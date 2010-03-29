@@ -441,6 +441,8 @@ int NITFCreate( const char *pszFilename,
     const char *pszVersion;
     int iIM, nIM = 1;
     const char *pszNUMI;
+    int iGS, nGS = 0; // number of graphic segment
+    const char *pszNUMS; // graphic segment option string
 
     if (nBands <= 0 || nBands > 99999)
     {
@@ -481,6 +483,21 @@ int NITFCreate( const char *pszFilename,
         }
     }
     
+    // Reads and validates graphics segment number option
+    pszNUMS = CSLFetchNameValue(papszOptions, "NUMS");
+    if (pszNUMS != NULL)
+    {
+        nGS = atoi(pszNUMS);
+        if (nGS < 0 || nGS > 999)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid NUMS value : %s",
+                            pszNUMS);
+            return FALSE;
+        }
+    }
+
+
+
 /* -------------------------------------------------------------------- */
 /*      Compute raw image size, blocking factors and so forth.          */
 /* -------------------------------------------------------------------- */
@@ -659,13 +676,27 @@ int NITFCreate( const char *pszFilename,
         nHL += 6 + 10;
     }
 
-    PLACE (nHL,     NUMS         ,"000"                           );
-    PLACE (nHL + 3, NUMX         ,"000"                           );
-    PLACE (nHL + 6, NUMT         ,CPLSPrintf("%03d",nNUMT)        );
+    // Creates Header entries for graphic segment
+    //    NUMS: number of segment
+    // For each segment:
+    // 	  LSSH[i]: subheader length (4 byte), set to be 258, the size for
+    //				minimal amount of information.
+    //    LS[i] data length (6 byte)
+    PLACE (nHL,     NUMS         ,CPLSPrintf("%03d",nGS)        );
+    nHL += 3; // Move three characters
+    for (iGS = 0; iGS < nGS; iGS++)
+    {
+        PLACE (nHL, LSSHi ,CPLSPrintf("0000") );
+        PLACE (nHL + 4, LSi ,CPLSPrintf("000000") );
+        nHL += 4 + 6;
+    }
 
-    PLACE (nHL + 9, LTSHnLTn     ,""                              );
+    PLACE (nHL, NUMX         ,"000"                           );
+    PLACE (nHL + 3, NUMT         ,CPLSPrintf("%03d",nNUMT)        );
 
-    nHL += 9 + (4+5) * nNUMT;
+    PLACE (nHL + 6, LTSHnLTn     ,""                              );
+
+    nHL += 6 + (4+5) * nNUMT;
 
     PLACE (nHL, NUMDES       ,"000"                           );
     nHL += 3;

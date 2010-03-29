@@ -42,6 +42,7 @@ CPL_CVSID("$Id$");
 static void NITFPatchImageLength( const char *pszFilename,
                                   GUIntBig nImageOffset, 
                                   GIntBig nPixelCount, const char *pszIC );
+static int NITFWriteCGMSegments( const char *pszFilename, char **papszList );
 static void NITFWriteTextSegments( const char *pszFilename, char **papszList );
 
 static CPLErr NITFSetColorInterpretation( NITFImage *psImage, 
@@ -2677,7 +2678,7 @@ void NITFDataset::InitializeTextMetadata()
     int iText = 0;
 
 /* ==================================================================== */
-/*      Process all graphics segments.                                  */
+/*      Process all text segments.                                  */
 /* ==================================================================== */
     for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
     {
@@ -2685,6 +2686,29 @@ void NITFDataset::InitializeTextMetadata()
 
         if( !EQUAL(psSegment->szSegmentType,"TX") )
             continue;
+
+/* -------------------------------------------------------------------- */
+/*      Load the text header                                            */
+/* -------------------------------------------------------------------- */
+
+        /* Allocate one extra byte for the NULL terminating character */
+        char *pabyHeaderData = (char *) CPLCalloc(1,
+                (size_t) psSegment->nSegmentHeaderSize + 1);
+        if (VSIFSeekL(psFile->fp, psSegment->nSegmentHeaderStart,
+                      SEEK_SET) != 0 ||
+            VSIFReadL(pabyHeaderData, 1, (size_t) psSegment->nSegmentHeaderSize,
+                      psFile->fp) != psSegment->nSegmentHeaderSize)
+        {
+            CPLError( CE_Warning, CPLE_FileIO,
+                      "Failed to read %d bytes of text header data at " CPL_FRMT_GUIB ".",
+                      psSegment->nSegmentHeaderSize,
+                      psSegment->nSegmentHeaderStart);
+            return;
+        }
+
+        oSpecialMD.SetMetadataItem( CPLString().Printf("HEADER_%d", iText),
+                                    pabyHeaderData, "TEXT");
+        CPLFree(pabyHeaderData);
 
 /* -------------------------------------------------------------------- */
 /*      Load the raw TEXT data itself.                                  */
@@ -3629,7 +3653,17 @@ NITFDataset::NITFCreateCopy(
 /*      Prepare for text segments.                                      */
 /* -------------------------------------------------------------------- */
     int iOpt, nNUMT = 0;
-    char **papszTextMD = poSrcDS->GetMetadata( "TEXT" );
+    char **papszTextMD = CSLFetchNameValueMultiple (papszOptions, "TEXT");
+    // Notice: CSLFetchNameValueMultiple remove the leading "TEXT=" when
+    // returning the list, which is what we want.
+
+    // Use TEXT information from original image if no creation option is passed in.
+    if (papszTextMD == NULL)
+    {
+        // Read CGM adata from original image, duplicate the list becuase
+        // we frees papszCgmMD at end of the function.
+        papszTextMD = CSLDuplicate( poSrcDS->GetMetadata( "TEXT" ));
+    }
 
     for( iOpt = 0; 
          papszTextMD != NULL && papszTextMD[iOpt] != NULL; 
@@ -3646,6 +3680,36 @@ NITFDataset::NITFCreateCopy(
         papszFullOptions = CSLAddString( papszFullOptions, 
                                          CPLString().Printf( "NUMT=%d", 
                                                              nNUMT ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare for CGM segments.                                       */
+/* -------------------------------------------------------------------- */
+    const char *pszNUMS; // graphic segment option string
+    int nNUMS = 0;
+
+    char **papszCgmMD = CSLFetchNameValueMultiple (papszOptions, "CGM");
+    // Notice: CSLFetchNameValueMultiple remove the leading "CGM=" when
+    // returning the list, which is what we want.
+
+    // Use CGM information from original image if no creation option is passed in.
+    if (papszCgmMD == NULL)
+    {
+        // Read CGM adata from original image, duplicate the list becuase
+        // we frees papszCgmMD at end of the function.
+        papszCgmMD = CSLDuplicate( poSrcDS->GetMetadata( "CGM" ));
+    }
+
+    // Set NUMS based on the number of segments
+    if (papszCgmMD != NULL)
+    {
+        pszNUMS = CSLFetchNameValue(papszCgmMD, "SEGMENT_COUNT");
+
+        if (pszNUMS != NULL) {
+            nNUMS = atoi(pszNUMS);
+        }
+        papszFullOptions = CSLAddString(papszFullOptions,
+                                        CPLString().Printf("NUMS=%d", nNUMS));
     }
 
 /* -------------------------------------------------------------------- */
@@ -3707,6 +3771,8 @@ NITFDataset::NITFCreateCopy(
             if (bStrict)
             {
                 CSLDestroy(papszFullOptions);
+                CSLDestroy(papszCgmMD);
+                CSLDestroy(papszTextMD);
                 return NULL;
             }
         }
@@ -3739,6 +3805,8 @@ NITFDataset::NITFCreateCopy(
             if (bStrict)
             {
                 CSLDestroy(papszFullOptions);
+                CSLDestroy(papszCgmMD);
+                CSLDestroy(papszTextMD);
                 return NULL;
             }
         }
@@ -3754,6 +3822,8 @@ NITFDataset::NITFCreateCopy(
     if( pszPVType == NULL )
     {
         CSLDestroy(papszFullOptions);
+        CSLDestroy(papszCgmMD);
+        CSLDestroy(papszTextMD);
         return NULL;
     }
 
@@ -3762,6 +3832,8 @@ NITFDataset::NITFCreateCopy(
                 papszFullOptions ))
     {
         CSLDestroy( papszFullOptions );
+        CSLDestroy(papszCgmMD);
+        CSLDestroy(papszTextMD);
         return NULL;
     }
 
@@ -3812,7 +3884,11 @@ NITFDataset::NITFCreateCopy(
                                          pfnProgress, pProgressData );
         }
         if( poJ2KDataset == NULL )
+        {
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
             return NULL;
+        }
 
         delete poJ2KDataset;
 
@@ -3822,13 +3898,18 @@ NITFDataset::NITFCreateCopy(
             poSrcDS->GetRasterCount();
 
         NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount, "C8" );
+        NITFWriteCGMSegments( pszFilename, papszCgmMD );
         NITFWriteTextSegments( pszFilename, papszTextMD );
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
         poDstDS = (NITFDataset *) Open( &oOpenInfo );
 
         if( poDstDS == NULL )
+        {
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
             return NULL;
+        }
     }
 
 /* ==================================================================== */
@@ -3849,6 +3930,8 @@ NITFDataset::NITFCreateCopy(
         if( !bSuccess )
         {
             NITFClose( psFile );
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
             return NULL;
         }
 
@@ -3861,13 +3944,19 @@ NITFDataset::NITFCreateCopy(
 
         NITFPatchImageLength( pszFilename, nImageOffset,
                               nPixelCount, pszIC );
+
+        NITFWriteCGMSegments( pszFilename, papszCgmMD );
         NITFWriteTextSegments( pszFilename, papszTextMD );
         
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
         poDstDS = (NITFDataset *) Open( &oOpenInfo );
 
         if( poDstDS == NULL )
+        {
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
             return NULL;
+        }
 #endif /* def JPEG_SUPPORTED */
     }
 
@@ -3876,17 +3965,24 @@ NITFDataset::NITFCreateCopy(
 /* ==================================================================== */
     else
     {
+        NITFWriteCGMSegments( pszFilename, papszCgmMD );
         NITFWriteTextSegments( pszFilename, papszTextMD );
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
         poDstDS = (NITFDataset *) Open( &oOpenInfo );
         if( poDstDS == NULL )
+        {
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
             return NULL;
+        }
         
         void  *pData = VSIMalloc2(nXSize, (GDALGetDataTypeSize(eType) / 8));
         if (pData == NULL)
         {
             delete poDstDS;
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
             return NULL;
         }
         
@@ -3938,6 +4034,8 @@ NITFDataset::NITFCreateCopy(
         if ( eErr != CE_None )
         {
             delete poDstDS;
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
             return NULL;
         }
     }
@@ -3952,6 +4050,9 @@ NITFDataset::NITFCreateCopy(
     }
 
     poDstDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    CSLDestroy(papszCgmMD);
+    CSLDestroy(papszTextMD);
 
     return poDstDS;
 }
@@ -4012,11 +4113,37 @@ static void NITFPatchImageLength( const char *pszFilename,
 /*      so the COMRAT will either be at offset 778 or 838.              */
 /* -------------------------------------------------------------------- */
     char szICBuf[2];
-    VSIFSeekL( fpVSIL, 779-2, SEEK_SET );
+    char achNUM[4]; // buffer for segment size.  3 digits plus null character
+    achNUM[3] = '\0';
+
+    // get number of graphic and text segment so we can calculate offset for
+    // image IC.
+    int nNumIOffset = 360;
+    VSIFSeekL( fpVSIL, nNumIOffset, SEEK_SET );
+    VSIFReadL( achNUM, 1, 3, fpVSIL );
+    int nIM = atoi(achNUM); // number of image segment
+
+    int nNumSOffset = nNumIOffset + 3 + nIM * 16;
+    VSIFSeekL( fpVSIL,  nNumSOffset, SEEK_SET );
+    VSIFReadL( achNUM, 1, 3, fpVSIL );
+    int nGS = atoi(achNUM); // number of graphic segment
+
+    int nNumTOffset = nNumSOffset + 3 + 10 * nGS + 3;
+    VSIFSeekL( fpVSIL, nNumTOffset, SEEK_SET );
+    VSIFReadL( achNUM, 1, 3, fpVSIL );
+    int nTS = atoi(achNUM); // number of text segment
+
+    int nAdditionalOffset = nGS * 10 + nTS * 9;
+
+    // 779-2 is the offset for IC without taking into account of the size
+    // changes as the result of additional text and graphics segments.
+    // 839-2 is the offset if IGOLO exist.
+
+    VSIFSeekL( fpVSIL, 779 -2 + nAdditionalOffset , SEEK_SET );
     VSIFReadL( szICBuf, 2, 1, fpVSIL );
     if( !EQUALN(szICBuf,pszIC,2) )
     {
-        VSIFSeekL( fpVSIL, 839-2, SEEK_SET );
+        VSIFSeekL( fpVSIL, 839 -2 + nAdditionalOffset, SEEK_SET );
         VSIFReadL( szICBuf, 2, 1, fpVSIL );
     }
     
@@ -4055,7 +4182,228 @@ static void NITFPatchImageLength( const char *pszFilename,
     
     VSIFCloseL( fpVSIL );
 }
-        
+
+/************************************************************************/
+/*                       NITFWriteCGMSegments()                        */
+/************************************************************************/
+static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
+{
+    char errorMessage[255] = "";
+
+    // size of each Cgm header entry (LS (4) + LSSH (6))
+    const int nCgmHdrEntrySz = 10;
+    
+    if (papszList == NULL)
+        return TRUE;
+
+    int nNUMS = 0;
+    const char *pszNUMS;
+    pszNUMS = CSLFetchNameValue(papszList, "SEGMENT_COUNT");
+    if (pszNUMS != NULL)
+    {
+        nNUMS = atoi(pszNUMS);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Open the target file.                                           */
+    /* -------------------------------------------------------------------- */
+    FILE *fpVSIL = VSIFOpenL(pszFilename, "r+b");
+
+    if (fpVSIL == NULL)
+        return FALSE;
+
+    // Calculates the offset for NUMS so we can update header data
+    char achNUMI[4]; // 3 digits plus null character
+    achNUMI[3] = '\0';
+
+    // NUMI offset is at a fixed offset 363
+    int nNumIOffset = 360;
+    VSIFSeekL(fpVSIL, nNumIOffset, SEEK_SET );
+    VSIFReadL(achNUMI, 1, 3, fpVSIL);
+    int nIM = atoi(achNUMI);
+
+    // 6 for size of LISH and 10 for size of LI
+    // NUMS offset is NumI offset plus the size of NumI + size taken up each
+    // the header data multiply by the number of data
+
+    int nNumSOffset = nNumIOffset + 3+ nIM * (6 + 10);
+
+    /* -------------------------------------------------------------------- */
+    /*      Confirm that the NUMS in the file header already matches the    */
+    /*      number of graphic segments we want to write                     */
+    /* -------------------------------------------------------------------- */
+    char achNUMS[4];
+
+    VSIFSeekL( fpVSIL, nNumSOffset, SEEK_SET );
+    VSIFReadL( achNUMS, 1, 3, fpVSIL );
+    achNUMS[3] = '\0';
+
+    if( atoi(achNUMS) != nNUMS )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "It appears an attempt was made to add or update graphic\n"
+                  "segments on an NITF file with existing segments.  This\n"
+                  "is not currently supported by the GDAL NITF driver." );
+
+        VSIFCloseL( fpVSIL );
+        return FALSE;
+    }
+
+
+    // allocate space for graphic header.
+    // Size of LS = 4, size of LSSH = 6, and 1 for null character
+    char *pachLS = (char *) CPLCalloc(nNUMS * nCgmHdrEntrySz + 1, 1);
+
+    /* -------------------------------------------------------------------- */
+    /*	Assume no extended data such as SXSHDL, SXSHD						*/
+    /* -------------------------------------------------------------------- */
+
+    /* ==================================================================== */
+    /*      Write the Graphics segments at the end of the file.             */
+    /* ==================================================================== */
+
+    #define PLACE(location,name,text)  strncpy(location,text,strlen(text))
+
+    for (int i = 0; i < nNUMS; i++)
+    {
+
+        // Get all the fields for current CGM segment
+        const char *pszSlocRow = CSLFetchNameValue(papszList,
+                        CPLString().Printf("SEGMENT_%d_SLOC_ROW", i));
+        const char *pszSlocCol = CSLFetchNameValue(papszList,
+                        CPLString().Printf("SEGMENT_%d_SLOC_COL", i));
+        const char *pszSdlvl = CSLFetchNameValue(papszList,
+                        CPLString().Printf("SEGMENT_%d_SDLVL", i));
+        const char *pszSalvl = CSLFetchNameValue(papszList,
+                        CPLString().Printf("SEGMENT_%d_SALVL", i));
+        const char *pszData = CSLFetchNameValue(papszList,
+                        CPLString().Printf("SEGMENT_%d_DATA", i));
+
+        // Error checking
+        if (pszSlocRow == NULL)
+        {
+            sprintf(errorMessage, "NITF graphic segment writing error: SLOC_ROW for segment %d is not defined",i);
+            break;
+        }
+        if (pszSlocCol == NULL)
+        {
+            sprintf(errorMessage, "NITF graphic segment writing error: SLOC_COL for segment %d is not defined",i);
+            break;
+        }
+        if (pszSdlvl == NULL)
+        {
+            sprintf(errorMessage, "NITF graphic segment writing error: SDLVL for segment %d is not defined", i);
+            break;
+        }
+        if (pszSalvl == NULL)
+        {
+            sprintf(errorMessage, "NITF graphic segment writing error: SALVLfor segment %d is not defined", i);
+            break;
+        }
+        if (pszData == NULL)
+        {
+            sprintf(errorMessage, "NITF graphic segment writing error: DATA for segment %d is not defined", i);
+            break;
+        }
+
+        int nSlocCol = atoi(pszSlocRow);
+        int nSlocRow = atoi(pszSlocCol);
+        int nSdlvl = atoi(pszSdlvl);
+        int nSalvl = atoi(pszSalvl);
+
+        // Create a buffer for graphics segment header, 258 is the size of
+        // the header that we will be writing.
+        char achGSH[258];
+
+        memset(achGSH, ' ', sizeof(achGSH));
+
+
+        PLACE( achGSH+ 0, SY , "SY" );
+        PLACE( achGSH+ 2, SID ,CPLSPrintf("%010d", i) );
+        PLACE( achGSH+ 12, SNAME , "DEFAULT NAME        " );
+        PLACE( achGSH+32, SSCLAS , "U" );
+        PLACE( achGSH+33, SSCLASY , "0" );
+        PLACE( achGSH+199, ENCRYP , "0" );
+        PLACE( achGSH+200, SFMT , "C" );
+        PLACE( achGSH+201, SSTRUCT , "0000000000000" );
+        PLACE( achGSH+214, SDLVL , CPLSPrintf("%03d",nSdlvl)); // size3
+        PLACE( achGSH+217, SALVL , CPLSPrintf("%03d",nSalvl)); // size3
+        PLACE( achGSH+220, SLOC , CPLSPrintf("%05d%05d",nSlocRow,nSlocCol) ); // size 10
+        PLACE( achGSH+230, SBAND1 , "0000000000" );
+        PLACE( achGSH+240, SCOLOR, "C" );
+        PLACE( achGSH+241, SBAND2, "0000000000" );
+        PLACE( achGSH+251, SRES2, "00" );
+        PLACE( achGSH+253, SXSHDL, "00000" );
+
+        // Move to the end of the file
+        VSIFSeekL(fpVSIL, 0, SEEK_END );
+        VSIFWriteL(achGSH, 1, sizeof(achGSH), fpVSIL);
+
+        /* -------------------------------------- ------------------------------ */
+        /*      Prepare and write CGM segment data.                            */
+        /* -------------------------------------------------------------------- */
+        int nCGMSize = 0;
+        char *pszCgmToWrite = CPLUnescapeString(pszData, &nCGMSize,
+                        CPLES_BackslashQuotable);
+
+        if (nCGMSize > 999999)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Length of SEGMENT_%d_DATA is %d, which is greater than 999999. Truncating...",
+                     i + 1, nCGMSize);
+            nCGMSize = 999999;
+        }
+
+        VSIFWriteL(pszCgmToWrite, 1, nCGMSize, fpVSIL);
+
+        /* -------------------------------------------------------------------- */
+        /*      Update the subheader and data size info in the file header.     */
+        /* -------------------------------------------------------------------- */
+        sprintf( pachLS + nCgmHdrEntrySz * i, "%04d%06d",(int) sizeof(achGSH), nCGMSize );
+
+        CPLFree(pszCgmToWrite);
+
+    } // End For
+
+
+    /* -------------------------------------------------------------------- */
+    /*      Write out the graphic segment info.                             */
+    /* -------------------------------------------------------------------- */
+
+    VSIFSeekL(fpVSIL, nNumSOffset + 3, SEEK_SET );
+    VSIFWriteL(pachLS, 1, nNUMS * nCgmHdrEntrySz, fpVSIL);
+
+    /* -------------------------------------------------------------------- */
+    /*      Update total file length.                                       */
+    /* -------------------------------------------------------------------- */
+    VSIFSeekL(fpVSIL, 0, SEEK_END );
+    GUIntBig nFileLen = VSIFTellL(fpVSIL);
+    // Offset to file length entry
+    VSIFSeekL(fpVSIL, 342, SEEK_SET );
+    if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                        "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999999",
+                        nFileLen);
+        nFileLen = (GUIntBig) (1e12 - 1);
+    }
+    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",
+                    nFileLen);
+    VSIFWriteL((void *) osLen.c_str(), 1, 12, fpVSIL);
+
+    VSIFCloseL(fpVSIL);
+
+    CPLFree(pachLS);
+
+    if (strlen(errorMessage) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,errorMessage);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 /************************************************************************/
 /*                       NITFWriteTextSegments()                        */
 /************************************************************************/
@@ -4086,16 +4434,41 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
     if( fpVSIL == NULL )
         return;
-    
-/* -------------------------------------------------------------------- */
-/*      Confirm that the NUMT in the file header already matches the    */
-/*      number of text segements we want to write, and that the         */
-/*      segment header/data size info is blank.                         */
-/* -------------------------------------------------------------------- */
+
+    // Get number of text field.  Since there there could be multiple images
+    // or graphic segment, the  offset need to be calculated dynamically.
+
+    char achNUMI[4]; // 3 digits plus null character
+    achNUMI[3] = '\0';
+    // NUMI offset is at a fixed offset 363
+    int nNumIOffset = 360;
+    VSIFSeekL( fpVSIL, nNumIOffset, SEEK_SET );
+    VSIFReadL( achNUMI, 1, 3, fpVSIL );
+    int nIM = atoi(achNUMI);
+
+    char achNUMG[4]; // 3 digits plus null character
+    achNUMG[3] = '\0';
+
+    // 3 for size of NUMI.  6 and 10 are the field size for LISH and LI
+    int nNumGOffset = nNumIOffset + 3 + nIM * (6 + 10);
+    VSIFSeekL( fpVSIL, nNumGOffset, SEEK_SET );
+    VSIFReadL( achNUMG, 1, 3, fpVSIL );
+    int nGS = atoi(achNUMG);
+
+    // NUMT offset
+    // 3 for size of NUMG.  4 and 6 are filed size of LSSH and LS.
+    // the last + 3 is for NUMX field, which is not used
+    int nNumTOffset = nNumGOffset + 3 + nGS * (4 + 6) + 3;
+
+    /* -------------------------------------------------------------------- */
+    /*      Confirm that the NUMT in the file header already matches the    */
+    /*      number of text segements we want to write, and that the         */
+    /*      segment header/data size info is blank.                         */
+    /* -------------------------------------------------------------------- */
     char achNUMT[4];
     char *pachLT = (char *) CPLCalloc(nNUMT * 9 + 1, 1);
 
-    VSIFSeekL( fpVSIL, 385, SEEK_SET );
+    VSIFSeekL( fpVSIL, nNumTOffset, SEEK_SET );
     VSIFReadL( achNUMT, 1, 3, fpVSIL );
     achNUMT[3] = '\0';
 
@@ -4139,22 +4512,102 @@ static void NITFWriteTextSegments( const char *pszFilename,
         if( !EQUALN(papszList[iOpt],"DATA_",5) )
             continue;
 
+        const char *pszHeaderBuffer = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Locate corresponding header data in the buffer                  */
+/* -------------------------------------------------------------------- */
+
+        for( int iOpt2 = 0; papszList != NULL && papszList[iOpt2] != NULL; iOpt2++ ) {
+            if( !EQUALN(papszList[iOpt2],"HEADER_",7) )
+                continue;
+
+            char *pszHeaderKey, *pszDataKey;
+            CPLParseNameValue( papszList[iOpt2], &pszHeaderKey );
+            CPLParseNameValue( papszList[iOpt], &pszDataKey );
+
+            char *pszHeaderId, *pszDataId; //point to header and data number
+            pszHeaderId = pszHeaderKey + 7;
+            pszDataId = pszDataKey + 5;
+
+            bool bIsSameId = strcmp(pszHeaderId, pszDataId) == 0;
+            CPLFree(pszHeaderKey);
+            CPLFree(pszDataKey);
+
+            // if ID matches, read the header information and exit the loop
+            if (bIsSameId) {
+            	pszHeaderBuffer = CPLParseNameValue( papszList[iOpt2], NULL);
+            	break;
+            }
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Prepare and write text header.                                  */
 /* -------------------------------------------------------------------- */
+        char achTSH[282];
+        memset( achTSH, ' ', sizeof(achTSH) );
         VSIFSeekL( fpVSIL, 0, SEEK_END );
 
-        char achTSH[282];
+        if (pszHeaderBuffer!= NULL) {
+            memcpy( achTSH, pszHeaderBuffer, MIN(strlen(pszHeaderBuffer), sizeof(achTSH)) );
 
-        memset( achTSH, ' ', sizeof(achTSH) );
+            // Take care NITF2.0 date format changes
+            char chTimeZone = achTSH[20];
 
-        PLACE( achTSH+  0, TE            , "TE"                              );
-        PLACE( achTSH+  9, TXTALVL       , "000"                             );
-        PLACE( achTSH+ 12, TXTDT         , "00000000000000"                  );
-        PLACE( achTSH+106, TSCLAS        , "U"                               );
-        PLACE( achTSH+273, ENCRYP        , "0"                               );
-        PLACE( achTSH+274, TXTFMT        , "STA"                             );
-        PLACE( achTSH+277, TXSHDL        , "00000"                           );
+            // Check for Zulu time zone character.  IpachLTf that exist, then
+            // it's NITF2.0 format.
+            if (chTimeZone == 'Z') {
+                char *achOrigDate=achTSH+12;  // original date string
+
+                // The date value taken from default NITF file date
+                char achNewDate[]="20021216151629";
+                char achYear[3];
+                int nYear;
+
+                // Offset to the year
+                strncpy(achYear,achOrigDate+12, 2);
+                achYear[2] = '\0';
+                nYear = atoi(achYear);
+
+                // Set century.
+                // Since NITF2.0 does not track the century, we are going to
+                // assume any year number greater then 94 (the year NITF2.0
+                // spec published), will be 1900s, otherwise, it's 2000s.
+                if (nYear > 94) strncpy(achNewDate,"19",2);
+                else strncpy(achNewDate,"20",2);
+
+                strncpy(achNewDate+6, achOrigDate,8); // copy cover DDhhmmss
+                strncpy(achNewDate+2, achOrigDate+12,2); // copy over years
+
+                // Perform month conversion
+                char *pszOrigMonth = achOrigDate+9;
+                char *pszNewMonth = achNewDate+4;
+
+                if (strncmp(pszOrigMonth,"JAN",3) == 0) strncpy(pszNewMonth,"01",2);
+                else if (strncmp(pszOrigMonth,"FEB",3) == 0) strncpy(pszNewMonth,"02",2);
+                else if (strncmp(pszOrigMonth,"MAR",3) == 0) strncpy(pszNewMonth,"03",2);
+                else if (strncmp(pszOrigMonth,"APR",3) == 0) strncpy(pszNewMonth,"04",2);
+                else if (strncmp(pszOrigMonth,"MAY",3) == 0) strncpy(pszNewMonth,"05",2);
+                else if (strncmp(pszOrigMonth,"JUN",3) == 0) strncpy(pszNewMonth,"07",2);
+                else if (strncmp(pszOrigMonth,"AUG",3) == 0) strncpy(pszNewMonth,"08",2);
+                else if (strncmp(pszOrigMonth,"SEP",3) == 0) strncpy(pszNewMonth,"09",2);
+                else if (strncmp(pszOrigMonth,"OCT",3) == 0) strncpy(pszNewMonth,"10",2);
+                else if (strncmp(pszOrigMonth,"NOV",3) == 0) strncpy(pszNewMonth,"11",2);
+                else if (strncmp(pszOrigMonth,"DEC",3) == 0) strncpy(pszNewMonth,"12",2);
+
+                PLACE( achTSH+ 12, TXTDT         , achNewDate          		);
+
+            }
+        } else { // Use default value if header information is not found
+            PLACE( achTSH+  0, TE            , "TE"                          );
+            PLACE( achTSH+  9, TXTALVL       , "000"                         );
+            PLACE( achTSH+ 12, TXTDT         , "20021216151629"              );
+            PLACE( achTSH+106, TSCLAS        , "U"                           );
+            PLACE( achTSH+273, ENCRYP        , "0"                           );
+            PLACE( achTSH+274, TXTFMT        , "STA"                         );
+            PLACE( achTSH+277, TXSHDL        , "00000"                       );
+        }
+
 
         VSIFWriteL( achTSH, 1, sizeof(achTSH), fpVSIL );
 
@@ -4162,14 +4615,23 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /*      Prepare and write text segment data.                            */
 /* -------------------------------------------------------------------- */
         pszTextToWrite = CPLParseNameValue( papszList[iOpt], NULL );
+        
+        int nTextLength = (int) strlen(pszTextToWrite);
+        if (nTextLength > 99999)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Length of DATA_%d is %d, which is greater than 99999. Truncating...",
+                     iTextSeg + 1, nTextLength);
+            nTextLength = 99999;
+        }
 
-        VSIFWriteL( pszTextToWrite, 1, strlen(pszTextToWrite), fpVSIL );
+        VSIFWriteL( pszTextToWrite, 1, nTextLength, fpVSIL );
         
 /* -------------------------------------------------------------------- */
 /*      Update the subheader and data size info in the file header.     */
 /* -------------------------------------------------------------------- */
         sprintf( pachLT + 9*iTextSeg+0, "%04d%05d",
-                 (int) sizeof(achTSH), (int) strlen(pszTextToWrite) );
+                 (int) sizeof(achTSH), nTextLength );
 
         iTextSeg++;
     }
@@ -4177,7 +4639,8 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out the text segment info.                                */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( fpVSIL, 388, SEEK_SET );
+
+    VSIFSeekL( fpVSIL, nNumTOffset + 3, SEEK_SET );
     VSIFWriteL( pachLT, 1, nNUMT * 9, fpVSIL );
 
 /* -------------------------------------------------------------------- */
@@ -4625,7 +5088,9 @@ void GDALRegister_NITF()
 "   <Option name='LUT_SIZE' type='integer' description='Set to control the size of pseudocolor tables for RGB/LUT bands' default='256'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Set the block width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Set the block height'/>"
-"   <Option name='BLOCKSIZE' type='int' description='Set the block with and height. Overridden by BLOCKXSIZE and BLOCKYSIZE'/>";
+"   <Option name='BLOCKSIZE' type='int' description='Set the block with and height. Overridden by BLOCKXSIZE and BLOCKYSIZE'/>"
+"   <Option name='TEXT' type='string' description='TEXT options as text-option-name=text-option-content'/>"
+"   <Option name='CGM' type='string' description='CGM options in cgm-option-name=cgm-option-content'/>";
 
         for(i=0;i<sizeof(asFieldDescription) / sizeof(asFieldDescription[0]); i++)
         {
