@@ -1251,7 +1251,50 @@ def nitf_48():
         pass
 
     return 'success'
-    
+
+###############################################################################
+# Test TEXT and CGM creation options (#3376)
+
+def nitf_49():
+
+    options = [ "TEXT=DATA_0=COUCOU",
+                "TEXT=HEADER_0=ABC", # This content is invalid but who cares here
+                "CGM=SEGMENT_COUNT=1",
+                "CGM=SEGMENT_0_SLOC_ROW=25",
+                "CGM=SEGMENT_0_SLOC_COL=25",
+                "CGM=SEGMENT_0_SDLVL=2",
+                "CGM=SEGMENT_0_SALVL=1",
+                "CGM=SEGMENT_0_DATA=XYZ" ]
+
+    src_ds = gdal.Open('data/text_md.vrt')
+
+    # This will check that the creation option overrides the TEXT metadata domain from the source
+    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf49.ntf', src_ds,
+                                                  options = options )
+
+    # Test copy from source TEXT and CGM metadata domains
+    ds2 = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf49_2.ntf', ds )
+
+    md = ds2.GetMetadata('TEXT')
+    if 'DATA_0' not in md or md['DATA_0'] != 'COUCOU' or \
+       'HEADER_0' not in md or md['HEADER_0'].find('ABC  ') == -1:
+        gdaltest.post_reason('did not get expected TEXT metadata')
+        print(md)
+        return 'success'
+
+    md = ds2.GetMetadata('CGM')
+    if 'SEGMENT_COUNT' not in md or md['SEGMENT_COUNT'] != '1' or \
+       'SEGMENT_0_DATA' not in md or md['SEGMENT_0_DATA'] != 'XYZ' :
+        gdaltest.post_reason('did not get expected CGM metadata')
+        print(md)
+        return 'success'
+
+    src_ds = None
+    ds = None
+    ds2 = None
+
+    return 'success'
+
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
@@ -1907,6 +1950,16 @@ def nitf_cleanup():
         os.unlink( 'tmp/nitf46.ntf_0.ovr' )
     except:
         pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf49.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf49_2.ntf' )
+    except:
+        pass
         
     return 'success'
 
@@ -1965,6 +2018,7 @@ gdaltest_list = [
     nitf_46_jasper,
     nitf_47,
     nitf_48,
+    nitf_49,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
