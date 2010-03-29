@@ -1043,7 +1043,6 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
 
 {
     char	**papszLines;
-    char        **papszTok=NULL;
     int		iLine, nLines=0;
     int	        nCoordinateCount = 0;
     GDAL_GCP    asGCPs[MAX_GCP];
@@ -1071,9 +1070,9 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
         return FALSE;
     }
 
-    OGRSpatialReference oSRS, *poLatLong = NULL;
-    OGRCoordinateTransformation *poTransform = NULL;
+    OGRSpatialReference oSRS;
     const char *pszProj = NULL, *pszProjParms = NULL;
+    OGRErr eErr = OGRERR_NONE;
 
     for ( iLine = 5; iLine < nLines; iLine++ )
     {
@@ -1092,21 +1091,19 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
 
     if ( papszLines[4][0] != '\0' && pszProj && pszProjParms )
     {
-        if (oSRS.importFromOzi( papszLines[4], pszProj, pszProjParms ) ==
-                                                                   OGRERR_NONE)
+        eErr = oSRS.importFromOzi( papszLines[4], pszProj, pszProjParms );
+        if ( eErr == OGRERR_NONE )
         {
             if ( ppszWKT != NULL )
                 oSRS.exportToWkt( ppszWKT );
-
-            poLatLong = oSRS.CloneGeogCS();
-            poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
         }
     }
 
     // Iterate all lines in the TAB-file
     for ( iLine = 5; iLine < nLines; iLine++ )
     {
-        CSLDestroy( papszTok );
+        char    **papszTok = NULL;
+
         papszTok = CSLTokenizeString2( papszLines[iLine], ",",
                                        CSLT_ALLOWEMPTYTOKENS
                                        | CSLT_STRIPLEADSPACES
@@ -1115,52 +1112,83 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
         if ( CSLCount(papszTok) < 12 )
             continue;
 
-        if ( CSLCount(papszTok) >= 12
+        if ( CSLCount(papszTok) >= 17
              && EQUALN(papszTok[0], "Point", 5)
+             && !EQUAL(papszTok[2], "")
              && !EQUAL(papszTok[3], "")
-             && !EQUAL(papszTok[6], "")
-             && !EQUAL(papszTok[7], "")
-             && !EQUAL(papszTok[9], "")
-             && !EQUAL(papszTok[10], "")
              && nCoordinateCount < MAX_GCP )
         {
-            double dfLon, dfLat;
+            int     bReadOk = FALSE;
+            double  dfLon, dfLat;
 
-            GDALInitGCPs( 1, asGCPs + nCoordinateCount );
+            if ( !EQUAL(papszTok[6], "")
+                 && !EQUAL(papszTok[7], "")
+                 && !EQUAL(papszTok[9], "")
+                 && !EQUAL(papszTok[10], "") )
+            {
+                // Set geographical coordinates of the pixels
+                dfLon = CPLAtofM(papszTok[9]) + CPLAtofM(papszTok[10]) / 60.0;
+                dfLat = CPLAtofM(papszTok[6]) + CPLAtofM(papszTok[7]) / 60.0;
+                if ( EQUAL(papszTok[11], "W") )
+                    dfLon = -dfLon;
+                if ( EQUAL(papszTok[8], "S") )
+                    dfLat = -dfLat;
 
-            // Set pixel/line part
-            asGCPs[nCoordinateCount].dfGCPPixel = CPLAtofM(papszTok[2]);
-            asGCPs[nCoordinateCount].dfGCPLine = CPLAtofM(papszTok[3]);
+                // Transform from the geographical coordinates into projected
+                // coordinates.
+                if ( eErr == OGRERR_NONE )
+                {
+                    OGRSpatialReference *poLatLong = NULL;
+                    OGRCoordinateTransformation *poTransform = NULL;
 
-            // Set geographical coordinates of the pixels
-            dfLon = CPLAtofM(papszTok[9]) + CPLAtofM(papszTok[10]) / 60.0;
-            dfLat = CPLAtofM(papszTok[6]) + CPLAtofM(papszTok[7]) / 60.0;
-            if (EQUAL(papszTok[11], "W") )
-                dfLon = -dfLon;
-            if ( EQUAL(papszTok[8], "S") )
-                dfLat = -dfLat;
+                    poLatLong = oSRS.CloneGeogCS();
+                    if ( poLatLong )
+                    {
+                        poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
+                        if ( poTransform )
+                        {
+                            bReadOk = poTransform->Transform( 1, &dfLon, &dfLat );
+                            delete poTransform;
+                        }
+                        delete poLatLong;
+                    }
+                }
+            }
+            else if ( !EQUAL(papszTok[14], "")
+                      && !EQUAL(papszTok[15], "") )
+            {
+                // Set cartesian coordinates of the pixels.
+                dfLon = CPLAtofM(papszTok[14]);
+                dfLat = CPLAtofM(papszTok[15]);
+                bReadOk = TRUE;
 
-            if ( poTransform )
-                poTransform->Transform( 1, &dfLon, &dfLat );
+                if ( EQUAL(papszTok[16], "S") )
+                    dfLat = -dfLat;
+            }
 
-            asGCPs[nCoordinateCount].dfGCPX = dfLon;
-            asGCPs[nCoordinateCount].dfGCPY = dfLat;
+            if ( bReadOk )
+            {
+                GDALInitGCPs( 1, asGCPs + nCoordinateCount );
 
-            nCoordinateCount++;
+                // Set pixel/line part
+                asGCPs[nCoordinateCount].dfGCPPixel = CPLAtofM(papszTok[2]);
+                asGCPs[nCoordinateCount].dfGCPLine = CPLAtofM(papszTok[3]);
+
+                asGCPs[nCoordinateCount].dfGCPX = dfLon;
+                asGCPs[nCoordinateCount].dfGCPY = dfLat;
+
+                nCoordinateCount++;
+            }
         }
+
+        CSLDestroy( papszTok );
     }
 
-    if ( poTransform )
-        delete poTransform;
-    if ( poLatLong )
-        delete poLatLong;
-
-    CSLDestroy( papszTok );
     CSLDestroy( papszLines );
 
     if ( nCoordinateCount == 0 )
     {
-        CPLDebug( "GDAL", "GDALLoadOziMapFile(\"%s\") did not get any GCPs.", 
+        CPLDebug( "GDAL", "GDALLoadOziMapFile(\"%s\") did read no GCPs.", 
                   pszFilename );
         return FALSE;
     }
