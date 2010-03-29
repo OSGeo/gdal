@@ -103,40 +103,31 @@ static
 CPLErr ReadRaster_internal( GDALRasterBandShadow *obj, 
                             int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
-                            GDALDataType buf_type,
-                            int *buf_size, char **buf,
-                            int pixel_space, int line_space)
+                            GDALDataType buf_type, PyObject **ppoStr,
+                            int pixel_space, int line_space )
 {
   CPLErr result;
   
-  *buf_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
-                                       pixel_space, line_space, FALSE );
+  int buf_size = ComputeBandRasterIOSize( buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
+                                          pixel_space, line_space, FALSE );
   
-  if (*buf_size == 0)
+  if ( buf_size == 0 )
   {
-      *buf = 0;
+      *ppoStr = 0;
       return CE_Failure;
   }
   
-  *buf = (char*) malloc( *buf_size );
-  if (*buf)
+  *ppoStr = PyString_FromStringAndSize( NULL, (Py_ssize_t)buf_size );
+  if ( *ppoStr )
   {
+    char *buf = PyString_AsString( *ppoStr );
     result =  GDALRasterIO( obj, GF_Read, xoff, yoff, xsize, ysize,
-                                    (void *) *buf, buf_xsize, buf_ysize,
+                                    (void *) buf, buf_xsize, buf_ysize,
                                     buf_type, pixel_space, line_space );
-    if ( result != CE_None ) {
-        free( *buf );
-        *buf = 0;
-        *buf_size = 0;
-    }
   }
   else
-  {
-    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate %d bytes", *buf_size);
     result = CE_Failure;
-    *buf = 0;
-    *buf_size = 0;
-  }
+
   return result;
 }
 
@@ -314,11 +305,11 @@ public:
   }
 
 #if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
-%apply ( int *nLen, char **pBuf ) { (int *buf_len, char **buf ) };
+%apply ( PyObject **ppoStr ) { (PyObject **ppoStr) };
 %apply ( int *optional_int ) {(int*)};
 %feature( "kwargs" ) ReadRaster;
   CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
-                     int *buf_len, char **buf,
+                     PyObject **ppoStr,
                      int *buf_xsize = 0,
                      int *buf_ysize = 0,
                      int *buf_type = 0,
@@ -331,9 +322,8 @@ public:
     int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
     int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
-                                nxsize, nysize, ntype, buf_len, buf, pixel_space, line_space );
+                                nxsize, nysize, ntype, ppoStr, pixel_space, line_space );
   }
-%clear (int *buf_len, char **buf );
 %clear (int*);
 
 %apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
