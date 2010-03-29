@@ -260,6 +260,17 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  * This typemap has a typecheck also since the WriteRaster()
  * methods are overloaded.
  */
+%typemap(in,numinputs=0) (PyObject **ppoStr) (PyObject *ppoStr = 0)
+{
+  /* %typemap (in,numinputs=0) (PyObject **ppoStr) */
+  $1 = &ppoStr;
+}
+%typemap(argout) (PyObject **ppoStr)
+{
+  /* %typemap(argout) (PyObject **ppoStr) */
+  Py_XDECREF($result);
+  $result = *$1;
+}
 %typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
 {
   /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
