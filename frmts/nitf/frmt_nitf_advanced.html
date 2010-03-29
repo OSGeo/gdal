@@ -39,6 +39,22 @@ backslashes and double quotes will be backslashed escaped.  The
 CPLUnescapeString() function can be used to unescape the data into binary
 format using scheme CPLES_BackslashQuotable. <p>
 
+Since GDAL 1.8.0, to add CGM data to a NITF image, you can pass creation options in the following format:
+
+<pre>
+  CGM=SEGMENT_COUNT=1
+  CGM=SEGMENT_0_SLOC_ROW=25
+  CGM=SEGMENT_0_SLOC_COL=25
+  CGM=SEGMENT_0_SDLVL=2
+  CGM=SEGMENT_0_SALVL=1
+  CGM=SEGMENT_0_DATA=\0!\0...
+</pre> 
+
+Notice that passing CGM as creation options will overwrite existing CGM segment read in the CGM metadata domain.
+
+<p>
+
+
 While GDAL does not support parsing or rendering CGM data, at least one user 
 has found the <a href="http://sk1project.org/modules.php?name=Products&product=uniconvertor">UniConverter</a> 
 library useful for this purpose.
@@ -74,24 +90,42 @@ information available as metadata in the TEXT domain.
 The returned metadata will look something like:
 
 <pre>
+  HEADER_0=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
   DATA_0=This is test text file 01.
 
+  HEADER_1=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
   DATA_1=This is test text file 02.
 
+  HEADER_2=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
   DATA_2=This is test text file 03.
 
+  HEADER_3=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
   DATA_3=This is test text file 04.
 
+  HEADER_4=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
   DATA_4=This is test text file 05.
 </pre>
 
-Currently no TEXT segment header data is preserved.  The argument to DATA_n
+The argument to DATA_n
 is the raw text of the n'th (zero based) text segment with no escaping of any
 kind applied. <p>
+
+Since GDAL 1.8.0, the TEXT segment header data is preserved in HEADER_n metdata item.
 
 The CreateCopy() method on the NITF driver also supports creating 
 text segments on the output file as long as the input file has metadata
 in the TEXT domain as defined above.<p>
+
+Since GDAL 1.8.0, to add TEXT data to a NITF image, you can also pass creation options in the following format:
+
+<pre>
+  TEXT=HEADER_0=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
+  TEXT=DATA_0=This is test text file 01.
+  TEXT=HEADER_1=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
+  TEXT=DATA_1=This is test text file 02.
+</pre> 
+
+Notice that passing TEXT as creation options will overwrite existing text segment read in the TEXT metadata domain.
 
 <h2>TREs</h2>
 
