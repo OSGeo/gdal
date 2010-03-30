@@ -1,4 +1,4 @@
-/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_extension.c,v 1.6 2007/06/26 12:31:26 joris Exp $ */
+/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_extension.c,v 1.7 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -109,3 +109,10 @@ void TIFFSetClientInfo( TIFF *tif, void *data, const char *name )
 
     tif->tif_clientinfo = link;
 }
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

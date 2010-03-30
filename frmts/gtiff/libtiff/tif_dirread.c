@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.155 2009-10-29 20:04:07 bfriesen Exp $ */
+/* $Id: tif_dirread.c,v 1.156 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -5432,3 +5432,10 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

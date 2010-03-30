@@ -1,4 +1,4 @@
-/* $Id: tif_thunder.c,v 1.9 2007/07/19 15:50:28 dron Exp $ */
+/* $Id: tif_thunder.c,v 1.10 2010-03-10 18:56:49 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -174,3 +174,10 @@ TIFFInitThunderScan(TIFF* tif, int scheme)
 #endif /* THUNDER_SUPPORT */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */
