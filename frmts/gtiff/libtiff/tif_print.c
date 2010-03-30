@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.48 2009-08-24 16:51:14 bfriesen Exp $ */
+/* $Id: tif_print.c,v 1.49 2010-03-10 18:56:49 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -669,3 +669,10 @@ _TIFFprintAsciiTag(FILE* fd, const char* name, const char* value)
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

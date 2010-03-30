@@ -1,4 +1,4 @@
-/* $Id: t4.h,v 1.2 2007/06/26 10:30:12 joris Exp $ */
+/* $Id: t4.h,v 1.3 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -283,3 +283,10 @@ extern const tableentry TIFFFaxWhiteCodes[];
 extern const tableentry TIFFFaxBlackCodes[];
 #endif
 #endif /* _T4_ */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

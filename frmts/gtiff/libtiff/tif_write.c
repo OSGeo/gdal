@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.34 2009-06-03 23:47:22 fwarmerdam Exp $ */
+/* $Id: tif_write.c,v 1.35 2010-03-10 18:56:49 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -738,3 +738,10 @@ TIFFSetWriteOffset(TIFF* tif, toff_t off)
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

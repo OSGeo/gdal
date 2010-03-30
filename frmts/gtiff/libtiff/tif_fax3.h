@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.h,v 1.6 2007/06/26 10:30:13 joris Exp $ */
+/* $Id: tif_fax3.h,v 1.7 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -523,3 +523,10 @@ eol2d:									\
     CLEANUP_RUNS();							\
 } while (0)
 #endif /* _FAX3_ */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

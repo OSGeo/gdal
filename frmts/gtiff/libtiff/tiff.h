@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.64 2007/07/10 11:52:02 dron Exp $ */
+/* $Id: tiff.h,v 1.65 2010-03-10 18:56:49 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -636,3 +636,10 @@ typedef enum {
 #endif /* _TIFF_ */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

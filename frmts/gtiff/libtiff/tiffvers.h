@@ -7,3 +7,10 @@
  * string returned by TIFFGetVersion.
  */
 #define TIFFLIB_VERSION 20091104
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

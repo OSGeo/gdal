@@ -1,4 +1,4 @@
-/* $Id: tif_packbits.c,v 1.19 2007/10/01 12:43:49 joris Exp $ */
+/* $Id: tif_packbits.c,v 1.20 2010-03-10 18:56:49 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -285,3 +285,10 @@ TIFFInitPackBits(TIFF* tif, int scheme)
 #endif /* PACKBITS_SUPPORT */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */
