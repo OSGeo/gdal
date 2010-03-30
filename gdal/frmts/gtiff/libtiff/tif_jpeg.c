@@ -2289,8 +2289,8 @@ a JPEGTABLES tag generated and causes null-filled JPEGTABLES tags to be written
 when the JPEG data is placed with TIFFWriteRawStrip.  The field bit should be 
 set, anyway, later when actual JPEGTABLES header is generated, so removing it 
 here hopefully is harmless.
-            TIFFSetFieldBit(tif, FIELD_JPEGTABLES);
 */
+            TIFFSetFieldBit(tif, FIELD_JPEGTABLES);
             sp->jpegtables_length = SIZE_OF_JPEGTABLES;
             sp->jpegtables = (void *) _TIFFmalloc(sp->jpegtables_length);
 	    _TIFFmemset(sp->jpegtables, 0, SIZE_OF_JPEGTABLES);
