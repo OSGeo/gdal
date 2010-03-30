@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.24 2009-11-30 18:19:15 fwarmerdam Exp $ */
+/* $Id: tif_aux.c,v 1.25 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -48,7 +48,9 @@ _TIFFCheckRealloc(TIFF* tif, void* buffer,
 
 	if (cp == NULL)
 		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
-			     "No space %s", what);
+			     "Failed to allocate memory for %s "
+			     "(%ld elements of %ld bytes each)",
+			     what,(long) nmemb, (long) elem_size);
 
 	return cp;
 }
@@ -320,4 +322,10 @@ _TIFFUInt64ToDouble(uint64 ui64)
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
-
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

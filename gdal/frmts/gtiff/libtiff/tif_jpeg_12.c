@@ -56,3 +56,10 @@ int TIFFReInitJPEG_12( TIFF *tif, int scheme, int is_encode )
 
 #endif /* defined(JPEG_DUAL_MODE_8_12) */
 
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

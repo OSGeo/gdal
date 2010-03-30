@@ -1,4 +1,4 @@
-/* $Id: tif_close.c,v 1.18 2008/03/28 01:10:39 bfriesen Exp $ */
+/* $Id: tif_close.c,v 1.19 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -131,3 +131,10 @@ TIFFClose(TIFF* tif)
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
 
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

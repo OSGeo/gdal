@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.85 2009-11-30 12:22:26 fwarmerdam Exp $ */
+/* $Id: tiffio.h,v 1.86 2010-03-10 18:56:49 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -541,3 +541,10 @@ extern const TIFFFieldInfo* TIFFFindFieldInfoByName(TIFF* , const char *,
 #endif /* _TIFFIO_ */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

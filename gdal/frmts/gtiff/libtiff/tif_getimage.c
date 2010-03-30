@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.74 2009-11-30 12:22:26 fwarmerdam Exp $ */
+/* $Id: tif_getimage.c,v 1.75 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -2786,3 +2786,10 @@ TIFFReadRGBATile(TIFF* tif, uint32 col, uint32 row, uint32 * raster)
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

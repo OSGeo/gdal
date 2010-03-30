@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.86 2009-12-04 01:37:58 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.88 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -2283,7 +2283,14 @@ TIFFInitJPEG(TIFF* tif, int scheme)
         if( tif->tif_diroff == 0 )
         {
 #define SIZE_OF_JPEGTABLES 2000
+/*
+The following line assumes incorrectly that all JPEG-in-TIFF files will have
+a JPEGTABLES tag generated and causes null-filled JPEGTABLES tags to be written
+when the JPEG data is placed with TIFFWriteRawStrip.  The field bit should be 
+set, anyway, later when actual JPEGTABLES header is generated, so removing it 
+here hopefully is harmless.
             TIFFSetFieldBit(tif, FIELD_JPEGTABLES);
+*/
             sp->jpegtables_length = SIZE_OF_JPEGTABLES;
             sp->jpegtables = (void *) _TIFFmalloc(sp->jpegtables_length);
 	    _TIFFmemset(sp->jpegtables, 0, SIZE_OF_JPEGTABLES);
@@ -2296,3 +2303,10 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
 
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.42 2009-11-01 00:16:49 bfriesen Exp $ */
+/* $Id: tif_lzw.c,v 1.44 2010-03-30 17:02:57 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -134,7 +134,7 @@ typedef struct {
 	long    dec_nbitsmask;		/* lzw_nbits 1 bits, right adjusted */
 	long    dec_restart;		/* restart count */
 #ifdef LZW_CHECKEOS
-	tmsize_t dec_bitsleft;		/* available bits in raw data */
+	uint64  dec_bitsleft;		/* available bits in raw data */
 #endif
 	decodeFunc dec_decode;		/* regular or backwards compatible */
 	code_t* dec_codep;		/* current recognized code */
@@ -174,7 +174,7 @@ static void cl_hash(LZWCodecState*);
  * strip is suppose to be terminated with CODE_EOI.
  */
 #define	NextCode(_tif, _sp, _bp, _code, _get) {				\
-	if ((_sp)->dec_bitsleft < (tmsize_t)nbits) {			\
+	if ((_sp)->dec_bitsleft < (uint64)nbits) {			\
 		TIFFWarningExt(_tif->tif_clientdata, module,		\
 		    "LZWDecode: Strip %d not terminated with EOI code", \
 		    _tif->tif_curstrip);				\
@@ -316,7 +316,7 @@ LZWPreDecode(TIFF* tif, uint16 s)
 	sp->dec_restart = 0;
 	sp->dec_nbitsmask = MAXCODE(BITS_MIN);
 #ifdef LZW_CHECKEOS
-	sp->dec_bitsleft = tif->tif_rawcc << 3;
+	sp->dec_bitsleft = ((uint64)tif->tif_rawcc) << 3;
 #endif
 	sp->dec_free_entp = sp->dec_codetab + CODE_FIRST;
 	/*
@@ -1158,3 +1158,10 @@ bad:
 #endif /* LZW_SUPPORT */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

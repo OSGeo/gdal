@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.46 2009-09-03 20:45:22 bfriesen Exp $ */
+/* $Id: tif_ojpeg.c,v 1.47 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -2453,3 +2453,10 @@ OJPEGLibjpegJpegSourceMgrTermSource(jpeg_decompress_struct* cinfo)
 #endif
 
 
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

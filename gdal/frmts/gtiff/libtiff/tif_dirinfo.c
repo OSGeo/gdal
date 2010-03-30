@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.106 2009-11-30 18:19:16 fwarmerdam Exp $ */
+/* $Id: tif_dirinfo.c,v 1.107 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -969,3 +969,10 @@ TIFFFindFieldInfo(TIFF* tif, uint32 tag, TIFFDataType dt)
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
 
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */
