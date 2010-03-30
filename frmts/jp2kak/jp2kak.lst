@@ -6,7 +6,6 @@ KAK_OBJ = \
 	$(KAKDIR)/apps/make/mj2.o \
 	$(KAKDIR)/apps/make/palette.o \
 	$(KAKDIR)/apps/make/roi_sources.o \
-	$(KAKDIR)/apps/make/kdu_cache.o \
 	$(KAKDIR)/apps/make/kdu_region_decompressor.o \
 	$(KAKDIR)/apps/make/kdu_stripe_decompressor.o
 
