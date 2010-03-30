@@ -1253,7 +1253,7 @@ def nitf_48():
     return 'success'
 
 ###############################################################################
-# Test TEXT and CGM creation options (#3376)
+# Test TEXT and CGM creation options with CreateCopy() (#3376)
 
 def nitf_49():
 
@@ -1292,6 +1292,61 @@ def nitf_49():
     src_ds = None
     ds = None
     ds2 = None
+
+    return 'success'
+
+###############################################################################
+# Test TEXT and CGM creation options with Create() (#3376)
+
+def nitf_50():
+
+    options = [ #"IC=C8",
+                "TEXT=DATA_0=COUCOU",
+                "TEXT=HEADER_0=ABC", # This content is invalid but who cares here
+                "CGM=SEGMENT_COUNT=1",
+                "CGM=SEGMENT_0_SLOC_ROW=25",
+                "CGM=SEGMENT_0_SLOC_COL=25",
+                "CGM=SEGMENT_0_SDLVL=2",
+                "CGM=SEGMENT_0_SALVL=1",
+                "CGM=SEGMENT_0_DATA=XYZ" ]
+
+    try:
+        os.remove('tmp/nitf50.ntf')
+    except:
+        pass
+
+    # This will check that the creation option overrides the TEXT metadata domain from the source
+    ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf50.ntf', 100, 100, 3, options = options )
+
+    ds.WriteRaster( 0, 0, 100, 100, '   ', 1, 1,
+                    buf_type = gdal.GDT_Byte,
+                    band_list = [1,2,3] )
+
+    ds.GetRasterBand( 1 ).SetRasterColorInterpretation( gdal.GCI_BlueBand )
+    ds.GetRasterBand( 2 ).SetRasterColorInterpretation( gdal.GCI_GreenBand )
+    ds.GetRasterBand( 3 ).SetRasterColorInterpretation( gdal.GCI_RedBand )
+
+    # We need to reopen the dataset, because the TEXT and CGM segments are only written
+    # when closing the dataset (for JP2 compressed datastreams, we need to wait for the
+    # imagery to be written)
+    ds = None
+    ds = gdal.Open('tmp/nitf50.ntf')
+
+    md = ds.GetMetadata('TEXT')
+    if 'DATA_0' not in md or md['DATA_0'] != 'COUCOU' or \
+       'HEADER_0' not in md or md['HEADER_0'].find('ABC  ') == -1:
+        gdaltest.post_reason('did not get expected TEXT metadata')
+        print(md)
+        return 'success'
+
+    md = ds.GetMetadata('CGM')
+    if 'SEGMENT_COUNT' not in md or md['SEGMENT_COUNT'] != '1' or \
+       'SEGMENT_0_DATA' not in md or md['SEGMENT_0_DATA'] != 'XYZ' :
+        gdaltest.post_reason('did not get expected CGM metadata')
+        print(md)
+        return 'success'
+
+    ds = None
 
     return 'success'
 
@@ -1960,7 +2015,12 @@ def nitf_cleanup():
         gdal.GetDriverByName('NITF').Delete( 'tmp/nitf49_2.ntf' )
     except:
         pass
-        
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf50.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -2019,6 +2079,7 @@ gdaltest_list = [
     nitf_47,
     nitf_48,
     nitf_49,
+    nitf_50,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
