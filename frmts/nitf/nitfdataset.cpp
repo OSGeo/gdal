@@ -106,6 +106,9 @@ class NITFDataset : public GDALPamDataset
     CPLString    osRSetVRT;
     int          CheckForRSets( const char *pszFilename );
 
+    char       **papszTextMDToWrite;
+    char       **papszCgmMDToWrite;
+
   public:
                  NITFDataset();
                  ~NITFDataset();
@@ -137,12 +140,17 @@ class NITFDataset : public GDALPamDataset
                                     int, int *, GDALProgressFunc, void * );
 
     static int          Identify( GDALOpenInfo * );
-    static GDALDataset *Open( GDALOpenInfo *, GDALDataset *poWritableJ2KDataset);
+    static GDALDataset *Open( GDALOpenInfo *, GDALDataset *poWritableJ2KDataset,
+                              int bOpenForCreate);
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *
     NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                     int bStrict, char **papszOptions, 
                     GDALProgressFunc pfnProgress, void * pProgressData );
+    static GDALDataset *
+             NITFDatasetCreate( const char *pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char **papszOptions );
 
 };
 
@@ -883,6 +891,9 @@ NITFDataset::NITFDataset()
     adfGeoTransform[5] = 1.0;
     
     poDriver = (GDALDriver*) GDALGetDriverByName("NITF");
+
+    papszTextMDToWrite = NULL;
+    papszCgmMDToWrite = NULL;
 }
 
 /************************************************************************/
@@ -966,6 +977,16 @@ NITFDataset::~NITFDataset()
 
     CPLFree( panJPEGBlockOffset );
     CPLFree( pabyJPEGBlock );
+
+/* -------------------------------------------------------------------- */
+/*      If the dataset was opened by Create(), we may need to write     */
+/*      the CGM and TEXT segments                                       */
+/* -------------------------------------------------------------------- */
+    NITFWriteCGMSegments( GetDescription(), papszCgmMDToWrite );
+    NITFWriteTextSegments( GetDescription(), papszTextMDToWrite );
+
+    CSLDestroy(papszTextMDToWrite);
+    CSLDestroy(papszCgmMDToWrite);
 }
 
 /************************************************************************/
@@ -1034,10 +1055,12 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    return Open(poOpenInfo, NULL);
+    return Open(poOpenInfo, NULL, FALSE);
 }
 
-GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritableJ2KDataset)
+GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
+                                GDALDataset *poWritableJ2KDataset,
+                                int bOpenForCreate)
 
 {
     int nIMIndex = -1;
@@ -1072,8 +1095,11 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
         return NULL;
     }
 
-    NITFCollectAttachments( psFile );
-    NITFReconcileAttachments( psFile );
+    if (!bOpenForCreate)
+    {
+        NITFCollectAttachments( psFile );
+        NITFReconcileAttachments( psFile );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Is there an image to operate on?                                */
@@ -3429,13 +3455,95 @@ static char **NITFJP2Options( char **papszOptions )
     return papszJP2Options;
 }
 
+
+
+/************************************************************************/
+/*              NITFExtractTEXTAndCGMCreationOption()                   */
+/************************************************************************/
+
+static char** NITFExtractTEXTAndCGMCreationOption( GDALDataset* poSrcDS,
+                                                   char **papszOptions,
+                                                   char ***ppapszTextMD,
+                                                   char ***ppapszCgmMD )
+{
+    char** papszFullOptions = CSLDuplicate(papszOptions);
+
+/* -------------------------------------------------------------------- */
+/*      Prepare for text segments.                                      */
+/* -------------------------------------------------------------------- */
+    int iOpt, nNUMT = 0;
+    char **papszTextMD = CSLFetchNameValueMultiple (papszOptions, "TEXT");
+    // Notice: CSLFetchNameValueMultiple remove the leading "TEXT=" when
+    // returning the list, which is what we want.
+
+    // Use TEXT information from original image if no creation option is passed in.
+    if (poSrcDS != NULL && papszTextMD == NULL)
+    {
+        // Read CGM adata from original image, duplicate the list becuase
+        // we frees papszCgmMD at end of the function.
+        papszTextMD = CSLDuplicate( poSrcDS->GetMetadata( "TEXT" ));
+    }
+
+    for( iOpt = 0; 
+         papszTextMD != NULL && papszTextMD[iOpt] != NULL; 
+         iOpt++ )
+    {
+        if( !EQUALN(papszTextMD[iOpt],"DATA_",5) )
+            continue;
+
+        nNUMT++;
+    }
+
+    if( nNUMT > 0 )
+    {
+        papszFullOptions = CSLAddString( papszFullOptions, 
+                                         CPLString().Printf( "NUMT=%d", 
+                                                             nNUMT ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare for CGM segments.                                       */
+/* -------------------------------------------------------------------- */
+    const char *pszNUMS; // graphic segment option string
+    int nNUMS = 0;
+
+    char **papszCgmMD = CSLFetchNameValueMultiple (papszOptions, "CGM");
+    // Notice: CSLFetchNameValueMultiple remove the leading "CGM=" when
+    // returning the list, which is what we want.
+
+    // Use CGM information from original image if no creation option is passed in.
+    if (poSrcDS != NULL && papszCgmMD == NULL)
+    {
+        // Read CGM adata from original image, duplicate the list becuase
+        // we frees papszCgmMD at end of the function.
+        papszCgmMD = CSLDuplicate( poSrcDS->GetMetadata( "CGM" ));
+    }
+
+    // Set NUMS based on the number of segments
+    if (papszCgmMD != NULL)
+    {
+        pszNUMS = CSLFetchNameValue(papszCgmMD, "SEGMENT_COUNT");
+
+        if (pszNUMS != NULL) {
+            nNUMS = atoi(pszNUMS);
+        }
+        papszFullOptions = CSLAddString(papszFullOptions,
+                                        CPLString().Printf("NUMS=%d", nNUMS));
+    }
+
+    *ppapszTextMD = papszTextMD;
+    *ppapszCgmMD = papszCgmMD;
+
+    return papszFullOptions;
+}
+
 /************************************************************************/
 /*                         NITFDatasetCreate()                          */
 /************************************************************************/
 
-static GDALDataset *
-NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
-                   GDALDataType eType, char **papszOptions )
+GDALDataset *
+NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char **papszOptions )
 
 {
     const char *pszPVType = GDALToNITFDataType( eType );
@@ -3476,13 +3584,31 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Prepare for text and CGM segments.                              */
+/* -------------------------------------------------------------------- */
+    char **papszTextMD = NULL;
+    char **papszCgmMD = NULL;
+    char **papszFullOptions = NITFExtractTEXTAndCGMCreationOption( NULL,
+                                                          papszOptions,
+                                                          &papszTextMD,
+                                                          &papszCgmMD );
+
+/* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
 
     if( !NITFCreate( pszFilename, nXSize, nYSize, nBands, 
                      GDALGetDataTypeSize( eType ), pszPVType, 
-                     papszOptions ) )
+                     papszFullOptions ) )
+    {
+        CSLDestroy(papszTextMD);
+        CSLDestroy(papszCgmMD);
+        CSLDestroy(papszFullOptions);
         return NULL;
+    }
+
+    CSLDestroy(papszFullOptions);
+    papszFullOptions = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Various special hacks related to JPEG2000 encoded files.        */
@@ -3506,14 +3632,30 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
         CSLDestroy(papszJP2Options);
 
         if( poWritableJ2KDataset == NULL )
+        {
+            CSLDestroy(papszTextMD);
+            CSLDestroy(papszCgmMD);
             return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Open the dataset in update mode.                                */
 /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
-    return NITFDataset::Open(&oOpenInfo, poWritableJ2KDataset);
+    NITFDataset* poDS = (NITFDataset*)
+            NITFDataset::Open(&oOpenInfo, poWritableJ2KDataset, TRUE);
+    if (poDS)
+    {
+        poDS->papszTextMDToWrite = papszTextMD;
+        poDS->papszCgmMDToWrite = papszCgmMD;
+    }
+    else
+    {
+        CSLDestroy(papszTextMD);
+        CSLDestroy(papszCgmMD);
+    }
+    return poDS;
 }
 
 /************************************************************************/
@@ -3529,7 +3671,6 @@ NITFDataset::NITFCreateCopy(
 {
     GDALDataType eType;
     GDALRasterBand *poBand1;
-    char  **papszFullOptions = CSLDuplicate( papszOptions );
     int   bJPEG2000 = FALSE;
     int   bJPEG = FALSE;
     NITFDataset *poDstDS = NULL;
@@ -3540,14 +3681,12 @@ NITFDataset::NITFCreateCopy(
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unable to export files with zero bands." );
-        CSLDestroy(papszFullOptions);
         return NULL;
     }
 
     poBand1 = poSrcDS->GetRasterBand(1);
     if( poBand1 == NULL )
     {
-        CSLDestroy(papszFullOptions);
         return NULL;
     }
 
@@ -3576,7 +3715,6 @@ NITFDataset::NITFCreateCopy(
                     "Unable to write JPEG2000 compressed NITF file.\n"
                     "No 'subfile' JPEG2000 write supporting drivers are\n"
                     "configured." );
-                CSLDestroy(papszFullOptions);
                 return NULL;
             }
             bJPEG2000 = TRUE;
@@ -3589,7 +3727,6 @@ NITFDataset::NITFCreateCopy(
                 CE_Failure, CPLE_AppDefined, 
                 "Unable to write JPEG compressed NITF file.\n"
                 "Libjpeg is not configured into build." );
-            CSLDestroy(papszFullOptions);
             return NULL;
 #endif
         }
@@ -3598,7 +3735,6 @@ NITFDataset::NITFCreateCopy(
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Only IC=NC (uncompressed), IC=C3/M3 (JPEG) and IC=C8 (JPEG2000)\n"
                       "allowed with NITF CreateCopy method." );
-            CSLDestroy(papszFullOptions);
             return NULL;
         }
     }
@@ -3611,6 +3747,16 @@ NITFDataset::NITFCreateCopy(
     eType = poBand1->GetRasterDataType();
     if( !bStrict && (eType == GDT_CInt16 || eType == GDT_CInt32) )
         eType = GDT_CFloat32;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare for text and CGM segments.                              */
+/* -------------------------------------------------------------------- */
+    char **papszTextMD = NULL;
+    char **papszCgmMD = NULL;
+    char **papszFullOptions = NITFExtractTEXTAndCGMCreationOption( poSrcDS,
+                                                         papszOptions,
+                                                         &papszTextMD,
+                                                         &papszCgmMD );
 
 /* -------------------------------------------------------------------- */
 /*      Copy over other source metadata items as creation options       */
@@ -3647,69 +3793,6 @@ NITFDataset::NITFCreateCopy(
         osTRE += papszSrcMD[iMD];
 
         papszFullOptions = CSLAddString( papszFullOptions, osTRE );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Prepare for text segments.                                      */
-/* -------------------------------------------------------------------- */
-    int iOpt, nNUMT = 0;
-    char **papszTextMD = CSLFetchNameValueMultiple (papszOptions, "TEXT");
-    // Notice: CSLFetchNameValueMultiple remove the leading "TEXT=" when
-    // returning the list, which is what we want.
-
-    // Use TEXT information from original image if no creation option is passed in.
-    if (papszTextMD == NULL)
-    {
-        // Read CGM adata from original image, duplicate the list becuase
-        // we frees papszCgmMD at end of the function.
-        papszTextMD = CSLDuplicate( poSrcDS->GetMetadata( "TEXT" ));
-    }
-
-    for( iOpt = 0; 
-         papszTextMD != NULL && papszTextMD[iOpt] != NULL; 
-         iOpt++ )
-    {
-        if( !EQUALN(papszTextMD[iOpt],"DATA_",5) )
-            continue;
-
-        nNUMT++;
-    }
-
-    if( nNUMT > 0 )
-    {
-        papszFullOptions = CSLAddString( papszFullOptions, 
-                                         CPLString().Printf( "NUMT=%d", 
-                                                             nNUMT ) );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Prepare for CGM segments.                                       */
-/* -------------------------------------------------------------------- */
-    const char *pszNUMS; // graphic segment option string
-    int nNUMS = 0;
-
-    char **papszCgmMD = CSLFetchNameValueMultiple (papszOptions, "CGM");
-    // Notice: CSLFetchNameValueMultiple remove the leading "CGM=" when
-    // returning the list, which is what we want.
-
-    // Use CGM information from original image if no creation option is passed in.
-    if (papszCgmMD == NULL)
-    {
-        // Read CGM adata from original image, duplicate the list becuase
-        // we frees papszCgmMD at end of the function.
-        papszCgmMD = CSLDuplicate( poSrcDS->GetMetadata( "CGM" ));
-    }
-
-    // Set NUMS based on the number of segments
-    if (papszCgmMD != NULL)
-    {
-        pszNUMS = CSLFetchNameValue(papszCgmMD, "SEGMENT_COUNT");
-
-        if (pszNUMS != NULL) {
-            nNUMS = atoi(pszNUMS);
-        }
-        papszFullOptions = CSLAddString(papszFullOptions,
-                                        CPLString().Printf("NUMS=%d", nNUMS));
     }
 
 /* -------------------------------------------------------------------- */
@@ -5122,7 +5205,7 @@ void GDALRegister_NITF()
         
         poDriver->pfnIdentify = NITFDataset::Identify;
         poDriver->pfnOpen = NITFDataset::Open;
-        poDriver->pfnCreate = NITFDatasetCreate;
+        poDriver->pfnCreate = NITFDataset::NITFDatasetCreate;
         poDriver->pfnCreateCopy = NITFDataset::NITFCreateCopy;
 
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_nitf.html" );
