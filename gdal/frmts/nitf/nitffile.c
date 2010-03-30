@@ -435,7 +435,7 @@ int NITFCreate( const char *pszFilename,
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
     int nCLevel;
-    const char *pszOpt;
+    const char *pszNUMT;
     int nHL, nNUMT = 0;
     int nUDIDLOffset;
     const char *pszVersion;
@@ -461,10 +461,18 @@ int NITFCreate( const char *pszFilename,
     if( pszIREP == NULL )
         pszIREP = "MONO";
 
-    pszOpt = CSLFetchNameValue( papszOptions, "NUMT" );
-    if( pszOpt != NULL )
-        nNUMT = atoi(pszOpt);
-    
+    pszNUMT = CSLFetchNameValue( papszOptions, "NUMT" );
+    if( pszNUMT != NULL )
+    {
+        nNUMT = atoi(pszNUMT);
+        if (nNUMT < 0 || nNUMT > 999)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Invalid NUMT value : %s", pszNUMT);
+            return FALSE;
+        }
+    }
+
     pszNUMI = CSLFetchNameValue( papszOptions, "NUMI" );
     if (pszNUMI != NULL)
     {
