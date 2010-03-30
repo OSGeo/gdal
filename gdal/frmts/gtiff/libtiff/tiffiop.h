@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.73 2008/04/14 09:05:26 dron Exp $ */
+/* $Id: tiffiop.h,v 1.74 2010-03-10 18:56:49 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -365,3 +365,10 @@ extern TIFFCodec _TIFFBuiltinCODECS[];
 #endif /* _TIFFIOP_ */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

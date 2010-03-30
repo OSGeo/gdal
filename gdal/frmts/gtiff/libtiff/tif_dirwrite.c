@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.71 2009-01-23 06:21:29 fwarmerdam Exp $ */
+/* $Id: tif_dirwrite.c,v 1.72 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -2782,3 +2782,10 @@ _TIFFRewriteField(TIFF* tif, uint16 tag, TIFFDataType in_datatype,
     return 1;
 }
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

@@ -1,4 +1,4 @@
-/* $Id: tif_flush.c,v 1.7 2008-12-21 20:31:33 fwarmerdam Exp $ */
+/* $Id: tif_flush.c,v 1.8 2010-03-10 18:56:48 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -109,3 +109,10 @@ TIFFFlushData(TIFF* tif)
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */
