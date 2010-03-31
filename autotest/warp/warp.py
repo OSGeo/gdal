@@ -38,8 +38,10 @@ sys.path.append( '../pymod' )
 
 try:
     from osgeo import gdal
+    from osgeo import osr
 except ImportError:
     import gdal
+    import osr
 
 import gdaltest
 import test_cli_utilities
@@ -570,6 +572,63 @@ def warp_21():
     return 'success'
 
 ###############################################################################
+# Test warping with datasets which are "bigger" than the wm parameter.
+# Would have detected issue of #3458
+
+def warp_22():
+
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    # Generate source image with non uniform data
+    w = 1001
+    h = 1001
+    ds = gdal.GetDriverByName('GTiff').Create("tmp/warp_22_src.tif", w,h, 1)
+    ds.SetGeoTransform([2,0.01,0,49,0,-0.01])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+
+    for j in range(h):
+        line = ''
+        for i in range(w):
+            line = line + '%c' % ((i*i+h*j/(i+1))%256)
+        ds.GetRasterBand(1).WriteRaster(0,j,w,1,line)
+
+    expected_cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    ret = 'success'
+    failures = ''
+
+    # warp with various options
+    for option1 in ['', '-wo OPTIMIZE_SIZE=TRUE']:
+        for option2 in ['', '-co TILED=YES', '-co TILED=YES -co BLOCKXSIZE=16 -co BLOCKYSIZE=16']:
+            option = option1 + ' ' + option2
+            try:
+                os.remove('tmp/warp_22_dst.tif')
+            except:
+                pass
+            # -wm should not be greater than 2 * w * h. Let's put it at its minimum value
+            gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/warp_22_src.tif tmp/warp_22_dst.tif -wm 100000 ' + option)
+            ds = gdal.Open('tmp/warp_22_dst.tif')
+            cs = ds.GetRasterBand(1).Checksum()
+            if cs != expected_cs:
+                if failures != '':
+                    failures = failures + '\n'
+                failures = failures + 'failed for %s. Checksum : got %d, expected %d' % (option, cs, expected_cs)
+                ret = 'fail'
+            ds = None
+
+    if failures != '':
+        gdaltest.post_reason(failures)
+
+    os.remove('tmp/warp_22_src.tif')
+    os.remove('tmp/warp_22_dst.tif')
+
+    return ret
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -597,7 +656,8 @@ gdaltest_list = [
     warp_18,
     warp_19,
     warp_20,
-    warp_21
+    warp_21,
+    warp_22
     ]
 
 if __name__ == '__main__':
