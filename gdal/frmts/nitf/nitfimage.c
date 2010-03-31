@@ -519,16 +519,21 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             
         /* See MIL-STD-2500-C, paragraph 5.4.2.2-d (#3263) */
         if (EQUAL(psImage->szIC, "NC") &&
-            (psImage->nCols > 8192 || psImage->nRows > 8192) &&
-            psImage->nBlocksPerRow == 1 &&
-            psImage->nBlocksPerColumn == 1 &&
-            psImage->nBlockWidth == 0 &&
-            psImage->nBlockHeight == 0)
+            (psImage->nCols > 8192 || psImage->nRows > 8192))
         {
-            psImage->nBlockWidth = psImage->nCols;
-            psImage->nBlockHeight = psImage->nRows;
+            if (psImage->nBlocksPerRow == 1 &&
+                psImage->nBlockWidth == 0)
+            {
+                psImage->nBlockWidth = psImage->nCols;
+            }
+
+            if (psImage->nBlocksPerColumn == 1 &&
+                psImage->nBlockHeight == 0)
+            {
+                psImage->nBlockHeight = psImage->nRows;
+            }
         }
-            
+
         psImage->nBitsPerSample = 
             atoi(NITFGetField(szTemp, pachHeader, nOffset+18, 2));
         
