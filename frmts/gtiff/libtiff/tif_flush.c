@@ -1,4 +1,4 @@
-/* $Id: tif_flush.c,v 1.8 2010-03-10 18:56:48 bfriesen Exp $ */
+/* $Id: tif_flush.c,v 1.9 2010-03-31 06:40:10 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -80,7 +80,7 @@ TIFFFlush(TIFF* tif)
     }
 
     if ((tif->tif_flags & (TIFF_DIRTYDIRECT|TIFF_DIRTYSTRIP)) 
-        && !TIFFWriteDirectory(tif))
+        && !TIFFRewriteDirectory(tif))
         return (0);
 
     return (1);
