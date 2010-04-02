@@ -34,6 +34,8 @@
    images to mutiple strips of ~8Kb to reduce memory usage) */
 #define STRIPCHOP_DEFAULT TIFF_STRIPCHOP
 
+#define CHUNKY_STRIP_READ_SUPPORT 1
+
 /* Default size of the strip in bytes (when strip chopping enabled) */
 #define STRIP_SIZE_DEFAULT 8192
 

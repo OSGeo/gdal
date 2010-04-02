@@ -1,4 +1,4 @@
-/* $Id: tif_open.c,v 1.44 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tif_open.c,v 1.45 2010-04-02 19:26:22 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -426,6 +426,8 @@ TIFFClientOpen(
 	tif->tif_flags |= TIFF_MYBUFFER;
 	tif->tif_rawcp = tif->tif_rawdata = 0;
 	tif->tif_rawdatasize = 0;
+        tif->tif_rawdataoff = 0;
+        tif->tif_rawdataloaded = 0;
 
 	switch (mode[0]) {
 		case 'r':

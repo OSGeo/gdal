@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.72 2010-03-10 18:56:48 bfriesen Exp $ */
+/* $Id: tif_dirwrite.c,v 1.73 2010-04-02 19:26:22 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -394,6 +394,8 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 			tif->tif_rawdata = NULL;
 			tif->tif_rawcc = 0;
 			tif->tif_rawdatasize = 0;
+                        tif->tif_rawdataoff = 0;
+                        tif->tif_rawdataloaded = 0;
 		}
 		tif->tif_flags &= ~(TIFF_BEENWRITING|TIFF_BUFFERSETUP);
 	}
