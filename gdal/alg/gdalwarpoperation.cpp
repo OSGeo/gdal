@@ -977,7 +977,10 @@ CPLErr GDALWarpOperation::CollectChunkList(
         * psOptions->nBandCount;
 
     if( psOptions->pfnSrcDensityMaskFunc != NULL )
-        nSrcPixelCostInBits += 32; /* float mask */
+        nSrcPixelCostInBits += 32; /* ?? float mask */
+
+    if( psOptions->nSrcAlphaBand > 0 || psOptions->hCutline != NULL )
+        nSrcPixelCostInBits += 32; /* UnifiedSrcDensity float mask */
 
     if( psOptions->papfnSrcPerBandValidityMaskFunc != NULL 
         || psOptions->padfSrcNoDataReal != NULL )
