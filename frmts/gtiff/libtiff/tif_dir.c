@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.102 2010-03-10 18:56:48 bfriesen Exp $ */
+/* $Id: tif_dir.c,v 1.103 2010-04-02 19:26:22 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1504,6 +1504,8 @@ TIFFUnlinkDirectory(TIFF* tif, uint16 dirn)
 		_TIFFfree(tif->tif_rawdata);
 		tif->tif_rawdata = NULL;
 		tif->tif_rawcc = 0;
+                tif->tif_rawdataoff = 0;
+                tif->tif_rawdataloaded = 0;
 	}
 	tif->tif_flags &= ~(TIFF_BEENWRITING|TIFF_BUFFERSETUP|TIFF_POSTENCODE|TIFF_BUF4WRITE);
 	TIFFFreeDirectory(tif);
