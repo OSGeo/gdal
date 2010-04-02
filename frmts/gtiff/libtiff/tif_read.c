@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.30 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tif_read.c,v 1.31 2010-04-02 19:26:22 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -36,19 +36,143 @@ int TIFFFillTile(TIFF* tif, uint32 tile);
 static int TIFFStartStrip(TIFF* tif, uint32 strip);
 static int TIFFStartTile(TIFF* tif, uint32 tile);
 static int TIFFCheckRead(TIFF*, int);
+static tmsize_t
+TIFFReadRawStrip1(TIFF* tif, uint32 strip, void* buf, tmsize_t size,const char* module);
 
 #define NOSTRIP ((uint32)(-1))       /* undefined state */
 #define NOTILE ((uint32)(-1))         /* undefined state */
 
+static int
+TIFFFillStripPartial( TIFF *tif, int strip, int read_ahead, int restart )
+{
+	static const char module[] = "TIFFFillStripPartial";
+	register TIFFDirectory *td = &tif->tif_dir;
+        uint64 unused_data;
+        uint64 read_offset;
+        tmsize_t cc, to_read;
+        
+        /*
+         * Expand raw data buffer, if needed, to hold data
+         * strip coming from file (perhaps should set upper
+         * bound on the size of a buffer we'll use?).
+         */
+        tmsize_t bytecountm;
+        bytecountm=(tmsize_t) td->td_stripbytecount[strip];
+                        
+        if (read_ahead*2 > tif->tif_rawdatasize) {
+                assert( restart );
+                
+                tif->tif_curstrip = NOSTRIP;
+                if ((tif->tif_flags & TIFF_MYBUFFER) == 0) {
+                        TIFFErrorExt(tif->tif_clientdata, module,
+                                     "Data buffer too small to hold part of strip %lu",
+                                     (unsigned long) strip);
+                        return (0);
+                }
+                if (!TIFFReadBufferSetup(tif, 0, read_ahead*2))
+                        return (0);
+        }
+
+        if( restart )
+        {
+                tif->tif_rawdataloaded = 0;
+                tif->tif_rawdataoff = 0;
+        }
+
+        /*
+        ** If we are reading more data, move any unused data to the
+        ** start of the buffer.
+        */
+        if( tif->tif_rawdataloaded > 0 )
+                unused_data = tif->tif_rawdataloaded - (tif->tif_rawcp - tif->tif_rawdata);
+        else
+                unused_data = 0;
+        
+        if( unused_data > 0 )
+        {
+                memmove( tif->tif_rawdata, tif->tif_rawcp, unused_data );
+        }
+
+        /*
+        ** Seek to the point in the file where more data should be read.
+        */
+        read_offset = td->td_stripoffset[strip]
+                + tif->tif_rawdataoff + tif->tif_rawdataloaded;
+
+        if (!SeekOK(tif, read_offset)) {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                             "Seek error at scanline %lu, strip %lu",
+                             (unsigned long) tif->tif_row, (unsigned long) strip);
+                return 0;
+        }
+
+        /*
+        ** How much do we want to read?
+        */
+        to_read = tif->tif_rawdatasize - unused_data;
+        if( (uint64) to_read > td->td_stripbytecount[strip] 
+            - tif->tif_rawdataoff - tif->tif_rawdataloaded )
+        {
+                to_read = td->td_stripbytecount[strip]
+                        - tif->tif_rawdataoff - tif->tif_rawdataloaded;
+        }
+
+        cc = TIFFReadFile(tif, tif->tif_rawdata + unused_data, to_read);
+
+        if (cc != to_read) {
+#if defined(__WIN32__) && defined(_MSC_VER)
+                TIFFErrorExt(tif->tif_clientdata, module,
+                             "Read error at scanline %lu; got %I64u bytes, expected %I64u",
+                             (unsigned long) tif->tif_row,
+                             (unsigned __int64) cc,
+                             (unsigned __int64) to_read);
+#else
+                TIFFErrorExt(tif->tif_clientdata, module,
+                             "Read error at scanline %lu; got %llu bytes, expected %llu",
+                             (unsigned long) tif->tif_row,
+                             (unsigned long long) cc,
+                             (unsigned long long) to_read);
+#endif
+                return 0;
+        }
+        
+        tif->tif_rawdataoff = tif->tif_rawdataoff + tif->tif_rawdataloaded - unused_data ;
+        tif->tif_rawdataloaded = unused_data + to_read;
+
+        tif->tif_rawcp = tif->tif_rawdata;
+                        
+        if (!isFillOrder(tif, td->td_fillorder) &&
+            (tif->tif_flags & TIFF_NOBITREV) == 0)
+                TIFFReverseBits(tif->tif_rawdata + unused_data, to_read );
+
+        /*
+        ** When starting a strip from the beginning we need to
+        ** restart the decoder.
+        */
+        if( restart )
+                return TIFFStartStrip(tif, strip);
+        else
+                return 1;
+}
+
 /*
  * Seek to a random row+sample in a file.
+ *
+ * Only used by TIFFReadScanline, and is only used on
+ * strip organized files.  We do some tricky stuff to try
+ * and avoid reading the whole compressed raw data for big
+ * strips.
  */
 static int
-TIFFSeek(TIFF* tif, uint32 row, uint16 sample)
+TIFFSeek(TIFF* tif, uint32 row, uint16 sample )
 {
 	register TIFFDirectory *td = &tif->tif_dir;
 	uint32 strip;
+        int    whole_strip, read_ahead = 0;
 
+        /*
+        ** Establish what strip we are working from.
+        */
 	if (row >= td->td_imagelength) {	/* out of range */
 		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 		    "%lu: Row out of range, max %lu",
@@ -66,10 +190,55 @@ TIFFSeek(TIFF* tif, uint32 row, uint16 sample)
 		strip = (uint32)sample*td->td_stripsperimage + row/td->td_rowsperstrip;
 	} else
 		strip = row / td->td_rowsperstrip;
+
+        /*
+         * Do we want to treat this strip as one whole chunk or
+         * read it a few lines at a time?
+         */
+#if defined(CHUNKY_STRIP_READ_SUPPORT)        
+        whole_strip = tif->tif_dir.td_stripbytecount[strip] < 10
+                || isMapped(tif);
+#else
+        whole_strip = 1;
+#endif
+        
+        if( !whole_strip )
+        {
+                read_ahead = tif->tif_scanlinesize * 2 + 5000;
+        }
+
+        /*
+         * If we haven't loaded this strip, do so now, possibly
+         * only reading the first part.
+         */
 	if (strip != tif->tif_curstrip) {	/* different strip, refill */
-		if (!TIFFFillStrip(tif, strip))
-			return (0);
-	} else if (row < tif->tif_row) {
+                
+                if( whole_strip )
+                {
+                        if (!TIFFFillStrip(tif, strip))
+                                return (0);
+                }
+                else
+                {
+                        if( !TIFFFillStripPartial(tif,strip,read_ahead,1) )
+                                return 0;
+                }
+	}
+
+        /*
+        ** If we already have some data loaded, do we need to read some more?
+        */
+        else if( !whole_strip )
+        {
+                if( ((tif->tif_rawdata + tif->tif_rawdataloaded) - tif->tif_rawcp) < read_ahead 
+                    && (uint64) tif->tif_rawdataoff+tif->tif_rawdataloaded < td->td_stripbytecount[strip] )
+                {
+                        if( !TIFFFillStripPartial(tif,strip,read_ahead,0) )
+                                return 0;
+                }
+        }
+
+        if (row < tif->tif_row) {
 		/*
 		 * Moving backwards within the same strip: backup
 		 * to the start and then decode forward (below).
@@ -78,17 +247,31 @@ TIFFSeek(TIFF* tif, uint32 row, uint16 sample)
 		 * strip, it's better to just read and decode the entire
 		 * strip, and then access the decoded data in a random fashion.
 		 */
-		if (!TIFFStartStrip(tif, strip))
-			return (0);
+
+                if( tif->tif_rawdataoff != 0 )
+                {
+                        if( !TIFFFillStripPartial(tif,strip,read_ahead,1) )
+                                return 0;
+                }
+                else
+                {
+                        if (!TIFFStartStrip(tif, strip))
+                                return (0);
+                }
 	}
+        
 	if (row != tif->tif_row) {
 		/*
 		 * Seek forward to the desired row.
 		 */
+
+                /* TODO: Will this really work with partial buffers? */
+                
 		if (!(*tif->tif_seek)(tif, row - tif->tif_row))
 			return (0);
 		tif->tif_row = row;
 	}
+
 	return (1);
 }
 
@@ -368,6 +551,8 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 			}
 			tif->tif_rawdatasize = (tmsize_t)bytecount;
 			tif->tif_rawdata = tif->tif_base + (tmsize_t)td->td_stripoffset[strip];
+                        tif->tif_rawdataoff = 0;
+                        tif->tif_rawdataloaded = (tmsize_t) bytecount;
 		} else {
 			/*
 			 * Expand raw data buffer, if needed, to hold data
@@ -395,10 +580,14 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 			if (TIFFReadRawStrip1(tif, strip, tif->tif_rawdata,
 				bytecountm, module) != bytecountm)
 				return (0);
+
+                        tif->tif_rawdataoff = 0;
+                        tif->tif_rawdataloaded = bytecountm;
+                        
 			if (!isFillOrder(tif, td->td_fillorder) &&
 			    (tif->tif_flags & TIFF_NOBITREV) == 0)
 				TIFFReverseBits(tif->tif_rawdata, bytecountm);
-		}
+                }
 	}
 	return (TIFFStartStrip(tif, strip));
 }
@@ -622,6 +811,8 @@ TIFFFillTile(TIFF* tif, uint32 tile)
 			tif->tif_rawdatasize = (tmsize_t)bytecount;
 			tif->tif_rawdata =
 				tif->tif_base + (tmsize_t)td->td_stripoffset[tile];
+                        tif->tif_rawdataoff = 0;
+                        tif->tif_rawdataloaded = (tmsize_t) bytecount;
 		} else {
 			/*
 			 * Expand raw data buffer, if needed, to hold data
@@ -649,9 +840,14 @@ TIFFFillTile(TIFF* tif, uint32 tile)
 			if (TIFFReadRawTile1(tif, tile, tif->tif_rawdata,
 			    bytecountm, module) != bytecountm)
 				return (0);
+
+                        tif->tif_rawdataoff = 0;
+                        tif->tif_rawdataloaded = bytecountm;
+                        
 			if (!isFillOrder(tif, td->td_fillorder) &&
 			    (tif->tif_flags & TIFF_NOBITREV) == 0)
-				TIFFReverseBits(tif->tif_rawdata, bytecountm);
+				TIFFReverseBits(tif->tif_rawdata,
+                                                tif->tif_rawdataloaded);
 		}
 	}
 	return (TIFFStartTile(tif, tile));

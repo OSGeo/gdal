@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.74 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tiffiop.h,v 1.75 2010-04-02 19:26:22 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -192,6 +192,8 @@ struct tiff {
 	tmsize_t             tif_scanlineskew; /* scanline skew for reading strips */
 	uint8*               tif_rawdata;      /* raw data buffer */
 	tmsize_t             tif_rawdatasize;  /* # of bytes in raw data buffer */
+        tmsize_t             tif_rawdataoff;   /* rawdata offset within strip */
+        tmsize_t             tif_rawdataloaded;/* amount of data in rawdata */
 	uint8*               tif_rawcp;        /* current spot in raw buffer */
 	tmsize_t             tif_rawcc;        /* bytes unread from raw buffer */
 	/* memory-mapped file support */
