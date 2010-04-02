@@ -438,6 +438,9 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
             sr.SetWellKnownGeogCS( "NAD83" );
             break;
 
+          case -9:
+            break;
+
           default:
             sr.SetWellKnownGeogCS( "NAD27" );
             break;
