@@ -169,6 +169,7 @@ int main( int argc, char ** argv )
                  pszFilename );
 
         CSLDestroy( argv );
+        CSLDestroy( papszExtraMDDomains );
     
         GDALDumpOpenDatasets( stderr );
 
