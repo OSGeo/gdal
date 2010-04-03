@@ -957,9 +957,9 @@ def nitf_40():
     # put it somewhere else due to unvoluntary cast to 32bit integer...
     blockWidth = 256
     blockHeight = 256
-    nBlockx = ((width+blockWidth-1)/blockWidth)
-    iBlockx = x / blockWidth
-    iBlocky = y / blockHeight
+    nBlockx = int((width+blockWidth-1)/blockWidth)
+    iBlockx = int(x / blockWidth)
+    iBlocky = int(y / blockHeight)
     ix = x % blockWidth
     iy = y % blockHeight
     offset = 843 + (iBlocky * nBlockx + iBlockx) * blockWidth * blockHeight + (iy * blockWidth + ix)

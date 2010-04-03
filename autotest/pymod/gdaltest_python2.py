@@ -81,4 +81,5 @@ def runexternal(cmd, strin = None):
 
 def runexternal_out_and_err(cmd):
     (ret_stdin, ret_stdout, ret_stderr) = os.popen3(cmd)
+    ret_stdin.close()
     return (ret_stdout.read(), ret_stderr.read())
