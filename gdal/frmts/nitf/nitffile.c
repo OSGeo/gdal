@@ -43,7 +43,8 @@ static int NITFWriteTREsFromOptions(
     FILE* fp,
     vsi_l_offset nOffsetUDIDL, vsi_l_offset nOffsetTRE,
     int *pnOffset,
-    char **papszOptions );
+    char **papszOptions,
+    const char* pszTREPrefix);
 
 static int 
 NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
@@ -715,6 +716,24 @@ int NITFCreate( const char *pszFilename,
     PLACE (nHL, XHDL         ,"00000"                         );
     nHL += 5;
 
+    if( CSLFetchNameValue(papszOptions,"FILE_TRE") != NULL )
+    {
+        NITFWriteTREsFromOptions(
+            fp,
+            nHL - 10,
+            nHL,
+            &nHL,
+            papszOptions, "FILE_TRE=" );
+    }
+
+    if (nHL > 999999)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too big file header length : %d", nHL);
+        VSIFCloseL( fp );
+        return FALSE;
+    }
+
     // update header length
     PLACE (354, HL           ,CPLSPrintf("%06d",nHL)          );
 
@@ -907,7 +926,7 @@ int NITFCreate( const char *pszFilename,
             nCur + (GUIntBig)nUDIDLOffset, 
             nCur + (GUIntBig)nOffset, 
             &nOffset, 
-            papszOptions );
+            papszOptions, "TRE=" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1046,12 +1065,13 @@ static int NITFWriteTREsFromOptions(
     FILE* fp,
     vsi_l_offset nOffsetUDIDL, vsi_l_offset nOffsetTRE,
     int *pnOffset,
-    char **papszOptions )    
+    char **papszOptions, const char* pszTREPrefix )    
 
 {
     int bIgnoreBLOCKA = 
         CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL;
     int iOption;
+    int nTREPrefixLen = strlen(pszTREPrefix);
 
     if( papszOptions == NULL )
         return TRUE;
@@ -1064,25 +1084,25 @@ static int NITFWriteTREsFromOptions(
         int  nContentLength;
         const char* pszSpace;
 
-        if( !EQUALN(papszOptions[iOption],"TRE=",4) )
+        if( !EQUALN(papszOptions[iOption], pszTREPrefix, nTREPrefixLen) )
             continue;
 
-        if( EQUALN(papszOptions[iOption]+4,"BLOCKA=",7)
+        if( EQUALN(papszOptions[iOption]+nTREPrefixLen,"BLOCKA=",7)
             && bIgnoreBLOCKA )
             continue;
         
         /* We do no longer use CPLParseNameValue() as it removes leading spaces */
         /* from the value (see #3088) */
-        pszSpace = strchr(papszOptions[iOption]+4, '=');
+        pszSpace = strchr(papszOptions[iOption]+nTREPrefixLen, '=');
         if (pszSpace == NULL)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Could not parse creation options %s", papszOptions[iOption]+4);
+                     "Could not parse creation options %s", papszOptions[iOption]+nTREPrefixLen);
             return FALSE;
         }
         
-        pszTREName = CPLStrdup(papszOptions[iOption]+4);
-        pszTREName[pszSpace - (papszOptions[iOption]+4)] = '\0';
+        pszTREName = CPLStrdup(papszOptions[iOption]+nTREPrefixLen);
+        pszTREName[pszSpace - (papszOptions[iOption]+nTREPrefixLen)] = '\0';
         pszEscapedContents = pszSpace + 1;
 
         pszUnescapedContents = 
