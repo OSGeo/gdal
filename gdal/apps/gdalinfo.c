@@ -542,16 +542,21 @@ int main( int argc, char ** argv )
                     printf( ", " );
 
                 hOverview = GDALGetOverview( hBand, iOverview );
-                printf( "%dx%d", 
-                        GDALGetRasterBandXSize( hOverview ),
-                        GDALGetRasterBandYSize( hOverview ) );
+                if (hOverview != NULL)
+                {
+                    printf( "%dx%d", 
+                            GDALGetRasterBandXSize( hOverview ),
+                            GDALGetRasterBandYSize( hOverview ) );
 
-                pszResampling = 
-                    GDALGetMetadataItem( hOverview, "RESAMPLING", "" );
+                    pszResampling = 
+                        GDALGetMetadataItem( hOverview, "RESAMPLING", "" );
 
-                if( pszResampling != NULL 
-                    && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
-                    printf( "*" );
+                    if( pszResampling != NULL 
+                        && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+                        printf( "*" );
+                }
+                else
+                    printf( "(null)" );
             }
             printf( "\n" );
 
@@ -568,10 +573,13 @@ int main( int argc, char ** argv )
                         printf( ", " );
 
                     hOverview = GDALGetOverview( hBand, iOverview );
-                    printf( "%d",
-                            GDALChecksumImage(hOverview, 0, 0,
-                                      GDALGetRasterBandXSize(hOverview),
-                                      GDALGetRasterBandYSize(hOverview)));
+                    if (hOverview)
+                        printf( "%d",
+                                GDALChecksumImage(hOverview, 0, 0,
+                                        GDALGetRasterBandXSize(hOverview),
+                                        GDALGetRasterBandYSize(hOverview)));
+                    else
+                        printf( "(null)" );
                 }
                 printf( "\n" );
             }
