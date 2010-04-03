@@ -859,6 +859,11 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
             apoOverviews[iOverview].poBand = poSrcDS->GetRasterBand( 
                 apoOverviews[iOverview].nBand );
+
+            if (apoOverviews[iOverview].poBand == NULL)
+            {
+                GDALClose( (GDALDatasetH)poSrcDS );
+            }
         }
 
         return apoOverviews[iOverview].poBand;
