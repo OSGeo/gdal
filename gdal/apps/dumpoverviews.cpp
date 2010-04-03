@@ -113,6 +113,12 @@ int main( int argc, char ** argv )
         for( iOverview = 0; iOverview < nOverviewCount; iOverview++ )
         {
             GDALRasterBandH hSrcOver = GDALGetOverview( hBaseBand, iOverview );
+            
+            if (hSrcOver == NULL)
+            {
+                fprintf(stderr, "skipping overview %d as being null\n", iOverview);
+                continue;
+            }
 
 /* -------------------------------------------------------------------- */
 /*      Is this a requested overview?                                   */

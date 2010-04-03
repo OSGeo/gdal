@@ -2130,6 +2130,9 @@ GDALRasterBand *GDALRasterBand::GetRasterSampleOverview( int nDesiredSamples )
         GDALRasterBand  *poOBand = GetOverview( iOverview );
         double          dfOSamples = 0;
 
+        if (poOBand == NULL)
+            continue;
+
         dfOSamples = poOBand->GetXSize() * (double)poOBand->GetYSize();
 
         if( dfOSamples < dfBestSamples && dfOSamples > nDesiredSamples )
