@@ -1351,6 +1351,49 @@ def nitf_50():
     return 'success'
 
 ###############################################################################
+# Test reading very small images with NBPP < 8 or NBPP == 12
+
+def nitf_51():
+    import struct
+
+    for xsize in range(1,9):
+        for nbpp in [1,2,3,4,5,6,7,12]:
+            ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf51.ntf', xsize, 1 )
+            ds = None
+
+            f = open('tmp/nitf51.ntf', 'rb+')
+            # Patch NBPP value at offset 811
+            f.seek(811)
+            f.write(struct.pack('B' * 2, 48 + int(nbpp/10), 48 + nbpp % 10))
+
+            # Write image data
+            f.seek(843)
+            n = int((xsize * nbpp+7) / 8)
+            for i in range(n):
+                f.write(struct.pack('B' * 1, 255))
+
+            f.close()
+
+            ds = gdal.Open('tmp/nitf51.ntf')
+            if nbpp == 12:
+                data = ds.GetRasterBand(1).ReadRaster(0, 0, xsize, 1, buf_type = gdal.GDT_UInt16)
+                arr = struct.unpack('H' * xsize, data)
+            else:
+                data = ds.GetRasterBand(1).ReadRaster(0, 0, xsize, 1)
+                arr = struct.unpack('B' * xsize, data)
+
+            ds = None
+
+            for i in range(xsize):
+                if arr[i] != (1 << nbpp) - 1:
+                    gdaltest.post_reason('did not get expected data')
+                    print('xsize = %d, nbpp = %d' % (xsize, nbpp))
+                    print(arr)
+                    return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -2021,6 +2064,11 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf51.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -2080,6 +2128,7 @@ gdaltest_list = [
     nitf_48,
     nitf_49,
     nitf_50,
+    nitf_51,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
