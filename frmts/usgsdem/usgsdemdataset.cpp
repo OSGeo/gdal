@@ -195,7 +195,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         djunk = DConvert(poGDS->fp, 24);
         djunk = DConvert(poGDS->fp, 24);
 
-        if( strstr(poGDS->pszProjection,"PROJCS") == NULL )
+        if( EQUALN(poGDS->pszProjection,"GEOGCS",6) )
             dyStart = dyStart / 3600.0;
 
         lygap = (int)((dfYMin - dyStart)/poGDS->adfGeoTransform[5]+ 0.5);
