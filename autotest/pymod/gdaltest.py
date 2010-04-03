@@ -1082,16 +1082,10 @@ def reregister_all_jpeg2000_drivers():
 
 def filesystem_supports_sparse_files(path):
 
-    # TODO: Should be ported to Python 3
     try:
-        (child_stdin, child_stdout, child_stderr) = os.popen3('stat -f -c "%T" ' + path)
+        (ret, err) = runexternal_out_and_err('stat -f -c "%T" ' + path)
     except:
         return False
-    ret = child_stdout.read()
-    err = child_stderr.read()
-    child_stdin.close()
-    child_stdout.close()
-    child_stderr.close()
 
     if err != '':
         post_reason('Cannot determine if filesystem supports sparse files')

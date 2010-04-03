@@ -32,6 +32,7 @@ import string
 import array
 import shutil
 import osr
+import sys
 
 sys.path.append( '../pymod' )
 
@@ -2265,6 +2266,8 @@ def tiff_write_70():
 
 def tiff_write_71():
 
+    import struct
+
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
@@ -2279,32 +2282,33 @@ def tiff_write_71():
     f = open('tmp/tiff_write_71.tif', 'wb')
     f.write(header)
 
+    from sys import version_info
+
     # Write StripByteCounts tag
     # 100,000 in little endian
-    strip_length = '\xa0\x86\x01\x00\x00\x00\x00\x00'
-    for i in range(100000):
-        f.write(strip_length)
+    if version_info >= (3,0,0):
+        for i in range(100000):
+            exec("f.write(b'\\xa0\\x86\\x01\\x00\\x00\\x00\\x00\\x00')")
+    else:
+        for i in range(100000):
+            f.write('\xa0\x86\x01\x00\x00\x00\x00\x00')
 
     # Write StripOffsets tag
     offset = 1600252
-    array_offset = [0 for i in range(8)]
     for i in range(100000):
-        off = offset
-        for j in range(8):
-            array_offset[j] = off % 256
-            off = off / 256
-        f.write(''.join(map(chr,array_offset)))
+        f.write(struct.pack('<Q', offset))
         offset = offset + 100000
 
     # Write 0x78 as value of pixel (99999, 99999)
     f.seek(10001600252-1, 0)
-    c = '\x78'
-    f.write(c)
+    if version_info >= (3,0,0):
+        exec("f.write(b'\\x78')")
+    else:
+        f.write('\x78')
     f.close()
 
     ds = gdal.Open('tmp/tiff_write_71.tif')
     data = ds.GetRasterBand(1).ReadRaster(99999, 99999, 1, 1)
-    import struct
     if struct.unpack('b', data)[0] != 0x78:
         return 'fail'
     ds = None
