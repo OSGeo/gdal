@@ -5201,6 +5201,7 @@ void GDALRegister_NITF()
 
         osCreationOptions +=
 "   <Option name='TRE' type='string' description='Under the format TRE=tre-name,tre-contents'/>"
+"   <Option name='FILE_TRE' type='string' description='Under the format FILE_TRE=tre-name,tre-contents'/>"
 "   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>";
 
         for(i=0; apszFieldsBLOCKA[i] != NULL; i+=3)
