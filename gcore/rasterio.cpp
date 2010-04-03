@@ -2088,6 +2088,9 @@ int GDALBandGetBestOverviewLevel(GDALRasterBand* poBand,
     for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
     {
         GDALRasterBand  *poOverview = poBand->GetOverview( iOverview );
+        if (poOverview == NULL)
+            continue;
+
         double          dfResolution;
 
         // What resolution is this?
@@ -2182,6 +2185,9 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 /*      Recast the call in terms of the new raster layer.               */
 /* -------------------------------------------------------------------- */
     GDALRasterBand* poOverviewBand = GetOverview(nOverview);
+    if (poOverviewBand == NULL)
+        return CE_Failure;
+
     return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpace, nLineSpace );
@@ -2236,6 +2242,9 @@ int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
                     poBand->GetOverview(iOverview);
                 GDALRasterBand* poOvrFirstBand =
                     poFirstBand->GetOverview(iOverview);
+                if ( poOvrBand == NULL || poOvrFirstBand == NULL)
+                    continue;
+
                 if ( poOvrFirstBand->GetXSize() != poOvrBand->GetXSize() ||
                      poOvrFirstBand->GetYSize() != poOvrBand->GetYSize() )
                 {
