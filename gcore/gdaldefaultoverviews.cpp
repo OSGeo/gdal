@@ -544,6 +544,8 @@ GDALDefaultOverviews::BuildOverviews(
         {
             int    nOvFactor;
             GDALRasterBand * poOverview = poBand->GetOverview( j );
+            if (poOverview == NULL)
+                continue;
  
             nOvFactor = (int) 
                 (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
@@ -653,6 +655,8 @@ GDALDefaultOverviews::BuildOverviews(
             {
                 int    nOvFactor;
                 GDALRasterBand * poOverview = poBand->GetOverview( j );
+                if (poOverview == NULL)
+                    continue;
 
                 int bHasNoData;
                 double noDataValue = poBand->GetNoDataValue(&bHasNoData);
@@ -915,6 +919,8 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
         for( iOver = 0; iOver < nOverviewCount; iOver++ )
         {
             GDALRasterBand *poOverBand = poBaseMask->GetOverview( iOver );
+            if (poOverBand == NULL)
+                continue;
             
             if( poOverBand->GetXSize() == poDS->GetRasterXSize() 
                 && poOverBand->GetYSize() == poDS->GetRasterYSize() )
