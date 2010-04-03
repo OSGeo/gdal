@@ -1567,15 +1567,25 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
     nLineSize = (size_t)psImage->nPixelOffset * (psImage->nCols - 1) 
         + psImage->nWordSize;
 
+    if (nLineSize == 0 || psImage->nWordSize * 8 != psImage->nBitsPerSample)
+      nLineSize = (psImage->nBlockWidth*psImage->nBitsPerSample+7)/8;
+
     VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
 
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer.                        */
 /* -------------------------------------------------------------------- */
-    if( psImage->nWordSize == psImage->nPixelOffset
-        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset )
+    if( (psImage->nBitsPerSample % 8) != 0 ||
+        (psImage->nWordSize == psImage->nPixelOffset
+        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset) )
     {
-        VSIFReadL( pData, 1, nLineSize, psImage->psFile->fp );
+        if( VSIFReadL( pData, 1, nLineSize, psImage->psFile->fp ) !=  
+            nLineSize )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Unable to read %d bytes for line %d.", (int) nLineSize, nLine );
+            return BLKREAD_FAIL;
+        }
 
 #ifdef CPL_LSB
         NITFSwapWords( psImage, pData, psImage->nBlockWidth);
@@ -1596,7 +1606,14 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         return BLKREAD_FAIL;
     }
 
-    VSIFReadL( pabyLineBuf, 1, nLineSize, psImage->psFile->fp );
+    if( VSIFReadL( pData, 1, nLineSize, psImage->psFile->fp ) !=  
+        nLineSize )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                    "Unable to read %d bytes for line %d.", (int) nLineSize, nLine );
+        CPLFree(pabyLineBuf);
+        return BLKREAD_FAIL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Copy the desired data out of the interleaved buffer.            */

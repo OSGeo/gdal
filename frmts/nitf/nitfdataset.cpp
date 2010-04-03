@@ -622,6 +622,16 @@ void NITFRasterBand::Unpack( GByte* pData )
   long n = nBlockXSize*nBlockYSize;
   long i;
   long k;
+
+  GByte abyTempData[7] = {0, 0, 0, 0, 0, 0, 0};
+  const GByte* pDataSrc = pData;
+  if (n < psImage->nBitsPerSample &&
+      psImage->nBitsPerSample < 8)
+  {
+      memcpy(abyTempData, pData, n);
+      pDataSrc = abyTempData;
+  }
+
   switch (psImage->nBitsPerSample)
   {
     case 1:
@@ -646,7 +656,7 @@ void NITFRasterBand::Unpack( GByte* pData )
       static const int s_Shift4[] = {4, 0};
       // unpack 4-bit in-place in reverse
       for (i = n; --i >= 0; )
-        pData[i] = (pData[i>>1] >> (GByte)s_Shift4[i&1]) & 0x07;
+        pData[i] = (pData[i>>1] >> (GByte)s_Shift4[i&1]) & 0x0f;
        
       break;
     }
@@ -655,14 +665,14 @@ void NITFRasterBand::Unpack( GByte* pData )
       // unpacks 8 pixels (3 bytes) at time
       for (i = 0, k = 0; i < n; i += 8, k += 3)
       {
-        pUnpackData[i+0] = ((pData[k+0] >> 5));
-        pUnpackData[i+1] = ((pData[k+0] >> 2) & 0x07);
-        pUnpackData[i+2] = ((pData[k+0] << 1) & 0x07) | (pData[k+1] >> 7);
-        pUnpackData[i+3] = ((pData[k+1] >> 4) & 0x07);
-        pUnpackData[i+4] = ((pData[k+1] >> 1) & 0x07);
-        pUnpackData[i+5] = ((pData[k+1] << 2) & 0x07) | (pData[k+2] >> 6);
-        pUnpackData[i+6] = ((pData[k+2] >> 3) & 0x07);
-        pUnpackData[i+7] = ((pData[k+2]) & 0x7);
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 5));
+        pUnpackData[i+1] = ((pDataSrc[k+0] >> 2) & 0x07);
+        pUnpackData[i+2] = ((pDataSrc[k+0] << 1) & 0x07) | (pDataSrc[k+1] >> 7);
+        pUnpackData[i+3] = ((pDataSrc[k+1] >> 4) & 0x07);
+        pUnpackData[i+4] = ((pDataSrc[k+1] >> 1) & 0x07);
+        pUnpackData[i+5] = ((pDataSrc[k+1] << 2) & 0x07) | (pDataSrc[k+2] >> 6);
+        pUnpackData[i+6] = ((pDataSrc[k+2] >> 3) & 0x07);
+        pUnpackData[i+7] = ((pDataSrc[k+2]) & 0x7);
       }
 
       memcpy(pData, pUnpackData, n);
@@ -673,14 +683,14 @@ void NITFRasterBand::Unpack( GByte* pData )
       // unpacks 8 pixels (5 bytes) at time
       for (i = 0, k = 0; i < n; i += 8, k += 5)
       {
-        pUnpackData[i+0] = ((pData[k+0] >> 3));
-        pUnpackData[i+1] = ((pData[k+0] << 2) & 0x1f) | (pData[k+1] >> 6);
-        pUnpackData[i+2] = ((pData[k+1] >> 1) & 0x1f);
-        pUnpackData[i+3] = ((pData[k+1] << 4) & 0x1f) | (pData[k+2] >> 4);
-        pUnpackData[i+4] = ((pData[k+2] << 1) & 0x1f) | (pData[k+3] >> 7);
-        pUnpackData[i+5] = ((pData[k+3] >> 2) & 0x1f);
-        pUnpackData[i+6] = ((pData[k+3] << 3) & 0x1f) | (pData[k+4] >> 5);
-        pUnpackData[i+7] = ((pData[k+4]) & 0x1f);
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 3));
+        pUnpackData[i+1] = ((pDataSrc[k+0] << 2) & 0x1f) | (pDataSrc[k+1] >> 6);
+        pUnpackData[i+2] = ((pDataSrc[k+1] >> 1) & 0x1f);
+        pUnpackData[i+3] = ((pDataSrc[k+1] << 4) & 0x1f) | (pDataSrc[k+2] >> 4);
+        pUnpackData[i+4] = ((pDataSrc[k+2] << 1) & 0x1f) | (pDataSrc[k+3] >> 7);
+        pUnpackData[i+5] = ((pDataSrc[k+3] >> 2) & 0x1f);
+        pUnpackData[i+6] = ((pDataSrc[k+3] << 3) & 0x1f) | (pDataSrc[k+4] >> 5);
+        pUnpackData[i+7] = ((pDataSrc[k+4]) & 0x1f);
       }
 
       memcpy(pData, pUnpackData, n);
@@ -691,10 +701,10 @@ void NITFRasterBand::Unpack( GByte* pData )
       // unpacks 4 pixels (3 bytes) at time
       for (i = 0, k = 0; i < n; i += 4, k += 3)
       {
-        pUnpackData[i+0] = ((pData[k+0] >> 2));
-        pUnpackData[i+1] = ((pData[k+0] << 4) & 0x3f) | (pData[k+1] >> 4);
-        pUnpackData[i+2] = ((pData[k+1] << 2) & 0x3f) | (pData[k+2] >> 6);
-        pUnpackData[i+3] = ((pData[k+2]) & 0x3f);
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 2));
+        pUnpackData[i+1] = ((pDataSrc[k+0] << 4) & 0x3f) | (pDataSrc[k+1] >> 4);
+        pUnpackData[i+2] = ((pDataSrc[k+1] << 2) & 0x3f) | (pDataSrc[k+2] >> 6);
+        pUnpackData[i+3] = ((pDataSrc[k+2]) & 0x3f);
       }
 
       memcpy(pData, pUnpackData, n);
@@ -705,14 +715,14 @@ void NITFRasterBand::Unpack( GByte* pData )
       // unpacks 8 pixels (7 bytes) at time
       for (i = 0, k = 0; i < n; i += 8, k += 7)
       {
-        pUnpackData[i+0] = ((pData[k+0] >> 1));
-        pUnpackData[i+1] = ((pData[k+0] << 6) & 0x7f) | (pData[k+1] >> 2);
-        pUnpackData[i+2] = ((pData[k+1] << 5) & 0x7f) | (pData[k+2] >> 3) ;
-        pUnpackData[i+3] = ((pData[k+2] << 4) & 0x7f) | (pData[k+3] >> 4);
-        pUnpackData[i+4] = ((pData[k+3] << 3) & 0x7f) | (pData[k+4] >> 5);
-        pUnpackData[i+5] = ((pData[k+4] << 2) & 0x7f) | (pData[k+5] >> 6);
-        pUnpackData[i+6] = ((pData[k+5] << 1) & 0x7f) | (pData[k+6] >> 7);
-        pUnpackData[i+7] = ((pData[k+6]) & 0x7f);
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 1));
+        pUnpackData[i+1] = ((pDataSrc[k+0] << 6) & 0x7f) | (pDataSrc[k+1] >> 2);
+        pUnpackData[i+2] = ((pDataSrc[k+1] << 5) & 0x7f) | (pDataSrc[k+2] >> 3) ;
+        pUnpackData[i+3] = ((pDataSrc[k+2] << 4) & 0x7f) | (pDataSrc[k+3] >> 4);
+        pUnpackData[i+4] = ((pDataSrc[k+3] << 3) & 0x7f) | (pDataSrc[k+4] >> 5);
+        pUnpackData[i+5] = ((pDataSrc[k+4] << 2) & 0x7f) | (pDataSrc[k+5] >> 6);
+        pUnpackData[i+6] = ((pDataSrc[k+5] << 1) & 0x7f) | (pDataSrc[k+6] >> 7);
+        pUnpackData[i+7] = ((pDataSrc[k+6]) & 0x7f);
       }
 
       memcpy(pData, pUnpackData, n);
@@ -1377,16 +1387,17 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Report problems with odd bit sizes.                             */
 /* -------------------------------------------------------------------- */
-    if( psImage != NULL 
-        && psImage->nBitsPerSample != 1
-        && psImage->nBitsPerSample != 12
-        && (psImage->nBitsPerSample < 8 || psImage->nBitsPerSample % 8 != 0) 
+    if( poOpenInfo->eAccess == GA_Update &&
+        psImage != NULL 
+        && (psImage->nBitsPerSample % 8 != 0) 
         && poDS->poJPEGDataset == NULL
         && poDS->poJ2KDataset == NULL )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Image with %d bits per sample will not be interpreted properly.", 
+                  "Image with %d bits per sample cannot be opened in update mode.", 
                   psImage->nBitsPerSample );
+        delete poDS;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
