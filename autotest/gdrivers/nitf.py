@@ -1394,6 +1394,35 @@ def nitf_51():
     return 'success'
 
 ###############################################################################
+# Test reading GeoSDE TREs
+
+def nitf_52():
+
+    # Create a fake NITF file with GeoSDE TREs (probably not conformant, but enough to test GDAL code)
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf52.ntf', 1, 1, options = \
+         ['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM', \
+          'FILE_TRE=PRJPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789AC0000000000000000000000000000000', \
+          'TRE=MAPLOB=M  0001000010000000000100000000000005000000'])
+    ds = None
+
+    ds = gdal.Open('tmp/nitf52.ntf')
+    wkt = ds.GetProjectionRef()
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    if wkt != """PROJCS["unnamed",GEOGCS["EUROPEAN 1950, Mean (3 Param)",DATUM["EUROPEAN 1950, Mean (3 Param)",SPHEROID["International 1924            ",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",0],PARAMETER["standard_parallel_2",0],PARAMETER["latitude_of_center",0],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""":
+        gdaltest.post_reason('did not get expected SRS')
+        print(wkt)
+        return 'fail'
+
+    if gt != (100000.0, 10.0, 0.0, 5000000.0, 0.0, -10.0):
+        gdaltest.post_reason('did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -2069,6 +2098,11 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf52.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -2129,6 +2163,7 @@ gdaltest_list = [
     nitf_49,
     nitf_50,
     nitf_51,
+    nitf_52,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
