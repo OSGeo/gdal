@@ -2249,6 +2249,7 @@ void NITFDataset::CheckGeoSDEInfo()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read PRJPSB TRE. Not enough bytes");
+        return;
     }
     int nParmCount = atoi(NITFGetField(szParm,pszPRJPSB,82,1));
     int i;
@@ -2259,6 +2260,7 @@ void NITFDataset::CheckGeoSDEInfo()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read PRJPSB TRE. Not enough bytes");
+        return;
     }
     for( i = 0; i < nParmCount; i++ )
         adfParm[i] = atof(NITFGetField(szParm,pszPRJPSB,83+15*i,15));
@@ -2358,6 +2360,7 @@ void NITFDataset::CheckGeoSDEInfo()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read GEOPSB TRE. Not enough bytes");
+        return;
     }
     LoadDODDatum( &oSRS, NITFGetField(szParm,pszGEOPSB,86,4) );
 
@@ -2372,6 +2375,7 @@ void NITFDataset::CheckGeoSDEInfo()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read MAPLOB TRE. Not enough bytes");
+        return;
     }
     
     if( EQUALN(pszMAPLOB+0,"DM ",3) )
