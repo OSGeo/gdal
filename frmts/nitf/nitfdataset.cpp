@@ -1515,6 +1515,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
                     CPLFree( poDS->pszProjection );
                     poDS->pszProjection = NULL;
                     zone=atoi(&(papszLines[8][6]));
+                    oSRSWork.Clear();
                     oSRSWork.SetUTM( zone, isNorth );
                     oSRSWork.SetWellKnownGeogCS( "WGS84" );
                     oSRSWork.exportToWkt( &(poDS->pszProjection) );
