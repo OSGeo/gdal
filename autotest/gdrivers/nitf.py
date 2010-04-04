@@ -1468,6 +1468,112 @@ def nitf_53():
     return 'success'
 
 ###############################################################################
+# Test reading RPC00B
+
+def nitf_54():
+
+    # Create a fake NITF file with RPC00B TRE (probably not conformant, but enough to test GDAL code)
+    RPC00B='100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf54.ntf', 1, 1, options = ['TRE=RPC00B=' + RPC00B])
+    ds = None
+
+    ds = gdal.Open('tmp/nitf54.ntf')
+    md = ds.GetMetadata('RPC')
+    ds = None
+
+    if md is None or 'HEIGHT_OFF' not in md:
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading ICHIPB
+
+def nitf_55():
+
+    # Create a fake NITF file with ICHIPB TRE (probably not conformant, but enough to test GDAL code)
+    ICHIPB='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf55.ntf', 1, 1, options = ['TRE=ICHIPB=' + ICHIPB])
+    ds = None
+
+    ds = gdal.Open('tmp/nitf55.ntf')
+    md = ds.GetMetadata()
+    ds = None
+
+    if md is None or 'ICHIP_SCALE_FACTOR' not in md:
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading USE00A
+
+def nitf_56():
+
+    # Create a fake NITF file with USE00A TRE (probably not conformant, but enough to test GDAL code)
+    USE00A='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf56.ntf', 1, 1, options = ['TRE=USE00A=' + USE00A])
+    ds = None
+
+    ds = gdal.Open('tmp/nitf56.ntf')
+    md = ds.GetMetadata()
+    ds = None
+
+    if md is None or 'NITF_USE00A_ANGLE_TO_NORTH' not in md:
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading GEOLOB
+
+def nitf_57():
+
+    # Create a fake NITF file with GEOLOB TRE
+    GEOLOB='000000360000000360-180.000000000090.000000000000'
+
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf57.ntf', 1, 1, options = ['TRE=GEOLOB=' + GEOLOB])
+    ds = None
+
+    ds = gdal.Open('tmp/nitf57.ntf')
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    if gt != (-180.0, 1.0, 0.0, 90.0, 0.0, -1.0):
+        gdaltest.post_reason('did not get expected geotransform')
+        print(gt)
+        return 'success'
+
+    return 'success'
+
+###############################################################################
+# Test reading STDIDC
+
+def nitf_58():
+
+    # Create a fake NITF file with STDIDC TRE (probably not conformant, but enough to test GDAL code)
+    STDIDC='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf58.ntf', 1, 1, options = ['TRE=STDIDC=' + STDIDC])
+    ds = None
+
+    ds = gdal.Open('tmp/nitf58.ntf')
+    md = ds.GetMetadata()
+    ds = None
+
+    if md is None or 'NITF_STDIDC_ACQUISITION_DATE' not in md:
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -2153,6 +2259,31 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf54.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf55.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf56.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf57.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf58.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -2215,6 +2346,11 @@ gdaltest_list = [
     nitf_51,
     nitf_52,
     nitf_53,
+    nitf_54,
+    nitf_55,
+    nitf_56,
+    nitf_57,
+    nitf_58,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
