@@ -2121,7 +2121,7 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
     char szTemp[100];
     int  i;
     int  bRPC00A = FALSE;
-    int  nRemainingBytes;
+    int  nTRESize;
 
     psRPC->SUCCESS = 0;
 
@@ -2129,12 +2129,12 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 /*      Do we have the TRE?                                             */
 /* -------------------------------------------------------------------- */
     pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
-                           "RPC00B", NULL );
+                           "RPC00B", &nTRESize );
 
     if( pachTRE == NULL )
     {
         pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes,
-                               "RPC00A", NULL );
+                               "RPC00A", &nTRESize );
         if( pachTRE )
             bRPC00A = TRUE;
     }
@@ -2144,8 +2144,7 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
         return FALSE;
     }
 
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-    if (nRemainingBytes < 801 + 19*12 + 12)
+    if (nTRESize < 801 + 19*12 + 12)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read RPC00A/RPC00B TRE. Not enough bytes");
@@ -2209,18 +2208,18 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
 {
     const char *pachTRE;
     char szTemp[32];
-    int nRemainingBytes;
+    int nTRESize;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
 /* -------------------------------------------------------------------- */
     pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
-                           "ICHIPB", NULL );
+                           "ICHIPB", &nTRESize );
 
     if( pachTRE == NULL )
     {
         pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes,
-                               "ICHIPA", NULL );
+                               "ICHIPA", &nTRESize );
     }
 
     if( pachTRE == NULL )
@@ -2228,8 +2227,7 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
         return FALSE;
     }
 
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-    if (nRemainingBytes < 2)
+    if (nTRESize < 2)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read ICHIPA/ICHIPB TRE. Not enough bytes");
@@ -2242,7 +2240,7 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
 
     if ( psICHIP->XFRM_FLAG == 0 )
     {
-        if (nRemainingBytes < 216 + 8)
+        if (nTRESize < 216 + 8)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot read ICHIPA/ICHIPB TRE. Not enough bytes");
@@ -2373,7 +2371,6 @@ char **NITFReadBLOCKA( NITFImage *psImage )
     char **papszMD = NULL;
     int nBlockaCount = 0;
     char szTemp[128];
-    int nRemainingBytes;
 
     while ( TRUE )
     {
@@ -2391,14 +2388,6 @@ char **NITFReadBLOCKA( NITFImage *psImage )
         {
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "BLOCKA TRE wrong size, ignoring." );
-            break;
-        }
-
-        nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-        if (nRemainingBytes < 123)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot read BLOCKA TRE. Not enough bytes");
             break;
         }
 
@@ -2511,7 +2500,6 @@ int NITFReadBLOCKA_GCPs( NITFImage *psImage )
     int        nTRESize;
     int        nBlockaLines;
     char       szTemp[128];
-    int        nRemainingBytes;
     
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -2527,13 +2515,6 @@ int NITFReadBLOCKA_GCPs( NITFImage *psImage )
         return FALSE;
     }
 
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-    if (nRemainingBytes < 123)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Cannot read BLOCKA TRE. Not enough bytes");
-        return FALSE;
-    }
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
@@ -2602,7 +2583,6 @@ static int NITFReadGEOLOB( NITFImage *psImage )
     const char *pachTRE;
     int        nTRESize;
     char       szTemp[128];
-    int        nRemainingBytes;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -2623,14 +2603,6 @@ static int NITFReadGEOLOB( NITFImage *psImage )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Cannot read GEOLOB TRE. Wrong size.");
-        return FALSE;
-    }
-
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-    if (nRemainingBytes < 48)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Cannot read GEOLOB TRE. Not enough bytes");
         return FALSE;
     }
 
@@ -3079,11 +3051,9 @@ static void NITFLoadLocationTable( NITFImage *psImage )
     int i;
     int nRemainingBytes;
 
-    pszTRE = NITFFindTRE(psImage->pachTRE, psImage->nTREBytes, "RPFIMG", NULL);
+    pszTRE = NITFFindTRE(psImage->pachTRE, psImage->nTREBytes, "RPFIMG", &nRemainingBytes);
     if( pszTRE == NULL )
         return;
-
-    nRemainingBytes = psImage->nTREBytes - (pszTRE - psImage->pachTRE);
 
     pszTRE += 6;
     nRemainingBytes -= 6;
@@ -3273,7 +3243,6 @@ char **NITFReadSTDIDC( NITFImage *psImage )
     const char *pachTRE;
     int  nTRESize;
     char **papszMD = NULL;
-    int nRemainingBytes;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -3288,14 +3257,6 @@ char **NITFReadSTDIDC( NITFImage *psImage )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "STDIDC TRE wrong size, ignoring." );
-        return NULL;
-    }
-
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-    if (nRemainingBytes < 89)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Cannot read STDIDC TRE. Not enough bytes");
         return NULL;
     }
 
