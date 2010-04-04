@@ -342,7 +342,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             goto header_too_small;
 
         nNICOM = atoi(NITFGetField( szTemp, pachHeader, nOffset++, 1));
-        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 1 + 80 * nNICOM )
+        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 80 * nNICOM )
             goto header_too_small;
 
         psImage->pszComments = (char *) CPLMalloc(nNICOM*80+1);
@@ -445,7 +445,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
         psBandInfo->pabyLUT = (unsigned char *) CPLCalloc(768,1);
         if ( (int)psSegInfo->nSegmentHeaderSize <
-             nOffset + psBandInfo->nSignificantLUTEntries )
+             nOffset + nLUTS * psBandInfo->nSignificantLUTEntries )
             goto header_too_small;
 
         memcpy( psBandInfo->pabyLUT, pachHeader + nOffset, 
@@ -454,17 +454,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
         if( nLUTS == 3 )
         {
-            if ( (int)psSegInfo->nSegmentHeaderSize <
-                 nOffset + psBandInfo->nSignificantLUTEntries )
-                goto header_too_small;
-
             memcpy( psBandInfo->pabyLUT+256, pachHeader + nOffset, 
                     psBandInfo->nSignificantLUTEntries );
             nOffset += psBandInfo->nSignificantLUTEntries;
-
-            if ( (int)psSegInfo->nSegmentHeaderSize <
-                 nOffset + psBandInfo->nSignificantLUTEntries )
-                goto header_too_small;
 
             memcpy( psBandInfo->pabyLUT+512, pachHeader + nOffset, 
                     psBandInfo->nSignificantLUTEntries );
