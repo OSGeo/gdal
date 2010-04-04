@@ -2231,10 +2231,11 @@ void NITFDataset::CheckGeoSDEInfo()
     const char *pszGEOPSB , *pszPRJPSB, *pszMAPLOB;
     OGRSpatialReference oSRS;
     char szName[81];
+    int nGEOPSBSize, nPRJPSBSize, nMAPLOBSize;
 
-    pszGEOPSB = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes,"GEOPSB",NULL);
-    pszPRJPSB = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes,"PRJPSB",NULL);
-    pszMAPLOB = NITFFindTRE(psImage->pachTRE,psImage->nTREBytes,"MAPLOB",NULL);
+    pszGEOPSB = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes,"GEOPSB",&nGEOPSBSize);
+    pszPRJPSB = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes,"PRJPSB",&nPRJPSBSize);
+    pszMAPLOB = NITFFindTRE(psImage->pachTRE,psImage->nTREBytes,"MAPLOB",&nMAPLOBSize);
 
     if( pszGEOPSB == NULL || pszPRJPSB == NULL || pszMAPLOB == NULL )
         return;
@@ -2242,10 +2243,9 @@ void NITFDataset::CheckGeoSDEInfo()
 /* -------------------------------------------------------------------- */
 /*      Collect projection parameters.                                  */
 /* -------------------------------------------------------------------- */
-    int nRemainingBytesPRJPSB = psFile->nTREBytes - (pszPRJPSB - psFile->pachTRE);
 
     char szParm[16];
-    if (nRemainingBytesPRJPSB < 82 + 1)
+    if (nPRJPSBSize < 82 + 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read PRJPSB TRE. Not enough bytes");
@@ -2256,7 +2256,7 @@ void NITFDataset::CheckGeoSDEInfo()
     double adfParm[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     double dfFN;
     double dfFE;
-    if (nRemainingBytesPRJPSB < 83+15*nParmCount+15+15)
+    if (nPRJPSBSize < 83+15*nParmCount+15+15)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read PRJPSB TRE. Not enough bytes");
@@ -2355,8 +2355,7 @@ void NITFDataset::CheckGeoSDEInfo()
 /* -------------------------------------------------------------------- */
 /*      Try to apply the datum.                                         */
 /* -------------------------------------------------------------------- */
-    int nRemainingBytesGEOPSB = psFile->nTREBytes - (pszGEOPSB - psFile->pachTRE);
-    if (nRemainingBytesGEOPSB < 86 + 4)
+    if (nGEOPSBSize < 86 + 4)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read GEOPSB TRE. Not enough bytes");
@@ -2370,8 +2369,7 @@ void NITFDataset::CheckGeoSDEInfo()
     double adfGT[6];
     double dfMeterPerUnit = 1.0;
 
-    int nRemainingBytesMAPLOB = psImage->nTREBytes - (pszMAPLOB - psImage->pachTRE);
-    if (nRemainingBytesMAPLOB < 28 + 15)
+    if (nMAPLOBSize < 28 + 15)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read MAPLOB TRE. Not enough bytes");

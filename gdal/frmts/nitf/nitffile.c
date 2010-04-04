@@ -1367,6 +1367,14 @@ const char *NITFFindTRE( const char *pszTREData, int nTREBytes,
                      nThisTRESize, szTemp);
             return NULL;
         }
+        if (nTREBytes - 11 < nThisTRESize)
+        {
+            NITFGetField(szTemp, pszTREData, 0, 6 );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot read %s TRE. Not enough bytes : remaining %d, expected %d",
+                    szTemp, nTREBytes - 11, nThisTRESize);
+            return NULL;
+        }
 
         if( EQUALN(pszTREData,pszTag,6) )
         {
@@ -1402,6 +1410,14 @@ const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
             NITFGetField(szTemp, pszTREData, 0, 6 );
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid size (%d) for TRE %s",
                      nThisTRESize, szTemp);
+            return NULL;
+        }
+        if (nTREBytes - 11 < nThisTRESize)
+        {
+            NITFGetField(szTemp, pszTREData, 0, 6 );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot read %s TRE. Not enough bytes : remaining %d, expected %d",
+                    szTemp, nTREBytes - 11, nThisTRESize);
             return NULL;
         }
 
