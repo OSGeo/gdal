@@ -47,7 +47,7 @@ static int NITFWriteTREsFromOptions(
     const char* pszTREPrefix);
 
 static int 
-NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
+NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
                         int nHeaderLenSize, int nDataLenSize, 
                         GUIntBig *pnNextData );
 
@@ -1179,11 +1179,11 @@ static int NITFWriteBLOCKA( FILE* fp, vsi_l_offset nOffsetUDIDL,
             if( pszValue == NULL )
                 pszValue = "";
 
-            if (strlen(pszValue) > iSize)
+            if (strlen(pszValue) > (size_t)iSize)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Too much data for %s. Got %d bytes, max allowed is %d",
-                         szFullFieldName, strlen(pszValue), iSize);
+                         szFullFieldName, (int)strlen(pszValue), iSize);
                 return FALSE;
             }
 
@@ -1215,7 +1215,7 @@ static int NITFWriteBLOCKA( FILE* fp, vsi_l_offset nOffsetUDIDL,
 /************************************************************************/
 
 static int 
-NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
+NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
                         int nHeaderLenSize, int nDataLenSize, GUIntBig *pnNextData )
 
 {
@@ -1273,7 +1273,7 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
         psInfo->nCCS_C = -1;
 
         psInfo->hAccess = NULL;
-        strcpy( psInfo->szSegmentType, pszType );
+        strcpy( psInfo->szSegmentType, szType );
         
         psInfo->nSegmentHeaderSize = 
             atoi(NITFGetField(szTemp,pachSegDef, 
