@@ -1574,6 +1574,57 @@ def nitf_58():
     return 'success'
 
 ###############################################################################
+# Test georeferencing through .nfw and .hdr files
+
+def nitf_59():
+
+    shutil.copyfile('data/nitf59.nfw', 'tmp/nitf59.nfw')
+    shutil.copyfile('data/nitf59.hdr', 'tmp/nitf59.hdr')
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf59.ntf', 1, 1, options = ['ICORDS=N'])
+    ds = None
+
+    ds = gdal.Open('tmp/nitf59.ntf')
+    wkt = ds.GetProjectionRef()
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    if wkt != """PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]""":
+        gdaltest.post_reason('did not get expected SRS')
+        print(wkt)
+        return 'fail'
+
+    if gt != (149999.5, 1.0, 0.0, 4500000.5, 0.0, -1.0):
+        gdaltest.post_reason('did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading CADRG polar tile georeferencing (#2940)
+
+def nitf_60():
+
+    ds = gdal.Open('data/testtest.on9')
+    wkt = ds.GetProjectionRef()
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    if wkt != """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6378137,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]""":
+        gdaltest.post_reason('did not get expected SRS')
+        print(wkt)
+        return 'fail'
+
+    ref_gt = [1036422.8453166834, 149.94543479697344, 0.0, 345474.28177222813, 0.0, -149.94543479697404]
+    for i in range(6):
+        if abs(gt[i]-ref_gt[i]) > 1e-6:
+            gdaltest.post_reason('did not get expected geotransform')
+            print(gt)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -2284,6 +2335,12 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        os.remove('tmp/nitf59.hdr')
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf59.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -2351,6 +2408,8 @@ gdaltest_list = [
     nitf_56,
     nitf_57,
     nitf_58,
+    nitf_59,
+    nitf_60,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
