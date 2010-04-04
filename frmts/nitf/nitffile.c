@@ -153,7 +153,14 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         return NULL;
     }
     VSIFSeekL( fp, 0, SEEK_SET );
-    VSIFReadL( pachHeader, 1, nHeaderLen, fp );
+    if ((int)VSIFReadL( pachHeader, 1, nHeaderLen, fp ) != nHeaderLen)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, 
+                  "Cannot read %d bytes for NITF header", (nHeaderLen));
+        VSIFCloseL(fp);
+        CPLFree(pachHeader);
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create and initialize info structure about file.                */
@@ -251,16 +258,26 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
     nOffset = NITFCollectSegmentInfo( psFile, nOffset,"IM",6, 10, &nNextData );
 
-    nOffset = NITFCollectSegmentInfo( psFile, nOffset, "GR", 4, 6, &nNextData);
+    if (nOffset != -1)
+        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "GR", 4, 6, &nNextData);
 
     /* LA Called NUMX in NITF 2.1 */
-    nOffset = NITFCollectSegmentInfo( psFile, nOffset, "LA", 4, 3, &nNextData);
+    if (nOffset != -1)
+        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "LA", 4, 3, &nNextData);
 
-    nOffset = NITFCollectSegmentInfo( psFile, nOffset, "TX", 4, 5, &nNextData);
+    if (nOffset != -1)
+        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "TX", 4, 5, &nNextData);
 
-    nOffset = NITFCollectSegmentInfo( psFile, nOffset, "DE", 4, 9, &nNextData);
+    if (nOffset != -1)
+        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "DE", 4, 9, &nNextData);
 
-    nOffset = NITFCollectSegmentInfo( psFile, nOffset, "RE", 4, 7, &nNextData);
+    if (nOffset != -1)
+        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "RE", 4, 7, &nNextData);
+    else
+    {
+        NITFClose(psFile);
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Is there User Define Header Data? (TREs)                        */
@@ -1228,7 +1245,11 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
 /*      accordingly.                                                    */
 /* -------------------------------------------------------------------- */
     VSIFSeekL( psFile->fp, nOffset, SEEK_SET );
-    VSIFReadL( szTemp, 1, 3, psFile->fp );
+    if ((int)VSIFReadL( szTemp, 1, 3, psFile->fp ) != 3)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read segment count");
+        return -1;
+    }
     szTemp[3] = '\0';
 
     nCount = atoi(szTemp);
@@ -1255,7 +1276,7 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot read segment info");
         CPLFree( pachSegDef );
-        return nOffset + 3;
+        return -1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1281,8 +1302,9 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
                               nHeaderLenSize));
         if (strchr(szTemp, '-') != NULL) /* Avoid negative values being mapped to huge unsigned values */
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment info");
-            break;
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment header size : %s", szTemp);
+            CPLFree( pachSegDef );
+            return -1;
         }
         psInfo->nSegmentSize = 
             CPLScanUIntBig(NITFGetField(szTemp,pachSegDef, 
@@ -1291,8 +1313,9 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
                               nDataLenSize), nDataLenSize);
         if (strchr(szTemp, '-') != NULL) /* Avoid negative values being mapped to huge unsigned values */
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment info");
-            break;
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment size : %s", szTemp);
+            CPLFree( pachSegDef );
+            return -1;
         }
 
         psInfo->nSegmentHeaderStart = *pnNextData;
