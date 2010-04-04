@@ -35,6 +35,7 @@ import array
 import string
 import struct
 import shutil
+from sys import version_info
 
 sys.path.append( '../pymod' )
 
@@ -1423,6 +1424,50 @@ def nitf_52():
     return 'success'
 
 ###############################################################################
+# Test reading UTM MGRS
+
+def nitf_53():
+
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf53.ntf', 2, 2, options = ['ICORDS=N'])
+    ds = None
+
+    f = open('tmp/nitf53.ntf', 'rb+')
+
+    # Patch ICORDS and IGEOLO
+    f.seek(775)
+    if version_info >= (3,0,0):
+        exec("f.write(b'U')")
+        exec("f.write(b'31UBQ1000040000')")
+        exec("f.write(b'31UBQ2000040000')")
+        exec("f.write(b'31UBQ2000030000')")
+        exec("f.write(b'31UBQ1000030000')")
+    else:
+        f.write('U')
+        f.write('31UBQ1000040000')
+        f.write('31UBQ2000040000')
+        f.write('31UBQ2000030000')
+        f.write('31UBQ1000030000')
+
+    f.close()
+
+    ds = gdal.Open('tmp/nitf53.ntf')
+    wkt = ds.GetProjectionRef()
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    if wkt != """PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]""":
+        gdaltest.post_reason('did not get expected SRS')
+        print(wkt)
+        return 'fail'
+
+    if gt != (205000.0, 10000.0, 0.0, 5445000.0, 0.0, -10000.0):
+        gdaltest.post_reason('did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -2103,6 +2148,11 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf53.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -2164,6 +2214,7 @@ gdaltest_list = [
     nitf_50,
     nitf_51,
     nitf_52,
+    nitf_53,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
