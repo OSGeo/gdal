@@ -1159,7 +1159,7 @@ static int NITFWriteBLOCKA( FILE* fp, vsi_l_offset nOffsetUDIDL,
 /* ==================================================================== */
     for( iBlock = 1; iBlock <= nBlockCount; iBlock++ )
     {
-        char szBLOCKA[200];
+        char szBLOCKA[123];
         int iField;
 
 /* -------------------------------------------------------------------- */
@@ -1179,17 +1179,18 @@ static int NITFWriteBLOCKA( FILE* fp, vsi_l_offset nOffsetUDIDL,
             if( pszValue == NULL )
                 pszValue = "";
 
-            if (iStart + MAX( 0 , (size_t)iSize - strlen(pszValue) )
-                       + MIN( (size_t)iSize , strlen(pszValue) ) >
-                sizeof(szBLOCKA))
+            if (strlen(pszValue) > iSize)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Too much data for BLOCKA");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too much data for %s. Got %d bytes, max allowed is %d",
+                         szFullFieldName, strlen(pszValue), iSize);
                 return FALSE;
             }
 
+            /* Right align value and left pad with spaces */
             memset( szBLOCKA + iStart, ' ', iSize );
             memcpy( szBLOCKA + iStart + MAX((size_t)0,iSize-strlen(pszValue)),
-                    pszValue, MIN((size_t)iSize,strlen(pszValue)) );
+                    pszValue, strlen(pszValue) );
         }
 
         // required field - semantics unknown. 
