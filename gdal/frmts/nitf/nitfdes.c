@@ -85,6 +85,7 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
         return NULL;
     }
 
+retry:
     if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart, 
                   SEEK_SET ) != 0 
         || VSIFReadL( pachHeader, 1, psSegInfo->nSegmentHeaderSize, 
@@ -94,6 +95,24 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
                   "Failed to read %u byte DES subheader from " CPL_FRMT_GUIB ".",
                   psSegInfo->nSegmentHeaderSize,
                   psSegInfo->nSegmentHeaderStart );
+        CPLFree(pachHeader);
+        return NULL;
+    }
+
+    if (!EQUALN(pachHeader, "DE", 2))
+    {
+        if (EQUALN(pachHeader + 4, "DERegistered", 12))
+        {
+            /* BAO_46_Ed1/rpf/conc/concz10/000fz010.ona and cie are buggy */
+            CPLDebug("NITF", "Patching nSegmentHeaderStart and nSegmentStart for DE segment %d", iSegment);
+            psSegInfo->nSegmentHeaderStart += 4;
+            psSegInfo->nSegmentStart += 4;
+            goto retry;
+        }
+
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid segment prefix for DE segment %d", iSegment);
+
         CPLFree(pachHeader);
         return NULL;
     }
@@ -325,6 +344,12 @@ int   NITFDESGetTRE( NITFDES* psDES,
 
     if (VSIFReadL(szTREHeader, 1, 11, fp) != 11)
     {
+        /* Some files have a nSegmentSize larger than what is is in reality */
+        /* So exit silently if we're at end of file */ 
+        VSIFSeekL(fp, 0, SEEK_END);
+        if (VSIFTellL(fp) == psSegInfo->nSegmentStart + nOffset)
+            return FALSE;
+
         CPLError(CE_Failure, CPLE_FileIO,
                  "Cannot get 11 bytes at offset " CPL_FRMT_GUIB ".",
                  psSegInfo->nSegmentStart + nOffset );
