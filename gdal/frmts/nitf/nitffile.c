@@ -47,7 +47,8 @@ static int NITFWriteTREsFromOptions(
     const char* pszTREPrefix);
 
 static int 
-NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
+NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLenSize, int nOffset,
+                        const char szType[3],
                         int nHeaderLenSize, int nDataLenSize, 
                         GUIntBig *pnNextData );
 
@@ -65,6 +66,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     GUIntBig    nNextData;
     char        szTemp[128], achFSDWNG[6];
     GIntBig     currentPos;
+    int         bTriedStreamingFileHeader = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -169,6 +171,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     psFile->fp = fp;
     psFile->pachHeader = pachHeader;
 
+retry_read_header:
 /* -------------------------------------------------------------------- */
 /*      Get version.                                                    */
 /* -------------------------------------------------------------------- */
@@ -219,6 +222,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         GetMD( psFile, szWork, 0, 11, FBKGC );
         GetMD( psFile, pachHeader, 300,  24, ONAME  );
         GetMD( psFile, pachHeader, 324,  18, OPHONE );
+        NITFGetField(szTemp, pachHeader, 342, 12);
     }
     else if( EQUAL(psFile->szVersion,"NITF02.00") )
     {
@@ -247,6 +251,57 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         GetMD( psFile, pachHeader, 296+nCOff,   1, ENCRYP );
         GetMD( psFile, pachHeader, 297+nCOff,  27, ONAME  );
         GetMD( psFile, pachHeader, 324+nCOff,  18, OPHONE );
+        NITFGetField(szTemp, pachHeader, 342+nCOff, 12);
+    }
+
+    if (!bTriedStreamingFileHeader &&
+         EQUAL(szTemp, "999999999999"))
+    {
+        GUIntBig nFileSize;
+        GByte abyDELIM2_L2[12];
+        GByte abyL1_DELIM1[11];
+
+        bTriedStreamingFileHeader = TRUE;
+        CPLDebug("NITF", "Total file unknown. Trying to get a STREAMING_FILE_HEADER");
+
+        VSIFSeekL( fp, 0, SEEK_END );
+        nFileSize = VSIFTellL(fp);
+
+        VSIFSeekL( fp, nFileSize - 11, SEEK_SET );
+        abyDELIM2_L2[11] = '\0';
+
+        if (VSIFReadL( abyDELIM2_L2, 1, 11, fp ) == 11 &&
+            abyDELIM2_L2[0] == 0x0E && abyDELIM2_L2[1] == 0xCA &&
+            abyDELIM2_L2[2] == 0x14 && abyDELIM2_L2[3] == 0xBF)
+        {
+            int SFHL2 = atoi((const char*)(abyDELIM2_L2 + 4));
+            if (SFHL2 > 0 && nFileSize > 11 + SFHL2 + 11 )
+            {
+                VSIFSeekL( fp, nFileSize - 11 - SFHL2 - 11 , SEEK_SET );
+
+                if ( VSIFReadL( abyL1_DELIM1, 1, 11, fp ) == 11 &&
+                     abyL1_DELIM1[7] == 0x0A && abyL1_DELIM1[8] == 0x6E &&
+                     abyL1_DELIM1[9] == 0x1D && abyL1_DELIM1[10] == 0x97 &&
+                     memcmp(abyL1_DELIM1, abyDELIM2_L2 + 4, 7) == 0 )
+                {
+                    if (SFHL2 == nHeaderLen)
+                    {
+                        CSLDestroy(psFile->papszMetadata);
+                        psFile->papszMetadata = NULL;
+
+                        if ( (int)VSIFReadL( pachHeader, 1, SFHL2, fp ) != SFHL2 )
+                        {
+                            VSIFCloseL(fp);
+                            CPLFree(pachHeader);
+                            CPLFree(psFile);
+                            return NULL;
+                        }
+
+                        goto retry_read_header;
+                    }
+                }
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -256,23 +311,23 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
     nOffset = nHeaderLenOffset + 6;
 
-    nOffset = NITFCollectSegmentInfo( psFile, nOffset,"IM",6, 10, &nNextData );
+    nOffset = NITFCollectSegmentInfo( psFile, nHeaderLen, nOffset,"IM",6, 10, &nNextData );
 
     if (nOffset != -1)
-        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "GR", 4, 6, &nNextData);
+        nOffset = NITFCollectSegmentInfo( psFile, nHeaderLen, nOffset, "GR", 4, 6, &nNextData);
 
     /* LA Called NUMX in NITF 2.1 */
     if (nOffset != -1)
-        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "LA", 4, 3, &nNextData);
+        nOffset = NITFCollectSegmentInfo( psFile, nHeaderLen, nOffset, "LA", 4, 3, &nNextData);
 
     if (nOffset != -1)
-        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "TX", 4, 5, &nNextData);
+        nOffset = NITFCollectSegmentInfo( psFile, nHeaderLen, nOffset, "TX", 4, 5, &nNextData);
 
     if (nOffset != -1)
-        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "DE", 4, 9, &nNextData);
+        nOffset = NITFCollectSegmentInfo( psFile, nHeaderLen, nOffset, "DE", 4, 9, &nNextData);
 
     if (nOffset != -1)
-        nOffset = NITFCollectSegmentInfo( psFile, nOffset, "RE", 4, 7, &nNextData);
+        nOffset = NITFCollectSegmentInfo( psFile, nHeaderLen, nOffset, "RE", 4, 7, &nNextData);
     else
     {
         NITFClose(psFile);
@@ -1232,30 +1287,35 @@ static int NITFWriteBLOCKA( FILE* fp, vsi_l_offset nOffsetUDIDL,
 /************************************************************************/
 
 static int 
-NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
+NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLen, int nOffset, const char szType[3],
                         int nHeaderLenSize, int nDataLenSize, GUIntBig *pnNextData )
 
 {
     char szTemp[12];
-    char *pachSegDef;
     int  nCount, nSegDefSize, iSegment;
 
 /* -------------------------------------------------------------------- */
 /*      Get the segment count, and grow the segmentinfo array           */
 /*      accordingly.                                                    */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( psFile->fp, nOffset, SEEK_SET );
-    if ((int)VSIFReadL( szTemp, 1, 3, psFile->fp ) != 3)
+    if ( nFileHeaderLen < nOffset + 3 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read segment count");
+        CPLError(CE_Failure, CPLE_AppDefined, "Not enough bytes to read segment count");
         return -1;
     }
-    szTemp[3] = '\0';
 
+    NITFGetField( szTemp, psFile->pachHeader, nOffset, 3 );
     nCount = atoi(szTemp);
 
     if( nCount <= 0 )
         return nOffset + 3;
+
+    nSegDefSize = nCount * (nHeaderLenSize + nDataLenSize);
+    if ( nFileHeaderLen < nOffset + 3 + nSegDefSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Not enough bytes to read segment info");
+        return -1;
+    }
 
     if( psFile->pasSegmentInfo == NULL )
         psFile->pasSegmentInfo = (NITFSegmentInfo *)
@@ -1265,19 +1325,6 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
             CPLRealloc( psFile->pasSegmentInfo, 
                         sizeof(NITFSegmentInfo)
                         * (psFile->nSegmentCount+nCount) );
-
-/* -------------------------------------------------------------------- */
-/*      Read the detailed information about the segments.               */
-/* -------------------------------------------------------------------- */
-    nSegDefSize = nCount * (nHeaderLenSize + nDataLenSize);
-    pachSegDef = (char *) CPLMalloc(nCount * (nHeaderLenSize + nDataLenSize));
-    
-    if((int)VSIFReadL( pachSegDef, 1, nSegDefSize, psFile->fp) != nSegDefSize)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read segment info");
-        CPLFree( pachSegDef );
-        return -1;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Collect detailed about segment.                                 */
@@ -1297,24 +1344,22 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
         strcpy( psInfo->szSegmentType, szType );
         
         psInfo->nSegmentHeaderSize = 
-            atoi(NITFGetField(szTemp,pachSegDef, 
-                              iSegment * (nHeaderLenSize+nDataLenSize), 
+            atoi(NITFGetField(szTemp, psFile->pachHeader, 
+                              nOffset + 3 + iSegment * (nHeaderLenSize+nDataLenSize), 
                               nHeaderLenSize));
         if (strchr(szTemp, '-') != NULL) /* Avoid negative values being mapped to huge unsigned values */
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment header size : %s", szTemp);
-            CPLFree( pachSegDef );
             return -1;
         }
         psInfo->nSegmentSize = 
-            CPLScanUIntBig(NITFGetField(szTemp,pachSegDef, 
-                              iSegment * (nHeaderLenSize+nDataLenSize) 
+            CPLScanUIntBig(NITFGetField(szTemp,psFile->pachHeader, 
+                              nOffset + 3 + iSegment * (nHeaderLenSize+nDataLenSize) 
                               + nHeaderLenSize,
                               nDataLenSize), nDataLenSize);
         if (strchr(szTemp, '-') != NULL) /* Avoid negative values being mapped to huge unsigned values */
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment size : %s", szTemp);
-            CPLFree( pachSegDef );
             return -1;
         }
 
@@ -1324,8 +1369,6 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, const char szType[2],
         *pnNextData += (psInfo->nSegmentHeaderSize+psInfo->nSegmentSize);
         psFile->nSegmentCount++;
     }
-
-    CPLFree( pachSegDef );
 
     return nOffset + nSegDefSize + 3;
 }
