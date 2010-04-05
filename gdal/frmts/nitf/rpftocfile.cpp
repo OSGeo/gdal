@@ -86,9 +86,9 @@ static void RPFTOCTrim(char* str)
  
 RPFToc* RPFTOCRead(const char* pszFilename, NITFFile* psFile)
 {
-    int TRESize;
+    int nTRESize;
     const char* pachTRE = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes, 
-                           "RPFHDR", &TRESize );
+                           "RPFHDR", &nTRESize );
     if (pachTRE == NULL)
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -96,18 +96,10 @@ RPFToc* RPFTOCRead(const char* pszFilename, NITFFile* psFile)
         return NULL;
     }
 
-    if (TRESize < 48)
+    if (nTRESize != 48)
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "Not enough bytes in RPFHDR." );
-        return NULL;
-    }
-
-    int nRemainingBytes = psFile->nTREBytes - (pachTRE - psFile->pachTRE);
-    if (nRemainingBytes < 48)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Cannot read RPFHDR TRE. Not enough bytes");
+                  "RPFHDR TRE wrong size." );
         return NULL;
     }
 
