@@ -4179,12 +4179,12 @@ static void NITFPatchImageLength( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Update total file length.                                       */
 /* -------------------------------------------------------------------- */
-    if (nFileLen >= (GUIntBig)1e12)
+    if (nFileLen >= (GUIntBig)(1e12 - 1))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999999",
+                 "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999998",
                  nFileLen);
-        nFileLen = (GUIntBig)(1e12 - 1);
+        nFileLen = (GUIntBig)(1e12 - 2);
     }
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
     CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",nFileLen);
@@ -4194,12 +4194,12 @@ static void NITFPatchImageLength( const char *pszFilename,
 /*      Update the image data length.                                   */
 /* -------------------------------------------------------------------- */
     GUIntBig nImageSize = nFileLen-nImageOffset;
-    if (GUINTBIG_TO_DOUBLE(nImageSize) >= 1e10)
+    if (GUINTBIG_TO_DOUBLE(nImageSize) >= 1e10 - 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too big image size : " CPL_FRMT_GUIB". Truncating to 9999999999",
+                 "Too big image size : " CPL_FRMT_GUIB". Truncating to 9999999998",
                  nImageSize);
-        nImageSize = (GUIntBig)(1e10 - 1);
+        nImageSize = (GUIntBig)(1e10 - 2);
     }
     VSIFSeekL( fpVSIL, 369, SEEK_SET );
     osLen = CPLString().Printf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",nImageSize);
@@ -4444,12 +4444,12 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         char *pszCgmToWrite = CPLUnescapeString(pszData, &nCGMSize,
                         CPLES_BackslashQuotable);
 
-        if (nCGMSize > 999999)
+        if (nCGMSize > 999998)
         {
             CPLError(CE_Warning, CPLE_NotSupported,
-                     "Length of SEGMENT_%d_DATA is %d, which is greater than 999999. Truncating...",
+                     "Length of SEGMENT_%d_DATA is %d, which is greater than 999998. Truncating...",
                      i + 1, nCGMSize);
-            nCGMSize = 999999;
+            nCGMSize = 999998;
         }
 
         VSIFWriteL(pszCgmToWrite, 1, nCGMSize, fpVSIL);
@@ -4478,12 +4478,12 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     GUIntBig nFileLen = VSIFTellL(fpVSIL);
     // Offset to file length entry
     VSIFSeekL(fpVSIL, 342, SEEK_SET );
-    if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12)
+    if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12 - 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                        "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999999",
+                        "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999998",
                         nFileLen);
-        nFileLen = (GUIntBig) (1e12 - 1);
+        nFileLen = (GUIntBig) (1e12 - 2);
     }
     CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",
                     nFileLen);
@@ -4715,12 +4715,12 @@ static void NITFWriteTextSegments( const char *pszFilename,
         pszTextToWrite = CPLParseNameValue( papszList[iOpt], NULL );
         
         int nTextLength = (int) strlen(pszTextToWrite);
-        if (nTextLength > 99999)
+        if (nTextLength > 99998)
         {
             CPLError(CE_Warning, CPLE_NotSupported,
-                     "Length of DATA_%d is %d, which is greater than 99999. Truncating...",
+                     "Length of DATA_%d is %d, which is greater than 99998. Truncating...",
                      iTextSeg + 1, nTextLength);
-            nTextLength = 99999;
+            nTextLength = 99998;
         }
 
         VSIFWriteL( pszTextToWrite, 1, nTextLength, fpVSIL );
@@ -4748,12 +4748,12 @@ static void NITFWriteTextSegments( const char *pszFilename,
     GUIntBig nFileLen = VSIFTellL( fpVSIL );
 
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
-    if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12)
+    if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12 - 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999999",
+                 "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999998",
                  nFileLen);
-        nFileLen = (GUIntBig)(1e12 - 1);
+        nFileLen = (GUIntBig)(1e12 - 2);
     }
     CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",nFileLen);
     VSIFWriteL( (void *) osLen.c_str(), 1, 12, fpVSIL );
