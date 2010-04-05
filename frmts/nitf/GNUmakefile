@@ -4,7 +4,7 @@ include ../../GDALmake.opt
 
 GDAL_OBJ	=	nitfdataset.o rpftocdataset.o nitfwritejpeg.o nitfwritejpeg_12.o
 NITFLIB_OBJ	=	nitffile.o nitfimage.o mgrs.o nitfaridpcm.o \
-			nitfbilevel.o rpftocfile.o
+			nitfbilevel.o rpftocfile.o nitfdes.o
 
 CPPFLAGS	:=	-I../vrt $(GDAL_INCLUDE) $(CPPFLAGS)
 

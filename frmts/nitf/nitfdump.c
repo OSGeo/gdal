@@ -29,11 +29,61 @@
 
 #include "nitflib.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
 static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC );
 static void DumpMetadata( const char *, const char *, char ** );
+
+
+typedef struct
+{
+    const char* pszLocName;
+    int         nLocID;
+} LocationNameId;
+
+static const LocationNameId asLocationTable[] =
+{
+    { "HeaderComponent", 128 },
+    { "LocationComponent", 129 },
+    { "CoverageSectionSubheader", 130 },
+    { "CompressionSectionSubsection", 131 },
+    { "CompressionLookupSubsection", 132 },
+    { "CompressionParameterSubsection", 133 },
+    { "ColorGrayscaleSectionSubheader", 134 },
+    { "ColormapSubsection", 135 },
+    { "ImageDescriptionSubheader", 136 },
+    { "ImageDisplayParametersSubheader", 137 },
+    { "MaskSubsection", 138 },
+    { "ColorConverterSubsection", 139 },
+    { "SpatialDataSubsection", 140 },
+    { "AttributeSectionSubheader", 141 },
+    { "AttributeSubsection", 142 },
+    { "ExplicitArealCoverageTable", 143 },
+    { "RelatedImagesSectionSubheader", 144 },
+    { "RelatedImagesSubsection", 145 },
+    { "ReplaceUpdateSectionSubheader", 146 },
+    { "ReplaceUpdateTable", 147 },
+    { "BoundaryRectangleSectionSubheader", 148 },
+    { "BoundaryRectangleTable", 149 },
+    { "FrameFileIndexSectionSubHeader", 150 },
+    { "FrameFileIndexSubsection", 151 },
+    { "ColorTableIndexSectionSubheader", 152 },
+    { "ColorTableIndexRecord", 153 }
+};
+
+const char* GetLocationNameFromId(int nID)
+{
+    unsigned int i;
+    for(i=0;i<sizeof(asLocationTable) / sizeof(asLocationTable[0]);i++)
+    {
+        if (asLocationTable[i].nLocID == nID)
+            return asLocationTable[i].pszLocName;
+    }
+    return "(unknown)";
+}
 
 /************************************************************************/
 /*                                main()                                */
@@ -45,11 +95,18 @@ int main( int nArgc, char ** papszArgv )
     NITFFile	*psFile;
     int          iSegment, iFile;
     char         szTemp[100];
+    int          bDisplayTRE = FALSE;
 
     if( nArgc < 2 )
     {
-        printf( "Usage: nitfdump <nitf_filename>*\n" );
+        printf( "Usage: nitfdump [-tre] <nitf_filename>*\n" );
         exit( 1 );
+    }
+    
+    for( iFile = 1; iFile < nArgc; iFile++ )
+    {
+        if ( EQUAL(papszArgv[iFile], "-tre") )
+            bDisplayTRE = TRUE;
     }
 
 /* ==================================================================== */
@@ -57,6 +114,11 @@ int main( int nArgc, char ** papszArgv )
 /* ==================================================================== */
     for( iFile = 1; iFile < nArgc; iFile++ )
     {
+        int bHasFoundLocationTable = FALSE;
+
+        if ( EQUAL(papszArgv[iFile], "-tre") )
+            continue;
+
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
@@ -80,7 +142,7 @@ int main( int nArgc, char ** papszArgv )
             while( nTREBytes > 10 )
             {
                 int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
-                if (nThisTRESize < 0)
+                if (nThisTRESize < 0 || nThisTRESize > nTREBytes - 11)
                 {
                     NITFGetField(szTemp, pszTREData, 0, 6 );
                     printf(" Invalid size (%d) for TRE %s", nThisTRESize, szTemp);
@@ -92,6 +154,30 @@ int main( int nArgc, char ** papszArgv )
                 nTREBytes -= (nThisTRESize + 11);
             }
             printf( "\n" );
+
+            if (bDisplayTRE)
+            {
+                nTREBytes = psFile->nTREBytes;
+                pszTREData = psFile->pachTRE;
+
+                while( nTREBytes > 10 )
+                {
+                    char *pszEscaped;
+                    int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+                    if (nThisTRESize < 0 || nThisTRESize > nTREBytes - 11)
+                    {
+                        break;
+                    }
+
+                    pszEscaped = CPLEscapeString( pszTREData + 11, nThisTRESize,
+                                                       CPLES_BackslashQuotable );
+                    printf( "TRE '%6.6s' : %s\n", pszTREData, pszEscaped);
+                    CPLFree(pszEscaped);
+
+                    pszTREData += nThisTRESize + 11;
+                    nTREBytes -= (nThisTRESize + 11);
+                }
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -185,7 +271,7 @@ int main( int nArgc, char ** papszArgv )
                 while( nTREBytes > 10 )
                 {
                     int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
-                    if (nThisTRESize < 0)
+                    if (nThisTRESize < 0 || nThisTRESize > nTREBytes - 11)
                     {
                         NITFGetField(szTemp, pszTREData, 0, 6 );
                         printf(" Invalid size (%d) for TRE %s", nThisTRESize, szTemp);
@@ -197,16 +283,42 @@ int main( int nArgc, char ** papszArgv )
                     nTREBytes -= (nThisTRESize + 11);
                 }
                 printf( "\n" );
+
+                if (bDisplayTRE)
+                {
+                    nTREBytes = psImage->nTREBytes;
+                    pszTREData = psImage->pachTRE;
+    
+                    while( nTREBytes > 10 )
+                    {
+                        char *pszEscaped;
+                        int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+                        if (nThisTRESize < 0 || nThisTRESize > nTREBytes - 11)
+                        {
+                            break;
+                        }
+    
+                        pszEscaped = CPLEscapeString( pszTREData + 11, nThisTRESize,
+                                                        CPLES_BackslashQuotable );
+                        printf( "  TRE '%6.6s' : %s\n", pszTREData, pszEscaped);
+                        CPLFree(pszEscaped);
+    
+                        pszTREData += nThisTRESize + 11;
+                        nTREBytes -= (nThisTRESize + 11);
+                    }
+                }
             }
 
             /* Report info from location table, if found.                  */
             if( psImage->nLocCount > 0 )
             {
                 int i;
+                bHasFoundLocationTable = TRUE;
                 printf( "  Location Table\n" );
                 for( i = 0; i < psImage->nLocCount; i++ )
                 {
-                    printf( "    LocId=%d, Offset=%d, Size=%d\n", 
+                    printf( "    LocName=%s, LocId=%d, Offset=%d, Size=%d\n", 
+                            GetLocationNameFromId(psImage->pasLocations[i].nLocId),
                             psImage->pasLocations[i].nLocId,
                             psImage->pasLocations[i].nLocOffset,
                             psImage->pasLocations[i].nLocSize );
@@ -253,6 +365,7 @@ int main( int nArgc, char ** papszArgv )
             }
 
             DumpMetadata( "  Image Metadata:", "    ", psImage->papszMetadata );
+            printf("\n");
         }
 
 /* ==================================================================== */
@@ -297,6 +410,88 @@ int main( int nArgc, char ** papszArgv )
                     achSubheader + 2 );
 
             printf( "  sname=%20.20s\n", achSubheader + 12 );
+            printf("\n");
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Report details of DES.                                          */
+/* -------------------------------------------------------------------- */
+        for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+        {
+            NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
+            NITFDES *psDES;
+            int nOffset = 0;
+            char szTREName[7];
+            int nThisTRESize;
+            int nRPFDESOffset = -1;
+
+            if( !EQUAL(psSegInfo->szSegmentType,"DE") )
+                continue;
+        
+            psDES = NITFDESAccess( psFile, iSegment );
+            if( psDES == NULL )
+            {
+                printf( "NITFDESAccess(%d) failed!\n", iSegment );
+                continue;
+            }
+
+            printf( "DE Segment %d:\n", iSegment );
+
+            printf( "  Segment TREs:" );
+            nOffset = 0;
+            while (NITFDESGetTRE( psDES, nOffset, szTREName, NULL, &nThisTRESize))
+            {
+                printf( " %6.6s(%d)", szTREName, nThisTRESize );
+                if (strcmp(szTREName, "RPFDES") == 0)
+                    nRPFDESOffset = nOffset + 11;
+                nOffset += 11 + nThisTRESize;
+            }
+            printf( "\n" );
+
+            if (bDisplayTRE)
+            {
+                char* pabyTREData = NULL;
+                nOffset = 0;
+                while (NITFDESGetTRE( psDES, nOffset, szTREName, &pabyTREData, &nThisTRESize))
+                {
+                    char* pszEscaped = CPLEscapeString( pabyTREData, nThisTRESize,
+                                                        CPLES_BackslashQuotable );
+                    printf( "  TRE '%6.6s' : %s\n", szTREName, pszEscaped);
+                    CPLFree(pszEscaped);
+
+                    nOffset += 11 + nThisTRESize;
+
+                    NITFDESFreeTREData(pabyTREData);
+                }
+            }
+
+            /* Report info from location table, if found. */
+            if( !bHasFoundLocationTable && nRPFDESOffset >= 0 )
+            {
+                int i;
+                int nLocCount = 0;
+                NITFLocation* pasLocations;
+
+                VSIFSeekL(psFile->fp, psSegInfo->nSegmentStart + nRPFDESOffset, SEEK_SET);
+                pasLocations = NITFReadRPFLocationTable(psFile->fp, &nLocCount);
+                if (pasLocations)
+                {
+                    printf( "  Location Table\n" );
+                    for( i = 0; i < nLocCount; i++ )
+                    {
+                        printf( "    LocName=%s, LocId=%d, Offset=%d, Size=%d\n", 
+                                GetLocationNameFromId(pasLocations[i].nLocId),
+                                pasLocations[i].nLocId,
+                                pasLocations[i].nLocOffset,
+                                pasLocations[i].nLocSize );
+                    }
+
+                    CPLFree(pasLocations);
+                    printf( "\n" );
+                }
+            }
+
+            DumpMetadata( "  DES Metadata:", "    ", psDES->papszMetadata );
         }
 
 /* -------------------------------------------------------------------- */
@@ -304,6 +499,9 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
         NITFClose( psFile );
     }
+    
+    CPLCleanupTLS();
+    VSICleanupFileManager();
 
     exit( 0 );
 }
