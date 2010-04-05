@@ -254,6 +254,8 @@ int       CPL_DLL  NITFDESGetTRE(   NITFDES* psDES,
                                     int* pnFoundTRESize);
 void      CPL_DLL  NITFDESFreeTREData( char* pabyTREData );
 
+int       CPL_DLL  NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName);
+
 /* -------------------------------------------------------------------- */
 /*      These are really intended to be private helper stuff for the    */
 /*      library.                                                        */
