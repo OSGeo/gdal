@@ -3026,6 +3026,108 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage )
 }
 
 
+static GUInt16 NITFReadMSBGUInt16(FILE* fp, int* pbSuccess)
+{
+    GUInt16 nVal;
+    if (VSIFReadL(&nVal, 1, sizeof(nVal), fp) != sizeof(nVal))
+    {
+        *pbSuccess = FALSE;
+        return 0;
+    }
+    CPL_MSBPTR16( &nVal );
+    return nVal;
+}
+
+static GUInt32 NITFReadMSBGUInt32(FILE* fp, int* pbSuccess)
+{
+    GUInt32 nVal;
+    if (VSIFReadL(&nVal, 1, sizeof(nVal), fp) != sizeof(nVal))
+    {
+        *pbSuccess = FALSE;
+        return 0;
+    }
+    CPL_MSBPTR32( &nVal );
+    return nVal;
+}
+
+/************************************************************************/
+/*                     NITFReadRPFLocationTable()                       */
+/************************************************************************/
+
+NITFLocation* NITFReadRPFLocationTable(FILE* fp, int* pnLocCount)
+{
+    GUInt16 nLocSectionLength;
+    GUInt32 nLocSectionOffset;
+    GUInt16 iLoc;
+    GUInt16 nLocCount;
+    GUInt16 nLocRecordLength;
+    GUInt32 nLocComponentAggregateLength;
+    NITFLocation* pasLocations = NULL;
+    int bSuccess;
+    GUIntBig nCurOffset;
+
+    if (fp == NULL || pnLocCount == NULL)
+        return NULL;
+
+    *pnLocCount = 0;
+
+    nCurOffset = VSIFTellL(fp);
+
+    bSuccess = TRUE;
+    nLocSectionLength = NITFReadMSBGUInt16(fp, &bSuccess);
+    nLocSectionOffset = NITFReadMSBGUInt32(fp, &bSuccess);
+    if (nLocSectionOffset != 14)
+    {
+        CPLDebug("NITF", "Unusual location section offset : %d", nLocSectionOffset);
+    }
+
+    nLocCount = NITFReadMSBGUInt16(fp, &bSuccess);
+
+    if (!bSuccess || nLocCount == 0)
+    {
+        return NULL;
+    }
+
+    nLocRecordLength = NITFReadMSBGUInt16(fp, &bSuccess);
+    if (nLocRecordLength != 10)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Did not get expected record length : %d", nLocRecordLength);
+        return NULL;
+    }
+
+    nLocComponentAggregateLength = NITFReadMSBGUInt32(fp, &bSuccess);
+
+    VSIFSeekL(fp, nCurOffset + nLocSectionOffset, SEEK_SET);
+
+    pasLocations = (NITFLocation *)  VSICalloc(sizeof(NITFLocation), nLocCount);
+    if (pasLocations == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Cannot allocate memory for location table");
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process the locations.                                          */
+/* -------------------------------------------------------------------- */
+    for( iLoc = 0; iLoc < nLocCount; iLoc++ )
+    {
+        pasLocations[iLoc].nLocId = NITFReadMSBGUInt16(fp, &bSuccess);
+        pasLocations[iLoc].nLocSize = NITFReadMSBGUInt32(fp, &bSuccess);
+        pasLocations[iLoc].nLocOffset = NITFReadMSBGUInt32(fp, &bSuccess);
+    }
+
+    if (!bSuccess)
+    {
+        CPLFree(pasLocations);
+        return NULL;
+    }
+
+    *pnLocCount = nLocCount;
+    return pasLocations;
+}
+
 /************************************************************************/
 /*                       NITFLoadLocationTable()                        */
 /************************************************************************/
@@ -3036,75 +3138,25 @@ static void NITFLoadLocationTable( NITFImage *psImage )
 /* -------------------------------------------------------------------- */
 /*      Get the location table out of the RPFIMG TRE on the image.      */
 /* -------------------------------------------------------------------- */
-    GUInt16  nLocCount;
-    int      iLoc;
     const char *pszTRE;
     int nHeaderOffset = 0;
     int i;
-    int nRemainingBytes;
+    int nTRESize;
+    char szTempFileName[32];
+    FILE* fpTemp;
 
-    pszTRE = NITFFindTRE(psImage->pachTRE, psImage->nTREBytes, "RPFIMG", &nRemainingBytes);
+    pszTRE = NITFFindTRE(psImage->pachTRE, psImage->nTREBytes, "RPFIMG", &nTRESize);
     if( pszTRE == NULL )
         return;
 
-    pszTRE += 6;
-    nRemainingBytes -= 6;
+    sprintf(szTempFileName, "/vsimem/%p", pszTRE);
+    fpTemp = VSIFileFromMemBuffer( szTempFileName, (GByte*) pszTRE, nTRESize, FALSE);
+    psImage->pasLocations = NITFReadRPFLocationTable(fpTemp, &psImage->nLocCount);
+    VSIFCloseL(fpTemp);
+    VSIUnlink(szTempFileName);
 
-    if (nRemainingBytes < 2)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot read location table. Not enough bytes");
-        return;
-    }
-
-    memcpy( &nLocCount, pszTRE, 2 );
-    nLocCount = CPL_MSBWORD16( nLocCount );
-
-    psImage->nLocCount = nLocCount;
     if (psImage->nLocCount == 0)
         return;
-
-    psImage->pasLocations = (NITFLocation *) 
-        VSICalloc(sizeof(NITFLocation), nLocCount);
-    if (psImage->pasLocations == NULL)
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate memory for location table");
-        psImage->nLocCount = 0;
-        return;
-    }
-
-    pszTRE += 8;
-    nRemainingBytes -= 8;
-
-    if (nRemainingBytes < nLocCount * 10)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot read location table. Not enough bytes");
-        CPLFree(psImage->pasLocations);
-        psImage->pasLocations = NULL;
-        psImage->nLocCount = 0;
-        return;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Process the locations.                                          */
-/* -------------------------------------------------------------------- */
-    
-    for( iLoc = 0; iLoc < nLocCount; iLoc++ )
-    {
-        unsigned char *pabyEntry = (unsigned char *) pszTRE;
-        pszTRE += 10;
-        nRemainingBytes -= 10;
-
-        psImage->pasLocations[iLoc].nLocId = pabyEntry[0] * 256 + pabyEntry[1];
-
-        CPL_MSBPTR32( pabyEntry + 2 );
-        memcpy( &(psImage->pasLocations[iLoc].nLocSize), pabyEntry + 2, 4 );
-
-        CPL_MSBPTR32( pabyEntry + 6 );
-        memcpy( &(psImage->pasLocations[iLoc].nLocOffset), pabyEntry + 6, 4 );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      It seems that sometimes (at least for bug #1313 and #1714)      */

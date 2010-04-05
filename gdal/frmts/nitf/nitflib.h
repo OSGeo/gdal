@@ -231,6 +231,8 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
                            GByte *pabyInputData, int nInputBytes,
                            GByte *pabyOutputImage );
 
+NITFLocation* NITFReadRPFLocationTable(FILE* fp, int* pnLocCount);
+
 /* -------------------------------------------------------------------- */
 /*      These are really intended to be private helper stuff for the    */
 /*      library.                                                        */
