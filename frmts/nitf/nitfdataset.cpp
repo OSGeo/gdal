@@ -3807,6 +3807,15 @@ NITFDataset::NITFCreateCopy(
     {
         CPLString osTRE;
 
+        if (EQUALN(papszSrcMD[iMD], "RPFHDR", 6) ||
+            EQUALN(papszSrcMD[iMD], "RPFIMG", 6) ||
+            EQUALN(papszSrcMD[iMD], "RPFDES", 6))
+        {
+            /* Do not copy RPF TRE. They contain absolute offsets */
+            /* No chance that they make sense in the new NITF file */
+            continue;
+        }
+
         osTRE = "TRE=";
         osTRE += papszSrcMD[iMD];
 
