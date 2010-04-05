@@ -447,6 +447,8 @@ void NITFClose( NITFFile *psFile )
 
         if( EQUAL(psSegInfo->szSegmentType,"IM"))
             NITFImageDeaccess( (NITFImage *) psSegInfo->hAccess );
+        else if( EQUAL(psSegInfo->szSegmentType,"DE"))
+            NITFDESDeaccess( (NITFDES *) psSegInfo->hAccess );
         else
         {
             CPLAssert( FALSE );
@@ -1352,6 +1354,13 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLen, int nOffset, const
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment header size : %s", szTemp);
             return -1;
         }
+
+        if (strcmp(szType, "DE") == 0 && psInfo->nSegmentHeaderSize == 207)
+        {
+            /* DMAAC A.TOC files have a wrong header size. It says 207 but it is 209 really */
+            psInfo->nSegmentHeaderSize = 209;
+        }
+
         psInfo->nSegmentSize = 
             CPLScanUIntBig(NITFGetField(szTemp,psFile->pachHeader, 
                               nOffset + 3 + iSegment * (nHeaderLenSize+nDataLenSize) 

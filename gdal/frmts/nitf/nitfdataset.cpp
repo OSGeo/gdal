@@ -2863,6 +2863,48 @@ void NITFDataset::InitializeTREMetadata()
             pszTREData += (nThisTRESize + 11);
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over TRE in DES                                            */
+/* -------------------------------------------------------------------- */
+    int iSegment;
+    for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+    {
+        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
+        NITFDES *psDES;
+        int nOffset = 0;
+        char szTREName[7];
+        int nThisTRESize;
+
+        if( !EQUAL(psSegInfo->szSegmentType,"DE") )
+            continue;
+
+        psDES = NITFDESAccess( psFile, iSegment );
+        if( psDES == NULL )
+            continue;
+
+        char* pabyTREData = NULL;
+        nOffset = 0;
+        while (NITFDESGetTRE( psDES, nOffset, szTREName, &pabyTREData, &nThisTRESize))
+        {
+            char* pszEscapedData = CPLEscapeString( pabyTREData, nThisTRESize,
+                                                CPLES_BackslashQuotable );
+
+            // trim white off tag. 
+            while( strlen(szTREName) > 0 && szTREName[strlen(szTREName)-1] == ' ' )
+                szTREName[strlen(szTREName)-1] = '\0';
+
+            oSpecialMD.SetMetadataItem( szTREName, pszEscapedData, "TRE" );
+
+            CPLFree(pszEscapedData);
+
+            nOffset += 11 + nThisTRESize;
+
+            NITFDESFreeTREData(pabyTREData);
+        }
+
+        NITFDESDeaccess(psDES);
+    }
 }
 
 /************************************************************************/
