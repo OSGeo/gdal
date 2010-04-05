@@ -45,6 +45,7 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
     NITFDES   *psDES;
     char      *pachHeader;
     NITFSegmentInfo *psSegInfo;
+    char       szDESID[26];
     char       szTemp[128];
     int        nOffset;
     char       chDECLAS;
@@ -165,12 +166,12 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
     }
 
     /* Load DESID */
-    NITFGetField( szTemp, pachHeader, 2, 25);
+    NITFGetField( szDESID, pachHeader, 2, 25);
 
     /* For NITF < 02.10, we cannot rely on DESID=TRE_OVERFLOW to detect */
     /* if DESOFLW and DESITEM are present. So if the next 4 bytes are non */
     /* numeric, we'll assume that DESOFLW is there */
-    bHasDESOFLW = EQUALN(szTemp, "TRE_OVERFLOW", strlen("TRE_OVERFLOW")) ||
+    bHasDESOFLW = EQUALN(szDESID, "TRE_OVERFLOW", strlen("TRE_OVERFLOW")) ||
        (!((pachHeader[nOffset+0] >= '0' && pachHeader[nOffset+0] <= '9') &&
           (pachHeader[nOffset+1] >= '0' && pachHeader[nOffset+1] <= '9') &&
           (pachHeader[nOffset+2] >= '0' && pachHeader[nOffset+2] <= '9') &&
@@ -215,7 +216,28 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
         return NULL;
     }
 
-    if (nDESSHL > 0)
+    if (EQUALN(szDESID, "CSSHPA DES", strlen("CSSHPA DES")))
+    {
+        if ( nDESSHL != 62 && nDESSHL != 80)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid DESSHL for CSSHPA DES");
+            NITFDESDeaccess(psDES);
+            return NULL;
+        }
+
+        GetMD( 25, SHAPE_USE );
+        GetMD( 10, SHAPE_CLASS );
+        if (nDESSHL == 80)
+            GetMD( 18, CC_SOURCE );
+        GetMD(  3, SHAPE1_NAME );
+        GetMD(  6, SHAPE1_START );
+        GetMD(  3, SHAPE2_NAME );
+        GetMD(  6, SHAPE2_START );
+        GetMD(  3, SHAPE3_NAME );
+        GetMD(  6, SHAPE3_START );
+    }
+    else if (nDESSHL > 0)
         GetMD(  nDESSHL, DESSHF );
 
     if ((int)psSegInfo->nSegmentHeaderSize > nOffset)
@@ -368,4 +390,86 @@ int   NITFDESGetTRE( NITFDES* psDES,
 void NITFDESFreeTREData( char* pabyTREData )
 {
     VSIFree(pabyTREData);
+}
+
+
+/************************************************************************/
+/*                        NITFDESExtractShapefile()                     */
+/************************************************************************/
+
+int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
+{
+    NITFSegmentInfo* psSegInfo;
+    const char* apszExt[3];
+    int anOffset[4];
+    int iShpFile;
+    char* pszFilename;
+
+    if ( CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE_USE") == NULL )
+        return FALSE;
+
+    psSegInfo = psDES->psFile->pasSegmentInfo + psDES->iSegment;
+
+    apszExt[0] = CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE1_NAME");
+    anOffset[0] = atoi(CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE1_START"));
+    apszExt[1] = CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE2_NAME");
+    anOffset[1] = atoi(CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE2_START"));
+    apszExt[2] = CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE3_NAME");
+    anOffset[2] = atoi(CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE3_START"));
+    anOffset[3] = (int) psSegInfo->nSegmentSize;
+
+    for(iShpFile = 0; iShpFile < 3; iShpFile ++)
+    {
+        if (!EQUAL(apszExt[iShpFile], "SHP") &&
+            !EQUAL(apszExt[iShpFile], "SHX") &&
+            !EQUAL(apszExt[iShpFile], "DBF"))
+            return FALSE;
+
+        if (anOffset[iShpFile] < 0 ||
+            anOffset[iShpFile] >= anOffset[iShpFile+1])
+            return FALSE;
+    }
+
+    pszFilename = (char*) VSIMalloc(strlen(pszRadixFileName) + 4 + 1);
+    if (pszFilename == NULL)
+        return FALSE;
+
+    for(iShpFile = 0; iShpFile < 3; iShpFile ++)
+    {
+        FILE* fp;
+        GByte* pabyBuffer;
+        int nSize = anOffset[iShpFile+1] - anOffset[iShpFile];
+
+        pabyBuffer = (GByte*) VSIMalloc(nSize);
+        if (pabyBuffer == NULL)
+        {
+            VSIFree(pszFilename);
+            return FALSE;
+        }
+
+        VSIFSeekL(psDES->psFile->fp, psSegInfo->nSegmentStart + anOffset[iShpFile], SEEK_SET);
+        if (VSIFReadL(pabyBuffer, 1, nSize, psDES->psFile->fp) != nSize)
+        {
+            VSIFree(pabyBuffer);
+            VSIFree(pszFilename);
+            return FALSE;
+        }
+
+        sprintf(pszFilename, "%s.%s", pszRadixFileName, apszExt[iShpFile]);
+        fp = VSIFOpenL(pszFilename, "wb");
+        if (fp == NULL)
+        {
+            VSIFree(pabyBuffer);
+            VSIFree(pszFilename);
+            return FALSE;
+        }
+
+        VSIFWriteL(pabyBuffer, 1, nSize, fp);
+        VSIFCloseL(fp);
+        VSIFree(pabyBuffer);
+    }
+
+    VSIFree(pszFilename);
+
+    return TRUE;
 }
