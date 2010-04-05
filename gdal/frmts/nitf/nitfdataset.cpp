@@ -2675,6 +2675,7 @@ void NITFDataset::InitializeCGMMetadata()
                       "Failed to read " CPL_FRMT_GUIB " bytes of graphic data at " CPL_FRMT_GUIB ".", 
                       psSegment->nSegmentSize,
                       psSegment->nSegmentStart );
+            CPLFree(pabyCGMData);
             return;
         }
 
@@ -2744,6 +2745,7 @@ void NITFDataset::InitializeTextMetadata()
                       "Failed to read %d bytes of text header data at " CPL_FRMT_GUIB ".",
                       psSegment->nSegmentHeaderSize,
                       psSegment->nSegmentHeaderStart);
+            CPLFree(pabyHeaderData);
             return;
         }
 
@@ -2767,6 +2769,7 @@ void NITFDataset::InitializeTextMetadata()
                       "Failed to read " CPL_FRMT_GUIB " bytes of text data at " CPL_FRMT_GUIB ".", 
                       psSegment->nSegmentSize,
                       psSegment->nSegmentStart );
+            CPLFree( pabyTextData );
             return;
         }
 
