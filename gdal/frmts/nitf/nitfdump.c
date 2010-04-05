@@ -429,6 +429,70 @@ int main( int nArgc, char ** papszArgv )
             printf("\n");
         }
 
+/* ==================================================================== */
+/*      Report details of text segments.                                */
+/* ==================================================================== */
+        for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+        {
+            char *pabyHeaderData;
+            char *pabyTextData;
+
+            NITFSegmentInfo *psSegment = psFile->pasSegmentInfo + iSegment;
+
+            if( !EQUAL(psSegment->szSegmentType,"TX") )
+                continue;
+
+            printf( "Text Segment %d\n", iSegment + 1);
+
+/* -------------------------------------------------------------------- */
+/*      Load the text header                                            */
+/* -------------------------------------------------------------------- */
+
+            /* Allocate one extra byte for the NULL terminating character */
+            pabyHeaderData = (char *) CPLCalloc(1,
+                    (size_t) psSegment->nSegmentHeaderSize + 1);
+            if (VSIFSeekL(psFile->fp, psSegment->nSegmentHeaderStart,
+                        SEEK_SET) != 0 ||
+                VSIFReadL(pabyHeaderData, 1, (size_t) psSegment->nSegmentHeaderSize,
+                        psFile->fp) != psSegment->nSegmentHeaderSize)
+            {
+                CPLError( CE_Warning, CPLE_FileIO,
+                        "Failed to read %d bytes of text header data at " CPL_FRMT_GUIB ".",
+                        psSegment->nSegmentHeaderSize,
+                        psSegment->nSegmentHeaderStart);
+                CPLFree(pabyHeaderData);
+                continue;
+            }
+
+            printf("  Header : %s\n", pabyHeaderData);
+            CPLFree(pabyHeaderData);
+
+/* -------------------------------------------------------------------- */
+/*      Load the raw TEXT data itself.                                  */
+/* -------------------------------------------------------------------- */
+
+
+            /* Allocate one extra byte for the NULL terminating character */
+            pabyTextData = (char *) CPLCalloc(1,(size_t)psSegment->nSegmentSize+1);
+            if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
+                        SEEK_SET ) != 0 
+                || VSIFReadL( pabyTextData, 1, (size_t)psSegment->nSegmentSize, 
+                            psFile->fp ) != psSegment->nSegmentSize )
+            {
+                CPLError( CE_Warning, CPLE_FileIO, 
+                        "Failed to read " CPL_FRMT_GUIB " bytes of text data at " CPL_FRMT_GUIB ".", 
+                        psSegment->nSegmentSize,
+                        psSegment->nSegmentStart );
+                CPLFree( pabyTextData );
+                continue;
+            }
+
+            printf("  Data  : %s\n", pabyTextData);
+            printf("\n");
+            CPLFree( pabyTextData );
+
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Report details of DES.                                          */
 /* -------------------------------------------------------------------- */
