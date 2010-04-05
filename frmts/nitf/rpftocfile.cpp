@@ -122,11 +122,11 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
     int i, j;
     unsigned int locationSectionPhysicalLocation;
     
-    unsigned short nSections;
-    unsigned int boundaryRectangleSectionSubHeaderPhysIndex = 0, boundaryRectangleSectionSubHeaderLength = 0;
-    unsigned int boundaryRectangleTablePhysIndex = 0, boundaryRectangleTableLength = 0;
-    unsigned int frameFileIndexSectionSubHeaderPhysIndex = 0, frameFileIndexSectionSubHeaderLength = 0;
-    unsigned int frameFileIndexSubsectionPhysIndex = 0, frameFileIndexSubsectionLength = 0;
+    int nSections;
+    unsigned int boundaryRectangleSectionSubHeaderPhysIndex = 0;
+    unsigned int boundaryRectangleTablePhysIndex = 0;
+    unsigned int frameFileIndexSectionSubHeaderPhysIndex = 0;
+    unsigned int frameFileIndexSubsectionPhysIndex = 0;
     
     unsigned int boundaryRectangleTableOffset;
     unsigned short boundaryRectangleCount;
@@ -161,50 +161,29 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
         return NULL;
     }
     
-    /* Skip location section length (4) and component location table offset (2)*/
-    VSIFSeekL( fp, 4 + 2, SEEK_CUR);
-    
-    /* How many sections: # of section location records */
-    VSIFReadL( &nSections, 1, sizeof(nSections), fp);
-    CPL_MSBPTR16( &nSections );
-    
-    /* Skip location record length(2) + component aggregate length(4) */
-    VSIFSeekL( fp, 2 + 4, SEEK_CUR);
+    NITFLocation* pasLocations = NITFReadRPFLocationTable(fp, &nSections);
     
     for (i = 0; i < nSections; i++)
     {
-        unsigned short id;
-        unsigned int sectionLength, physIndex;
-        VSIFReadL( &id, 1, sizeof(id), fp);
-        CPL_MSBPTR16( &id );
-        
-        VSIFReadL( &sectionLength, 1, sizeof(sectionLength), fp);
-        CPL_MSBPTR32( &sectionLength );
-        
-        VSIFReadL( &physIndex, 1, sizeof(physIndex), fp);
-        CPL_MSBPTR32( &physIndex );
-        
-        if (id == LID_BoundaryRectangleSectionSubheader)
+        if (pasLocations[i].nLocId == LID_BoundaryRectangleSectionSubheader)
         {
-            boundaryRectangleSectionSubHeaderPhysIndex = physIndex;
-            boundaryRectangleSectionSubHeaderLength = sectionLength;
+            boundaryRectangleSectionSubHeaderPhysIndex = pasLocations[i].nLocOffset;
         }
-        else if (id == LID_BoundaryRectangleTable)
+        else if (pasLocations[i].nLocId == LID_BoundaryRectangleTable)
         {
-            boundaryRectangleTablePhysIndex = physIndex;
-            boundaryRectangleTableLength = sectionLength;
+            boundaryRectangleTablePhysIndex = pasLocations[i].nLocOffset;
         }
-        else if (id == LID_FrameFileIndexSectionSubHeader)
+        else if (pasLocations[i].nLocId == LID_FrameFileIndexSectionSubHeader)
         {
-            frameFileIndexSectionSubHeaderPhysIndex = physIndex;
-            frameFileIndexSectionSubHeaderLength = sectionLength;
+            frameFileIndexSectionSubHeaderPhysIndex = pasLocations[i].nLocOffset;
         }
-        else if (id == LID_FrameFileIndexSubsection)
+        else if (pasLocations[i].nLocId == LID_FrameFileIndexSubsection)
         {
-            frameFileIndexSubsectionPhysIndex = physIndex;
-            frameFileIndexSubsectionLength = sectionLength;
+            frameFileIndexSubsectionPhysIndex = pasLocations[i].nLocOffset;
         }
     }
+
+    CPLFree(pasLocations);
     
     if (boundaryRectangleSectionSubHeaderPhysIndex == 0)
     {
