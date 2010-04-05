@@ -1625,6 +1625,23 @@ def nitf_60():
     return 'success'
 
 ###############################################################################
+# Test reading TRE from DE segment
+
+def nitf_61():
+
+    # Derived from http://www.gwg.nga.mil/ntb/baseline/software/testfile/rsm/SampleFiles/FrameSet1/NITF_Files/i_6130a.zip
+    # but hand edited to have just 1x1 imagery
+    ds = gdal.Open('data/i_6130a_truncated.ntf')
+    md = ds.GetMetadata('TRE')
+    ds = None
+
+    if md is None or 'RSMDCA' not in md or 'RSMECA' not in md or 'RSMPCA' not in md or 'RSMIDA' not in md:
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -2203,6 +2220,27 @@ def nitf_online_20():
     return 'success'
 
 ###############################################################################
+# Check that we can read NITF header located in STREAMING_FILE_HEADER DE 
+# segment when header at beginning of file is incomplete
+
+def nitf_online_21():
+
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3321a.nsf', 'ns3321a.nsf'):
+        return 'skip'
+
+    ds = gdal.Open( 'tmp/cache/ns3321a.nsf' )
+    md = ds.GetMetadata()
+    ds = None
+
+    # If we get NS3321A, it means we are not exploiting the header from the STREAMING_FILE_HEADER DE segment
+    if md['NITF_OSTAID'] != 'I_3321A':
+        gdaltest.post_reason('did not get expected OSTAID value')
+        print(md['NITF_OSTAID'])
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -2410,6 +2448,7 @@ gdaltest_list = [
     nitf_58,
     nitf_59,
     nitf_60,
+    nitf_61,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
@@ -2439,6 +2478,7 @@ gdaltest_list = [
     nitf_online_18,
     nitf_online_19,
     nitf_online_20,
+    nitf_online_21,
     nitf_cleanup ]
 
 if __name__ == '__main__':
