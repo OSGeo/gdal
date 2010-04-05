@@ -1,7 +1,7 @@
 
 GDAL_OBJ	=	nitfdataset.obj rpftocdataset.obj nitfwritejpeg.obj nitfwritejpeg_12.obj
 NITFLIB_OBJ	=	nitffile.obj nitfimage.obj mgrs.obj nitfaridpcm.obj \
-			nitfbilevel.obj rpftocfile.obj
+			nitfbilevel.obj rpftocfile.obj nitfdes.obj
 
 OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 

@@ -234,6 +234,27 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
 NITFLocation* NITFReadRPFLocationTable(FILE* fp, int* pnLocCount);
 
 /* -------------------------------------------------------------------- */
+/*      DE segment access.                                              */
+/* -------------------------------------------------------------------- */
+typedef struct {
+    NITFFile  *psFile;
+    int        iSegment;
+    char      *pachHeader;
+
+    char       **papszMetadata;
+} NITFDES;
+
+NITFDES   CPL_DLL *NITFDESAccess( NITFFile *, int iSegment );
+void      CPL_DLL  NITFDESDeaccess( NITFDES * );
+
+int       CPL_DLL  NITFDESGetTRE(   NITFDES* psDES,
+                                    int nOffset,
+                                    char szTREName[7],
+                                    char** ppabyTREData,
+                                    int* pnFoundTRESize);
+void      CPL_DLL  NITFDESFreeTREData( char* pabyTREData );
+
+/* -------------------------------------------------------------------- */
 /*      These are really intended to be private helper stuff for the    */
 /*      library.                                                        */
 /* -------------------------------------------------------------------- */
