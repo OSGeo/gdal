@@ -32,6 +32,10 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
+#ifdef OGR_ENABLED
+#include "ogr_api.h"
+#endif
+
 CPL_CVSID("$Id$");
 
 static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC );
@@ -96,10 +100,11 @@ int main( int nArgc, char ** papszArgv )
     int          iSegment, iFile;
     char         szTemp[100];
     int          bDisplayTRE = FALSE;
+    int          bExtractSHP = FALSE, bExtractSHPInMem = FALSE;
 
     if( nArgc < 2 )
     {
-        printf( "Usage: nitfdump [-tre] <nitf_filename>*\n" );
+        printf( "Usage: nitfdump [-tre] [-extractshp | -extractshpinmem] <nitf_filename>*\n" );
         exit( 1 );
     }
     
@@ -107,6 +112,13 @@ int main( int nArgc, char ** papszArgv )
     {
         if ( EQUAL(papszArgv[iFile], "-tre") )
             bDisplayTRE = TRUE;
+        else if ( EQUAL(papszArgv[iFile], "-extractshp") )
+            bExtractSHP = TRUE;
+        else if ( EQUAL(papszArgv[iFile], "-extractshpinmem") )
+        {
+            bExtractSHP = TRUE;
+            bExtractSHPInMem = TRUE;
+        }
     }
 
 /* ==================================================================== */
@@ -117,6 +129,10 @@ int main( int nArgc, char ** papszArgv )
         int bHasFoundLocationTable = FALSE;
 
         if ( EQUAL(papszArgv[iFile], "-tre") )
+            continue;
+        if ( EQUAL(papszArgv[iFile], "-extractshp") )
+            continue;
+        if ( EQUAL(papszArgv[iFile], "-extractshpinmem") )
             continue;
 
 /* -------------------------------------------------------------------- */
@@ -235,7 +251,7 @@ int main( int nArgc, char ** papszArgv )
             }
 
             printf( "Image Segment %d, %dPx%dLx%dB x %dbits:\n", 
-                    iSegment, psImage->nCols, psImage->nRows, 
+                    iSegment + 1, psImage->nCols, psImage->nRows, 
                     psImage->nBands, psImage->nBitsPerSample );
             printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s, ICORDS=%c\n", 
                     psImage->szPVType, psImage->szIREP, psImage->szICAT,
@@ -404,7 +420,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Report some standard info.                                      */
 /* -------------------------------------------------------------------- */
             printf( "Graphic Segment %d, type=%2.2s, sfmt=%c, sid=%10.10s\n",
-                    iSegment, 
+                    iSegment + 1, 
                     achSubheader + 0, 
                     achSubheader[nSTYPEOffset],
                     achSubheader + 2 );
@@ -435,7 +451,7 @@ int main( int nArgc, char ** papszArgv )
                 continue;
             }
 
-            printf( "DE Segment %d:\n", iSegment );
+            printf( "DE Segment %d:\n", iSegment + 1 );
 
             printf( "  Segment TREs:" );
             nOffset = 0;
@@ -492,6 +508,60 @@ int main( int nArgc, char ** papszArgv )
             }
 
             DumpMetadata( "  DES Metadata:", "    ", psDES->papszMetadata );
+
+            if ( bExtractSHP && CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE_USE") != NULL )
+            {
+                char szFilename[32];
+                char szRadix[32];
+                if (bExtractSHPInMem)
+                    sprintf(szRadix, "/vsimem/nitf_segment_%d", iSegment + 1);
+                else
+                    sprintf(szRadix, "nitf_segment_%d", iSegment + 1);
+
+                if (NITFDESExtractShapefile(psDES, szRadix))
+                {
+#ifdef OGR_ENABLED
+                    OGRDataSourceH hDS;
+                    OGRRegisterAll();
+                    sprintf(szFilename, "%s.SHP", szRadix);
+                    hDS = OGROpen(szFilename, FALSE, NULL);
+                    if (hDS)
+                    {
+                        int nGeom = 0;
+                        OGRLayerH hLayer = OGR_DS_GetLayer(hDS, 0);
+                        if (hLayer)
+                        {
+                            OGRFeatureH hFeat;
+                            printf("\n");
+                            while ( (hFeat = OGR_L_GetNextFeature(hLayer)) != NULL )
+                            {
+                                OGRGeometryH hGeom = OGR_F_GetGeometryRef(hFeat);
+                                if (hGeom)
+                                {
+                                    char* pszWKT = NULL;
+                                    OGR_G_ExportToWkt(hGeom, &pszWKT);
+                                    if (pszWKT)
+                                        printf("    Geometry %d : %s\n", nGeom ++, pszWKT);
+                                    CPLFree(pszWKT);
+                                }
+                                OGR_F_Destroy(hFeat);
+                            }
+                        }
+                        OGR_DS_Destroy(hDS);
+                    }
+#endif
+                }
+
+                if (bExtractSHPInMem)
+                {
+                    sprintf(szFilename, "%s.SHP", szRadix);
+                    VSIUnlink(szFilename);
+                    sprintf(szFilename, "%s.SHX", szRadix);
+                    VSIUnlink(szFilename);
+                    sprintf(szFilename, "%s.DBF", szRadix);
+                    VSIUnlink(szFilename);
+                }
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -500,8 +570,12 @@ int main( int nArgc, char ** papszArgv )
         NITFClose( psFile );
     }
     
+    CPLFinderClean();
     CPLCleanupTLS();
     VSICleanupFileManager();
+#ifdef OGR_ENABLED
+    OGRCleanupAll();
+#endif
 
     exit( 0 );
 }
