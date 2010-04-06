@@ -40,6 +40,17 @@ namespace PCIDSK
         Mutex          *io_mutex;
     };
 
+    /************************************************************************/
+    /*                           ProtectedEDBFile                           */
+    /************************************************************************/
+    struct ProtectedEDBFile
+    {
+        EDBFile        *file;
+        std::string     filename;
+        int             writable;
+        Mutex          *io_mutex;
+    };
+
 } // end namespace PCIDSK
 
 #endif // __INCLUDE_CORE_PROTECTEDFILE_H
