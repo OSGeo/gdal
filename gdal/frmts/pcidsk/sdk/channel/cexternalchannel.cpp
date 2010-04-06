@@ -41,6 +41,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 
 using namespace PCIDSK;
 
