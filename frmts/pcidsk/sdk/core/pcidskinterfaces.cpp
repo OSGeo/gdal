@@ -44,6 +44,7 @@ PCIDSKInterfaces::PCIDSKInterfaces()
 
 {
     io = GetDefaultIOInterfaces();
+    OpenEDB = DefaultOpenEDB;
     CreateMutex = DefaultCreateMutex;
 
 #if defined(HAVE_LIBJPEG)

@@ -44,7 +44,7 @@ namespace PCIDSK
     /*                            CPCIDSKGeoref                             */
     /************************************************************************/
 
-    class CPCIDSKBitmap : public CPCIDSKSegment, 
+    class CPCIDSKBitmap : public CPCIDSKSegment,
                           public PCIDSKChannel
     {
     public:
@@ -69,10 +69,11 @@ namespace PCIDSK
         virtual bool IsOverviewValid( int i );
         virtual std::string GetOverviewResampling( int i );
         virtual void SetOverviewValidity( int i, bool validity );
+        virtual std::vector<int> GetOverviewLevelMapping() const;
 
-        virtual std::string GetMetadataValue( const std::string &key );
+        virtual std::string GetMetadataValue( const std::string &key ) const;
         virtual void SetMetadataValue( const std::string &key, const std::string &value );
-        virtual std::vector<std::string> GetMetadataKeys();
+        virtual std::vector<std::string> GetMetadataKeys() const;
 
         virtual void Synchronize();
 

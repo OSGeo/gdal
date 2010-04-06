@@ -71,14 +71,15 @@ namespace PCIDSK
         bool IsOverviewValid( int i );
         void SetOverviewValidity( int i, bool validity );
         std::string GetOverviewResampling( int i );
+        std::vector<int> GetOverviewLevelMapping() const;
 
         int         GetChannelNumber() { return channel_number; }
 
-        std::string GetMetadataValue( const std::string &key ) 
+        std::string GetMetadataValue( const std::string &key ) const 
             { return metadata.GetMetadataValue(key); }
         void        SetMetadataValue( const std::string &key, const std::string &value ) 
             { metadata.SetMetadataValue(key,value); }
-        std::vector<std::string> GetMetadataKeys() 
+        std::vector<std::string> GetMetadataKeys() const
             { return metadata.GetMetadataKeys(); }
 
         virtual void Synchronize() {}
@@ -96,7 +97,7 @@ namespace PCIDSK
 
     protected:
         CPCIDSKFile *file;
-        MetadataSet  metadata;
+        mutable MetadataSet  metadata;
 
         void LoadHistory( const PCIDSKBuffer &image_header );
         std::vector<std::string> history_;
@@ -114,12 +115,14 @@ namespace PCIDSK
         mutable int       block_height;
 
     // info about overviews;
-        void      EstablishOverviewInfo();
+        void      EstablishOverviewInfo() const;
 
-        bool                         overviews_initialized;
-        std::vector<std::string>     overview_infos;
-        std::vector<CTiledChannel *> overview_bands;
-        std::vector<int>             overview_decimations;
+        mutable bool                         overviews_initialized;
+        mutable std::vector<std::string>     overview_infos;
+        mutable std::vector<CTiledChannel *> overview_bands;
+        mutable std::vector<int>             overview_decimations;
+
+        void      InvalidateOverviews();
     };
 } // end namespace PCIDSK
 

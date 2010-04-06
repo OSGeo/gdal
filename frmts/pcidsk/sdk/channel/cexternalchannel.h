@@ -1,9 +1,13 @@
 /******************************************************************************
  *
- * Purpose:  Primary public include file for PCIDSK SDK.
+ * Purpose:  Declaration of the CExternalChannel class.
+ *
+ * This class is used to implement band interleaved channels that are
+ * references to an external image database that is not just a raw file.
+ * It uses the application supplied EDB interface to access non-PCIDSK files.
  * 
  ******************************************************************************
- * Copyright (c) 2009
+ * Copyright (c) 2010
  * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,54 +28,60 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
-#ifndef __INCLUDE_SEGMENT_PCIDSKSEGMENT_H
-#define __INCLUDE_SEGMENT_PCIDSKSEGMENT_H
+
+#ifndef __INCLUDE_CHANNEL_CEXTERNALCHANNEL_H
+#define __INCLUDE_CHANNEL_CEXTERNALCHANNEL_H
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
+#include "pcidsk_buffer.h"
+#include "channel/cpcidskchannel.h"
 #include <string>
-#include <vector>
 
 namespace PCIDSK
 {
+    class CPCIDSKFile;
+
 /************************************************************************/
-/*                            PCIDSKSegment                             */
+/*                           CExternalChannel                           */
 /************************************************************************/
 
-//! Public tnterface for the PCIDSK Segment Type
-
-    class PCIDSKSegment 
+    class CExternalChannel : public CPCIDSKChannel
     {
     public:
-        virtual	~PCIDSKSegment() {}
+        CExternalChannel( PCIDSKBuffer &image_header, 
+            uint64 ih_offset,
+            PCIDSKBuffer &file_header, 
+            int channelnum,
+            CPCIDSKFile *file,
+            eChanType pixel_type );
+        virtual ~CExternalChannel();
 
-        virtual void Initialize() {}
+        virtual int GetBlockWidth() const;
+        virtual int GetBlockHeight() const;
+        virtual int ReadBlock( int block_index, void *buffer,
+            int xoff=-1, int yoff=-1,
+            int xsize=-1, int ysize=-1 );
+        virtual int WriteBlock( int block_index, void *buffer );
 
-        virtual void WriteToFile( const void *buffer, uint64 offset, uint64 size)=0;
-        virtual void ReadFromFile( void *buffer, uint64 offset, uint64 size ) = 0;
-
-        virtual eSegType    GetSegmentType() = 0;
-        virtual std::string GetName() = 0;
-        virtual std::string GetDescription() = 0;
-        virtual int         GetSegmentNumber() = 0;
-        virtual uint64      GetContentSize() = 0;
-        virtual bool        IsAtEOF() = 0;
-
-        virtual void        SetDescription( const std::string &description) = 0;
-
-        virtual std::string GetMetadataValue( const std::string &key ) const = 0;
-        virtual void SetMetadataValue( const std::string &key, const std::string &value ) = 0;
-        virtual std::vector<std::string> GetMetadataKeys() const = 0;
+    private:
+        int	 exoff;
+        int      eyoff;
+        int      exsize;
+        int      eysize;
         
-        virtual std::vector<std::string> GetHistoryEntries() const = 0;
-        virtual void SetHistoryEntries( const std::vector<std::string> &entries ) = 0;
-        virtual void PushHistory(const std::string &app,
-                                 const std::string &message) = 0;
+        int      echannel;
 
-        virtual void Synchronize() = 0;
+        mutable int blocks_per_row;
+
+        mutable EDBFile  *db;
+        mutable Mutex    *mutex;
+        mutable bool     writable;
+
+        void     AccessDB() const;
+
+        std::string filename;
     };
-
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_SEGMENT_PCIDSKSEGMENT_H
+#endif // __INCLUDE_CHANNEL_CEXTERNALCHANNEL_H

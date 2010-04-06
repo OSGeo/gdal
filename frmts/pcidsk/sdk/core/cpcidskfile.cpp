@@ -36,6 +36,7 @@
 #include "channel/cbandinterleavedchannel.h"
 #include "channel/cpixelinterleavedchannel.h"
 #include "channel/ctiledchannel.h"
+#include "channel/cexternalchannel.h"
 
 // Segment types
 #include "segment/cpcidskgeoref.h"
@@ -135,6 +136,15 @@ CPCIDSKFile::~CPCIDSKFile()
 
         interfaces.io->Close( file_list[i_file].io_handle );
         file_list[i_file].io_handle = NULL;
+    }
+
+    for( i_file=0; i_file < edb_file_list.size(); i_file++ )
+    {
+        delete edb_file_list[i_file].io_mutex;
+        edb_file_list[i_file].io_mutex = NULL;
+
+        delete edb_file_list[i_file].file;
+        edb_file_list[i_file].file = NULL;
     }
 
     delete io_mutex;
@@ -439,15 +449,15 @@ void CPCIDSKFile::InitializeFromHeader()
                 pixel_type = CHN_32R;
         }
             
-        if( interleaving == "BAND" )
+        if( interleaving == "BAND"  )
         {
             channel = new CBandInterleavedChannel( ih, ih_offset, fh, 
                                                    channelnum, this,
                                                    image_offset, pixel_type );
 
             
-            image_offset += DataTypeSize(channel->GetType())
-                * width * height;
+            image_offset += (int64)DataTypeSize(channel->GetType())
+                * (int64)width * (int64)height;
         }
 
         else if( interleaving == "PIXEL" )
@@ -464,6 +474,13 @@ void CPCIDSKFile::InitializeFromHeader()
         {
             channel = new CTiledChannel( ih, ih_offset, fh, 
                                          channelnum, this, pixel_type );
+        }
+
+        else if( interleaving == "FILE" 
+                 && strncmp(((const char*)ih.buffer)+250, "        ", 8 ) != 0 )
+        {
+            channel = new CExternalChannel( ih, ih_offset, fh, 
+                                            channelnum, this, pixel_type );
         }
 
         else if( interleaving == "FILE" )
@@ -618,6 +635,72 @@ void CPCIDSKFile::FlushBlock()
         }
         last_block_mutex->Release();
     }
+}
+
+/************************************************************************/
+/*                         GetEDBFileDetails()                          */
+/************************************************************************/
+
+bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p, 
+                                     Mutex **io_mutex_p, 
+                                     std::string filename )
+
+{
+    *file_p = NULL;
+    *io_mutex_p = NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Does the file exist already in our file list?                   */
+/* -------------------------------------------------------------------- */
+    unsigned int i;
+
+    for( i = 0; i < edb_file_list.size(); i++ )
+    {
+        if( edb_file_list[i].filename == filename )
+        {
+            *file_p = edb_file_list[i].file;
+            *io_mutex_p = edb_file_list[i].io_mutex;
+            return edb_file_list[i].writable;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If not, we need to try and open the file.  Eventually we        */
+/*      will need better rules about read or update access.             */
+/* -------------------------------------------------------------------- */
+    ProtectedEDBFile new_file;
+
+    new_file.file = NULL;
+    new_file.writable = false;
+
+    if( GetUpdatable() )
+    {
+        try {
+            new_file.file = interfaces.OpenEDB( filename, "r+" );
+            new_file.writable = true;
+        } catch( PCIDSK::PCIDSKException ex ) {}
+    }
+
+    if( new_file.file == NULL )
+        new_file.file = interfaces.OpenEDB( filename, "r" );
+
+    if( new_file.file == NULL )
+        ThrowPCIDSKException( "Unable to open file '%s'.", 
+                              filename.c_str() );
+
+/* -------------------------------------------------------------------- */
+/*      Push the new file into the list of files managed for this       */
+/*      PCIDSK file.                                                    */
+/* -------------------------------------------------------------------- */
+    new_file.io_mutex = interfaces.CreateMutex();
+    new_file.filename = filename;
+
+    edb_file_list.push_back( new_file );
+
+    *file_p = edb_file_list[edb_file_list.size()-1].file;
+    *io_mutex_p  = edb_file_list[edb_file_list.size()-1].io_mutex;
+
+    return new_file.writable;
 }
 
 /************************************************************************/
@@ -1037,10 +1120,12 @@ void CPCIDSKFile::MoveSegmentToEOF( int segment )
 /************************************************************************/
 /*
  const char *pszResampling;
- 	     Either "NEAREST" for Nearest Neighbour resampling (the fastest),
+ 	     Can be "NEAREST" for Nearest Neighbour resampling (the fastest),
              "AVERAGE" for block averaging or "MODE" for block mode.  This
              establishing the type of resampling to be applied when preparing
-             the decimated overviews.  
+             the decimated overviews. Other methods can be set as well, but
+             not all applications might support a given overview generation
+             method.
 */
 
 void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list, 
@@ -1048,19 +1133,6 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
 
 {
     std::vector<int> default_chan_list;
-
-/* -------------------------------------------------------------------- */
-/*      Validate resampling method.                                     */
-/* -------------------------------------------------------------------- */
-    UCaseStr( resampling );
-
-    if( resampling != "NEAREST" 
-        && resampling != "AVERAGE"
-        && resampling != "MODE" )
-    {
-        ThrowPCIDSKException( "Requested overview resampling '%s' not supported.\nUse one of NEAREST, AVERAGE or MODE.",
-                              resampling.c_str() );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Default to processing all bands.                                */
@@ -1117,10 +1189,10 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
         PCIDSKChannel *channel = GetChannel( channel_number );
         
 /* -------------------------------------------------------------------- */
-/*      Do we have a preexisting overview that corresponds to this      */
-/*      factor?  If so, throw an exception.  Would it be better to      */
-/*      just return quietly?                                            */
+/*      Figure out if the given overview level already exists           */
+/*      for a given channel; if it does, skip creating it.              */
 /* -------------------------------------------------------------------- */
+        bool overview_exists = false;
         for( int i = channel->GetOverviewCount()-1; i >= 0; i-- )
         {
             PCIDSKChannel *overview = channel->GetOverview( i );
@@ -1128,30 +1200,32 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
             if( overview->GetWidth() == channel->GetWidth() / factor
                 && overview->GetHeight() == channel->GetHeight() / factor )
             {
-                ThrowPCIDSKException( "Channel %d already has a factor %d overview.",
-                                      channel_number, factor );
+                overview_exists = true;
             }
         }
 
+        if (overview_exists == false)
+        {
 /* -------------------------------------------------------------------- */
 /*      Create the overview as a tiled image layer.                     */
 /* -------------------------------------------------------------------- */
-        int virtual_image = 
-            bm->CreateVirtualImageFile( channel->GetWidth() / factor, 
-                                        channel->GetHeight() / factor,
-                                        blocksize, blocksize, 
-                                        channel->GetType(), compression );
+            int virtual_image = 
+                bm->CreateVirtualImageFile( channel->GetWidth() / factor, 
+                                            channel->GetHeight() / factor,
+                                            blocksize, blocksize, 
+                                            channel->GetType(), compression );
 
 /* -------------------------------------------------------------------- */
 /*      Attach reference to this overview as metadata.                  */
 /* -------------------------------------------------------------------- */
-        char overview_md_value[128];
-        char overview_md_key[128];
+            char overview_md_value[128];
+            char overview_md_key[128];
 
-        sprintf( overview_md_key, "_Overview_%d", factor );
-        sprintf( overview_md_value, "%d 0 %s",virtual_image,resampling.c_str());
-                 
-        channel->SetMetadataValue( overview_md_key, overview_md_value );
+            sprintf( overview_md_key, "_Overview_%d", factor );
+            sprintf( overview_md_value, "%d 0 %s",virtual_image,resampling.c_str());
+                     
+            channel->SetMetadataValue( overview_md_key, overview_md_value );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Force channel to invalidate it's loaded overview list.          */
@@ -1159,3 +1233,4 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
         dynamic_cast<CPCIDSKChannel *>(channel)->InvalidateOverviewInfo();
     }
 }
+

@@ -21,8 +21,10 @@ OBJ	=	pcidskdataset2.obj vsi_pcidsk_io.obj \
 	sdk\channel\cpcidskchannel.obj \
 	sdk\channel\cpixelinterleavedchannel.obj \
 	sdk\channel\ctiledchannel.obj \
+	sdk\channel\cexternalchannel.obj \
 	sdk\core\cpcidskfile.obj \
 	sdk\core\libjpeg_io.obj \
+	sdk\core\edb_pcidsk.obj \
 	sdk\core\metadataset_p.obj \
 	sdk\core\pcidskbuffer.obj \
 	sdk\core\pcidskcreate.obj \
