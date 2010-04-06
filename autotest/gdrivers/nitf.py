@@ -2241,6 +2241,93 @@ def nitf_online_21():
     return 'success'
 
 ###############################################################################
+# Test fix for #3002 (reconcilement of NITF file with LA segments)
+#
+
+def nitf_online_22():
+
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0001C.NTF', 'U_0001C.NTF'):
+        return 'skip'
+
+    ds = gdal.Open( 'NITF_IM:1:tmp/cache/U_0001C.NTF' )
+    md = ds.GetMetadata()
+    ds = None
+
+    tab = [
+        ('NITF_IDLVL','6'),
+        ('NITF_IALVL','1'),
+        ('NITF_ILOC_ROW','360'),
+        ('NITF_ILOC_COLUMN','380'),
+        ('NITF_CCS_ROW','425'),
+        ('NITF_CCS_COLUMN','410'),
+        ]
+
+    for item in tab:
+        if md[item[0]] != item[1]:
+            gdaltest.post_reason( '(1) wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]) )
+            return 'fail'
+
+    ds = gdal.Open( 'NITF_IM:2:tmp/cache/U_0001C.NTF' )
+    md = ds.GetMetadata()
+    ds = None
+
+    tab = [
+        ('NITF_IDLVL','11'),
+        ('NITF_IALVL','2'),
+        ('NITF_ILOC_ROW','360'),
+        ('NITF_ILOC_COLUMN','40'),
+        ('NITF_CCS_ROW','422'),
+        ('NITF_CCS_COLUMN','210'),
+        ]
+
+    for item in tab:
+        if md[item[0]] != item[1]:
+            gdaltest.post_reason( '(2) wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]) )
+            return 'fail'
+
+    ds = gdal.Open( 'NITF_IM:3:tmp/cache/U_0001C.NTF' )
+    md = ds.GetMetadata()
+    ds = None
+
+    tab = [
+        ('NITF_IDLVL','5'),
+        ('NITF_IALVL','3'),
+        ('NITF_ILOC_ROW','40'),
+        ('NITF_ILOC_COLUMN','240'),
+        ('NITF_CCS_ROW','-1'),
+        ('NITF_CCS_COLUMN','-1'),
+        ]
+
+    for item in tab:
+        if md[item[0]] != item[1]:
+            gdaltest.post_reason( '(3) wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]) )
+            return 'fail'
+
+    ds = gdal.Open( 'NITF_IM:4:tmp/cache/U_0001C.NTF' )
+    md = ds.GetMetadata()
+    ds = None
+
+    tab = [
+        ('NITF_IDLVL','1'),
+        ('NITF_IALVL','0'),
+        ('NITF_ILOC_ROW','65'),
+        ('NITF_ILOC_COLUMN','30'),
+        ('NITF_CCS_ROW','65'),
+        ('NITF_CCS_COLUMN','30'),
+        ]
+
+    for item in tab:
+        if md[item[0]] != item[1]:
+            gdaltest.post_reason( '(4) wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]) )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -2479,6 +2566,7 @@ gdaltest_list = [
     nitf_online_19,
     nitf_online_20,
     nitf_online_21,
+    nitf_online_22,
     nitf_cleanup ]
 
 if __name__ == '__main__':
