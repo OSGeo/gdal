@@ -379,7 +379,7 @@ void CPCIDSKBitmap::SetOverviewValidity( int i, bool validity )
 /*                          GetMetadataValue()                          */
 /************************************************************************/
 
-std::string CPCIDSKBitmap::GetMetadataValue( const std::string &key )
+std::string CPCIDSKBitmap::GetMetadataValue( const std::string &key ) const
 
 {
     return CPCIDSKSegment::GetMetadataValue( key );
@@ -389,7 +389,7 @@ std::string CPCIDSKBitmap::GetMetadataValue( const std::string &key )
 /*                          SetMetadataValue()                          */
 /************************************************************************/
 
-void CPCIDSKBitmap::SetMetadataValue( const std::string &key, 
+void CPCIDSKBitmap::SetMetadataValue( const std::string &key,
                                       const std::string &value )
 
 {
@@ -397,10 +397,20 @@ void CPCIDSKBitmap::SetMetadataValue( const std::string &key,
 }
 
 /************************************************************************/
+/*                   GetOverviewLevelMapping()                          */
+/************************************************************************/
+std::vector<int> CPCIDSKBitmap::GetOverviewLevelMapping() const
+{
+    std::vector<int> ov;
+    
+    return ov;
+}
+
+/************************************************************************/
 /*                          GetMetadataKeys()                           */
 /************************************************************************/
 
-std::vector<std::string> CPCIDSKBitmap::GetMetadataKeys()
+std::vector<std::string> CPCIDSKBitmap::GetMetadataKeys() const
 
 {
     return CPCIDSKSegment::GetMetadataKeys();

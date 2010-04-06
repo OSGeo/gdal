@@ -10,7 +10,7 @@ OBJ	=	pcidskdataset.o pcidsktiledrasterband.o
 CPPFLAGS	:=	$(GDAL_INCLUDE) -I../raw $(CPPFLAGS)
 $(O_OBJ):	../raw/rawdataset.h gdal_pcidsk.h
 else
-OBJ	=	pcidskdataset2.o vsi_pcidsk_io.o $(SDKOBJ)
+OBJ	=	pcidskdataset2.o vsi_pcidsk_io.o gdal_edb.o $(SDKOBJ)
 ifeq ($(PCIDSK_SETTING),internal)
 CPPFLAGS	:=	-DHAVE_LIBJPEG $(JPEG_INCLUDE) -DPCIDSK_INTERNAL \
 	-Isdk $(GDAL_INCLUDE) $(CPPFLAGS)
@@ -20,8 +20,10 @@ SDKOBJ 	=	\
 	cpcidskchannel.o \
 	cpixelinterleavedchannel.o \
 	ctiledchannel.o \
+	cexternalchannel.o \
 	cpcidskfile.o \
 	libjpeg_io.o \
+	edb_pcidsk.o \
 	metadataset_p.o \
 	pcidskbuffer.o \
 	pcidskcreate.o \

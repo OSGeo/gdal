@@ -73,9 +73,9 @@ namespace PCIDSK
 
         void        SetDescription( const std::string &description);
         
-        std::string GetMetadataValue( const std::string &key );
+        std::string GetMetadataValue( const std::string &key ) const;
         void        SetMetadataValue( const std::string &key, const std::string &value );
-        std::vector<std::string> GetMetadataKeys();
+        std::vector<std::string> GetMetadataKeys() const;
             
         virtual void Synchronize() {}
         
@@ -98,7 +98,7 @@ namespace PCIDSK
 
         PCIDSKBuffer header;
 
-        MetadataSet  *metadata;
+        mutable MetadataSet  *metadata;
         
         std::vector<std::string> history_;
     };

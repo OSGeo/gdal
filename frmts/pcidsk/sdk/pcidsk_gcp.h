@@ -115,6 +115,7 @@ namespace PCIDSK {
         double GetLineErr() const { return raster_error_[1]; }
         
         std::string const& GetMapUnits(void) const { return map_units_; }
+        void SetMapUnits(std::string const& map_units) { map_units_ = map_units; }
         
         const char* GetIDString(void) const { return gcp_id_; }
     private:

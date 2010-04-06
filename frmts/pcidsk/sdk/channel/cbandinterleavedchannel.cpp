@@ -199,6 +199,8 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
     if( !file->GetUpdatable() )
         throw PCIDSKException( "File not open for update in WriteBlock()" );
 
+    InvalidateOverviews();
+
 /* -------------------------------------------------------------------- */
 /*      Establish region to read.                                       */
 /* -------------------------------------------------------------------- */
