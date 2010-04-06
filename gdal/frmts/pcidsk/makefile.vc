@@ -9,14 +9,14 @@ OBJ		=	pcidskdataset.obj pcidsktiledrasterband.obj
 !ENDIF
 
 !IF "$(PCIDSK_SETTING)" == "EXTERNAL"
-PCIDSKFLAGS	=	$(PCIDSK_INCLUDE)
-OBJ		=	pcidskdataset2.obj vsi_pcidsk_io.obj
+PCIDSKFLAGS	=	$(PCIDSK_INCLUDE) 
+OBJ		=	pcidskdataset2.obj vsi_pcidsk_io.obj gdal_edb.obj
 !ENDIF
 
 !IF "$(PCIDSK_SETTING)" == "INTERNAL"
 PCIDSKFLAGS	=	-Isdk -DPCIDSK_INTERNAL -DHAVE_LIBJPEG 
 
-OBJ	=	pcidskdataset2.obj vsi_pcidsk_io.obj \
+OBJ	=	pcidskdataset2.obj vsi_pcidsk_io.obj gdal_edb.obj \
 	sdk\channel\cbandinterleavedchannel.obj \
 	sdk\channel\cpcidskchannel.obj \
 	sdk\channel\cpixelinterleavedchannel.obj \
