@@ -74,7 +74,7 @@ CPCIDSKSegment::~CPCIDSKSegment()
 /************************************************************************/
 /*                          GetMetadataValue()                          */
 /************************************************************************/
-std::string CPCIDSKSegment::GetMetadataValue( const std::string &key ) 
+std::string CPCIDSKSegment::GetMetadataValue( const std::string &key ) const
 {
     return metadata->GetMetadataValue(key);
 }
@@ -90,7 +90,7 @@ void CPCIDSKSegment::SetMetadataValue( const std::string &key, const std::string
 /************************************************************************/
 /*                           GetMetdataKeys()                           */
 /************************************************************************/
-std::vector<std::string> CPCIDSKSegment::GetMetadataKeys() 
+std::vector<std::string> CPCIDSKSegment::GetMetadataKeys() const
 {
     return metadata->GetMetadataKeys();
 }

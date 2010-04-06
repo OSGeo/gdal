@@ -288,7 +288,9 @@ void PCIDSK::ParseTileFormat( std::string full_text,
     if( *next_text != '\0' )
     {
         compression = next_text;
-        if( compression != "RLE"
+        if (compression == "NO_WARNINGS")
+            compression = "";
+        else if( compression != "RLE"
             && strncmp(compression.c_str(),"JPEG",4) != 0 
             && compression != "NONE"
             && compression != "QUADTREE" )

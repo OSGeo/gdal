@@ -35,6 +35,8 @@ CPL_CVSID("$Id: pcidskdataset.cpp 17097 2009-05-21 19:59:35Z warmerdam $");
 
 using namespace PCIDSK;
 
+EDBFile *GDAL_EDBOpen( std::string osFilename, std::string osAccess );
+
 class VSI_IOInterface : public IOInterfaces
 {
     virtual void   *Open( std::string filename, std::string access ) const;
@@ -59,6 +61,7 @@ const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces()
     static PCIDSKInterfaces singleton_pcidsk2_interfaces;
 
     singleton_pcidsk2_interfaces.io = &singleton_vsi_interface;
+    singleton_pcidsk2_interfaces.OpenEDB = GDAL_EDBOpen;
 
     return &singleton_pcidsk2_interfaces;
 }

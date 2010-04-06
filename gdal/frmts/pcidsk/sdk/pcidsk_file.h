@@ -55,8 +55,7 @@ namespace PCIDSK
         virtual std::vector<PCIDSKSegment *> GetSegments() = 0;
 
         virtual PCIDSK::PCIDSKSegment *GetSegment( int type, 
-            std::string name,
-            int previous = 0 ) = 0;
+            std::string name, int previous = 0 ) = 0;
 
         virtual int GetWidth() const = 0;
         virtual int GetHeight() const = 0;

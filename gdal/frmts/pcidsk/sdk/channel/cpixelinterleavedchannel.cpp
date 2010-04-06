@@ -180,6 +180,8 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
     if( !file->GetUpdatable() )
         throw PCIDSKException( "File not open for update in WriteBlock()" );
 
+    InvalidateOverviews();
+
 /* -------------------------------------------------------------------- */
 /*      Work out sizes and offsets.                                     */
 /* -------------------------------------------------------------------- */

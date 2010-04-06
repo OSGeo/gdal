@@ -93,6 +93,8 @@ namespace PCIDSK
         void                     JPEGCompressBlock( PCIDSKBuffer &oDecompressed,
                                                     PCIDSKBuffer &oCompressed );
 
+        bool                     IsTileEmpty(void* buffer) const;
+
     };
 } // end namespace PCIDSK
 

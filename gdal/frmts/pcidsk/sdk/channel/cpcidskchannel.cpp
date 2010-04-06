@@ -135,8 +135,7 @@ void CPCIDSKChannel::InvalidateOverviewInfo()
 /************************************************************************/
 /*                       EstablishOverviewInfo()                        */
 /************************************************************************/
-
-void CPCIDSKChannel::EstablishOverviewInfo()
+void CPCIDSKChannel::EstablishOverviewInfo() const
 
 {
     if( overviews_initialized )
@@ -299,6 +298,33 @@ void CPCIDSKChannel::SetOverviewValidity( int overview_index,
     sprintf( key, "_Overview_%d", overview_decimations[overview_index] );
 
     SetMetadataValue( key, new_info );
+}
+
+/************************************************************************/
+/*                        InvalidateOverviews()                         */
+/*                                                                      */
+/*      Whenever a write is done on this band, we will invalidate       */
+/*      any previously valid overviews.                                 */
+/************************************************************************/
+
+void CPCIDSKChannel::InvalidateOverviews()
+
+{
+    EstablishOverviewInfo();
+
+    for( int i = 0; i < GetOverviewCount(); i++ )
+        SetOverviewValidity( i, false );
+}
+
+/************************************************************************/
+/*                  GetOverviewLevelMapping()                           */
+/************************************************************************/
+
+std::vector<int> CPCIDSKChannel::GetOverviewLevelMapping() const
+{
+    EstablishOverviewInfo();
+    
+    return overview_decimations;
 }
 
 /************************************************************************/

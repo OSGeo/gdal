@@ -276,5 +276,16 @@ the message.
 @param app the application name, only 7 characters are used.
 @param message the history message, only 56 characters are used.
 
+******************************************************************************
+\fn std::vector<int> PCIDSK::PCIDSKChannel::GetOverviewLevelMapping() const;
+
+\brief Get mapping between overview indices and overview levels
+
+This method will return a vector representing a mapping between an overview
+index, used with the PCIDSK::PCIDSKChannel::GetOverview method.
+
+@note The overview levels may not be sorted when retrieved via this mechanism.
+
+@return a vector, where the index of the entry maps to the overview index.
 */
 
