@@ -2631,6 +2631,116 @@ def tiff_write_78():
     return 'success'
     
 ###############################################################################
+# Test reading & updating GDALMD_AREA_OR_POINT (#3522)
+
+def tiff_write_79():
+    
+    ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_79.tif', 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:32601')
+    ds.SetProjection(srs.ExportToWkt())
+    ds = None
+    
+    for do_projection_ref in [False, True]:
+        for check_just_after in [False, True]:
+    
+            ds = gdal.Open( 'tmp/tiff_write_79.tif')
+            if do_projection_ref:
+                ds.GetProjectionRef()
+            mdi = ds.GetMetadataItem('AREA_OR_POINT') 
+            if mdi != 'Area':
+                gdaltest.post_reason('(1) did not get expected value. do_projection_ref = %d, check_just_after = %d' % (do_projection_ref, check_just_after))
+                print(mdi)
+                return 'fail'
+            ds = None
+        
+            # Still read-only.
+            ds = gdal.Open( 'tmp/tiff_write_79.tif')
+            if do_projection_ref:
+                ds.GetProjectionRef()
+            ds.SetMetadataItem('AREA_OR_POINT', 'Point')
+            ds = None
+            try:
+                # check that it doesn't go to PAM
+                os.stat('tmp/tiff_write_79.tif.aux.xml')
+                gdaltest.post_reason('got to PAM')
+                return 'fail'
+            except:
+                pass
+        
+            # So should get 'Area'
+            ds = gdal.Open( 'tmp/tiff_write_79.tif')
+            if do_projection_ref:
+                ds.GetProjectionRef()
+            mdi = ds.GetMetadataItem('AREA_OR_POINT') 
+            if mdi != 'Area':
+                gdaltest.post_reason('(2) did not get expected value. do_projection_ref = %d, check_just_after = %d' % (do_projection_ref, check_just_after))
+                print(mdi)
+                return 'fail'
+            ds = None
+        
+            # Now update to 'Point'
+            ds = gdal.Open( 'tmp/tiff_write_79.tif', gdal.GA_Update)
+            if do_projection_ref:
+                ds.GetProjectionRef()
+            ds.SetMetadataItem('AREA_OR_POINT', 'Point')
+            if check_just_after:
+                mdi = ds.GetMetadataItem('AREA_OR_POINT') 
+                if mdi != 'Point':
+                    gdaltest.post_reason('(3) did not get expected value. do_projection_ref = %d, check_just_after = %d' % (do_projection_ref, check_just_after))
+                    print(mdi)
+                    return 'fail'
+            ds = None
+            try:
+                # check that it doesn't go to PAM
+                os.stat('tmp/tiff_write_79.tif.aux.xml')
+                gdaltest.post_reason('got to PAM')
+                return 'fail'
+            except:
+                pass
+    
+            # Now should get 'Point'
+            ds = gdal.Open( 'tmp/tiff_write_79.tif')
+            if do_projection_ref:
+                ds.GetProjectionRef()
+            mdi = ds.GetMetadataItem('AREA_OR_POINT') 
+            if mdi != 'Point':
+                gdaltest.post_reason('(4) did not get expected value. do_projection_ref = %d, check_just_after = %d' % (do_projection_ref, check_just_after))
+                print(mdi)
+                return 'fail'
+            ds = None
+        
+            # Now update back to 'Area' through SetMetadata()
+            ds = gdal.Open( 'tmp/tiff_write_79.tif', gdal.GA_Update)
+            if do_projection_ref:
+                ds.GetProjectionRef()
+            md = {}
+            md['AREA_OR_POINT'] = 'Area'
+            ds.SetMetadata(md)
+            if check_just_after:
+                mdi = ds.GetMetadataItem('AREA_OR_POINT') 
+                if mdi != 'Area':
+                    gdaltest.post_reason('(5) did not get expected value. do_projection_ref = %d, check_just_after = %d' % (do_projection_ref, check_just_after))
+                    print(mdi)
+                    return 'fail'
+            ds = None
+        
+            # Now should get 'Area'
+            ds = gdal.Open( 'tmp/tiff_write_79.tif')
+            if do_projection_ref:
+                ds.GetProjectionRef()
+            mdi = ds.GetMetadataItem('AREA_OR_POINT') 
+            if mdi != 'Area':
+                gdaltest.post_reason('(6) did not get expected value')
+                print(mdi)
+                return 'fail'
+            ds = None
+    
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_79.tif' )
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2721,6 +2831,7 @@ gdaltest_list = [
     tiff_write_76,
     tiff_write_77,
     tiff_write_78,
+    tiff_write_79,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
