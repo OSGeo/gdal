@@ -1795,12 +1795,14 @@ int NITFReconcileAttachments( NITFFile *psFile )
                 {
                     psSegInfo->nCCS_R = psOtherSegInfo->nLOC_R + psSegInfo->nLOC_R;
                     psSegInfo->nCCS_C = psOtherSegInfo->nLOC_C + psSegInfo->nLOC_C;
-                    bMadeProgress = TRUE;
+                    if ( psSegInfo->nCCS_R != -1 )
+                        bMadeProgress = TRUE;
                 }
                 else
                 {
                     bSuccess = FALSE;
                 }
+                break;
             }
         }
 
