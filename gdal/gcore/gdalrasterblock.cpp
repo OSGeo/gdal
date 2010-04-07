@@ -93,13 +93,29 @@ int CPL_STDCALL GDALGetCacheMax()
 {
     if( !bCacheMaxInitialized )
     {
-        if( CPLGetConfigOption("GDAL_CACHEMAX",NULL) != NULL )
-        {
-            nCacheMax = atoi(CPLGetConfigOption("GDAL_CACHEMAX",""));
-            if( nCacheMax < 100000 )
-                nCacheMax *= 1024 * 1024;
-        }
+        const char* pszCacheMax = CPLGetConfigOption("GDAL_CACHEMAX",NULL);
         bCacheMaxInitialized = TRUE;
+        if( pszCacheMax != NULL )
+        {
+            int nNewCacheMax = atoi(pszCacheMax);
+            if( nNewCacheMax < 100000 )
+            {
+                if (nNewCacheMax < 0)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Invalid value for GDAL_CACHEMAX. Using default value.");
+                    return nCacheMax;
+                }
+                if (nNewCacheMax > 2047)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Maximum value supported for GDAL_CACHEMAX is 2 GB. Using default value.");
+                    return nCacheMax;
+                }
+                nNewCacheMax *= 1024 * 1024;
+            }
+            nCacheMax = nNewCacheMax;
+        }
     }
     
     return nCacheMax;
