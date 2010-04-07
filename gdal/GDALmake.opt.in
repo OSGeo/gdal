@@ -337,7 +337,6 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
 		nitf bmp pcidsk airsar rs2 ilwis rmf leveller sgi srtmhgt \
 		idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg \
 		coasp tsx terragen blx msgn til r northwood saga \
-		kmlsuperoverlay \
 		@OPT_GDAL_FORMATS@
 
 ifneq ($(LIBZ_SETTING),no)
