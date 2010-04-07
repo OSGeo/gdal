@@ -4470,12 +4470,10 @@ void GTiffDataset::LookForProjection()
         if( GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType, 
                        0, 1 ) == 1 )
         {
-            int bMetadataChangedSaved = bMetadataChanged;
             if( nRasterType == (short) RasterPixelIsPoint )
-                SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+                oGTiffMDMD.SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
             else
-                SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_AREA );
-            bMetadataChanged = bMetadataChangedSaved;
+                oGTiffMDMD.SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_AREA );
         }
 
         GTIFFree( hGTIF );
@@ -7063,8 +7061,11 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
 {
     if( pszDomain != NULL && EQUAL(pszDomain,"ProxyOverviewRequest") )
         return GDALPamDataset::GetMetadata( pszDomain );
-    else
-        return oGTiffMDMD.GetMetadata( pszDomain );
+
+    /* FIXME ? Should we call LookForProjection() to load GDALMD_AREA_OR_POINT ? */
+    /* This can impact performances */
+
+    return oGTiffMDMD.GetMetadata( pszDomain );
 }
 
 /************************************************************************/
@@ -7075,6 +7076,21 @@ CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
 {
     if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
         bMetadataChanged = TRUE;
+
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        CSLFetchNameValue(papszMD, GDALMD_AREA_OR_POINT) != NULL )
+    {
+        const char* pszPrevValue = 
+                GetMetadataItem(GDALMD_AREA_OR_POINT);
+        const char* pszNewValue = 
+                CSLFetchNameValue(papszMD, GDALMD_AREA_OR_POINT);
+        if (pszPrevValue == NULL || pszNewValue == NULL ||
+            !EQUAL(pszPrevValue, pszNewValue))
+        {
+            LookForProjection();
+            bGeoTIFFInfoChanged = TRUE;
+        }
+    }
 
     return oGTiffMDMD.SetMetadata( papszMD, pszDomain );
 }
@@ -7089,8 +7105,14 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
 {
     if( pszDomain != NULL && EQUAL(pszDomain,"ProxyOverviewRequest") )
         return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
-    else
-        return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
+
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        pszName != NULL && EQUAL(pszName, GDALMD_AREA_OR_POINT) )
+    {
+        LookForProjection();
+    }
+
+    return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
 }
 
 /************************************************************************/
@@ -7104,6 +7126,13 @@ CPLErr GTiffDataset::SetMetadataItem( const char *pszName,
 {
     if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
         bMetadataChanged = TRUE;
+
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        pszName != NULL && EQUAL(pszName, GDALMD_AREA_OR_POINT) )
+    {
+        LookForProjection();
+        bGeoTIFFInfoChanged = TRUE;
+    }
 
     return oGTiffMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
 }
