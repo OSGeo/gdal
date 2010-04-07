@@ -1,0 +1,40 @@
+EXTRAFLAGS 	= 	$(MINIZIP_INCLUDE) -I..\zlib /D_MBCS /DWIN32 /D_WIN32  
+
+OBJ		=	kmlsuperoverlaydataset.obj
+
+PLUGIN_DLL	=	gdal_KMLSUPEROVERLAY.dll
+PLUGIN_PDB	=	gdal_KMLSUPEROVERLAY.pdb
+
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	$(INSTALL) *.obj ..\o
+
+all:	default 
+
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+	-del *.pdb
+	-del *.ilk
+
+plugin: $(PLUGIN_DLL)
+
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDAL_ROOT)\gdal_i.lib \
+      $(MINIZIP_LIBRARY) $(LIB_EXCLUDE) $(LDEBUG)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest \
+		-outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
+!IFDEF DEBUG
+	$(INSTALL) $(PLUGIN_PDB) $(PLUGINDIR)
+!ENDIF

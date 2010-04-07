@@ -159,6 +159,14 @@ JPEG12_SUPPORTED = 1
 #GEOTIFF_INC =   -Ic:/warmerda/libgeotiff -Ic:/warmerda/libgeotiff/libxtiff
 #GEOTIFF_LIB =   C:/warmerda/libgeotiff/geotiff_i.lib
 
+# Uncomment out the following to enable KML Super-Overlay support.
+#KMLSUPEROVERLAY_SUPPORTED = YES
+#MINIZIP_INCLUDE = -I$(OSSIM_HOME)\minizip\src
+#MINIZIP_LIBRARY = $(OSSIM_HOME)\minizip\release\minizip.lib
+
+# Enable the following if you want to build the KML Super-Overlay plugin.
+#KMLSUPEROVERLAY_PLUGIN = YES
+
 # Uncomment the following and update to enable ECW support.
 #ECW_PLUGIN = NO
 #ECWDIR  = 	C:\warmerda\libecwj2-3.3
@@ -333,7 +341,9 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #GEOS_LIB     = $(GEOS_DIR)/source/geos_c_i.lib
 
 # Any extra libraries needed on this platform?
-ADD_LIBS	=
+# Uncomment first line and comment second line for KMLSUPEROVERLAY plugin
+#ADD_LIBS	= $(MINIZIP_LIBRARY)
+ADD_LIBS	= 
 
 # Comment out the following if you want to build with Python support, but
 # you don't have Numeric Python installed (with include files).  Numeric
