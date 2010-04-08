@@ -30,9 +30,7 @@
 
 #include "cpl_error.h"
 
-
 #include "ogr_spatialref.h"
-
 
 #include "gdal.h"
 #include "gdal_priv.h"
@@ -1316,7 +1314,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     CPLErr eError = CE_None;
 
-    if( poStmt->Execute() && poStmt->Fetch() )
+    if( poStmt->Execute() )
     {
         poGeoRaster->SetGeoReference( nMaxSRID ); //TODO change that method
         poGeoRaster->sWKText = pszCloneWKT;
@@ -1404,7 +1402,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         {
             int nCount = 1;
 
-            while( poStmt->Fetch() )
+            do
             {
                 papszSubdatasets = CSLSetNameValue( papszSubdatasets,
                     CPLSPrintf( "SUBDATASET_%d_NAME", nCount ),
@@ -1418,6 +1416,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
 
                 nCount++;
             }
+            while( poStmt->Fetch() );
         }
 
         return;
@@ -1446,7 +1445,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         {
             int nCount = 1;
 
-            while( poStmt->Fetch() )
+            do
             {
                 papszSubdatasets = CSLSetNameValue( papszSubdatasets,
                     CPLSPrintf( "SUBDATASET_%d_NAME", nCount ),
@@ -1462,6 +1461,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
 
                 nCount++;
             }
+            while( poStmt->Fetch() );
         }
         
         return;
@@ -1524,7 +1524,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     {
         int nCount = 1;
 
-        while( poStmt->Fetch() )
+        do
         {
             papszSubdatasets = CSLSetNameValue( papszSubdatasets,
                 CPLSPrintf( "SUBDATASET_%d_NAME", nCount ),
@@ -1547,6 +1547,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
 
             nCount++;
         }
+        while( poStmt->Fetch() );
     }
 }
 

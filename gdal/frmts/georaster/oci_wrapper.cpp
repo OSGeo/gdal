@@ -226,7 +226,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     hNumArrayTDO    = DescribeType( (char*) SDO_NUMBER_ARRAY );
     hGeometryTDO    = DescribeType( (char*) SDO_GEOMETRY );
     hGeoRasterTDO   = DescribeType( (char*) SDO_GEORASTER );
-    hPointCloudTDO  = DescribeType( (char*) SDO_PC );
+    hPCTDO          = DescribeType( (char*) SDO_PC );
 }
 
 OWConnection::~OWConnection()
@@ -550,8 +550,8 @@ bool OWStatement::Execute( int nRows )
     sword nStatus = OCIStmtExecute( poConnection->hSvcCtx,
         hStmt,
         hError,
-        (ub4) ( nStmtMode != OCI_DEFAULT ),
         (ub4) nRows,
+        (ub4) 0,
         (OCISnapshot*) NULL,
         (OCISnapshot*) NULL,
         nStmtMode );
@@ -683,6 +683,40 @@ void OWStatement::Bind( char* pData, long nData )
         hError );
 }
 
+void OWStatement::Bind( sdo_geometry** pphData )
+{
+    OCIBind* hBind = NULL;
+
+    nNextBnd++;
+
+    CheckError( OCIBindByPos(
+        hStmt,
+        &hBind,
+        hError,
+        (ub4) nNextBnd,
+        (dvoid*) NULL,
+        (sb4) 0,
+        (ub2) SQLT_NTY,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) 0,
+        (ub4) 0,
+        (ub4) OCI_DEFAULT ),
+        hError );
+    
+    CheckError( OCIBindObject(
+        hBind,
+        hError,
+        poConnection->hGeometryTDO,
+	(dvoid**) pphData,
+        (ub4*) 0,
+	(dvoid**) 0, 
+        (ub4*) 0),
+        hError );
+
+}
+
 void OWStatement::Define( double* pfdData )
 {
     OCIDefine* hDefine = NULL;
@@ -746,7 +780,7 @@ void OWStatement::Bind( char* pszData, int nSize )
         hError );
 }
 
-void OWStatement::Define( OCILobLocator** pphLocator, bool bBLOB ) 
+void OWStatement::Define( OCILobLocator** pphLocator )
 {
     OCIDefine*  hDefine = NULL;
 
@@ -760,8 +794,6 @@ void OWStatement::Define( OCILobLocator** pphLocator, bool bBLOB )
         0),
         hError );
 
-    ub2 eDTY = bBLOB ? SQLT_BLOB : SQLT_CLOB;
-
     CheckError( OCIDefineByPos(
         hStmt,
         &hDefine,
@@ -769,7 +801,7 @@ void OWStatement::Define( OCILobLocator** pphLocator, bool bBLOB )
         (ub4) nNextCol,
         (dvoid*) pphLocator,
         (sb4) 0,
-        (ub2) eDTY,
+        (ub2) SQLT_BLOB,
         (void*) NULL,
         (ub2*) NULL,
         (ub2*) NULL,
@@ -858,7 +890,7 @@ void OWStatement::Define( sdo_geometry** pphData )
         (ub4*) NULL ), hError );
 }
 
-void OWStatement::Define( sdo_pointcloud** pphData )
+void OWStatement::Define( sdo_pc** pphData )
 {
     OCIDefine* hDefine = NULL;
 
@@ -878,7 +910,7 @@ void OWStatement::Define( sdo_pointcloud** pphData )
 
     CheckError( OCIDefineObject( hDefine,
         hError,
-        poConnection->hGeometryTDO,
+        poConnection->hPCTDO,
         (dvoid**) pphData,
         (ub4*) NULL,
         (dvoid**) NULL,
@@ -1061,11 +1093,10 @@ unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
         (ub4) 1,
         (dvoid*) pBuffer,
         (ub4) nSize,
-        0,
-        0,
-        0,
-        0 ),
-        hError ) )
+        (dvoid *) 0,
+        (OCICallbackLobRead) 0,
+        (ub2) 0,
+        (ub1) SQLCS_IMPLICIT), hError ) )
     {
         return 0;
     }
@@ -1253,6 +1284,96 @@ void OWStatement::BindName( const char* pszName, OCILobLocator** pphLocator )
         (ub4*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
+}
+
+void OWStatement::BindArray( double** ppfdData, long nSize )
+{
+    OCIBind* hBind = NULL;
+
+    nNextBnd++;
+
+    CheckError( OCIBindByPos(
+        hStmt,
+        &hBind,
+        hError,
+        (ub4) nNextBnd,
+        (dvoid*) ppfdData,
+        (sb4) nSize * sizeof(double),
+        (ub2) SQLT_BIN,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) NULL,
+        (ub4) NULL,
+        (ub4) OCI_DEFAULT ), hError );
+
+    CheckError( OCIBindArrayOfStruct(
+        hBind,
+        hError,
+        (ub4) nSize * sizeof(double),
+        (ub4) 0,
+        (ub4) 0,
+        (ub4) 0), hError );
+}
+
+void OWStatement::BindArray( long** pplnData, long nSize )
+{
+    OCIBind* hBind = NULL;
+
+    nNextBnd++;
+
+    CheckError( OCIBindByPos(
+        hStmt,
+        &hBind,
+        hError,
+        (ub4) nNextBnd,
+        (dvoid*) pplnData,
+        (sb4) nSize * sizeof(long),
+        (ub2) SQLT_BIN,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) NULL,
+        (ub4) NULL,
+        (ub4) OCI_DEFAULT ), hError );
+
+    CheckError( OCIBindArrayOfStruct(
+        hBind,
+        hError,
+        (ub4) nSize * sizeof(long),
+        (ub4) 0,
+        (ub4) 0,
+        (ub4) 0), hError );
+}
+
+void OWStatement::BindArray( int** ppnData, long nSize )
+{
+    OCIBind* hBind = NULL;
+
+    nNextBnd++;
+
+    CheckError( OCIBindByPos(
+        hStmt,
+        &hBind,
+        hError,
+        (ub4) nNextBnd,
+        (dvoid*) ppnData,
+        (sb4) nSize * sizeof(int),
+        (ub2) SQLT_BIN,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) NULL,
+        (ub4) NULL,
+        (ub4) OCI_DEFAULT ), hError );
+
+    CheckError( OCIBindArrayOfStruct(
+        hBind,
+        hError,
+        (ub4) nSize * sizeof(int),
+        (ub4) 0,
+        (ub4) 0,
+        (ub4) 0), hError );
 }
 
 /*****************************************************************************/
