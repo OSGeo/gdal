@@ -217,7 +217,7 @@ struct sdo_orgscl_type_ind
 };
 typedef struct sdo_orgscl_type_ind SDO_ORGSCL_TYPE_ind;
 
-struct sdo_pointcloud
+struct sdo_pc
 {
     OCIString*          base_table;
     OCIString*          base_column;
@@ -231,7 +231,7 @@ struct sdo_pointcloud
     OCIString*          pc_val_attr_tables;
     void*               pc_other_attrs;
 };
-typedef struct sdo_pointcloud SDO_PC_TYPE;
+typedef struct sdo_pc SDO_PC_TYPE;
 
 struct sdo_pc_ind
 {
@@ -248,7 +248,7 @@ struct sdo_pc_ind
     OCIInd              pc_val_attr_tables;
     OCIInd              pc_other_attrs;
 };
-typedef struct sdo_pointcloud_ind SDO_PC_ind;
+typedef struct sdo_pc_ind SDO_PC_ind;
 
 /***************************************************************************/
 /*                            Oracle class wrappers                        */
@@ -294,7 +294,7 @@ private:
     OCIType*            hNumArrayTDO;
     OCIType*            hGeometryTDO;
     OCIType*            hGeoRasterTDO;
-    OCIType*            hPointCloudTDO;
+    OCIType*            hPCTDO;
     OCIType*            hElemArrayTDO;
     OCIType*            hOrdinateArrayTDO;
 
@@ -355,7 +355,7 @@ private:
 
 public:
 
-    bool                Execute( int nRows = 0 );
+    bool                Execute( int nRows = 1 );
     bool                Fetch( int nRows = 1 );
     unsigned int        nFetchCount;
 
@@ -366,16 +366,17 @@ public:
     void                Define( int* pnData );
     void                Bind( int* pnData );
     void                Bind( double* pnData );
-    void                Bind( char* pData, long nData);    
+    void                Bind( char* pData, long nData );
+    void                Bind( sdo_geometry** pphData );
+    void                Bind( OCILobLocator** pphLocator );
     void                Define( double* pnData );
     void                Define( char* pszData, int nSize = OWNAME );
     void                Bind( char* pszData, int nSize = OWNAME );
-    void                Define( OCILobLocator** pphLocator,
-                            bool bBLOB = false);
+    void                Define( OCILobLocator** pphLocator);
     void                Define( OCIArray** pphData );
     void                Define( sdo_georaster** pphData );
     void                Define( sdo_geometry** pphData );
-    void                Define( sdo_pointcloud** pphData );
+    void                Define( sdo_pc** pphData );
     void                Define( OCILobLocator** pphLocator, long nIterations );
     void                BindName( const char* pszName, int* pnData );
     void                BindName( const char* pszName, double* pnData );
@@ -383,6 +384,9 @@ public:
                             int nSize = OWNAME );
     void                BindName( const char* pszName,
                             OCILobLocator** pphLocator );
+    void                BindArray( double** ppfdData, long nSize = 1);
+    void                BindArray( long** plnData, long nSize = 1);
+    void                BindArray( int** ppnData, long nSize = 1);
     static void         Free( OCILobLocator** ppphLocator,
                             int nCount );
     unsigned long       ReadBlob( OCILobLocator* phLocator,

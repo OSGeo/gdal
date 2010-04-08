@@ -454,7 +454,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     poStmt->BindName( ":wktext", szWKText, sizeof(szWKText) );
     poStmt->BindName( ":authority", szAuthority );
 
-    if( poStmt->Execute() == false )
+    if( ! poStmt->Execute() )
     {
         delete poStmt;
         delete poGRW;
@@ -1686,9 +1686,8 @@ bool GeoRasterWrapper::InitializeIO( void )
 
     poBlockStmt->Bind( &nRasterId );
     poBlockStmt->Define( pahLocator, nBlockCount );
-    poBlockStmt->Execute();
 
-    if( poBlockStmt->Fetch( nBlockCount ) == false )
+    if( ! poBlockStmt->Execute( nBlockCount ) )
     {
         return false;
     }
@@ -2491,11 +2490,7 @@ bool GeoRasterWrapper::DeletePyramid()
             sColumn.c_str(),
             sWhere.c_str() ) );
     
-    if( poStmt->Execute() )
-    {
-        delete poStmt;
-        return true;
-    }
+    poStmt->Execute();
 
     delete poStmt;
     return false;
