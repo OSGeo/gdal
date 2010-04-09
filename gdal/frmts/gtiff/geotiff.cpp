@@ -843,6 +843,9 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 double GTiffRasterBand::GetOffset( int *pbSuccess )
 
 {
+    if (!bHaveOffsetScale)
+        return GDALPamRasterBand::GetOffset(pbSuccess);
+
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
     return dfOffset;
@@ -870,6 +873,9 @@ CPLErr GTiffRasterBand::SetOffset( double dfNewValue )
 double GTiffRasterBand::GetScale( int *pbSuccess )
 
 {
+    if (!bHaveOffsetScale)
+        return GDALPamRasterBand::GetScale(pbSuccess);
+
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
     return dfScale;
