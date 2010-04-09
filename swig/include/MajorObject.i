@@ -93,6 +93,7 @@ public:
 /*
  * GetMetadataItem
  */
+  %apply Pointer NONNULL {const char * pszName};
   const char *GetMetadataItem( const char *pszName, const char *pszDomain = "" ) {
     return GDALGetMetadataItem( self, pszName, pszDomain);
   }
@@ -104,6 +105,7 @@ public:
                                             const char * pszDomain = "" ) {
     return GDALSetMetadataItem( self, pszName, pszValue, pszDomain);
   }
+  %clear const char * pszName;
 
 } /* %extend */
 };
