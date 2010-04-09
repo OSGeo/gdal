@@ -4540,7 +4540,30 @@ void GTiffDataset::ApplyPamInfo()
     {
         CPLFree( pszProjection );
         pszProjection = CPLStrdup( pszPamSRS );
-        bLookedForProjection= TRUE;
+        bLookedForProjection = TRUE;
+    }
+
+    int nPamGCPCount = GDALPamDataset::GetGCPCount();
+    if( nPamGCPCount > 0 )
+    {
+        if( nGCPCount > 0 )
+        {
+            GDALDeinitGCPs( nGCPCount, pasGCPList );
+            CPLFree( pasGCPList );
+            pasGCPList = NULL;
+        }
+
+        nGCPCount = nPamGCPCount;
+        pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALPamDataset::GetGCPs());
+
+        CPLFree( pszProjection );
+        pszProjection = NULL;
+
+        const char *pszPamGCPProjection = GDALPamDataset::GetGCPProjection();
+        if( pszPamGCPProjection != NULL && strlen(pszPamGCPProjection) > 0 )
+            pszProjection = CPLStrdup(pszPamGCPProjection);
+
+        bLookedForProjection = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -7040,10 +7063,11 @@ const char *GTiffDataset::GetGCPProjection()
     if( nGCPCount > 0 )
     {
         LookForProjection();
-        return pszProjection;
     }
+    if (pszProjection != NULL)
+        return pszProjection;
     else
-        return GDALPamDataset::GetGCPProjection();
+        return "";
 }
 
 /************************************************************************/
