@@ -2806,6 +2806,42 @@ def tiff_write_80():
     return 'success'
 
 ###############################################################################
+# Test retrieving GCP from PAM
+
+def tiff_write_81():
+    
+    shutil.copyfile('data/byte.tif', 'tmp/tiff_write_81.tif')
+    f = open('tmp/tiff_write_81.tif.aux.xml', 'wt')
+    f.write("""
+<PAMDataset>
+  <GCPList Projection="PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]">
+    <GCP Id="" Pixel="0.0000" Line="0.0000" X="4.407200000000E+05" Y="3.751320000000E+06"/>
+    <GCP Id="" Pixel="100.0000" Line="0.0000" X="4.467200000000E+05" Y="3.751320000000E+06"/>
+    <GCP Id="" Pixel="0.0000" Line="100.0000" X="4.407200000000E+05" Y="3.745320000000E+06"/>
+    <GCP Id="" Pixel="100.0000" Line="100.0000" X="4.467200000000E+05" Y="3.745320000000E+06"/>
+  </GCPList>
+</PAMDataset>""")
+    f.close()
+    
+    ds = gdal.Open('tmp/tiff_write_81.tif')
+
+    if ds.GetGCPProjection().find(
+                   'AUTHORITY["EPSG","26711"]') == -1:
+        gdaltest.post_reason( 'GCP Projection not set properly.' )
+        return 'fail'
+
+    gcps = ds.GetGCPs()
+    if len(gcps) != 4:
+        gdaltest.post_reason( 'GCP count wrong.' )
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_81.tif' )
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2898,6 +2934,7 @@ gdaltest_list = [
     tiff_write_78,
     tiff_write_79,
     tiff_write_80,
+    tiff_write_81,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
