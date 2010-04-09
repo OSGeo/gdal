@@ -257,6 +257,16 @@ public:
     *val = GDALGetRasterScale( self, hasval );
   }
 
+  /* Interface method added for GDAL 1.8.0 */
+  CPLErr SetOffset( double val ) {
+    return GDALSetRasterOffset( self, val );
+  }
+
+  /* Interface method added for GDAL 1.8.0 */
+  CPLErr SetScale( double val ) {
+    return GDALSetRasterScale( self, val );
+  }
+  
 %apply (double *OUTPUT){double *min, double *max, double *mean, double *stddev};
 %apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
   CPLErr GetStatistics( int approx_ok, int force, 
