@@ -1642,6 +1642,28 @@ def nitf_61():
     return 'success'
 
 ###############################################################################
+# Test creating & reading image comments
+
+def nitf_62():
+
+    # 80+1 characters
+    comments = '012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678ZA'
+
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf62.ntf', 1, 1, options = ['ICOM=' + comments])
+    ds = None
+
+    ds = gdal.Open('tmp/nitf62.ntf')
+    md = ds.GetMetadata()
+    ds = None
+
+    got_comments = md['NITF_IMAGE_COMMENTS']
+    if len(got_comments) != 160 or got_comments.find(comments) == -1:
+        gdaltest.post_reason('did not get expected comments')
+        print("'%s'" % got_comments)
+        return 'fail'
+
+    return 'success'
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -2466,6 +2488,11 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf62.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -2536,6 +2563,7 @@ gdaltest_list = [
     nitf_59,
     nitf_60,
     nitf_61,
+    nitf_62,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
