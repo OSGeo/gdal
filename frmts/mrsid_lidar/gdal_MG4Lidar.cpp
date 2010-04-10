@@ -171,7 +171,8 @@ default:
    CPLXMLNode *poxmlFilter = CPLGetXMLNode(poxmlBand, "ClassificationFilter");
    if( poxmlFilter == NULL )
       poxmlFilter = CPLGetXMLNode(pods->poXMLPCView, "ClassificationFilter");
-   if (poxmlFilter == NULL )
+   if (poxmlFilter == NULL || poxmlFilter->psChild == NULL ||
+       poxmlFilter->psChild->pszValue == NULL)
       papszFilterClassCodes = NULL;
    else
       papszFilterClassCodes = CSLTokenizeString(poxmlFilter->psChild->pszValue);
@@ -179,7 +180,8 @@ default:
    poxmlFilter = CPLGetXMLNode(poxmlBand, "ReturnNumberFilter");
    if( poxmlFilter == NULL )
       poxmlFilter = CPLGetXMLNode(pods->poXMLPCView, "ReturnNumberFilter");
-   if (poxmlFilter == NULL )
+   if (poxmlFilter == NULL || poxmlFilter->psChild == NULL ||
+       poxmlFilter->psChild->pszValue == NULL)
       papszFilterReturnNums = NULL;
    else
       papszFilterReturnNums = CSLTokenizeString(poxmlFilter->psChild->pszValue);
@@ -188,26 +190,26 @@ default:
    CPLXMLNode * poxmlAggregation = CPLGetXMLNode(poxmlBand, "AggregationMethod");
    if( poxmlAggregation == NULL )
       poxmlAggregation = CPLGetXMLNode(pods->poXMLPCView, "AggregationMethod");
-   if (poxmlAggregation == NULL )
+   if (poxmlAggregation == NULL || poxmlAggregation->psChild == NULL ||
+       poxmlAggregation->psChild->pszValue == NULL)
       Aggregation = "Mean";
    else
       Aggregation = poxmlAggregation->psChild->pszValue;
-      
+
+   nodatavalue = getMaxValue();
+
    CPLXMLNode * poxmlIntepolation = CPLGetXMLNode(poxmlBand, "InterpolationMethod");
    if( poxmlIntepolation == NULL )
       poxmlIntepolation = CPLGetXMLNode(pods->poXMLPCView, "InterpolationMethod");
-   if (poxmlIntepolation == NULL )
-      nodatavalue = getMaxValue();
-   else
+   if (poxmlIntepolation != NULL )
    {
       CPLXMLNode * poxmlMethod= NULL;
-      char ** papszParams;
-      if (((poxmlMethod = CPLSearchXMLNode(poxmlIntepolation, "None")) != NULL))
+      char ** papszParams = NULL;
+      if (((poxmlMethod = CPLSearchXMLNode(poxmlIntepolation, "None")) != NULL) &&
+          poxmlMethod->psChild != NULL && poxmlMethod->psChild->pszValue != NULL)
       {
          papszParams = CSLTokenizeString(poxmlMethod->psChild->pszValue);
-         if (EQUAL(papszParams[0], "MAX"))
-            nodatavalue = getMaxValue();
-         else
+         if (!EQUAL(papszParams[0], "MAX"))
             nodatavalue = atof(papszParams[0]);
       }
       // else if .... Add support for other interpolation methods here.
@@ -220,12 +222,12 @@ default:
       filter = "Classification";
    else if (papszFilterReturnNums != NULL)
       filter = "Return";
-   char desc[128];
+   CPLString osDesc;
    if (filter)
-      sprintf(desc,"%s of %s (filtered by %s)", Aggregation, ChannelName.c_str(), filter);
+      osDesc.Printf("%s of %s (filtered by %s)", Aggregation, ChannelName.c_str(), filter);
    else
-      sprintf(desc,"%s of %s", Aggregation, ChannelName.c_str());
-   SetDescription(desc);
+      osDesc.Printf("%s of %s", Aggregation, ChannelName.c_str());
+   SetDescription(osDesc);
 }
 
 /************************************************************************/
@@ -290,10 +292,12 @@ const DTYPE GetChannelElement(const ChannelData &channel, size_t idx)
       retval = static_cast<DTYPE>(static_cast<const unsigned char *>(channel.getData())[idx]);
       break;
    case (DATATYPE_SINT64):
-      retval = static_cast<DTYPE>(static_cast<const __int64 *>(channel.getData())[idx]);
+      retval = static_cast<DTYPE>(static_cast<const GIntBig *>(channel.getData())[idx]);
       break;
    case (DATATYPE_UINT64):
-      retval = static_cast<DTYPE>(static_cast<const unsigned __int64 *>(channel.getData())[idx]);
+      retval = static_cast<DTYPE>(static_cast<const GUIntBig *>(channel.getData())[idx]);
+      break;
+   default:
       break;
    }
    return retval;
@@ -304,10 +308,11 @@ const bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, s
 {
    bool bClassificationOK = true;
    bool bReturnNumOK = true;
-   MG4LidarDataset *poGDS = (MG4LidarDataset *) poDS;
+
    // Check if classification code is ok:  it was requested and it does match one of the requested codes
    const int classcode = GetChannelElement<int>(*pointdata.getChannel(CHANNEL_NAME_ClassId), i);
-   char bufCode[3]; itoa(classcode, bufCode, 10);
+   char bufCode[16];
+   sprintf(bufCode, "%d", classcode);
    bClassificationOK = (papszFilterClassCodes == NULL ? true :
       (CSLFindString(papszFilterClassCodes,bufCode)!=-1));
 
@@ -315,7 +320,7 @@ const bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, s
    {
       // Check if return num is ok:  it was requested and it does match one of the requested return numbers
       const long returnnum= static_cast<const unsigned char *>(pointdata.getChannel(CHANNEL_NAME_ReturnNum)->getData())[i];
-      itoa(returnnum, bufCode, 10);
+      sprintf(bufCode, "%d", (int)returnnum);
       bReturnNumOK = (papszFilterReturnNums == NULL ? true :
          (CSLFindString(papszFilterReturnNums, bufCode)!=-1));
       if (!bReturnNumOK && CSLFindString(papszFilterReturnNums, "Last")!=-1)
@@ -447,6 +452,9 @@ double MG4LidarRasterBand::getMaxValue()
       DO_CASE (GDT_UInt16, USHRT_MAX);
       DO_CASE (GDT_Byte, UCHAR_MAX);
       #undef DO_CASE 
+       default:
+           retval = 0;
+           break;
    }
    return retval;
 }
@@ -472,6 +480,9 @@ CPLErr MG4LidarRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       DO_CASE (GDT_UInt16, unsigned short);
       DO_CASE (GDT_Byte, char);
 #undef DO_CASE 
+      default:
+           return CE_Failure;
+           break;
 
    }
    return CE_None;
@@ -500,6 +511,8 @@ CPLErr MG4LidarRasterBand::GetStatistics( int bApproxOK, int bForce,
 
 double MG4LidarRasterBand::GetNoDataValue( int *pbSuccess )
 {
+   if (pbSuccess)
+       *pbSuccess = TRUE;
    return nodatavalue;
 }
 
@@ -509,8 +522,9 @@ double MG4LidarRasterBand::GetNoDataValue( int *pbSuccess )
 /************************************************************************/
 MG4LidarDataset::MG4LidarDataset()
 {
-   MG4PointReader *reader = NULL;
+   reader = NULL;
 
+   poXMLPCView = NULL;
    nOverviewCount = 0;
    papoOverviewDS = NULL;
 
@@ -528,6 +542,10 @@ MG4LidarDataset::~MG4LidarDataset()
       for( int i = 0; i < nOverviewCount; i++ )
          delete papoOverviewDS[i];
       CPLFree( papoOverviewDS );
+   }
+   else
+   {
+      CPLDestroyXMLNode(poXMLPCView);
       RELEASE(reader);
    }
 }
@@ -675,19 +693,17 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    if( strstr((const char *) poOpenInfo->pabyHeader, "<PointCloudView" ) == NULL )
       return NULL;
 
-   CPLXMLNode *psFile, *psInputFile;
-   psFile = CPLParseXMLFile( poOpenInfo->pszFilename );
-   CPLXMLNode *pxmlPCView = CPLGetXMLNode( psFile, "=PointCloudView" );
+   CPLXMLNode *pxmlPCView, *psInputFile;
+   pxmlPCView = CPLParseXMLFile( poOpenInfo->pszFilename );
    if (pxmlPCView == NULL)
-   {
-      return NULL;
-   }
+       return NULL;
 
    psInputFile = CPLGetXMLNode( pxmlPCView, "InputFile" );
    if( psInputFile == NULL )
    {
       CPLError( CE_Failure, CPLE_OpenFailed, 
          "Failed to find <InputFile> in document." );
+      CPLDestroyXMLNode(pxmlPCView);
       return NULL;
    }
    CPLString sidInputName(psInputFile->psChild->pszValue);
@@ -703,13 +719,17 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    /*      dates.                                                          */
    /* -------------------------------------------------------------------- */
    if( openinfo.fp == NULL || openinfo.nHeaderBytes < 50 )
+   {
+      CPLDestroyXMLNode(pxmlPCView);
       return NULL;
+   }
 
    /* check magic */
    // to do:  SDK should provide an API for this.
    if(  !EQUALN((const char *) openinfo.pabyHeader, "msid", 4)
       || (*(openinfo.pabyHeader+4) != 0x4 )) // Generation 4.  ... is there more we can check?
    {
+      CPLDestroyXMLNode(pxmlPCView);
       return NULL;
    }
 
@@ -733,6 +753,9 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       {
          CPLError( CE_Failure, CPLE_OpenFailed, 
             "Invalid ClipBox.  Must contain 4 or 6 floats." );
+         CSLDestroy(papszClipExtent);
+         delete poDS;
+         RELEASE(r);
          return NULL;
       }
       if (!EQUAL(papszClipExtent[0], "NOFILTER"))
@@ -765,6 +788,8 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       cell_side = atof(pszCellSize);
    MaxRasterSize = MAX(poDS->reader->getBounds().x.length()/cell_side, poDS->reader->getBounds().y.length()/cell_side);
 
+   RELEASE(r);
+
    // Calculate the number of levels to expose.  The highest level correpsonds to a
    // raster size of 256 on the longest side.
    double blocksizefactor = MaxRasterSize/256.0;
@@ -795,10 +820,17 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       "Opened image: width %d, height %d, bands %d",
       poDS->nRasterXSize, poDS->nRasterYSize, poDS->nBands );
 
+   if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+   {
+       delete poDS;
+       return NULL;
+   }
+
    if (! ((poDS->nBands == 1) || (poDS->nBands == 3)))
    {
       CPLDebug( "MG4Lidar",
          "Inappropriate number of bands (%d)", poDS->nBands );
+      delete poDS;
       return(NULL);
    }
 
@@ -813,6 +845,9 @@ void GDALRegister_MG4Lidar()
 
 {
    GDALDriver	*poDriver;
+
+    if (! GDAL_CHECK_VERSION("MG4Lidar driver"))
+        return;
 
    if( GDALGetDriverByName( "MG4Lidar" ) == NULL )
    {
