@@ -50,33 +50,33 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 ../o/%.$(OBJ_EXT):	sdk/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	sdk/channel/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	sdk/core/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	sdk/port/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	sdk/segment/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/channel/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/core/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/port/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/segment/%.cpp
-	$(CC) -c $(CPPFLAGS) $(CXXFLAGS ) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS ) $< -o $@
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
