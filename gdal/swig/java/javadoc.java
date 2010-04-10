@@ -3103,7 +3103,7 @@ public class Band:public int GetMaskFlags()
  * 
  * For file formats that don't know this intrinsically, no value will be returned
  *
- * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * @param val empty allocated array of type Double[] of size 1. val[0] will contain a Double object
  * with the minimum value if available, other val[0] will contain null
  */
 public class Band:public void GetMinimum(Double[] val)
@@ -3113,7 +3113,7 @@ public class Band:public void GetMinimum(Double[] val)
  * 
  * For file formats that don't know this intrinsically, no value will be returned
  *
- * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * @param val empty allocated array of type Double[] of size 1. val[0] will contain a Double object
  * with the maximum value if available, other val[0] will contain null
  */
 public class Band:public void GetMaximum(Double[] val)
@@ -3130,7 +3130,7 @@ public class Band:public void GetMaximum(Double[] val)
  * <p>
  * For file formats that don't know this intrinsically, no value will be returned
  *
- * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * @param val empty allocated array of type Double[] of size 1. val[0] will contain a Double object
  * with the offset value if available, other val[0] will contain null
  */
 public class Band:public void GetOffset(Double[] val)
@@ -3147,7 +3147,7 @@ public class Band:public void GetOffset(Double[] val)
  * <p>
  * For file formats that don't know this intrinsically, no value will be returned
  *
- * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * @param val empty allocated array of type Double[] of size 1. val[0] will contain a Double object
  * with the scale value if available, other val[0] will contain null
  */
 public class Band:public void GetScale(Double[] val)
@@ -3159,7 +3159,7 @@ public class Band:public void GetScale(Double[] val)
  * value used to mark pixels that are not valid data.  Such pixels should
  * generally not be displayed, nor contribute to analysis operations.
  *
- * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * @param val empty allocated array of type Double[] of size 1. val[0] will contain a Double object
  * with the no data value if available, other val[0] will contain null
  */
 public class Band:public void GetNoDataValue(Double[] val)
@@ -4285,6 +4285,34 @@ public class Band:public int SetDefaultRAT(RasterAttributeTable table)
  * been emitted.
  */
 public class Band:public int SetNoDataValue(double nodataValue)
+
+/**
+ * Set scaling offset.
+ *
+ * Very few formats implement this method.
+ * When not implemented it will issue a CPLE_NotSupported error and return CE_Failure.
+ *
+ * @param newoffset the new offset.
+ *
+ * @return gdalconst.CE_None or success or gdalconst.CE_Failure on failure. 
+ *
+ * @since Java bindings 1.8.0
+ */
+public class Band:public int SetOffset(double newoffset)
+
+/**
+ * Set scaling ratio.
+ *
+ * Very few formats implement this method.
+ * When not implemented it will issue a CPLE_NotSupported error and return CE_Failure.
+ *
+ * @param newscale the new scale.
+ *
+ * @return gdalconst.CE_None or success or gdalconst.CE_Failure on failure. 
+ *
+ * @since Java bindings 1.8.0
+ */
+public class Band:public int SetScale(double newscale)
 
 /**
  * Set the category names for this band.
