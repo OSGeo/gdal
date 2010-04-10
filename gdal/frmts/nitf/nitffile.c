@@ -866,7 +866,27 @@ int NITFCreate( const char *pszFilename,
         }
     }
 
-    PLACE (nCur+nOffset, NICOM    , "0"                            );
+    {
+        const char* pszICOM = CSLFetchNameValue( papszOptions, "ICOM");
+        if (pszICOM != NULL)
+        {
+            int nLenICOM = strlen(pszICOM);
+            int nICOM = (79 + nLenICOM) / 80;
+            if (nICOM > 9)
+            {
+                CPLError(CE_Warning, CPLE_NotSupported, "ICOM will be truncated");
+                nICOM = 9;
+            }
+            PLACE (nCur+nOffset, NICOM    , CPLSPrintf("%01d",nICOM) );
+            VSIFWriteL(pszICOM, 1, MIN(nICOM * 80, nLenICOM), fp);
+            nOffset += nICOM * 80;
+        }
+        else
+        {
+            PLACE (nCur+nOffset, NICOM    , "0"                            );
+        }
+    }
+
     OVR( 2,nCur+nOffset+1, IC     , "NC"                           );
 
     if( pszIC[0] != 'N' )
