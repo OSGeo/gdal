@@ -61,6 +61,22 @@ def rasterio_1():
         gdaltest.post_reason( 'Didnt get expected buffer ')
         return 'fail'
 
+    # Capability of passing the result buffer added in GDAL 1.8.0
+    data3 = ' '.encode('ascii')
+    ds.ReadRaster(0, 0, 1, 1, buf_obj = data3)
+    if data3 != data:
+        gdaltest.post_reason( 'Didnt get expected buffer (2)')
+        print(data3)
+        return 'fail'
+
+    # Capability of passing the result buffer added in GDAL 1.8.0
+    data3 = ' '.encode('ascii')
+    ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_obj = data3)
+    if data3 != data:
+        gdaltest.post_reason( 'Didnt get expected buffer (3)')
+        print(data3)
+        return 'fail'
+
     ds = None
     drv.Delete('tmp/rasterio1.tif')
 
