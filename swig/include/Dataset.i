@@ -114,7 +114,7 @@ int ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
 }
 %}
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON)
 %{
 static
 CPLErr DSReadRaster_internal( GDALDatasetShadow *obj, 
@@ -400,7 +400,7 @@ public:
 %clear (int buf_len, char *buf_string);
 #endif
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON)
 %feature("kwargs") ReadRaster;
 %apply (int *optional_int) { (GDALDataType *buf_type) };
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };

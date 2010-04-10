@@ -112,7 +112,108 @@
 }
 
 %extend GDALRasterBandShadow {
+%apply ( void **outPythonObject ) { (void **buf ) };
+%apply ( int *optional_int ) {(int*)};
+%feature( "kwargs" ) ReadRaster1;
+  CPLErr ReadRaster1( int xoff, int yoff, int xsize, int ysize,
+                     void **buf,
+                     int *buf_xsize = 0,
+                     int *buf_ysize = 0,
+                     int *buf_type = 0,
+                     int *buf_pixel_space = 0,
+                     int *buf_line_space = 0) {
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
+                                        : (GDALDataType)*buf_type;
+    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+
+    int buf_size = ComputeBandRasterIOSize( nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8, 
+                                            pixel_space, line_space, FALSE ); 
+    if (buf_size == 0)
+    {
+        *buf = Py_None;
+        Py_INCREF(Py_None);
+        return CE_Failure;
+    }
+%#if PY_VERSION_HEX >= 0x03000000 
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        *buf = Py_None;
+        Py_INCREF(Py_None);
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return CE_Failure;
+    }
+    char *data = PyBytes_AsString( (PyObject *)*buf ); 
+%#else 
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        *buf = Py_None;
+        Py_INCREF(Py_None);
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return CE_Failure;
+    }
+    char *data = PyString_AsString( (PyObject *)*buf ); 
+%#endif
+    return GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize, 
+                         (void *) data, nxsize, nysize, ntype, 
+                         pixel_space, line_space ); 
+  }
+%clear (void **buf );
+%clear (int*);
+
+%apply (int nLen, char *pBuf ) { (int buflen, char *buf) };
+%apply ( int *optional_int ) {(int*)};
+%feature( "kwargs" ) ReadRaster2;
+  CPLErr ReadRaster2( int xoff, int yoff, int xsize, int ysize,
+                     int buflen, char *buf,
+                     int *buf_xsize = 0,
+                     int *buf_ysize = 0,
+                     int *buf_type = 0,
+                     int *buf_pixel_space = 0,
+                     int *buf_line_space = 0) {
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
+                                        : (GDALDataType)*buf_type;
+    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+
+    int buf_size = ComputeBandRasterIOSize( nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8, 
+                                            pixel_space, line_space, FALSE ); 
+    if (buf_size == 0)
+    {
+        return CE_Failure;
+    }
+    if (buflen < buf_size)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Provided buffer is not large enough");
+        return CE_Failure;
+    }
+    return GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize, 
+                         buf, nxsize, nysize, ntype, 
+                         pixel_space, line_space ); 
+  }
+%clear (int buflen, char *buf);
+%clear (int*);
+
 %pythoncode {
+
+  def ReadRaster(self, xoff, yoff, xsize, ysize,
+                   buf_xsize = None, buf_ysize = None, buf_type = None,
+                   buf_pixel_space = None, buf_line_space = None, buf_obj = None ):
+        if buf_obj is not None and (type(buf_obj).__name__ == 'str' or type(buf_obj).__name__ == 'bytes'):
+            return _gdal.Band_ReadRaster2(self, xoff, yoff, xsize, ysize, buf_obj,
+                                          buf_xsize, buf_ysize, buf_type,
+                                          buf_pixel_space, buf_line_space)
+        else:
+            return _gdal.Band_ReadRaster1(self, xoff, yoff, xsize, ysize,
+                                          buf_xsize, buf_ysize, buf_type,
+                                          buf_pixel_space, buf_line_space)
+
   def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                   buf_xsize=None, buf_ysize=None, buf_obj=None):
       import gdalnumeric
@@ -133,6 +234,133 @@
 }
 
 %extend GDALDatasetShadow {
+%feature("kwargs") ReadRaster1;
+%apply (int *optional_int) { (GDALDataType *buf_type) };
+%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+%apply ( void **outPythonObject ) { (void **buf ) };
+%apply ( int *optional_int ) {(int*)};
+CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
+                    void **buf,
+                    int *buf_xsize = 0, int *buf_ysize = 0,
+                    GDALDataType *buf_type = 0,
+                    int band_list = 0, int *pband_list = 0,
+                    int* buf_pixel_space = 0, int* buf_line_space = 0, int* buf_band_space = 0 )
+{
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype;
+    if ( buf_type != 0 ) {
+      ntype = (GDALDataType) *buf_type;
+    } else {
+      int lastband = GDALGetRasterCount( self ) - 1;
+      if (lastband < 0)
+      {
+          *buf = Py_None;
+          Py_INCREF(Py_None);
+          return CE_Failure;
+      }
+      ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
+    }
+
+    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    int band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
+
+    int buf_size = ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
+                                               band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
+                                               pixel_space, line_space, band_space, FALSE);
+    if (buf_size == 0)
+    {
+        *buf = Py_None;
+        Py_INCREF(Py_None);
+        return CE_Failure;
+    }
+
+%#if PY_VERSION_HEX >= 0x03000000 
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        *buf = Py_None;
+        Py_INCREF(Py_None);
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return CE_Failure;
+    }
+    char *data = PyBytes_AsString( (PyObject *)*buf ); 
+%#else 
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        *buf = Py_None;
+        Py_INCREF(Py_None);
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return CE_Failure;
+    }
+    char *data = PyString_AsString( (PyObject *)*buf ); 
+%#endif
+
+    return GDALDatasetRasterIO(self, GF_Read, xoff, yoff, xsize, ysize,
+                               (void*) data, nxsize, nysize, ntype,
+                               band_list, pband_list, pixel_space, line_space, band_space );
+}
+
+%clear (GDALDataType *buf_type);
+%clear (int band_list, int *pband_list );
+%clear (void **buf );
+%clear (int*);
+
+%feature("kwargs") ReadRaster2;
+%apply (int *optional_int) { (GDALDataType *buf_type) };
+%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+%apply (int nLen, char *pBuf ) { (int buflen, char *buf) };
+%apply ( int *optional_int ) {(int*)};
+CPLErr ReadRaster2(  int xoff, int yoff, int xsize, int ysize,
+                    int buflen, char *buf,
+                    int *buf_xsize = 0, int *buf_ysize = 0,
+                    GDALDataType *buf_type = 0,
+                    int band_list = 0, int *pband_list = 0,
+                    int* buf_pixel_space = 0, int* buf_line_space = 0, int* buf_band_space = 0 )
+{
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype;
+    if ( buf_type != 0 ) {
+      ntype = (GDALDataType) *buf_type;
+    } else {
+      int lastband = GDALGetRasterCount( self ) - 1;
+      if (lastband < 0)
+      {
+          return CE_Failure;
+      }
+      ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
+    }
+
+    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    int band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
+
+    int buf_size = ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
+                                               band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
+                                               pixel_space, line_space, band_space, FALSE);
+    if (buf_size == 0)
+    {
+        return CE_Failure;
+    }
+    if (buflen < buf_size)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Provided buffer is not large enough");
+        return CE_Failure;
+    }
+
+    return GDALDatasetRasterIO(self, GF_Read, xoff, yoff, xsize, ysize,
+                               (void*) buf, nxsize, nysize, ntype,
+                               band_list, pband_list, pixel_space, line_space, band_space );
+}
+
+%clear (GDALDataType *buf_type);
+%clear (int band_list, int *pband_list );
+%clear (int buflen, char *buf);
+%clear (int*);
+
 %pythoncode {
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None ):
         import gdalnumeric
@@ -160,7 +388,7 @@
     def ReadRaster(self, xoff, yoff, xsize, ysize,
                    buf_xsize = None, buf_ysize = None, buf_type = None,
                    band_list = None,
-                   buf_pixel_space = None, buf_line_space = None, buf_band_space = None ):
+                   buf_pixel_space = None, buf_line_space = None, buf_band_space = None, buf_obj = None ):
 
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
@@ -171,9 +399,15 @@
 
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType;
-        return _gdal.Dataset_ReadRaster(self, xoff, yoff, xsize, ysize,
-                                           buf_xsize, buf_ysize, buf_type,
-                                           band_list, buf_pixel_space, buf_line_space, buf_band_space )
+
+        if buf_obj is not None and (type(buf_obj).__name__ == 'str' or type(buf_obj).__name__ == 'bytes'):
+            return _gdal.Dataset_ReadRaster2(self, xoff, yoff, xsize, ysize, buf_obj,
+                                             buf_xsize, buf_ysize, buf_type,
+                                             band_list, buf_pixel_space, buf_line_space, buf_band_space )
+        else:
+            return _gdal.Dataset_ReadRaster1(self, xoff, yoff, xsize, ysize,
+                                             buf_xsize, buf_ysize, buf_type,
+                                             band_list, buf_pixel_space, buf_line_space, buf_band_space )
 
     def GetSubDatasets(self):
         sd_list = []

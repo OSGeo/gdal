@@ -254,8 +254,23 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %}
 
 /*
+ * Typemap Band::ReadRaster()
+ */
+%typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pBuf = NULL )
+{
+  /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pBuf = NULL ) */
+  $1 = &pBuf;
+}
+%typemap(argout) ( void **outPythonObject )
+{
+  /* %typemap(argout) ( void **outPythonObject ) */
+  Py_XDECREF($result);
+  $result = (PyObject *)*$1;
+}
+
+/*
  * Typemap for buffers with length <-> PyStrings
- * Used in Band::ReadRaster() and Band::WriteRaster()
+ * Used in Band::WriteRaster()
  *
  * This typemap has a typecheck also since the WriteRaster()
  * methods are overloaded.
