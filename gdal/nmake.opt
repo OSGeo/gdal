@@ -233,6 +233,13 @@ JPEG12_SUPPORTED = 1
 #		-I$(MRSID_DIR)\include\mrsid_readers \
 #		-I$(MRSID_DIR)\include\j2k_readers
 #MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_dsdk_dll.lib advapi32.lib user32.lib
+
+# Uncomment the following for MrSID Lidar (MG4 Lidar) support.
+#MRSID_LIDAR_PLUGIN = NO
+#MRSID_LIDAR_DIR = C:\dev\Lidar_DSDK-1.1.0.2814
+#MRSID_LIDAR_INCLUDE = -I$(MRSID_LIDAR_DIR)\include
+#MRSID_LIDAR_LIB = $(MRSID_LIDAR_DIR)\lib\Release_md\lti_lidar_dsdk.lib
+
 # Comment out the following to supress JP2MRSID driver. 
 #MRSID_FLAGS =	-DMRSID_J2K
 # Enable these, if you have the MrSID Encoding SDK and want
@@ -394,7 +401,6 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 ODBCLIB = odbc32.lib odbccp32.lib user32.lib
 !ENDIF
 
-
 !IFDEF MRSID_DIR
 !IF "$(MRSID_PLUGIN)" != "YES"
 MRSID_LIB_LINK = $(MRSID_LIB)
@@ -457,7 +463,8 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(DWG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
-	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) 
+	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) \
+	$(MRSID_LIDAR_LIB) 
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
