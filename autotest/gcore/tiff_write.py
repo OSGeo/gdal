@@ -43,6 +43,7 @@ import gdaltest
 
 def tiff_write_1():
 
+    gdaltest.oldCacheSize = gdal.GetCacheMax()
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         gdaltest.post_reason( 'GTiff driver not found!' )
@@ -2842,15 +2843,34 @@ def tiff_write_81():
     return 'success'
 
 ###############################################################################
+# Test writing & reading a signedbyte 8 bit geotiff
+
+def tiff_write_82():
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_82.tif', src_ds, options = ['PIXELTYPE=SIGNEDBYTE'])
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_82.tif')
+    md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
+    if md['PIXELTYPE'] != 'SIGNEDBYTE':
+        gdaltest.post_reason('did not get SIGNEDBYTE')
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_82.tif' )
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
     if 0 == gdal.GetCacheMax():
-        gdal.SetCacheMax(oldCacheSize)
+        gdal.SetCacheMax(gdaltest.oldCacheSize)
 
     return 'success'
-
-oldCacheSize = gdal.GetCacheMax()
 
 gdaltest_list = [
     tiff_write_1,
@@ -2935,6 +2955,7 @@ gdaltest_list = [
     tiff_write_79,
     tiff_write_80,
     tiff_write_81,
+    tiff_write_82,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
