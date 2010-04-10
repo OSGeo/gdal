@@ -5118,59 +5118,61 @@ typedef struct
 {
     int         nMaxLen;
     const char* pszName;
+    const char* pszDescription;
 } NITFFieldDescription;
 
 /* Keep in sync with NITFCreate */
 static const NITFFieldDescription asFieldDescription [] =
 {
-    { 2, "CLEVEL" } ,
-    { 10, "OSTAID" } ,
-    { 14, "FDT" } ,
-    { 80, "FTITLE" } ,
-    { 1, "FSCLAS" } ,
-    { 2, "FSCLSY" } ,
-    { 11, "FSCODE" } ,
-    { 2, "FSCTLH" } ,
-    { 20, "FSREL" } ,
-    { 2, "FSDCTP" } ,
-    { 8, "FSDCDT" } ,
-    { 4, "FSDCXM" } ,
-    { 1, "FSDG" } ,
-    { 8, "FSDGDT" } ,
-    { 43, "FSCLTX" } ,
-    { 1, "FSCATP" } ,
-    { 40, "FSCAUT" } ,
-    { 1, "FSCRSN" } ,
-    { 8, "FSSRDT" } ,
-    { 15, "FSCTLN" } ,
-    { 5, "FSCOP" } ,
-    { 5, "FSCPYS" } ,
-    { 24, "ONAME" } ,
-    { 18, "OPHONE" } ,
-    { 10, "IID1" } ,
-    { 14, "IDATIM" } ,
-    { 17, "TGTID" } ,
-    { 80, "IID2" } ,
-    {  1, "ISCLAS" } ,
-    {  2, "ISCLSY" } ,
-    { 11, "ISCODE" } ,
-    {  2, "ISCTLH" } ,
-    { 20, "ISREL" } ,
-    {  2, "ISDCTP" } ,
-    {  8, "ISDCDT" } ,
-    {  4, "ISDCXM" } ,
-    {  1, "ISDG" } ,
-    {  8, "ISDGDT" } ,
-    { 43, "ISCLTX" } ,
-    {  1, "ISCATP" } ,
-    { 40, "ISCAUT" } ,
-    {  1, "ISCRSN" } ,
-    {  8, "ISSRDT" } ,
-    { 15, "ISCTLN" } ,
-    { 42, "ISORCE" } ,
-    {  8, "ICAT" } ,
-    {  2, "ABPP" } ,
-    {  1, "PJUST" } ,
+    { 2, "CLEVEL", "Complexity level" } ,
+    { 10, "OSTAID", "Originating Station ID" } ,
+    { 14, "FDT", "File Date and Time" } ,
+    { 80, "FTITLE", "File Title" } ,
+    { 1, "FSCLAS", "File Security Classification" } ,
+    { 2, "FSCLSY", "File Classification Security System" } ,
+    { 11, "FSCODE", "File Codewords" } ,
+    { 2, "FSCTLH", "File Control and Handling" } ,
+    { 20, "FSREL", "File Releasing Instructions" } ,
+    { 2, "FSDCTP", "File Declassification Type" } ,
+    { 8, "FSDCDT", "File Declassification Date" } ,
+    { 4, "FSDCXM", "File Declassification Exemption" } ,
+    { 1, "FSDG", "File Downgrade" } ,
+    { 8, "FSDGDT", "File Downgrade Date" } ,
+    { 43, "FSCLTX", "File Classification Text" } ,
+    { 1, "FSCATP", "File Classification Authority Type" } ,
+    { 40, "FSCAUT", "File Classification Authority" } ,
+    { 1, "FSCRSN", "File Classification Reason" } ,
+    { 8, "FSSRDT", "File Security Source Date" } ,
+    { 15, "FSCTLN", "File Security Control Number" } ,
+    { 5, "FSCOP", "File Copy Number" } ,
+    { 5, "FSCPYS", "File Number of Copies" } ,
+    { 24, "ONAME", "Originator Name" } ,
+    { 18, "OPHONE", "Originator Phone Number" } ,
+    { 10, "IID1", "Image Identifier 1" } ,
+    { 14, "IDATIM", "Image Date and Time" } ,
+    { 17, "TGTID", "Target Identifier" } ,
+    { 80, "IID2", "Image Identifier 2" } ,
+    {  1, "ISCLAS", "Image Security Classification" } ,
+    {  2, "ISCLSY", "Image Classification Security System" } ,
+    { 11, "ISCODE", "Image Codewords" } ,
+    {  2, "ISCTLH", "Image Control and Handling" } ,
+    { 20, "ISREL", "Image Releasing Instructions" } ,
+    {  2, "ISDCTP", "Image Declassification Type" } ,
+    {  8, "ISDCDT", "Image Declassification Date" } ,
+    {  4, "ISDCXM", "Image Declassification Exemption" } ,
+    {  1, "ISDG", "Image Downgrade" } ,
+    {  8, "ISDGDT", "Image Downgrade Date" } ,
+    { 43, "ISCLTX", "Image Classification Text" } ,
+    {  1, "ISCATP", "Image Classification Authority Type" } ,
+    { 40, "ISCAUT", "Image Classification Authority" } ,
+    {  1, "ISCRSN", "Image Classification Reason" } ,
+    {  8, "ISSRDT", "Image Security Source Date" } ,
+    { 15, "ISCTLN", "Image Security Control Number" } ,
+    { 42, "ISORCE", "Image Source" } ,
+    {  8, "ICAT", "Image Category" } ,
+    {  2, "ABPP", "Actual Bits-Per-Pixel Per Band" } ,
+    {  1, "PJUST", "Pixel Justification" } ,
+    {780, "ICOM", "Image Comments (up to 9x80 characters)" } ,
 };
 
 /* Keep in sync with NITFWriteBLOCKA */
@@ -5246,10 +5248,8 @@ void GDALRegister_NITF()
 
         for(i=0;i<sizeof(asFieldDescription) / sizeof(asFieldDescription[0]); i++)
         {
-            char szFieldDescription[128];
-            sprintf(szFieldDescription, "   <Option name='%s' type='string' maxsize='%d'/>",
-                    asFieldDescription[i].pszName, asFieldDescription[i].nMaxLen);
-            osCreationOptions += szFieldDescription;
+            osCreationOptions += CPLString().Printf("   <Option name='%s' type='string' description='%s' maxsize='%d'/>",
+                    asFieldDescription[i].pszName, asFieldDescription[i].pszDescription, asFieldDescription[i].nMaxLen);
         }
 
         osCreationOptions +=
