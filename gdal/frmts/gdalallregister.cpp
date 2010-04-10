@@ -280,6 +280,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_MrSID();
 #endif
 
+#ifdef FRMT_mrsid_lidar
+    GDALRegister_MG4Lidar();
+#endif
+
 #ifdef FRMT_rmf
     GDALRegister_RMF();
 #endif
