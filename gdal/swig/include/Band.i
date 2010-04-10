@@ -97,7 +97,7 @@ int ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
 }
 %}
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON)
 %{
 static
 CPLErr ReadRaster_internal( GDALRasterBandShadow *obj, 
@@ -141,7 +141,11 @@ CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
 
   return result;
 }
+%}
+#endif
 
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+%{
 static
 CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
                              int xoff, int yoff, int xsize, int ysize,
@@ -325,7 +329,7 @@ public:
     return GDALFillRaster( self, real_fill, imag_fill );
   }
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON)
 %apply ( int *nLen, char **pBuf ) { (int *buf_len, char **buf ) };
 %apply ( int *optional_int ) {(int*)};
 %feature( "kwargs" ) ReadRaster;
@@ -347,7 +351,9 @@ public:
   }
 %clear (int *buf_len, char **buf );
 %clear (int*);
+#endif /* !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON) */
 
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
 %apply ( int *optional_int ) {(int*)};
 %feature( "kwargs" ) WriteRaster;
