@@ -70,7 +70,7 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Read the DES subheader.                                         */
 /* -------------------------------------------------------------------- */
-    if (psSegInfo->nSegmentHeaderSize < 30)
+    if (psSegInfo->nSegmentHeaderSize < 200)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "DES header too small");
@@ -141,48 +141,21 @@ retry:
     GetMD( 25, DESID  );
     GetMD(  2, DESVER );
     GetMD(  1, DECLAS );
-
-/* -------------------------------------------------------------------- */
-/*      Should we extract classification informations ?                 */
-/*      Strangely some unclassified files have those fields blank,      */
-/*      whereas they should not be present according to the standard... */
-/* -------------------------------------------------------------------- */
-    chDECLAS = pachHeader[27];
-    if (chDECLAS == 'T' || chDECLAS == 'S' ||
-        chDECLAS == 'C' || chDECLAS == 'R' ||
-        (int)psSegInfo->nSegmentHeaderSize >= nOffset + 166 )
-    {
-        if ((int)psSegInfo->nSegmentHeaderSize < nOffset + 166 )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                        "DES header too small");
-            NITFDESDeaccess(psDES);
-            return NULL;
-        }
-        GetMD(  2, DESCLSY );
-        GetMD( 11, DESCODE );
-        GetMD(  2, DESCTLH );
-        GetMD( 20, DESREL  );
-        GetMD(  2, DESDCTP );
-        GetMD(  8, DESDCDT );
-        GetMD(  4, DESDCXM );
-        GetMD(  1, DESDG   );
-        GetMD(  8, DESDGDT );
-        GetMD( 43, DESCLTX );
-        GetMD(  1, DESCATP );
-        GetMD( 40, DESCAUT );
-        GetMD(  1, DESCRSN );
-        GetMD(  8, DESSRDT );
-        GetMD( 15, DESCTLN );
-    }
-
-    if ((int)psSegInfo->nSegmentHeaderSize < nOffset + 4 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                    "DES header too small");
-        NITFDESDeaccess(psDES);
-        return NULL;
-    }
+    GetMD(  2, DESCLSY );
+    GetMD( 11, DESCODE );
+    GetMD(  2, DESCTLH );
+    GetMD( 20, DESREL  );
+    GetMD(  2, DESDCTP );
+    GetMD(  8, DESDCDT );
+    GetMD(  4, DESDCXM );
+    GetMD(  1, DESDG   );
+    GetMD(  8, DESDGDT );
+    GetMD( 43, DESCLTX );
+    GetMD(  1, DESCATP );
+    GetMD( 40, DESCAUT );
+    GetMD(  1, DESCRSN );
+    GetMD(  8, DESSRDT );
+    GetMD( 15, DESCTLN );
 
     /* Load DESID */
     NITFGetField( szDESID, pachHeader, 2, 25);
