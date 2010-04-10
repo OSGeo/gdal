@@ -92,7 +92,7 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'stats' )
+    gdaltest.setup_run( 'gdal_stats' )
 
     gdaltest.run_tests( gdaltest_list )
 
