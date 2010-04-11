@@ -109,6 +109,5 @@ ct = osr.CoordinateTransformation(srs, srsLatLong)
 # Report results
 print('pixel: %g\t\t\tline: %g' % (pixel, line))
 print('latitude: %fd\t\tlongitude: %fd' % (lat, int))
-print('latitude: ', gdal.DecToDMS(lat, 'Lat', 2), \
-    '\tlongitude: ', gdal.DecToDMS(int, 'Long', 2))
+print('latitude: %s\t\tlongitude: %s' % (gdal.DecToDMS(lat, 'Lat', 2), gdal.DecToDMS(int, 'Long', 2)))
 
