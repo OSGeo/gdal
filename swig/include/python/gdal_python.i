@@ -158,9 +158,16 @@
     }
     char *data = PyString_AsString( (PyObject *)*buf ); 
 %#endif
-    return GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize, 
+    CPLErr eErr = GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize, 
                          (void *) data, nxsize, nysize, ntype, 
                          pixel_space, line_space ); 
+    if (eErr == CE_Failure)
+    {
+        Py_DECREF((PyObject*)*buf);
+        *buf = Py_None;
+        Py_INCREF(Py_None);
+    }
+    return eErr;
   }
 %clear (void **buf );
 %clear (int*);
@@ -259,9 +266,16 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     char *data = PyString_AsString( (PyObject *)*buf ); 
 %#endif
 
-    return GDALDatasetRasterIO(self, GF_Read, xoff, yoff, xsize, ysize,
+    CPLErr eErr = GDALDatasetRasterIO(self, GF_Read, xoff, yoff, xsize, ysize,
                                (void*) data, nxsize, nysize, ntype,
                                band_list, pband_list, pixel_space, line_space, band_space );
+    if (eErr == CE_Failure)
+    {
+        Py_DECREF((PyObject*)*buf);
+        *buf = Py_None;
+        Py_INCREF(Py_None);
+    }
+    return eErr;
 }
 
 %clear (GDALDataType *buf_type);
