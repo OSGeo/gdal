@@ -186,11 +186,113 @@ def rasterio_4():
 
     return 'success'
 
+###############################################################################
+# Test error cases of ReadRaster()
+
+def rasterio_5():
+
+    ds = gdal.Open('data/byte.tif')
+
+    for obj in [ds, ds.GetRasterBand(1)]:
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        res = obj.ReadRaster(0,0,21,21)
+        gdal.PopErrorHandler()
+        error_msg = gdal.GetLastErrorMsg()
+        if res is not None:
+            gdaltest.post_reason('expected None')
+            return 'fail'
+        if error_msg.find('Access window out of range in RasterIO()') == -1:
+            gdaltest.post_reason('did not get expected error msg (1)')
+            print(error_msg)
+            return 'fail'
+
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        res = obj.ReadRaster(0,0,1000000,1000000)
+        gdal.PopErrorHandler()
+        error_msg = gdal.GetLastErrorMsg()
+        if res is not None:
+            gdaltest.post_reason('expected None')
+            return 'fail'
+        if error_msg.find('Integer overflow') == -1:
+            gdaltest.post_reason('did not get expected error msg (2)')
+            print(error_msg)
+            return 'fail'
+
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        res = obj.ReadRaster(0,0,0,1)
+        gdal.PopErrorHandler()
+        error_msg = gdal.GetLastErrorMsg()
+        if res is not None:
+            gdaltest.post_reason('expected None')
+            return 'fail'
+        if error_msg.find('Illegal values for buffer size') == -1:
+            gdaltest.post_reason('did not get expected error msg (3)')
+            print(error_msg)
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test error cases of WriteRaster()
+
+def rasterio_6():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+
+    for obj in [ds, ds.GetRasterBand(1)]:
+        try:
+            obj.WriteRaster(0,0,2,2,None)
+            gdaltest.post_reason('expected exception')
+            return 'fail'
+        except:
+            pass
+
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        obj.WriteRaster(0,0,2,2,' ')
+        gdal.PopErrorHandler()
+        error_msg = gdal.GetLastErrorMsg()
+        if error_msg.find('Buffer too small') == -1:
+            gdaltest.post_reason('did not get expected error msg (1)')
+            print(error_msg)
+            return 'fail'
+
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        obj.WriteRaster(-1,0,1,1,' ')
+        gdal.PopErrorHandler()
+        error_msg = gdal.GetLastErrorMsg()
+        if error_msg.find('Access window out of range in RasterIO()') == -1:
+            gdaltest.post_reason('did not get expected error msg (2)')
+            print(error_msg)
+            return 'fail'
+
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        obj.WriteRaster(0,0,0,1,' ')
+        gdal.PopErrorHandler()
+        error_msg = gdal.GetLastErrorMsg()
+        if error_msg.find('Illegal values for buffer size') == -1:
+            gdaltest.post_reason('did not get expected error msg (3)')
+            print(error_msg)
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     rasterio_1,
     rasterio_2,
     rasterio_3,
-    rasterio_4 ]
+    rasterio_4,
+    rasterio_5,
+    rasterio_6 ]
 
 if __name__ == '__main__':
 
