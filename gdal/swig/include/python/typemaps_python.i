@@ -306,7 +306,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %#if PY_VERSION_HEX>=0x03000000
   if (PyUnicode_Check($input))
   {
-    size_t safeLen;
+    size_t safeLen = 0;
     int ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
     if (!SWIG_IsOK(ret)) {
       SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
@@ -315,16 +315,29 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     if (safeLen) safeLen--;
     $1 = (int) safeLen;
   }
-  else
+  else if (PyBytes_Check($input))
   {
-    Py_ssize_t safeLen;
+    Py_ssize_t safeLen = 0;
     PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
     $1 = (int) safeLen;
   }
+  else
+  {
+    PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+    SWIG_fail;
+  }
 %#else
-  Py_ssize_t safeLen;
-  PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
-  $1 = (int) safeLen;
+  if (PyString_Check($input))
+  {
+    Py_ssize_t safeLen = 0;
+    PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
+    $1 = (int) safeLen;
+  }
+  else
+  {
+    PyErr_SetString(PyExc_TypeError, "not a string");
+    SWIG_fail;
+  }
 %#endif
 }
 
