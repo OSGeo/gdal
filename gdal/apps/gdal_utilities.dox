@@ -964,7 +964,7 @@ Usage:
 \endhtmlonly
 
 \verbatim
-pct2rgb.py [-of format] [-b band] source_file dest_file
+pct2rgb.py [-of format] [-b band] [-rgba] source_file dest_file
 \endverbatim
 
 \section pdescription DESCRIPTION
@@ -976,6 +976,7 @@ RGB file of the desired format.
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> 
 Band to convert to RGB, defaults to 1.</dd>
+<dt> <b>-rgba:</b></dt><dd> Generate a RGBA file (instead of a RGB file by default).</dd>
 <dt> <i>source_file</i>:</dt><dd> The input file. </dd>
 <dt> <i>dest_file</i>:</dt><dd> The output RGB file that will be
 created.</dd>
