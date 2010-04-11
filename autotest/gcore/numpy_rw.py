@@ -241,6 +241,30 @@ def numpy_rw_8():
         
     return 'success'
     
+###############################################################################
+# Test Band.WriteArray()
+
+def numpy_rw_9():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/byte.tif' )
+    array = ds.ReadAsArray()
+
+    out_ds = gdal.GetDriverByName('MEM').Create('', ds.RasterYSize, ds.RasterXSize)
+    out_ds.GetRasterBand(1).WriteArray(array)
+    cs = out_ds.GetRasterBand(1).Checksum()
+    out_ds = None
+    ds = None
+
+    if cs != 4672:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
@@ -255,6 +279,7 @@ gdaltest_list = [
     numpy_rw_6,
     numpy_rw_7,
     numpy_rw_8,
+    numpy_rw_9,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':
