@@ -726,11 +726,11 @@ def BandReadAsArray( band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = Non
         datatype = NumericTypeCodeToGDALTypeCode( typecode )
 
     if buf_obj is None:
-        band_str = band.ReadRaster( xoff, yoff, win_xsize, win_ysize,
-                                    buf_xsize, buf_ysize, datatype )
-        ar = numpy.fromstring(band_str,dtype=typecode)
-        ar = numpy.reshape(ar, [buf_ysize,buf_xsize])
-        
+        ar = numpy.empty([buf_ysize,buf_xsize], dtype = typecode)
+        if BandRasterIONumPy( band, 0, xoff, yoff, win_xsize, win_ysize,
+                                ar, buf_xsize, buf_ysize, datatype ) != 0:
+            return None
+
         return ar
     else:
             
