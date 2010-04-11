@@ -621,6 +621,8 @@ def flip_code(code):
     if isinstance(code, type):
         # since several things map to complex64 we must carefully select
         # the opposite that is an exact match (ticket 1518)
+        if code == numpy.int8:
+            return gdalconst.GDT_Byte
         if code == numpy.complex64:
             return gdalconst.GDT_CFloat32
         
@@ -726,6 +728,8 @@ def BandReadAsArray( band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = Non
         datatype = NumericTypeCodeToGDALTypeCode( typecode )
 
     if buf_obj is None:
+        if datatype == gdalconst.GDT_Byte and band.GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
+            typecode = numpy.int8
         ar = numpy.empty([buf_ysize,buf_xsize], dtype = typecode)
         if BandRasterIONumPy( band, 0, xoff, yoff, win_xsize, win_ysize,
                                 ar, buf_xsize, buf_ysize, datatype ) != 0:
