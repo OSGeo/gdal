@@ -41,15 +41,10 @@ except ImportError:
     from gdalconst import *
 
 try:
-    import numpy as Numeric
-    Numeric.arrayrange = Numeric.arange
+    import numpy
 except ImportError:
-    import Numeric
+    import Numeric as numpy
 
-try:
-    from osgeo import gdal_array as gdalnumeric
-except ImportError:
-    import gdalnumeric
 
 import sys
 
@@ -149,7 +144,7 @@ for iBand in range(1, indataset.RasterCount + 1):
 
     for i in range(inband.YSize - 1, -1, -1):
         scanline = inband.ReadAsArray(0, i, inband.XSize, 1, inband.XSize, 1)
-        scanline = gdalnumeric.choose( gdalnumeric.equal( scanline, inNoData),
+        scanline = numpy.choose( numpy.equal( scanline, inNoData),
                                        (scanline, outNoData) )
         outband.WriteArray(scanline, 0, i)
 
