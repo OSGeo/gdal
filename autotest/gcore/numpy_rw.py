@@ -302,6 +302,65 @@ def numpy_rw_10():
 
     return 'success'
 
+###############################################################################
+# Test all datatypes
+
+def numpy_rw_11():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+
+    type_tuples = [ ( 'uint8', gdal.GDT_Byte, numpy.uint8, 255 ),
+                    ( 'uint16', gdal.GDT_UInt16, numpy.uint16, 65535 ),
+                    ( 'int16', gdal.GDT_Int16, numpy.int16, -32767 ),
+                    ( 'uint32', gdal.GDT_UInt32, numpy.uint32, 4294967295 ),
+                    ( 'int32', gdal.GDT_Int32, numpy.int32, -2147483648 ),
+                    ( 'float32', gdal.GDT_Float32, numpy.float32, 1.23 ),
+                    ( 'float64', gdal.GDT_Float64, numpy.float64, 1.23456789 ),
+                    ( 'cint16', gdal.GDT_CInt16, numpy.complex64, -32768 + 32767j ),
+                    ( 'cint32', gdal.GDT_CInt32, numpy.complex64, -32769 + 32768j ),
+                    ( 'cfloat32', gdal.GDT_CFloat32, numpy.complex64, -32768.5 + 32767.5j ),
+                    ( 'cfloat64', gdal.GDT_CFloat64, numpy.complex128, -32768.123456 + 32767.123456j ) ]
+
+    for type_tuple in type_tuples:
+        ds = gdal.GetDriverByName('GTiff').Create('/vsimem/' + type_tuple[0], 1, 1, 1, type_tuple[1])
+        tmp = ds.ReadAsArray()
+        if tmp.dtype != type_tuple[2]:
+            gdaltest.post_reason('did not get expected numpy type')
+            print(type_tuple)
+            return 'fail'
+
+        ar = numpy.empty([1, 1], dtype = type_tuple[2])
+        ar[0][0] = type_tuple[3]
+        ds.GetRasterBand(1).WriteArray(ar)
+        ds = None
+
+        ds = gdal.Open('/vsimem/' + type_tuple[0])
+        ar2 = ds.ReadAsArray()
+        ar3 = numpy.empty_like(ar2)
+        ds.GetRasterBand(1).ReadAsArray(buf_obj = ar3)
+        ds = None
+
+        gdal.Unlink('/vsimem/' + type_tuple[0])
+
+        if (type_tuple[0] == 'float32' and abs(ar2[0][0] - type_tuple[3]) > 1e-6) or \
+           (type_tuple[0] != 'float32' and ar2[0][0] != type_tuple[3]):
+            gdaltest.post_reason('did not get expected result (1)')
+            print(ar2)
+            print(type_tuple)
+            return 'fail'
+
+        if (type_tuple[0] == 'float32' and abs(ar3[0][0] - type_tuple[3]) > 1e-6) or \
+           (type_tuple[0] != 'float32' and ar3[0][0] != type_tuple[3]):
+            gdaltest.post_reason('did not get expected result (2)')
+            print(ar3)
+            print(type_tuple)
+            return 'fail'
+
+    return 'success'
+
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
@@ -318,6 +377,7 @@ gdaltest_list = [
     numpy_rw_8,
     numpy_rw_9,
     numpy_rw_10,
+    numpy_rw_11,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':
