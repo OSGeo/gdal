@@ -50,7 +50,7 @@ import sys
 import os.path
 
 def Usage():
-    print('Usage: pct2rgb.py [-of format] [-b <band>] source_file dest_file')
+    print('Usage: pct2rgb.py [-of format] [-b <band>] [-rgba] source_file dest_file')
     sys.exit(1)
 
 # =============================================================================
