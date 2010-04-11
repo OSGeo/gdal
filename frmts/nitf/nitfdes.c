@@ -48,7 +48,6 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
     char       szDESID[26];
     char       szTemp[128];
     int        nOffset;
-    char       chDECLAS;
     int        bHasDESOFLW;
     int        nDESSHL;
     
