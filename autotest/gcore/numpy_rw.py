@@ -264,6 +264,43 @@ def numpy_rw_9():
         return 'fail'
 
     return 'success'
+    
+###############################################################################
+# Test signed byte handling
+
+def numpy_rw_10():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/signed8.tif', 2, 1, options = ['PIXELTYPE=SIGNEDBYTE'])
+    ar = numpy.empty([1, 2], dtype = numpy.int8)
+    ar[0][0] = -128
+    ar[0][1] = 127
+    ds.GetRasterBand(1).WriteArray(ar)
+    ds = None
+
+    ds = gdal.Open('/vsimem/signed8.tif')
+    ar2 = ds.ReadAsArray()
+    ar3 = numpy.empty_like(ar2)
+    ds.GetRasterBand(1).ReadAsArray(buf_obj = ar3)
+    ds = None
+
+    gdal.Unlink('/vsimem/signed8.tif')
+
+    if ar2[0][0] != -128 or ar2[0][1] != 127:
+        gdaltest.post_reason('did not get expected result (1)')
+        print(ar2)
+        return 'fail'
+
+    if ar3[0][0] != -128 or ar3[0][1] != 127:
+        gdaltest.post_reason('did not get expected result (2)')
+        print(ar3)
+        return 'fail'
+
+    return 'success'
 
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
@@ -280,6 +317,7 @@ gdaltest_list = [
     numpy_rw_7,
     numpy_rw_8,
     numpy_rw_9,
+    numpy_rw_10,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':
