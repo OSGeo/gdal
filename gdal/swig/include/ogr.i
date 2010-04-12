@@ -1475,14 +1475,17 @@ public:
 /* The geometry now owns an inner geometry */
 /* Don't change the 'other_disown' name as Java bindings depends on it */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow* other_disown};
+%apply Pointer NONNULL {OGRGeometryShadow* other_disown};
   OGRErr AddGeometryDirectly( OGRGeometryShadow* other_disown ) {
     return OGR_G_AddGeometryDirectly( self, other_disown );
   }
 %clear OGRGeometryShadow* other_disown;
 
+%apply Pointer NONNULL {OGRGeometryShadow* other};
   OGRErr AddGeometry( OGRGeometryShadow* other ) {
     return OGR_G_AddGeometry( self, other );
   }
+%clear OGRGeometryShadow* other;
 
   %newobject Clone;
   OGRGeometryShadow* Clone() {
