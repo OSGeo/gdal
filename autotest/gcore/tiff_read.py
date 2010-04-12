@@ -403,6 +403,51 @@ def tiff_read_stats_from_pam():
 
     return 'success'
 
+###############################################################################
+# Test extracting georeferencing from a .TAB file
+
+def tiff_read_from_tab():
+    
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_read_from_tab.tif', 1, 1)
+    ds = None
+    
+    f = open('tmp/tiff_read_from_tab.tab', 'wt')
+    f.write("""!table
+!version 300
+!charset WindowsLatin1
+
+Definition Table
+  File "HP.TIF"
+  Type "RASTER"
+  (400000,1200000) (0,4000) Label "Pt 1",
+  (500000,1200000) (4000,4000) Label "Pt 2",
+  (500000,1300000) (4000,0) Label "Pt 3",
+  (400000,1300000) (0,0) Label "Pt 4"
+  CoordSys Earth Projection 8, 79, "m", -2, 49, 0.9996012717, 400000, -100000
+  Units "m"
+""")
+    f.close()
+
+    ds = gdal.Open('tmp/tiff_read_from_tab.tif')
+    gt = ds.GetGeoTransform()
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('tmp/tiff_read_from_tab.tif')
+    os.remove('tmp/tiff_read_from_tab.tab')
+
+    if gt != (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0):
+        gdaltest.post_reason('did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    if wkt.find('OSGB_1936') == -1:
+        gdaltest.post_reason('did not get expected SRS')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -423,6 +468,7 @@ gdaltest_list.append( (tiff_vsizip_and_mem) )
 gdaltest_list.append( (tiff_ProjectedCSTypeGeoKey_only) )
 gdaltest_list.append( (tiff_12bitjpeg) )
 gdaltest_list.append( (tiff_read_stats_from_pam) )
+gdaltest_list.append( (tiff_read_from_tab) )
 
 if __name__ == '__main__':
 
