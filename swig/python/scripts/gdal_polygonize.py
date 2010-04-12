@@ -205,8 +205,9 @@ result = gdal.Polygonize( srcband, maskband, dst_layer, dst_field, options,
                           callback = prog_func )
     
 srcband = None
+src_ds = None
 dst_ds = None
-
+mask_ds = None
 
 
 

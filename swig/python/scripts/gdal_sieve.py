@@ -180,9 +180,9 @@ result = gdal.SieveFilter( srcband, maskband, dstband,
                            threshold, connectedness, 
                            callback = prog_func )
     
-
-
-
+src_ds = None
+dst_ds = None
+mask_ds = None
 
 
 
