@@ -1434,20 +1434,20 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
 /* -------------------------------------------------------------------- */
     pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
 
-    fpTAB = VSIFOpen( pszTAB, "rt" );
+    fpTAB = VSIFOpenL( pszTAB, "rt" );
 
 #ifndef WIN32
     if( fpTAB == NULL )
     {
         pszTAB = CPLResetExtension( pszBaseFilename, "TAB" );
-        fpTAB = VSIFOpen( pszTAB, "rt" );
+        fpTAB = VSIFOpenL( pszTAB, "rt" );
     }
 #endif
     
     if( fpTAB == NULL )
         return FALSE;
 
-    VSIFClose( fpTAB );
+    VSIFCloseL( fpTAB );
 
 /* -------------------------------------------------------------------- */
 /*      We found the file, now load and parse it.                       */
