@@ -48,6 +48,8 @@
 int OGR_G_GetPointCount( OGRGeometryH hGeom )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetPointCount", 0 );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
@@ -80,6 +82,8 @@ int OGR_G_GetPointCount( OGRGeometryH hGeom )
 double OGR_G_GetX( OGRGeometryH hGeom, int i )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetX", 0 );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
@@ -116,6 +120,8 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
 double OGR_G_GetY( OGRGeometryH hGeom, int i )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetY", 0 );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
@@ -152,6 +158,8 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
 double OGR_G_GetZ( OGRGeometryH hGeom, int i )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetZ", 0 );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
@@ -192,6 +200,8 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
                      double *pdfX, double *pdfY, double *pdfZ )
 
 {
+    VALIDATE_POINTER0( hGeom, "OGR_G_GetPoint" );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
@@ -247,6 +257,8 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
                      double dfX, double dfY, double dfZ )
 
 {
+    VALIDATE_POINTER0( hGeom, "OGR_G_SetPoint" );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
@@ -295,6 +307,8 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
                         double dfX, double dfY )
     
 {
+    VALIDATE_POINTER0( hGeom, "OGR_G_SetPoint_2D" );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
@@ -340,6 +354,8 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
                      double dfX, double dfY, double dfZ )
 
 {
+    VALIDATE_POINTER0( hGeom, "OGR_G_AddPoint" );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
@@ -378,6 +394,8 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
                         double dfX, double dfY )
 
 {
+    VALIDATE_POINTER0( hGeom, "OGR_G_AddPoint_2D" );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
@@ -407,6 +425,8 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
  * wkbMultiPolygon[25D] or wkbGeometryCollection[25D] may return a valid value.
  * Other geometry types will silently return 0.
  *
+ * For a polygon, the returned number is the number of rings (exterior ring + interior rings).
+ *
  * @param hGeom single geometry or geometry container from which to get
  * the number of elements.
  * @return the number of elements.
@@ -415,6 +435,8 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
 int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryCount", 0 );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPolygon:
@@ -454,6 +476,9 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
  * This function is the same as the CPP method 
  * OGRGeometryCollection::getGeometryRef().
  *
+ * For a polygon, OGR_G_GetGeometryRef(iSubGeom) returns the exterior ring
+ * if iSubGeom == 0, and the interior rings for iSubGeom > 0.
+ *
  * @param hGeom handle to the geometry container from which to get a 
  * geometry from.
  * @param iSubGeom the index of the geometry to fetch, between 0 and
@@ -464,6 +489,8 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
 OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryRef", NULL );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPolygon:
@@ -503,6 +530,10 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
  * This function is the same as the CPP method 
  * OGRGeometryCollection::addGeometry.
  *
+ * For a polygon, hNewSubGeom must be a linearring. If the polygon is empty,
+ * the first added subgeometry will be the exterior ring. The next ones will be
+ * the interior rings.
+ *
  * @param hGeom existing geometry container.
  * @param hNewSubGeom geometry to add to the container.
  *
@@ -513,18 +544,20 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
 OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_AddGeometry", OGRERR_UNSUPPORTED_OPERATION );
+    VALIDATE_POINTER1( hNewSubGeom, "OGR_G_AddGeometry", OGRERR_UNSUPPORTED_OPERATION );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPolygon:
       {
-          OGRLinearRing *poRing = (OGRLinearRing *) hNewSubGeom;
-
-          if( poRing->WkbSize() != 0 
-              || wkbFlatten(poRing->getGeometryType()) != wkbLineString )
+          if( !EQUAL( ((OGRGeometry*) hNewSubGeom)->getGeometryName(), "LINEARRING" ) )
+          {
               return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+          }
           else
           {
-              ((OGRPolygon *)hGeom)->addRing( poRing );
+              ((OGRPolygon *)hGeom)->addRing( (OGRLinearRing *) hNewSubGeom );
               return OGRERR_NONE;
           }
       }
@@ -557,6 +590,10 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
  *
  * There is no SFCOM analog to this method.
  *
+ * For a polygon, hNewSubGeom must be a linearring. If the polygon is empty,
+ * the first added subgeometry will be the exterior ring. The next ones will be
+ * the interior rings.
+ *
  * @param hGeom existing geometry.
  * @param hNewSubGeom geometry to add to the existing geometry.
  *
@@ -568,18 +605,20 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
                                   OGRGeometryH hNewSubGeom )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_AddGeometryDirectly", OGRERR_UNSUPPORTED_OPERATION );
+    VALIDATE_POINTER1( hNewSubGeom, "OGR_G_AddGeometryDirectly", OGRERR_UNSUPPORTED_OPERATION );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPolygon:
       {
-          OGRLinearRing *poRing = (OGRLinearRing *) hNewSubGeom;
-
-          if( poRing->WkbSize() != 0 
-              || wkbFlatten(poRing->getGeometryType()) != wkbLineString )
+          if( !EQUAL( ((OGRGeometry*) hNewSubGeom)->getGeometryName(), "LINEARRING" ) )
+          {
               return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+          }
           else
           {
-              ((OGRPolygon *)hGeom)->addRingDirectly( poRing );
+              ((OGRPolygon *)hGeom)->addRingDirectly( (OGRLinearRing *) hNewSubGeom );
               return OGRERR_NONE;
           }
       }
@@ -628,6 +667,8 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
 OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetArea", 0 );
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPolygon:

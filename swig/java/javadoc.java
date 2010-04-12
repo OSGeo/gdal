@@ -7394,6 +7394,10 @@ public class Geometry:public Geometry(int eGeometryType, String wkt, byte[] wkb,
  * to make an internal copy.
  * <p>
  * There is no SFCOM analog to this method.
+ * <p>
+ * For a polygon, other must be a linearring. If the polygon is empty,
+ * the first added subgeometry will be the exterior ring. The next ones will be
+ * the interior rings.
  *
  * @param other geometry to add to the container.
  *
@@ -7411,6 +7415,10 @@ public class Geometry:public int AddGeometry(Geometry other)
  * does.
  * <p>
  * There is no SFCOM analog to this method.
+ * <p>
+ * For a polygon, other must be a linearring. If the polygon is empty,
+ * the first added subgeometry will be the exterior ring. The next ones will be
+ * the interior rings.
  *
  * @param other geometry to add to the container.
  *
@@ -7868,6 +7876,8 @@ public class Geometry:public void GetEnvelope(double[] argout)
  * wkbMultiPolygon[25D] or wkbGeometryCollection[25D] may return a valid value.
  * Other geometry types will silently return 0.
  *
+ * For a polygon, the returned number is the number of rings (exterior ring + interior rings).
+ *
  * @return the number of elements.
  */
 public class Geometry:public int GetGeometryCount()
@@ -7891,6 +7901,9 @@ public class Geometry:public String GetGeometryName()
  * <p>
  * This function relates to the SFCOM 
  * IGeometryCollection::get_Geometry() method.
+ * <p>
+ * For a polygon, OGR_G_GetGeometryRef(iSubGeom) returns the exterior ring
+ * if iSubGeom == 0, and the interior rings for iSubGeom > 0.
  *
  * @param iSubGeom the index of the geometry to fetch, between 0 and
  *          GetGeometryCount() - 1.
