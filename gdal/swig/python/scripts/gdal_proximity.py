@@ -182,7 +182,7 @@ gdal.ComputeProximity( srcband, dstband, options,
 srcband = None
 dstband = None
 src_ds = None
-
+dst_ds = None
 
 
 
