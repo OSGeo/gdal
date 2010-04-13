@@ -3137,18 +3137,24 @@ int OGRGeometry::Centroid( OGRPoint *poPoint ) const
         if( hOtherGeosGeom == NULL )
             return OGRERR_FAILURE;
 
-        OGRPoint *poCentroid = (OGRPoint *) 
+        OGRGeometry *poCentroidGeom =
             OGRGeometryFactory::createFromGEOS( hOtherGeosGeom );
 
         GEOSGeom_destroy( hOtherGeosGeom );
 
-        if (poCentroid == NULL)
+        if (poCentroidGeom == NULL)
             return OGRERR_FAILURE;
+        if (wkbFlatten(poCentroidGeom->getGeometryType()) != wkbPoint)
+        {
+            delete poCentroidGeom;
+            return OGRERR_FAILURE;
+        }
 
+        OGRPoint *poCentroid = (OGRPoint *) poCentroidGeom;
 	poPoint->setX( poCentroid->getX() );
 	poPoint->setY( poCentroid->getY() );
 
-        delete poCentroid;
+        delete poCentroidGeom;
 
     	return OGRERR_NONE;
     }
