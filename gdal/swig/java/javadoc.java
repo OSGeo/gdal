@@ -7516,12 +7516,21 @@ public class Geometry:public Geometry Buffer(double distance, int quadsecs)
 public class Geometry:public Geometry Buffer(double distance)
 
 /**
- * Compute and return centroid of surface.  The centroid is not necessarily
- * within the geometry.  
+ * Compute the geometry centroid.
+ *
+ * The centroid is not necessarily within the geometry.  
  * <p>
- * This method relates to the SFCOM ISurface::get_Centroid() method.
+ * This method relates to the SFCOM ISurface::get_Centroid() method
+ * however the current implementation based on GEOS can operate on other
+ * geometry types such as multipoint, linestring, geometrycollection such as
+ * multipolygons.
+ * OGC SF SQL 1.1 defines the operation for surfaces (polygons).
+ * SQL/MM-Part 3 defines the operation for surfaces and multisurfaces (multipolygons).
  * <p>
- * NOTE: Only implemented when GEOS included in build.
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail, 
+ * issuing a CPLE_NotSupported error. 
  *
  * @return point with the centroid location, or null in case of failure
  */
