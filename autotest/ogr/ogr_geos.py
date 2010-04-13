@@ -385,6 +385,28 @@ def ogr_geos_centroid_multipolygon():
     centroid.Destroy()
 
     return 'success'
+
+###############################################################################
+
+def ogr_geos_centroid_point_empty():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'POINT EMPTY' )
+
+    centroid = g1.Centroid()
+
+    g1.Destroy()
+
+    if centroid.ExportToWkt() != 'POINT EMPTY':
+        print('Got: ', centroid.ExportToWkt())
+        return 'fail'
+
+    centroid.Destroy()
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_geos_union,
     ogr_geos_intersection,
@@ -398,7 +420,8 @@ gdaltest_list = [
     ogr_geos_contains,
     ogr_geos_overlaps,
     ogr_geos_centroid,
-    ogr_geos_centroid_multipolygon ]
+    ogr_geos_centroid_multipolygon,
+    ogr_geos_centroid_point_empty ]
 
 if __name__ == '__main__':
 
