@@ -45,22 +45,6 @@
  */
 
 /**
- * \fn OGRErr OGRSurface::Centroid( OGRPoint * poPoint ) const;
- *
- * \brief Compute and return centroid of surface.
- * The centroid is not necessarily
- * within the geometry.  
- *
- * This method relates to the SFCOM ISurface::get_Centroid() method.
- *
- * NOTE: Only implemented when GEOS included in build.
- *
- * @param poPoint point to be set with the centroid location.
- *
- * @return OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise. 
- */
-
-/**
  * \fn OGRErr OGRSurface::PointOnSurface( OGRPoint * poPoint ) const;
  *
  * \brief This method relates to the SFCOM ISurface::get_PointOnSurface() method.
