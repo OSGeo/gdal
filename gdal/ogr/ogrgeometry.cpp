@@ -3080,3 +3080,130 @@ void OGR_G_CloseRings( OGRGeometryH hGeom )
 
     ((OGRGeometry *) hGeom)->closeRings();
 }
+
+/************************************************************************/
+/*                              Centroid()                              */
+/************************************************************************/
+
+/**
+ * \brief Compute the geometry centroid.
+ *
+ * The centroid location is applied to the passed in OGRPoint object.
+ * The centroid is not necessarily within the geometry.  
+ *
+ * This method relates to the SFCOM ISurface::get_Centroid() method
+ * however the current implementation based on GEOS can operate on other
+ * geometry types such as multipoint, linestring, geometrycollection such as
+ * multipolygons.
+ * OGC SF SQL 1.1 defines the operation for surfaces (polygons).
+ * SQL/MM-Part 3 defines the operation for surfaces and multisurfaces (multipolygons).
+ *
+ * This function is the same as the C function OGR_G_Centroid().
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @return OGRERR_NONE on success or OGRERR_FAILURE on error.
+ *
+ * @since GDAL 1.8.0 as a OGRGeometry method (previously was restricted to OGRPolygon)
+ */
+
+int OGRGeometry::Centroid( OGRPoint *poPoint ) const
+
+{
+    if( poPoint == NULL )
+        return OGRERR_FAILURE;
+
+#ifndef HAVE_GEOS
+    // notdef ... not implemented yet.
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return OGRERR_FAILURE;
+
+#else
+
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hOtherGeosGeom = NULL;
+    
+    hThisGeosGeom = exportToGEOS();
+
+    if( hThisGeosGeom != NULL )
+    {
+    	hOtherGeosGeom = GEOSGetCentroid( hThisGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+
+        if( hOtherGeosGeom == NULL )
+            return OGRERR_FAILURE;
+
+        OGRPoint *poCentroid = (OGRPoint *) 
+            OGRGeometryFactory::createFromGEOS( hOtherGeosGeom );
+
+        GEOSGeom_destroy( hOtherGeosGeom );
+
+        if (poCentroid == NULL)
+            return OGRERR_FAILURE;
+
+	poPoint->setX( poCentroid->getX() );
+	poPoint->setY( poCentroid->getY() );
+
+        delete poCentroid;
+
+    	return OGRERR_NONE;
+    }
+    else
+    {
+    	return OGRERR_FAILURE;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                           OGR_G_Centroid()                           */
+/************************************************************************/
+
+/**
+ * \brief Compute the geometry centroid.
+ *
+ * The centroid location is applied to the passed in OGRPoint object.
+ * The centroid is not necessarily within the geometry.  
+ *
+ * This method relates to the SFCOM ISurface::get_Centroid() method
+ * however the current implementation based on GEOS can operate on other
+ * geometry types such as multipoint, linestring, geometrycollection such as
+ * multipolygons.
+ * OGC SF SQL 1.1 defines the operation for surfaces (polygons).
+ * SQL/MM-Part 3 defines the operation for surfaces and multisurfaces (multipolygons).
+ *
+ * This function is the same as the C++ method OGRGeometry::Centroid().
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @return OGRERR_NONE on success or OGRERR_FAILURE on error.
+ */
+
+int OGR_G_Centroid( OGRGeometryH hGeom, OGRGeometryH hCentroidPoint )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_Centroid", OGRERR_FAILURE );
+
+    OGRGeometry *poGeom = ((OGRGeometry *) hGeom);
+    OGRPoint *poCentroid = ((OGRPoint *) hCentroidPoint);
+    
+    if( poCentroid == NULL )
+        return OGRERR_FAILURE;
+
+    if( wkbFlatten(poCentroid->getGeometryType()) != wkbPoint )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Passed wrong geometry type as centroid argument." );
+        return OGRERR_FAILURE;
+    }
+
+    return poGeom->Centroid( poCentroid );
+}
