@@ -364,6 +364,27 @@ def ogr_geos_centroid():
 
     return 'success'
 
+###############################################################################
+
+def ogr_geos_centroid_multipolygon():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)),((2 0,2 1,3 1,3 0,2 0)))' )
+
+    centroid = g1.Centroid()
+
+    g1.Destroy()
+
+    if ogrtest.check_feature_geometry( centroid,
+                                       'POINT (1.5 0.5)') != 0:
+        print('Got: ', centroid.ExportToWkt())
+        return 'fail'
+
+    centroid.Destroy()
+
+    return 'success'
 gdaltest_list = [ 
     ogr_geos_union,
     ogr_geos_intersection,
@@ -376,7 +397,8 @@ gdaltest_list = [
     ogr_geos_within,
     ogr_geos_contains,
     ogr_geos_overlaps,
-    ogr_geos_centroid ]
+    ogr_geos_centroid,
+    ogr_geos_centroid_multipolygon ]
 
 if __name__ == '__main__':
 
