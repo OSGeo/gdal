@@ -1811,6 +1811,14 @@ GEOSGeom OGRGeometry::exportToGEOS() const
         initGEOS( _GEOSWarningHandler, _GEOSErrorHandler );
     }
 
+    /* POINT EMPTY is exported to WKB as if it were POINT(0 0) */
+    /* so that particular case is necessary */
+    if (wkbFlatten(getGeometryType()) == wkbPoint &&
+        nCoordDimension == 0)
+    {
+        return GEOSGeomFromWKT("POINT EMPTY");
+    }
+
     GEOSGeom hGeom = NULL;
     size_t nDataSize;
     unsigned char *pabyData = NULL;

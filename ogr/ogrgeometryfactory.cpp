@@ -1426,6 +1426,11 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
     unsigned char *pabyBuf = NULL;
     OGRGeometry *poGeometry = NULL;
 
+    /* Special case as POINT EMPTY cannot be translated to WKB */
+    if (GEOSGeomTypeId(geosGeom) == GEOS_POINT &&
+        GEOSisEmpty(geosGeom))
+        return new OGRPoint();
+
     pabyBuf = GEOSGeomToWKB_buf( geosGeom, &nSize );
     if( pabyBuf == NULL || nSize == 0 )
     {
