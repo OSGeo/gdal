@@ -60,6 +60,8 @@ typedef struct GEOSGeom_t *GEOSGeom;
 /*                             OGRGeometry                              */
 /************************************************************************/
 
+class OGRPoint;
+
 /**
  * Abstract base class for all geometry classes.
  *
@@ -147,6 +149,7 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *Union( const OGRGeometry * ) const;
     virtual OGRGeometry *Difference( const OGRGeometry * ) const;
     virtual OGRGeometry *SymmetricDifference( const OGRGeometry * ) const;
+    virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
 
     // backward compatibility methods. 
     OGRBoolean  Intersect( OGRGeometry * ) const;
@@ -382,7 +385,6 @@ class CPL_DLL OGRSurface : public OGRGeometry
 {
   public:
     virtual double      get_Area() const = 0;
-    virtual OGRErr      Centroid( OGRPoint * poPoint ) const = 0;
     virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const = 0;
 };
 
@@ -420,7 +422,6 @@ class CPL_DLL OGRPolygon : public OGRSurface
 
     // ISurface Interface
     virtual double      get_Area() const;
-    virtual int         Centroid( OGRPoint * poPoint ) const;
     virtual int         PointOnSurface( OGRPoint * poPoint ) const;
     
     // IWks Interface
