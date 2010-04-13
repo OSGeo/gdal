@@ -837,19 +837,24 @@ int OGRPolygon::PointOnSurface( OGRPoint *poPoint ) const
         if( hOtherGeosGeom == NULL )
             return OGRERR_FAILURE;
 
-        OGRPoint *poInsidePoint = (OGRPoint *) 
+        OGRGeometry *poInsidePointGeom = (OGRGeometry *) 
             OGRGeometryFactory::createFromGEOS( hOtherGeosGeom );
  
         GEOSGeom_destroy( hOtherGeosGeom );
- 
-        if( poPoint == NULL 
-            || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
+
+        if (poInsidePointGeom == NULL)
             return OGRERR_FAILURE;
- 
+        if (wkbFlatten(poInsidePointGeom->getGeometryType()) != wkbPoint)
+        {
+            delete poInsidePointGeom;
+            return OGRERR_FAILURE;
+        }
+
+        OGRPoint *poInsidePoint = (OGRPoint *) poInsidePointGeom;
  	poPoint->setX( poInsidePoint->getX() );
  	poPoint->setY( poInsidePoint->getY() );
  
-        delete poInsidePoint;
+        delete poInsidePointGeom;
  
      	return OGRERR_NONE;
     }
