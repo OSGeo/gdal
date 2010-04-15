@@ -3796,6 +3796,34 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetFieldTypeName(OGRFieldDefnShadow *s
              dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees );
   }
 
+
+OGRGeometryShadow* ForceToPolygon( OGRGeometryShadow *geom_in ) {
+ if (geom_in == NULL)
+     return NULL;
+ return OGR_G_ForceToPolygon( OGR_G_Clone(geom_in) );
+}
+
+
+OGRGeometryShadow* ForceToMultiPolygon( OGRGeometryShadow *geom_in ) {
+ if (geom_in == NULL)
+     return NULL;
+ return OGR_G_ForceToMultiPolygon( OGR_G_Clone(geom_in) );
+}
+
+
+OGRGeometryShadow* ForceToMultiPoint( OGRGeometryShadow *geom_in ) {
+ if (geom_in == NULL)
+     return NULL;
+ return OGR_G_ForceToMultiPoint( OGR_G_Clone(geom_in) );
+}
+
+
+OGRGeometryShadow* ForceToMultiLineString( OGRGeometryShadow *geom_in ) {
+ if (geom_in == NULL)
+     return NULL;
+ return OGR_G_ForceToMultiLineString( OGR_G_Clone(geom_in) );
+}
+
 SWIGINTERN void delete_OGRGeometryShadow(OGRGeometryShadow *self){
     OGR_G_DestroyGeometry( self );
   }
@@ -10183,7 +10211,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
 #if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj0))
     {
-      size_t safeLen;
+      size_t safeLen = 0;
       int ret = SWIG_AsCharPtrAndSize(obj0, (char**) &arg2, &safeLen, &alloc1);
       if (!SWIG_IsOK(ret)) {
         SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
@@ -10192,16 +10220,29 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
       if (safeLen) safeLen--;
       arg1 = (int) safeLen;
     }
-    else
+    else if (PyBytes_Check(obj0))
     {
-      Py_ssize_t safeLen;
+      Py_ssize_t safeLen = 0;
       PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
       arg1 = (int) safeLen;
     }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      SWIG_fail;
+    }
 #else
-    Py_ssize_t safeLen;
-    PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
-    arg1 = (int) safeLen;
+    if (PyString_Check(obj0))
+    {
+      Py_ssize_t safeLen = 0;
+      PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      arg1 = (int) safeLen;
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a string");
+      SWIG_fail;
+    }
 #endif
   }
   if (obj1) {
@@ -10519,6 +10560,126 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_ForceToPolygon(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ForceToPolygon",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ForceToPolygon" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (OGRGeometryShadow *)ForceToPolygon(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ForceToMultiPolygon(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ForceToMultiPolygon",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ForceToMultiPolygon" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (OGRGeometryShadow *)ForceToMultiPolygon(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ForceToMultiPoint(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ForceToMultiPoint",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ForceToMultiPoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (OGRGeometryShadow *)ForceToMultiPoint(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ForceToMultiLineString(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ForceToMultiLineString",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ForceToMultiLineString" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (OGRGeometryShadow *)ForceToMultiLineString(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_delete_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -10594,7 +10755,7 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
 #if PY_VERSION_HEX>=0x03000000
       if (PyUnicode_Check(obj2))
       {
-        size_t safeLen;
+        size_t safeLen = 0;
         int ret = SWIG_AsCharPtrAndSize(obj2, (char**) &arg4, &safeLen, &alloc3);
         if (!SWIG_IsOK(ret)) {
           SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
@@ -10603,16 +10764,29 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
         if (safeLen) safeLen--;
         arg3 = (int) safeLen;
       }
-      else
+      else if (PyBytes_Check(obj2))
       {
-        Py_ssize_t safeLen;
+        Py_ssize_t safeLen = 0;
         PyBytes_AsStringAndSize(obj2, (char**) &arg4, &safeLen);
         arg3 = (int) safeLen;
       }
+      else
+      {
+        PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+        SWIG_fail;
+      }
 #else
-      Py_ssize_t safeLen;
-      PyString_AsStringAndSize(obj2, (char**) &arg4, &safeLen);
-      arg3 = (int) safeLen;
+      if (PyString_Check(obj2))
+      {
+        Py_ssize_t safeLen = 0;
+        PyString_AsStringAndSize(obj2, (char**) &arg4, &safeLen);
+        arg3 = (int) safeLen;
+      }
+      else
+      {
+        PyErr_SetString(PyExc_TypeError, "not a string");
+        SWIG_fail;
+      }
 #endif
     }
   }
@@ -11074,6 +11248,11 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometryDirectly(PyObject *SWIGUNUSEDPARM
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_AddGeometryDirectly" "', argument " "2"" of type '" "OGRGeometryShadow *""'");
   }
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11128,6 +11307,11 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometry(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_AddGeometry" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
     if ( bUseExceptions ) {
@@ -15658,6 +15842,10 @@ static PyMethodDef SwigMethods[] = {
 		"    double dfRotation, double dfStartAngle, double dfEndAngle, \n"
 		"    double dfMaxAngleStepSizeDegrees) -> Geometry\n"
 		""},
+	 { (char *)"ForceToPolygon", _wrap_ForceToPolygon, METH_VARARGS, (char *)"ForceToPolygon(Geometry geom_in) -> Geometry"},
+	 { (char *)"ForceToMultiPolygon", _wrap_ForceToMultiPolygon, METH_VARARGS, (char *)"ForceToMultiPolygon(Geometry geom_in) -> Geometry"},
+	 { (char *)"ForceToMultiPoint", _wrap_ForceToMultiPoint, METH_VARARGS, (char *)"ForceToMultiPoint(Geometry geom_in) -> Geometry"},
+	 { (char *)"ForceToMultiLineString", _wrap_ForceToMultiLineString, METH_VARARGS, (char *)"ForceToMultiLineString(Geometry geom_in) -> Geometry"},
 	 { (char *)"delete_Geometry", _wrap_delete_Geometry, METH_VARARGS, (char *)"delete_Geometry(Geometry self)"},
 	 { (char *)"new_Geometry", (PyCFunction) _wrap_new_Geometry, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"new_Geometry(OGRwkbGeometryType type = wkbUnknown, char wkt = None, \n"

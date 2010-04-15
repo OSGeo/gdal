@@ -2918,6 +2918,22 @@ def ApproximateArcAngles(*args, **kwargs):
         double dfMaxAngleStepSizeDegrees) -> Geometry
     """
   return _ogr.ApproximateArcAngles(*args, **kwargs)
+
+def ForceToPolygon(*args):
+  """ForceToPolygon(Geometry geom_in) -> Geometry"""
+  return _ogr.ForceToPolygon(*args)
+
+def ForceToMultiPolygon(*args):
+  """ForceToMultiPolygon(Geometry geom_in) -> Geometry"""
+  return _ogr.ForceToMultiPolygon(*args)
+
+def ForceToMultiPoint(*args):
+  """ForceToMultiPoint(Geometry geom_in) -> Geometry"""
+  return _ogr.ForceToMultiPoint(*args)
+
+def ForceToMultiLineString(*args):
+  """ForceToMultiLineString(Geometry geom_in) -> Geometry"""
+  return _ogr.ForceToMultiLineString(*args)
 class Geometry(_object):
     """Proxy of C++ OGRGeometryShadow class"""
     __swig_setmethods__ = {}
