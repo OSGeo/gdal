@@ -429,7 +429,8 @@ int main( int nArgc, char ** papszArgv )
             else if (EQUALN(papszArgv[iArg+1], "POLYGON", 7) ||
                      EQUALN(papszArgv[iArg+1], "MULTIPOLYGON", 12))
             {
-                OGRGeometryFactory::createFromWkt(&papszArgv[iArg+1], NULL, &poClipSrc);
+                char* pszTmp = (char*) papszArgv[iArg+1];
+                OGRGeometryFactory::createFromWkt(&pszTmp, NULL, &poClipSrc);
                 if (poClipSrc == NULL)
                 {
                     fprintf( stderr, "FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n\n");
@@ -484,7 +485,8 @@ int main( int nArgc, char ** papszArgv )
             else if (EQUALN(papszArgv[iArg+1], "POLYGON", 7) ||
                      EQUALN(papszArgv[iArg+1], "MULTIPOLYGON", 12))
             {
-                OGRGeometryFactory::createFromWkt(&papszArgv[iArg+1], NULL, &poClipDst);
+                char* pszTmp = (char*) papszArgv[iArg+1];
+                OGRGeometryFactory::createFromWkt(&pszTmp, NULL, &poClipDst);
                 if (poClipDst == NULL)
                 {
                     fprintf( stderr, "FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n\n");
