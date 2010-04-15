@@ -528,6 +528,29 @@ def GDAL_GCP_set_Id(*args):
 def GCPsToGeoTransform(*args):
   """GCPsToGeoTransform(int nGCPs, int bApproxOK = 1) -> FALSE_IS_ERR"""
   return _gdal.GCPsToGeoTransform(*args)
+class AsyncReader(_object):
+    """Proxy of C++ GDALAsyncReaderShadow class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, AsyncReader, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, AsyncReader, name)
+    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    def GetNextUpdatedRegion(self, *args):
+        """GetNextUpdatedRegion(self, double timeout) -> GDALAsyncStatusType"""
+        return _gdal.AsyncReader_GetNextUpdatedRegion(self, *args)
+
+    def LockBuffer(self, *args):
+        """LockBuffer(self, double timeout) -> int"""
+        return _gdal.AsyncReader_LockBuffer(self, *args)
+
+    def UnlockBuffer(self, *args):
+        """UnlockBuffer(self)"""
+        return _gdal.AsyncReader_UnlockBuffer(self, *args)
+
+AsyncReader_swigregister = _gdal.AsyncReader_swigregister
+AsyncReader_swigregister(AsyncReader)
+
 class Dataset(MajorObject):
     """Proxy of C++ GDALDatasetShadow class"""
     __swig_setmethods__ = {}
@@ -623,15 +646,29 @@ class Dataset(MajorObject):
         """
         return _gdal.Dataset_WriteRaster(self, *args, **kwargs)
 
-    def ReadRaster(self, *args, **kwargs):
+    def BeginAsyncReader(self, *args, **kwargs):
         """
-        ReadRaster(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
+        BeginAsyncReader(self, int xOff, int yOff, int xSize, int ySize, int buf_xsize, 
+            int buf_ysize, GDALDataType bufType = (GDALDataType) 0, 
+            int band_list = 0, int nPixelSpace = 0, 
+            int nLineSpace = 0, int nBandSpace = 0, 
+            char options = None) -> AsyncReader
+        """
+        return _gdal.Dataset_BeginAsyncReader(self, *args, **kwargs)
+
+    def EndAsyncReader(self, *args):
+        """EndAsyncReader(self, AsyncReader ario)"""
+        return _gdal.Dataset_EndAsyncReader(self, *args)
+
+    def ReadRaster1(self, *args, **kwargs):
+        """
+        ReadRaster1(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
             int buf_ysize = None, GDALDataType buf_type = None, 
             int band_list = 0, int buf_pixel_space = None, 
             int buf_line_space = None, 
             int buf_band_space = None) -> CPLErr
         """
-        return _gdal.Dataset_ReadRaster(self, *args, **kwargs)
+        return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)
 
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None ):
         import gdalnumeric
@@ -670,9 +707,10 @@ class Dataset(MajorObject):
 
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType;
-        return _gdal.Dataset_ReadRaster(self, xoff, yoff, xsize, ysize,
-                                           buf_xsize, buf_ysize, buf_type,
-                                           band_list, buf_pixel_space, buf_line_space, buf_band_space )
+
+        return _gdal.Dataset_ReadRaster1(self, xoff, yoff, xsize, ysize,
+                                            buf_xsize, buf_ysize, buf_type,
+                                            band_list, buf_pixel_space, buf_line_space, buf_band_space )
 
     def GetSubDatasets(self):
         sd_list = []
@@ -687,6 +725,18 @@ class Dataset(MajorObject):
                               sd['SUBDATASET_'+str(i)+'_DESC'] ) )
             i = i + 1
         return sd_list
+
+    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_xsize = None, buf_ysize = None, buf_type = None, band_list = None, options=[]):
+        if band_list is None:
+            band_list = range(1, self.RasterCount + 1)
+        if buf_xsize is None:
+            buf_xsize = 0;
+        if buf_ysize is None:
+            buf_ysize = 0;
+        if buf_type is None:
+            buf_type = GDT_Byte
+        
+        return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)            
 
 Dataset_swigregister = _gdal.Dataset_swigregister
 Dataset_swigregister(Dataset)
@@ -767,6 +817,14 @@ class Band(MajorObject):
         """GetScale(self)"""
         return _gdal.Band_GetScale(self, *args)
 
+    def SetOffset(self, *args):
+        """SetOffset(self, double val) -> CPLErr"""
+        return _gdal.Band_SetOffset(self, *args)
+
+    def SetScale(self, *args):
+        """SetScale(self, double val) -> CPLErr"""
+        return _gdal.Band_SetScale(self, *args)
+
     def GetStatistics(self, *args):
         """GetStatistics(self, int approx_ok, int force) -> CPLErr"""
         return _gdal.Band_GetStatistics(self, *args)
@@ -802,14 +860,6 @@ class Band(MajorObject):
     def Fill(self, *args):
         """Fill(self, double real_fill, double imag_fill = 0.0) -> CPLErr"""
         return _gdal.Band_Fill(self, *args)
-
-    def ReadRaster(self, *args, **kwargs):
-        """
-        ReadRaster(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
-            int buf_ysize = None, int buf_type = None, 
-            int buf_pixel_space = None, int buf_line_space = None) -> CPLErr
-        """
-        return _gdal.Band_ReadRaster(self, *args, **kwargs)
 
     def WriteRaster(self, *args, **kwargs):
         """
@@ -885,6 +935,22 @@ class Band(MajorObject):
     def HasArbitraryOverviews(self, *args):
         """HasArbitraryOverviews(self) -> bool"""
         return _gdal.Band_HasArbitraryOverviews(self, *args)
+
+    def ReadRaster1(self, *args, **kwargs):
+        """
+        ReadRaster1(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
+            int buf_ysize = None, int buf_type = None, 
+            int buf_pixel_space = None, int buf_line_space = None) -> CPLErr
+        """
+        return _gdal.Band_ReadRaster1(self, *args, **kwargs)
+
+    def ReadRaster(self, xoff, yoff, xsize, ysize,
+                     buf_xsize = None, buf_ysize = None, buf_type = None,
+                     buf_pixel_space = None, buf_line_space = None ):
+
+        return _gdal.Band_ReadRaster1(self, xoff, yoff, xsize, ysize,
+                                      buf_xsize, buf_ysize, buf_type,
+                                      buf_pixel_space, buf_line_space)
 
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_obj=None):

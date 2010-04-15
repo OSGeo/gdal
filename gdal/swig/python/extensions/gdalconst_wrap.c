@@ -3467,6 +3467,10 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GMF_PER_DATASET",SWIG_From_int((int)(0x02)));
   SWIG_Python_SetConstant(d, "GMF_ALPHA",SWIG_From_int((int)(0x04)));
   SWIG_Python_SetConstant(d, "GMF_NODATA",SWIG_From_int((int)(0x08)));
+  SWIG_Python_SetConstant(d, "GARIO_PENDING",SWIG_From_int((int)(GARIO_PENDING)));
+  SWIG_Python_SetConstant(d, "GARIO_UPDATE",SWIG_From_int((int)(GARIO_UPDATE)));
+  SWIG_Python_SetConstant(d, "GARIO_ERROR",SWIG_From_int((int)(GARIO_ERROR)));
+  SWIG_Python_SetConstant(d, "GARIO_COMPLETE",SWIG_From_int((int)(GARIO_COMPLETE)));
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else
