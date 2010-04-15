@@ -109,6 +109,19 @@ public class ogr2ogr
         Vector papszFieldTypesToString = new Vector();
         boolean bDisplayProgress = false;
         ProgressCallback pfnProgress = null;
+        boolean  bClipSrc = false;
+        Geometry poClipSrc = null;
+        String pszClipSrcDS = null;
+        String pszClipSrcSQL = null;
+        String pszClipSrcLayer = null;
+        String pszClipSrcWhere = null;
+        Geometry poClipDst = null;
+        String pszClipDstDS = null;
+        String pszClipDstSQL = null;
+        String pszClipDstLayer = null;
+        String pszClipDstWhere = null;
+        String pszSrcEncoding = null;
+        String pszDstEncoding = null;
 
     /* -------------------------------------------------------------------- */
     /*      Register format(s).                                             */
@@ -301,6 +314,120 @@ public class ogr2ogr
             {
                 bDisplayProgress = true;
             }
+            /*else if( args[iArg].equalsIgnoreCase("-wrapdateline") )
+            {
+                bWrapDateline = true;
+            }
+            */
+            else if( args[iArg].equalsIgnoreCase("-clipsrc") && iArg < args.length-1 )
+            {
+                bClipSrc = true;
+                if ( IsNumber(args[iArg+1]) && iArg < args.length - 4 )
+                {
+                    Geometry oRing = new Geometry(ogrConstants.wkbLinearRing);
+                    double xmin = new Double(args[++iArg]).doubleValue();
+                    double ymin = new Double(args[++iArg]).doubleValue();
+                    double xmax = new Double(args[++iArg]).doubleValue();
+                    double ymax = new Double(args[++iArg]).doubleValue();
+                    oRing.AddPoint(xmin, ymin);
+                    oRing.AddPoint(xmin, ymax);
+                    oRing.AddPoint(xmax, ymax);
+                    oRing.AddPoint(xmax, ymin);
+                    oRing.AddPoint(xmin, ymin);
+                    
+                    poClipSrc = new Geometry(ogrConstants.wkbPolygon);
+                    poClipSrc.AddGeometry(oRing);
+                }
+                else if( (args[iArg+1].length() >= 7 && args[iArg+1].substring(0, 7).equalsIgnoreCase("POLYGON") ) ||
+                         (args[iArg+1].length() >= 12 && args[iArg+1].substring(0, 12).equalsIgnoreCase("MULTIPOLYGON") ) )
+                {
+                    poClipSrc = Geometry.CreateFromWkt(args[iArg+1]);
+                    if (poClipSrc == null)
+                    {
+                        System.err.print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n\n");
+                        Usage();
+                    }
+                    iArg ++;
+                }
+                else if (args[iArg+1].equalsIgnoreCase("spat_extent") )
+                {
+                    iArg ++;
+                }
+                else
+                {
+                    pszClipSrcDS = args[iArg+1];
+                    iArg ++;
+                }
+            }
+            else if( args[iArg].equalsIgnoreCase("-clipsrcsql") && iArg < args.length-1 )
+            {
+                pszClipSrcSQL = args[iArg+1];
+                iArg ++;
+            }
+            else if( args[iArg].equalsIgnoreCase("-clipsrclayer") && iArg < args.length-1 )
+            {
+                pszClipSrcLayer = args[iArg+1];
+                iArg ++;
+            }
+            else if( args[iArg].equalsIgnoreCase("-clipsrcwhere") && iArg < args.length-1 )
+            {
+                pszClipSrcWhere = args[iArg+1];
+                iArg ++;
+            }
+            else if( args[iArg].equalsIgnoreCase("-clipdst") && iArg < args.length-1 )
+            {
+                if ( IsNumber(args[iArg+1]) && iArg < args.length - 4 )
+                {
+                    Geometry oRing = new Geometry(ogrConstants.wkbLinearRing);
+                    double xmin = new Double(args[++iArg]).doubleValue();
+                    double ymin = new Double(args[++iArg]).doubleValue();
+                    double xmax = new Double(args[++iArg]).doubleValue();
+                    double ymax = new Double(args[++iArg]).doubleValue();
+                    oRing.AddPoint(xmin, ymin);
+                    oRing.AddPoint(xmin, ymax);
+                    oRing.AddPoint(xmax, ymax);
+                    oRing.AddPoint(xmax, ymin);
+                    oRing.AddPoint(xmin, ymin);
+                    
+                    poClipDst = new Geometry(ogrConstants.wkbPolygon);
+                    poClipDst.AddGeometry(oRing);
+                }
+                else if( (args[iArg+1].length() >= 7 && args[iArg+1].substring(0, 7).equalsIgnoreCase("POLYGON") ) ||
+                         (args[iArg+1].length() >= 12 && args[iArg+1].substring(0, 12).equalsIgnoreCase("MULTIPOLYGON") ) )
+                {
+                    poClipDst = Geometry.CreateFromWkt(args[iArg+1]);
+                    if (poClipDst == null)
+                    {
+                        System.err.print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n\n");
+                        Usage();
+                    }
+                    iArg ++;
+                }
+                else if (args[iArg+1].equalsIgnoreCase("spat_extent") )
+                {
+                    iArg ++;
+                }
+                else
+                {
+                    pszClipDstDS = args[iArg+1];
+                    iArg ++;
+                }
+            }
+            else if( args[iArg].equalsIgnoreCase("-clipdstsql") && iArg < args.length-1 )
+            {
+                pszClipDstSQL = args[iArg+1];
+                iArg ++;
+            }
+            else if( args[iArg].equalsIgnoreCase("-clipdstlayer") && iArg < args.length-1 )
+            {
+                pszClipDstLayer = args[iArg+1];
+                iArg ++;
+            }
+            else if( args[iArg].equalsIgnoreCase("-clipdstwhere") && iArg < args.length-1 )
+            {
+                pszClipDstWhere = args[iArg+1];
+                iArg ++;
+            }
             else if( args[iArg].charAt(0) == '-' )
             {
                 Usage();
@@ -316,6 +443,36 @@ public class ogr2ogr
         if( pszDataSource == null )
             Usage();
     
+        if( bClipSrc && pszClipSrcDS != null)
+        {
+            poClipSrc = LoadGeometry(pszClipSrcDS, pszClipSrcSQL, pszClipSrcLayer, pszClipSrcWhere);
+            if (poClipSrc == null)
+            {
+                System.err.print("FAILURE: cannot load source clip geometry\n\n" );
+                Usage();
+            }
+        }
+        else if( bClipSrc && poClipSrc == null )
+        {
+            if (poSpatialFilter != null)
+                poClipSrc = poSpatialFilter.Clone();
+            if (poClipSrc == null)
+            {
+                System.err.print("FAILURE: -clipsrc must be used with -spat option or a\n" +
+                                "bounding box, WKT string or datasource must be specified\n\n");
+                Usage();
+            }
+        }
+        
+        if( pszClipDstDS != null)
+        {
+            poClipDst = LoadGeometry(pszClipDstDS, pszClipDstSQL, pszClipDstLayer, pszClipDstWhere);
+            if (poClipDst == null)
+            {
+                System.err.print("FAILURE: cannot load dest clip geometry\n\n" );
+                Usage();
+            }
+        }
     /* -------------------------------------------------------------------- */
     /*      Open data source.                                               */
     /* -------------------------------------------------------------------- */
@@ -469,7 +626,7 @@ public class ogr2ogr
                                     pszNewLayerName, bTransform, poOutputSRS,
                                     poSourceSRS, papszSelFields, bAppend, eGType,
                                     bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
-                                    nCountLayerFeatures, pfnProgress ))
+                                    nCountLayerFeatures, poClipSrc, poClipDst, pfnProgress ))
                 {
                     System.err.println(
                             "Terminating translation prematurely after failed\n" +
@@ -585,7 +742,7 @@ public class ogr2ogr
                                     pszNewLayerName, bTransform, poOutputSRS,
                                     poSourceSRS, papszSelFields, bAppend, eGType,
                                     bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
-                                    panLayerCountFeatures[iLayer], pfnProgress) 
+                                    panLayerCountFeatures[iLayer], poClipSrc, poClipDst, pfnProgress) 
                     && !bSkipFailures )
                 {
                     System.err.println(
@@ -619,7 +776,8 @@ public class ogr2ogr
                 "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n" +
                 "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n" +
                 "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n" +
-                "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" +
+                // "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" +
+                "               [-fieldTypeToString All|(type1[,type2]*)]\n" +
                 "               dst_datasource_name src_datasource_name\n" +
                 "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n" +
                 "\n" +
@@ -644,8 +802,8 @@ public class ogr2ogr
                 " -skipfailures: skip features or layers that fail to convert\n" +
                 " -gt n: group n features per transaction (default 200)\n" +
                 " -spat xmin ymin xmax ymax: spatial query extents\n" +
-                " -segmentize max_dist: maximum distance between 2 nodes.\n" +
-                "                       Used to create intermediate points\n" +
+                //" -segmentize max_dist: maximum distance between 2 nodes.\n" +
+                //"                       Used to create intermediate points\n" +
                 " -dsco NAME=VALUE: Dataset creation option (format specific)\n" +
                 " -lco  NAME=VALUE: Layer creation option (format specific)\n" +
                 " -nln name: Assign an alternate name to the new layer\n" +
@@ -683,6 +841,91 @@ public class ogr2ogr
         return -1;
     }
 
+    
+    static boolean IsNumber(String pszStr)
+    {
+        try
+        {
+            Double.parseDouble(pszStr);
+            return true;
+        }
+        catch(Exception ex)
+        {
+            return false;
+        }
+    }
+    
+    static Geometry LoadGeometry( String pszDS,
+                                  String pszSQL,
+                                  String pszLyr,
+                                  String pszWhere)
+    {
+        DataSource       poDS;
+        Layer            poLyr;
+        Feature          poFeat;
+        Geometry         poGeom = null;
+            
+        poDS = ogr.Open( pszDS, false );
+        if (poDS == null)
+            return null;
+    
+        if (pszSQL != null)
+            poLyr = poDS.ExecuteSQL( pszSQL, null, null ); 
+        else if (pszLyr != null)
+            poLyr = poDS.GetLayerByName(pszLyr);
+        else
+            poLyr = poDS.GetLayer(0);
+            
+        if (poLyr == null)
+        {
+            System.err.print("Failed to identify source layer from datasource.\n");
+            poDS.delete();
+            return null;
+        }
+        
+        if (pszWhere != null)
+            poLyr.SetAttributeFilter(pszWhere);
+            
+        while ((poFeat = poLyr.GetNextFeature()) != null)
+        {
+            Geometry poSrcGeom = poFeat.GetGeometryRef();
+            if (poSrcGeom != null)
+            {
+                int eType = poSrcGeom.GetGeometryType()& (~ogrConstants.wkb25DBit);
+                
+                if (poGeom == null)
+                    poGeom = new Geometry( ogr.wkbMultiPolygon );
+    
+                if( eType == ogr.wkbPolygon )
+                    poGeom.AddGeometry( poSrcGeom );
+                else if( eType == ogr.wkbMultiPolygon )
+                {
+                    int iGeom;
+                    int nGeomCount = poSrcGeom.GetGeometryCount();
+    
+                    for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+                    {
+                        poGeom.AddGeometry(poSrcGeom.GetGeometryRef(iGeom) );
+                    }
+                }
+                else
+                {
+                    System.err.print("ERROR: Geometry not of polygon type.\n" );
+                    if( pszSQL != null )
+                        poDS.ReleaseResultSet( poLyr );
+                    poDS.delete();
+                    return null;
+                }
+            }
+        }
+
+        if( pszSQL != null )
+            poDS.ReleaseResultSet( poLyr );
+        poDS.delete();
+
+        return poGeom;
+    }
+
     /************************************************************************/
     /*                           TranslateLayer()                           */
     /************************************************************************/
@@ -700,6 +943,8 @@ public class ogr2ogr
                             double dfMaxSegmentLength,
                             Vector papszFieldTypesToString,
                             long nCountLayerFeatures,
+                            Geometry poClipSrc,
+                            Geometry poClipDst, 
                             ProgressCallback pfnProgress)
     
     {
@@ -956,35 +1201,77 @@ public class ogr2ogr
     
             /*if (poDstFeature.GetGeometryRef() != null && dfMaxSegmentLength > 0)
                 poDstFeature.GetGeometryRef().segmentize(dfMaxSegmentLength);*/
-    
-            if( poCT != null && poDstFeature.GetGeometryRef() != null )
+            
+            Geometry poDstGeometry = poDstFeature.GetGeometryRef();
+            if (poDstGeometry != null)
             {
-                eErr = poDstFeature.GetGeometryRef().Transform( poCT );
-                if( eErr != 0 )
+                if (poClipSrc != null)
                 {
-                    if( nGroupTransactions > 0)
-                        poDstLayer.CommitTransaction();
-    
-                    System.err.println("Failed to reproject feature" + poFeature.GetFID() + " (geometry probably out of source or destination SRS).");
-                    if( !bSkipFailures )
+                    Geometry poClipped = poDstGeometry.Intersection(poClipSrc);
+                    if (poClipped == null || poClipped.IsEmpty())
                     {
+                        /* Report progress */
+                        nCount ++;
+                        if (pfnProgress != null)
+                            pfnProgress.run(nCount * 1.0 / nCountLayerFeatures, "");
                         poFeature.delete();
-                        poFeature = null;
                         poDstFeature.delete();
-                        poDstFeature = null;
-                        return false;
+                        continue;
+                    }
+                    poDstFeature.SetGeometryDirectly(poClipped);
+                    poDstGeometry = poClipped;
+                }
+        
+                if( poCT != null )
+                {
+                    eErr = poDstGeometry.Transform( poCT );
+                    if( eErr != 0 )
+                    {
+                        if( nGroupTransactions > 0)
+                            poDstLayer.CommitTransaction();
+        
+                        System.err.println("Failed to reproject feature" + poFeature.GetFID() + " (geometry probably out of source or destination SRS).");
+                        if( !bSkipFailures )
+                        {
+                            poFeature.delete();
+                            poFeature = null;
+                            poDstFeature.delete();
+                            poDstFeature = null;
+                            return false;
+                        }
                     }
                 }
-            }
-    
-            if( poDstFeature.GetGeometryRef() != null && bForceToPolygon )
-            {
-                poDstFeature.SetGeometryDirectly(ogr.ForceToPolygon(poDstFeature.GetGeometryRef()));
-            }
-                        
-            if( poDstFeature.GetGeometryRef() != null && bForceToMultiPolygon )
-            {
-                poDstFeature.SetGeometryDirectly(ogr.ForceToMultiPolygon(poDstFeature.GetGeometryRef()));
+                else if (poOutputSRS != null)
+                {
+                    poDstGeometry.AssignSpatialReference(poOutputSRS);
+                }
+                
+                if (poClipDst != null)
+                {
+                    Geometry poClipped = poDstGeometry.Intersection(poClipDst);
+                    if (poClipped == null || poClipped.IsEmpty())
+                    {
+                        /* Report progress */
+                        nCount ++;
+                        if (pfnProgress != null)
+                            pfnProgress.run(nCount * 1.0 / nCountLayerFeatures, "");
+                        poFeature.delete();
+                        poDstFeature.delete();
+                        continue;
+                    }
+                    poDstFeature.SetGeometryDirectly(poClipped);
+                    poDstGeometry = poClipped;
+                }
+        
+                if( bForceToPolygon )
+                {
+                    poDstFeature.SetGeometryDirectly(ogr.ForceToPolygon(poDstGeometry));
+                }
+                            
+                if( bForceToMultiPolygon )
+                {
+                    poDstFeature.SetGeometryDirectly(ogr.ForceToMultiPolygon(poDstGeometry));
+                }
             }
                         
             poFeature.delete();
