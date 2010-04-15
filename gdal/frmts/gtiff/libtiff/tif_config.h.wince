@@ -8,7 +8,7 @@
 #endif
 
 /* Get the common system configuration switches from the main file. */
-#include "cpl_config.h"
+#include "cpl_port.h"
 
 /* Compatibility stuff. */
 
@@ -80,12 +80,14 @@
 /* Signed size type */
 #ifdef _WIN64
 #  define TIFF_SSIZE_T long
+#  define TIFF_SSIZE_FORMAT CPL_FRMT_GIB
 #else
 #  define TIFF_SSIZE_T signed long
+#  define TIFF_SSIZE_FORMAT "%ld"
 #endif
 
 /* Unsigned 16-bit type */
-#define TIFF_UINT16_T short
+#define TIFF_UINT16_T unsigned short
 
 /* Unsigned 32-bit type */
 #define TIFF_UINT32_T unsigned int
@@ -95,3 +97,5 @@
 
 /* Unsigned 8-bit type */
 #define TIFF_UINT8_T unsigned char
+
+#define TIFF_UINT64_FORMAT CPL_FRMT_GUIB
