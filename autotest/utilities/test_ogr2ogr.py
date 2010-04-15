@@ -205,17 +205,17 @@ def test_ogr2ogr_6():
         return 'skip'
     gdaltest.pg_ds.Destroy()
 
-    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
+    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL PG:' + gdaltest.pg_connection_string + ' ../ogr/data/poly.shp -nln tpoly')
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -update -overwrite -f PostgreSQL PG:' + gdaltest.pg_connection_string + ' ../ogr/data/poly.shp -nln tpoly')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" ../ogr/data/poly.shp -nln tpoly')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -update -overwrite -f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" ../ogr/data/poly.shp -nln tpoly')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     if ds is None or ds.GetLayerByName('tpoly').GetFeatureCount() != 10:
         return 'fail'
     ds.Destroy()
 
-    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
+    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
     return 'success'
 
@@ -236,16 +236,16 @@ def test_ogr2ogr_7():
         return 'skip'
     gdaltest.pg_ds.Destroy()
 
-    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
+    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL PG:' + gdaltest.pg_connection_string + ' ../ogr/data/poly.shp -nln tpoly -gt 1')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" ../ogr/data/poly.shp -nln tpoly -gt 1')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     if ds is None or ds.GetLayerByName('tpoly').GetFeatureCount() != 10:
         return 'fail'
     ds.Destroy()
 
-    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
+    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
     return 'success'
 
@@ -758,6 +758,150 @@ def test_ogr2ogr_23():
 
     return 'success'
 
+###############################################################################
+# Test -clipsrc with WKT geometry (#3530)
+
+def test_ogr2ogr_24():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+        
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipsrc "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
+
+    ds = ogr.Open('tmp/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
+        return 'fail'
+        
+    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
+        print(ds.GetLayer(0).GetExtent())
+        gdaltest.post_reason('unexpected extent')
+        return 'fail'
+        
+    ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+
+    return 'success'
+
+###############################################################################
+# Test -clipsrc with clip from external datasource
+
+def test_ogr2ogr_25():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+        
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+    
+    f = open('tmp/clip.csv', 'wt')
+    f.write('foo,WKT\n')
+    f.write('foo,"POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"\n')
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipsrc tmp/clip.csv -clipsrcwhere foo=\'foo\'')
+
+    ds = ogr.Open('tmp/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
+        return 'fail'
+        
+    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
+        print(ds.GetLayer(0).GetExtent())
+        gdaltest.post_reason('unexpected extent')
+        return 'fail'
+        
+    ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    os.remove('tmp/clip.csv')
+
+    return 'success'
+
+###############################################################################
+# Test -clipdst with WKT geometry (#3530)
+
+def test_ogr2ogr_26():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+        
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipdst "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
+
+    ds = ogr.Open('tmp/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
+        return 'fail'
+        
+    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
+        print(ds.GetLayer(0).GetExtent())
+        gdaltest.post_reason('unexpected extent')
+        return 'fail'
+        
+    ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+
+    return 'success'
+
+###############################################################################
+# Test -clipdst with clip from external datasource
+
+def test_ogr2ogr_27():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+        
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+    
+    f = open('tmp/clip.csv', 'wt')
+    f.write('foo,WKT\n')
+    f.write('foo,"POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"\n')
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -nlt MULTIPOLYGON tmp/poly.shp ../ogr/data/poly.shp -clipdst tmp/clip.csv -clipdstsql "SELECT * from clip"')
+
+    ds = ogr.Open('tmp/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
+        return 'fail'
+        
+    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
+        print(ds.GetLayer(0).GetExtent())
+        gdaltest.post_reason('unexpected extent')
+        return 'fail'
+        
+    ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    os.remove('tmp/clip.csv')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -781,7 +925,11 @@ gdaltest_list = [
     test_ogr2ogr_20,
     test_ogr2ogr_21,
     test_ogr2ogr_22,
-    test_ogr2ogr_23 ]
+    test_ogr2ogr_23,
+    test_ogr2ogr_24,
+    test_ogr2ogr_25,
+    test_ogr2ogr_26,
+    test_ogr2ogr_27 ]
     
 if __name__ == '__main__':
 
