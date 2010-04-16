@@ -43,6 +43,8 @@
 #include "hdf4compat.h"
 #include "hdf4dataset.h"
 
+#include "nasakeywordhandler.h"
+
 CPL_CVSID("$Id$");
 
 CPL_C_START
@@ -120,6 +122,7 @@ class HDF4ImageDataset : public HDF4Dataset
     void                GetSwatAttrs( int32 );
     void                GetGridAttrs( int32 hGD );
     void                CaptureNRLGeoTransform(void);
+    void                CaptureL1GMTLInfo(void);
     void                CaptureCoastwatchGCTPInfo(void);
     void                ProcessModisSDSGeolocation(void);
     int                 ProcessSwathGeolocation( int32, char ** );
@@ -1071,6 +1074,180 @@ void HDF4ImageDataset::ReadCoordinates( const char *pszString,
     *pdfX = CPLAtof( papszStrList[0] );
     *pdfY = CPLAtof( papszStrList[1] );
     CSLDestroy( papszStrList );
+}
+
+/************************************************************************/
+/*                         CaptureL1GMTLInfo()                          */
+/************************************************************************/
+
+/*  FILE L71002025_02520010722_M_MTL.L1G
+
+GROUP = L1_METADATA_FILE 
+  ...
+  GROUP = PRODUCT_METADATA 
+    PRODUCT_TYPE = "L1G"
+    PROCESSING_SOFTWARE = "IAS_5.1"
+    EPHEMERIS_TYPE = "DEFINITIVE"
+    SPACECRAFT_ID = "Landsat7" 
+    SENSOR_ID = "ETM+" 
+    ACQUISITION_DATE = 2001-07-22
+    WRS_PATH = 002
+    STARTING_ROW = 025
+    ENDING_ROW = 025
+    BAND_COMBINATION = "12345--7-"
+    PRODUCT_UL_CORNER_LAT = 51.2704805  
+    PRODUCT_UL_CORNER_LON = -53.8914311 
+    PRODUCT_UR_CORNER_LAT = 50.8458100  
+    PRODUCT_UR_CORNER_LON = -50.9869091 
+    PRODUCT_LL_CORNER_LAT = 49.6960897  
+    PRODUCT_LL_CORNER_LON = -54.4047933 
+    PRODUCT_LR_CORNER_LAT = 49.2841436  
+    PRODUCT_LR_CORNER_LON = -51.5900428 
+    PRODUCT_UL_CORNER_MAPX = 298309.894  
+    PRODUCT_UL_CORNER_MAPY = 5683875.631 
+    PRODUCT_UR_CORNER_MAPX = 500921.624  
+    PRODUCT_UR_CORNER_MAPY = 5632678.683 
+    PRODUCT_LL_CORNER_MAPX = 254477.193  
+    PRODUCT_LL_CORNER_MAPY = 5510407.880 
+    PRODUCT_LR_CORNER_MAPX = 457088.923  
+    PRODUCT_LR_CORNER_MAPY = 5459210.932 
+    PRODUCT_SAMPLES_REF = 6967
+    PRODUCT_LINES_REF = 5965
+    BAND1_FILE_NAME = "L71002025_02520010722_B10.L1G"
+    BAND2_FILE_NAME = "L71002025_02520010722_B20.L1G"
+    BAND3_FILE_NAME = "L71002025_02520010722_B30.L1G"
+    BAND4_FILE_NAME = "L71002025_02520010722_B40.L1G"
+    BAND5_FILE_NAME = "L71002025_02520010722_B50.L1G"
+    BAND7_FILE_NAME = "L72002025_02520010722_B70.L1G"
+    METADATA_L1_FILE_NAME = "L71002025_02520010722_MTL.L1G"
+    CPF_FILE_NAME = "L7CPF20010701_20010930_06"
+    HDF_DIR_FILE_NAME = "L71002025_02520010722_HDF.L1G"
+  END_GROUP = PRODUCT_METADATA 
+  ...
+  GROUP = PROJECTION_PARAMETERS 
+    REFERENCE_DATUM = "NAD83"
+    REFERENCE_ELLIPSOID = "GRS80"
+    GRID_CELL_SIZE_PAN = 15.000000
+    GRID_CELL_SIZE_THM = 60.000000
+    GRID_CELL_SIZE_REF = 30.000000
+    ORIENTATION = "NOM"
+    RESAMPLING_OPTION = "CC"
+    MAP_PROJECTION = "UTM"
+  END_GROUP = PROJECTION_PARAMETERS 
+  GROUP = UTM_PARAMETERS 
+    ZONE_NUMBER = 22
+  END_GROUP = UTM_PARAMETERS 
+END_GROUP = L1_METADATA_FILE 
+END
+*/
+
+void HDF4ImageDataset::CaptureL1GMTLInfo()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Does the physical file look like it matches our expected        */
+/*      name pattern?                                                   */
+/* -------------------------------------------------------------------- */
+    if( strlen(pszFilename) < 8 
+        || !EQUAL(pszFilename+strlen(pszFilename)-8,"_HDF.L1G") )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Construct the name of the corresponding MTL file.  We should    */
+/*      likely be able to extract that from the HDF itself but I'm      */
+/*      not sure where to find it.                                      */
+/* -------------------------------------------------------------------- */
+    CPLString osMTLFilename = pszFilename;
+    osMTLFilename.resize(osMTLFilename.length() - 8);
+    osMTLFilename += "_MTL.L1G";
+
+/* -------------------------------------------------------------------- */
+/*      Ingest the MTL using the NASAKeywordHandler written for the     */
+/*      PDS driver.                                                     */
+/* -------------------------------------------------------------------- */
+    NASAKeywordHandler oMTL;
+
+    FILE *fp = VSIFOpenL( osMTLFilename, "r" );
+    if( fp == NULL )
+        return;
+
+    if( !oMTL.Ingest( fp, 0 ) )
+    {
+        VSIFCloseL( fp );
+        return;
+    }
+
+    VSIFCloseL( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Get image corner coordinates in projected coordinates.          */
+/* -------------------------------------------------------------------- */
+    double dfULX, dfULY, dfLRX, dfLRY;
+
+    dfULX = atof(oMTL.GetKeyword("L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_UL_CORNER_MAPX", "0" ));
+    dfULY = atof(oMTL.GetKeyword("L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_UL_CORNER_MAPY", "0" ));
+    dfLRX = atof(oMTL.GetKeyword("L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_LR_CORNER_MAPX", "0" ));
+    dfLRY = atof(oMTL.GetKeyword("L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_LR_CORNER_MAPY", "0" ));
+
+    if( ABS(dfULX - atof(oMTL.GetKeyword("L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_LL_CORNER_MAPX", "0" ))) < 1.0 
+        && ABS(dfULY - atof(oMTL.GetKeyword("L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_UR_CORNER_MAPY", "0" ))) < 1.0 
+        && dfULX != 0
+        && dfULY != 0 )
+    {
+        /* TODO - no sample data available */;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*  Fill the GCPs list.                                                 */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        double dfLLX, dfLLY, dfURX, dfURY;
+
+        dfULX = atof(oMTL.GetKeyword(
+                         "L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_UL_CORNER_LON", "0" ));
+        dfULY = atof(oMTL.GetKeyword(
+                         "L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_UL_CORNER_LAT", "0" ));
+        dfLRX = atof(oMTL.GetKeyword(
+                         "L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_LR_CORNER_LON", "0" ));
+        dfLRY = atof(oMTL.GetKeyword(
+                         "L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_LR_CORNER_LAT", "0" ));
+        dfLLX = atof(oMTL.GetKeyword(
+                         "L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_LL_CORNER_LON", "0" ));
+        dfLLY = atof(oMTL.GetKeyword(
+                         "L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_LL_CORNER_LAT", "0" ));
+        dfURX = atof(oMTL.GetKeyword(
+                         "L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_UR_CORNER_LON", "0" ));
+        dfURY = atof(oMTL.GetKeyword(
+                         "L1_METADATA_FILE.PRODUCT_METADATA.PRODUCT_UR_CORNER_LAT", "0" ));
+
+        CPLFree( pszGCPProjection );
+        pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
+
+        nGCPCount = 4;
+        pasGCPList = (GDAL_GCP *) CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) );
+        GDALInitGCPs( nGCPCount, pasGCPList );
+
+        pasGCPList[0].dfGCPX = dfULX;
+        pasGCPList[0].dfGCPY = dfULY;
+        pasGCPList[0].dfGCPPixel = 0.0;
+        pasGCPList[0].dfGCPLine = 0.0;
+
+        pasGCPList[1].dfGCPX = dfURX;
+        pasGCPList[1].dfGCPY = dfURY;
+        pasGCPList[1].dfGCPPixel = GetRasterXSize();
+        pasGCPList[1].dfGCPLine = 0.0;
+
+        pasGCPList[2].dfGCPX = dfLLX;
+        pasGCPList[2].dfGCPY = dfLLY;
+        pasGCPList[2].dfGCPPixel = 0.0;
+        pasGCPList[2].dfGCPLine = GetRasterYSize();
+
+        pasGCPList[3].dfGCPX = dfLRX;
+        pasGCPList[3].dfGCPY = dfLRY;
+        pasGCPList[3].dfGCPPixel = GetRasterXSize();
+        pasGCPList[3].dfGCPLine = GetRasterYSize();
+    }
 }
 
 /************************************************************************/
@@ -2942,6 +3119,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
           // Special case for MODIS geolocation
           poDS->ProcessModisSDSGeolocation();
+
+          // Special case for NASA/CCRS Landsat in HDF
+          poDS->CaptureL1GMTLInfo();
       }
       break;
 
