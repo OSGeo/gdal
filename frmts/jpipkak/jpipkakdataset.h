@@ -107,6 +107,7 @@ private:
     int nResLevels;
     int nComps;
     int nBitDepth;
+    int bYCC;
     GDALDataType eDT;
 
     int nCodestream;
