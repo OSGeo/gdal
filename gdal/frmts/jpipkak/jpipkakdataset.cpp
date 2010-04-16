@@ -617,6 +617,9 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
     cod_in->get("Clayers", 0, 0, nQualityLayers);
     cod_in->get("Clevels", 0, 0, nResLevels);
 
+    bYCC=TRUE;
+    cod_in->get("Cycc", 0, 0, bYCC);
+
     // setup band objects
     int iBand;
     
@@ -646,6 +649,11 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
     SetMetadataItem("JPIP_NRESOLUTIONLEVELS", osNResolutionLevels.c_str(), "JPIP");
     SetMetadataItem("JPIP_NCOMPS", osNComps.c_str(), "JPIP");
     SetMetadataItem("JPIP_SPRECISION", osBitDepth.c_str(), "JPIP");
+
+    if( bYCC )
+        SetMetadataItem("JPIP_YCC", "YES", "JPIP");
+    else
+        SetMetadataItem("JPIP_YCC", "NO", "JPIP");
 	
 /* ==================================================================== */
 /*      Parse geojp2, or gmljp2, we will assume that the core           */
@@ -1396,10 +1404,17 @@ void JPIPKAKAsyncReader::Start()
         CPLString jpipUrl;
         CPLString comps;
 
-        for (int i = 0; i < nBandCount; i++)
-            comps.Printf("%s%i,", comps.c_str(), panBandMap[i]-1);
+        if( poJDS->bYCC )
+        {
+            comps = "0,1,2";
+        }
+        else
+        {
+            for (int i = 0; i < nBandCount; i++)
+                comps.Printf("%s%i,", comps.c_str(), panBandMap[i]-1);
 
-        comps.erase(comps.length() -1);
+            comps.erase(comps.length() -1);
+        }
 	
         jpipUrl.Printf("%s&type=jpp-stream&roff=%i,%i&rsiz=%i,%i&fsiz=%i,%i,closest&quality=%i&comps=%s", 
                        ((JPIPKAKDataset*)poDS)->osRequestUrl.c_str(),
