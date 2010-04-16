@@ -27,7 +27,8 @@
 #include "cpl_conv.h"
 #include "ilwisdataset.h"
 
-//using namespace std;
+#include <string>
+using namespace std;
 
 typedef struct 
 {
