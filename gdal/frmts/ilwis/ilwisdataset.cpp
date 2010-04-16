@@ -31,6 +31,10 @@
 #include <float.h>
 #include <limits.h>
 
+#include <string>
+
+using namespace std;
+
 // IniFile.cpp: implementation of the IniFile class.
 //
 //////////////////////////////////////////////////////////////////////

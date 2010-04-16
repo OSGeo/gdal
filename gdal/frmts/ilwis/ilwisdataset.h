@@ -34,19 +34,15 @@
 #include "gdal_pam.h"
 #include "cpl_csv.h"
 #include "ogr_spatialref.h"
-//#include "Windows.h"
-#include <string>
-#include <map>
 
 #ifdef WIN32
 #include  <io.h>
 #endif
 
-#include  <stdio.h>
-#include  <stdlib.h>
-
-
-using namespace std;
+#include  <cstdio>
+#include  <cstdlib>
+#include <string>
+#include <map>
 
 CPL_C_START
 void	GDALRegister_ILWIS(void);
@@ -71,8 +67,8 @@ class ValueRange
 public:
     ValueRange(double min, double max);	// step = 1
     ValueRange(double min, double max, double step);	
-    ValueRange(string str);
-    string ToString();
+    ValueRange(std::string str);
+    std::string ToString();
     ilwisStoreType get_NeededStoreType() { return st; }
     double get_rLo() { return _rLo; }
     double get_rHi() { return _rHi; }
@@ -104,7 +100,7 @@ struct ILWISInfo
     bool bUseValueRange;
     ValueRange vr;
     ilwisStoreType stStoreType;
-    string stDomain;
+    std::string stDomain;
 };
 
 /************************************************************************/
@@ -123,8 +119,8 @@ public:
 
     ILWISRasterBand( ILWISDataset *, int );
     ~ILWISRasterBand();
-    CPLErr GetILWISInfo(string pszFileName);
-    void ILWISOpen( string pszFilename);
+    CPLErr GetILWISInfo(std::string pszFileName);
+    void ILWISOpen( std::string pszFilename);
 				
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * ); 
@@ -134,7 +130,7 @@ private:
     void FillWithNoData(void * pImage);
     void SetValue(void *pImage, int i, double rV);
     double GetValue(void *pImage, int i);
-    void ReadValueDomainProperties(string pszFileName);
+    void ReadValueDomainProperties(std::string pszFileName);
 };
 
 /************************************************************************/
@@ -144,16 +140,16 @@ class ILWISDataset : public GDALPamDataset
 {
     friend class ILWISRasterBand;
     CPLString osFileName;
-    string pszIlwFileName;
+    std::string pszIlwFileName;
     char	 *pszProjection;
     double adfGeoTransform[6];
     int    bGeoDirty;
     int		 bNewDataset;            /* product of Create() */
-    string pszFileType; //indicating the input dataset: Map/MapList
-    CPLErr ReadProjection( string csyFileName);
+    std::string pszFileType; //indicating the input dataset: Map/MapList
+    CPLErr ReadProjection( std::string csyFileName);
     CPLErr WriteProjection();
     CPLErr WriteGeoReference();
-    void   CollectTransformCoef(string &pszRefFile );
+    void   CollectTransformCoef(std::string &pszRefFile );
 		
 public:
     ILWISDataset();
@@ -185,31 +181,29 @@ public:
 // 
 //////////////////////////////////////////////////////////////////////
 
-using std::map;
-
 class CompareAsNum
 {
 public:
-    bool operator() (const string&, const string&) const;
+    bool operator() (const std::string&, const std::string&) const;
 };
 
-typedef map<string, string>          SectionEntries;
-typedef map<string, SectionEntries*> Sections;
+typedef std::map<std::string, std::string>          SectionEntries;
+typedef std::map<std::string, SectionEntries*> Sections;
 
 class IniFile  
 {
 public:
-    IniFile(const string& filename);
+    IniFile(const std::string& filename);
     virtual ~IniFile();
 
-    void SetKeyValue(const string& section, const string& key, const string& value);
-    string GetKeyValue(const string& section, const string& key);
+    void SetKeyValue(const std::string& section, const std::string& key, const std::string& value);
+    std::string GetKeyValue(const std::string& section, const std::string& key);
 
-    void RemoveKeyValue(const string& section, const string& key);
-    void RemoveSection(const string& section);
+    void RemoveKeyValue(const std::string& section, const std::string& key);
+    void RemoveSection(const std::string& section);
 
 private:
-    string filename;
+    std::string filename;
     Sections sections;
     bool bChanged;
 
