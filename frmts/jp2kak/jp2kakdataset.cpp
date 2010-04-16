@@ -966,7 +966,13 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
              || EQUALN(poOpenInfo->pszFilename,"https://",8)
              || EQUALN(poOpenInfo->pszFilename,"jpip://",7))
             && EQUAL(pszExtension,"jp2") )
+        {
+#ifdef USE_JPIP
             return TRUE;
+#else
+            return FALSE;
+#endif
+        }
         else if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
             return TRUE;
         else
@@ -1158,6 +1164,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 #else
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "JPIP Protocol not supported by GDAL with Kakadu 3.4 or on Unix." );
+            return NULL;
 #endif
         }
         else if( pszExtension != NULL
