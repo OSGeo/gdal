@@ -410,7 +410,7 @@ GDALDefaultOverviews::BuildOverviewsSubDataset(
     GDALProgressFunc pfnProgress, void * pProgressData)
 
 {
-    if( osOvrFilename.length() == 0 )
+    if( osOvrFilename.length() == 0 && nOverviews > 0 )
     {
         int iSequence = 0;
         VSIStatBufL sStatBuf;
