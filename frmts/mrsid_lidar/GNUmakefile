@@ -1,15 +1,5 @@
 include ../../GDALmake.opt
 
-# This is a temporary solution just to make it build the plugin
-#
-# Once the configure is changes to support it, the followinf should be removed:
-
-MRSID_LIDAR_DIR	=	$(HOME)/Dev/Lidar_DSDK-1.1.0.2814
-
-EXTRA_LIBS	=	-L $(MRSID_LIDAR_DIR)/lib/Release/ -l lti_lidar_dsdk
-
-MRSID_LIDAR_INCLUDE	= -I. -I$(MRSID_LIDAR_DIR)/include/
-
 OBJ		=	gdal_MG4Lidar.o
 
 CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(MRSID_LIDAR_INCLUDE) $(CPPFLAGS)
