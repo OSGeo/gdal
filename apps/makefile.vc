@@ -99,7 +99,7 @@ multireadtest.exe:	multireadtest.cpp $(GDALLIB) $(XTRAOBJ)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdalasyncread.exe:	gdalasyncread.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) multireadtest.cpp $(XTRAOBJ) $(LIBS) \
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalasyncread.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
