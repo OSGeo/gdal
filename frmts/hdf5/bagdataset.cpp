@@ -497,6 +497,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Setup/check for pam .aux.xml.                                   */
 /* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
