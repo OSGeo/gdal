@@ -31,7 +31,7 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 # SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
 
 LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
-		$(MRSID_LIBS) $(INGRES_LIB) $(PCIDSK_LIB)
+		$(MRSID_LIBS) $(MRSID_LIDAR_LIBS) $(INGRES_LIB) $(PCIDSK_LIB)
 
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_LIBS = @PYTHON_LIBS@
@@ -181,6 +181,12 @@ MRSID_INCLUDE	= @MRSID_INCLUDE@
 MRSID_LIBS	= @MRSID_LIBS@
 
 #
+#
+# MrSID/MG4 support via LizardTech LiDAR SDK
+#
+MRSID_LIDAR_INCLUDE	= @MRSID_LIDAR_INCLUDE@
+MRSID_LIDAR_LIBS	= @MRSID_LIDAR_LIBS@
+
 # Xerces C++ XML Parser for GML and ILI
 #
 HAVE_XERCES	= @HAVE_XERCES@
