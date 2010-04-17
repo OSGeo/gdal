@@ -723,6 +723,9 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 
     HDF5Dataset *poDS;
 
+    if( !poH5Object->pszPath )
+        return CE_None;
+
     poDS = this;
 
     poH5CurrentObject = poH5Object;
