@@ -486,9 +486,6 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 		poBand->SetNoDataValue( 255 );
     }
 
-    
-    poDS->oSRS.SetWellKnownGeogCS( "WGS84" );
-    poDS->oSRS.exportToWkt( &poDS->pszProjection );
     poDS->CreateProjections( );
 
     poDS->SetMetadata( poDS->papszMetadata );
@@ -555,6 +552,9 @@ CPLErr HDF5ImageDataset::CreateProjections()
     nDeltaLat = nRasterYSize / NBGCPLAT;
     nDeltaLon = nRasterXSize / NBGCPLON;
 
+    if( nDeltaLat == 0 || nDeltaLon == 0 )
+        return CE_None;
+
 /* -------------------------------------------------------------------- */
 /*      Create HDF5 Data Hierarchy in a link list                       */
 /* -------------------------------------------------------------------- */
@@ -604,7 +604,8 @@ CPLErr HDF5ImageDataset::CreateProjections()
 		  Longitude );
 	
 	oSRS.SetWellKnownGeogCS( "WGS84" );
-  CPLFree(pszProjection);
+        CPLFree(pszProjection);
+        CPLFree(pszGCPProjection);
 	oSRS.exportToWkt( &pszProjection );
 	oSRS.exportToWkt( &pszGCPProjection );
 	
