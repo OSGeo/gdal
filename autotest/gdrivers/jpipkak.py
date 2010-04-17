@@ -50,11 +50,11 @@ def jpipkak_1():
         gdaltest.post_reason( 'failed to open jpip stream.' )
         return 'fail'
 
-    target = ds.GetRasterBand(1).GetOverview(3)
+    target = ds.GetRasterBand(3).GetOverview(3)
 
     stats = target.GetStatistics(0,1)
 
-    if abs(stats[2] - 5096.374) > 1.0 or abs(stats[3]-1432.501) > 1.0:
+    if abs(stats[2] - 6791.121) > 1.0 or abs(stats[3]-3046.536) > 1.0:
         print( stats )
         gdaltest.post_reason( 'did not get expected mean/stddev' )
         return 'fail'
@@ -85,7 +85,7 @@ def jpipkak_2():
 
     stats = target.GetStatistics(0,1)
 
-    if abs(stats[2] - 32.635) > 1.0 or abs(stats[3]-19.056) > 1.0:
+    if abs(stats[2] - 43.429) > 1.0 or abs(stats[3]-18.526) > 1.0:
         print( stats )
         gdaltest.post_reason( 'did not get expected mean/stddev' )
         return 'fail'
