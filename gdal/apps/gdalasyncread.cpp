@@ -95,6 +95,7 @@ int main( int argc, char ** argv )
     int                 iSrcFileArg = -1, iDstFileArg = -1;
     int                 bMulti = FALSE;
     double              dfTimeout = -1.0;
+    const char          *pszOXSize = NULL, *pszOYSize = NULL;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -193,8 +194,8 @@ int main( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-outsize") && i < argc-2 )
         {
-            nOXSize = atoi(argv[++i]);
-            nOYSize = atoi(argv[++i]);
+            pszOXSize = argv[++i];
+            pszOYSize = argv[++i];
         }   
 
         else if( EQUAL(argv[i],"-srcwin") && i < argc-4 )
@@ -285,10 +286,17 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Establish output size.                                          */
 /* -------------------------------------------------------------------- */
-    if( nOXSize == 0 && nOYSize == 0 )
+    if( pszOXSize == NULL )
     {
         nOXSize = anSrcWin[2];
         nOYSize = anSrcWin[3];
+    }
+    else
+    {
+        nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%' 
+                          ? atof(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
+        nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%' 
+                          ? atof(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
     }
 
 /* -------------------------------------------------------------------- */
