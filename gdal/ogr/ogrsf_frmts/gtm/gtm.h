@@ -67,8 +67,6 @@
 #endif
 
 
-using std::vector;
-
 void appendDouble(void* pBuffer, double val);
 void appendFloat(void* pBuffer, float val);
 void appendInt(void* pBuffer, int val);
