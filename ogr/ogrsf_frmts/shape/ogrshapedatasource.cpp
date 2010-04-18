@@ -306,13 +306,13 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     const char  *pszPrjFile = CPLResetExtension( pszNewName, "prj" );
     FILE        *fp = NULL;
 
-    fp = VSIFOpen( pszPrjFile, "r" );
+    fp = VSIFOpenL( pszPrjFile, "r" );
 
 #ifndef WIN32
     if( NULL == fp )
     {
         pszPrjFile = CPLResetExtension( pszNewName, "PRJ" );
-        fp = VSIFOpen( pszPrjFile, "r" );
+        fp = VSIFOpenL( pszPrjFile, "r" );
     }
 #endif
 
@@ -320,7 +320,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     {
         char    **papszLines;
 
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         
         papszLines = CSLLoad( pszPrjFile );
 
