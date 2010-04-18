@@ -89,19 +89,19 @@ OWConnection::OWConnection( const char* pszUserIn,
     //  Initialize Environment handler                                  */
     // ------------------------------------------------------
 
-    if( CheckError( OCIInitialize((ub4) (OCI_DEFAULT | OCI_OBJECT), (dvoid *)0,
-        (dvoid * (*)(dvoid *, size_t)) 0,
-        (dvoid * (*)(dvoid *, dvoid *, size_t))0,
-        (void (*)(dvoid *, dvoid *)) 0 ), NULL ) )
+    if( OCIEnvCreate( &hEnv,
+        (ub4) ( OCI_DEFAULT | OCI_OBJECT | OCI_THREADED ),
+        (dvoid *) 0, (dvoid * (*)(dvoid *, size_t)) 0,
+        (dvoid * (*)(dvoid *, dvoid *, size_t)) 0,
+        (void (*)(dvoid *, dvoid *)) 0, (size_t) 0,
+        (dvoid **) 0), NULL )
     {
         return;
     }
 
-    if( CheckError( OCIEnvInit( (OCIEnv **) &hEnv, OCI_DEFAULT, (size_t) 0,
-        (dvoid **) 0 ), NULL ) )
-    {
-        return;
-    }
+    // ------------------------------------------------------
+    //  Initialize Error handler
+    // ------------------------------------------------------
 
     if( CheckError( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hError,
         OCI_HTYPE_ERROR, (size_t) 0, (dvoid **) 0), NULL ) )
@@ -113,36 +113,34 @@ OWConnection::OWConnection( const char* pszUserIn,
     //  Initialize Server Context
     // ------------------------------------------------------
 
-    if( CheckError( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hServer,
-        OCI_HTYPE_SERVER, (size_t) 0, (dvoid **) 0), hError ) )
-    {
-        return;
-    }
-
     if( CheckError( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hSvcCtx,
         OCI_HTYPE_SVCCTX, (size_t) 0, (dvoid **) 0), hError ) )
     {
         return;
     }
 
-    if( CheckError( OCIServerAttach( hServer, hError, (text*) pszServer,
-        strlen((char*) pszServer), 0), hError ) )
-    {
-        return;
-    }
-
     // ------------------------------------------------------
-    //  Initialize Service Context
+    //  Allocate Server and Authentication (Session) handler
     // ------------------------------------------------------
 
-    if( CheckError( OCIAttrSet( (dvoid *) hSvcCtx, OCI_HTYPE_SVCCTX, (dvoid *)hServer,
-        (ub4) 0, OCI_ATTR_SERVER, (OCIError *) hError), hError ) )
+    if( CheckError( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hServer,
+        (ub4) OCI_HTYPE_SERVER, (size_t) 0, (dvoid **) 0), hError ) )
     {
         return;
     }
 
     if( CheckError( OCIHandleAlloc((dvoid *) hEnv, (dvoid **)&hSession,
         (ub4) OCI_HTYPE_SESSION, (size_t) 0, (dvoid **) 0), hError ) )
+    {
+        return;
+    }
+
+    // ------------------------------------------------------
+    //  Attach to the server
+    // ------------------------------------------------------
+
+    if( CheckError( OCIServerAttach( hServer, hError, (text*) pszServer,
+        strlen((char*) pszServer), 0), hError ) )
     {
         return;
     }
@@ -161,6 +159,12 @@ OWConnection::OWConnection( const char* pszUserIn,
         return;
     }
 
+    if( CheckError( OCIAttrSet( (dvoid *) hSvcCtx, OCI_HTYPE_SVCCTX, (dvoid *)hServer,
+        (ub4) 0, OCI_ATTR_SERVER, (OCIError *) hError), hError ) )
+    {
+        return;
+    }
+
     // ------------------------------------------------------
     //  Initialize Session
     // ------------------------------------------------------
@@ -168,12 +172,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     if( CheckError( OCISessionBegin(hSvcCtx, hError, hSession, eCred,
         (ub4) OCI_DEFAULT), hError ) )
     {
-        bSuceeeded = false;
         return;
-    }
-    else
-    {
-        bSuceeeded = true;
     }
 
     // ------------------------------------------------------
@@ -187,15 +186,14 @@ OWConnection::OWConnection( const char* pszUserIn,
         return;
     }
 
+    bSuceeeded = true;
+
     // ------------------------------------------------------
     //  Get Character Size based on current Locale
     // ------------------------------------------------------
 
-    OCINlsNumericInfoGet(
-        hEnv,
-        hError,
-        &nCharSize,
-        OCI_NLS_CHARSET_MAXBYTESZ );
+    OCINlsNumericInfoGet( hEnv, hError,
+        &nCharSize, OCI_NLS_CHARSET_MAXBYTESZ );
 
     // ------------------------------------------------------
     //  Get Server Version
@@ -923,26 +921,14 @@ void OWStatement::Define( OCILobLocator** pphLocator, long nIterations )
 
     nNextCol++;
 
-    long i, nLobEmpty;
-
-    sword nStatus = 0;
+    long i;
 
     for (i = 0; i < nIterations; i++)
     {
-        nStatus = OCIDescriptorAlloc( poConnection->hEnv,
+        OCIDescriptorAlloc(
+            poConnection->hEnv,
             (void**) &pphLocator[i],
-            OCI_DTYPE_LOB,
-            0,
-            0);
-
-        nLobEmpty = 0;
-
-        nStatus = OCIAttrSet(pphLocator[i],
-            OCI_DTYPE_LOB,
-            &nLobEmpty,
-            0,
-            OCI_ATTR_LOBEMPTY,
-            hError);
+            OCI_DTYPE_LOB, (size_t) 0, (void**) 0);
     }
 
     CheckError( OCIDefineByPos( hStmt,
@@ -1078,12 +1064,11 @@ double OWStatement::GetElement( OCIArray** ppoData,
     return *pdfResult;
 }
 
-
 unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
                                      void* pBuffer,
                                      int nSize )
 {
-    ub4 nAmont      = (ub4) nSize;
+    ub4 nAmont      = (ub4) 0;
 
     if( CheckError( OCILobRead(
         poConnection->hSvcCtx,
@@ -1104,7 +1089,8 @@ unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
     return nAmont;
 }
 
-bool OWStatement::WriteBlob( OCILobLocator* phLocator, void* pBuffer, 
+bool OWStatement::WriteBlob( OCILobLocator* phLocator,
+                             void* pBuffer,
                              int nSize )
 {
     ub4 nAmont  = (ub4) nSize;
