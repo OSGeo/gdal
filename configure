@@ -880,6 +880,8 @@ KAKDIR
 MRSID_INCLUDE
 MRSID_FLAGS
 MRSID_LIBS
+MRSID_LIDAR_INCLUDE
+MRSID_LIDAR_LIBS
 ORACLE_OCI_VERSION
 ORACLE_OCI_CFLAGS
 ORACLE_OCI_LDFLAGS
@@ -1580,6 +1582,7 @@ Optional Packages:
   --with-kakadu=ARG     Include Kakadu/JPEG2000 support
   --with-mrsid=ARG      Include MrSID support (ARG=path to MrSID DSDK or no)
   --with-jp2mrsid=ARG   Enable MrSID JPEG2000 support (ARG=yes/no)
+  --with-mrsid_lidar=ARG      Include MrSID/MG4 LiDAR support (ARG=path to LizardTech LiDAR SDK or no)
   --with-msg=ARG          Enable MSG driver (ARG=yes or no)
   --without-bsb           Disable BSB driver (legal issues pending
   --with-oci=[ARG]        use Oracle OCI API from given Oracle home
@@ -5778,13 +5781,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5781: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5784: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5784: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5787: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5787: output\"" >&5)
+  (eval echo "\"\$as_me:5790: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6881,7 +6884,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6884 "configure"' > conftest.$ac_ext
+  echo '#line 6887 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -8572,11 +8575,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8575: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8578: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8579: \$? = $ac_status" >&5
+   echo "$as_me:8582: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8894,11 +8897,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8897: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8900: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8901: \$? = $ac_status" >&5
+   echo "$as_me:8904: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8999,11 +9002,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9002: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9005: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9006: \$? = $ac_status" >&5
+   echo "$as_me:9009: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9054,11 +9057,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9057: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9060: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9061: \$? = $ac_status" >&5
+   echo "$as_me:9064: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11814,7 +11817,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11817 "configure"
+#line 11820 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11914,7 +11917,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11917 "configure"
+#line 11920 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13942,11 +13945,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13945: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13948: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13949: \$? = $ac_status" >&5
+   echo "$as_me:13952: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14041,11 +14044,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14044: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14047: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14048: \$? = $ac_status" >&5
+   echo "$as_me:14051: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14093,11 +14096,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14096: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14099: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14100: \$? = $ac_status" >&5
+   echo "$as_me:14103: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -23684,6 +23687,51 @@ if test "$HAVE_MRSID" != "no" ; then
 fi
 
 
+MRSID_LIDAR_FLAGS=
+HAVE_MRSID_LIDAR=no
+
+
+# Check whether --with-mrsid_lidar was given.
+if test "${with_mrsid_lidar+set}" = set; then
+  withval=$with_mrsid_lidar;
+fi
+
+
+if test "x$with_mrsid_lidar" = "xno"  -o "x$with_mrsid_lidar" = "x" ; then
+  HAVE_MRSID_LIDAR=no
+  { echo "$as_me:$LINENO: MrSID/MG4 Lidar support disabled." >&5
+echo "$as_me: MrSID/MG4 Lidar support disabled." >&6;}
+else
+  MRSID_LIDAR_BASE="$with_mrsid_lidar"
+
+  if test -r "$MRSID_LIDAR_BASE/include/lidar/Version.h" ; then
+    { echo "$as_me:$LINENO: result: found LizardTech LiDAR SDK 1.1 or newer." >&5
+echo "${ECHO_T}found LizardTech LiDAR SDK 1.1 or newer." >&6; }
+    HAVE_MRSID_LIDAR=yes
+  else
+    HAVE_MRSID_LIDAR=no
+    { echo "$as_me:$LINENO: result: not found." >&5
+echo "${ECHO_T}not found." >&6; }
+    { { echo "$as_me:$LINENO: error:   MrSID/MG4 Lidar requested, but components not found." >&5
+echo "$as_me: error:   MrSID/MG4 Lidar requested, but components not found." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+  if test $HAVE_MRSID_LIDAR = yes ; then
+    MRSID_LIDAR_LIBS="-L$MRSID_LIDAR_BASE/lib/Release -llti_lidar_dsdk"
+    MRSID_LIDAR_INCLUDE="-I$MRSID_LIDAR_BASE/include"
+  fi
+fi
+
+MRSID_LIDAR_INCLUDE=$MRSID_LIDAR_INCLUDE
+
+MRSID_LIDAR_LIBS=$MRSID_LIDAR_LIBS
+
+
+if test "$HAVE_MRSID_LIDAR" != "no" ; then
+  OPT_GDAL_FORMATS="mrsid_lidar $OPT_GDAL_FORMATS"
+fi
+
 
 
 # Check whether --with-msg was given.
@@ -29460,6 +29508,8 @@ KAKDIR!$KAKDIR$ac_delim
 MRSID_INCLUDE!$MRSID_INCLUDE$ac_delim
 MRSID_FLAGS!$MRSID_FLAGS$ac_delim
 MRSID_LIBS!$MRSID_LIBS$ac_delim
+MRSID_LIDAR_INCLUDE!$MRSID_LIDAR_INCLUDE$ac_delim
+MRSID_LIDAR_LIBS!$MRSID_LIDAR_LIBS$ac_delim
 ORACLE_OCI_VERSION!$ORACLE_OCI_VERSION$ac_delim
 ORACLE_OCI_CFLAGS!$ORACLE_OCI_CFLAGS$ac_delim
 ORACLE_OCI_LDFLAGS!$ORACLE_OCI_LDFLAGS$ac_delim
@@ -29533,7 +29583,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 92; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 94; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -30770,6 +30820,9 @@ echo "  ECW support:               ${ECW_SETTING}"
 
 
 echo "  MrSID support:             ${HAVE_MRSID}"
+
+
+echo "  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}"
 
 
 echo "  MSG support:               ${HAVE_MSG}"
