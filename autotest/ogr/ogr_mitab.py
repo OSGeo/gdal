@@ -359,6 +359,26 @@ def ogr_mitab_10():
     return 'success'
 
 ###############################################################################
+# Verify that a newly created mif layer returns a non null layer definition
+
+def ogr_mitab_11():
+    
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    ds = gdaltest.mapinfo_drv.CreateDataSource( 'tmp', options = ['FORMAT=MIF'] )
+    lyr = ds.CreateLayer( 'testlyrdef' )
+    defn = lyr.GetLayerDefn()
+
+    if defn is None:
+        return 'fail'
+
+    ogrtest.quick_create_layer_def( lyr, [ ('AREA', ogr.OFTReal) ] )
+
+    ds.Destroy()    
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_mitab_cleanup():
@@ -383,6 +403,7 @@ gdaltest_list = [
     ogr_mitab_8,
     ogr_mitab_9,
     ogr_mitab_10,
+    ogr_mitab_11,
     ogr_mitab_cleanup ]
 
 if __name__ == '__main__':
