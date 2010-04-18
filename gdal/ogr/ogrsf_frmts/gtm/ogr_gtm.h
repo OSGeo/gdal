@@ -40,7 +40,7 @@ typedef enum
 {
     GTM_NONE,
     GTM_WPT,
-    GTM_TRACK,
+    GTM_TRACK
 } GTMGeometryType;
 
 #ifndef FILE_OFFSETS
