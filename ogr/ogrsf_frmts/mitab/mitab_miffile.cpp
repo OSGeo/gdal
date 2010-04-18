@@ -425,6 +425,16 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
             /* we leave it unknown indicating a mixture */;
     }
 
+    /* A newly created layer should have OGRFeatureDefn */
+    if (m_poDefn == NULL)
+    {
+        char *pszFeatureClassName = TABGetBasename(m_pszFname);
+        m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
+        CPLFree(pszFeatureClassName);
+        // Ref count defaults to 0... set it to 1
+        m_poDefn->Reference();
+    }
+
     return 0;
 }
 
