@@ -1,42 +1,43 @@
-<html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang=en>
 <head>
 <title>ESRI Shapefile</title>
 </head>
 
-<body bgcolor="#ffffff">
+<body>
 
 <h1>ESRI Shapefile</h1>
 
-All varieties of ESRI Shapefiles should be available for reading, and
-simple 3D files can be created.<p>
+<p>All varieties of ESRI Shapefiles should be available for reading, and
+simple 3D files can be created.</p>
 
-Normally the OGR Shapefile driver treats a whole directory of shapefiles
+<p>Normally the OGR Shapefile driver treats a whole directory of shapefiles
 as a dataset, and a single shapefile within that directory as a layer.  In
 this case the directory name should be used as the dataset name.  However,
 it is also possible to use one of the files (.shp, .shx or .dbf) in a
 shapefile set as the dataset name, and then it will be treated as a dataset
-with one layer.<p>
+with one layer.</p>
 
-Note that when reading a Shapefile of type SHPT_ARC, the corresponding layer
+<p>Note that when reading a Shapefile of type SHPT_ARC, the corresponding layer
 will be reported as of type wkbLineString, but depending on the number of
 parts of each geometry, the actual type of the geometry for each feature
 can be either OGRLineString or OGRMultiLineString.
 The same applies for SHPT_POLYGON shapefiles, reported as layers of type
 wkbPolygon, but depending on the number of parts of each geometry, the
-actual type can be either OGRPolygon or OGRMultiPolygon.<p>
+actual type can be either OGRPolygon or OGRMultiPolygon.</p>
 
-The new ESRI measure values are discarded if encountered.<p>
+<p>The new ESRI measure values are discarded if encountered.</p>
 
-If a .prj files in old Arc/Info style or new ESRI OGC WKT style is present,
-it will be read and used to associate a projection with features.<p>
+<p>If a .prj files in old Arc/Info style or new ESRI OGC WKT style is present,
+it will be read and used to associate a projection with features.</p>
 
-The read driver assumes that multipart polygons follow the specification, that
+<p>The read driver assumes that multipart polygons follow the specification, that
 is to say the vertices of outer rings should be oriented clockwise on the X/Y plane,
 and those of inner rings counterclockwise.
 If a Shapefile is broken w.r.t. that rule, it is possible to define the configuration option
 OGR_ORGANIZE_POLYGONS=DEFAULT to proceed to a full analysis based on topological
 relationships of the parts of the polygons so that the resulting polygons are correctly
-defined in the OGC Simple Feature convention. <p>
+defined in the OGC Simple Feature convention. </p>
 
 <h2>Spatial and Attribute Indexing</h2>
 
@@ -48,21 +49,19 @@ are used by UMN MapServer.  It does not support the ESRI spatial index
 files (.sbn / .sbx).  Spatial indexing can accelerate spatially filtered
 passes through large datasets to pick out a small area quite dramatically.</p>
 
-<p>To create a spatial index, issue a SQL command of the form
+<p>To create a spatial index, issue a SQL command of the form</p>
 <pre>CREATE SPATIAL INDEX ON tablename [DEPTH N]</pre>
-where optional DEPTH specifier can be used to control number of index tree levels
+<p>where optional DEPTH specifier can be used to control number of index tree levels
 generated. If DEPTH is omitted, tree depth is estimated on basis of number of features
 in a shapefile and its value ranges from 1 to 12.</p>
 
-<p>To delete a spatial index issue a command of the form
+<p>To delete a spatial index issue a command of the form</p>
 <pre>DROP SPATIAL INDEX ON tablename</pre>
-</p>
 
 
 <p>
-  Otherwise, the <a href="http://mapserver.org">MapServer</a> shptree utility can be used:
+  Otherwise, the <a href="http://mapserver.org">MapServer</a> shptree utility can be used:</p>
 <pre>shptree &lt;shpfile&gt; [&lt;depth&gt;] [&lt;index_format&gt;]</pre>
-</p>
 
 <p>
 More information is available about this utility at the
@@ -80,113 +79,115 @@ with any other shapefile applications.</p>
 
 <h2>Creation Issues</h2>
 
-The Shapefile driver treats a directory as a dataset, and each Shapefile
+<p>The Shapefile driver treats a directory as a dataset, and each Shapefile
 set (.shp, .shx, and .dbf) as a layer.  The dataset name will be treated
 as a directory name.  If the directory already exists it is used and 
 existing files in the directory are ignored.  If the directory does not
-exist it will be created.<p>
+exist it will be created.</p>
 
-As a special case attempts to create a new dataset with the extension .shp
-will result in a single file set being created instead of a directory.<p>
+<p>As a special case attempts to create a new dataset with the extension .shp
+will result in a single file set being created instead of a directory.</p>
 
-ESRI shapefiles can only store one kind of geometry per layer (shapefile). 
+<p>ESRI shapefiles can only store one kind of geometry per layer (shapefile). 
 On creation this is may be set based on the source file (if a uniform geometry
 type is known from the source driver), or it may be set directly by the
 user with the layer creation option SHPT (shown below).  If not set the
 layer creation will fail.  If geometries of incompatible types are written
-to the layer, the output will be terminated with an error.<p>
+to the layer, the output will be terminated with an error.</p>
 
-Note that this can make it very difficult to translate a mixed geometry layer
+<p>Note that this can make it very difficult to translate a mixed geometry layer
 from another format into Shapefile format using ogr2ogr, since ogr2ogr has
 no support for separating out geometries from a source layer. See 
-the <a href="http://trac.osgeo.org/gdal/wiki/FAQVector#HowdoItranslateamixedgeometryfiletoshapefileformat">FAQ</a> for a solution.<p>
+the <a href="http://trac.osgeo.org/gdal/wiki/FAQVector#HowdoItranslateamixedgeometryfiletoshapefileformat">FAQ</a> for a solution.</p>
 
-Shapefile feature attributes are stored in an associated .dbf file, and so
-attributes suffer a number of limitations:<P>
+<p>Shapefile feature attributes are stored in an associated .dbf file, and so
+attributes suffer a number of limitations:</p>
 
 <ul>
-<li> Attribute names can only be up to 10 characters long.  Longer names will
+<li><p> Attribute names can only be up to 10 characters long.  Longer names will
 be silently truncated.  This may result in non-unique column names, which 
-will definitely cause problems later. <p>
+will definitely cause problems later. </p></li>
 
-<li> Starting with version 1.7, the OGR Shapefile driver tries to generate
+<li><p> Starting with version 1.7, the OGR Shapefile driver tries to generate
 unique field names. Successive duplicate field names, including those created
 by truncation to 10 characters, will be truncated to 8 characters and appended
-with a serial number from 1 to 99. <br>For example:
-<ul><li>a &rarr; a, a &rarr; a_1, A &rarr; A_2;
-<li>abcdefghijk &rarr; abcdefghij, abcdefghijkl &rarr; abcdefgh_1</ul>
-<p>
+with a serial number from 1 to 99. </p><p>For example:</p>
+<ul><li>a &rarr; a, a &rarr; a_1, A &rarr; A_2;</li>
+<li>abcdefghijk &rarr; abcdefghij, abcdefghijkl &rarr; abcdefgh_1</li></ul>
+</li>
 
-<li> Only Integer, Real, String and Date (not DateTime, just year/month/day)
+<li><p> Only Integer, Real, String and Date (not DateTime, just year/month/day)
 field types are supported.  The various list, and binary field types cannot
-be created.<p>
+be created.</p></li>
 
-<li> The field width and precision are directly used to establish storage 
+<li><p> The field width and precision are directly used to establish storage 
 size in the .dbf file.  This means that strings longer than the field
 width, or numbers that don't fit into the indicated field format will suffer
-truncation.<p>
+truncation.</p></li>
 
-<li> Integer fields without an explicit width are treated as width 11.<p>
+<li><p> Integer fields without an explicit width are treated as width 11.</p></li>
 
-<li> Real (floating point) fields without an explicit width are treated as
-width 24 with 15 decimal places of precision.<p>
+<li><p> Real (floating point) fields without an explicit width are treated as
+width 24 with 15 decimal places of precision.</p></li>
 
-<li> String fields without an assigned width are treated as 80 characters.<p>
+<li><p> String fields without an assigned width are treated as 80 characters.</p></li>
 
 </ul>
 
-Also, .dbf files are required to have at least one field.  If none are created
+<p>Also, .dbf files are required to have at least one field.  If none are created
 by the application an "FID" field will be automatically created and populated
-with the record number.<p>
+with the record number.</p>
 
-The OGR shapefile driver supports rewriting existing shapes in a shapefile
+<p>The OGR shapefile driver supports rewriting existing shapes in a shapefile
 as well as deleting shapes.  Deleted shapes are marked for deletion in 
 the .dbf file, and then ignored by OGR.  To actually remove them permanently
-(resulting in renumbering of FIDs) invoke the SQL 'REPACK <tablename>' via
-the datasource ExecuteSQL() method.<p>
+(resulting in renumbering of FIDs) invoke the SQL 'REPACK &lt;tablename&gt;' via
+the datasource ExecuteSQL() method.</p>
 
 <h2>Size Issues</h2>
 
-Geometry: The Shapefile format explicitly uses 32bit offsets and so cannot
+<p>Geometry: The Shapefile format explicitly uses 32bit offsets and so cannot
 go over 8GB (it actually uses 32bit offsets to 16bit words).
-Hence, it is is not recommended to use a file size over 4GB.<p>
+Hence, it is is not recommended to use a file size over 4GB.</p>
 
-Attributes: The dbf format does not have any offsets in it, so it can be
-arbitrarily large.
+<p>Attributes: The dbf format does not have any offsets in it, so it can be
+arbitrarily large.</p>
 
 <h3>Dataset Creation Options</h3>
 
-None<p>
+<p>None</p>
 
 <h3>Layer Creation Options</h3>
 
-
+<ul>
+<li>
 <b>SHPT=type</b>: Override the type of shapefile created.  Can be one of
 NULL for a simple .dbf file with no .shp file, 
  POINT, ARC, POLYGON or MULTIPOINT for 2D, or 
 POINTZ, ARCZ, POLYGONZ or MULTIPOINTZ for 3D.  Shapefiles with <i>measure</i>
-values are not supported, nor are MULTIPATCH files.<p>
+values are not supported, nor are MULTIPATCH files.</li>
+</ul>
 
 <h3>Examples</h3>
 
-A merge of two shapefiles 'file1.shp' and 'file2.shp' into a new file
-'file_merged.shp' is performed like this:
+<p>A merge of two shapefiles 'file1.shp' and 'file2.shp' into a new file
+'file_merged.shp' is performed like this:</p>
 
 <pre>
 % ogr2ogr file_merged.shp file1.shp
 % ogr2ogr -update -append file_merged.shp file2.shp -nln file_merged
 </pre>
 
-The second command is opening file_merged.shp in update mode, and trying to
-find existing layers and append the features being copied.
-<br>
-The -nln option sets the name of the layer to be copied to.
+<p>The second command is opening file_merged.shp in update mode, and trying to
+find existing layers and append the features being copied.</p>
+
+<p>The -nln option sets the name of the layer to be copied to.</p>
 
 
 <h3>See Also</h3>
 
 <ul>
-<li> <a href="http://shapelib.maptools.org/">Shapelib Page</a><p>
+<li> <a href="http://shapelib.maptools.org/">Shapelib Page</a></li>
 </ul>
 
 </body>
