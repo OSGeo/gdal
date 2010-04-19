@@ -568,10 +568,10 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         poSRS->morphToESRI();
 
         if( poSRS->exportToWkt( &pszWKT ) == OGRERR_NONE 
-            && (fp = VSIFOpen( osPrjFile, "wt" )) != NULL )
+            && (fp = VSIFOpenL( osPrjFile, "wt" )) != NULL )
         {
-            VSIFWrite( pszWKT, strlen(pszWKT), 1, fp );
-            VSIFClose( fp );
+            VSIFWriteL( pszWKT, strlen(pszWKT), 1, fp );
+            VSIFCloseL( fp );
         }
 
         CPLFree( pszWKT );
