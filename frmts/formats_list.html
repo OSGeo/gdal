@@ -1,13 +1,14 @@
-<html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang=en>
 <head>
 <title>GDAL Raster Formats</title>
 </head>
 
-<body bgcolor="#ffffff">
+<body>
 
 <h1>GDAL Raster Formats</h1>
 
-<table border>
+<table border="1">
 
 <tr>
 <th>Long Format Name</th>
@@ -15,7 +16,7 @@
 <th>Creation</th>
 <th>Georeferencing</th>
 <th>Maximum file size<sup><a href="#footnote1">1</a></sup></th>
-<th>Compiled by<br>default</th>
+<th>Compiled by<br/>default</th>
 </tr>
 
 <tr><td> <a href="frmt_various.html#AAIGrid">Arc/Info ASCII Grid</a>
@@ -658,16 +659,6 @@
 </td><td> Yes
 </td></tr>
 
-<!-- Sorry PGCHIP, it was nice to meet you but WKTRaster has hopefully a better future...
-<tr><td>  <a href="http://simon.benjamin.free.fr/pgchip">Postgis CHIP raster (under development)</a>
-</td><td> PGCHIP
-</td><td> Yes
-</td><td> Yes
-</td><td> --
-</td><td> No, needs PostgreSQL library and Postgis headers
-</td></tr>
--->
-
 <tr><td> <a href="frmt_various.html#PNG">Portable Network Graphics (.png)</a>
 </td><td> PNG
 </td><td> Yes
@@ -880,14 +871,14 @@
 </table>
 
 <p>
-<a name="#footnote1"><sup>1</sup>Maximum file size does not only determined by
+<a name="footnote1"><sup>1</sup></a>Maximum file size does not only determined by
 	the file format itself, but operating system/file system capabilities
 	as well. Look <a href="gdal_building.html#gdal_building_lfs">here</a>
-	for details.</a>
+	for details.
 </p>
 
 <p>
-<a name="#footnote2"><sup>2</sup>ERDAS Imagine has different file format for
+<a name="footnote2"><sup>2</sup></a>ERDAS Imagine has different file format for
 	large files, where 32-bit pointers cannot be used. Look for details
 	<a href="frmt_hfa.html">here</a>.
 </p>

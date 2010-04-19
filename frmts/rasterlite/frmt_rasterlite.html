@@ -17,7 +17,7 @@
   The driver supports reading grayscale, paletted and RGB images stored as GIF, PNG, TIFF or JPEG tiles.
   The driver also supports reading overviews/pyramids, spatial reference system and spatial extent.
 </p>
-  Wavelet compressed tiles are not supported by default by GDAL, unless the <a href="frmt_epsilon.html">EPSILON</a> driver is compiled.
+<p>Wavelet compressed tiles are not supported by default by GDAL, unless the <a href="frmt_epsilon.html">EPSILON</a> driver is compiled.
 </p>
 
 <p>GDAL/OGR must be compiled with OGR SQLite driver support. For read support, linking against spatialite library is not required, but
@@ -33,9 +33,9 @@ recent enough sqlite3 library is needed to read rasterlite databases. rasterlite
 
 <h2>Connexion string syntax in read mode </h2>
 
-Syntax: 'rasterlitedb_name' or 'RASTERLITE:rasterlitedb_name[,table=raster_table_prefix][,minx=minx_val,miny=miny_val,maxx=maxx_val,maxy=maxy_val][,level=level_number]<p>
+<p>Syntax: 'rasterlitedb_name' or 'RASTERLITE:rasterlitedb_name[,table=raster_table_prefix][,minx=minx_val,miny=miny_val,maxx=maxx_val,maxy=maxy_val][,level=level_number]</p>
 
-where :
+<p>where :</p>
 <ul>
 <li><i>rasterlitedb_name</i> is the filename of the rasterlite DB.</li>
 <li><i>raster_table_prefix</i> is the prefix of the raster table to open. For each raster, there are 2 correspondings SQLite tables, suffixed with _rasters and _metadata</li>
@@ -53,21 +53,21 @@ where :
 
 <p>Syntax for the name of the output dataset: 'RASTERLITE:rasterlitedb_name,table=raster_table_prefix' or 'rasterlitedb_name' </p>
 
-It is possible to specify only the DB name as in the later form, but only if the database does not already exists. In that case, the raster table name will be base on the DB name itself.
+<p>It is possible to specify only the DB name as in the later form, but only if the database does not already exists. In that case, the raster table name will be base on the DB name itself.</p>
 
 <h3>Creation options</h3>
 
 <ul>
-<li><b>WIPE</b> (=NO by default): Set to YES to erase all prexisting data in the specified table</li><p>
-<li><b>TILED</b> (=YES by default) : Set to NO if the source dataset must be written as a single tile in the raster table</li><p>
-<li><b>BLOCKXSIZE</b>=n: Sets tile width, defaults to 256.</li><p>
-<li><b>BLOCKYSIZE</b>=n: Sets tile height, defaults to 256.</li><p>
-<li><b>DRIVER</b>=[GTiff/GIF/PNG/JPEG/EPSILON/...] : name of the GDAL driver to use for storing tiles. Defaults to GTiff</li><p>
-<li><b>COMPRESS</b>=[LZW/JPEG/DEFLATE/...] : (GTiff driver) name of the compression method</li><p>
-<li><b>PHOTOMETRIC</b>=[RGB/YCbCr/...] : (GTiff driver) photometric interpretation</li><p>
-<li><b>QUALITY</b> : (GTiff / JPEG drivers) JPEG quality 1-100. Defaults to 75</li><p>
-<li><b>TARGET</b> : (EPSILON driver) target size reduction as a percentage of the original (0-100). Defaults to 96.</li><p>
-<li><b>FILTER</b> : (EPSILON driver) Filter ID. Defaults to 'daub97lift'.</li><p>
+<li><p><b>WIPE</b> (=NO by default): Set to YES to erase all prexisting data in the specified table</p></li>
+<li><p><b>TILED</b> (=YES by default) : Set to NO if the source dataset must be written as a single tile in the raster table</p></li>
+<li><p><b>BLOCKXSIZE</b>=n: Sets tile width, defaults to 256.</p></li>
+<li><p><b>BLOCKYSIZE</b>=n: Sets tile height, defaults to 256.</p></li>
+<li><p><b>DRIVER</b>=[GTiff/GIF/PNG/JPEG/EPSILON/...] : name of the GDAL driver to use for storing tiles. Defaults to GTiff</p></li>
+<li><p><b>COMPRESS</b>=[LZW/JPEG/DEFLATE/...] : (GTiff driver) name of the compression method</p></li>
+<li><p><b>PHOTOMETRIC</b>=[RGB/YCbCr/...] : (GTiff driver) photometric interpretation</p></li>
+<li><p><b>QUALITY</b> : (GTiff / JPEG drivers) JPEG quality 1-100. Defaults to 75</p></li>
+<li><p><b>TARGET</b> : (EPSILON driver) target size reduction as a percentage of the original (0-100). Defaults to 96.</p></li>
+<li><p><b>FILTER</b> : (EPSILON driver) Filter ID. Defaults to 'daub97lift'.</p></li>
 </ul>
 
 <h2>Overviews</h2>
