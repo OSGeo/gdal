@@ -76,9 +76,14 @@ class GTXDataset : public RawDataset
     	        ~GTXDataset();
     
     virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual CPLErr SetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef();
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszOptions );
 };
 
 /************************************************************************/
@@ -110,22 +115,31 @@ GTXDataset::~GTXDataset()
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int GTXDataset::Identify( GDALOpenInfo *poOpenInfo )
+
+{
+    if( poOpenInfo->nHeaderBytes < 40 )
+        return FALSE;
+
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"gtx") )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*      We assume the user is pointing to the header (.pcb) file.       */
-/*      Does this appear to be a pcb file?                              */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 40 || poOpenInfo->fp == NULL )
+    if( !Identify( poOpenInfo ) )
         return NULL;
-
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"gtx") )
-        return NULL;
-
+        
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
@@ -221,10 +235,55 @@ CPLErr GTXDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GTXDataset::SetGeoTransform( double * padfTransform )
+
+{
+    if( padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to write skewed or rotated geotransform to gtx." );
+        return CE_Failure;
+    }
+
+    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+
+    unsigned char header[32];
+    double dfXOrigin, dfYOrigin, dfWidth, dfHeight;
+
+    dfXOrigin = adfGeoTransform[0] + 0.5 * adfGeoTransform[1];
+    dfYOrigin = adfGeoTransform[3] + (nRasterYSize-0.5) * adfGeoTransform[5];
+    dfWidth = adfGeoTransform[1];
+    dfHeight = - adfGeoTransform[5];
+    
+
+    memcpy( header + 0, &dfYOrigin, 8 );
+    CPL_MSBPTR64( header + 0 );
+
+    memcpy( header + 8, &dfXOrigin, 8 );
+    CPL_MSBPTR64( header + 8 );
+
+    memcpy( header + 16, &dfHeight, 8 );
+    CPL_MSBPTR64( header + 16 );
+
+    memcpy( header + 24, &dfWidth, 8 );
+    CPL_MSBPTR64( header + 24 );
+
+    if( VSIFSeekL( fpImage, SEEK_SET, 0 ) != 0 
+        || VSIFWriteL( header, 32, 1, fpImage ) != 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to write geotrasform header to gtx failed." );
+        return CE_Failure;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                          GetProjectionRef()                          */
-/*                                                                      */
-/*      Use PAM coordinate system if available in preference to the     */
-/*      generally poor value derived from the file itself.              */
 /************************************************************************/
 
 const char *GTXDataset::GetProjectionRef()
@@ -232,6 +291,77 @@ const char *GTXDataset::GetProjectionRef()
 {
     return SRS_WKT_WGS84;
 }
+
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *GTXDataset::Create( const char * pszFilename,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType,
+                                 char ** papszOptions )
+
+{
+    if( eType != GDT_Float32 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create gtx file with unsupported data type '%s'.",
+                  GDALGetDataTypeName( eType ) );
+        return NULL;
+    }
+
+    if( !EQUAL(CPLGetExtension(pszFilename),"gtx") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create gtx file with extension other than gtx." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to create the file.                                         */
+/* -------------------------------------------------------------------- */
+    FILE	*fp;
+
+    fp = VSIFOpenL( pszFilename, "wb" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create file `%s' failed.\n",
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out the header with stub georeferencing.                  */
+/* -------------------------------------------------------------------- */
+    unsigned char header[40];
+    double dfXOrigin=0, dfYOrigin=0, dfXSize=0.01, dfYSize=0.01;
+    GInt32 nXSize32 = nXSize, nYSize32 = nYSize;
+
+    memcpy( header + 0, &dfYOrigin, 8 );
+    CPL_MSBPTR64( header + 0 );
+
+    memcpy( header + 8, &dfXOrigin, 8 );
+    CPL_MSBPTR64( header + 8 );
+
+    memcpy( header + 16, &dfYSize, 8 );
+    CPL_MSBPTR64( header + 16 );
+
+    memcpy( header + 24, &dfXSize, 8 );
+    CPL_MSBPTR64( header + 24 );
+
+    memcpy( header + 32, &nYSize32, 4 );
+    CPL_MSBPTR32( header + 32 );
+    memcpy( header + 36, &nXSize32, 4 );
+    CPL_MSBPTR32( header + 36 );
+
+    VSIFWriteL( header, 40, 1, fp );
+    VSIFCloseL( fp );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}
+
 
 /************************************************************************/
 /*                          GDALRegister_GTX()                          */
@@ -254,7 +384,12 @@ void GDALRegister_GTX()
 //        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
 //                                   "frmt_various.html#GTX" );
         
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Float32" );
+
         poDriver->pfnOpen = GTXDataset::Open;
+        poDriver->pfnIdentify = GTXDataset::Identify;
+        poDriver->pfnCreate = GTXDataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
