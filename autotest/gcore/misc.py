@@ -133,7 +133,28 @@ def misc_5_internal(drv, datatype, nBands):
             return
 
     filename = '%s/foo' % dirname
+    if drv.ShortName == 'GTX':
+        filename = filename + '.gtx'
+    elif drv.ShortName == 'RST':
+        filename = filename + '.rst'
+    elif drv.ShortName == 'SAGA':
+        filename = filename + '.sdat'
+    elif drv.ShortName == 'ADRG':
+        filename = '%s/ABCDEF01.GEN' % dirname
     ds = drv.Create(filename, 100, 100, nBands, datatype)
+    if ds is not None:
+        ds.SetGeoTransform([2,1.0/10,0,49,0,-1.0/10])
+        ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]]')
+        #if ds.RasterCount > 0:
+        #    ds.GetRasterBand(1).Fill(255)
+    ds = None
+    ds = gdal.Open(filename)
+    if ds is None:
+        reason = 'Cannot reopen %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+        gdaltest.post_reason(reason)
+    #else:
+    #    if ds.RasterCount > 0:
+    #        print ds.GetRasterBand(1).Checksum()
     ds = None
 
     try:
@@ -173,18 +194,18 @@ def misc_5():
             for nBands in range(6):
                 misc_5_internal(drv, datatype, nBands)
 
-            nBands = 1
-            for datatype in (gdal.GDT_UInt16,
-                             gdal.GDT_Int16,
-                             gdal.GDT_UInt32,
-                             gdal.GDT_Int32,
-                             gdal.GDT_Float32,
-                             gdal.GDT_Float64,
-                             gdal.GDT_CInt16,
-                             gdal.GDT_CInt32,
-                             gdal.GDT_CFloat32,
-                             gdal.GDT_CFloat64):
-                misc_5_internal(drv, datatype, nBands)
+            for nBands in [1,3]:
+                for datatype in (gdal.GDT_UInt16,
+                                gdal.GDT_Int16,
+                                gdal.GDT_UInt32,
+                                gdal.GDT_Int32,
+                                gdal.GDT_Float32,
+                                gdal.GDT_Float64,
+                                gdal.GDT_CInt16,
+                                gdal.GDT_CInt32,
+                                gdal.GDT_CFloat32,
+                                gdal.GDT_CFloat64):
+                    misc_5_internal(drv, datatype, nBands)
 
     gdal.PopErrorHandler()
 
