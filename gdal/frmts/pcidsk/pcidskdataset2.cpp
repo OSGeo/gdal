@@ -1329,6 +1329,15 @@ GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL( eChanType eType )
       case CHN_BIT:
         return GDT_Byte;
         
+      case CHN_C16U:
+        return GDT_CInt16;
+      
+      case CHN_C16S:
+        return GDT_CInt16;
+      
+      case CHN_C32R:
+        return GDT_CFloat32;
+        
       default:
         return GDT_Unknown;
     }
@@ -1474,13 +1483,17 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
     std::vector<eChanType> aeChanTypes;
 
     if( eType == GDT_Float32 )
-        aeChanTypes.resize( MAX(1,nBands), CHN_32R ); 
+        aeChanTypes.resize( MAX(1,nBands), CHN_32R );
     else if( eType == GDT_Int16 )
-        aeChanTypes.resize( MAX(1,nBands), CHN_16S ); 
+        aeChanTypes.resize( MAX(1,nBands), CHN_16S );
     else if( eType == GDT_UInt16 )
-        aeChanTypes.resize( MAX(1,nBands), CHN_16U ); 
+        aeChanTypes.resize( MAX(1,nBands), CHN_16U );
+    else if( eType == GDT_CInt16 )
+        aeChanTypes.resize( MAX(1, nBands), CHN_C16S );
+    else if( eType == GDT_CFloat32 )
+        aeChanTypes.resize( MAX(1, nBands), CHN_C32R );
     else 
-        aeChanTypes.resize( MAX(1,nBands), CHN_8U ); 
+        aeChanTypes.resize( MAX(1,nBands), CHN_8U );
 
 /* -------------------------------------------------------------------- */
 /*      Reformat options.  Currently no support for jpeg compression    */
@@ -1559,7 +1572,7 @@ void GDALRegister_PCIDSK()
                                    "frmt_pcidsk.html" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pix" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16 Int16 Float32" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16 Int16 Float32 CInt16 CFloat32" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='INTERLEAVING' type='string-select' default='BAND' description='raster data organization'>"
