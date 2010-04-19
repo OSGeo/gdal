@@ -1506,6 +1506,40 @@ def ogr_shape_34():
     return 'success'
 
 ###############################################################################
+# Check that we can read & write a VSI*L dataset
+
+def ogr_shape_35():
+    
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource( '/vsimem/test35.shp' )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4326 )
+    lyr = ds.CreateLayer( 'test35', srs = srs )
+    feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    geom_wkt = 'POINT(0 1)'
+    geom = ogr.CreateGeometryFromWkt( geom_wkt )
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+    ds.Destroy()
+
+    ds = ogr.Open('/vsimem/test35.shp')
+    lyr = ds.GetLayer(0)
+    srs_read = lyr.GetSpatialRef()
+    if srs_read.ExportToWkt().find('GCS_WGS_1984') == -1:
+        gdaltest.post_reason('did not get expected SRS')
+        print(srs_read)
+        return 'fail'
+    feat_read = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('POINT(0 1)'),
+                                max_error = 0.000000001 ) != 0:
+        print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1520,6 +1554,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( 'tmp' )
     shape_drv.DeleteDataSource( 'tmp/UPPERCASE' )
     shape_drv.DeleteDataSource( 'tmp/lowercase' )
+    shape_drv.DeleteDataSource( '/vsimem/test35.shp' )
     
     return 'success'
 
@@ -1559,6 +1594,7 @@ gdaltest_list = [
     ogr_shape_32,
     ogr_shape_33,
     ogr_shape_34,
+    ogr_shape_35,
     ogr_shape_cleanup ]
  
 if __name__ == '__main__':
