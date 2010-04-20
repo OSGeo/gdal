@@ -122,7 +122,7 @@ class OGRInfo {
 		/* -------------------------------------------------------------------- */
 		/*      Reading the spatial reference                                   */
 		/* -------------------------------------------------------------------- */
-		SpatialReference sr = layer.GetSpatialRef();
+        OSGeo.OSR.SpatialReference sr = layer.GetSpatialRef();
 		string srs_wkt;
 		if ( sr != null ) 
 		{
