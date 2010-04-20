@@ -259,7 +259,7 @@ OPTIONAL_POD(int, int);
   char* temp_string;
   temp_string = SWIG_csharp_string_callback(*$1);
   if (*$1)
-		free(*$1);
+		CPLFree(*$1);
   *$1 = temp_string;
 }
 %typemap(argout) (char **staticstring), (char **username), (char **usrname), (char **type)
