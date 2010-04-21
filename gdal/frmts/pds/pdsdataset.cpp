@@ -705,6 +705,24 @@ int PDSDataset::ParseUncompressedImage()
 
     nSkipBytes += atoi(GetKeyword("IMAGE.LINE_PREFIX_BYTES",""));
     
+    /***********   Grab SAMPLE_TYPE *****************/
+    /** if keyword not found leave as "M" or "MSB" **/
+    CPLString osST = GetKeyword( "IMAGE.SAMPLE_TYPE" );
+    if( osST.size() >= 2 && osST[0] == '"' && osST[osST.size()-1] == '"' )
+        osST = osST.substr( 1, osST.size() - 2 );
+
+    if( (EQUAL(osST,"LSB_INTEGER")) || 
+        (EQUAL(osST,"LSB")) || // just incase
+        (EQUAL(osST,"LSB_UNSIGNED_INTEGER")) || 
+        (EQUAL(osST,"LSB_SIGNED_INTEGER")) || 
+        (EQUAL(osST,"UNSIGNED_INTEGER")) || 
+        (EQUAL(osST,"VAX_REAL")) || 
+        (EQUAL(osST,"VAX_INTEGER")) || 
+        (EQUAL(osST,"PC_INTEGER")) ||  //just incase 
+        (EQUAL(osST,"PC_REAL")) ) {
+        chByteOrder = 'I';
+    }
+
     /**** Grab format type - pds supports 1,2,4,8,16,32,64 (in theory) **/
     /**** I have only seen 8, 16, 32 (float) in released datasets      **/
     itype = atoi(GetKeyword("IMAGE.SAMPLE_BITS",""));
@@ -715,7 +733,10 @@ int PDSDataset::ParseUncompressedImage()
         bNoDataSet = TRUE;
         break;
       case 16 :
-        eDataType = GDT_Int16;
+        if( strstr(osST,"UNSIGNED") != NULL )
+            eDataType = GDT_UInt16;
+        else
+            eDataType = GDT_Int16;
         dfNoData = NULL2;
         bNoDataSet = TRUE;
         break;
@@ -736,21 +757,6 @@ int PDSDataset::ParseUncompressedImage()
         return FALSE;
     }
 
-    /***********   Grab SAMPLE_TYPE *****************/
-    /** if keyword not found leave as "M" or "MSB" **/
-    value = GetKeyword( "IMAGE.SAMPLE_TYPE" );
-    if( (EQUAL(value,"LSB_INTEGER")) || 
-        (EQUAL(value,"LSB")) || // just incase
-        (EQUAL(value,"LSB_UNSIGNED_INTEGER")) || 
-        (EQUAL(value,"LSB_SIGNED_INTEGER")) || 
-        (EQUAL(value,"UNSIGNED_INTEGER")) || 
-        (EQUAL(value,"VAX_REAL")) || 
-        (EQUAL(value,"VAX_INTEGER")) || 
-        (EQUAL(value,"PC_INTEGER")) ||  //just incase 
-        (EQUAL(value,"PC_REAL")) ) {
-        chByteOrder = 'I';
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
 /*      this never having been considered to be a match. This isn't     */
@@ -799,16 +805,22 @@ int PDSDataset::ParseUncompressedImage()
     {
         nPixelOffset = nItemSize * nBands;
         nBandOffset = nItemSize;
+        nLineOffset = ((nPixelOffset * nCols + record_bytes - 1)/record_bytes)
+            * record_bytes;
     }
     else if( EQUAL(szLayout,"BSQ") )
     {
         nPixelOffset = nItemSize;
         nBandOffset = nLineOffset * nRows;
+        nLineOffset = ((nPixelOffset * nCols + record_bytes - 1)/record_bytes)
+            * record_bytes;
     }
     else /* assume BIL */
     {
         nPixelOffset = nItemSize;
         nBandOffset = nItemSize * nCols;
+        nLineOffset = ((nBandOffset * nCols + record_bytes - 1)/record_bytes)
+            * record_bytes;
     }
     
 /* -------------------------------------------------------------------- */
