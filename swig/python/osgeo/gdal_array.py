@@ -74,9 +74,7 @@ def GetArrayFilename(*args):
 def BandRasterIONumPy(*args, **kwargs):
   """
     BandRasterIONumPy(Band band, int bWrite, int xoff, int yoff, int xsize, 
-        int ysize, PyArrayObject psArray, int buf_xsize = None, 
-        int buf_ysize = None, int buf_type = None, 
-        int buf_pixel_space = None, int buf_line_space = None) -> CPLErr
+        int ysize, PyArrayObject psArray, int buf_type) -> CPLErr
     """
   return _gdal_array.BandRasterIONumPy(*args, **kwargs)
 import numpy
@@ -204,39 +202,42 @@ def BandReadAsArray( band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = Non
             buf_ysize = win_ysize
     else:
         if len(buf_obj.shape) == 2:
-            if buf_xsize is None:
-                buf_xsize = buf_obj.shape[1]
-            if buf_ysize is None:
-                buf_ysize = buf_obj.shape[0]
+            shape_buf_xsize = buf_obj.shape[1]
+            shape_buf_ysize = buf_obj.shape[0]
         else:
-            if buf_xsize is None:
-                buf_xsize = buf_obj.shape[2]
-            if buf_ysize is None:
-                buf_ysize = buf_obj.shape[1]
-                
-    datatype = band.DataType
-    typecode = GDALTypeCodeToNumericTypeCode( datatype )
-    if typecode == None:
-        datatype = gdalconst.GDT_Float32
-        typecode = numpy.float32
-    else:
-        datatype = NumericTypeCodeToGDALTypeCode( typecode )
+            shape_buf_xsize = buf_obj.shape[2]
+            shape_buf_ysize = buf_obj.shape[1]
+        if buf_xsize is not None and buf_xsize != shape_buf_xsize:
+            raise ValueError('Specified buf_xsize not consistant with array shape')
+        if buf_ysize is not None and buf_ysize != shape_buf_ysize:
+            raise ValueError('Specified buf_ysize not consistant with array shape')
+        buf_xsize = shape_buf_xsize
+        buf_ysize = shape_buf_ysize
 
     if buf_obj is None:
+        datatype = band.DataType
+        typecode = GDALTypeCodeToNumericTypeCode( datatype )
+        if typecode == None:
+            datatype = gdalconst.GDT_Float32
+            typecode = numpy.float32
+        else:
+            datatype = NumericTypeCodeToGDALTypeCode( typecode )
+
         if datatype == gdalconst.GDT_Byte and band.GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
             typecode = numpy.int8
         ar = numpy.empty([buf_ysize,buf_xsize], dtype = typecode)
         if BandRasterIONumPy( band, 0, xoff, yoff, win_xsize, win_ysize,
-                                ar, buf_xsize, buf_ysize, datatype ) != 0:
+                                ar, datatype ) != 0:
             return None
 
         return ar
     else:
-            
         datatype = NumericTypeCodeToGDALTypeCode( buf_obj.dtype.type )
-            
+        if not datatype:
+            raise ValueError("array does not have corresponding GDAL data type")
+
         if BandRasterIONumPy( band, 0, xoff, yoff, win_xsize, win_ysize,
-                                buf_obj, buf_xsize, buf_ysize, datatype ) != 0:
+                                buf_obj, datatype ) != 0:
             return None
 
         return buf_obj
@@ -267,7 +268,7 @@ def BandWriteArray( band, array, xoff=0, yoff=0 ):
         raise ValueError("array does not have corresponding GDAL data type")
 
     return BandRasterIONumPy( band, 1, xoff, yoff, xsize, ysize,
-                                array, xsize, ysize, datatype )
+                                array, datatype )
 
     
 def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
