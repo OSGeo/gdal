@@ -977,9 +977,7 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
         // I should really check whether this is an expected issue.
     }
         
-    if( poGeoref == NULL )
-        return GDALPamDataset::GetGeoTransform( padfTransform );
-    else
+    if( poGeoref != NULL )
     {
         try
         {
@@ -997,8 +995,24 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
             return CE_Failure;
         }
 
-        return CE_None;
+        // If we got anything non-default return it.
+        if( padfTransform[0] != 0.0
+            || padfTransform[1] != 1.0
+            || padfTransform[2] != 0.0
+            || padfTransform[3] != 0.0
+            || padfTransform[4] != 0.0
+            || padfTransform[5] != 1.0 )
+            return CE_None;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check for worldfile if we have no other georeferencing.         */
+/* -------------------------------------------------------------------- */
+    if( GDALReadWorldFile( GetDescription(), "pxw", 
+                           padfTransform ) )
+        return CE_None;
+    else
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
