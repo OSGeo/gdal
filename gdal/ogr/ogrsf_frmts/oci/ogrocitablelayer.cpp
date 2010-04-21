@@ -156,6 +156,20 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
     poDefn->Reference();
 
 /* -------------------------------------------------------------------- */
+/*      Split out the owner if available.                               */
+/* -------------------------------------------------------------------- */
+    const char *pszTableName = pszTable;
+    char *pszOwner = NULL;
+
+    if( strstr(pszTableName,".") != NULL )
+    {
+        pszOwner = CPLStrdup(pszTableName);
+        pszTableName = strstr(pszTableName,".") + 1;
+
+        *(strstr(pszOwner,".")) = '\0';
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do a DescribeAll on the table.                                  */
 /* -------------------------------------------------------------------- */
     OCIParam *hAttrParam = NULL;
@@ -238,6 +252,38 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         }
 
         poDefn->AddFieldDefn( &oField );
+    }
+
+    /* -------------------------------------------------------------------- */ 
+    /*      Identify Geometry dimension                                     */ 
+    /* -------------------------------------------------------------------- */ 
+         
+    OGROCIStringBuf oDimCmd;
+    OGROCIStatement oDimStatement( poSession );
+    char **papszResult;
+    int iDim = -1;
+
+    oDimCmd.Append( "SELECT a." );
+    oDimCmd.Append( pszGeomName  );
+    oDimCmd.Append( ".GET_DIMS() DIM FROM " );
+    oDimCmd.Append( pszTableName );
+    oDimCmd.Append( " a WHERE ROWNUM = 1" );
+
+    oDimStatement.Execute( oDimCmd.GetString() );
+
+    papszResult = oDimStatement.SimpleFetchRow();
+
+    if( CSLCount(papszResult) < 1 )
+    {
+        CPLDebug( "OCI", "get dim based of existing data failed." );
+    }
+    else
+    {
+        iDim = atoi(papszResult[0]);
+        if( iDim > 0 )
+        {
+            SetDimension( iDim );
+        }
     }
 
     bValidTable = TRUE;
