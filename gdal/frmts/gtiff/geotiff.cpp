@@ -2962,10 +2962,18 @@ void GTiffDataset::FlushDirectory()
     // case we should not risk a flush. 
     if( TIFFCurrentDirOffset(hTIFF) == nDirOffset )
     {
+        TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
+
+        toff_t nNewDirOffset = pfnSizeProc( TIFFClientdata( hTIFF ) );
+        if( (nNewDirOffset % 2) == 1 )
+            nNewDirOffset++;
+
         TIFFFlush( hTIFF );
         if( nDirOffset != TIFFCurrentDirOffset( hTIFF ) )
         {
-            CPLDebug( "GTiff", "directory moved during flush, unhandled!" );
+            nDirOffset = nNewDirOffset;
+            CPLDebug( "GTiff", 
+                      "directory moved during flush in FlushDirectory()" );
         }
     }
 }
