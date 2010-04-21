@@ -361,6 +361,95 @@ def numpy_rw_11():
 
     return 'success'
 
+###############################################################################
+# Test array with slices (#3542)
+
+def numpy_rw_12():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+
+    ar = numpy.empty([2, 2], dtype = numpy.uint8)
+    ar[0][0] = 0
+    ar[0][1] = 1
+    ar[1][0] = 2
+    ar[1][1] = 3
+
+    drv = gdal.GetDriverByName( 'MEM' )
+    ds = drv.Create( '', 1, 2, 1, gdal.GDT_Byte )
+    slice = ar[:,1:]
+
+    ds.GetRasterBand(1).WriteArray( slice )
+
+    ar_read = numpy.zeros_like(ar)
+    slice_read = ar_read[:,1:]
+    ds.GetRasterBand(1).ReadAsArray( buf_obj = slice_read )
+    ds = None
+
+    if slice_read[0][0] != 1 or slice_read[1][0] != 3:
+        print(slice_read)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test expected errors
+
+def numpy_rw_13():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+
+    drv = gdal.GetDriverByName( 'MEM' )
+    ds = drv.Create( '', 2, 1, 1, gdal.GDT_Byte )
+    ar = numpy.empty([1, 2], dtype = numpy.uint8)
+    ar[0][0] = 100
+    ar[0][1] = 200
+    ds.GetRasterBand(1).WriteArray( ar )
+
+    # Try reading into unsupported array type
+    ar = numpy.empty([1, 2], dtype = numpy.int64)
+    try:
+        ds.GetRasterBand(1).ReadAsArray( buf_obj = ar )
+        gdaltest.post_reason('expected "ValueError: array does not have corresponding GDAL data type"')
+        return 'fail'
+    except:
+        pass
+
+    # Try call with inconsistant parameters
+    ar = numpy.empty([1, 2], dtype = numpy.uint8)
+    try:
+        ds.GetRasterBand(1).ReadAsArray( buf_obj = ar, buf_xsize = 2, buf_ysize = 2 )
+        gdaltest.post_reason('expected "Specified buf_ysize not consistant with buffer shape"')
+        return 'fail'
+    except:
+        pass
+
+    # Try call with inconsistant parameters
+    ar = numpy.empty([1, 2], dtype = numpy.uint8)
+    try:
+        ds.GetRasterBand(1).ReadAsArray( buf_obj = ar, buf_xsize = 1, buf_ysize = 1 )
+        gdaltest.post_reason('expected "Specified buf_xsize not consistant with buffer shape"')
+        return 'fail'
+    except:
+        pass
+
+    # This one should be OK !
+    ar = numpy.zeros([1, 2], dtype = numpy.uint8)
+    ds.GetRasterBand(1).ReadAsArray( buf_obj = ar, buf_xsize = 2, buf_ysize = 1 )
+    if ar[0][0] != 100 or ar[0][1] != 200:
+        gdaltest.post_reason('did not get expected values')
+        print(ar)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
@@ -378,6 +467,8 @@ gdaltest_list = [
     numpy_rw_9,
     numpy_rw_10,
     numpy_rw_11,
+    numpy_rw_12,
+    numpy_rw_13,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':
