@@ -343,9 +343,12 @@ int OGRGeoJSONDataSource::ReadFromFile( const char* pszSource )
     nDataLen = VSIFTellL( fp );
     VSIFSeekL( fp, 0, SEEK_SET );
 
-    pszGeoData_ = (char*)CPLMalloc(nDataLen + 1);
+    pszGeoData_ = (char*)VSIMalloc(nDataLen + 1);
     if( NULL == pszGeoData_ )
+    {
+        VSIFCloseL(fp);
         return FALSE;
+    }
 
     pszGeoData_[nDataLen] = '\0';
     if( ( nDataLen != VSIFReadL( pszGeoData_, 1, nDataLen, fp ) ) )
@@ -423,8 +426,12 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 
     // TODO: Eventually, CPLHTTPResult::pabyData could be assigned
     //       to pszGeoData_, so we will avoid copying of potentially (?) big data.
-    pszGeoData_ = (char*)CPLMalloc( sizeof(char) * pResult->nDataLen + 1 );
-    CPLAssert( NULL != pszGeoData_ );
+    pszGeoData_ = (char*)VSIMalloc( sizeof(char) * pResult->nDataLen + 1 );
+    if( NULL == pszGeoData_ )
+    {
+        CPLHTTPDestroyResult( pResult );
+        return FALSE;
+    }
 
     strncpy( pszGeoData_, pszData, pResult->nDataLen );
     pszGeoData_[pResult->nDataLen] = '\0';
