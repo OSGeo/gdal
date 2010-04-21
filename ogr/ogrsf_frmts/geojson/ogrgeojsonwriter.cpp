@@ -200,7 +200,7 @@ json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint )
     }
     else
     {
-        CPLAssert( !"SHOULD NEVER GET HERE" );
+        /* We can get here with POINT EMPTY geometries */
     }
 
     return poObj;
@@ -235,6 +235,8 @@ json_object* OGRGeoJSONWritePolygon( OGRPolygon* poPolygon )
     
     /* Exterior ring. */
     OGRLinearRing* poRing = poPolygon->getExteriorRing();
+    if (poRing == NULL)
+        return poObj;
     
     json_object* poObjRing = NULL;
     poObjRing = OGRGeoJSONWriteLineCoords( poRing );
@@ -245,6 +247,9 @@ json_object* OGRGeoJSONWritePolygon( OGRPolygon* poPolygon )
     for( int i = 0; i < nCount; ++i )
     {
         poRing = poPolygon->getInteriorRing( i );
+        if (poRing == NULL)
+            continue;
+
         poObjRing = OGRGeoJSONWriteLineCoords( poRing );
 
         json_object_array_add( poObj, poObjRing );
