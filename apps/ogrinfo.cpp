@@ -60,6 +60,7 @@ int main( int nArgc, char ** papszArgv )
     int         nRepeatCount = 1, bAllLayers = FALSE;
     const char  *pszSQLStatement = NULL;
     const char  *pszDialect = NULL;
+    int          nRet = 0;
     
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -198,7 +199,8 @@ int main( int nArgc, char ** papszArgv )
             printf( "  -> %s\n", poR->GetDriver(iDriver)->GetName() );
         }
 
-        exit( 1 );
+        nRet = 1;
+        goto end;
     }
 
     CPLAssert( poDriver != NULL);
@@ -313,6 +315,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
+end:
     CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
     CSLDestroy( papszOptions );
@@ -322,7 +325,7 @@ int main( int nArgc, char ** papszArgv )
 
     OGRCleanupAll();
 
-    return 0;
+    return nRet;
 }
 
 /************************************************************************/
