@@ -3233,66 +3233,6 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-/* Returned size is in bytes or 0 if an error occured */
-static
-int ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
-                             int nPixelSpace, int nLineSpace,
-                             int bSpacingShouldBeMultipleOfPixelSize )
-{
-    const int MAX_INT = 0x7fffffff;
-    if (buf_xsize <= 0 || buf_ysize <= 0)
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
-        return 0;
-    }
-
-    if (nPixelSpace < 0 || nLineSpace < 0)
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for space arguments");
-        return 0;
-    }
-
-    if (nPixelSize == 0)
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Illegal value for data type");
-        return 0;
-    }
-
-    if( nPixelSpace == 0 )
-        nPixelSpace = nPixelSize;
-    else if ( bSpacingShouldBeMultipleOfPixelSize && (nPixelSpace % nPixelSize) != 0 )
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg, "nPixelSpace should be a multiple of nPixelSize");
-        return 0;
-    }
-
-    if( nLineSpace == 0 )
-    {
-        if (nPixelSpace > MAX_INT / buf_xsize)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
-            return 0;
-        }
-        nLineSpace = nPixelSpace * buf_xsize;
-    }
-    else if ( bSpacingShouldBeMultipleOfPixelSize && (nLineSpace % nPixelSize) != 0 )
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg, "nLineSpace should be a multiple of nPixelSize");
-        return 0;
-    }
-
-    if ((buf_ysize - 1) > MAX_INT / nLineSpace ||
-        (buf_xsize - 1) > MAX_INT / nPixelSpace ||
-        (buf_ysize - 1) * nLineSpace > MAX_INT - (buf_xsize - 1) * nPixelSpace ||
-        (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace > MAX_INT - nPixelSize)
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
-        return 0;
-    }
-
-    return (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + nPixelSize;
-}
-
 
 
 retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
@@ -3309,14 +3249,9 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
   CPLErr BandRasterIONumPy( GDALRasterBandShadow* band, int bWrite, int xoff, int yoff, int xsize, int ysize,
                      PyArrayObject *psArray,
-                     int *buf_xsize = 0,
-                     int *buf_ysize = 0,
-                     int *buf_type = 0,
-                     int *buf_pixel_space = 0,
-                     int *buf_line_space = 0) {
+                     int buf_type) {
 
-    GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(band)
-                                        : (GDALDataType)*buf_type;
+    GDALDataType ntype  = (GDALDataType)buf_type;
     if( psArray->nd < 2 || psArray->nd > 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -3324,41 +3259,15 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                   psArray->nd );
         return CE_Failure;
     }
-    
+
     int xdim = ( psArray->nd == 2) ? 1 : 2;
     int ydim = ( psArray->nd == 2) ? 0 : 1;
-    
+
     int nxsize, nysize, pixel_space, line_space;
-    if (buf_xsize == 0)
-        nxsize = psArray->dimensions[xdim];
-    else
-        nxsize = *buf_xsize;
-        
-    if (buf_ysize == 0)
-        nysize = psArray->dimensions[ydim];
-    else
-        nysize = *buf_ysize;
-        
-    if (buf_pixel_space == 0)
-        pixel_space = psArray->strides[xdim];
-    else
-        pixel_space = *buf_pixel_space;
-        
-    if (buf_line_space == 0)
-        line_space = psArray->strides[ydim];
-    else
-        line_space = *buf_line_space;
-    
-    int min_buf_size = ComputeBandRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
-                                                pixel_space, line_space, FALSE );
-    if (min_buf_size == 0)
-        return CE_Failure;
-        
-    if (PyArray_NBYTES(psArray) < min_buf_size)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
-        return CE_Failure;
-    }
+    nxsize = psArray->dimensions[xdim];
+    nysize = psArray->dimensions[ydim];
+    pixel_space = psArray->strides[xdim];
+    line_space = psArray->strides[ydim];
 
     return  GDALRasterIO( band, (bWrite) ? GF_Write : GF_Read, xoff, yoff, xsize, ysize,
                           psArray->data, nxsize, nysize,
@@ -3566,11 +3475,7 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
   int arg5 ;
   int arg6 ;
   PyArrayObject *arg7 = (PyArrayObject *) 0 ;
-  int *arg8 = (int *) 0 ;
-  int *arg9 = (int *) 0 ;
-  int *arg10 = (int *) 0 ;
-  int *arg11 = (int *) 0 ;
-  int *arg12 = (int *) 0 ;
+  int arg8 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int val2 ;
@@ -3584,10 +3489,7 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
   int val6 ;
   int ecode6 = 0 ;
   int val8 ;
-  int val9 ;
-  int val10 ;
-  int val11 ;
-  int val12 ;
+  int ecode8 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -3596,16 +3498,12 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
   PyObject * obj5 = 0 ;
   PyObject * obj6 = 0 ;
   PyObject * obj7 = 0 ;
-  PyObject * obj8 = 0 ;
-  PyObject * obj9 = 0 ;
-  PyObject * obj10 = 0 ;
-  PyObject * obj11 = 0 ;
   char *  kwnames[] = {
-    (char *) "band",(char *) "bWrite",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "psArray",(char *) "buf_xsize",(char *) "buf_ysize",(char *) "buf_type",(char *) "buf_pixel_space",(char *) "buf_line_space", NULL 
+    (char *) "band",(char *) "bWrite",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "psArray",(char *) "buf_type", NULL 
   };
   CPLErr result;
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOO|OOOOO:BandRasterIONumPy",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOOO:BandRasterIONumPy",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "BandRasterIONumPy" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
@@ -3648,82 +3546,12 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
       SWIG_fail;
     }
   }
-  if (obj7) {
-    {
-      /* %typemap(in) (int *optional_##int) */
-      if ( obj7 == Py_None ) {
-        arg8 = 0;
-      }
-      else if ( PyArg_Parse( obj7,"i" ,&val8 ) ) {
-        arg8 = (int *) &val8;
-      }
-      else {
-        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
-        SWIG_fail;
-      }
-    }
-  }
-  if (obj8) {
-    {
-      /* %typemap(in) (int *optional_##int) */
-      if ( obj8 == Py_None ) {
-        arg9 = 0;
-      }
-      else if ( PyArg_Parse( obj8,"i" ,&val9 ) ) {
-        arg9 = (int *) &val9;
-      }
-      else {
-        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
-        SWIG_fail;
-      }
-    }
-  }
-  if (obj9) {
-    {
-      /* %typemap(in) (int *optional_##int) */
-      if ( obj9 == Py_None ) {
-        arg10 = 0;
-      }
-      else if ( PyArg_Parse( obj9,"i" ,&val10 ) ) {
-        arg10 = (int *) &val10;
-      }
-      else {
-        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
-        SWIG_fail;
-      }
-    }
-  }
-  if (obj10) {
-    {
-      /* %typemap(in) (int *optional_##int) */
-      if ( obj10 == Py_None ) {
-        arg11 = 0;
-      }
-      else if ( PyArg_Parse( obj10,"i" ,&val11 ) ) {
-        arg11 = (int *) &val11;
-      }
-      else {
-        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
-        SWIG_fail;
-      }
-    }
-  }
-  if (obj11) {
-    {
-      /* %typemap(in) (int *optional_##int) */
-      if ( obj11 == Py_None ) {
-        arg12 = 0;
-      }
-      else if ( PyArg_Parse( obj11,"i" ,&val12 ) ) {
-        arg12 = (int *) &val12;
-      }
-      else {
-        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
-        SWIG_fail;
-      }
-    }
-  }
-  result = (CPLErr)BandRasterIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12);
+  ecode8 = SWIG_AsVal_int(obj7, &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "BandRasterIONumPy" "', argument " "8"" of type '" "int""'");
+  } 
+  arg8 = static_cast< int >(val8);
+  result = (CPLErr)BandRasterIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -3736,9 +3564,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetArrayFilename", _wrap_GetArrayFilename, METH_VARARGS, (char *)"GetArrayFilename(PyArrayObject psArray) -> retStringAndCPLFree"},
 	 { (char *)"BandRasterIONumPy", (PyCFunction) _wrap_BandRasterIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"BandRasterIONumPy(Band band, int bWrite, int xoff, int yoff, int xsize, \n"
-		"    int ysize, PyArrayObject psArray, int buf_xsize = None, \n"
-		"    int buf_ysize = None, int buf_type = None, \n"
-		"    int buf_pixel_space = None, int buf_line_space = None) -> CPLErr\n"
+		"    int ysize, PyArrayObject psArray, int buf_type) -> CPLErr\n"
 		""},
 	 { NULL, NULL, 0, NULL }
 };
