@@ -607,6 +607,7 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid Feature object. "
                   "Missing \'geometry\' member." );
+        delete poFeature;
         return NULL;
     }
 
