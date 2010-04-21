@@ -571,7 +571,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
         
     if (PyArray_NBYTES(psArray) < min_buf_size)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
+        CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small, need %d, have %d.", min_buf_size, PyArray_NBYTES(psArray));
         return CE_Failure;
     }
 
