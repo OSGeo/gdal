@@ -267,7 +267,7 @@ OGRFeature* OGRGeoJSONLayer::GetFeature( long nFID )
 OGRErr OGRGeoJSONLayer::CreateFeature( OGRFeature* poFeature )
 {
     FILE* fp = poDS_->GetOutputFile();
-    if( NULL == poFeature )
+    if( NULL == fp )
     {
         CPLDebug( "GeoJSON", "Target datasource file is invalid." );
         return CE_Failure;
