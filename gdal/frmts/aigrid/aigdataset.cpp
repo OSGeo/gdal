@@ -549,23 +549,41 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
     }
 
-    osTestName.Printf( "%s/w001001x.adf", osCoverName.c_str() );
-    if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+/* -------------------------------------------------------------------- */
+/*      Confirm we have at least one raster data file.  These can be    */
+/*      sparse so we don't require particular ones to exists but if     */
+/*      there are none this is likely not a grid.                       */
+/* -------------------------------------------------------------------- */
+    char **papszFileList = VSIReadDir( osCoverName );
+    int iFile;
+    int bGotOne = FALSE;
 
+    for( iFile = 0; 
+         papszFileList != NULL && papszFileList[iFile] != NULL && !bGotOne;
+         iFile++ )
     {
-        osTestName.Printf( "%s/W001001X.ADF", osCoverName.c_str() );
-        if( VSIStatL( osTestName, &sStatBuf ) != 0 )
-            return NULL;
-    }
+        if( strlen(papszFileList[iFile]) != 11 )
+            continue;
 
-    osTestName.Printf( "%s/w001001.adf", osCoverName.c_str() );
-    if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+        // looking for something like w001001.adf or z001013.adf
+        if( papszFileList[iFile][0] != 'w'
+            && papszFileList[iFile][0] != 'W'
+            && papszFileList[iFile][0] != 'z'
+            && papszFileList[iFile][0] != 'Z' )
+            continue;
 
-    {
-        osTestName.Printf( "%s/W001001.ADF", osCoverName.c_str() );
-        if( VSIStatL( osTestName, &sStatBuf ) != 0 )
-            return NULL;
+        if( strncmp(papszFileList[iFile] + 1, "0010", 4) != 0 )
+            continue;
+
+        if( !EQUAL(papszFileList[iFile] + 7, ".adf") )
+            continue;
+
+        bGotOne = TRUE;
     }
+    CSLDestroy( papszFileList );
+
+    if( !bGotOne )
+        return NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -602,7 +620,6 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to read a color table (.clr).  It seems it is legal to      */
 /*      have more than one so we just use the first one found.          */
 /* -------------------------------------------------------------------- */
-    int  iFile;
     char **papszFiles = CPLReadDir( psInfo->pszCoverName );
     CPLString osClrFilename;
     CPLString osCleanPath = CPLCleanTrailingSlash( psInfo->pszCoverName );
