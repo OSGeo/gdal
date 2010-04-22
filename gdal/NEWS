@@ -5,64 +5,68 @@ branch.
 
 == General ==
 
-* Fix definition of CPL atomic function with CPL_INLINE undefined (#3526)
-* Clean out remnants of old generation python support in configure (#3489)
-* Fix build problems on systems with 64bit pointer and 32bit long (#3460)
-* C#: Fixed ambiguous reference to SpatialReference in C# sample apps (#3477)
-* C#: Fix crash on memory release of string from ExportToWkt() (#3529)
-* Java: Handle transparency better in color tables (#3455)
-* Python 2.x/3.0 compatability fixes for scripts (#3441, #3395)
-* stateplane.csv updated for Kentuky and California fixes (#3408)
+ * configure/libtool/etc regenerated with newer versions.
+ * Fix definition of CPL atomic function with CPL_INLINE undefined (#3526)
+ * Clean out remnants of old generation python support in configure (#3489)
+ * Fix build problems on systems with 64bit pointer and 32bit long (#3460)
+ * C#: Fixed ambiguous reference to SpatialReference in C# sample apps (#3477)
+ * C#: Fix crash on memory release of string from ExportToWkt() (#3529)
+ * Java: Handle transparency better in color tables (#3455)
+ * Python 2.x/3.0 compatability fixes for scripts (#3441, #3395) 
+ * Python fixes for numpy array io (#3542)
+ * stateplane.csv updated for Kentuky and California fixes (#3408)
 
 == GDAL / Raster ==
 
-* USGS DEM: Add state plane coordinate system support (#3529)
-* PCIDSK: Ensure C++ compiler used to compile C++ code on unix (#3526)
-* GTiff: Fix writing of area or point metadata (#3522)
-* NITF: Improve error handling for GeoSDE (#3518)
-* NITF: Fix support for reading large blocks (#3263)
-* NITF: fix handling of zone 'J' as south pole (#3337)
-* Leveller: Fix build problem with 8bit string (#3490)
-* Fix support for larger than 2GB buffers in GDALDataset::RasterIO() (#3481)
-* Avoid infinite loop in rasterize algorithm with small buffers (#3473)
-* But attribute into all bands during rasterization (#3396)
-* Fix crash with null geometries when rasterizing (#3437)
-* Warper: Backout heuristics about aligning io on block boundaries (#3459)
-* Warper: Fixed chunking problem that sometimes causes data dropout (#3458)
-* gdalwarp: Fix crash on files with no bands. (#3438)
-* Avoid unnecessary work in GDALSuggestedWarpOutput2() (#3447)
-* HDF4: better support for odd sizes datasets, avoid missing ds crash (#3316)
-* JP2KAK: support quality values as low as 0.01 percent. (#2801)
-* JP2KAK: Avoid use of set_fussy(), makes some images fail (#3295)
-* gdal_proximity.py: fix when -q is not specified.
-* gdal_polygonize.py: fix specifying field name in existing layer (#3418)
-* HFA: Avoid crash for long field names (#3427)
-* HFA: Several fixes for generating large HFA overviews (#3371)
-* GeoRaster: Fixes for JPEG compression and RGBA color interprtation (#3430)
-* ENVI: Include INTERLEAVE metadata(#3436)
-* Improve GDAL plugin loading support on MacOS X (#2661)
+ * USGS DEM: Add state plane coordinate system support (#3529)
+ * PCIDSK: Ensure C++ compiler used to compile C++ code on unix (#3526)
+ * GTiff: Fix writing of area or point metadata (#3522)
+ * NITF: Improve error handling for GeoSDE (#3518)
+ * NITF: Fix support for reading large blocks (#3263)
+ * NITF: fix handling of zone 'J' as south pole (#3337) 
+ * Leveller: Fix build problem with 8bit string (#3490)
+ * Fix support for larger than 2GB buffers in GDALDataset::RasterIO() (#3481)
+ * Avoid infinite loop in rasterize algorithm with small buffers (#3473)
+ * Burn attribute into all bands during rasterization (#3396)
+ * Fix crash with null geometries when rasterizing (#3437)
+ * Warper: Backout heuristics about aligning io on block boundaries (#3459)
+ * Warper: Fixed chunking problem that sometimes causes data dropout (#3458)
+ * gdalwarp: Fix crash on files with no bands. (#3438)
+ * Avoid unnecessary work in GDALSuggestedWarpOutput2() (#3447)
+ * HDF4: better support for odd sizes datasets, avoid missing ds crash (#3316)
+ * JP2KAK: support quality values as low as 0.01 percent. (#2801)
+ * JP2KAK: Avoid use of set_fussy(), makes some images fail (#3295)
+ * gdal_proximity.py: fix when -q is not specified.
+ * gdal_polygonize.py: fix specifying field name in existing layer (#3418)
+ * HFA: Avoid crash for long field names (#3427)
+ * HFA: Several fixes for generating large HFA overviews (#3371)
+ * GeoRaster: Fixes for JPEG compression and RGBA color interprtation (#3430) 
+ * ENVI: Include INTERLEAVE metadata(#3436)
+ * Improve GDAL plugin loading support on MacOS X (#2661)
+ * PDS: Several fixes to support prototype Dawn products (#3543)
+ * AIGRID: support sparse sets of tiles (#3541)
 
 == OGR / Vector ==
 
-* Shape: Support .prj file from virtual file sources like zip (#3536)
-* Shape: Fix REPACK support on unix (#3434)
-* MapInfo: Create layer definition on layer creation. (#3391)
-* ogr2ogr.cpp: Fix crash on exit with -clipsrc or -clipdst (#3530)
-* Postgres: Improve logic for extending spatial_ref_sys (#3508)
-* Postgres: Do not ignore "pg*" tables that are not system tables (#3480)
-* SQLite: Improve SRS generation for spatial_ref_sys (#3506)
-* SQLite: Fix support for db with nulls in geometry_columns (#3507)
-* SQLite: Preserve triggers/index when adding fields (#3474)
-* SQLite: Avoid altering geometry column type in CreateField (#3471)
-* Make forceTo* function robust with EMPTY geometries.  (#3504)
-* Fix forceToPolygon() (#3498)
-* ODBC: format string safety changes in error/debug messages (#3402)
-* ODBC: Avoid problem with integer overflow in buffer sizes (#3385)
-* Be careful of NULL geometries in geos wrapper code (#3467)
-* DXF: Support DXF files with only an entities section (#3412)
-* DXF: Fixup polygon and 2d/3d handling (#3393)
-* DXF: Ensure points have AcDbEntity and AcDbPoint (#3423)
-* CopyLayer(): Use transactions for better performance (#3335)
+ * Shape: Support .prj file from virtual file sources like zip (#3536)
+ * Shape: Fix REPACK support on unix (#3434)
+ * MapInfo: Create layer definition on layer creation. (#3391)
+ * ogr2ogr.cpp: Fix crash on exit with -clipsrc or -clipdst (#3530)
+ * Postgres: Improve logic for extending spatial_ref_sys (#3508)
+ * Postgres: Do not ignore "pg*" tables that are not system tables (#3480)
+ * SQLite: Improve SRS generation for spatial_ref_sys (#3506)
+ * SQLite: Fix support for db with nulls in geometry_columns (#3507)
+ * SQLite: Preserve triggers/index when adding fields (#3474)
+ * SQLite: Avoid altering geometry column type in CreateField (#3471)
+ * Make forceTo* function robust with EMPTY geometries.  (#3504)
+ * Fix forceToPolygon() (#3498)
+ * ODBC: format string safety changes in error/debug messages (#3402)
+ * ODBC: Avoid problem with integer overflow in buffer sizes (#3385)
+ * Be careful of NULL geometries in geos wrapper code (#3467)
+ * DXF: Support DXF files with only an entities section (#3412)
+ * DXF: Fixup polygon and 2d/3d handling (#3393)
+ * DXF: Ensure points have AcDbEntity and AcDbPoint (#3423)
+ * CopyLayer(): Use transactions for better performance (#3335)
 
 = GDAL/OGR 1.7.1 = 
 
@@ -74,36 +78,36 @@ of all bug fixes since the 1.7.0 release.
 
 == General ==
 
-* MacOS X: Support versioning for framework builds (#2661)
-* FreeBSD: fix --with-threads configuring (#3348)
+ * MacOS X: Support versioning for framework builds (#2661)
+ * FreeBSD: fix --with-threads configuring (#3348)
 
 == GDAL / Raster ==
 
-* HFA/Imagine: Fix very serious 1.7 bug with blank layer names which was
+ * HFA/Imagine: Fix very serious 1.7 bug with blank layer names which was
   producing .img files unreadable in non-GDAL software (#3382)
-* HFA: Ensure nodata values carried into overviews (#2855)
-* HFA: Fix support for files with nonstandard mapunits (#3338)
-* NITF: Improve NITF spec compliance when generating JPEG compression (#3345)
-* NITF: Improve dateline handling for CADRG products (#3383)
-* NITF: Return GCPPROJECTIONX metadata when we can't transform polar (#3337)
-* GeoRaster: Avoid error messages when looking up epsg codes (#3326)
-* DODS / GDALCopyWords(): Fix bug with negative offsets/flipping (#3388)
-* PCIDSK: Fix new bug with UTM MGRS zone handling (#3379)
-* PDS: Fix up offset support for detached labels (#3355)
-* gdal_merge.py: support per band init values (#3354)
-* ECW: Fix one broken case in configure logic (#3343)
-* RasterLite: Fix crash on 32bit platforms (#3339)
-* NetCDF: Prevent CreateCopy() of complex bands (r18602)
-* HDF4: Fix buffer overflow with GeodeticLatitude (r18601)
+ * HFA: Ensure nodata values carried into overviews (#2855)
+ * HFA: Fix support for files with nonstandard mapunits (#3338)
+ * NITF: Improve NITF spec compliance when generating JPEG compression (#3345)
+ * NITF: Improve dateline handling for CADRG products (#3383)
+ * NITF: Return GCPPROJECTIONX metadata when we can't transform polar (#3337)
+ * GeoRaster: Avoid error messages when looking up epsg codes (#3326)
+ * DODS / GDALCopyWords(): Fix bug with negative offsets/flipping (#3388)
+ * PCIDSK: Fix new bug with UTM MGRS zone handling (#3379)
+ * PDS: Fix up offset support for detached labels (#3355)
+ * gdal_merge.py: support per band init values (#3354)
+ * ECW: Fix one broken case in configure logic (#3343)
+ * RasterLite: Fix crash on 32bit platforms (#3339)
+ * NetCDF: Prevent CreateCopy() of complex bands (r18602)
+ * HDF4: Fix buffer overflow with GeodeticLatitude (r18601)
 
 == OGR / Vector ==
 
-* SQLite: TestCapability() returns TRUE for transation support (#3394)
-* DXF: Support polylines in Object Coordinate System (#3372)
-* MIF/ogr2ogr: Fix new problem translating to MIF format (#3384)
-* GeoJSON: Support stdout output via new /vsistdout/ name (#3381)
-* Shapefile: Fixes for winding calculations on read and write (#3363, #3356)
-* Postgres: Get field width and precision from SQL queries (#3349)
+ * SQLite: TestCapability() returns TRUE for transation support (#3394)
+ * DXF: Support polylines in Object Coordinate System (#3372)
+ * MIF/ogr2ogr: Fix new problem translating to MIF format (#3384)
+ * GeoJSON: Support stdout output via new /vsistdout/ name (#3381)
+ * Shapefile: Fixes for winding calculations on read and write (#3363, #3356)
+ * Postgres: Get field width and precision from SQL queries (#3349)
 
 = GDAL/OGR 1.7.0 =
 
@@ -111,16 +115,16 @@ of all bug fixes since the 1.7.0 release.
 
 == In a nutshell... ==
 
-* New GDAL drivers : BAG, EPSILON, Northwood/VerticalMapper, R, Rasterlite,
+ * New GDAL drivers : BAG, EPSILON, Northwood/VerticalMapper, R, Rasterlite,
                      SAGA GIS Binary, SRP (USRP/ASRP), EarthWatch .TIL, WKT Raster
-* GDAL PCIDSK driver using the new PCIDSK SDK by default
-* New OGR drivers : DXF, GeoRSS, GTM, PCIDSK and VFK
-* New utility : gdaldem, gdalbuildvrt now compiled by default
-* Add support for Python 3.X. Compatibility with Python 2.X preserved (#3265)
-* Remove old-generation Python bindings.
-* Significantly improved GDAL drivers: GeoRaster, GeoTIFF, HFA, JPEG2000 Jasper, JPEG2000 Kakadu, NITF
-* Significantly improved OGR drivers: CSV, KML, SQLite (SpatiaLite support), VRT
-* WARNING: incompatibility between MrSID GeoDSDK and libgeotiff 1.3.0 or internal libgeotiff on some platforms (see #3309)
+ * GDAL PCIDSK driver using the new PCIDSK SDK by default
+ * New OGR drivers : DXF, GeoRSS, GTM, PCIDSK and VFK
+ * New utility : gdaldem, gdalbuildvrt now compiled by default
+ * Add support for Python 3.X. Compatibility with Python 2.X preserved (#3265)
+ * Remove old-generation Python bindings.
+ * Significantly improved GDAL drivers: GeoRaster, GeoTIFF, HFA, JPEG2000 Jasper, JPEG2000 Kakadu, NITF
+ * Significantly improved OGR drivers: CSV, KML, SQLite (SpatiaLite support), VRT
+ * WARNING: incompatibility between MrSID GeoDSDK and libgeotiff 1.3.0 or internal libgeotiff on some platforms (see #3309)
 
 == GDAL/OGR 1.7.0 - General Changes ==
 
