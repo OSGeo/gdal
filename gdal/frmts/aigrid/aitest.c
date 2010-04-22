@@ -116,6 +116,7 @@ int main( int argc, char ** argv )
     GUInt32 	*panRaster;
     int		i, j;
     int		bMagic = FALSE, bSupressMagic = FALSE;
+    int         iTestTileX = 0, iTestTileY = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Process arguments.                                              */
@@ -127,6 +128,14 @@ int main( int argc, char ** argv )
 
         else if( EQUAL(argv[1],"-nomagic") )
             bSupressMagic = TRUE;
+
+        else if( EQUAL(argv[1],"-t") && argc > 2 )
+        {
+            iTestTileX = atoi(argv[2]);
+            iTestTileY = atoi(argv[3]);
+            argc -= 2;
+            argv += 2;
+        }
 
         argc--;
         argv++;
@@ -144,7 +153,7 @@ int main( int argc, char ** argv )
     if( psInfo == NULL )
         exit( 1 );
 
-    AIGAccessTile( psInfo, 0, 0 );
+    AIGAccessTile( psInfo, iTestTileX, iTestTileY );
 
 /* -------------------------------------------------------------------- */
 /*      Dump general information                                        */
