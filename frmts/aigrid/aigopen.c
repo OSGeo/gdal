@@ -223,6 +223,7 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
         CPLError( CE_Warning, CPLE_OpenFailed,
                   "Failed to open grid file, assuming region is nodata:\n%s\n",
                   pszFilename );
+        CPLFree( pszFilename );
         return CE_Warning;
     }
 
