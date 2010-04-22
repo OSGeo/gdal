@@ -196,7 +196,7 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
     psTInfo = psInfo->pasTileInfo + iTileX + iTileY * psInfo->nTilesPerRow;
 
-    if( psTInfo->fpGrid != NULL )
+    if( psTInfo->fpGrid != NULL || psTInfo->bTriedToLoad )
         return CE_None;
 
 /* -------------------------------------------------------------------- */
@@ -216,13 +216,14 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
     sprintf( pszFilename, "%s/%s.adf", psInfo->pszCoverName, szBasename );
 
     psTInfo->fpGrid = AIGLLOpen( pszFilename, "rb" );
+    psTInfo->bTriedToLoad = TRUE;
     
     if( psTInfo->fpGrid == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open grid file:\n%s\n",
+        CPLError( CE_Warning, CPLE_OpenFailed,
+                  "Failed to open grid file, assuming region is nodata:\n%s\n",
                   pszFilename );
-        return CE_Failure;
+        return CE_Warning;
     }
 
     CPLFree( pszFilename );
@@ -255,7 +256,7 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     iTileY = nBlockYOff / psInfo->nBlocksPerColumn;
 
     eErr = AIGAccessTile( psInfo, iTileX, iTileY );
-    if( eErr != CE_None )
+    if( eErr == CE_Failure )
         return eErr;
 
     psTInfo = psInfo->pasTileInfo + iTileX + iTileY * psInfo->nTilesPerRow;
@@ -263,6 +264,18 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     nBlockXOff -= iTileX * psInfo->nBlocksPerRow;
     nBlockYOff -= iTileY * psInfo->nBlocksPerColumn;
 
+/* -------------------------------------------------------------------- */
+/*      Request for tile from a file which does not exist - treat as    */
+/*      all nodata.                                                     */
+/* -------------------------------------------------------------------- */
+    if( psTInfo->fpGrid == NULL )
+    {
+        int i;
+        for( i = psInfo->nBlockXSize * psInfo->nBlockYSize - 1; i >= 0; i-- )
+            panData[i] = ESRI_GRID_NO_DATA;
+        return CE_None;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      validate block id.                                              */
 /* -------------------------------------------------------------------- */
@@ -333,7 +346,7 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     iTileY = nBlockYOff / psInfo->nBlocksPerColumn;
 
     eErr = AIGAccessTile( psInfo, iTileX, iTileY );
-    if( eErr != CE_None )
+    if( eErr == CE_Failure )
         return eErr;
 
     psTInfo = psInfo->pasTileInfo + iTileX + iTileY * psInfo->nTilesPerRow;
@@ -341,6 +354,18 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     nBlockXOff -= iTileX * psInfo->nBlocksPerRow;
     nBlockYOff -= iTileY * psInfo->nBlocksPerColumn;
 
+/* -------------------------------------------------------------------- */
+/*      Request for tile from a file which does not exist - treat as    */
+/*      all nodata.                                                     */
+/* -------------------------------------------------------------------- */
+    if( psTInfo->fpGrid == NULL )
+    {
+        int i;
+        for( i = psInfo->nBlockXSize * psInfo->nBlockYSize - 1; i >= 0; i-- )
+            pafData[i] = ESRI_GRID_FLOAT_NO_DATA;
+        return CE_None;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      validate block id.                                              */
 /* -------------------------------------------------------------------- */

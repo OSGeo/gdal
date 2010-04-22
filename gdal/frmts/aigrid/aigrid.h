@@ -48,6 +48,7 @@ typedef struct {
     int		*panBlockSize;
 
     FILE	*fpGrid;	/* the w001001.adf file */
+    int         bTriedToLoad;
 } AIGTileInfo;
 
 typedef struct {
