@@ -903,6 +903,9 @@ def ogr_sqlite_19():
     if gdaltest.sl_ds is None:
         return 'skip'
 
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1800:
+        return 'skip'
+
     ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test_with_epsg.db', options = ['SPATIALITE=YES', 'INIT_WITH_EPSG=YES'] )
 
     # EPSG:26632 has a ' character in it's WKT representation
