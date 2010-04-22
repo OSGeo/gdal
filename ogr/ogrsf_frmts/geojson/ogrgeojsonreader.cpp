@@ -645,9 +645,9 @@ OGRGeoJSONReader::ReadFeatureCollection( json_object* poObj )
             poObjFeature = json_object_array_get_idx( poObjFeatures, i );
             poFeature = OGRGeoJSONReader::ReadFeature( poObjFeature );
             bAdded = AddFeature( poFeature );
-            CPLAssert( bAdded );
+            //CPLAssert( bAdded );
         }
-        CPLAssert( nFeatures == poLayer_->GetFeatureCount() );
+        //CPLAssert( nFeatures == poLayer_->GetFeatureCount() );
     }
 
     // We're returning class member to follow the same pattern of
