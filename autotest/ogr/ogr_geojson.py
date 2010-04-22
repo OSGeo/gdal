@@ -624,6 +624,38 @@ def ogr_geojson_13():
 
     return 'success'
 
+###############################################################################
+# Test reading & writing various degenerated geometries
+
+def ogr_geojson_14():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1800:
+        return 'skip'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.Open('data/ogr_geojson_14.geojson')
+    gdal.PopErrorHandler()
+    lyr = ds.GetLayer(0)
+
+    out_ds = gdaltest.geojson_drv.CreateDataSource('tmp/out_ogr_geojson_14.geojson')
+    out_lyr = out_ds.CreateLayer('lyr')
+
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        geom = feat.GetGeometryRef()
+        if geom is not None:
+            #print(geom)
+            out_feat = ogr.Feature(feature_def = out_lyr.GetLayerDefn())
+            out_feat.SetGeometry(geom)
+            out_lyr.CreateFeature(out_feat)
+        feat = lyr.GetNextFeature()
+    ds.Destroy()
+    out_ds.Destroy()
+
+    return 'success'
 
 ###############################################################################
 
@@ -649,6 +681,11 @@ def ogr_geojson_cleanup():
     except:
         pass
 
+    try:
+        os.remove('tmp/out_ogr_geojson_14.geojson')
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
@@ -665,6 +702,7 @@ gdaltest_list = [
     ogr_geojson_11,
     ogr_geojson_12,
     ogr_geojson_13,
+    ogr_geojson_14,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
