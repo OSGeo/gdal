@@ -984,7 +984,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     CSLDestroy( papszGeomColumnNames );
 
 /* -------------------------------------------------------------------- */
-    return nLayers > 0 || bUpdate;
+    return TRUE;
 }
 
 /************************************************************************/
