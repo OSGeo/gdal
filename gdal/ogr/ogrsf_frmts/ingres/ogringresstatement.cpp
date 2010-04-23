@@ -65,7 +65,12 @@ OGRIngresStatement::OGRIngresStatement( II_PTR hConn )
 OGRIngresStatement::~OGRIngresStatement()
 
 {
-    IIAPI_WAITPARM	waitParm = { -1 };
+    Close();
+}
+
+void OGRIngresStatement::Close()
+{
+    IIAPI_WAITPARM  waitParm = { -1 };
 
     if( hStmt != NULL )
     {
@@ -74,7 +79,7 @@ OGRIngresStatement::~OGRIngresStatement()
         closeParm.cl_genParm.gp_callback = NULL;
         closeParm.cl_genParm.gp_closure = NULL;
         closeParm.cl_stmtHandle = hStmt;
-        
+
         IIapi_close( &closeParm );
 
         while( closeParm.cl_genParm.gp_completed == FALSE )
@@ -100,12 +105,20 @@ OGRIngresStatement::~OGRIngresStatement()
     }
 
     ClearDynamicColumns();
+ 
+    // Set the descriptorCount to zero to avoid attempting to refree it
+    // in another Close call.
+    getDescrParm.gd_descriptorCount = 0;
 
     CPLFree( papszFields );
     CPLFree( pabyWrkBuffer );
     CPLFree( pasDataBuffer );
     CPLFree( pabyParmData );
-//    CPLDebug( "INGRES", "Destroy Statement %p", this );
+
+    papszFields = NULL;
+    pabyWrkBuffer = NULL;
+    pasDataBuffer = NULL;
+    pabyParmData = NULL;
 }
 
 /************************************************************************/
