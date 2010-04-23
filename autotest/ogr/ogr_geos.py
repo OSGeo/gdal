@@ -333,8 +333,21 @@ def ogr_geos_overlaps():
 
     result = g2.Overlaps( g1 )
 
+    # g1 and g2 intersect, but their intersection is equal to g1
     if result != 0:
         gdaltest.post_reason( 'wrong result (got true)' )
+        return 'fail'
+
+    g1.Destroy()
+    g2.Destroy()
+
+    g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
+    g2 = ogr.CreateGeometryFromWkt( 'POLYGON((0 -5,10 5,10 -5,0 -5))')
+
+    result = g2.Overlaps( g1 )
+
+    if result == 0:
+        gdaltest.post_reason( 'wrong result (got false)' )
         return 'fail'
 
     g1.Destroy()
