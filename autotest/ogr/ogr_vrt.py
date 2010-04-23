@@ -556,7 +556,7 @@ def ogr_vrt_14():
     if gdaltest.vrt_ds is None:
         return 'skip'
     try:
-        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
     except:
         pass
     
@@ -624,6 +624,7 @@ def ogr_vrt_14():
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
     if vrt_lyr.GetFeatureCount() != 1:
         if gdal.GetLastErrorMsg().find('GEOS support not enabled') != -1:
+            ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
             return 'skip'
         
         print(vrt_lyr.GetFeatureCount())
@@ -643,7 +644,7 @@ def ogr_vrt_14():
     vrt_ds.Destroy()
     vrt_ds = None
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
 
     return 'success'
 
@@ -759,6 +760,9 @@ def ogr_vrt_16():
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
     if vrt_lyr.GetFeatureCount() != 1:
         if gdal.GetLastErrorMsg().find('GEOS support not enabled') != -1:
+            vrt_ds.Destroy()
+            os.remove('tmp/test.csv')
+            os.remove('tmp/test.csvt')
             return 'skip'
         return 'fail'
 
