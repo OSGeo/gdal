@@ -3013,8 +3013,7 @@ const GDAL_GCP *NITFDataset::GetGCPs()
 int NITFDataset::CheckForRSets( const char *pszNITFFilename )
 
 {
-    if( !EQUAL(CPLGetExtension(pszNITFFilename),"r0") )
-        return FALSE;
+    bool isR0File = EQUAL(CPLGetExtension(pszNITFFilename),"r0");
 
 /* -------------------------------------------------------------------- */
 /*      Check to see if we have RSets.                                  */
@@ -3027,8 +3026,13 @@ int NITFDataset::CheckForRSets( const char *pszNITFFilename )
         CPLString osTarget;
         VSIStatBufL sStat;
 
-        osTarget = pszNITFFilename;
-        osTarget[osTarget.size()-1] = ('0' + i );
+        if ( isR0File )
+        {
+          osTarget = pszNITFFilename;
+          osTarget[osTarget.size()-1] = ('0' + i );
+        }
+        else
+          osTarget.Printf( "%s.r%d", pszNITFFilename, i );
 
         if( VSIStatL( osTarget, &sStat ) != 0 )
             break;
