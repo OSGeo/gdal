@@ -596,42 +596,42 @@ const char *OGRIngresLayer::GetGeometryColumn()
 /*                         FetchSRSId()                                 */
 /************************************************************************/
 
-int OGRIngresLayer::FetchSRSId()
+int OGRIngresLayer::FetchSRSId(OGRFeatureDefn *poDefn)
 {
-    return -1;
-#ifdef notdef
-    char         szCommand[1024];
-    char           **papszRow;  
-    
-    if( hResultSet != NULL )
-        ingres_free_result( hResultSet );
-    hResultSet = NULL;
-				
-    sprintf( szCommand, 
-             "SELECT srid FROM geometry_columns "
-             "WHERE f_table_name = '%s'",
-             pszGeomColumnTable );
-
-    if( !ingres_query( poDS->GetConn(), szCommand ) )
-        hResultSet = ingres_store_result( poDS->GetConn() );
-
-    papszRow = NULL;
-    if( hResultSet != NULL )
-        papszRow = ingres_fetch_row( hResultSet );
-        
-
-    if( papszRow != NULL && papszRow[0] != NULL )
+/* -------------------------------------------------------------------- */
+/*      We only support srses in the new ingres geospatial implementation.*/
+/* -------------------------------------------------------------------- */
+    if( !poDS->IsNewIngres() )
     {
-        nSRSId = atoi(papszRow[0]);
+        nSRSId = -1;
     }
 
-    // make sure to free our results
-    if( hResultSet != NULL )
-        ingres_free_result( hResultSet );
-    hResultSet = NULL;
+/* -------------------------------------------------------------------- */
+/*      If we haven't queried for the srs id yet, do so now.            */
+/* -------------------------------------------------------------------- */
+    if( nSRSId == -2 )
+    {
+        char         szCommand[1024];
+        char           **papszRow;
+        OGRIngresStatement oStatement(poDS->GetConn());
         
+        sprintf( szCommand, 
+                 "SELECT srid FROM geometry_columns "
+                 "WHERE f_table_name = '%s' AND f_geometry_column = '%s'",
+                 poDefn->GetName(),
+                 GetGeometryColumn());
+        
+        oStatement.ExecuteSQL(szCommand);
+        
+        papszRow = oStatement.GetRow();
+        
+        if( papszRow != NULL && papszRow[0] != NULL )
+        {
+            nSRSId = *((II_INT4 *) papszRow[0]);
+        }
+    }
+
     return nSRSId;
-#endif
 }
 
 /************************************************************************/
