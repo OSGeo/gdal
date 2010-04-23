@@ -74,6 +74,7 @@ public:
 
     int    IsColumnLong(int iCol);
     void   ClearDynamicColumns();
+    void   Close();
     int    SendParms();
 };
 
@@ -105,7 +106,7 @@ class OGRIngresLayer : public OGRLayer
 
     OGRIngresStatement *poResultSet; /* stmt */
 
-    int                 FetchSRSId();
+    int                 FetchSRSId(OGRFeatureDefn *poDefn);
     OGRGeometry        *TranslateGeometry( const char * );
 
   public:

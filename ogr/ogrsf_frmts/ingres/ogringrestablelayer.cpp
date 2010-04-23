@@ -248,8 +248,14 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
                   "table %s has no FID column, FIDs will not be reliable!",
                   pszTable );
 
+    //We must close the current statement before calling this or else
+    //The query within FetchSRSId will fail
+    oStatement.Close();
+
     // Fetch the SRID for this table now
-    //nSRSId = FetchSRSId(); 
+    // But only if it's the new Ingres Geospatial
+    if(poDS->IsNewIngres() == TRUE)
+        nSRSId = FetchSRSId(poDefn);
 
     return poDefn;
 }
@@ -736,42 +742,42 @@ OGRErr OGRIngresTableLayer::PrepareNewStyleGeometry(
 /* -------------------------------------------------------------------- */
     if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
     {
-        osRetGeomText.Printf( "POINTFROMWKB( ~V )");
+        osRetGeomText.Printf( "POINTFROMWKB( ~V , %d )", nSRSId );
     }
 /* -------------------------------------------------------------------- */
 /*      Linestring                                                      */
 /* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
-        osRetGeomText.Printf("LINEFROMWKB( ~V )");
+        osRetGeomText.Printf("LINEFROMWKB( ~V , %d)", nSRSId);
     }
 /* -------------------------------------------------------------------- */
 /*      Polygon                                                         */
 /* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
     {
-        osRetGeomText.Printf("POLYFROMWKB( ~V )");
+        osRetGeomText.Printf("POLYFROMWKB( ~V , %d)", nSRSId);
     }
 /* -------------------------------------------------------------------- */
 /*      Multipoint                                                      */
 /* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
     {
-        osRetGeomText.Printf("MPOINTFROMWKB( ~V )");
+        osRetGeomText.Printf("MPOINTFROMWKB( ~V , %d)", nSRSId);
     }
 /* -------------------------------------------------------------------- */
 /*      Multilinestring                                                 */
 /* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
     {
-    	osRetGeomText.Printf("MLINEFROMWKB( ~V )");
+    	osRetGeomText.Printf("MLINEFROMWKB( ~V , %d)", nSRSId);
     }
 /* -------------------------------------------------------------------- */
 /*      Multipolygon                                                    */
 /* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
     {
-    	osRetGeomText.Printf("MPOLYFROMWKB( ~V )");
+    	osRetGeomText.Printf("MPOLYFROMWKB( ~V , %d)", nSRSId);
     }
     else
     {
