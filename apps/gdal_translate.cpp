@@ -792,8 +792,52 @@ static int ProxyMain( int argc, char ** argv )
             poVDS->SetMetadata( papszMD, "GEOLOCATION" );
     }
 
+    int nSrcBandCount = nBandCount;
+
     if (nRGBExpand != 0)
-        nBandCount += nRGBExpand - 1;
+    {
+        GDALRasterBand  *poSrcBand;
+        poSrcBand = ((GDALDataset *) 
+                     hDataset)->GetRasterBand(panBandList[0]);
+        GDALColorTable* poColorTable = poSrcBand->GetColorTable();
+        if (poColorTable == NULL)
+        {
+            fprintf(stderr, "Error : band %d has no color table\n", panBandList[0]);
+            GDALClose( hDataset );
+            CPLFree( panBandList );
+            GDALDestroyDriverManager();
+            CSLDestroy( argv );
+            CSLDestroy( papszCreateOptions );
+            exit( 1 );
+        }
+        
+        /* Check that the color table only contains gray levels */
+        /* when using -expand gray */
+        if (nRGBExpand == 1)
+        {
+            int nColorCount = poColorTable->GetColorEntryCount();
+            int nColor;
+            for( nColor = 0; nColor < nColorCount; nColor++ )
+            {
+                const GDALColorEntry* poEntry = poColorTable->GetColorEntry(nColor);
+                if (poEntry->c1 != poEntry->c2 || poEntry->c1 != poEntry->c2)
+                {
+                    fprintf(stderr, "Warning : color table contains non gray levels colors\n");
+                    break;
+                }
+            }
+        }
+
+        if (nBandCount == 1)
+            nBandCount = nRGBExpand;
+        else if (nBandCount == 2 && (nRGBExpand == 3 || nRGBExpand == 4))
+            nBandCount = nRGBExpand;
+        else
+        {
+            fprintf(stderr, "Error : invalid use of -expand option.\n");
+            exit( 1 );
+        }
+    }
 
 /* ==================================================================== */
 /*      Process all bands.                                              */
@@ -803,38 +847,18 @@ static int ProxyMain( int argc, char ** argv )
         VRTSourcedRasterBand   *poVRTBand;
         GDALRasterBand  *poSrcBand;
         GDALDataType    eBandType;
+        int             nComponent = 0;
 
-        if (nRGBExpand != 0 && i < nRGBExpand)
+        if (nRGBExpand != 0)
         {
-            poSrcBand = ((GDALDataset *) 
-                     hDataset)->GetRasterBand(panBandList[0]);
-            GDALColorTable* poColorTable = poSrcBand->GetColorTable();
-            if (poColorTable == NULL)
+            if (nSrcBandCount == 2 && nRGBExpand == 4 && i == 3)
+                poSrcBand = ((GDALDataset *) 
+                        hDataset)->GetRasterBand(panBandList[1]);
+            else
             {
-                fprintf(stderr, "Error : band %d has no color table\n", panBandList[0]);
-                GDALClose( hDataset );
-                CPLFree( panBandList );
-                GDALDestroyDriverManager();
-                CSLDestroy( argv );
-                CSLDestroy( papszCreateOptions );
-                exit( 1 );
-            }
-            
-            /* Check that the color table only contains gray levels */
-            /* when using -expand gray */
-            if (nRGBExpand == 1)
-            {
-                int nColorCount = poColorTable->GetColorEntryCount();
-                int nColor;
-                for( nColor = 0; nColor < nColorCount; nColor++ )
-                {
-                    const GDALColorEntry* poEntry = poColorTable->GetColorEntry(nColor);
-                    if (poEntry->c1 != poEntry->c2 || poEntry->c1 != poEntry->c2)
-                    {
-                        fprintf(stderr, "Warning : color table contains non gray levels colors\n");
-                        break;
-                    }
-                }
+                poSrcBand = ((GDALDataset *) 
+                        hDataset)->GetRasterBand(panBandList[0]);
+                nComponent = i + 1;
             }
         }
         else
@@ -898,7 +922,7 @@ static int ProxyMain( int argc, char ** argv )
                                          0, 0, nOXSize, nOYSize,
                                          dfOffset, dfScale,
                                          VRT_NODATA_UNSET,
-                                         (nRGBExpand != 0 && i < nRGBExpand) ? i + 1 : 0 );
+                                         nComponent );
         }
         else
             poVRTBand->AddSimpleSource( poSrcBand,
