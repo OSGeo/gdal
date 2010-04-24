@@ -1763,11 +1763,20 @@ def tiff_write_54():
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_54.tif',
                                               256, 256, 3,
                                               options=['TILED=YES', 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'] )
-    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(1).Fill(255)
     ds.FlushCache()
     ds = None
 
+    ds = gdal.Open('tmp/tiff_write_54.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_54.tif' )
+
+    if cs == 0:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
 
     return 'success'
 
@@ -2863,6 +2872,47 @@ def tiff_write_82():
 
     return 'success'
 
+
+###############################################################################
+# Test writing & reading an indexed GeoTIFF with an extra transparency band (#3547)
+
+def tiff_write_83():
+
+    # Test Create() method
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_83.tif',1,1,2)
+    ct = gdal.ColorTable() 
+    ct.SetColorEntry( 127, (255,255,255,255) )
+    ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+    ds.GetRasterBand( 1 ).Fill(127)
+    ds.GetRasterBand( 2 ).Fill(255)
+    ds = None
+
+    # Test CreateCopy() method
+    src_ds = gdal.Open('tmp/tiff_write_83.tif')
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_83_2.tif', src_ds)
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_83_2.tif')
+    ct2 = ds.GetRasterBand(1).GetRasterColorTable()
+    if ct2.GetColorEntry(127) != (255,255,255,255):
+        gdaltest.post_reason('did not get expected color table')
+        return 'fail'
+    cs1 = ds.GetRasterBand(1).Checksum()
+    if cs1 != 127 % 7:
+        gdaltest.post_reason('did not get expected checksum for band 1')
+        return 'fail'
+    cs2 = ds.GetRasterBand(2).Checksum()
+    if cs2 != 255 % 7:
+        gdaltest.post_reason('did not get expected checksum for band 2')
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_83.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_83_2.tif' )
+
+    return 'success'
+
 ###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -2956,6 +3006,7 @@ gdaltest_list = [
     tiff_write_80,
     tiff_write_81,
     tiff_write_82,
+    tiff_write_83,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':

@@ -504,6 +504,44 @@ def test_gdal_translate_18():
 
     return 'success'
 
+
+###############################################################################
+# Test -expand rgba on a color indexed dataset with an alpha band
+
+def test_gdal_translate_19():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/test_gdal_translate_19_src.tif',1,1,2)
+    ct = gdal.ColorTable() 
+    ct.SetColorEntry( 127, (255,255,255,255) )
+    ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+    ds.GetRasterBand( 1 ).Fill(127)
+    ds.GetRasterBand( 2 ).Fill(255)
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgba tmp/test_gdal_translate_19_src.tif tmp/test_gdal_translate_19_dst.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_19_dst.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 1:
+        gdaltest.post_reason('Bad checksum for band 1')
+        return 'fail'
+    if ds.GetRasterBand(2).Checksum() != 2:
+        gdaltest.post_reason('Bad checksum for band 2')
+        return 'fail'
+    if ds.GetRasterBand(3).Checksum() != 3:
+        gdaltest.post_reason('Bad checksum for band 3')
+        return 'fail'
+    if ds.GetRasterBand(4).Checksum() != 255 % 7:
+        gdaltest.post_reason('Bad checksum for band 4')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
 ###############################################################################
 # Cleanup
 
@@ -539,6 +577,14 @@ def test_gdal_translate_cleanup():
         pass
     try:
         os.remove('tmp/test18_2.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/test_gdal_translate_19_src.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/test_gdal_translate_19_dst.tif')
     except:
         pass
     return 'success'
