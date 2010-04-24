@@ -205,8 +205,8 @@ class GTiffDataset : public GDALPamDataset
                                     GDALProgressFunc, void * );
 
     CPLErr	   OpenOffset( TIFF *, GTiffDataset **ppoActiveDSRef, 
-                               toff_t nDirOffset, int, GDALAccess, 
-                               int bAllowRGBAInterface = TRUE);
+                               toff_t nDirOffset, int bBaseIn, GDALAccess, 
+                               int bAllowRGBAInterface = TRUE, int bReadGeoTransform = FALSE);
 
     static GDALDataset *OpenDir( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -4428,7 +4428,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->OpenOffset( hTIFF, &(poDS->poActiveDS),
                           TIFFCurrentDirOffset(hTIFF), TRUE,
                           poOpenInfo->eAccess, 
-                          bAllowRGBAInterface ) != CE_None )
+                          bAllowRGBAInterface, TRUE ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -4721,7 +4721,8 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     }
 
     if( poDS->OpenOffset( hTIFF, &(poDS->poActiveDS),
-                          nOffset, FALSE, GA_ReadOnly, bAllowRGBAInterface ) != CE_None )
+                          nOffset, FALSE, GA_ReadOnly,
+                          bAllowRGBAInterface, TRUE ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -4745,7 +4746,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                                  GTiffDataset **ppoActiveDSRef,
                                  toff_t nDirOffsetIn, 
 				 int bBaseIn, GDALAccess eAccess,
-                                 int bAllowRGBAInterface)
+                                 int bAllowRGBAInterface,
+                                 int bReadGeoTransform)
 
 {
     uint32	nXSize, nYSize;
@@ -5058,7 +5060,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 /*      Get the transform or gcps from the GeoTIFF file.                */
 /* -------------------------------------------------------------------- */
-    if( bBaseIn )
+    if( bReadGeoTransform )
     {
         char    *pszTabWKT = NULL;
         double	*padfTiePoints, *padfScale, *padfMatrix;
