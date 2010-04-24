@@ -79,7 +79,7 @@ int main( int argc, char ** argv )
 
 {
     GDALDatasetH	hSrcDS, hDstDS;
-    GDALDataset *       poSrcDS, *poDstDS;
+    GDALDataset *       poSrcDS, *poDstDS = NULL;
     int			i;
     int			nRasterXSize, nRasterYSize;
     const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
@@ -408,7 +408,7 @@ int main( int argc, char ** argv )
 /*      transfer.                                                       */
 /* -------------------------------------------------------------------- */
     int nBytesPerPixel = nBandCount * (GDALGetDataTypeSize(eOutputType) / 8);
-    void *pImage = VSIMalloc3( nOXSize, nOYSize, nBytesPerPixel*4 );
+    void *pImage = VSIMalloc3( nOXSize, nOYSize, nBytesPerPixel );
 
     if( pImage == NULL )
     {
@@ -458,6 +458,11 @@ int main( int argc, char ** argv )
             hDstDS = GDALCreate( hDriver, osOutFilename, nOXSize, nOYSize, 
                                  nBandCount, eOutputType, 
                                  papszCreateOptions );
+            if (hDstDS == NULL)
+            {
+                exit(1);
+            }
+            
             poDstDS = (GDALDataset *) hDstDS;
                                       
 /* -------------------------------------------------------------------- */
