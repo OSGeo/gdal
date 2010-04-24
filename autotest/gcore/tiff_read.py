@@ -79,6 +79,13 @@ def tiff_read_off():
     if ds.GetRasterBand(1).Checksum() != 4672:
         return 'fail'
 
+    # Check that georeferencing is read properly when accessing "GTIFF_DIR" subdatasets (#3478)
+    gt = ds.GetGeoTransform()
+    if gt != (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0):
+        gdaltest.post_reason('did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
     return 'success'
 
 
