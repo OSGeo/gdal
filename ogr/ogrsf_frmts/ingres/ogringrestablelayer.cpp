@@ -156,9 +156,10 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
                 || EQUAL(osInternalType,"LONG POLYGON")
                 || EQUAL(osInternalType,"CIRCLE")
                 || EQUAL(osInternalType,"LINESTRING")
-				|| EQUAL(osInternalType,"MULTIPOINT")
-				|| EQUAL(osInternalType,"MULTIPOLYGON")
-				|| EQUAL(osInternalType,"MULTILINESTRING")
+                || EQUAL(osInternalType,"MULTIPOINT")
+                || EQUAL(osInternalType,"MULTIPOLYGON")
+                || EQUAL(osInternalType,"MULTILINESTRING")
+                || EQUAL(osInternalType,"GEOMETRYCOLLECTION")
                 || EQUAL(osInternalType,"ICIRCLE")) )
         {
             osGeomColumn = osFieldName;
@@ -176,6 +177,9 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
             	poDefn->SetGeomType(wkbMultiPolygon);
             else if( strstr(osInternalType,"MULTILINESTRING"))
             	poDefn->SetGeomType(wkbMultiLineString);
+            // Oddly this is the standin for a generic geometry type.
+            else if( strstr(osInternalType,"GEOMETRYCOLLECTION"))
+            	poDefn->SetGeomType(wkbUnknown);
             else
                 poDefn->SetGeomType( wkbPolygon );
             continue;
@@ -779,9 +783,24 @@ OGRErr OGRIngresTableLayer::PrepareNewStyleGeometry(
     {
     	osRetGeomText.Printf("MPOLYFROMWKB( ~V , %d)", nSRSId);
     }
-    else
+/* -------------------------------------------------------------------- */
+/*      Geometry collection.                                            */
+/* -------------------------------------------------------------------- */
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
     {
-        eErr = OGRERR_FAILURE;
+    	osRetGeomText.Printf("GEOMCOLLFROMWKB( ~V , %d)", nSRSId);
+    }
+/* -------------------------------------------------------------------- */
+/*      Fallback generic geometry handling.                             */
+/* -------------------------------------------------------------------- */
+    else 
+    {
+        CPLDebug( 
+            "INGRES",
+            "Unexpected geometry type (%s), attempting to treat generically.",
+            poGeom->getGeometryName() );
+
+    	osRetGeomText.Printf("GEOMETRYFROMWKB( ~V , %d)", nSRSId);
     }
 
     return eErr;

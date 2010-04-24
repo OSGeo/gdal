@@ -777,7 +777,7 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     {
     	if( IsNewIngres() )
     	{
-    		pszGeometryType = "LINESTRING";
+            pszGeometryType = "LINESTRING";
     	}
     	else
     	{
@@ -789,7 +789,7 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     {
     	if( IsNewIngres() )
     	{
-    		pszGeometryType = "POLYGON";
+            pszGeometryType = "POLYGON";
     	}
     	else
     	{
@@ -797,15 +797,45 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     	}
     }
 
+    else if( wkbFlatten(eType) == wkbMultiPolygon )
+    {
+    	if( IsNewIngres() )
+            pszGeometryType = "MULTIPOLYGON";
+    }
+
+    else if( wkbFlatten(eType) == wkbMultiLineString )
+    {
+    	if( IsNewIngres() )
+            pszGeometryType = "MULTILINESTRING";
+    }
+
+    else if( wkbFlatten(eType) == wkbMultiPoint )
+    {
+    	if( IsNewIngres() )
+            pszGeometryType = "MULTIPOINT";
+    }
+
+    else if( wkbFlatten(eType) == wkbGeometryCollection )
+    {
+    	if( IsNewIngres() )
+            pszGeometryType = "GEOMETRYCOLLECTION";
+    }
+
+    else if( wkbFlatten(eType) == wkbUnknown )
+    {
+    	if( IsNewIngres() )
+            // this is also used as the generic geometry type.
+            pszGeometryType = "GEOMETRYCOLLECTION";
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Try to get the SRS Id of this spatial reference system,         */
     /*      adding tot the srs table if needed.                             */
     /* -------------------------------------------------------------------- */
-        int nSRSId = -1;
-
-        if( poSRS != NULL && IsNewIngres() == TRUE )
-            nSRSId = FetchSRSId( poSRS );
-
+    int nSRSId = -1;
+    
+    if( poSRS != NULL && IsNewIngres() == TRUE )
+        nSRSId = FetchSRSId( poSRS );
 
 /* -------------------------------------------------------------------- */
 /*      Form table creation command.                                    */
@@ -863,122 +893,6 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
             return NULL;
     }
 
-    // Calling this does no harm
-    //InitializeMetadataTables();
-    
-/* -------------------------------------------------------------------- */
-/*      Sometimes there is an old crufty entry in the geometry_columns  */
-/*      table if things were not properly cleaned up before.  We make   */
-/*      an effort to clean out such cruft.                              */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    sprintf( szCommand,
-             "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
-             pszLayerName );
-
-    if( ingres_query(GetConn(), szCommand ) )
-    {
-        ReportError( szCommand );
-        return NULL;
-    }
-
-    // make sure to attempt to free results of successful queries
-    hResult = ingres_store_result( GetConn() );
-    if( hResult != NULL )
-        ingres_free_result( hResult );
-    hResult = NULL;   
-#endif
-        
-/* -------------------------------------------------------------------- */
-/*      Attempt to add this table to the geometry_columns table, if     */
-/*      it is a spatial layer.                                          */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    if( eType != wkbNone )
-    {
-        int nCoordDimension;
-        if( eType == wkbFlatten(eType) )
-            nCoordDimension = 2;
-        else
-            nCoordDimension = 3;
-
-        switch( wkbFlatten(eType) )
-        {
-            case wkbPoint:
-                pszGeometryType = "POINT";
-                break;
-
-            case wkbLineString:
-                pszGeometryType = "LINESTRING";
-                break;
-
-            case wkbPolygon:
-                pszGeometryType = "POLYGON";
-                break;
-
-            case wkbMultiPoint:
-                pszGeometryType = "MULTIPOINT";
-                break;
-
-            case wkbMultiLineString:
-                pszGeometryType = "MULTILINESTRING";
-                break;
-
-            case wkbMultiPolygon:
-                pszGeometryType = "MULTIPOLYGON";
-                break;
-
-            case wkbGeometryCollection:
-                pszGeometryType = "GEOMETRYCOLLECTION";
-                break;
-
-            default:
-                pszGeometryType = "GEOMETRY";
-                break;
-
-        }
-
-        if( nSRSId == -1 )
-            sprintf( szCommand,
-                     "INSERT INTO geometry_columns "
-                     " (F_TABLE_NAME, "
-                     "  F_GEOMETRY_COLUMN, "
-                     "  COORD_DIMENSION, "
-                     "  TYPE) values "
-                     "  ('%s', '%s', %d, '%s')",
-                     pszLayerName,
-                     pszGeomColumnName,
-                     nCoordDimension,
-                     pszGeometryType );
-        else
-            sprintf( szCommand,
-                     "INSERT INTO geometry_columns "
-                     " (F_TABLE_NAME, "
-                     "  F_GEOMETRY_COLUMN, "
-                     "  COORD_DIMENSION, "
-                     "  SRID, "
-                     "  TYPE) values "
-                     "  ('%s', '%s', %d, %d, '%s')",
-                     pszLayerName,
-                     pszGeomColumnName,
-                     nCoordDimension,
-                     nSRSId,
-                     pszGeometryType );
-
-        if( ingres_query(GetConn(), szCommand ) )
-        {
-            ReportError( szCommand );
-            return NULL;
-        }
-
-        // make sure to attempt to free results of successful queries
-        hResult = ingres_store_result( GetConn() );
-        if( hResult != NULL )
-            ingres_free_result( hResult );
-        hResult = NULL;   
-    }
-#endif
-        
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
