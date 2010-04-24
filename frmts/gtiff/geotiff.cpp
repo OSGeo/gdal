@@ -1024,7 +1024,14 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 /* -------------------------------------------------------------------- */
 /*      Check if this is even a candidate for applying a PCT.           */
 /* -------------------------------------------------------------------- */
-    if( poGDS->nSamplesPerPixel != 1 )
+    if( nBand != 1)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "SetColorTable() can only be called on band 1." );
+        return CE_Failure;
+    }
+
+    if( poGDS->nSamplesPerPixel != 1 && poGDS->nSamplesPerPixel != 2)
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "SetColorTable() not supported for multi-sample TIFF files." );
@@ -6532,7 +6539,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Does the source image consist of one band, with a palette?      */
 /*      If so, copy over.                                               */
 /* -------------------------------------------------------------------- */
-    if( nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL 
+    if( (nBands == 1 || nBands == 2) && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL 
         && eType == GDT_Byte )
     {
         unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
@@ -6562,7 +6569,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
         TIFFSetField( hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
     }
-    else if( nBands == 1 
+    else if( (nBands == 1 || nBands == 2) 
              && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL 
              && eType == GDT_UInt16 )
     {
@@ -6604,7 +6611,16 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     else if( poSrcDS->GetRasterBand(1)->GetColorTable() != NULL )
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to export color table to GeoTIFF file.  Color tables\n"
-                  "can only be written to 1 band Byte or UInt16 GeoTIFF files." );
+                  "can only be written to 1 band or 2 bands Byte or UInt16 GeoTIFF files." );
+
+    if( nBands == 2
+        && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL 
+        && (eType == GDT_Byte || eType == GDT_UInt16) )
+    {
+        uint16 v[1] = { EXTRASAMPLE_UNASSALPHA };
+
+        TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Transfer some TIFF specific metadata, if available.             */
