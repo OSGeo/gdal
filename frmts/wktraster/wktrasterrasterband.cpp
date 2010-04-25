@@ -600,6 +600,10 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
     WKTRasterBandWrapper * poWKTRasterBandWrapper = NULL;
     int nNaturalXBlockSize = 0;
     int nNaturalYBlockSize = 0;
+    int nPadXSize = 0;
+    int nPadYSize = 0;
+    int nBlockXBound = 0;
+    int nBlockYBound = 0;
 
 
     // Check parameters
@@ -630,14 +634,24 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
      *************************************************************************/
     GetBlockSize(&nNaturalXBlockSize, &nNaturalYBlockSize);
 
+    /**
+     * The end of this block is the start of the next one
+     * xxx jorgearevalo: sure?? always??
+     */
+    nBlockXBound = (nBlockXOff * nNaturalXBlockSize) + nNaturalXBlockSize;
+    nBlockYBound = (nBlockYOff * nNaturalYBlockSize) + nNaturalYBlockSize;
 
-    nPixelXInitPosition = nNaturalXBlockSize * nBlockXOff;
-    nPixelYInitPosition = nNaturalYBlockSize * nBlockYOff;
+    if (nBlockXBound > nRasterXSize)
+        nPadXSize = nBlockXBound - nRasterXSize;            
+    if (nBlockYBound > nRasterYSize)
+        nPadYSize = nBlockYBound - nRasterYSize;
 
-    // Now, get the end of the block
-    nPixelXEndPosition = nPixelXInitPosition + nNaturalXBlockSize;
-    nPixelYEndPosition = nPixelYInitPosition + nNaturalYBlockSize;
 
+    nPixelXInitPosition = nBlockXOff * nNaturalXBlockSize;
+    nPixelYInitPosition = nBlockYOff * nNaturalYBlockSize;
+
+    nPixelXEndPosition = nPixelXInitPosition + (nNaturalXBlockSize - nPadXSize);
+    nPixelYEndPosition = nPixelYInitPosition + (nNaturalYBlockSize - nPadYSize);
 
     /**************************************************************************
      * Transform pixel/line coordinates into coordinates of the raster
@@ -647,6 +661,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
      * array format.
      **************************************************************************/
     poWKTRasterDS->GetGeoTransform(adfTransform);
+   
     dfProjXInit = adfTransform[0] +
             nPixelXInitPosition * adfTransform[1] +
             nPixelYInitPosition * adfTransform[2];
@@ -771,9 +786,6 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
         }
     }
 
-
-    //printf("query: %s\n", szCommand);
-
     hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
 
     if (hPGresult == NULL ||
@@ -790,6 +802,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
 
 
     nTuples = PQntuples(hPGresult);
+
 
     /*****************************************************************
      * No blocks found. Fill the buffer with nodata value
