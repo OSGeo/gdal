@@ -18,16 +18,18 @@
  *      (August 2009)
  *
  * TODO:
+ *  - Eliminate working mode. We can determine if the raster has regular
+ *      blocking or not by querying RASTER_COLUMNS table.
  *	- Allow non-regular blocking table arrangements (in general)
- *  	- Allow PQ connection string parameters in any order
- *      - Update data blocks in SetProjection
- *      - Update data blocks in SetGeoTransform
- *      - Disable sequential scanning in OpenConnection in the database instance
- *        has support for GEOMETRY type (is a good idea?)
- *      - In SetRasterProperties, if we can't create OGRGeometry from database,
- *        we should "attack" directly the WKT representation of geometry, not
- *        abort the program. For example, when pszProjectionRef is NULL
- *       (SRID = -1), when poSR or prGeom are NULL...
+ *  - Allow PQ connection string parameters in any order
+ *  - Update data blocks in SetProjection
+ *  - Update data blocks in SetGeoTransform
+ *  - Disable sequential scanning in OpenConnection in the database instance
+ *    has support for GEOMETRY type (is a good idea?)
+ *  - In SetRasterProperties, if we can't create OGRGeometry from database,
+ *    we should "attack" directly the WKT representation of geometry, not
+ *    abort the program. For example, when pszProjectionRef is NULL
+ *   (SRID = -1), when poSR or prGeom are NULL...
  *
  *    Low priority:
  *      - Add support for rotated images in SetRasterProperties
@@ -578,16 +580,6 @@ CPLErr WKTRasterDataset::SetRasterProperties() {
      ********************************************************************/
     if (EQUALN(pszWorkingMode,
             REGULARLY_TILED_MODE, strlen(REGULARLY_TILED_MODE))) {
-        /********************************************
-         *  Populate georeference related fields
-         *  Note: From now (July 2009), only
-         *  north up images (unrotated) will be
-         *  supported.
-         *
-         *  TODO: Support for rotated images?
-         ********************************************/
-        dfRotationX = 0.0;
-        dfRotationY = 0.0;
 
         /**************************************************************
          * Try to fetch info from RASTER_COLUMNS table
@@ -603,7 +595,8 @@ CPLErr WKTRasterDataset::SetRasterProperties() {
                 hPGresult != NULL &&
                 PQresultStatus(hPGresult) == PGRES_TUPLES_OK &&
                 PQntuples(hPGresult) > 0
-                ) {
+                ) 
+        {
 
             nSrid = atoi(PQgetvalue(hPGresult, 0, 0));
 
@@ -611,65 +604,84 @@ CPLErr WKTRasterDataset::SetRasterProperties() {
 
             dfPixelSizeX = atof(PQgetvalue(hPGresult, 0, 2));
             dfPixelSizeY = atof(PQgetvalue(hPGresult, 0, 3));
-            nBlockSizeX = atoi(PQgetvalue(hPGresult, 0, 4));
-            nBlockSizeY = atoi(PQgetvalue(hPGresult, 0, 5));
+
+            /**
+             * BE CAREFUL!! blocksize_x and blocksize_y may be NULL
+             */
+            nBlockSizeX = (PQgetvalue(hPGresult, 0, 4)) ? 
+                atoi(PQgetvalue(hPGresult, 0, 4)) :
+                0;
+            nBlockSizeY = (PQgetvalue(hPGresult, 0, 5)) ?
+                atoi(PQgetvalue(hPGresult, 0, 5)) :
+                0;
 
             PQclear(hPGresult);
 
-            /******************************************************************
-             * TODO If we can't create OGRGeometry from database, we should 
-             * "attack" directly the WKT representation of geometry, not abort
-             * the program. For example, when pszProjectionRef is NULL
-             * (SRID = -1), when poSR or prGeom are NULL...
-             ******************************************************************/
-            pszProjectionRef = (char *) GetProjectionRef();
-            poSR = new OGRSpatialReference(pszProjectionRef);
-            OgrErr = OGRGeometryFactory::createFromWkt(&pszWKTRaster, poSR,
-                    &poGeom);
-            if (OgrErr != OGRERR_NONE) {
+            
+            /**
+             * Construct a Geometry Object based on raster extent
+             */
+            if (nSrid != -1)
+            {                                    
+                pszProjectionRef = (char *) GetProjectionRef();
+                poSR = new OGRSpatialReference(pszProjectionRef);
+            }           
 
+            else
+            {
+                poSR = new OGRSpatialReference();
+            }           
+
+            OgrErr = OGRGeometryFactory::createFromWkt(&pszWKTRaster, poSR,
+                        &poGeom);
+            if (OgrErr != OGRERR_NONE) 
+            {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "Can't get WKT Raster extent from database\n");
+                    "Couldn't get WKT Raster extent from database\n");
                 CPLFree(pszWKTRaster);
 
-                /**
-                 * NOTE: Projection ref can be an empty string. Should it be
-                 * free in that case?
-                 */
                 CPLFree(pszProjectionRef);
 
                 return CE_Failure;
-            }
+            }         
 
 
+            /****************************************************************
+             * TODO: Get skewX and skewY with st_skewx and st_skewy
+             ****************************************************************/
+            dfRotationX = 0.0;
+            dfRotationY = 0.0;
+            
             /****************************************************************
              * Get upper left and lower rights coordinates for this block.
              * The lower right coords are not really needed...
              ****************************************************************/
-            poE = new OGREnvelope();
-            poGeom->getEnvelope(poE);
-            dfUpperLeftX = poE->MinX;
-            dfUpperLeftY = poE->MaxY;
-            dfLowerRightX = poE->MaxX;
-            dfLowerRightY = poE->MinY;
+             poE = new OGREnvelope();
+             poGeom->getEnvelope(poE);
+        
+             dfUpperLeftX = poE->MinX;
+             dfUpperLeftY = poE->MinY;
+             dfLowerRightX = poE->MaxX;
+             dfLowerRightY = poE->MaxY;
 
             /****************************************************************
              * Get raster size from extent (Geometry)
              ****************************************************************/
-            nRasterXSize = (int)
-                    fabs(rint((poE->MaxX - poE->MinX) / dfPixelSizeX));
-            nRasterYSize = (int)
-                    fabs(rint((poE->MaxY - poE->MinY) / dfPixelSizeY));
+             nRasterXSize = (int)
+                fabs(rint((poE->MaxX - poE->MinX) / dfPixelSizeX));
+             nRasterYSize = (int)
+                fabs(rint((poE->MaxY - poE->MinY) / dfPixelSizeY));
 
-
-            return CE_None;
+            
+             return CE_None;
         }
         
         /**
          * If the table isn't listed in RASTER_COLUMNS then it isn't
          * regularly_blocked for our purposes. This is only temporarily
          */
-        else {
+        else 
+        {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Can't get georeference coordinates from database\n");
             return CE_Failure;
