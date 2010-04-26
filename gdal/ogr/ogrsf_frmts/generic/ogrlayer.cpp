@@ -960,6 +960,38 @@ const char *OGR_L_GetGeometryColumn( OGRLayerH hLayer )
 }
 
 /************************************************************************/
+/*                            GetStyleTable()                           */
+/************************************************************************/
+
+OGRStyleTable *OGRLayer::GetStyleTable()
+{
+    return m_poStyleTable;
+}
+
+/************************************************************************/
+/*                         SetStyleTableDirectly()                      */
+/************************************************************************/
+
+void OGRLayer::SetStyleTableDirectly( OGRStyleTable *poStyleTable )
+{
+    if ( m_poStyleTable )
+        delete m_poStyleTable;
+    m_poStyleTable = poStyleTable;
+}
+
+/************************************************************************/
+/*                            SetStyleTable()                           */
+/************************************************************************/
+
+void OGRLayer::SetStyleTable(OGRStyleTable *poStyleTable)
+{
+    if ( m_poStyleTable )
+        delete m_poStyleTable;
+    if ( poStyleTable )
+        m_poStyleTable = poStyleTable->Clone();
+}
+
+/************************************************************************/
 /*                         OGR_L_GetStyleTable()                        */
 /************************************************************************/
 

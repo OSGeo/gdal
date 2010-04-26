@@ -1845,7 +1845,21 @@ fi
 
 AC_SUBST([HAVE_EXPAT], $HAVE_EXPAT)
 AC_SUBST([EXPAT_INCLUDE], $EXPAT_CFLAGS)
- 
+
+dnl ---------------------------------------------------------------------------
+dnl Check for Google libkml support.
+dnl ---------------------------------------------------------------------------
+
+LIBKML_REQ_VERSION="1.2.0"
+AX_LIB_LIBKML($LIBKML_REQ_VERSION)
+
+if test "$HAVE_LIBKML" = "yes"; then
+    LIBS="$LIBKML_LDFLAGS $LIBS"
+fi
+
+AC_SUBST([HAVE_LIBKML], $HAVE_LIBKML)
+AC_SUBST([LIBKML_INCLUDE], $LIBKML_CFLAGS)
+  
 dnl ---------------------------------------------------------------------------
 dnl Check for ODBC support.
 dnl ---------------------------------------------------------------------------
@@ -2630,6 +2644,7 @@ LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
 LOC_MSG([  NAS support:               ${HAVE_NAS}])
 LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
+LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  PGeo support:              ${ODBC_SETTING}])
 LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
