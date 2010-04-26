@@ -278,8 +278,11 @@ def jp2kak_13():
         gdaltest.post_reason( 'did not get expected overview size.' )
         return 'fail'
 
+    # Note, due to oddities of rounding related to identifying discard
+    # levels the overview is actually generated with no discard levels
+    # and in the debug output we see 500x7 -> 500x7 -> 250x4.
     checksum = ov_band.Checksum()
-    expected = 12083
+    expected = 11776
 
     if checksum != expected:
         print(checksum)
