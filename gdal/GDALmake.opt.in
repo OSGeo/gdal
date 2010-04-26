@@ -204,6 +204,12 @@ HAVE_EXPAT = @HAVE_EXPAT@
 EXPAT_INCLUDE = @EXPAT_INCLUDE@
 
 #
+# Google libkml for the new OGR KML driver written by Brian Case
+#
+HAVE_LIBKML = @HAVE_LIBKML@
+LIBKML_INCLUDE = @LIBKML_INCLUDE@
+
+#
 # Oracle Spatial Support
 #
 HAVE_OCI	= @HAVE_OCI@

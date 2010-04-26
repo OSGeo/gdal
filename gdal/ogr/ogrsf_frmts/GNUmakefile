@@ -22,6 +22,7 @@ SUBDIRS-$(HAVE_SQLITE)	+= sqlite
 SUBDIRS-$(HAVE_SDE)     += sde
 SUBDIRS-$(HAVE_INGRES)  += ingres
 SUBDIRS-$(HAVE_VFK)     += vfk
+SUBDIRS-$(HAVE_LIBKML)  += libkml
 
 ifeq ($(PCIDSK_SETTING),internal)
 SUBDIRS-yes  += pcidsk
