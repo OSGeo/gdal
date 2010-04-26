@@ -1,0 +1,71 @@
+<html>
+<head>
+    <title>Libkml Driver</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+    <h1>Libkml Driver (.kml .kmz)</h1>
+
+
+    <h2>datasource</h2>
+    
+    <h3>Enviroment Variables</h3>
+    <dl>
+        <dt>LIBKML_USE_DOC.KML</dt>
+        <dd>read/write a kml file with a network link to each layer file, for
+         .kmz and dir datasets. Defaults to yes</dd>
+    </dl>
+
+    <h3>Style</h3>
+    Style tables are wrote to the document in a .kml file, style/style.kml
+    in a kmz file.
+    <h3>Schema</h3>
+    
+    <h2>Layer</h2>
+    
+    <h3>Style</h3>
+    Layer style tables cannot be read or written to a kml layer that is a folder,
+    otherwise they are in the document that is the layer.
+    
+    <h3>Schema</h3>
+    Read and write of Schema is supported for .kml files , .kmz files, and dirs.
+    
+    <h3>Other</h3>
+    Description, timestamp, timespan, open, and Visibility are not supported on
+    layers as there is no place in ogr to store this data.
+
+    <h2>Fields</h2>
+    
+    <h3>Enviroment Variables</h3>
+    <dl>
+        <dt>LIBKML_NAME_FIELD</dt>
+        <dd>Name of the OGR field to use for a placemark's name,
+          Defaults to Name</dd>
+        <dt>LIBKML_DESCRIPTION_FIELD</dt>
+        <dd>Name of the OGR field to use for a placemark's description,
+          Defaults to description</dd>
+        <dt>LIBKML_TIMESTAMP_FIELD</dt>
+        <dd>Name of the OGR field to use for a placemark's timestamp,
+          Defaults to timestamp</dd>
+        <dt>LIBKML_BEGIN_FIELD</dt>
+        <dd>Name of the OGR field to use for a placemark's timespan begin,
+          Defaults to begin</dd>
+        <dt>LIBKML_END_FIELD</dt>
+        <dd>Name of the OGR field to use for a placemark's timespan end,
+          Defaults to end</dd>
+        <dt>LIBKML_ALTITUDEMODE_FIELD</dt>
+        <dd>Name of the OGR field to use for a geometry's altitudeMode,
+          Defaults to altitudeMode</dd>
+        <dt>LIBKML_TESSELLATE_FIELD</dt>
+        <dd>Name of the OGR field to use for a polygon's tessellate,
+          Defaults to tessellate</dd>
+        <dt>LIBKML_EXTRUDE_FIELD</dt>
+        <dd>Name of the OGR field to use for a geometry's extrude,
+          Defaults to extrude</dd>
+        <dt>LIBKML_VISIBILITY_FIELD</dt>
+        <dd>Name of the OGR field to use for a placemark's visibility,
+          Defaults to visibility</dd>
+    </dl>
+</body>
+</html>
