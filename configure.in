@@ -1850,7 +1850,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check for Google libkml support.
 dnl ---------------------------------------------------------------------------
 
-LIBKML_REQ_VERSION="1.2.0"
+LIBKML_REQ_VERSION="1.3.0"
 AX_LIB_LIBKML($LIBKML_REQ_VERSION)
 
 if test "$HAVE_LIBKML" = "yes"; then
