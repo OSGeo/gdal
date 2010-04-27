@@ -724,7 +724,6 @@ int OGRLIBKMLDataSource::OpenKml (
     }
 
     m_isKml = TRUE;
-    printf("m_isKml = TRUE; %i %i\n", m_isKml, IsKml());
 
     /***** get the styles *****/
 
