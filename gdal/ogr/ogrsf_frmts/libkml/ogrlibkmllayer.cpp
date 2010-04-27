@@ -361,7 +361,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
          && poKmlFeature->Type (  ) == kmldom::Type_Placemark ) {
         poOgrFeature =
             kml2feat ( AsPlacemark ( poKmlFeature ), m_poOgrDS, this,
-                       m_poOgrFeatureDefn );
+                       m_poOgrFeatureDefn, m_poOgrSRS );
     }
 
     return poOgrFeature;

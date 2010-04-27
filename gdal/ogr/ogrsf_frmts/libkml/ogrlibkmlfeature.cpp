@@ -78,7 +78,8 @@ OGRFeature *kml2feat (
     PlacemarkPtr poKmlPlacemark,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
-    OGRFeatureDefn * poOgrFeatDefn )
+    OGRFeatureDefn * poOgrFeatDefn,
+    OGRSpatialReference *poOgrSRS)
 {
 
     OGRFeature *poOgrFeat = new OGRFeature ( poOgrFeatDefn );
@@ -91,7 +92,7 @@ OGRFeature *kml2feat (
 
     if ( poKmlPlacemark->has_geometry (  ) ) {
         OGRGeometry *poOgrGeom =
-            kml2geom ( poKmlPlacemark->get_geometry (  ) );
+            kml2geom ( poKmlPlacemark->get_geometry (  ), poOgrSRS );
         poOgrFeat->SetGeometryDirectly ( poOgrGeom );
 
     }
