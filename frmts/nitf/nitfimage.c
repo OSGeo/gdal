@@ -1617,7 +1617,7 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         return BLKREAD_FAIL;
     }
 
-    if( VSIFReadL( pData, 1, nLineSize, psImage->psFile->fp ) !=  
+    if( VSIFReadL( pabyLineBuf, 1, nLineSize, psImage->psFile->fp ) !=  
         nLineSize )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
