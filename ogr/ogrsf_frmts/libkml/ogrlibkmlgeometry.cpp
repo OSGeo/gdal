@@ -318,6 +318,7 @@ ElementPtr geom2kml (
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
+            poOgrSRS        pointer to the spatial ref to set on the geometry 
 
 Returns:
             pointer to the new ogr geometry object
@@ -325,7 +326,9 @@ Returns:
 ******************************************************************************/
 
 OGRGeometry *kml2geom (
-    GeometryPtr poKmlGeometry )
+    GeometryPtr poKmlGeometry,
+    OGRSpatialReference *poOgrSRS)
+
 {
 
     /***** ogr geom vars *****/
@@ -436,7 +439,7 @@ OGRGeometry *kml2geom (
 
             poKmlOuterRing = poKmlPolygon->get_outerboundaryis (  );
             poKmlLinearRing = poKmlOuterRing->get_linearring (  );
-            poOgrTmpGeometry = kml2geom ( poKmlLinearRing );
+            poOgrTmpGeometry = kml2geom ( poKmlLinearRing, poOgrSRS );
 
             poOgrPolygon->
                 addRingDirectly ( ( OGRLinearRing * ) poOgrTmpGeometry );
@@ -446,7 +449,7 @@ OGRGeometry *kml2geom (
         for ( i = 0; i < nRings; i++ ) {
             poKmlInnerRing = poKmlPolygon->get_innerboundaryis_array_at ( i );
             poKmlLinearRing = poKmlInnerRing->get_linearring (  );
-            poOgrTmpGeometry = kml2geom ( poKmlLinearRing );
+            poOgrTmpGeometry = kml2geom ( poKmlLinearRing, poOgrSRS );
 
             poOgrPolygon->
                 addRingDirectly ( ( OGRLinearRing * ) poOgrTmpGeometry );
@@ -461,7 +464,7 @@ OGRGeometry *kml2geom (
         nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
         for ( i = 0; i < nGeom; i++ ) {
             poKmlTmpGeometry = poKmlMultiGeometry->get_geometry_array_at ( i );
-            poOgrTmpGeometry = kml2geom ( poKmlTmpGeometry );
+            poOgrTmpGeometry = kml2geom ( poKmlTmpGeometry, poOgrSRS );
 
             poOgrMultiGeometry->addGeometryDirectly ( poOgrTmpGeometry );
         }
@@ -470,6 +473,9 @@ OGRGeometry *kml2geom (
     default:
         break;
     }
+
+    if (poOgrGeometry)
+        poOgrGeometry->assignSpatialReference(poOgrSRS);
 
     return poOgrGeometry;
 }
