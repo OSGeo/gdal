@@ -70,12 +70,12 @@ class WKTRasterDataset : public GDALDataset {
     // Private attributes and methods
     PGconn * hPGconn; 
     GBool bCloseConnection;
+    GBool bTableHasGISTIndex;
+    GBool bTableHasRegularBlocking;
     char * pszSchemaName;
     char * pszTableName;
     char * pszRasterColumnName;
     char * pszWhereClause;
-    char * pszProjection;
-    GBool bTableHasGISTIndex;
     int nVersion;
     int nBlockSizeX;
     int nBlockSizeY;
@@ -85,8 +85,8 @@ class WKTRasterDataset : public GDALDataset {
     double dfUpperLeftY;
     double dfLowerRightX;
     double dfLowerRightY;
-    double dfRotationX;
-    double dfRotationY;
+    double dfSkewX;
+    double dfSkewY;
     int nSrid;
     char * pszWorkingMode;  
     int nOverviews;
