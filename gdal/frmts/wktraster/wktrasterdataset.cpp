@@ -736,8 +736,8 @@ CPLErr WKTRasterDataset::SetRasterProperties()
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                         "Couldn't get WKT Raster extent from database");
-                    CPLFree(pszExtent);
-                    CPLFree(pszProjectionRef);
+                    //CPLFree(pszExtent);
+                    //CPLFree(pszProjectionRef);
 
                     return CE_Failure;
                 }         
@@ -753,6 +753,10 @@ CPLErr WKTRasterDataset::SetRasterProperties()
                 nRasterYSize = (int)
                     fabs(rint((poE->MaxY - poE->MinY) / dfPixelSizeY));
                
+                /*
+                printf("Raster envelope. From (%f, %f) to (%f, %f)\n",
+                        poE->MinX, poE->MinY, poE->MaxX, poE->MaxY);
+                */
 
                 /**
                  * TODO: This is not correct... Fails with
@@ -764,10 +768,10 @@ CPLErr WKTRasterDataset::SetRasterProperties()
                 /**
                  * TODO: pszExtent is modified by createFromWkt, so, we 
                  * can't free it. What should we do?
+                 * And something happens with pszProjectionRef too
                  */
                 //CPLFree(pszExtent);
-
-                CPLFree(pszProjectionRef);                
+                //CPLFree(pszProjectionRef);                
             }
 
             else
@@ -996,11 +1000,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     double dfNoDataValue = 0.0;
     int nCountNoDataValues = 0;
     char ** papszTokenizedStr = NULL;
-    int nTokens = 0;
-    int i;
-    int nPos;
     const char * pszTmp;
-    const char * pszToken;
 
 
     /********************************************************
@@ -1615,7 +1615,8 @@ const char * WKTRasterDataset::GetProjectionRef() {
     hResult = PQexec(this->hPGconn, osCommand.c_str());
 
     if (hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
-            && PQntuples(hResult) > 0) {
+            && PQntuples(hResult) > 0) 
+    {
         pszProjection = CPLStrdup(PQgetvalue(hResult, 0, 0));
     }
 
