@@ -52,6 +52,7 @@ ElementPtr geom2kml (
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
+            poOgrSRS        pointer to the spatial ref to set on the geometry 
 
 Returns:
             pointer to the new ogr geometry object
@@ -59,4 +60,5 @@ Returns:
 ******************************************************************************/
 
 OGRGeometry *kml2geom (
-    GeometryPtr poKmlGeometry );
+    GeometryPtr poKmlGeometry,
+    OGRSpatialReference *poOgrSRS);
