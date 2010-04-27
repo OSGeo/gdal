@@ -1663,6 +1663,49 @@ def nitf_62():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test NITFReadImageLine() and NITFWriteImageLine() when nCols < nBlockWidth (#3551)
+
+def nitf_63():
+
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf63.ntf', 50, 25, 3, gdal.GDT_Int16, options = ['BLOCKXSIZE=256'])
+    ds = None
+
+    try:
+        os.SEEK_SET
+    except AttributeError:
+        os.SEEK_SET, os.SEEK_CUR, os.SEEK_END = list(range(3))
+
+    # Patch IMODE at hand
+    f = open('tmp/nitf63.ntf', 'r+')
+    f.seek(820, os.SEEK_SET)
+    f.write('P')
+    f.close()
+
+    ds = gdal.Open('tmp/nitf63.ntf', gdal.GA_Update)
+    md = ds.GetMetadata()
+    if md['NITF_IMODE'] != 'P':
+        gdaltest.post_reason('wrong IMODE')
+        return 'fail'
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(2).Fill(127)
+    ds.GetRasterBand(3).Fill(255)
+    ds = None
+
+    ds = gdal.Open('tmp/nitf63.ntf')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    cs3 = ds.GetRasterBand(3).Checksum()
+    ds = None
+
+    if cs1 != 0 or cs2 != 14186 or cs3 != 15301:
+        gdaltest.post_reason('did not get expected checksums : (%d, %d, %d) instead of (0, 14186, 15301)' % (cs1, cs2, cs3))
+        return 'fail'
+
+
+    return 'success'
+
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
@@ -1787,6 +1830,22 @@ def nitf_online_7():
                                       % file )
                 return 'fail'
         ds = None
+        
+        #shutil.copyfile('tmp/cache/' + file, 'tmp/' + file)
+        #ds = gdal.Open('tmp/' + file, gdal.GA_Update)
+        #data = ds.GetRasterBand(1).ReadRaster(0, 0, 1024, 1024)
+        #ds.GetRasterBand(1).Fill(0)
+        #ds = None
+        
+        #ds = gdal.Open('tmp/' + file, gdal.GA_Update)
+        #ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+        #ds = None
+        
+        #ds = gdal.Open('tmp/' + file)
+        #print(ds.GetRasterBand(1).Checksum())
+        #ds = None
+        
+        #os.remove('tmp/' + file)
 
     return 'success'
 
@@ -2493,6 +2552,11 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf63.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -2564,6 +2628,7 @@ gdaltest_list = [
     nitf_60,
     nitf_61,
     nitf_62,
+    nitf_63,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
