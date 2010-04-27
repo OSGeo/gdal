@@ -750,11 +750,6 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
 
     }        // No where clause
     else {
-
-
-
-        //printf("raster band: srid from dataset: %d\n", poWKTRasterDS->nSrid);
-
         /**
          * Table has a GIST index.
          */
@@ -770,7 +765,8 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
                     dfProjLowerLeftY,dfProjUpperRightX, dfProjUpperRightY,
                     poWKTRasterDS->nSrid);
 
-        }            /**
+        }
+            /**
              * Table hasn't a GIST index. Normal searching
              */
         else {
@@ -802,7 +798,6 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
 
 
     nTuples = PQntuples(hPGresult);
-
 
     /*****************************************************************
      * No blocks found. Fill the buffer with nodata value
