@@ -301,6 +301,38 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer (  )
 
 }
 
+
+/******************************************************************************
+ Method to get the next feature on the layer
+
+ Args:          none
+ 
+ Returns:       The next feature, or NULL if there is no more
+
+ this function copyed from the sqlite driver
+******************************************************************************/
+
+OGRFeature *OGRLIBKMLLayer::GetNextFeature()
+
+{
+    for( ; TRUE; )
+    {
+        OGRFeature      *poFeature;
+
+        poFeature = GetNextRawFeature();
+        if( poFeature == NULL )
+            return NULL;
+
+        if( (m_poFilterGeom == NULL
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
+            return poFeature;
+
+        delete poFeature;
+    }
+}
+
 /******************************************************************************
  Method to get the next feature on the layer
 
@@ -310,7 +342,7 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer (  )
                 
 ******************************************************************************/
 
-OGRFeature *OGRLIBKMLLayer::GetNextFeature (
+OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
      )
 {
     FeaturePtr poKmlFeature;
