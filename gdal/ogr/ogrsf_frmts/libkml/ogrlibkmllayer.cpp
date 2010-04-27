@@ -414,16 +414,11 @@ int OGRLIBKMLLayer::GetFeatureCount (
 {
     
     int i = 0;
-    size_t iKmlFeature;
-    size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size (  );
-
-    for ( iKmlFeature = 0; iKmlFeature < nKmlFeatures; iKmlFeature++ ) {
-        if ( m_poKmlLayer->get_feature_array_at ( iKmlFeature )->
-             IsA ( kmldom::Type_Placemark ) ) {
-            i++;
-        }
-    }
-
+    ResetReading();
+    while ( GetNextFeature(  ) )
+        i++;
+    ResetReading();
+    
     return i;
 }
 
