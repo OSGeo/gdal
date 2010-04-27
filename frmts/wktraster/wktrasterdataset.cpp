@@ -129,6 +129,7 @@
 #include "gdal_priv.h"
 #include <math.h>
 #include <cpl_error.h>
+#include <ogr_core.h>
 
 #ifdef _WIN32
 #define rint(x) floor((x) + 0.5)
@@ -752,18 +753,20 @@ CPLErr WKTRasterDataset::SetRasterProperties()
                     fabs(rint((poE->MaxX - poE->MinX) / dfPixelSizeX));
                 nRasterYSize = (int)
                     fabs(rint((poE->MaxY - poE->MinY) / dfPixelSizeY));
-               
-                /*
-                printf("Raster envelope. From (%f, %f) to (%f, %f)\n",
-                        poE->MinX, poE->MinY, poE->MaxX, poE->MaxY);
-                */
 
                 /**
                  * TODO: This is not correct... Fails with
                  * non-georeferenced images
                  */
                 dfUpperLeftX = poE->MinX;
-                dfUpperLeftY = poE->MaxY;
+
+                /**
+                 * TODO: Review this. Is a good algorithm?
+                 **/
+                if (nSrid == -1)
+                    dfUpperLeftY = poE->MinY;
+                else
+                    dfUpperLeftY = poE->MaxY;
               
                 /**
                  * TODO: pszExtent is modified by createFromWkt, so, we 
@@ -1578,14 +1581,24 @@ CPLErr WKTRasterDataset::GetGeoTransform(double * padfTransform) {
      */
 
     // copy necessary values in supplied buffer
-    padfTransform[0] = dfUpperLeftX;
-    padfTransform[1] = dfPixelSizeX;
-    padfTransform[2] = dfSkewX;
-    padfTransform[3] = dfUpperLeftY;
-    padfTransform[4] = dfSkewY;
-    padfTransform[5] = dfPixelSizeY;
+    if (nSrid != -1)
+    {
+        padfTransform[0] = dfUpperLeftX;
+        padfTransform[1] = dfPixelSizeX;
+        padfTransform[2] = dfSkewX;
+        padfTransform[3] = dfUpperLeftY;
+        padfTransform[4] = dfSkewY;
+        padfTransform[5] = dfPixelSizeY;
+        
+        return CE_None;
+    }
 
-    return CE_None;
+    else
+    {
+        return GDALDataset::GetGeoTransform(padfTransform);
+    }
+
+    
 }
 
 /**
