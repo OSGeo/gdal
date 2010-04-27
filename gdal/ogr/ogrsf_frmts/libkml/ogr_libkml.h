@@ -88,6 +88,7 @@ class OGRLIBKMLLayer:public OGRLayer
 
     void                      ResetReading  (  ) { iFeature = 0; };
     OGRFeature               *GetNextFeature (  );
+    OGRFeature               *GetRawFeature (  );
     OGRFeatureDefn           *GetLayerDefn (  ) { return m_poOgrFeatureDefn; };
     //OGRErr                    SetAttributeFilter (const char * );
     OGRErr                    CreateFeature ( OGRFeature * poOgrFeat );
