@@ -185,8 +185,6 @@ JPIPKAKRasterBand::JPIPKAKRasterBand( int nBand, int nDiscardLevels,
 JPIPKAKRasterBand::~JPIPKAKRasterBand()
 
 {
-	//if (ario != NULL) poBaseDS->EndAsyncReader(ario);
-
     for( int i = 0; i < nOverviewCount; i++ )
         delete papoOverviewBand[i];
 
@@ -355,7 +353,6 @@ JPIPKAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*****************************************/
 JPIPKAKDataset::JPIPKAKDataset()         
 {
-    pszTid = NULL;
     pszPath = NULL;
     pszCid = NULL;
     pszProjection = NULL;
@@ -401,9 +398,6 @@ JPIPKAKDataset::JPIPKAKDataset()
 JPIPKAKDataset::~JPIPKAKDataset()
 {
     CPLHTTPCleanup();
-
-    if (pszTid)
-        CPLFree(pszTid);
 
     if (pszPath)
         CPLFree(pszPath);
@@ -489,10 +483,9 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
     // parse the response headers, and the initial data until we get to the 
     // codestream definition
     char** pszHdrs = psResult->papszHeaders;
-    const char* pszTid = CSLFetchNameValue(pszHdrs, "JPIP-tid");
     const char* pszCnew = CSLFetchNameValue(pszHdrs, "JPIP-cnew");
 
-    if( pszTid == NULL || pszCnew == NULL )
+    if( pszCnew == NULL )
     {
         CPLHTTPDestroyResult( psResult );
         CPLError(CE_Failure, CPLE_AppDefined, 
@@ -500,7 +493,6 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
         return FALSE;    
     }
 
-    pszTid = CPLStrdup(pszTid);
     // parse cnew response
     // JPIP-cnew:
     // cid=DC69DF980A641A4BBDEB50E484A66578,path=MyPath,transport=http
@@ -594,13 +586,24 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
     if( poCodestream->get_bit_depth(0) > 8 
         && poCodestream->get_bit_depth(0) <= 16
         && poCodestream->get_signed(0) )
+    {
         eDT = GDT_Int16;
+    }
     else if( poCodestream->get_bit_depth(0) > 8
              && poCodestream->get_bit_depth(0) <= 16
              && !poCodestream->get_signed(0) )
+    {
         eDT = GDT_UInt16;
+    }
     else
         this->eDT = GDT_Byte;
+
+    if( poCodestream->get_bit_depth(0) % 8 != 8
+        && poCodestream->get_bit_depth(0) < 16 )
+        SetMetadataItem( 
+            "NBITS", 
+            CPLString().Printf("%d",poCodestream->get_bit_depth(0)), 
+            "IMAGE_STRUCTURE" );
 
     // TODO add color interpretation
 
@@ -1579,21 +1582,10 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         
     region.pos += view_dims.pos;
     
-    int nPrecisionBits = 8;
-    
-    switch(poJDS->eDT)
-    {
-      case GDT_Byte:
-        nPrecisionBits = 8;
-        break;
-      case GDT_UInt16:
-      case GDT_Int16:
-        nPrecisionBits = 16;
-        break;
-      default:
-        nPrecisionBits = 8;
-        break;
-    }
+    int nBytesPerPixel = GDALGetDataTypeSize(poJDS->eDT) / 8;
+
+    if( nBytesPerPixel > 2 )
+        nBytesPerPixel = 1;
     
 /* ==================================================================== */
 /*      Now we process the available cached jpeg2000 data into          */
@@ -1671,26 +1663,26 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
                 ((kdu_byte *) pBuf) 
                 + (i+nBandsCompleted-component_indices.size()) * nBandSpace );
 
-        int pixel_gap = nPixelSpace / (nPrecisionBits / 8);
-        int row_gap = nLineSpace / (nPrecisionBits / 8);
+        int pixel_gap = nPixelSpace / nBytesPerPixel;
+        int row_gap = nLineSpace / nBytesPerPixel;
 
         while ((bIsDecompressing == 1) || (incomplete_region.area() != 0))
         {
-            if( nPrecisionBits == 8 )
+            if( nBytesPerPixel == 1 )
             {
                 bIsDecompressing = poJDS->poDecompressor->
                     process(&(channel_bufs[0]), false, 
                             pixel_gap, origin, row_gap, 1000000, 0, 
                             incomplete_region, region_pass,
-                            8, false );
+                            0, false );
             }
-            else if( nPrecisionBits == 16 )
+            else if( nBytesPerPixel == 2 )
             {
                 bIsDecompressing = poJDS->poDecompressor->
                     process((kdu_uint16**) &(channel_bufs[0]), false,
                             pixel_gap, origin, row_gap, 1000000, 0, 
                             incomplete_region, region_pass,
-                            16, false );
+                            0, false );
             }
             
             CPLDebug( "JPIPKAK",

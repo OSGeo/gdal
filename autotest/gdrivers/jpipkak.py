@@ -92,9 +92,35 @@ def jpipkak_2():
 
     return 'success'
 
+###############################################################################
+# Test an 11bit image. 
+
+def jpipkak_3():
+
+    if gdaltest.jpipkak_drv is None:
+        return 'skip'
+
+    
+    ds = gdal.Open( 'jpip://216.150.195.220/JP2Server/qb_boulder_pan_11bit' )
+    if ds is None:
+        gdaltest.post_reason( 'failed to open jpip stream.' )
+        return 'fail'
+
+    target = ds.GetRasterBand(1)
+
+    stats = target.GetStatistics(0,1)
+    
+    if abs(stats[2] - 483.501) > 1.0 or abs(stats[3]-117.972) > 1.0:
+        print( stats )
+        gdaltest.post_reason( 'did not get expected mean/stddev' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     jpipkak_1,
     jpipkak_2,
+    jpipkak_3
  ]
 
 if __name__ == '__main__':
