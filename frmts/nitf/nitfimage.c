@@ -48,6 +48,7 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage );
 static int NITFLoadVQTables( NITFImage *psImage );
 static int NITFReadGEOLOB( NITFImage *psImage );
 static void NITFLoadAttributeSection( NITFImage *psImage );
+static void NITFPossibleIGEOLOReorientation( NITFImage *psImage );
 
 void NITFGetGCP ( const char* pachCoord, double *pdfXYs, int iCoord );
 int NITFReadBLOCKA_GCPs ( NITFImage *psImage );
@@ -333,6 +334,13 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
         nOffset += 60;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Should we reorient the IGEOLO points in an attempt to handle    */
+/*      files where they were written in the wrong order?               */
+/* -------------------------------------------------------------------- */
+    if( psImage->bHaveIGEOLO )
+        NITFPossibleIGEOLOReorientation( psImage );
 
 /* -------------------------------------------------------------------- */
 /*      Read the image comments.                                        */
@@ -3544,4 +3552,170 @@ GUIntBig NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
 //    nWrkOffset += 2 * psImage->nBands;
 
     return 0;
+}
+
+/************************************************************************/
+/*                        NITFDoLinesIntersect()                        */
+/************************************************************************/
+
+static int NITFDoLinesIntersect( double dfL1X1, double dfL1Y1, 
+                                 double dfL1X2, double dfL1Y2,
+                                 double dfL2X1, double dfL2Y1, 
+                                 double dfL2X2, double dfL2Y2 )
+
+{
+    double dfL1M, dfL1B, dfL2M, dfL2B;
+    
+    if( dfL1X1 == dfL1X2 )
+    {
+        dfL1M = 1e10;
+        dfL1B = 0.0;
+    }
+    else 
+    {
+        dfL1M = (dfL1Y2 - dfL1Y1 ) / (dfL1X2 - dfL1X1);
+        dfL1B = dfL1Y2 - dfL1M * dfL1X2;
+    }
+
+    if( dfL2X1 == dfL2X2 )
+    {
+        dfL2M = 1e10;
+        dfL2B = 0.0;
+    }
+    else 
+    {
+        dfL2M = (dfL2Y2 - dfL2Y1 ) / (dfL2X2 - dfL2X1);
+        dfL2B = dfL2Y2 - dfL2M * dfL2X2;
+    }
+    
+    if( dfL2M == dfL1M )
+    {
+        // parallel .. no meaningful intersection.
+        return FALSE;
+    }
+    else
+    {
+        double dfX, dfY;
+        
+        dfX = (dfL2B - dfL1B) / (dfL1M-dfL2M);
+        dfY = dfL2M * dfX + dfL2B;
+
+        /* 
+        ** Is this intersection on the line between
+        ** our corner points or "out somewhere" else?
+        */
+        return ((dfX >= dfL1X1 && dfX <= dfL1X2)
+                || (dfX >= dfL1X2 && dfX <= dfL1X1))
+                && ((dfX >= dfL2X1 && dfX <= dfL2X2)
+                    || (dfX >= dfL2X2 && dfX <= dfL2X1));
+    }
+}
+
+/************************************************************************/
+/*                  NITFPossibleIGEOLOReorientation()                   */
+/************************************************************************/
+
+static void NITFPossibleIGEOLOReorientation( NITFImage *psImage )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Check whether the vector from top left to bottom left           */
+/*      intersects the line from top right to bottom right.  If this    */
+/*      is true, then we believe the corner coordinate order was        */
+/*      written improperly.                                             */
+/* -------------------------------------------------------------------- */
+#if 1
+    if( !NITFDoLinesIntersect( psImage->dfULX, psImage->dfULY,
+                               psImage->dfLLX, psImage->dfLLY,
+                               psImage->dfURX, psImage->dfURY,
+                               psImage->dfLRX, psImage->dfLRY ) )
+        return;
+    else
+        CPLDebug( "NITF", "It appears the IGEOLO corner coordinates were written improperly!" );
+#endif
+    
+/* -------------------------------------------------------------------- */
+/*      Divide the lat/long extents of this image into four             */
+/*      quadrants and assign the corners based on which point falls     */
+/*      into which quadrant.  This is intended to correct images        */
+/*      with the corner points written improperly.  Unfortunately it    */
+/*      also breaks images which are mirrored, or rotated more than     */
+/*      90 degrees from simple north up.                                */
+/* -------------------------------------------------------------------- */
+    {
+        
+        double dfXMax = MAX(MAX(psImage->dfULX,psImage->dfURX),
+                            MAX(psImage->dfLRX,psImage->dfLLX));
+        double dfXMin = MIN(MIN(psImage->dfULX,psImage->dfURX),
+                            MIN(psImage->dfLRX,psImage->dfLLX));
+        double dfYMax = MAX(MAX(psImage->dfULY,psImage->dfURY),
+                            MAX(psImage->dfLRY,psImage->dfLLY));
+        double dfYMin = MIN(MIN(psImage->dfULY,psImage->dfURY),
+                            MIN(psImage->dfLRY,psImage->dfLLY));
+        double dfXPivot = (dfXMax + dfXMin) * 0.5;
+        double dfYPivot = (dfYMax + dfYMin) * 0.5;
+
+        double dfNewULX, dfNewULY, dfNewURX, dfNewURY, 
+            dfNewLLX, dfNewLLY, dfNewLRX, dfNewLRY;
+        int bGotUL = FALSE, bGotUR = FALSE, 
+            bGotLL = FALSE, bGotLR = FALSE;
+        int iCoord, bChange = FALSE;
+    
+        for( iCoord = 0; iCoord < 4; iCoord++ )
+        {
+            double *pdfXY = &(psImage->dfULX) + iCoord*2; 
+
+            if( pdfXY[0] < dfXPivot && pdfXY[1] < dfYPivot )
+            {
+                bGotLL = TRUE;
+                dfNewLLX = pdfXY[0];
+                dfNewLLY = pdfXY[1];
+                bChange |= iCoord != 3;
+            }
+            else if( pdfXY[0] > dfXPivot && pdfXY[1] < dfYPivot )
+            {
+                bGotLR = TRUE;
+                dfNewLRX = pdfXY[0];
+                dfNewLRY = pdfXY[1];
+                bChange |= iCoord != 2;
+            }
+            else if( pdfXY[0] > dfXPivot && pdfXY[1] > dfYPivot )
+            {
+                bGotUR = TRUE;
+                dfNewURX = pdfXY[0];
+                dfNewURY = pdfXY[1];
+                bChange |= iCoord != 1;
+            }
+            else
+            {
+                bGotUL = TRUE;
+                dfNewULX = pdfXY[0];
+                dfNewULY = pdfXY[1];
+                bChange |= iCoord != 0;
+            }
+        }
+
+        if( !bGotUL || !bGotUR || !bGotLL || !bGotLR )
+        {
+            CPLDebug( "NITF", 
+                      "Unable to reorient corner points sensibly in NITFPossibleIGEOLOReorganization(), discarding IGEOLO locations." );
+            psImage->bHaveIGEOLO = FALSE;
+            return;
+        }
+
+        if( !bChange )
+            return;
+
+        psImage->dfULX = dfNewULX;
+        psImage->dfULY = dfNewULY;
+        psImage->dfURX = dfNewURX;
+        psImage->dfURY = dfNewURY;
+        psImage->dfLRX = dfNewLRX;
+        psImage->dfLRY = dfNewLRY;
+        psImage->dfLLX = dfNewLLX;
+        psImage->dfLLY = dfNewLLY;
+    
+        CPLDebug( "NITF", 
+                  "IGEOLO corners have been reoriented by NITFPossibleIGEOLOReorientation()." );
+    }
 }
