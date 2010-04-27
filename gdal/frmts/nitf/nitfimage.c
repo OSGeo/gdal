@@ -1598,6 +1598,13 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         return BLKREAD_FAIL;
     }
 
+    if( psImage->nBlockWidth < psImage->nCols)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "For scanline access, block width cannot be lesser than the number of columns." );
+        return BLKREAD_FAIL;
+    }
+
     if( !EQUAL(psImage->szIC,"NC") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1612,7 +1619,7 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         + psImage->nLineOffset * nLine
         + psImage->nBandOffset * (nBand-1);
 
-    nLineSize = (size_t)psImage->nPixelOffset * (psImage->nCols - 1) 
+    nLineSize = (size_t)psImage->nPixelOffset * (psImage->nBlockWidth - 1) 
         + psImage->nWordSize;
 
     VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
@@ -1694,6 +1701,13 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         return BLKREAD_FAIL;
     }
 
+    if( psImage->nBlockWidth < psImage->nCols)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "For scanline access, block width cannot be lesser than the number of columns." );
+        return BLKREAD_FAIL;
+    }
+
     if( !EQUAL(psImage->szIC,"NC") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1708,7 +1722,7 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         + psImage->nLineOffset * nLine
         + psImage->nBandOffset * (nBand-1);
 
-    nLineSize = (size_t)psImage->nPixelOffset * (psImage->nCols - 1) 
+    nLineSize = (size_t)psImage->nPixelOffset * (psImage->nBlockWidth - 1) 
         + psImage->nWordSize;
 
     VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
@@ -1720,13 +1734,13 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset )
     {
 #ifdef CPL_LSB
-        NITFSwapWords( psImage, pData, psImage->nCols );
+        NITFSwapWords( psImage, pData, psImage->nBlockWidth );
 #endif
 
         VSIFWriteL( pData, 1, nLineSize, psImage->psFile->fp );
 
 #ifdef CPL_LSB
-        NITFSwapWords( psImage, pData, psImage->nCols );
+        NITFSwapWords( psImage, pData, psImage->nBlockWidth );
 #endif
 
         return BLKREAD_OK;
@@ -1753,18 +1767,23 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         GByte *pabySrc, *pabyDst;
         int iPixel;
         
-        pabySrc = pabyLineBuf;
-        pabyDst = ((GByte *) pData);
-        
+        pabyDst = pabyLineBuf;
+        pabySrc = ((GByte *) pData);
+
+#ifdef CPL_LSB
+        NITFSwapWords( psImage, pData, psImage->nBlockWidth );
+#endif
+
         for( iPixel = 0; iPixel < psImage->nBlockWidth; iPixel++ )
         {
-            memcpy( pabySrc + iPixel * psImage->nPixelOffset,
-                    pabyDst + iPixel * psImage->nWordSize, 
+            memcpy( pabyDst + iPixel * psImage->nPixelOffset,
+                    pabySrc + iPixel * psImage->nWordSize, 
                     psImage->nWordSize );
-#ifdef CPL_LSB
-            NITFSwapWords( psImage, pabyDst + iPixel * psImage->nWordSize, 1 );
-#endif
         }
+
+#ifdef CPL_LSB
+        NITFSwapWords( psImage, pData, psImage->nBlockWidth );
+#endif
     }
 
 /* -------------------------------------------------------------------- */
