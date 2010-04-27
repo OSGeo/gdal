@@ -631,12 +631,12 @@ CPLErr WKTRasterDataset::SetRasterProperties()
 {
     CPLString osCommand;
     PGresult * hPGresult = NULL;
-    char * pszExtent = NULL;
+    char * pszExtent;
     OGRSpatialReference * poSR = NULL;
     OGRGeometry * poGeom = NULL;
     OGRErr OgrErr = OGRERR_NONE;
     OGREnvelope * poE = NULL;
-    char * pszProjectionRef = NULL;   
+    char * pszProjectionRef;   
 
     /*********************************************************************
      * The raster table could contain several images with different
@@ -762,10 +762,12 @@ CPLErr WKTRasterDataset::SetRasterProperties()
                 dfUpperLeftY = poE->MaxY;
               
                 /**
-                 * TODO: Bug here. Invalid pointer. Study it.
+                 * TODO: pszExtent is modified by createFromWkt, so, we 
+                 * can't free it. What should we do?
                  */
                 //CPLFree(pszExtent);
-                //CPLFree(pszProjectionRef);                
+
+                CPLFree(pszProjectionRef);                
             }
 
             else
