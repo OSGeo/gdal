@@ -412,12 +412,24 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
 int OGRLIBKMLLayer::GetFeatureCount (
     int bForce )
 {
-    
-    int i = 0;
-    ResetReading();
-    while ( GetNextFeature(  ) )
-        i++;
-    ResetReading();
+
+
+    int i = 0; 
+    if ( OGRLayer::GetSpatialFilter(  ) ) {
+        i = OGRLayer::GetFeatureCount( bForce );
+    }
+
+    else {
+        size_t iKmlFeature; 
+     	size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size (  ); 
+     	 
+     	for ( iKmlFeature = 0; iKmlFeature < nKmlFeatures; iKmlFeature++ ) { 
+ 	        if ( m_poKmlLayer->get_feature_array_at ( iKmlFeature )-> 
+ 	             IsA ( kmldom::Type_Placemark ) ) { 
+ 	            i++; 
+ 	        } 
+ 	    }
+    }
     
     return i;
 }
