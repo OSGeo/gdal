@@ -753,16 +753,11 @@ CPLErr WKTRasterDataset::SetRasterProperties()
                     fabs(rint((poE->MaxX - poE->MinX) / dfPixelSizeX));
                 nRasterYSize = (int)
                     fabs(rint((poE->MaxY - poE->MinY) / dfPixelSizeY));
-
-                /**
-                 * TODO: This is not correct... Fails with
-                 * non-georeferenced images
-                 */
-                dfUpperLeftX = poE->MinX;
-
+                
                 /**
                  * TODO: Review this. Is a good algorithm?
-                 **/
+                 **/                
+                dfUpperLeftX = poE->MinX;
                 if (nSrid == -1)
                     dfUpperLeftY = poE->MinY;
                 else
@@ -791,10 +786,6 @@ CPLErr WKTRasterDataset::SetRasterProperties()
 
         else
         {
-            /**
-             * TODO: if there was an error getting information for raster
-             * table, we could try querying RASTER_COLUMNS table
-             */
             CPLError(CE_Failure, CPLE_OpenFailed,
                     "Couldn't fetch raster information.");
             return CE_Failure;
@@ -1047,7 +1038,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     if (pszTableName == NULL)
     {        
         CPLError(CE_Failure, CPLE_AppDefined,
-                "Couldn't find a table name. Is connection string in the \
+                "Couldn't find table. Is connection string in the \
                 format PG:\"host=<host> user=<user> password=<password> \
                 dbname=<dbname> table=<raster_table> [schema=<schema>] \
                 [where=<where_clause>]\"?\n");
@@ -1078,7 +1069,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     CPLFree(pszConnectionString);
     pszConnectionString = NULL;
 
-    if (hPGconn == NULL) {
+    if (hPGconn == NULL) 
+    {
 
         CPLFree(pszTableName);
         CPLFree(pszSchemaName);
@@ -1091,7 +1083,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     /************************************************
      * Check if the RASTER_COLUMNS table does exist
      ************************************************/
-    if (ExistsRasterColumnsTable(hPGconn) == FALSE)  {
+    if (ExistsRasterColumnsTable(hPGconn) == FALSE)  
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Couldn't find RASTER_COLUMNS table. Please, check WKT\
                 Raster extension is properly installed");
@@ -1111,7 +1104,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
      ******************************************************/
     pszRasterColumnName = GetWKTRasterColumnName(hPGconn, pszSchemaName,
             pszTableName);
-    if (pszRasterColumnName == NULL) {
+    if (pszRasterColumnName == NULL) 
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Couldn't find a WKT Raster column in %s.%s table\n",
                 pszSchemaName, pszTableName);
@@ -1229,7 +1223,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
         if (pszArrayPixelTypes != NULL)
             papszPixelTypes = poDS->ExplodeArrayString(pszArrayPixelTypes,
                     &nBands);
-        if (pszArrayNodataValues != NULL) {
+        if (pszArrayNodataValues != NULL) 
+        {
 
             /**
              * Has nBands been fetched by the previous call? If yes, 
@@ -1256,8 +1251,10 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
      **************************************************************/
     GBool bSignedByte = FALSE;
     int nBitDepth = 8;
-    for (int iBand = 0; iBand < poDS->nBands; iBand++) {
-        if (pszArrayPixelTypes != NULL && papszPixelTypes != NULL) {
+    for (int iBand = 0; iBand < poDS->nBands; iBand++) 
+    {
+        if (pszArrayPixelTypes != NULL && papszPixelTypes != NULL) 
+        {
             if (EQUALN(papszPixelTypes[iBand], "1BB", 3 * sizeof (char))) 
             {
                 hDataType = GDT_Byte;
@@ -1381,9 +1378,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
      * Create overviews datasets, if does exist
      ******************************************************/
     bExistsOverviewsTable = ExistsOverviewsTable(hPGconn);
-    if (bExistsOverviewsTable) {
-
-
+    if (bExistsOverviewsTable) 
+    {
         // Count the number of overviews        
         osCommand.Printf(
                 "select o_table_name, overview_factor, o_column, \
