@@ -415,7 +415,7 @@ int OGRLIBKMLLayer::GetFeatureCount (
 
 
     int i = 0; 
-    if ( OGRLayer::GetSpatialFilter(  ) ) {
+    if (m_poFilterGeom != NULL || m_poAttrQuery != NULL ) {
         i = OGRLayer::GetFeatureCount( bForce );
     }
 
