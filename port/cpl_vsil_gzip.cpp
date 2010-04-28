@@ -1439,6 +1439,133 @@ void VSIInstallGZipFileHandler(void)
 }
 
 
+/************************************************************************/
+/* ==================================================================== */
+/*                         VSIZipEntryFileOffset                        */
+/* ==================================================================== */
+/************************************************************************/
+
+class VSIZipEntryFileOffset : public VSIArchiveEntryFileOffset
+{
+public:
+        unz_file_pos file_pos;
+
+        VSIZipEntryFileOffset(unz_file_pos file_pos)
+        {
+            this->file_pos.pos_in_zip_directory = file_pos.pos_in_zip_directory;
+            this->file_pos.num_of_file = file_pos.num_of_file;
+        }
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                             VSIZipReader                             */
+/* ==================================================================== */
+/************************************************************************/
+
+class VSIZipReader : public VSIArchiveReader
+{
+    private:
+        unzFile unzF;
+        unz_file_pos file_pos;
+        GUIntBig nNextFileSize;
+        CPLString osNextFileName;
+
+        void SetInfo();
+
+    public:
+        VSIZipReader(const char* pszZipFileName);
+        virtual ~VSIZipReader();
+
+        int IsValid() { return unzF != NULL; }
+
+        unzFile GetUnzFileHandle() { return unzF; }
+
+        virtual int GotoFirstFile();
+        virtual int GotoNextFile();
+        virtual VSIArchiveEntryFileOffset* GetFileOffset() { return new VSIZipEntryFileOffset(file_pos); }
+        virtual GUIntBig GetFileSize() { return nNextFileSize; }
+        virtual CPLString GetFileName() { return osNextFileName; }
+        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
+};
+
+
+/************************************************************************/
+/*                           VSIZipReader()                             */
+/************************************************************************/
+
+VSIZipReader::VSIZipReader(const char* pszZipFileName)
+{
+    unzF = cpl_unzOpen(pszZipFileName);
+    nNextFileSize = 0;
+}
+
+/************************************************************************/
+/*                          ~VSIZipReader()                             */
+/************************************************************************/
+
+VSIZipReader::~VSIZipReader()
+{
+    if (unzF)
+        cpl_unzClose(unzF);
+}
+
+/************************************************************************/
+/*                              SetInfo()                               */
+/************************************************************************/
+
+void VSIZipReader::SetInfo()
+{
+    char fileName[512];
+    unz_file_info file_info;
+    cpl_unzGetCurrentFileInfo (unzF, &file_info, fileName, 512, NULL, 0, NULL, 0);
+    osNextFileName = fileName;
+    nNextFileSize = file_info.uncompressed_size;
+
+    cpl_unzGetFilePos(unzF, &this->file_pos);
+}
+
+/************************************************************************/
+/*                           GotoNextFile()                             */
+/************************************************************************/
+
+int VSIZipReader::GotoNextFile()
+{
+    if (cpl_unzGoToNextFile(unzF) != UNZ_OK)
+        return FALSE;
+
+    SetInfo();
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          GotoFirstFile()                             */
+/************************************************************************/
+
+int VSIZipReader::GotoFirstFile()
+{
+    if (cpl_unzGoToFirstFile(unzF) != UNZ_OK)
+        return FALSE;
+
+    SetInfo();
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         GotoFileOffset()                             */
+/************************************************************************/
+
+int VSIZipReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
+{
+    VSIZipEntryFileOffset* pZipEntryOffset = (VSIZipEntryFileOffset*)pOffset;
+    cpl_unzGoToFilePos(unzF, &(pZipEntryOffset->file_pos));
+
+    SetInfo();
+
+    return TRUE;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1446,336 +1573,49 @@ void VSIInstallGZipFileHandler(void)
 /* ==================================================================== */
 /************************************************************************/
 
-typedef struct
+class VSIZipFilesystemHandler : public VSIArchiveFilesystemHandler 
 {
-    char         *fileName;
-    vsi_l_offset  uncompressed_size;
-    unz_file_pos  file_pos;
-    int           bIsDir;
-} ZIPEntry;
-
-typedef struct
-{
-    int nEntries;
-    ZIPEntry* entries;
-} ZIPContent;
-
-class VSIZipFilesystemHandler : public VSIFilesystemHandler 
-{
-    void* hMutex;
-    /* We use a cache that contains the list of files containes in a ZIP file as */
-    /* unzip.c is quite inefficient in listing them. This speeds up access to ZIP files */
-    /* containing ~1000 files like a CADRG product */
-    std::map<CPLString,ZIPContent*>   oFileList;
-
 public:
-    VSIZipFilesystemHandler();
-    ~VSIZipFilesystemHandler();
+    virtual const char* GetPrefix() { return "/vsizip"; }
+    virtual std::vector<CPLString> GetExtensions();
+    virtual VSIArchiveReader* CreateReader(const char* pszZipFileName);
 
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess);
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDir( const char *pszDirname );
-
-    const ZIPContent* GetContentOfZip(const char* zipFilename, unzFile unzF = NULL);
-    char* SplitFilename(const char *pszFilename, CPLString &osZipInFileName);
-    unzFile OpenZIPFile(const char* zipFilename, const char* zipInFileName);
-    int FindFileInZip(const char* zipFilename, const char* zipInFileName, const ZIPEntry** zipEntry);
 };
 
 /************************************************************************/
-/*                    VSIZipFilesystemHandler()                        */
+/*                          GetExtensions()                             */
 /************************************************************************/
 
-VSIZipFilesystemHandler::VSIZipFilesystemHandler()
+std::vector<CPLString> VSIZipFilesystemHandler::GetExtensions()
 {
-    hMutex = NULL;
+    std::vector<CPLString> oList;
+    oList.push_back(".zip");
+    return oList;
 }
 
 /************************************************************************/
-/*                    ~VSIZipFilesystemHandler()                        */
+/*                           CreateReader()                             */
 /************************************************************************/
 
-VSIZipFilesystemHandler::~VSIZipFilesystemHandler()
-
+VSIArchiveReader* VSIZipFilesystemHandler::CreateReader(const char* pszZipFileName)
 {
-    std::map<CPLString,ZIPContent*>::const_iterator iter;
+    VSIZipReader* poReader = new VSIZipReader(pszZipFileName);
 
-    for( iter = oFileList.begin(); iter != oFileList.end(); ++iter )
+    if (!poReader->IsValid())
     {
-        ZIPContent* content = iter->second;
-        int i;
-        for(i=0;i<content->nEntries;i++)
-        {
-            CPLFree(content->entries[i].fileName);
-        }
-        CPLFree(content->entries);
-        delete content;
-    }
-
-    if( hMutex != NULL )
-        CPLDestroyMutex( hMutex );
-    hMutex = NULL;
-}
-
-/************************************************************************/
-/*                         GetContentOfZip()                            */
-/************************************************************************/
-
-const ZIPContent* VSIZipFilesystemHandler::GetContentOfZip(const char* zipFilename, unzFile unzF)
-{
-    CPLMutexHolder oHolder( &hMutex );
-
-    if (oFileList.find(zipFilename) != oFileList.end() )
-    {
-        return oFileList[zipFilename];
-    }
-
-    int bMustCloseUnzf = (unzF == NULL);
-    if (unzF == NULL)
-    {
-        unzF = cpl_unzOpen(zipFilename);
-        if (!unzF)
-            return NULL;
-    }
-
-    if (cpl_unzGoToFirstFile(unzF) != UNZ_OK)
-    {
-        if (bMustCloseUnzf)
-            cpl_unzClose(unzF);
+        delete poReader;
         return NULL;
     }
 
-    ZIPContent* content = new ZIPContent;
-    content->nEntries = 0;
-    content->entries = NULL;
-    oFileList[zipFilename] = content;
-
-    do
+    if (!poReader->GotoFirstFile())
     {
-        char fileName[512];
-        unz_file_info file_info;
-        cpl_unzGetCurrentFileInfo (unzF, &file_info, fileName, 512, NULL, 0, NULL, 0);
-        content->entries = (ZIPEntry*)CPLRealloc(content->entries, sizeof(ZIPEntry) * (content->nEntries + 1));
-        content->entries[content->nEntries].fileName = CPLStrdup(fileName);
-        content->entries[content->nEntries].uncompressed_size = file_info.uncompressed_size;
-        content->entries[content->nEntries].bIsDir =
-                strlen(fileName) > 0 &&
-                (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\');
-        if (content->entries[content->nEntries].bIsDir)
-        {
-            /* Remove trailing slash */
-            content->entries[content->nEntries].fileName[strlen(fileName)-1] = 0;
-        }
-        cpl_unzGetFilePos(unzF, &(content->entries[content->nEntries].file_pos));
-        if (ENABLE_DEBUG)
-            CPLDebug("ZIP", "[%d] %s : " CPL_FRMT_GUIB " bytes", content->nEntries+1,
-                 content->entries[content->nEntries].fileName,
-                 content->entries[content->nEntries].uncompressed_size);
-        content->nEntries++;
-    } while(cpl_unzGoToNextFile(unzF) == UNZ_OK);
-
-    if (bMustCloseUnzf)
-        cpl_unzClose(unzF);
-
-    return content;
-}
-
-/************************************************************************/
-/*                           FindFileInZip()                            */
-/************************************************************************/
-
-int VSIZipFilesystemHandler::FindFileInZip(const char* zipFilename,
-                                           const char* zipInFileName,
-                                           const ZIPEntry** zipEntry)
-{
-    if (zipInFileName == NULL)
-        return FALSE;
-
-    const ZIPContent* content = GetContentOfZip(zipFilename);
-    if (content)
-    {
-        int i;
-        for(i=0;i<content->nEntries;i++)
-        {
-            if (strcmp(zipInFileName, content->entries[i].fileName) == 0)
-            {
-                if (zipEntry)
-                    *zipEntry = &content->entries[i];
-                return TRUE;
-            }
-        }
-    }
-    return FALSE;
-}
-
-/************************************************************************/
-/*                           SplitFilename()                            */
-/************************************************************************/
-
-char* VSIZipFilesystemHandler::SplitFilename(const char *pszFilename,
-                                             CPLString &osZipInFileName)
-{
-    int i = 0;
-
-    /* Allow natural chaining of VSI drivers without requiring double slash */
-    if (strncmp(pszFilename, "/vsizip/vsi", strlen("/vsizip/vsi")) == 0)
-        pszFilename += strlen("/vsizip");
-    else
-        pszFilename += strlen("/vsizip/");
-
-    while(pszFilename[i])
-    {
-        if (EQUALN(pszFilename + i, ".zip", 4))
-        {
-            VSIStatBufL statBuf;
-            char* zipFilename = CPLStrdup(pszFilename);
-            int bZipFileExists = FALSE;
-            zipFilename[i + 4] = 0;
-
-            {
-                CPLMutexHolder oHolder( &hMutex );
-
-                if (oFileList.find(zipFilename) != oFileList.end() )
-                {
-                    bZipFileExists = TRUE;
-                }
-            }
-
-            if (!bZipFileExists)
-            {
-                VSIFilesystemHandler *poFSHandler = 
-                    VSIFileManager::GetHandler( zipFilename );
-                if (poFSHandler->Stat(zipFilename, &statBuf) == 0 &&
-                    !VSI_ISDIR(statBuf.st_mode))
-                {
-                    bZipFileExists = TRUE;
-                }
-            }
-
-            if (bZipFileExists)
-            {
-                if (pszFilename[i + 4] != 0)
-                {
-                    char* pszZipInFileName = CPLStrdup(pszFilename + i + 5);
-
-                    /* Replace a/../b by b and foo/a/../b by foo/b */
-                    while(TRUE)
-                    {
-                        char* pszPrevDir = strstr(pszZipInFileName, "/../");
-                        if (pszPrevDir == NULL || pszPrevDir == pszZipInFileName)
-                            break;
-
-                        char* pszPrevSlash = pszPrevDir - 1;
-                        while(pszPrevSlash != pszZipInFileName &&
-                                *pszPrevSlash != '/')
-                            pszPrevSlash --;
-                        if (pszPrevSlash == pszZipInFileName)
-                            memmove(pszZipInFileName, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
-                        else
-                            memmove(pszPrevSlash + 1, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
-                    }
-
-                    osZipInFileName = pszZipInFileName;
-                    CPLFree(pszZipInFileName);
-                }
-                else
-                    osZipInFileName = "";
-
-                /* Remove trailing slash */
-                if (strlen(osZipInFileName))
-                {
-                    char lastC = osZipInFileName[strlen(osZipInFileName) - 1];
-                    if (lastC == '\\' || lastC == '/')
-                        osZipInFileName[strlen(osZipInFileName) - 1] = 0;
-                }
-
-                return zipFilename;
-            }
-            CPLFree(zipFilename);
-        }
-        i++;
-    }
-    return NULL;
-}
-
-/************************************************************************/
-/*                             OpenZIPFile()                            */
-/************************************************************************/
-
-unzFile VSIZipFilesystemHandler::OpenZIPFile(const char* zipFilename, 
-                                             const char* zipInFileName)
-{
-    unzFile unzF = cpl_unzOpen(zipFilename);
-
-    if (unzF == NULL)
-    {
+        delete poReader;
         return NULL;
     }
 
-    if (zipInFileName == NULL || strlen(zipInFileName) == 0)
-    {
-        if (cpl_unzGoToFirstFile(unzF) != UNZ_OK)
-        {
-            cpl_unzClose(unzF);
-            return NULL;
-        }
-
-        char fileName[512];
-        int isSecondFile = FALSE;
-        cpl_unzGetCurrentFileInfo (unzF, NULL, fileName, 512, NULL, 0, NULL, 0);
-        if (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\')
-        {
-            if (cpl_unzGoToNextFile(unzF) != UNZ_OK)
-            {
-                cpl_unzClose(unzF);
-                return NULL;
-            }
-            isSecondFile = TRUE;
-        }
-
-        if (cpl_unzGoToNextFile(unzF) != UNZ_END_OF_LIST_OF_FILE)
-        {
-            CPLString msg;
-            msg.Printf("Support only 1 file in ZIP file %s when no explicit in-zip filename is specified",
-                       zipFilename);
-            const ZIPContent* content = GetContentOfZip(zipFilename, unzF);
-            if (content)
-            {
-                int i;
-                msg += "\nYou could try one of the following :\n";
-                for(i=0;i<content->nEntries;i++)
-                {
-                    msg += CPLString().Printf("  /vsizip/%s/%s\n", zipFilename, content->entries[i].fileName);
-                }
-            }
-
-            CPLError(CE_Failure, CPLE_NotSupported, "%s", msg.c_str());
-
-            cpl_unzClose(unzF);
-            return NULL;
-        }
-
-        cpl_unzGoToFirstFile(unzF);
-        if (isSecondFile)
-            cpl_unzGoToNextFile(unzF);
-    }
-    else
-    {
-        const ZIPEntry* zipEntry = NULL;
-        if (FindFileInZip(zipFilename, zipInFileName, &zipEntry) == FALSE ||
-            zipEntry->bIsDir == TRUE)
-        {
-            cpl_unzClose(unzF);
-            return NULL;
-        }
-        cpl_unzGoToFilePos(unzF, (unz_file_pos*)&(zipEntry->file_pos));
-    }
-    return unzF;
+    return poReader;
 }
 
 /************************************************************************/
@@ -1800,8 +1640,8 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
     if (zipFilename == NULL)
         return NULL;
 
-    unzFile unzF = OpenZIPFile(zipFilename, osZipInFileName);
-    if (unzF == NULL)
+    VSIArchiveReader* poReader = OpenArchiveFile(zipFilename, osZipInFileName);
+    if (poReader == NULL)
     {
         CPLFree(zipFilename);
         return NULL;
@@ -1818,8 +1658,11 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
 
     if (poVirtualHandle == NULL)
     {
+        delete poReader;
         return NULL;
     }
+
+    unzFile unzF = ((VSIZipReader*)poReader)->GetUnzFileHandle();
 
     cpl_unzOpenCurrentFile(unzF);
 
@@ -1830,7 +1673,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
 
     cpl_unzCloseCurrentFile(unzF);
 
-    cpl_unzClose(unzF);
+    delete poReader;
 
     return new VSIGZipHandle(poVirtualHandle,
                              NULL,
@@ -1839,166 +1682,6 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
                              file_info.uncompressed_size,
                              file_info.crc,
                              file_info.compression_method == 0);
-}
-
-/************************************************************************/
-/*                                 Stat()                               */
-/************************************************************************/
-
-int VSIZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf )
-{
-    int ret;
-    CPLString osZipInFileName;
-    char* zipFilename = SplitFilename(pszFilename, osZipInFileName);
-    if (zipFilename == NULL)
-        return -1;
-
-    if (strlen(osZipInFileName) != 0)
-    {
-        if (ENABLE_DEBUG) CPLDebug("ZIP", "Looking for %s %s\n",
-                                    zipFilename, osZipInFileName.c_str());
-
-        const ZIPEntry* zipEntry = NULL;
-        if (FindFileInZip(zipFilename, osZipInFileName, &zipEntry) == FALSE)
-        {
-            ret = -1;
-        }
-        else
-        {
-            /* Patching st_size with uncompressed file size */
-            pStatBuf->st_size = (long)zipEntry->uncompressed_size;
-            if (zipEntry->bIsDir)
-                pStatBuf->st_mode = S_IFDIR;
-            else
-                pStatBuf->st_mode = S_IFREG;
-            ret = 0;
-        }
-    }
-    else
-    {
-        unzFile unzF = OpenZIPFile(zipFilename, NULL);
-        if (unzF)
-        {
-            cpl_unzOpenCurrentFile(unzF);
-
-            unz_file_info file_info;
-            cpl_unzGetCurrentFileInfo (unzF, &file_info, NULL, 0, NULL, 0, NULL, 0);
-
-            /* Patching st_size with uncompressed file size */
-            pStatBuf->st_size = (long)file_info.uncompressed_size;
-            pStatBuf->st_mode = S_IFREG;
-
-            cpl_unzCloseCurrentFile(unzF);
-
-            cpl_unzClose(unzF);
-            ret = 0;
-        }
-        else
-        {
-            ret = -1;
-        }
-    }
-
-    CPLFree(zipFilename);
-    return ret;
-}
-
-/************************************************************************/
-/*                             ReadDir()                                */
-/************************************************************************/
-
-int VSIZipFilesystemHandler::Unlink( const char *pszFilename )
-{
-    return -1;
-}
-
-/************************************************************************/
-/*                             Rename()                                 */
-/************************************************************************/
-
-int VSIZipFilesystemHandler::Rename( const char *oldpath, const char *newpath )
-{
-    return -1;
-}
-
-/************************************************************************/
-/*                             Mkdir()                                  */
-/************************************************************************/
-
-int VSIZipFilesystemHandler::Mkdir( const char *pszDirname, long nMode )
-{
-    return -1;
-}
-
-/************************************************************************/
-/*                             Rmdir()                                  */
-/************************************************************************/
-
-int VSIZipFilesystemHandler::Rmdir( const char *pszDirname )
-{
-    return -1;
-}
-
-/************************************************************************/
-/*                             ReadDir()                                */
-/************************************************************************/
-
-char** VSIZipFilesystemHandler::ReadDir( const char *pszDirname )
-{
-    CPLString osInZipSubDir;
-    char* zipFilename = SplitFilename(pszDirname, osInZipSubDir);
-    if (zipFilename == NULL)
-        return NULL;
-    int lenInZipSubDir = strlen(osInZipSubDir);
-
-    char **papszDir = NULL;
-    
-    const ZIPContent* content = GetContentOfZip(zipFilename);
-    if (!content)
-    {
-        CPLFree(zipFilename);
-        return NULL;
-    }
-
-    if (ENABLE_DEBUG) CPLDebug("ZIP", "Read dir %s", pszDirname);
-    int i;
-    for(i=0;i<content->nEntries;i++)
-    {
-        const char* fileName = content->entries[i].fileName;
-        /* Only list entries at the same level of inZipSubDir */
-        if (lenInZipSubDir != 0 &&
-            strncmp(fileName, osInZipSubDir, lenInZipSubDir) == 0 &&
-            (fileName[lenInZipSubDir] == '/' || fileName[lenInZipSubDir] == '\\') &&
-            fileName[lenInZipSubDir + 1] != 0)
-        {
-            const char* slash = strchr(fileName + lenInZipSubDir + 1, '/');
-            if (slash == NULL)
-                slash = strchr(fileName + lenInZipSubDir + 1, '\\');
-            if (slash == NULL || slash[1] == 0)
-            {
-                char* tmpFileName = CPLStrdup(fileName);
-                if (slash != NULL)
-                {
-                    tmpFileName[strlen(tmpFileName)-1] = 0;
-                }
-                if (ENABLE_DEBUG)
-                    CPLDebug("ZIP", "Add %s as in directory %s\n",
-                            tmpFileName + lenInZipSubDir + 1, pszDirname);
-                papszDir = CSLAddString(papszDir, tmpFileName + lenInZipSubDir + 1);
-                CPLFree(tmpFileName);
-            }
-        }
-        else if (lenInZipSubDir == 0 &&
-                 strchr(fileName, '/') == NULL && strchr(fileName, '\\') == NULL)
-        {
-            /* Only list toplevel files and directories */
-            if (ENABLE_DEBUG) CPLDebug("ZIP", "Add %s as in directory %s\n", fileName, pszDirname);
-            papszDir = CSLAddString(papszDir, fileName);
-        }
-    }
-
-    CPLFree(zipFilename);
-    return papszDir;
 }
 
 /************************************************************************/

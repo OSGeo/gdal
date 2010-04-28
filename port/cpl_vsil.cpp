@@ -610,6 +610,7 @@ VSIFileManager *VSIFileManager::Get()
 #endif
         VSIInstallStdoutHandler();
         VSIInstallSparseFileHandler();
+        VSIInstallTarFileHandler();
     }
     
     return poManager;
