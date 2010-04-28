@@ -175,6 +175,97 @@ def tiff_read_zip_2():
     return 'success'
 
 ###############################################################################
+# Read a .tif.zip file with a single file in a subdirectory (with explicit filename)
+
+def tiff_read_zip_3():
+
+    ds = gdal.Open('/vsizip/./data/onefileinsubdir.zip/onefileinsubdir/byte.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Read a .tif.zip file with a single file in a subdirectory(with implicit filename)
+
+def tiff_read_zip_4():
+
+    ds = gdal.Open('/vsizip/./data/onefileinsubdir.zip')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Read a .tif.zip file with 2 files in a subdirectory
+
+def tiff_read_zip_5():
+
+    ds = gdal.Open('/vsizip/./data/twofileinsubdir.zip/twofileinsubdir/byte.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Read a .tar file (with explicit filename)
+
+def tiff_read_tar_1():
+
+    ds = gdal.Open('/vsitar/./data/byte.tar/byte.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Read a .tar file (with implicit filename)
+
+def tiff_read_tar_2():
+
+    ds = gdal.Open('/vsitar/./data/byte.tar')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Read a .tgz file (with explicit filename)
+
+def tiff_read_tgz_1():
+
+    ds = gdal.Open('/vsitar/./data/byte.tgz/byte.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Read a .tgz file (with implicit filename)
+
+def tiff_read_tgz_2():
+
+    ds = gdal.Open('/vsitar/./data/byte.tgz')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Check handling of non-degree angular units (#601)
 
 def tiff_grads():
@@ -467,6 +558,13 @@ gdaltest_list.append( (tiff_read_cmyk_raw) )
 gdaltest_list.append( (tiff_read_gzip) )
 gdaltest_list.append( (tiff_read_zip_1) )
 gdaltest_list.append( (tiff_read_zip_2) )
+gdaltest_list.append( (tiff_read_zip_3) )
+gdaltest_list.append( (tiff_read_zip_4) )
+gdaltest_list.append( (tiff_read_zip_5) )
+gdaltest_list.append( (tiff_read_tar_1) )
+gdaltest_list.append( (tiff_read_tar_2) )
+gdaltest_list.append( (tiff_read_tgz_1) )
+gdaltest_list.append( (tiff_read_tgz_2) )
 gdaltest_list.append( (tiff_grads) )
 gdaltest_list.append( (tiff_g4_split) )
 gdaltest_list.append( (tiff_multi_images) )
