@@ -975,10 +975,10 @@ int OGRLIBKMLDataSource::OpenDir (
 
         /***** read the file *****/
         std::string oKmlKml;
-        const char *pszFilePath =
+        CPLString osFilePath =
             CPLFormFilename ( pszFilename, papszDirList[iFile], NULL );
 
-        if ( !kmlbase::File::ReadFileToString ( pszFilePath, &oKmlKml ) ) {
+        if ( !kmlbase::File::ReadFileToString ( osFilePath.c_str(), &oKmlKml ) ) {
             CPLError ( CE_Failure, CPLE_OpenFailed,
                        "%s is not a valid kml file", pszFilename );
             continue;
@@ -993,7 +993,7 @@ int OGRLIBKMLDataSource::OpenDir (
         if ( !poKmlRoot ) {
             CPLError ( CE_Failure, CPLE_OpenFailed,
                        "ERROR Parseing kml layer %s from %s :%s",
-                       pszFilePath, pszFilename, oKmlErrors.c_str (  ) );
+                       osFilePath.c_str(), pszFilename, oKmlErrors.c_str (  ) );
 
             continue;
         }
@@ -1021,9 +1021,9 @@ int OGRLIBKMLDataSource::OpenDir (
 
         /***** create the layer *****/
 
-        AddLayer ( CPLGetBasename ( pszFilePath ),
+        AddLayer ( CPLGetBasename ( osFilePath.c_str() ),
                    poOgrSRS, wkbUnknown,
-                   this, poKmlContainer, pszFilePath, FALSE, bUpdate, nFiles );
+                   this, poKmlContainer, osFilePath.c_str(), FALSE, bUpdate, nFiles );
 
     }
 
