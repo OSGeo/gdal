@@ -756,9 +756,14 @@ CPLErr WKTRasterDataset::SetRasterProperties()
                 
                 /**
                  * TODO: Review this. Is a good algorithm?
+                 * If the pixel size Y is negative, we can assume the raster's
+                 * reference system uses cartesian coordinates, in which the
+                 * origin is in lower-left corner, while the origin in an image
+                 * is un upper-left corner. In this case, the upper left Y value
+                 * will be MaxY from the envelope. Otherwise, it will be MinY.
                  **/                
                 dfUpperLeftX = poE->MinX;
-                if (nSrid == -1)
+                if (dfPixelSizeY >= 0.0) 
                     dfUpperLeftY = poE->MinY;
                 else
                     dfUpperLeftY = poE->MaxY;
