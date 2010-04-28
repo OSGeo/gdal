@@ -100,6 +100,7 @@ AC_DEFUN([AX_LIB_LIBKML],
     if test -n "$libkml_prefix"; then
         libkml_include_dir="$libkml_prefix/include"
         libkml_include_dir2="$libkml_prefix/include/kml"
+        libkml_include_dir3="$libkml_prefix/include/kml/third_party/boost_1_34_1"
         if test "$libkml_prefix" = "/usr"; then
             libkml_lib_flags="-lkmlengine -lkmldom -lkmlbase -lkmlconvenience"
         else
@@ -109,6 +110,7 @@ AC_DEFUN([AX_LIB_LIBKML],
     elif test "$libkml_requested" = "yes"; then
         if test -n "$libkml_include_dir" -a -n "$libkml_lib_flags"; then
             libkml_include_dir2="$libkml_include_dir/kml"
+            libkml_include_dir3="$libkml_include_dir/kml/third_party/boost_1_34_1"
             run_libkml_test="yes"
         fi
     else
@@ -121,7 +123,7 @@ AC_DEFUN([AX_LIB_LIBKML],
     if test "$run_libkml_test" = "yes"; then
 
         saved_CPPFLAGS="$CPPFLAGS"
-        CPPFLAGS="$CPPFLAGS -I$libkml_include_dir -I$libkml_include_dir2"
+        CPPFLAGS="$CPPFLAGS -I$libkml_include_dir -I$libkml_include_dir2 -I$libkml_include_dir3"
 
         saved_LDFLAGS="$LDFLAGS"
         LDFLAGS="$LDFLAGS $libkml_lib_flags"
@@ -129,7 +131,7 @@ AC_DEFUN([AX_LIB_LIBKML],
         dnl
         dnl Check headers
         dnl
-        AC_MSG_CHECKING([for Google libkml headers in $libkml_include_dir and $libkml_include_dir2])
+        AC_MSG_CHECKING([for Google libkml headers in $libkml_include_dir, $libkml_include_dir2, and $libkml_include_dir3])
 
         AC_LANG_PUSH([C++])
         AC_COMPILE_IFELSE([
@@ -140,7 +142,7 @@ AC_DEFUN([AX_LIB_LIBKML],
                 [[]]
             )],
             [
-            LIBKML_CFLAGS="-I$libkml_include_dir -I$libkml_include_dir2"
+            LIBKML_CFLAGS="-I$libkml_include_dir -I$libkml_include_dir2 -I$libkml_include_dir3"
             libkml_header_found="yes"
             AC_MSG_RESULT([found])
             ],
