@@ -1958,6 +1958,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
         OGRField        uField;
 
         uField.IntegerList.nCount = nCount;
+        uField.Set.nMarker2 = 0;
         uField.IntegerList.paList = panValues;
 
         SetField( iField, &uField );
@@ -2020,6 +2021,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
         OGRField        uField;
         
         uField.RealList.nCount = nCount;
+        uField.Set.nMarker2 = 0;
         uField.RealList.paList = padfValues;
         
         SetField( iField, &uField );
@@ -2081,8 +2083,9 @@ void OGRFeature::SetField( int iField, char ** papszValues )
         OGRField        uField;
         
         uField.StringList.nCount = CSLCount(papszValues);
+        uField.Set.nMarker2 = 0;
         uField.StringList.paList = papszValues;
-        
+
         SetField( iField, &uField );
     }
 }
@@ -2142,7 +2145,9 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
         OGRField        uField;
 
         uField.Binary.nCount = nBytes;
+        uField.Set.nMarker2 = 0;
         uField.Binary.paData = pabyData;
+
         SetField( iField, &uField );
     }
 }
