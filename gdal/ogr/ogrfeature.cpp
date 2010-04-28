@@ -672,8 +672,16 @@ int OGR_F_IsFieldSet( OGRFeatureH hFeat, int iField )
 
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_IsFieldSet", 0 );
+    
+    OGRFeature* poFeature = (OGRFeature* )hFeat;
+    
+    if (iField < 0 || iField >= poFeature->GetFieldCount())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", iField);
+        return FALSE;
+    }
 
-    return ((OGRFeature *)hFeat)->IsFieldSet( iField );
+    return poFeature->IsFieldSet( iField );
 }
 
 /************************************************************************/
