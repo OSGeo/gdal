@@ -35,37 +35,64 @@
     Description, timestamp, timespan, open, and Visibility are not supported on
     layers as there is no place in ogr to store this data.
 
-    <h2>Fields</h2>
-    
-    <h3>Enviroment Variables</h3>
+    <h3>Fields</h3>
     <dl>
-        <dt>LIBKML_NAME_FIELD</dt>
-        <dd>Name of the OGR field to use for a placemark's name,
-          Defaults to Name</dd>
-        <dt>LIBKML_DESCRIPTION_FIELD</dt>
-        <dd>Name of the OGR field to use for a placemark's description,
-          Defaults to description</dd>
-        <dt>LIBKML_TIMESTAMP_FIELD</dt>
-        <dd>Name of the OGR field to use for a placemark's timestamp,
-          Defaults to timestamp</dd>
-        <dt>LIBKML_BEGIN_FIELD</dt>
-        <dd>Name of the OGR field to use for a placemark's timespan begin,
-          Defaults to begin</dd>
-        <dt>LIBKML_END_FIELD</dt>
-        <dd>Name of the OGR field to use for a placemark's timespan end,
-          Defaults to end</dd>
-        <dt>LIBKML_ALTITUDEMODE_FIELD</dt>
-        <dd>Name of the OGR field to use for a geometry's altitudeMode,
-          Defaults to altitudeMode</dd>
-        <dt>LIBKML_TESSELLATE_FIELD</dt>
-        <dd>Name of the OGR field to use for a polygon's tessellate,
-          Defaults to tessellate</dd>
-        <dt>LIBKML_EXTRUDE_FIELD</dt>
-        <dd>Name of the OGR field to use for a geometry's extrude,
-          Defaults to extrude</dd>
-        <dt>LIBKML_VISIBILITY_FIELD</dt>
-        <dd>Name of the OGR field to use for a placemark's visibility,
-          Defaults to visibility</dd>
-    </dl>
+       <dt>Name</dt>
+       <dd>
+         This String field maps to the kml tag 
+         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#name">
+         &lt;name&gt;</a>. The name of the ogr field can be changed with the
+         enviroment variable LIBKML_NAME_FIELD .
+       </dd>
+       <dt>description</dt>
+       <dd>This String field maps to the kml tag 
+         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#description">
+         &lt;description&gt;</a>. The name of the ogr field can be changed with the
+         enviroment variable LIBKML_DESCRIPTION_FIELD .
+       </dd>
+       <dt>timestamp</dt>
+       <dd>This string or datetime or date and/or time field maps to the kml tag 
+         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#timestamp">
+         &lt;timestamp&gt;</a>. The name of the ogr field can be changed with the
+         enviroment variable LIBKML_TIMESTAMP_FIELD .
+       </dd>
+       <dt>begin</dt>
+       <dd>This string or datetime or date and/or time field maps to the kml tag 
+         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#begin">
+         &lt;begin&gt;</a>. The name of the ogr field can be changed with the
+         enviroment variable LIBKML_BEGIN_FIELD .
+       </dd>
+       <dt>end</dt>
+       <dd>This string or datetime or date and/or time field maps to the kml tag 
+         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#end">
+         &lt;end&gt;</a>. The name of the ogr field can be changed with the
+         enviroment variable LIBKML_END_FIELD .
+       </dd>
+       <dt>altitudeMode</dt>
+       <dd>This string field maps to the kml tag 
+         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#altitudemode">
+         &lt;altitudeMode&gt;</a>. The name of the ogr field can be changed with the
+         enviroment variable LIBKML_ALTITUDEMODE_FIELD .
+       </dd>
+       <dt>tessellate</dt>
+       <dd>This integer field maps to the kml tag 
+         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#tessellate">
+         &lt;tessellate&gt;</a>. The name of the ogr field can be changed with the
+         enviroment variable LIBKML_TESSELLATE_FIELD .
+       </dd>
+       <dt>extrude</dt>
+       <dd>This integer field maps to the kml tag 
+         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#extrude">
+         &lt;extrude&gt;</a>. The name of the ogr field can be changed with the
+         enviroment variable LIBKML_EXTRUDE_FIELD .
+       </dd>
+       <dt>visibility</dt>
+       <dd>This integer field maps to the kml tag 
+         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#visibility">
+         &lt;visibility&gt;</a>. The name of the ogr field can be changed with the
+         enviroment variable LIBKML_VISIBILITY_FIELD .
+       </dd>
+    <dl>
+
 </body>
 </html>
