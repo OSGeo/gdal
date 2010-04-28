@@ -422,11 +422,14 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
 
         if (frameEntry->exists)
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
-                      "Invalid TOC file. Frame entry(%d,%d) for frame file index %d is a duplicate.",
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Frame entry(%d,%d) for frame file index %d was already found.",
                       frameRow, frameCol, i);
-            RPFTOCFree(toc);
-            return NULL;
+            CPLFree(frameEntry->directory);
+            frameEntry->directory = NULL;
+            CPLFree(frameEntry->fullFilePath);
+            frameEntry->fullFilePath = NULL;
+            frameEntry->exists = 0;
         }
         
         VSIFReadL( &offsetFrameFilePathName, 1, sizeof(offsetFrameFilePathName), fp);
