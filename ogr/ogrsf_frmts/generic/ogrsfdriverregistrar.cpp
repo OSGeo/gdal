@@ -589,6 +589,46 @@ void OGRRegisterDriver( OGRSFDriverH hDriver )
 }
 
 /************************************************************************/
+/*                          DeregisterDriver()                          */
+/************************************************************************/
+
+void OGRSFDriverRegistrar::DeregisterDriver( OGRSFDriver * poDriver )
+
+{
+    CPLMutexHolderD( &hDRMutex );
+    int         i;
+
+    for( i = 0; i < nDrivers; i++ )
+    {
+        if( poDriver == papoDrivers[i] )
+            break;
+    }
+
+    if (i == nDrivers)
+        return;
+
+    while( i < nDrivers-1 )
+    {
+        papoDrivers[i] = papoDrivers[i+1];
+        i++;
+    }
+    nDrivers--;
+}
+
+/************************************************************************/
+/*                        OGRDeregisterDriver()                         */
+/************************************************************************/
+
+void OGRDeregisterDriver( OGRSFDriverH hDriver )
+
+{
+    VALIDATE_POINTER0( hDriver, "OGRDeregisterDriver" );
+
+    OGRSFDriverRegistrar::GetRegistrar()->DeregisterDriver( 
+        (OGRSFDriver *) hDriver );
+}
+
+/************************************************************************/
 /*                           GetDriverCount()                           */
 /************************************************************************/
 

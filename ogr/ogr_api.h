@@ -387,6 +387,7 @@ OGRDataSourceH CPL_DLL OGROpen( const char *, int, OGRSFDriverH * );
 OGRDataSourceH CPL_DLL OGROpenShared( const char *, int, OGRSFDriverH * );
 OGRErr  CPL_DLL OGRReleaseDataSource( OGRDataSourceH );
 void    CPL_DLL OGRRegisterDriver( OGRSFDriverH );
+void    CPL_DLL OGRDeregisterDriver( OGRSFDriverH );
 int     CPL_DLL OGRGetDriverCount(void);
 OGRSFDriverH CPL_DLL OGRGetDriver( int );
 OGRSFDriverH CPL_DLL OGRGetDriverByName( const char * );
