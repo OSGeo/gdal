@@ -544,6 +544,7 @@ void field2kml (
                         poKmlFactory->CreateTimeStamp (  );
                     poKmlTimeStamp->set_when ( timebuf );
                     poKmlPlacemark->set_timeprimitive ( poKmlTimeStamp );
+                    CPLFree( timebuf );
 
                     continue;
                 }
@@ -561,6 +562,7 @@ void field2kml (
                     }
 
                     poKmlTimeSpan->set_begin ( timebuf );
+                    CPLFree( timebuf );
 
                     continue;
 
@@ -580,6 +582,7 @@ void field2kml (
                     }
 
                     poKmlTimeSpan->set_end ( timebuf );
+                    CPLFree( timebuf );
 
                     continue;
                 }
