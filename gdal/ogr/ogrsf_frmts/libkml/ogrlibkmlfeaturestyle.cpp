@@ -283,6 +283,8 @@ void kml2featurestyle (
             /***** add the style to the feature *****/
 
             poOgrSM->SetFeatureStyleString ( poOgrFeat );
+
+            delete poOgrSM;
         }
 
         /***** is the style a stylemap? *****/
