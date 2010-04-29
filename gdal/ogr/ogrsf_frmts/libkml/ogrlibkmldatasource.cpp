@@ -881,9 +881,14 @@ int OGRLIBKMLDataSource::OpenKmz (
         delete poKmlHref;
     }
 
+    /***** if the doc.kml has links store it so if were in update mode we can write it *****/
+    
+    if ( nLinks )
+        m_poKmlDocKml = poKmlContainer;
+        
     /***** if the doc.kml has no links treat it as a normal kml file *****/
 
-    if ( !nLinks ) {
+    else {
 
         /* todo there could still be a seperate styles file in the kmz
            if there is this would be a layer style table IF its only a single
