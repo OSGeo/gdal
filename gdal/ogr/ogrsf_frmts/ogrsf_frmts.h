@@ -275,6 +275,7 @@ class CPL_DLL OGRSFDriverRegistrar
     OGRErr      ReleaseDataSource( OGRDataSource * );
 
     void        RegisterDriver( OGRSFDriver * poDriver );
+    void        DeregisterDriver( OGRSFDriver * poDriver );
 
     int         GetDriverCount( void );
     OGRSFDriver *GetDriver( int iDriver );
