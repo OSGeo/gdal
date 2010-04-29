@@ -3231,6 +3231,12 @@ SWIGINTERNINLINE PyObject*
 SWIGINTERN char const *OGRDriverShadow_GetName(OGRDriverShadow *self){
     return OGR_Dr_GetName( self );
   }
+SWIGINTERN void OGRDriverShadow_Register(OGRDriverShadow *self){
+    OGRRegisterDriver( self );
+  }
+SWIGINTERN void OGRDriverShadow_Deregister(OGRDriverShadow *self){
+    OGRDeregisterDriver( self );
+  }
 SWIGINTERN void delete_OGRDataSourceShadow(OGRDataSourceShadow *self){
     OGRReleaseDataSource(self);
   }
@@ -4538,6 +4544,64 @@ SWIGINTERN PyObject *_wrap_Driver_GetName(PyObject *SWIGUNUSEDPARM(self), PyObje
     }
   }
   resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Driver_Register(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Driver_Register",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_Register" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRDriverShadow * >(argp1);
+  {
+    OGRDriverShadow_Register(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Driver_Deregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Driver_Deregister",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_Deregister" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRDriverShadow * >(argp1);
+  {
+    OGRDriverShadow_Deregister(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
   return NULL;
@@ -13835,6 +13899,8 @@ static PyMethodDef SwigMethods[] = {
 		"driver name. This is an internal string and should not be modified or\n"
 		"freed. \n"
 		""},
+	 { (char *)"Driver_Register", _wrap_Driver_Register, METH_VARARGS, (char *)"Driver_Register(Driver self)"},
+	 { (char *)"Driver_Deregister", _wrap_Driver_Deregister, METH_VARARGS, (char *)"Driver_Deregister(Driver self)"},
 	 { (char *)"Driver_swigregister", Driver_swigregister, METH_VARARGS, NULL},
 	 { (char *)"DataSource_name_get", _wrap_DataSource_name_get, METH_VARARGS, (char *)"DataSource_name_get(DataSource self) -> char"},
 	 { (char *)"delete_DataSource", _wrap_delete_DataSource, METH_VARARGS, (char *)"delete_DataSource(DataSource self)"},
