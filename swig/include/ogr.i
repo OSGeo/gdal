@@ -362,6 +362,15 @@ public:
     return OGR_Dr_GetName( self );
   }
 
+  /* Added in GDAL 1.8.0 */
+  void Register() {
+    OGRRegisterDriver( self );
+  }
+
+  /* Added in GDAL 1.8.0 */
+  void Deregister() {
+    OGRDeregisterDriver( self );
+  }
 
 } /* %extend */
 }; /* class OGRDriverShadow */
