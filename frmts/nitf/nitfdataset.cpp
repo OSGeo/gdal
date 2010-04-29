@@ -2085,7 +2085,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
 
     if( pszOverviewFile == NULL )
     {
-        if( poDS->CheckForRSets(poOpenInfo->pszFilename) )
+        if( poDS->CheckForRSets(pszFilename) )
             pszOverviewFile = poDS->osRSetVRT;
     }        
 
@@ -4553,7 +4553,7 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
 
     if (strlen(errorMessage) != 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,errorMessage);
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", errorMessage);
         return FALSE;
     }
 
