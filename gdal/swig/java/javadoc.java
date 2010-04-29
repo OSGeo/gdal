@@ -5932,6 +5932,24 @@ public class org.gdal.ogr.Driver:public String getName()
 public class org.gdal.ogr.Driver:public String GetName()
 
 
+/** 
+  Add a driver to the list of registered drivers.
+
+  If the driver is already registered (based on handle comparison) 
+  then the driver isn't registered.  New drivers are added at the end of
+  the list of registered drivers.
+
+  @since GDAL 1.8.0
+*/
+public class org.gdal.ogr.Driver:public void Register()
+
+/** 
+  Remove the  driver from the list of registered drivers.
+
+  @since GDAL 1.8.0
+*/
+public class org.gdal.ogr.Driver:public void Deregister()
+
 /* Class DataSource */
 /**
   * This class represents a data source.
