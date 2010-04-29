@@ -2224,7 +2224,8 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 
         /* establish level */
         nLevel = papsElems[i]->level;
-        abyLevelsOccuring[nLevel >> 3] |= (0x1 << ((nLevel-1)&0x7));
+        nLevel = MAX(1,MIN(nLevel,64));
+        abyLevelsOccuring[(nLevel-1) >> 3] |= (0x1 << ((nLevel-1)&0x7));
         
         DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
         if( i == 0 )
