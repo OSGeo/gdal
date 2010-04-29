@@ -584,19 +584,17 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
     // all bands based on the first.  This really doesn't do something
     // great for >16 bit images.
     if( poCodestream->get_bit_depth(0) > 8 
-        && poCodestream->get_bit_depth(0) <= 16
         && poCodestream->get_signed(0) )
     {
         eDT = GDT_Int16;
     }
     else if( poCodestream->get_bit_depth(0) > 8
-             && poCodestream->get_bit_depth(0) <= 16
              && !poCodestream->get_signed(0) )
     {
         eDT = GDT_UInt16;
     }
     else
-        this->eDT = GDT_Byte;
+        eDT = GDT_Byte;
 
     if( poCodestream->get_bit_depth(0) % 8 != 8
         && poCodestream->get_bit_depth(0) < 16 )
@@ -1583,9 +1581,12 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
     region.pos += view_dims.pos;
     
     int nBytesPerPixel = GDALGetDataTypeSize(poJDS->eDT) / 8;
+    int nPrecision = 0;
 
-    if( nBytesPerPixel > 2 )
-        nBytesPerPixel = 1;
+    CPLAssert( nBytesPerPixel == 1 || nBytesPerPixel == 2  );
+
+    if( poJDS->poCodestream->get_bit_depth(0) > 16 )
+        nPrecision = 16;
     
 /* ==================================================================== */
 /*      Now we process the available cached jpeg2000 data into          */
@@ -1682,7 +1683,7 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
                     process((kdu_uint16**) &(channel_bufs[0]), false,
                             pixel_gap, origin, row_gap, 1000000, 0, 
                             incomplete_region, region_pass,
-                            0, false );
+                            nPrecision, false );
             }
             
             CPLDebug( "JPIPKAK",
