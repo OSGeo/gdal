@@ -1031,9 +1031,12 @@ int OGRLIBKMLDataSource::OpenDir (
 
     CSLDestroy ( papszDirList );
 
-    m_isDir = TRUE;
-    
-    return TRUE;
+    if ( nLayers > 0 ) {
+        m_isDir = TRUE;
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 /******************************************************************************
