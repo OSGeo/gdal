@@ -165,6 +165,33 @@
 
 */
 
+
+/** 
+  \fn void OGRSFDriverRegistrar::DeregisterDriver( OGRSFDriver * poDriver );
+  
+  \brief Remove the passed driver from the list of registered drivers.
+
+  This method is the same as the C function OGRDeregisterDriver().
+
+  @param poDriver the driver to deregister.
+
+  @since GDAL 1.8.0
+*/
+
+
+/** 
+  \fn void OGRDeregisterDriver( OGRSFDriverH hDriver );
+  
+  \brief Remove the passed driver from the list of registered drivers.
+
+  This function is the same as the C++ method 
+  OGRSFDriverRegistrar::DeregisterDriver().
+
+  @param hDriver handle to the driver to deregister.
+
+  @since GDAL 1.8.0
+*/
+
 /**
 
   \fn int OGRSFDriverRegistrar::GetDriverCount();
