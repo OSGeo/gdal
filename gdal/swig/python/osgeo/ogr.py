@@ -327,6 +327,14 @@ class Driver(_object):
         """
         return _ogr.Driver_GetName(self, *args)
 
+    def Register(self, *args):
+        """Register(self)"""
+        return _ogr.Driver_Register(self, *args)
+
+    def Deregister(self, *args):
+        """Deregister(self)"""
+        return _ogr.Driver_Deregister(self, *args)
+
 Driver_swigregister = _ogr.Driver_swigregister
 Driver_swigregister(Driver)
 
