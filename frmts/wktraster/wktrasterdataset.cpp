@@ -1112,7 +1112,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     if (pszRasterColumnName == NULL) 
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                "Couldn't find a WKT Raster column in %s.%s table\n",
+                "The table %s.%s doesn't exist or doesn't have a WKT Raster column\n",
                 pszSchemaName, pszTableName);
         PQfinish(hPGconn);
         CPLFree(pszTableName);
