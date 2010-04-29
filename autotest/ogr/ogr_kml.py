@@ -44,23 +44,43 @@ import gdal
 # Test basic open operation for KML datastore.
 #
 def ogr_kml_datastore():
-
-    gdaltest.kml_ds = None
+    
+    ogrtest.kml_ds = None
+    ogrtest.have_read_kml = 0
+    ogrtest.kml_drv = None
+    ogrtest.libkml_drv = None
 
     try:
-        gdaltest.kml_ds = ogr.Open( 'data/samples.kml' );
+        ogrtest.kml_drv = ogr.GetDriverByName('KML')
     except:
-        gdaltest.kml_ds = None
+        pass
 
-    if gdaltest.kml_ds is None:
-        gdaltest.have_kml = 0
-    else:
-        gdaltest.have_kml = 1
-
-    if not gdaltest.have_kml:
+    if ogrtest.kml_drv is None:
         return 'skip'
 
-    if gdaltest.kml_ds.GetLayerCount() != 6:
+    try:
+        ogrtest.libkml_drv = ogr.GetDriverByName('LIBKML')
+    except:
+        pass
+
+    # Unregister LIBKML driver if present as it's behaviour is not identical
+    # to old KML driver
+    if ogrtest.libkml_drv is not None:
+        print('Unregister LIBKML driver')
+        ogrtest.libkml_drv.Deregister()
+
+    try:
+        ogrtest.kml_ds = ogr.Open( 'data/samples.kml' );
+    except:
+        pass
+
+    if ogrtest.kml_ds is not None:
+        ogrtest.have_read_kml = 1
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    if ogrtest.kml_ds.GetLayerCount() != 6:
         gdaltest.post_reason( 'wrong number of layers' )
         return 'fail'
 
@@ -71,14 +91,14 @@ def ogr_kml_datastore():
 #
 def ogr_kml_attributes_1():
     
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
-    if gdaltest.kml_ds is None:
+    if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'kml_ds is none' )
         return 'faii'
 
-    lyr = gdaltest.kml_ds.GetLayerByName('Placemarks')
+    lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
     feat = lyr.GetNextFeature()
 
     if feat.GetField('Name') != 'Simple placemark':
@@ -125,14 +145,14 @@ def ogr_kml_attributes_1():
 #
 def ogr_kml_attributes_2():
     
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
-    if gdaltest.kml_ds is None:
+    if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'kml_ds is none' )
         return 'faii'
 
-    lyr = gdaltest.kml_ds.GetLayerByName('Highlighted Icon')
+    lyr = ogrtest.kml_ds.GetLayerByName('Highlighted Icon')
     feat = lyr.GetNextFeature()
 
     if feat.GetField('Name') != 'Roll over this icon':
@@ -155,14 +175,14 @@ def ogr_kml_attributes_2():
 #
 def ogr_kml_attributes_3():
     
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
-    if gdaltest.kml_ds is None:
+    if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'kml_ds is none' )
         return 'faii'
 
-    lyr = gdaltest.kml_ds.GetLayerByName('Paths')
+    lyr = ogrtest.kml_ds.GetLayerByName('Paths')
     feat = lyr.GetNextFeature()
 
     if feat.GetField('Name') != 'Tessellated':
@@ -198,14 +218,14 @@ def ogr_kml_attributes_3():
 #
 def ogr_kml_attributes_4():
     
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
-    if gdaltest.kml_ds is None:
+    if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'kml_ds is none' )
         return 'faii'
 
-    lyr = gdaltest.kml_ds.GetLayerByName('Google Campus')
+    lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
     feat = lyr.GetNextFeature()
 
     i = 40
@@ -230,14 +250,14 @@ def ogr_kml_attributes_4():
 #
 def ogr_kml_point_read():
     
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
-    if gdaltest.kml_ds is None:
+    if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'kml_ds is none' )
         return 'faii'
 
-    lyr = gdaltest.kml_ds.GetLayerByName('Placemarks')
+    lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
@@ -273,14 +293,14 @@ def ogr_kml_point_read():
 #
 def ogr_kml_linestring_read():
     
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
-    if gdaltest.kml_ds is None:
+    if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'kml_ds is none' )
         return 'faii'
 
-    lyr = gdaltest.kml_ds.GetLayerByName('Paths')
+    lyr = ogrtest.kml_ds.GetLayerByName('Paths')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
@@ -313,14 +333,14 @@ def ogr_kml_linestring_read():
 #
 def ogr_kml_polygon_read():
     
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
-    if gdaltest.kml_ds is None:
+    if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'kml_ds is none' )
         return 'faii'
 
-    lyr = gdaltest.kml_ds.GetLayerByName('Google Campus')
+    lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
@@ -361,6 +381,9 @@ def ogr_kml_polygon_read():
 # Write test
 
 def ogr_kml_write_1():
+
+    if ogrtest.kml_drv is None:
+        return 'skip'
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS72')
@@ -448,7 +471,7 @@ def ogr_kml_write_1():
 
 def ogr_kml_check_write_1():
 
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
     ds = ogr.Open('tmp/kml.kml')
@@ -531,7 +554,7 @@ def ogr_kml_check_write_1():
 #
 def ogr_kml_xml_attributes():
     
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
     ds = ogr.Open('data/description_with_xml.kml')
@@ -553,12 +576,17 @@ def ogr_kml_xml_attributes():
 #  Cleanup
 
 def ogr_kml_cleanup():
-    if not gdaltest.have_kml:
+    if not ogrtest.have_read_kml:
         return 'skip'
 
-    if gdaltest.kml_ds is not None:
-        gdaltest.kml_ds.Destroy()
+    if ogrtest.kml_ds is not None:
+        ogrtest.kml_ds.Destroy()
     os.remove('tmp/kml.kml')
+
+    # Re-register LIBKML driver if necessary
+    if ogrtest.libkml_drv is not None:
+        print('Re-register LIBKML driver')
+        ogrtest.libkml_drv.Register()
 
     return 'success'
 
