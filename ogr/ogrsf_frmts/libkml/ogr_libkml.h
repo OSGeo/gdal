@@ -144,6 +144,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
 
     int                       m_isKmz;
     ContainerPtr              m_poKmlDocKml;
+    ElementPtr                m_poKmlDocKmlRoot;
     ContainerPtr              m_poKmlStyleKml;
     const char               *pszStylePath;
 
