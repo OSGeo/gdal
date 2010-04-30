@@ -2633,7 +2633,13 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     {
         VSIFReadL( abyHeader, 1, 32, fp );
         if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
-            poODS =  (GDALDataset *) GDALOpenShared( osAuxFilename, eAccess );
+        {
+            /* Avoid causing failure in opening of main file from SWIG bindings */
+            /* when auxiliary file cannot be opened (#3269) */
+            CPLTurnFailureIntoWarning(TRUE);
+            poODS = (GDALDataset *) GDALOpenShared( osAuxFilename, eAccess );
+            CPLTurnFailureIntoWarning(FALSE);
+        }
         VSIFCloseL( fp );
     }
 
@@ -2723,7 +2729,13 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         {
             VSIFReadL( abyHeader, 1, 32, fp );
             if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
+            {
+                /* Avoid causing failure in opening of main file from SWIG bindings */
+                /* when auxiliary file cannot be opened (#3269) */
+                CPLTurnFailureIntoWarning(TRUE);
                 poODS = (GDALDataset *) GDALOpenShared( osAuxFilename, eAccess );
+                CPLTurnFailureIntoWarning(FALSE);
+            }
             VSIFCloseL( fp );
         }
  
