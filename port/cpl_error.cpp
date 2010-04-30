@@ -62,7 +62,9 @@ typedef struct {
     CPLErr  eLastErrType;
     CPLErrorHandlerNode *psHandlerStack;
     int     nLastErrMsgMax;
+    int     nFailureIntoWarning;
     char    szLastErrMsg[DEFAULT_LAST_ERR_MSG_SIZE];
+    /* Do not add anything here. szLastErrMsg must be the last field. See CPLRealloc() below */
 } CPLErrorContext;
 
 /************************************************************************/
@@ -141,6 +143,9 @@ void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
 void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    if (psCtx->nFailureIntoWarning > 0 && eErrClass == CE_Failure)
+        eErrClass = CE_Warning;
 
 /* -------------------------------------------------------------------- */
 /*      Expand the error message                                        */
@@ -583,6 +588,20 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
         fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
 
     fflush( fpLog );
+}
+
+/**********************************************************************
+ *                      CPLTurnFailureIntoWarning()                   *
+ **********************************************************************/
+
+void CPLTurnFailureIntoWarning(int bOn )
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+    psCtx->nFailureIntoWarning += (bOn) ? 1 : -1;
+    if (psCtx->nFailureIntoWarning < 0)
+    {
+        CPLDebug("CPL", "Wrong nesting of CPLTurnFailureIntoWarning(TRUE) / CPLTurnFailureIntoWarning(FALSE)");
+    }
 }
 
 /**********************************************************************
