@@ -72,6 +72,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                                  OGRwkbGeometryType eGType,
                                  OGRLIBKMLDataSource * poOgrDS,
                                  ElementPtr poKmlRoot,
+                                 ContainerPtr poKmlContainer,
                                  const char *pszFileName,
                                  int bNew,
                                  int bUpdate )
@@ -95,7 +96,11 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
     /***** store the root element pointer *****/
 
-    m_poKmlLayer = AsContainer ( poKmlRoot );
+    m_poKmlLayerRoot = poKmlRoot;
+    
+    /***** store the layers container *****/
+
+    m_poKmlLayer = poKmlContainer;
 
     /***** was the layer created from a DS::Open *****/
 
