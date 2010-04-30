@@ -220,9 +220,17 @@ void OGRLIBKMLDataSource::WriteKmz (
             }
         }
 
-        KmlPtr poKmlKml = m_poKmlFactory->CreateKml (  );
+        /***** if we dont have the layers root *****/
+        /***** make it and add the container    *****/
 
-        poKmlKml->set_feature ( poKlmContainer );
+        KmlPtr poKmlKml = NULL;
+
+        if ( !( poKmlKml = AsKml( papoLayers[iLayer]->GetKmlLayerRoot (  ) ) ) ) {
+
+            poKmlKml = m_poKmlFactory->CreateKml (  );
+
+            poKmlKml->set_feature ( poKlmContainer );
+        }
 
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
 
@@ -310,9 +318,17 @@ void OGRLIBKMLDataSource::WriteDir (
             };
         }
 
-        KmlPtr poKmlKml = m_poKmlFactory->CreateKml (  );
+        /***** if we dont have the layers root *****/
+        /***** make it and add the container    *****/
 
-        poKmlKml->set_feature ( poKmlContainer );
+        KmlPtr poKmlKml = NULL;
+
+        if ( !( poKmlKml = AsKml( papoLayers[iLayer]->GetKmlLayerRoot (  ) ) ) ) {
+
+            poKmlKml = m_poKmlFactory->CreateKml (  );
+
+            poKmlKml->set_feature ( poKmlContainer );
+        }
 
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
 
@@ -538,6 +554,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer (
     OGRwkbGeometryType eGType,
     OGRLIBKMLDataSource * poOgrDS,
     ElementPtr poKmlRoot,
+    ContainerPtr poKmlContainer,
     const char *pszFileName,
     int bNew,
     int bUpdate,
@@ -563,6 +580,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer (
                                                       eGType,
                                                       poOgrDS,
                                                       poKmlRoot,
+                                                      poKmlContainer,
                                                       pszFileName,
                                                       bNew,
                                                       bUpdate );
@@ -630,7 +648,7 @@ int OGRLIBKMLDataSource::ParseLayers (
 
             AddLayer ( oKmlFeatName.c_str (  ),
                        poOgrSRS, wkbUnknown, this,
-                       poKmlFeat, "", FALSE, bUpdate, nKmlFeatures );
+                       NULL, AsContainer( poKmlFeat ), "", FALSE, bUpdate, nKmlFeatures );
 
         }
 
@@ -749,7 +767,7 @@ int OGRLIBKMLDataSource::OpenKml (
     if ( nPlacemarks && !nLayers ) {
         AddLayer ( CPLGetBasename ( pszFilename ),
                    poOgrSRS, wkbUnknown,
-                   this, m_poKmlDSContainer, pszFilename, FALSE, bUpdate, 1 );
+                   this, poKmlRoot, m_poKmlDSContainer, pszFilename, FALSE, bUpdate, 1 );
     }
 
     delete poOgrSRS;
@@ -798,9 +816,9 @@ int OGRLIBKMLDataSource::OpenKmz (
     /***** parse the kml into the DOM *****/
 
     std::string oKmlErrors;
-    m_poKmlDocKmlRoot = kmldom::Parse ( oKmlKml, &oKmlErrors );
+    ElementPtr poKmlDocKmlRoot = kmldom::Parse ( oKmlKml, &oKmlErrors );
 
-    if ( !m_poKmlDocKmlRoot ) {
+    if ( !poKmlDocKmlRoot ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
                    "ERROR Parseing kml layer %s from %s :%s",
                    oKmlKmlPath.c_str (  ),
@@ -812,7 +830,7 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     /***** get the child contianer from root *****/
 
-    ContainerPtr poKmlContainer = GetContainerFromRoot ( m_poKmlDocKmlRoot );
+    ContainerPtr poKmlContainer = GetContainerFromRoot ( poKmlDocKmlRoot );
 
     /***** loop over the container looking for network links *****/
 
@@ -880,7 +898,7 @@ int OGRLIBKMLDataSource::OpenKmz (
 
                 AddLayer ( CPLGetBasename
                            ( poKmlHref->get_path (  ).c_str (  ) ), poOgrSRS,
-                           wkbUnknown, this, poKmlLyrContainer,
+                           wkbUnknown, this, poKmlLyrRoot, poKmlLyrContainer,
                            poKmlHref->get_path (  ).c_str (  ), FALSE, bUpdate,
                            nKmlFeatures );
 
@@ -894,8 +912,10 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     /***** if the doc.kml has links store it so if were in update mode we can write it *****/
     
-    if ( nLinks )
+    if ( nLinks ) {
         m_poKmlDocKml = poKmlContainer;
+        m_poKmlDocKmlRoot = poKmlDocKmlRoot;
+    }
         
     /***** if the doc.kml has no links treat it as a normal kml file *****/
 
@@ -919,7 +939,7 @@ int OGRLIBKMLDataSource::OpenKmz (
         if ( nPlacemarks && !nLayers ) {
             AddLayer ( CPLGetBasename ( pszFilename ),
                        poOgrSRS, wkbUnknown,
-                       this, poKmlContainer, pszFilename, FALSE, bUpdate, 1 );
+                       this, poKmlDocKmlRoot, poKmlContainer, pszFilename, FALSE, bUpdate, 1 );
         }
     }
 
@@ -1039,7 +1059,7 @@ int OGRLIBKMLDataSource::OpenDir (
 
         AddLayer ( CPLGetBasename ( osFilePath.c_str() ),
                    poOgrSRS, wkbUnknown,
-                   this, poKmlContainer, osFilePath.c_str(), FALSE, bUpdate, nFiles );
+                   this, poKmlRoot, poKmlContainer, osFilePath.c_str(), FALSE, bUpdate, nFiles );
 
     }
 
@@ -1456,7 +1476,7 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayerKml (
     /***** create the layer *****/
 
     poOgrLayer = AddLayer ( pszLayerName, poOgrSRS, eGType, this,
-                            poKmlDocument, "", TRUE, bUpdate, 1 );
+                            NULL, poKmlDocument, "", TRUE, bUpdate, 1 );
 
     /***** add the layer name as a <Name> *****/
 
@@ -1513,7 +1533,7 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayerKmz (
     DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
 
     poOgrLayer = AddLayer ( pszLayerName, poOgrSRS, eGType, this,
-                            poKmlDocument,
+                            NULL, poKmlDocument,
                             CPLFormFilename ( NULL, pszLayerName, ".kml" ),
                             TRUE, bUpdate, 1 );
 
