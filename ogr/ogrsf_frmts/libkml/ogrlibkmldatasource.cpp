@@ -184,10 +184,16 @@ void OGRLIBKMLDataSource::WriteKmz (
 
     if ( EQUAL ( pszUseDocKml, "yes" ) && m_poKmlDocKml ) {
 
-        KmlPtr poKmlKml = m_poKmlFactory->CreateKml (  );
+        /***** if we dont have the doc.kml root *****/
+        /***** make it and add the container    *****/
+        
+        if ( !m_poKmlDocKmlRoot ) {
+            m_poKmlDocKmlRoot = m_poKmlFactory->CreateKml (  );
 
-        poKmlKml->set_feature ( m_poKmlDocKml );
-        std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
+            AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
+        }
+        
+        std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
 
         if ( !poKmlKmzfile->AddFile ( oKmlOut, "doc.kml" ) )
             CPLError ( CE_Failure, CPLE_FileIO,
@@ -266,11 +272,16 @@ void OGRLIBKMLDataSource::WriteDir (
 
     if ( EQUAL ( pszUseDocKml, "yes" ) && m_poKmlDocKml ) {
 
-        KmlPtr poKmlKml = m_poKmlFactory->CreateKml (  );
+        /***** if we dont have the doc.kml root *****/
+        /***** make it and add the container    *****/
+        
+        if ( !m_poKmlDocKmlRoot ) {
+            m_poKmlDocKmlRoot = m_poKmlFactory->CreateKml (  );
 
-        poKmlKml->set_feature ( m_poKmlDocKml );
-
-        std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
+            AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
+        }
+        
+        std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
 
         const char *pszOutfile = CPLFormFilename ( pszName, "doc.kml", NULL );
 
@@ -787,9 +798,9 @@ int OGRLIBKMLDataSource::OpenKmz (
     /***** parse the kml into the DOM *****/
 
     std::string oKmlErrors;
-    ElementPtr poKmlRoot = kmldom::Parse ( oKmlKml, &oKmlErrors );
+    m_poKmlDocKmlRoot = kmldom::Parse ( oKmlKml, &oKmlErrors );
 
-    if ( !poKmlRoot ) {
+    if ( !m_poKmlDocKmlRoot ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
                    "ERROR Parseing kml layer %s from %s :%s",
                    oKmlKmlPath.c_str (  ),
@@ -801,7 +812,7 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     /***** get the child contianer from root *****/
 
-    ContainerPtr poKmlContainer = GetContainerFromRoot ( poKmlRoot );
+    ContainerPtr poKmlContainer = GetContainerFromRoot ( m_poKmlDocKmlRoot );
 
     /***** loop over the container looking for network links *****/
 
