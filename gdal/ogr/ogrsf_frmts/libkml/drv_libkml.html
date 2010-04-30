@@ -1,98 +1,348 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-    <title>Libkml Driver</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>LIBKML Driver</title>
 </head>
-
+ 
 <body bgcolor="#ffffff">
-
-    <h1>Libkml Driver (.kml .kmz)</h1>
-
-
-    <h2>datasource</h2>
+ 
+  <h1>LIBKML Driver (.kml .kmz)</h1>
     
-    <h3>Enviroment Variables</h3>
-    <dl>
-        <dt>LIBKML_USE_DOC.KML</dt>
-        <dd>read/write a kml file with a network link to each layer file, for
-         .kmz and dir datasets. Defaults to yes</dd>
-    </dl>
-
-    <h3>Style</h3>
-    Style tables are wrote to the document in a .kml file, style/style.kml
-    in a kmz file.
-    <h3>Schema</h3>
+  <p>
+    The LIBKML driver is a client of
+    <a href="http://code.google.com/p/libkml/">Libkml</a> from Google, a
+    reference implementation of
+    <a href="http://www.opengeospatial.org/standards/kml/">KML</a>
+    reading and writing, in the form of a cross platform C++ library.
+    You must build and install Libkml in order to use this OGR driver.
+  </p>
     
-    <h2>Layer</h2>
+  <p>
+    Note that if you build and include this LIBKML driver, it will become the
+    default reader of KML for ogr, overriding the previous KML driver. You can
+    still specify either KML or LIBKML as the ouput driver via the command line
+  </p>
     
-    <h3>Style</h3>
-    Layer style tables cannot be read or written to a kml layer that is a folder,
-    otherwise they are in the document that is the layer.
+  <p>
+    Libkml from Google provides reading services for any valid KML file.
+    However, please be advised that some KML facilities do not map into the
+    Simple Features specification ogr uses as its internal structure.
+    Therefore, a best effort will be made by the driver to understand the
+    content of a KML file read by libkml into ogr, but your mileage may vary.
+    Please try a few KML files as samples to get a sense of what is understood.
+    In particular, nesting of feature sets more than one deep will be flattened
+    to support ogr's internal format.
+  </p>
+  
+  <h2>Datasource</h2>
+  
+  <p>
+    You may specify a
+    <a href="http://www.gdal.org/ogr/ogr_arch.html#ogr_arch_data_source">datasource </a>
+    as a kml file <code>somefile.kml</code> , 
+    a directory <code>somedir/</code> , or a kmz file <code>somefile.kmz</code> .
+  </p>
+  
+  <p>
+    By default on directory and kmz datasources, an index file of all the
+    layers will be read from or written to doc.kml. It conatains a
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#networklink">
+    &lt;NetworkLink&gt;</a> to each layer file in the datasource. This feature
+    can be turned off by setting the enviroment variable LIBKML_USE_DOC.KML to
+    "no"
+   </p>
+  
+  <h3>StyleTable</h3>
+  
+  <p>
+    Datasource style tables are written to the
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#document">
+    &lt;Document&gt;</a> in a .kml, style/style.kml
+    in a kmz file, or style.kml in a directory, as one or more
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#style">
+    &lt;Style&gt;</a> elements. Not all of
+    <a href="http://www.gdal.org/ogr/ogr_feature_style.html">OGR Feature Style</a>
+    can translate into KML.
+  </p>
+  
+  <h2>Layer</h2>
+  
+  <p>
+    <a href="http://www.gdal.org/ogr/ogr_arch.html#ogr_arch_layer">
+    Layers</a> are mapped to kml files as a
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#document">
+    &lt;Document&gt;</a>
+    or
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#folder">
+    &lt;Folder&gt;</a>, and kmz files or directorys as a seperate kml file.
+  </p>
+  
+  <h3>Style</h3>
+  <p>
+    Layer style tables can not be read from or written to a kml layer that is a 
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#folder">
+    &lt;Folder&gt;</a>, otherwise they are in the
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#document">
+    &lt;Document&gt;</a> that is the layer.
+  </p>
+  
+  <h3>Schema</h3>
+  
+  <p>
+    Read and write of
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#schema">
+    &lt;Schema&gt;</a> is supported for .kml files , .kmz files, and
+    directorys.
+  </p>
+ 
+  <h2>Feature</h2>
+  
+  <p>
+    An OGR <a href="http://www.gdal.org/ogr/ogr_arch.html#ogr_arch_feature">feature</a>
+    translates to kml as a
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#placemark">
+    &lt;Placemark&gt;</a>.
+  </p>
+  
+  <h3>Style</h3>
+  
+  <p>
+    Style Strings at the feature level are Mapped to KML as either a 
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#style">
+    &lt;Style&gt;</a> or
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#styleurl">
+    &lt;StyleUrl&gt;</a> in each
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#placemark">
+    &lt;Placemark&gt;</a>.
+  </p>
+  
+  <h2>Fields</h2>
+  
+  <p> OGR fields (feature atributes) are mapped to kml with
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#schema">
+    &lt;Schema&gt</a>; and
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#simpledata">
+    &lt;SimpleData&gt;</a>, except for some special fields as noted below.
+  </p>
+  
+  <p>
+    A rich set of environment variables are available to define how fields in
+    input and output, map to a KML 
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#placemark">
+    &lt;Placemark&gt;</a>. For example, if you want a field called 'Cities'
+    to map to the
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#name">
+    &lt;name&gt;</a>; tag in KML, you can set an
+    environment variable. 
+  </p>
+ 
+  <dl>
+    <dt>Name</dt>
+    <dd>
+      This String field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#name">
+      &lt;name&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NAME_FIELD .
+    </dd>
+    <dt>description</dt>
+    <dd>This String field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#description">
+      &lt;description&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_DESCRIPTION_FIELD .
+    </dd>
+    <dt>timestamp</dt>
+    <dd>This string or datetime or date and/or time field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#timestamp">
+      &lt;timestamp&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_TIMESTAMP_FIELD .
+    </dd>
+    <dt>begin</dt>
+    <dd>This string or datetime or date and/or time field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#begin">
+      &lt;begin&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_BEGIN_FIELD .
+    </dd>
+    <dt>end</dt>
+    <dd>This string or datetime or date and/or time field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#end">
+      &lt;end&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_END_FIELD .
+    </dd>
+    <dt>altitudeMode</dt>
+    <dd>This string field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#altitudemode">
+      &lt;altitudeMode&gt;</a> or
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#gxaltitudemode">
+      &lt;gx:altitudeMode&gt;</a>. The name of the ogr field can be changed
+      with the enviroment variable LIBKML_ALTITUDEMODE_FIELD .
+    </dd>
+    <dt>tessellate</dt>
+    <dd>This integer field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#tessellate">
+      &lt;tessellate&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_TESSELLATE_FIELD .
+    </dd>
+    <dt>extrude</dt>
+    <dd>This integer field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#extrude">
+      &lt;extrude&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_EXTRUDE_FIELD .
+    </dd>
+    <dt>visibility</dt>
+    <dd>This integer field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#visibility">
+      &lt;visibility&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_VISIBILITY_FIELD .
+    </dd>
+    <dt>OFR_STYLE</dt>
+    <dd>This string feild maps to a features style string, OGR reads this field
+      if there is no style string set on the feature.
+    </dd>
+  </dl>
+  
+  <h2>Geometry</h2>
+  
+  <p>
+    Translation of OGR
+    <a href="http://www.gdal.org/ogr/ogr_arch.html#ogr_arch_geometry">
+    Geometry</a> to KML Geometry is pretty strait forwards with only a couple
+    of exceptions. Point to 
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#point">
+    &lt;Point&gt;</a>, LineString to
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#linestring">
+    &lt;LineString&gt;</a>, LinearRing to
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#linearring">
+    &lt;LinearRing&gt;</a>, and Polygon to
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#polygon">
+    &lt;Polygon&gt;</a>. in OGR a polygon contains an array of LinearRings,
+    the first one being the outer ring. KML has the tags
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#outerboundaryis">
+    &lt;outerBoundaryIs&gt;</a>and 
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#innerboundaryis">
+    &lt;innerBoundaryIs&gt;</a>to differentiate between the two. OGR has
+    several Multi types of geometry, GeometryCollection, MultiPolygon,
+    MultiPoint, and OGRMultiLineString, which all map to KML as
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#multigeometry">
+    &lt;MultiGeometry&gt;</a>, but only maps back into OGR as a GeometryCollection.
+  </p>
+  
+  <h2>Example</h2>
+ 
+  <p>
+    The following bash script will build a
+    <a href="http://www.gdal.org/ogr/drv_csv.html">csv</a> file and a
+    <a href="http://www.gdal.org/ogr/drv_vrt.html">vrt</a> file, and then
+    translate them to KML using 
+    <a href="http://www.gdal.org/ogr2ogr.html">ogr2ogr</a> into a .kml file with
+    timestamps and styling.
+  </p>
+ 
+  <pre>
+ 
+ 
+#!/bin/bash
+# Copyright (c) 2010, Brian Case
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+ 
+ 
+icon="http://maps.google.com/mapfiles/kml/shapes/shaded_dot.png"
+rgba33="#FF9900"
+rgba70="#FFFF00"
+rgba150="#00FF00"
+rgba300="#0000FF"
+rgba500="#9900FF"
+rgba800="#FF0000"
+ 
+function docsv {
+ 
+    IFS=','
     
-    <h3>Schema</h3>
-    Read and write of Schema is supported for .kml files , .kmz files, and dirs.
-    
-    <h3>Other</h3>
-    Description, timestamp, timespan, open, and Visibility are not supported on
-    layers as there is no place in ogr to store this data.
-
-    <h3>Fields</h3>
-    <dl>
-       <dt>Name</dt>
-       <dd>
-         This String field maps to the kml tag 
-         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#name">
-         &lt;name&gt;</a>. The name of the ogr field can be changed with the
-         enviroment variable LIBKML_NAME_FIELD .
-       </dd>
-       <dt>description</dt>
-       <dd>This String field maps to the kml tag 
-         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#description">
-         &lt;description&gt;</a>. The name of the ogr field can be changed with the
-         enviroment variable LIBKML_DESCRIPTION_FIELD .
-       </dd>
-       <dt>timestamp</dt>
-       <dd>This string or datetime or date and/or time field maps to the kml tag 
-         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#timestamp">
-         &lt;timestamp&gt;</a>. The name of the ogr field can be changed with the
-         enviroment variable LIBKML_TIMESTAMP_FIELD .
-       </dd>
-       <dt>begin</dt>
-       <dd>This string or datetime or date and/or time field maps to the kml tag 
-         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#begin">
-         &lt;begin&gt;</a>. The name of the ogr field can be changed with the
-         enviroment variable LIBKML_BEGIN_FIELD .
-       </dd>
-       <dt>end</dt>
-       <dd>This string or datetime or date and/or time field maps to the kml tag 
-         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#end">
-         &lt;end&gt;</a>. The name of the ogr field can be changed with the
-         enviroment variable LIBKML_END_FIELD .
-       </dd>
-       <dt>altitudeMode</dt>
-       <dd>This string field maps to the kml tag 
-         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#altitudemode">
-         &lt;altitudeMode&gt;</a>. The name of the ogr field can be changed with the
-         enviroment variable LIBKML_ALTITUDEMODE_FIELD .
-       </dd>
-       <dt>tessellate</dt>
-       <dd>This integer field maps to the kml tag 
-         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#tessellate">
-         &lt;tessellate&gt;</a>. The name of the ogr field can be changed with the
-         enviroment variable LIBKML_TESSELLATE_FIELD .
-       </dd>
-       <dt>extrude</dt>
-       <dd>This integer field maps to the kml tag 
-         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#extrude">
-         &lt;extrude&gt;</a>. The name of the ogr field can be changed with the
-         enviroment variable LIBKML_EXTRUDE_FIELD .
-       </dd>
-       <dt>visibility</dt>
-       <dd>This integer field maps to the kml tag 
-         <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#visibility">
-         &lt;visibility&gt;</a>. The name of the ogr field can be changed with the
-         enviroment variable LIBKML_VISIBILITY_FIELD .
-       </dd>
-    <dl>
-
+    while read Date Time Lat Lon Mag Dep
+    do
+        ts=$(echo $Date | sed 's:/:-:g')T${Time%%.*}Z
+        rgba=""
+        
+        if [[ $rgba == "" ]] && [[ $Dep -lt 33 ]]
+        then
+            rgba=$rgba33
+        fi
+        
+        if [[ $rgba == "" ]] && [[ $Dep -lt 70 ]]
+        then
+            rgba=$rgba70
+        fi
+        
+        if [[ $rgba == "" ]] && [[ $Dep -lt 150 ]]
+        then
+            rgba=$rgba150
+        fi
+        
+        if [[ $rgba == "" ]] && [[ $Dep -lt 300 ]]
+        then
+            rgba=$rgba300
+        fi
+        
+        if [[ $rgba == "" ]] && [[ $Dep -lt 500 ]]
+        then
+            rgba=$rgba500
+        fi
+        
+        if [[ $rgba == "" ]]
+        then
+            rgba=$rgba800
+        fi
+        
+        
+        
+        style="\"SYMBOL(s:$Mag,id:\"\"$icon\"\",c:$rgba)\""
+        
+        echo $Date,$Time,$Lat,$Lon,$Mag,$Dep,$ts,"$style"
+    done
+        
+}
+ 
+ 
+wget http://neic.usgs.gov/neis/gis/qed.asc -O /dev/stdout |\
+ tail -n +2 &gt; qed.asc
+ 
+echo Date,TimeUTC,Latitude,Longitude,Magnitude,Depth,timestamp,OGR_STYLE &gt; qed.csv
+ 
+docsv &lt; qed.asc &gt;&gt; qed.csv
+ 
+cat &gt; qed.vrt &lt;&lt; EOF
+&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTLayer name="qed"&gt;
+        &lt;SrcDataSource&gt;qed.csv&lt;/SrcDataSource&gt;
+        &lt;GeometryType&gt;wkbPoint&lt;/GeometryType&gt;
+        &lt;LayerSRS&gt;WGS84&lt;/LayerSRS&gt;
+        &lt;GeometryField encoding="PointFromColumns" x="Longitude" y="Latitude"/&gt;
+    &lt;/OGRVRTLayer&gt;
+&lt;/OGRVRTDataSource&gt;
+ 
+EOF
+ 
+ogr2ogr -f libkml qed.kml qed.vrt
+ 
+  </pre>
+ 
 </body>
 </html>
