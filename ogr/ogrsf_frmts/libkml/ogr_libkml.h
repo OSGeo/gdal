@@ -81,6 +81,7 @@ class OGRLIBKMLLayer:public OGRLayer
                                 OGRwkbGeometryType eGType,
                                 OGRLIBKMLDataSource *poOgrDS,
                                 ElementPtr poKmlRoot,
+                                ContainerPtr poKmlContainer,
                                 const char *pszFileName,
                                 int bNew,
                                 int bUpdate);
@@ -113,6 +114,7 @@ class OGRLIBKMLLayer:public OGRLayer
     const char               *GetName(  ) { return m_pszName; };
     int                       TestCapability ( const char * );
     ContainerPtr              GetKmlLayer () { return m_poKmlLayer; };
+    ElementPtr                GetKmlLayerRoot () { return m_poKmlLayerRoot; };
     SchemaPtr                 GetKmlSchema () { return m_poKmlSchema; };
     const char               *GetFileName (  ) { return m_pszFileName; };
     };
@@ -258,6 +260,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
                                          OGRwkbGeometryType eGType,
                                          OGRLIBKMLDataSource * poOgrDS,
                                          ElementPtr poKmlRoot,
+                                         ContainerPtr poKmlContainer,
                                          const char *pszFileName,
                                          int bNew,
                                          int bUpdate,
