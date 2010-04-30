@@ -256,7 +256,7 @@ void field2kml (
 
     /***** set the url to the schema *****/
 
-    if ( poKmlSchema->has_id (  ) ) {
+    if ( poKmlSchema && poKmlSchema->has_id (  ) ) {
         std::string oKmlSchemaID = poKmlSchema->get_id (  );
 
 
