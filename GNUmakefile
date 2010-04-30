@@ -118,7 +118,7 @@ docs:
 	doxygen -w html html/header.html html/footer.html html/stylesheet.css
 	sed -e 's,iso-8859-1,utf-8,g' html/header.html > html/header_ru.html
 	cp html/header.html html/header_br.html
-	(cat Doxyfile ; echo "HTML_HEADER=html/header_ru.html"; echo "INPUT=doc/ru"; echo "OUTPUT_LANGUAGE=Russian") | doxygen -
+	(cd doc/ru ; doxygen ; cp html/*.* ../../html/. )
 	(cd doc/br ; doxygen ; cp html/*.* ../../html/. )
 # Generate HTML docs
 	doxygen Doxyfile
