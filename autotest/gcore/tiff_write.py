@@ -372,7 +372,7 @@ def tiff_write_9():
 
     new_ds = gdal.Open( 'tmp/test_9.tif' )
     bnd = new_ds.GetRasterBand(1)
-    if bnd.Checksum() != 4084:
+    if bnd.Checksum() != 5287:
         gdaltest.post_reason( 'Didnt get expected checksum on reopened file')
         return 'fail'
 
