@@ -492,10 +492,12 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                 }
             }
         }
+        poGeom = new OGRPoint();
     }
     else if (sName_.compare("LineString") == 0)
     {
         // Search coordinate Element
+        poGeom = new OGRLineString();
         for(nCount = 0; nCount < pvpoChildren_->size(); nCount++)
         {
             if((*pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
@@ -506,8 +508,6 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                     psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
                     if(psCoord != NULL)
                     {
-                        if (poGeom == NULL)
-                            poGeom = new OGRLineString();
                         if (psCoord->bHasZ)
                             ((OGRLineString*)poGeom)->addPoint(psCoord->dfLongitude,
                                                                psCoord->dfLatitude,
@@ -526,9 +526,11 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
         //*********************************
         // Search outerBoundaryIs Element
         //*********************************
+        poGeom = new OGRPolygon();
         for(nCount = 0; nCount < pvpoChildren_->size(); nCount++)
         {
-            if((*pvpoChildren_)[nCount]->sName_.compare("outerBoundaryIs") == 0)
+            if((*pvpoChildren_)[nCount]->sName_.compare("outerBoundaryIs") == 0 &&
+               (*pvpoChildren_)[nCount]->pvpoChildren_->size() > 0)
             {
                 poCoor = (*(*pvpoChildren_)[nCount]->pvpoChildren_)[0];
             }
@@ -536,7 +538,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
         // No outer boundary found
         if(poCoor == NULL)
         {
-            return NULL;
+            return poGeom;
         }
         // Search coordinate Element
         OGRLinearRing* poLinearRing = NULL;
@@ -549,9 +551,8 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                     psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
                     if(psCoord != NULL)
                     {
-                        if (poGeom == NULL)
+                        if (poLinearRing == NULL)
                         {
-                            poGeom = new OGRPolygon();
                             poLinearRing = new OGRLinearRing();
                         }
                         if (psCoord->bHasZ)
@@ -567,9 +568,9 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
             }
         }
         // No outer boundary coordinates found
-        if(poGeom == NULL)
+        if(poLinearRing == NULL)
         {
-            return NULL;
+            return poGeom;
         }
 
         ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
@@ -585,6 +586,11 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
             {
                 if (poLinearRing)
                     ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
+                poLinearRing = NULL;
+
+                if ((*pvpoChildren_)[nCount2]->pvpoChildren_->size() == 0)
+                    continue;
+
                 poLinearRing = new OGRLinearRing();
 
                 poCoor = (*(*pvpoChildren_)[nCount2]->pvpoChildren_)[0];
