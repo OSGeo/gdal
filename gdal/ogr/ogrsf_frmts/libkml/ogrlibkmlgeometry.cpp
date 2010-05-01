@@ -478,10 +478,32 @@ OGRGeometry *kml2geom (
 
         break;
     case kmldom::Type_MultiGeometry:
+    {
         poKmlMultiGeometry = AsMultiGeometry ( poKmlGeometry );
-
-        poOgrMultiGeometry = new OGRGeometryCollection (  );
         nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
+
+        /* Detect subgeometry type to instanciate appropriate Multi geometry type */
+        kmldom::KmlDomType type = kmldom::Type_Unknown;
+        for ( i = 0; i < nGeom; i++ ) {
+            poKmlTmpGeometry = poKmlMultiGeometry->get_geometry_array_at ( i );
+            if (type == kmldom::Type_Unknown)
+                type = poKmlTmpGeometry->Type();
+            else if (type != poKmlTmpGeometry->Type())
+            {
+                type = kmldom::Type_Unknown;
+                break;
+            }
+        }
+
+        if (type == kmldom::Type_Point)
+            poOgrMultiGeometry = new OGRMultiPoint();
+        else if (type == kmldom::Type_LineString)
+            poOgrMultiGeometry = new OGRMultiLineString();
+        else if (type == kmldom::Type_Polygon)
+            poOgrMultiGeometry = new OGRMultiPolygon();
+        else
+            poOgrMultiGeometry = new OGRGeometryCollection ();
+
         for ( i = 0; i < nGeom; i++ ) {
             poKmlTmpGeometry = poKmlMultiGeometry->get_geometry_array_at ( i );
             poOgrTmpGeometry = kml2geom ( poKmlTmpGeometry, poOgrSRS );
@@ -490,6 +512,7 @@ OGRGeometry *kml2geom (
         }
         poOgrGeometry = poOgrMultiGeometry;
         break;
+    }
     default:
         break;
     }
