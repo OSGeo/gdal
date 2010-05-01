@@ -111,17 +111,23 @@ ElementPtr geom2kml (
     case wkbPoint:
 
         poOgrPoint = ( OGRPoint * ) poOgrGeom;
+        if (poOgrPoint->getCoordinateDimension() == 0)
+        {
+            poKmlGeometry = poKmlPoint = poKmlFactory->CreatePoint (  );
+        }
+        else
+        {
+            x = poOgrPoint->getX (  );
+            y = poOgrPoint->getY (  );
 
-        x = poOgrPoint->getX (  );
-        y = poOgrPoint->getY (  );
+            if ( x > 180 )
+                x -= 360;
 
-        if ( x > 180 )
-            x -= 360;
-
-        coordinates = poKmlFactory->CreateCoordinates (  );
-        coordinates->add_latlng ( y, x );
-        poKmlGeometry = poKmlPoint = poKmlFactory->CreatePoint (  );
-        poKmlPoint->set_coordinates ( coordinates );
+            coordinates = poKmlFactory->CreateCoordinates (  );
+            coordinates->add_latlng ( y, x );
+            poKmlGeometry = poKmlPoint = poKmlFactory->CreatePoint (  );
+            poKmlPoint->set_coordinates ( coordinates );
+        }
 
         break;
 
@@ -366,27 +372,38 @@ OGRGeometry *kml2geom (
         poKmlPoint = AsPoint ( poKmlGeometry );
         if ( poKmlPoint->has_coordinates (  ) ) {
             poKmlCoordinates = poKmlPoint->get_coordinates (  );
-            oKmlVec = poKmlCoordinates->get_coordinates_array_at ( 0 );
+            nCoords = poKmlCoordinates->get_coordinates_array_size (  );
+            if (nCoords > 0)
+            {
+                oKmlVec = poKmlCoordinates->get_coordinates_array_at ( 0 );
 
-            if ( oKmlVec.has_altitude (  ) )
-                poOgrPoint = new OGRPoint ( oKmlVec.get_longitude (  ),
-                                            oKmlVec.get_latitude (  ),
-                                            oKmlVec.get_altitude (  ) );
+                if ( oKmlVec.has_altitude (  ) )
+                    poOgrPoint = new OGRPoint ( oKmlVec.get_longitude (  ),
+                                                oKmlVec.get_latitude (  ),
+                                                oKmlVec.get_altitude (  ) );
+                else
+                    poOgrPoint = new OGRPoint ( oKmlVec.get_longitude (  ),
+                                                oKmlVec.get_latitude (  ) );
+
+                poOgrGeometry = poOgrPoint;
+            }
             else
-                poOgrPoint = new OGRPoint ( oKmlVec.get_longitude (  ),
-                                            oKmlVec.get_latitude (  ) );
-
-            poOgrGeometry = poOgrPoint;
+            {
+                poOgrGeometry = new OGRPoint();
+            }
+        }
+        else
+        {
+            poOgrGeometry = new OGRPoint();
         }
 
         break;
 
     case kmldom::Type_LineString:
         poKmlLineString = AsLineString ( poKmlGeometry );
+        poOgrLineString = new OGRLineString (  );
         if ( poKmlLineString->has_coordinates (  ) ) {
             poKmlCoordinates = poKmlLineString->get_coordinates (  );
-
-            poOgrLineString = new OGRLineString (  );
 
             nCoords = poKmlCoordinates->get_coordinates_array_size (  );
             for ( i = 0; i < nCoords; i++ ) {
@@ -400,18 +417,16 @@ OGRGeometry *kml2geom (
                     poOgrLineString->
                         addPoint ( oKmlVec.get_longitude (  ),
                                    oKmlVec.get_latitude (  ) );
-
-                poOgrGeometry = poOgrLineString;
             }
         }
+        poOgrGeometry = poOgrLineString;
 
         break;
     case kmldom::Type_LinearRing:
         poKmlLinearRing = AsLinearRing ( poKmlGeometry );
+        poOgrLinearRing = new OGRLinearRing (  );
         if ( poKmlLinearRing->has_coordinates (  ) ) {
             poKmlCoordinates = poKmlLinearRing->get_coordinates (  );
-
-            poOgrLinearRing = new OGRLinearRing (  );
 
             nCoords = poKmlCoordinates->get_coordinates_array_size (  );
             for ( i = 0; i < nCoords; i++ ) {
@@ -425,10 +440,9 @@ OGRGeometry *kml2geom (
                     poOgrLinearRing->
                         addPoint ( oKmlVec.get_longitude (  ),
                                    oKmlVec.get_latitude (  ) );
-
-                poOgrGeometry = poOgrLinearRing;
             }
         }
+        poOgrGeometry = poOgrLinearRing;
 
         break;
     case kmldom::Type_Polygon:
@@ -439,20 +453,26 @@ OGRGeometry *kml2geom (
 
             poKmlOuterRing = poKmlPolygon->get_outerboundaryis (  );
             poKmlLinearRing = poKmlOuterRing->get_linearring (  );
-            poOgrTmpGeometry = kml2geom ( poKmlLinearRing, poOgrSRS );
+            if (poKmlLinearRing)
+            {
+                poOgrTmpGeometry = kml2geom ( poKmlLinearRing, poOgrSRS );
 
-            poOgrPolygon->
-                addRingDirectly ( ( OGRLinearRing * ) poOgrTmpGeometry );
+                poOgrPolygon->
+                    addRingDirectly ( ( OGRLinearRing * ) poOgrTmpGeometry );
+            }
 
         }
         nRings = poKmlPolygon->get_innerboundaryis_array_size (  );
         for ( i = 0; i < nRings; i++ ) {
             poKmlInnerRing = poKmlPolygon->get_innerboundaryis_array_at ( i );
             poKmlLinearRing = poKmlInnerRing->get_linearring (  );
-            poOgrTmpGeometry = kml2geom ( poKmlLinearRing, poOgrSRS );
+            if (poKmlLinearRing)
+            {
+                poOgrTmpGeometry = kml2geom ( poKmlLinearRing, poOgrSRS );
 
-            poOgrPolygon->
-                addRingDirectly ( ( OGRLinearRing * ) poOgrTmpGeometry );
+                poOgrPolygon->
+                    addRingDirectly ( ( OGRLinearRing * ) poOgrTmpGeometry );
+            }
         }
         poOgrGeometry = poOgrPolygon;
 
