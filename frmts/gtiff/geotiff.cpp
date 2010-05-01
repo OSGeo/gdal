@@ -185,6 +185,8 @@ class GTiffDataset : public GDALPamDataset
     int           bTreatAsSplit;
     int           bTreatAsSplitBitmap;
 
+    int           bClipWarn;
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -1672,6 +1674,8 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( eErr != CE_None )
         return eErr;
 
+    GUInt32 nMaxVal = (1 << poGDS->nBitsPerSample) - 1;
+
 /* -------------------------------------------------------------------- */
 /*      Handle case of "separate" images or single band images where    */
 /*      no interleaving with other data is required.                    */
@@ -1711,7 +1715,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
             for( iX = 0; iX < nBlockXSize; iX++ )
             {
-                int  nInWord = 0;
+                GUInt32  nInWord = 0;
                 if( eDataType == GDT_Byte )
                     nInWord = ((GByte *) pImage)[iPixel++];
                 else if( eDataType == GDT_UInt16 )
@@ -1721,6 +1725,16 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 else
                     CPLAssert(0);
 
+                if (nInWord > nMaxVal)
+                {
+                    nInWord = nMaxVal;
+                    if( !poGDS->bClipWarn )
+                    {
+                        poGDS->bClipWarn = TRUE;
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "One or more pixels clipped to fit %d bit domain.", poGDS->nBitsPerSample );
+                    }
+                }
 
                 if (poGDS->nBitsPerSample == 24)
                 {
@@ -1814,7 +1828,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
             for( iX = 0; iX < nBlockXSize; iX++ )
             {
-                int  nInWord = 0;
+                GUInt32  nInWord = 0;
                 if( eDataType == GDT_Byte )
                     nInWord = ((GByte *) pabyThisImage)[iPixel++];
                 else if( eDataType == GDT_UInt16 )
@@ -1824,6 +1838,16 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 else
                     CPLAssert(0);
 
+                if (nInWord > nMaxVal)
+                {
+                    nInWord = nMaxVal;
+                    if( !poGDS->bClipWarn )
+                    {
+                        poGDS->bClipWarn = TRUE;
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "One or more pixels clipped to fit %d bit domain.", poGDS->nBitsPerSample );
+                    }
+                }
 
                 if (poGDS->nBitsPerSample == 24)
                 {
@@ -2408,6 +2432,7 @@ GTiffDataset::GTiffDataset()
     nLastBandRead = -1;
     bTreatAsSplit = FALSE;
     bTreatAsSplitBitmap = FALSE;
+    bClipWarn = FALSE;
 }
 
 /************************************************************************/
