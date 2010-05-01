@@ -249,6 +249,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                 }
             }
 
+            iFeature = 0;
+
         }
 
 
