@@ -571,7 +571,27 @@ def ogr_kml_xml_attributes():
     ds.Destroy()
 
     return 'success'
-    
+
+###############################################################################
+# Test reading all geometry types (#3558)
+#
+def ogr_kml_read_geometries():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/geometries.kml')
+
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        feat.Destroy()
+        feat = lyr.GetNextFeature()
+
+    ds.Destroy()
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -605,6 +625,7 @@ gdaltest_list = [
     ogr_kml_write_1,
     ogr_kml_check_write_1,
     ogr_kml_xml_attributes,
+    ogr_kml_read_geometries,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
