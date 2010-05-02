@@ -216,16 +216,17 @@
     <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#linearring">
     &lt;LinearRing&gt;</a>, and Polygon to
     <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#polygon">
-    &lt;Polygon&gt;</a>. in OGR a polygon contains an array of LinearRings,
+    &lt;Polygon&gt;</a>. In OGR a polygon contains an array of LinearRings,
     the first one being the outer ring. KML has the tags
-    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#outerboundaryis">
-    &lt;outerBoundaryIs&gt;</a>and 
+    &nbsp;<a href="http://code.google.com/apis/kml/documentation/kmlreference.html#outerboundaryis">
+    &lt;outerBoundaryIs&gt;</a>&nbsp;and&nbsp; 
     <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#innerboundaryis">
-    &lt;innerBoundaryIs&gt;</a>to differentiate between the two. OGR has
-    several Multi types of geometry, GeometryCollection, MultiPolygon,
-    MultiPoint, and OGRMultiLineString, which all map to KML as
+    &lt;innerBoundaryIs&gt;</a>&nbsp;to differentiate between the two. OGR has
+    several Multi types of geometry : GeometryCollection, MultiPolygon,
+    MultiPoint, and MultiLineString. When possible, OGR will try to map 
     <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#multigeometry">
-    &lt;MultiGeometry&gt;</a>, but only maps back into OGR as a GeometryCollection.
+    &lt;MultiGeometry&gt;</a> to the more precise OGR geometry type (MultiPoint, MultiLineString or MultiPolygon),
+    and default to GeometryCollection in case of mixed content.
   </p>
   
   <h2>Example</h2>
