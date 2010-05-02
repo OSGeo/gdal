@@ -513,11 +513,12 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 /* -------------------------------------------------------------------- */
     pszWorkLine = CPLStrdup( pszLine );
 
+    int i = 0, nCount = 0;
+    int nWorkLineLength = strlen(pszWorkLine);
+
     while( TRUE )
     {
-        int             i, nCount = 0;
-
-        for( i = 0; pszWorkLine[i] != '\0'; i++ )
+        for( ; pszWorkLine[i] != '\0'; i++ )
         {
             if( pszWorkLine[i] == '\"'
                 && (i == 0 || pszWorkLine[i-1] != '\\') )
@@ -531,11 +532,18 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
         if( pszLine == NULL )
             break;
 
-        pszWorkLine = (char *)
-            CPLRealloc(pszWorkLine,
-                       strlen(pszWorkLine) + strlen(pszLine) + 2);
-        strcat( pszWorkLine, "\n" ); // This gets lost in CPLReadLine().
-        strcat( pszWorkLine, pszLine );
+        int nLineLen = strlen(pszLine);
+
+        char* pszWorkLineTmp = (char *)
+            VSIRealloc(pszWorkLine,
+                       nWorkLineLength + nLineLen + 2);
+        if (pszWorkLineTmp == NULL)
+            break;
+        pszWorkLine = pszWorkLineTmp;
+        strcat( pszWorkLine + nWorkLineLength, "\n" ); // This gets lost in CPLReadLine().
+        strcat( pszWorkLine + nWorkLineLength, pszLine );
+
+        nWorkLineLength += nLineLen + 1;
     }
     
     papszReturn = CSVSplitLine( pszWorkLine, chDelimiter );
