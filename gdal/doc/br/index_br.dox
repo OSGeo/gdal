@@ -17,13 +17,13 @@ Translator Ivan Lucena <ivan.lucena@pmldnet.com>
 \htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL \endlatexonly
 &eacute; uma bibliot&eacute;ca para tradu&ccedil;&atilde;o de formatos de dados geogr&aacute;ficos distribu&iacute;da pela 
 <a href="http://www.osgeo.org/">Open Source Geospatial Foundation</a> sob a licen&ccedil;a 
-<a href="faq.html#license">X/MIT</a> estilo 
+<a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#WhatlicensedoesGDALOGRuse">X/MIT</a> estilo
 <a href="http://www.opensource.org/"> Open Source</a>. 
 As aplica&ccedil;&otilde;es que &agrave; utilizam acessam todos os formats 
 supportados pela biblioteca atrav&eacute;s de 
 \link gdal_datamodel_br.html um &uacute;nico modelo de dados abstrato\endlink.
 A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas 
-\link gdal_utilities.html utilit&aacute;rios de linha de comando \endlink 
+<a class="el" href="gdal_utilities.html"> utilit&aacute;rios de linha de comando</a>
 para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute;rie de outras fun&ccedil;&otilde;es. 
 A p&aacute;gina 
 <a href="http://trac.osgeo.org/gdal/wiki/Release/1.7.1-News">novidades</a> descreve o 
