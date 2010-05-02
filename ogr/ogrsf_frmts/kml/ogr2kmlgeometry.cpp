@@ -217,17 +217,27 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
         char szCoordinate[256] = { 0 };
         OGRPoint* poPoint = static_cast<OGRPoint*>(poGeometry);
 
-        MakeKMLCoordinate( szCoordinate, 
-                           poPoint->getX(), poPoint->getY(), 0.0, FALSE );
-                           
-        _GrowBuffer( *pnLength + strlen(szCoordinate) + 60, 
+        if (poPoint->getCoordinateDimension() == 0)
+        {
+            _GrowBuffer( *pnLength + 10, 
                      ppszText, pnMaxLength );
+            strcat( *ppszText + *pnLength, "<Point/>");
+            *pnLength += strlen( *ppszText + *pnLength );
+        }
+        else
+        {
+            MakeKMLCoordinate( szCoordinate, 
+                            poPoint->getX(), poPoint->getY(), 0.0, FALSE );
 
-        sprintf( *ppszText + *pnLength, 
-                "<Point><coordinates>%s</coordinates></Point>",
-                 szCoordinate );
+            _GrowBuffer( *pnLength + strlen(szCoordinate) + 60, 
+                        ppszText, pnMaxLength );
 
-        *pnLength += strlen( *ppszText + *pnLength );
+            sprintf( *ppszText + *pnLength, 
+                    "<Point><coordinates>%s</coordinates></Point>",
+                    szCoordinate );
+
+            *pnLength += strlen( *ppszText + *pnLength );
+        }
     }
 /* -------------------------------------------------------------------- */
 /*      3D Point                                                        */
