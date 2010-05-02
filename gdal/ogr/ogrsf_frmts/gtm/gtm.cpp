@@ -353,6 +353,7 @@ bool GTM::isValid()
             if (isValid())
             {
                 VSIFCloseL(pGTMFileOri);
+                CPLFree(pszGZIPFileName);
                 return TRUE;
             }
             else
