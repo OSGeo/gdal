@@ -93,3 +93,7 @@ using System.Security;
 // Web page that should be running under restricted permissions.
 [assembly: AllowPartiallyTrustedCallers]
 
+// Use the .NET Framework 2.0 transparency rules (level 1 transparency) as default
+#if (CLR4)
+[assembly: SecurityRules(SecurityRuleSet.Level1)]
+#endif
