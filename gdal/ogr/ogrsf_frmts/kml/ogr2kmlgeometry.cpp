@@ -460,7 +460,7 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
     char* pszText = NULL;
     int nLength = 0;
     int nMaxLength = 1;
-    char szAltitudeMode[128] =  { 0 }; 
+    char szAltitudeMode[128]; 
 
     // TODO - mloskot: Shouldn't we use VALIDATE_POINTER1 here?
     if( hGeometry == NULL )
@@ -469,14 +469,14 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
     pszText = (char *) CPLMalloc(nMaxLength);
     pszText[0] = '\0';
 
-    if (NULL != pszAltitudeMode) 
- 	{ 
+    if (NULL != pszAltitudeMode && strlen(pszAltitudeMode) < 128 - (29 + 1))
+    {
         sprintf(szAltitudeMode, "<altitudeMode>%s</altitudeMode>", pszAltitudeMode); 
- 	} 
- 	else 
- 	{ 
- 	    szAltitudeMode[0] = 0; 
- 	} 
+    }
+    else 
+    {
+        szAltitudeMode[0] = 0; 
+    }
 
     if( !OGR2KMLGeometryAppend( (OGRGeometry *) hGeometry, &pszText, 
                                 &nLength, &nMaxLength, szAltitudeMode ))
