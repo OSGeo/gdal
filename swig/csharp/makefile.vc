@@ -38,13 +38,13 @@ CSC = csc
 !ENDIF
 
 !IFDEF DEBUG
-CSDEBUG = /debug:full /debug:full
+CSDEBUG = /debug:full
 !ELSE
 CSDEBUG =
 !ENDIF
 
 !IF $(MSVC_VER) >= 1600
-CSC = $(CSC) /define:CLR4
+CSC = $(CSC) /define:CLR4 /debug:full
 !ENDIF
 
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
