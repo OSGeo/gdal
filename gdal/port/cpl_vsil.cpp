@@ -608,6 +608,7 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallGZipFileHandler();
         VSIInstallZipFileHandler();
 #endif
+        VSIInstallStdinHandler();
         VSIInstallStdoutHandler();
         VSIInstallSparseFileHandler();
         VSIInstallTarFileHandler();
