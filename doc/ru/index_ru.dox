@@ -12,12 +12,15 @@ Translator Andrey Kiselev <dron@ak4719.spb.edu>
 --- это библиотека для работы с растровыми географическими форматами файлов
 данных. GDAL распространяется
 <a href="http://www.osgeo.org/">Open Source Geospatial Foundation</a>
-на условиях лицензии <a href="faq.html#license">X/MIT</a>, то есть является
+на условиях лицензии 
+<a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#WhatlicensedoesGDALOGRuse">X/MIT</a>
+, то есть является
 проектом с <a href="http://www.opensource.org/">открытым исходным кодом</a>.
 Как библиотека GDAL предоставляет вызывающему приложению
 \link gdal_datamodel_ru.html единую обобщённую модель данных\endlink для всех
 поддерживаемых форматов файлов данных. Помимо этого в состав GDAL входит
-\link gdal_utilities.html набор вспомогательных программ\endlink, вызываемых
+<a class="el" href="gdal_utilities.html"> 
+набор вспомогательных программ</a>, вызываемых
 из командной строки, для преобразования и обработки данных. Описание выпуска
 GDAL/OGR 1.5.1 (март 2008) можно найти на странице
 <a href="http://trac.osgeo.org/gdal/wiki/Release/1.5.1-News">новостей</a>.
