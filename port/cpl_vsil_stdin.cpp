@@ -146,7 +146,7 @@ int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
     if (nRealPos > nBufferLen && nOffset < nRealPos)
     {
-        CPLError(CE_Failure, CPLE_NotSupported
+        CPLError(CE_Failure, CPLE_NotSupported,
                 "backward Seek() unsupported on /vsistdin above first MB");
         return -1;
     }
