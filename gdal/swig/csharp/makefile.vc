@@ -38,7 +38,7 @@ CSC = csc
 !ENDIF
 
 !IFDEF DEBUG
-CSDEBUG = /debug:full
+CSDEBUG = /debug:full /debug:full
 !ELSE
 CSDEBUG =
 !ENDIF
