@@ -1029,42 +1029,36 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     }
 
 
-    /***************************************************
-     * Fetch schema name, table name and where clause
-     ***************************************************/
-    papszTokenizedStr = CSLTokenizeString(
-            poOpenInfo->pszFilename + 3);
-
-    pszSchemaName = CPLStrdup(
-            CSLFetchNameValueDef(papszTokenizedStr, "schema", "public"));
-    
-    pszTmp = CSLFetchNameValue(papszTokenizedStr, "table");
-    pszTableName = pszTmp ? CPLStrdup(pszTmp) : NULL;
-    if (pszTableName == NULL)
-    {        
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Couldn't find table. Is connection string in the \
-                format PG:\"host=<host> user=<user> password=<password> \
-                dbname=<dbname> table=<raster_table> [schema=<schema>] \
-                [where=<where_clause>]\"?\n");
-        CPLFree(pszSchemaName);
-        CSLDestroy(papszTokenizedStr);
-    }
-
-    pszTmp = CSLFetchNameValue(papszTokenizedStr, "where");
-    pszWhereClause = pszTmp ? CPLStrdup(pszTmp) : NULL;
-
     /********************************************************************
-     * Reconstruct connection string without these fields
+	 * Extract schema name, table name and where clause. Then, reconstruct 
+	 * connection string without these fields
      ********************************************************************/
-    CSLDestroy(papszTokenizedStr);
-
     pszConnectionString = CPLStrdup(poOpenInfo->pszFilename);
-    ExtractField(&pszConnectionString, "schema=");
-    ExtractField(&pszConnectionString, "table=");
-    if (pszWhereClause)
-        ExtractField(&pszConnectionString, "where=");
+    pszSchemaName = ExtractField(&pszConnectionString, "schema=");
+	if (pszSchemaName == NULL)
+	{
+		pszSchemaName = (char *)CPLCalloc(strlen("public"), sizeof(char));
+		if (pszSchemaName == NULL)
+		{
+			CPLError(CE_Failure, CPLE_OutOfMemory,
+						"Memory error allocating space for schema name");
+			return NULL;
+		}
+		strcpy(pszSchemaName, "public");
+	}
+	pszTableName = ExtractField(&pszConnectionString, "table=");
+	if (pszTableName == NULL)
+	{        
+		CPLError(CE_Failure, CPLE_AppDefined,
+        	"Couldn't find table. Is connection string in the \
+            format PG:\"host=<host> user=<user> password=<password> \
+            dbname=<dbname> table=<raster_table> [schema=<schema>] \
+            [where=<where_clause>]\"?\n");
+        CPLFree(pszSchemaName);
+		return NULL;	
+	}
 
+    pszWhereClause = ExtractField(&pszConnectionString, "where=");
 
     /********************************************************
      * 		Open a database connection
