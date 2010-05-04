@@ -593,7 +593,6 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
     double dfProjUpperRightX = 0.0;
     double dfProjUpperRightY = 0.0;
     char * pszHexWkb = NULL;
-    GByte byMachineEndianess = NDR; // by default
     int nTuples = 0;
     GByte * pbyRasterData = NULL;
     WKTRasterWrapper * poWKTRasterWrapper = NULL;
@@ -605,21 +604,12 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
     int nBlockXBound = 0;
     int nBlockYBound = 0;
 
-
-    // Check parameters
+    /* Check input parameters */
     if (pImage == NULL || nBlockXOff < 0 || nBlockYOff < 0) {
         CPLError(CE_Failure, CPLE_NotSupported,
                 "Unsupported block size or NULL buffer");
         return CE_Failure;
     }
-
-   
-    // Check machine endianess
-#ifdef CPL_LSB
-    byMachineEndianess = NDR;
-#else
-    byMachineEndianess = XDR;
-#endif
 
     /*************************************************************************
      * Get pixel size (divide by 8 because GDALGetDataTypeSize returns the
@@ -699,87 +689,28 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
      * Perform a spatial query that gives the tile/block (row of raster table)
      * or tiles/blocks (in case of non-regular blocking) that contain this block
      **************************************************************************/
+    if (poWKTRasterDS->pszWhereClause != NULL)
+    {
+       osCommand.Printf(
+               "SELECT %s FROM %s.%s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
+                (ST_Point(%f, %f), ST_Point(%f, %f)), %d) AND %s",
+               poWKTRasterDS->pszRasterColumnName, poWKTRasterDS->pszSchemaName,
+               poWKTRasterDS->pszTableName, poWKTRasterDS->pszRasterColumnName,
+               dfProjLowerLeftX, dfProjLowerLeftY, dfProjUpperRightX,
+               dfProjUpperRightY, poWKTRasterDS->nSrid,
+               poWKTRasterDS->pszWhereClause); 
+    }
 
-    if (poWKTRasterDS->pszWhereClause != NULL) {
-
-        /**
-         * Table has GIST index-
-         * We could disable sequential scanning, but for versions of PostGIS
-         * up to 0.8, this is no necessary. PostGIS >=0.8 is correctly
-         * integrated with query planner, thus PostgreSQL will use indexes
-         * whenever appropriate.
-         * NOTE: We should add version checking here, and disable sequential
-         * scanning when needed. See OGRDataSource::Open method.
-         */
-        if (poWKTRasterDS->bTableHasGISTIndex) {
-
-            /**
-             * This queries for the tiles that contains the given block. When
-             * regular_blocking rasters, the blocks will have the same size of
-             * a tile, so, we can use "contain" function and "~" operator. 
-             * But when non-regular_blocking, the only way this will work is
-             * setting the block size to the smallest tile size. The problem is
-             * how do we know all the tiles size?
-             */
-            osCommand.Printf(
-                    "SELECT rid, %s FROM %s.%s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
-                    (ST_Point(%f, %f),ST_Point(%f, %f)), %d) AND %s",
-                    poWKTRasterDS->pszRasterColumnName,
-                    poWKTRasterDS->pszSchemaName,
-                    poWKTRasterDS->pszTableName,
-                    poWKTRasterDS->pszRasterColumnName, dfProjLowerLeftX,
-                    dfProjLowerLeftY, dfProjUpperRightX, dfProjUpperRightY,
-                    poWKTRasterDS->nSrid, poWKTRasterDS->pszWhereClause);
-
-        }            /**
-             * Table hasn't a GIST index. Normal searching
-             */
-        else {
-            osCommand.Printf(
-                    "SELECT rid, %s FROM %s.%s WHERE _ST_Contains(%s, ST_SetSRID(\
-                    ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d)) AND\
-                    %s",
-                    poWKTRasterDS->pszRasterColumnName,
-                    poWKTRasterDS->pszSchemaName,
-                    poWKTRasterDS->pszTableName,
-                    poWKTRasterDS->pszRasterColumnName, dfProjLowerLeftX,
-                    dfProjLowerLeftY, dfProjUpperRightX, dfProjUpperRightY,
-                    poWKTRasterDS->nSrid, poWKTRasterDS->pszWhereClause);
-        }
-
-
-    }        // No where clause
-    else {
-        /**
-         * Table has a GIST index.
-         */
-        if (poWKTRasterDS->bTableHasGISTIndex) {
-
-            osCommand.Printf(
-                    "SELECT rid, %s FROM %s.%s WHERE %s ~ ST_SetSRID(ST_MakeBox2D(\
-                    ST_Point(%f, %f),ST_Point(%f, %f)), %d)",
-                    poWKTRasterDS->pszRasterColumnName,
-                    poWKTRasterDS->pszSchemaName,
-                    poWKTRasterDS->pszTableName,
-                    poWKTRasterDS->pszRasterColumnName, dfProjLowerLeftX,
-                    dfProjLowerLeftY,dfProjUpperRightX, dfProjUpperRightY,
-                    poWKTRasterDS->nSrid);
-
-        }
-            /**
-             * Table hasn't a GIST index. Normal searching
-             */
-        else {
-            osCommand.Printf(
-                    "SELECT rid, %s FROM %s.%s WHERE _ST_Contains(%s, ST_SetSRID(\
-                    ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d))",
-                    poWKTRasterDS->pszRasterColumnName,
-                    poWKTRasterDS->pszSchemaName,
-                    poWKTRasterDS->pszTableName,
-                    poWKTRasterDS->pszRasterColumnName, dfProjLowerLeftX,
-                    dfProjLowerLeftY, dfProjUpperRightX, dfProjUpperRightY,
-                    poWKTRasterDS->nSrid);
-        }
+    else
+    {
+       osCommand.Printf(
+               "SELECT %s FROM %s.%s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
+                (ST_Point(%f, %f), ST_Point(%f, %f)), %d)",
+               poWKTRasterDS->pszRasterColumnName, poWKTRasterDS->pszSchemaName,
+               poWKTRasterDS->pszTableName, poWKTRasterDS->pszRasterColumnName,
+               dfProjLowerLeftX, dfProjLowerLeftY, dfProjUpperRightX,
+               dfProjUpperRightY, poWKTRasterDS->nSrid);
+ 
     }
 
     hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
@@ -802,7 +733,8 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
     /*****************************************************************
      * No blocks found. Fill the buffer with nodata value
      *****************************************************************/
-    if (nTuples == 0) {
+    if (nTuples == 0) 
+    {
         NullBlock(pImage);
         return CE_None;
     }
@@ -811,16 +743,16 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
     /******************************************************************
      * One block found. Regular blocking arrangements, no overlaps
      ******************************************************************/
-    else if (nTuples == 1) {
-        int nRid = atoi(PQgetvalue(hPGresult, 0, 0));      
-
+    else if (nTuples == 1) 
+    {
         // Get HEXWKB representation of the block
-        pszHexWkb = CPLStrdup(PQgetvalue(hPGresult, 0, 1));
+        pszHexWkb = CPLStrdup(PQgetvalue(hPGresult, 0, 0));
 
         PQclear(hPGresult);
 
         // Raster hex must have an even number of characters
-        if (pszHexWkb == NULL || strlen(pszHexWkb) % 2) {
+        if (pszHexWkb == NULL || strlen(pszHexWkb) % 2) 
+        {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "The HEXWKB data fetch from database must have an even number \
                   of characters");
@@ -830,7 +762,8 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
 
         // Create a wrapper object
         poWKTRasterWrapper = new WKTRasterWrapper();
-        if (poWKTRasterWrapper->Initialize(pszHexWkb) == FALSE) {
+        if (poWKTRasterWrapper->Initialize(pszHexWkb) == FALSE) 
+        {
             CPLFree(pszHexWkb);
             delete poWKTRasterWrapper;
             return CE_Failure;
@@ -842,7 +775,8 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
 
         // Create raster band wrapper
         poWKTRasterBandWrapper = poWKTRasterWrapper->GetBand((GUInt16)nBand);
-        if (poWKTRasterBandWrapper == NULL) {
+        if (poWKTRasterBandWrapper == NULL) 
+        {
             CPLError(CE_Failure, CPLE_ObjectNull,"Couldn't fetch band data");
             delete poWKTRasterWrapper;
             return CE_Failure;
@@ -858,13 +792,15 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
         /**********************************************************
          * Check if the raster is offline
          **********************************************************/
-        if (poWKTRasterBandWrapper->bIsOffline == TRUE) {
+        if (poWKTRasterBandWrapper->bIsOffline == TRUE) 
+        {
             // The raster data in this case is a path to the raster file
             int nBandToRead = poWKTRasterBandWrapper->nOutDbBandNumber;
 
 
             // Open dataset, if needed
-            if  (poWKTRasterDS->poOutdbRasterDS == NULL) {
+            if  (poWKTRasterDS->poOutdbRasterDS == NULL) 
+            {
                 poWKTRasterDS->poOutdbRasterDS = (GDALDataset *)
                         GDALOpen((char *)pbyRasterData, GA_ReadOnly);
             }
@@ -877,12 +813,11 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
                  * The outdb file may don't have the same block structure...
                  */
 
-                /*
+                
                 poWKTRasterDS->poOutdbRasterDS->GetRasterBand(nBandToRead)->ReadBlock(
-                    nBlockXOff, nBlockYOff, pImage);
-                 */
-                ;
-            else {
+                    nBlockXOff, nBlockYOff, pImage);                             
+            else 
+            {
                 CPLError(CE_Failure, CPLE_ObjectNull,
                     "Couldn't read band data from out-db raster");
                 delete poWKTRasterWrapper;
@@ -892,7 +827,11 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
         }
 
 
-        else {
+        /****************************
+         * Indb raster
+         ****************************/
+        else 
+        {
             /**
              * Copy the data buffer into pImage.
              * nBlockXSize * nBlockYSize should be equal to nDataSize/2
@@ -914,7 +853,8 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
         /*********************************************************************
          * More than one block found. Non regular blocking arrangements
          *********************************************************************/
-    else {
+    else 
+    {
         // Only regular_block supported, just now
         PQclear(hPGresult);
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -932,7 +872,8 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
  *  - void *: the block data
  * Returns: nothing
  */
-void WKTRasterRasterBand::NullBlock(void *pData) {
+void WKTRasterRasterBand::NullBlock(void *pData) 
+{
     VALIDATE_POINTER0(pData, "NullBlock");
 
     int nNaturalBlockXSize = 0;
@@ -944,9 +885,12 @@ void WKTRasterRasterBand::NullBlock(void *pData) {
 
     int bNoDataSet;
     double dfNoData = GetNoDataValue(&bNoDataSet);
-    if (!bNoDataSet) {
+    if (!bNoDataSet) 
+    {
         memset(pData, 0, nWords * nChunkSize);
-    } else {
+    } 
+    else 
+    {
         int i = 0;
         for (i = 0; i < nWords; i += nChunkSize)
             memcpy((GByte *) pData + i, &dfNoData, nChunkSize);
