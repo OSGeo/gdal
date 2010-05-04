@@ -220,7 +220,12 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
             VSIStatBufL statBuf;
             char* archiveFilename = CPLStrdup(pszFilename);
             int bArchiveFileExists = FALSE;
-            archiveFilename[i + nToSkip] = 0;
+
+            if (archiveFilename[i + nToSkip] == '/' ||
+                archiveFilename[i + nToSkip] == '\\')
+            {
+                archiveFilename[i + nToSkip] = 0;
+            }
 
             {
                 CPLMutexHolder oHolder( &hMutex );
@@ -244,7 +249,8 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
             if (bArchiveFileExists)
             {
-                if (pszFilename[i + nToSkip] != 0)
+                if (pszFilename[i + nToSkip] == '/' ||
+                    pszFilename[i + nToSkip] == '\\')
                 {
                     char* pszArchiveInFileName = CPLStrdup(pszFilename + i + nToSkip + 1);
 
