@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.103 2010-04-02 19:26:22 fwarmerdam Exp $ */
+/* $Id: tif_dir.c,v 1.104 2010-04-10 19:22:34 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -489,7 +489,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		}
 		else
 		{
-			if(fip->field_passcount) {
+			if (fip->field_passcount) {
 				if (fip->field_writecount == TIFF_VARIABLE2)
 					tv->count = (uint32) va_arg(ap, uint32);
 				else
@@ -502,9 +502,21 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 			else
 				tv->count = fip->field_writecount;
 
+			if (tv->count == 0) {
+				status = 0;
+				TIFFErrorExt(tif->tif_clientdata, module,
+					     "%s: Null count for \"%s\" (type "
+					     "%d, writecount %d, passcount %d)",
+					     tif->tif_name,
+					     fip->field_name,
+					     fip->field_type,
+					     fip->field_writecount,
+					     fip->field_passcount);
+				goto end;
+			}
 
-			tv->value = _TIFFCheckMalloc(tif, tv_size, tv->count,
-			    "Tag Value");
+			tv->value = _TIFFCheckMalloc(tif, tv->count, tv_size,
+			    "custom tag binary object");
 			if (!tv->value) {
 				status = 0;
 				goto end;
