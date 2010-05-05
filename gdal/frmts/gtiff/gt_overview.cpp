@@ -350,6 +350,9 @@ GTIFFBuildOverviews( const char * pszFilename,
                       pszCompress );
     }
     
+    if( nCompression == COMPRESSION_JPEG && nBitsPerPixel == 16 )
+        nBitsPerPixel = 12;
+
 /* -------------------------------------------------------------------- */
 /*      Figure out the planar configuration to use.                     */
 /* -------------------------------------------------------------------- */
