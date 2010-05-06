@@ -12,6 +12,8 @@ to register all known drivers, including those auto-loaded from .so files
 using GDALDriverManager::AutoLoadDrivers().  If for some applications it
 is necessary to limit the set of drivers it may be helpful to review
 the code from <a href="gdalallregister.cpp.html">gdalallregister.cpp</a>.
+Python automatically calls GDALAllRegister() when the gdal module is 
+imported.
 
 Once the drivers are registered, the application should call the free
 standing GDALOpen() function to open a dataset, passing the name of the
