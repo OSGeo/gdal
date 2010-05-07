@@ -1355,8 +1355,7 @@ def tiff_ovr_37():
 def tiff_ovr_38():
 
     # Skip with old libtiff (crash with 3.8.2)
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
@@ -1377,6 +1376,265 @@ def tiff_ovr_38():
         print(file_size)
         gdaltest.post_reason( 'did not get expected file size.' )
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test external overviews on all datatypes
+
+def tiff_ovr_39():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+    data = src_ds.GetRasterBand(1).ReadRaster(0,0,20,20)
+    src_ds = None
+
+    for datatype in [gdal.GDT_Byte,
+                     gdal.GDT_Int16,
+                     gdal.GDT_UInt16,
+                     gdal.GDT_Int32,
+                     gdal.GDT_UInt32,
+                     gdal.GDT_Float32,
+                     gdal.GDT_Float64,
+                     gdal.GDT_CInt16,
+                     gdal.GDT_CInt32,
+                     gdal.GDT_CFloat32,
+                     gdal.GDT_CFloat64]:
+
+        gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' data/byte.tif tmp/ovr39.tif -ot ' + gdal.GetDataTypeName(datatype))
+
+        try:
+            os.remove('tmp/ovr39.tif.ovr')
+        except:
+            pass
+
+        ds = gdal.Open('tmp/ovr39.tif')
+        ds.BuildOverviews('NEAREST', overviewlist = [2])
+        ds = None
+
+        ds = gdal.Open('tmp/ovr39.tif.ovr')
+        ovr_datatype = ds.GetRasterBand(1).DataType
+        ds = None
+
+        if datatype != ovr_datatype:
+            gdaltest.post_reason('did not get expected datatype')
+            return 'fail'
+
+        ds = gdal.Open('tmp/ovr39.tif')
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        ds = None
+
+        if gdal.DataTypeIsComplex(datatype):
+            expected_cs = 1171
+        else:
+            expected_cs = 1087
+
+        if cs != expected_cs:
+            gdaltest.post_reason('did not get expected checksum for datatype %s' % gdal.GetDataTypeName(datatype))
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test external overviews on 1 bit datasets with AVERAGE_BIT2GRAYSCALE (similar to tiff_ovr_4)
+
+def tiff_ovr_40():
+
+    shutil.copyfile( 'data/oddsize_1bit2b.tif', 'tmp/ovr40.tif' )
+
+    wrk_ds = gdal.Open('tmp/ovr40.tif')
+
+    if wrk_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    wrk_ds.BuildOverviews( 'AVERAGE_BIT2GRAYSCALE', overviewlist = [2,4] )
+    wrk_ds = None
+
+    wrk_ds = gdal.Open('tmp/ovr40.tif')
+
+    ovband = wrk_ds.GetRasterBand(1).GetOverview(1)
+    md = ovband.GetMetadata()
+    if 'RESAMPLING' not in md \
+       or md['RESAMPLING'] != 'AVERAGE_BIT2GRAYSCALE':
+        gdaltest.post_reason( 'Did not get expected RESAMPLING metadata.' )
+        return 'fail'
+
+    # compute average value of overview band image data.
+    ovimage = ovband.ReadRaster(0,0,ovband.XSize,ovband.YSize)
+
+    pix_count = ovband.XSize * ovband.YSize
+    sum = 0.0
+    is_bytes = False
+    try:
+        if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
+            is_bytes = True
+    except:
+        pass
+
+    if is_bytes is True:
+        for i in range(pix_count):
+            sum = sum + ovimage[i]
+    else:
+        for i in range(pix_count):
+            sum = sum + ord(ovimage[i])
+            
+    average = sum / pix_count
+    exp_average = 154.8144
+    if abs(average - exp_average) > 0.1:
+        print(average)
+        gdaltest.post_reason( 'got wrong average for overview image' )
+        return 'fail'
+
+    # read base band as overview resolution and verify we aren't getting
+    # the grayscale image.
+
+    frband = wrk_ds.GetRasterBand(1)
+    ovimage = frband.ReadRaster(0,0,frband.XSize,frband.YSize,
+                                ovband.XSize,ovband.YSize)
+
+    pix_count = ovband.XSize * ovband.YSize
+    sum = 0.0
+    if is_bytes is True:
+        for i in range(pix_count):
+            sum = sum + ovimage[i]
+    else:
+        for i in range(pix_count):
+            sum = sum + ord(ovimage[i])
+    average = sum / pix_count
+    exp_average = 0.6096
+    
+    if abs(average - exp_average) > 0.01:
+        print(average)
+        gdaltest.post_reason( 'got wrong average for downsampled image' )
+        return 'fail'
+
+    wrk_ds = None
+
+    return 'success'
+
+###############################################################################
+# Test external overviews on 1 bit datasets with NEAREST
+
+def tiff_ovr_41():
+
+    shutil.copyfile( 'data/oddsize_1bit2b.tif', 'tmp/ovr41.tif' )
+
+    ds = gdal.Open('tmp/ovr41.tif')
+    #data = wrk_ds.GetRasterBand(1).ReadRaster(0,0,99,99,50,50)
+    ds.BuildOverviews( 'NEAREST', overviewlist = [2] )
+    ds = None
+
+    #ds = gdaltest.tiff_drv.Create('tmp/ovr41.tif.handmade.ovr',50,50,1,options=['NBITS=1'])
+    #ds.GetRasterBand(1).WriteRaster(0,0,50,50,data)
+    #ds = None
+
+    ds = gdal.Open('tmp/ovr41.tif')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    if cs != 1496:
+        print(cs)
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test external overviews on dataset with color table
+
+def tiff_ovr_42():
+
+    ct_data = [ (255,0,0), (0,255,0), (0,0,255), (255,255,255)]
+
+    ct = gdal.ColorTable()
+    for i in range(len(ct_data)):
+        ct.SetColorEntry( i, ct_data[i] )
+
+    ds = gdaltest.tiff_drv.Create('tmp/ovr42.tif',1,1)
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+    ds = None
+
+    ds = gdal.Open('tmp/ovr42.tif')
+    ds.BuildOverviews('NEAREST', overviewlist = [2] )
+    ds = None
+
+    ds = gdal.Open('tmp/ovr42.tif.ovr')
+    ct2 = ds.GetRasterBand(1).GetRasterColorTable()
+
+    if ct2.GetCount() != 256 or \
+       ct2.GetColorEntry(0) != (255,0,0,255) or \
+       ct2.GetColorEntry(1) != (0,255,0,255) or \
+       ct2.GetColorEntry(2) != (0,0,255,255) or \
+       ct2.GetColorEntry(3) != (255,255,255,255):
+        gdaltest.post_reason( 'Wrong color table entry.' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Make sure that 16bit overviews with jpeg compression are handled using 12bit jpeg-in-tiff (#3539) 
+
+def tiff_ovr_43():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    old_accum = gdal.GetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'OFF' )
+    gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'ON' )
+    gdal.ErrorReset()
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        
+    try:
+        ds = gdal.Open('data/mandrilmini_12bitjpeg.tif')
+        ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    except:
+        ds = None
+
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', old_accum )
+    
+    if gdal.GetLastErrorMsg().find(
+                   'Unsupported JPEG data precision 12') != -1:
+        sys.stdout.write('(12bit jpeg not available) ... ')
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/ovr43.tif', 16, 16, 1, gdal.GDT_UInt16)
+    ds.GetRasterBand(1).Fill(4000)
+    ds = None
+
+    try:
+        os.remove('tmp/ovr43.tif.ovr')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/ovr43.tif')
+    gdal.SetConfigOption('COMPRESS_OVERVIEW','JPEG')
+    ds.BuildOverviews('NEAREST', overviewlist = [2])
+    ds = None
+    gdal.SetConfigOption('COMPRESS_OVERVIEW',None)
+
+    ds = gdal.Open('tmp/ovr43.tif.ovr')
+    md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    if not 'NBITS' in md or md['NBITS'] != '12':
+        print(md)
+        gdaltest.post_reason('did not get expected NBITS')
+        return 'fail'
+
+    if cs != 642:
+        print(cs)
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr43.tif' )
 
     return 'success'
 
@@ -1414,6 +1672,10 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr37.dt0' )
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') != -1:
         gdaltest.tiff_drv.Delete( 'tmp/ovr38.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr39.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr40.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr41.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr42.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -1458,6 +1720,11 @@ gdaltest_list_internal = [
     tiff_ovr_36,
     tiff_ovr_37,
     tiff_ovr_38,
+    tiff_ovr_39,
+    tiff_ovr_40,
+    tiff_ovr_41,
+    tiff_ovr_42,
+    tiff_ovr_43,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
