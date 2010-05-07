@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.90 2010-05-05 18:38:38 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.91 2010-05-07 18:38:46 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1723,9 +1723,9 @@ JPEGPreEncode(TIFF* tif, uint16 s)
 	sp->cinfo.c.write_JFIF_header = FALSE;
 	sp->cinfo.c.write_Adobe_marker = FALSE;
 	/* set up table handling correctly */
+        if (!TIFFjpeg_set_quality(sp, sp->jpegquality, FALSE))
+		return (0);
 	if (! (sp->jpegtablesmode & JPEGTABLESMODE_QUANT)) {
-		if (!TIFFjpeg_set_quality(sp, sp->jpegquality, FALSE))
-			return (0);
 		unsuppress_quant_table(sp, 0);
 		unsuppress_quant_table(sp, 1);
 	}
