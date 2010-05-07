@@ -82,8 +82,7 @@
  *  - Update data blocks in SetProjection
  *  - Update data blocks in SetGeoTransform
  *  - Disable sequential scanning in OpenConnection in the database 
- *    instance
- *    has support for GEOMETRY type (is a good idea?)
+ *    instance has support for GEOMETRY type (is a good idea?)
  *  - In SetRasterProperties, if we can't create OGRGeometry from database,
  *    we should "attack" directly the WKT representation of geometry, not
  *    abort the program. For example, when pszProjectionRef is NULL
@@ -406,7 +405,7 @@ GBool TableHasRegularBlocking(PGconn * hPGconn, const char * pszTable,
         const char * pszColumn, const char * pszSchema) 
 {
 
-    // Security checkings
+    /* Check input parameters */
     VALIDATE_POINTER1(hPGconn, "TableHasRegularBlocking", FALSE);
     VALIDATE_POINTER1(pszTable, "TableHasRegularBlocking", FALSE);
     VALIDATE_POINTER1(pszColumn, "TableHasRegularBlocking", FALSE);
@@ -1576,22 +1575,14 @@ CPLErr WKTRasterDataset::GetGeoTransform(double * padfTransform) {
      */
 
     // copy necessary values in supplied buffer
-    if (nSrid != -1)
-    {
-        padfTransform[0] = dfUpperLeftX;
-        padfTransform[1] = dfPixelSizeX;
-        padfTransform[2] = dfSkewX;
-        padfTransform[3] = dfUpperLeftY;
-        padfTransform[4] = dfSkewY;
-        padfTransform[5] = dfPixelSizeY;
+    padfTransform[0] = dfUpperLeftX;
+    padfTransform[1] = dfPixelSizeX;
+    padfTransform[2] = dfSkewX;
+    padfTransform[3] = dfUpperLeftY;
+    padfTransform[4] = dfSkewY;
+    padfTransform[5] = dfPixelSizeY;
         
-        return CE_None;
-    }
-
-    else
-    {
-        return GDALDataset::GetGeoTransform(padfTransform);
-    }
+    return CE_None;
 
     
 }
