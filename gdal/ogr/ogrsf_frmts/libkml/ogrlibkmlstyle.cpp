@@ -84,7 +84,9 @@ returns:
 void addstylestring2kml (
     const char *pszStyleString,
     StylePtr poKmlStyle,
-    KmlFactory * poKmlFactory )
+    KmlFactory * poKmlFactory,
+    PlacemarkPtr poKmlPlacemark,
+    OGRFeature * poOgrFeat )
 {
 
     /***** just bail now if stylestring is empty *****/
@@ -687,7 +689,7 @@ void styletable2kml (
 
         /***** parse the style string *****/
 
-        addstylestring2kml ( pszStyleString, poKmlStyle, poKmlFactory );
+        addstylestring2kml ( pszStyleString, poKmlStyle, poKmlFactory, NULL, NULL );
 
         /***** add the style to the container *****/
 
