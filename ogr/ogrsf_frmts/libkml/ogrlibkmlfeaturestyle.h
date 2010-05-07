@@ -28,6 +28,8 @@
 
 #include "ogr_libkml.h"
 
+using kmldom::PlacemarkPtr;
+
 void featurestyle2kml (
     OGRLIBKMLDataSource *poOgrDS,
     OGRLayer * poKOgrLayer,
