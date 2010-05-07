@@ -2952,6 +2952,8 @@ def tiff_write_84():
     ds.BuildOverviews('NEAREST', overviewlist = [2])
     cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
     ds = None
+    gdal.SetConfigOption('COMPRESS_OVERVIEW',None)
+    gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW',None)
 
     gdal.SetCacheMax(oldSize)
 
