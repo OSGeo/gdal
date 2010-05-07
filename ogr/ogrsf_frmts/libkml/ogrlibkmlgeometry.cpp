@@ -162,6 +162,9 @@ ElementPtr geom2kml (
             x = poOgrPoint->getX (  );
             y = poOgrPoint->getY (  );
 
+            if ( x > 180 )
+                x -= 360;
+
             coordinates->add_latlng ( y, x );
         }
         delete poOgrPoint;
@@ -208,6 +211,9 @@ ElementPtr geom2kml (
             x = poOgrPoint->getX (  );
             y = poOgrPoint->getY (  );
             z = poOgrPoint->getZ (  );
+
+            if ( x > 180 )
+                x -= 360;
 
             coordinates->add_latlngalt ( y, x, z );
         }
