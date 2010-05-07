@@ -1760,6 +1760,10 @@ def tiff_write_53_bis():
 
 def tiff_write_54():
 
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_54.tif',
                                               256, 256, 3,
                                               options=['TILED=YES', 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'] )
@@ -2423,6 +2427,10 @@ def tiff_write_73():
 
 def tiff_write_74():
 
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
     old_accum = gdal.GetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'OFF' )
     gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'ON' )
     gdal.ErrorReset()
@@ -2579,6 +2587,10 @@ def tiff_write_77():
 # Test generating & reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259)
 
 def tiff_write_78():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
 
     src_ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_78_src.tif', 16, 2048, 3 )
     src_ds.GetRasterBand(2).Fill(255)
@@ -2914,6 +2926,45 @@ def tiff_write_83():
     return 'success'
 
 ###############################################################################
+# Test propagation of non-standard JPEG quality when the current directory
+# changes in the midst of encoding of tiles (#3539)
+
+def tiff_write_84():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+    
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_84.tif', 128, 128, 3)
+    ds = None
+
+    try:
+        os.remove('tmp/tiff_write_84.tif.ovr')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/tiff_write_84.tif')
+    gdal.SetConfigOption('COMPRESS_OVERVIEW','JPEG')
+    gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW','90')
+    ds.BuildOverviews('NEAREST', overviewlist = [2])
+    cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
+    ds = None
+
+    gdal.SetCacheMax(oldSize)
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_84.tif' )
+
+    if cs != 0:
+        print(cs)
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3007,6 +3058,7 @@ gdaltest_list = [
     tiff_write_81,
     tiff_write_82,
     tiff_write_83,
+    tiff_write_84,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
