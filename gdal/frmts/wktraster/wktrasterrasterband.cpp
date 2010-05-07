@@ -730,6 +730,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
 
     nTuples = PQntuples(hPGresult);
 
+
     /*****************************************************************
      * No blocks found. Fill the buffer with nodata value
      *****************************************************************/
@@ -806,6 +807,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
             }
 
             if (poWKTRasterDS->poOutdbRasterDS != NULL)
+            {
 
                 // Read data from band
                 /**
@@ -816,6 +818,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
                 
                 poWKTRasterDS->poOutdbRasterDS->GetRasterBand(nBandToRead)->ReadBlock(
                     nBlockXOff, nBlockYOff, pImage);                             
+            }
             else 
             {
                 CPLError(CE_Failure, CPLE_ObjectNull,
