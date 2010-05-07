@@ -249,6 +249,7 @@ void addstylestring2kml (
         case OGRSTCLabel:
             {
                 GBool nullcheck;
+                GBool nullcheck2;
                 
                 poKmlLabelStyle = poKmlFactory->CreateLabelStyle (  );
 
@@ -268,6 +269,48 @@ void addstylestring2kml (
                     poKmlLabelStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
                 }
 
+                /***** scale *****/
+
+                double dfScale = poStyleLabel->Size ( nullcheck );
+
+                if ( !nullcheck ) {
+                    poKmlLabelStyle->set_scale ( dfScale );
+                }
+                
+                /***** heading *****/
+
+                double heading = poStyleLabel->Angle ( nullcheck );
+
+                if ( !nullcheck ) {
+                    if ( !poKmlIconStyle) {
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
+                        IconStyleIconPtr poKmlIcon = poKmlFactory->CreateIconStyleIcon (  );
+                        poKmlIconStyle->set_icon ( poKmlIcon );
+                    }
+                    
+                    poKmlIconStyle->set_heading ( heading );
+                }
+
+                /***** hotspot *****/
+
+                double dfDx = poStyleLabel->SpacingX ( nullcheck );
+                double dfDy = poStyleLabel->SpacingY ( nullcheck2 );
+
+                if ( !nullcheck && !nullcheck2 ) {
+                    if ( !poKmlIconStyle) {
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
+                        IconStyleIconPtr poKmlIcon = poKmlFactory->CreateIconStyleIcon (  );
+                        poKmlIconStyle->set_icon ( poKmlIcon );
+                    }
+                    
+                    HotSpotPtr poKmlHotSpot = poKmlFactory->CreateHotSpot (  );
+
+                    poKmlHotSpot->set_x ( dfDx );
+                    poKmlHotSpot->set_y ( dfDy );
+
+                    poKmlIconStyle->set_hotspot ( poKmlHotSpot );
+                }
+                
                 break;
             }
         case OGRSTCNone:
