@@ -157,8 +157,6 @@ void addstylestring2kml (
                 GBool nullcheck;
                 GBool nullcheck2;
 
-                poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
-
                 OGRStyleSymbol *poStyleSymbol = ( OGRStyleSymbol * ) poOgrST;
 
                 /***** id (kml icon) *****/
@@ -166,6 +164,8 @@ void addstylestring2kml (
                 const char *pszId = poStyleSymbol->Id ( nullcheck );
 
                 if ( !nullcheck ) {
+                    if ( !poKmlIconStyle)
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
 
                     /***** split it at the ,'s *****/
 
@@ -197,15 +197,22 @@ void addstylestring2kml (
 
                 double heading = poStyleSymbol->Angle ( nullcheck );
 
-                if ( !nullcheck )
+                if ( !nullcheck ) {
+                    if ( !poKmlIconStyle)
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
                     poKmlIconStyle->set_heading ( heading );
+                }
 
                 /***** scale *****/
 
                 double dfScale = poStyleSymbol->Size ( nullcheck );
 
-                if ( !nullcheck )
+                if ( !nullcheck ) {
+                    if ( !poKmlIconStyle)
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
+
                     poKmlIconStyle->set_scale ( dfScale );
+                }
 
                 /***** color *****/
 
@@ -226,6 +233,9 @@ void addstylestring2kml (
                 double dfDy = poStyleSymbol->SpacingY ( nullcheck2 );
 
                 if ( !nullcheck && !nullcheck2 ) {
+                    if ( !poKmlIconStyle)
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
+
                     HotSpotPtr poKmlHotSpot = poKmlFactory->CreateHotSpot (  );
 
                     poKmlHotSpot->set_x ( dfDx );
