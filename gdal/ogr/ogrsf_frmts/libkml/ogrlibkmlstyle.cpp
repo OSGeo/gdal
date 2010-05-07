@@ -68,6 +68,11 @@ void addstylestring2kml (
     OGRFeature * poOgrFeat )
 {
 
+    LineStylePtr poKmlLineStyle = NULL;
+    PolyStylePtr poKmlPolyStyle = NULL;
+    IconStylePtr poKmlIconStyle = NULL;
+    LabelStylePtr poKmlLabelStyle = NULL;
+    
     /***** just bail now if stylestring is empty *****/
 
     if ( !pszStyleString || !*pszStyleString ) {
@@ -96,7 +101,7 @@ void addstylestring2kml (
             {
                 GBool nullcheck;
 
-                LineStylePtr poKmlLineStyle = poKmlFactory->CreateLineStyle (  );
+                poKmlLineStyle = poKmlFactory->CreateLineStyle (  );
 
                 OGRStylePen *poStylePen = ( OGRStylePen * ) poOgrST;
 
@@ -119,15 +124,14 @@ void addstylestring2kml (
                     dfWidth = 1.0;
 
                 poKmlLineStyle->set_width ( dfWidth );
-                poKmlStyle->set_linestyle ( poKmlLineStyle );
-
+                
                 break;
             }
         case OGRSTCBrush:
             {
                 GBool nullcheck;
 
-                PolyStylePtr poKmlPolyStyle = poKmlFactory->CreatePolyStyle (  );
+                poKmlPolyStyle = poKmlFactory->CreatePolyStyle (  );
 
                 OGRStyleBrush *poStyleBrush = ( OGRStyleBrush * ) poOgrST;
 
@@ -144,7 +148,7 @@ void addstylestring2kml (
                      && poStyleBrush->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
                     poKmlPolyStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
                 }
-                poKmlStyle->set_polystyle ( poKmlPolyStyle );
+                
 
                 break;
             }
@@ -153,7 +157,7 @@ void addstylestring2kml (
                 GBool nullcheck;
                 GBool nullcheck2;
 
-                IconStylePtr poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
+                poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
 
                 OGRStyleSymbol *poStyleSymbol = ( OGRStyleSymbol * ) poOgrST;
 
@@ -229,15 +233,14 @@ void addstylestring2kml (
 
                     poKmlIconStyle->set_hotspot ( poKmlHotSpot );
                 }
-                poKmlStyle->set_iconstyle ( poKmlIconStyle );
-
+                
                 break;
             }
         case OGRSTCLabel:
             {
                 GBool nullcheck;
                 
-                LabelStylePtr poKmlLabelStyle = poKmlFactory->CreateLabelStyle (  );
+                poKmlLabelStyle = poKmlFactory->CreateLabelStyle (  );
 
                 OGRStyleLabel *poStyleLabel = ( OGRStyleLabel * ) poOgrST;
 
@@ -255,8 +258,6 @@ void addstylestring2kml (
                     poKmlLabelStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
                 }
 
-                poKmlStyle->set_labelstyle ( poKmlLabelStyle );
-
                 break;
             }
         case OGRSTCNone:
@@ -267,6 +268,18 @@ void addstylestring2kml (
         delete poOgrST;
     }
 
+    if ( poKmlLineStyle )
+        poKmlStyle->set_linestyle ( poKmlLineStyle );
+
+    if ( poKmlPolyStyle )
+        poKmlStyle->set_polystyle ( poKmlPolyStyle );
+
+    if ( poKmlIconStyle )
+        poKmlStyle->set_iconstyle ( poKmlIconStyle );
+
+    if ( poKmlLabelStyle )
+        poKmlStyle->set_labelstyle ( poKmlLabelStyle );
+    
     delete poOgrSM;
 }
 
