@@ -34,7 +34,6 @@ using namespace std;
 #include <kml/dom.h>
 
 using kmldom::KmlFactory;;
-using kmldom::PlacemarkPtr;
 using kmldom::IconStylePtr;
 using kmldom::PolyStylePtr;
 using kmldom::LineStylePtr;
@@ -79,7 +78,7 @@ void featurestyle2kml (
 
     if ( pszStyleString ) {
 
-    /***** does it ref a style table? *****/
+        /***** does it ref a style table? *****/
 
         if ( *pszStyleString == '@' ) {
 
@@ -114,14 +113,15 @@ void featurestyle2kml (
             }
         }
 
-    /***** no style table ref *****/
+        /***** no style table ref *****/
 
         else {
             StylePtr poKmlStyle = poKmlFactory->CreateStyle (  );
 
             /***** parse the style string *****/
 
-            addstylestring2kml ( pszStyleString, poKmlStyle, poKmlFactory );
+            addstylestring2kml ( pszStyleString, poKmlStyle, poKmlFactory,
+                                 poKmlPlacemark, poOgrFeat );
 
             /***** add the style to the placemark *****/
 
@@ -182,7 +182,7 @@ void featurestyle2kml (
                 /***** parse the style string *****/
 
                 addstylestring2kml ( pszStyleString, poKmlStyle,
-                                     poKmlFactory );
+                                     poKmlFactory, poKmlPlacemark, poOgrFeat );
 
                 /***** add the style to the placemark *****/
 

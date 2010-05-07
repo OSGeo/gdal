@@ -30,11 +30,14 @@ using kmldom::KmlFactory;
 using kmldom::StylePtr;
 using kmldom::DocumentPtr;
 using kmldom::ContainerPtr;
+using kmldom::PlacemarkPtr;
 
 void addstylestring2kml (
     const char *stylestring,
     StylePtr poKmlStyle,
-    KmlFactory * poKmlFactory );
+    KmlFactory * poKmlFactory,
+    PlacemarkPtr poKmlPlacemark,
+    OGRFeature * poOgrFeat );
 
 
 
