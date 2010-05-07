@@ -310,7 +310,18 @@ void addstylestring2kml (
 
                     poKmlIconStyle->set_hotspot ( poKmlHotSpot );
                 }
-                
+
+                /***** label text *****/
+
+                const char *pszText = poStyleLabel->TextString ( nullcheck );
+
+                if ( !nullcheck ) {
+                    if ( poKmlPlacemark ) {
+
+                        poKmlPlacemark->set_name( pszText );
+                    }
+                }
+                    
                 break;
             }
         case OGRSTCNone:
