@@ -77,10 +77,14 @@ OGRGPXDataSource::~OGRGPXDataSource()
             if (dfMinLon <= dfMaxLon)
             {
                 char szMetadata[SPACE_FOR_METADATA+1];
-                sprintf(szMetadata, "<metadata><bounds minlat=\"%.15f\" minlon=\"%.15f\" maxlat=\"%.15f\" maxlon=\"%.15f\"/></metadata>",
+                int nRet = snprintf(szMetadata, SPACE_FOR_METADATA,
+                         "<metadata><bounds minlat=\"%.15f\" minlon=\"%.15f\" maxlat=\"%.15f\" maxlon=\"%.15f\"/></metadata>",
                         dfMinLat, dfMinLon, dfMaxLat, dfMaxLon);
-                VSIFSeek(fpOutput, nOffsetBounds, SEEK_SET);
-                VSIFWrite(szMetadata, 1, strlen(szMetadata), fpOutput);
+                if (nRet < SPACE_FOR_METADATA)
+                {
+                    VSIFSeek(fpOutput, nOffsetBounds, SEEK_SET);
+                    VSIFWrite(szMetadata, 1, strlen(szMetadata), fpOutput);
+                }
             }
             VSIFClose( fpOutput);
         }
