@@ -112,7 +112,6 @@ def ogr_bna_3():
     feat.Destroy()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error = 0.0001 ) != 0:
-        print feat.GetGeometryRef()
         return 'fail'
     feat.Destroy()
     feat = lyr.GetFeature(2)
