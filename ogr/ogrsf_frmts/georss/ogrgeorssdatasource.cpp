@@ -67,16 +67,15 @@ OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
         {
             if (eFormat == GEORSS_RSS)
             {
-                VSIFPrintf(fpOutput, "  </channel>\n");
-                VSIFPrintf(fpOutput, "</rss>\n");
+                VSIFPrintfL(fpOutput, "  </channel>\n");
+                VSIFPrintfL(fpOutput, "</rss>\n");
             }
             else
             {
-                VSIFPrintf(fpOutput, "</feed>\n");
+                VSIFPrintfL(fpOutput, "</feed>\n");
             }
         }
-        if ( fpOutput != stdout )
-            VSIFClose( fpOutput);
+        VSIFCloseL( fpOutput);
     }
 
     for( int i = 0; i < nLayers; i++ )
@@ -353,9 +352,9 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
     pszName = CPLStrdup( pszFilename );
 
     if( EQUAL(pszFilename,"stdout") )
-        fpOutput = stdout;
+        fpOutput = VSIFOpenL( "/vsistdout/", "w" );
     else
-        fpOutput = VSIFOpen( pszFilename, "w" );
+        fpOutput = VSIFOpenL( pszFilename, "w" );
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -451,49 +450,49 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*     Output header of GeoRSS file.                                       */
 /* -------------------------------------------------------------------- */
-    VSIFPrintf(fpOutput, "<?xml version=\"1.0\"?>\n");
+    VSIFPrintfL(fpOutput, "<?xml version=\"1.0\"?>\n");
     if (eFormat == GEORSS_RSS)
     {
-        VSIFPrintf(fpOutput, "<rss version=\"2.0\" ");
+        VSIFPrintfL(fpOutput, "<rss version=\"2.0\" ");
         if (eGeomDialect == GEORSS_GML)
-            VSIFPrintf(fpOutput, "xmlns:georss=\"http://www.georss.org/georss\" xmlns:gml=\"http://www.opengis.net/gml\"");
+            VSIFPrintfL(fpOutput, "xmlns:georss=\"http://www.georss.org/georss\" xmlns:gml=\"http://www.opengis.net/gml\"");
         else if (eGeomDialect == GEORSS_SIMPLE)
-            VSIFPrintf(fpOutput, "xmlns:georss=\"http://www.georss.org/georss\"");
+            VSIFPrintfL(fpOutput, "xmlns:georss=\"http://www.georss.org/georss\"");
         else
-            VSIFPrintf(fpOutput, "xmlns:geo=\"http://www.w3.org/2003/01/geo/wgs84_pos#\"");
-        VSIFPrintf(fpOutput, ">\n");
-        VSIFPrintf(fpOutput, "  <channel>\n");
+            VSIFPrintfL(fpOutput, "xmlns:geo=\"http://www.w3.org/2003/01/geo/wgs84_pos#\"");
+        VSIFPrintfL(fpOutput, ">\n");
+        VSIFPrintfL(fpOutput, "  <channel>\n");
         if (pszHeader)
         {
-            VSIFPrintf(fpOutput, "%s", pszHeader);
+            VSIFPrintfL(fpOutput, "%s", pszHeader);
         }
         else
         {
-            VSIFPrintf(fpOutput, "    <title>%s</title>\n", pszTitle);
-            VSIFPrintf(fpOutput, "    <description>%s</description>\n", pszDescription);
-            VSIFPrintf(fpOutput, "    <link>%s</link>\n", pszLink);
+            VSIFPrintfL(fpOutput, "    <title>%s</title>\n", pszTitle);
+            VSIFPrintfL(fpOutput, "    <description>%s</description>\n", pszDescription);
+            VSIFPrintfL(fpOutput, "    <link>%s</link>\n", pszLink);
         }
     }
     else
     {
-        VSIFPrintf(fpOutput, "<feed xmlns=\"http://www.w3.org/2005/Atom\" ");
+        VSIFPrintfL(fpOutput, "<feed xmlns=\"http://www.w3.org/2005/Atom\" ");
         if (eGeomDialect == GEORSS_GML)
-            VSIFPrintf(fpOutput, "xmlns:gml=\"http://www.opengis.net/gml\"");
+            VSIFPrintfL(fpOutput, "xmlns:gml=\"http://www.opengis.net/gml\"");
         else if (eGeomDialect == GEORSS_SIMPLE)
-            VSIFPrintf(fpOutput, "xmlns:georss=\"http://www.georss.org/georss\"");
+            VSIFPrintfL(fpOutput, "xmlns:georss=\"http://www.georss.org/georss\"");
         else
-            VSIFPrintf(fpOutput, "xmlns:geo=\"http://www.w3.org/2003/01/geo/wgs84_pos#\"");
-        VSIFPrintf(fpOutput, ">\n");
+            VSIFPrintfL(fpOutput, "xmlns:geo=\"http://www.w3.org/2003/01/geo/wgs84_pos#\"");
+        VSIFPrintfL(fpOutput, ">\n");
         if (pszHeader)
         {
-            VSIFPrintf(fpOutput, "%s", pszHeader);
+            VSIFPrintfL(fpOutput, "%s", pszHeader);
         }
         else
         {
-            VSIFPrintf(fpOutput, "  <title>%s</title>\n", pszTitle);
-            VSIFPrintf(fpOutput, "  <updated>%s</updated>\n", pszUpdated);
-            VSIFPrintf(fpOutput, "  <author><name>%s</name></author>\n", pszAuthorName);
-            VSIFPrintf(fpOutput, "  <id>%s</id>\n", pszId);
+            VSIFPrintfL(fpOutput, "  <title>%s</title>\n", pszTitle);
+            VSIFPrintfL(fpOutput, "  <updated>%s</updated>\n", pszUpdated);
+            VSIFPrintfL(fpOutput, "  <author><name>%s</name></author>\n", pszAuthorName);
+            VSIFPrintfL(fpOutput, "  <id>%s</id>\n", pszId);
         }
     }
 

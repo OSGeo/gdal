@@ -169,7 +169,7 @@ class OGRGeoRSSDataSource : public OGRDataSource
     int                 nLayers;
 
     /*  Export related */
-    FILE                *fpOutput; /* Standard file API */
+    FILE                *fpOutput; /* Virtual file API */
     
     OGRGeoRSSValidity   validity;
     OGRGeoRSSFormat     eFormat;
