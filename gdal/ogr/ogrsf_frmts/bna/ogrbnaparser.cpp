@@ -222,7 +222,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
     char c;
     int inQuotes = FALSE;
     int numField = 0;
-    const char* ptrBeginningOfNumber = NULL;
+    char* ptrBeginningOfNumber = NULL;
     int exponentFound = 0;
     int exponentSignFound = 0;
     int dotFound = 0;
@@ -253,7 +253,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
           break;
       }
 
-      const char* ptrCurLine = szLineBuffer;
+      char* ptrCurLine = szLineBuffer;
       const char* ptrBeginLine = szLineBuffer;
 
       if (*ptrCurLine == 0)
@@ -313,9 +313,14 @@ BNARecord* BNA_GetNextRecord(FILE* f,
             if (interestFeatureType == BNA_READ_ALL ||
                 interestFeatureType == currentFeatureType)
             {
+              char* pszComma = strchr(ptrBeginningOfNumber, ',');
+              if (pszComma)
+                  *pszComma = '\0';
               record->tabCoords[(numField - nbExtraId - NB_MIN_BNA_IDS - 1) / 2]
                                [1 - ((numField - nbExtraId) % 2)] =
                   CPLAtof(ptrBeginningOfNumber);
+              if (pszComma)
+                  *pszComma = ',';
             }
             if (numField == NB_MIN_BNA_IDS + 1 + nbExtraId + 2 * record->nCoords - 1)
             {
@@ -451,9 +456,14 @@ BNARecord* BNA_GetNextRecord(FILE* f,
             if (interestFeatureType == BNA_READ_ALL ||
                 interestFeatureType == currentFeatureType)
             {
+              char* pszComma = strchr(ptrBeginningOfNumber, ',');
+              if (pszComma)
+                  *pszComma = '\0';
               record->tabCoords[(numField - nbExtraId - NB_MIN_BNA_IDS - 1) / 2]
                                [1 - ((numField - nbExtraId) % 2)] =
                   CPLAtof(ptrBeginningOfNumber);
+              if (pszComma)
+                  *pszComma = ',';
             }
             if (numField == NB_MIN_BNA_IDS + 1 + nbExtraId + 2 * record->nCoords - 1)
             {
