@@ -82,6 +82,13 @@ int sprintbuf(struct printbuf *p, const char *msg, ...)
   if((size = CPLVASPrintf(&t, msg, ap)) == -1) return -1; 
   va_end(ap);
   
+  if (strcmp(msg, "%f") == 0)
+  {
+      char* pszComma = strchr(t, ',');
+      if (pszComma)
+          *pszComma = '.';
+  }
+  
   ret = printbuf_memappend(p, t, size); 
   free(t); 
   return ret; 

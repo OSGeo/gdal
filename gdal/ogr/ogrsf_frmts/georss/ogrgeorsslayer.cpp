@@ -490,7 +490,12 @@ void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                     OGRGeoRSS_GetOGRCompatibleTagName(CPLSPrintf("%s_%s", pszCompatibleName, ppszAttr[i]));
             int iAttrField = poFeatureDefn->GetFieldIndex(pszAttrCompatibleName);
             if (iAttrField >= 0)
-                poFeature->SetField( iAttrField, ppszAttr[i+1] );
+            {
+                if (poFeatureDefn->GetFieldDefn(iAttrField)->GetType() == OFTReal)
+                    poFeature->SetField( iAttrField, CPLAtof(ppszAttr[i+1]) );
+                else
+                    poFeature->SetField( iAttrField, ppszAttr[i+1] );
+            }
             CPLFree(pszAttrCompatibleName);
         }
 
@@ -552,10 +557,10 @@ static OGRGeometry* OGRGeoRSS_GetGMLEnvelope(const char* pszGML)
             OGRPolygon* poPolygon = new OGRPolygon();
             OGRLinearRing* poLinearRing = new OGRLinearRing();
             poPolygon->addRingDirectly(poLinearRing);
-            double x1 = atof(papszTokensLower[0]);
-            double y1 = atof(papszTokensLower[1]);
-            double x2 = atof(papszTokensUpper[0]);
-            double y2 = atof(papszTokensUpper[1]);
+            double x1 = CPLAtof(papszTokensLower[0]);
+            double y1 = CPLAtof(papszTokensLower[1]);
+            double x2 = CPLAtof(papszTokensUpper[0]);
+            double y2 = CPLAtof(papszTokensUpper[1]);
             poLinearRing->addPoint( x1, y1 );
             poLinearRing->addPoint( x2, y1 );
             poLinearRing->addPoint( x2, y2 );
@@ -655,7 +660,10 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
             pszSubElementValue && nSubElementValueLen)
         {
             pszSubElementValue[nSubElementValueLen] = 0;
-            poFeature->SetField( iCurrentField, pszSubElementValue);
+            if (poFeatureDefn->GetFieldDefn(iCurrentField)->GetType() == OFTReal)
+                poFeature->SetField( iCurrentField, CPLAtof(pszSubElementValue) );
+            else
+                poFeature->SetField( iCurrentField, pszSubElementValue);
         }
 
         CPLFree(pszSubElementName);
@@ -889,7 +897,10 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
             }
             else
             {
-                poFeature->SetField( iCurrentField, pszSubElementValue);
+                if (poFeatureDefn->GetFieldDefn(iCurrentField)->GetType() == OFTReal)
+                    poFeature->SetField( iCurrentField, CPLAtof(pszSubElementValue) );
+                else
+                    poFeature->SetField( iCurrentField, pszSubElementValue);
             }
         }
 
@@ -1169,6 +1180,12 @@ static void OGRGeoRSSLayerWriteSimpleElement(FILE* fp,
             {
                 char* pszValue =
                         OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
+                if (poFeatureDefn->GetFieldDefn(iIndex)->GetType() == OFTReal)
+                {
+                    char* pszComma = strchr(pszValue, ',');
+                    if (pszComma)
+                        *pszComma = '.';
+                }
                 VSIFPrintfL(fp, " %s=\"%s\"", pszAttributeName, pszValue);
                 CPLFree(pszValue);
             }
@@ -1184,6 +1201,12 @@ static void OGRGeoRSSLayerWriteSimpleElement(FILE* fp,
 
         char* pszValue =
                 OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
+        if (poFeatureDefn->GetFieldDefn(iIndex)->GetType() == OFTReal)
+        {
+            char* pszComma = strchr(pszValue, ',');
+            if (pszComma)
+                *pszComma = '.';
+        }
         VSIFPrintfL(fp, "%s", pszValue);
         CPLFree(pszValue);
 
@@ -1300,6 +1323,12 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
 
                             char* pszValue =
                                     OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( j ));
+                            if (poFeatureDefn->GetFieldDefn(j)->GetType() == OFTReal)
+                            {
+                                char* pszComma = strchr(pszValue, ',');
+                                if (pszComma)
+                                    *pszComma = '.';
+                            }
                             VSIFPrintfL(fp, "        <%s>%s</%s>\n", pszAttributeName2, pszValue, pszAttributeName2);
                             CPLFree(pszValue);
                         }
@@ -1501,6 +1530,12 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
             }
             char* pszValue =
                         OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( i ));
+            if (poFeatureDefn->GetFieldDefn(i)->GetType() == OFTReal)
+            {
+                char* pszComma = strchr(pszValue, ',');
+                if (pszComma)
+                    *pszComma = '.';
+            }
             VSIFPrintfL(fp, "      <%s>%s</%s>\n", pszTagName, pszValue, pszTagName);
             CPLFree(pszValue);
             CPLFree(pszTagName);
@@ -1556,6 +1591,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
             }
         }
 
+        char szCoord[75];
         switch( wkbFlatten(poGeom->getGeometryType()) )
         {
             case wkbPoint:
@@ -1570,25 +1606,29 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                         VSIFPrintfL(fp, " srsName=\"%s\"", pszURN);
                     if (poGeom->getCoordinateDimension() == 3)
                     {
-                        VSIFPrintfL(fp, " srsDimension=\"3\"><gml:pos>%.15f %.15f %.15f",
-                                   (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y,
-                                    poPoint->getZ());
+                        OGRMakeWktCoordinate(szCoord, (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y,
+                                             poPoint->getZ(), 3);
+                        VSIFPrintfL(fp, " srsDimension=\"3\"><gml:pos>%s", szCoord);
                     }
                     else
                     {
-                        VSIFPrintfL(fp, "><gml:pos>%.15f %.15f",
-                                   (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y);
+                        OGRMakeWktCoordinate(szCoord, (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y,
+                                             0, 2);
+                        VSIFPrintfL(fp, "><gml:pos>%s", szCoord);
                     }
                     VSIFPrintfL(fp, "</gml:pos></gml:Point></georss:where>\n");
                 }
                 else if (eGeomDialect == GEORSS_SIMPLE)
                 {
-                    VSIFPrintfL(fp, "      <georss:point>%.15f %.15f</georss:point>\n", y, x);
+                    OGRMakeWktCoordinate(szCoord, y, x, 0, 2);
+                    VSIFPrintfL(fp, "      <georss:point>%s</georss:point>\n", szCoord);
                 }
                 else if (eGeomDialect == GEORSS_W3C_GEO)
                 {
-                    VSIFPrintfL(fp, "      <geo:lat>%.15f</geo:lat>\n", y);
-                    VSIFPrintfL(fp, "      <geo:long>%.15f</geo:long>\n", x);
+                    OGRFormatDouble( szCoord, sizeof(szCoord), y, '.' );
+                    VSIFPrintfL(fp, "      <geo:lat>%s</geo:lat>\n", szCoord);
+                    OGRFormatDouble( szCoord, sizeof(szCoord), x, '.' );
+                    VSIFPrintfL(fp, "      <geo:long>%s</geo:long>\n", szCoord);
                 }
                 break;
             }
@@ -1607,8 +1647,9 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                     {
                         double x = poLineString->getX(i);
                         double y = poLineString->getY(i);
-                        VSIFPrintfL(fp, "%.15f %.15f ",
-                                   (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y);
+                        OGRMakeWktCoordinate(szCoord, (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y,
+                                             0, 2);
+                        VSIFPrintfL(fp, "%s ", szCoord);
                     }
                     VSIFPrintfL(fp, "</gml:posList></gml:LineString></georss:where>\n");
                 }
@@ -1620,7 +1661,8 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                     {
                         double x = poLineString->getX(i);
                         double y = poLineString->getY(i);
-                        VSIFPrintfL(fp, "%.15f %.15f ", y, x);
+                        OGRMakeWktCoordinate(szCoord, y, x, 0, 2);
+                        VSIFPrintfL(fp, "%s ", szCoord);
                     }
                     VSIFPrintfL(fp, "</georss:line>\n");
                 }
@@ -1649,8 +1691,9 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                     {
                         double x = poLineString->getX(i);
                         double y = poLineString->getY(i);
-                        VSIFPrintfL(fp, "%.15f %.15f ",
-                                   (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y);
+                        OGRMakeWktCoordinate(szCoord, (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y,
+                                             0, 2);
+                        VSIFPrintfL(fp, "%s ", szCoord);
                     }
                     VSIFPrintfL(fp, "</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></georss:where>\n");
                 }
@@ -1662,7 +1705,8 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                     {
                         double x = poLineString->getX(i);
                         double y = poLineString->getY(i);
-                        VSIFPrintfL(fp, "%.15f %.15f ", y, x);
+                        OGRMakeWktCoordinate(szCoord, y, x, 0, 2);
+                        VSIFPrintfL(fp, "%s ", szCoord);
                     }
                     VSIFPrintfL(fp, "</georss:polygon>\n");
                 }

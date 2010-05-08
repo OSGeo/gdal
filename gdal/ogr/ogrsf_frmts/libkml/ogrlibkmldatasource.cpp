@@ -720,6 +720,8 @@ int OGRLIBKMLDataSource::OpenKml (
         return FALSE;
     }
 
+    CPLLocaleC  oLocaleForcer;
+
     /***** create a SRS *****/
 
     OGRSpatialReference *poOgrSRS =
@@ -798,6 +800,8 @@ int OGRLIBKMLDataSource::OpenKmz (
                    "%s is not a valid kmz file", pszFilename );
         return FALSE;
     }
+
+    CPLLocaleC  oLocaleForcer;
 
     /***** read the doc.kml *****/
 
@@ -1020,6 +1024,7 @@ int OGRLIBKMLDataSource::OpenDir (
             continue;
         }
 
+        CPLLocaleC  oLocaleForcer;
 
         /***** parse the kml into the DOM *****/
 

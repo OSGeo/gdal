@@ -88,7 +88,7 @@ void VFKFeature::SetProperty(int iIndex, const char *pszValue)
 	    m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
 	    break;
 	case OFTReal:
-	    m_propertyList[iIndex] = VFKProperty(atof(pszValue));
+	    m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));
 	    break;
 	default:
 	    m_propertyList[iIndex] = VFKProperty(pszValue);

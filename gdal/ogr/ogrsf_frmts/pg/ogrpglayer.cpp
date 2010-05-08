@@ -919,7 +919,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 padfList = (double *) CPLCalloc(sizeof(double),nCount);
 
                 for( i = 0; i < nCount; i++ )
-                    padfList[i] = atof(papszTokens[i]);
+                    padfList[i] = CPLAtof(papszTokens[i]);
                 CSLDestroy( papszTokens );
             }
 
@@ -1126,7 +1126,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     var.dscale = sDscale;
                     var.digits = (NumericDigit*)pabyData;
                     char* str = OGRPGGetStrFromBinaryNumeric(&var);
-                    poFeature->SetField( iOGRField, str);
+                    poFeature->SetField( iOGRField, CPLAtof(str));
                     CPLFree(str);
                 }
                 else if ( nTypeOID == INT2OID )
@@ -1193,6 +1193,11 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                         poFeature->SetField( iOGRField, 0);
                     else
                         poFeature->SetField( iOGRField, pabyData);
+                }
+                else if ( eOGRType == OFTReal )
+                {
+                    poFeature->SetField( iOGRField,
+                                CPLAtof(PQgetvalue( hCursorResult, iRecord, iField )) );
                 }
                 else
                 {
