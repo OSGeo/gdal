@@ -406,14 +406,20 @@ void OGRPGResultLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
         {
             if( m_poFilterGeom != NULL)
             {
+                char szBox3D_1[128];
+                char szBox3D_2[128];
+                char* pszComma;
                 OGREnvelope  sEnvelope;
 
                 m_poFilterGeom->getEnvelope( &sEnvelope );
-                osWHERE.Printf("WHERE \"%s\" && SetSRID('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
-                            pszGeomColumn,
-                            sEnvelope.MinX, sEnvelope.MinY,
-                            sEnvelope.MaxX, sEnvelope.MaxY,
-                            nSRSId );
+                snprintf(szBox3D_1, sizeof(szBox3D_1), "%.12f %.12f", sEnvelope.MinX, sEnvelope.MinY);
+                while((pszComma = strchr(szBox3D_1, ',')) != NULL)
+                    *pszComma = '.';
+                snprintf(szBox3D_2, sizeof(szBox3D_2), "%.12f %.12f", sEnvelope.MaxX, sEnvelope.MaxY);
+                while((pszComma = strchr(szBox3D_2, ',')) != NULL)
+                    *pszComma = '.';
+                osWHERE.Printf("WHERE \"%s\" && SetSRID('BOX3D(%s, %s)'::box3d,%d) ",
+                            pszGeomColumn, szBox3D_1, szBox3D_2, nSRSId );
             }
             else
             {

@@ -294,10 +294,10 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             && CPLGetXMLValue( psDSI, "ExtentYMin", NULL ) != NULL
             && CPLGetXMLValue( psDSI, "ExtentYMax", NULL ) != NULL )
         {
-            SetExtents( atof(CPLGetXMLValue( psDSI, "ExtentXMin", "0.0" )),
-                        atof(CPLGetXMLValue( psDSI, "ExtentXMax", "0.0" )),
-                        atof(CPLGetXMLValue( psDSI, "ExtentYMin", "0.0" )),
-                        atof(CPLGetXMLValue( psDSI, "ExtentYMax", "0.0" )) );
+            SetExtents( CPLAtof(CPLGetXMLValue( psDSI, "ExtentXMin", "0.0" )),
+                        CPLAtof(CPLGetXMLValue( psDSI, "ExtentXMax", "0.0" )),
+                        CPLAtof(CPLGetXMLValue( psDSI, "ExtentYMin", "0.0" )),
+                        CPLAtof(CPLGetXMLValue( psDSI, "ExtentYMax", "0.0" )) );
         }
     }
     

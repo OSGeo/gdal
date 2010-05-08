@@ -68,6 +68,7 @@ class OGRBNALayer : public OGRLayer
     OGRFeature *       BuildFeatureFromBNARecord (BNARecord* record, long fid);
     void               FastParseUntil ( int interestFID);
     void               WriteFeatureAttributes(FILE* fp, OGRFeature *poFeature);
+    void               WriteCoord(FILE* fp, double dfX, double dfY);
     
   public:
                         OGRBNALayer(const char *pszFilename,

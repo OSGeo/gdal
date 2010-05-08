@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
+#include "ogr_p.h"
 
 #ifndef M_PI
 # define M_PI  3.1415926535897932384626433832795
@@ -225,10 +226,14 @@ OGRFeature *OGRBNALayer::GetNextFeature()
 }
 
 
+/************************************************************************/
+/*                      WriteFeatureAttributes()                        */
+/************************************************************************/
+
 void OGRBNALayer::WriteFeatureAttributes(FILE* fp, OGRFeature *poFeature )
 {
     int i;
-    OGRFieldDefn *poField;
+    OGRFieldDefn *poFieldDefn;
     int nbOutID = poDS->GetNbOutId();
     if (nbOutID < 0)
         nbOutID = poFeatureDefn->GetFieldCount();
@@ -236,11 +241,21 @@ void OGRBNALayer::WriteFeatureAttributes(FILE* fp, OGRFeature *poFeature )
     { 
         if (i < poFeatureDefn->GetFieldCount())
         {
-            poField = poFeatureDefn->GetFieldDefn( i );
+            poFieldDefn = poFeatureDefn->GetFieldDefn( i );
             if( poFeature->IsFieldSet( i ) )
             {
-                const char *pszRaw = poFeature->GetFieldAsString( i );
-                VSIFPrintfL( fp, "\"%s\",", pszRaw);
+                if (poFieldDefn->GetType() == OFTReal)
+                {
+                    char szBuffer[64];
+                    OGRFormatDouble(szBuffer, sizeof(szBuffer),
+                                    poFeature->GetFieldAsDouble(i), '.');
+                    VSIFPrintfL( fp, "\"%s\",", szBuffer);
+                }
+                else
+                {
+                    const char *pszRaw = poFeature->GetFieldAsString( i );
+                    VSIFPrintfL( fp, "\"%s\",", pszRaw);
+                }
             }
             else
             {
@@ -252,6 +267,20 @@ void OGRBNALayer::WriteFeatureAttributes(FILE* fp, OGRFeature *poFeature )
             VSIFPrintfL( fp, "\"\",");
         }
     }
+}
+
+/************************************************************************/
+/*                             WriteCoord()                             */
+/************************************************************************/
+
+void OGRBNALayer::WriteCoord(FILE* fp, double dfX, double dfY)
+{
+    char szBuffer[64];
+    OGRFormatDouble(szBuffer, sizeof(szBuffer), dfX, '.', poDS->GetCoordinatePrecision());
+    VSIFPrintfL( fp, "%s", szBuffer);
+    VSIFPrintfL( fp, "%s", poDS->GetCoordinateSeparator());
+    OGRFormatDouble(szBuffer, sizeof(szBuffer), dfY, '.', poDS->GetCoordinatePrecision());
+    VSIFPrintfL( fp, "%s", szBuffer);
 }
 
 /************************************************************************/
@@ -295,9 +324,6 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
     
     FILE* fp = poDS->GetOutputFP();
     int nbPairPerLine = poDS->GetNbPairPerLine();
-    char formatCoordinates[32];
-    sprintf(formatCoordinates, "%%s%%.%df%s%%.%df",
-            poDS->GetCoordinatePrecision(), poDS->GetCoordinateSeparator(), poDS->GetCoordinatePrecision());
 
     switch( poGeom->getGeometryType() )
     {
@@ -307,7 +333,8 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
             OGRPoint* point = (OGRPoint*)poGeom;
             WriteFeatureAttributes(fp, poFeature);
             VSIFPrintfL( fp, "1");
-            VSIFPrintfL( fp, formatCoordinates, partialEol, point->getX(), point->getY());
+            VSIFPrintfL( fp, "%s", partialEol);
+            WriteCoord(fp, point->getX(), point->getY());
             VSIFPrintfL( fp, "%s", eol);
             break;
         }
@@ -364,8 +391,10 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
                     {
                         WriteFeatureAttributes(fp, poFeature);
                         VSIFPrintfL( fp, "2");
-                        VSIFPrintfL( fp, formatCoordinates, partialEol, center1X, center1Y);
-                        VSIFPrintfL( fp, formatCoordinates,  partialEol, major_radius, minor_radius);
+                        VSIFPrintfL( fp, "%s", partialEol);
+                        WriteCoord(fp, center1X, center1Y);
+                        VSIFPrintfL( fp, "%s", partialEol);
+                        WriteCoord(fp, major_radius, minor_radius);
                         VSIFPrintfL( fp, "%s", eol);
                     }
                 }
@@ -389,8 +418,8 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
                 int nbPair = 0;
                 for(i=0;i<n;i++)
                 {
-                    VSIFPrintfL( fp, formatCoordinates,
-                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", ring->getX(i), ring->getY(i));
+                    VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " ");
+                    WriteCoord(fp, ring->getX(i), ring->getY(i));
                     nbPair++;
                 }
                 for(i=0;i<nInteriorRings;i++)
@@ -399,12 +428,12 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
                     n = ring->getNumPoints();
                     for(j=0;j<n;j++)
                     {
-                        VSIFPrintfL( fp, formatCoordinates,
-                                    ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", ring->getX(j), ring->getY(j));
+                        VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " ");
+                        WriteCoord(fp, ring->getX(j), ring->getY(j));
                         nbPair++;
                     }
-                    VSIFPrintfL( fp, formatCoordinates,
-                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", firstX, firstY);
+                    VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " ");
+                    WriteCoord(fp, firstX, firstY);
                     nbPair++;
                 }
                 VSIFPrintfL( fp, "%s", eol);
@@ -459,14 +488,14 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
                 int nInteriorRings = polygon->getNumInteriorRings();
                 for(j=0;j<n;j++)
                 {
-                    VSIFPrintfL( fp, formatCoordinates,
-                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ",ring->getX(j), ring->getY(j));
+                    VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " ");
+                    WriteCoord(fp, ring->getX(j), ring->getY(j));
                     nbPair++;
                 }
                 if (i != 0)
                 {
-                    VSIFPrintfL( fp, formatCoordinates,
-                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ",firstX, firstY);
+                    VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " ");
+                    WriteCoord(fp, firstX, firstY);
                     nbPair++;
                 }
                 for(j=0;j<nInteriorRings;j++)
@@ -475,12 +504,12 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
                     n = ring->getNumPoints();
                     for(k=0;k<n;k++)
                     {
-                        VSIFPrintfL( fp, formatCoordinates, 
-                                    ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", ring->getX(k), ring->getY(k));
+                        VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " ");
+                        WriteCoord(fp, ring->getX(k), ring->getY(k));
                         nbPair++;
                     }
-                    VSIFPrintfL( fp, formatCoordinates,
-                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", firstX, firstY);
+                    VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " ");
+                    WriteCoord(fp, firstX, firstY);
                     nbPair++;
                 }
             }
@@ -504,8 +533,8 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
             int nbPair = 0;
             for(i=0;i<n;i++)
             {
-                VSIFPrintfL( fp, formatCoordinates,
-                            ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", line->getX(i), line->getY(i));
+                VSIFPrintfL( fp, "%s", partialEol);
+                WriteCoord(fp, line->getX(i), line->getY(i));
                 nbPair++;
             }
             VSIFPrintfL( fp, "%s", eol);

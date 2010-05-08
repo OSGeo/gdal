@@ -311,7 +311,12 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 poFeature->SetGeometryDirectly( poGeom );
         }
 
-        if (poFeatureDefn->GetFieldDefn(iAttr)->GetType() != OFTString)
+        if (poFeatureDefn->GetFieldDefn(iAttr)->GetType() == OFTReal)
+        {
+            if (papszTokens[iAttr][0] != '\0')
+                poFeature->SetField( iAttr, CPLAtof(papszTokens[iAttr]) );
+        }
+        else if (poFeatureDefn->GetFieldDefn(iAttr)->GetType() != OFTString)
         {
             if (papszTokens[iAttr][0] != '\0')
                 poFeature->SetField( iAttr, papszTokens[iAttr] );
@@ -675,8 +680,16 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
         
         pszEscaped = 
             CPLEscapeString( poNewFeature->GetFieldAsString(iField),
-                             -1, CPLES_CSV );
-        
+                            -1, CPLES_CSV );
+
+        if (poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTReal)
+        {
+            /* Use point as decimal separator */
+            char* pszComma = strchr(pszEscaped, ',');
+            if (pszComma)
+                *pszComma = '.';
+        }
+
         VSIFWrite( pszEscaped, 1, strlen(pszEscaped), fpCSV );
         CPLFree( pszEscaped );
     }

@@ -160,12 +160,16 @@ int OGRDXFWriterLayer::WriteValue( int nCode, int nValue )
 int OGRDXFWriterLayer::WriteValue( int nCode, double dfValue )
 
 {
-    CPLString osLinePair;
+    char szLinePair[64];
 
-    osLinePair.Printf( "%3d\n%.15g\n", nCode, dfValue );
+    snprintf(szLinePair, sizeof(szLinePair), "%3d\n%.15g\n", nCode, dfValue );
+    char* pszComma = strchr(szLinePair, ',');
+    if (pszComma)
+        *pszComma = '.';
+    size_t nLen = strlen(szLinePair);
 
-    return VSIFWriteL( osLinePair.c_str(), 
-                       1, osLinePair.size(), fp ) == osLinePair.size();
+    return VSIFWriteL( szLinePair, 
+                       1, nLen, fp ) == nLen;
 }
 
 /************************************************************************/

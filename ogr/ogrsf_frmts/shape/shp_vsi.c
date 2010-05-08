@@ -30,6 +30,7 @@
 #include "shapefil.h"
 #include "cpl_vsi.h"
 #include "cpl_error.h"
+#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
@@ -141,7 +142,7 @@ void SASetupDefaultHooks( SAHooks *psHooks )
     psHooks->FClose  = VSI_SHP_Close;
 
     psHooks->Remove  = VSI_SHP_Remove;
-    psHooks->Atof    = atof;
+    psHooks->Atof    = CPLAtof;
 
     psHooks->Error   = VSI_SHP_Error;
 }
