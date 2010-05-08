@@ -361,8 +361,8 @@ const char * OGRWktReadPoints( const char * pszInput,
 /* -------------------------------------------------------------------- */
 /*      Add point to list.                                              */
 /* -------------------------------------------------------------------- */
-        (*ppaoPoints)[*pnPointsRead].x = atof(szTokenX);
-        (*ppaoPoints)[*pnPointsRead].y = atof(szTokenY);
+        (*ppaoPoints)[*pnPointsRead].x = CPLAtof(szTokenX);
+        (*ppaoPoints)[*pnPointsRead].y = CPLAtof(szTokenY);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a Z coordinate?                                      */
@@ -376,7 +376,7 @@ const char * OGRWktReadPoints( const char * pszInput,
                 *ppadfZ = (double *) CPLCalloc(sizeof(double),*pnMaxPoints);
             }
 
-            (*ppadfZ)[*pnPointsRead] = atof(szDelim);
+            (*ppadfZ)[*pnPointsRead] = CPLAtof(szDelim);
             
             pszInput = OGRWktReadToken( pszInput, szDelim );
         }

@@ -9,6 +9,8 @@
  *
  */
 
+#include "cpl_conv.h"
+
 #include "config.h"
 
 #include <stdio.h>
@@ -370,8 +372,6 @@ struct json_object* json_object_new_double(double d)
 
 double json_object_get_double(struct json_object *jso)
 {
-  double cdouble;
-
   if(!jso) return 0.0;
   switch(jso->o_type) {
   case json_type_double:
@@ -381,7 +381,7 @@ double json_object_get_double(struct json_object *jso)
   case json_type_boolean:
     return jso->o.c_boolean;
   case json_type_string:
-    if(sscanf(jso->o.c_string, "%lf", &cdouble) == 1) return cdouble;
+    return CPLAtof(jso->o.c_string);
   default:
     return 0.0;
   }

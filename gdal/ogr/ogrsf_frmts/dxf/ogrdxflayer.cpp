@@ -243,7 +243,7 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
         if( osWeight == "-1" )
             osWeight = poDS->LookupLayerProperty(osLayer,"LineWeight");
 
-        dfWeight = atof(osWeight) / 100.0;
+        dfWeight = CPLAtof(osWeight) / 100.0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -258,7 +258,14 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
                     pabyDXFColors[nColor*3+2] );
 
     if( dfWeight > 0.0 )
-        osStyle += CPLString().Printf( ",w:%.2gmm", dfWeight );
+    {
+        char szBuffer[64];
+        snprintf(szBuffer, sizeof(szBuffer), "%.2g", dfWeight);
+        char* pszComma = strchr(szBuffer, ',');
+        if (pszComma)
+            *pszComma = '.';
+        osStyle += CPLString().Printf( ",w:%smm", szBuffer );
+    }
 
     osStyle += ")";
     
@@ -387,20 +394,20 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
         switch( nCode )
         {
           case 10:
-            dfX = atof(szLineBuf);
+            dfX = CPLAtof(szLineBuf);
             break;
 
           case 20:
-            dfY = atof(szLineBuf);
+            dfY = CPLAtof(szLineBuf);
             break;
 
           case 30:
-            dfZ = atof(szLineBuf);
+            dfZ = CPLAtof(szLineBuf);
             bHaveZ = TRUE;
             break;
 
           case 40:
-            dfHeight = atof(szLineBuf);
+            dfHeight = CPLAtof(szLineBuf);
             break;
 
           case 71:
@@ -408,11 +415,11 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
             break;
 
           case 11:
-            dfXDirection = atof(szLineBuf);
+            dfXDirection = CPLAtof(szLineBuf);
             break;
 
           case 21:
-            dfYDirection = atof(szLineBuf);
+            dfYDirection = CPLAtof(szLineBuf);
             dfAngle = atan2( dfYDirection, dfXDirection ) * 180.0 / PI;
             break;
 
@@ -422,7 +429,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
             break;
 
           case 50:
-            dfAngle = atof(szLineBuf);
+            dfAngle = CPLAtof(szLineBuf);
             break;
 
           default:
@@ -462,14 +469,28 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 /*      Prepare style string.                                           */
 /* -------------------------------------------------------------------- */
     CPLString osStyle;
+    char szBuffer[64];
+    char* pszComma;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
 
     if( dfAngle != 0.0 )
-        osStyle += CPLString().Printf(",a:%.3g", dfAngle);
+    {
+        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
+        pszComma = strchr(szBuffer, ',');
+        if (pszComma)
+            *pszComma = '.';
+        osStyle += CPLString().Printf(",a:%s", szBuffer);
+    }
 
     if( dfHeight != 0.0 )
-        osStyle += CPLString().Printf(",s:%.3gg", dfHeight);
+    {
+        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
+        pszComma = strchr(szBuffer, ',');
+        if (pszComma)
+            *pszComma = '.';
+        osStyle += CPLString().Printf(",s:%sg", szBuffer);
+    }
 
     if( nAttachmentPoint >= 0 && nAttachmentPoint <= 9 )
     {
@@ -518,20 +539,20 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
         switch( nCode )
         {
           case 10:
-            dfX = atof(szLineBuf);
+            dfX = CPLAtof(szLineBuf);
             break;
 
           case 20:
-            dfY = atof(szLineBuf);
+            dfY = CPLAtof(szLineBuf);
             break;
 
           case 30:
-            dfZ = atof(szLineBuf);
+            dfZ = CPLAtof(szLineBuf);
             bHaveZ = TRUE;
             break;
 
           case 40:
-            dfHeight = atof(szLineBuf);
+            dfHeight = CPLAtof(szLineBuf);
             break;
 
           case 1:
@@ -540,7 +561,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
             break;
 
           case 50:
-            dfAngle = atof(szLineBuf);
+            dfAngle = CPLAtof(szLineBuf);
             break;
 
           default:
@@ -563,14 +584,28 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 /*      Prepare style string.                                           */
 /* -------------------------------------------------------------------- */
     CPLString osStyle;
+    char szBuffer[64];
+    char* pszComma;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
 
     if( dfAngle != 0.0 )
-        osStyle += CPLString().Printf(",a:%.3g", dfAngle);
+    {
+        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
+        pszComma = strchr(szBuffer, ',');
+        if (pszComma)
+            *pszComma = '.';
+        osStyle += CPLString().Printf(",a:%s", szBuffer);
+    }
 
     if( dfHeight != 0.0 )
-        osStyle += CPLString().Printf(",s:%.3gg", dfHeight);
+    {
+        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
+        pszComma = strchr(szBuffer, ',');
+        if (pszComma)
+            *pszComma = '.';
+        osStyle += CPLString().Printf(",s:%sg", szBuffer);
+    }
 
     // add color!
 
@@ -599,15 +634,15 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
         switch( nCode )
         {
           case 10:
-            dfX = atof(szLineBuf);
+            dfX = CPLAtof(szLineBuf);
             break;
 
           case 20:
-            dfY = atof(szLineBuf);
+            dfY = CPLAtof(szLineBuf);
             break;
 
           case 30:
-            dfZ = atof(szLineBuf);
+            dfZ = CPLAtof(szLineBuf);
             bHaveZ = TRUE;
             break;
 
@@ -650,28 +685,28 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
         switch( nCode )
         {
           case 10:
-            dfX1 = atof(szLineBuf);
+            dfX1 = CPLAtof(szLineBuf);
             break;
 
           case 11:
-            dfX2 = atof(szLineBuf);
+            dfX2 = CPLAtof(szLineBuf);
             break;
 
           case 20:
-            dfY1 = atof(szLineBuf);
+            dfY1 = CPLAtof(szLineBuf);
             break;
 
           case 21:
-            dfY2 = atof(szLineBuf);
+            dfY2 = CPLAtof(szLineBuf);
             break;
 
           case 30:
-            dfZ1 = atof(szLineBuf);
+            dfZ1 = CPLAtof(szLineBuf);
             bHaveZ = TRUE;
             break;
 
           case 31:
-            dfZ2 = atof(szLineBuf);
+            dfZ2 = CPLAtof(szLineBuf);
             bHaveZ = TRUE;
             break;
 
@@ -752,7 +787,7 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
         {
             case 38:
                 // Constant elevation.
-                dfZ = atof(szLineBuf);
+                dfZ = CPLAtof(szLineBuf);
 				smoothPolyline.setCoordinateDimension(3);
                 break;
 
@@ -772,7 +807,7 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
                     dfBulge = 0.0;
                     bHaveY = FALSE;
                 }
-                dfX = atof(szLineBuf);
+                dfX = CPLAtof(szLineBuf);
                 bHaveX = TRUE;
                 break;
 
@@ -784,12 +819,12 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
                     dfBulge = 0.0;
                     bHaveX = FALSE;
                 }
-                dfY = atof(szLineBuf);
+                dfY = CPLAtof(szLineBuf);
                 bHaveY = TRUE;
                 break;
 
             case 42:
-                dfBulge = atof(szLineBuf);
+                dfBulge = CPLAtof(szLineBuf);
                 break;
 
 
@@ -882,20 +917,20 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             switch( nCode )
             {
               case 10:
-                dfX = atof(szLineBuf);
+                dfX = CPLAtof(szLineBuf);
                 break;
                 
               case 20:
-                dfY = atof(szLineBuf);
+                dfY = CPLAtof(szLineBuf);
                 break;
                 
               case 30:
-                dfZ = atof(szLineBuf);
+                dfZ = CPLAtof(szLineBuf);
 				smoothPolyline.setCoordinateDimension(3);
                 break;
 
               case 42:
-                dfBulge = atof(szLineBuf);
+                dfBulge = CPLAtof(szLineBuf);
                 break;
 
               default:
@@ -943,20 +978,20 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
         switch( nCode )
         {
           case 10:
-            dfX1 = atof(szLineBuf);
+            dfX1 = CPLAtof(szLineBuf);
             break;
 
           case 20:
-            dfY1 = atof(szLineBuf);
+            dfY1 = CPLAtof(szLineBuf);
             break;
 
           case 30:
-            dfZ1 = atof(szLineBuf);
+            dfZ1 = CPLAtof(szLineBuf);
             bHaveZ = TRUE;
             break;
 
           case 40:
-            dfRadius = atof(szLineBuf);
+            dfRadius = CPLAtof(szLineBuf);
             break;
 
           default:
@@ -1009,40 +1044,40 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
         switch( nCode )
         {
           case 10:
-            dfX1 = atof(szLineBuf);
+            dfX1 = CPLAtof(szLineBuf);
             break;
 
           case 20:
-            dfY1 = atof(szLineBuf);
+            dfY1 = CPLAtof(szLineBuf);
             break;
 
           case 30:
-            dfZ1 = atof(szLineBuf);
+            dfZ1 = CPLAtof(szLineBuf);
             bHaveZ = TRUE;
             break;
 
           case 11:
-            dfAxisX = atof(szLineBuf);
+            dfAxisX = CPLAtof(szLineBuf);
             break;
 
           case 21:
-            dfAxisY = atof(szLineBuf);
+            dfAxisY = CPLAtof(szLineBuf);
             break;
 
           case 31:
-            dfAxisZ = atof(szLineBuf);
+            dfAxisZ = CPLAtof(szLineBuf);
             break;
 
           case 40:
-            dfRatio = atof(szLineBuf);
+            dfRatio = CPLAtof(szLineBuf);
             break;
 
           case 41:
-            dfEndAngle = -1 * atof(szLineBuf) * 180.0 / PI;
+            dfEndAngle = -1 * CPLAtof(szLineBuf) * 180.0 / PI;
             break;
 
           case 42:
-            dfStartAngle = -1 * atof(szLineBuf) * 180.0 / PI;
+            dfStartAngle = -1 * CPLAtof(szLineBuf) * 180.0 / PI;
             break;
 
           default:
@@ -1115,28 +1150,28 @@ OGRFeature *OGRDXFLayer::TranslateARC()
         switch( nCode )
         {
           case 10:
-            dfX1 = atof(szLineBuf);
+            dfX1 = CPLAtof(szLineBuf);
             break;
 
           case 20:
-            dfY1 = atof(szLineBuf);
+            dfY1 = CPLAtof(szLineBuf);
             break;
 
           case 30:
-            dfZ1 = atof(szLineBuf);
+            dfZ1 = CPLAtof(szLineBuf);
             bHaveZ = TRUE;
             break;
 
           case 40:
-            dfRadius = atof(szLineBuf);
+            dfRadius = CPLAtof(szLineBuf);
             break;
 
           case 50:
-            dfEndAngle = -1 * atof(szLineBuf);
+            dfEndAngle = -1 * CPLAtof(szLineBuf);
             break;
 
           case 51:
-            dfStartAngle = -1 * atof(szLineBuf);
+            dfStartAngle = -1 * CPLAtof(szLineBuf);
             break;
 
           default:
@@ -1194,11 +1229,11 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
         switch( nCode )
         {
           case 10:
-            adfControlPoints.push_back( atof(szLineBuf) );
+            adfControlPoints.push_back( CPLAtof(szLineBuf) );
             break;
 
           case 20:
-            adfControlPoints.push_back( atof(szLineBuf) );
+            adfControlPoints.push_back( CPLAtof(szLineBuf) );
             adfControlPoints.push_back( 0.0 );
             break;
 
@@ -1349,31 +1384,31 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
         switch( nCode )
         {
           case 10:
-            oTransformer.dfXOffset = atof(szLineBuf);
+            oTransformer.dfXOffset = CPLAtof(szLineBuf);
             break;
 
           case 20:
-            oTransformer.dfYOffset = atof(szLineBuf);
+            oTransformer.dfYOffset = CPLAtof(szLineBuf);
             break;
 
           case 30:
-            oTransformer.dfZOffset = atof(szLineBuf);
+            oTransformer.dfZOffset = CPLAtof(szLineBuf);
             break;
 
           case 41:
-            oTransformer.dfXScale = atof(szLineBuf);
+            oTransformer.dfXScale = CPLAtof(szLineBuf);
             break;
 
           case 42:
-            oTransformer.dfYScale = atof(szLineBuf);
+            oTransformer.dfYScale = CPLAtof(szLineBuf);
             break;
 
           case 43:
-            oTransformer.dfZScale = atof(szLineBuf);
+            oTransformer.dfZScale = CPLAtof(szLineBuf);
             break;
 
           case 50:
-            oTransformer.dfAngle = atof(szLineBuf) * PI / 180.0;
+            oTransformer.dfAngle = CPLAtof(szLineBuf) * PI / 180.0;
             break;
 
           case 2: 

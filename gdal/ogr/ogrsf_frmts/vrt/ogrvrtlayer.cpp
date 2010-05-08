@@ -682,6 +682,9 @@ int OGRVRTLayer::ResetSourceReading()
                     pszXField, sEnvelope.MaxX,
                     pszYField, sEnvelope.MinY,
                     pszYField, sEnvelope.MaxY );
+            char* pszComma;
+            while((pszComma = strchr(pszFilter, ',')) != NULL)
+                *pszComma = '.';
         }
     }
 
@@ -971,8 +974,11 @@ retry:
         {
             /* Eventually we need to offer some more sophisticated translation
                options here for more esoteric types. */
-            
-            poDstFeat->SetField( iVRTField, 
+            if (poDstDefn->GetType() == OFTReal)
+                poDstFeat->SetField( iVRTField, 
+                                 poSrcFeat->GetFieldAsDouble(anSrcField[iVRTField]));
+            else
+                poDstFeat->SetField( iVRTField, 
                                  poSrcFeat->GetFieldAsString(anSrcField[iVRTField]));
         }
     }
