@@ -62,7 +62,10 @@ const char CPL_DLL * OGRWktReadPoints( const char * pszInput,
                                        int * pnReadPoints );
 
 void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
+
 #endif
+
+void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDecimalSep, int nPrecision = 15 );
 
 /* -------------------------------------------------------------------- */
 /*      Date-time parsing and processing functions                      */
