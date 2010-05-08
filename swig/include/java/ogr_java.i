@@ -55,13 +55,6 @@ typedef char retStringAndCPLFree;
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
 %rename (RegisterAll) OGRRegisterAll();
 
-
-%rename (GeometryTypeToName) OGRGeometryTypeToName;
-const char *OGRGeometryTypeToName( OGRwkbGeometryType eType );
-
-%rename (GetFieldTypeName) OGR_GetFieldTypeName;
-const char * OGR_GetFieldTypeName(OGRFieldType type);
-
 /*
  *
  */ 
