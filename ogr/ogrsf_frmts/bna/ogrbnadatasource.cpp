@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrbnadatasource.cpp
+ * $Id$
  *
  * Project:  BNA Translator
  * Purpose:  Implements OGRBNADataSource class
@@ -61,7 +61,7 @@ OGRBNADataSource::~OGRBNADataSource()
 {
     if ( fpOutput != NULL )
     {
-        VSIFClose( fpOutput);
+        VSIFCloseL( fpOutput);
     }
 
     for( int i = 0; i < nLayers; i++ )
@@ -167,12 +167,14 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     
 // -------------------------------------------------------------------- 
-//      Does this appear to be an .bna file?
+//      Does this appear to be a .bna file?
 // --------------------------------------------------------------------
-    if( !EQUAL( CPLGetExtension(pszFilename), "bna" ) )
+    if( !(EQUAL( CPLGetExtension(pszFilename), "bna" )
+           || ((EQUALN( pszFilename, "/vsigzip/", 9) || EQUALN( pszFilename, "/vsizip/", 8)) &&
+               (strstr( pszFilename, ".bna") || strstr( pszFilename, ".BNA")))) )
         return FALSE;
     
-    FILE* fp = VSIFOpen(pszFilename, "rb");
+    FILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp)
     {
         BNARecord* record;
@@ -202,7 +204,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
 
         while(1)
         {
-            int offset = VSIFTell(fp);
+            int offset = VSIFTellL(fp);
             int line = curLine;
             record =  BNA_GetNextRecord(fp, &ok, &curLine, FALSE, BNA_READ_NONE);
             if (ok == FALSE)
@@ -256,7 +258,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
             }
         }
 #endif
-        VSIFClose(fp);
+        VSIFCloseL(fp);
     }
 
     return ok;
@@ -290,9 +292,9 @@ int OGRBNADataSource::Create( const char *pszFilename,
     pszName = CPLStrdup( pszFilename );
 
     if( EQUAL(pszFilename,"stdout") )
-        fpOutput = stdout;
+        fpOutput = VSIFOpenL( "/vsistdout/", "wb" );
     else
-        fpOutput = VSIFOpen( pszFilename, "wb" );
+        fpOutput = VSIFOpenL( pszFilename, "wb" );
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
