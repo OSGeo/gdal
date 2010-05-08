@@ -355,7 +355,7 @@ def ogr_georss_4():
         return 'fail'
 
     content = open('tmp/test_rss2.xml').read()
-    if content.find('<georss:point>49.0') == -1:
+    if content.find('<georss:point>49 2') == -1:
         print(('%s' % content))
         return 'fail'
 
@@ -377,7 +377,7 @@ def ogr_georss_6():
         return 'fail'
 
     content = open('tmp/test_rss2.xml').read()
-    if content.find('<georss:where><gml:Point><gml:pos>49.0') == -1:
+    if content.find('<georss:where><gml:Point><gml:pos>49 2') == -1:
         print(('%s' % content))
         return 'fail'
 
@@ -401,7 +401,7 @@ def ogr_georss_8():
         return 'fail'
 
     content = open('tmp/test_rss2.xml').read()
-    if content.find('<geo:lat>49.0') == -1 or content.find('<geo:long>2.0') == -1:
+    if content.find('<geo:lat>49') == -1 or content.find('<geo:long>2') == -1:
         print(('%s' % content))
         return 'fail'
 
@@ -459,7 +459,7 @@ def ogr_georss_10():
     ds.Destroy()
 
     content = open('tmp/test32631.rss').read()
-    if content.find('<georss:where><gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000.0') == -1:
+    if content.find('<georss:where><gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000 4000000') == -1:
         print(('%s' % content))
         return 'fail'
 

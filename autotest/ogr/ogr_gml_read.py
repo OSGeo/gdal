@@ -292,6 +292,7 @@ def ogr_gml_8():
     lyr = gml_ds.GetLayer()
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('name') != '\xc4\x80liamanu':
+        print(feat.GetFieldAsString('name'))
         return 'fail'
 
     gml_ds.Destroy()
@@ -354,21 +355,24 @@ def ogr_gml_10():
     drv = ogr.GetDriverByName('GML')
     ds = drv.CreateDataSource('tmp/fields.gml')
     lyr = ds.CreateLayer('test')
-    lyr.CreateField(ogr.FieldDefn('string', ogr.OFTString))
-    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('string')).SetWidth(100)
+    field_defn = ogr.FieldDefn('string', ogr.OFTString)
+    field_defn.SetWidth(100)
+    lyr.CreateField(field_defn)
     lyr.CreateField(ogr.FieldDefn('date', ogr.OFTDate))
-    lyr.CreateField(ogr.FieldDefn('real', ogr.OFTReal))
-    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('real')).SetWidth(4)
-    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('real')).SetPrecision(2)
+    field_defn = ogr.FieldDefn('real', ogr.OFTReal)
+    field_defn.SetWidth(4)
+    field_defn.SetPrecision(2)
+    lyr.CreateField(field_defn)
     lyr.CreateField(ogr.FieldDefn('float', ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn('integer', ogr.OFTInteger))
-    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('integer')).SetWidth(5)
+    field_defn = ogr.FieldDefn('integer', ogr.OFTInteger)
+    field_defn.SetWidth(5)
+    lyr.CreateField(field_defn)
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetField('string', 'test string of length 24')
     dst_feat.SetField('date', '2003/04/22')
-    dst_feat.SetField('real', '12.34')
-    dst_feat.SetField('float', '1234.5678')
+    dst_feat.SetField('real', 12.34)
+    dst_feat.SetField('float', 1234.5678)
     dst_feat.SetField('integer', '1234')
 
     ret = lyr.CreateFeature( dst_feat )
@@ -406,7 +410,7 @@ def ogr_gml_10():
     if feat.GetField('date') != '2003/04/22':
         gdaltest.post_reason('Unexpected string content.' + feat.GetField('date') )
         return 'fail'
-    if feat.GetField('real') != 12.34:
+    if feat.GetFieldAsDouble('real') != 12.34:
         gdaltest.post_reason('Unexpected real content.')
         return 'fail'
     if feat.GetField('float') != 1234.5678:
