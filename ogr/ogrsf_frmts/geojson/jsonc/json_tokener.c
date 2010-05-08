@@ -15,6 +15,8 @@
 
 #include "config.h"
 
+#include "cpl_conv.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -485,7 +487,8 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
         double numd;
         if(!tok->is_double && sscanf(tok->pb->buf, "%d", &numi) == 1) {
           current = json_object_new_int(numi);
-        } else if(tok->is_double && sscanf(tok->pb->buf, "%lf", &numd) == 1) {
+        } else if(tok->is_double) {
+          numd = CPLAtof(tok->pb->buf);
           current = json_object_new_double(numd);
         } else {
           tok->err = json_tokener_error_parse_number;

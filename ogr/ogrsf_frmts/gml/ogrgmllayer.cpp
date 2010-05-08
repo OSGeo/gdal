@@ -253,7 +253,12 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             const char *pszProperty = poGMLFeature->GetProperty( iField );
             
             if( pszProperty != NULL )
-                poOGRFeature->SetField( iField, pszProperty );
+            {
+                if (GetLayerDefn()->GetFieldDefn(iField)->GetType() == OFTReal)
+                    poOGRFeature->SetField( iField, CPLAtof(pszProperty) );
+                else
+                    poOGRFeature->SetField( iField, pszProperty );
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -368,7 +373,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         
-        OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
+        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( iField );
 
         if( poFeature->IsFieldSet( iField ) )
         {
@@ -378,9 +383,18 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
                 pszRaw++;
 
             char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
+
+            if (poFieldDefn->GetType() == OFTReal)
+            {
+                /* Use point as decimal separator */
+                char* pszComma = strchr(pszEscaped, ',');
+                if (pszComma)
+                    *pszComma = '.';
+            }
+
             VSIFPrintf( fp, "      <ogr:%s>%s</ogr:%s>\n", 
-                        poField->GetNameRef(), pszEscaped, 
-                        poField->GetNameRef() );
+                        poFieldDefn->GetNameRef(), pszEscaped, 
+                        poFieldDefn->GetNameRef() );
             CPLFree( pszEscaped );
         }
     }

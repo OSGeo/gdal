@@ -52,7 +52,7 @@ OGRFeature *OGRDXFLayer::TranslateDIMENSION()
     double dfTargetX2 = 0.0, dfTargetY2 = 0.0, dfTargetZ2 = 0.0;
     double dfTextX = 0.0, dfTextY = 0.0, dfTextZ = 0.0;
     double dfAngle = 0.0;
-    double dfHeight = atof(poDS->GetVariable("$DIMTXT", "2.5"));
+    double dfHeight = CPLAtof(poDS->GetVariable("$DIMTXT", "2.5"));
 
     CPLString osText;
 
@@ -61,51 +61,51 @@ OGRFeature *OGRDXFLayer::TranslateDIMENSION()
         switch( nCode )
         {
           case 10:
-            dfArrowX1 = atof(szLineBuf);
+            dfArrowX1 = CPLAtof(szLineBuf);
             break;
 
           case 20:
-            dfArrowY1 = atof(szLineBuf);
+            dfArrowY1 = CPLAtof(szLineBuf);
             break;
 
           case 30:
-            dfArrowZ1 = atof(szLineBuf);
+            dfArrowZ1 = CPLAtof(szLineBuf);
             break;
 
           case 11:
-            dfTextX = atof(szLineBuf);
+            dfTextX = CPLAtof(szLineBuf);
             break;
 
           case 21:
-            dfTextY = atof(szLineBuf);
+            dfTextY = CPLAtof(szLineBuf);
             break;
 
           case 31:
-            dfTextZ = atof(szLineBuf);
+            dfTextZ = CPLAtof(szLineBuf);
             break;
 
           case 13:
-            dfTargetX2 = atof(szLineBuf);
+            dfTargetX2 = CPLAtof(szLineBuf);
             break;
 
           case 23:
-            dfTargetY2 = atof(szLineBuf);
+            dfTargetY2 = CPLAtof(szLineBuf);
             break;
 
           case 33:
-            dfTargetZ2 = atof(szLineBuf);
+            dfTargetZ2 = CPLAtof(szLineBuf);
             break;
 
           case 14:
-            dfTargetX1 = atof(szLineBuf);
+            dfTargetX1 = CPLAtof(szLineBuf);
             break;
 
           case 24:
-            dfTargetY1 = atof(szLineBuf);
+            dfTargetY1 = CPLAtof(szLineBuf);
             break;
 
           case 34:
-            dfTargetZ1 = atof(szLineBuf);
+            dfTargetZ1 = CPLAtof(szLineBuf);
             break;
 
           case 70:
@@ -322,14 +322,28 @@ the approach is as above in all these cases.
     }
 
     CPLString osStyle;
+    char szBuffer[64];
+    char* pszComma;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\",p:5",osText.c_str());
 
     if( dfAngle != 0.0 )
-        osStyle += CPLString().Printf(",a:%.3g", dfAngle);
+    {
+        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
+        pszComma = strchr(szBuffer, ',');
+        if (pszComma)
+            *pszComma = '.';
+        osStyle += CPLString().Printf(",a:%s", szBuffer);
+    }
 
     if( dfHeight != 0.0 )
-        osStyle += CPLString().Printf(",s:%.3gg", dfHeight);
+    {
+        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
+        pszComma = strchr(szBuffer, ',');
+        if (pszComma)
+            *pszComma = '.';
+        osStyle += CPLString().Printf(",s:%sg", szBuffer);
+    }
 
     // add color!
 
@@ -353,12 +367,17 @@ void OGRDXFLayer::FormatDimension( CPLString &osText, double dfValue )
 
 {
     int nPrecision = atoi(poDS->GetVariable("$LUPREC","4"));
-    CPLString osFormat;
+    char szFormat[32];
+    char szBuffer[64];
 
     // we could do a significantly more precise formatting if we want
     // to spend the effort.  See QCAD's rs_dimlinear.cpp and related files
     // for example.  
 
-    osFormat.Printf( "%%.%df", nPrecision );
-    osText.Printf( osFormat, dfValue );
+    sprintf(szFormat, "%%.%df", nPrecision );
+    snprintf(szBuffer, sizeof(szBuffer), szFormat, dfValue);
+    char* pszComma = strchr(szBuffer, ',');
+    if (pszComma)
+        *pszComma = '.';
+    osText = szBuffer;
 }

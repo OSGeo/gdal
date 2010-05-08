@@ -1187,6 +1187,13 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                     VSIFPrintf(fp, "</link>\n");
                 }
             }
+            else if (poFieldDefn->GetType() == OFTReal)
+            {
+                char szValue[64];
+                OGRFormatDouble(szValue, sizeof(szValue), poFeature->GetFieldAsDouble(i), '.');
+                VSIFPrintf(fp, "  <%s>%s</%s>\n",
+                        pszName, szValue, pszName);
+            }
             else
             {
                 char* pszValue =
@@ -1211,46 +1218,61 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
             {
                 char* compatibleName =
                         OGRGPX_GetXMLCompatibleTagName(pszExtensionsNS, poFieldDefn->GetNameRef());
-                const char *pszRaw = poFeature->GetFieldAsString( i );
-                
-                /* Try to detect XML content */
-                if (pszRaw[0] == '<' && pszRaw[strlen(pszRaw) - 1] == '>')
+
+                if (poFieldDefn->GetType() == OFTReal)
                 {
-                    if (OGRGPX_WriteXMLExtension(fp, compatibleName, pszRaw))
-                        continue;
+                    char szValue[64];
+                    OGRFormatDouble(szValue, sizeof(szValue), poFeature->GetFieldAsDouble(i), '.');
+                    VSIFPrintf(fp, "    <%s:%s>%s</%s:%s>\n",
+                                pszExtensionsNS,
+                                compatibleName,
+                                szValue,
+                                pszExtensionsNS,
+                                compatibleName);
                 }
-                
-                /* Try to detect XML escaped content */
-                else if (strncmp(pszRaw, "&lt;", 4) == 0 &&
-                         strncmp(pszRaw + strlen(pszRaw) - 4, "&gt;", 4) == 0)
+                else
                 {
-                    char* pszUnescapedContent = CPLUnescapeString( pszRaw, NULL, CPLES_XML );
-                    
-                    if (OGRGPX_WriteXMLExtension(fp, compatibleName, pszUnescapedContent))
+                    const char *pszRaw = poFeature->GetFieldAsString( i );
+
+                    /* Try to detect XML content */
+                    if (pszRaw[0] == '<' && pszRaw[strlen(pszRaw) - 1] == '>')
                     {
-                        CPLFree(pszUnescapedContent);
-                        continue;
+                        if (OGRGPX_WriteXMLExtension(fp, compatibleName, pszRaw))
+                            continue;
                     }
-                    
-                    CPLFree(pszUnescapedContent);
-                }
 
-                /* Remove leading spaces for a numeric field */
-                if (poFieldDefn->GetType() == OFTInteger || poFieldDefn->GetType() == OFTReal)
-                {
-                    while( *pszRaw == ' ' )
-                        pszRaw++;
-                }
+                    /* Try to detect XML escaped content */
+                    else if (strncmp(pszRaw, "&lt;", 4) == 0 &&
+                            strncmp(pszRaw + strlen(pszRaw) - 4, "&gt;", 4) == 0)
+                    {
+                        char* pszUnescapedContent = CPLUnescapeString( pszRaw, NULL, CPLES_XML );
 
-                char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
-                VSIFPrintf(fp, "    <%s:%s>%s</%s:%s>\n",
-                        pszExtensionsNS,
-                        compatibleName,
-                        pszEscaped,
-                        pszExtensionsNS,
-                        compatibleName);
+                        if (OGRGPX_WriteXMLExtension(fp, compatibleName, pszUnescapedContent))
+                        {
+                            CPLFree(pszUnescapedContent);
+                            continue;
+                        }
+
+                        CPLFree(pszUnescapedContent);
+                    }
+
+                    /* Remove leading spaces for a numeric field */
+                    if (poFieldDefn->GetType() == OFTInteger || poFieldDefn->GetType() == OFTReal)
+                    {
+                        while( *pszRaw == ' ' )
+                            pszRaw++;
+                    }
+
+                    char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
+                    VSIFPrintf(fp, "    <%s:%s>%s</%s:%s>\n",
+                            pszExtensionsNS,
+                            compatibleName,
+                            pszEscaped,
+                            pszExtensionsNS,
+                            compatibleName);
+                    CPLFree(pszEscaped);
+                }
                 CPLFree(compatibleName);
-                CPLFree(pszEscaped);
             }
         }
         VSIFPrintf(fp, "  </extensions>\n");
@@ -1309,6 +1331,10 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
     if (fp == NULL)
         return CE_Failure;
     
+    char szLat[64];
+    char szLon[64];
+    char szAlt[64];
+    
     OGRGeometry     *poGeom = poFeature->GetGeometryRef();
     
     if (gpxGeomType == GPX_WPT)
@@ -1346,7 +1372,9 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                 double lon = point->getX();
                 CheckAndFixCoordinatesValidity(&lat, &lon);
                 poDS->AddCoord(lon, lat);
-                VSIFPrintf(fp, "<wpt lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
+                OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
+                OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
+                VSIFPrintf(fp, "<wpt lat=\"%s\" lon=\"%s\">\n", szLat, szLon);
                 WriteFeatureAttributes(poFeature);
                 VSIFPrintf(fp, "</wpt>\n");
                 break;
@@ -1431,11 +1459,14 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
             double lon = line->getX(i);
             CheckAndFixCoordinatesValidity(&lat, &lon);
             poDS->AddCoord(lon, lat);
-            VSIFPrintf(fp, "  <rtept lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
+            OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
+            OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
+            VSIFPrintf(fp, "  <rtept lat=\"%s\" lon=\"%s\">\n", szLat, szLon);
             if (poGeom->getGeometryType() == wkbLineString25D ||
                 poGeom->getGeometryType() == wkbMultiLineString25D)
             {
-                VSIFPrintf(fp, "    <ele>%f</ele>\n", line->getZ(i));
+                OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
+                VSIFPrintf(fp, "    <ele>%s</ele>\n", szAlt);
             }
             VSIFPrintf(fp, "  </rtept>\n");
         }
@@ -1470,10 +1501,13 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                     double lon = line->getX(i);
                     CheckAndFixCoordinatesValidity(&lat, &lon);
                     poDS->AddCoord(lon, lat);
-                    VSIFPrintf(fp, "    <trkpt lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
+                    OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
+                    OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
+                    VSIFPrintf(fp, "    <trkpt lat=\"%s\" lon=\"%s\">\n", szLat, szLon);
                     if (line->getGeometryType() == wkbLineString25D)
                     {
-                        VSIFPrintf(fp, "        <ele>%f</ele>\n", line->getZ(i));
+                        OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
+                        VSIFPrintf(fp, "        <ele>%s</ele>\n", szAlt);
                     }
                     VSIFPrintf(fp, "    </trkpt>\n");
                 }
@@ -1501,10 +1535,13 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                         double lon = line->getX(i);
                         CheckAndFixCoordinatesValidity(&lat, &lon);
                         poDS->AddCoord(lon, lat);
-                        VSIFPrintf(fp, "    <trkpt lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
+                        OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
+                        OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
+                        VSIFPrintf(fp, "    <trkpt lat=\"%s\" lon=\"%s\">\n", szLat, szLon);
                         if (line->getGeometryType() == wkbLineString25D)
                         {
-                            VSIFPrintf(fp, "        <ele>%f</ele>\n", line->getZ(i));
+                            OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
+                            VSIFPrintf(fp, "        <ele>%s</ele>\n", szAlt);
                         }
                         VSIFPrintf(fp, "    </trkpt>\n");
                     }

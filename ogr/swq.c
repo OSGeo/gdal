@@ -743,7 +743,7 @@ swq_subexpr_compile( char **tokens, swq_field_list *field_list,
     {
         op->string_value = swq_strdup(tokens[*tokens_consumed]);
         op->int_value = atoi(op->string_value);
-        op->float_value = atof(op->string_value);
+        op->float_value = CPLAtof(op->string_value);
         
         if( op->field_index != -1 
             && (op->field_type == SWQ_INTEGER || op->field_type == SWQ_FLOAT) 
@@ -2312,7 +2312,7 @@ swq_select_summarize( swq_select *select_info,
       case SWQCF_MIN:
         if( value != NULL && value[0] != '\0' )
         {
-            double df_val = atof(value);
+            double df_val = CPLAtof(value);
             if( df_val < summary->min )
                 summary->min = df_val;
         }
@@ -2320,7 +2320,7 @@ swq_select_summarize( swq_select *select_info,
       case SWQCF_MAX:
         if( value != NULL && value[0] != '\0' )
         {
-            double df_val = atof(value);
+            double df_val = CPLAtof(value);
             if( df_val > summary->max )
                 summary->max = df_val;
         }
@@ -2330,7 +2330,7 @@ swq_select_summarize( swq_select *select_info,
         if( value != NULL && value[0] != '\0' )
         {
             summary->count++;
-            summary->sum += atof(value);
+            summary->sum += CPLAtof(value);
         }
         break;
 
@@ -2374,8 +2374,8 @@ static int FORCE_CDECL swq_compare_real( const void *item1, const void *item2 )
 {
     double  v1, v2;
 
-    v1 = atof(*((const char **) item1));
-    v2 = atof(*((const char **) item2));
+    v1 = CPLAtof(*((const char **) item1));
+    v2 = CPLAtof(*((const char **) item2));
 
     if( v1 < v2 )
         return -1;
