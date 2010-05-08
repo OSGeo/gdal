@@ -1154,7 +1154,7 @@ static void OGRGeoRSSLayerWriteSimpleElement(FILE* fp,
                                              OGRFeatureDefn* poFeatureDefn,
                                              OGRFeature* poFeature)
 {
-    VSIFPrintf(fp, "      <%s", pszElementName);
+    VSIFPrintfL(fp, "      <%s", pszElementName);
 
     unsigned k;
     for( k = 0; papszNames[k] != NULL ; k++)
@@ -1169,7 +1169,7 @@ static void OGRGeoRSSLayerWriteSimpleElement(FILE* fp,
             {
                 char* pszValue =
                         OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
-                VSIFPrintf(fp, " %s=\"%s\"", pszAttributeName, pszValue);
+                VSIFPrintfL(fp, " %s=\"%s\"", pszAttributeName, pszValue);
                 CPLFree(pszValue);
             }
             CPLFree(pszFieldName);
@@ -1180,18 +1180,18 @@ static void OGRGeoRSSLayerWriteSimpleElement(FILE* fp,
     int iIndex = poFeatureDefn->GetFieldIndex(pszFieldName);
     if (iIndex != -1 && poFeature->IsFieldSet( iIndex ))
     {
-        VSIFPrintf(fp, ">");
+        VSIFPrintfL(fp, ">");
 
         char* pszValue =
                 OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
-        VSIFPrintf(fp, "%s", pszValue);
+        VSIFPrintfL(fp, "%s", pszValue);
         CPLFree(pszValue);
 
-        VSIFPrintf(fp, "</%s>\n", pszElementName);
+        VSIFPrintfL(fp, "</%s>\n", pszElementName);
     }
     else
     {
-        VSIFPrintf(fp, "/>\n");
+        VSIFPrintfL(fp, "/>\n");
     }
     CPLFree(pszFieldName);
 }
@@ -1215,17 +1215,17 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
         int iFieldTitle = poFeatureDefn->GetFieldIndex( "title" );
         int iFieldDescription = poFeatureDefn->GetFieldIndex( "description" );
 
-        VSIFPrintf(fp, "    <item>\n");
+        VSIFPrintfL(fp, "    <item>\n");
 
         if ((iFieldTitle == -1 || poFeature->IsFieldSet( iFieldTitle ) == FALSE) &&
             (iFieldDescription == -1 || poFeature->IsFieldSet( iFieldDescription ) == FALSE))
         {
-            VSIFPrintf(fp, "      <title>Feature %d</title>\n", nNextFID);
+            VSIFPrintfL(fp, "      <title>Feature %d</title>\n", nNextFID);
         }
     }
     else
     {
-        VSIFPrintf(fp, "    <entry>\n");
+        VSIFPrintfL(fp, "    <entry>\n");
 
         int iFieldId = poFeatureDefn->GetFieldIndex( "id" );
         int iFieldTitle = poFeatureDefn->GetFieldIndex( "title" );
@@ -1233,17 +1233,17 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
 
         if (iFieldId == -1 || poFeature->IsFieldSet( iFieldId ) == FALSE)
         {
-            VSIFPrintf(fp, "      <id>Feature %d</id>\n", nNextFID);
+            VSIFPrintfL(fp, "      <id>Feature %d</id>\n", nNextFID);
         }
 
         if (iFieldTitle == -1 || poFeature->IsFieldSet( iFieldTitle ) == FALSE)
         {
-            VSIFPrintf(fp, "      <title>Title for feature %d</title>\n", nNextFID);
+            VSIFPrintfL(fp, "      <title>Title for feature %d</title>\n", nNextFID);
         }
 
         if (iFieldUpdated == -1 || poFeature->IsFieldSet(iFieldUpdated ) == FALSE)
         {
-            VSIFPrintf(fp, "      <updated>2009-01-01T00:00:00Z</updated>\n");
+            VSIFPrintfL(fp, "      <updated>2009-01-01T00:00:00Z</updated>\n");
         }
     }
 
@@ -1278,7 +1278,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                     if (pbUsed[i])
                         break;
 
-                    VSIFPrintf(fp, "      <%s>\n", pszElementName);
+                    VSIFPrintfL(fp, "      <%s>\n", pszElementName);
 
                     int j;
                     for(j = i; j < nFieldCount; j ++)
@@ -1300,7 +1300,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
 
                             char* pszValue =
                                     OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( j ));
-                            VSIFPrintf(fp, "        <%s>%s</%s>\n", pszAttributeName2, pszValue, pszAttributeName2);
+                            VSIFPrintfL(fp, "        <%s>%s</%s>\n", pszAttributeName2, pszValue, pszAttributeName2);
                             CPLFree(pszValue);
                         }
                         CPLFree(pszElementName2);
@@ -1308,7 +1308,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                         CPLFree(pszAttributeName2);
                     }
 
-                    VSIFPrintf(fp, "      </%s>\n", pszElementName);
+                    VSIFPrintfL(fp, "      </%s>\n", pszElementName);
 
                     break;
                 }
@@ -1327,7 +1327,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                                                     &hour, &minute, &second, &TZFlag))
             {
                 char* pszDate = OGRGetRFC822DateTime(year, month, day, hour, minute, second, TZFlag);
-                VSIFPrintf(fp, "      <%s>%s</%s>\n",
+                VSIFPrintfL(fp, "      <%s>%s</%s>\n",
                         pszName, pszDate, pszName);
                 CPLFree(pszDate);
             }
@@ -1340,7 +1340,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                                                     &hour, &minute, &second, &TZFlag))
             {
                 char* pszDate = OGRGetXMLDateTime(year, month, day, hour, minute, second, TZFlag);
-                VSIFPrintf(fp, "      <%s>%s</%s>\n",
+                VSIFPrintfL(fp, "      <%s>%s</%s>\n",
                         pszName, pszDate, pszName);
                 CPLFree(pszDate);
             }
@@ -1352,7 +1352,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                                                     &hour, &minute, &second, &TZFlag))
             {
                 char* pszDate = OGRGetXMLDateTime(year, month, day, hour, minute, second, TZFlag);
-                VSIFPrintf(fp, "      <%s>%s</%s>\n",
+                VSIFPrintfL(fp, "      <%s>%s</%s>\n",
                         "dc:date", pszDate, "dc:date");
                 CPLFree(pszDate);
             }
@@ -1399,7 +1399,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
             int iIndex;
             if (strchr(pszName, '_') == NULL)
             {
-                VSIFPrintf(fp, "      <%s", pszName);
+                VSIFPrintfL(fp, "      <%s", pszName);
 
                 int bIsXHTML = FALSE;
                 pszFieldName = CPLStrdup(CPLSPrintf("%s_%s", pszName, "type"));
@@ -1409,7 +1409,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                     bIsXHTML = strcmp(poFeature->GetFieldAsString( iIndex ), "xhtml") == 0;
                     char* pszValue =
                             OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
-                    VSIFPrintf(fp, " %s=\"%s\"", "type", pszValue);
+                    VSIFPrintfL(fp, " %s=\"%s\"", "type", pszValue);
                     CPLFree(pszValue);
                 }
                 CPLFree(pszFieldName);
@@ -1420,7 +1420,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 {
                     char* pszValue =
                             OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
-                    VSIFPrintf(fp, " %s=\"%s\"", "xml:lang", pszValue);
+                    VSIFPrintfL(fp, " %s=\"%s\"", "xml:lang", pszValue);
                     CPLFree(pszValue);
                 }
                 CPLFree(pszFieldName);
@@ -1431,22 +1431,22 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 {
                     char* pszValue =
                             OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
-                    VSIFPrintf(fp, " %s=\"%s\"", "xml:base", pszValue);
+                    VSIFPrintfL(fp, " %s=\"%s\"", "xml:base", pszValue);
                     CPLFree(pszValue);
                 }
                 CPLFree(pszFieldName);
 
-                VSIFPrintf(fp, ">");
+                VSIFPrintfL(fp, ">");
                 if (bIsXHTML)
-                    VSIFPrintf(fp, "%s", poFeature->GetFieldAsString(i));
+                    VSIFPrintfL(fp, "%s", poFeature->GetFieldAsString(i));
                 else
                 {
                     char* pszValue =
                             OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( i ));
-                    VSIFPrintf(fp, "%s", pszValue);
+                    VSIFPrintfL(fp, "%s", pszValue);
                     CPLFree(pszValue);
                 }
-                VSIFPrintf(fp, "      </%s>\n", pszName);
+                VSIFPrintfL(fp, "      </%s>\n", pszName);
             }
         }
         else if (strncmp(pszName, "dc_subject", strlen("dc_subject")) == 0)
@@ -1455,7 +1455,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
             int iIndex;
             if (strchr(pszName+strlen("dc_subject"), '_') == NULL)
             {
-                VSIFPrintf(fp, "      <%s", "dc:subject");
+                VSIFPrintfL(fp, "      <%s", "dc:subject");
 
                 pszFieldName = CPLStrdup(CPLSPrintf("%s_%s", pszName, "xml_lang"));
                 iIndex = poFeatureDefn->GetFieldIndex(pszFieldName);
@@ -1463,14 +1463,14 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 {
                     char* pszValue =
                             OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
-                    VSIFPrintf(fp, " %s=\"%s\"", "xml:lang", pszValue);
+                    VSIFPrintfL(fp, " %s=\"%s\"", "xml:lang", pszValue);
                     CPLFree(pszValue);
                 }
                 CPLFree(pszFieldName);
 
                 char* pszValue =
                         OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( i ));
-                VSIFPrintf(fp, ">%s</%s>\n", pszValue, "dc:subject");
+                VSIFPrintfL(fp, ">%s</%s>\n", pszValue, "dc:subject");
                 CPLFree(pszValue);
             }
         }
@@ -1501,7 +1501,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
             }
             char* pszValue =
                         OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( i ));
-            VSIFPrintf(fp, "      <%s>%s</%s>\n", pszTagName, pszValue, pszTagName);
+            VSIFPrintfL(fp, "      <%s>%s</%s>\n", pszTagName, pszValue, pszTagName);
             CPLFree(pszValue);
             CPLFree(pszTagName);
         }
@@ -1565,30 +1565,30 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 double y = poPoint->getY();
                 if (eGeomDialect == GEORSS_GML)
                 {
-                    VSIFPrintf(fp, "      <georss:where><gml:Point");
+                    VSIFPrintfL(fp, "      <georss:where><gml:Point");
                     if (pszURN != NULL)
-                        VSIFPrintf(fp, " srsName=\"%s\"", pszURN);
+                        VSIFPrintfL(fp, " srsName=\"%s\"", pszURN);
                     if (poGeom->getCoordinateDimension() == 3)
                     {
-                        VSIFPrintf(fp, " srsDimension=\"3\"><gml:pos>%.15f %.15f %.15f",
+                        VSIFPrintfL(fp, " srsDimension=\"3\"><gml:pos>%.15f %.15f %.15f",
                                    (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y,
                                     poPoint->getZ());
                     }
                     else
                     {
-                        VSIFPrintf(fp, "><gml:pos>%.15f %.15f",
+                        VSIFPrintfL(fp, "><gml:pos>%.15f %.15f",
                                    (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y);
                     }
-                    VSIFPrintf(fp, "</gml:pos></gml:Point></georss:where>\n");
+                    VSIFPrintfL(fp, "</gml:pos></gml:Point></georss:where>\n");
                 }
                 else if (eGeomDialect == GEORSS_SIMPLE)
                 {
-                    VSIFPrintf(fp, "      <georss:point>%.15f %.15f</georss:point>\n", y, x);
+                    VSIFPrintfL(fp, "      <georss:point>%.15f %.15f</georss:point>\n", y, x);
                 }
                 else if (eGeomDialect == GEORSS_W3C_GEO)
                 {
-                    VSIFPrintf(fp, "      <geo:lat>%.15f</geo:lat>\n", y);
-                    VSIFPrintf(fp, "      <geo:long>%.15f</geo:long>\n", x);
+                    VSIFPrintfL(fp, "      <geo:lat>%.15f</geo:lat>\n", y);
+                    VSIFPrintfL(fp, "      <geo:long>%.15f</geo:long>\n", x);
                 }
                 break;
             }
@@ -1598,31 +1598,31 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 OGRLineString* poLineString = (OGRLineString*)poGeom;
                 if (eGeomDialect == GEORSS_GML)
                 {
-                    VSIFPrintf(fp, "      <georss:where><gml:LineString");
+                    VSIFPrintfL(fp, "      <georss:where><gml:LineString");
                     if (pszURN != NULL)
-                        VSIFPrintf(fp, " srsName=\"%s\"", pszURN);
-                    VSIFPrintf(fp, "><gml:posList>\n");
+                        VSIFPrintfL(fp, " srsName=\"%s\"", pszURN);
+                    VSIFPrintfL(fp, "><gml:posList>\n");
                     int n = poLineString->getNumPoints();
                     for(int i=0;i<n;i++)
                     {
                         double x = poLineString->getX(i);
                         double y = poLineString->getY(i);
-                        VSIFPrintf(fp, "%.15f %.15f ",
+                        VSIFPrintfL(fp, "%.15f %.15f ",
                                    (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y);
                     }
-                    VSIFPrintf(fp, "</gml:posList></gml:LineString></georss:where>\n");
+                    VSIFPrintfL(fp, "</gml:posList></gml:LineString></georss:where>\n");
                 }
                 else if (eGeomDialect == GEORSS_SIMPLE)
                 {
-                    VSIFPrintf(fp, "      <georss:line>\n");
+                    VSIFPrintfL(fp, "      <georss:line>\n");
                     int n = poLineString->getNumPoints();
                     for(int i=0;i<n;i++)
                     {
                         double x = poLineString->getX(i);
                         double y = poLineString->getY(i);
-                        VSIFPrintf(fp, "%.15f %.15f ", y, x);
+                        VSIFPrintfL(fp, "%.15f %.15f ", y, x);
                     }
-                    VSIFPrintf(fp, "</georss:line>\n");
+                    VSIFPrintfL(fp, "</georss:line>\n");
                 }
                 else
                 {
@@ -1640,31 +1640,31 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
 
                 if (eGeomDialect == GEORSS_GML)
                 {
-                    VSIFPrintf(fp, "      <georss:where><gml:Polygon");
+                    VSIFPrintfL(fp, "      <georss:where><gml:Polygon");
                     if (pszURN != NULL)
-                        VSIFPrintf(fp, " srsName=\"%s\"", pszURN);
-                    VSIFPrintf(fp, "><gml:exterior><gml:LinearRing><gml:posList>\n");
+                        VSIFPrintfL(fp, " srsName=\"%s\"", pszURN);
+                    VSIFPrintfL(fp, "><gml:exterior><gml:LinearRing><gml:posList>\n");
                     int n = poLineString->getNumPoints();
                     for(int i=0;i<n;i++)
                     {
                         double x = poLineString->getX(i);
                         double y = poLineString->getY(i);
-                        VSIFPrintf(fp, "%.15f %.15f ",
+                        VSIFPrintfL(fp, "%.15f %.15f ",
                                    (bSwapCoordinates) ? y : x, (bSwapCoordinates) ? x : y);
                     }
-                    VSIFPrintf(fp, "</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></georss:where>\n");
+                    VSIFPrintfL(fp, "</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></georss:where>\n");
                 }
                 else if (eGeomDialect == GEORSS_SIMPLE)
                 {
-                    VSIFPrintf(fp, "      <georss:polygon>\n");
+                    VSIFPrintfL(fp, "      <georss:polygon>\n");
                     int n = poLineString->getNumPoints();
                     for(int i=0;i<n;i++)
                     {
                         double x = poLineString->getX(i);
                         double y = poLineString->getY(i);
-                        VSIFPrintf(fp, "%.15f %.15f ", y, x);
+                        VSIFPrintfL(fp, "%.15f %.15f ", y, x);
                     }
-                    VSIFPrintf(fp, "</georss:polygon>\n");
+                    VSIFPrintfL(fp, "</georss:polygon>\n");
                 }
                 else
                 {
@@ -1681,9 +1681,9 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     if (eFormat == GEORSS_RSS)
-        VSIFPrintf(fp, "    </item>\n");
+        VSIFPrintfL(fp, "    </item>\n");
     else
-        VSIFPrintf(fp, "    </entry>\n");
+        VSIFPrintfL(fp, "    </entry>\n");
 
     return OGRERR_NONE;
 }
