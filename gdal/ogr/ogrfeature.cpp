@@ -992,7 +992,7 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value.  This string is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief. 
+ * modified, or freed.  Its lifetime may be very brief. 
  */
 
 const char *OGRFeature::GetFieldAsString( int iField )
@@ -1278,7 +1278,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value.  This string is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief. 
+ * modified, or freed.  Its lifetime may be very brief. 
  */
 
 const char *OGR_F_GetFieldAsString( OGRFeatureH hFeat, int iField )
@@ -1304,7 +1304,7 @@ const char *OGR_F_GetFieldAsString( OGRFeatureH hFeat, int iField )
  * @param pnCount an integer to put the list count (number of integers) into.
  *
  * @return the field value.  This list is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief.  If *pnCount is zero
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
  * on return the returned pointer may be NULL or non-NULL.
  */
 
@@ -1353,7 +1353,7 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
  * @param pnCount an integer to put the list count (number of integers) into.
  *
  * @return the field value.  This list is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief.  If *pnCount is zero
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
  * on return the returned pointer may be NULL or non-NULL.
  */
 
@@ -1381,7 +1381,7 @@ const int *OGR_F_GetFieldAsIntegerList( OGRFeatureH hFeat, int iField,
  * @param pnCount an integer to put the list count (number of doubles) into.
  *
  * @return the field value.  This list is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief.  If *pnCount is zero
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
  * on return the returned pointer may be NULL or non-NULL.
  */
 
@@ -1430,7 +1430,7 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
  * @param pnCount an integer to put the list count (number of doubles) into.
  *
  * @return the field value.  This list is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief.  If *pnCount is zero
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
  * on return the returned pointer may be NULL or non-NULL.
  */
 
@@ -1460,7 +1460,7 @@ const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField,
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value.  This list is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief.
+ * modified, or freed.  Its lifetime may be very brief.
  */
 
 char **OGRFeature::GetFieldAsStringList( int iField ) const
@@ -1504,7 +1504,7 @@ char **OGRFeature::GetFieldAsStringList( int iField ) const
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value.  This list is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief.
+ * modified, or freed.  Its lifetime may be very brief.
  */
 
 char **OGR_F_GetFieldAsStringList( OGRFeatureH hFeat, int iField )
@@ -1530,7 +1530,7 @@ char **OGR_F_GetFieldAsStringList( OGRFeatureH hFeat, int iField )
  * @param pnBytes location to put the number of bytes returned.
  *
  * @return the field value.  This data is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief.
+ * modified, or freed.  Its lifetime may be very brief.
  */
 
 GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
@@ -1575,7 +1575,7 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
  * @param pnBytes location to place count of bytes returned.
  *
  * @return the field value.  This list is internal, and should not be
- * modified, or freed.  It's lifetime may be very brief.
+ * modified, or freed.  Its lifetime may be very brief.
  */
 
 GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
