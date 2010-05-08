@@ -13459,6 +13459,66 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GeometryTypeToName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRwkbGeometryType arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:GeometryTypeToName",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "GeometryTypeToName" "', argument " "1"" of type '" "OGRwkbGeometryType""'");
+  } 
+  arg1 = static_cast< OGRwkbGeometryType >(val1);
+  {
+    result = (char *)OGRGeometryTypeToName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetFieldTypeName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRFieldType arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:GetFieldTypeName",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "GetFieldTypeName" "', argument " "1"" of type '" "OGRFieldType""'");
+  } 
+  arg1 = static_cast< OGRFieldType >(val1);
+  {
+    result = (char *)OGR_GetFieldTypeName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_GetOpenDS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int arg1 ;
@@ -16815,6 +16875,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetOpenDSCount", _wrap_GetOpenDSCount, METH_VARARGS, (char *)"GetOpenDSCount() -> int"},
 	 { (char *)"SetGenerate_DB2_V72_BYTE_ORDER", _wrap_SetGenerate_DB2_V72_BYTE_ORDER, METH_VARARGS, (char *)"SetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER) -> OGRErr"},
 	 { (char *)"RegisterAll", _wrap_RegisterAll, METH_VARARGS, (char *)"RegisterAll()"},
+	 { (char *)"GeometryTypeToName", _wrap_GeometryTypeToName, METH_VARARGS, (char *)"GeometryTypeToName(OGRwkbGeometryType eType) -> char"},
+	 { (char *)"GetFieldTypeName", _wrap_GetFieldTypeName, METH_VARARGS, (char *)"GetFieldTypeName(OGRFieldType type) -> char"},
 	 { (char *)"GetOpenDS", _wrap_GetOpenDS, METH_VARARGS, (char *)"GetOpenDS(int ds_number) -> DataSource"},
 	 { (char *)"Open", (PyCFunction) _wrap_Open, METH_VARARGS | METH_KEYWORDS, (char *)"Open(char filename, int update = 0) -> DataSource"},
 	 { (char *)"OpenShared", (PyCFunction) _wrap_OpenShared, METH_VARARGS | METH_KEYWORDS, (char *)"OpenShared(char filename, int update = 0) -> DataSource"},
