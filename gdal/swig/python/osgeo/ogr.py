@@ -4066,6 +4066,14 @@ def RegisterAll(*args):
   """RegisterAll()"""
   return _ogr.RegisterAll(*args)
 
+def GeometryTypeToName(*args):
+  """GeometryTypeToName(OGRwkbGeometryType eType) -> char"""
+  return _ogr.GeometryTypeToName(*args)
+
+def GetFieldTypeName(*args):
+  """GetFieldTypeName(OGRFieldType type) -> char"""
+  return _ogr.GetFieldTypeName(*args)
+
 def GetOpenDS(*args):
   """GetOpenDS(int ds_number) -> DataSource"""
   return _ogr.GetOpenDS(*args)
