@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_bna.h 10646 2007-01-18 02:38:10Z warmerdam $
+ * $Id$
  *
  * Project:  BNA Translator
  * Purpose:  Definition of classes for OGR .bna driver.
@@ -111,7 +111,7 @@ class OGRBNADataSource : public OGRDataSource
     int                 bUpdate;
     
     /*  Export related */
-    FILE                *fpOutput;
+    FILE                *fpOutput; /* Virtual file API */
     int                 bUseCRLF;
     int                 bMultiLine;
     int                 nbOutID;

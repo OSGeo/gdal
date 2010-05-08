@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrbnadataparser.c
+ * $Id$
  *
  * Project:  BNA Parser
  * Purpose:  Parse a BNA record
@@ -149,7 +149,7 @@ enum
 static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], FILE* f)
 {
     char* ptrCurLine = szLineBuffer;
-    int nRead = VSIFRead(szLineBuffer, 1, LINE_BUFFER_SIZE, f);
+    int nRead = VSIFReadL(szLineBuffer, 1, LINE_BUFFER_SIZE, f);
     szLineBuffer[nRead] = 0;
     if (nRead == 0)
     {
@@ -180,7 +180,7 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], FILE* f)
         if (ptrCurLine == szLineBuffer + LINE_BUFFER_SIZE - 1)
         {
             char c;
-            nRead = VSIFRead(&c, 1, 1, f);
+            nRead = VSIFReadL(&c, 1, 1, f);
             if (nRead == 1)
             {
                 if (c == 0x0a)
@@ -189,22 +189,22 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], FILE* f)
                 }
                 else
                 {
-                    VSIFSeek(f, -1, SEEK_CUR);
+                    VSIFSeekL(f, VSIFTellL(f) - 1, SEEK_SET);
                 }
             }
         }
         else if (ptrCurLine[1] == 0x0a)
         {
-            VSIFSeek(f, ptrCurLine + 2 - (szLineBuffer + nRead), SEEK_CUR);
+            VSIFSeekL(f, VSIFTellL(f) + ptrCurLine + 2 - (szLineBuffer + nRead), SEEK_SET);
         }
         else
         {
-            VSIFSeek(f, ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_CUR);
+            VSIFSeekL(f, VSIFTellL(f) + ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_SET);
         }
     }
     else /* *ptrCurLine == 0x0a */
     {
-        VSIFSeek(f, ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_CUR);
+        VSIFSeekL(f, VSIFTellL(f) + ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_SET);
     }
     *ptrCurLine = 0;
 

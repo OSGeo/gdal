@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrbnaparser.h
+ * $Id$
  *
  * Project:  BNA Parser header
  * Purpose:  Definition of structures, enums and functions of BNA parser
@@ -65,7 +65,7 @@ typedef struct
 } BNARecord;
 
 /** Get the next BNA record in the file
-   @param f open BNA files
+   @param f open BNA files (VSI Large API handle)
    @param ok (out) set to TRUE if reading was OK (or EOF detected)
    @param curLine (in/out) incremenet number line
    @param verbose if TRUE, errors will be reported
