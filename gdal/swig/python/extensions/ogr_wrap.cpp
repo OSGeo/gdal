@@ -8627,7 +8627,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField(PyObject *self, PyObject *args) {
       if (_v) {
         {
           /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
-          _v = 1;
+#if PY_VERSION_HEX>=0x03000000
+          _v = (PyUnicode_Check(argv[2]) || PyBytes_Check(argv[2])) ? 1 : 0;
+#else
+          _v = (PyString_Check(argv[2])) ? 1 : 0;
+#endif
         }
         if (_v) {
           return _wrap_Feature_SetField__SWIG_0(self, args);
@@ -8688,7 +8692,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField(PyObject *self, PyObject *args) {
       if (_v) {
         {
           /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
-          _v = 1;
+#if PY_VERSION_HEX>=0x03000000
+          _v = (PyUnicode_Check(argv[2]) || PyBytes_Check(argv[2])) ? 1 : 0;
+#else
+          _v = (PyString_Check(argv[2])) ? 1 : 0;
+#endif
         }
         if (_v) {
           return _wrap_Feature_SetField__SWIG_1(self, args);
