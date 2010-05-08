@@ -768,7 +768,11 @@ OPTIONAL_POD(int,i);
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
-  $1 = 1;
+%#if PY_VERSION_HEX>=0x03000000
+  $1 = (PyUnicode_Check($input) || PyBytes_Check($input)) ? 1 : 0;
+%#else
+  $1 = (PyString_Check($input)) ? 1 : 0;
+%#endif
 }
 
 /*
