@@ -105,7 +105,6 @@ def ogr_bna_3():
     tr = ogrtest.check_features_against_list( lyr, 'Primary ID', expect )
     if not tr:
         return 'fail'
-
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     feat.Destroy()
@@ -113,6 +112,7 @@ def ogr_bna_3():
     feat.Destroy()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error = 0.0001 ) != 0:
+        print feat.GetGeometryRef()
         return 'fail'
     feat.Destroy()
     feat = lyr.GetFeature(2)
@@ -230,8 +230,8 @@ def ogr_bna_6():
         return ret
         
     size = os.stat('tmp/out.bna').st_size
-    if size != 1576:
-        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1576))
+    if size != 1479:
+        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1479))
         return 'fail'
 
     os.remove( 'tmp/out.bna' )
@@ -241,8 +241,8 @@ def ogr_bna_6():
         return ret
         
     size = os.stat('tmp/out.bna').st_size
-    if size != 1584:
-        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1584))
+    if size != 1487:
+        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1487))
         return 'fail'
     
     return 'success'
