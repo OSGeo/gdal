@@ -140,13 +140,31 @@ def test_gdalinfo_6():
 
     return 'success'
 
+###############################################################################
+# Test a dataset with GCPs
+
+def test_gdalinfo_7():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/gcps.vrt')
+    if ret.find('GCP Projection =') == -1:
+        return 'fail'
+    if ret.find('PROJCS["NAD27 / UTM zone 11N"') == -1:
+        return 'fail'
+    if ret.find('(100,100) -> (446720,3745320,0)') == -1:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdalinfo_1,
     test_gdalinfo_2,
     test_gdalinfo_3,
     test_gdalinfo_4,
     test_gdalinfo_5,
-    test_gdalinfo_6
+    test_gdalinfo_6,
+    test_gdalinfo_7
     ]
 
 
