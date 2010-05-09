@@ -6555,6 +6555,7 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg7 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOOO:Driver_CreateCopy",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -6631,10 +6632,7 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   if (obj6) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj6 ;
-      arg7 = psProgressInfo;
-      
     }
   }
   {
@@ -9691,6 +9689,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg6 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOOO:Dataset_BuildOverviews",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -9755,10 +9754,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   if (obj4) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj4 ;
-      arg6 = psProgressInfo;
-      
     }
   }
   {
@@ -12008,6 +12004,7 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg8 = psProgressInfo;
   arg3 = &temp3;
   arg4 = &temp4;
   arg5 = &temp5;
@@ -12053,10 +12050,7 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
   if (obj3) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj3 ;
-      arg8 = psProgressInfo;
-      
     }
   }
   {
@@ -13084,6 +13078,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg9 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOOOOOO:Band_GetHistogram",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -13160,10 +13155,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   if (obj7) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj7 ;
-      arg9 = psProgressInfo;
-      
     }
   }
   {
@@ -13270,6 +13262,7 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg8 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOOOOOO:Band_GetDefaultHistogram",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -13341,10 +13334,7 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
   if (obj7) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj7 ;
-      arg8 = psProgressInfo;
-      
     }
   }
   {
@@ -15080,6 +15070,7 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg7 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOO|OO:ComputeMedianCutPCT",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -15136,10 +15127,7 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
   if (obj6) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj6 ;
-      arg7 = psProgressInfo;
-      
     }
   }
   {
@@ -15227,6 +15215,7 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg7 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOO|OO:DitherRGB2PCT",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -15283,10 +15272,7 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
   if (obj6) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj6 ;
-      arg7 = psProgressInfo;
-      
     }
   }
   {
@@ -15386,6 +15372,7 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg9 = psProgressInfo;
   if (!PyArg_ParseTuple(args,(char *)"OO|OOOOOOO:ReprojectImage",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -15462,10 +15449,7 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
   if (obj8) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj8 ;
-      arg9 = psProgressInfo;
-      
     }
   }
   {
@@ -15537,6 +15521,7 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg5 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|OOO:ComputeProximity",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -15601,10 +15586,7 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
   if (obj4) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj4 ;
-      arg5 = psProgressInfo;
-      
     }
   }
   {
@@ -15692,6 +15674,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg11 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOOOOO:RasterizeLayer",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -15808,10 +15791,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
   if (obj8) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj8 ;
-      arg11 = psProgressInfo;
-      
     }
   }
   {
@@ -15919,6 +15899,7 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg7 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO|OOO:Polygonize",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -15993,10 +15974,7 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
   if (obj6) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj6 ;
-      arg7 = psProgressInfo;
-      
     }
   }
   {
@@ -16080,6 +16058,7 @@ SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg7 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO|OOO:FillNodata",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -16154,10 +16133,7 @@ SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *
   if (obj6) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj6 ;
-      arg7 = psProgressInfo;
-      
     }
   }
   {
@@ -16240,6 +16216,7 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg8 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO|OOOO:SieveFilter",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -16321,10 +16298,7 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
   if (obj7) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj7 ;
-      arg8 = psProgressInfo;
-      
     }
   }
   {
@@ -16402,6 +16376,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg6 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|OOO:RegenerateOverviews",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -16472,10 +16447,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
   if (obj4) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj4 ;
-      arg6 = psProgressInfo;
-      
     }
   }
   {
@@ -16551,6 +16523,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverview(PyObject *SWIGUNUSEDPARM(self), Py
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
+  arg5 = psProgressInfo;
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|OOO:RegenerateOverview",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -16599,10 +16572,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverview(PyObject *SWIGUNUSEDPARM(self), Py
   if (obj4) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      
       psProgressInfo->psPyCallbackData = obj4 ;
-      arg5 = psProgressInfo;
-      
     }
   }
   {
