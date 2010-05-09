@@ -39,6 +39,9 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 
+
+###############################################################################
+
 class ScaledProgressObject:
     def __init__(self, min, max, cbk, cbk_data = None):
         self.min = min
@@ -46,26 +49,66 @@ class ScaledProgressObject:
         self.cbk = cbk
         self.cbk_data = cbk_data
 
+###############################################################################
+
 def ScaledProgressFunc(pct, msg, data):
     if data.cbk is None:
         return True
     return data.cbk(data.min + pct * (data.max - data.min), msg, data.cbk_data)
 
+###############################################################################
+
+def EQUAL(a, b):
+    return a.lower() == b.lower()
+
+###############################################################################
+# Redefinition of GDALTermProgress, so that autotest/pyscripts/test_ogr2ogr_py.py
+# can check that the progress bar is displayed
+
+nLastTick = -1
+
+def TermProgress( dfComplete, pszMessage, pProgressArg ):
+
+    global nLastTick;
+    nThisTick = (int) (dfComplete * 40.0);
+
+    if nThisTick < 0:
+        nThisTick = 0
+    if nThisTick > 40:
+        nThisTick = 40
+
+    # Have we started a new progress run?  
+    if nThisTick < nLastTick and nLastTick >= 39:
+        nLastTick = -1;
+
+    if nThisTick <= nLastTick:
+        return True
+
+    while nThisTick > nLastTick:
+        nLastTick = nLastTick + 1
+        if (nLastTick % 4) == 0:
+            sys.stdout.write('%d' % ((nLastTick / 4) * 10))
+        else:
+            sys.stdout.write('.')
+
+    if nThisTick == 40:
+        print(" - done." )
+    else:
+        sys.stdout.flush()
+
+    return True
+
+
+#/************************************************************************/
+#/*                                main()                                */
+#/************************************************************************/
 
 bSkipFailures = False
 nGroupTransactions = 200
 bPreserveFID = False
 nFIDToFetch = ogr.NullFID
 
-
-def EQUAL(a, b):
-    return a.lower() == b.lower()
-
-#/************************************************************************/
-#/*                                main()                                */
-#/************************************************************************/
-
-def main(args = None, progress_func = gdal.TermProgress_nocb, progress_data = None):
+def main(args = None, progress_func = TermProgress, progress_data = None):
     
     global bSkipFailures
     global nGroupTransactions
@@ -734,7 +777,7 @@ def LoadGeometry( pszDS, pszSQL, pszLyr, pszWhere):
     while poFeat is not None:
         poSrcGeom = poFeat.GetGeometryRef()
         if poSrcGeom is not None:
-            eType = poSrcGeom.GetGeometryType() & (~ogrConstants.wkb25DBit)
+            eType = poSrcGeom.GetGeometryType() & (~ogr.wkb25DBit)
 
             if poGeom is None:
                 poGeom = ogr.Geometry( ogr.wkbMultiPolygon )
@@ -894,7 +937,7 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                 if papszFieldTypesToString is not None and \
                     (CSLFindString(papszFieldTypesToString, "All") != -1 or \
                     CSLFindString(papszFieldTypesToString, \
-                                ogr.GetFieldTypeName(poFDefn.GetFieldDefn(iSrcField).GetFieldType())) != -1):
+                                ogr.GetFieldTypeName(poFDefn.GetFieldDefn(iSrcField).GetType())) != -1):
 
                     oFieldDefn = ogr.FieldDefn( poFDefn.GetFieldDefn(iSrcField).GetName() )
                     oFieldDefn.SetType(ogr.OFTString)
