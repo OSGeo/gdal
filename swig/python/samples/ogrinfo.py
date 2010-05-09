@@ -35,8 +35,13 @@
 # It could be made much more Python'ish !
 
 import sys
-from osgeo import gdal
-from osgeo import ogr
+
+try:
+    from osgeo import gdal
+    from osgeo import ogr
+except:
+    import gdal
+    import ogr
 
 bReadOnly = False
 bVerbose = True

@@ -32,8 +32,12 @@
 # ****************************************************************************/
 
 import sys
-from osgeo import gdal
-from osgeo import osr
+try:
+    from osgeo import gdal
+    from osgeo import osr
+except:
+    import gdal
+    import osr
 
 #/************************************************************************/
 #/*                               Usage()                                */
