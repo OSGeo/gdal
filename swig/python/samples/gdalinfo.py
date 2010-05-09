@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #/******************************************************************************
 # * $Id$
 # *
@@ -41,8 +42,7 @@ from osgeo import osr
 def Usage():
     print( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n" + \
             "                [-norat] [-noct] [-checksum] [-mdd domain]* datasetname" )
-    sys.exit( 1 )
-    return
+    return 1
 
 
 def EQUAL(a, b):
@@ -90,7 +90,7 @@ def main( argv = None ):
     argv = gdal.GeneralCmdLineProcessor( argv )
 
     if argv is None:
-        sys.exit( -1 )
+        return 1
 
     nArgc = len(argv)
 #/* -------------------------------------------------------------------- */
@@ -102,7 +102,7 @@ def main( argv = None ):
         if EQUAL(argv[i], "--utility_version"):
             print("%s is running against GDAL %s" %
                    (argv[0], gdal.VersionInfo("RELEASE_NAME")))
-            sys.exit(0)
+            return 0
         elif EQUAL(argv[i], "-mm"):
             bComputeMinMax = True
         elif EQUAL(argv[i], "-hist"):
@@ -149,7 +149,7 @@ def main( argv = None ):
 
         print("gdalinfo failed - unable to open '%s'." % pszFilename )
 
-        sys.exit( 1 )
+        return 1
     
 #/* -------------------------------------------------------------------- */
 #/*      Report general info.                                            */
@@ -525,11 +525,11 @@ def main( argv = None ):
             print( "  Color Table (%s with %d entries)" % (\
                     gdal.GetPaletteInterpretationName( \
                         hTable.GetPaletteInterpretation(  )), \
-                    hTable.GetColorEntryCount() ))
+                    hTable.GetCount() ))
 
             if bShowColorTable:
 
-                for i in range(hTable.GetColorEntryCount()):
+                for i in range(hTable.GetCount()):
                     sEntry = hTable.GetColorEntry(i)
                     print( "  %3d: %d,%d,%d,%d" % ( \
                             i, \
@@ -543,7 +543,7 @@ def main( argv = None ):
 
             #GDALRATDumpReadable( hRAT, None );
 
-    return
+    return 0
 
 #/************************************************************************/
 #/*                        GDALInfoReportCorner()                        */
@@ -591,10 +591,10 @@ def GDALInfoReportCorner( hDataset, hTransform, corner_name, x, y ):
 
     return True
 
+if __name__ == '__main__':
+    version_num = int(gdal.VersionInfo('VERSION_NUM'))
+    if version_num < 1800: # because of GetGeoTransform(can_return_null)
+        print('ERROR: Python bindings of GDAL 1.8.0 or later required')
+        sys.exit(1)
 
-version_num = int(gdal.VersionInfo('VERSION_NUM'))
-if version_num < 1800: # because of GetGeoTransform(can_return_null)
-    print('ERROR: Python bindings of GDAL 1.8.0 or later required')
-    sys.exit(1)
-
-main(sys.argv)
+    sys.exit(main(sys.argv))
