@@ -589,9 +589,9 @@ class Dataset(MajorObject):
         """SetProjection(self, char prj) -> CPLErr"""
         return _gdal.Dataset_SetProjection(self, *args)
 
-    def GetGeoTransform(self, *args):
-        """GetGeoTransform(self)"""
-        return _gdal.Dataset_GetGeoTransform(self, *args)
+    def GetGeoTransform(self, *args, **kwargs):
+        """GetGeoTransform(self, int can_return_null = None)"""
+        return _gdal.Dataset_GetGeoTransform(self, *args, **kwargs)
 
     def SetGeoTransform(self, *args):
         """SetGeoTransform(self, double argin) -> CPLErr"""

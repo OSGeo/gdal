@@ -50,6 +50,28 @@
   }
 }
 
+
+%typemap(in,numinputs=0) (double argout[6], int* isvalid) ( double argout[6], int isvalid )
+{
+  /* %typemap(in,numinputs=0) (double argout[6], int* isvalid) */
+  $1 = argout;
+  $2 = &isvalid;
+}
+
+%typemap(argout) (double argout[6], int* isvalid) 
+{
+   /* %typemap(argout) (double argout[6], int* isvalid)  */
+  PyObject *r;
+  if ( !*$2 ) {
+    Py_INCREF(Py_None);
+    r = Py_None;
+  }
+  else {
+    r = CreateTupleFromDoubleArray($1, 6);
+  }
+  $result = t_output_helper($result,r);
+}
+
 /*
  *
  * Define a simple return code typemap which checks if the return code from
