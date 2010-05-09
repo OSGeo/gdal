@@ -126,9 +126,9 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
         {
             case wkbUnknown:
             case wkbNone:
-                break;
             case wkbPoint:
             case wkbPoint25D:
+                fprintf( fp, "\n");
                 break;
             case wkbLineString:
             case wkbLineString25D:
@@ -143,18 +143,23 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
                 poPoly = (OGRPolygon*)this;
                 poRing = poPoly->getExteriorRing();
                 nRings = poPoly->getNumInteriorRings();
-                fprintf( fp, "%d points", poRing->getNumPoints() );
-                if (nRings)
+                if (poRing == NULL)
+                    fprintf( fp, "empty");
+                else
                 {
-                    fprintf( fp, ", %d inner rings (", nRings);
-                    for( ir = 0; ir < nRings; ir++)
+                    fprintf( fp, "%d points", poRing->getNumPoints() );
+                    if (nRings)
                     {
-                        if (ir)
-                            fprintf( fp, ", ");
-                        fprintf( fp, "%d points",
-                                 poPoly->getInteriorRing(ir)->getNumPoints() );
+                        fprintf( fp, ", %d inner rings (", nRings);
+                        for( ir = 0; ir < nRings; ir++)
+                        {
+                            if (ir)
+                                fprintf( fp, ", ");
+                            fprintf( fp, "%d points",
+                                    poPoly->getInteriorRing(ir)->getNumPoints() );
+                        }
+                        fprintf( fp, ")");
                     }
-                    fprintf( fp, ")");
                 }
                 fprintf( fp, "\n");
                 break;
