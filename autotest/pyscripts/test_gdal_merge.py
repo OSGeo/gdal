@@ -66,6 +66,8 @@ def test_gdal_merge_2():
     if script_path is None:
         return 'skip'
 
+    import osr
+
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS( 'WGS84' )

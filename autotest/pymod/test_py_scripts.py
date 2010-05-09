@@ -36,21 +36,25 @@ import os
 # Return the path in which the Python script is found
 #
 def get_py_script(script_name):
-    try:
-        # Test subversion layout : {root_dir}/gdal, {root_dir}/autotest
-        test_path = os.path.join(os.getcwd(), '..', '..', 'gdal', 'swig', 'python', 'scripts')
-        test_file_path = os.path.join(test_path, script_name + '.py')
-        os.stat(test_file_path)
-        return test_path
-    except:
+    
+    for subdir in [ 'scripts', 'samples' ]:
         try:
-            # Test FrankW's directory layout : {root_dir}/gdal, {root_dir}/gdal/autotest
-            test_path = os.path.join(os.getcwd(), '..', '..', 'swig', 'python', 'scripts')
+            # Test subversion layout : {root_dir}/gdal, {root_dir}/autotest
+            test_path = os.path.join(os.getcwd(), '..', '..', 'gdal', 'swig', 'python', subdir)
             test_file_path = os.path.join(test_path, script_name + '.py')
             os.stat(test_file_path)
             return test_path
         except:
-            return None
+            try:
+                # Test FrankW's directory layout : {root_dir}/gdal, {root_dir}/gdal/autotest
+                test_path = os.path.join(os.getcwd(), '..', '..', 'swig', 'python', subdir)
+                test_file_path = os.path.join(test_path, script_name + '.py')
+                os.stat(test_file_path)
+                return test_path
+            except:
+                pass
+
+    return None
 
 ###############################################################################
 # Utility function of run_py_script_as_py_module()
@@ -114,8 +118,15 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
 
     has_imported_module = False
 
-    try:
-    #if True:
+    ret = None
+
+    # Redirect stdout to file
+    fout = open('tmp/stdout.txt', 'wt')
+    ori_stdout = sys.stdout
+    sys.stdout = fout
+
+    #try:
+    if True:
         exec('import ' + script_name)
         has_imported_module = True
 
@@ -126,9 +137,18 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
         if has_main:
             exec(script_name + '.main()')
 
-        ret = 'success'
-    except:
-        ret = 'skip'
+    #except:
+    #    pass
+
+    # Restore original stdout
+    fout.close()
+    sys.stdout = ori_stdout
+
+    fout = open('tmp/stdout.txt', 'rt')
+    ret = fout.read()
+    fout.close()
+
+    os.remove('tmp/stdout.txt')
 
     # Restore original sys variables
     sys.path = saved_syspath
@@ -142,17 +162,18 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
 
         # Unload gdal modules so that a change such as gdal.TermProgress = gdal.TermProgress_nocb
         # done in gdal_merge.py is undone next time gdal is reloaded
-        for module_name in ['osgeo.gdal', 'osgeo.gdalconst', 'osgeo.ogr', 'osgeo', 'gdal', 'gdalconst' 'ogr']:
+        for module_name in ['osgeo.gdal', 'osgeo.gdalconst', 'osgeo.ogr', 'osgeo.osr', 'osgeo', 'gdal', 'gdalconst' 'ogr', 'osr']:
             if module_name in sys.modules:
                 del sys.modules[module_name]
 
         # Reload gdal again
         try:
-            from osgeo import gdal, gdalconst, ogr
+            from osgeo import gdal, gdalconst, ogr, osr
         except:
             import gdal
             import gdalconst
             import ogr
+            import osr
 
     return ret
 
