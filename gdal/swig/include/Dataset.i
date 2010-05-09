@@ -244,8 +244,31 @@ public:
     return GDALSetProjection( self, prj );
   }
 
+#ifdef SWIGPYTHON
+%feature("kwargs") GetGeoTransform;
+%apply (int *optional_int) { (int*) };
+  void GetGeoTransform( double argout[6], int* isvalid, int* can_return_null = 0 ) {
+    if (can_return_null && *can_return_null)
+    {
+        *isvalid = (GDALGetGeoTransform( self, argout ) == CE_None );
+    }
+    else
+    {
+        *isvalid = TRUE;
+        if ( GDALGetGeoTransform( self, argout ) != CE_None ) {
+            argout[0] = 0.0;
+            argout[1] = 1.0;
+            argout[2] = 0.0;
+            argout[3] = 0.0;
+            argout[4] = 0.0;
+            argout[5] = 1.0;
+        }
+    }
+  }
+%clear (int*);
+#else
   void GetGeoTransform( double argout[6] ) {
-    if ( GDALGetGeoTransform( self, argout ) != 0 ) {
+    if ( GDALGetGeoTransform( self, argout ) != CE_None ) {
       argout[0] = 0.0;
       argout[1] = 1.0;
       argout[2] = 0.0;
@@ -254,6 +277,7 @@ public:
       argout[5] = 1.0;
     }
   }
+#endif
 
   CPLErr SetGeoTransform( double argin[6] ) {
     return GDALSetGeoTransform( self, argin );

@@ -3666,14 +3666,22 @@ SWIGINTERN char const *GDALDatasetShadow_GetProjectionRef(GDALDatasetShadow *sel
 SWIGINTERN CPLErr GDALDatasetShadow_SetProjection(GDALDatasetShadow *self,char const *prj){
     return GDALSetProjection( self, prj );
   }
-SWIGINTERN void GDALDatasetShadow_GetGeoTransform(GDALDatasetShadow *self,double argout[6]){
-    if ( GDALGetGeoTransform( self, argout ) != 0 ) {
-      argout[0] = 0.0;
-      argout[1] = 1.0;
-      argout[2] = 0.0;
-      argout[3] = 0.0;
-      argout[4] = 0.0;
-      argout[5] = 1.0;
+SWIGINTERN void GDALDatasetShadow_GetGeoTransform(GDALDatasetShadow *self,double argout[6],int *isvalid,int *can_return_null=0){
+    if (can_return_null && *can_return_null)
+    {
+        *isvalid = (GDALGetGeoTransform( self, argout ) == CE_None );
+    }
+    else
+    {
+        *isvalid = TRUE;
+        if ( GDALGetGeoTransform( self, argout ) != CE_None ) {
+            argout[0] = 0.0;
+            argout[1] = 1.0;
+            argout[2] = 0.0;
+            argout[3] = 0.0;
+            argout[4] = 0.0;
+            argout[5] = 1.0;
+        }
     }
   }
 SWIGINTERN CPLErr GDALDatasetShadow_SetGeoTransform(GDALDatasetShadow *self,double argin[6]){
@@ -9557,27 +9565,51 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Dataset_GetGeoTransform(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Dataset_GetGeoTransform(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   double *arg2 ;
+  int *arg3 = (int *) 0 ;
+  int *arg4 = (int *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   double argout2[6] ;
+  int isvalid2 ;
+  int val4 ;
   PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "can_return_null", NULL 
+  };
   
   {
-    /* %typemap(in,numinputs=0) (double argout2[ANY]) */
+    /* %typemap(in,numinputs=0) (double argout2[6], int* isvalid2) */
     arg2 = argout2;
+    arg3 = &isvalid2;
   }
-  if (!PyArg_ParseTuple(args,(char *)"O:Dataset_GetGeoTransform",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:Dataset_GetGeoTransform",kwnames,&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_GetGeoTransform" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  if (obj1) {
+    {
+      /* %typemap(in) (int *optional_##int) */
+      if ( obj1 == Py_None ) {
+        arg4 = 0;
+      }
+      else if ( PyArg_Parse( obj1,"i" ,&val4 ) ) {
+        arg4 = (int *) &val4;
+      }
+      else {
+        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+        SWIG_fail;
+      }
+    }
+  }
   {
-    GDALDatasetShadow_GetGeoTransform(arg1,arg2);
+    GDALDatasetShadow_GetGeoTransform(arg1,arg2,arg3,arg4);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -9587,9 +9619,16 @@ SWIGINTERN PyObject *_wrap_Dataset_GetGeoTransform(PyObject *SWIGUNUSEDPARM(self
   }
   resultobj = SWIG_Py_Void();
   {
-    /* %typemap(argout) (double argout[ANY]) */
-    PyObject *out = CreateTupleFromDoubleArray( arg2, 6 );
-    resultobj = t_output_helper(resultobj,out);
+    /* %typemap(argout) (double argout[6], int* isvalid)  */
+    PyObject *r;
+    if ( !*arg3 ) {
+      Py_INCREF(Py_None);
+      r = Py_None;
+    }
+    else {
+      r = CreateTupleFromDoubleArray(arg2, 6);
+    }
+    resultobj = t_output_helper(resultobj,r);
   }
   return resultobj;
 fail:
@@ -18286,7 +18325,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Dataset_GetProjection", _wrap_Dataset_GetProjection, METH_VARARGS, (char *)"Dataset_GetProjection(Dataset self) -> char"},
 	 { (char *)"Dataset_GetProjectionRef", _wrap_Dataset_GetProjectionRef, METH_VARARGS, (char *)"Dataset_GetProjectionRef(Dataset self) -> char"},
 	 { (char *)"Dataset_SetProjection", _wrap_Dataset_SetProjection, METH_VARARGS, (char *)"Dataset_SetProjection(Dataset self, char prj) -> CPLErr"},
-	 { (char *)"Dataset_GetGeoTransform", _wrap_Dataset_GetGeoTransform, METH_VARARGS, (char *)"Dataset_GetGeoTransform(Dataset self)"},
+	 { (char *)"Dataset_GetGeoTransform", (PyCFunction) _wrap_Dataset_GetGeoTransform, METH_VARARGS | METH_KEYWORDS, (char *)"Dataset_GetGeoTransform(Dataset self, int can_return_null = None)"},
 	 { (char *)"Dataset_SetGeoTransform", _wrap_Dataset_SetGeoTransform, METH_VARARGS, (char *)"Dataset_SetGeoTransform(Dataset self, double argin) -> CPLErr"},
 	 { (char *)"Dataset_BuildOverviews", (PyCFunction) _wrap_Dataset_BuildOverviews, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Dataset_BuildOverviews(Dataset self, char resampling = \"NEAREST\", int overviewlist = 0, \n"
