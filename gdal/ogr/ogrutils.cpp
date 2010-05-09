@@ -50,7 +50,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
     char szFormat[16];
     sprintf(szFormat, "%%.%df", nPrecision);
 
-    if (snprintf(pszBuffer, nBufferLen, szFormat, dfVal) >= nBufferLen)
+    int ret = snprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+    /* Windows CRT doesn't conform with C99 and return -1 when buffer is truncated */
+    if (ret >= nBufferLen || ret == -1)
         return;
 
     while(TRUE)
