@@ -963,20 +963,15 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
         psProgressInfo->nLastReported = -1;
         psProgressInfo->psPyCallback = NULL;
         psProgressInfo->psPyCallbackData = NULL;
-
+        $1 = psProgressInfo;
 }
 
-/*  This is kind of silly, but this typemap takes the $input'ed         */
-/*  PyObject* and hangs it on the struct's callback data *and* sets     */
-/*  the argument to the psProgressInfo void* that will eventually be    */
-/*  passed into the function as its callback data.  Confusing.  Sorry.  */
+/*  This typemap takes the $input'ed  PyObject* and hangs it on the     */
+/*  struct's callback data .                                            */
 %typemap(in) (void* callback_data=NULL) 
 {
     /* %typemap(in) ( void* callback_data=NULL)  */
-  
         psProgressInfo->psPyCallbackData = $input ;
-        $1 = psProgressInfo;
-
 }
 
 /*  Here is our actual callback function.  It could be a generic GDAL   */
