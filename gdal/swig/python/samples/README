@@ -84,3 +84,13 @@ magphase.py             Example script computing magnitude and phase images
 
 hsv_merge.py            Merge greyscale image into rgb image as intensity
                         in HSV space. 
+
+------------------------------------------------------------------------------
+Ports of .c/.cpp utilities
+------------------------------------------------------------------------------
+
+gdalinfo.py             A direct port of apps/gdalinfo.c
+
+ogrinfo.py              A direct port of apps/ogrinfo.cpp
+
+ogr2ogr.py              A direct port of apps/ogr2ogr.cpp
