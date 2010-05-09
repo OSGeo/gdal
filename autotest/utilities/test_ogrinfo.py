@@ -120,7 +120,7 @@ def test_ogrinfo_6():
 ###############################################################################
 # Test -geom=SUMMARY option
 
-def test_ogrinfo_6():
+def test_ogrinfo_7():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
@@ -137,7 +137,7 @@ def test_ogrinfo_6():
 ###############################################################################
 # Test -spat option
 
-def test_ogrinfo_7():
+def test_ogrinfo_8():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
@@ -154,7 +154,7 @@ def test_ogrinfo_7():
 ###############################################################################
 # Test -where option
 
-def test_ogrinfo_8():
+def test_ogrinfo_9():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
@@ -167,7 +167,7 @@ def test_ogrinfo_8():
 ###############################################################################
 # Test -fid option
 
-def test_ogrinfo_9():
+def test_ogrinfo_10():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
@@ -180,7 +180,7 @@ def test_ogrinfo_9():
 ###############################################################################
 # Test -fields=no option
 
-def test_ogrinfo_10():
+def test_ogrinfo_11():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
@@ -202,7 +202,8 @@ gdaltest_list = [
     test_ogrinfo_7,
     test_ogrinfo_8,
     test_ogrinfo_9,
-    test_ogrinfo_10
+    test_ogrinfo_10,
+    test_ogrinfo_11
     ]
 
 
