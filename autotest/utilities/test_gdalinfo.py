@@ -157,6 +157,35 @@ def test_gdalinfo_7():
 
     return 'success'
 
+###############################################################################
+# Test -hist option
+
+def test_gdalinfo_8():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    try:
+        os.remove('../gcore/data/byte.tif.aux.xml')
+    except:
+        pass
+    
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
+    if ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') != -1:
+        gdaltest.post_reason( 'did not expect histogram.' )
+        print(ret)
+        return 'fail'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -hist ../gcore/data/byte.tif')
+    if ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') == -1:
+        gdaltest.post_reason( 'did not get expected histogram.' )
+        print(ret)
+        return 'fail'
+
+    # We will blow an exception if the file does not exist now!
+    os.remove('../gcore/data/byte.tif.aux.xml')
+    
+    return 'success'
+
 gdaltest_list = [
     test_gdalinfo_1,
     test_gdalinfo_2,
@@ -164,7 +193,8 @@ gdaltest_list = [
     test_gdalinfo_4,
     test_gdalinfo_5,
     test_gdalinfo_6,
-    test_gdalinfo_7
+    test_gdalinfo_7,
+    test_gdalinfo_8
     ]
 
 
