@@ -186,6 +186,27 @@ def test_gdalinfo_8():
     
     return 'success'
 
+###############################################################################
+# Test -mdd option
+
+def test_gdalinfo_9():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/fake_nsif.ntf')
+    if ret.find('BLOCKA=010000001000000000') != -1:
+        gdaltest.post_reason( 'unexpectingly got extra MD.' )
+        print(ret)
+        return 'fail'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -mdd TRE ../gdrivers/data/fake_nsif.ntf')
+    if ret.find('BLOCKA=010000001000000000') == -1:
+        gdaltest.post_reason( 'did not get extra MD.' )
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdalinfo_1,
     test_gdalinfo_2,
@@ -194,7 +215,8 @@ gdaltest_list = [
     test_gdalinfo_5,
     test_gdalinfo_6,
     test_gdalinfo_7,
-    test_gdalinfo_8
+    test_gdalinfo_8,
+    test_gdalinfo_9
     ]
 
 
