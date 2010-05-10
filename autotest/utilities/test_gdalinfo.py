@@ -155,6 +155,15 @@ def test_gdalinfo_7():
     if ret.find('(100,100) -> (446720,3745320,0)') == -1:
         return 'fail'
 
+    # Same but with -nogcps
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -nogcp ../gcore/data/gcps.vrt')
+    if ret.find('GCP Projection =') != -1:
+        return 'fail'
+    if ret.find('PROJCS["NAD27 / UTM zone 11N"') != -1:
+        return 'fail'
+    if ret.find('(100,100) -> (446720,3745320,0)') != -1:
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -207,6 +216,23 @@ def test_gdalinfo_9():
 
     return 'success'
 
+###############################################################################
+# Test -mm option
+
+def test_gdalinfo_10():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
+    if ret.find('Computed Min/Max=74.000,255.000') != -1:
+        return 'fail'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -mm ../gcore/data/byte.tif')
+    if ret.find('Computed Min/Max=74.000,255.000') == -1:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdalinfo_1,
     test_gdalinfo_2,
@@ -216,7 +242,8 @@ gdaltest_list = [
     test_gdalinfo_6,
     test_gdalinfo_7,
     test_gdalinfo_8,
-    test_gdalinfo_9
+    test_gdalinfo_9,
+    test_gdalinfo_10
     ]
 
 
