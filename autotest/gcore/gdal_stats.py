@@ -81,13 +81,30 @@ def stats_signedbyte():
     
     return ret
 
+
+###############################################################################
+# Test return of GetStatistics() when we don't have stats and don't
+# force their cmoputation (#3572)
+
+def stats_dont_force():
+
+    ds = gdal.Open('data/byte.tif')
+    stats = ds.GetRasterBand(1).GetStatistics(0, 0)
+    if stats != [0, 0, 0, -1]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Run tests
 
 gdaltest_list = [
     stats_nan_1,
     stats_nan_2,
-    stats_signedbyte
+    stats_signedbyte,
+    stats_dont_force
     ]
 
 if __name__ == '__main__':
