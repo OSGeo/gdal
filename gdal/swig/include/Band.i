@@ -259,6 +259,10 @@ public:
 %apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
   CPLErr GetStatistics( int approx_ok, int force, 
                       double *min, double *max, double *mean, double *stddev ){
+    if (min) *min = 0;
+    if (max) *max = 0;
+    if (mean) *mean = 0;
+    if (stddev) *stddev = -1; /* This is the only way to recognize from Python if GetRasterStatistics() has updated the values */
     return GDALGetRasterStatistics( self, approx_ok, force, 
 				    min, max, mean, stddev );
   }
