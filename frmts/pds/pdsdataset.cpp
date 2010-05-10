@@ -788,17 +788,28 @@ int PDSDataset::ParseUncompressedImage()
 /* -------------------------------------------------------------------- */
     
     if( eAccess == GA_ReadOnly )
-        fpImage = VSIFOpenL( osTargetFile, "rb" );
-    else
-        fpImage = VSIFOpenL( osTargetFile, "r+b" );
-
-    if( fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open %s with write permission.\n%s", 
-                  osTargetFile.c_str(),
-                  VSIStrerror( errno ) );
-        return FALSE;
+        fpImage = VSIFOpenL( osTargetFile, "rb" );
+        if( fpImage == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                    "Failed to open %s.\n%s", 
+                    osTargetFile.c_str(),
+                    VSIStrerror( errno ) );
+            return FALSE;
+        }
+    }
+    else
+    {
+        fpImage = VSIFOpenL( osTargetFile, "r+b" );
+        if( fpImage == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                    "Failed to open %s with write permission.\n%s", 
+                    osTargetFile.c_str(),
+                    VSIStrerror( errno ) );
+            return FALSE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
