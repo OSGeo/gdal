@@ -133,16 +133,16 @@ def main( argv = None ):
             i = i + 1
             papszExtraMDDomains.append( argv[i] )
         elif argv[i][0] == '-':
-            Usage()
+            return Usage()
         elif pszFilename is None:
             pszFilename = argv[i]
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if pszFilename is None:
-        Usage()
+        return Usage()
 
 #/* -------------------------------------------------------------------- */
 #/*      Open dataset.                                                   */
