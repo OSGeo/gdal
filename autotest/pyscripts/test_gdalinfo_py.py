@@ -195,6 +195,27 @@ def test_gdalinfo_py_8():
     
     return 'success'
 
+###############################################################################
+# Test -mdd option
+
+def test_gdalinfo_py_9():
+    script_path = test_py_scripts.get_py_script('gdalinfo')
+    if script_path is None:
+        return 'skip'
+
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/fake_nsif.ntf')
+    if ret.find('BLOCKA=010000001000000000') != -1:
+        gdaltest.post_reason( 'unexpectingly got extra MD.' )
+        print(ret)
+        return 'fail'
+
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mdd TRE ../gdrivers/data/fake_nsif.ntf')
+    if ret.find('BLOCKA=010000001000000000') == -1:
+        gdaltest.post_reason( 'did not get extra MD.' )
+        print(ret)
+        return 'fail'
+
+    return 'success'
 gdaltest_list = [
     test_gdalinfo_py_1,
     test_gdalinfo_py_2,
@@ -203,7 +224,8 @@ gdaltest_list = [
     test_gdalinfo_py_5,
     test_gdalinfo_py_6,
     test_gdalinfo_py_7,
-    test_gdalinfo_py_8
+    test_gdalinfo_py_8,
+    test_gdalinfo_py_9
     ]
 
 
