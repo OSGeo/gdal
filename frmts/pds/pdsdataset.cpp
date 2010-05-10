@@ -580,6 +580,7 @@ int PDSDataset::ParseUncompressedImage()
     // ^IMAGE		  = ("BLAH.IMG",1)	 -- start at record 1 (1 based)
     // ^IMAGE		  = ("BLAH.IMG")	 -- still start at record 1 (equiv of "BLAH.IMG")
     // ^IMAGE		  = ("BLAH.IMG", 5 <BYTES>) -- start at byte 5 (the fifth byte in the file)
+    // ^IMAGE             = 10851 <BYTES>
     // ^SPECTRAL_QUBE = 5  for multi-band images
 
     CPLString osImageKeyword = "^IMAGE";
@@ -691,7 +692,13 @@ int PDSDataset::ParseUncompressedImage()
     if (record_bytes == 0)
         record_bytes = atoi(GetKeyword("RECORD_BYTES"));
 
-    if (nQube > 0)
+    // this can happen with "record_type = undefined". 
+    if( record_bytes == 0 )
+        record_bytes = 1;
+
+    if( nQube >0 && osQube.find("<BYTES>") != CPLString::npos )
+        nSkipBytes = nQube - 1;
+    else if (nQube > 0 )
         nSkipBytes = (nQube - 1) * record_bytes;
     else if( nDetachedOffset > 0 )
     {
