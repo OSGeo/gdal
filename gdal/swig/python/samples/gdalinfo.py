@@ -389,16 +389,16 @@ def main( argv = None ):
 
         if bReportHistograms:
 
-            hist = hBand.GetDefaultHistogram(True, callback = gdal.TermProgress)
+            hist = hBand.GetDefaultHistogram(force = True, callback = gdal.TermProgress)
             if hist is not None:
                 dfMin = hist[0]
                 dfMax = hist[1]
                 nBucketCount = hist[2]
                 panHistogram = hist[3]
 
-                print( "  %d buckets from %g to %g:  " % ( \
+                print( "  %d buckets from %g to %g:" % ( \
                         nBucketCount, dfMin, dfMax ))
-                line = ''
+                line = '  '
                 for bucket in panHistogram:
                     line = line + ("%d " % bucket)
 
