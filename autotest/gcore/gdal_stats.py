@@ -97,6 +97,49 @@ def stats_dont_force():
 
     return 'success'
 
+
+###############################################################################
+# Test statistics when stored nodata value doesn't accurately match the nodata
+# value used in the imagery (#3573)
+
+def stats_approx_nodata():
+
+    shutil.copyfile('data/minfloat.tif', 'tmp/minfloat.tif')
+    try:
+        os.remove('tmp/minfloat.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/minfloat.tif')
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    os.remove('tmp/minfloat.tif.aux.xml')
+
+    ds = gdal.Open('tmp/minfloat.tif')
+    minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
+    ds = None
+
+    os.remove('tmp/minfloat.tif')
+
+    if nodata != -3.4028234663852886e+38:
+        gdaltest.post_reason('did not get expected nodata')
+        print("%.18g" % nodata)
+        return 'fail'
+
+    if stats != [-3.0, 5.0, 1.0, 4.0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    if minmax != (-3.0, 5.0):
+        gdaltest.post_reason('did not get expected minmax')
+        print(minmax)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Run tests
 
@@ -104,7 +147,8 @@ gdaltest_list = [
     stats_nan_1,
     stats_nan_2,
     stats_signedbyte,
-    stats_dont_force
+    stats_dont_force,
+    stats_approx_nodata
     ]
 
 if __name__ == '__main__':
