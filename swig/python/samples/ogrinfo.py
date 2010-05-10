@@ -171,7 +171,6 @@ def main(argv = None):
         if poDS is not None and bVerbose:
             print( "Had to open data source read-only." )
             bReadOnly = True
-    poDriver = poDS.GetDriver()
 
 #/* -------------------------------------------------------------------- */
 #/*      Report failure                                                  */
@@ -181,9 +180,11 @@ def main(argv = None):
                 "Unable to open datasource `%s' with the following drivers." % pszDataSource )
 
         for iDriver in range(ogr.GetDriverCount()):
-            print( "  . %s" % ogr.GetDriver(iDriver).GetName() )
+            print( "  -> %s" % ogr.GetDriver(iDriver).GetName() )
 
         return 1
+
+    poDriver = poDS.GetDriver()
 
 #/* -------------------------------------------------------------------- */
 #/*      Some information messages.                                      */
