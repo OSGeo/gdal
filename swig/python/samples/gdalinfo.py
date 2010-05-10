@@ -129,7 +129,7 @@ def main( argv = None ):
             bShowRAT = False
         elif EQUAL(argv[i], "-noct"):
             bShowColorTable = False
-        elif EQUAL(argv[i], "-mdd") and i < argc-1:
+        elif EQUAL(argv[i], "-mdd") and i < nArgc-1:
             i = i + 1
             papszExtraMDDomains.append( argv[i] )
         elif argv[i][0] == '-':
