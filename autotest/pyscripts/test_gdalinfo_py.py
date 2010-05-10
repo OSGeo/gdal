@@ -163,6 +163,15 @@ def test_gdalinfo_py_7():
     if ret.find('(100,100) -> (446720,3745320,0)') == -1:
         return 'fail'
 
+    # Same but with -nogcps
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-nogcp ../gcore/data/gcps.vrt')
+    if ret.find('GCP Projection =') != -1:
+        return 'fail'
+    if ret.find('PROJCS["NAD27 / UTM zone 11N"') != -1:
+        return 'fail'
+    if ret.find('(100,100) -> (446720,3745320,0)') != -1:
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -216,6 +225,25 @@ def test_gdalinfo_py_9():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test -mm option
+
+def test_gdalinfo_py_10():
+    script_path = test_py_scripts.get_py_script('gdalinfo')
+    if script_path is None:
+        return 'skip'
+
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
+    if ret.find('Computed Min/Max=74.000,255.000') != -1:
+        return 'fail'
+
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mm ../gcore/data/byte.tif')
+    if ret.find('Computed Min/Max=74.000,255.000') == -1:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdalinfo_py_1,
     test_gdalinfo_py_2,
@@ -225,7 +253,8 @@ gdaltest_list = [
     test_gdalinfo_py_6,
     test_gdalinfo_py_7,
     test_gdalinfo_py_8,
-    test_gdalinfo_py_9
+    test_gdalinfo_py_9,
+    test_gdalinfo_py_10
     ]
 
 
