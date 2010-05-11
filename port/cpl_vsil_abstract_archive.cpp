@@ -316,7 +316,7 @@ VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archi
             return NULL;
         }
 
-        int isSecondFile = FALSE;
+        /* Skip optionnal leading subdir */
         CPLString osFileName = poReader->GetFileName();
         const char* fileName = osFileName.c_str();
         if (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\')
@@ -326,10 +326,9 @@ VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archi
                 delete(poReader);
                 return NULL;
             }
-            isSecondFile = TRUE;
         }
 
-        if (poReader->GotoNextFile() == TRUE)
+        if (poReader->GotoNextFile())
         {
             CPLString msg;
             msg.Printf("Support only 1 file in archive file %s when no explicit in-archive filename is specified",
@@ -350,27 +349,12 @@ VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archi
             delete(poReader);
             return NULL;
         }
-
-        if (!poReader->GotoFirstFile())
-        {
-            delete poReader;
-            return NULL;
-        }
-
-        if (isSecondFile)
-        {
-            if (!poReader->GotoNextFile())
-            {
-                delete poReader;
-                return NULL;
-            }
-        }
     }
     else
     {
         const VSIArchiveEntry* archiveEntry = NULL;
         if (FindFileInArchive(archiveFilename, fileInArchiveName, &archiveEntry) == FALSE ||
-            archiveEntry->bIsDir == TRUE)
+            archiveEntry->bIsDir)
         {
             delete(poReader);
             return NULL;
@@ -390,7 +374,7 @@ VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archi
 
 int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf )
 {
-    int ret;
+    int ret = -1;
     CPLString osFileInArchive;
     char* archiveFilename = SplitFilename(pszFilename, osFileInArchive);
     if (archiveFilename == NULL)
@@ -402,11 +386,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pSt
                                     archiveFilename, osFileInArchive.c_str());
 
         const VSIArchiveEntry* archiveEntry = NULL;
-        if (FindFileInArchive(archiveFilename, osFileInArchive, &archiveEntry) == FALSE)
-        {
-            ret = -1;
-        }
-        else
+        if (FindFileInArchive(archiveFilename, osFileInArchive, &archiveEntry))
         {
             /* Patching st_size with uncompressed file size */
             pStatBuf->st_size = (long)archiveEntry->uncompressed_size;
@@ -419,20 +399,41 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pSt
     }
     else
     {
-        VSIArchiveReader* poReader = OpenArchiveFile(archiveFilename, NULL);
-        if (poReader)
-        {
-            /* Patching st_size with uncompressed file size */
-            pStatBuf->st_size = (long)poReader->GetFileSize();
-            pStatBuf->st_mode = S_IFREG;
+        VSIArchiveReader* poReader = CreateReader(archiveFilename);
+        CPLFree(archiveFilename);
+        archiveFilename = NULL;
 
-            delete(poReader);
+        if (poReader != NULL && poReader->GotoFirstFile())
+        {
+            /* Skip optionnal leading subdir */
+            CPLString osFileName = poReader->GetFileName();
+            const char* fileName = osFileName.c_str();
+            if (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\')
+            {
+                if (poReader->GotoNextFile() == FALSE)
+                {
+                    delete(poReader);
+                    return -1;
+                }
+            }
+
+            if (poReader->GotoNextFile())
+            {
+                /* Several files in archive --> treat as dir */
+                pStatBuf->st_size = 0;
+                pStatBuf->st_mode = S_IFDIR;
+            }
+            else
+            {
+                /* Patching st_size with uncompressed file size */
+                pStatBuf->st_size = (long)poReader->GetFileSize();
+                pStatBuf->st_mode = S_IFREG;
+            }
+
             ret = 0;
         }
-        else
-        {
-            ret = -1;
-        }
+
+        delete(poReader);
     }
 
     CPLFree(archiveFilename);
