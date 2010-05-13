@@ -42,11 +42,17 @@ def stats_nan_1():
     gdaltest.gtiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.gtiff_drv is None:
         return 'skip'
-
+    
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
-    t = gdaltest.GDALTest( 'GTiff', 'nan32.tif', 1, 874 )
-    return t.testOpen( check_approx_stat = stats, check_stat = stats )
+    shutil.copyfile('data/nan32.tif', 'tmp/nan32.tif')
+
+    t = gdaltest.GDALTest( 'GTiff', 'tmp/nan32.tif', 1, 874, filename_absolute = 1 )
+    ret = t.testOpen( check_approx_stat = stats, check_stat = stats )
+
+    gdal.GetDriverByName('GTiff').Delete('tmp/nan32.tif')
+
+    return ret
 
 ###############################################################################
 # Test handling NaN with GDT_Float64 data
@@ -58,9 +64,14 @@ def stats_nan_2():
 
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
-    t = gdaltest.GDALTest( 'GTiff', 'nan64.tif', 1, 4414 )
-    return t.testOpen( check_approx_stat = stats, check_stat = stats )
+    shutil.copyfile('data/nan64.tif', 'tmp/nan64.tif')
 
+    t = gdaltest.GDALTest( 'GTiff', 'tmp/nan64.tif', 1, 4414, filename_absolute = 1 )
+    ret = t.testOpen( check_approx_stat = stats, check_stat = stats )
+
+    gdal.GetDriverByName('GTiff').Delete('tmp/nan64.tif')
+
+    return ret
 
 ###############################################################################
 # Test stats on signed byte (#3151)
