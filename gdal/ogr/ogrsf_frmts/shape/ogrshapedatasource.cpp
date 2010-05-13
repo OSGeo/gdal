@@ -308,13 +308,11 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 
     fp = VSIFOpenL( pszPrjFile, "r" );
 
-#ifndef WIN32
     if( NULL == fp )
     {
         pszPrjFile = CPLResetExtension( pszNewName, "PRJ" );
         fp = VSIFOpenL( pszPrjFile, "r" );
     }
-#endif
 
     if( fp != NULL )
     {
