@@ -263,7 +263,15 @@ VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
     for( i = 12; pszPath[i] != '\0'; i++ )
     {
         if( pszPath[i] == '_' && nSubFileSize == 0 )
-            nSubFileSize = CPLScanUIntBig(pszPath + i + 1, strlen(pszPath + i + 1));
+        {
+            /* -1 is sometimes passed to mean that we don't know the file size */
+            /* for example when creating a JPEG2000 datastream in a NITF file */
+            /* Transform it into 0  for correct behaviour of Read(), Write() and Eof() */
+            if (pszPath[i + 1] == '-')
+                nSubFileSize = 0;
+            else
+                nSubFileSize = CPLScanUIntBig(pszPath + i + 1, strlen(pszPath + i + 1));
+        }
         else if( pszPath[i] == ',' )
         {
             osFilename = pszPath + i + 1;
