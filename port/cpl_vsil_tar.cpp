@@ -266,6 +266,7 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
     osSubFileName += "_";
     osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, poReader->GetFileSize());
     osSubFileName += ",";
+    delete pOffset;
     
     if (VSIIsTGZ(tarFilename))
     {
