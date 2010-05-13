@@ -4257,8 +4257,12 @@ void GTiffDataset::ReadRPCTag()
 void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
 
 {
-    TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, 
-                  CPLString().Printf( "%.18g", dfNoData ).c_str() );
+    char szVal[400];
+    if (CPLIsNan(dfNoData))
+        strcpy(szVal, "nan");
+	else
+        snprintf(szVal, sizeof(szVal), "%.18g", dfNoData);
+    TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, szVal );
 }
 
 /************************************************************************/
@@ -5380,9 +5384,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                 if( poBand != NULL )
                 {
                     if( EQUAL(pszRole,"scale") )
-                        poBand->SetScale( atof(pszUnescapedValue) );
+                        poBand->SetScale( CPLAtofM(pszUnescapedValue) );
                     else if( EQUAL(pszRole,"offset") )
-                        poBand->SetOffset( atof(pszUnescapedValue) );
+                        poBand->SetOffset( CPLAtofM(pszUnescapedValue) );
                     else
                     {
                         if( bIsXML )
@@ -5442,7 +5446,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) )
     {
         bNoDataSet = TRUE;
-        dfNoDataValue = atof( pszText );
+        dfNoDataValue = CPLAtofM( pszText );
     }
 
 /* -------------------------------------------------------------------- */

@@ -86,8 +86,11 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
 
     if( psPam->bNoDataValueSet )
     {
-        CPLSetXMLValue( psTree, "NoDataValue", 
-                        oFmt.Printf( "%.14E", psPam->dfNoDataValue ) );
+        if (CPLIsNan(psPam->dfNoDataValue))
+            CPLSetXMLValue( psTree, "NoDataValue",  "nan" );
+        else
+            CPLSetXMLValue( psTree, "NoDataValue", 
+                            oFmt.Printf( "%.14E", psPam->dfNoDataValue ) );
 
         /* hex encode real floating point values */
         if( psPam->dfNoDataValue != floor(psPam->dfNoDataValue) 

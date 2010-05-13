@@ -40,12 +40,6 @@
 // (minimum value, maximum value, etc.)
 #define GDALSTAT_APPROX_NUMSAMPLES 2500
 
-// Test if pixel value matches nodata value. Avoid using strict comparison as
-// the stored nodata value in GeoTIFF files is stored as a string, so there might
-// be numerical imprecision when reading it back. See #3573
-#define EQUAL_TO_NODATA(dfValue, dfNoDataValue) \
- (dfValue == dfNoDataValue || (dfNoDataValue != 0 && fabs(1 - dfValue / dfNoDataValue) < 1e-10 ))
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -2812,8 +2806,6 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     {
                         double dfReal = ((GInt16 *)pData)[iOffset*2];
                         double dfImag = ((GInt16 *)pData)[iOffset*2+1];
-                        if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
-                            continue;
                         dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
                     }
                     break;
@@ -2821,8 +2813,6 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     {
                         double dfReal = ((GInt32 *)pData)[iOffset*2];
                         double dfImag = ((GInt32 *)pData)[iOffset*2+1];
-                        if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
-                            continue;
                         dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
                     }
                     break;
@@ -2979,9 +2969,13 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                         break;
                       case GDT_Float32:
                         dfValue = ((float *) pData)[iOffset];
+                        if (CPLIsNan(dfValue))
+                            continue;
                         break;
                       case GDT_Float64:
                         dfValue = ((double *) pData)[iOffset];
+                        if (CPLIsNan(dfValue))
+                            continue;
                         break;
                       case GDT_CInt16:
                         {
@@ -2989,8 +2983,6 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                                 ((GInt16 *) pData)[iOffset*2];
                             double  dfImag =
                                 ((GInt16 *) pData)[iOffset*2+1];
-                            if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
-                                continue;
                             dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
                         }
                         break;
@@ -3000,8 +2992,6 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                                 ((GInt32 *) pData)[iOffset*2];
                             double  dfImag =
                                 ((GInt32 *) pData)[iOffset*2+1];
-                            if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
-                                continue;
                             dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
                         }
                         break;
