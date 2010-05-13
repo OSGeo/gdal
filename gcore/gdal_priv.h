@@ -875,6 +875,14 @@ CPLErr CPL_DLL GDALParseGMLCoverage( CPLXMLNode *psTree,
 int CPL_DLL GDALCheckDatasetDimensions( int nXSize, int nYSize );
 int CPL_DLL GDALCheckBandCount( int nBands, int bIsZeroAllowed );
 
+
+// Test if pixel value matches nodata value. Avoid using strict comparison as
+// the stored nodata value in GeoTIFF files is stored as a string, so there might
+// be numerical imprecision when reading it back. See #3573
+#define EQUAL_TO_NODATA(dfValue, dfNoDataValue) \
+ (dfValue == dfNoDataValue || (dfNoDataValue != 0 && fabs(1 - dfValue / dfNoDataValue) < 1e-10 ))
+
+
 CPL_C_END
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */

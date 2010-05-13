@@ -308,7 +308,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     SetDescription( CPLGetXMLValue( psTree, "Description", "" ) );
     
     if( CPLGetXMLValue( psTree, "NoDataValue", NULL ) != NULL )
-        SetNoDataValue( atof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
+        SetNoDataValue( CPLAtofM(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
 
     if( CPLGetXMLValue( psTree, "HideNoDataValue", NULL ) != NULL )
         bHideNoDataValue = CSLTestBoolean( CPLGetXMLValue( psTree, "HideNoDataValue", "0" ) );
@@ -465,9 +465,14 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
         CPLSetXMLValue( psTree, "Description", GetDescription() );
 
     if( bNoDataValueSet )
-        CPLSetXMLValue( psTree, "NoDataValue", 
-                        CPLSPrintf( "%.14E", dfNoDataValue ) );
-
+    {
+        if (CPLIsNan(dfNoDataValue))
+            CPLSetXMLValue( psTree, "NoDataValue", "nan");
+        else
+            CPLSetXMLValue( psTree, "NoDataValue", 
+                            CPLSPrintf( "%.14E", dfNoDataValue ) );
+    }
+    
     if( bHideNoDataValue )
         CPLSetXMLValue( psTree, "HideNoDataValue", 
                         CPLSPrintf( "%d", bHideNoDataValue ) );

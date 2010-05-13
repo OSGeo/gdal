@@ -43,6 +43,23 @@ extern float strtof(const char *nptr, char **endptr);
 }
 #endif
 
+#ifndef NAN
+#  ifdef HUGE_VAL
+#    define NAN (HUGE_VAL * 0.0)
+#  else
+
+static float CPLNaN(void)
+{
+    float fNan;
+    int nNan = 0x7FC00000;
+    memcpy(&fNan, &nNan, 4);
+    return fNan;
+}
+
+#    define NAN CPLNan()
+#  endif
+#endif
+
 /************************************************************************/
 /*                            CPLAtofDelim()                            */
 /************************************************************************/
@@ -222,6 +239,10 @@ static void CPLReplacePointByLocalePoint(char* pszNumber, char point)
  */
 double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 {
+   if (EQUAL(nptr,"nan") || EQUAL(nptr, "1.#QNAN") ||
+       EQUAL(nptr, "-1.#QNAN") || EQUAL(nptr, "-1.#IND"))
+       return NAN;
+
 /* -------------------------------------------------------------------- */
 /*  We are implementing a simple method here: copy the input string     */
 /*  into the temporary buffer, replace the specified decimal delimiter  */
@@ -352,4 +373,5 @@ float CPLStrtof(const char *nptr, char **endptr)
 {
     return CPLStrtofDelim(nptr, endptr, '.');
 }
+
 /* END OF FILE */
