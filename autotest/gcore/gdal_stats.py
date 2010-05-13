@@ -151,6 +151,148 @@ def stats_approx_nodata():
 
     return 'success'
 
+
+###############################################################################
+# Test read and copy of dataset with nan as nodata value (#3576)
+
+def stats_nan_3():
+
+    src_ds = gdal.Open('data/nan32_nodata.tif')
+    nodata = src_ds.GetRasterBand(1).GetNoDataValue()
+    if nodata == nodata:
+        gdaltest.post_reason('expected nan, got %f' % nodata)
+        return 'fail'
+
+    out_ds = gdaltest.gtiff_drv.CreateCopy('tmp/nan32_nodata.tif', src_ds)
+    out_ds = None
+
+    src_ds = None
+
+    try:
+        os.remove('tmp/nan32_nodata.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/nan32_nodata.tif')
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    gdaltest.gtiff_drv.Delete('tmp/nan32_nodata.tif')
+    if nodata == nodata:
+        gdaltest.post_reason('expected nan, got %f' % nodata)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a VRT with a complex source that define nan as band nodata
+# and complex source nodata (#3576)
+
+def stats_nan_4():
+
+    ds = gdal.Open('data/nan32_nodata.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    if cs != 874:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    if nodata == nodata:
+        gdaltest.post_reason('expected nan, got %f' % nodata)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a VRT with a complex source that define 0 as band nodata
+# and complex source nodata (nan must be translated to 0 then) (#3576)
+
+def stats_nan_5():
+
+    ds = gdal.Open('data/nan32_nodata_nan_to_zero.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    if cs != 978:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    if nodata != 0:
+        gdaltest.post_reason('expected nan, got %f' % nodata)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test reading a warped VRT with nan as src nodata and dest nodata (#3576)
+
+def stats_nan_6():
+
+    ds = gdal.Open('data/nan32_nodata_warp.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    if cs != 874:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    if nodata == nodata:
+        gdaltest.post_reason('expected nan, got %f' % nodata)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a warped VRT with nan as src nodata and 0 as dest nodata (#3576)
+
+def stats_nan_7():
+
+    ds = gdal.Open('data/nan32_nodata_warp_nan_to_zero.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    if cs != 978:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    if nodata != 0:
+        gdaltest.post_reason('expected nan, got %f' % nodata)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test reading a warped VRT with zero as src nodata and nan as dest nodata (#3576)
+
+def stats_nan_8():
+
+    ds = gdal.Open('data/nan32_nodata_warp_zero_to_nan.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    if cs != 874:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    if nodata == nodata:
+        gdaltest.post_reason('expected nan, got %f' % nodata)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Run tests
 
@@ -159,7 +301,13 @@ gdaltest_list = [
     stats_nan_2,
     stats_signedbyte,
     stats_dont_force,
-    stats_approx_nodata
+    stats_approx_nodata,
+    stats_nan_3,
+    stats_nan_4,
+    stats_nan_5,
+    stats_nan_6,
+    stats_nan_7,
+    stats_nan_8
     ]
 
 if __name__ == '__main__':
