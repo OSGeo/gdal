@@ -1569,7 +1569,23 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
  
 const char * HFABand::GetBandName()
 {
-    return( poNode->GetName() );
+    if( strlen(poNode->GetName()) > 0 )
+        return( poNode->GetName() );
+    else
+    {
+        int iBand; 
+        for( iBand = 0; iBand < psInfo->nBands; iBand++ )
+        {
+            if( psInfo->papoBand[iBand] == this )
+            {
+                osOverName.Printf( "Layer_%d", iBand+1 );
+                return osOverName;
+            }
+        }
+
+        osOverName.Printf( "Layer_%x", poNode->GetFilePos() );
+        return osOverName;
+    }
 }
 
 /************************************************************************/
@@ -1960,13 +1976,13 @@ int HFABand::CreateOverview( int nOverviewLevel )
     {
         psRRDInfo = HFACreateDependent( psInfo );
 
-        poParent = psRRDInfo->poRoot->GetNamedChild( poNode->GetName() );
+        poParent = psRRDInfo->poRoot->GetNamedChild( GetBandName() );
 
         // Need to create layer object.
         if( poParent == NULL )
         {
             poParent = 
-                new HFAEntry( psRRDInfo, poNode->GetName(), 
+                new HFAEntry( psRRDInfo, GetBandName(),
                               "Eimg_Layer", psRRDInfo->poRoot );
         }
     }
@@ -2034,11 +2050,12 @@ int HFABand::CreateOverview( int nOverviewLevel )
 /* -------------------------------------------------------------------- */
     int iNextName = poRRDNamesList->GetFieldCount( "nameList" );
     char szName[50];
+    CPLString osNodeName;
 
     sprintf( szName, "nameList[%d].string", iNextName );
 
     osLayerName.Printf( "%s(:%s:_ss_%d_)", 
-                        psRRDInfo->pszFilename, poNode->GetName(), 
+                        psRRDInfo->pszFilename, GetBandName(),
                         nOverviewLevel );
 
     // TODO: Need to add to end of array (thats pretty hard).
