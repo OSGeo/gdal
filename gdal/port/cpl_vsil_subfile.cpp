@@ -172,7 +172,10 @@ size_t VSISubFileHandle::Write( const void * pBuffer, size_t nSize, size_t nCoun
 int VSISubFileHandle::Eof()
 
 {
-    return VSIFEofL( fp );
+    if (nSubregionSize != 0)
+        return VSIFTellL( fp ) >= nSubregionOffset + nSubregionSize;
+    else
+        return VSIFEofL( fp );
 }
 
 /************************************************************************/
