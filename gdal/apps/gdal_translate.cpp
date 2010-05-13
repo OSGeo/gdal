@@ -230,17 +230,17 @@ static int ProxyMain( int argc, char ** argv )
                 CPLRealloc( pasGCPs, sizeof(GDAL_GCP) * nGCPCount );
             GDALInitGCPs( 1, pasGCPs + nGCPCount - 1 );
 
-            pasGCPs[nGCPCount-1].dfGCPPixel = atof(argv[++i]);
-            pasGCPs[nGCPCount-1].dfGCPLine = atof(argv[++i]);
-            pasGCPs[nGCPCount-1].dfGCPX = atof(argv[++i]);
-            pasGCPs[nGCPCount-1].dfGCPY = atof(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPPixel = CPLAtofM(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPLine = CPLAtofM(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPX = CPLAtofM(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPY = CPLAtofM(argv[++i]);
             if( argv[i+1] != NULL 
                 && (CPLStrtod(argv[i+1], &endptr) != 0.0 || argv[i+1][0] == '0') )
             {
                 /* Check that last argument is really a number and not a filename */
                 /* looking like a number (see ticket #863) */
                 if (endptr && *endptr == 0)
-                    pasGCPs[nGCPCount-1].dfGCPZ = atof(argv[++i]);
+                    pasGCPs[nGCPCount-1].dfGCPZ = CPLAtofM(argv[++i]);
             }
 
             /* should set id and info? */
@@ -249,16 +249,16 @@ static int ProxyMain( int argc, char ** argv )
         else if( EQUAL(argv[i],"-a_nodata") && i < argc - 1 )
         {
             bSetNoData = TRUE;
-            dfNoDataReal = atof(argv[i+1]);
+            dfNoDataReal = CPLAtofM(argv[i+1]);
             i += 1;
         }   
 
         else if( EQUAL(argv[i],"-a_ullr") && i < argc - 4 )
         {
-            adfULLR[0] = atof(argv[i+1]);
-            adfULLR[1] = atof(argv[i+2]);
-            adfULLR[2] = atof(argv[i+3]);
-            adfULLR[3] = atof(argv[i+4]);
+            adfULLR[0] = CPLAtofM(argv[i+1]);
+            adfULLR[1] = CPLAtofM(argv[i+2]);
+            adfULLR[2] = CPLAtofM(argv[i+3]);
+            adfULLR[3] = CPLAtofM(argv[i+4]);
 
             bGotBounds = TRUE;
             
@@ -276,14 +276,14 @@ static int ProxyMain( int argc, char ** argv )
             if( i < argc-2 && ArgIsNumeric(argv[i+1]) )
             {
                 bHaveScaleSrc = TRUE;
-                dfScaleSrcMin = atof(argv[i+1]);
-                dfScaleSrcMax = atof(argv[i+2]);
+                dfScaleSrcMin = CPLAtofM(argv[i+1]);
+                dfScaleSrcMax = CPLAtofM(argv[i+2]);
                 i += 2;
             }
             if( i < argc-2 && bHaveScaleSrc && ArgIsNumeric(argv[i+1]) )
             {
-                dfScaleDstMin = atof(argv[i+1]);
-                dfScaleDstMax = atof(argv[i+2]);
+                dfScaleDstMin = CPLAtofM(argv[i+1]);
+                dfScaleDstMax = CPLAtofM(argv[i+2]);
                 i += 2;
             }
             else
@@ -320,10 +320,10 @@ static int ProxyMain( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-projwin") && i < argc-4 )
         {
-            dfULX = atof(argv[++i]);
-            dfULY = atof(argv[++i]);
-            dfLRX = atof(argv[++i]);
-            dfLRY = atof(argv[++i]);
+            dfULX = CPLAtofM(argv[++i]);
+            dfULY = CPLAtofM(argv[++i]);
+            dfLRX = CPLAtofM(argv[++i]);
+            dfLRY = CPLAtofM(argv[++i]);
         }   
 
         else if( EQUAL(argv[i],"-a_srs") && i < argc-1 )
@@ -672,9 +672,9 @@ static int ProxyMain( int argc, char ** argv )
     else
     {
         nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%' 
-                          ? atof(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
+                          ? CPLAtofM(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
         nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%' 
-                          ? atof(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
+                          ? CPLAtofM(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
     }
     
 /* ==================================================================== */
