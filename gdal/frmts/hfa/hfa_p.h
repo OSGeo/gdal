@@ -146,6 +146,8 @@ class HFABand
     void ReAllocBlock( int iBlock, int nSize );
     void NullBlock( void * );
 
+    CPLString   osOverName;
+
   public:
     		HFABand( HFAInfo_t *, HFAEntry * );
                 ~HFABand();
