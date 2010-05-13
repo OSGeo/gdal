@@ -392,14 +392,14 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-et") && i < argc-1 )
         {
-            dfErrorThreshold = atof(argv[++i]);
+            dfErrorThreshold = CPLAtofM(argv[++i]);
         }
         else if( EQUAL(argv[i],"-wm") && i < argc-1 )
         {
-            if( atof(argv[i+1]) < 10000 )
-                dfWarpMemoryLimit = atof(argv[i+1]) * 1024 * 1024;
+            if( CPLAtofM(argv[i+1]) < 10000 )
+                dfWarpMemoryLimit = CPLAtofM(argv[i+1]) * 1024 * 1024;
             else
-                dfWarpMemoryLimit = atof(argv[i+1]);
+                dfWarpMemoryLimit = CPLAtofM(argv[i+1]);
             i++;
         }
         else if( EQUAL(argv[i],"-srcnodata") && i < argc-1 )
@@ -412,8 +412,8 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-tr") && i < argc-2 )
         {
-            dfXRes = atof(argv[++i]);
-            dfYRes = fabs(atof(argv[++i]));
+            dfXRes = CPLAtofM(argv[++i]);
+            dfYRes = fabs(CPLAtofM(argv[++i]));
             if( dfXRes == 0 || dfYRes == 0 )
             {
                 printf( "Wrong value for -tr parameters\n");
@@ -475,10 +475,10 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-te") && i < argc-4 )
         {
-            dfMinX = atof(argv[++i]);
-            dfMinY = atof(argv[++i]);
-            dfMaxX = atof(argv[++i]);
-            dfMaxY = atof(argv[++i]);
+            dfMinX = CPLAtofM(argv[++i]);
+            dfMinY = CPLAtofM(argv[++i]);
+            dfMaxX = CPLAtofM(argv[++i]);
+            dfMaxY = CPLAtofM(argv[++i]);
             bCreateOutput = TRUE;
         }
         else if( EQUAL(argv[i],"-rn") )
@@ -853,8 +853,14 @@ int main( int argc, char ** argv )
             if( bHaveNodata )
             {
                 if( !bQuiet )
-                    printf( "Using internal nodata values (eg. %g) for image %s.\n",
-                            dfReal, papszSrcFiles[iSrc] );
+                {
+                    if (CPLIsNan(dfReal))
+                        printf( "Using internal nodata values (eg. nan) for image %s.\n",
+                                papszSrcFiles[iSrc] );
+                    else
+                        printf( "Using internal nodata values (eg. %g) for image %s.\n",
+                                dfReal, papszSrcFiles[iSrc] );
+                }
                 psWO->padfSrcNoDataReal = (double *) 
                     CPLMalloc(psWO->nBandCount*sizeof(double));
                 psWO->padfSrcNoDataImag = (double *) 

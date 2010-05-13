@@ -826,9 +826,10 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                         continue;
 
                     float fSampledValue = pafSrc[iX + iY * nReqXSize];
+                    if (CPLIsNan(fSampledValue))
+                        continue;
 
-                    if( bNoDataSet
-                        && ABS(fSampledValue-dfNoDataValue) < 0.0001 )
+                    if( bNoDataSet && EQUAL_TO_NODATA(fSampledValue, dfNoDataValue))
                         continue;
 
                     nPixelCount++;
@@ -913,8 +914,11 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 
     if( bNoDataSet )
     {
-        CPLSetXMLValue( psSrc, "NODATA", 
-                        CPLSPrintf("%g", dfNoDataValue) );
+        if (CPLIsNan(dfNoDataValue))
+            CPLSetXMLValue( psSrc, "NODATA", "nan");
+        else
+            CPLSetXMLValue( psSrc, "NODATA", 
+                            CPLSPrintf("%g", dfNoDataValue) );
     }
         
     if( bDoScaling )
@@ -973,7 +977,7 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     if( CPLGetXMLValue(psSrc, "NODATA", NULL) != NULL )
     {
         bNoDataSet = TRUE;
-        dfNoDataValue = atof(CPLGetXMLValue(psSrc, "NODATA", "0"));
+        dfNoDataValue = CPLAtofM(CPLGetXMLValue(psSrc, "NODATA", "0"));
     }
 
     if( CPLGetXMLValue(psSrc, "LUT", NULL) != NULL )
@@ -1150,7 +1154,9 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
             if (pafData)
             {
                 fResult = pafData[iX + iY * nOutXSize];
-                if( bNoDataSet && fResult == dfNoDataValue )
+                if( CPLIsNan(dfNoDataValue) && CPLIsNan(fResult) )
+                    continue;
+                if( bNoDataSet && EQUAL_TO_NODATA(fResult, dfNoDataValue) )
                     continue;
 
                 if (nColorTableComponent)
@@ -1169,9 +1175,14 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                     }
                     else
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "No entry %d.", (int)fResult);
-                        return CE_Failure;
+                        static int bHasWarned = FALSE;
+                        if (!bHasWarned)
+                        {
+                            bHasWarned = TRUE;
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                    "No entry %d.", (int)fResult);
+                        }
+                        continue;
                     }
                 }
 

@@ -524,7 +524,10 @@ int main( int argc, char ** argv )
         dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
         if( bGotNodata )
         {
-            printf( "  NoData Value=%.18g\n", dfNoData );
+            if (CPLIsNan(dfNoData))
+                printf( "  NoData Value=nan\n" );
+            else
+                printf( "  NoData Value=%.18g\n", dfNoData );
         }
 
         if( GDALGetOverviewCount(hBand) > 0 )
