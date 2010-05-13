@@ -241,7 +241,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
             nSrcNoDataCount = CSLCount(papszTokens);
             padfSrcNoData = (double *) CPLMalloc(sizeof(double) * nSrcNoDataCount);
             for(i=0;i<nSrcNoDataCount;i++)
-                padfSrcNoData[i] = atof(papszTokens[i]);
+                padfSrcNoData[i] = CPLAtofM(papszTokens[i]);
             CSLDestroy(papszTokens);
         }
     }
@@ -262,7 +262,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
             nVRTNoDataCount = CSLCount(papszTokens);
             padfVRTNoData = (double *) CPLMalloc(sizeof(double) * nVRTNoDataCount);
             for(i=0;i<nVRTNoDataCount;i++)
-                padfVRTNoData[i] = atof(papszTokens[i]);
+                padfVRTNoData[i] = CPLAtofM(papszTokens[i]);
             CSLDestroy(papszTokens);
         }
     }
@@ -1005,15 +1005,15 @@ int main( int nArgc, char ** papszArgv )
         }
         else if ( EQUAL(papszArgv[iArg],"-tr") && iArg + 2 < nArgc)
         {
-            we_res = atof(papszArgv[++iArg]);
-            ns_res = atof(papszArgv[++iArg]);
+            we_res = CPLAtofM(papszArgv[++iArg]);
+            ns_res = CPLAtofM(papszArgv[++iArg]);
         }
         else if ( EQUAL(papszArgv[iArg],"-te") && iArg + 4 < nArgc)
         {
-            xmin = atof(papszArgv[++iArg]);
-            ymin = atof(papszArgv[++iArg]);
-            xmax = atof(papszArgv[++iArg]);
-            ymax = atof(papszArgv[++iArg]);
+            xmin = CPLAtofM(papszArgv[++iArg]);
+            ymin = CPLAtofM(papszArgv[++iArg]);
+            xmax = CPLAtofM(papszArgv[++iArg]);
+            ymax = CPLAtofM(papszArgv[++iArg]);
         }
         else if ( EQUAL(papszArgv[iArg],"-addalpha") )
         {
