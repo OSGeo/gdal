@@ -35,6 +35,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_vsil_abstract_archive.obj \
 		cpl_vsil_tar.obj \
 		cpl_vsil_stdin.obj \
+		cpl_vsil_buffered_reader.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib
