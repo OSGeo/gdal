@@ -1,14 +1,14 @@
 
 OBJ	=	grddataset.obj grcdataset.obj northwood.obj
 
-EXTRAFLAGS = 	-I..\iso8211 -I..\..\ogr\ogrsf_frmts
+EXTRAFLAGS = 	-I..\..\ogr\ogrsf_frmts
 
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 clean:
 	-del *.obj
