@@ -152,7 +152,24 @@ vsi_l_offset VSISubFileHandle::Tell()
 size_t VSISubFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    return VSIFReadL( pBuffer, nSize, nCount, fp );
+    if (nSubregionSize == 0)
+        return VSIFReadL( pBuffer, nSize, nCount, fp );
+
+    if (nSize == 0)
+        return 0;
+
+    vsi_l_offset nCurOffset = VSIFTellL(fp);
+    if (nCurOffset >= nSubregionOffset + nSubregionSize)
+        return 0;
+
+    size_t nByteToRead = nSize * nCount;
+    if (nCurOffset + nByteToRead > nSubregionOffset + nSubregionSize)
+    {
+        int nRead = (int)VSIFReadL( pBuffer, 1, nSubregionOffset + nSubregionSize - nCurOffset, fp);
+        return nRead / nSize;
+    }
+    else
+        return VSIFReadL( pBuffer, nSize, nCount, fp );
 }
 
 /************************************************************************/
@@ -162,7 +179,24 @@ size_t VSISubFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 size_t VSISubFileHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    return VSIFWriteL( pBuffer, nSize, nCount, fp );
+    if (nSubregionSize == 0)
+        return VSIFWriteL( pBuffer, nSize, nCount, fp );
+
+    if (nSize == 0)
+        return 0;
+
+    vsi_l_offset nCurOffset = VSIFTellL(fp);
+    if (nCurOffset >= nSubregionOffset + nSubregionSize)
+        return 0;
+
+    size_t nByteToWrite = nSize * nCount;
+    if (nCurOffset + nByteToWrite > nSubregionOffset + nSubregionSize)
+    {
+        int nWritten = (int)VSIFWriteL( pBuffer, 1, nSubregionOffset + nSubregionSize - nCurOffset, fp);
+        return nWritten / nSize;
+    }
+    else
+        return VSIFWriteL( pBuffer, nSize, nCount, fp );
 }
 
 /************************************************************************/
