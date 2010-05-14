@@ -1284,14 +1284,26 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     
     const char *pszGFldName = NULL;
     
+    CPLString osCreateTable;
+    int bTemporary = CSLFetchNameValue( papszOptions, "TEMPORARY" ) != NULL &&
+                     CSLTestBoolean(CSLFetchNameValue( papszOptions, "TEMPORARY" ));
+    if (bTemporary)
+    {
+        CPLFree(pszSchemaName);
+        pszSchemaName = CPLStrdup("pg_temp_1");
+        osCreateTable.Printf("CREATE TEMPORARY TABLE \"%s\"", pszTableName);
+    }
+    else
+        osCreateTable.Printf("CREATE TABLE \"%s\".\"%s\"", pszSchemaName, pszTableName);
+    
     if( !bHavePostGIS )
     {
         osCommand.Printf(
-                 "CREATE TABLE \"%s\".\"%s\" ( "
+                 "%s ( "
                  "   OGC_FID SERIAL, "
                  "   WKB_GEOMETRY %s, "
                  "   CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
-                 pszSchemaName, pszTableName, pszGeomType, pszTableName );
+                 osCreateTable.c_str(), pszGeomType, pszTableName );
     }
     else if ( EQUAL(pszGeomType, "geography") )
     {
@@ -1302,18 +1314,18 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
         
         if (nSRSId)
             osCommand.Printf(
-                     "CREATE TABLE \"%s\".\"%s\" ( OGC_FID SERIAL, \"%s\" geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
-                     pszSchemaName, pszTableName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName );
+                     "%s ( OGC_FID SERIAL, \"%s\" geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
+                     osCreateTable.c_str(), pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName );
         else
             osCommand.Printf(
-                     "CREATE TABLE \"%s\".\"%s\" ( OGC_FID SERIAL, \"%s\" geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
-                     pszSchemaName, pszTableName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName );
+                     "%s ( OGC_FID SERIAL, \"%s\" geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
+                     osCreateTable.c_str(), pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName );
     }
     else
     {
         osCommand.Printf(
-                 "CREATE TABLE \"%s\".\"%s\" ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
-                 pszSchemaName, pszTableName, pszTableName );
+                 "%s ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
+                 osCreateTable.c_str(), pszTableName );
     }
 
     hResult = PQexec(hPGConn, osCommand.c_str());
