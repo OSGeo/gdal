@@ -1,0 +1,82 @@
+<html>
+<head>
+<title>PGDump (PostgreSQL SQL Dump)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>PostgreSQL SQL Dump</h1>
+
+(GDAL/OGR >= 1.8.0)<p>
+
+This write-only driver implements support for generating a SQL dump file that
+can later be injected into a live PostgreSQL instance. It supports
+PostgreSQL extended with the 
+<a href="http://www.postgis.org/">PostGIS</a> geometries.<p>
+
+This driver is very similar to the PostGIS shp2pgsql utility.<p>
+
+Most creation options are shared with the regular PostgreSQL driver.
+
+<h2>Creation options</h2>
+
+<h3>Dataset Creation Options</h3>
+
+<ul>
+<li> <b>LINEFORMAT</b>:
+By default files are created with the line
+termination conventions of the local platform (CR/LF on win32 or 
+LF on all other systems).  This may be overridden through use of the
+LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
+(DOS format) or <b>LF</b> (Unix format). <p>
+</ul>
+
+<h3>Layer Creation Options</h3>
+
+<ul>
+<li>
+<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to 
+one of "geometry" or "geography" (PostGIS >= 1.5) to force the type of geometry used for
+a table. "geometry" is the default value.<p>
+<li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
+layer to have their field names "laundered" into a form more compatible with
+PostgreSQL.  This converts to lower case and converts some special characters
+like "-" and "#" to "_".  If "NO" exact names are preserved.  
+The default value is "YES".  If enabled the table (layer) name will also be laundered.<p>
+<li> <b>PRECISION</b>: This may be "YES" to force new fields created on this
+layer to try and represent the width and precision information, if available
+using NUMERIC(width,precision) or CHAR(width) types.  If "NO" then the types
+FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
+<li> <b>DIM={2,3}</b>: Control the dimension of the layer.  Defaults to 3. 
+Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
+on the geometry dimension during loading.<p>
+<li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
+omitted it defaults to <i>wkb_geometry</i> for GEOM_TYPE=geometry, or <i>the_geog</i> for GEOM_TYPE=geography.<p>
+<li> <b>SCHEMA</b>: Set name of schema for new table.
+Using the same layer name in different schemas is supported, but not in the public schema and others..<p>
+<li> <b>SPATIAL_INDEX</b>:  Set to ON by default. Creates a spatial index on the geometry column
+to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is available).<p>
+<li> <b>TEMPORARY</b>: Set to OFF by default. Creates a temporary table instead of a permanent one.<p>
+<li> <b>WRITE_EWKT_GEOM</b>: Set to OFF by default. Turn to ON to write EWKT geometries instead of HEX geometries.
+This option will have no effect if PG_USE_COPY environment variable is to YES.<p>
+<li> <b>CREATE_TABLE</b>: Set to ON by default so that tables are recreated if necessary. Turn to OFF to disable this and use existing table structure.<p>
+</ul>
+
+<h3>Environment variables</h3>
+
+<ul>
+<li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
+COPY is less robust than INSERT, but significantly faster.</li><p>
+</ul>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="drv_pg.html">OGR PostgreSQL driver Page</a><p>
+<li> <a href="http://www.postgresql.org/">PostgreSQL Home Page</a><p>
+<li> <a href="http://www.postgis.org/">PostGIS</a><p>
+<li> <a href="http://www.postgis.org/support/wiki/index.php?OGR%20Examples">PostGIS / OGR Wiki Examples Page</a><p>
+</ul>
+
+</body>
+</html>

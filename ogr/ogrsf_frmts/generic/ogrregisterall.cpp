@@ -167,6 +167,8 @@ void OGRRegisterAll()
 #ifdef VFK_ENABLED
     RegisterOGRVFK();
 #endif
-
+#ifdef PGDUMP_ENABLED
+    RegisterOGRPGDump();
+#endif
 } /* OGRRegisterAll */
 
