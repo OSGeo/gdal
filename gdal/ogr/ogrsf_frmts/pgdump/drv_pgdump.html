@@ -60,6 +60,7 @@ to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is ava
 <li> <b>WRITE_EWKT_GEOM</b>: Set to OFF by default. Turn to ON to write EWKT geometries instead of HEX geometries.
 This option will have no effect if PG_USE_COPY environment variable is to YES.<p>
 <li> <b>CREATE_TABLE</b>: Set to ON by default so that tables are recreated if necessary. Turn to OFF to disable this and use existing table structure.<p>
+<li> <b>SRID</b>: Set the SRID of the geometry. Defaults to -1, unless a SRS is associated with the layer. In the case, if the EPSG code is mentionned, it will be used as the SRID. (Note: the spatial_ref_sys table must be correctly populated with the specified SRID) <p>
 </ul>
 
 <h3>Environment variables</h3>
