@@ -24,7 +24,11 @@ for each OGDI family available for each layer in the datastore.  For drivers
 such as VRF this can result in alot of layers.  Each of the layers has an
 OGR name based on the OGDI name plus an underscore and the family name.  For
 instance a layer might be called <b>watrcrsl@hydro(*)_line</b> if coming
-out of the VRF driver. 
+out of the VRF driver.<p>
+
+From GDAL/OGR 1.8.0, setting the <i>OGR_OGDI_LAUNDER_LAYER_NAMES</i> configuration
+option (or environment variable) to YES causes the layer names to be simplified. For example :
+<i>watrcrsl_hydro</i> instead of 'watrcrsl@hydro(*)_line'<p>
 
 Alternatively to accessing all the layers in a datastore, it is possible to 
 open a particular layer using a customized filename consisting
