@@ -268,6 +268,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     pszName = CPLStrdup( pszNewName );
+    char* pszConnectionName = CPLStrdup(pszName);
 
 /* -------------------------------------------------------------------- */
 /*      Determine if the connection string contains an optional         */
@@ -275,9 +276,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     char             *pszActiveSchemaStart;
     CPLString         osActiveSchema;
-    pszActiveSchemaStart = strstr(pszName, "active_schema=");
+    pszActiveSchemaStart = strstr(pszConnectionName, "active_schema=");
     if (pszActiveSchemaStart == NULL)
-        pszActiveSchemaStart = strstr(pszName, "ACTIVE_SCHEMA=");
+        pszActiveSchemaStart = strstr(pszConnectionName, "ACTIVE_SCHEMA=");
     if (pszActiveSchemaStart != NULL)
     {
         char           *pszActiveSchema;
@@ -287,9 +288,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         pszEnd = strchr(pszActiveSchemaStart, ' ');
         if( pszEnd == NULL )
-            pszEnd = pszName + strlen(pszName);
+            pszEnd = pszConnectionName + strlen(pszConnectionName);
 
-        // Remove ACTIVE_SCHEMA=xxxxx from pszName string
+        // Remove ACTIVE_SCHEMA=xxxxx from pszConnectionName string
         memmove( pszActiveSchemaStart, pszEnd, strlen(pszEnd) + 1 );
 
         pszActiveSchema[pszEnd - pszActiveSchemaStart - strlen("active_schema=")] = '\0';
@@ -308,9 +309,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     char             *pszSchemasStart;
     char            **papszSchemaList = NULL;
-    pszSchemasStart = strstr(pszName, "schemas=");
+    pszSchemasStart = strstr(pszConnectionName, "schemas=");
     if (pszSchemasStart == NULL)
-        pszSchemasStart = strstr(pszName, "SCHEMAS=");
+        pszSchemasStart = strstr(pszConnectionName, "SCHEMAS=");
     if (pszSchemasStart != NULL)
     {
         char           *pszSchemas;
@@ -320,9 +321,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         pszEnd = strchr(pszSchemasStart, ' ');
         if( pszEnd == NULL )
-            pszEnd = pszName + strlen(pszName);
+            pszEnd = pszConnectionName + strlen(pszConnectionName);
 
-        // Remove SCHEMAS=xxxxx from pszName string
+        // Remove SCHEMAS=xxxxx from pszConnectionName string
         memmove( pszSchemasStart, pszEnd, strlen(pszEnd) + 1 );
 
         pszSchemas[pszEnd - pszSchemasStart - strlen("schemas=")] = '\0';
@@ -353,9 +354,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     char              **papszGeomColumnNames=NULL;
 
     char             *pszTableStart;
-    pszTableStart = strstr(pszName, "tables=");
+    pszTableStart = strstr(pszConnectionName, "tables=");
     if (pszTableStart == NULL)
-        pszTableStart = strstr(pszName, "TABLES=");
+        pszTableStart = strstr(pszConnectionName, "TABLES=");
 
     if( pszTableStart != NULL )
     {
@@ -368,9 +369,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         pszEnd = strchr(pszTableStart, ' ');
         if( pszEnd == NULL )
-            pszEnd = pszName + strlen(pszName);
+            pszEnd = pszConnectionName + strlen(pszConnectionName);
 
-        // Remove TABLES=xxxxx from pszName string
+        // Remove TABLES=xxxxx from pszConnectionName string
         memmove( pszTableStart, pszEnd, strlen(pszEnd) + 1 );
 
         pszTableSpec[pszEnd - pszTableStart - 7] = '\0';
@@ -425,7 +426,10 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    hPGConn = PQconnectdb( pszName + (bUseBinaryCursor ? 4 : 3) );
+    hPGConn = PQconnectdb( pszConnectionName + (bUseBinaryCursor ? 4 : 3) );
+    CPLFree(pszConnectionName);
+    pszConnectionName = NULL;
+
     if( hPGConn == NULL || PQstatus(hPGConn) == CONNECTION_BAD )
     {
         CSLDestroy( papszSchemaList );
