@@ -35,6 +35,7 @@
 
 #define RMF_COMPRESSION_NONE    0
 #define RMF_COMPRESSION_LZW     1
+#define RMF_COMPRESSION_DEM     32
 
 enum RMFType
 {
@@ -146,7 +147,8 @@ class RMFDataset : public GDALDataset
 
     CPLErr          WriteHeader();
     static int      LZWDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
-    int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32 );
+    static int      DEMDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
+   int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32 );
 
   public:
                 RMFDataset();
@@ -178,6 +180,8 @@ class RMFRasterBand : public GDALRasterBand
     GUInt32     nBlockSize, nBlockBytes;
     GUInt32     nLastTileXBytes, nLastTileHeight;
     GUInt32     nDataSize;
+
+    CPLErr   ReadBuffer( GByte *, GUInt32 ) const;
 
   public:
 
