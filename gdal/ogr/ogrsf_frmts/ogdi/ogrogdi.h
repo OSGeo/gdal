@@ -100,6 +100,8 @@ class OGROGDIDataSource : public OGRDataSource
 
     char                *m_pszFullName;
 
+    int                 m_bLaunderLayerNames;
+
     void                IAddLayer( const char *pszLayerName, 
                                    ecs_Family eFamily );
 
@@ -121,6 +123,8 @@ class OGROGDIDataSource : public OGRDataSource
 
     OGROGDILayer       *GetCurrentLayer() { return m_poCurrentLayer; }
     void                SetCurrentLayer(OGROGDILayer* poLayer) { m_poCurrentLayer = poLayer ; }
+
+    int                 LaunderLayerNames() { return m_bLaunderLayerNames; }
 };
 
 /************************************************************************/
