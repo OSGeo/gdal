@@ -214,6 +214,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *      [4]  Scaling factor
  *      [5]  False Easting
  *      [6]  False Northing
+ *      [7]  Zone number
  * </pre>
  *
  * Particular projection uses different parameters, unused ones may be set to
@@ -257,7 +258,12 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
         case PAN_PROJ_UTM:
             {
-                long nZone = (long)TO_ZONE(padfPrjParams[3]);
+                long nZone;
+
+                if ( padfPrjParams[7] == 0.0 )
+                    nZone = (long)TO_ZONE(padfPrjParams[3]);
+                else
+                    nZone = (long) padfPrjParams[7];
 
                 // XXX: no way to determine south hemisphere. Always assume
                 // nothern hemisphere.
@@ -312,12 +318,24 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 // parameter, because usually it is not contained in the
                 // "Panorama" projection definition.
                 // FIXME: what to do with negative values?
-                long nZone = (long)TO_ZONE(padfPrjParams[3]);
+                long    nZone;
+                double  dfCenterLong;
+
+                if ( padfPrjParams[7] == 0.0 )
+                {
+                    nZone = (long)TO_ZONE(padfPrjParams[3]);
+                    dfCenterLong = TO_DEGREES * padfPrjParams[3];
+                }
+                else
+                {
+                    nZone = (long) padfPrjParams[7];
+                    dfCenterLong = 6 * nZone - 3;
+                }
 
                 padfPrjParams[5] = nZone * 1000000.0 + 500000.0;
                 padfPrjParams[4] = 1.0;
                 SetTM( TO_DEGREES * padfPrjParams[2],
-                       TO_DEGREES * padfPrjParams[3],
+                       dfCenterLong,
                        padfPrjParams[4],
                        padfPrjParams[5], padfPrjParams[6] );
             }
@@ -415,9 +433,9 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to lookup ellipsoid code %d, likely due to"
+                          "Failed to lookup ellipsoid code %ld, likely due to"
                           " missing GDAL gcs.csv\n"
-                          " file.  Falling back to use WGS84.", (int) iEllips );
+                          " file.  Falling back to use WGS84.", iEllips );
                 SetWellKnownGeogCS( "WGS84" );
             }
 
@@ -428,9 +446,9 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Wrong datum code %d. Supported datums are 1--%ld only.\n"
+                      "Wrong datum code %ld. Supported datums are 1--%ld only.\n"
                       "Setting WGS84 as a fallback.",
-                      (int) iDatum, NUMBER_OF_DATUMS - 1 );
+                      iDatum, NUMBER_OF_DATUMS - 1 );
             SetWellKnownGeogCS( "WGS84" );
         }
     }
@@ -756,7 +774,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 #ifdef DEBUG
         CPLDebug( "OSR_Panorama",
                   "Datum \"%s\" unsupported by \"Panorama\" GIS. "
-                  "Try to translate ellipsoid definition.", pszDatum );
+                  "Trying to translate an ellipsoid definition.", pszDatum );
 #endif
        
         for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
