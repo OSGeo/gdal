@@ -16,7 +16,10 @@ PostgreSQL extended with the
 
 This driver is very similar to the PostGIS shp2pgsql utility.<p>
 
-Most creation options are shared with the regular PostgreSQL driver.
+Most creation options are shared with the regular PostgreSQL driver.<p>
+
+The driver opens the output file through the VSIF Large API, so it is possible
+to specify /vsistdout/ as output file to output on the standard output.<p>
 
 <h2>Creation options</h2>
 
@@ -68,6 +71,27 @@ This option will have no effect if PG_USE_COPY environment variable is to YES.<p
 <ul>
 <li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
 COPY is less robust than INSERT, but significantly faster.</li><p>
+</ul>
+
+<h3>Example</h3>
+
+<ul>
+<li>
+Simple translation of a shapefile into PostgreSQL into a file abc.sql.  The table 'abc' will
+be created with the features from abc.shp and attributes from abc.dbf. The SRID is specified.
+PG_USE_COPY is set to YES to improve the peformance.<p>
+
+<pre>
+% ogr2ogr --config PG_USE_COPY YES -f PGDump abc.sql abc.shp -lco SRID=32631
+</pre>
+
+<li>
+Pipe the output of the PGDump driver into the psql utility.
+
+<pre>
+% ogr2ogr --config PG_USE_COPY YES -f PGDump /vsistdout/ abc.shp | psql -d my_dbname -f -
+</pre>
+
 </ul>
 
 <h3>See Also</h3>
