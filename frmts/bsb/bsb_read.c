@@ -791,7 +791,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
             }
 
             /* Prevent over-run of line data */
-            if (nRunCount < 0)
+            if (nRunCount < 0 || nRunCount > INT_MAX - (iPixel + 1))
             {
                 CPLError( CE_Failure, CPLE_FileIO, 
                           "Corrupted run count : %d", nRunCount );
