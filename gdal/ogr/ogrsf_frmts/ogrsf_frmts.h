@@ -338,6 +338,7 @@ void CPL_DLL RegisterOGRNAS();
 void CPL_DLL RegisterOGRGeoRSS();
 void CPL_DLL RegisterOGRGTM();
 void CPL_DLL RegisterOGRVFK();
+void CPL_DLL RegisterOGRPGDump();
 
 CPL_C_END
 
