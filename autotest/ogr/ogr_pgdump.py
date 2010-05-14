@@ -181,6 +181,80 @@ def ogr_pgdump_2():
         
     return 'success'
 
+
+###############################################################################
+# Create table from data/poly.shp without any geometry
+
+def ogr_pgdump_3():
+
+    try:
+        os.remove('tmp/tpoly.sql')
+    except:
+        pass
+
+    gdal.SetConfigOption( 'PG_USE_COPY', 'YES' )
+
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('tmp/tpoly.sql', options = [ 'LINEFORMAT=LF' ] )
+
+    ######################################################
+    # Create Layer
+    lyr = ds.CreateLayer( 'tpoly', geom_type = ogr.wkbNone, options = [ 'SCHEMA=another_schema' ] )
+
+    ######################################################
+    # Setup Schema
+    ogrtest.quick_create_layer_def( lyr,
+                                    [ ('AREA', ogr.OFTReal),
+                                      ('EAS_ID', ogr.OFTInteger),
+                                      ('PRFEDEA', ogr.OFTString),
+                                      ('SHORTNAME', ogr.OFTString, 8) ] )
+
+    ######################################################
+    # Copy in poly.shp
+
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+
+    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_lyr = shp_ds.GetLayer(0)
+    feat = shp_lyr.GetNextFeature()
+    gdaltest.poly_feat = []
+    
+    while feat is not None:
+
+        gdaltest.poly_feat.append( feat )
+
+        dst_feat.SetFrom( feat )
+        lyr.CreateFeature( dst_feat )
+
+        feat = shp_lyr.GetNextFeature()
+
+    dst_feat.Destroy()
+    ds.Destroy()
+
+    gdal.SetConfigOption( 'PG_USE_COPY', 'NO' )
+
+    f = open('tmp/tpoly.sql')
+    sql = f.read()
+    f.close()
+    
+    if sql.find("""DROP TABLE "another_schema"."tpoly" CASCADE;""") == -1 or \
+       sql.find("""DELETE FROM geometry_columns""") != -1 or \
+       sql.find("""BEGIN;""") == -1 or \
+       sql.find("""CREATE TABLE "another_schema"."tpoly" (    OGC_FID SERIAL,    CONSTRAINT "tpoly_pk" PRIMARY KEY (OGC_FID) );""") == -1 or \
+       sql.find("""SELECT AddGeometryColumn""") != -1 or \
+       sql.find("""CREATE INDEX "tpoly_geom_idx""") != -1 or \
+       sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "area" FLOAT8;""") == -1 or \
+       sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "eas_id" INTEGER;""") == -1 or \
+       sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;""") == -1 or \
+       sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" CHAR(8);""") == -1 or \
+       sql.find("""COPY "another_schema"."tpoly" ("area", "eas_id", "prfedea", "shortname") FROM STDIN;""") == -1 or \
+       sql.find("""5268.813	170	35043413	\N""") == -1 or \
+       sql.find("""\.""") == -1 or \
+       sql.find("""COMMIT;""") == -1 :
+        print(sql)
+        return 'fail'
+        
+    return 'success'
+    
 ###############################################################################
 # Cleanup
 
@@ -195,6 +269,7 @@ def ogr_pgdump_cleanup():
 gdaltest_list = [ 
     ogr_pgdump_1,
     ogr_pgdump_2,
+    ogr_pgdump_3,
     ogr_pgdump_cleanup ]
 
 
