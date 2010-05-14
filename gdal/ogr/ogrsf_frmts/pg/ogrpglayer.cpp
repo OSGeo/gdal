@@ -1307,7 +1307,8 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Do we need to fetch more records?                               */
 /* -------------------------------------------------------------------- */
-    if( nResultOffset >= PQntuples(hCursorResult)
+    if( PQntuples(hCursorResult) > 0 &&
+        nResultOffset >= PQntuples(hCursorResult)
         && bCursorActive )
     {
         OGRPGClearResult( hCursorResult );
