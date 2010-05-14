@@ -472,10 +472,27 @@ void OGROGDILayer::BuildFeatureDefn()
         eLayerGeomType = wkbUnknown;
         break;
     }
-
-    m_poFeatureDefn = new OGRFeatureDefn(CPLSPrintf("%s_%s", 
+    
+    char* pszFeatureDefnName;
+    if (m_poODS->LaunderLayerNames())
+    {
+        pszFeatureDefnName = CPLStrdup(m_pszOGDILayerName);
+        char* pszAt = strchr(pszFeatureDefnName, '@');
+        if (pszAt)
+            *pszAt = '_';
+        char* pszLeftParenthesis = strchr(pszFeatureDefnName, '(');
+        if (pszLeftParenthesis)
+            *pszLeftParenthesis = '\0';
+    }
+    else
+        pszFeatureDefnName = CPLStrdup(CPLSPrintf("%s_%s", 
                                                     m_pszOGDILayerName, 
                                                     pszGeomName ));
+
+    m_poFeatureDefn = new OGRFeatureDefn(pszFeatureDefnName);
+    CPLFree(pszFeatureDefnName);
+    pszFeatureDefnName = NULL;
+    
     m_poFeatureDefn->SetGeomType(eLayerGeomType);
     m_poFeatureDefn->Reference();
 
