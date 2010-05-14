@@ -131,7 +131,7 @@ CPLErr RMFRasterBand::ReadBuffer( GByte *pabyBuf, GUInt32 nBytes ) const
 #ifdef CPL_MSB
     if ( poGDS->eRMFType == RMFT_MTW )
     {
-        GUint32     i;
+        GUInt32     i;
 
         if ( poGDS->sHeader.nBitDepth == 16 )
         {
