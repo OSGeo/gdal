@@ -395,7 +395,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             SetLocalCS( CPLString().Printf("\"Panorama\" projection number %ld",
                                    iProjSys) );
             break;
-            
+
     }
 
 /* -------------------------------------------------------------------- */
@@ -435,21 +435,21 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to lookup ellipsoid code %ld, likely due to"
                           " missing GDAL gcs.csv\n"
-                          " file.  Falling back to use WGS84.", iEllips );
-                SetWellKnownGeogCS( "WGS84" );
+                          " file.  Falling back to use Pulkovo 42.", iEllips );
+                SetWellKnownGeogCS( "EPSG:4284" );
             }
 
             if ( pszName )
                 CPLFree( pszName );
         }
-        
+
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Wrong datum code %ld. Supported datums are 1--%ld only.\n"
-                      "Setting WGS84 as a fallback.",
+                      "Falling back to use Pulkovo 42.",
                       iDatum, NUMBER_OF_DATUMS - 1 );
-            SetWellKnownGeogCS( "WGS84" );
+            SetWellKnownGeogCS( "EPSG:4284" );
         }
     }
 
