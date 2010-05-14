@@ -197,6 +197,7 @@ using the -overwrite option of ogr2ogr and -lco SCHEMA= option at the same time 
 will not understand that the existing layer must be destroyed in the specified schema. Use the -nln option of ogr2ogr instead, or better the active_schema connection string. See below example.<p>
 <li> <b>SPATIAL_INDEX</b>: (From GDAL 1.6.0) Set to ON by default. Creates a spatial index on the geometry column
 to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is available).<p>
+<li> <b>TEMPORARY</b>: (From GDAL 1.8.0) Set to OFF by default. Creates a temporary table instead of a permanent one.<p>
 </ul>
 
 <h3>Environment variables</h3>
