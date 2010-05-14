@@ -791,11 +791,20 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
             }
 
             /* Prevent over-run of line data */
-            if (nRunCount < 0 || nRunCount > psInfo->nXSize)
+            if (nRunCount < 0)
             {
                 CPLError( CE_Failure, CPLE_FileIO, 
                           "Corrupted run count : %d", nRunCount );
                 return FALSE;
+            }
+            if (nRunCount > psInfo->nXSize)
+            {
+                static int bHasWarned = FALSE;
+                if (!bHasWarned)
+                {
+                    CPLDebug("BSB", "Too big run count : %d", nRunCount );
+                    bHasWarned = TRUE;
+                }
             }
 
             if( iPixel + nRunCount + 1 > psInfo->nXSize )
