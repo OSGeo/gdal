@@ -2486,6 +2486,8 @@ void swq_select_free( swq_select *select_info )
     {
         if( select_info->column_defs[i].field_name != NULL )
             SWQ_FREE( select_info->column_defs[i].field_name );
+        if( select_info->column_defs[i].field_alias != NULL )
+            SWQ_FREE( select_info->column_defs[i].field_alias );
         if( select_info->column_defs[i].col_func_name != NULL )
             SWQ_FREE( select_info->column_defs[i].col_func_name );
 
