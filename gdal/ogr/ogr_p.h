@@ -86,6 +86,8 @@ char CPL_DLL * OGRGetXMLDateTime(int year, int month, int day,
                                  int hour, int minute, int second, int TZFlag);
 char CPL_DLL * OGRGetXML_UTF8_EscapedString(const char* pszString);
 
+int OGRCompareDate(   OGRField *psFirstTuple,
+                      OGRField *psSecondTuple ); /* used by ogr_gensql.cpp and ogrfeaturequery.cpp */
 
 /* General utility option processing. */
 int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions );

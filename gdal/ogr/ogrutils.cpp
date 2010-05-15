@@ -1191,6 +1191,48 @@ char* OGRGetXML_UTF8_EscapedString(const char* pszString)
 }
 
 /************************************************************************/
+/*                        OGRCompareDate()                              */
+/************************************************************************/
+
+int OGRCompareDate(   OGRField *psFirstTuple,
+                      OGRField *psSecondTuple )
+{
+    /* FIXME? : We ignore TZFlag */
+
+    if (psFirstTuple->Date.Year < psSecondTuple->Date.Year)
+        return -1;
+    else if (psFirstTuple->Date.Year > psSecondTuple->Date.Year)
+        return 1;
+
+    if (psFirstTuple->Date.Month < psSecondTuple->Date.Month)
+        return -1;
+    else if (psFirstTuple->Date.Month > psSecondTuple->Date.Month)
+        return 1;
+
+    if (psFirstTuple->Date.Day < psSecondTuple->Date.Day)
+        return -1;
+    else if (psFirstTuple->Date.Day > psSecondTuple->Date.Day)
+        return 1;
+
+    if (psFirstTuple->Date.Hour < psSecondTuple->Date.Hour)
+        return -1;
+    else if (psFirstTuple->Date.Hour > psSecondTuple->Date.Hour)
+        return 1;
+
+    if (psFirstTuple->Date.Minute < psSecondTuple->Date.Minute)
+        return -1;
+    else if (psFirstTuple->Date.Minute > psSecondTuple->Date.Minute)
+        return 1;
+
+    if (psFirstTuple->Date.Second < psSecondTuple->Date.Second)
+        return -1;
+    else if (psFirstTuple->Date.Second > psSecondTuple->Date.Second)
+        return 1;
+
+    return 0;
+}
+
+/************************************************************************/
 /*                        OGRFastAtof()                                 */
 /************************************************************************/
 
