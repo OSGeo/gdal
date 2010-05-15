@@ -204,7 +204,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *       9: WGS, 1984 (GPS)
  * </pre>
  *
- * @param padfPrjParams Array of 7 coordinate system parameters:
+ * @param padfPrjParams Array of 8 coordinate system parameters:
  *
  * <pre>
  *      [0]  Latitude of the first standard parallel (radians)
@@ -240,7 +240,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
     {
         int     i;
 
-        padfPrjParams = (double *)CPLMalloc( 7 * sizeof(double) );
+        padfPrjParams = (double *)CPLMalloc( 8 * sizeof(double) );
         if ( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
         for ( i = 0; i < 7; i++ )
