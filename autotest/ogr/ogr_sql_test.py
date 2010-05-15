@@ -299,8 +299,8 @@ def ogr_sql_13():
 def ogr_sql_14():
 
     expect = [
-        'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1.ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2.ogr-pen-0")',
-        'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1.ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2.ogr-pen-0")' ]
+        'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")',
+        'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")' ]
 
     ds = ogr.Open( 'data/small.mif' )
     sql_lyr = ds.ExecuteSQL( "select ogr_style from small where ogr_geom_wkt LIKE 'POLYGON%'" )
