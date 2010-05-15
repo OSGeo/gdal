@@ -242,6 +242,24 @@ def ogr_join_10():
         return 'fail'
     
 ###############################################################################
+# Test join on string field
+
+def ogr_join_11():
+
+    expect = ['_168_','_179_','_171_','_170_','_165_','_158_','_166_']
+    
+    sql_lyr = gdaltest.ds.ExecuteSQL( 	\
+        'SELECT il.*, il2.* FROM idlink il LEFT JOIN idlink2 il2 ON il.NAME = il2.NAME' )
+
+    tr = ogrtest.check_features_against_list( sql_lyr, 'il2.NAME', expect )
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+###############################################################################
 
 def ogr_join_cleanup():
     gdaltest.lyr = None
@@ -261,6 +279,7 @@ gdaltest_list = [
     ogr_join_8,
     ogr_join_9,
     ogr_join_10,
+    ogr_join_11,
     ogr_join_cleanup ]
 
 if __name__ == '__main__':
