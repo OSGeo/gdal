@@ -639,7 +639,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 
     for( iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
     {
-        char szFilter[512];
+        CPLString osFilter;
 
         swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
         OGRLayer *poJoinLayer = papoTableLayers[psJoinInfo->secondary_table];
@@ -649,7 +649,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             continue;
 
         // Prepare attribute query to express fetching on the joined variable
-        sprintf( szFilter, "%s = ", 
+        osFilter.Printf("%s = ", 
                  poJoinLayer->GetLayerDefn()->GetFieldDefn( 
                      psJoinInfo->secondary_field )->GetNameRef() );
 
@@ -660,11 +660,11 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
                     psJoinInfo->primary_field )->GetType() )
         {
           case OFTInteger:
-            sprintf( szFilter+strlen(szFilter), "%d", psSrcField->Integer );
+            osFilter += CPLString().Printf("%d", psSrcField->Integer );
             break;
 
           case OFTReal:
-            sprintf( szFilter+strlen(szFilter), "%.16g", psSrcField->Real );
+            osFilter += CPLString().Printf("%.16g", psSrcField->Real );
             break;
 
           case OFTString:
@@ -672,14 +672,9 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
               char *pszEscaped = CPLEscapeString( psSrcField->String, 
                                                   strlen(psSrcField->String),
                                                   CPLES_SQL );
-              if( strlen(pszEscaped) + strlen(szFilter) < sizeof(szFilter)-3 )
-                  sprintf( szFilter+strlen(szFilter), "\'%s\'", 
-                           pszEscaped );
-              else
-              {
-                  strcat( szFilter, "' '" );
-                  CPLDebug( "GenSQL", "Skip long join field value." );
-              }
+              osFilter += "'";
+              osFilter += pszEscaped;
+              osFilter += "'";
               CPLFree( pszEscaped );
           }
           break;
@@ -690,7 +685,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         }
 
         poJoinLayer->ResetReading();
-        if( poJoinLayer->SetAttributeFilter( szFilter ) != OGRERR_NONE )
+        if( poJoinLayer->SetAttributeFilter( osFilter.c_str() ) != OGRERR_NONE )
             continue;
 
         // Fetch first joined feature.
