@@ -604,6 +604,52 @@ def ogr_sql_25():
     return 'success'
 
 ###############################################################################
+# Test query 'SELECT 'literal_value' AS column_name FROM a_table'
+#
+#def ogr_sql_26():
+#
+#    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+#    mem_lyr = mem_ds.CreateLayer( "my_layer")
+#
+#    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
+#    mem_lyr.CreateFeature( feat )
+#
+#    sql_lyr = mem_ds.ExecuteSQL("SELECT 'literal_value' AS my_column FROM my_layer")
+#    if sql_lyr.GetFeatureCount() != 1:
+#        return 'fail'
+#    feat = sql_lyr.GetNextFeature()
+#    if feat.GetFieldAsString('my_column') != 'literal_value':
+#        return 'fail'
+#    mem_ds.ReleaseResultSet(sql_lyr)
+#
+#    mem_ds = None
+#
+#    return 'success'
+
+###############################################################################
+
+###############################################################################
+# Test query on datetime columns
+#
+def ogr_sql_27():
+
+    ds = ogr.Open('data/testdatetime.csv')
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM testdatetime WHERE " \
+                            "timestamp < '2010/04/01 00:00:00' AND " \
+                            "timestamp > '2009/11/15 11:59:59' AND " \
+                            "timestamp != '2009/12/31 23:00:00' " \
+                            "ORDER BY timestamp DESC")
+
+    tr = ogrtest.check_features_against_list( sql_lyr, 'name', [ 'foo5', 'foo4'] )
+
+    ds.ReleaseResultSet( sql_lyr )
+    ds = None
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -639,6 +685,8 @@ gdaltest_list = [
     ogr_sql_23,
     ogr_sql_24,
     ogr_sql_25,
+#    ogr_sql_26,
+    ogr_sql_27,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
