@@ -1,5 +1,8 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
 <title>MapInfo TAB and MIF/MID</title>
 </head>
 
@@ -7,83 +10,107 @@
 
 <h1>MapInfo TAB and MIF/MID</h1>
 
+<p>
 MapInfo datasets in native (TAB) format and in interchange (MIF/MID) format
 are supported for reading and writing.  Update of existing files is not 
-currently supported.<p>
+currently supported.
+</p>
 
+<p>
 Note: In the rest of this document "MIF/MID File" is used to refer to a
 pair of .MIF + .MID files, and "TAB file" refers to the set of files for a 
 MapInfo table in binary form (usually with extensions .TAB, .DAT, .MAP, .ID,
-.IND).<p>
+.IND).
+</p>
 
+<p>
 The MapInfo driver treats a whole directory of files as a dataset, and 
 a single file within that directory as a layer.  In this case the directory
-name should be used as the dataset name.  <p>
+name should be used as the dataset name.
+</p>
 
+<p>
 However, it is also possible to use one of the files (.tab or .mif) in a 
 MapInfo set as the dataset name, and then it will be treated as a dataset 
-with one single layer.<p>
+with one single layer.
+</p>
 
-MapInfo coordinate system information is supported for reading and writing.<p>
+<p>
+MapInfo coordinate system information is supported for reading and writing.
+</p>
 
 
 <h2>Creation Issues</h2>
 
+<p>
 The TAB File format requires that the bounds (geographical extents) of a new
 file be set before writing the first feature.  However, there is currently
 no clean mechanism to set the default bounds of a new file through the 
-OGRDataSource interface. <P>
+OGRDataSource interface.
+</p>
 
+<p>
 We should fix the driver at some point to set valid default bounds for 
 each projection, but for the time being, the MapInfo driver sets the following
 default bounds when a new layer is created:
-<UL>
-  <LI>For a file in LAT/LON (geographic) coordinates: BOUNDS (-180, -90) (180, 90)
-  <LI>For any other projection: BOUNDS (-30000000, -15000000) (30000000, 15000000)
-</UL>
-<p>
+</p>
+<ul>
+  <li>For a file in LAT/LON (geographic) coordinates: BOUNDS (-180, -90) (180, 90)</li>
+  <li>For any other projection: BOUNDS (-30000000, -15000000) (30000000, 15000000)</li>
+</ul>
 
+
+<p>
 If no coordinate system is provided when creating a layer, the projection
 case is used, not geographic which can result in very low precision if
 the coordinates really are geographic.  You can add "-a_srs WGS84" to the
-<b>ogr2ogr</b> commandline during a translation to force geographic mode.<p>
+<b>ogr2ogr</b> commandline during a translation to force geographic mode.
+</p>
 
-MapInfo feature attributes suffer a number of limitations:<P>
-
+<p>
+MapInfo feature attributes suffer a number of limitations:
+</p>
 <ul>
 <li> Only Integer, Real and String field types can be created.  The various
-list, and binary field types cannot be created.<p>
-
+list, and binary field types cannot be created.</li>
 <li> For String fields, the field width is used to establish storage size in
 the .dat file.  This means that strings longer than the field width will be
-truncated.<p>
-
-<li> String fields without an assigned width are treated as 254 characters.<p>
-
+truncated</li>
+<li> String fields without an assigned width are treated as 254 characters.</li>
 </ul>
 
 <H3>Dataset Creation Options</h3>
-<p>
 
 <ul>
-<li><b>FORMAT=MIF</b>: To create MIF/MID instead of TAB files (TAB is the default).
+<li><b>FORMAT=MIF</b>: To create MIF/MID instead of TAB files (TAB is the default).</li>
 </ul>
-<p>
 
 <H3>Layer Creation Options</h3>
-<p>
 
 <ul>
-<li><b>SPATIAL_INDEX_MODE=QUICK</b>: Use this to turn on "quick spatial index mode". The default behavior of MITAB since GDAL v1.5.0 is to generate an optimized spatial index, but this results in slower write speed than what we used to get with GDAL 1.4.x and older. Applications that want faster write speed and do not care about the performance of spatial queries on the resulting file can use this option to require the creation of a non-optimal spatial index (actually emulating the type of spatial index produced by OGR's TAB driver before GDAL 1.5.0). In this mode writing files can be about 5 times faster, but spatial queries can be up to 30 times slower.
+<li><b>SPATIAL_INDEX_MODE=QUICK</b>: Use this to turn on "quick spatial index
+mode". The default behavior of MITAB since GDAL v1.5.0 is to generate an
+optimized spatial index, but this results in slower write speed than what we
+used to get with GDAL 1.4.x and older. Applications that want faster write
+speed and do not care about the performance of spatial queries on the resulting
+file can use this option to require the creation of a non-optimal spatial index
+(actually emulating the type of spatial index produced by OGR's TAB driver
+before GDAL 1.5.0). In this mode writing files can be about 5 times faster, but
+spatial queries can be up to 30 times slower.</li>
 </ul>
+
+<h3>Compatability</h3>
+
 <p>
-
-
-
+Before v1.8.0 , the driver was incorrectly using a "." as the delimiter for id:
+parameters and starting with v1.8.0 the driver uses a comma as the delimiter
+as per the OGR Feature Style Specification.
+</p>
 <h3>See Also</h3>
 
+
 <ul>
-<li> <a href="http://mitab.maptools.org/">MITAB Page</a><p>
+<li> <a href="http://mitab.maptools.org/">MITAB Page</a></li>
 </ul>
 
 </body>
