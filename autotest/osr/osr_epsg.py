@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_pm.py 11065 2007-03-24 09:35:32Z mloskot $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test aspects of EPSG code lookup.
@@ -48,6 +48,7 @@ def osr_epsg_1():
 
     if abs(srs.GetProjParm('central_meridian') - -3.4523333333333) > 0.000005:
         gdaltest.post_reason( 'Wrong central meridian, override missed?' )
+        print(srs.ExportToPrettyWkt())
         return 'fail'
     
     return 'success'
@@ -64,7 +65,29 @@ def osr_epsg_2():
     if abs(float(srs.GetAttrValue( 'TOWGS84', 6)) \
            - 2.4232) > 0.0005:
         gdaltest.post_reason( 'Wrong TOWGS84, override missed?' )
+        print(srs.ExportToPrettyWkt())
         return 'fail'
+    
+    return 'success'
+
+###############################################################################
+#	Check that various EPSG lookups based on Pulvoko 1942 have the
+#       towgs84 values set properly (#3579)
+
+def osr_epsg_3():
+    
+    for epsg in [3120,2172,2173,2174,2175,3333,3334,3335,3329,3330,3331,3332,3328,4179]:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG( epsg )
+    
+        expected_towgs84 = [33.4,-146.6,-76.3,-0.359,-0.053,0.844,-0.84]
+    
+        for i in range(6):
+            if abs(float(srs.GetAttrValue( 'TOWGS84', i)) \
+                - expected_towgs84[i]) > 0.0005:
+                gdaltest.post_reason( 'For EPSG:%d. Wrong TOWGS84, override missed?' % epsg )
+                print(srs.ExportToPrettyWkt())
+                return 'fail'
     
     return 'success'
 
@@ -73,6 +96,7 @@ def osr_epsg_2():
 gdaltest_list = [ 
     osr_epsg_1,
     osr_epsg_2,
+    osr_epsg_3,
     None ]
 
 if __name__ == '__main__':
