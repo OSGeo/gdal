@@ -13,6 +13,10 @@ PostgreSQL extended with the
 Some support exists in the driver for use with PostgreSQL without PostGIS
 but with less functionalities.<p>
 
+This driver requires a connection to a Postgres database. If you want to
+prepare a SQL dump to inject it later into a Postgres database, you can
+instead use the <a href="drv_pgdump.html">PostgreSQL SQL Dump driver</a> (GDAL/OGR >= 1.8.0)<p>
+
 <h2>Connecting to a database</h2>
 
 To connect to a Postgres datasource, use a connection string specifying the database name,
@@ -360,6 +364,7 @@ by setting the configuration option PG_LIST_ALL_TABLES to YES. (e.g. ogrinfo --c
 <h3>See Also</h3>
 
 <ul>
+<li> <a href="drv_pgdump.html">OGR PostgreSQL SQL Dump driver Page</a><p>
 <li> <a href="http://www.postgresql.org/">PostgreSQL Home Page</a><p>
 <li> <a href="http://www.postgis.org/">PostGIS</a><p>
 <li> <a href="http://trac.osgeo.org/postgis/wiki/UsersWikiOGR">PostGIS / OGR Wiki Examples Page</a><p>
