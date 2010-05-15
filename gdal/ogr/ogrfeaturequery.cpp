@@ -113,6 +113,12 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
             paeFieldTypes[iField] = SWQ_STRING;
             break;
 
+          case OFTDate:
+          case OFTTime:
+          case OFTDateTime:
+            paeFieldTypes[iField] = SWQ_TIMESTAMP;
+            break;
+
           default:
             paeFieldTypes[iField] = SWQ_OTHER;
             break;
@@ -377,6 +383,42 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
                       op->operation );
             return FALSE;
         }
+
+      case SWQ_TIMESTAMP:
+      {
+        OGRField sField2;
+        int bField1Valid = !(psField->Set.nMarker1 == OGRUnsetMarker
+                             && psField->Set.nMarker2 == OGRUnsetMarker );
+        int bField2Valid = op->string_value[0] != '\0' &&
+                           OGRParseDate(op->string_value, &sField2, 0);
+        int nRes = OGRCompareDate(psField, &sField2);
+        switch( op->operation )
+        {
+          case SWQ_EQ:
+            return (bField1Valid && bField2Valid && nRes == 0) ||
+                   (!bField1Valid && !bField2Valid);
+          case SWQ_NE:
+            return !((bField1Valid && bField2Valid && nRes == 0) ||
+                     (!bField1Valid && !bField2Valid));
+
+          case SWQ_LT:
+            return (bField1Valid && bField2Valid && nRes < 0);
+          case SWQ_GT:
+            return (bField1Valid && bField2Valid && nRes > 0);
+          case SWQ_LE:
+            return (bField1Valid && bField2Valid && nRes <= 0);
+          case SWQ_GE:
+            return (bField1Valid && bField2Valid && nRes >= 0);
+          case SWQ_ISNULL:
+            return !poFeature->IsFieldSet( op->field_index );
+
+          default:
+            CPLDebug( "OGRFeatureQuery", 
+                      "Illegal operation (%d) on timestamp field.",
+                      op->operation );
+            return FALSE;
+        }
+      }
 
       case SWQ_OTHER:
         switch( op->operation )
