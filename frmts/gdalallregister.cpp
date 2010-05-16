@@ -257,6 +257,11 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JP2ECW();
 #endif
 
+#ifdef FRMT_openjpeg
+// JPEG2000 support using OpenJPEG library
+    GDALRegister_JP2OpenJPEG();
+#endif
+
 #ifdef FRMT_jpeg2000
 // JPEG2000 support using JasPer toolkit
 // This one should always be placed after other JasPer supported formats,
@@ -449,6 +454,7 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_kmlsuperoverlay
     GDALRegister_KMLSUPEROVERLAY();
 #endif
+
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
