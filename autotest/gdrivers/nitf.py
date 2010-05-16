@@ -1186,7 +1186,10 @@ def nitf_46_jp2kak():
 
 def nitf_46_jasper():
     return nitf_46('JPEG2000')
-    
+
+def nitf_46_openjpeg():
+    return nitf_46('JP2OpenJPEG')
+
 ###############################################################################
 # Check reading of rsets.
 
@@ -2069,7 +2072,7 @@ def nitf_online_14():
 ###############################################################################
 # Test opening a IC=C8 NITF file with the various JPEG2000 drivers
 
-def nitf_online_15(driver_to_test):
+def nitf_online_15(driver_to_test, expected_cs = 1054):
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/p0_01/p0_01a.ntf', 'p0_01a.ntf'):
         return 'skip'
 
@@ -2085,7 +2088,7 @@ def nitf_online_15(driver_to_test):
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
 
     ds = gdal.Open('tmp/cache/p0_01a.ntf')
-    if ds.GetRasterBand(1).Checksum() == 1054:
+    if ds.GetRasterBand(1).Checksum() == expected_cs:
         ret = 'success'
     else:
         print(ds.GetRasterBand(1).Checksum())
@@ -2108,6 +2111,11 @@ def nitf_online_15_jp2kak():
 
 def nitf_online_15_jasper():
     return nitf_online_15('JPEG2000')
+
+# For some reason OpenJPEG doesn't preserve the checksum,
+# but the image looks good visually
+def nitf_online_15_openjpeg():
+    return nitf_online_15('JP2OpenJPEG', expected_cs = 877)
 
 ###############################################################################
 # Test opening a IC=C8 NITF file which has 256-entry palette/LUT in both JP2 Header and image Subheader
@@ -2166,6 +2174,9 @@ def nitf_online_16_jp2kak():
 def nitf_online_16_jasper():
     return nitf_online_16('JPEG2000')
 
+# color table unsupported by OpenJPEG
+def nitf_online_16_openjpeg():
+    return nitf_online_16('JP2OpenJPEG')
 
 ###############################################################################
 # Test opening a IC=C8 NITF file which has 256-entry/LUT in Image Subheader, JP2 header completely removed
@@ -2215,6 +2226,10 @@ def nitf_online_17_jp2kak():
 
 def nitf_online_17_jasper():
     return nitf_online_17('JPEG2000')
+
+# color table unsupported by OpenJPEG
+def nitf_online_17_openjpeg():
+    return nitf_online_17('JP2OpenJPEG')
 
 ###############################################################################
 # Test polar stereographic CADRG tile.  
@@ -2612,6 +2627,7 @@ gdaltest_list = [
     #nitf_46_jp2mrsid,
     #nitf_46_jp2kak,
     nitf_46_jasper,
+    #nitf_46_openjpeg,
     nitf_47,
     nitf_48,
     nitf_49,
@@ -2647,14 +2663,17 @@ gdaltest_list = [
     nitf_online_15_jp2mrsid,
     nitf_online_15_jp2kak,
     nitf_online_15_jasper,
+    nitf_online_15_openjpeg,
     nitf_online_16_jp2ecw,
     nitf_online_16_jp2mrsid,
     nitf_online_16_jp2kak,
     nitf_online_16_jasper,
+    #nitf_online_16_openjpeg,
     nitf_online_17_jp2ecw,
     nitf_online_17_jp2mrsid,
     nitf_online_17_jp2kak,
     nitf_online_17_jasper,
+    #nitf_online_17_openjpeg,
     nitf_online_18,
     nitf_online_19,
     nitf_online_20,
