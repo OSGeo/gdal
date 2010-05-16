@@ -1374,6 +1374,50 @@ fi
 AC_SUBST([HAVE_JASPER],$HAVE_JASPER)
 AC_SUBST([JASPER_FLAGS],$JASPER_FLAGS)
 
+
+dnl ---------------------------------------------------------------------------
+dnl Select a OpenJPEG Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(openjpeg,[  --with-openjpeg[=ARG]     Include JPEG-2000 support via OpenJPEG v2 library (ARG=path)],,)
+
+if test "$with_openjpeg" = "no" ; then
+
+  HAVE_OPENJPEG=no
+
+  AC_MSG_NOTICE([OpenJPEG (JPEG2000) support disabled.])
+
+elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
+
+  AC_CHECK_LIB(openjpeg,opj_decode_tile_data,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
+  AC_CHECK_HEADERS(openjpeg.h)
+
+  if test "$ac_cv_header_openjpeg_h" = "no"; then
+    HAVE_OPENJPEG=no
+  fi
+
+  if test "$HAVE_OPENJPEG" = "yes" ; then
+    LIBS="-lopenjpeg $LIBS"
+  fi
+else
+
+  HAVE_OPENJPEG=yes
+  LIBS="-L$with_openjpeg -L$with_openjpeg/lib -lopenjpeg $LIBS"
+  EXTRA_INCLUDES="-I$with_openjpeg -I$with_openjpeg/include $EXTRA_INCLUDES"
+
+  AC_CHECK_LIB(openjpeg,opj_decode_tile_data,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
+
+  if test "$HAVE_OPENJPEG" = "yes" ; then
+    AC_MSG_NOTICE([using OpenJPEG library from $with_openjpeg.])
+  fi
+fi
+
+if test "$HAVE_OPENJPEG" != "no" ; then
+  OPT_GDAL_FORMATS="openjpeg $OPT_GDAL_FORMATS"
+fi
+
+AC_SUBST([HAVE_OPENJPEG],$HAVE_OPENJPEG)
+
 dnl ---------------------------------------------------------------------------
 dnl Select a ECW Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
@@ -2631,6 +2675,7 @@ if test "x$HAVE_JASPER_UUID" != "x" ; then
 else
   LOC_MSG([  JasPer support:            ${HAVE_JASPER}])
 fi
+LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])

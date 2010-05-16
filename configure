@@ -820,6 +820,7 @@ MRSID_FLAGS
 MRSID_INCLUDE
 KAKDIR
 ECW_SETTING
+HAVE_OPENJPEG
 JASPER_FLAGS
 HAVE_JASPER
 HDF5_INCLUDE
@@ -974,6 +975,7 @@ with_fme
 with_hdf4
 with_hdf5
 with_jasper
+with_openjpeg
 with_ecw
 with_kakadu
 with_mrsid
@@ -1683,6 +1685,7 @@ Optional Packages:
   --with-hdf4=ARG       Include HDF4 support (ARG=path)
   --with-hdf5=ARG       Include HDF5 support (ARG=path)
   --with-jasper=ARG     Include JPEG-2000 support via JasPer library (ARG=path)
+  --with-openjpeg=ARG     Include JPEG-2000 support via OpenJPEG v2 library (ARG=path)
   --with-ecw=ARG        Include ECW support (ARG=ECW SDK Path, yes or no)
   --with-kakadu=ARG     Include Kakadu/JPEG2000 support
   --with-mrsid=ARG      Include MrSID support (ARG=path to MrSID DSDK or no)
@@ -5873,13 +5876,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5876: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5879: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5879: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5882: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5882: output\"" >&5)
+  (eval echo "\"\$as_me:5885: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -7081,7 +7084,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 7084 "configure"' > conftest.$ac_ext
+  echo '#line 7087 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -9008,11 +9011,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9011: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9014: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9015: \$? = $ac_status" >&5
+   echo "$as_me:9018: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9347,11 +9350,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9350: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9353: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9354: \$? = $ac_status" >&5
+   echo "$as_me:9357: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9452,11 +9455,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9455: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9458: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9459: \$? = $ac_status" >&5
+   echo "$as_me:9462: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9507,11 +9510,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9510: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9513: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9514: \$? = $ac_status" >&5
+   echo "$as_me:9517: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11890,7 +11893,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11893 "configure"
+#line 11896 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11986,7 +11989,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11989 "configure"
+#line 11992 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13942,11 +13945,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13945: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13948: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13949: \$? = $ac_status" >&5
+   echo "$as_me:13952: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14041,11 +14044,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14044: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14047: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14048: \$? = $ac_status" >&5
+   echo "$as_me:14051: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14093,11 +14096,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14096: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14099: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14100: \$? = $ac_status" >&5
+   echo "$as_me:14103: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -19348,6 +19351,148 @@ fi
 HAVE_JASPER=$HAVE_JASPER
 
 JASPER_FLAGS=$JASPER_FLAGS
+
+
+
+
+
+# Check whether --with-openjpeg was given.
+if test "${with_openjpeg+set}" = set; then :
+  withval=$with_openjpeg;
+fi
+
+
+if test "$with_openjpeg" = "no" ; then
+
+  HAVE_OPENJPEG=no
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: OpenJPEG (JPEG2000) support disabled." >&5
+$as_echo "$as_me: OpenJPEG (JPEG2000) support disabled." >&6;}
+
+elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_decode_tile_data in -lopenjpeg" >&5
+$as_echo_n "checking for opj_decode_tile_data in -lopenjpeg... " >&6; }
+if test "${ac_cv_lib_openjpeg_opj_decode_tile_data+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lopenjpeg  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char opj_decode_tile_data ();
+int
+main ()
+{
+return opj_decode_tile_data ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_openjpeg_opj_decode_tile_data=yes
+else
+  ac_cv_lib_openjpeg_opj_decode_tile_data=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjpeg_opj_decode_tile_data" >&5
+$as_echo "$ac_cv_lib_openjpeg_opj_decode_tile_data" >&6; }
+if test "x$ac_cv_lib_openjpeg_opj_decode_tile_data" = x""yes; then :
+  HAVE_OPENJPEG=yes
+else
+  HAVE_OPENJPEG=no
+fi
+
+  for ac_header in openjpeg.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg.h" "ac_cv_header_openjpeg_h" "$ac_includes_default"
+if test "x$ac_cv_header_openjpeg_h" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_OPENJPEG_H 1
+_ACEOF
+
+fi
+
+done
+
+
+  if test "$ac_cv_header_openjpeg_h" = "no"; then
+    HAVE_OPENJPEG=no
+  fi
+
+  if test "$HAVE_OPENJPEG" = "yes" ; then
+    LIBS="-lopenjpeg $LIBS"
+  fi
+else
+
+  HAVE_OPENJPEG=yes
+  LIBS="-L$with_openjpeg -L$with_openjpeg/lib -lopenjpeg $LIBS"
+  EXTRA_INCLUDES="-I$with_openjpeg -I$with_openjpeg/include $EXTRA_INCLUDES"
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_decode_tile_data in -lopenjpeg" >&5
+$as_echo_n "checking for opj_decode_tile_data in -lopenjpeg... " >&6; }
+if test "${ac_cv_lib_openjpeg_opj_decode_tile_data+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lopenjpeg  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char opj_decode_tile_data ();
+int
+main ()
+{
+return opj_decode_tile_data ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_openjpeg_opj_decode_tile_data=yes
+else
+  ac_cv_lib_openjpeg_opj_decode_tile_data=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjpeg_opj_decode_tile_data" >&5
+$as_echo "$ac_cv_lib_openjpeg_opj_decode_tile_data" >&6; }
+if test "x$ac_cv_lib_openjpeg_opj_decode_tile_data" = x""yes; then :
+  HAVE_OPENJPEG=yes
+else
+  HAVE_OPENJPEG=no
+fi
+
+
+  if test "$HAVE_OPENJPEG" = "yes" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: using OpenJPEG library from $with_openjpeg." >&5
+$as_echo "$as_me: using OpenJPEG library from $with_openjpeg." >&6;}
+  fi
+fi
+
+if test "$HAVE_OPENJPEG" != "no" ; then
+  OPT_GDAL_FORMATS="openjpeg $OPT_GDAL_FORMATS"
+fi
+
+HAVE_OPENJPEG=$HAVE_OPENJPEG
 
 
 
@@ -26313,6 +26458,9 @@ else
 echo "  JasPer support:            ${HAVE_JASPER}"
 
 fi
+
+echo "  OpenJPEG support:          ${HAVE_OPENJPEG}"
+
 
 echo "  ECW support:               ${ECW_SETTING}"
 
