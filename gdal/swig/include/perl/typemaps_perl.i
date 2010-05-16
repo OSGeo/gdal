@@ -378,6 +378,22 @@ CreateArrayFromStringArray( char **first ) {
     }
 }
 
+/* slightly different version(?) for GDALAsyncReader */
+%typemap(in,numinputs=0) (int *nLength, char **pBuffer ) ( int nLength = 0, char *pBuffer = 0 )
+{
+  /* %typemap(in,numinputs=0) (int *nLength, char **pBuffer ) */
+  $1 = &nLength;
+  $2 = &pBuffer;
+}
+%typemap(freearg) (int *nLength, char **pBuffer )
+{
+  /* %typemap(freearg) (int *nLength, char **pBuffer ) */
+  if( *$1 ) {
+    free( *$2 );
+  }
+}
+
+
 /*
  * Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
  */
