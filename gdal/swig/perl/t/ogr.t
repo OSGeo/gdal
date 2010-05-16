@@ -36,6 +36,29 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 		);
 
 {
+    # test conversion methods
+    my $g = Geo::OGR::Geometry->create(WKT=>'POINT (1 1)');
+    my $x = Geo::OGR::Geometry->create(WKT=>'POINT (2 2)');
+    my $g2 = $g->ForceToMultiPoint($x);
+    ok($g2->AsText eq 'MULTIPOINT (1 1,2 2)', 'ForceToMultiPoint');
+    $g = Geo::OGR::Geometry->create(WKT=>'LINESTRING (1 1,2 2)');
+    $x = Geo::OGR::Geometry->create(WKT=>'LINESTRING (2 2,3 3)');
+    $g2 = $g->ForceToMultiLineString($x);
+    ok($g2->AsText eq 'MULTILINESTRING ((1 1,2 2),(2 2,3 3))', 'ForceToMultiLineString');
+    $g = Geo::OGR::Geometry->create(WKT=>'POLYGON ((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5))');
+    $x = Geo::OGR::Geometry->create(WKT=>'POLYGON ((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5))');
+    $g2 = $g->ForceToMultiPolygon($x);
+    ok($g2->AsText eq 'MULTIPOLYGON (((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5)),((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5)))', 'ForceToMultiPolygon');
+    $g = Geo::OGR::Geometry->create(WKT=>'POINT (1 1)');
+    $x = Geo::OGR::Geometry->create(WKT=>'LINESTRING (2 2,3 3)');
+    $g2 = $g->ForceToCollection($x);
+    ok($g2->AsText eq 'GEOMETRYCOLLECTION (POINT (1 1),LINESTRING (2 2,3 3))', 'ForceToCollection');
+    my @g = $g2->Dissolve;
+    ok($g[0]->AsText eq 'POINT (1 1)', 'Dissolve point');
+    ok($g[1]->AsText eq 'LINESTRING (2 2,3 3)', 'Dissolve line string');
+}
+
+{
     my $g = Geo::OGR::Geometry->create(wkt => "point(1 2)");
     $g->Point(2,3);
     my @p = $g->Point;

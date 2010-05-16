@@ -843,8 +843,11 @@
 
 ## @cmethod Geo::OGR::Geometry create(%params)
 # @param %params A named parameter, possible are: GeometryType, WKT,
-# WKB, HEXWKB, GML, GeoJSON, and Points (as in method
+# WKB, HEXWKB, GML, GeoJSON, arc, and Points (as in method
 # Geo::OGR::Geometry::Points).
+# - \a arc An anonymous list of [CenterX, CenterY, CenterZ,
+#    PrimaryRadius, SecondaryRadius, Rotation, StartAngle, EndAngle,
+#    MaxAngleStepSizeDegrees]
 # @return a new Geo::OGR::Geometry object
 
 ## @method FlattenTo2D()
@@ -1018,6 +1021,48 @@
 
 ## @method Geo::OGR::Geometry ConvexHull()
 # @return a new Geo::OGR::Geometry object
+
+## @method Geo::OGR::Geometry BuildPolygonFromEdges($BestEffort = 0, $AutoClose = 0, $Tolerance = 0)
+# Attempt to create a polygon from a collection of lines or from a multilinestring.
+# @param BestEffort For future
+# @param AutoClose Assure the first and last points of rings are same.
+# @param Tolerance Snap distance.
+# @exception Several possibilities, some are reported, some are general errors.
+# @return a new Geo::OGR::Geometry object (Polygon)
+
+## @method Geo::OGR::Geometry Collect(@geometries)
+# Create a geometrycollection from this and possibly other geometries.
+# @param geometries [optional] More geometries to add to the collection.
+# @return a new Geo::OGR::Geometry object of type geometrycollection.
+
+## @method @Dissolve()
+# Dissolve a geometrycollection into separate geometries.
+# @return a list of new Geo::OGR::Geometry objects cloned from the collection.
+
+## @method Geo::OGR::Geometry ForceToPolygon()
+# Attempt to create a polygon from the geometry.
+# @exception None reported. If this method fails, just a copy is returned.
+# @return a new Geo::OGR::Geometry object
+
+## @method Geo::OGR::Geometry ForceToMultiPoint(@points)
+# Attempt to create a multipoint from the geometry, which must be a point.
+# @param points [optional] More points to add to the collection.
+# @return a new Geo::OGR::Geometry object of type multipoint.
+
+## @method Geo::OGR::Geometry ForceToMultiLineString(@linestrings)
+# Attempt to create a multilinestring from the geometry, which must be a linestring.
+# @param linestrings [optional] More linestrings to add to the collection.
+# @return a new Geo::OGR::Geometry object of type multilinestring.
+
+## @method Geo::OGR::Geometry ForceToMultiPolygon(@polygons)
+# Attempt to create a multipolygon from the geometry, which must be a polygon.
+# @param polygons [optional] More polygons to add to the collection.
+# @return a new Geo::OGR::Geometry object of type multipolygon.
+
+## @method Geo::OGR::Geometry ForceToCollection(@geometries)
+# Create a geometrycollection from the geometry.
+# @param polygons [optional] More geometries to add to the collection.
+# @return a new Geo::OGR::Geometry object of type geometrycollection.
 
 ## @method Geo::OGR::Geometry Buffer($distance, $quadsecs = 30)
 # @param distance
