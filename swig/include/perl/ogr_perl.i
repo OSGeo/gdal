@@ -837,7 +837,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub create { # alternative constructor since swig created new cannot be overridden(?)
 	    my $pkg = shift;
-	    my($type, $wkt, $wkb, $gml, $json, $srs, $points);
+	  my($type, $wkt, $wkb, $gml, $json, $srs, $points, $arc);
 	    if (@_ == 1) {
 		$type = shift;
 	    } else {
@@ -856,6 +856,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$gml = ($param{gml} or $param{GML});
 		$json = ($param{geojson} or $param{GeoJSON});
 		$points = $param{Points};
+		$arc = ($param{arc} or $param{Arc});
 	    }
 	    $type = $TYPE_STRING2INT{$type} if defined $type and exists $TYPE_STRING2INT{$type};
 	    my $self;
@@ -871,6 +872,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		croak "unknown GeometryType: $type" unless 
 		    exists($TYPE_STRING2INT{$type}) or exists($TYPE_INT2STRING{$type});
 		$self = Geo::OGRc::new_Geometry($type);
+	    } elsif (defined $arc) {
+		$self = Geo::OGRc::ApproximateArcAngles(@$arc);
 	    } else {
 		croak "missing GeometryType, WKT, WKB, GML, or GeoJSON parameter in Geo::OGR::Geometry::create";
 	    }
@@ -1001,12 +1004,60 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $bo = $BYTE_ORDER_STRING2INT{$bo} if defined $bo and exists $BYTE_ORDER_STRING2INT{$bo};
 	    return _ExportToWkb($self, $bo);
 	}
+	sub ForceToMultiPoint {
+	    my $self = shift;
+	    $self = Geo::OGR::ForceToMultiPoint($self);
+	    for my $g (@_) {
+		$self->AddGeometry($g);
+	    }
+	    return $self;
+	}
+	sub ForceToMultiLineString {
+	    my $self = shift;
+	    $self = Geo::OGR::ForceToMultiLineString($self);
+	    for my $g (@_) {
+		$self->AddGeometry($g);
+	    }
+	    return $self;
+	}
+	sub ForceToMultiPolygon {
+	    my $self = shift;
+	    $self = Geo::OGR::ForceToMultiPolygon($self);
+	    for my $g (@_) {
+		$self->AddGeometry($g);
+	    }
+	    return $self;
+	}
+	sub ForceToCollection {
+	    my $self = Geo::OGR::Geometry->create(GeometryType => 'GeometryCollection');
+	    for my $g (@_) {
+		$self->AddGeometry($g);
+	    }
+	    return $self;
+	}
+	*Collect = *ForceToCollection;
+	sub Dissolve {
+	    my $self = shift;
+	    my @c;
+	    my $n = $self->GetGeometryCount;
+	    if ($n > 0) {
+		for my $i (0..$n-1) {
+		    push @c, $self->GetGeometryRef($i)->Clone;
+		}
+	    } else {
+		push @c, $self;
+	    }
+	    return @c;
+	}
 	*AsText = *ExportToWkt;
 	*AsBinary = *ExportToWkb;
 	*AsGML = *ExportToGML;
 	*AsKML = *ExportToKML;
 	*Equals = *Equal;
 	*Intersects = *Intersect;
+	*BuildPolygonFromEdges = *Geo::OGR::BuildPolygonFromEdges;
+	*ForceToPolygon = *Geo::OGR::ForceToPolygon;
+	
     }
     sub GeometryType {
 	my($type_or_name) = @_;
