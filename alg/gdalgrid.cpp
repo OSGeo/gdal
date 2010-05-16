@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_vsi.h"
+#include "cpl_string.h"
 #include "gdalgrid.h"
 
 CPL_CVSID("$Id$");
@@ -1275,6 +1276,177 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
     VSIFree( padfValues );
 
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      ParseAlgorithmAndOptions()                      */
+/*                                                                      */
+/*      Translates mnemonic gridding algorithm names into               */
+/*      GDALGridAlgorithm code, parse control parameters and assign     */
+/*      defaults.                                                       */
+/************************************************************************/
+
+CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
+                                 GDALGridAlgorithm *peAlgorithm,
+                                 void **ppOptions )
+{
+
+    char **papszParms = CSLTokenizeString2( pszAlgoritm, ":", FALSE );
+
+    if ( CSLCount(papszParms) < 1 )
+        return CE_Failure;
+
+    if ( EQUAL(papszParms[0], szAlgNameInvDist) )
+        *peAlgorithm = GGA_InverseDistanceToAPower;
+    else if ( EQUAL(papszParms[0], szAlgNameAverage) )
+        *peAlgorithm = GGA_MovingAverage;
+    else if ( EQUAL(papszParms[0], szAlgNameNearest) )
+        *peAlgorithm = GGA_NearestNeighbor;
+    else if ( EQUAL(papszParms[0], szAlgNameMinimum) )
+        *peAlgorithm = GGA_MetricMinimum;
+    else if ( EQUAL(papszParms[0], szAlgNameMaximum) )
+        *peAlgorithm = GGA_MetricMaximum;
+    else if ( EQUAL(papszParms[0], szAlgNameRange) )
+        *peAlgorithm = GGA_MetricRange;
+    else if ( EQUAL(papszParms[0], szAlgNameCount) )
+        *peAlgorithm = GGA_MetricCount;
+    else if ( EQUAL(papszParms[0], szAlgNameAverageDistance) )
+        *peAlgorithm = GGA_MetricAverageDistance;
+    else if ( EQUAL(papszParms[0], szAlgNameAverageDistancePts) )
+        *peAlgorithm = GGA_MetricAverageDistancePts;
+    else
+    {
+        fprintf( stderr, "Unsupported gridding method \"%s\".\n",
+                 papszParms[0] );
+        CSLDestroy( papszParms );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse algorithm parameters and assign defaults.                 */
+/* -------------------------------------------------------------------- */
+    const char  *pszValue;
+
+    switch ( *peAlgorithm )
+    {
+        case GGA_InverseDistanceToAPower:
+        default:
+            *ppOptions =
+                CPLMalloc( sizeof(GDALGridInverseDistanceToAPowerOptions) );
+
+            pszValue = CSLFetchNameValue( papszParms, "power" );
+            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
+                dfPower = (pszValue) ? CPLAtofM(pszValue) : 2.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "smoothing" );
+            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
+                dfSmoothing = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
+                dfRadius1 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "radius2" );
+            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
+                dfRadius2 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "angle" );
+            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
+                dfAngle = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "max_points" );
+            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
+                nMaxPoints = (pszValue) ? CPLAtofM(pszValue) : 0;
+
+            pszValue = CSLFetchNameValue( papszParms, "min_points" );
+            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
+                nMinPoints = (pszValue) ? CPLAtofM(pszValue) : 0;
+
+            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
+                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            break;
+
+        case GGA_MovingAverage:
+            *ppOptions =
+                CPLMalloc( sizeof(GDALGridMovingAverageOptions) );
+
+            pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            ((GDALGridMovingAverageOptions *)*ppOptions)->
+                dfRadius1 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "radius2" );
+            ((GDALGridMovingAverageOptions *)*ppOptions)->
+                dfRadius2 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "angle" );
+            ((GDALGridMovingAverageOptions *)*ppOptions)->
+                dfAngle = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "min_points" );
+            ((GDALGridMovingAverageOptions *)*ppOptions)->
+                nMinPoints = (pszValue) ? CPLAtofM(pszValue) : 0;
+
+            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            ((GDALGridMovingAverageOptions *)*ppOptions)->
+                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            break;
+
+        case GGA_NearestNeighbor:
+            *ppOptions =
+                CPLMalloc( sizeof(GDALGridNearestNeighborOptions) );
+
+            pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            ((GDALGridNearestNeighborOptions *)*ppOptions)->
+                dfRadius1 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "radius2" );
+            ((GDALGridNearestNeighborOptions *)*ppOptions)->
+                dfRadius2 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "angle" );
+            ((GDALGridNearestNeighborOptions *)*ppOptions)->
+                dfAngle = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            ((GDALGridNearestNeighborOptions *)*ppOptions)->
+                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            break;
+
+        case GGA_MetricMinimum:
+        case GGA_MetricMaximum:
+        case GGA_MetricRange:
+        case GGA_MetricCount:
+        case GGA_MetricAverageDistance:
+        case GGA_MetricAverageDistancePts:
+            *ppOptions =
+                CPLMalloc( sizeof(GDALGridDataMetricsOptions) );
+
+            pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                dfRadius1 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "radius2" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                dfRadius2 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "angle" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                dfAngle = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "min_points" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                nMinPoints = (pszValue) ? atol(pszValue) : 0;
+
+            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            break;
+
+   }
+
+    CSLDestroy( papszParms );
     return CE_None;
 }
 
