@@ -38,6 +38,20 @@
 
 #include "gdal_alg.h"
 
+/*
+ *  GridCreate Algorithm names
+ */
+
+static const char szAlgNameInvDist[] = "invdist";
+static const char szAlgNameAverage[] = "average";
+static const char szAlgNameNearest[] = "nearest";
+static const char szAlgNameMinimum[] = "minimum";
+static const char szAlgNameMaximum[] = "maximum";
+static const char szAlgNameRange[] = "range";
+static const char szAlgNameCount[] = "count";
+static const char szAlgNameAverageDistance[] = "average_distance";
+static const char szAlgNameAverageDistancePts[] = "average_distance_pts";
+
 CPL_C_START
 
 typedef CPLErr (*GDALGridFunction)( const void *, GUInt32,
@@ -87,6 +101,10 @@ GDALGridDataMetricAverageDistancePts( const void *, GUInt32,
                                       const double *, const double *,
                                       const double *, double, double,
                                       double * );
+CPLErr CPL_DLL
+ParseAlgorithmAndOptions( const char *,
+                          GDALGridAlgorithm *,
+                          void ** );
 CPL_C_END
 
 #endif /* GDALGRID_H_INCLUDED */
