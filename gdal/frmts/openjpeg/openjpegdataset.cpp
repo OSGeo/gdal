@@ -239,8 +239,8 @@ static void CopySrcToDst(int nWidthToRead, int nHeightToRead,
             for(i=0;i<nWidthToRead;i++)
             {
                 int Y = pSrc[j * nWidthToRead + i];
-                int Cb = pSrc[nHeightToRead * nWidthToRead + (j * (nWidthToRead/2) + i) / 2];
-                int Cr = pSrc[5 * nHeightToRead * nWidthToRead / 4 + (j * (nWidthToRead/2) + i) / 2];
+                int Cb = pSrc[nHeightToRead * nWidthToRead + ((j/2) * (nWidthToRead/2) + i/2) ];
+                int Cr = pSrc[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * (nWidthToRead/2) + i/2) ];
                 if (nBand == 1)
                     pDst[j * nBlockXSize + i] = CLAMP_0_255(Y + 1.402 * (Cr - 128));
                 else if (nBand == 2)
