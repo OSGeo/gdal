@@ -676,7 +676,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 
         int read_size = Read(outbuf, 1, (uInt)size);
         if (read_size == 0) {
-            CPL_VSIL_GZ_RETURN_MINUS_ONE();
+            //CPL_VSIL_GZ_RETURN_MINUS_ONE();
             return -1L;
         }
         if (original_nWhence == SEEK_END)
