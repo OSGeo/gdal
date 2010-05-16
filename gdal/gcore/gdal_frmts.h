@@ -150,6 +150,7 @@ void CPL_DLL GDALRegister_NWT_GRC(void);
 void CPL_DLL GDALRegister_SAGA(void);
 void CPL_DLL GDALRegister_KMLSUPEROVERLAY(void);
 void CPL_DLL GDALRegister_GTX(void);
+void CPL_DLL GDALRegister_JP2OpenJPEG(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
