@@ -802,6 +802,14 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      More metadata.                                                  */
+/* -------------------------------------------------------------------- */
+    if( poDS->nBands > 1 )
+    {
+        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for georeferencing information.                           */
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
