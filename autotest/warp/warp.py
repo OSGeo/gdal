@@ -629,6 +629,90 @@ def warp_22():
     return ret
 
 ###############################################################################
+# Test warping with datasets where some RasterIO() requests involve nBufXSize == 0 (#3582)
+
+def warp_23():
+
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+    
+    gcp1 = gdal.GCP()
+    gcp1.GCPPixel = 3213
+    gcp1.GCPLine = 2225
+    gcp1.GCPX = -88.834495
+    gcp1.GCPY = 29.979959
+    
+    gcp2 = gdal.GCP()
+    gcp2.GCPPixel = 2804
+    gcp2.GCPLine = 2236
+    gcp2.GCPX = -88.836706
+    gcp2.GCPY = 29.979516
+    
+    gcp3 = gdal.GCP()
+    gcp3.GCPPixel = 3157
+    gcp3.GCPLine = 4344
+    gcp3.GCPX = -88.833389
+    gcp3.GCPY = 29.969519
+    
+    gcp4 = gdal.GCP()
+    gcp4.GCPPixel = 3768
+    gcp4.GCPLine = 5247
+    gcp4.GCPX = -88.830168
+    gcp4.GCPY = 29.964958
+    
+    gcp5 = gdal.GCP()
+    gcp5.GCPPixel = 2697
+    gcp5.GCPLine = 9225
+    gcp5.GCPX = -88.83516
+    gcp5.GCPY = 29.945386
+    
+    gcp6 = gdal.GCP()
+    gcp6.GCPPixel = 4087
+    gcp6.GCPLine = 12360
+    gcp6.GCPX = -88.827899
+    gcp6.GCPY = 29.929807
+    
+    gcp7 = gdal.GCP()
+    gcp7.GCPPixel = 4629
+    gcp7.GCPLine = 11258
+    gcp7.GCPX = -88.825102
+    gcp7.GCPY = 29.93527
+    
+    gcp8 = gdal.GCP()
+    gcp8.GCPPixel = 4480
+    gcp8.GCPLine = 7602
+    gcp8.GCPX = -88.826733
+    gcp8.GCPY = 29.95304
+    
+    gcps = [gcp1,gcp2,gcp3,gcp4,gcp5,gcp6,gcp7,gcp8]
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/test3582.tif', 70, 170, 4, options = ['SPARSE_OK=YES'])
+    for i in range(len(gcps)):
+        gcps[i].GCPPixel = gcps[i].GCPPixel / 10
+        gcps[i].GCPLine = gcps[i].GCPLine / 10
+    ds.SetGCPs(gcps, sr.ExportToWkt())
+    ds = None
+    
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test3582.tif tmp/test3582_warped.tif')
+    
+    ds = gdal.Open('tmp/test3582_warped.tif')
+    ret = 'success'
+    if ds is None:
+        gdaltest.post_reason('could not open output dataset')
+        ret = 'fail'
+    ds = None
+    
+    os.remove('tmp/test3582.tif')
+    try:
+        os.remove('tmp/test3582_warped.tif')
+    except:
+        pass
+    
+    return ret
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -657,7 +741,8 @@ gdaltest_list = [
     warp_19,
     warp_20,
     warp_21,
-    warp_22
+    warp_22,
+    warp_23
     ]
 
 if __name__ == '__main__':
