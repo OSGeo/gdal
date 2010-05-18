@@ -330,7 +330,7 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                             nBlockXOff * nBlockXSize + nWidthToRead,
                             nBlockYOff * nBlockYSize + nHeightToRead))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decode_area() failed");
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
@@ -914,7 +914,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "1024"));
     int nBlockYSize =
         atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "1024"));
-    if (nBlockXSize <= 32 || nBlockYSize <= 32)
+    if (nBlockXSize < 32 || nBlockYSize < 32)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid block size");
         return NULL;
@@ -981,6 +981,15 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     
     int bSOP = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SOP", "FALSE"));
     int bEPH = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "EPH", "FALSE"));
+    
+    int bResample = nBands == 3 && eDataType == GDT_Byte &&
+            CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCBCR420", "FALSE"));
+    if (bResample && !((nXSize % 2) == 0 && (nYSize % 2) == 0 && (nBlockXSize % 2) == 0 && (nBlockYSize % 2) == 0))
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "YCBCR420 unsupported when image size and/or tile size are not multiple of 2");
+        bResample = FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup encoder                                                  */
@@ -1009,12 +1018,22 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int iBand;
     for(iBand=0;iBand<nBands;iBand++)
     {
-        pasBandParams[iBand].dx = 1;
-        pasBandParams[iBand].dy = 1;
         pasBandParams[iBand].x0 = 0;
         pasBandParams[iBand].y0 = 0;
-        pasBandParams[iBand].w = nXSize;
-        pasBandParams[iBand].h = nYSize;
+        if (bResample && iBand > 0)
+        {
+            pasBandParams[iBand].dx = 2;
+            pasBandParams[iBand].dy = 2;
+            pasBandParams[iBand].w = nXSize / 2;
+            pasBandParams[iBand].h = nYSize / 2;
+        }
+        else
+        {
+            pasBandParams[iBand].dx = 1;
+            pasBandParams[iBand].dy = 1;
+            pasBandParams[iBand].w = nXSize;
+            pasBandParams[iBand].h = nYSize;
+        }
         pasBandParams[iBand].sgnd = (eDataType == GDT_Int16 || eDataType == GDT_Int32);
         pasBandParams[iBand].prec = 8 * nDataTypeSize;
     }
@@ -1032,7 +1051,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback,NULL);
     opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,NULL);
 
-    OPJ_COLOR_SPACE eColorSpace = (nBands == 3) ? CLRSPC_SRGB : CLRSPC_GRAY;
+    OPJ_COLOR_SPACE eColorSpace = (bResample) ? CLRSPC_SYCC : (nBands == 3) ? CLRSPC_SRGB : CLRSPC_GRAY;
     opj_image_t* psImage = opj_image_tile_create(nBands,pasBandParams,
                                                  eColorSpace);
     CPLFree(pasBandParams);
@@ -1107,6 +1126,21 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
 
+    GByte* pYUV420Buffer = NULL;
+    if (bResample)
+    {
+        pYUV420Buffer =(GByte*)VSIMalloc(3 * nBlockXSize * nBlockYSize / 2);
+        if (pYUV420Buffer == NULL)
+        {
+            opj_stream_destroy(pStream);
+            opj_image_destroy(psImage);
+            opj_destroy_codec(pCodec);
+            CPLFree(pTempBuffer);
+            VSIFCloseL(fp);
+            return NULL;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Iterate over the tiles                                          */
 /* -------------------------------------------------------------------- */
@@ -1131,15 +1165,48 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                                      0,0,0);
             if (eErr == CE_None)
             {
-                if (!opj_write_tile(pCodec,
-                                    iTile,
-                                    pTempBuffer,
-                                    nWidthToRead * nHeightToRead * nBands * nDataTypeSize,
-                                    pStream))
+                if (bResample)
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "opj_write_tile() failed");
-                    eErr = CE_Failure;
+                    int j, i;
+                    for(j=0;j<nHeightToRead;j++)
+                    {
+                        for(i=0;i<nWidthToRead;i++)
+                        {
+                            int R = pTempBuffer[j*nWidthToRead+i];
+                            int G = pTempBuffer[nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                            int B = pTempBuffer[2*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                            int Y = 0.299 * R + 0.587 * G + 0.114 * B;
+                            int Cb = CLAMP_0_255(-0.1687 * R - 0.3313 * G + 0.5 * B  + 128);
+                            int Cr = CLAMP_0_255(0.5 * R - 0.4187 * G - 0.0813 * B  + 128);
+                            pYUV420Buffer[j*nWidthToRead+i] = Y;
+                            pYUV420Buffer[nHeightToRead * nWidthToRead + ((j/2) * ((nWidthToRead)/2) + i/2) ] = Cb;
+                            pYUV420Buffer[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * ((nWidthToRead)/2) + i/2) ] = Cr;
+                        }
+                    }
+
+                    if (!opj_write_tile(pCodec,
+                                        iTile,
+                                        pYUV420Buffer,
+                                        3 * nWidthToRead * nHeightToRead / 2,
+                                        pStream))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                "opj_write_tile() failed");
+                        eErr = CE_Failure;
+                    }
+                }
+                else
+                {
+                    if (!opj_write_tile(pCodec,
+                                        iTile,
+                                        pTempBuffer,
+                                        nWidthToRead * nHeightToRead * nBands * nDataTypeSize,
+                                        pStream))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                "opj_write_tile() failed");
+                        eErr = CE_Failure;
+                    }
                 }
             }
 
@@ -1151,6 +1218,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
 
     VSIFree(pTempBuffer);
+    VSIFree(pYUV420Buffer);
 
     if (eErr != CE_None)
     {
@@ -1235,6 +1303,7 @@ void GDALRegister_JP2OpenJPEG()
 "   </Option>"
 "   <Option name='SOP' type='boolean' description='True to insert SOP markers' default='false'/>"
 "   <Option name='EPH' type='boolean' description='True to insert EPH markers' default='false'/>"
+"   <Option name='YCBCR420' type='boolean' description='if RGB must be resampled to YCbCr 4:2:0' default='false'/>"
 "</CreationOptionList>"  );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
