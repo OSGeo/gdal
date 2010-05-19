@@ -782,6 +782,15 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                OSR_GDV( papszPrj, "PARAM_4", 0.0 ) );
     }
 
+    else if( EQUAL(osProj,"MERCATOR") )
+    {
+        SetMercator( OSR_GDV( papszPrj, "PARAM_1", 0.0 ), 
+                     OSR_GDV( papszPrj, "PARAM_0", 0.0 ), 
+                     1.0, 
+                     OSR_GDV( papszPrj, "PARAM_2", 0.0 ), 
+                     OSR_GDV( papszPrj, "PARAM_3", 0.0 ) );
+    }
+
     else
     {
         CPLDebug( "OGR_ESRI", "Unsupported projection: %s", osProj.c_str() );
