@@ -182,6 +182,8 @@ const char *VRTRasterBand::GetUnitType()
 CPLErr VRTRasterBand::SetUnitType( const char *pszNewValue )
 
 {
+    ((VRTDataset *) poDS)->SetNeedsFlush();
+
     CPLFree( pszUnitType );
     
     if( pszNewValue == NULL )
@@ -212,6 +214,8 @@ double VRTRasterBand::GetOffset( int *pbSuccess )
 CPLErr VRTRasterBand::SetOffset( double dfNewOffset )
 
 {
+    ((VRTDataset *) poDS)->SetNeedsFlush();
+
     dfOffset = dfNewOffset;
     return CE_None;
 }
@@ -236,6 +240,8 @@ double VRTRasterBand::GetScale( int *pbSuccess )
 CPLErr VRTRasterBand::SetScale( double dfNewScale )
 
 {
+    ((VRTDataset *) poDS)->SetNeedsFlush();
+
     dfScale = dfNewScale;
     return CE_None;
 }
@@ -257,6 +263,8 @@ char **VRTRasterBand::GetCategoryNames()
 CPLErr VRTRasterBand::SetCategoryNames( char ** papszNewNames )
 
 {
+    ((VRTDataset *) poDS)->SetNeedsFlush();
+
     CSLDestroy( papszCategoryNames );
     papszCategoryNames = CSLDuplicate( papszNewNames );
 
