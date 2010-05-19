@@ -339,7 +339,7 @@ typedef struct
 
     slope = M_PI / 2 - atan(sqrt(x*x + y*y));
 
-    aspect = atan2(x,y);
+    aspect = atan2(y,x);
 
     cang = sin(alt * degreesToRadians) * sin(slope) +
            cos(alt * degreesToRadians) * cos(slope) *
@@ -361,7 +361,7 @@ float GDALHillshadeAlg (float* afWin, float fDstNoDataValue, void* pData)
     xx_plus_yy = x * x + y * y;
 
     // ... then aspect...
-    aspect = atan2(x,y);
+    aspect = atan2(y,x);
 
     // ... then the shade value
     cang = (psData->sin_altRadians -
