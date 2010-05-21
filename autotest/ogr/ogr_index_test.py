@@ -228,20 +228,72 @@ def ogr_index_9():
     expect = [ 'Value 5' ]
 
     tr = ogrtest.check_features_against_list( gdaltest.s_lyr, 'VALUE', expect )
-    if tr:
-        return 'success'
-    else:
+    if not tr:
         return 'fail'
-        
+    
+    gdaltest.s_ds.Release()
+    
+    # After dataset closing, check that the index files do not exist after
+    # dropping the index
+    for filename in ['join_t.idm','join_t.ind']:
+        try:
+            os.stat(filename)
+            gdaltest.post_reason("%s shouldn't exist" % filename)
+            return 'fail'
+        except:
+            pass
+
+    # Re-create an index
+    gdaltest.s_ds = ogr.OpenShared( 'join_t.dbf', update = 1 )
+    gdaltest.s_ds.ExecuteSQL( 'CREATE INDEX ON join_t USING value' )
+    gdaltest.s_ds.Release()
+    
+    for filename in ['join_t.idm','join_t.ind']:
+        try:
+            os.stat(filename)
+        except:
+            gdaltest.post_reason("%s should exist" % filename)
+            return 'fail'
+            pass
+
+    f = open('join_t.idm', 'rt')
+    xml = f.read()
+    f.close()
+    if xml.find('VALUE') == -1:
+        gdaltest.post_reason('VALUE column is not indexed (1)')
+        print(xml)
+        return 'fail'
+
+    # Close the dataset and re-open
+    gdaltest.s_ds = ogr.OpenShared( 'join_t.dbf', update = 1 )
+    # At this point the .ind was opened in read-only. Now it
+    # will be re-opened in read-write mode
+    gdaltest.s_ds.ExecuteSQL( 'CREATE INDEX ON join_t USING skey' )
+
+    gdaltest.s_ds.Release()
+
+    f = open('join_t.idm', 'rt')
+    xml = f.read()
+    f.close()
+    if xml.find('VALUE') == -1:
+        gdaltest.post_reason('VALUE column is not indexed (2)')
+        print(xml)
+        return 'fail'
+    if xml.find('SKEY') == -1:
+        gdaltest.post_reason('SKEY column is not indexed (2)')
+        print(xml)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 
 def ogr_index_cleanup():
     try:
         gdaltest.p_ds.Release()
-        gdaltest.s_ds.Release()
     except:
         pass
+
     gdaltest.p_ds = None
     gdaltest.s_ds = None
 
@@ -250,6 +302,14 @@ def ogr_index_cleanup():
 
     ogr.GetDriverByName( 'MapInfo File' ).DeleteDataSource( 'index_p.mif' )
     ogr.GetDriverByName( 'ESRI Shapefile' ).DeleteDataSource( 'join_t.dbf' )
+
+    for filename in ['join_t.idm','join_t.ind']:
+        try:
+            os.stat(filename)
+            gdaltest.post_reason("%s shouldn't exist" % filename)
+            return 'fail'
+        except:
+            pass
 
     return 'success'
 
