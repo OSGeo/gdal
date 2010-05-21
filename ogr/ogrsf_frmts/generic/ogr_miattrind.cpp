@@ -85,7 +85,10 @@ public:
 
     char        *pszMetadataFilename;
     char        *pszMIINDFilename;
-    
+
+    int         bINDAsReadOnly;
+    int         bUnlinkINDFile;
+
                 OGRMILayerAttrIndex();
     virtual     ~OGRMILayerAttrIndex();
 
@@ -118,6 +121,8 @@ OGRMILayerAttrIndex::OGRMILayerAttrIndex()
     poINDFile = NULL;
     nIndexCount = 0;
     papoIndexList = NULL;
+    bUnlinkINDFile = FALSE;
+    bINDAsReadOnly = TRUE;
 }
 
 /************************************************************************/
@@ -133,6 +138,9 @@ OGRMILayerAttrIndex::~OGRMILayerAttrIndex()
         delete poINDFile;
         poINDFile = NULL;
     }
+
+    if (bUnlinkINDFile)
+        VSIUnlink( pszMIINDFilename );
 
     for( int i = 0; i < nIndexCount; i++ )
         delete papoIndexList[i];
@@ -392,6 +400,31 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
             return OGRERR_FAILURE;
         }
     }
+    else if (bINDAsReadOnly)
+    {
+        poINDFile->Close();
+        if( poINDFile->Open( pszMIINDFilename, "r+" ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to open %s as write-only.",
+                      pszMIINDFilename );
+
+            if( poINDFile->Open( pszMIINDFilename, "r" ) != 0 )
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Cannot re-open %s as read-only.",
+                      pszMIINDFilename );
+                delete poINDFile;
+                poINDFile = NULL;
+            }
+
+            return OGRERR_FAILURE;
+        }
+        else
+        {
+            bINDAsReadOnly = FALSE;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we have this field indexed already?                          */
@@ -457,6 +490,8 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
 
     AddAttrInd( iField, iINDIndex );
 
+    bUnlinkINDFile = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Save the new configuration.                                     */
 /* -------------------------------------------------------------------- */
@@ -511,12 +546,13 @@ OGRErr OGRMILayerAttrIndex::DropIndex( int iField )
 /*      Save the new configuration, or if there is nothing left try     */
 /*      to clean up the index files.                                    */
 /* -------------------------------------------------------------------- */
+
     if( nIndexCount > 0 )
         return SaveConfigToXML();
     else
     {
+        bUnlinkINDFile = TRUE;
         VSIUnlink( pszMetadataFilename );
-        VSIUnlink( pszMIINDFilename );
 
         return OGRERR_NONE;
     }
