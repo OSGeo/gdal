@@ -587,6 +587,12 @@ OGRErr OGRDataSource::ProcessSQLCreateIndex( const char *pszSQLCommand )
     eErr = poLayer->GetIndex()->CreateIndex( i );
     if( eErr == OGRERR_NONE )
         eErr = poLayer->GetIndex()->IndexAllFeatures( i );
+    else
+    {
+        if( strlen(CPLGetLastErrorMsg()) == 0 )
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Cannot '%s'", pszSQLCommand);
+    }
 
     return eErr;
 }
