@@ -5,14 +5,14 @@ SWIGOUTPUTDIR=
 
 WRAPPERS = gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp
 
-gdal_wrap.cpp: ../include/gdal.i ../include/MajorObject.i ../include/Driver.i ../include/Dataset.i ../include/Band.i ../include/ColorTable.i ../include/cpl.i ../include/$(BINDING)/typemaps_$(BINDING).i
+gdal_wrap.cpp: ../include/gdal.i ../include/MajorObject.i ../include/Driver.i ../include/Dataset.i ../include/Band.i ../include/ColorTable.i ../include/cpl.i ../include/$(BINDING)/gdal_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/gdal.i
 
 gdalconst_wrap.c: ../include/gdalconst.i
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/gdalconst.i
 
-ogr_wrap.cpp:  ../include/ogr.i ../include/$(BINDING)/typemaps_$(BINDING).i
+ogr_wrap.cpp:  ../include/ogr.i ../include/$(BINDING)/ogr_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/ogr.i
 
-osr_wrap.cpp:  ../include/osr.i ../include/$(BINDING)/typemaps_$(BINDING).i
+osr_wrap.cpp:  ../include/osr.i ../include/$(BINDING)/osr_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/osr.i
