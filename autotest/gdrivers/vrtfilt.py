@@ -63,7 +63,7 @@ def vrtfilt_2():
 
 def vrtfilt_3():
 
-    ds = gdal.Open('data/rgbsmall.tif')
+    ds = gdal.OpenShared('data/rgbsmall.tif')
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
     ds = None
 
