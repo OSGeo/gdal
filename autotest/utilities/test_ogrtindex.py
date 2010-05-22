@@ -46,23 +46,13 @@ def test_ogrtindex_1(srs = None):
         return 'skip'
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
-
-    try:
-        os.remove('tmp/tileindex.shp')
-    except:
-        pass
-    try:
-        os.remove('tmp/tileindex.dbf')
-    except:
-        pass
-    try:
-        os.remove('tmp/tileindex.shx')
-    except:
-        pass
-    try:
-        os.remove('tmp/tileindex.prj')
-    except:
-        pass
+    
+    for basename in ['tileindex', 'point1', 'point2', 'point3', 'point4']:
+        for extension in ['shp', 'dbf', 'shx', 'prj']:
+            try:
+                os.remove('tmp/%s.%s' % (basename, extension))
+            except:
+                pass
 
     shape_ds = shape_drv.CreateDataSource( 'tmp' )
 
