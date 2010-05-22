@@ -967,6 +967,7 @@ def ogr_shape_23():
     #######################################################
     # Same test but use the wkb type when creating the layer
 
+    gdaltest.shape_ds.Destroy()
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     shape_drv.DeleteDataSource( 'tmp' )
     gdaltest.shape_ds = shape_drv.CreateDataSource( 'tmp' )
