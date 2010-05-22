@@ -1,35 +1,56 @@
 Geo-GDAL
 =======================
 
-This is the swig-generated Perl interface to the GDAL/OGR library, the
-same one which is distributed with GDAL. GDAL is available from
-www.gdal.org.
+This is the swig-generated Perl interface to the GDAL/OGR library. The
+master copy of this module is developed and distributed with GDAL. 
+GDAL is available from www.gdal.org.
 
 You need to have the development (header files etc.) versions of gdal and
 geos libraries available in your system to build these modules.
 
-The versions of GDAL and this interface must match. Makefile.PL does that.
+The versions of GDAL and this interface must match. Makefile.PL
+attempts to do that, but it is highly recommended to install Geo::GDAL
+from GDAL sources.
 
 This module is _not_ compatible with Geo::GDAL 0.11
 
 INSTALLATION
 
-Perl Makefile.PL generates four Makefiles. There is a master Makefile in 
-this distro.
+This module can be built and installed as a part of gdal build and
+installation, if you use --with-perl in configure of gdal. That
+process is controlled by GNUmakefile. 
 
-To install this module type the following:
+The build process comprises three steps:
 
-   perl Makefile.PL
-   make
-   make test
-   make install
+1) generating the wrappers, requires swig
 
-In MinGW it is 
+make generate
 
-   perl Makefile.PL
-   dmake 
-   dmake test
-   dmake install
+2) making the four makefiles
+
+perl Makefile.PL
+
+3) making the bindings
+
+make -f Makefile_Geo__GDAL
+make -f Makefile_Geo__GDAL__Const
+make -f Makefile_Geo__OGR
+make -f Makefile_Geo__OSR
+
+this is done by simple 'make' with the help of the GNUmakefile
+or Makefile in the case of dmake.
+
+The wrappers (*_wrap.c*) are already made in distribution packages.
+The wrappers in the repository are not guaranteed to be the latest
+ones.
+
+The wrappers may be tested with
+
+make -f Makefile_Geo__GDAL test
+
+or simply
+
+make test
 
 You may need to edit the Makefile.PL.
 
@@ -41,19 +62,20 @@ DOCUMENTATION
 
 The documentation is maintained in Doxygen files. Doxygen is available
 at www.doxygen.org. You will also need Perl Doxygen Filter from
-http://www.bigsister.ch/doxygenfilter/ and my extension to it from
-http://map.hut.fi/files/doxygenfilter/. To generate the documentation
-type
+http://www.bigsister.ch/doxygenfilter/ and an extension to it from
+http://geoinformatics.tkk.fi/files/doxygenfilter/. To generate the
+documentation type
 
     doxygen
 
 You can find the documentation also at
-http://map.hut.fi/doc/Geo-GDAL/html/. However, Tthe comprehensive
-documentation of GDAL and OGR are at http://www.gdal.org/.
+http://geoinformatics.tkk.fi/doc/Geo-GDAL/html/. However, the
+comprehensive documentation of GDAL and OGR are at
+http://www.gdal.org/.
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2006- by Ari Jolma and GDAL Swig people
+Copyright (C) 2006- by Ari Jolma and GDAL Swig developers.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.5 or,
