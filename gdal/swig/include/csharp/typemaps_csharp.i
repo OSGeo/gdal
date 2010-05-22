@@ -105,10 +105,7 @@ OPTIONAL_POD(int, int);
 /***************************************************
  * Typemaps for  (retStringAndCPLFree*)
  ***************************************************/
-%inline %{
-    typedef char retStringAndCPLFree;
-%}
- 
+
 %typemap(out) (retStringAndCPLFree*)
 %{ 
     /* %typemap(out) (retStringAndCPLFree*) */

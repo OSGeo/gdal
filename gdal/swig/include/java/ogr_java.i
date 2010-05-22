@@ -16,11 +16,7 @@
  *
  *
 */
-#ifdef SWIGJAVA
-%{
-typedef char retStringAndCPLFree;
-%}
-#endif
+
 %include java_exceptions.i
 
 %pragma(java) jniclasscode=%{

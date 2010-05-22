@@ -167,10 +167,6 @@
 /*                        GetWellKnownGeogCSAsWKT()                     */
 /************************************************************************/
 
-%{
-typedef char retStringAndCPLFree;
-%}
-
 %inline %{
 retStringAndCPLFree* GetWellKnownGeogCSAsWKT( const char *name ) {
   char* argout = NULL;
