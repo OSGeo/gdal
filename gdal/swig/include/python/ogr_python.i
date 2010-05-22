@@ -15,10 +15,6 @@
   
 %}
 
-%{
-typedef char retStringAndCPLFree;
-%}
-
 /*%{
     
 #if PY_MINOR_VERSION >= 4 
