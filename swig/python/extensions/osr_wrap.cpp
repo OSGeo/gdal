@@ -2837,6 +2837,9 @@ SWIG_FromCharPtr(const char *cptr)
   #define SWIG_From_double   PyFloat_FromDouble 
 
 
+typedef char retStringAndCPLFree;
+
+
 #include <iostream>
 using namespace std;
 
@@ -2853,9 +2856,6 @@ typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
 typedef void OSRSpatialReferenceShadow;
 typedef void OSRCoordinateTransformationShadow;
 #endif
-
-typedef char retStringAndCPLFree;
-
 
 
 int bUseExceptions=0;
@@ -11785,7 +11785,7 @@ static PyMethodDef SwigMethods[] = {
 
 static swig_type_info _swigt__p_OSRCoordinateTransformationShadow = {"_p_OSRCoordinateTransformationShadow", "OSRCoordinateTransformationShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "int *|OGRErr *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_long = {"_p_long", "long *", 0, 0, (void*)0, 0};
