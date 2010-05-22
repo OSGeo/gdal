@@ -37,6 +37,10 @@
 %module ogr
 #endif
 
+%inline %{
+typedef char retStringAndCPLFree;
+%}
+
 #ifdef SWIGCSHARP
 %include swig_csharp_extensions.i
 #endif
@@ -145,7 +149,6 @@ typedef void OGRGeometryShadow;
 typedef void OSRCoordinateTransformationShadow;
 typedef void OGRFieldDefnShadow;
 #endif
-
 %}
 
 #ifndef SWIGCSHARP
@@ -1437,7 +1440,7 @@ public:
 #endif
 #endif
 
-#if defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP)
+#if defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP) || defined(SWIGPERL)
   retStringAndCPLFree* ExportToGML() {
     return (retStringAndCPLFree*) OGR_G_ExportToGML(self);
   }
@@ -1448,7 +1451,7 @@ public:
   }
 #endif
 
-#if defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP)
+#if defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP) || defined(SWIGPERL)
   retStringAndCPLFree* ExportToKML(const char* altitude_mode=NULL) {
     return (retStringAndCPLFree *) OGR_G_ExportToKML(self, altitude_mode);
   }
@@ -1459,7 +1462,7 @@ public:
   }
 #endif
 
-#if defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP)
+#if defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP) || defined(SWIGPERL)
   retStringAndCPLFree* ExportToJson() {
     return (retStringAndCPLFree *) OGR_G_ExportToJson(self);
   }

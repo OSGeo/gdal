@@ -59,6 +59,10 @@
 %javaconst(0);
 #endif
 
+%inline %{
+typedef char retStringAndCPLFree;
+%}
+
 %{
 #include <iostream>
 using namespace std;
@@ -76,9 +80,6 @@ typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
 typedef void OSRSpatialReferenceShadow;
 typedef void OSRCoordinateTransformationShadow;
 #endif
-
-typedef char retStringAndCPLFree;
-
 %}
 
 typedef int OGRErr;
@@ -205,7 +206,7 @@ public:
 /* FIXME : all bindings should avoid using the #else case */
 /* as the deallocator for the char* is delete[] where as */
 /* OSRExportToPrettyWkt uses CPL/VSIMalloc() */
-#if defined(SWIGPYTHON)||defined(SWIGJAVA)
+#if defined(SWIGCSHARP)||defined(SWIGPYTHON)||defined(SWIGJAVA)||defined(SWIGPERL)
   retStringAndCPLFree *__str__() {
     char *buf = 0;
     OSRExportToPrettyWkt( self, &buf, 0 );
