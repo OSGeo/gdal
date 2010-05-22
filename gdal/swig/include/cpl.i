@@ -42,6 +42,10 @@ typedef enum
 #endif
 
 %inline %{
+typedef char retStringAndCPLFree;
+%}
+
+%inline %{
   void Debug( const char *msg_class, const char *message ) {
     CPLDebug( msg_class, "%s", message );
   }
@@ -132,9 +136,6 @@ void CPLErrorReset();
 #endif
 
 #ifdef SWIGJAVA
-%{
-typedef char retStringAndCPLFree;
-%}
 %apply (int nLen, unsigned char *pBuf ) {( int len, unsigned char *bin_string )};
 %inline %{
 retStringAndCPLFree* EscapeString(int len, unsigned char *bin_string , int scheme) {
@@ -156,10 +157,7 @@ retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme) {
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
 }
-#elif defined(SWIGPYTHON)
-%{
-typedef char retStringAndCPLFree;
-%}
+#elif defined(SWIGPYTHON) || defined(SWIGPERL)
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 %inline %{
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {

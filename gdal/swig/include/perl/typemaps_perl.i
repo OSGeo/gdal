@@ -378,6 +378,25 @@ CreateArrayFromStringArray( char **first ) {
     }
 }
 
+/***************************************************
+ * Typemaps for  (retStringAndCPLFree*)
+ ***************************************************/
+
+%typemap(out) (retStringAndCPLFree*)
+%{ 
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if($1)
+    {
+        $result = SWIG_FromCharPtr((const char *)result);
+        CPLFree($1);
+    }
+    else
+    {
+        $result = NULL;
+    }
+    argvi++ ;
+%}
+
 /* slightly different version(?) for GDALAsyncReader */
 %typemap(in,numinputs=0) (int *nLength, char **pBuffer ) ( int nLength = 0, char *pBuffer = 0 )
 {

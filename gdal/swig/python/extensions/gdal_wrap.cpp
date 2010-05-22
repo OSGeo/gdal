@@ -2985,6 +2985,9 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 }
 
 
+typedef char retStringAndCPLFree;
+
+
   void Debug( const char *msg_class, const char *message ) {
     CPLDebug( msg_class, "%s", message );
   }
@@ -3258,9 +3261,6 @@ SWIG_AsVal_int (PyObject * obj, int *val)
   }  
   return res;
 }
-
-
-typedef char retStringAndCPLFree;
 
 
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
@@ -18595,7 +18595,7 @@ static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow
 static swig_type_info _swigt__p_GDALTransformerInfoShadow = {"_p_GDALTransformerInfoShadow", "GDALTransformerInfoShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_double_p_q_const__char_p_void__int", "int (*)(double,char const *,void *)", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "CPLErr *|GDALRATFieldType *|int *|GDALColorInterp *|GDALAccess *|GDALPaletteInterp *|GDALDataType *|GDALAsyncStatusType *|GDALRATFieldUsage *|GDALResampleAlg *", 0, 0, (void*)0, 0};
