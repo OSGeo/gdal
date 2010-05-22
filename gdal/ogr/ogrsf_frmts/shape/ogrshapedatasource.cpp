@@ -366,6 +366,23 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     SHPHandle   hSHP;
     DBFHandle   hDBF;
     int         nShapeType;
+    int         iLayer;
+
+/* -------------------------------------------------------------------- */
+/*      Check that the layer doesn't already exist.                     */
+/* -------------------------------------------------------------------- */
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        OGRLayer        *poLayer = papoLayers[iLayer];
+
+        if( poLayer != NULL 
+            && EQUAL(poLayer->GetLayerDefn()->GetName(),pszLayerName) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Layer '%s' already exists",
+                      pszLayerName);
+            return NULL;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
@@ -547,6 +564,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
                   pszFilename );
         CPLFree( pszFilename );
         CPLFree( pszBasename );
+        SHPClose(hSHP);
         return NULL;
     }
 
