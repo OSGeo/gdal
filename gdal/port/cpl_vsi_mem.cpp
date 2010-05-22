@@ -479,6 +479,14 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
     CPLString osFilename = pszFilename;
     NormalizePath( osFilename );
 
+    if ( osFilename == "/vsimem/" )
+    {
+        memset( pStatBuf, 0, sizeof(VSIStatBufL) );
+        pStatBuf->st_size = 0;
+        pStatBuf->st_mode = S_IFDIR;
+        return 0;
+    }
+
     if( oFileList.find(osFilename) == oFileList.end() )
     {
         errno = ENOENT;
