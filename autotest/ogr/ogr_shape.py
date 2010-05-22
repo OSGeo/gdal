@@ -1078,20 +1078,6 @@ def ogr_shape_23():
         gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
         return 'fail'
 
-    #######################################################
-    # Test writing of a geometry collection
-    layer_name = 'strangemultipolygons'
-    wkt = 'MULTIPOLYGON(((0 0,0 10,10 10,0 0)), ((100 0,100 10,110 10,100 0)))'
-    geom = ogr.CreateGeometryFromWkt(wkt)
-    geom.AddGeometry(ogr.Geometry( type = ogr.wkbPolygon ))
-    poly = ogr.CreateGeometryFromWkt('POLYGON((100 0,100 10,110 10,100 0))');
-    poly.AddGeometry(ogr.Geometry( type = ogr.wkbLinearRing ))
-    geom.AddGeometry(poly)
-
-    if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
-        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
-        return 'fail'
-
     return 'success'
 
 
@@ -1592,6 +1578,24 @@ def ogr_shape_37():
     ds.Destroy()
 
     return 'success'
+
+###############################################################################
+# Check that we cannot create duplicated layers
+
+def ogr_shape_38():
+
+    ds = ogr.Open( '/vsimem/', update = 1 )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = ds.CreateLayer( 'test35' )
+    gdal.PopErrorHandler()
+    ds.Destroy()
+
+    if lyr is not None:
+        gdaltest.post_reason('should not have created a new layer')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -1650,6 +1654,7 @@ gdaltest_list = [
     ogr_shape_35,
     ogr_shape_36,
     ogr_shape_37,
+    ogr_shape_38,
     ogr_shape_cleanup ]
  
 if __name__ == '__main__':
