@@ -133,8 +133,7 @@
                                             pixel_space, line_space, FALSE ); 
     if (buf_size == 0)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
+        *buf = NULL;
         return CE_Failure;
     }
 %#if PY_VERSION_HEX >= 0x03000000 
@@ -142,7 +141,6 @@
     if (*buf == NULL)
     {
         *buf = Py_None;
-        Py_INCREF(Py_None);
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -151,8 +149,6 @@
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -164,8 +160,7 @@
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
-        *buf = Py_None;
-        Py_INCREF(Py_None);
+        *buf = NULL;
     }
     return eErr;
   }
@@ -223,8 +218,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
       int lastband = GDALGetRasterCount( self ) - 1;
       if (lastband < 0)
       {
-          *buf = Py_None;
-          Py_INCREF(Py_None);
+          *buf = NULL;
           return CE_Failure;
       }
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
@@ -239,8 +233,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                                                pixel_space, line_space, band_space, FALSE);
     if (buf_size == 0)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
+        *buf = NULL;
         return CE_Failure;
     }
 
@@ -248,8 +241,6 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -258,8 +249,6 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -272,8 +261,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
-        *buf = Py_None;
-        Py_INCREF(Py_None);
+        *buf = NULL;
     }
     return eErr;
 }
@@ -340,7 +328,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
             i = i + 1
         return sd_list
 
-    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_xsize = None, buf_ysize = None, buf_type = None, band_list = None, options=[]):
+    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj = None, buf_xsize = None, buf_ysize = None, buf_type = None, band_list = None, options=[]):
         if band_list is None:
             band_list = range(1, self.RasterCount + 1)
         if buf_xsize is None:
@@ -349,8 +337,22 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
             buf_ysize = 0;
         if buf_type is None:
             buf_type = GDT_Byte
-        
-        return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)            
+
+        if buf_xsize <= 0:
+            buf_xsize = xsize
+        if buf_ysize <= 0:
+            buf_ysize = ysize
+
+        if buf_obj is None:
+            from sys import version_info
+            nRequiredSize = int(buf_xsize * buf_ysize * len(band_list) * (_gdal.GetDataTypeSize(buf_type) / 8))
+            if version_info >= (3,0,0):
+                buf_obj_ar = [ None ]
+                exec("buf_obj_ar[0] = b' ' * nRequiredSize")
+                buf_obj = buf_obj_ar[0]
+            else:
+                buf_obj = ' ' * nRequiredSize
+        return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)
 }
 }
 
