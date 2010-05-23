@@ -546,6 +546,7 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
 %clear (double *regularArrayIn, long nRegularArraySizeIn);
 
 %apply (int nList, int* pListOut) {(int buckets, int *panHistogram)};
+%apply Pointer NONNULL { int *panHistogram };
   CPLErr GetHistogram(double min,
                      double max,
                      int buckets,
@@ -588,7 +589,7 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
   CPLErr GetHistogram(int buckets,
                         int *panHistogram) {
     CPLErrorReset(); 
-    CPLErr err = GDALGetRasterHistogram( self, -0.5, 225.5, buckets, panHistogram,
+    CPLErr err = GDALGetRasterHistogram( self, -0.5, 255.5, buckets, panHistogram,
                                          0, 1,
                                          NULL, NULL);
     return err;

@@ -1146,18 +1146,28 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
 %typemap(arginit) (int buckets, int* panHistogram)
 {
   /* %typemap(in) int buckets, int* panHistogram -> list */
-  $2 = (int *) CPLCalloc(sizeof(int),$1);
+  $2 = (int *) VSICalloc(sizeof(int),$1);
 }
 
 %typemap(in, numinputs=1) (int buckets, int* panHistogram)
 {
   /* %typemap(in) int buckets, int* panHistogram -> list */
-  int requested_buckets;
+  int requested_buckets = 0;
   SWIG_AsVal_int($input, &requested_buckets);
   if( requested_buckets != $1 )
-  { 
+  {
     $1 = requested_buckets;
-    $2 = (int *) CPLRealloc($2,sizeof(int) * requested_buckets);
+    if (requested_buckets <= 0 || requested_buckets > (int)(INT_MAX / sizeof(int)))
+    {
+        PyErr_SetString( PyExc_RuntimeError, "Bad value for buckets" );
+        SWIG_fail;
+    }
+    $2 = (int *) VSIRealloc($2, sizeof(int) * requested_buckets);
+  }
+  if ($2 == NULL)
+  {
+    PyErr_SetString( PyExc_RuntimeError, "Cannot allocate buckets" );
+    SWIG_fail;
   }
 }
 
@@ -1165,7 +1175,7 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
 {
   /* %typemap(freearg) (int buckets, int* panHistogram)*/
   if ( $2 ) {
-    CPLFree( $2 );
+    VSIFree( $2 );
   }
 }
 

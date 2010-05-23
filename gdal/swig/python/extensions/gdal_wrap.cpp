@@ -13291,7 +13291,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   
   {
     /* %typemap(in) int buckets, int* panHistogram -> list */
-    arg5 = (int *) CPLCalloc(sizeof(int),arg4);
+    arg5 = (int *) VSICalloc(sizeof(int),arg4);
   }
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
   PyProgressData *psProgressInfo;
@@ -13323,12 +13323,22 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   if (obj3) {
     {
       /* %typemap(in) int buckets, int* panHistogram -> list */
-      int requested_buckets;
+      int requested_buckets = 0;
       SWIG_AsVal_int(obj3, &requested_buckets);
       if( requested_buckets != arg4 )
       {
         arg4 = requested_buckets;
-        arg5 = (int *) CPLRealloc(arg5,sizeof(int) * requested_buckets);
+        if (requested_buckets <= 0 || requested_buckets > (int)(INT_MAX / sizeof(int)))
+        {
+          PyErr_SetString( PyExc_RuntimeError, "Bad value for buckets" );
+          SWIG_fail;
+        }
+        arg5 = (int *) VSIRealloc(arg5, sizeof(int) * requested_buckets);
+      }
+      if (arg5 == NULL)
+      {
+        PyErr_SetString( PyExc_RuntimeError, "Cannot allocate buckets" );
+        SWIG_fail;
       }
     }
   }
@@ -13407,7 +13417,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     /* %typemap(freearg) (int buckets, int* panHistogram)*/
     if ( arg5 ) {
-      CPLFree( arg5 );
+      VSIFree( arg5 );
     }
   }
   {
@@ -13421,7 +13431,7 @@ fail:
   {
     /* %typemap(freearg) (int buckets, int* panHistogram)*/
     if ( arg5 ) {
-      CPLFree( arg5 );
+      VSIFree( arg5 );
     }
   }
   {
