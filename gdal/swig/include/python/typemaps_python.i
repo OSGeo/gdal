@@ -278,16 +278,24 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap Band::ReadRaster()
  */
-%typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pBuf = NULL )
+%typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject = NULL )
 {
-  /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pBuf = NULL ) */
-  $1 = &pBuf;
+  /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject = NULL ) */
+  $1 = &pyObject;
 }
 %typemap(argout) ( void **outPythonObject )
 {
   /* %typemap(argout) ( void **outPythonObject ) */
   Py_XDECREF($result);
-  $result = (PyObject *)*$1;
+  if (*$1)
+  {
+      $result = (PyObject*)*$1;
+  }
+  else
+  {
+      $result = Py_None;
+      Py_INCREF($result);
+  }
 }
 
 /*
@@ -372,18 +380,37 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 /* required for GDALAsyncReader */
-%typemap(in,numinputs=0) (int *nLength, char **pBuffer ) ( int nLen = 0, char *pBuf = 0 )
+
+%typemap(in,numinputs=1) (int nLenKeepObject, char *pBufKeepObject, void* pyObject)
 {
-  /* %typemap(in,numinputs=0) (int *nLength, char **pBuffer ) */
-  $1 = &nLen;
-  $2 = &pBuf;
-}
-%typemap(freearg) (int *nLength, char **pBuffer )
-{
-  /* %typemap(freearg) (int *nLen, char **pBuf ) */
-  if( *$1 ) {
-    free( *$2 );
+  /* %typemap(in,numinputs=1) (int nLenKeepObject, char *pBufKeepObject, void* pyObject) */
+%#if PY_VERSION_HEX>=0x03000000
+  if (PyBytes_Check($input))
+  {
+    Py_ssize_t safeLen = 0;
+    PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
+    $1 = (int) safeLen;
+    $3 = $input;
   }
+  else
+  {
+    PyErr_SetString(PyExc_TypeError, "not a bytes");
+    SWIG_fail;
+  }
+%#else
+  if (PyString_Check($input))
+  {
+    Py_ssize_t safeLen = 0;
+    PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
+    $1 = (int) safeLen;
+    $3 = $input;
+  }
+  else
+  {
+    PyErr_SetString(PyExc_TypeError, "not a string");
+    SWIG_fail;
+  }
+%#endif
 }
 
 /* end of required for GDALAsyncReader */

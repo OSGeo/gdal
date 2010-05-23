@@ -536,9 +536,15 @@ class AsyncReader(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, AsyncReader, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
+    __swig_destroy__ = _gdal.delete_AsyncReader
+    __del__ = lambda self : None;
     def GetNextUpdatedRegion(self, *args):
         """GetNextUpdatedRegion(self, double timeout) -> GDALAsyncStatusType"""
         return _gdal.AsyncReader_GetNextUpdatedRegion(self, *args)
+
+    def GetBuffer(self, *args):
+        """GetBuffer(self)"""
+        return _gdal.AsyncReader_GetBuffer(self, *args)
 
     def LockBuffer(self, *args):
         """LockBuffer(self, double timeout) -> int"""
@@ -648,11 +654,11 @@ class Dataset(MajorObject):
 
     def BeginAsyncReader(self, *args, **kwargs):
         """
-        BeginAsyncReader(self, int xOff, int yOff, int xSize, int ySize, int buf_xsize, 
-            int buf_ysize, GDALDataType bufType = (GDALDataType) 0, 
-            int band_list = 0, int nPixelSpace = 0, 
-            int nLineSpace = 0, int nBandSpace = 0, 
-            char options = None) -> AsyncReader
+        BeginAsyncReader(self, int xOff, int yOff, int xSize, int ySize, int buf_len, 
+            int buf_xsize, int buf_ysize, GDALDataType bufType = (GDALDataType) 0, 
+            int band_list = 0, 
+            int nPixelSpace = 0, int nLineSpace = 0, 
+            int nBandSpace = 0, char options = None) -> AsyncReader
         """
         return _gdal.Dataset_BeginAsyncReader(self, *args, **kwargs)
 
@@ -726,7 +732,7 @@ class Dataset(MajorObject):
             i = i + 1
         return sd_list
 
-    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_xsize = None, buf_ysize = None, buf_type = None, band_list = None, options=[]):
+    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj = None, buf_xsize = None, buf_ysize = None, buf_type = None, band_list = None, options=[]):
         if band_list is None:
             band_list = range(1, self.RasterCount + 1)
         if buf_xsize is None:
@@ -735,8 +741,22 @@ class Dataset(MajorObject):
             buf_ysize = 0;
         if buf_type is None:
             buf_type = GDT_Byte
-        
-        return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)            
+
+        if buf_xsize <= 0:
+            buf_xsize = xsize
+        if buf_ysize <= 0:
+            buf_ysize = ysize
+
+        if buf_obj is None:
+            from sys import version_info
+            nRequiredSize = int(buf_xsize * buf_ysize * len(band_list) * (_gdal.GetDataTypeSize(buf_type) / 8))
+            if version_info >= (3,0,0):
+                buf_obj_ar = [ None ]
+                exec("buf_obj_ar[0] = b' ' * nRequiredSize")
+                buf_obj = buf_obj_ar[0]
+            else:
+                buf_obj = ' ' * nRequiredSize
+        return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)
 
 Dataset_swigregister = _gdal.Dataset_swigregister
 Dataset_swigregister(Dataset)

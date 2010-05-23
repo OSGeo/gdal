@@ -3637,14 +3637,106 @@ int ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
     return (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + (nBands - 1) * nBandSpace + nPixelSize;
 }
 
+
+typedef struct
+{
+    GDALAsyncReaderH  hAsyncReader;
+    void             *pyObject;
+} GDALAsyncReaderWrapper;
+
+typedef void* GDALAsyncReaderWrapperH;
+
+static GDALAsyncReaderH AsyncReaderWrapperGetReader(GDALAsyncReaderWrapperH hWrapper)
+{
+    GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper*)hWrapper;
+    if (psWrapper->hAsyncReader == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "AsyncReader object is defunct");
+    }
+    return psWrapper->hAsyncReader;
+}
+
+static void* AsyncReaderWrapperGetPyObject(GDALAsyncReaderWrapperH hWrapper)
+{
+    GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper*)hWrapper;
+    return psWrapper->pyObject;
+}
+
+static void DeleteAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
+{
+    GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper*)hWrapper;
+    if (psWrapper->hAsyncReader != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Native AsyncReader object will leak. EndAsyncReader() should have been called before");
+    }
+    CPLFree(psWrapper);
+}
+
+
+
+static GDALAsyncReaderWrapper* CreateAsyncReaderWrapper(GDALAsyncReaderH  hAsyncReader,
+                                                        void             *pyObject)
+{
+    GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper* )CPLMalloc(sizeof(GDALAsyncReaderWrapper));
+    psWrapper->hAsyncReader = hAsyncReader;
+    psWrapper->pyObject = pyObject;
+    Py_INCREF((PyObject*) psWrapper->pyObject);
+    return psWrapper;
+}
+
+static void DisableAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
+{
+    GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper*)hWrapper;
+    if (psWrapper->pyObject)
+    {
+        Py_XDECREF((PyObject*) psWrapper->pyObject);
+    }
+    psWrapper->pyObject = NULL;
+    psWrapper->hAsyncReader = NULL;
+}
+
+
+SWIGINTERN void delete_GDALAsyncReaderShadow(GDALAsyncReaderShadow *self){
+        DeleteAsyncReaderWrapper(self);
+    }
 SWIGINTERN GDALAsyncStatusType GDALAsyncReaderShadow_GetNextUpdatedRegion(GDALAsyncReaderShadow *self,double timeout,int *xoff,int *yoff,int *buf_xsize,int *buf_ysize){
-        return GDALARGetNextUpdatedRegion(self, timeout, xoff, yoff, buf_xsize, buf_ysize );
+        GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(self);
+        if (hReader == NULL)
+        {
+            *xoff = 0;
+            *yoff = 0;
+            *buf_xsize = 0;
+            *buf_ysize = 0;
+            return GARIO_ERROR;
+        }
+        return GDALARGetNextUpdatedRegion(hReader, timeout, xoff, yoff, buf_xsize, buf_ysize );
+    }
+SWIGINTERN void GDALAsyncReaderShadow_GetBuffer(GDALAsyncReaderShadow *self,void **ppRetPyObject){
+        GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(self);
+        if (hReader == NULL)
+        {
+            *ppRetPyObject = NULL;
+            return;
+        }
+        *ppRetPyObject = AsyncReaderWrapperGetPyObject(self);
+        Py_INCREF((PyObject*)*ppRetPyObject);
     }
 SWIGINTERN int GDALAsyncReaderShadow_LockBuffer(GDALAsyncReaderShadow *self,double timeout){
-        return GDALARLockBuffer(self,timeout);
+        GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(self);
+        if (hReader == NULL)
+        {
+            return 0;
+        }
+        return GDALARLockBuffer(hReader,timeout);
     }
 SWIGINTERN void GDALAsyncReaderShadow_UnlockBuffer(GDALAsyncReaderShadow *self){
-        GDALARUnlockBuffer(self);
+        GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(self);
+        if (hReader == NULL)
+        {
+            return;
+        }
+        GDALARUnlockBuffer(hReader);
     }
 SWIGINTERN void delete_GDALDatasetShadow(GDALDatasetShadow *self){
     if ( GDALDereferenceDataset( self ) <= 0 ) {
@@ -3760,8 +3852,8 @@ SWIGINTERN CPLErr GDALDatasetShadow_WriteRaster(GDALDatasetShadow *self,int xoff
 
     return eErr;
   }
-SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDatasetShadow *self,int xOff,int yOff,int xSize,int ySize,int *buf_len,char **buf,int buf_xsize,int buf_ysize,GDALDataType bufType=(GDALDataType) 0,int band_list=0,int *pband_list=0,int nPixelSpace=0,int nLineSpace=0,int nBandSpace=0,char **options=0){
-    
+SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDatasetShadow *self,int xOff,int yOff,int xSize,int ySize,int buf_len,char *buf_string,void *pyObject,int buf_xsize,int buf_ysize,GDALDataType bufType=(GDALDataType) 0,int band_list=0,int *pband_list=0,int nPixelSpace=0,int nLineSpace=0,int nBandSpace=0,char **options=0){
+
     if ((options != NULL) && (buf_xsize ==0) && (buf_ysize == 0))
     {
         // calculate an appropriate buffer size
@@ -3787,45 +3879,39 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
         ntype = GDT_Byte;
     }
     
+    int nBCount = (band_list) != 0 ? band_list : GDALGetRasterCount(self);
+    int nMinSize = nxsize * nysize * nBCount * (GDALGetDataTypeSize(ntype) / 8);
+    if (buf_string == NULL || buf_len < nMinSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Buffer is too small");
+        return NULL;
+    }
+    
     bool myBandList = false;
-    int nBCount;
     int* pBandList;
     
     if (band_list != 0){
         myBandList = false;
-        nBCount = band_list;
         pBandList = pband_list;
     }        
     else
     {
         myBandList = true;
-        nBCount = GDALGetRasterCount(self);
         pBandList = (int*)CPLMalloc(sizeof(int) * nBCount);
         for (int i = 0; i < nBCount; ++i) {
-            pBandList[i] = i;
+            pBandList[i] = i + 1;
         }
     }
-    
-    // for python bindings create buffer 
-    if (*buf == NULL)
+
+    GDALAsyncReaderH hAsyncReader =
+            GDALBeginAsyncReader(self, xOff, yOff, xSize, ySize, (void*) buf_string, nxsize, nysize, ntype, nBCount, pBandList, nPixelSpace, nLineSpace,
+    nBandSpace, options);
+    if (hAsyncReader)
     {
-        // calculate buffer size
-        // if type is byte typeSize is GDT_Int32 (4) since these are packed into an int (BGRA)
-        if (ntype == GDT_Byte)
-            *buf = (char*) VSIMalloc( nxsize * nysize * (int)GDALGetDataTypeSize(GDT_Int32) );
-        else
-            *buf = (char*) VSIMalloc( nxsize * nysize *  (int)GDALGetDataTypeSize(ntype)); 
-    }
-        
-    // check we were able to create the buffer
-    if (*buf)
-    {
-        return (GDALAsyncReader*) GDALBeginAsyncReader(self, xOff, yOff, xSize, ySize, (void*) *buf, nxsize, nysize, ntype, nBCount, pBandList, nPixelSpace, nLineSpace,
-        nBandSpace, options);
+        return (GDALAsyncReader*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
     }
     else
     {
-        *buf = 0;
         return NULL;
     }
     
@@ -3835,7 +3921,13 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
 
   }
 SWIGINTERN void GDALDatasetShadow_EndAsyncReader(GDALDatasetShadow *self,GDALAsyncReaderShadow *ario){
-    GDALEndAsyncReader(self, (GDALAsyncReaderH) ario);
+    GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(ario);
+    if (hReader == NULL)
+    {
+        return;
+    }
+    GDALEndAsyncReader(self, hReader);
+    DisableAsyncReaderWrapper(ario);
   }
 SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff,int yoff,int xsize,int ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,int *buf_pixel_space=0,int *buf_line_space=0,int *buf_band_space=0){
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
@@ -3847,8 +3939,7 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
       int lastband = GDALGetRasterCount( self ) - 1;
       if (lastband < 0)
       {
-          *buf = Py_None;
-          Py_INCREF(Py_None);
+          *buf = NULL;
           return CE_Failure;
       }
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
@@ -3863,8 +3954,7 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
                                                pixel_space, line_space, band_space, FALSE);
     if (buf_size == 0)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
+        *buf = NULL;
         return CE_Failure;
     }
 
@@ -3872,8 +3962,6 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -3882,8 +3970,6 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -3896,8 +3982,7 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
-        *buf = Py_None;
-        Py_INCREF(Py_None);
+        *buf = NULL;
     }
     return eErr;
 }
@@ -4171,8 +4256,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,in
                                             pixel_space, line_space, FALSE ); 
     if (buf_size == 0)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
+        *buf = NULL;
         return CE_Failure;
     }
 #if PY_VERSION_HEX >= 0x03000000 
@@ -4180,7 +4264,6 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,in
     if (*buf == NULL)
     {
         *buf = Py_None;
-        Py_INCREF(Py_None);
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -4189,8 +4272,6 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,in
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
-        *buf = Py_None;
-        Py_INCREF(Py_None);
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -4202,8 +4283,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,in
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
-        *buf = Py_None;
-        Py_INCREF(Py_None);
+        *buf = NULL;
     }
     return eErr;
   }
@@ -9111,6 +9191,35 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_delete_AsyncReader(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALAsyncReaderShadow *arg1 = (GDALAsyncReaderShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_AsyncReader",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALAsyncReaderShadow, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_AsyncReader" "', argument " "1"" of type '" "GDALAsyncReaderShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALAsyncReaderShadow * >(argp1);
+  {
+    delete_GDALAsyncReaderShadow(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_AsyncReader_GetNextUpdatedRegion(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALAsyncReaderShadow *arg1 = (GDALAsyncReaderShadow *) 0 ;
@@ -9183,6 +9292,54 @@ SWIGINTERN PyObject *_wrap_AsyncReader_GetNextUpdatedRegion(PyObject *SWIGUNUSED
   } else {
     int new_flags = SWIG_IsNewObj(res6) ? (SWIG_POINTER_OWN |  0 ) :  0 ;
     resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_NewPointerObj((void*)(arg6), SWIGTYPE_p_int, new_flags));
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_AsyncReader_GetBuffer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALAsyncReaderShadow *arg1 = (GDALAsyncReaderShadow *) 0 ;
+  void **arg2 = (void **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *pyObject2 = NULL ;
+  PyObject * obj0 = 0 ;
+  
+  {
+    /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject2 = NULL ) */
+    arg2 = &pyObject2;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O:AsyncReader_GetBuffer",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALAsyncReaderShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "AsyncReader_GetBuffer" "', argument " "1"" of type '" "GDALAsyncReaderShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALAsyncReaderShadow * >(argp1);
+  {
+    GDALAsyncReaderShadow_GetBuffer(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout) ( void **outPythonObject ) */
+    Py_XDECREF(resultobj);
+    if (*arg2)
+    {
+      resultobj = (PyObject*)*arg2;
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
+    }
   }
   return resultobj;
 fail:
@@ -10545,17 +10702,18 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
   int arg3 ;
   int arg4 ;
   int arg5 ;
-  int *arg6 = (int *) 0 ;
-  char **arg7 = (char **) 0 ;
-  int arg8 ;
+  int arg6 ;
+  char *arg7 = (char *) 0 ;
+  void *arg8 = (void *) 0 ;
   int arg9 ;
-  GDALDataType arg10 = (GDALDataType) (GDALDataType) 0 ;
-  int arg11 = (int) 0 ;
-  int *arg12 = (int *) 0 ;
-  int arg13 = (int) 0 ;
+  int arg10 ;
+  GDALDataType arg11 = (GDALDataType) (GDALDataType) 0 ;
+  int arg12 = (int) 0 ;
+  int *arg13 = (int *) 0 ;
   int arg14 = (int) 0 ;
   int arg15 = (int) 0 ;
-  char **arg16 = (char **) 0 ;
+  int arg16 = (int) 0 ;
+  char **arg17 = (char **) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int val2 ;
@@ -10566,20 +10724,18 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
   int ecode4 = 0 ;
   int val5 ;
   int ecode5 = 0 ;
-  int nLen6 = 0 ;
-  char *pBuf6 = 0 ;
-  int val8 ;
-  int ecode8 = 0 ;
   int val9 ;
   int ecode9 = 0 ;
   int val10 ;
   int ecode10 = 0 ;
-  int val13 ;
-  int ecode13 = 0 ;
+  int val11 ;
+  int ecode11 = 0 ;
   int val14 ;
   int ecode14 = 0 ;
   int val15 ;
   int ecode15 = 0 ;
+  int val16 ;
+  int ecode16 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -10593,17 +10749,13 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
   PyObject * obj10 = 0 ;
   PyObject * obj11 = 0 ;
   PyObject * obj12 = 0 ;
+  PyObject * obj13 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "xOff",(char *) "yOff",(char *) "xSize",(char *) "ySize",(char *) "buf_xsize",(char *) "buf_ysize",(char *) "bufType",(char *) "band_list",(char *) "nPixelSpace",(char *) "nLineSpace",(char *) "nBandSpace",(char *) "options", NULL 
+    (char *) "self",(char *) "xOff",(char *) "yOff",(char *) "xSize",(char *) "ySize",(char *) "buf_len",(char *) "buf_xsize",(char *) "buf_ysize",(char *) "bufType",(char *) "band_list",(char *) "nPixelSpace",(char *) "nLineSpace",(char *) "nBandSpace",(char *) "options", NULL 
   };
   GDALAsyncReaderShadow *result = 0 ;
   
-  {
-    /* %typemap(in,numinputs=0) (int *nLength, char **pBuffer ) */
-    arg6 = &nLen6;
-    arg7 = &pBuf6;
-  }
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOO|OOOOOO:Dataset_BeginAsyncReader",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11,&obj12)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOOO|OOOOOO:Dataset_BeginAsyncReader",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11,&obj12,&obj13)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_BeginAsyncReader" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
@@ -10629,36 +10781,66 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Dataset_BeginAsyncReader" "', argument " "5"" of type '" "int""'");
   } 
   arg5 = static_cast< int >(val5);
-  ecode8 = SWIG_AsVal_int(obj5, &val8);
-  if (!SWIG_IsOK(ecode8)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "Dataset_BeginAsyncReader" "', argument " "8"" of type '" "int""'");
-  } 
-  arg8 = static_cast< int >(val8);
+  {
+    /* %typemap(in,numinputs=1) (int nLenKeepObject, char *pBufKeepObject, void* pyObject) */
+#if PY_VERSION_HEX>=0x03000000
+    if (PyBytes_Check(obj5))
+    {
+      Py_ssize_t safeLen = 0;
+      PyBytes_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
+      arg6 = (int) safeLen;
+      arg8 = obj5;
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a bytes");
+      SWIG_fail;
+    }
+#else
+    if (PyString_Check(obj5))
+    {
+      Py_ssize_t safeLen = 0;
+      PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
+      arg6 = (int) safeLen;
+      arg8 = obj5;
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a string");
+      SWIG_fail;
+    }
+#endif
+  }
   ecode9 = SWIG_AsVal_int(obj6, &val9);
   if (!SWIG_IsOK(ecode9)) {
     SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "Dataset_BeginAsyncReader" "', argument " "9"" of type '" "int""'");
   } 
   arg9 = static_cast< int >(val9);
-  if (obj7) {
-    ecode10 = SWIG_AsVal_int(obj7, &val10);
-    if (!SWIG_IsOK(ecode10)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode10), "in method '" "Dataset_BeginAsyncReader" "', argument " "10"" of type '" "GDALDataType""'");
-    } 
-    arg10 = static_cast< GDALDataType >(val10);
-  }
+  ecode10 = SWIG_AsVal_int(obj7, &val10);
+  if (!SWIG_IsOK(ecode10)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode10), "in method '" "Dataset_BeginAsyncReader" "', argument " "10"" of type '" "int""'");
+  } 
+  arg10 = static_cast< int >(val10);
   if (obj8) {
+    ecode11 = SWIG_AsVal_int(obj8, &val11);
+    if (!SWIG_IsOK(ecode11)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode11), "in method '" "Dataset_BeginAsyncReader" "', argument " "11"" of type '" "GDALDataType""'");
+    } 
+    arg11 = static_cast< GDALDataType >(val11);
+  }
+  if (obj9) {
     {
       /* %typemap(in,numinputs=1) (int nList, int* pList)*/
       /* check if is List */
-      if ( !PySequence_Check(obj8) ) {
+      if ( !PySequence_Check(obj9) ) {
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      arg11 = PySequence_Size(obj8);
-      arg12 = (int*) malloc(arg11*sizeof(int));
-      for( int i = 0; i<arg11; i++ ) {
-        PyObject *o = PySequence_GetItem(obj8,i);
-        if ( !PyArg_Parse(o,"i",&arg12[i]) ) {
+      arg12 = PySequence_Size(obj9);
+      arg13 = (int*) malloc(arg12*sizeof(int));
+      for( int i = 0; i<arg12; i++ ) {
+        PyObject *o = PySequence_GetItem(obj9,i);
+        if ( !PyArg_Parse(o,"i",&arg13[i]) ) {
           PyErr_SetString(PyExc_TypeError, "not an integer");
           Py_DECREF(o);
           SWIG_fail;
@@ -10666,13 +10848,6 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
         Py_DECREF(o);
       }
     }
-  }
-  if (obj9) {
-    ecode13 = SWIG_AsVal_int(obj9, &val13);
-    if (!SWIG_IsOK(ecode13)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode13), "in method '" "Dataset_BeginAsyncReader" "', argument " "13"" of type '" "int""'");
-    } 
-    arg13 = static_cast< int >(val13);
   }
   if (obj10) {
     ecode14 = SWIG_AsVal_int(obj10, &val14);
@@ -10689,30 +10864,37 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
     arg15 = static_cast< int >(val15);
   }
   if (obj12) {
+    ecode16 = SWIG_AsVal_int(obj12, &val16);
+    if (!SWIG_IsOK(ecode16)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode16), "in method '" "Dataset_BeginAsyncReader" "', argument " "16"" of type '" "int""'");
+    } 
+    arg16 = static_cast< int >(val16);
+  }
+  if (obj13) {
     {
       /* %typemap(in) char **options */
       /* Check if is a list */
-      if ( ! PySequence_Check(obj12)) {
+      if ( ! PySequence_Check(obj13)) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj12);
+      int size = PySequence_Size(obj13);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        PyObject* pyObj = PySequence_GetItem(obj12,i);
+        PyObject* pyObj = PySequence_GetItem(obj13,i);
         if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg16 = CSLAddString( arg16, pszItem );
+        arg17 = CSLAddString( arg17, pszItem );
         Py_DECREF(pyObj);
       }
     }
   }
   {
-    result = (GDALAsyncReaderShadow *)GDALDatasetShadow_BeginAsyncReader(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16);
+    result = (GDALAsyncReaderShadow *)GDALDatasetShadow_BeginAsyncReader(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -10720,40 +10902,28 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
       }
     }
   }
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALAsyncReaderShadow, 0 |  0 );
-  {
-    /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg6 ) {
-      free( *arg7 );
-    }
-  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALAsyncReaderShadow, SWIG_POINTER_OWN |  0 );
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg12) {
-      free((void*) arg12);
+    if (arg13) {
+      free((void*) arg13);
     }
   }
   {
     /* %typemap(freearg) char **options */
-    CSLDestroy( arg16 );
+    CSLDestroy( arg17 );
   }
   return resultobj;
 fail:
   {
-    /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg6 ) {
-      free( *arg7 );
-    }
-  }
-  {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg12) {
-      free((void*) arg12);
+    if (arg13) {
+      free((void*) arg13);
     }
   }
   {
     /* %typemap(freearg) char **options */
-    CSLDestroy( arg16 );
+    CSLDestroy( arg17 );
   }
   return NULL;
 }
@@ -10823,7 +10993,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
   int ecode4 = 0 ;
   int val5 ;
   int ecode5 = 0 ;
-  void *pBuf6 = NULL ;
+  void *pyObject6 = NULL ;
   int val7 ;
   int val8 ;
   int val9 ;
@@ -10848,8 +11018,8 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
   CPLErr result;
   
   {
-    /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pBuf6 = NULL ) */
-    arg6 = &pBuf6;
+    /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject6 = NULL ) */
+    arg6 = &pyObject6;
   }
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOO|OOOOOOO:Dataset_ReadRaster1",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
@@ -11001,7 +11171,15 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
   {
     /* %typemap(argout) ( void **outPythonObject ) */
     Py_XDECREF(resultobj);
-    resultobj = (PyObject *)*arg6;
+    if (*arg6)
+    {
+      resultobj = (PyObject*)*arg6;
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
+    }
   }
   {
     /* %typemap(freearg) (int nList, int* pList) */
@@ -13566,7 +13744,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
   int ecode4 = 0 ;
   int val5 ;
   int ecode5 = 0 ;
-  void *pBuf6 = NULL ;
+  void *pyObject6 = NULL ;
   int val7 ;
   int val8 ;
   int val9 ;
@@ -13588,8 +13766,8 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
   CPLErr result;
   
   {
-    /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pBuf6 = NULL ) */
-    arg6 = &pBuf6;
+    /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject6 = NULL ) */
+    arg6 = &pyObject6;
   }
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOO|OOOOO:Band_ReadRaster1",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
@@ -13705,7 +13883,15 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
   {
     /* %typemap(argout) ( void **outPythonObject ) */
     Py_XDECREF(resultobj);
-    resultobj = (PyObject *)*arg6;
+    if (*arg6)
+    {
+      resultobj = (PyObject*)*arg6;
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
+    }
   }
   return resultobj;
 fail:
@@ -18312,7 +18498,9 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GDAL_GCP_get_Id", _wrap_GDAL_GCP_get_Id, METH_VARARGS, (char *)"GDAL_GCP_get_Id(GCP gcp) -> char"},
 	 { (char *)"GDAL_GCP_set_Id", _wrap_GDAL_GCP_set_Id, METH_VARARGS, (char *)"GDAL_GCP_set_Id(GCP gcp, char pszId)"},
 	 { (char *)"GCPsToGeoTransform", _wrap_GCPsToGeoTransform, METH_VARARGS, (char *)"GCPsToGeoTransform(int nGCPs, int bApproxOK = 1) -> FALSE_IS_ERR"},
+	 { (char *)"delete_AsyncReader", _wrap_delete_AsyncReader, METH_VARARGS, (char *)"delete_AsyncReader(AsyncReader self)"},
 	 { (char *)"AsyncReader_GetNextUpdatedRegion", _wrap_AsyncReader_GetNextUpdatedRegion, METH_VARARGS, (char *)"AsyncReader_GetNextUpdatedRegion(AsyncReader self, double timeout) -> GDALAsyncStatusType"},
+	 { (char *)"AsyncReader_GetBuffer", _wrap_AsyncReader_GetBuffer, METH_VARARGS, (char *)"AsyncReader_GetBuffer(AsyncReader self)"},
 	 { (char *)"AsyncReader_LockBuffer", _wrap_AsyncReader_LockBuffer, METH_VARARGS, (char *)"AsyncReader_LockBuffer(AsyncReader self, double timeout) -> int"},
 	 { (char *)"AsyncReader_UnlockBuffer", _wrap_AsyncReader_UnlockBuffer, METH_VARARGS, (char *)"AsyncReader_UnlockBuffer(AsyncReader self)"},
 	 { (char *)"AsyncReader_swigregister", AsyncReader_swigregister, METH_VARARGS, NULL},
@@ -18349,8 +18537,8 @@ static PyMethodDef SwigMethods[] = {
 		""},
 	 { (char *)"Dataset_BeginAsyncReader", (PyCFunction) _wrap_Dataset_BeginAsyncReader, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Dataset_BeginAsyncReader(Dataset self, int xOff, int yOff, int xSize, int ySize, \n"
-		"    int buf_xsize, int buf_ysize, GDALDataType bufType = (GDALDataType) 0, \n"
-		"    int band_list = 0, \n"
+		"    int buf_len, int buf_xsize, int buf_ysize, \n"
+		"    GDALDataType bufType = (GDALDataType) 0, int band_list = 0, \n"
 		"    int nPixelSpace = 0, int nLineSpace = 0, \n"
 		"    int nBandSpace = 0, char options = None) -> AsyncReader\n"
 		""},
