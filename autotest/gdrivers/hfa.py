@@ -581,6 +581,7 @@ def hfa_nodata_read():
         gdaltest.post_reason( 'StdDev value is wrong.' )
         return 'fail'
 
+    b = None
     ds = None
     
     gdal.GetDriverByName( 'HFA' ).Delete( 'tmp/nodata.img' )

@@ -168,6 +168,7 @@ def jpeg_5():
         print(cs)
         return 'fail'
 
+    refband = None
     ds2 = None
     gdal.GetDriverByName('JPEG').Delete( 'tmp/masked.jpg' )
     

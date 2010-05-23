@@ -700,6 +700,7 @@ def mask_and_ovr(order):
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
 
     if order < 4:
+        ds = None
         ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif', gdal.GA_Update)
         ds.GetRasterBand(1).GetMaskBand().Fill(1)
         # The overview of the mask will be implictely recomputed
@@ -819,6 +820,7 @@ def mask_20():
             gdaltest.post_reason( 'did not get expected mask checksum for type %s : %d' % (gdal.GetDataTypeName(types[i]), msk.Checksum()) )
             return 'fail'
 
+        msk = None
         ds = None
         drv.Delete('tmp/mask20.tif')
 
@@ -857,6 +859,7 @@ def mask_21():
             gdaltest.post_reason( 'did not get expected mask checksum for type %s : %d' % (gdal.GetDataTypeName(types[i]), msk.Checksum()) )
             return 'fail'
 
+        msk = None
         ds = None
         drv.Delete('tmp/mask21.tif')
 

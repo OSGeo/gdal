@@ -49,6 +49,7 @@ def hfa_write_desc():
 
     bnd = new_ds.GetRasterBand(1)
     bnd.SetDescription( 'CustomBandName' )
+    bnd = None
 
     src_ds = None
     new_ds = None
@@ -59,6 +60,7 @@ def hfa_write_desc():
         gdaltest.post_reason( 'Didnt get custom band name.' )
         return 'fail'
 
+    bnd = None
     new_ds = None
 
     gdal.GetDriverByName('HFA').Delete( 'tmp/test_desc.img' )

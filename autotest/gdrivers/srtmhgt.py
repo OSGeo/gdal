@@ -58,6 +58,7 @@ def srtmhgt_1():
 
     bandDst.FlushCache()
 
+    bandDst = None
     ds = None
     dsDst = None
 

@@ -897,6 +897,7 @@ def ogr_shape_23_write_geom(layer_name, geom, expected_geom, wkbType):
     #######################################################
     # Check feature
 
+    gdaltest.shape_lyr = None
     gdaltest.shape_ds.Destroy()
     gdaltest.shape_ds = ogr.GetDriverByName('ESRI Shapefile').Open( 'tmp', update = 1 )
 
