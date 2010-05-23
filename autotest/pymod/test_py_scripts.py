@@ -160,21 +160,6 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
         # several time)
         del sys.modules[script_name]
 
-        # Unload gdal modules so that a change such as gdal.TermProgress = gdal.TermProgress_nocb
-        # done in gdal_merge.py is undone next time gdal is reloaded
-        for module_name in ['osgeo.gdal', 'osgeo.gdalconst', 'osgeo.ogr', 'osgeo.osr', 'osgeo', 'gdal', 'gdalconst' 'ogr', 'osr']:
-            if module_name in sys.modules:
-                del sys.modules[module_name]
-
-        # Reload gdal again
-        try:
-            from osgeo import gdal, gdalconst, ogr, osr
-        except:
-            import gdal
-            import gdalconst
-            import ogr
-            import osr
-
     return ret
 
 
