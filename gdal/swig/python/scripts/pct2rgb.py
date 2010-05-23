@@ -35,9 +35,9 @@ except ImportError:
     import gdal
 
 try:
-    gdal.TermProgress = gdal.TermProgress_nocb
+    progress = gdal.TermProgress_nocb
 except:
-    pass
+    progress = gdal.TermProgress
 
 try:
     import numpy as Numeric
@@ -157,7 +157,7 @@ if src_ds.GetGCPCount() > 0:
 # ----------------------------------------------------------------------------
 # Do the processing one scanline at a time. 
 
-gdal.TermProgress( 0.0 )
+progress( 0.0 )
 for iY in range(src_ds.RasterYSize):
     src_data = src_band.ReadAsArray(0,iY,src_ds.RasterXSize,1)
 
@@ -167,7 +167,7 @@ for iY in range(src_ds.RasterYSize):
         dst_data = Numeric.take(band_lookup,src_data)
         tif_ds.GetRasterBand(iBand+1).WriteArray(dst_data,0,iY)
 
-    gdal.TermProgress( (iY+1.0) / src_ds.RasterYSize )
+    progress( (iY+1.0) / src_ds.RasterYSize )
     
 
 tif_ds = None
