@@ -214,6 +214,7 @@ def dted_9():
 
     bandDst.FlushCache()
 
+    bandDst = None
     ds = None
     dsDst = None
 

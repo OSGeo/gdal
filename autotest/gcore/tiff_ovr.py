@@ -1108,12 +1108,12 @@ def tiff_ovr_29():
     src_ds = None
 
     png_ds.BuildOverviews( overviewlist = [2] )
+    png_ds = None
 
     if open('tmp/ovr29.png.ovr') is None:
         gdaltest.post_reason( 'Did not expected .ovr file.' )
         return 'fail'
 
-    png_ds = None
     png_ds = gdal.Open( 'tmp/ovr29.png' )
 
     if png_ds.GetRasterBand(1).GetOverviewCount() != 1:

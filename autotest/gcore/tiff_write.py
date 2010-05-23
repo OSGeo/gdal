@@ -896,6 +896,7 @@ def tiff_write_26():
 
     ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
 
+    ct = None
     ds = None
 
     ds = gdal.Open( 'tmp/ct8.tif' )
@@ -909,6 +910,7 @@ def tiff_write_26():
         gdaltest.post_reason( 'Wrong color table entry.' )
         return 'fail'
 
+    ct = None
     ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/ct8.tif' )
@@ -930,6 +932,7 @@ def tiff_write_27():
 
     ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
 
+    ct = None
     ds = None
 
     ds = gdal.Open( 'tmp/ct16.tif' )
@@ -948,6 +951,7 @@ def tiff_write_27():
         gdaltest.post_reason( 'Wrong color table entry.' )
         return 'fail'
 
+    ct = None
     ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/ct16.tif' )
@@ -1316,6 +1320,7 @@ def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
     if bnd.Checksum() != 4672:
         gdaltest.post_reason( 'Didnt get expected checksum on band 3')
         return 'fail'
+    bnd = None
 
     md = ds.GetMetadata('IMAGE_STRUCTURE');
     if md['INTERLEAVE'] != interleaving:
@@ -1389,6 +1394,7 @@ def tiff_write_44():
     ds = gdal.Open( 'tmp/tw_44.tif' )
     bnd = ds.GetRasterBand(1)
     md = bnd.GetMetadata('IMAGE_STRUCTURE')
+    bnd = None
     if md['NBITS'] != '9':
         gdaltest.post_reason( 'Didnt get expected NBITS value')
         return 'fail'
@@ -1399,6 +1405,7 @@ def tiff_write_44():
     ds2 = gdal.Open('tmp/tw_44_copy.tif')
     bnd = ds.GetRasterBand(1)
     md = bnd.GetMetadata('IMAGE_STRUCTURE')
+    bnd = None
     if md['NBITS'] != '9':
         gdaltest.post_reason( 'Didnt get expected NBITS value')
         return 'fail'
@@ -1421,6 +1428,7 @@ def tiff_write_45():
     ds = gdal.Open( 'tmp/tw_45.tif' )
     bnd = ds.GetRasterBand(1)
     md = bnd.GetMetadata('IMAGE_STRUCTURE')
+    bnd = None
     if md['NBITS'] != '17':
         gdaltest.post_reason( 'Didnt get expected NBITS value')
         return 'fail'
@@ -1431,6 +1439,7 @@ def tiff_write_45():
     ds2 = gdal.Open('tmp/tw_45_copy.tif')
     bnd = ds.GetRasterBand(1)
     md = bnd.GetMetadata('IMAGE_STRUCTURE')
+    bnd = None
     if md['NBITS'] != '17':
         gdaltest.post_reason( 'Didnt get expected NBITS value')
         return 'fail'
@@ -2910,6 +2919,7 @@ def tiff_write_83():
     if ct2.GetColorEntry(127) != (255,255,255,255):
         gdaltest.post_reason('did not get expected color table')
         return 'fail'
+    ct2 = None
     cs1 = ds.GetRasterBand(1).Checksum()
     if cs1 != 127 % 7:
         gdaltest.post_reason('did not get expected checksum for band 1')

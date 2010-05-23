@@ -128,6 +128,9 @@ def vrtrawlink_4():
     if chksum != 12481:
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
+    
+    band_1 = None
+    band = None
 
     # Close and reopen to ensure we are getting data from disk.
     gdaltest_rawlink_ds = None

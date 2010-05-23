@@ -96,6 +96,7 @@ def rpftoc_4():
         gdaltest.post_reason('Overview missing on target file.')
         return 'fail'
 
+    ds = None
     ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC')
     if ds.GetRasterBand(1).GetOverviewCount() != 2:
         gdaltest.post_reason('Overview missing on target file after re-open.')

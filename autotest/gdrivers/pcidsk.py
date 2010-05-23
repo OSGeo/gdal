@@ -139,6 +139,7 @@ def pcidsk_6():
     band.SetMetadata( [ 'ABC=DEF', 'GHI=JKL' ] )
     band.SetMetadataItem( 'XXX',  'YYY' )
     band.SetMetadataItem( 'XYZ',  '123', 'AltDomain' )
+    band = None
 
     # Close and reopen.
     gdaltest.pcidsk_ds = None
@@ -187,6 +188,9 @@ def pcidsk_7():
     if ct.GetColorEntry(1) != (255,0,255,255):
         gdaltest.post_reason( 'Got wrong color table entry immediately.' )
         return 'fail'
+    
+    ct = None
+    band = None
     
     # Close and reopen.
     gdaltest.pcidsk_ds = None
