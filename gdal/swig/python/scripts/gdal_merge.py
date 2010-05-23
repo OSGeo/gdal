@@ -31,9 +31,10 @@ except ImportError:
     import gdal
 
 try:
-    gdal.TermProgress = gdal.TermProgress_nocb
+    progress = gdal.TermProgress_nocb
 except:
-    pass
+    progress = gdal.TermProgress
+
 
 import sys
 import glob
@@ -444,7 +445,7 @@ def main( argv=None ):
     t_band = 1
 
     if quiet == 0 and verbose == 0:
-        gdal.TermProgress( 0.0 )
+        progress( 0.0 )
     fi_processed = 0
     
     for fi in file_infos:
@@ -467,7 +468,7 @@ def main( argv=None ):
             
         fi_processed = fi_processed+1
         if quiet == 0 and verbose == 0:
-            gdal.TermProgress( fi_processed / float(len(file_infos))  )
+            progress( fi_processed / float(len(file_infos))  )
     
     # Force file to be closed.
     t_fh = None
