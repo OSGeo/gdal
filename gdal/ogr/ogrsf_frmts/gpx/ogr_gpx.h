@@ -122,6 +122,8 @@ class OGRGPXLayer : public OGRLayer
 #ifdef HAVE_EXPAT
     void               AddStrToSubElementValue(const char* pszStr);
 #endif
+    int                OGRGPX_WriteXMLExtension(const char* pszTagName,
+                                                const char* pszContent);
 
   public:
                         OGRGPXLayer(const char *pszFilename,
@@ -175,7 +177,9 @@ class OGRGPXDataSource : public OGRDataSource
     int                 nLayers;
 
     /*  Export related */
-    FILE                *fpOutput; /* Standard file API */
+    FILE               *fpOutput; /* Large file API */
+    int                 bIsBackSeekable;
+    const char         *pszEOL;
     int                 nOffsetBounds;
     double              dfMinLat, dfMinLon, dfMaxLat, dfMaxLon;
     
@@ -230,6 +234,8 @@ class OGRGPXDataSource : public OGRDataSource
     const char*         GetVersion() { return pszVersion; }
     
     void                AddCoord(double dfLon, double dfLat);
+    
+    void                PrintLine(const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
 };
 
 /************************************************************************/
