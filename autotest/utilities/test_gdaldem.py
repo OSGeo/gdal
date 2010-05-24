@@ -34,6 +34,7 @@ import os
 sys.path.append( '../pymod' )
 
 import gdal
+import osr
 import gdaltest
 import test_cli_utilities
 
@@ -73,6 +74,40 @@ def test_gdaldem_hillshade():
 
     src_ds = None
     ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem hillshade with -az parameter
+
+def test_gdaldem_hillshade_azimuth():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/pyramid.tif', 100, 100, 1)
+    ds.SetGeoTransform([2,0.01,0,49,0,-0.01])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    for j in range(100):
+        data = ''
+        for i in range(100):
+            val = 255 - 5 * max(abs(50-i),abs(50-j))
+            data = data + ('%c' % (val))
+        ds.GetRasterBand(1).WriteRaster(0,j,100,1,data)
+
+    ds = None
+
+    # Light from the east
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 100 -az 90 -co COMPRESS=LZW tmp/pyramid.tif tmp/pyramid_shaded.tif')
+
+    ds_ref = gdal.Open('data/pyramid_shaded_ref.tif')
+    ds = gdal.Open('tmp/pyramid_shaded.tif')
+    if gdaltest.compare_ds(ds, ds_ref, verbose = 1) > 1:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+    ds = None
+    ds_ref = None
 
     return 'success'
 
@@ -426,6 +461,11 @@ def test_gdaldem_cleanup():
     except:
         pass
     try:
+        os.remove('tmp/pyramid.tif')
+        os.remove('tmp/pyramid_shaded.tif')
+    except:
+        pass
+    try:
         os.remove('tmp/n43_hillshade.png')
         os.remove('tmp/n43_hillshade.png.aux.xml')
     except:
@@ -473,6 +513,7 @@ def test_gdaldem_cleanup():
 
 gdaltest_list = [
     test_gdaldem_hillshade,
+    test_gdaldem_hillshade_azimuth,
     test_gdaldem_hillshade_png,
     test_gdaldem_slope,
     test_gdaldem_aspect,
