@@ -1115,9 +1115,8 @@ static char* OGRGPX_GetUTF8String(const char* pszString)
 /*                   OGRGPX_WriteXMLExtension()                          */
 /************************************************************************/
 
-static int OGRGPX_WriteXMLExtension(FILE* fp,
-                                    const char* pszTagName,
-                                    const char* pszContent)
+int OGRGPXLayer::OGRGPX_WriteXMLExtension(const char* pszTagName,
+                                          const char* pszContent)
 {
     CPLXMLNode* poXML = CPLParseXMLString(pszContent);
     if (poXML)
@@ -1135,7 +1134,7 @@ static int OGRGPX_WriteXMLExtension(FILE* fp,
             
         /* Don't XML escape here */
         char *pszUTF8 = OGRGPX_GetUTF8String( pszContent );
-        VSIFPrintf(fp, "    <%s%s>%s</%s>\n",
+        poDS->PrintLine("    <%s%s>%s</%s>",
                    pszTagNameWithNS, (pszXMLNS) ? pszXMLNS : "", pszUTF8, pszTagNameWithNS);
         CPLFree(pszUTF8);
         
@@ -1171,7 +1170,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                                                   &hour, &minute, &second, &TZFlag))
                 {
                     char* pszDate = OGRGetXMLDateTime(year, month, day, hour, minute, second, TZFlag);
-                    VSIFPrintf(fp, "  <time>%s</time>\n", pszDate);
+                    poDS->PrintLine("  <time>%s</time>", pszDate);
                     CPLFree(pszDate);
                 }
             }
@@ -1179,26 +1178,26 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
             {
                 if (strstr(pszName, "href"))
                 {
-                    VSIFPrintf(fp, "  <link href=\"%s\">", poFeature->GetFieldAsString( i ));
+                    VSIFPrintfL(fp, "  <link href=\"%s\">", poFeature->GetFieldAsString( i ));
                     if( poFeature->IsFieldSet( i + 1 ) )
-                        VSIFPrintf(fp, "<text>%s</text>", poFeature->GetFieldAsString( i + 1 ));
+                        VSIFPrintfL(fp, "<text>%s</text>", poFeature->GetFieldAsString( i + 1 ));
                     if( poFeature->IsFieldSet( i + 2 ) )
-                        VSIFPrintf(fp, "<type>%s</type>", poFeature->GetFieldAsString( i + 2 ));
-                    VSIFPrintf(fp, "</link>\n");
+                        VSIFPrintfL(fp, "<type>%s</type>", poFeature->GetFieldAsString( i + 2 ));
+                    poDS->PrintLine("</link>");
                 }
             }
             else if (poFieldDefn->GetType() == OFTReal)
             {
                 char szValue[64];
                 OGRFormatDouble(szValue, sizeof(szValue), poFeature->GetFieldAsDouble(i), '.');
-                VSIFPrintf(fp, "  <%s>%s</%s>\n",
+                poDS->PrintLine("  <%s>%s</%s>",
                         pszName, szValue, pszName);
             }
             else
             {
                 char* pszValue =
                         OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( i ));
-                VSIFPrintf(fp, "  <%s>%s</%s>\n",
+                poDS->PrintLine("  <%s>%s</%s>",
                         pszName, pszValue, pszName);
                 CPLFree(pszValue);
             }
@@ -1210,7 +1209,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     if (i < n)
     {
         const char* pszExtensionsNS = poDS->GetExtensionsNS();
-        VSIFPrintf(fp, "  <extensions>\n");
+        poDS->PrintLine("  <extensions>");
         for(;i<n;i++)
         {
             OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
@@ -1223,7 +1222,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                 {
                     char szValue[64];
                     OGRFormatDouble(szValue, sizeof(szValue), poFeature->GetFieldAsDouble(i), '.');
-                    VSIFPrintf(fp, "    <%s:%s>%s</%s:%s>\n",
+                    poDS->PrintLine("    <%s:%s>%s</%s:%s>",
                                 pszExtensionsNS,
                                 compatibleName,
                                 szValue,
@@ -1237,7 +1236,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                     /* Try to detect XML content */
                     if (pszRaw[0] == '<' && pszRaw[strlen(pszRaw) - 1] == '>')
                     {
-                        if (OGRGPX_WriteXMLExtension(fp, compatibleName, pszRaw))
+                        if (OGRGPX_WriteXMLExtension( compatibleName, pszRaw))
                             continue;
                     }
 
@@ -1247,7 +1246,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                     {
                         char* pszUnescapedContent = CPLUnescapeString( pszRaw, NULL, CPLES_XML );
 
-                        if (OGRGPX_WriteXMLExtension(fp, compatibleName, pszUnescapedContent))
+                        if (OGRGPX_WriteXMLExtension(compatibleName, pszUnescapedContent))
                         {
                             CPLFree(pszUnescapedContent);
                             continue;
@@ -1264,7 +1263,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                     }
 
                     char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
-                    VSIFPrintf(fp, "    <%s:%s>%s</%s:%s>\n",
+                    poDS->PrintLine("    <%s:%s>%s</%s:%s>",
                             pszExtensionsNS,
                             compatibleName,
                             pszEscaped,
@@ -1275,7 +1274,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                 CPLFree(compatibleName);
             }
         }
-        VSIFPrintf(fp, "  </extensions>\n");
+        poDS->PrintLine("  </extensions>");
     }
 }
 
@@ -1374,9 +1373,9 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                 poDS->AddCoord(lon, lat);
                 OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
                 OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
-                VSIFPrintf(fp, "<wpt lat=\"%s\" lon=\"%s\">\n", szLat, szLon);
+                poDS->PrintLine("<wpt lat=\"%s\" lon=\"%s\">", szLat, szLon);
                 WriteFeatureAttributes(poFeature);
-                VSIFPrintf(fp, "</wpt>\n");
+                poDS->PrintLine("</wpt>");
                 break;
             }
             
@@ -1404,9 +1403,9 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
 
         if ( poGeom == NULL )
         {
-            VSIFPrintf(fp, "<rte>\n");
+            poDS->PrintLine("<rte>");
             WriteFeatureAttributes(poFeature);
-            VSIFPrintf(fp, "</rte>\n");
+            poDS->PrintLine("</rte>");
             return OGRERR_NONE;
         }
 
@@ -1451,7 +1450,7 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
 
         int n = (line) ? line->getNumPoints() : 0;
         int i;
-        VSIFPrintf(fp, "<rte>\n");
+        poDS->PrintLine("<rte>");
         WriteFeatureAttributes(poFeature);
         for(i=0;i<n;i++)
         {
@@ -1461,16 +1460,16 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
             poDS->AddCoord(lon, lat);
             OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
             OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
-            VSIFPrintf(fp, "  <rtept lat=\"%s\" lon=\"%s\">\n", szLat, szLon);
+            poDS->PrintLine("  <rtept lat=\"%s\" lon=\"%s\">", szLat, szLon);
             if (poGeom->getGeometryType() == wkbLineString25D ||
                 poGeom->getGeometryType() == wkbMultiLineString25D)
             {
                 OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
-                VSIFPrintf(fp, "    <ele>%s</ele>\n", szAlt);
+                poDS->PrintLine("    <ele>%s</ele>", szAlt);
             }
-            VSIFPrintf(fp, "  </rtept>\n");
+            poDS->PrintLine("  </rtept>");
         }
-        VSIFPrintf(fp, "</rte>\n");
+        poDS->PrintLine("</rte>");
     }
     else
     {
@@ -1478,9 +1477,9 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
 
         if (poGeom == NULL)
         {
-            VSIFPrintf(fp, "<trk>\n");
+            poDS->PrintLine("<trk>");
             WriteFeatureAttributes(poFeature);
-            VSIFPrintf(fp, "</trk>\n");
+            poDS->PrintLine("</trk>");
             return OGRERR_NONE;
         }
 
@@ -1492,9 +1491,9 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                 OGRLineString* line = (OGRLineString*)poGeom;
                 int n = line->getNumPoints();
                 int i;
-                VSIFPrintf(fp, "<trk>\n");
+                poDS->PrintLine("<trk>");
                 WriteFeatureAttributes(poFeature);
-                VSIFPrintf(fp, "  <trkseg>\n");
+                poDS->PrintLine("  <trkseg>");
                 for(i=0;i<n;i++)
                 {
                     double lat = line->getY(i);
@@ -1503,16 +1502,16 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                     poDS->AddCoord(lon, lat);
                     OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
                     OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
-                    VSIFPrintf(fp, "    <trkpt lat=\"%s\" lon=\"%s\">\n", szLat, szLon);
+                    poDS->PrintLine("    <trkpt lat=\"%s\" lon=\"%s\">", szLat, szLon);
                     if (line->getGeometryType() == wkbLineString25D)
                     {
                         OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
-                        VSIFPrintf(fp, "        <ele>%s</ele>\n", szAlt);
+                        poDS->PrintLine("        <ele>%s</ele>", szAlt);
                     }
-                    VSIFPrintf(fp, "    </trkpt>\n");
+                    poDS->PrintLine("    </trkpt>");
                 }
-                VSIFPrintf(fp, "  </trkseg>\n");
-                VSIFPrintf(fp, "</trk>\n");
+                poDS->PrintLine("  </trkseg>");
+                poDS->PrintLine("</trk>");
                 break;
             }
 
@@ -1520,7 +1519,7 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
             case wkbMultiLineString25D:
             {
                 int nGeometries = ((OGRGeometryCollection*)poGeom)->getNumGeometries ();
-                VSIFPrintf(fp, "<trk>\n");
+                poDS->PrintLine("<trk>");
                 WriteFeatureAttributes(poFeature);
                 int j;
                 for(j=0;j<nGeometries;j++)
@@ -1528,7 +1527,7 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                     OGRLineString* line = (OGRLineString*) ( ((OGRGeometryCollection*)poGeom)->getGeometryRef(j) );
                     int n = (line) ? line->getNumPoints() : 0;
                     int i;
-                    VSIFPrintf(fp, "  <trkseg>\n");
+                    poDS->PrintLine("  <trkseg>");
                     for(i=0;i<n;i++)
                     {
                         double lat = line->getY(i);
@@ -1537,17 +1536,17 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                         poDS->AddCoord(lon, lat);
                         OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
                         OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
-                        VSIFPrintf(fp, "    <trkpt lat=\"%s\" lon=\"%s\">\n", szLat, szLon);
+                        poDS->PrintLine("    <trkpt lat=\"%s\" lon=\"%s\">", szLat, szLon);
                         if (line->getGeometryType() == wkbLineString25D)
                         {
                             OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
-                            VSIFPrintf(fp, "        <ele>%s</ele>\n", szAlt);
+                            poDS->PrintLine("        <ele>%s</ele>", szAlt);
                         }
-                        VSIFPrintf(fp, "    </trkpt>\n");
+                        poDS->PrintLine("    </trkpt>");
                     }
-                    VSIFPrintf(fp, "  </trkseg>\n");
+                    poDS->PrintLine("  </trkseg>");
                 }
-                VSIFPrintf(fp, "</trk>\n");
+                poDS->PrintLine("</trk>");
                 break;
             }
 
