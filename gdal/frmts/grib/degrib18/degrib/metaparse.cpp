@@ -1277,8 +1277,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[37], is4[39],
                         is4[40], is4[41], is4[42], is4[43]) != 0) {
             msg = errSprintf (NULL);
-            meta->pds2.sect4.numInterval = (uChar) is4[44];
-            if (meta->pds2.sect4.numInterval != 1) {
+            uChar numInterval = (uChar) is4[44];
+            if (numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 38-44 of "
@@ -1286,6 +1286,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
+            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
@@ -1339,8 +1340,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[36], is4[38],
                         is4[39], is4[40], is4[41], is4[42]) != 0) {
             msg = errSprintf (NULL);
-            meta->pds2.sect4.numInterval = (uChar) is4[43];
-            if (meta->pds2.sect4.numInterval != 1) {
+            uChar numInterval = (uChar) is4[43];
+            if (numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 37-43 of "
@@ -1348,6 +1349,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
+            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
@@ -1394,8 +1396,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[34], is4[36],
                         is4[37], is4[38], is4[39], is4[40]) != 0) {
             msg = errSprintf (NULL);
-            meta->pds2.sect4.numInterval = (uChar) is4[41];
-            if (meta->pds2.sect4.numInterval != 1) {
+            uChar numInterval = (uChar) is4[41];
+            if (numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 35-41 of "
@@ -1403,6 +1405,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
+            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
@@ -1450,8 +1453,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[35], is4[37],
                         is4[38], is4[39], is4[40], is4[41]) != 0) {
             msg = errSprintf (NULL);
-            meta->pds2.sect4.numInterval = (uChar) is4[42];
-            if (meta->pds2.sect4.numInterval != 1) {
+            uChar numInterval = (uChar) is4[42];
+            if (numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 35-41 of "
@@ -1459,6 +1462,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
+            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
@@ -1521,8 +1525,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[47], is4[49],
                         is4[50], is4[51], is4[52], is4[53]) != 0) {
             msg = errSprintf (NULL);
-            meta->pds2.sect4.numInterval = (uChar) is4[54];
-            if (meta->pds2.sect4.numInterval != 1) {
+            uChar numInterval = (uChar) is4[54];
+            if (numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 48-54 of "
@@ -1530,6 +1534,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
+            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
