@@ -593,7 +593,7 @@ enables the user to control the way the output resolution is computed. 'average'
 
 <dt> <b>-tr</b> xres yres :</dt><dd>  (starting with GDAL 1.7.0)
 set target resolution. The values must be expressed in georeferenced units.
-Both must be positive values. Specifying those values is of curse incompatible with
+Both must be positive values. Specifying those values is of course incompatible with
 highest|lowest|average values for -resolution option.
 </dd>
 
