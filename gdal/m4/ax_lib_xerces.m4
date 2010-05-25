@@ -94,7 +94,7 @@ AC_DEFUN([AX_LIB_XERCES],
     dnl 
     run_xerces_test="no"
 
-    if test -n "$xerces_prefix"; then
+    if test -n "$xerces_prefix" -a -z "$xerces_include_dir" -a -z "$xerces_lib_flags"; then
         xerces_include_dir="$xerces_prefix/include"
         xerces_include_dir2="$xerces_prefix/include/xercesc"
         if test "$xerces_prefix" = "/usr"; then
