@@ -755,13 +755,16 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     int		nCount;
     int32	aiDimSizes[H4_MAX_VAR_DIMS];
     int32	iRank, iNumType, nAttrs;
-
+    bool        bIsHDF = true;
+    
     // Sometimes "HDFEOSVersion" attribute is not defined and we will
     // determine HDF-EOS datasets using other records
     // (see ReadGlobalAttributes() method).
     if ( poDS->bIsHDFEOS
          || CSLFetchNameValue(poDS->papszGlobalMetadata, "HDFEOSVersion") )
     {
+        bIsHDF  = false;
+
         int32   nSubDatasets, nStrBufSize;
 
 /* -------------------------------------------------------------------- */
@@ -978,9 +981,11 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             GDclose( hHDF4 );
         }
         GDclose( hHDF4 );
+
+        bIsHDF = ( nSubDatasets == 0 ); // Try to read as HDF
     }
 
-    else
+    if( bIsHDF )
     {
 
 /* -------------------------------------------------------------------- */
