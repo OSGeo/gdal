@@ -60,20 +60,27 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
     nLine = nLineIn;
 
 #ifdef DEBUG_MUTEX
-    CPLDebug( "MH", "Request %p for pid %ld at %d/%s", 
-              *phMutex, (long) CPLGetPID(), nLine, pszFile );
+    /*
+     * XXX: There is no way to use CPLDebug() here because it works with
+     * mutexes itself so we will fall in infinite recursion. Good old
+     * fprintf() will do the job right.
+     */
+    fprintf( stderr,
+             "CPLMutexHolder: Request %p for pid %ld at %d/%s.\n", 
+             *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
 
     if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
     {
-        CPLDebug( "CPLMutexHolder", "failed to acquire mutex!" );
+        fprintf( stderr, "CPLMutexHolder: Failed to acquire mutex!\n" );
         hMutex = NULL;
     }
     else
     {
 #ifdef DEBUG_MUTEX
-        CPLDebug( "MH", "Acquired %p for pid %ld at %d/%s", 
-                  *phMutex, (long) CPLGetPID(), nLine, pszFile );
+        fprintf( stderr,
+                 "CPLMutexHolder: Acquired %p for pid %ld at %d/%s.\n", 
+                 *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
 
         hMutex = *phMutex;
@@ -92,8 +99,9 @@ CPLMutexHolder::~CPLMutexHolder()
     if( hMutex != NULL )
     {
 #ifdef DEBUG_MUTEX
-        CPLDebug( "MH", "Release %p for pid %ld at %d/%s", 
-                  hMutex, (long) CPLGetPID(), nLine, pszFile );
+        fprintf( stderr,
+                 "~CPLMutexHolder: Release %p for pid %ld at %d/%s.\n", 
+                 hMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
         CPLReleaseMutex( hMutex );
     }
