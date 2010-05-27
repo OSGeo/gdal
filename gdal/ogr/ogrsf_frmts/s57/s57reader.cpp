@@ -1790,7 +1790,6 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 {
     DDFField    *poFSPT;
     int         nEdgeCount;
-    OGRLineString *poLine = new OGRLineString();
 
 /* -------------------------------------------------------------------- */
 /*      Find the FSPT field.                                            */
@@ -1804,6 +1803,9 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 /* ==================================================================== */
 /*      Loop collecting edges.                                          */
 /* ==================================================================== */
+    OGRLineString *poLine = new OGRLineString();
+    OGRMultiLineString *poMLS = new OGRMultiLineString();
+
     for( int iEdge = 0; iEdge < nEdgeCount; iEdge++ )
     {
         DDFRecord       *poSRecord;
@@ -1864,9 +1866,11 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
         }
 
 /* -------------------------------------------------------------------- */
-/*      Add the start node, if this is the first edge.                  */
+/*      Fetch the first node.  Does it match the trailing node on       */
+/*      the existing line string?  If so, skip it, otherwise if the     */
+/*      existing linestring is not empty we need to push it out and     */
+/*      start a new one as it means things are not connected.           */
 /* -------------------------------------------------------------------- */
-        if( iEdge == 0 )
         {
             int         nVC_RCID;
             double      dfX, dfY;
@@ -1876,9 +1880,7 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
             else
                 nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 1 );
 
-            if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
-                poLine->addPoint( dfX, dfY );
-            else
+            if( !FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
                 CPLError( CE_Warning, CPLE_AppDefined, 
                           "Unable to fetch start node RCID%d.\n"
                           "Feature OBJL=%s, RCID=%d may have corrupt or"
@@ -1886,6 +1888,20 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                           nVC_RCID, 
                           poFeature->GetDefnRef()->GetName(),
                           poFRecord->GetIntSubfield( "FRID", 0, "RCID", 0 ) );
+            else if( poLine->getNumPoints() == 0 )
+            {
+                poLine->addPoint( dfX, dfY );
+            }
+            else if( ABS(poLine->getX(poLine->getNumPoints()-1) - dfX) > 0.00000001 
+                     || ABS(poLine->getY(poLine->getNumPoints()-1) - dfY) > 0.00000001 )
+            {
+                // we need to start a new linestring.
+                poMLS->addGeometryDirectly( poLine );
+                poLine = new OGRLineString();
+                poLine->addPoint( dfX, dfY );
+            }
+            else
+                /* omit point, already present */;
         }
         
 /* -------------------------------------------------------------------- */
@@ -1939,10 +1955,26 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
         }
     }
 
-    if( poLine->getNumPoints() >= 2 )
+/* -------------------------------------------------------------------- */
+/*      Set either the line or multilinestring as the geometry.  We     */
+/*      are careful to just produce a linestring if there are no        */
+/*      disconnections.                                                 */
+/* -------------------------------------------------------------------- */
+    if( poMLS->getNumGeometries() > 0 )
+    {
+        poMLS->addGeometryDirectly( poLine );
+        poFeature->SetGeometryDirectly( poMLS );
+    }
+    else if( poLine->getNumPoints() >= 2 )
+    {
         poFeature->SetGeometryDirectly( poLine );
+        delete poMLS;
+    }
     else
+    {
         delete poLine;
+        delete poMLS;
+    }
 }
 
 /************************************************************************/
