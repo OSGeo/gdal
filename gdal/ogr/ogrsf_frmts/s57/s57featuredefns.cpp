@@ -238,7 +238,7 @@ S57GenerateVectorPrimitiveFeatureDefn( int nRCNM, int nOptionFlags )
     else if( nRCNM == RCNM_VE )
     {
         poFDefn = new OGRFeatureDefn( OGRN_VE );
-        poFDefn->SetGeomType( wkbLineString );
+        poFDefn->SetGeomType( wkbUnknown );
     }
     else if( nRCNM == RCNM_VF )
     {
@@ -365,7 +365,8 @@ OGRFeatureDefn *S57GenerateObjectClassDefn( S57ClassRegistrar *poCR,
     }
     else if( papszGeomPrim[0][0] == 'L' )
     {
-        poFDefn->SetGeomType( wkbLineString );
+        // unfortunately this could be a multilinestring
+        poFDefn->SetGeomType( wkbUnknown );
     }
     
 /* -------------------------------------------------------------------- */
