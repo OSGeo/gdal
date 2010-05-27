@@ -1956,17 +1956,17 @@ int main( int argc, char ** argv )
     {
         int	iDr;
 
-        fprintf( stderr, "Output driver `%s' not recognised or does not support\n", 
+        fprintf( stderr, "Output driver `%s' not recognised to have\n", 
                  pszFormat );
-        fprintf( stderr, "direct output file creation.  The following format drivers are configured\n"
-                "and support direct output:\n" );
+        fprintf( stderr, "output support.  The following format drivers are configured\n"
+                "and support output:\n" );
 
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
             GDALDriverH hDriver = GDALGetDriver(iDr);
 
-            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL &&
-                GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) == NULL )
+            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL ||
+                GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL )
             {
                 printf( "  %s: %s\n",
                         GDALGetDriverShortName( hDriver  ),
