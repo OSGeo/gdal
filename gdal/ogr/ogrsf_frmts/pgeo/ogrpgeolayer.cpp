@@ -665,26 +665,61 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
                  || nSHPType == SHPT_POLYGONM
                  || nSHPType == SHPT_POLYGONZM )
         {
-            OGRPolygon *poMulti = new OGRPolygon;
-            *ppoGeom = poMulti;
-
-            for( i = 0; i < nParts; i++ )
+            if (nParts != 0)
             {
-                OGRLinearRing *poRing = new OGRLinearRing;
-                int nVerticesInThisPart;
+                if (nParts == 1)
+                {
+                    OGRPolygon *poOGRPoly = new OGRPolygon;
+                    *ppoGeom = poOGRPoly;
+                    OGRLinearRing *poRing = new OGRLinearRing;
+                    int nVerticesInThisPart = nPoints - panPartStart[0];
+                    
+                    poRing->setPoints( nVerticesInThisPart, 
+                                       padfX + panPartStart[0], 
+                                       padfY + panPartStart[0], 
+                                       padfZ + panPartStart[0] );
+                    
+                    poOGRPoly->addRingDirectly( poRing );
+                }
+                else 
+                {
+                    OGRGeometry *poOGR = NULL;
+                    OGRPolygon** tabPolygons = new OGRPolygon*[nParts];
+               
+                    for( i = 0; i < nParts; i++ )
+                    {
+                        tabPolygons[i] = new OGRPolygon();
+                        OGRLinearRing *poRing = new OGRLinearRing;
+                        int nVerticesInThisPart;
+                        
+                        if( i == nParts-1 )
+                            nVerticesInThisPart = nPoints - panPartStart[i];
+                        else
+                            nVerticesInThisPart = 
+                                panPartStart[i+1] - panPartStart[i];
+                        
+                        poRing->setPoints( nVerticesInThisPart, 
+                                           padfX + panPartStart[i], 
+                                           padfY + panPartStart[i], 
+                                           padfZ + panPartStart[i] );
+                        tabPolygons[i]->addRingDirectly(poRing);
+                    }
 
-                if( i == nParts-1 )
-                    nVerticesInThisPart = nPoints - panPartStart[i];
-                else
-                    nVerticesInThisPart = 
-                        panPartStart[i+1] - panPartStart[i];
+                    int isValidGeometry;
+                    const char* papszOptions[] = { "METHOD=ONLY_CCW", NULL };
+                    poOGR = OGRGeometryFactory::organizePolygons( 
+                        (OGRGeometry**)tabPolygons, nParts, &isValidGeometry, papszOptions );
 
-                poRing->setPoints( nVerticesInThisPart, 
-                                   padfX + panPartStart[i], 
-                                   padfY + panPartStart[i], 
-                                   padfZ + panPartStart[i] );
+                    if (!isValidGeometry)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Geometry of polygon cannot be translated to Simple Geometry. "
+                                 "All polygons will be contained in a multipolygon.\n");
+                    }
 
-                poMulti->addRingDirectly( poRing );
+                    *ppoGeom = poOGR;
+                    delete[] tabPolygons;
+                }
             }
         } /* polygon */
 
