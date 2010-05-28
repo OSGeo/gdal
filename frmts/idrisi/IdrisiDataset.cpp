@@ -584,7 +584,10 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
         FILE *fpSMP;
         if( ( fpSMP = VSIFOpenL( pszSMPFilename, "rb" ) ) != NULL )
         {
-            double dfMaxValue = atof_nz( CSLFetchNameValue( poDS->papszRDC, rdcMAX_VALUE ) );
+            int dfMaxValue = atoi_nz( CSLFetchNameValue( poDS->papszRDC, rdcMAX_VALUE ) );
+            int nCatCount = atoi_nz( CSLFetchNameValue( poDS->papszRDC, rdcLEGEND_CATS ) );
+            if( nCatCount == 0 )
+                dfMaxValue = 255;
             VSIFSeekL( fpSMP, smpHEADERSIZE, SEEK_SET );
             GDALColorEntry oEntry;
             unsigned char aucRGB[3];
