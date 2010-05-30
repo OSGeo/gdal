@@ -33,6 +33,10 @@
 #include "cpl_multiproc.h"
 
 #include <stdio.h>
+#ifdef WIN32
+#include <io.h>
+#include <fcntl.h>
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -45,6 +49,26 @@ static void* hStdinMutex;
 static GByte* pabyBuffer;
 static GUInt32 nBufferLen;
 static GUIntBig nRealPos;
+
+/************************************************************************/
+/*                           VSIStdinInit()                             */
+/************************************************************************/
+
+static void VSIStdinInit()
+{
+    if (pabyBuffer == NULL)
+    {
+        CPLMutexHolder oHolder(&hStdinMutex);
+        if (pabyBuffer == NULL)
+        {
+#ifdef WIN32
+            setmode( fileno( stdin ), O_BINARY );
+#endif
+            pabyBuffer = (GByte*)CPLMalloc(BUFFER_SIZE);
+            nRealPos = nBufferLen = fread(pabyBuffer, 1, BUFFER_SIZE, stdin);
+        }
+    }
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -111,15 +135,7 @@ VSIStdinHandle::~VSIStdinHandle()
 int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
-    if (pabyBuffer == NULL)
-    {
-        CPLMutexHolder oHolder(&hStdinMutex);
-        if (pabyBuffer == NULL)
-        {
-            pabyBuffer = (GByte*)CPLMalloc(BUFFER_SIZE);
-            nRealPos = nBufferLen = fread(pabyBuffer, 1, BUFFER_SIZE, stdin);
-        }
-    }
+    VSIStdinInit();
 
     if (nWhence == SEEK_END)
     {
@@ -196,15 +212,7 @@ vsi_l_offset VSIStdinHandle::Tell()
 size_t VSIStdinHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    if (pabyBuffer == NULL)
-    {
-        CPLMutexHolder oHolder(&hStdinMutex);
-        if (pabyBuffer == NULL)
-        {
-            pabyBuffer = (GByte*)CPLMalloc(BUFFER_SIZE);
-            nRealPos = nBufferLen = fread(pabyBuffer, 1, BUFFER_SIZE, stdin);
-        }
-    }
+    VSIStdinInit();
 
     if (nCurOff < nBufferLen)
     {
@@ -338,15 +346,7 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
     if (strcmp(pszFilename, "/vsistdin/") != 0)
         return -1;
 
-    if (pabyBuffer == NULL)
-    {
-        CPLMutexHolder oHolder(&hStdinMutex);
-        if (pabyBuffer == NULL)
-        {
-            pabyBuffer = (GByte*)CPLMalloc(BUFFER_SIZE);
-            nRealPos = nBufferLen = fread(pabyBuffer, 1, BUFFER_SIZE, stdin);
-        }
-    }
+    VSIStdinInit();
 
     pStatBuf->st_size = nBufferLen;
     pStatBuf->st_mode = S_IFREG;
