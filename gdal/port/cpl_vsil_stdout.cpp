@@ -32,6 +32,10 @@
 #include "cpl_vsi_virtual.h"
 
 #include <stdio.h>
+#ifdef WIN32
+#include <io.h>
+#include <fcntl.h>
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -162,6 +166,11 @@ VSIStdoutFilesystemHandler::Open( const char *pszFilename,
                  "Read or update mode not supported on /vsistdout");
         return NULL;
     }
+
+#ifdef WIN32
+    if ( strchr(pszAccess, 'b') != NULL )
+        setmode( fileno( stdout ), O_BINARY );
+#endif
 
     return new VSIStdoutHandle;
 }
