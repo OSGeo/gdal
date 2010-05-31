@@ -7093,7 +7093,7 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-      "SetGeoTransform() is only supported on newly created GeoTIFF files." );
+                  "Attempt to call SetGeoTransform() on a read-only GeoTIFF file." );
         return CE_Failure;
     }
 }
