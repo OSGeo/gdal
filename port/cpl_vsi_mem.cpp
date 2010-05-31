@@ -795,9 +795,15 @@ FILE *VSIFileFromMemBuffer( const char *pszFilename,
     VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *) 
         VSIFileManager::GetHandler("/vsimem/");
 
+    if (pszFilename == NULL)
+        return NULL;
+
+    CPLString osFilename = pszFilename;
+    VSIMemFilesystemHandler::NormalizePath( osFilename );
+
     VSIMemFile *poFile = new VSIMemFile;
 
-    poFile->osFilename = pszFilename;
+    poFile->osFilename = osFilename;
     poFile->bOwnData = bTakeOwnership;
     poFile->pabyData = pabyData;
     poFile->nLength = nDataLength;
@@ -805,11 +811,12 @@ FILE *VSIFileFromMemBuffer( const char *pszFilename,
 
     {
         CPLMutexHolder oHolder( &poHandler->hMutex );
+        poHandler->Unlink(osFilename);
         poHandler->oFileList[poFile->osFilename] = poFile;
         poFile->nRefCount++;
     }
 
-    return (FILE *) poHandler->Open( pszFilename, "r+" );
+    return (FILE *) poHandler->Open( osFilename, "r+" );
 }
 
 /************************************************************************/
@@ -839,12 +846,18 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
     VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *) 
         VSIFileManager::GetHandler("/vsimem/");
 
-    CPLMutexHolder oHolder( &poHandler->hMutex );
-
-    if( poHandler->oFileList.find(pszFilename) == poHandler->oFileList.end() )
+    if (pszFilename == NULL)
         return NULL;
 
-    VSIMemFile *poFile = poHandler->oFileList[pszFilename];
+    CPLString osFilename = pszFilename;
+    VSIMemFilesystemHandler::NormalizePath( osFilename );
+
+    CPLMutexHolder oHolder( &poHandler->hMutex );
+
+    if( poHandler->oFileList.find(osFilename) == poHandler->oFileList.end() )
+        return NULL;
+
+    VSIMemFile *poFile = poHandler->oFileList[osFilename];
     GByte *pabyData;
 
     pabyData = poFile->pabyData;
@@ -859,7 +872,7 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
         else
             poFile->bOwnData = FALSE;
 
-        poHandler->oFileList.erase( poHandler->oFileList.find(pszFilename) );
+        poHandler->oFileList.erase( poHandler->oFileList.find(osFilename) );
         --(poFile->nRefCount);
         delete poFile;
     }
