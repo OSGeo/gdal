@@ -1,0 +1,46 @@
+<html>
+<head>
+<title>GPSBabel</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GPSBabel</h1>
+
+(GDAL/OGR >= 1.8.0)<p>
+
+Read-only driver for now that relies on the <a href="http://www.gpsbabel.org">GPSBabel</a> utility to access various GPS file formats.<p>
+
+The GPSBabel executable must be accessible through the PATH.
+The driver also needs the <a href="drv_gpx.html">GPX</a> driver to be fully configured with read support (through Expat library) to
+be able to parse the output of GPSBabel, as GPX is used as the pivot format.<p>
+
+The returned layers can be waypoints, routes, route_points, tracks, track_points depending
+on the input data.<p>
+
+The syntax to specify an input datasource is : <i>GPSBabel:gpsbabel_file_format:filename</i> where gpsbabel_file_format is one of the
+<a href="http://www.gpsbabel.org/capabilities.shtml">file formats</a> handled by GPSBabel.<p>
+
+Alternatively, for a few selected GPSBabel formats, just specifying the filename might be sufficient. The list
+includes for now :
+<ul>
+<li>mapsource</li>
+<li>gdb</li>
+<li>osm</li>
+<li>nmea</li>
+<li>ozi</li>
+<li>garmin_txt</li>
+<li>mapsend</li>
+</ul>
+<p>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.gpsbabel.org">GPSBabel Home Page</a><p>
+<li> <a href="http://www.gpsbabel.org/capabilities.shtml">GPSBabel file formats</a><p>
+<li> <a href="drv_gpx.html">GPX driver page</a><p>
+</ul>
+
+</body>
+</html>
