@@ -170,5 +170,8 @@ void OGRRegisterAll()
 #ifdef PGDUMP_ENABLED
     RegisterOGRPGDump();
 #endif
+#ifdef GPSBABEL_ENABLED
+    RegisterOGRGPSBabel();
+#endif
 } /* OGRRegisterAll */
 
