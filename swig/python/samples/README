@@ -28,28 +28,20 @@ gdalfilter.py		Example script for applying kernel based filters to
 			files as an intermediate representation.
 
 gdal_retile.py          Script for restructuring data in a tree of regular tiles.
+                        (transfered in swig/python/scripts)
 
 get_soundg.py		Script to copy the SOUNDG layer from an S-57 file to
 			a Shapefile, splitting up features with MULTIPOINT
 			geometries into many POINT feature, and appending
 			the point elevations as an attribute.
 
-get_world_zip.py	This little script is basically curl or wget, with the added 
-			benefit of dumping the contents of the url right out to the 
-			filesystem. This is useful if you want to roll curl-like 
-			functionality your python script using the ZipURL class. 
-
 histrep.py		Module to extract data from many rasters into one output.
-
-load2mysql.py		Load an OGR layer into a MySQL datastore.  Uses direct SQL 
-			since the MySQL driver is read-only for OGR.  Derived from 
-			load2odbc.py
 
 load2odbc.py		Load ODBC table to an ODBC datastore.  Uses direct SQL 
 			since the ODBC driver is read-only for OGR.
 
 rel.py			Script to produce a shaded relief image from the
-			elevation data.
+			elevation data. (similar functionnality in gdaldem now)
 
 tigerpoly.py		Script demonstrating how to assemble polygons from
 			arcs in TIGER/Line datasource, writing results to
