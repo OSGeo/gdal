@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
 
         if (bSetAlpha)
         {
-            if ((GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET) == 0)
+            if (nBands > 1 && (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET) == 0)
             {
                 fprintf(stderr, "When -set_alpha is specified, all source bands must "
                                 "share the same mask band (PER_DATASET mask)\n");
@@ -217,7 +217,7 @@ int main(int argc, char* argv[])
         dfNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bHasNoData);
         if (!bHasNoData)
             dfNoDataValue = dfDstNoData;
-        if (bHasNoData || bSetNoData)
+        if (!bSetAlpha && (bHasNoData || bSetNoData))
             GDALSetRasterNoDataValue(hDstBand, dfNoDataValue);
 
         hColorTable = GDALGetRasterColorTable( hSrcBand );
