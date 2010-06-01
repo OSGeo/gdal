@@ -1007,6 +1007,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     OGRFeatureDefn *poDstFDefn = NULL;
     int         bForceToPolygon = FALSE;
     int         bForceToMultiPolygon = FALSE;
+    int         bForceToMultiLineString = FALSE;
     
     char**      papszTransformOptions = NULL;
 
@@ -1017,6 +1018,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         bForceToPolygon = TRUE;
     else if( wkbFlatten(eGType) == wkbMultiPolygon )
         bForceToMultiPolygon = TRUE;
+    else if( wkbFlatten(eGType) == wkbMultiLineString )
+        bForceToMultiLineString = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Setup coordinate transformation if we need it.                  */
@@ -1435,11 +1438,16 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                     OGRGeometryFactory::forceToPolygon(
                         poDstFeature->StealGeometry() ) );
             }
-
-            if( bForceToMultiPolygon )
+            else if( bForceToMultiPolygon )
             {
                 poDstFeature->SetGeometryDirectly( 
                     OGRGeometryFactory::forceToMultiPolygon(
+                        poDstFeature->StealGeometry() ) );
+            }
+            else if ( bForceToMultiLineString )
+            {
+                poDstFeature->SetGeometryDirectly( 
+                    OGRGeometryFactory::forceToMultiLineString(
                         poDstFeature->StealGeometry() ) );
             }
         }
