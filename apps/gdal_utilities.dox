@@ -1836,6 +1836,10 @@ specific documentation for legal creation options for each format.</dd>
 output.</dd>
 </dl>
 
+For all algorithms, except color-relief, a nodata value in the target dataset will be emitted if
+at least one pixel set to the nodata value is found in the 3x3 window centered around each source pixel.
+The consequence is that there will be a 1-pixel border around each image set with nodata value.
+
 \section gdaldem_modes Modes
 
 \subsection gdaldem_hillshade hillshade
@@ -1844,6 +1848,8 @@ This command outputs an 8-bit raster with a nice shaded relief effect.
 It’s very useful for visualizing the terrain.
 You can optionally specify the azimuth and altitude of the light source,
 a vertical exaggeration factor and a scaling factor to account for differences between vertical and horizontal units.
+
+The value 0 is used as the output nodata value.
 
 The following specific options are available :
 <dl>
@@ -1858,6 +1864,8 @@ The following specific options are available :
 This command will take a DEM raster and output a 32-bit float raster with slope values.
 You have the option of specifying the type of slope value you want: degrees or percent slope.
 In cases where the horizontal units differ from the vertical units, you can also supply a scaling factor.
+
+The value -9999 is used as the output nodata value.
 
 The following specific options are available :
 <dl>
@@ -1932,6 +1940,8 @@ nv     0   0   0   0
 This command outputs a single-band raster with values computed from the elevation.
 TRI stands for Terrain Ruggedness Index, which is defined as the mean difference between a central pixel and its surrounding cells (see Wilson et al 2007, Marine Geodesy 30:3-35).
 
+The value -9999 is used as the output nodata value.
+
 There are no specific options.
 
 \subsection gdaldem_TPI TPI
@@ -1939,12 +1949,16 @@ There are no specific options.
 This command outputs a single-band raster with values computed from the elevation.
 TPI stands for Topographic Position Index, which is defined as the difference between a central pixel and the mean of its surrounding cells (see Wilson et al 2007, Marine Geodesy 30:3-35).
 
+The value -9999 is used as the output nodata value.
+
 There are no specific options.
 
 \subsection gdaldem_roughness roughness
 
 This command outputs a single-band raster with values computed from the elevation.
 Roughness is the the largest inter-cell difference of a central pixel and its surrounding cell, as defined in Wilson et al (2007, Marine Geodesy 30:3-35).
+
+The value -9999 is used as the output nodata value.
 
 There are no specific options.
 
