@@ -62,6 +62,10 @@ OGRGPXDataSource::OGRGPXDataSource()
 
     bIsBackSeekable = TRUE;
     pszEOL = "\n";
+
+    nLastRteId = -1;
+    nLastTrkId = -1;
+    nLastTrkSegId = -1;
 }
 
 /************************************************************************/
@@ -73,6 +77,13 @@ OGRGPXDataSource::~OGRGPXDataSource()
 {
     if ( fpOutput != NULL )
     {
+        if (nLastRteId != -1)
+            PrintLine("</rte>");
+        else if (nLastTrkId != -1)
+        {
+            PrintLine("  </trkseg>");
+            PrintLine("</trk>");
+        }
         PrintLine("</gpx>");
         if ( bIsBackSeekable )
         {
@@ -142,7 +153,12 @@ OGRLayer * OGRGPXDataSource::CreateLayer( const char * pszLayerName,
     GPXGeometryType gpxGeomType;
     if (eType == wkbPoint || eType == wkbPoint25D)
     {
-        gpxGeomType = GPX_WPT;
+        if (EQUAL(pszLayerName, "track_points"))
+            gpxGeomType = GPX_TRACK_POINT;
+        else if (EQUAL(pszLayerName, "route_points"))
+            gpxGeomType = GPX_ROUTE_POINT;
+        else
+            gpxGeomType = GPX_WPT;
     }
     else if (eType == wkbLineString || eType == wkbLineString25D)
     {
