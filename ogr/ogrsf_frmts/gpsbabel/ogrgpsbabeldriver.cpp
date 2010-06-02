@@ -79,7 +79,6 @@ OGRDataSource *OGRGPSBabelDriver::Open( const char * pszFilename,
 /*                          CreateDataSource()                          */
 /************************************************************************/
 
-/*
 OGRDataSource *OGRGPSBabelDriver::CreateDataSource( const char * pszName,
                                                char **papszOptions )
 
@@ -94,7 +93,20 @@ OGRDataSource *OGRGPSBabelDriver::CreateDataSource( const char * pszName,
 
     return poDS;
 }
-*/
+
+
+/************************************************************************/
+/*                          DeleteDataSource()                          */
+/************************************************************************/
+
+OGRErr OGRGPSBabelDriver::DeleteDataSource( const char *pszFilename )
+
+{
+    if( VSIUnlink( pszFilename ) == 0 )
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
+}
 
 /************************************************************************/
 /*                           TestCapability()                           */
@@ -103,9 +115,11 @@ OGRDataSource *OGRGPSBabelDriver::CreateDataSource( const char * pszName,
 int OGRGPSBabelDriver::TestCapability( const char * pszCap )
 
 {
-    /*if( EQUAL(pszCap,ODrCCreateDataSource) )
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
         return TRUE;
-    else*/
+    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
+        return TRUE;
+    else
         return FALSE;
 }
 
