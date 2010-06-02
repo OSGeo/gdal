@@ -116,8 +116,10 @@ class OGRGPXLayer : public OGRLayer
     int                nWithoutEventCounter;
     int                nDataHandlerCounter;
     
+    int                iFirstGPXField;
+    
   private:
-    void               WriteFeatureAttributes( OGRFeature *poFeature );
+    void               WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel = 1 );
     void               LoadExtensionsSchema();
 #ifdef HAVE_EXPAT
     void               AddStrToSubElementValue(const char* pszStr);
@@ -199,6 +201,10 @@ class OGRGPXDataSource : public OGRDataSource
   public:
                         OGRGPXDataSource();
                         ~OGRGPXDataSource();
+
+    int                nLastRteId;
+    int                nLastTrkId;
+    int                nLastTrkSegId;
 
     int                 Open( const char * pszFilename,
                               int bUpdate );
