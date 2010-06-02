@@ -435,7 +435,104 @@ def ogr_gpx_7():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Output extra fields as <extensions>. 
+
+def ogr_gpx_8():
+    if not gdaltest.have_gpx:
+        return 'skip'
+
+    if gdaltest.gpx_ds is not None:
+        gdaltest.gpx_ds.Destroy()
+    gdaltest.gpx_ds = None
+
+    try:
+        os.remove ('tmp/gpx.gpx')
+    except:
+        pass
+
+    gdaltest.gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx', options = ['LINEFORMAT=LF'])
+
+    lyr = gdaltest.gpx_ds.CreateLayer( 'route_points', geom_type = ogr.wkbPoint )
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    feat.SetField('route_name', 'ROUTE_NAME')
+    feat.SetField('route_fid', 0)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT(3 50)')
+    feat.SetField('route_name', '--ignored--')
+    feat.SetField('route_fid', 0)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT(3 51)')
+    feat.SetField('route_name', 'ROUTE_NAME2')
+    feat.SetField('route_fid', 1)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT(3 49)')
+    feat.SetField('route_fid', 1)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    lyr = gdaltest.gpx_ds.CreateLayer( 'track_points', geom_type = ogr.wkbPoint )
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    feat.SetField('track_name', 'TRACK_NAME')
+    feat.SetField('track_fid', 0)
+    feat.SetField('track_seg_id', 0)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT(3 50)')
+    feat.SetField('track_name', '--ignored--')
+    feat.SetField('track_fid', 0)
+    feat.SetField('track_seg_id', 0)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT(3 51)')
+    feat.SetField('track_fid', 0)
+    feat.SetField('track_seg_id', 1)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT(3 49)')
+    feat.SetField('track_name', 'TRACK_NAME2')
+    feat.SetField('track_fid', 1)
+    feat.SetField('track_seg_id', 0)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    gdaltest.gpx_ds.Destroy()
+    gdaltest.gpx_ds = None
+
+    f = open('tmp/gpx.gpx','rb')
+    f_ref = open('data/ogr_gpx_8_ref.txt','rb')
+    f_content = f.read()
+    f_ref_content = f_ref.read()
+    f.close()
+    f_ref.close()
+
+    if f_content.find(f_ref_content) == -1:
+        gdaltest.post_reason('did not get expected result')
+        print(f_content)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -463,6 +560,7 @@ gdaltest_list = [
     ogr_gpx_2,
     ogr_gpx_4,
     ogr_gpx_7,
+    ogr_gpx_8,
     ogr_gpx_cleanup ]
 
 if __name__ == '__main__':
