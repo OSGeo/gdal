@@ -60,6 +60,42 @@ class OGRGPSBabelDataSource : public OGRDataSource
     virtual int         TestCapability( const char * );
 
     int                 Open ( const char* pszFilename, int bUpdateIn );
+
+    static int          IsSpecialFile(const char* pszFilename);
+    static int          IsValidDriverName(const char* pszGPSBabelDriverName);
+};
+
+
+/************************************************************************/
+/*                   OGRGPSBabelWriteDataSource                         */
+/************************************************************************/
+
+class OGRGPSBabelWriteDataSource : public OGRDataSource
+{
+    char               *pszName;
+    char               *pszGPSBabelDriverName;
+    char               *pszFilename;
+    CPLString           osTmpFileName;
+    OGRDataSource      *poGPXDS;
+
+    int                 Convert();
+
+  public:
+                        OGRGPSBabelWriteDataSource();
+                        ~OGRGPSBabelWriteDataSource();
+
+    virtual const char  *GetName() { return pszName; }
+    virtual int         GetLayerCount();
+    virtual OGRLayer   *GetLayer( int );
+
+    virtual int         TestCapability( const char * );
+
+    virtual OGRLayer   *CreateLayer( const char * pszLayerName,
+                                     OGRSpatialReference *poSRS,
+                                     OGRwkbGeometryType eType,
+                                     char ** papszOptions );
+
+    int                 Create ( const char* pszFilename, char **papszOptions );
 };
 
 /************************************************************************/
@@ -73,8 +109,9 @@ class OGRGPSBabelDriver : public OGRSFDriver
 
     virtual const char    *GetName();
     virtual OGRDataSource *Open( const char *, int );
-    /*virtual OGRDataSource *CreateDataSource( const char * pszName,
-                                             char **papszOptions );*/
+    virtual OGRDataSource *CreateDataSource( const char * pszName,
+                                             char **papszOptions );
+    virtual OGRErr         DeleteDataSource( const char *pszFilename );
 
     virtual int            TestCapability( const char * );
 };
