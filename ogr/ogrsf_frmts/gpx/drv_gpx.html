@@ -118,6 +118,17 @@ Supported geometries :
 For route points and tracks points, if there is a Z coordinate, it is used to fill the elevation element
 of the corresponding points.<p>
 
+Starting with GDAL/OGR 1.8.0, if a layer is named "track_points" with wkbPoint/wkbPoint25D geometries, the
+tracks in the GPX file will be built from the sequence of features in that layer. This is the way of setting GPX attributes
+for each track point, in addition to the raw coordinates. Points belonging to the same track are
+identified thanks to the same value of the 'track_fid' field (and it will be broken into track segments
+according to the value of the 'track_seg_id' field). They must be written in sequence so that track objects
+are properly reconstructed. The 'track_name' field can be set on the first track point to fill the &lt;name&gt;
+element of the track.
+Similarly, if a layer is named "route_points" with wkbPoint/wkbPoint25D geometries, the routes in the GPX file
+will be built from the sequence of points with the same value of the 'route_fid' field.  The 'route_name'
+field can be set on the first track point to fill the &lt;name&gt; element of the route.<p>
+
 The GPX writer supports the following <i>layer</i> creation options:
 <ul>
 <li> <b>FORCE_GPX_TRACK</b>:
