@@ -965,6 +965,50 @@ def ogr_sqlite_20():
     return 'success'
 
 ###############################################################################
+# Test CopyLayer() from a table layer (#3617)
+
+def ogr_sqlite_21():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    src_lyr = gdaltest.sl_ds.GetLayerByName('tpoly')
+    copy_lyr = gdaltest.sl_ds.CopyLayer(src_lyr, 'tpoly_2')
+    
+    src_lyr_count = src_lyr.GetFeatureCount()
+    copy_lyr_count = copy_lyr.GetFeatureCount()
+    if src_lyr_count != copy_lyr_count:
+        gdaltest.post_reason('did not get same number of features')
+        print(src_lyr_count)
+        print(copy_lyr_count)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test CopyLayer() from a result layer (#3617)
+
+def ogr_sqlite_22():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    src_lyr = gdaltest.sl_ds.ExecuteSQL('select * from tpoly')
+    copy_lyr = gdaltest.sl_ds.CopyLayer(src_lyr, 'tpoly_3')
+    
+    src_lyr_count = src_lyr.GetFeatureCount()
+    copy_lyr_count = copy_lyr.GetFeatureCount()
+    if src_lyr_count != copy_lyr_count:
+        gdaltest.post_reason('did not get same number of features')
+        print(src_lyr_count)
+        print(copy_lyr_count)
+        return 'fail'
+
+    gdaltest.sl_ds.ReleaseResultSet(src_lyr)
+
+    return 'success'
+
+###############################################################################
 # Test if SpatiaLite is available
 
 def ogr_spatialite_1():
@@ -1163,6 +1207,8 @@ def ogr_sqlite_cleanup():
         return 'skip'
 
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly' )
+    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly_2' )
+    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly_3' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomwkb' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomwkt' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomspatialite' )
@@ -1217,6 +1263,8 @@ gdaltest_list = [
     ogr_sqlite_18,
     ogr_sqlite_19,
     ogr_sqlite_20,
+    ogr_sqlite_21,
+    ogr_sqlite_22,
     ogr_spatialite_1,
     ogr_spatialite_2,
     ogr_spatialite_3,
