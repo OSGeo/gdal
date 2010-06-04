@@ -1487,7 +1487,7 @@ do {                                                                    \
             if ( poDS->sExtHeader.nZone == 0 )
             {
                 padfPrjParams[7] =
-                    floor((poDS->sHeader.dfLLX - 500000.0 + 1000000.0) / 1000000.0);
+                    floor((poDS->sHeader.dfLLX - 500000.0 ) / 1000000.0);
             }
             else
                 padfPrjParams[7] = poDS->sExtHeader.nZone;
