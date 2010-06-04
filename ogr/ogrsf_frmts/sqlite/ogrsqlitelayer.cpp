@@ -255,6 +255,7 @@ const char *OGRSQLiteLayer::GetGeometryColumn()
 void OGRSQLiteLayer::ResetReading()
 
 {
+    ClearStatement();
     iNextShapeId = 0;
 }
 
@@ -290,8 +291,12 @@ OGRFeature *OGRSQLiteLayer::GetNextFeature()
 OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 
 {
-    if( GetStatement() == NULL )
-        return NULL;
+    if( hStmt == NULL )
+    {
+        ResetStatement();
+        if (hStmt == NULL)
+            return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are marked to restart then do so, and fetch a record.     */
@@ -303,6 +308,7 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
     {
         if ( rc != SQLITE_DONE )
         {
+            sqlite3_reset(hStmt);
             CPLError( CE_Failure, CPLE_AppDefined, 
                     "In GetNextRawFeature(): sqlite3_step() : %s", 
                     sqlite3_errmsg(poDS->GetDB()) );
@@ -1110,4 +1116,19 @@ OGRErr OGRSQLiteLayer::RollbackTransaction()
 
 {
     return poDS->SoftRollback();
+}
+
+/************************************************************************/
+/*                           ClearStatement()                           */
+/************************************************************************/
+
+void OGRSQLiteLayer::ClearStatement()
+
+{
+    if( hStmt != NULL )
+    {
+        CPLDebug( "OGR_SQLITE", "finalize %p", hStmt );
+        sqlite3_finalize( hStmt );
+        hStmt = NULL;
+    }
 }

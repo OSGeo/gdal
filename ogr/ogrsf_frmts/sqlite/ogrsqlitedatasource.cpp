@@ -556,7 +556,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     OGRSQLiteSelectLayer *poLayer = NULL;
         
-    poLayer = new OGRSQLiteSelectLayer( this, hSQLStmt );
+    CPLString osSQL = pszSQLCommand;
+    poLayer = new OGRSQLiteSelectLayer( this, osSQL, hSQLStmt );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
