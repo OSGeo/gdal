@@ -37,6 +37,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
+                                            CPLString osSQL,
                                             sqlite3_stmt *hStmtIn )
 
 {
@@ -46,12 +47,11 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
     nSRSId = -1;
     poFeatureDefn = NULL;
 
-    hStmt = hStmtIn;
+    BuildFeatureDefn( "SELECT", hStmtIn );
 
-    BuildFeatureDefn( "SELECT", hStmt );
-    
-    // Reset so the next _step() will get the first record.
-    sqlite3_reset( hStmt );
+    sqlite3_finalize( hStmtIn );
+
+    this->osSQL = osSQL;
 }
 
 /************************************************************************/
@@ -61,63 +61,34 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
 OGRSQLiteSelectLayer::~OGRSQLiteSelectLayer()
 
 {
-    sqlite3_finalize( hStmt );
-    hStmt = NULL;
 }
 
 /************************************************************************/
-/*                           ClearStatement()                           */
-/*                                                                      */
-/*      Called when GetNextRawFeature() runs out of rows.               */
+/*                           ResetStatement()                           */
 /************************************************************************/
 
-void OGRSQLiteSelectLayer::ClearStatement()
+OGRErr OGRSQLiteSelectLayer::ResetStatement()
 
 {
-}
+    int rc;
 
-/************************************************************************/
-/*                            ResetReading()                            */
-/************************************************************************/
+    ClearStatement();
 
-void OGRSQLiteSelectLayer::ResetReading()
+    iNextShapeId = 0;
 
-{
-    sqlite3_reset( hStmt );
-    OGRSQLiteLayer::ResetReading();
-}
+    rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(),
+                          &hStmt, NULL );
 
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *OGRSQLiteSelectLayer::GetFeature( long nFeatureId )
-
-{
-    return OGRSQLiteLayer::GetFeature( nFeatureId );
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRSQLiteSelectLayer::TestCapability( const char * pszCap )
-
-{
-    return OGRSQLiteLayer::TestCapability( pszCap );
-}
-
-/************************************************************************/
-/*                          GetFeatureCount()                           */
-/*                                                                      */
-/*      If a spatial filter is in effect, we turn control over to       */
-/*      the generic counter.  Otherwise we return the total count.      */
-/*      Eventually we should consider implementing a more efficient     */
-/*      way of counting features matching a spatial query.              */
-/************************************************************************/
-
-int OGRSQLiteSelectLayer::GetFeatureCount( int bForce )
-
-{
-    return OGRSQLiteLayer::GetFeatureCount( bForce );
+    if( rc == SQLITE_OK )
+    {
+        return OGRERR_NONE;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
+                  osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
+        hStmt = NULL;
+        return OGRERR_FAILURE;
+    }
 }
