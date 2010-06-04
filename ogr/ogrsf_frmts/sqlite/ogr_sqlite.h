@@ -99,7 +99,8 @@ class OGRSQLiteLayer : public OGRLayer
     CPLErr              BuildFeatureDefn( const char *pszLayerName, 
                                           sqlite3_stmt *hStmt );
 
-    virtual void	ClearStatement() = 0;
+    void                ClearStatement();
+    virtual OGRErr      ResetStatement() = 0;
 
     static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,
                                                   OGRGeometry ** );
@@ -126,8 +127,6 @@ class OGRSQLiteLayer : public OGRLayer
 
     virtual int         TestCapability( const char * );
 
-    virtual sqlite3_stmt        *GetStatement() { return hStmt; }
-
     virtual OGRErr       StartTransaction();
     virtual OGRErr       CommitTransaction();
     virtual OGRErr       RollbackTransaction();
@@ -145,15 +144,13 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     CPLString           osWHERE;
     CPLString           osQuery;
 
-    virtual void	ClearStatement();
-    OGRErr              ResetStatement();
     void                BuildWhere(void);
+
+    OGRErr              ResetStatement();
 
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteTableLayer();
-
-    virtual sqlite3_stmt        *GetStatement();
 
     CPLErr              Initialize( const char *pszTableName, 
                                     const char *pszGeomCol,
@@ -163,7 +160,6 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     int nSRSId = -1,
                                     int bHasSpatialIndex = FALSE);
 
-    virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
@@ -190,19 +186,15 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
 class OGRSQLiteSelectLayer : public OGRSQLiteLayer
 {
+    CPLString           osSQL;
+
+    OGRErr              ResetStatement();
+
   public:
                         OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
+                                              CPLString osSQL,
                                               sqlite3_stmt * );
                         ~OGRSQLiteSelectLayer();
-
-    virtual void        ResetReading();
-    virtual int         GetFeatureCount( int );
-
-    virtual OGRFeature *GetFeature( long nFeatureId );
-    
-    virtual int         TestCapability( const char * );
-
-    virtual void	ClearStatement();
 };
 
 /************************************************************************/
