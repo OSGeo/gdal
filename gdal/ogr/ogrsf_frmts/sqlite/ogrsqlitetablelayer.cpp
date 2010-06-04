@@ -165,34 +165,6 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 }
 
 /************************************************************************/
-/*                           ClearStatement()                           */
-/************************************************************************/
-
-void OGRSQLiteTableLayer::ClearStatement()
-
-{
-    if( hStmt != NULL )
-    {
-        CPLDebug( "OGR_SQLITE", "finalize %p", hStmt );
-	sqlite3_finalize( hStmt );
-        hStmt = NULL;
-    }
-}
-
-/************************************************************************/
-/*                            GetStatement()                            */
-/************************************************************************/
-
-sqlite3_stmt *OGRSQLiteTableLayer::GetStatement()
-
-{
-    if( hStmt == NULL )
-        ResetStatement();
-
-    return hStmt;
-}
-
-/************************************************************************/
 /*                           ResetStatement()                           */
 /************************************************************************/
 
@@ -227,16 +199,6 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
     }
 }
 
-/************************************************************************/
-/*                            ResetReading()                            */
-/************************************************************************/
-
-void OGRSQLiteTableLayer::ResetReading()
-
-{
-    ClearStatement();
-    OGRSQLiteLayer::ResetReading();
-}
 
 /************************************************************************/
 /*                             GetFeature()                             */
