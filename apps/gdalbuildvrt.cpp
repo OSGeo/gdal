@@ -337,6 +337,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                             "gdalbuildvrt -separate cannot stack ungeoreferenced and georeferenced images. Skipping %s",
                             dsFileName);
                     GDALClose(hDS);
+                    hDS = NULL;
                     continue;
                 }
                 else if (!bHasGeoTransform &&
@@ -347,6 +348,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                             "gdalbuildvrt -separate cannot stack ungeoreferenced images that have not the same dimensions. Skipping %s",
                             dsFileName);
                     GDALClose(hDS);
+                    hDS = NULL;
                     continue;
                 }
             }
@@ -358,6 +360,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                             "gdalbuildvrt does not support ungeoreferenced image. Skipping %s",
                             dsFileName);
                     GDALClose(hDS);
+                    hDS = NULL;
                     continue;
                 }
                 bHasGeoTransform = TRUE;
@@ -372,6 +375,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                             "gdalbuildvrt does not support rotated geo transforms. Skipping %s",
                             dsFileName);
                     GDALClose(hDS);
+                    hDS = NULL;
                     continue;
                 }
                 if (psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES] >= 0)
@@ -380,6 +384,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                             "gdalbuildvrt does not support positive NS resolution. Skipping %s",
                             dsFileName);
                     GDALClose(hDS);
+                    hDS = NULL;
                     continue;
                 }
             }
@@ -411,6 +416,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Skipping %s as it has no bands", dsFileName);
                 GDALClose(hDS);
+                hDS = NULL;
                 continue;
             }
             else if (_nBands > 1 && bSeparate)
@@ -507,6 +513,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                                  "gdalbuildvrt does not support heterogenous projection. Skipping %s",
                                  dsFileName);
                         GDALClose(hDS);
+                        hDS = NULL;
                         continue;
                     }
                 }
@@ -518,6 +525,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                                  "gdalbuildvrt does not support heterogenous band numbers. Skipping %s",
                                 dsFileName);
                         GDALClose(hDS);
+                        hDS = NULL;
                         continue;
                     }
                     for(j=0;j<nBands;j++)
@@ -530,20 +538,50 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                                      "gdalbuildvrt does not support heterogenous band characteristics. Skipping %s",
                                      dsFileName);
                             GDALClose(hDS);
+                            hDS = NULL;
+                            break;
                         }
                         if (bandProperties[j].colorTable)
                         {
                             GDALColorTableH colorTable = GDALGetRasterColorTable( hRasterBand );
+                            int nRefColorEntryCount = GDALGetColorEntryCount(bandProperties[j].colorTable);
+                            int i;
                             if (colorTable == NULL ||
-                                GDALGetColorEntryCount(colorTable) != GDALGetColorEntryCount(bandProperties[j].colorTable))
+                                GDALGetColorEntryCount(colorTable) != nRefColorEntryCount)
                             {
                                 CPLError(CE_Warning, CPLE_NotSupported,
-                                         "gdalbuildvrt does not support heterogenous band characteristics. Skipping %s",
+                                         "gdalbuildvrt does not support rasters with different color tables (different number of color table entries). Skipping %s",
                                         dsFileName);
                                 GDALClose(hDS);
+                                hDS = NULL;
                                 break;
                             }
-                            /* We should check that the palette are the same too ! */
+
+                            /* Check that the palette are the same too */
+                            /* We just warn and still process the file. It is not a technical no-go, but the user */
+                            /* should check that the end result is OK for him. */
+                            for(i=0;i<nRefColorEntryCount;i++)
+                            {
+                                const GDALColorEntry* psEntry = GDALGetColorEntry(colorTable, i);
+                                const GDALColorEntry* psEntryRef = GDALGetColorEntry(bandProperties[j].colorTable, i);
+                                if (psEntry->c1 != psEntryRef->c1 || psEntry->c2 != psEntryRef->c2 ||
+                                    psEntry->c3 != psEntryRef->c3 || psEntry->c4 != psEntryRef->c4)
+                                {
+                                    static int bFirstWarningPCT = TRUE;
+                                    if (bFirstWarningPCT)
+                                        CPLError(CE_Warning, CPLE_NotSupported,
+                                                "%s has different values than the first raster for some entries in the color table.\n"
+                                                "The end result might produce weird colors.\n"
+                                                "You're advised to preprocess your rasters with other tools, such as pct2rgb.py or gdal_translate -expand RGB\n"
+                                                "to operate gdalbuildvrt on RGB rasters instead", dsFileName);
+                                    else
+                                        CPLError(CE_Warning, CPLE_NotSupported,
+                                                 "%s has different values than the first raster for some entries in the color table.",
+                                                 dsFileName);
+                                    bFirstWarningPCT = FALSE;
+                                    break;
+                                }
+                            }
                         }
                     }
                     if (j != nBands)
