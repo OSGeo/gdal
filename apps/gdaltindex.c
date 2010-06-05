@@ -435,6 +435,8 @@ int main(int argc, char *argv[])
     OGR_DS_Destroy( hTileIndexDS );
     
     GDALDestroyDriverManager();
+    OGRCleanupAll();
+    CSLDestroy(argv);
     
     exit( 0 );
 } 
