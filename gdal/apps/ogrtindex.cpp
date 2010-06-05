@@ -31,6 +31,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
 
 #include <cassert>
 
@@ -544,6 +545,8 @@ int main( int nArgc, char ** papszArgv )
         }
         CPLFree(existingLayersTab);
     }
+
+    OGRCleanupAll();
 
     return 0;
 }
