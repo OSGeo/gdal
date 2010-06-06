@@ -2215,6 +2215,22 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
+    else if( EQUAL(pszProjName,"New_Zealand_Map_Grid") )
+    {
+        sPro.proType = EPRJ_EXTERNAL;
+        sPro.proNumber = 0;
+        sPro.proExeName = (char*) EPRJ_EXTERNAL_NZMG;
+        sPro.proName = (char*) "New Zealand Map Grid";
+        sPro.proZone = 0;
+        sPro.proParams[0] = 0;  // false easting etc not stored in .img it seems 
+        sPro.proParams[1] = 0;  // always fixed by definition. 
+        sPro.proParams[2] = 0;
+        sPro.proParams[3] = 0;
+        sPro.proParams[4] = 0;
+        sPro.proParams[5] = 0;
+        sPro.proParams[6] = 0;
+        sPro.proParams[7] = 0;
+    }
     // Anything we can't map, we store as an ESRI PE_STRING 
     else if( oSRS.IsProjected() || oSRS.IsGeographic() )
     {
@@ -2530,7 +2546,20 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
     else if( psPro->proType == EPRJ_EXTERNAL )
     {
-        oSRS.SetLocalCS( psPro->proName );
+        if( EQUALN(psPro->proExeName,EPRJ_EXTERNAL_NZMG,4) )
+        {
+            /* -------------------------------------------------------------------- */
+            /*         handle NZMG which is an external projection see              */
+            /*         http://www.linz.govt.nz/core/surveysystem/geodeticinfo\      */
+            /*                /datums-projections/projections/nzmg/index.html       */
+            /* -------------------------------------------------------------------- */
+            /* Is there a better way that doesn't require hardcoding of these numbers? */
+            oSRS.SetNZMG(-41.0,173.0,2510000,6023150);
+        }
+        else
+        {
+            oSRS.SetLocalCS( psPro->proName );
+        }
     }
 
     else if( psPro->proNumber != EPRJ_LATLONG
