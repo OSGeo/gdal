@@ -52,8 +52,10 @@ def test_gdaldem_hillshade():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).Checksum() != 45587:
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 45587:
         gdaltest.post_reason('Bad checksum')
+        print(cs)
         return 'fail'
 
     src_gt = src_ds.GetGeoTransform()
@@ -73,6 +75,29 @@ def test_gdaldem_hillshade():
         return 'fail'
 
     src_ds = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem hillshade with -compute_edges
+
+def test_gdaldem_hillshade_compute_edges():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -compute_edges -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compute_edges.tif')
+
+    ds = gdal.Open('tmp/n43_hillshade_compute_edges.tif')
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 50239:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
     ds = None
 
     return 'success'
@@ -124,14 +149,39 @@ def test_gdaldem_hillshade_png():
     if ds is None:
         return 'fail'
         
-    if ds.GetRasterBand(1).Checksum() != 45587:
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 45587:
         gdaltest.post_reason('Bad checksum')
+        print(cs)
         return 'fail'
         
     ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test gdaldem hillshade to PNG with -compute_edges
+
+def test_gdaldem_hillshade_png_compute_edges():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -compute_edges -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compute_edges.png')
+
+    ds = gdal.Open('tmp/n43_hillshade_compute_edges.png')
+    if ds is None:
+        return 'fail'
+        
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 50239:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+        
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # Test gdaldem slope
 
@@ -461,6 +511,10 @@ def test_gdaldem_cleanup():
     except:
         pass
     try:
+        os.remove('tmp/n43_hillshade_compute_edges.tif')
+    except:
+        pass
+    try:
         os.remove('tmp/pyramid.tif')
         os.remove('tmp/pyramid_shaded.tif')
     except:
@@ -468,6 +522,11 @@ def test_gdaldem_cleanup():
     try:
         os.remove('tmp/n43_hillshade.png')
         os.remove('tmp/n43_hillshade.png.aux.xml')
+    except:
+        pass
+    try:
+        os.remove('tmp/n43_hillshade_compute_edges.png')
+        os.remove('tmp/n43_hillshade_compute_edges.png.aux.xml')
     except:
         pass
     try:
@@ -513,8 +572,10 @@ def test_gdaldem_cleanup():
 
 gdaltest_list = [
     test_gdaldem_hillshade,
+    test_gdaldem_hillshade_compute_edges,
     test_gdaldem_hillshade_azimuth,
     test_gdaldem_hillshade_png,
+    test_gdaldem_hillshade_png_compute_edges,
     test_gdaldem_slope,
     test_gdaldem_aspect,
     test_gdaldem_color_relief,
