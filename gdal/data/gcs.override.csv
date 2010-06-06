@@ -40,3 +40,8 @@
 #
 4284,Pulkovo 1942,6284,Pulkovo 1942,6284,9122,7024,8901,1,0,6422,9607,23.9,-141.3,-80.9,0,-0.37,-0.85,-0.12
 
+# Forward-ported from 1.6 (and consistant with 1.8dev) (see ticket #3579)
+4179,"Pulkovo 1942(58)",6179,"Pulkovo 1942/58",6179,9122,7024,8901,1,0,6422,9606,33.4,-146.6,-76.3,-0.359,-0.053,0.844,-0.84
+
+# Backported from 1.8dev (see ticket #3579)
+4258,ETRS89,6258,European Terrestrial Reference System 1989,6258,9122,7019,8901,1,0,6422,9603,0,0,0,,,,
