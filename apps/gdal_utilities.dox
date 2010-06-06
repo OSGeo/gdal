@@ -1771,18 +1771,18 @@ Usage:
     gdaldem hillshade input_dem output_hillshade
                 [-z ZFactor (default=1)] [-s scale* (default=1)]"
                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]
-                [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
+                [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 - To generate a slope map from any GDAL-supported elevation raster :
     gdaldem slope input_dem output_slope_map"
                 [-p use percent slope (default=degrees)] [-s scale* (default=1)]
-                [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
+                [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 - To generate an aspect map from any GDAL-supported elevation raster
   Outputs a 32-bit float raster with pixel values from 0-360 indicating azimuth :
     gdaldem aspect input_dem output_aspect_map"
                 [-trigonometric] [-zero_for_flat]
-                [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
+                [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 - To generate a color relief map from any GDAL-supported elevation raster
     gdaldem color-relief input_dem color_text_file output_color_relief_map
@@ -1792,15 +1792,15 @@ Usage:
     
 - To generate a Terrain Ruggedness Index (TRI) map from any GDAL-supported elevation raster:
     gdaldem TRI input_dem output_TRI_map
-                [-b Band (default=1)] [-of format] [-q]
+                [-compute_edges] [-b Band (default=1)] [-of format] [-q]
             
 - To generate a Topographic Position Index (TPI) map from any GDAL-supported elevation raster:
     gdaldem TPI input_dem output_TPI_map
-                [-b Band (default=1)] [-of format] [-q]
+                [-compute_edges] [-b Band (default=1)] [-of format] [-q]
             
 - To generate a roughness map from any GDAL-supported elevation raster:
     gdaldem roughness input_dem output_roughness_map
-                [-b Band (default=1)] [-of format] [-q]
+                [-compute_edges] [-b Band (default=1)] [-of format] [-q]
 
 Notes :
   Scale is the ratio of vertical units to horizontal
@@ -1828,6 +1828,7 @@ The following general options are available :
 <dt> <i>output_xxx_map</i>:</dt><dd> The output raster produced</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
 is GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-compute_edges</b>:</dt><dd> (GDAL >= 1.8.0) Do the computation at raster edges and near nodata values</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input <i>band</i> to be processed. Bands are numbered from 1.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed.  See format 
@@ -1839,6 +1840,8 @@ output.</dd>
 For all algorithms, except color-relief, a nodata value in the target dataset will be emitted if
 at least one pixel set to the nodata value is found in the 3x3 window centered around each source pixel.
 The consequence is that there will be a 1-pixel border around each image set with nodata value.
+From GDAL 1.8.0, if -compute_edges is specified, gdaldem will compute values at image edges
+or if a nodata value is found in the 3x3 window, by interpolating missing values.
 
 \section gdaldem_modes Modes
 

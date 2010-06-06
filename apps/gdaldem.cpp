@@ -96,6 +96,8 @@ CPL_CVSID("$Id$");
 # define M_PI  3.1415926535897932384626433832795
 #endif
 
+#define INTERPOL(a,b) ((bSrcHasNoData && (EQUAL_TO_NODATA(a, fSrcNoDataValue) || EQUAL_TO_NODATA(b, fSrcNoDataValue))) ? fSrcNoDataValue : 2 * (a) - (b))
+
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -108,18 +110,18 @@ static void Usage()
             "     gdaldem hillshade input_dem output_hillshade \n"
             "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
             "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
+            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generates a slope map from any GDAL-supported elevation raster :\n\n"
             "     gdaldem slope input_dem output_slope_map \n"
             "                 [-p use percent slope (default=degrees)] [-s scale* (default=1)]\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
+            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate an aspect map from any GDAL-supported elevation raster\n"
             "   Outputs a 32-bit float tiff with pixel values from 0-360 indicating azimuth :\n\n"
             "     gdaldem aspect input_dem output_aspect_map \n"
             "                 [-trigonometric] [-zero_for_flat]\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
+            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate a color relief map from any GDAL-supported elevation raster\n"
             "     gdaldem color-relief input_dem color_text_file output_color_relief_map\n"
@@ -129,15 +131,15 @@ static void Usage()
             "\n"
             " - To generate a Terrain Ruggedness Index (TRI) map from any GDAL-supported elevation raster\n"
             "     gdaldem TRI input_dem output_TRI_map\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
+            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate a Topographic Position Index (TPI) map from any GDAL-supported elevation raster\n"
             "     gdaldem TPI input_dem output_TPI_map\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
+            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate a roughness map from any GDAL-supported elevation raster\n"
             "     gdaldem roughness input_dem output_roughness_map\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
+            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " Notes : \n"
             "   Scale is the ratio of vertical units to horizontal\n"
@@ -146,15 +148,48 @@ static void Usage()
 }
 
 /************************************************************************/
-/*                  GDALGeneric3x3Processing()                          */
+/*                          ComputeVal()                                */
 /************************************************************************/
 
 typedef float (*GDALGeneric3x3ProcessingAlg) (float* pafWindow, float fDstNoDataValue, void* pData);
+
+static float ComputeVal(int bSrcHasNoData, float fSrcNoDataValue,
+                        float* afWin, float fDstNoDataValue,
+                        GDALGeneric3x3ProcessingAlg pfnAlg,
+                        void* pData,
+                        int bComputeAtEdges)
+{
+    if (bSrcHasNoData && EQUAL_TO_NODATA(afWin[4], fSrcNoDataValue))
+    {
+        return fDstNoDataValue;
+    }
+    else if (bSrcHasNoData)
+    {
+        int k;
+        for(k=0;k<9;k++)
+        {
+            if (EQUAL_TO_NODATA(afWin[k], fSrcNoDataValue))
+            {
+                if (bComputeAtEdges)
+                    afWin[k] = afWin[4];
+                else
+                    return fDstNoDataValue;
+            }
+        }
+    }
+
+    return pfnAlg(afWin, fDstNoDataValue, pData);
+}
+
+/************************************************************************/
+/*                  GDALGeneric3x3Processing()                          */
+/************************************************************************/
 
 CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
                                    GDALRasterBandH hDstBand,
                                    GDALGeneric3x3ProcessingAlg pfnAlg,
                                    void* pData,
+                                   int bComputeAtEdges,
                                    GDALProgressFunc pfnProgress,
                                    void * pProgressData)
 {
@@ -209,20 +244,49 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
                         0, 0);
     }
     
-    // Exclude the edges
-    for (j = 0; j < nXSize; j++)
+    if (bComputeAtEdges && nXSize >= 2 && nYSize >= 2)
     {
-        pafOutputBuf[j] = fDstNoDataValue;
-    }
-    GDALRasterIO(hDstBand, GF_Write,
-                 0, 0, nXSize, 1,
-                 pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
+        for (j = 0; j < nXSize; j++)
+        {
+            float afWin[9];
+            int jmin = (j == 0) ? j : j - 1;
+            int jmax = (j == nXSize - 1) ? j : j + 1;
 
-    if (nYSize > 1)
-    {
+            afWin[0] = INTERPOL(pafThreeLineWin[jmin], pafThreeLineWin[nXSize + jmin]);
+            afWin[1] = INTERPOL(pafThreeLineWin[j],    pafThreeLineWin[nXSize + j]);
+            afWin[2] = INTERPOL(pafThreeLineWin[jmax], pafThreeLineWin[nXSize + jmax]);
+            afWin[3] = pafThreeLineWin[jmin];
+            afWin[4] = pafThreeLineWin[j];
+            afWin[5] = pafThreeLineWin[jmax];
+            afWin[6] = pafThreeLineWin[nXSize + jmin];
+            afWin[7] = pafThreeLineWin[nXSize + j];
+            afWin[8] = pafThreeLineWin[nXSize + jmax];
+
+            pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         afWin, fDstNoDataValue,
+                                         pfnAlg, pData, bComputeAtEdges);
+        }
         GDALRasterIO(hDstBand, GF_Write,
-                     0, nYSize - 1, nXSize, 1,
-                     pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
+                    0, 0, nXSize, 1,
+                    pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
+    }
+    else
+    {
+        // Exclude the edges
+        for (j = 0; j < nXSize; j++)
+        {
+            pafOutputBuf[j] = fDstNoDataValue;
+        }
+        GDALRasterIO(hDstBand, GF_Write,
+                    0, 0, nXSize, 1,
+                    pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
+    
+        if (nYSize > 1)
+        {
+            GDALRasterIO(hDstBand, GF_Write,
+                        0, nYSize - 1, nXSize, 1,
+                        pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
+        }
     }
     
     int nLine1Off = 0*nXSize;
@@ -243,11 +307,48 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         if (eErr != CE_None)
             goto end;
 
-        // Exclude the edges
-        pafOutputBuf[0] = fDstNoDataValue;
-        if (nXSize > 1)
-            pafOutputBuf[nXSize - 1] = fDstNoDataValue;
-        
+        if (bComputeAtEdges && nXSize >= 2)
+        {
+            float afWin[9];
+
+            j = 0;
+            afWin[0] = INTERPOL(pafThreeLineWin[nLine1Off + j], pafThreeLineWin[nLine1Off + j+1]);
+            afWin[1] = pafThreeLineWin[nLine1Off + j];
+            afWin[2] = pafThreeLineWin[nLine1Off + j+1];
+            afWin[3] = INTERPOL(pafThreeLineWin[nLine2Off + j], pafThreeLineWin[nLine2Off + j+1]);
+            afWin[4] = pafThreeLineWin[nLine2Off + j];
+            afWin[5] = pafThreeLineWin[nLine2Off + j+1];
+            afWin[6] = INTERPOL(pafThreeLineWin[nLine3Off + j], pafThreeLineWin[nLine3Off + j+1]);
+            afWin[7] = pafThreeLineWin[nLine3Off + j];
+            afWin[8] = pafThreeLineWin[nLine3Off + j+1];
+
+            pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         afWin, fDstNoDataValue,
+                                         pfnAlg, pData, bComputeAtEdges);
+            j = nXSize - 1;
+
+            afWin[0] = pafThreeLineWin[nLine1Off + j-1];
+            afWin[1] = pafThreeLineWin[nLine1Off + j];
+            afWin[2] = INTERPOL(pafThreeLineWin[nLine1Off + j], pafThreeLineWin[nLine1Off + j-1]);
+            afWin[3] = pafThreeLineWin[nLine2Off + j-1];
+            afWin[4] = pafThreeLineWin[nLine2Off + j];
+            afWin[5] = INTERPOL(pafThreeLineWin[nLine2Off + j], pafThreeLineWin[nLine2Off + j-1]);
+            afWin[6] = pafThreeLineWin[nLine3Off + j-1];
+            afWin[7] = pafThreeLineWin[nLine3Off + j];
+            afWin[8] = INTERPOL(pafThreeLineWin[nLine3Off + j], pafThreeLineWin[nLine3Off + j-1]);
+
+            pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         afWin, fDstNoDataValue,
+                                         pfnAlg, pData, bComputeAtEdges);
+        }
+        else
+        {
+            // Exclude the edges
+            pafOutputBuf[0] = fDstNoDataValue;
+            if (nXSize > 1)
+                pafOutputBuf[nXSize - 1] = fDstNoDataValue;
+        }
+
         for (j = 1; j < nXSize - 1; j++)
         {
             float afWin[9];
@@ -261,25 +362,9 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             afWin[7] = pafThreeLineWin[nLine3Off + j];
             afWin[8] = pafThreeLineWin[nLine3Off + j+1];
 
-            if (bSrcHasNoData && (
-                   afWin[0] == fSrcNoDataValue ||
-                   afWin[1] == fSrcNoDataValue ||
-                   afWin[2] == fSrcNoDataValue ||
-                   afWin[3] == fSrcNoDataValue ||
-                   afWin[4] == fSrcNoDataValue ||
-                   afWin[5] == fSrcNoDataValue ||
-                   afWin[6] == fSrcNoDataValue ||
-                   afWin[7] == fSrcNoDataValue ||
-                   afWin[8] == fSrcNoDataValue))
-            {
-                // We have nulls so write nullValue and move on
-                pafOutputBuf[j] = fDstNoDataValue;
-            }
-            else
-            {
-                // We have a valid 3x3 window.
-                pafOutputBuf[j] = pfnAlg(afWin, fDstNoDataValue, pData);
-            }
+            pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         afWin, fDstNoDataValue,
+                                         pfnAlg, pData, bComputeAtEdges);
         }
 
         /* -----------------------------------------
@@ -301,6 +386,33 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         nLine1Off = nLine2Off;
         nLine2Off = nLine3Off;
         nLine3Off = nTemp;
+    }
+
+    if (bComputeAtEdges && nXSize >= 2 && nYSize >= 2)
+    {
+        for (j = 0; j < nXSize; j++)
+        {
+            float afWin[9];
+            int jmin = (j == 0) ? j : j - 1;
+            int jmax = (j == nXSize - 1) ? j : j + 1;
+
+            afWin[0] = pafThreeLineWin[nLine1Off + jmin];
+            afWin[1] = pafThreeLineWin[nLine1Off + j];
+            afWin[2] = pafThreeLineWin[nLine1Off + jmax];
+            afWin[3] = pafThreeLineWin[nLine2Off + jmin];
+            afWin[4] = pafThreeLineWin[nLine2Off + j];
+            afWin[5] = pafThreeLineWin[nLine2Off + jmax];
+            afWin[6] = INTERPOL(pafThreeLineWin[nLine2Off + jmin], pafThreeLineWin[nLine1Off + jmin]);
+            afWin[7] = INTERPOL(pafThreeLineWin[nLine2Off + j],    pafThreeLineWin[nLine1Off + j]);
+            afWin[8] = INTERPOL(pafThreeLineWin[nLine2Off + jmax], pafThreeLineWin[nLine1Off + jmax]);
+
+            pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         afWin, fDstNoDataValue,
+                                         pfnAlg, pData, bComputeAtEdges);
+        }
+        GDALRasterIO(hDstBand, GF_Write,
+                     0, i, nXSize, 1,
+                     pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
     }
 
     pfnProgress( 1.0, NULL, pProgressData );
@@ -1460,6 +1572,7 @@ class GDALGeneric3x3Dataset : public GDALDataset
     int                bDstHasNoData;
     double             dfDstNoDataValue;
     int                nCurLine;
+    int                bComputeAtEdges;
 
   public:
                         GDALGeneric3x3Dataset(GDALDatasetH hSrcDS,
@@ -1468,7 +1581,8 @@ class GDALGeneric3x3Dataset : public GDALDataset
                                               int bDstHasNoData,
                                               double dfDstNoDataValue,
                                               GDALGeneric3x3ProcessingAlg pfnAlg,
-                                              void* pAlgData);
+                                              void* pAlgData,
+                                              int bComputeAtEdges);
                        ~GDALGeneric3x3Dataset();
 
     CPLErr      GetGeoTransform( double * padfGeoTransform );
@@ -1484,7 +1598,10 @@ class GDALGeneric3x3Dataset : public GDALDataset
 class GDALGeneric3x3RasterBand : public GDALRasterBand
 {
     friend class GDALGeneric3x3Dataset;
-
+    int bSrcHasNoData;
+    float fSrcNoDataValue;
+    
+    void                    InitWidthNoData(void* pImage);
     
   public:
                  GDALGeneric3x3RasterBand( GDALGeneric3x3Dataset *poDS,
@@ -1501,7 +1618,8 @@ GDALGeneric3x3Dataset::GDALGeneric3x3Dataset(
                                      int bDstHasNoData,
                                      double dfDstNoDataValue,
                                      GDALGeneric3x3ProcessingAlg pfnAlg,
-                                     void* pAlgData)
+                                     void* pAlgData,
+                                     int bComputeAtEdges)
 {
     this->hSrcDS = hSrcDS;
     this->hSrcBand = hSrcBand;
@@ -1509,6 +1627,7 @@ GDALGeneric3x3Dataset::GDALGeneric3x3Dataset(
     this->pAlgData = pAlgData;
     this->bDstHasNoData = bDstHasNoData;
     this->dfDstNoDataValue = dfDstNoDataValue;
+    this->bComputeAtEdges = bComputeAtEdges;
     
     CPLAssert(eDstDataType == GDT_Byte || eDstDataType == GDT_Float32);
 
@@ -1520,7 +1639,7 @@ GDALGeneric3x3Dataset::GDALGeneric3x3Dataset(
     apafSourceBuf[0] = (float *) CPLMalloc(sizeof(float)*nRasterXSize);
     apafSourceBuf[1] = (float *) CPLMalloc(sizeof(float)*nRasterXSize);
     apafSourceBuf[2] = (float *) CPLMalloc(sizeof(float)*nRasterXSize);
-    
+
     nCurLine = -1;
 }
 
@@ -1549,43 +1668,154 @@ GDALGeneric3x3RasterBand::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset *poDS,
     eDataType = eDstDataType;
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+
+    bSrcHasNoData = FALSE;
+    fSrcNoDataValue = (float)GDALGetRasterNoDataValue(poDS->hSrcBand,
+                                                      &bSrcHasNoData);
+}
+
+void   GDALGeneric3x3RasterBand::InitWidthNoData(void* pImage)
+{
+    int j;
+    GDALGeneric3x3Dataset * poGDS = (GDALGeneric3x3Dataset *) poDS;
+    if (eDataType == GDT_Byte)
+    {
+        for(j=0;j<nBlockXSize;j++)
+            ((GByte*)pImage)[j] = (GByte) poGDS->dfDstNoDataValue;
+    }
+    else
+    {
+        for(j=0;j<nBlockXSize;j++)
+            ((float*)pImage)[j] = (float) poGDS->dfDstNoDataValue;
+    }
 }
 
 CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
                                              int nBlockYOff,
                                              void *pImage )
 {
+    int i, j;
+    float fVal;
     GDALGeneric3x3Dataset * poGDS = (GDALGeneric3x3Dataset *) poDS;
-    
-    if ( nBlockYOff == 0 || nBlockYOff == nRasterYSize - 1)
+
+    if (poGDS->bComputeAtEdges && nRasterXSize >= 2 && nRasterYSize >= 2)
     {
-        int j;
-        if (eDataType == GDT_Byte)
+        if (nBlockYOff == 0)
         {
-            for(j=0;j<nBlockXSize;j++)
-                ((GByte*)pImage)[j] = (GByte) poGDS->dfDstNoDataValue;
+            for(i=0;i<2;i++)
+            {
+                CPLErr eErr = GDALRasterIO( poGDS->hSrcBand,
+                                    GF_Read,
+                                    0, i, nBlockXSize, 1,
+                                    poGDS->apafSourceBuf[i+1],
+                                    nBlockXSize, 1,
+                                    GDT_Float32,
+                                    0, 0);
+                if (eErr != CE_None)
+                {
+                    InitWidthNoData(pImage);
+                    return eErr;
+                }
+            }
+            poGDS->nCurLine = 0;
+
+            for (j = 0; j < nRasterXSize; j++)
+            {
+                float afWin[9];
+                int jmin = (j == 0) ? j : j - 1;
+                int jmax = (j == nRasterXSize - 1) ? j : j + 1;
+
+                afWin[0] = INTERPOL(poGDS->apafSourceBuf[1][jmin], poGDS->apafSourceBuf[2][jmin]);
+                afWin[1] = INTERPOL(poGDS->apafSourceBuf[1][j],    poGDS->apafSourceBuf[2][j]);
+                afWin[2] = INTERPOL(poGDS->apafSourceBuf[1][jmax], poGDS->apafSourceBuf[2][jmax]);
+                afWin[3] = poGDS->apafSourceBuf[1][jmin];
+                afWin[4] = poGDS->apafSourceBuf[1][j];
+                afWin[5] = poGDS->apafSourceBuf[1][jmax];
+                afWin[6] = poGDS->apafSourceBuf[2][jmin];
+                afWin[7] = poGDS->apafSourceBuf[2][j];
+                afWin[8] = poGDS->apafSourceBuf[2][jmax];
+
+                fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                    afWin, poGDS->dfDstNoDataValue,
+                                    poGDS->pfnAlg,
+                                    poGDS->pAlgData,
+                                    poGDS->bComputeAtEdges);
+
+                if (eDataType == GDT_Byte)
+                    ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+                else
+                    ((float*)pImage)[j] = fVal;
+            }
+
+            return CE_None;
         }
-        else
+        else if (nBlockYOff == nRasterYSize - 1)
         {
-            for(j=0;j<nBlockXSize;j++)
-                ((float*)pImage)[j] = (float) poGDS->dfDstNoDataValue;
+            if (poGDS->nCurLine != nRasterYSize - 2)
+            {
+                for(i=0;i<2;i++)
+                {
+                    CPLErr eErr = GDALRasterIO( poGDS->hSrcBand,
+                                        GF_Read,
+                                        0, nRasterYSize - 2 + i, nBlockXSize, 1,
+                                        poGDS->apafSourceBuf[i+1],
+                                        nBlockXSize, 1,
+                                        GDT_Float32,
+                                        0, 0);
+                    if (eErr != CE_None)
+                    {
+                        InitWidthNoData(pImage);
+                        return eErr;
+                    }
+                }
+            }
+
+            for (j = 0; j < nRasterXSize; j++)
+            {
+                float afWin[9];
+                int jmin = (j == 0) ? j : j - 1;
+                int jmax = (j == nRasterXSize - 1) ? j : j + 1;
+
+                afWin[0] = poGDS->apafSourceBuf[1][jmin];
+                afWin[1] = poGDS->apafSourceBuf[1][j];
+                afWin[2] = poGDS->apafSourceBuf[1][jmax];
+                afWin[3] = poGDS->apafSourceBuf[2][jmin];
+                afWin[4] = poGDS->apafSourceBuf[2][j];
+                afWin[5] = poGDS->apafSourceBuf[2][jmax];
+                afWin[6] = INTERPOL(poGDS->apafSourceBuf[2][jmin], poGDS->apafSourceBuf[1][jmin]);
+                afWin[7] = INTERPOL(poGDS->apafSourceBuf[2][j],    poGDS->apafSourceBuf[1][j]);
+                afWin[8] = INTERPOL(poGDS->apafSourceBuf[2][jmax], poGDS->apafSourceBuf[1][jmax]);
+
+                fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                    afWin, poGDS->dfDstNoDataValue,
+                                    poGDS->pfnAlg,
+                                    poGDS->pAlgData,
+                                    poGDS->bComputeAtEdges);
+
+                if (eDataType == GDT_Byte)
+                    ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+                else
+                    ((float*)pImage)[j] = fVal;
+            }
+
+            return CE_None;
         }
-            
+    }
+    else if ( nBlockYOff == 0 || nBlockYOff == nRasterYSize - 1)
+    {
+        InitWidthNoData(pImage);
         return CE_None;
     }
 
     if ( poGDS->nCurLine != nBlockYOff )
     {
-        if (nBlockYOff != 1 &&
-            poGDS->nCurLine == nBlockYOff + 1)
+        if (poGDS->nCurLine + 1 == nBlockYOff)
         {
             float* pafTmp =  poGDS->apafSourceBuf[0];
             poGDS->apafSourceBuf[0] = poGDS->apafSourceBuf[1];
             poGDS->apafSourceBuf[1] = poGDS->apafSourceBuf[2];
             poGDS->apafSourceBuf[2] = pafTmp;
-            
-            poGDS->nCurLine = nBlockYOff;
-            
+
             CPLErr eErr = GDALRasterIO( poGDS->hSrcBand,
                                     GF_Read,
                                     0, nBlockYOff + 1, nBlockXSize, 1,
@@ -1593,17 +1823,15 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
                                     nBlockXSize, 1,
                                     GDT_Float32,
                                     0, 0);
-                                    
+
             if (eErr != CE_None)
             {
-                memset(pImage, 0, nBlockXSize * sizeof(float));
+                InitWidthNoData(pImage);
                 return eErr;
             }
         }
         else
         {
-            poGDS->nCurLine = nBlockYOff;
-            int i;
             for(i=0;i<3;i++)
             {
                 CPLErr eErr = GDALRasterIO( poGDS->hSrcBand,
@@ -1615,31 +1843,80 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
                                     0, 0);
                 if (eErr != CE_None)
                 {
-                    memset(pImage, 0, nBlockXSize * sizeof(float));
+                    InitWidthNoData(pImage);
                     return eErr;
                 }
             }
         }
+
+        poGDS->nCurLine = nBlockYOff;
     }
 
-    int j;
-    
-    if (eDataType == GDT_Byte)
+    if (poGDS->bComputeAtEdges && nRasterXSize >= 2)
     {
-        ((GByte*)pImage)[0] = (GByte) poGDS->dfDstNoDataValue;
-        if (nBlockXSize > 1)
-            ((GByte*)pImage)[nBlockXSize - 1] = (GByte) poGDS->dfDstNoDataValue;
+        float afWin[9];
+
+        j = 0;
+        afWin[0] = INTERPOL(poGDS->apafSourceBuf[0][j], poGDS->apafSourceBuf[0][j+1]);
+        afWin[1] = poGDS->apafSourceBuf[0][j];
+        afWin[2] = poGDS->apafSourceBuf[0][j+1];
+        afWin[3] = INTERPOL(poGDS->apafSourceBuf[1][j], poGDS->apafSourceBuf[1][j+1]);
+        afWin[4] = poGDS->apafSourceBuf[1][j];
+        afWin[5] = poGDS->apafSourceBuf[1][j+1];
+        afWin[6] = INTERPOL(poGDS->apafSourceBuf[2][j], poGDS->apafSourceBuf[2][j+1]);
+        afWin[7] = poGDS->apafSourceBuf[2][j];
+        afWin[8] = poGDS->apafSourceBuf[2][j+1];
+
+        fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                    afWin, poGDS->dfDstNoDataValue,
+                                    poGDS->pfnAlg,
+                                    poGDS->pAlgData,
+                                    poGDS->bComputeAtEdges);
+
+        if (eDataType == GDT_Byte)
+            ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+        else
+            ((float*)pImage)[j] = fVal;
+
+        j = nRasterXSize - 1;
+
+        afWin[0] = poGDS->apafSourceBuf[0][j-1];
+        afWin[1] = poGDS->apafSourceBuf[0][j];
+        afWin[2] = INTERPOL(poGDS->apafSourceBuf[0][j], poGDS->apafSourceBuf[0][j-1]);
+        afWin[3] = poGDS->apafSourceBuf[1][j-1];
+        afWin[4] = poGDS->apafSourceBuf[1][j];
+        afWin[5] = INTERPOL(poGDS->apafSourceBuf[1][j], poGDS->apafSourceBuf[1][j-1]);
+        afWin[6] = poGDS->apafSourceBuf[2][j-1];
+        afWin[7] = poGDS->apafSourceBuf[2][j];
+        afWin[8] = INTERPOL(poGDS->apafSourceBuf[2][j], poGDS->apafSourceBuf[2][j-1]);
+
+        fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                    afWin, poGDS->dfDstNoDataValue,
+                                    poGDS->pfnAlg,
+                                    poGDS->pAlgData,
+                                    poGDS->bComputeAtEdges);
+
+        if (eDataType == GDT_Byte)
+            ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+        else
+            ((float*)pImage)[j] = fVal;
     }
     else
     {
-        ((float*)pImage)[0] = (float) poGDS->dfDstNoDataValue;
-        if (nBlockXSize > 1)
-            ((float*)pImage)[nBlockXSize - 1] = (float) poGDS->dfDstNoDataValue;
+        if (eDataType == GDT_Byte)
+        {
+            ((GByte*)pImage)[0] = (GByte) poGDS->dfDstNoDataValue;
+            if (nBlockXSize > 1)
+                ((GByte*)pImage)[nBlockXSize - 1] = (GByte) poGDS->dfDstNoDataValue;
+        }
+        else
+        {
+            ((float*)pImage)[0] = (float) poGDS->dfDstNoDataValue;
+            if (nBlockXSize > 1)
+                ((float*)pImage)[nBlockXSize - 1] = (float) poGDS->dfDstNoDataValue;
+        }
     }
-    
-    int bSrcHasNoData;
-    double dfSrcNoDataValue = GDALGetRasterNoDataValue(poGDS->hSrcBand,
-                                                       &bSrcHasNoData);
+
 
     for(j=1;j<nBlockXSize - 1;j++)
     {
@@ -1654,38 +1931,19 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
         afWin[7] = poGDS->apafSourceBuf[2][j];
         afWin[8] = poGDS->apafSourceBuf[2][j+1];
 
-        // Check if afWin has null value
-        int bContainsNull = FALSE;
-        if (bSrcHasNoData)
-        {
-            for ( int n = 0; n <= 8; n++)
-            {
-                if(afWin[n] == dfSrcNoDataValue)
-                {
-                    bContainsNull = TRUE;
-                    break;
-                }
-            }
-        }
+        fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                afWin, poGDS->dfDstNoDataValue,
+                                poGDS->pfnAlg,
+                                poGDS->pAlgData,
+                                poGDS->bComputeAtEdges);
 
-        if (bContainsNull)
-        {
-            // We have nulls so write nullValue and move on
-            if (eDataType == GDT_Byte)
-                ((GByte*)pImage)[j] = (GByte) poGDS->dfDstNoDataValue;
-            else
-                ((float*)pImage)[j] = (float) poGDS->dfDstNoDataValue;
-        } else {
-            // We have a valid 3x3 window.
-            if (eDataType == GDT_Byte)
-                ((GByte*)pImage)[j] = (GByte) (poGDS->pfnAlg(
-                        afWin, poGDS->dfDstNoDataValue, poGDS->pAlgData) + 0.5);
-            else
-                ((float*)pImage)[j] = (float) poGDS->pfnAlg(
-                        afWin, poGDS->dfDstNoDataValue, poGDS->pAlgData);
-        }
+        if (eDataType == GDT_Byte)
+            ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+        else
+            ((float*)pImage)[j] = fVal;
+
     }
-    
+
     return CE_None;
 }
 
@@ -1746,6 +2004,8 @@ int main( int argc, char ** argv )
     
     int nXSize = 0;
     int nYSize = 0;
+    
+    int bComputeAtEdges = FALSE;
     
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -1861,6 +2121,11 @@ int main( int argc, char ** argv )
                  EQUAL(argv[i], "-alpha"))
         {
             bAddAlpha = TRUE;
+        }
+        else if( eUtilityMode != COLOR_RELIEF &&
+                 EQUAL(argv[i], "-compute_edges"))
+        {
+            bComputeAtEdges = TRUE;
         }
         else if( i + 1 < argc &&
             (EQUAL(argv[i], "--b") || 
@@ -2084,7 +2349,8 @@ int main( int argc, char ** argv )
                                           bDstHasNoData,
                                           dfDstNoDataValue,
                                           pfnAlg,
-                                          pData);
+                                          pData,
+                                          bComputeAtEdges);
 
         GDALDatasetH hOutDS = GDALCreateCopy(
                                  hDriver, pszDstFilename, hIntermediateDataset, 
@@ -2151,6 +2417,7 @@ int main( int argc, char ** argv )
         
         GDALGeneric3x3Processing(hSrcBand, hDstBand,
                                  pfnAlg, pData,
+                                 bComputeAtEdges,
                                  pfnProgress, NULL);
                                     
     }
