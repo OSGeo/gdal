@@ -110,17 +110,20 @@ static void Usage()
             "     gdaldem hillshade input_dem output_hillshade \n"
             "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
             "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]\n"
+            "                 [-alg ZevenbergenThorne]\n"
             "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generates a slope map from any GDAL-supported elevation raster :\n\n"
             "     gdaldem slope input_dem output_slope_map \n"
             "                 [-p use percent slope (default=degrees)] [-s scale* (default=1)]\n"
+            "                 [-alg ZevenbergenThorne]\n"
             "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate an aspect map from any GDAL-supported elevation raster\n"
             "   Outputs a 32-bit float tiff with pixel values from 0-360 indicating azimuth :\n\n"
             "     gdaldem aspect input_dem output_aspect_map \n"
             "                 [-trigonometric] [-zero_for_flat]\n"
+            "                 [-alg ZevenbergenThorne]\n"
             "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate a color relief map from any GDAL-supported elevation raster\n"
@@ -489,11 +492,41 @@ float GDALHillshadeAlg (float* afWin, float fDstNoDataValue, void* pData)
     return cang;
 }
 
+float GDALHillshadeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* pData)
+{
+    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
+    double x, y, aspect, xx_plus_yy, cang;
+    
+    // First Slope ...
+    x = (afWin[3] - afWin[5]) / psData->ewres;
+
+    y = (afWin[7] - afWin[1]) / psData->nsres;
+
+    xx_plus_yy = x * x + y * y;
+
+    // ... then aspect...
+    aspect = atan2(y,x);
+
+    // ... then the shade value
+    cang = (psData->sin_altRadians -
+           psData->cos_altRadians_mul_z_scale_factor * sqrt(xx_plus_yy) *
+           sin(aspect - psData->azRadians)) /
+           sqrt(1 + psData->square_z_scale_factor * xx_plus_yy);
+
+    if (cang <= 0.0) 
+        cang = 1.0;
+    else
+        cang = 1.0 + (254.0 * cang);
+        
+    return cang;
+}
+
 void*  GDALCreateHillshadeData(double* adfGeoTransform,
                                double z,
                                double scale,
                                double alt,
-                               double az)
+                               double az,
+                               int bZevenbergenThorne)
 {
     GDALHillshadeAlgData* pData =
         (GDALHillshadeAlgData*)CPLMalloc(sizeof(GDALHillshadeAlgData));
@@ -503,7 +536,7 @@ void*  GDALCreateHillshadeData(double* adfGeoTransform,
     pData->ewres = adfGeoTransform[1];
     pData->sin_altRadians = sin(alt * degreesToRadians);
     pData->azRadians = az * degreesToRadians;
-    double z_scale_factor = z / (8 * scale);
+    double z_scale_factor = z / (((bZevenbergenThorne) ? 2 : 8) * scale);
     pData->cos_altRadians_mul_z_scale_factor =
         cos(alt * degreesToRadians) * z_scale_factor;
     pData->square_z_scale_factor = z_scale_factor * z_scale_factor;
@@ -522,7 +555,7 @@ typedef struct
     int    slopeFormat;
 } GDALSlopeAlgData;
 
-float GDALSlopeAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALSlopeHornAlg (float* afWin, float fDstNoDataValue, void* pData)
 {
     const double radiansToDegrees = 180.0 / M_PI;
     GDALSlopeAlgData* psData = (GDALSlopeAlgData*)pData;
@@ -540,6 +573,24 @@ float GDALSlopeAlg (float* afWin, float fDstNoDataValue, void* pData)
         return atan(sqrt(key) / (8*psData->scale)) * radiansToDegrees;
     else
         return 100*(sqrt(key) / (8*psData->scale));
+}
+
+float GDALSlopeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* pData)
+{
+    const double radiansToDegrees = 180.0 / M_PI;
+    GDALSlopeAlgData* psData = (GDALSlopeAlgData*)pData;
+    double dx, dy, key;
+    
+    dx = (afWin[3] - afWin[5])/psData->ewres;
+
+    dy = (afWin[7] - afWin[1])/psData->nsres;
+
+    key = (dx * dx + dy * dy);
+
+    if (psData->slopeFormat == 1) 
+        return atan(sqrt(key) / (2*psData->scale)) * radiansToDegrees;
+    else
+        return 100*(sqrt(key) / (2*psData->scale));
 }
 
 void*  GDALCreateSlopeData(double* adfGeoTransform,
@@ -604,6 +655,42 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
     return aspect;
 }
 
+float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* pData)
+{
+    const double degreesToRadians = M_PI / 180.0;
+    GDALAspectAlgData* psData = (GDALAspectAlgData*)pData;
+    double dx, dy;
+    float aspect;
+    
+    dx = (afWin[5] - afWin[3]);
+
+    dy = (afWin[7] - afWin[1]);
+
+    aspect = atan2(dy,-dx) / degreesToRadians;
+
+    if (dx == 0 && dy == 0)
+    {
+        /* Flat area */
+        aspect = fDstNoDataValue;
+    } 
+    else if ( psData->bAngleAsAzimuth )
+    {
+        if (aspect > 90.0) 
+            aspect = 450.0 - aspect;
+        else
+            aspect = 90.0 - aspect;
+    }
+    else
+    {
+        if (aspect < 0)
+            aspect += 360.0;
+    }
+
+    if (aspect == 360.0) 
+        aspect = 0.0;
+
+    return aspect;
+}
 void*  GDALCreateAspectData(int bAngleAsAzimuth)
 {
     GDALAspectAlgData* pData =
@@ -2006,6 +2093,7 @@ int main( int argc, char ** argv )
     int nYSize = 0;
     
     int bComputeAtEdges = FALSE;
+    int bZevenbergenThorne = FALSE;
     
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -2073,6 +2161,18 @@ int main( int argc, char ** argv )
         else if ( eUtilityMode == SLOPE && EQUAL(argv[i], "-p"))
         {
             slopeFormat = 0;
+        }
+        else if ( (eUtilityMode == HILL_SHADE || eUtilityMode == SLOPE ||
+                   eUtilityMode == ASPECT) && EQUAL(argv[i], "-alg") && i + 1 < argc)
+        {
+            i ++;
+            if (EQUAL(argv[i], "ZevenbergenThorne"))
+                bZevenbergenThorne = TRUE;
+            else if (!EQUAL(argv[i], "Horn"))
+            {
+                fprintf(stderr, "Wrong value for alg : %s\n", argv[i]);
+                Usage();
+            }
         }
         else if ( eUtilityMode == ASPECT && EQUAL(argv[i], "-trigonometric"))
         {
@@ -2255,8 +2355,12 @@ int main( int argc, char ** argv )
                                            z,
                                            scale,
                                            alt,
-                                           az);
-        pfnAlg = GDALHillshadeAlg;
+                                           az,
+                                           bZevenbergenThorne);
+        if (bZevenbergenThorne)
+            pfnAlg = GDALHillshadeZevenbergenThorneAlg;
+        else
+            pfnAlg = GDALHillshadeAlg;
     }
     else if (eUtilityMode == SLOPE)
     {
@@ -2264,7 +2368,10 @@ int main( int argc, char ** argv )
         bDstHasNoData = TRUE;
 
         pData = GDALCreateSlopeData(adfGeoTransform, scale, slopeFormat);
-        pfnAlg = GDALSlopeAlg;
+        if (bZevenbergenThorne)
+            pfnAlg = GDALSlopeZevenbergenThorneAlg;
+        else
+            pfnAlg = GDALSlopeHornAlg;
     }
 
     else if (eUtilityMode == ASPECT)
@@ -2276,7 +2383,10 @@ int main( int argc, char ** argv )
         }
 
         pData = GDALCreateAspectData(bAngleAsAzimuth);
-        pfnAlg = GDALAspectAlg;
+        if (bZevenbergenThorne)
+            pfnAlg = GDALAspectZevenbergenThorneAlg;
+        else
+            pfnAlg = GDALAspectAlg;
     }
     else if (eUtilityMode == TRI)
     {
