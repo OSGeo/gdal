@@ -32,6 +32,7 @@
 #include "gdal.h"
 #include "cpl_port.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
