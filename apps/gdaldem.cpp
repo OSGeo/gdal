@@ -1481,13 +1481,16 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
     GDALGetBlockSize(hSrcBand, &nBlockXSize, &nBlockYSize);
     
     int bRelativeToVRT;
+    CPLString osPath = CPLGetPath(pszDstFilename);
     char* pszSourceFilename = CPLStrdup(
-        CPLExtractRelativePath( pszDstFilename, GDALGetDescription(hSrcDataset), 
+        CPLExtractRelativePath( osPath.c_str(), GDALGetDescription(hSrcDataset), 
                                 &bRelativeToVRT ));
 
     for(iBand = 0; iBand < nBands; iBand++)
     {
         VSIFPrintfL(fp, "  <VRTRasterBand dataType=\"Byte\" band=\"%d\">\n", iBand + 1);
+        VSIFPrintfL(fp, "    <ColorInterp>%s</ColorInterp>\n",
+                    GDALGetColorInterpretationName((GDALColorInterp)(GCI_RedBand + iBand)));
         VSIFPrintfL(fp, "    <ComplexSource>\n");
         VSIFPrintfL(fp, "      <SourceFilename relativeToVRT=\"%d\">%s</SourceFilename>\n",
                         bRelativeToVRT, pszSourceFilename);
