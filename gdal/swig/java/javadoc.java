@@ -4315,6 +4315,22 @@ public class Band:public int SetOffset(double newoffset)
 public class Band:public int SetScale(double newscale)
 
 /**
+ * Set unit type.
+ *
+ * Set the unit type for a raster band.  Values should be one of
+ * "" (the default indicating it is unknown), "m" indicating meters, 
+ * or "ft" indicating feet, though other nonstandard values are allowed.
+ *
+ * @param newunittype the new unit type value.
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure if not succuessful, or 
+ * unsupported.
+ *
+ * @since Java bindings 1.8.0
+ */
+public class Band:public int SetUnitType(String newunittype)
+
+/**
  * Set the category names for this band.
  *
  * See the GetCategoryNames() method for more on the interpretation of

@@ -471,6 +471,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALSetRasterStatistics(
     double dfMin, double dfMax, double dfMean, double dfStdDev );
 
 const char CPL_DLL * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterUnitType( GDALRasterBandH hBand, const char *pszNewValue );
 double CPL_DLL CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset);
 double CPL_DLL CPL_STDCALL GDALGetRasterScale( GDALRasterBandH, int *pbSuccess );
