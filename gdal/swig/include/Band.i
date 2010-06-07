@@ -232,7 +232,12 @@ public:
   const char* GetUnitType() {
       return GDALGetRasterUnitType( self );
   }
-  
+
+  /* Interface method added for GDAL 1.8.0 */
+  CPLErr SetUnitType( const char* val ) {
+    return GDALSetRasterUnitType( self, val );
+  }
+
   %apply (char **options) { (char **) };
   char** GetRasterCategoryNames( ) {
     return GDALGetRasterCategoryNames( self );

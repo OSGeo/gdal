@@ -2462,6 +2462,8 @@ const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
  * "" (the default indicating it is unknown), "m" indicating meters, 
  * or "ft" indicating feet, though other nonstandard values are allowed.
  *
+ * This method is the same as the C function GDALSetRasterUnitType(). 
+ *
  * @param pszNewValue the new unit type value.
  *
  * @return CE_None on success or CE_Failure if not succuessful, or 
@@ -2475,6 +2477,27 @@ CPLErr GDALRasterBand::SetUnitType( const char *pszNewValue )
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "SetUnitType() not supported on this raster band." );
     return CE_Failure;
+}
+
+/************************************************************************/
+/*                       GDALSetRasterUnitType()                        */
+/************************************************************************/
+
+/**
+ * \brief Set unit type.
+ *
+ * @see GDALRasterBand::SetUnitType()
+ *
+ * @since GDAL 1.8.0
+ */
+
+CPLErr CPL_STDCALL GDALSetRasterUnitType( GDALRasterBandH hBand, const char *pszNewValue )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALSetRasterUnitType", CE_Failure );
+
+    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    return poBand->SetUnitType(pszNewValue);
 }
 
 /************************************************************************/
