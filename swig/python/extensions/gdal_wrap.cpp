@@ -4108,6 +4108,9 @@ SWIGINTERN CPLErr GDALRasterBandShadow_SetNoDataValue(GDALRasterBandShadow *self
 SWIGINTERN char const *GDALRasterBandShadow_GetUnitType(GDALRasterBandShadow *self){
       return GDALGetRasterUnitType( self );
   }
+SWIGINTERN CPLErr GDALRasterBandShadow_SetUnitType(GDALRasterBandShadow *self,char const *val){
+    return GDALSetRasterUnitType( self, val );
+  }
 SWIGINTERN char **GDALRasterBandShadow_GetRasterCategoryNames(GDALRasterBandShadow *self){
     return GDALGetRasterCategoryNames( self );
   }
@@ -11673,6 +11676,58 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Band_SetUnitType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  CPLErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Band_SetUnitType",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetUnitType" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Band_SetUnitType" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    result = (CPLErr)GDALRasterBandShadow_SetUnitType(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(ret) CPLErr */
+    if ( bUseExceptions == 0 ) {
+      /* We're not using exceptions.  And no error has occurred */
+      if ( resultobj == 0 ) {
+        /* No other return values set so return ErrorCode */
+        resultobj = PyInt_FromLong(result);
+      }
+    }
+  }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Band_GetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -18573,6 +18628,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_GetNoDataValue", _wrap_Band_GetNoDataValue, METH_VARARGS, (char *)"Band_GetNoDataValue(Band self)"},
 	 { (char *)"Band_SetNoDataValue", _wrap_Band_SetNoDataValue, METH_VARARGS, (char *)"Band_SetNoDataValue(Band self, double d) -> CPLErr"},
 	 { (char *)"Band_GetUnitType", _wrap_Band_GetUnitType, METH_VARARGS, (char *)"Band_GetUnitType(Band self) -> char"},
+	 { (char *)"Band_SetUnitType", _wrap_Band_SetUnitType, METH_VARARGS, (char *)"Band_SetUnitType(Band self, char val) -> CPLErr"},
 	 { (char *)"Band_GetRasterCategoryNames", _wrap_Band_GetRasterCategoryNames, METH_VARARGS, (char *)"Band_GetRasterCategoryNames(Band self) -> char"},
 	 { (char *)"Band_SetRasterCategoryNames", _wrap_Band_SetRasterCategoryNames, METH_VARARGS, (char *)"Band_SetRasterCategoryNames(Band self, char names) -> CPLErr"},
 	 { (char *)"Band_GetMinimum", _wrap_Band_GetMinimum, METH_VARARGS, (char *)"Band_GetMinimum(Band self)"},
