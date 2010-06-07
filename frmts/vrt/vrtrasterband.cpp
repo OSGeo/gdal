@@ -884,3 +884,15 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
     else
         return GDALRasterBand::GetOverview( iOverview );
 }
+
+/************************************************************************/
+/*                          SetDescription()                            */
+/************************************************************************/
+
+void VRTRasterBand::SetDescription(const char* pszDescription)
+
+{
+    ((VRTDataset *)poDS)->SetNeedsFlush();
+
+    GDALRasterBand::SetDescription(pszDescription);
+}
