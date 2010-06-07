@@ -813,6 +813,10 @@ class Band(MajorObject):
         """GetUnitType(self) -> char"""
         return _gdal.Band_GetUnitType(self, *args)
 
+    def SetUnitType(self, *args):
+        """SetUnitType(self, char val) -> CPLErr"""
+        return _gdal.Band_SetUnitType(self, *args)
+
     def GetRasterCategoryNames(self, *args):
         """GetRasterCategoryNames(self) -> char"""
         return _gdal.Band_GetRasterCategoryNames(self, *args)
