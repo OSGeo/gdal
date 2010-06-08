@@ -18,11 +18,11 @@
    Copyright (C) 1998-2005 Gilles Vollant
 */
 
+#include "cpl_vsi.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "cpl_vsi.h"
 
 #include "zlib.h"
 #include "cpl_minizip_ioapi.h"
