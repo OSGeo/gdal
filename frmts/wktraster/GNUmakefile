@@ -7,7 +7,7 @@ include ../../GDALmake.opt
 OBJ	=	wktrasterdataset.o wktrasterrasterband.o wktrasterwrapper.o
 
 
-CPPFLAGS	:= -Wall -g $(XTRA_OPT) $(PG_INC) $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:= $(XTRA_OPT) $(PG_INC) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
