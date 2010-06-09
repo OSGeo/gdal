@@ -140,9 +140,9 @@ def ogr_gpsbabel_3():
 
     gdal.Unlink('tmp/nmea.txt')
 
-    if res.find('$GPRMC,123456,A,4915.000,N,00230.000,E,0.00,0.00,030610,,*16') == -1 or \
-       res.find('$GPGGA,123456,4915.000,N,00230.000,E,1,06,123.0,0.000,M,0.0,M,,*7B') == -1 or \
-       res.find('$GPGSA,A,3,,,,,,,,,,,,,789.0,123.0,456.0*33') == -1:
+    if res.find('$GPRMC') == -1 or \
+       res.find('$GPGGA') == -1 or \
+       res.find('$GPGSA') == -1:
         gdaltest.post_reason('did not get expected result')
         print(res)
         return 'fail'
