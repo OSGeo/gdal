@@ -489,8 +489,10 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
     if( poGeom == NULL )
         return NULL;
 
-    if( wkbFlatten(poGeom->getGeometryType()) != wkbGeometryCollection
-        && wkbFlatten(poGeom->getGeometryType()) != wkbMultiPolygon )
+    OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
+
+    if( eGeomType != wkbGeometryCollection
+        && eGeomType != wkbMultiPolygon )
         return poGeom;
 
     // build an aggregated polygon from all the polygon rings in the container.
@@ -562,11 +564,21 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
     if( poGeom == NULL )
         return NULL;
 
+    OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
+
+/* -------------------------------------------------------------------- */
+/*      If this is already a MultiPolygon, nothing to do                */
+/* -------------------------------------------------------------------- */
+    if( eGeomType == wkbMultiPolygon )
+    {
+        return poGeom;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Check for the case of a geometrycollection that can be          */
 /*      promoted to MultiPolygon.                                       */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+    if( eGeomType == wkbGeometryCollection )
     {
         int iGeom;
         int bAllPoly = TRUE;
@@ -599,7 +611,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 /*      Eventually we should try to split the polygon into component    */
 /*      island polygons.  But thats alot of work and can be put off.    */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) != wkbPolygon )
+    if( eGeomType != wkbPolygon )
         return poGeom;
 
     OGRMultiPolygon *poMP = new OGRMultiPolygon();
@@ -649,11 +661,21 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
     if( poGeom == NULL )
         return NULL;
 
+    OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
+
+/* -------------------------------------------------------------------- */
+/*      If this is already a MultiPoint, nothing to do                  */
+/* -------------------------------------------------------------------- */
+    if( eGeomType == wkbMultiPoint )
+    {
+        return poGeom;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Check for the case of a geometrycollection that can be          */
 /*      promoted to MultiPoint.                                         */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+    if( eGeomType == wkbGeometryCollection )
     {
         int iGeom;
         int bAllPoint = TRUE;
@@ -682,7 +704,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
         return poMP;
     }
 
-    if( wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
+    if( eGeomType != wkbPoint )
         return poGeom;
 
     OGRMultiPoint *poMP = new OGRMultiPoint();
@@ -738,11 +760,21 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     if( poGeom == NULL )
         return NULL;
 
+    OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
+
+/* -------------------------------------------------------------------- */
+/*      If this is already a MultiLineString, nothing to do             */
+/* -------------------------------------------------------------------- */
+    if( eGeomType == wkbMultiLineString )
+    {
+        return poGeom;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Check for the case of a geometrycollection that can be          */
 /*      promoted to MultiLineString.                                    */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+    if( eGeomType == wkbGeometryCollection )
     {
         int iGeom;
         int bAllLines = TRUE;
@@ -774,7 +806,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 /* -------------------------------------------------------------------- */
 /*      Turn a linestring into a multilinestring.                       */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
+    if( eGeomType == wkbLineString )
     {
         OGRMultiLineString *poMP = new OGRMultiLineString();
         poMP->addGeometryDirectly( poGeom );
@@ -784,7 +816,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 /* -------------------------------------------------------------------- */
 /*      Convert polygons into a multilinestring.                        */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+    if( eGeomType == wkbPolygon )
     {
         OGRMultiLineString *poMP = new OGRMultiLineString();
         OGRPolygon *poPoly = (OGRPolygon *) poGeom;
@@ -819,7 +851,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 /* -------------------------------------------------------------------- */
 /*      Convert multi-polygons into a multilinestring.                  */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+    if( eGeomType == wkbMultiPolygon )
     {
         OGRMultiLineString *poMP = new OGRMultiLineString();
         OGRMultiPolygon *poMPoly = (OGRMultiPolygon *) poGeom;
