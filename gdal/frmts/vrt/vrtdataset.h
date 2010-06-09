@@ -230,6 +230,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
                                         int nBuckets, int *panHistogram );
 
     CPLErr         CopyCommonInfoFrom( GDALRasterBand * );
+    
+    virtual void   SetDescription( const char * );
 };
 
 /************************************************************************/
