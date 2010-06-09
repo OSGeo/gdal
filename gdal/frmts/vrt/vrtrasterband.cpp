@@ -733,3 +733,15 @@ VRTRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                                 ppanHistogram, bForce, 
                                                 pfnProgress,pProgressData);
 }
+
+/************************************************************************/
+/*                          SetDescription()                            */
+/************************************************************************/
+
+void VRTRasterBand::SetDescription(const char* pszDescription)
+
+{
+    ((VRTDataset *)poDS)->SetNeedsFlush();
+
+    GDALRasterBand::SetDescription(pszDescription);
+}
