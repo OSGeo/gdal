@@ -243,6 +243,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     
     virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
                                int *pnMaxSize, CPLHashSet* hSetFiles);
+    
+    virtual void   SetDescription( const char * );
 };
 
 /************************************************************************/

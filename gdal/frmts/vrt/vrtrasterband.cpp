@@ -737,3 +737,15 @@ void VRTRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
                                 int *pnMaxSize, CPLHashSet* hSetFiles)
 {
 }
+
+/************************************************************************/
+/*                          SetDescription()                            */
+/************************************************************************/
+
+void VRTRasterBand::SetDescription(const char* pszDescription)
+
+{
+    ((VRTDataset *)poDS)->SetNeedsFlush();
+
+    GDALRasterBand::SetDescription(pszDescription);
+}
