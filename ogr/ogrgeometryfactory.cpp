@@ -1463,7 +1463,15 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
         GEOSisEmpty(geosGeom))
         return new OGRPoint();
 
+#if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 3)
+    int nCoordDim = GEOSGeom_getCoordinateDimension(geosGeom);
+    GEOSWKBWriter* wkbwriter = GEOSWKBWriter_create();
+    GEOSWKBWriter_setOutputDimension(wkbwriter, nCoordDim);
+    pabyBuf = GEOSWKBWriter_write( wkbwriter, geosGeom, &nSize );
+    GEOSWKBWriter_destroy(wkbwriter);
+#else
     pabyBuf = GEOSGeomToWKB_buf( geosGeom, &nSize );
+#endif
     if( pabyBuf == NULL || nSize == 0 )
     {
         return NULL;
