@@ -93,21 +93,22 @@
           % (self.Id, self.GCPPixel, self.GCPLine,
              self.GCPX, self.GCPY, self.GCPZ, self.Info )
     return str
-    def serialize(self,with_Z=0):
-        base = [CXT_Element,'GCP']
-        base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
-        pixval = '%0.15E' % self.GCPPixel       
-        lineval = '%0.15E' % self.GCPLine
-        xval = '%0.15E' % self.GCPX
-        yval = '%0.15E' % self.GCPY
-        zval = '%0.15E' % self.GCPZ
-        base.append([CXT_Attribute,'Pixel',[CXT_Text,pixval]])
-        base.append([CXT_Attribute,'Line',[CXT_Text,lineval]])
-        base.append([CXT_Attribute,'X',[CXT_Text,xval]])
-        base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
-        if with_Z:
-            base.append([CXT_Attribute,'Z',[CXT_Text,zval]])        
-        return base
+
+  def serialize(self,with_Z=0):
+    base = [CXT_Element,'GCP']
+    base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
+    pixval = '%0.15E' % self.GCPPixel       
+    lineval = '%0.15E' % self.GCPLine
+    xval = '%0.15E' % self.GCPX
+    yval = '%0.15E' % self.GCPY
+    zval = '%0.15E' % self.GCPZ
+    base.append([CXT_Attribute,'Pixel',[CXT_Text,pixval]])
+    base.append([CXT_Attribute,'Line',[CXT_Text,lineval]])
+    base.append([CXT_Attribute,'X',[CXT_Text,xval]])
+    base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
+    if with_Z:
+        base.append([CXT_Attribute,'Z',[CXT_Text,zval]])        
+    return base
 } /* pythoncode */
 }
 
