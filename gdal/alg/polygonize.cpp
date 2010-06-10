@@ -28,6 +28,7 @@
 
 #include "gdal_alg_priv.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -497,6 +498,8 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
+    int nConnectedness = CSLFetchNameValue( papszOptions, "8CONNECTED" ) ? 8 : 4;
+
 /* -------------------------------------------------------------------- */
 /*      Confirm our output layer will support feature creation.         */
 /* -------------------------------------------------------------------- */
@@ -549,7 +552,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /*      what on the second pass.                                        */
 /* -------------------------------------------------------------------- */
     int iY;
-    GDALRasterPolygonEnumerator oFirstEnum;
+    GDALRasterPolygonEnumerator oFirstEnum(nConnectedness);
 
     for( iY = 0; eErr == CE_None && iY < nYSize; iY++ )
     {
@@ -615,7 +618,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /*      We will use a new enumerator for the second pass primariliy     */
 /*      so we can preserve the first pass map.                          */
 /* -------------------------------------------------------------------- */
-    GDALRasterPolygonEnumerator oSecondEnum;
+    GDALRasterPolygonEnumerator oSecondEnum(nConnectedness);
     RPolygon **papoPoly = (RPolygon **) 
         CPLCalloc(sizeof(RPolygon*),oFirstEnum.nNextPolygonId);
 
