@@ -906,7 +906,7 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
             if( psNode->pszValue[0] == '?' )
                 strcat( *ppszText + *pnLength, "?>\n" );
             else
-                strcat( *ppszText + *pnLength, "/>\n" );
+                strcat( *ppszText + *pnLength, " />\n" );
         }
         else
         {
@@ -1054,13 +1054,15 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
     if( psNode == NULL )
         return;
 
+    if( psNode->pszValue != NULL )
+        CPLFree( psNode->pszValue );
+
     if( psNode->psChild != NULL )
         CPLDestroyXMLNode( psNode->psChild );
     
     if( psNode->psNext != NULL )
         CPLDestroyXMLNode( psNode->psNext );
 
-    CPLFree( psNode->pszValue );
     CPLFree( psNode );
 }
 
@@ -1372,7 +1374,7 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 }
 
 /************************************************************************/
-/*                           CPLAddXMLChild()                           */
+/*                        CPLRemoveXMLChild()                           */
 /************************************************************************/
 
 /**
