@@ -181,10 +181,51 @@ def polygonize_3():
     else:
         return 'fail'
 
+###############################################################################
+# Test a simple case without masking but with 8-connectedness.
+
+def polygonize_4():
+
+    if not gdaltest.have_ng:
+        return 'skip'
+    
+    src_ds = gdal.Open('data/polygonize_in.grd')
+    src_band = src_ds.GetRasterBand(1)
+
+    # Create a memory OGR datasource to put results in. 
+    mem_drv = ogr.GetDriverByName( 'Memory' )
+    mem_ds = mem_drv.CreateDataSource( 'out' )
+
+    mem_layer = mem_ds.CreateLayer( 'poly', None, ogr.wkbPolygon )
+
+    fd = ogr.FieldDefn( 'DN', ogr.OFTInteger )
+    mem_layer.CreateField( fd )
+
+    # run the algorithm.
+    result = gdal.Polygonize( src_band, None, mem_layer, 0, ["8CONNECTED=8"] )
+
+    # Confirm we get the set of expected features in the output layer.
+
+    expected_feature_number = 16
+    if mem_layer.GetFeatureCount() != expected_feature_number:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number) )
+        return 'fail'
+
+    expect = [ 107, 123, 132, 115, 132, 115, 140, 148, 
+               123, 140, 132, 156, 100, 101, 102, 103 ]
+    
+    tr = ogrtest.check_features_against_list( mem_layer, 'DN', expect )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
 gdaltest_list = [
     polygonize_1,
     polygonize_2,
-    polygonize_3
+    polygonize_3,
+    polygonize_4
     ]
 
 if __name__ == '__main__':
