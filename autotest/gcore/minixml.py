@@ -117,7 +117,7 @@ def minixml_1():
 def minixml_2():
 
     tree = [0,'TestDoc',[2,'style',[1,'123']],[0,'sub1'],[0,'sub2',[1,'abc']]]
-    doc_target = '<TestDoc style="123">\n  <sub1/>\n  <sub2>abc</sub2>\n</TestDoc>\n'
+    doc_target = '<TestDoc style="123">\n  <sub1 />\n  <sub2>abc</sub2>\n</TestDoc>\n'
     doc_got = gdal.SerializeXMLTree( tree )
     if doc_got != doc_target:
         gdaltest.post_reason( 'serialize xml tree failed.' )

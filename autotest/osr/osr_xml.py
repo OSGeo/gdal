@@ -116,26 +116,26 @@ def osr_xml_1():
   </gml:baseCRS>
   <gml:definedByConversion>
     <gml:Conversion gml:id="ogrcrs9">
-      <gml:usesMethod xlink:href="urn:ogc:def:method:EPSG::9807"/>
+      <gml:usesMethod xlink:href="urn:ogc:def:method:EPSG::9807" />
       <gml:usesParameterValue>
         <gml:value gml:uom="urn:ogc:def:uom:EPSG::9102">0</gml:value>
-        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8801"/>
+        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8801" />
       </gml:usesParameterValue>
       <gml:usesParameterValue>
         <gml:value gml:uom="urn:ogc:def:uom:EPSG::9102">3</gml:value>
-        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8802"/>
+        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8802" />
       </gml:usesParameterValue>
       <gml:usesParameterValue>
         <gml:value gml:uom="urn:ogc:def:uom:EPSG::9001">0.9996</gml:value>
-        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8805"/>
+        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8805" />
       </gml:usesParameterValue>
       <gml:usesParameterValue>
         <gml:value gml:uom="urn:ogc:def:uom:EPSG::9001">500000</gml:value>
-        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8806"/>
+        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8806" />
       </gml:usesParameterValue>
       <gml:usesParameterValue>
         <gml:value gml:uom="urn:ogc:def:uom:EPSG::9001">0</gml:value>
-        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8807"/>
+        <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8807" />
       </gml:usesParameterValue>
     </gml:Conversion>
   </gml:definedByConversion>
