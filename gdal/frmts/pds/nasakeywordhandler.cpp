@@ -31,6 +31,22 @@
  * and other NASA data systems. Refer to Chapter 12 of "PDS Standards
  * Reference" at http://pds.jpl.nasa.gov/tools/standards-reference.shtml for
  * further details about ODL.
+ * 
+ * This is also known as PVL (Parameter Value Language) which is written
+ * about at http://www.orrery.us/node/44 where it notes:
+ * 
+ * The PVL syntax that the PDS uses is specified by the Consultative Committee 
+ * for Space Data Systems in their Blue Book publication: "Parameter Value 
+ * Language Specification (CCSD0006 and CCSD0008)", June 2000 
+ * [CCSDS 641.0-B-2], and Green Book publication: "Parameter Value Language - 
+ * A Tutorial", June 2000 [CCSDS 641.0-G-2]. PVL has also been accepted by the
+ * International Standards Organization (ISO), as a Final Draft International 
+ * Standard (ISO 14961:2002) keyword value type language for naming and 
+ * expressing data values.
+ * --
+ * also of interest, on PDS ODL:
+ *  http://pds.jpl.nasa.gov/documents/sr/Chapter12.pdf
+ *  
  ****************************************************************************/
 
 #include "cpl_string.h" 
@@ -284,11 +300,13 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
         osWord += *(pszHeaderNext++);
         return TRUE;
     }
+
     /* Extract a symbol string */
     /* These are expected to not have
        '\'' (delimiters),
        format effectors (should fit on a single line) or
-       control characters.  */
+       control characters.  
+    */
     if( *pszHeaderNext == '\'' )
     {
         osWord += *(pszHeaderNext++);
@@ -303,12 +321,26 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
         return TRUE;
     }
 
+    /*
+     * Extract normal text.  Terminated by '=' or whitespace. 
+     *
+     * A special exception is that a line may terminate with a '-' 
+     * which is taken as a line extender, and we suck up white space to new
+     * text.
+     */
     while( *pszHeaderNext != '\0' 
            && *pszHeaderNext != '=' 
            && !isspace((unsigned char)*pszHeaderNext) )
     {
         osWord += *pszHeaderNext;
         pszHeaderNext++;
+
+        if( *pszHeaderNext == '-' 
+            && (pszHeaderNext[1] == 10 || pszHeaderNext[1] == 13) )
+        {
+            pszHeaderNext += 2;
+            SkipWhite();
+        }
     }
     
     return TRUE;
