@@ -255,6 +255,10 @@ public:
 
     int              ParseXSD( const char *pszFile );
 
+    int              ResolveXlinks( const char *pszFile,
+                                    char **papszSkip = NULL,
+                                    const int bStrict = FALSE );
+
     int              PrescanForSchema(int bGetExtents = TRUE );
     void             ResetReading();
 

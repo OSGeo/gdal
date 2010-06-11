@@ -788,6 +788,8 @@ char ** CSLTokenizeString2( const char * pszString,
                             int nCSLTFlags )
 
 {
+    if( pszString == NULL )
+        return (char **) CPLCalloc(sizeof(char *),1);
     char        **papszRetList = NULL;
     int         nRetMax = 0, nRetLen = 0;
     char        *pszToken;
