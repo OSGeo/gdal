@@ -4711,9 +4711,9 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth ) const
 
     double      dfCentralMeridian = GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
                                                      0.0);
-    double      dfZone = (dfCentralMeridian+183) / 6.0 + 0.000000001;
+    double      dfZone = ( dfCentralMeridian + 186.0 ) / 6.0;
 
-    if( ABS(dfZone - (int) dfZone) > 0.00001
+    if( ABS(dfZone - (int) dfZone - 0.5 ) > 0.00001
         || dfCentralMeridian < -177.00001
         || dfCentralMeridian > 177.000001 )
         return 0;
