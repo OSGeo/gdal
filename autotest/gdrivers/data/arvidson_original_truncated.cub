@@ -120,21 +120,6 @@ GROUP = LABELS_PT
     DELETE = NULL
   END_GROUP = PARAMETERS
 END_GROUP = LABELS_PT
-Group = Radiometry
-    EvenDarkColumns           = (16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36)
-    OddDarkColumns            = (17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37)
-    DarkFile                  = /usr/local/isis3/data/lro/calibration/NACL_Av-
-                                erageDarks.0004.cub
-    NonlinearOffset           = /usr/local/isis3/data/lro/calibration/NACL_Li-
-                                nearizationOffsets.0004.cub
-    LinearizationCoefficients = /usr/local/isis3/data/lro/calibration/NACL_Li-
-                                nearizationCoefficients.0003.txt
-    FlatFile                  = /usr/local/isis3/data/lro/calibration/NACL_Fl-
-                                atfield.0005.cub
-    RadiometricType           = IOF
-    ResponsivityValue         = 15453.0
-    SolarDistance             = 1.0174574690296
-End_Group
 END
-                                                                                                                                                                                                                                                                                                ÿÿûÿÿûEÔÃ	EÑÂƒFEÒ9EÓÂ¿EÕÂ‰MEÖItE×5ÒEÖÏÌEÓÞ_EÑ¢8EÏC½EÌýûEÌEËpÖEË&EÉX/EÉ®Â„EÊA8EÊÂ’ÚEË
-,EÉtEÊ>nEÊr±EÉÉ§EÉª.EÈÂ_EÈÃEËÂŽñEÍÂƒ2EÎê¤EÏhEÏOµEÎÄEÌÂš"EÌ1EËÂ’ØEÊlÆEÉvÐEÊ*8ÿÿûÿÿû
+                                                                                                                                                                                                                                                                                                ÿÿûÿÿûEÔÃ	EÑƒFEÒ9EÓ¿EÕ‰MEÖItE×5ÒEÖÏÌEÓÞ_EÑ¢8EÏC½EÌýûEÌEËpÖEË&EÉX/EÉ®„EÊA8EÊ’ÚEË
+,EÉtEÊ>nEÊr±EÉÉ§EÉª.EÈ_EÈÃEËŽñEÍƒ2EÎê¤EÏhEÏOµEÎÄEÌš"EÌ1EË’ØEÊlÆEÉvÐEÊ*8ÿÿûÿÿû
