@@ -7070,6 +7070,10 @@
 							RelativePath=".\ogr\ogrsf_frmts\gml\trstring.cpp"
 							>
 						</File>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\gml\resolvexlinks.cpp"
+							>
+						</File>
 					</Filter>
 					<Filter
 						Name="gmt"

@@ -35,12 +35,42 @@ be automatically regenerated if the associated .gml file has a newer timestamp.
 <p>
 
 When prescanning the GML file to determine the list of feature types, and
-fields, the contents of fields are scanned to try and determine the type
-of the field.  In some applications it is easier if all fields are just treated
-as string fields.  This can be accomplished by setting the configuration
-option <b>GML_FIELDTYPES</b> to the value <b>ALWAYS_STRING</b>.  Configuration
-options can be set via the CPLSetConfigOption() function or as environment
-variables.<p>
+fields, the contents of fields are scanned to try and determine the type of the
+field.  In some applications it is easier if all fields are just treated as
+string fields.  This can be accomplished by setting the configuration option
+<b>GML_FIELDTYPES</b> to the value <b>ALWAYS_STRING</b>.<p>
+
+Configuration options can be set via the CPLSetConfigOption() function or as
+environment variables.<p>
+
+OGR 1.8.0 adds support for more GML geometries including TopoCurve,
+TopoSurface, MultiCurve. The TopoCurve type GML geometry can be interpreted as
+either of two types of geometries.  The Edge elements in it contain curves and
+their corresponding nodes.  By default only the curves, the main geometries,
+are reported as OGRMultiLineString.  To retrieve the nodes, as OGRMultiPoint,
+the configuration option <b>GML_GET_SECONDARY_GEOM</b> should be set to the
+value <b>YES</b>.  When this is set only the secondary geometries are
+reported.<p>
+
+OGR 1.8.0 adds support for gml:xlink resolving.  When the resolver finds an
+element containing the tag xlink:href, it tries to find the corresponding
+element with the gml:id in the same gml file, other gml file in the file system
+or on the web using cURL.  By default the resolved file will be saved in the
+same directory as the original file with the extension ".resolved.gml", if it
+doesn't exist already.  This behaviour can be changed using the configuration
+option <b>GML_SAVE_RESOLVED_TO</b>.  Set it to <b>SAME</b> to overwrite the
+original file.  Set it to a <b>filename ending with .gml</b> to save it to that
+location.  Any other values are ignored.  If the resolver cannot write to the
+file for any reason, it will try to save it to a temperary file generated using
+CPLGenerateTempFilename("ResolvedGML"); if it cannot, resolution fails.<p>
+
+Note that the resolution algorithm is not optimised for large files.  For files
+with more than a couple of thousand xlink:href tags, the process can go beyond
+a few minutes.  A rough progress can be displayed through CPLDebug() for every
+256 links.  The resolution time can be reduced if you know any elements that
+won't be needed.  Mention a comma seperated list of names of such elements with
+the configuration option <b>GML_SKIP_RESOLVE_ELEMS</b>.  Set it to <b>ALL</b>
+to skip resolving altogether.<p>
 
 <h2>Encoding issues</h2>
 

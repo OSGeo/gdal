@@ -5390,6 +5390,9 @@
     <ClCompile Include="ogr\ogrsf_frmts\gml\trstring.cpp">
       <Filter>Source Files\ogr\ogrsf_frmts\gml</Filter>
     </ClCompile>
+    <ClCompile Include="ogr\ogrsf_frmts\gml\resolvexlinks.cpp">
+      <Filter>Source Files\ogr\ogrsf_frmts\gml</Filter>
+    </ClCompile>
     <ClCompile Include="ogr\ogrsf_frmts\gmt\ogrgmtdatasource.cpp">
       <Filter>Source Files\ogr\ogrsf_frmts\gmt</Filter>
     </ClCompile>
