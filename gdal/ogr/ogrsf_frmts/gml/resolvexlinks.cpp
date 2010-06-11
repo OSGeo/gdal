@@ -158,7 +158,8 @@ static CPLXMLNode *FindElementByID( CPLXMLNode * psRoot,
         if( psSibling->eType == CXT_Element )
         {
             // check that sibling for id value
-            if( EQUAL( GetID( psSibling ), pszID) )
+            const char* pszIDOfSibling = GetID( psSibling );
+            if( pszIDOfSibling != NULL && EQUAL( pszIDOfSibling, pszID) )
                 return psSibling;
         }
     }
