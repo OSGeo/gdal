@@ -877,7 +877,7 @@ OGRErr OGRSpatialReference::SetAngularUnits( const char * pszUnitsName,
     if( poCS->FindChild( "UNIT" ) >= 0 )
     {
         poUnits = poCS->GetChild( poCS->FindChild( "UNIT" ) );
-        if (poUnits->GetChildCount() != 2)
+        if (poUnits->GetChildCount() < 2)
             return OGRERR_FAILURE;
         poUnits->GetChild(0)->SetValue( pszUnitsName );
         poUnits->GetChild(1)->SetValue( szValue );
@@ -1108,7 +1108,7 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
     if( poCS->FindChild( "UNIT" ) >= 0 )
     {
         poUnits = poCS->GetChild( poCS->FindChild( "UNIT" ) );
-        if (poUnits->GetChildCount() != 2)
+        if (poUnits->GetChildCount() < 2)
             return OGRERR_FAILURE;
         poUnits->GetChild(0)->SetValue( pszUnitsName );
         poUnits->GetChild(1)->SetValue( szValue );
