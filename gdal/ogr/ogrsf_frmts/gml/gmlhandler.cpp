@@ -658,14 +658,17 @@ int GMLHandler::IsGeometryElement( const char *pszElement )
 
 {
     return strcmp(pszElement,"Polygon") == 0
-        || strcmp(pszElement,"MultiPolygon") == 0 
-        || strcmp(pszElement,"MultiPoint") == 0 
-        || strcmp(pszElement,"MultiLineString") == 0 
-        || strcmp(pszElement,"MultiSurface") == 0 
+        || strcmp(pszElement,"MultiPolygon") == 0
+        || strcmp(pszElement,"MultiPoint") == 0
+        || strcmp(pszElement,"MultiLineString") == 0
+        || strcmp(pszElement,"MultiSurface") == 0
         || strcmp(pszElement,"GeometryCollection") == 0
-        || strcmp(pszElement,"Point") == 0 
-        || strcmp(pszElement,"Curve") == 0 
-        || strcmp(pszElement,"Surface") == 0 
-        || strcmp(pszElement,"PolygonPatch") == 0 
+        || strcmp(pszElement,"Point") == 0
+        || strcmp(pszElement,"Curve") == 0
+        || strcmp(pszElement,"MultiCurve") == 0
+        || strcmp(pszElement,"TopoCurve") == 0
+        || strcmp(pszElement,"Surface") == 0
+        || strcmp(pszElement,"TopoSurface") == 0
+        || strcmp(pszElement,"PolygonPatch") == 0
         || strcmp(pszElement,"LineString") == 0;
 }

@@ -52,7 +52,7 @@ typedef struct {
 
 /*! Describe the result of a CPLHTTPFetch() call */
 typedef struct {
-    /*! HTTP status code : 200=success, value < 0 if request failed */ 
+    /*! cURL error code : 0=success, non-zero if request failed */ 
     int     nStatus;
 
     /*! Content-Type of the response */                                
