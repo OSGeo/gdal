@@ -1343,6 +1343,7 @@
     <ClCompile Include="ogr\ogrsf_frmts\gml\ogrgmllayer.cpp" />
     <ClCompile Include="ogr\ogrsf_frmts\gml\parsexsd.cpp" />
     <ClCompile Include="ogr\ogrsf_frmts\gml\trstring.cpp" />
+    <ClCompile Include="ogr\ogrsf_frmts\gml\resolvexlinks.cpp" />
     <ClCompile Include="ogr\ogrsf_frmts\gmt\ogrgmtdatasource.cpp" />
     <ClCompile Include="ogr\ogrsf_frmts\gmt\ogrgmtdriver.cpp" />
     <ClCompile Include="ogr\ogrsf_frmts\gmt\ogrgmtlayer.cpp" />

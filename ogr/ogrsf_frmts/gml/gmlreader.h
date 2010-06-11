@@ -212,6 +212,10 @@ public:
 
     virtual int  ParseXSD( const char *pszFile ) = 0;
 
+    virtual int  ResolveXlinks( const char *pszFile,
+                                char **papszSkip = NULL,
+                                const int bStrict = FALSE ) = 0;
+
     virtual int PrescanForSchema( int bGetExtents = TRUE ) = 0;
 
     virtual int HasStoppedParsing() = 0;

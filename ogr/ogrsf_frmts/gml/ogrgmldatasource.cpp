@@ -184,6 +184,67 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 
     poReader->SetSourceFile( pszNewName );
     
+/* -------------------------------------------------------------------- */
+/*      Resolve the xlinks in the source file and save it with the      */
+/*      extension ".resolved.gml". The source file will to set to that. */
+/* -------------------------------------------------------------------- */
+
+    char *pszXlinkResolvedFilename = NULL;
+    const char *pszOption = CPLGetConfigOption("GML_SAVE_RESOLVED_TO", NULL);
+    int bResolve = TRUE;
+    if( pszOption != NULL )
+    {
+        if( EQUALN( pszOption, "SAME", 4 ) )
+        {
+            // "SAME" will overwrite the existing gml file
+            pszXlinkResolvedFilename = CPLStrdup( pszNewName );
+        }
+        else if( ( CPLStrnlen( pszOption, 5 ) >= 5 ) &&
+                 EQUALN( pszOption - 4 + strlen( pszOption ), ".gml", 4 ) )
+        {
+            // Any string ending with ".gml" will try and write to it
+            pszXlinkResolvedFilename = CPLStrdup( pszNewName );
+        }
+    }
+    else
+    {
+        // Default action would be to use a file with the extension
+        // changed to resolved.gml
+        pszXlinkResolvedFilename = CPLStrdup(
+                            CPLResetExtension( pszNewName, "resolved.gml" ) );
+
+        // Check if the file already exists.
+        VSIStatBuf sResStatBuf, sGMLStatBuf;
+        if( CPLStat( pszXlinkResolvedFilename, &sResStatBuf ) == 0 )
+        {
+            CPLStat( pszNewName, &sGMLStatBuf );
+            if( sGMLStatBuf.st_mtime > sResStatBuf.st_mtime )
+            {
+                CPLDebug( "GML", 
+                          "Found %s but ignoring because it appears\n"
+                          "be older than the associated GML file.", 
+                          pszXlinkResolvedFilename );
+                bResolve = FALSE;
+            }
+        }
+    }
+
+    const char *pszSkipOption = CPLGetConfigOption( "GML_SKIP_RESOLVE_ELEMS",
+                                                    "");
+    char **papszSkip = NULL;
+    if( EQUAL( pszSkipOption, "ALL" ) )
+        bResolve = FALSE;
+    else
+        papszSkip = CSLTokenizeString2( pszSkipOption, ",",
+                                           CSLT_STRIPLEADSPACES |
+                                           CSLT_STRIPENDSPACES );
+
+    if( bResolve )
+        poReader->ResolveXlinks( pszXlinkResolvedFilename, papszSkip );
+
+    CPLFree( pszXlinkResolvedFilename );
+    CSLDestroy( papszSkip );
+
     pszName = CPLStrdup( pszNewName );
 
 /* -------------------------------------------------------------------- */

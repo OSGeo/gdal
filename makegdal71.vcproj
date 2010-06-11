@@ -2050,6 +2050,7 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\ogrgmllayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\parsexsd.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\trstring.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gml\resolvexlinks.cpp" />
 					</Filter>
 					<Filter Name="gmt" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gmt\ogrgmtdatasource.cpp" />
