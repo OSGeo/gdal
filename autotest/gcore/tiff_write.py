@@ -2633,7 +2633,6 @@ def tiff_write_78():
             # this ends up being 1
             expected_cs = 1 % 7;
         if cs != expected_cs:
-            print(attempt)
             print(cs)
             print(expected_cs)
             print(band_line)
@@ -2942,6 +2941,11 @@ def tiff_write_83():
 def tiff_write_84():
 
     md = gdaltest.tiff_drv.GetMetadata()
+    
+    # Crashes with libtiff < 4.0
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
     
