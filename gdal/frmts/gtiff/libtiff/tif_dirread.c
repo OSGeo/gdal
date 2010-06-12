@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.156 2010-03-10 18:56:48 bfriesen Exp $ */
+/* $Id: tif_dirread.c,v 1.157 2010-05-08 18:33:07 olivier Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -67,9 +67,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryByte(TIFF* tif, TIFFDirEntry* di
 static enum TIFFReadDirEntryErr TIFFReadDirEntryShort(TIFF* tif, TIFFDirEntry* direntry, uint16* value);
 static enum TIFFReadDirEntryErr TIFFReadDirEntryLong(TIFF* tif, TIFFDirEntry* direntry, uint32* value);
 static enum TIFFReadDirEntryErr TIFFReadDirEntryLong8(TIFF* tif, TIFFDirEntry* direntry, uint64* value);
-#ifdef notdef
 static enum TIFFReadDirEntryErr TIFFReadDirEntryFloat(TIFF* tif, TIFFDirEntry* direntry, float* value);
-#endif
 static enum TIFFReadDirEntryErr TIFFReadDirEntryDouble(TIFF* tif, TIFFDirEntry* direntry, double* value);
 static enum TIFFReadDirEntryErr TIFFReadDirEntryIfd8(TIFF* tif, TIFFDirEntry* direntry, uint64* value);
 
@@ -530,7 +528,6 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryLong8(TIFF* tif, TIFFDirEntry* d
 	}
 }
 
-#ifdef notdef
 static enum TIFFReadDirEntryErr TIFFReadDirEntryFloat(TIFF* tif, TIFFDirEntry* direntry, float* value)
 {
 	enum TIFFReadDirEntryErr err;
@@ -632,7 +629,6 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryFloat(TIFF* tif, TIFFDirEntry* d
 			return(TIFFReadDirEntryErrType);
 	}
 }
-#endif /* def notdef */
 
 static enum TIFFReadDirEntryErr TIFFReadDirEntryDouble(TIFF* tif, TIFFDirEntry* direntry, double* value)
 {
@@ -4710,6 +4706,19 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				assert(fip->field_readcount==1);
 				assert(fip->field_passcount==0);
 				err=TIFFReadDirEntryLong8(tif,dp,&data);
+				if (err==TIFFReadDirEntryErrOk)
+				{
+					if (!TIFFSetField(tif,dp->tdir_tag,data))
+						return(0);
+				}
+			}
+			break;
+		case TIFF_SETGET_FLOAT:
+			{
+				float data;
+				assert(fip->field_readcount==1);
+				assert(fip->field_passcount==0);
+				err=TIFFReadDirEntryFloat(tif,dp,&data);
 				if (err==TIFFReadDirEntryErrOk)
 				{
 					if (!TIFFSetField(tif,dp->tdir_tag,data))

@@ -2549,6 +2549,13 @@ void GTiffDataset::FillEmptyTiles()
     else
         TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts );
 
+    if (panByteCounts == NULL)
+    {
+        /* Got here with libtiff 3.9.3 and tiff_write_8 test */
+        CPLError(CE_Failure, CPLE_AppDefined, "FillEmptyTiles() failed because panByteCounts == NULL");
+        return;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Prepare a blank data buffer to write for uninitialized blocks.  */
 /* -------------------------------------------------------------------- */
@@ -4952,10 +4959,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     {
         /* libtiff 3.9.2 (20091104) and older, libtiff 4.0.0beta5 (also 20091104) */
         /* and older will crash when trying to open a all-in-one-strip */
-        /* YCbCr JPEG compressed TIFF (see #3259). BUG_3259_FIXED is defined */
-        /* in internal libtiff tif_config.h until a 4.0.0beta6 is released */
+        /* YCbCr JPEG compressed TIFF (see #3259). */
 #if (TIFFLIB_VERSION <= 20091104 && !defined(BIGTIFF_SUPPORT)) || \
-    (TIFFLIB_VERSION <= 20091104 && defined(BIGTIFF_SUPPORT) && !defined(BUG_3259_FIXED))
+    (TIFFLIB_VERSION <= 20091104 && defined(BIGTIFF_SUPPORT))
         if (nPhotometric == PHOTOMETRIC_YCBCR  &&
             nCompression == COMPRESSION_JPEG)
         {
