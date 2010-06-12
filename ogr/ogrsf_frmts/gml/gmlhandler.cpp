@@ -454,7 +454,8 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 /* -------------------------------------------------------------------- */
 /*      Is it a feature?  If so push a whole new state, and return.     */
 /* -------------------------------------------------------------------- */
-    else if( m_poReader->IsFeatureElement( pszName ) )
+    else if( m_nDepthFeature == 0 &&
+             m_poReader->IsFeatureElement( pszName ) )
     {
         char* pszFID = GetFID(attr);
 
@@ -561,6 +562,7 @@ OGRErr GMLHandler::endElement(const char* pszName )
         && strcmp(pszName,
                  poState->m_poFeature->GetClass()->GetElementName()) == 0 )
     {
+        m_nDepthFeature = 0;
         m_poReader->PopState();
     }
 
