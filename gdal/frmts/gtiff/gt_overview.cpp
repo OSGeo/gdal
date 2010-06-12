@@ -42,6 +42,7 @@ CPL_CVSID("$Id$");
 
 CPL_C_START
 void    GTiffOneTimeInit();
+void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
 CPL_C_END
 
 /************************************************************************/
@@ -641,6 +642,8 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Loop, creating overviews.                                       */
 /* -------------------------------------------------------------------- */
+    int nOvrBlockXSize, nOvrBlockYSize;
+    GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
     {
         int    nOXSize, nOYSize;
@@ -653,7 +656,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         GTIFFWriteDirectory(hOTIFF, FILETYPE_REDUCEDIMAGE,
                             nOXSize, nOYSize, nBitsPerPixel, 
                             nPlanarConfig, nBands,
-                            128, 128, TRUE, nCompression,
+                            nOvrBlockXSize, nOvrBlockYSize, TRUE, nCompression,
                             nPhotometric, nSampleFormat, nPredictor,
                             panRed, panGreen, panBlue,
                             0, NULL, /* FIXME? how can we fetch extrasamples */
