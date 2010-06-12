@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang=en>
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>GTiff -- GeoTIFF File Format</title>
 </head>
 
@@ -83,6 +84,10 @@ environment variable is set to YES and the GeoTIFF file is opened in update mode
 BuildOverviews() will automatically create overviews for the internal transparency mask.
 These overviews will be refreshed by further calls to BuildOverviews() even if
 GDAL_TIFF_INTERNAL_MASK is not set to YES.</p>
+
+<p>(From GDAL 1.8.0) The block size (tile width and height) used for overviews
+(internal or external) can be specified by setting the GDAL_TIFF_OVR_BLOCKSIZE
+environment variable to a power-of-two value between 64 and 4096. The default value is 128.</p>
 
 <h2>Metadata</h2>
 
