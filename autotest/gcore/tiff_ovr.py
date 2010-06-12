@@ -1639,6 +1639,69 @@ def tiff_ovr_43():
     return 'success'
 
 ###############################################################################
+# Test that we can change overview block size through GDAL_TIFF_OVR_BLOCKSIZE configuration
+# option
+
+def tiff_ovr_44():
+
+    shutil.copyfile( 'data/byte.tif', 'tmp/ovr44.tif' )
+    gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', '256')
+    ds = gdal.Open('tmp/ovr44.tif', gdal.GA_Update)
+    ds.BuildOverviews( overviewlist = [2] )
+    ds = None
+    gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', None)
+
+    ds = gdal.Open('tmp/ovr44.tif')
+    ovr_band = ds.GetRasterBand(1).GetOverview(0)
+    if 'GetBlockSize' in dir(gdal.Band):
+        (blockx, blocky) = ovr_band.GetBlockSize()
+        if blockx != 256 or blocky != 256:
+            gdaltest.post_reason('did not get expected block size')
+            return 'fail'
+    cs = ovr_band.Checksum()
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr44.tif' )
+
+    if cs != 1087:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Same as tiff_ovr_44, but with external overviews
+
+def tiff_ovr_45():
+
+    shutil.copyfile( 'data/byte.tif', 'tmp/ovr45.tif' )
+    gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', '256')
+    ds = gdal.Open('tmp/ovr45.tif', gdal.GA_ReadOnly)
+    ds.BuildOverviews( overviewlist = [2] )
+    ds = None
+    gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', None)
+
+    ds = gdal.Open('tmp/ovr45.tif.ovr')
+    ovr_band = ds.GetRasterBand(1)
+    if 'GetBlockSize' in dir(gdal.Band):
+        (blockx, blocky) = ovr_band.GetBlockSize()
+        if blockx != 256 or blocky != 256:
+            gdaltest.post_reason('did not get expected block size')
+            return 'fail'
+    cs = ovr_band.Checksum()
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr45.tif' )
+
+    if cs != 1087:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1725,6 +1788,8 @@ gdaltest_list_internal = [
     tiff_ovr_41,
     tiff_ovr_42,
     tiff_ovr_43,
+    tiff_ovr_44,
+    tiff_ovr_45,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
