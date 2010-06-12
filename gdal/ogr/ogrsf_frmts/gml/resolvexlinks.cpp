@@ -107,38 +107,6 @@ static std::vector<CPLXMLNode*> BuildIDIndex( CPLXMLNode* psNode,
 }*/
 
 /************************************************************************/
-/*                       DestroyXMLNode()                               */
-/*                                                                      */
-/*      Works similar to CPLDestroyXMLNode without using recursion to   */
-/*      avoid call stack overflow error.                                */
-/*      Since the whole GML file is present in the tree, the call       */
-/*      stack in recursive method will go as deep as the number of gml  */
-/*      features in all the layers.                                     */
-/************************************************************************/
-
-static void DestroyXMLNode( CPLXMLNode * psRoot )
-
-{
-    if( psRoot == NULL )
-        return;
-
-    std::stack<CPLXMLNode *> apsNodes;
-    apsNodes.push( psRoot );
-    CPLXMLNode *psCurrentNode;
-    while( !apsNodes.empty() )
-    {
-        psCurrentNode = apsNodes.top();
-        CPLFree( psCurrentNode->pszValue );
-        apsNodes.pop();
-        if( psCurrentNode->psNext != NULL )
-            apsNodes.push( psCurrentNode->psNext );
-        if( psCurrentNode->psChild != NULL )
-            apsNodes.push( psCurrentNode->psChild );
-        CPLFree( psCurrentNode );
-    }
-}
-
-/************************************************************************/
 /*                          FindElementByID()                           */
 /*                                                                      */
 /*      Find a node with the indicated "gml:id" in the node tree and    */
@@ -564,7 +532,7 @@ int GMLReader::ResolveXlinks( const char *pszFile,
     int nItems = CSLCount( papszResourceHREF );
     CSLDestroy( papszResourceHREF );
     while( nItems > 0 )
-        DestroyXMLNode( papsSrcTree[--nItems] );
+        CPLDestroyXMLNode( papsSrcTree[--nItems] );
     CPLFree( papsSrcTree );
 
     return bReturn;
