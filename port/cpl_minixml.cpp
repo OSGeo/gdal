@@ -1051,19 +1051,20 @@ CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
 void CPLDestroyXMLNode( CPLXMLNode *psNode )
 
 {
-    if( psNode == NULL )
-        return;
+    while(psNode != NULL)
+    {
+        if( psNode->pszValue != NULL )
+            CPLFree( psNode->pszValue );
 
-    if( psNode->pszValue != NULL )
-        CPLFree( psNode->pszValue );
+        if( psNode->psChild != NULL )
+            CPLDestroyXMLNode( psNode->psChild );
 
-    if( psNode->psChild != NULL )
-        CPLDestroyXMLNode( psNode->psChild );
-    
-    if( psNode->psNext != NULL )
-        CPLDestroyXMLNode( psNode->psNext );
+        CPLXMLNode* psNext = psNode->psNext;
 
-    CPLFree( psNode );
+        CPLFree( psNode );
+
+        psNode = psNext;
+    }
 }
 
 /************************************************************************/
@@ -1658,47 +1659,46 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
                            int bRecurse )
 
 {
-    if( psRoot == NULL )
-        return;
+    size_t nNameSpaceLen = (pszNamespace) ? strlen(pszNamespace) : 0;
 
-    if( psRoot->eType == CXT_Element || psRoot->eType == CXT_Attribute )
+    while( psRoot != NULL )
     {
-        if( pszNamespace != NULL )
+
+        if( psRoot->eType == CXT_Element || psRoot->eType == CXT_Attribute )
         {
-            if( EQUALN(pszNamespace,psRoot->pszValue,strlen(pszNamespace)) 
-                && psRoot->pszValue[strlen(pszNamespace)] == ':' )
+            if( pszNamespace != NULL )
             {
-                char *pszNewValue = 
-                    CPLStrdup(psRoot->pszValue+strlen(pszNamespace)+1);
-                
-                CPLFree( psRoot->pszValue );
-                psRoot->pszValue = pszNewValue;
-            }
-        }
-        else
-        {
-            const char *pszCheck;
-            
-            for( pszCheck = psRoot->pszValue; *pszCheck != '\0'; pszCheck++ )
-            {
-                if( *pszCheck == ':' )
+                if( EQUALN(pszNamespace,psRoot->pszValue,nNameSpaceLen) 
+                    && psRoot->pszValue[nNameSpaceLen] == ':' )
                 {
-                    char *pszNewValue = CPLStrdup( pszCheck+1 );
-                    
-                    CPLFree( psRoot->pszValue );
-                    psRoot->pszValue = pszNewValue;
-                    break;
+                    memmove(psRoot->pszValue, psRoot->pszValue+nNameSpaceLen+1,
+                           strlen(psRoot->pszValue+nNameSpaceLen+1) + 1);
+                }
+            }
+            else
+            {
+                const char *pszCheck;
+
+                for( pszCheck = psRoot->pszValue; *pszCheck != '\0'; pszCheck++ )
+                {
+                    if( *pszCheck == ':' )
+                    {
+                        memmove(psRoot->pszValue, pszCheck + 1, strlen(pszCheck + 1) + 1);
+                        break;
+                    }
                 }
             }
         }
-    }
 
-    if( bRecurse )
-    {
-        if( psRoot->psChild != NULL )
-            CPLStripXMLNamespace( psRoot->psChild, pszNamespace, 1 );
-        if( psRoot->psNext != NULL )
-            CPLStripXMLNamespace( psRoot->psNext, pszNamespace, 1 );
+        if( bRecurse )
+        {
+            if( psRoot->psChild != NULL )
+                CPLStripXMLNamespace( psRoot->psChild, pszNamespace, 1 );
+
+            psRoot = psRoot->psNext;
+        }
+        else
+            break;
     }
 }
 
