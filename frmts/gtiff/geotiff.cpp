@@ -50,6 +50,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename );
 GUInt32 HalfToFloat( GUInt16 );
 GUInt32 TripleToFloat( GUInt32 );
 void    GTiffOneTimeInit();
+void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
 CPL_C_END
 
 #define TIFFTAG_GDAL_METADATA  42112
@@ -61,6 +62,50 @@ CPL_C_END
 #endif
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
+
+
+/************************************************************************/
+/*                            IsPowerOfTwo()                            */
+/************************************************************************/
+
+static int IsPowerOfTwo(unsigned int i)
+{
+    int nBitSet = 0;
+    while(i != 0)
+    {
+        if ((i & 1))
+            nBitSet ++;
+        i >>= 1;
+    }
+    return nBitSet == 1;
+}
+
+/************************************************************************/
+/*                     GTIFFGetOverviewBlockSize()                      */
+/************************************************************************/
+
+void GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize)
+{
+    static int bHasWarned = FALSE;
+    const char* pszVal = CPLGetConfigOption("GDAL_TIFF_OVR_BLOCKSIZE", "128");
+    int nOvrBlockSize = atoi(pszVal);
+    if (nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
+        !IsPowerOfTwo(nOvrBlockSize))
+    {
+        if (!bHasWarned)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                    "Wrong value for GDAL_TIFF_OVR_BLOCKSIZE : %s. "
+                    "Should be a power of 2 between 64 and 4096. Defaulting to 128",
+                    pszVal);
+            bHasWarned = TRUE;
+        }
+        nOvrBlockSize = 128;
+    }
+
+    *pnBlockXSize = nOvrBlockSize;
+    *pnBlockYSize = nOvrBlockSize;
+}
 
 enum
 {
@@ -3292,6 +3337,8 @@ CPLErr GTiffDataset::IBuildOverviews(
 /*      which are new.  We assume that band 1 of the file is            */
 /*      representative.                                                 */
 /* -------------------------------------------------------------------- */
+    int nOvrBlockXSize, nOvrBlockYSize;
+    GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
     for( i = 0; i < nOverviews && eErr == CE_None; i++ )
     {
         int   j;
@@ -3325,7 +3372,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                 GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE,
                                     nOXSize, nOYSize, 
                                     nOvBitsPerSample, nPlanarConfig,
-                                    nSamplesPerPixel, 128, 128, TRUE,
+                                    nSamplesPerPixel, nOvrBlockXSize, nOvrBlockYSize, TRUE,
                                     nCompression, nPhotometric, nSampleFormat, 
                                     nPredictor,
                                     panRed, panGreen, panBlue,
@@ -3380,7 +3427,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                     GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK,
                                         papoOverviewDS[i]->nRasterXSize, papoOverviewDS[i]->nRasterYSize, 
                                         1, PLANARCONFIG_CONTIG,
-                                        1, 128, 128, TRUE,
+                                        1, nOvrBlockXSize, nOvrBlockYSize, TRUE,
                                         COMPRESSION_NONE, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, PREDICTOR_NONE,
                                         NULL, NULL, NULL, 0, NULL,
                                         "" );
