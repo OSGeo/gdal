@@ -512,7 +512,10 @@ int GMLReader::ResolveXlinks( const char *pszFile,
     papsSrcTree[0] = CPLParseXMLFile( m_pszFilename );
 
     if( papsSrcTree[0] == NULL )
+    {
+        CPLFree(papsSrcTree);
         return FALSE;
+    }
 
 //setup resource data structure
     char **papszResourceHREF = NULL;
