@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: resolvexlinks.cpp 17629 2009-09-10 14:51:45Z chaitanya $
+ * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLReader::ResolveXlinks() method.
@@ -29,6 +29,8 @@
 
 #include "gmlreader.h"
 #include "cpl_error.h"
+
+CPL_CVSID("$Id$");
 
 #if HAVE_XERCES != 0 || defined(HAVE_EXPAT)
 
