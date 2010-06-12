@@ -229,8 +229,9 @@ static int TrimTree( CPLXMLNode * psRoot )
 
 // search the child elements of psRoot
     int bReturn = FALSE, bRemove;
-    for( psChild = psRoot->psChild; psChild != NULL; psChild = psChild->psNext)
+    for( psChild = psRoot->psChild; psChild != NULL;)
     {
+        CPLXMLNode* psNextChild = psChild->psNext;
         if( psChild->eType == CXT_Element )
         {
             bRemove = TrimTree( psChild );
@@ -245,6 +246,8 @@ static int TrimTree( CPLXMLNode * psRoot )
                 CPLDestroyXMLNode( psChild );
             }
         }
+
+        psChild = psNextChild;
     }
     return bReturn;
 }
@@ -294,12 +297,12 @@ static void CorrectURLs( CPLXMLNode * psRoot, const char *pszURL )
 /*      Find a doc tree that is located at pszURL.                      */
 /************************************************************************/
 
-static CPLXMLNode *FindTreeByURL( CPLXMLNode ** papsRoot,
+static CPLXMLNode *FindTreeByURL( CPLXMLNode *** ppapsRoot,
                                   char *** ppapszResourceHREF,
                                   const char *pszURL )
 
 {
-    if( papsRoot == NULL || ppapszResourceHREF == NULL )
+    if( *ppapsRoot == NULL || ppapszResourceHREF == NULL )
         return NULL;
 
 //if found in ppapszResourceHREF
@@ -308,7 +311,7 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ** papsRoot,
     if( ( i = CSLFindString( *ppapszResourceHREF, pszURL )) >= 0 )
     {
     //return corresponding psRoot
-        return papsRoot[i];
+        return (*ppapsRoot)[i];
     }
     else
     {
@@ -347,13 +350,13 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ** papsRoot,
     //update to lists
         nItems = CSLCount(*ppapszResourceHREF);
         *ppapszResourceHREF = CSLAddString( *ppapszResourceHREF, pszURL );
-        papsRoot = (CPLXMLNode**)CPLRealloc(papsRoot,
+        *ppapsRoot = (CPLXMLNode**)CPLRealloc(*ppapsRoot,
                                             (nItems+2)*sizeof(CPLXMLNode*));
-        papsRoot[nItems] = psSrcTree;
-        papsRoot[nItems+1] = NULL;
+        (*ppapsRoot)[nItems] = psSrcTree;
+        (*ppapsRoot)[nItems+1] = NULL;
 
     //return the tree
-        return papsRoot[nItems];
+        return (*ppapsRoot)[nItems];
     }
 
     return NULL;
@@ -365,7 +368,7 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ** papsRoot,
 /************************************************************************/
 
 static CPLErr Resolve( CPLXMLNode * psNode,
-                CPLXMLNode ** papsRoot,
+                CPLXMLNode *** ppapsRoot,
                 char *** ppapszResourceHREF,
                 char ** papszSkip,
                 const int bStrict )
@@ -421,7 +424,7 @@ static CPLErr Resolve( CPLXMLNode * psNode,
             }
 
             //look for the resource with that URL
-            psResource = FindTreeByURL( papsRoot,
+            psResource = FindTreeByURL( ppapsRoot,
                                         ppapszResourceHREF,
                                         papszTokens[0] );
             if( bStrict && psResource == NULL )
@@ -477,7 +480,7 @@ static CPLErr Resolve( CPLXMLNode * psNode,
 
         //Recurse with the first child
         eReturn = Resolve( psSibling->psChild,
-                           papsRoot,
+                           ppapsRoot,
                            ppapszResourceHREF,
                            papszSkip,
                            bStrict );
@@ -525,7 +528,7 @@ int GMLReader::ResolveXlinks( const char *pszFile,
     papszResourceHREF = CSLAddString( papszResourceHREF, "" );
 
 //call resolver
-    Resolve( papsSrcTree[0], papsSrcTree, &papszResourceHREF, papszSkip, bStrict );
+    Resolve( papsSrcTree[0], &papsSrcTree, &papszResourceHREF, papszSkip, bStrict );
 
     char *pszTmpName = NULL;
     int bReturn = TRUE;
