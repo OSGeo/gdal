@@ -113,6 +113,7 @@ CPLMutexHolder::~CPLMutexHolder()
 /*                      CPLCreateOrAcquireMutex()                       */
 /************************************************************************/
 
+#ifndef CPL_MULTIPROC_PTHREAD
 int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
 
 {
@@ -129,6 +130,11 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
     if( hCOAMutex == NULL )
     {
         hCOAMutex = CPLCreateMutex();
+        if (hCOAMutex == NULL)
+        {
+            *phMutex = NULL;
+            return FALSE;
+        }
     }
     else
     {
@@ -138,8 +144,8 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
     if( *phMutex == NULL )
     {
         *phMutex = CPLCreateMutex();
+        bSuccess = *phMutex != NULL;
         CPLReleaseMutex( hCOAMutex );
-        bSuccess = TRUE;
     }
     else
     {
@@ -151,6 +157,7 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
 
     return bSuccess;
 }
+#endif
 
 /************************************************************************/
 /*                        CPLCleanupTLSList()                           */
@@ -713,6 +720,32 @@ void CPLCleanupTLS()
   /* ==================================================================== */
   /************************************************************************/
 
+/************************************************************************/
+/*                      CPLCreateOrAcquireMutex()                       */
+/************************************************************************/
+
+int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
+
+{
+    int bSuccess = FALSE;
+    static pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_mutex_lock(&global_mutex);
+    if( *phMutex == NULL )
+    {
+        *phMutex = CPLCreateMutex();
+        bSuccess = *phMutex != NULL;
+        pthread_mutex_unlock(&global_mutex);
+    }
+    else
+    {
+        pthread_mutex_unlock(&global_mutex);
+
+        bSuccess = CPLAcquireMutex( *phMutex, dfWaitInSeconds );
+    }
+
+    return bSuccess;
+}
 
 /************************************************************************/
 /*                        CPLGetThreadingModel()                        */
@@ -734,6 +767,8 @@ void *CPLCreateMutex()
     pthread_mutex_t *hMutex;
 
     hMutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+    if (hMutex == NULL)
+        return NULL;
 
 #if defined(PTHREAD_MUTEX_RECURSIVE) || defined(HAVE_PTHREAD_MUTEX_RECURSIVE)
     {
@@ -779,9 +814,9 @@ int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
     if( err != 0 )
     {
         if( err == EDEADLK )
-            CPLDebug( "CPLAcquireMutex", "Error = %d/EDEADLK", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d/EDEADLK", err );
         else
-            CPLDebug( "CPLAcquireMutex", "Error = %d", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d", err );
 
         return FALSE;
     }
