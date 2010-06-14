@@ -427,6 +427,10 @@ in the gravity/magnetics field.  GDAL supports reading (but not writing)
 GXF-3 files, including support for georeferencing information, and projections.
 </p>
 
+<p>By default, the datatype returned for GXF datasets by GDAL is Float32.
+From GDAL 1.8.0, you can specify the datatype by setting the GXF_DATATYPE
+configuration option (Float64 supported currently)</p>
+
 <p>Details on the supporting code, and format can be found on the
 <a href="http://home.gdal.org/projects/gxf/index.html">GXF-3</a> page.</p>
 
