@@ -878,6 +878,7 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to reconstitute RPC transformer." );
+        CSLDestroy( papszMD );
         return NULL;
     }
 
@@ -898,8 +899,10 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
                                     CPLGetXMLValue(psTree,"HeightOffset","0"));
     papszOptions = CSLSetNameValue( papszOptions, "RPC_HEIGHT_SCALE",
                                     CPLGetXMLValue(psTree,"HeightScale","1"));
-    papszOptions = CSLSetNameValue( papszOptions, "RPC_DEM",
-                                    CPLGetXMLValue(psTree,"DEMPath",""));
+    const char* pszDEMPath = CPLGetXMLValue(psTree,"DEMPath",NULL);
+    if (pszDEMPath != NULL)
+        papszOptions = CSLSetNameValue( papszOptions, "RPC_DEM",
+                                        pszDEMPath);
 
 /* -------------------------------------------------------------------- */
 /*      Generate transformation.                                        */
