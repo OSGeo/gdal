@@ -514,9 +514,11 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->bNoDataSet = TRUE;
         poDS->dfNoDataValue = atof(pszNoData);
-        if( strchr( pszNoData, '.' ) != NULL )
+        if( strchr( pszNoData, '.' ) != NULL ||
+            INT_MIN > poDS->dfNoDataValue || poDS->dfNoDataValue > INT_MAX )
         {
             eDataType = GDT_Float32;
+            poDS->dfNoDataValue = (double) (float) poDS->dfNoDataValue;
         }
     }
     
@@ -573,13 +575,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CPLAssert( NULL != poDS->fp );
 
-    /* Use bigger data type. */
-    if( poDS->bNoDataSet
-        && ( INT_MIN > poDS->dfNoDataValue || poDS->dfNoDataValue > INT_MAX) )
-    {
-        eDataType = GDT_Float32; 
-    }
-    else
+    if( eDataType != GDT_Float32)
     {
         /* Allocate 100K chunk + 1 extra byte for NULL character. */
         const size_t nChunkSize = 1024 * 100;
