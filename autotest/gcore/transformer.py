@@ -36,6 +36,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import gdal
 import gdalconst
+import osr
 
 ###############################################################################
 # Test simple Geotransform based transformer.
@@ -225,6 +226,61 @@ def transformer_5():
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.(2)' )
         return 'fail'
+
+    # Test RPC_HEIGHT option
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT=30' ] )
+
+    (success,pnt) = tr.TransformPoint( 0, 20, 10 )
+
+    if not success \
+       or abs(pnt[0]-125.64828521533849) > 0.000001 \
+       or abs(pnt[1]-39.869345204440144) > 0.000001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong forward transform result.(3)' )
+        return 'fail'
+
+    (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
+
+    if not success \
+       or abs(pnt[0]-20) > 0.001 \
+       or abs(pnt[1]-10) > 0.001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong reverse transform result.(3)' )
+        return 'fail'
+
+    # Test RPC_DEM and RPC_HEIGHT_SCALE options
+
+    # (long,lat)=(125.64828521533849 39.869345204440144) -> (Easting,Northing)=(213324.662167036 4418634.47813677) in EPSG:32652
+    ds_dem = gdal.GetDriverByName('GTiff').Create('/vsimem/dem.tif', 100, 100, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32652)
+    ds_dem.SetProjection(sr.ExportToWkt())
+    ds_dem.SetGeoTransform([213300,1,0,4418700,0,-1])
+    ds_dem.GetRasterBand(1).Fill(15)
+    ds_dem = None
+
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif' ] )
+
+    (success,pnt) = tr.TransformPoint( 0, 20, 10, 0 )
+
+    if not success \
+       or abs(pnt[0]-125.64828521533849) > 0.000001 \
+       or abs(pnt[1]-39.869345204440144) > 0.000001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong forward transform result.(4)' )
+        return 'fail'
+
+    (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
+
+    if not success \
+       or abs(pnt[0]-20) > 0.001 \
+       or abs(pnt[1]-10) > 0.001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong reverse transform result.(4)' )
+        return 'fail'
+
+    tr = None
+    gdal.Unlink('/vsimem/dem.tif')
 
     return 'success' 
 
