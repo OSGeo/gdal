@@ -326,10 +326,13 @@ typedef struct {
  * an average height above sea level for ground in the target scene. 
  *
  * <li> RPC_HEIGHT_SCALE: a factor used to multiply heights above ground.
- * Usefull when elevation offsets are not expressed in meters. (GDAL >= 1.8.0)
+ * Usefull when elevation offsets of the DEM are not expressed in meters. (GDAL >= 1.8.0)
  *
  * <li> RPC_DEM: the name of a GDAL dataset (a DEM file typically) used to
- * extract elevation offsets from. (GDAL >= 1.8.0)
+ * extract elevation offsets from. In this situation the Z passed into the
+ * transformation function is assumed to be height above ground. This option
+ * should be used in replacement of RPC_HEIGHT to provide a way of defining
+ * a non uniform ground for the target scene (GDAL >= 1.8.0)
  * </ul>
  *
  * @param psRPCInfo Definition of the RPC parameters.
