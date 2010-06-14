@@ -341,6 +341,7 @@ void GXFClose( GXFHandle hGXF )
     CSLDestroy( psGXF->papszMapDatumTransform );
     CSLDestroy( psGXF->papszMapProjection );
     CPLFree( psGXF->pszTitle );
+    CPLFree( psGXF->pszTransformName );
 
     VSIFClose( psGXF->fp );
 
