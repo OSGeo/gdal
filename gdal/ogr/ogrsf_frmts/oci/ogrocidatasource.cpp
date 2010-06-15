@@ -396,7 +396,7 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
     oCommand.Execute( szCommand );
 
     sprintf( szCommand, 
-             "DELETE FROM USER_SDO_GEOM_METADATA WHERE TABLE_NAME = '%s'", 
+             "DELETE FROM USER_SDO_GEOM_METADATA WHERE TABLE_NAME = UPPER('%s')",
              pszLayerName );
     oCommand.Execute( szCommand );
 

@@ -907,7 +907,7 @@ int OGROCILayer::LookupTableSRID()
     OGROCIStringBuf oCommand;
 
     oCommand.Appendf( 1000, "SELECT SRID FROM ALL_SDO_GEOM_METADATA "
-                      "WHERE TABLE_NAME = '%s' AND COLUMN_NAME = '%s'", 
+                      "WHERE TABLE_NAME = UPPER('%s') AND COLUMN_NAME = UPPER('%s')",
                       pszTableName, pszGeomName );
     
     if( pszOwner != NULL )
