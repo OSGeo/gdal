@@ -668,7 +668,7 @@ void OGROCILoaderLayer::FinalizeNewLayer()
     sDimUpdate.Append( ")" );
 
     sDimUpdate.Appendf( strlen(poFeatureDefn->GetName()) + 100,
-                        " WHERE table_name = '%s'", 
+                        " WHERE table_name = UPPER('%s')",
                         poFeatureDefn->GetName() );
 
 /* -------------------------------------------------------------------- */
