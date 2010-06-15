@@ -1165,12 +1165,12 @@ OGRErr OGROCITableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
                           pszTableName );
     }
 
-    oCommand.Appendf( 500, "WHERE m.TABLE_NAME = '%s' AND m.COLUMN_NAME='%s'",
+    oCommand.Appendf( 500, "WHERE m.TABLE_NAME = UPPER('%s') AND m.COLUMN_NAME = UPPER('%s')",
                       pszTableName, pszGeomName );
 
     if( pszOwner != NULL )
     {
-        oCommand.Appendf( 500, " AND OWNER = '%s'", pszOwner );
+        oCommand.Appendf( 500, " AND OWNER = UPPER('%s')", pszOwner );
         CPLFree( pszOwner );
     }
 
