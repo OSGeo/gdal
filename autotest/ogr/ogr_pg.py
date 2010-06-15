@@ -1552,12 +1552,23 @@ def ogr_pg_36():
         return 'skip'
 
     if gdaltest.pg_has_postgis:
-        gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'table36_base', geom_type = ogr.wkbPoint )
+        lyr = gdaltest.pg_ds.CreateLayer( 'table36_base', geom_type = ogr.wkbPoint )
     else:
-        gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'table36_base' )
+        lyr = gdaltest.pg_ds.CreateLayer( 'table36_base' )
 
     gdaltest.pg_ds.ExecuteSQL('CREATE TABLE table36_inherited ( col1 CHAR(1) ) INHERITS ( table36_base )')
     gdaltest.pg_ds.ExecuteSQL('CREATE TABLE table36_inherited2 ( col2 CHAR(1) ) INHERITS ( table36_inherited )')
+
+    # Test fix for #3636 when 2 inherited tables with same name exist in 2 different schemas
+    if gdaltest.pg_has_postgis:
+        #lyr = gdaltest.pg_ds.CreateLayer( 'table36_base', geom_type = ogr.wkbLineString, options = ['SCHEMA=AutoTest-schema'] )
+        lyr = gdaltest.pg_ds.CreateLayer( 'AutoTest-schema.table36_base', geom_type = ogr.wkbLineString )
+    else:
+        lyr = gdaltest.pg_ds.CreateLayer( 'table36_base', options = ['SCHEMA=AutoTest-schema'] )
+
+    gdaltest.pg_ds.ExecuteSQL('CREATE TABLE "AutoTest-schema"."table36_inherited" ( col3 CHAR(1) ) INHERITS ( "AutoTest-schema".table36_base )')
+    gdaltest.pg_ds.ExecuteSQL('CREATE TABLE "AutoTest-schema"."table36_inherited2" ( col4 CHAR(1) ) INHERITS ( "AutoTest-schema".table36_inherited )')
+
 
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
 
@@ -1575,7 +1586,16 @@ def ogr_pg_36():
     if lyr is None:
         return 'fail'
     if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+        gdaltest.post_reason( 'wrong geometry type for layer table36_inherited2' )
         return 'fail'
+
+    lyr = ds.GetLayerByName( 'AutoTest-schema.table36_inherited2' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbLineString:
+        gdaltest.post_reason( 'wrong geometry type for layer AutoTest-schema.table36_inherited2' )
+        return 'fail'
+
     ds.Destroy()
 
     return 'success'
@@ -2385,6 +2405,8 @@ def ogr_pg_table_cleanup():
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.test41' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.table36_base' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.table36_inherited' )
     # Drop 'AutoTest-schema' (here, double qoutes are required)
     gdaltest.pg_ds.ExecuteSQL( 'DROP SCHEMA \"AutoTest-schema\" CASCADE')
     gdal.PopErrorHandler()
