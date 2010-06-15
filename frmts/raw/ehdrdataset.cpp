@@ -857,32 +857,32 @@ CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
     CPLString osName = CPLGetBasename( pszFilename );
     CPLString osREPFilename =
         CPLFormCIFilename( osPath, osName, "rep" );
-    if( VSIStatL( (const char*)osREPFilename, &sStatBuf ) == 0 )
+    if( VSIStatL( osREPFilename.c_str(), &sStatBuf ) == 0 )
         return osREPFilename;
 
     if (EQUAL(CPLGetFilename(pszFilename), "imspatio.bil") ||
         EQUAL(CPLGetFilename(pszFilename), "haspatio.bil"))
     {
-        CPLString pszImageRepFilename(CPLFormCIFilename( osPath, "image", "rep" ));
-        if( VSIStatL( (const char*)pszImageRepFilename, &sStatBuf ) == 0 )
-            return pszImageRepFilename;
+        CPLString osImageRepFilename(CPLFormCIFilename( osPath, "image", "rep" ));
+        if( VSIStatL( osImageRepFilename.c_str(), &sStatBuf ) == 0 )
+            return osImageRepFilename;
 
         /* Try in the upper directories if not found in the BIL image directory */
         CPLString dirName(CPLGetDirname(osPath));
-        if (CPLIsFilenameRelative((const char*)osPath))
+        if (CPLIsFilenameRelative(osPath.c_str()))
         {
             char* cwd = CPLGetCurrentDir();
             if (cwd)
             {
-                dirName = CPLFormFilename(cwd, (const char*)dirName, NULL);
+                dirName = CPLFormFilename(cwd, dirName.c_str(), NULL);
                 CPLFree(cwd);
             }
         }
         while (dirName[0] != 0 && EQUAL(dirName, ".") == FALSE && EQUAL(dirName, "/") == FALSE)
         {
-            pszImageRepFilename = CPLFormCIFilename( (const char*)dirName, "image", "rep" );
-            if( VSIStatL( (const char*)pszImageRepFilename, &sStatBuf ) == 0 )
-                return pszImageRepFilename;
+            osImageRepFilename = CPLFormCIFilename( dirName.c_str(), "image", "rep" );
+            if( VSIStatL( osImageRepFilename.c_str(), &sStatBuf ) == 0 )
+                return osImageRepFilename;
 
             /* Don't try to recurse above the 'image' subdirectory */
             if (EQUAL(dirName, "image"))
@@ -892,7 +892,7 @@ CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
             dirName = CPLString(CPLGetDirname(dirName));
         }
     }
-    return "";
+    return CPLString();
 }
 
 /************************************************************************/
@@ -930,8 +930,8 @@ char **EHdrDataset::GetFileList()
         papszFileList = CSLAddString( papszFileList, osFilename );
     
     CPLString imageRepFilename = GetImageRepFilename( GetDescription() );
-    if (imageRepFilename[0])
-        papszFileList = CSLAddString( papszFileList, (const char*)imageRepFilename );
+    if (!imageRepFilename.empty())
+        papszFileList = CSLAddString( papszFileList, imageRepFilename.c_str() );
     
     return papszFileList;
 }
@@ -1381,10 +1381,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*  For the specification of SPDF (in French),                          */
 /*   see http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download */
 /* -------------------------------------------------------------------- */
-        CPLString pszImageRepFilename = GetImageRepFilename(poOpenInfo->pszFilename );
-        if (pszImageRepFilename[0])
+        CPLString szImageRepFilename = GetImageRepFilename(poOpenInfo->pszFilename );
+        if (!szImageRepFilename.empty())
         {
-            fp = VSIFOpenL( (const char*)pszImageRepFilename, "r" );
+            fp = VSIFOpenL( szImageRepFilename.c_str(), "r" );
         }
         if (fp != NULL)
         {
