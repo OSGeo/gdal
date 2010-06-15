@@ -132,7 +132,13 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition(PGresult *hInitialResultI
         
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
+            if (bHasFid)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "More than one ogc_fid column was found in the result of the SQL request. Only last one will be used");
+            }
             bHasFid = TRUE;
+            CPLFree(pszFIDColumn);
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
             continue;
         }
