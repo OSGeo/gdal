@@ -510,10 +510,20 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( CPLString& osCurrentSchema
         else
         {
             /* Fetch the name of the parent table */
-            osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
-                             "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
-                             "(SELECT pg_class.oid FROM pg_class WHERE relname = '%s'))",
-                             (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn );
+            if (pszSchemaName)
+            {
+                osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
+                                "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
+                                "(SELECT c.oid FROM pg_class c, pg_namespace n WHERE c.relname = '%s' AND c.relnamespace=n.oid AND n.nspname = '%s'))",
+                                (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn, pszSchemaName );
+            }
+            else
+            {
+                osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
+                                "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
+                                "(SELECT pg_class.oid FROM pg_class WHERE relname = '%s'))",
+                                (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn );
+            }
 
             OGRPGClearResult( hResult );
             hResult = PQexec(hPGConn, osCommand.c_str() );
