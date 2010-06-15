@@ -1090,7 +1090,7 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
 /************************************************************************/
 
 OGRLayer *
-OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
+OGRPGDataSource::CreateLayer( const char * pszLayerName,
                               OGRSpatialReference *poSRS,
                               OGRwkbGeometryType eType,
                               char ** papszOptions )
@@ -1099,27 +1099,18 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     PGresult            *hResult = NULL;
     CPLString            osCommand;
     const char          *pszGeomType = NULL;
-    char                *pszLayerName = NULL;
-    const char          *pszTableName = NULL;
+    char                *pszTableName = NULL;
     char                *pszSchemaName = NULL;
     int                 nDimension = 3;
 
-    if (pszLayerNameIn == NULL)
+    if (pszLayerName == NULL)
         return NULL;
 
-    if (strncmp(pszLayerNameIn, "pg", 2) == 0)
+    if (strncmp(pszLayerName, "pg", 2) == 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "The layer name should not begin by 'pg' as it is a reserved prefix");
     }
-
-    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
-    {
-        pszLayerName = LaunderName( pszLayerNameIn );
-        
-    }
-    else
-        pszLayerName = CPLStrdup( pszLayerNameIn );
 
     if( wkbFlatten(eType) == eType )
         nDimension = 2;
@@ -1132,21 +1123,29 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
        Set layer name to "schema.table" or to "table" if schema == current_schema()
        Usage without schema name is backwards compatible
     */
-    pszTableName = strstr(pszLayerName,".");
-    if ( pszTableName != NULL )
+    const char* pszDotPos = strstr(pszLayerName,".");
+    if ( pszDotPos != NULL )
     {
-      int length = pszTableName - pszLayerName;
+      int length = pszDotPos - pszLayerName;
       pszSchemaName = (char*)CPLMalloc(length+1);
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
-      ++pszTableName; //skip "."
+      
+      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+          pszTableName = LaunderName( pszDotPos + 1 ); //skip "."
+      else
+          pszTableName = CPLStrdup( pszDotPos + 1 ); //skip "."
     }
     else
     {
       pszSchemaName = NULL;
-      pszTableName = pszLayerName;
+      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+          pszTableName = LaunderName( pszLayerName ); //skip "."
+      else
+          pszTableName = CPLStrdup( pszLayerName ); //skip "."
     }
 
+    
 /* -------------------------------------------------------------------- */
 /*      Set the default schema for the layers.                          */
 /* -------------------------------------------------------------------- */
@@ -1171,7 +1170,17 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+        CPLString osSQLLayerName;
+        if (pszSchemaName == NULL || (strlen(osCurrentSchema) > 0 && EQUAL(pszSchemaName, osCurrentSchema.c_str())))
+            osSQLLayerName = pszTableName;
+        else
+        {
+            osSQLLayerName = pszSchemaName;
+            osSQLLayerName += ".";
+            osSQLLayerName += pszTableName;
+        }
+
+        if( EQUAL(osSQLLayerName.c_str(),papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
@@ -1184,8 +1193,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
-                          pszLayerName );
-                CPLFree( pszLayerName );
+                          osSQLLayerName.c_str() );
+                CPLFree( pszTableName );
                 CPLFree( pszSchemaName );
                 return NULL;
             }
@@ -1210,7 +1219,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                   "GEOM_TYPE=geography is only supported in PostGIS >= 1.5.\n"
                   "Creation of layer %s has failed.",
                   pszLayerName );
-        CPLFree( pszLayerName );
+        CPLFree( pszTableName );
         CPLFree( pszSchemaName );
         return NULL;
     }
@@ -1229,7 +1238,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                       "Creation of layer %s with GEOM_TYPE %s has failed.",
                       pszLayerName, pszGeomType );
 
-        CPLFree( pszLayerName );
+        CPLFree( pszTableName );
         CPLFree( pszSchemaName );
         return NULL;
     }
@@ -1337,7 +1346,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s\n%s", osCommand.c_str(), PQerrorMessage(hPGConn) );
-        CPLFree( pszLayerName );
+        CPLFree( pszTableName );
         CPLFree( pszSchemaName );
 
         OGRPGClearResult( hResult );
@@ -1385,7 +1394,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                       "AddGeometryColumn failed for layer %s, layer creation has failed.",
                       pszLayerName );
 
-            CPLFree( pszLayerName );
+            CPLFree( pszTableName );
             CPLFree( pszSchemaName );
 
             OGRPGClearResult( hResult );
@@ -1424,7 +1433,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                         "'%s' failed for layer %s, index creation has failed.",
                         osCommand.c_str(), pszLayerName );
 
-                CPLFree( pszLayerName );
+                CPLFree( pszTableName );
                 CPLFree( pszSchemaName );
 
                 OGRPGClearResult( hResult );
@@ -1452,7 +1461,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     poLayer = new OGRPGTableLayer( this, osCurrentSchema, pszTableName, pszSchemaName, NULL, TRUE, FALSE, nSRSId);
     if( poLayer->GetLayerDefn() == NULL )
     {
-        CPLFree( pszLayerName );
+        CPLFree( pszTableName );
         CPLFree( pszSchemaName );
         delete poLayer;
         return NULL;
@@ -1469,7 +1478,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
     papoLayers[nLayers++] = poLayer;
 
-    CPLFree( pszLayerName );
+    CPLFree( pszTableName );
     CPLFree( pszSchemaName );
 
     return poLayer;
