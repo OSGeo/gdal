@@ -292,9 +292,9 @@ def test_gdal_contour_4():
 
     ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' -a elev -i 10 tmp/gdal_contour_orientation.tif tmp/contour_orientation.shp')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' -a elev -i 10 tmp/gdal_contour_orientation.tif tmp/contour_orientation1.shp')
 
-    ds = ogr.Open('tmp/contour_orientation.shp')
+    ds = ogr.Open('tmp/contour_orientation1.shp')
 
     expected_contours = [ 'LINESTRING (1.621875 49.493749999999999,'+
                                       '1.628125 49.493749999999999,'+
@@ -316,10 +316,61 @@ def test_gdal_contour_4():
                                       '1.371875 49.493749999999999)' ]
     expected_elev = [ 10, 20 ]
 
-    lyr = ds.ExecuteSQL("select * from contour_orientation order by elev asc")
+    lyr = ds.ExecuteSQL("select * from contour_orientation1 order by elev asc")
 
     if lyr.GetFeatureCount() != len(expected_contours):
-        print('Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_envelopes)))
+        print('Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_contours)))
+        return 'fail'
+
+    i = 0
+    test_failed = False
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        expected_geom = ogr.CreateGeometryFromWkt(expected_contours[i])
+        if feat.GetField('elev') != expected_elev[i]:
+            print('Got %f. Expected %f' % (feat.GetField('elev'), expected_elev[i]))
+            return 'fail'
+        if ogrtest.check_feature_geometry(feat, expected_geom) != 0:
+            print('Got      %s.\nExpected %s' % (feat.GetGeometryRef().ExportToWkt(),expected_contours[i]))
+            test_failed = True
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+    ds.ReleaseResultSet(lyr)
+    ds.Destroy()
+
+    if test_failed:
+        return 'fail'
+    else:
+        return 'success'
+
+###############################################################################
+# Test contour orientation
+
+def test_gdal_contour_5():
+    if test_cli_utilities.get_gdal_contour_path() is None:
+        return 'skip'
+
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' -a elev -i 10 data/contour_orientation.tif tmp/contour_orientation2.shp')
+
+    ds = ogr.Open('tmp/contour_orientation2.shp')
+
+    expected_contours = [ 'LINESTRING (0 2,'+
+                                      '0.5 2.0,'+
+                                      '1.5 2.0,'+
+                                      '1.954542932445554 2.5,'+
+                                      '2.124997615823304 3.5,'+
+                                      '1.5 3.954546085074803,'+
+                                      '0.5 4.066665649414062,'+
+                                      '0.0 4.066665649414062)' ]
+    expected_elev = [ 140 ]
+
+    lyr = ds.ExecuteSQL("select * from contour_orientation2 order by elev asc")
+
+    if lyr.GetFeatureCount() != len(expected_contours):
+        print('Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_contours)))
         return 'fail'
 
     i = 0
@@ -352,7 +403,8 @@ def test_gdal_contour_cleanup():
         return 'skip'
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour.shp')
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour_orientation.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour_orientation1.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour_orientation2.shp')
     try:
         os.remove('tmp/gdal_contour.tif')
         os.remove('tmp/gdal_contour_orientation.tif')
@@ -367,6 +419,7 @@ gdaltest_list = [
     test_gdal_contour_2,
     test_gdal_contour_3,
     test_gdal_contour_4,
+    test_gdal_contour_5,
     test_gdal_contour_cleanup
     ]
 
@@ -378,8 +431,5 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
-
-
 
 
