@@ -557,42 +557,72 @@ CPLErr GDALContourGenerator::ProcessRect(
 
         if( nPoints >= 2 )
         {
-            if( 
-                ( ( (nPoints1 == 1 && nPoints2 == 2)||
-                    (nPoints1 == 1 && nPoints3 == 2)|| 
-                    (nPoints1 == 1 && nPoints  == 2)  ) &&
-                                           dfUpLeft > dfLoLeft )
-                ||
-                ( ( (nPoints2 == 1 && nPoints3 == 2)||
-                    (nPoints2 == 1 && nPoints  == 2)  ) &&
-                                         dfLoLeft > dfLoRight )
-                ||
-                ( ( (nPoints3 == 1 && nPoints  == 2)  ) &&
-                                         dfLoRight > dfUpRight )
-              )
+            if ( nPoints1 == 1 && nPoints2 == 2) // left + bottom
+            {
                 eErr = AddSegment( dfLevel,
                                    adfX[0], adfY[0], adfX[1], adfY[1],
-                                   TRUE );
+                                   dfUpRight > dfLoLeft );
+            }
+            else if ( nPoints1 == 1 && nPoints3 == 2 ) // left + right 
+            {
+                eErr = AddSegment( dfLevel,
+                                   adfX[0], adfY[0], adfX[1], adfY[1],
+                                   dfUpLeft > dfLoRight );
+            }
+            else if ( nPoints1 == 1 && nPoints == 2 ) // left + top 
+            { // Do not do vertical contours on the left, due to symmetry
+              if ( !(dfUpLeft == dfLevel && dfLoLeft == dfLevel) )
+                eErr = AddSegment( dfLevel,
+                                   adfX[0], adfY[0], adfX[1], adfY[1],
+                                   dfUpLeft > dfLoRight );
+            }
+            else if(  nPoints2 == 1 && nPoints3 == 2) // bottom + right
+            {
+                eErr = AddSegment( dfLevel,
+                                   adfX[0], adfY[0], adfX[1], adfY[1],
+                                   dfUpLeft > dfLoRight );
+            }
+            else if ( nPoints2 == 1 && nPoints == 2 ) // bottom + top
+            {
+                eErr = AddSegment( dfLevel,
+                                   adfX[0], adfY[0], adfX[1], adfY[1],
+                                   dfLoLeft > dfUpRight );
+            }
+            else if ( nPoints3 == 1 && nPoints == 2 ) // right + top
+            { // Do not do horizontal contours on upside, due to symmetry
+              if ( !(dfUpRight == dfLevel && dfUpLeft == dfLevel) )
+                eErr = AddSegment( dfLevel,
+                                   adfX[0], adfY[0], adfX[1], adfY[1],
+                                   dfLoLeft > dfUpRight );
+            }
             else
-                eErr = AddSegment( dfLevel,
-                                   adfX[0], adfY[0], adfX[1], adfY[1],
-                                   FALSE );
-
+            {
+                // If we get here it is a serious error!
+                CPLDebug( "CONTOUR", "Contour state not implemented!");
+            }
+ 
             if( eErr != CE_None )
-                return eErr;
+                 return eErr;
         }
 
         if( nPoints == 4 )
         {
-            /* If we get here, we know the first was left+bottom, so we are at
-            ** right+top, therefore "left is high" if loRight is larger than
-            ** up right...
-            */
+          // Do not do horizontal contours on upside, due to symmetry
+          if ( !(dfUpRight == dfLevel && dfUpLeft == dfLevel) )
+          {
+/* -------------------------------------------------------------------- */
+/*          If we get here, we know the first was left+bottom,          */
+/*          so we are at right+top, therefore "left is high"            */
+/*          if low-left is larger than up-right.                        */
+/*          We do not do a diagonal check here as we are dealing with   */
+/*          a saddle point.                                             */
+/* -------------------------------------------------------------------- */
             eErr = AddSegment( dfLevel,
                                adfX[2], adfY[2], adfX[3], adfY[3],
                                ( dfLoRight > dfUpRight) );
             if( eErr != CE_None )
                 return eErr;
+          }
         }
     }
 
