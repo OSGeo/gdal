@@ -232,6 +232,13 @@ class GTiffDataset : public GDALPamDataset
 
     int           bClipWarn;
 
+    CPLString     osRPBFile;
+    int           FindRPBFile(char** papszSiblingFiles);
+    CPLString     osRPCFile;
+    int           FindRPCFile(char** papszSiblingFiles);
+    CPLString     osIMDFile;
+    int           FindIMDFile(char** papszSiblingFiles);
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -253,7 +260,8 @@ class GTiffDataset : public GDALPamDataset
 
     CPLErr	   OpenOffset( TIFF *, GTiffDataset **ppoActiveDSRef, 
                                toff_t nDirOffset, int bBaseIn, GDALAccess, 
-                               int bAllowRGBAInterface = TRUE, int bReadGeoTransform = FALSE);
+                               int bAllowRGBAInterface = TRUE, int bReadGeoTransform = FALSE,
+                               char** papszSiblingFiles = NULL);
 
     static GDALDataset *OpenDir( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -4511,7 +4519,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->OpenOffset( hTIFF, &(poDS->poActiveDS),
                           TIFFCurrentDirOffset(hTIFF), TRUE,
                           poOpenInfo->eAccess, 
-                          bAllowRGBAInterface, TRUE ) != CE_None )
+                          bAllowRGBAInterface, TRUE,
+                          poOpenInfo->papszSiblingFiles) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -4805,7 +4814,8 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 
     if( poDS->OpenOffset( hTIFF, &(poDS->poActiveDS),
                           nOffset, FALSE, GA_ReadOnly,
-                          bAllowRGBAInterface, TRUE ) != CE_None )
+                          bAllowRGBAInterface, TRUE,
+                          poOpenInfo->papszSiblingFiles ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -4830,7 +4840,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                                  toff_t nDirOffsetIn, 
 				 int bBaseIn, GDALAccess eAccess,
                                  int bAllowRGBAInterface,
-                                 int bReadGeoTransform)
+                                 int bReadGeoTransform,
+                                 char** papszSiblingFiles )
 
 {
     uint32	nXSize, nYSize;
@@ -5462,12 +5473,18 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     bMetadataChanged = FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Check for RPC metadata in an RPB file.                          */
+/*      Check for RPC metadata in an RPB or _rpc.txt file.              */
 /* -------------------------------------------------------------------- */
     if( bBaseIn )
     {
-        char **papszRPCMD = GDALLoadRPBFile( osFilename, NULL );
-        
+        char **papszRPCMD = NULL;
+        /* Read Digital Globe .RPB file */
+        if (FindRPBFile(papszSiblingFiles))
+            papszRPCMD = GDALLoadRPBFile( osRPBFile.c_str(), NULL );
+        /* Read GeoEye _rpc.txt file */
+        if(papszRPCMD == NULL && FindRPCFile(papszSiblingFiles))
+            papszRPCMD = GDALLoadRPCFile( osRPCFile.c_str(), NULL );
+
         if( papszRPCMD != NULL )
         {
             oGTiffMDMD.SetMetadata( papszRPCMD, "RPC" );
@@ -5481,9 +5498,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 /*      Check for RPC metadata in an RPB file.                          */
 /* -------------------------------------------------------------------- */
-    if( bBaseIn )
+    if( bBaseIn && FindIMDFile(papszSiblingFiles) )
     {
-        char **papszIMDMD = GDALLoadIMDFile( osFilename, NULL );
+        char **papszIMDMD = GDALLoadIMDFile( osIMDFile.c_str(), NULL );
 
         if( papszIMDMD != NULL )
         {
@@ -7343,6 +7360,130 @@ void *GTiffDataset::GetInternalHandle( const char * /* pszHandleName */ )
     return hTIFF;
 }
 
+
+/************************************************************************/
+/*                           FindRPBFile()                             */
+/************************************************************************/
+
+int GTiffDataset::FindRPBFile(char** papszSiblingFiles)
+{
+    CPLString osTarget = CPLResetExtension( osFilename, "RPB" );
+
+    if( papszSiblingFiles == NULL )
+    {
+        VSIStatBufL sStatBuf;
+
+        if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+        {
+            osTarget = CPLResetExtension( osFilename, "rpb" );
+
+            if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+                return FALSE;
+        }
+    }
+    else
+    {
+        int iSibling = CSLFindString( papszSiblingFiles, 
+                                      CPLGetFilename(osTarget) );
+        if( iSibling < 0 )
+            return FALSE;
+
+        osTarget.resize(osTarget.size() - strlen(papszSiblingFiles[iSibling]));
+        osTarget += papszSiblingFiles[iSibling];
+    }
+
+    osRPBFile = osTarget;
+    return TRUE;
+}
+
+
+/************************************************************************/
+/*                           FindRPCFile()                             */
+/************************************************************************/
+
+int GTiffDataset::FindRPCFile(char** papszSiblingFiles)
+{
+    CPLString osSrcPath = osFilename;
+    CPLString soPt(".");
+    size_t found = osSrcPath.rfind(soPt);
+    if (found == CPLString::npos)
+        return NULL;
+    osSrcPath.replace (found, osSrcPath.size() - found, "_rpc.txt");
+    CPLString osTarget = osSrcPath; 
+
+    if( papszSiblingFiles == NULL )
+    {
+        VSIStatBufL sStatBuf;
+
+        if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+        {
+            osSrcPath = osFilename;
+            osSrcPath.replace (found, osSrcPath.size() - found, "_RPC.TXT");
+            osTarget = osSrcPath; 
+
+            if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+            {
+                osSrcPath = osFilename;
+                osSrcPath.replace (found, osSrcPath.size() - found, "_rpc.TXT");
+                osTarget = osSrcPath; 
+
+                if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+                {
+                    return FALSE;
+                }
+            }
+        }
+    }
+    else
+    {
+        int iSibling = CSLFindString( papszSiblingFiles, 
+                                    CPLGetFilename(osTarget) );
+        if( iSibling < 0 )
+            return FALSE;
+
+        osTarget.resize(osTarget.size() - strlen(papszSiblingFiles[iSibling]));
+        osTarget += papszSiblingFiles[iSibling];
+    }
+
+    osRPCFile = osTarget;
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           FindIMDFile()                             */
+/************************************************************************/
+
+int GTiffDataset::FindIMDFile(char** papszSiblingFiles)
+{
+    CPLString osTarget = CPLResetExtension( osFilename, "IMD" );
+
+    if( papszSiblingFiles == NULL )
+    {
+        VSIStatBufL sStatBuf;
+
+        if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+        {
+            osTarget = CPLResetExtension( osFilename, "imd" );
+
+            if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+                return FALSE;
+        }
+    }
+    else
+    {
+        int iSibling = CSLFindString( papszSiblingFiles, 
+                                      CPLGetFilename(osTarget) );
+        if( iSibling < 0 )
+            return FALSE;
+
+        osTarget.resize(osTarget.size() - strlen(papszSiblingFiles[iSibling]));
+        osTarget += papszSiblingFiles[iSibling];
+    }
+
+    osIMDFile = osTarget;
+    return TRUE;
+}
+
 /************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
@@ -7351,33 +7492,13 @@ char **GTiffDataset::GetFileList()
 
 {
     char **papszFileList = GDALPamDataset::GetFileList();
-    VSIStatBufL sStatBuf;
 
-/* -------------------------------------------------------------------- */
-/*      Check for .imd file.                                            */
-/* -------------------------------------------------------------------- */
-    CPLString osTarget = CPLResetExtension( osFilename, "IMD" );
-    if( VSIStatL( osTarget, &sStatBuf ) == 0 )
-        papszFileList = CSLAddString( papszFileList, osTarget );
-    else
-    {
-        osTarget = CPLResetExtension( osFilename, "imd" );
-        if( VSIStatL( osTarget, &sStatBuf ) == 0 )
-            papszFileList = CSLAddString( papszFileList, osTarget );
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Check for .rpb file.                                            */
-/* -------------------------------------------------------------------- */
-    osTarget = CPLResetExtension( osFilename, "RPB" );
-    if( VSIStatL( osTarget, &sStatBuf ) == 0 )
-        papszFileList = CSLAddString( papszFileList, osTarget );
-    else
-    {
-        osTarget = CPLResetExtension( osFilename, "rpb" );
-        if( VSIStatL( osTarget, &sStatBuf ) == 0 )
-            papszFileList = CSLAddString( papszFileList, osTarget );
-    }
+    if (osIMDFile.size() != 0)
+        papszFileList = CSLAddString( papszFileList, osIMDFile );
+    if (osRPBFile.size() != 0)
+        papszFileList = CSLAddString( papszFileList, osRPBFile );
+    if (osRPCFile.size() != 0)
+        papszFileList = CSLAddString( papszFileList, osRPCFile );
 
     return papszFileList;
 }

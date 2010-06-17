@@ -48,7 +48,9 @@ points used, Coordsys ignored).</p>
 RPCs in GeoTIFF</a> proposed extension. The tag is written only for
 files created with the default profile GDALGeoTIFF. For other profiles, a .RPB file
 is created. In GDAL data model, the RPC coefficients are stored into the RPC metadata domain.
-For more details, see the <a href="http://trac.osgeo.org/gdal/wiki/rfc22_rpc">RPC Georeferencing RFC</a>.</p>
+For more details, see the <a href="http://trac.osgeo.org/gdal/wiki/rfc22_rpc">RPC Georeferencing RFC</a>.
+If .RPB or _RPC.TXT files are found, they will be used to read the RPCs, even if the <i>RPCCoefficientTag</i> tag is set.
+</p>
 
 <h2>Internal nodata masks</h2>
 
