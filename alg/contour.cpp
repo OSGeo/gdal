@@ -528,7 +528,7 @@ CPLErr GDALContourGenerator::ProcessRect(
 
         int  nPoints = 0; 
         double adfX[4], adfY[4];
-        CPLErr eErr;
+        CPLErr eErr = CE_None;
 
         /* Logs how many points we have af left + bottom,
         ** and left + bottom + right.
