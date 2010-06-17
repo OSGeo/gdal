@@ -63,8 +63,11 @@ char **CPL_STDCALL GDALLoadRPBFile( const char *pszFilename,
 /*      Try to identify the RPB file in upper or lower case.            */
 /* -------------------------------------------------------------------- */
     CPLString osTarget = CPLResetExtension( pszFilename, "RPB" );
-    
-    if( papszSiblingFiles == NULL )
+
+    /* Is this already a RPB file ? */
+    if (EQUAL(CPLGetExtension(pszFilename), "RPB"))
+        osTarget = pszFilename;
+    else if( papszSiblingFiles == NULL )
     {
         VSIStatBufL sStatBuf;
         
@@ -154,6 +157,129 @@ char **CPL_STDCALL GDALLoadRPBFile( const char *pszFilename,
         papszMD = CSLSetNameValue( papszMD, apszRPBMap[i], osAdjVal );
     }
 
+    return papszMD;
+}
+
+/************************************************************************/
+/*                          GDALLoadRPCFile()                           */
+/************************************************************************/
+
+/* Load a GeoEye _rpc.txt file. See ticket http://trac.osgeo.org/gdal/ticket/3639 */
+
+char **CPL_STDCALL GDALLoadRPCFile( const char *pszFilename,
+                                    char **papszSiblingFiles )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Try to identify the RPC file in upper or lower case.            */
+/* -------------------------------------------------------------------- */
+    CPLString osTarget; 
+
+    /* Is this already a _RPC.TXT file ? */
+    if (strlen(pszFilename) > 8 && EQUAL(pszFilename + strlen(pszFilename) - 8, "_RPC.TXT"))
+        osTarget = pszFilename;
+    else
+    {
+        CPLString osSrcPath = pszFilename;
+        CPLString soPt(".");
+        size_t found = osSrcPath.rfind(soPt);
+        if (found == CPLString::npos)
+            return NULL;
+        osSrcPath.replace (found, osSrcPath.size() - found, "_rpc.txt");
+        CPLString osTarget = osSrcPath; 
+
+        if( papszSiblingFiles == NULL )
+        {
+            VSIStatBufL sStatBuf;
+
+            if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+            {
+                osSrcPath = pszFilename;
+                osSrcPath.replace (found, osSrcPath.size() - found, "_RPC.TXT");
+                osTarget = osSrcPath; 
+
+                if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+                {
+                    osSrcPath = pszFilename;
+                    osSrcPath.replace (found, osSrcPath.size() - found, "_rpc.TXT");
+                    osTarget = osSrcPath; 
+
+                    if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+                    {
+                        return NULL;
+                    }
+                }
+            }
+        }
+        else
+        {
+            int iSibling = CSLFindString( papszSiblingFiles, 
+                                        CPLGetFilename(osTarget) );
+            if( iSibling < 0 )
+                return NULL;
+
+            osTarget.resize(osTarget.size() - strlen(papszSiblingFiles[iSibling]));
+            osTarget += papszSiblingFiles[iSibling];
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read file and parse.                                            */
+/* -------------------------------------------------------------------- */
+    char **papszLines = CSLLoad2( osTarget, 100, 100, NULL );
+    if(!papszLines)
+        return NULL;
+
+    char **papszMD = NULL;
+
+    /* From LINE_OFF to HEIGHT_SCALE */
+    for(size_t i = 0; i < 19; i += 2 )
+    {
+        const char *pszRPBVal = CSLFetchNameValue(papszLines, apszRPBMap[i] );
+        if( pszRPBVal == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                "%s file found, but missing %s field (and possibly others).",
+                osTarget.c_str(), apszRPBMap[i]);
+            CSLDestroy( papszMD );
+            CSLDestroy( papszLines );
+            return NULL;
+        }
+        else
+        {
+            papszMD = CSLSetNameValue( papszMD, apszRPBMap[i], pszRPBVal );
+        }
+    }
+       
+    /* For LINE_NUM_COEFF, LINE_DEN_COEFF, SAMP_NUM_COEFF, SAMP_DEN_COEFF */
+    /* parameters that have 20 values each */
+    for(size_t i = 20; apszRPBMap[i] != NULL; i += 2 )
+    {
+        CPLString soVal;
+        for(int j = 1; j <= 20; j++)
+        {
+            CPLString soRPBMapItem;
+            soRPBMapItem.Printf("%s_%d", apszRPBMap[i], j);
+            const char *pszRPBVal = CSLFetchNameValue(papszLines, soRPBMapItem.c_str() );
+            if( pszRPBVal == NULL )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s file found, but missing %s field (and possibly others).",
+                    osTarget.c_str(), soRPBMapItem.c_str() );
+                CSLDestroy( papszMD );
+                CSLDestroy( papszLines );
+                return NULL;
+            }
+            else
+            {
+                soVal += pszRPBVal;
+                soVal += " ";
+            }
+        }
+        papszMD = CSLSetNameValue( papszMD, apszRPBMap[i], soVal.c_str() );
+    }
+
+    CSLDestroy( papszLines );
     return papszMD;
 }
 
@@ -378,11 +504,14 @@ char ** CPL_STDCALL GDALLoadIMDFile( const char *pszFilename,
 
 {
 /* -------------------------------------------------------------------- */
-/*      Try to identify the RPB file in upper or lower case.            */
+/*      Try to identify the IMD file in upper or lower case.            */
 /* -------------------------------------------------------------------- */
     CPLString osTarget = CPLResetExtension( pszFilename, "IMD" );
-    
-    if( papszSiblingFiles == NULL )
+
+    /* Is this already a IMD file ? */
+    if (EQUAL(CPLGetExtension(pszFilename), "IMD"))
+        osTarget = pszFilename;
+    else if( papszSiblingFiles == NULL )
     {
         VSIStatBufL sStatBuf;
         

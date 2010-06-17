@@ -573,6 +573,8 @@ int CPL_DLL CPL_STDCALL GDALReadOziMapFile( const char * ,  double *,
                                             char **, int *, GDAL_GCP ** );
 char CPL_DLL ** CPL_STDCALL GDALLoadRPBFile( const char *pszFilename, 
                                              char **papszSiblingFiles );
+char CPL_DLL ** CPL_STDCALL GDALLoadRPCFile( const char *pszFilename, 
+                                             char **papszSiblingFiles );
 CPLErr CPL_DLL CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, 
                                              char **papszMD );
 char CPL_DLL ** CPL_STDCALL GDALLoadIMDFile( const char *pszFilename, 
