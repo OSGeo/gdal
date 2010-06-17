@@ -111,7 +111,7 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 
 #endif
 
-#ifndef CPL_INLINE
+#ifndef HAS_CPL_INLINE
 
 int CPLAtomicInc(volatile int* ptr)
 {

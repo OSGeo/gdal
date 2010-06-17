@@ -253,7 +253,8 @@ typedef unsigned long    GUIntBig;
 #endif
 
 /* TODO : support for other compilers needed */
-#if defined(__GNUC__) || defined(_MSC_VER)
+#if defined(__GNUC__) || defined(_MSC_VER) || defined(__SUNPRO_CC)
+#define HAS_CPL_INLINE  1
 #define CPL_INLINE __inline
 #else
 #define CPL_INLINE
