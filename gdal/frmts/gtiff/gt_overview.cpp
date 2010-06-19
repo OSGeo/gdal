@@ -40,6 +40,10 @@ CPL_CVSID("$Id$");
 
 #define TIFFTAG_GDAL_METADATA  42112
 
+#if !defined(PREDICTOR_NONE)
+#define PREDICTOR_NONE 1
+#endif
+
 CPL_C_START
 void    GTiffOneTimeInit();
 void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
