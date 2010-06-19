@@ -185,7 +185,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName, int bUpdateIn)
 
         if (pszGPSBabelDriverName == NULL)
         {
-            return NULL;
+            return FALSE;
         }
 
         pszFilename = CPLStrdup(pszDatasourceName);
