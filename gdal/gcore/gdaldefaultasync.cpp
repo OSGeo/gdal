@@ -266,7 +266,7 @@ GDALDefaultAsyncReader( GDALDataset* poDS,
         memcpy( this->panBandMap, panBandMap, sizeof(int)*nBandCount );
     else
     {
-        for( int i; i < nBandCount; i++ )
+        for( int i = 0; i < nBandCount; i++ )
             this->panBandMap[i] = i+1;
     }
     
