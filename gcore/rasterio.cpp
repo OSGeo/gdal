@@ -30,8 +30,14 @@
 
 #include "gdal_priv.h"
 
+// Define a list of "C++" compilers that have broken template support or
+// broken scoping so we can fall back on the legacy implementation of
+// GDALCopyWords
+#define NOT_BROKEN_COMPILER \
+	(!(defined(_MSC_VER) && _MSC_VER <= 1200) && !defined(__BORLANDC__) && \
+	!defined(__SUNPRO_CC))
 
-#if !(defined(_MSC_VER) && _MSC_VER <= 1200) && !(defined(__BORLANDC__))
+#if NOT_BROKEN_COMPILER
 #include <stdexcept>
 #include <limits>
 
