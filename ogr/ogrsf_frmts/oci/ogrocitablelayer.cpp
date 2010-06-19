@@ -275,15 +275,39 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 
     if( CSLCount(papszResult) < 1 )
     {
-        CPLDebug( "OCI", "get dim based of existing data failed." );
+        OGROCIStringBuf oDimCmd2;
+        OGROCIStatement oDimStatement2( poSession );
+        char **papszResult2;
+        
+        oDimCmd2.Appendf( 1024,
+            "select m.sdo_index_dims\n"
+            "from   all_sdo_index_metadata m, all_sdo_index_info i\n"
+            "where  i.index_name = m.sdo_index_name\n"
+            "   and i.sdo_index_owner = m.sdo_index_owner\n"
+            "   and i.table_name = upper('%s')",
+            pszTableName );
+
+        oDimStatement2.Execute( oDimCmd2.GetString() );
+
+        papszResult2 = oDimStatement2.SimpleFetchRow();
+        
+        if( CSLCount( papszResult2 ) > 0 )
+        {
+            iDim = atoi( papszResult2[0] );
+        }
     }
     else
     {
-        iDim = atoi(papszResult[0]);
-        if( iDim > 0 )
-        {
-            SetDimension( iDim );
-        }
+        iDim = atoi( papszResult[0] );
+    }
+    
+    if( iDim > 0 )
+    {
+        SetDimension( iDim );
+    }
+    else
+    {
+        CPLDebug( "OCI", "get dim based of existing data or index failed." );
     }
 
     bValidTable = TRUE;
