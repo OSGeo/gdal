@@ -56,7 +56,11 @@
 #define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the `strdup' function. */
+#ifdef _GNU_SOURCE
+#define HAVE_STRNDUP 1
+#else
 #undef HAVE_STRNDUP
+#endif
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H 1
