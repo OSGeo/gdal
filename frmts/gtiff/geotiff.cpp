@@ -57,8 +57,17 @@ CPL_C_END
 #define TIFFTAG_GDAL_NODATA    42113
 #define TIFFTAG_RPCCOEFFICIENT 50844
 
-#if TIFFLIB_VERSION >= 20081217 && defined(BIGTIFF_SUPPORT)
+#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20081217 && defined(BIGTIFF_SUPPORT)
 #  define HAVE_UNSETFIELD
+#endif
+
+#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION > 20041016
+/* We need at least TIFF 3.7.0 for TIFFGetSizeProc and TIFFClientdata */
+#  define HAVE_TIFFGETSIZEPROC
+#endif
+
+#if !defined(PREDICTOR_NONE)
+#define PREDICTOR_NONE 1
 #endif
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
@@ -3024,8 +3033,7 @@ void GTiffDataset::FlushDirectory()
         if( bNeedsRewrite )
         {
 #if defined(TIFFLIB_VERSION)
-/* We need at least TIFF 3.7.0 for TIFFGetSizeProc and TIFFClientdata */
-#if  TIFFLIB_VERSION > 20041016
+#if defined(HAVE_TIFFGETSIZEPROC)
             if (!SetDirectory())
                 return;
 
@@ -3054,19 +3062,22 @@ void GTiffDataset::FlushDirectory()
     // case we should not risk a flush. 
     if( TIFFCurrentDirOffset(hTIFF) == nDirOffset )
     {
+#if defined(HAVE_TIFFGETSIZEPROC)
         TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
 
         toff_t nNewDirOffset = pfnSizeProc( TIFFClientdata( hTIFF ) );
         if( (nNewDirOffset % 2) == 1 )
             nNewDirOffset++;
-
+#endif
         TIFFFlush( hTIFF );
+#if defined(HAVE_TIFFGETSIZEPROC)
         if( nDirOffset != TIFFCurrentDirOffset( hTIFF ) )
         {
             nDirOffset = nNewDirOffset;
             CPLDebug( "GTiff", 
                       "directory moved during flush in FlushDirectory()" );
         }
+#endif
     }
 }
 
@@ -7069,6 +7080,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
         
         /* Necessary to be able to read the file without re-opening */
+#if defined(HAVE_TIFFGETSIZEPROC)
         TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
 
         TIFFFlushData( hTIFF );
@@ -7076,13 +7088,17 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         toff_t nNewDirOffset = pfnSizeProc( TIFFClientdata( hTIFF ) );
         if( (nNewDirOffset % 2) == 1 )
             nNewDirOffset++;
+#endif
 
         TIFFFlush( hTIFF );
+
+#if defined(HAVE_TIFFGETSIZEPROC)
         if( poDS->nDirOffset != TIFFCurrentDirOffset( hTIFF ) )
         {
             poDS->nDirOffset = nNewDirOffset;
             CPLDebug( "GTiff", "directory moved during flush." );
         }
+#endif
     }
     else
     {
