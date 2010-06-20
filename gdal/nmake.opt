@@ -159,6 +159,22 @@ JPEG12_SUPPORTED = 1
 #GEOTIFF_INC =   -Ic:/warmerda/libgeotiff -Ic:/warmerda/libgeotiff/libxtiff
 #GEOTIFF_LIB =   C:/warmerda/libgeotiff/geotiff_i.lib
 
+# Uncomment out the following lines to enable LibKML support.
+#LIBKML_DIR = C:/Dev/libkml
+#LIBKML_INCLUDE = -I$(LIBKML_DIR)/src -I$(LIBKML_DIR)/third_party/boost_1_34_1
+#LIBKML_LIBRARY = $(LIBKML_DIR)/msvc/Release
+#LIBKML_LIBS =	$(LIBKML_LIBRARY)/libkmlbase.lib \
+#		$(LIBKML_LIBRARY)/libkmlconvenience.lib \
+#		$(LIBKML_LIBRARY)/libkmldom.lib \
+#		$(LIBKML_LIBRARY)/libkmlengine.lib \
+#		$(LIBKML_LIBRARY)/libkmlregionator.lib \
+#		$(LIBKML_LIBRARY)/libkmlxsd.lib \
+#		$(LIBKML_LIBRARY)/minizip_static.lib \
+#		$(LIBKML_DIR)/third_party\expat.win32/libexpat.lib \
+#		$(LIBKML_DIR)/third_party\uriparser-0.7.5.win32/debug/uriparser.lib \
+#		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/minizip.lib \
+#		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/zlib.lib
+							
 # Uncomment out the following to enable KML Super-Overlay support.
 #KMLSUPEROVERLAY_SUPPORTED = YES
 #MINIZIP_INCLUDE = -I$(OSSIM_HOME)\minizip\src
@@ -464,7 +480,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(DWG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) \
-	$(MRSID_LIDAR_LIB) 
+	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS)
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
