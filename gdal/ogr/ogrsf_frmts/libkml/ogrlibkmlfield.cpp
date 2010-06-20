@@ -329,7 +329,7 @@ void field2kml (
 
                 /***** description *****/
 
-                else if ( !EQUAL ( name, descfield ) ) {
+                else if ( EQUAL ( name, descfield ) ) {
                     poKmlPlacemark->set_description ( poOgrFeat->
                                                       GetFieldAsString ( i ) );
                     continue;
