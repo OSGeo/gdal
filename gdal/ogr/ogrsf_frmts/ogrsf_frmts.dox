@@ -1647,11 +1647,12 @@ by the OGRSFDriverManager.
 
  The query string should be in the format of an SQL WHERE clause.  For
  instance "population > 1000000 and population < 5000000" where population
- is an attribute in the layer.  The query format is a restricted form of SQL
- WHERE clause as defined "eq_format=restricted_where" about half way through
- this document:
-
-   http://ogdi.sourceforge.net/prop/6.2.CapabilitiesMetadata.html
+ is an attribute in the layer.  The query format is normally a restricted 
+ form of SQL  WHERE clause as described in the "WHERE" section of the 
+ <a href="ogr_sql.html">OGR SQL</a> tutorial.  In some cases (RDBMS 
+ backed drivers) the native capabilities of the database may be used to 
+ interprete the WHERE clause in which case the capabilities will be broader
+ than those of OGR SQL.
 
  Note that installing a query string will generally result in resetting
  the current reading position (ala ResetReading()).  
