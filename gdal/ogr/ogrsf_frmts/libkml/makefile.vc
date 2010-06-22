@@ -1,0 +1,28 @@
+GDAL_ROOT	= ..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+CORE_OBJ =	ogrlibkmlgeometry.obj \
+		ogrlibkmlfield.obj \
+		ogrlibkmlfeature.obj \
+		ogrlibkmlfeaturestyle.obj \
+		ogrlibkmlstyle.obj
+
+OGR_OBJ =	ogrlibkmldriver.obj \
+		ogrlibkmldatasource.obj \
+		ogrlibkmllayer.obj
+
+OBJ =		$(CORE_OBJ) $(OGR_OBJ)
+
+EXTRAFLAGS = -I.. -I..\.. $(LIBKML_INCLUDE)
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.dll
+
+ogr_LIBKML.dll:	$(OBJ)
+	link /dll $(LDEBUG) /out:ogr_LIBKML.dll $(OBJ) /LTCG \
+		$(GDAL_ROOT)/gdal_i.lib $(LIBKML_LIBS)
