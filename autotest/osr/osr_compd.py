@@ -62,7 +62,7 @@ def osr_compd_1():
         gdaltest.post_reason( 'projected COMPD_CS misrecognised as local.')
         return 'fail'
 
-    expected_proj4 = '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.999601272 +x_0=400000 +y_0=-100000 +ellps=airy +datum=OSGB36 +units=m +no_defs '
+    expected_proj4 = '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.999601272 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=375,-111,431,0,0,0,0 +units=m +no_defs '
     got_proj4 = srs.ExportToProj4()
 
     if expected_proj4 != got_proj4:
