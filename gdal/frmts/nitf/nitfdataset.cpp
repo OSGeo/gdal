@@ -2504,10 +2504,10 @@ CPLErr NITFDataset::SetProjection(const char* _pszProjection)
 
     if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0)
     {
-        if (psImage->chICORDS != 'G')
+        if (psImage->chICORDS != 'G' && psImage->chICORDS != 'D')
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "NITF file should have been created with creation option 'ICORDS=G'.\n");
+                     "NITF file should have been created with creation option 'ICORDS=G' (or 'ICORDS=D').\n");
             return CE_Failure;
         }
     }
@@ -3604,11 +3604,33 @@ NITFDataset::NITFCreateCopy(
             }
         }
 
+        const char* pszICORDS = CSLFetchNameValue(papszFullOptions, "ICORDS");
+
         if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 
             && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
         {
-            papszFullOptions = 
-                CSLSetNameValue( papszFullOptions, "ICORDS", "G" );
+            if (pszICORDS == NULL)
+            {
+                papszFullOptions = 
+                    CSLSetNameValue( papszFullOptions, "ICORDS", "G" );
+            }
+            else if (EQUAL(pszICORDS, "G") || EQUAL(pszICORDS, "D"))
+            {
+                /* Do nothing */
+            }
+            else
+            {
+                CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+                    "Inconsistant ICORDS value with SRS : %s%s.\n", pszICORDS,
+                    (!bStrict) ? ". Setting it to G instead" : "");
+                if (bStrict)
+                {
+                    CSLDestroy(papszFullOptions);
+                    return NULL;
+                }
+                papszFullOptions = 
+                    CSLSetNameValue( papszFullOptions, "ICORDS", "G" );
+            }
             bWriteGeoTransform = TRUE;
         }
 
