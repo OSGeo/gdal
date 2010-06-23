@@ -171,7 +171,7 @@ JPEG12_SUPPORTED = 1
 #		$(LIBKML_LIBRARY)/libkmlxsd.lib \
 #		$(LIBKML_LIBRARY)/minizip_static.lib \
 #		$(LIBKML_DIR)/third_party\expat.win32/libexpat.lib \
-#		$(LIBKML_DIR)/third_party\uriparser-0.7.5.win32/debug/uriparser.lib \
+#		$(LIBKML_DIR)/third_party\uriparser-0.7.5.win32/release/uriparser.lib \
 #		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/minizip.lib \
 #		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/zlib.lib
 							
