@@ -29,6 +29,8 @@
  *****************************************************************************/
 
 %{
+#include "gdalgrid.h"
+
 #ifdef DEBUG 
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
@@ -403,6 +405,98 @@ int  RegenerateOverview( GDALRasterBandShadow *srcBand,
 }
 %}
 %clear GDALRasterBandShadow* srcBand, GDALRasterBandShadow* overviewBand, char* resampling;
+
+/************************************************************************/
+/*                             GridCreate()                             */
+/************************************************************************/
+
+#ifdef SWIGJAVA
+%rename (GridCreate) wrapper_GridCreate;
+%apply (int nCount, double *x, double *y, double *z) { (int points, double *x, double *y, double *z) };
+%apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
+%inline %{
+int wrapper_GridCreate( char* algorithmOptions,
+                        int points, double *x, double *y, double *z,
+                        double xMin, double xMax, double yMin, double yMax,
+                        int xSize, int ySize, GDALDataType dataType,
+                        void* nioBuffer, long nioBufferSize,
+                        GDALProgressFunc callback = NULL,
+                        void* callback_data = NULL)
+{
+    GDALGridAlgorithm eAlgorithm = GGA_InverseDistanceToAPower;
+    void* pOptions = NULL;
+
+    CPLErr eErr = CE_Failure;
+
+    CPLErrorReset();
+
+    if ( algorithmOptions )
+    {
+        eErr = ParseAlgorithmAndOptions( algorithmOptions, &eAlgorithm, &pOptions );
+    }
+    else
+    {
+        eErr = ParseAlgorithmAndOptions( szAlgNameInvDist, &eAlgorithm, &pOptions );
+    }
+    
+    if ( eErr != CE_None )
+    {
+        CPLError( eErr, CPLE_AppDefined, "Failed to process algoritm name and parameters.\n" );
+        return eErr;
+    }
+
+    eErr = GDALGridCreate( eAlgorithm, pOptions, points, x, y, z,
+                           xMin, xMax, yMin, yMax, xSize, ySize, dataType, nioBuffer,
+                           callback, callback_data );
+
+    return eErr;
+}
+%}
+%clear (void *nioBuffer, long nioBufferSize);
+#endif
+
+/************************************************************************/
+/*                          ContourGenerate()                           */
+/************************************************************************/
+
+%apply Pointer NONNULL {GDALRasterBandShadow *srcBand};
+#ifdef SWIGJAVA
+%inline %{
+int ContourGenerate( GDALRasterBandH *srcBand,
+                     double dfContourInterval,
+                     double dfContourBase,
+                     int nFixedLevelCount,
+                     double *padfFixedLevels,
+                     int bUseNoData,
+                     double dfNoDataValue,
+                     void *hLayer, 
+                     int iIDField,
+                     int iElevField,
+                     GDALProgressFunc callback = NULL,
+                     void* callback_data = NULL)
+{
+    CPLErr eErr;
+
+    CPLErrorReset();
+
+    eErr =  GDALContourGenerate( srcBand,
+                                 dfContourInterval,
+                                 dfContourBase,
+                                 nFixedLevelCount,
+                                 padfFixedLevels,
+                                 bUseNoData,
+                                 dfNoDataValue,
+                                 hLayer,
+                                 iIDField,
+                                 iElevField,
+                                 callback,
+                                 callback_data);
+
+    return eErr;
+}
+%}
+#endif
+%clear GDALRasterBandShadow *srcBand;
 
 /************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */

@@ -531,7 +531,7 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
 
     return GDALWriteBlock(self, nXBlockOff, nYBlockOff, nioBuffer);
   }
-%clear (void *nioBuffer, long nioBufferSize);
+/* %clear (void *nioBuffer, long nioBufferSize); */
 
 %clear (char *regularArrayOut, long nRegularArraySizeOut);
 %clear (short *regularArrayOut, long nRegularArraySizeOut);
