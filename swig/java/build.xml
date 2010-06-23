@@ -6,7 +6,7 @@
 	<target name="compile" description="Compile the source files.">
 		<mkdir dir="build/classes"/>
 		<javac srcdir="org" destdir="build/classes" 
-		       debug="on" source="1.4" target="1.4"
+		       debug="on" source="1.5" target="1.5"
 		       includeantruntime="false" deprecation="true">
 		</javac>
 		<echo>compilation complete</echo>
@@ -23,7 +23,7 @@
 	<target name="compile_tests" depends="archive" description="Compile the tests files.">
 		<mkdir dir="build/apps"/>
 		<javac srcdir="apps" destdir="build/apps" 
-		       debug="on" source="1.4" target="1.4"
+		       debug="on" source="1.5" target="1.5"
 		       includeantruntime="false" deprecation="true" classpath="gdal.jar">
 		</javac>
 		<echo>compilation of tests complete</echo>
