@@ -1889,22 +1889,23 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         /* nothing */;
 
     else if( EQUAL(pszDatum,SRS_DN_NAD27) || nEPSGDatum == 6267 )
-        pszPROJ4Datum = "+datum=NAD27";
+        pszPROJ4Datum = "NAD27";
 
     else if( EQUAL(pszDatum,SRS_DN_NAD83) || nEPSGDatum == 6269 )
-        pszPROJ4Datum = "+datum=NAD83";
+        pszPROJ4Datum = "NAD83";
 
     else if( EQUAL(pszDatum,SRS_DN_WGS84) || nEPSGDatum == 6326 )
-        pszPROJ4Datum = "+datum=WGS84";
+        pszPROJ4Datum = "WGS84";
 
     else if( (pszPROJ4Datum = OGRGetProj4Datum(pszDatum, nEPSGDatum)) != NULL )
     {
-        strcat( szProj4, "+datum=" );
-        /* The datum name contained in pszPROJ4Datum will be appended below */
+        /* nothing */
     }
 
-    else if( poTOWGS84 != NULL )
+    if( pszPROJ4Datum == NULL || CSLTestBoolean(CPLGetConfigOption("OVERRIDE_PROJ_DATUM_WITH_TOWGS84", "YES")) )
     {
+      if( poTOWGS84 != NULL )
+      {
         int bOverflow = FALSE;
         int iChild;
         for(iChild=0;iChild<poTOWGS84->GetChildCount() && !bOverflow;iChild++)
@@ -1924,7 +1925,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      poTOWGS84->GetChild(0)->GetValue(),
                      poTOWGS84->GetChild(1)->GetValue(),
                      poTOWGS84->GetChild(2)->GetValue() );
-            pszPROJ4Datum = szTOWGS84;
+            strcat( szProj4, szTOWGS84 );
+            strcat( szProj4, " " );
+            pszPROJ4Datum = NULL;
         }
         else if( !bOverflow && poTOWGS84->GetChildCount() > 6)
         {
@@ -1936,12 +1939,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      poTOWGS84->GetChild(4)->GetValue(),
                      poTOWGS84->GetChild(5)->GetValue(),
                      poTOWGS84->GetChild(6)->GetValue() );
-            pszPROJ4Datum = szTOWGS84;
+            strcat( szProj4, szTOWGS84 );
+            strcat( szProj4, " " );
+            pszPROJ4Datum = NULL;
         }
-    }
+      }
 
-    else if( nEPSGGeogCS != -1 )
-    {
+      else if( nEPSGGeogCS != -1 )
+      {
         double padfTransform[7];
         if( EPSGGetWGS84Transform( nEPSGGeogCS, padfTransform ) )
         {
@@ -1953,12 +1958,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      padfTransform[4],
                      padfTransform[5],
                      padfTransform[6] );
-            pszPROJ4Datum = szTOWGS84;
+            strcat( szProj4, szTOWGS84 );
+            strcat( szProj4, " " );
+            pszPROJ4Datum = NULL;
         }
+      }
     }
     
     if( pszPROJ4Datum != NULL )
     {
+        strcat( szProj4, "+datum=" );
         strcat( szProj4, pszPROJ4Datum );
         strcat( szProj4, " " );
     }
