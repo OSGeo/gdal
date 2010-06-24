@@ -259,6 +259,7 @@ private:
 
     void Start();
     void Stop();
+
 public:
     JPIPKAKAsyncReader();
     virtual ~JPIPKAKAsyncReader();
@@ -271,6 +272,8 @@ public:
     void SetComplete(int bFinished){this->bComplete = bFinished;};
 
     friend class JPIPKAKDataset;
+
+    CPLString  osErrorMsg;
 };
 
 /************************************************************************/
