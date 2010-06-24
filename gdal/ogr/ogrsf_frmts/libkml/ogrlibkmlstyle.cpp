@@ -95,11 +95,6 @@ void addstylestring2kml (
         if ( !poOgrST ) {
             continue;
         }
-
-        /***** set the units on the style tool part *****/
-
-        poOgrST->SetUnit(OGRSTUGround, 100);
-
         
         switch ( poOgrST->GetType (  ) ) {
         case OGRSTCPen:
