@@ -834,7 +834,17 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     /***** get the child contianer from root *****/
 
-    ContainerPtr poKmlContainer = GetContainerFromRoot ( poKmlDocKmlRoot );
+    ContainerPtr poKmlContainer;
+
+    if (!(poKmlContainer = GetContainerFromRoot ( poKmlDocKmlRoot ))) {
+        CPLError ( CE_Failure, CPLE_OpenFailed,
+                   "ERROR Parseing %s from %s :%s",
+                   oKmlKmlPath.c_str (  ),
+                   pszFilename, "kml contains no Containers" );
+        delete poOgrSRS;
+
+        return FALSE;
+    }
 
     /***** loop over the container looking for network links *****/
 
