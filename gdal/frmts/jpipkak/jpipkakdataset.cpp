@@ -487,9 +487,15 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
 
     if( pszCnew == NULL )
     {
+        if( psResult->pszContentType != NULL 
+            && EQUALN(psResult->pszContentType,"text/html",9) )
+            CPLDebug( "JPIPKAK", "%s\n", 
+                      psResult->pabyData );
+
         CPLHTTPDestroyResult( psResult );
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "Unable to parse required cnew and tid response headers" );
+
         return FALSE;    
     }
 
@@ -1545,6 +1551,25 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         *pnybufoff = 0;
         *pnxbufsize = 0;
         *pnybufsize = 0;		
+
+        // Indicate an error if the thread finished prematurely
+        if( (bHighPriority 
+             && !poJDS->bHighThreadRunning 
+             && poJDS->bHighThreadFinished)
+            || (!bHighPriority 
+                && !poJDS->bLowThreadRunning 
+                && poJDS->bLowThreadFinished) )
+        {
+            if( osErrorMsg != "" )
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "%s", osErrorMsg.c_str() );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Working thread failed without complete data." );
+            return GARIO_ERROR;
+        }
+
+        // Otherwise there is still pending data to wait for.
         return GARIO_PENDING;
     }
 
@@ -1832,8 +1857,17 @@ static void JPIPWorkerFunc(void *req)
         CPLHTTPResult *psResult = CPLHTTPFetch(osCurrentRequest, apszOptions);
         if (psResult->nDataLen == 0)
         {
+            CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
+            if( psResult->pszErrBuf )
+                pRequest->poARIO->
+                    osErrorMsg.Printf( "zero data returned from server, timeout?\n%s", psResult->pszErrBuf );
+            else
+                pRequest->poARIO->
+                    osErrorMsg =  "zero data returned from server, timeout?";
+
             // status is not being set, always zero in cpl_http
-            CPLDebug("JPIPWorkerFunc", "zero data returned from server: %s", psResult->pszErrBuf);
+            CPLDebug("JPIPWorkerFunc", "zero data returned from server");
+            CPLReleaseMutex(poJDS->pGlobalMutex);
             break;
         }
 
