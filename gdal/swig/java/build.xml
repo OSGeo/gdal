@@ -6,7 +6,7 @@
 	<target name="compile" description="Compile the source files.">
 		<mkdir dir="build/classes"/>
 		<javac srcdir="org" destdir="build/classes" 
-		       debug="on" source="1.5" target="1.5"
+		       debug="on" source="1.4" target="1.4"
 		       includeantruntime="false" deprecation="true">
 		</javac>
 		<echo>compilation complete</echo>
