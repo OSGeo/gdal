@@ -958,7 +958,7 @@ static void *CPLStdCallThreadJacket( void *pData )
 int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
-    
+
     CPLStdCallThreadInfo *psInfo;
     pthread_attr_t hThreadAttr;
 
@@ -992,20 +992,30 @@ void CPLSleep( double dfWaitInSeconds )
     nanosleep( &sRequest, &sRemain );
 }
 
-static int           bTLSKeySetup = FALSE;
-static pthread_key_t oTLSKey;
+static pthread_key_t  oTLSKey;
+static pthread_once_t oTLSKeySetup = PTHREAD_ONCE_INIT;
 
 /************************************************************************/
-/*                           CPLCleanupTLS()                            */
+/*                             CPLMake_key()                            */
+/************************************************************************/
+
+static void CPLMake_key()
+
+{
+    if( pthread_key_create( &oTLSKey, (void (*)(void*)) CPLCleanupTLSList ) != 0 )
+    {
+        CPLError( CE_Fatal, CPLE_AppDefined, "pthread_key_create() failed!" );
+    }
+}
+
+/************************************************************************/
+/*                             CPLCleanupTLS()                          */
 /************************************************************************/
 
 void CPLCleanupTLS()
 
 {
     void **papTLSList;
-
-    if( !bTLSKeySetup )
-        return;
 
     papTLSList = (void **) pthread_getspecific( oTLSKey );
     if( papTLSList == NULL )
@@ -1025,15 +1035,10 @@ static void **CPLGetTLSList()
 {
     void **papTLSList;
 
-    if( !bTLSKeySetup )
+    if ( pthread_once(&oTLSKeySetup, CPLMake_key) != 0 )
     {
-        if( pthread_key_create( &oTLSKey, 
-                                (void (*)(void*)) CPLCleanupTLSList ) != 0 )
-        {
-            CPLError( CE_Fatal, CPLE_AppDefined, 
-                      "pthread_key_create() failed!" );
-        }
-        bTLSKeySetup = TRUE;
+        CPLError( CE_Fatal, CPLE_AppDefined,
+            "pthread_once() failed!" );
     }
 
     papTLSList = (void **) pthread_getspecific( oTLSKey );
@@ -1042,8 +1047,8 @@ static void **CPLGetTLSList()
         papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX*2);
         if( pthread_setspecific( oTLSKey, papTLSList ) != 0 )
         {
-            CPLError( CE_Fatal, CPLE_AppDefined, 
-                      "pthread_setspecific() failed!" );
+            CPLError( CE_Fatal, CPLE_AppDefined,
+                "pthread_setspecific() failed!" );
         }
     }
 
@@ -1080,4 +1085,3 @@ void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
     papTLSList[nIndex] = pData;
     papTLSList[CTLS_MAX + nIndex] = (void *) (long) bFreeOnExit;
 }
-
