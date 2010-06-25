@@ -31,6 +31,25 @@
 
 #include "jpipkakdataset.h"
 
+
+/* 
+** The following are for testing premature stream termination support.
+** This is a mechanism to test handling of failed or incomplete reads 
+** from the server, and is not normally active.  For this reason we
+** don't worry about the non-threadsafe nature of the debug support
+** variables below.
+*/
+
+#ifdef DEBUG
+#  define PST_DEBUG 1
+#endif
+
+#ifdef PST_DEBUG
+static int nPSTTargetInstance = -1;
+static int nPSTThisInstance = -1;
+static int nPSTTargetOffset = -1;
+#endif
+
 /************************************************************************/
 /* ==================================================================== */
 /*                     Set up messaging services                        */
@@ -534,97 +553,107 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
 
     // ok, good to go with jpip, get to the codestream before returning 
     // successful initialisation of the driver
-    poCache = new kdu_cache();
-    poCodestream = new kdu_codestream();
-    poDecompressor = new kdu_region_decompressor();
-
-    int bFinished = FALSE;
-    bFinished = ReadFromInput(psResult->pabyData, psResult->nDataLen);
-    CPLHTTPDestroyResult(psResult);
-
-    // continue making requests in the main thread to get all the available 
-    // metadata for data bin 0, and reach the codestream
-
-    // format the new request
-    // and set as pszRequestUrl;
-    // get the protocol from the original request
-    size_t found = osRequest.find_first_of("/");
-    CPLString osProtocol = osRequest.substr(0, found + 2);
-    osRequest.erase(0, found + 2);
-    // find context path
-    found = osRequest.find_first_of("/");
-    osRequest.erase(found);
-			
-    osRequestUrl.Printf("%s%s/%s?cid=%s&stream=0&len=%i", osProtocol.c_str(), osRequest.c_str(), pszPath, pszCid, 2000);
-
-    while (!bFinished)
+    try
     {
-        CPLHTTPResult *psResult = CPLHTTPFetch(osRequestUrl, apszOptions);
+        poCache = new kdu_cache();
+        poCodestream = new kdu_codestream();
+        poDecompressor = new kdu_region_decompressor();
+
+        int bFinished = FALSE;
         bFinished = ReadFromInput(psResult->pabyData, psResult->nDataLen);
         CPLHTTPDestroyResult(psResult);
-    }
 
-    // clean up osRequest, remove variable len= parameter
-    size_t pos = osRequestUrl.find_last_of("&");	
-    osRequestUrl.erase(pos);
+        // continue making requests in the main thread to get all the available 
+        // metadata for data bin 0, and reach the codestream
 
-    // create codestream
-    poCache->set_read_scope(KDU_MAIN_HEADER_DATABIN, 0, 0);
-    poCodestream->create(poCache);
-    poCodestream->set_persistent();
+        // format the new request
+        // and set as pszRequestUrl;
+        // get the protocol from the original request
+        size_t found = osRequest.find_first_of("/");
+        CPLString osProtocol = osRequest.substr(0, found + 2);
+        osRequest.erase(0, found + 2);
+        // find context path
+        found = osRequest.find_first_of("/");
+        osRequest.erase(found);
+			
+        osRequestUrl.Printf("%s%s/%s?cid=%s&stream=0&len=%i", osProtocol.c_str(), osRequest.c_str(), pszPath, pszCid, 2000);
 
-    kdu_channel_mapping oChannels;
-    oChannels.configure(*poCodestream);
-    kdu_coords* ref_expansion = new kdu_coords(1, 1);
+        while (!bFinished)
+        {
+            CPLHTTPResult *psResult = CPLHTTPFetch(osRequestUrl, apszOptions);
+            bFinished = ReadFromInput(psResult->pabyData, psResult->nDataLen);
+            CPLHTTPDestroyResult(psResult);
+        }
+
+        // clean up osRequest, remove variable len= parameter
+        size_t pos = osRequestUrl.find_last_of("&");	
+        osRequestUrl.erase(pos);
+
+        // create codestream
+        poCache->set_read_scope(KDU_MAIN_HEADER_DATABIN, 0, 0);
+        poCodestream->create(poCache);
+        poCodestream->set_persistent();
+
+        kdu_channel_mapping oChannels;
+        oChannels.configure(*poCodestream);
+        kdu_coords* ref_expansion = new kdu_coords(1, 1);
 					
-    // get available resolutions, image width / height etc.
-    kdu_dims view_dims = poDecompressor->
-        get_rendered_image_dims(*poCodestream, &oChannels, -1, 0,
-                                *ref_expansion, *ref_expansion, 
-                                KDU_WANT_OUTPUT_COMPONENTS);
+        // get available resolutions, image width / height etc.
+        kdu_dims view_dims = poDecompressor->
+            get_rendered_image_dims(*poCodestream, &oChannels, -1, 0,
+                                    *ref_expansion, *ref_expansion, 
+                                    KDU_WANT_OUTPUT_COMPONENTS);
 
-    nRasterXSize = view_dims.size.x;
-    nRasterYSize = view_dims.size.y;
+        nRasterXSize = view_dims.size.x;
+        nRasterYSize = view_dims.size.y;
 
-    // Establish the datatype - we will use the same datatype for
-    // all bands based on the first.  This really doesn't do something
-    // great for >16 bit images.
-    if( poCodestream->get_bit_depth(0) > 8 
-        && poCodestream->get_signed(0) )
-    {
-        eDT = GDT_Int16;
+        // Establish the datatype - we will use the same datatype for
+        // all bands based on the first.  This really doesn't do something
+        // great for >16 bit images.
+        if( poCodestream->get_bit_depth(0) > 8 
+            && poCodestream->get_signed(0) )
+        {
+            eDT = GDT_Int16;
+        }
+        else if( poCodestream->get_bit_depth(0) > 8
+                 && !poCodestream->get_signed(0) )
+        {
+            eDT = GDT_UInt16;
+        }
+        else
+            eDT = GDT_Byte;
+
+        if( poCodestream->get_bit_depth(0) % 8 != 8
+            && poCodestream->get_bit_depth(0) < 16 )
+            SetMetadataItem( 
+                "NBITS", 
+                CPLString().Printf("%d",poCodestream->get_bit_depth(0)), 
+                "IMAGE_STRUCTURE" );
+
+        // TODO add color interpretation
+
+        // calculate overviews
+        siz_params* siz_in = poCodestream->access_siz();
+        kdu_params* cod_in = siz_in->access_cluster("COD");
+
+        delete ref_expansion;
+
+        siz_in->get("Scomponents", 0, 0, nComps);
+        siz_in->get("Sprecision", 0, 0, nBitDepth);
+
+        cod_in->get("Clayers", 0, 0, nQualityLayers);
+        cod_in->get("Clevels", 0, 0, nResLevels);
+
+        bYCC=TRUE;
+        cod_in->get("Cycc", 0, 0, bYCC);
+
     }
-    else if( poCodestream->get_bit_depth(0) > 8
-             && !poCodestream->get_signed(0) )
+    catch(...)
     {
-        eDT = GDT_UInt16;
+        CPLError(CE_Failure, CPLE_AppDefined, 
+                 "Trapped Kakadu exception attempting to initialize JPIP access." );
+        return FALSE;
     }
-    else
-        eDT = GDT_Byte;
-
-    if( poCodestream->get_bit_depth(0) % 8 != 8
-        && poCodestream->get_bit_depth(0) < 16 )
-        SetMetadataItem( 
-            "NBITS", 
-            CPLString().Printf("%d",poCodestream->get_bit_depth(0)), 
-            "IMAGE_STRUCTURE" );
-
-    // TODO add color interpretation
-
-    // calculate overviews
-    siz_params* siz_in = poCodestream->access_siz();
-    kdu_params* cod_in = siz_in->access_cluster("COD");
-
-    delete ref_expansion;
-
-    siz_in->get("Scomponents", 0, 0, nComps);
-    siz_in->get("Sprecision", 0, 0, nBitDepth);
-
-    cod_in->get("Clayers", 0, 0, nQualityLayers);
-    cod_in->get("Clevels", 0, 0, nResLevels);
-
-    bYCC=TRUE;
-    cod_in->get("Cycc", 0, 0, bYCC);
 
 /* -------------------------------------------------------------------- */
 /*      YCC images are always processed as 3 bands.                     */
@@ -781,8 +810,18 @@ long JPIPKAKDataset::ReadVBAS(GByte* pabyData, int nLen)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "EOF reached before completing VBAS");
-            break;
+            return -1;
         }
+
+#ifdef PST_DEBUG
+        if( nPSTThisInstance == nPSTTargetInstance 
+            && nPos >= nPSTTargetOffset )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Artificial PST EOF reached before completing VBAS");
+            return -1;
+        }
+#endif
 
         c = pabyData[nPos];
         nPos++;
@@ -893,6 +932,31 @@ int JPIPKAKDataset::ReadFromInput(GByte* pabyData, int nLen)
     int res = FALSE;
     if (nLen > 0)
     {
+#ifdef PST_DEBUG
+        nPSTThisInstance++;
+        if( CPLGetConfigOption( "PST_OFFSET", NULL ) != NULL )
+        {
+            nPSTTargetOffset = atoi(CPLGetConfigOption("PST_OFFSET","0"));
+            nPSTTargetInstance = 0;
+        }
+        if( CPLGetConfigOption( "PST_INSTANCE", NULL ) != NULL )
+        {
+            nPSTTargetInstance = atoi(CPLGetConfigOption("PST_INSTANCE","0"));
+        }
+
+        if( nPSTTargetOffset != -1 && nPSTThisInstance == 0 )
+        {
+            CPLDebug( "JPIPKAK", "Premature Stream Termination Activated, PST_OFFSET=%d, PST_INSTANCE=%d",
+                      nPSTTargetOffset, nPSTTargetInstance );
+        }
+        if( nPSTTargetOffset != -1 
+            && nPSTThisInstance == nPSTTargetInstance )
+        {
+            CPLDebug( "JPIPKAK", "Premature Stream Termination in force for this input instance, PST_OFFSET=%d, data length=%d", 
+                      nPSTTargetOffset, nLen );
+        }
+#endif // def PST_DEBUG 
+        
         // parse the data stream, reading the vbas and adding to the kakadu cache
         // we could parse all the boxes by hand, and just add data to the kakadu cache
         // we will do it the easy way and retrieve the metadata through the kakadu query api
