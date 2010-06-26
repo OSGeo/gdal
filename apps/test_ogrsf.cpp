@@ -737,6 +737,8 @@ static void TestSpatialFilter( OGRLayer *poLayer )
     }
 
     OGRFeature::DestroyFeature(poTargetFeature);
+
+    poLayer->SetSpatialFilter( NULL );
 }
 
 
