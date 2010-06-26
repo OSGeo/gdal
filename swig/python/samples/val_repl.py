@@ -59,30 +59,11 @@ def Usage():
 
 # =============================================================================
 def ParseType(type):
-    if type == 'Byte':
-        return GDT_Byte
-    elif type == 'Int16':
-        return GDT_Int16
-    elif type == 'UInt16':
-        return GDT_UInt16
-    elif type == 'Int32':
-        return GDT_Int32
-    elif type == 'UInt32':
-        return GDT_UInt32
-    elif type == 'Float32':
-        return GDT_Float32
-    elif type == 'Float64':
-        return GDT_Float64
-    elif type == 'CInt16':
-        return GDT_CInt16
-    elif type == 'CInt32':
-        return GDT_CInt32
-    elif type == 'CFloat32':
-        return GDT_CFloat32
-    elif type == 'CFloat64':
-        return GDT_CFloat64
-    else:
-        return GDT_Byte
+    gdal_dt = gdal.GetDataTypeByName(type)
+    if gdal_dt is GDT_Unknown:
+        gdal_dt = GDT_Byte
+    return gdal_dt
+
 # =============================================================================
 
 inNoData = None
@@ -137,6 +118,14 @@ indataset = gdal.Open( infile, GA_ReadOnly )
 
 out_driver = gdal.GetDriverByName(format)
 outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)
+
+gt = indataset.GetGeoTransform()
+if gt is not None and gt != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
+    outdataset.SetGeoTransform(gt)
+
+prj = indataset.GetProjectionRef()
+if prj is not None and len(prj) > 0:
+    outdataset.SetProjection(prj)
 
 for iBand in range(1, indataset.RasterCount + 1):
     inband = indataset.GetRasterBand(iBand)
