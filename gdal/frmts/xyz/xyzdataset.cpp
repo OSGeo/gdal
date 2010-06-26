@@ -58,6 +58,8 @@ class XYZDataset : public GDALPamDataset
     int         nLineNum;     /* any line */
     int         nDataLineNum; /* line with values (header line and empty lines ignored) */
     double      adfGeoTransform[6];
+    
+    static int          IdentifyEx( GDALOpenInfo *, int& );
 
   public:
                  XYZDataset();
@@ -66,6 +68,7 @@ class XYZDataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * );
     
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
     static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                                     int bStrict, char ** papszOptions, 
                                     GDALProgressFunc pfnProgress, void * pProgressData );
@@ -274,20 +277,48 @@ XYZDataset::~XYZDataset()
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                             Identify()                               */
 /************************************************************************/
 
-GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
+int XYZDataset::Identify( GDALOpenInfo * poOpenInfo )
+{
+    int bHasHeaderLine;
+    return IdentifyEx(poOpenInfo, bHasHeaderLine);
+}
+
+/************************************************************************/
+/*                            IdentifyEx()                              */
+/************************************************************************/
+
+
+int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo, int& bHasHeaderLine )
 
 {
     int         i;
+
+    bHasHeaderLine = FALSE;
+
+    CPLString osFilename(poOpenInfo->pszFilename);
+
+    GDALOpenInfo* poOpenInfoToDelete = NULL;
+    /*  GZipped .xyz files are common, so automagically open them */
+    /*  if the /vsigzip/ has not been explicitely passed */
+    if (strlen(poOpenInfo->pszFilename) > 6 &&
+        EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "xyz.gz") &&
+        !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+    {
+        osFilename = "/vsigzip/";
+        osFilename += poOpenInfo->pszFilename;
+        poOpenInfo = poOpenInfoToDelete =
+                new GDALOpenInfo(osFilename.c_str(), GA_ReadOnly,
+                                 poOpenInfo->papszSiblingFiles);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Chech that it looks roughly as a XYZ dataset                    */
 /* -------------------------------------------------------------------- */
     const char* pszData = (const char*)poOpenInfo->pabyHeader;
-    int bHasHeaderLine = FALSE, bHasFoundNewLine = FALSE,
-        bHasFoundSeparator = FALSE;
+    int bHasFoundNewLine = FALSE, bHasFoundSeparator = FALSE;
     for(i=0;i<poOpenInfo->nHeaderBytes;i++)
     {
         char ch = pszData[i];
@@ -305,7 +336,10 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                               (ch >= 'A' & ch <= 'Z'))
             bHasHeaderLine = TRUE;
         else
-            return NULL;
+        {
+            delete poOpenInfoToDelete;
+            return FALSE;
+        }
     }
     for(;i<poOpenInfo->nHeaderBytes;i++)
     {
@@ -324,18 +358,52 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             ;
         }
         else
-            return NULL;
+        {
+            delete poOpenInfoToDelete;
+            return FALSE;
+        }
     }
-    if (!bHasFoundNewLine || !bHasFoundSeparator)
+
+    delete poOpenInfoToDelete;
+    return TRUE;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+    int         i;
+    int         bHasHeaderLine;
+
+    if (!IdentifyEx(poOpenInfo, bHasHeaderLine))
         return NULL;
+
+    CPLString osFilename(poOpenInfo->pszFilename);
+
+    /*  GZipped .xyz files are common, so automagically open them */
+    /*  if the /vsigzip/ has not been explicitely passed */
+    if (strlen(poOpenInfo->pszFilename) > 6 &&
+        EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "xyz.gz") &&
+        !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+    {
+        osFilename = "/vsigzip/";
+        osFilename += poOpenInfo->pszFilename;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Find dataset characteristics                                    */
 /* -------------------------------------------------------------------- */
-    FILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    FILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
     if (fp == NULL)
         return NULL;
-    fp = (FILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
+
+    /* For better performance of CPLReadLine2L() we create a buffered reader */
+    /* (except for /vsigzip/ since it has one internally) */
+    if (!EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+        fp = (FILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
     
     const char* pszLine;
     int nXIndex = -1, nYIndex = -1, nZIndex = -1;
@@ -807,6 +875,7 @@ void GDALRegister_XYZ()
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = XYZDataset::Open;
+        poDriver->pfnIdentify = XYZDataset::Identify;
         poDriver->pfnCreateCopy = XYZDataset::CreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
