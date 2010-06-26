@@ -31,7 +31,7 @@
 import os
 import sys
 import string
-import array
+import struct
 import gdal
 import osr
 
@@ -77,19 +77,23 @@ def xyz_3():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
     ds = gdal.Open('/vsimem/grid.xyz')
     buf = ds.ReadRaster(0,2,2,1)
-    if buf != 'EF':
+    bytes = struct.unpack('B' * 2, buf)
+    if bytes != (69, 70):
         print(buf)
         return 'fail'
     buf = ds.ReadRaster(0,1,2,1)
-    if buf != 'CD':
+    bytes = struct.unpack('B' * 2, buf)
+    if bytes != (67, 68):
         print(buf)
         return 'fail'
     buf = ds.ReadRaster(0,0,2,1)
-    if buf != 'AB':
+    bytes = struct.unpack('B' * 2, buf)
+    if bytes != (65, 66):
         print(buf)
         return 'fail'
     buf = ds.ReadRaster(0,2,2,1)
-    if buf != 'EF':
+    bytes = struct.unpack('B' * 2, buf)
+    if bytes != (69, 70):
         print(buf)
         return 'fail'
     ds = None
