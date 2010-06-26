@@ -12,7 +12,7 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_jaxapalsar -DFRMT_ers -DFRMT_ingr -DFRMT_dimap \
 		-DFRMT_gff -DFRMT_terragen -DFRMT_gsg -DFRMT_cosar -DFRMT_pds \
 		-DFRMT_adrg -DFRMT_coasp -DFRMT_tsx -DFRMT_blx -DFRMT_til \
-		-DFRMT_r -DFRMT_northwood -DFRMT_saga
+		-DFRMT_r -DFRMT_northwood -DFRMT_saga -DFRMT_xyz
 
 MOREEXTRA 	=	
 
