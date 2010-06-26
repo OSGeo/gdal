@@ -314,6 +314,12 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo, int& bHasHeaderLine )
                                  poOpenInfo->papszSiblingFiles);
     }
 
+    if (poOpenInfo->nHeaderBytes == 0)
+    {
+        delete poOpenInfoToDelete;
+        return FALSE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Chech that it looks roughly as a XYZ dataset                    */
 /* -------------------------------------------------------------------- */
