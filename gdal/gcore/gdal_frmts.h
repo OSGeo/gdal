@@ -152,6 +152,7 @@ void CPL_DLL GDALRegister_KMLSUPEROVERLAY(void);
 void CPL_DLL GDALRegister_GTX(void);
 void CPL_DLL GDALRegister_JP2OpenJPEG(void);
 void CPL_DLL GDALRegister_XYZ(void);
+void CPL_DLL GDALRegister_HF2(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
