@@ -901,7 +901,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                           bNodeOrientation = TRUE;
         OGRGeometry      *poGeom;
         OGRLineString    *poLineString;
-        OGRPoint         *poPositiveNode, *poNegativeNode;
+        OGRPoint         *poPositiveNode = NULL, *poNegativeNode = NULL;
         OGRMultiPoint    *poMP;
     
         bEdgeOrientation = GetElementOrientation(psNode);
@@ -1079,8 +1079,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
     if( EQUAL(pszBaseGeometry,"TopoCurve") )
     {
         const CPLXMLNode *psChild;
-        OGRMultiLineString *poMLS;
-        OGRMultiPoint *poMP;
+        OGRMultiLineString *poMLS = NULL;
+        OGRMultiPoint *poMP = NULL;
 
         if( bGetSecondaryGeometry )
             poMP = new OGRMultiPoint();
