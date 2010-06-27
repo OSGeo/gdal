@@ -773,6 +773,19 @@ def ogr_shape_21():
             return 'fail'
 
         feat.Destroy()
+
+        # Test fix for #3665
+        lyr.ResetReading()
+        lyr.SetSpatialFilterRect(0,0,1,1)
+        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        feat = lyr.GetNextFeature()
+        gdal.PopErrorHandler()
+
+        if feat.GetGeometryRef() is not None:
+            return 'fail'
+
+        feat.Destroy()
+
         lyr = None
         ds.Destroy()
 
