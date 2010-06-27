@@ -239,6 +239,7 @@ static int LoadProjLibrary()
         CPLGetSymbol( pszLibName, "pj_ctx_get_errno" );
 
     CPLPopErrorHandler();
+    CPLErrorReset();
 #endif
 
     if (pfn_pj_ctx_alloc != NULL &&
