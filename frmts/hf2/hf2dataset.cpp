@@ -1039,6 +1039,12 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                     }
                 }
             }
+
+            if( pfnProgress && !pfnProgress( (j * nXBlocks + i + 1) * 1.0 / (nXBlocks * nYBlocks), NULL, pProgressData ) )
+            {
+                eErr = CE_Failure;
+                break;
+            }
         }
     }
 
