@@ -103,6 +103,11 @@ gdalasyncread.exe:	gdalasyncread.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
+testreprojmulti.exe:	testreprojmulti.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) testreprojmulti.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
 ogr2ogr.exe:	ogr2ogr.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) ogr2ogr.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
