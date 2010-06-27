@@ -335,11 +335,11 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo, int& bHasHeaderLine )
         }
         else if (ch == ' ' || ch == ',' || ch == '\t' || ch == ';')
             bHasFoundSeparator = TRUE;
-        else if (ch >= '0' && ch <= '9' || ch == '.' || ch == '+' ||
+        else if ((ch >= '0' && ch <= '9') || ch == '.' || ch == '+' ||
                  ch == '-' || ch == 'e' || ch == 'E')
             ;
-        else if (ch == '"' || (ch >= 'a' & ch <= 'z') ||
-                              (ch >= 'A' & ch <= 'Z'))
+        else if (ch == '"' || (ch >= 'a' && ch <= 'z') ||
+                              (ch >= 'A' && ch <= 'Z'))
             bHasHeaderLine = TRUE;
         else
         {
@@ -358,7 +358,7 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo, int& bHasHeaderLine )
         {
             bHasFoundSeparator = TRUE;
         }
-        else if (ch >= '0' && ch <= '9' || ch == '.' || ch == '+' ||
+        else if ((ch >= '0' && ch <= '9') || ch == '.' || ch == '+' ||
                  ch == '-' || ch == 'e' || ch == 'E')
         {
             ;
