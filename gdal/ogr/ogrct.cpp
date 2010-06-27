@@ -63,8 +63,6 @@ static void *hPROJMutex = NULL;
 
 static projPJ       (*pfn_pj_init_plus)(const char *) = NULL;
 static projPJ       (*pfn_pj_init)(int, char**) = NULL;
-static projUV       (*pfn_pj_fwd)(projUV, projPJ) = NULL;
-static projUV       (*pfn_pj_inv)(projUV, projPJ) = NULL;
 static void     (*pfn_pj_free)(projPJ) = NULL;
 static int      (*pfn_pj_transform)(projPJ, projPJ, long, int, 
                                     double *, double *, double * ) = NULL;
@@ -180,8 +178,6 @@ static int LoadProjLibrary()
 #ifdef PROJ_STATIC
     pfn_pj_init = pj_init;
     pfn_pj_init_plus = pj_init_plus;
-    pfn_pj_fwd = pj_fwd;
-    pfn_pj_inv = pj_inv;
     pfn_pj_free = pj_free;
     pfn_pj_transform = pj_transform;
     pfn_pj_get_errno_ref = (int *(*)(void)) pj_get_errno_ref;
@@ -208,10 +204,6 @@ static int LoadProjLibrary()
 
     pfn_pj_init_plus = (projPJ (*)(const char *)) 
         CPLGetSymbol( pszLibName, "pj_init_plus" );
-    pfn_pj_fwd = (projUV (*)(projUV,projPJ)) 
-        CPLGetSymbol( pszLibName, "pj_fwd" );
-    pfn_pj_inv = (projUV (*)(projUV,projPJ)) 
-        CPLGetSymbol( pszLibName, "pj_inv" );
     pfn_pj_free = (void (*)(projPJ)) 
         CPLGetSymbol( pszLibName, "pj_free" );
     pfn_pj_transform = (int (*)(projPJ,projPJ,long,int,double*,
