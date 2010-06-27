@@ -710,7 +710,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     if (adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0)
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "XYZ driver does not support CreateCopy() from skewed or rotated dataset.\n");
+                  "HF2 driver does not support CreateCopy() from skewed or rotated dataset.\n");
         return NULL;
     }
 
