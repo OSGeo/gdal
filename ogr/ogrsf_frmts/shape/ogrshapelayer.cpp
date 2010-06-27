@@ -293,12 +293,8 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
         
         psShape = SHPReadObject( hSHP, iShapeId );
 
-        if( psShape == NULL)
-        {
-            poFeature = NULL;
-        }
         // do not trust degenerate bounds or bounds on null shapes.
-        else if( psShape->dfXMin == psShape->dfXMax
+        if( psShape == NULL || psShape->dfXMin == psShape->dfXMax
             || psShape->dfYMin == psShape->dfYMax 
             || psShape->nSHPType == SHPT_NULL )
         {
