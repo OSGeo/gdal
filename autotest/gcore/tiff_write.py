@@ -2793,16 +2793,48 @@ def tiff_write_80():
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
     if scale != 100 or offset != 1000:
-        gdaltest.post_reason('did not get expected values in internal case')
+        gdaltest.post_reason('did not get expected values in internal case (1)')
         print(scale)
-        print(value)
+        print(offset)
+        return 'fail'
+    ds = None
+    
+    # Test CreateCopy()
+    src_ds = gdal.Open('tmp/tiff_write_80.tif')
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_80_copy.tif', src_ds )
+    src_ds = None
+    ds = None
+    ds = gdal.Open( 'tmp/tiff_write_80_copy.tif')
+    scale = ds.GetRasterBand(1).GetScale()
+    offset = ds.GetRasterBand(1).GetOffset()
+    if scale != 100 or offset != 1000:
+        gdaltest.post_reason('did not get expected values in copy')
+        print(scale)
+        print(offset)
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_80_copy.tif' )
+
+    # Second part : test unsetting scale & offsets from internal metadata
+    ds = gdal.Open('tmp/tiff_write_80.tif', gdal.GA_Update)
+    ds.GetRasterBand(1).SetScale(1)
+    ds.GetRasterBand(1).SetOffset(0)
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_80.tif')
+    scale = ds.GetRasterBand(1).GetScale()
+    offset = ds.GetRasterBand(1).GetOffset()
+    if scale != 1 or offset != 0:
+        gdaltest.post_reason('did not get expected values in internal case (2)')
+        print(scale)
+        print(offset)
         return 'fail'
     ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_80.tif' )
 
 
-    # Second part : test storing and retrieving scale & offsets from PAM metadata
+    # Third part : test storing and retrieving scale & offsets from PAM metadata
     ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_80_bis.tif', 1, 1)
     if ds.GetRasterBand(1).GetScale() != None or ds.GetRasterBand(1).GetOffset() != None:
         gdaltest.post_reason('expected None values')
@@ -2825,12 +2857,37 @@ def tiff_write_80():
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
     if scale != -100 or offset != -1000:
-        gdaltest.post_reason('did not get expected values in PAM case')
+        gdaltest.post_reason('did not get expected values in PAM case (1)')
         print(scale)
-        print(value)
+        print(offset)
         return 'fail'
     ds = None
 
+
+    # Fourth part : test unsetting scale & offsets from PAM metadata
+    ds = gdal.Open('tmp/tiff_write_80_bis.tif')
+    ds.GetRasterBand(1).SetScale(1)
+    ds.GetRasterBand(1).SetOffset(0)
+    ds = None
+
+    try:
+        # check that there is no more any PAM file
+        os.stat('tmp/tiff_write_80_bis.tif.aux.xml')
+        gdaltest.post_reason('PAM file should be deleted')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open('tmp/tiff_write_80_bis.tif')
+    scale = ds.GetRasterBand(1).GetScale()
+    offset = ds.GetRasterBand(1).GetOffset()
+    if scale != 1 or offset != 0:
+        gdaltest.post_reason('did not get expected values in PAM case (2)')
+        print(scale)
+        print(offset)
+        return 'fail'
+    ds = None
+    
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_80_bis.tif' )
 
     return 'success'
@@ -2981,6 +3038,113 @@ def tiff_write_84():
     return 'success'
 
 ###############################################################################
+# Test SetUnitType()
+
+def tiff_write_85():
+
+    # First part : test storing and retrieving unittype from internal metadata
+    ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_85.tif', 1, 1)
+    ds.GetRasterBand(1).SetUnitType('ft')
+    ds = None
+    
+    try:
+        # check that it doesn't go to PAM
+        os.stat('tmp/tiff_write_85.tif.aux.xml')
+        gdaltest.post_reason('got to PAM, but not expected...')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open('tmp/tiff_write_85.tif')
+    unittype = ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'ft':
+        gdaltest.post_reason('did not get expected values in internal case (1)')
+        print(unittype)
+        return 'fail'
+    ds = None
+    
+    # Test CreateCopy()
+    src_ds = gdal.Open('tmp/tiff_write_85.tif')
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_85_copy.tif', src_ds )
+    src_ds = None
+    ds = None
+    ds = gdal.Open( 'tmp/tiff_write_85_copy.tif')
+    unittype = ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'ft':
+        gdaltest.post_reason('did not get expected values in copy')
+        print(unittype)
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_85_copy.tif' )
+
+    # Second part : test unsetting unittype from internal metadata
+    ds = gdal.Open('tmp/tiff_write_85.tif', gdal.GA_Update)
+    ds.GetRasterBand(1).SetUnitType(None)
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_85.tif')
+    unittype = ds.GetRasterBand(1).GetUnitType()
+    if unittype != '':
+        gdaltest.post_reason('did not get expected values in internal case (2)')
+        print(unittype)
+        return 'fail'
+    ds = None
+    
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_85.tif' )
+
+
+    # Third part : test storing and retrieving unittype from PAM metadata
+    ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_85_bis.tif', 1, 1)
+    if len(ds.GetRasterBand(1).GetUnitType()) != 0:
+        gdaltest.post_reason('expected None values')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_85_bis.tif')
+    ds.GetRasterBand(1).SetUnitType('ft')
+    ds = None
+
+    try:
+        # check that it *goes* to PAM
+        os.stat('tmp/tiff_write_85_bis.tif.aux.xml')
+    except:
+        gdaltest.post_reason('did not go to PAM as expected')
+        return 'fail'
+
+    ds = gdal.Open('tmp/tiff_write_85_bis.tif')
+    unittype = ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'ft':
+        gdaltest.post_reason('did not get expected values in PAM case (1)')
+        print(unittype)
+        return 'fail'
+    ds = None
+
+    # Fourth part : test unsetting unittype from PAM metadata
+    ds = gdal.Open('tmp/tiff_write_85_bis.tif')
+    ds.GetRasterBand(1).SetUnitType(None)
+    ds = None
+
+    try:
+        # check that there is no more any PAM file
+        os.stat('tmp/tiff_write_85_bis.tif.aux.xml')
+        gdaltest.post_reason('PAM file should be deleted')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open('tmp/tiff_write_85_bis.tif')
+    unittype = ds.GetRasterBand(1).GetUnitType()
+    if unittype != '':
+        gdaltest.post_reason('did not get expected values in PAM case (2)')
+        print(unittype)
+        return 'fail'
+    ds = None
+    
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_85_bis.tif' )
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3075,6 +3239,7 @@ gdaltest_list = [
     tiff_write_82,
     tiff_write_83,
     tiff_write_84,
+    tiff_write_85,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
