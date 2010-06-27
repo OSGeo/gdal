@@ -26,7 +26,7 @@ endif
 NON_DEFAULT_LIST = 	multireadtest$(EXE) \
 			dumpoverviews$(EXE) gdalwarpsimple$(EXE) gdalflattenmask$(EXE) \
 			gdaltorture$(EXE) gdal2ogr$(EXE) test_ogrsf$(EXE) \
-			gdalasyncread$(EXE)
+			gdalasyncread$(EXE) testreprojmulti$(EXE)
 
 default:	gdal-config-inst gdal-config $(BIN_LIST)
 
@@ -112,6 +112,9 @@ test_ogrsf$(EXE):	test_ogrsf.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdalasyncread$(EXE):	gdalasyncread.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+testreprojmulti$(EXE):	testreprojmulti.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 clean:
