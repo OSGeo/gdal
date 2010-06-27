@@ -857,10 +857,10 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 
     char szBlockName[16 + 1];
-    memset(szBlockName, 0, 16 + 1);
     if (bHasGeoTransform)
     {
         VSIFWriteL("bin\0", 4, 1, fp);
+        memset(szBlockName, 0, 16 + 1);
         strcpy(szBlockName, "georef-extents");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 34);
@@ -873,6 +873,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     if (nUTMZone != 0)
     {
         VSIFWriteL("bin\0", 4, 1, fp);
+        memset(szBlockName, 0, 16 + 1);
         strcpy(szBlockName, "georef-utm");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 2);
@@ -881,6 +882,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     if (nDatumCode != -2)
     {
         VSIFWriteL("bin\0", 4, 1, fp);
+        memset(szBlockName, 0, 16 + 1);
         strcpy(szBlockName, "georef-datum");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 2);
@@ -889,6 +891,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     if (nEPSGCode != 0)
     {
         VSIFWriteL("bin\0", 4, 1, fp);
+        memset(szBlockName, 0, 16 + 1);
         strcpy(szBlockName, "georef-epsg-prj");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 2);
