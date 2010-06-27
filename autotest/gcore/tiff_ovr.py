@@ -1366,13 +1366,7 @@ def tiff_ovr_38():
 
     file_size = os.stat('tmp/ovr38.tif')[stat.ST_SIZE]
 
-    # The file size is not the same whether the file is created with native
-    # endianness or inversed endianness. A bit strange.
-    # 17847 : on little-endian host, native endianness
-    # 17879 : on little-endian host, inverted endianness
-    # 17732 : on big-endian host, native endianness
-    # 17867 : on big-endian host, inverted endianness
-    if file_size != 17847 and file_size != 17879 and file_size != 17732 and file_size != 17867:
+    if file_size > 21000:
         print(file_size)
         gdaltest.post_reason( 'did not get expected file size.' )
         return 'fail'
