@@ -322,6 +322,7 @@ class GTiffRasterBand : public GDALPamRasterBand
     int                bHaveOffsetScale;
     double             dfOffset;
     double             dfScale;
+    CPLString          osUnitType;
 
 protected:
     GTiffDataset       *poGDS;
@@ -350,6 +351,8 @@ public:
     virtual CPLErr SetOffset( double dfNewValue );
     virtual double GetScale( int *pbSuccess = NULL );
     virtual CPLErr SetScale( double dfNewValue );
+    virtual const char* GetUnitType();
+    virtual CPLErr SetUnitType( const char *pszNewValue );
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
     virtual CPLErr  SetMetadata( char **, const char * = "" );
@@ -907,9 +910,6 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 double GTiffRasterBand::GetOffset( int *pbSuccess )
 
 {
-    if (!bHaveOffsetScale)
-        return GDALPamRasterBand::GetOffset(pbSuccess);
-
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
     return dfOffset;
@@ -937,9 +937,6 @@ CPLErr GTiffRasterBand::SetOffset( double dfNewValue )
 double GTiffRasterBand::GetScale( int *pbSuccess )
 
 {
-    if (!bHaveOffsetScale)
-        return GDALPamRasterBand::GetScale(pbSuccess);
-
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
     return dfScale;
@@ -957,6 +954,31 @@ CPLErr GTiffRasterBand::SetScale( double dfNewValue )
 
     bHaveOffsetScale = TRUE;
     dfScale = dfNewValue;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            GetUnitType()                             */
+/************************************************************************/
+
+const char* GTiffRasterBand::GetUnitType()
+
+{
+    return osUnitType.c_str();
+}
+
+/************************************************************************/
+/*                           SetUnitType()                              */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::SetUnitType( const char* pszNewValue )
+
+{
+    CPLString osNewValue(pszNewValue ? pszNewValue : "");
+    if( osNewValue.compare(osUnitType) != 0 )
+        poGDS->bMetadataChanged = TRUE;
+
+    osUnitType = osNewValue;
     return CE_None;
 }
 
@@ -4057,6 +4079,11 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
             AppendMetadataItem( &psRoot, &psTail, "SCALE", szValue, nBand, 
                                 "scale", "" );
         }
+
+        const char* pszUnitType = poBand->GetUnitType();
+        if (pszUnitType != NULL && pszUnitType[0] != '\0')
+            AppendMetadataItem( &psRoot, &psTail, "UNITTYPE", pszUnitType, nBand, 
+                                "unittype", "" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -4095,6 +4122,22 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         CPLDestroyXMLNode( psRoot );
 
         return bRet;
+    }
+    else
+    {
+        /* If we have no more metadata but it existed before, remove the GDAL_METADATA tag */
+        if( EQUAL(pszProfile,"GDALGeoTIFF") )
+        {
+            char* pszText = NULL;
+            if( TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
+            {
+#ifdef HAVE_UNSETFIELD
+                TIFFUnsetField( hTIFF, TIFFTAG_GDAL_METADATA );
+#else
+                TIFFSetField( hTIFF, TIFFTAG_GDAL_METADATA, "" );
+#endif
+            }
+        }
     }
 
     return TRUE;
@@ -4174,11 +4217,13 @@ void GTiffDataset::PushMetadataToPam()
             double dfOffset = poBand->GetOffset( &bSuccess );
             double dfScale = poBand->GetScale();
 
-            if( bSuccess && (dfOffset != 0.0 || dfScale != 1.0) )
+            if( bSuccess )
             {
                 poBand->GDALPamRasterBand::SetScale( dfScale );
                 poBand->GDALPamRasterBand::SetOffset( dfOffset );
             }
+
+            poBand->GDALPamRasterBand::SetUnitType( poBand->GetUnitType() );
         }
     }
 }
@@ -4542,6 +4587,25 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->TryLoadXML();
     poDS->ApplyPamInfo();
+
+    int i;
+    for(i=1;i<=poDS->nBands;i++)
+    {
+        GTiffRasterBand* poBand = (GTiffRasterBand*) poDS->GetRasterBand(i);
+
+        /* Load scale, offset and unittype from PAM if available */
+        if (!poBand->bHaveOffsetScale)
+        {
+            poBand->dfScale = poBand->GDALPamRasterBand::GetScale(&poBand->bHaveOffsetScale);
+            poBand->dfOffset = poBand->GDALPamRasterBand::GetOffset();
+        }
+        if (poBand->osUnitType.size() == 0)
+        {
+            const char* pszUnitType = poBand->GDALPamRasterBand::GetUnitType();
+            if (pszUnitType)
+                poBand->osUnitType = pszUnitType;
+        }
+    }
 
     poDS->bMetadataChanged = FALSE;
     poDS->bGeoTIFFInfoChanged = FALSE;
@@ -5462,6 +5526,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                         poBand->SetScale( CPLAtofM(pszUnescapedValue) );
                     else if( EQUAL(pszRole,"offset") )
                         poBand->SetOffset( CPLAtofM(pszUnescapedValue) );
+                    else if( EQUAL(pszRole,"unittype") )
+                        poBand->SetUnitType( pszUnescapedValue );
                     else
                     {
                         if( bIsXML )
