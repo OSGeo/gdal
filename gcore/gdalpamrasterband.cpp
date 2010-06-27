@@ -60,7 +60,7 @@ GDALPamRasterBand::~GDALPamRasterBand()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
+CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszUnused )
 
 {
     if( psPam == NULL )
@@ -292,7 +292,7 @@ void GDALPamRasterBand::PamClear()
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
+CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
 
 {
     PamInitialize();
@@ -766,12 +766,21 @@ CPLErr GDALPamRasterBand::SetUnitType( const char *pszNewValue )
 
     if( psPam )
     {
-        CPLFree( psPam->pszUnitType );
-        
-        if( pszNewValue == NULL )
+        if( pszNewValue == NULL || pszNewValue[0] == '\0' )
+        {
+            if (psPam->pszUnitType != NULL)
+                psPam->poParentDS->MarkPamDirty();
+            CPLFree( psPam->pszUnitType );
             psPam->pszUnitType = NULL;
+        }
         else
+        {
+            if (psPam->pszUnitType == NULL ||
+                strcmp(psPam->pszUnitType, pszNewValue) != 0)
+                psPam->poParentDS->MarkPamDirty();
+            CPLFree( psPam->pszUnitType );
             psPam->pszUnitType = CPLStrdup(pszNewValue);
+        }
 
         return CE_None;
     }

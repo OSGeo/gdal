@@ -161,7 +161,7 @@ void GDALPamDataset::FlushCache()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
+CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
 
 {
     CPLString oFmt;
@@ -269,7 +269,7 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
         if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
             continue;
 
-        psBandTree = poBand->SerializeToXML( pszVRTPath );
+        psBandTree = poBand->SerializeToXML( pszUnused );
 
         if( psBandTree != NULL )
             CPLAddXMLChild( psDSTree, psBandTree );
@@ -363,7 +363,7 @@ void GDALPamDataset::PamClear()
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
+CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
 
 {
 /* -------------------------------------------------------------------- */
@@ -489,7 +489,7 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
             continue;
 
-        poBand->XMLInit( psBandTree, pszVRTPath );
+        poBand->XMLInit( psBandTree, pszUnused );
     }
 
 /* -------------------------------------------------------------------- */
@@ -712,12 +712,16 @@ CPLErr GDALPamDataset::TrySaveXML()
 /* -------------------------------------------------------------------- */
 /*      Build the XML representation of the auxilary metadata.          */
 /* -------------------------------------------------------------------- */
-    CPLString osVRTPath = CPLGetPath(psPam->pszPamFilename);
-
-    psTree = SerializeToXML( osVRTPath );
+    psTree = SerializeToXML( NULL );
 
     if( psTree == NULL )
+    {
+        /* If we have unset all metadata, we have to delete the PAM file */
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+        VSIUnlink(psPam->pszPamFilename);
+        CPLPopErrorHandler();
         return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are working with a subdataset, we need to integrate       */
