@@ -28,8 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <string.h>
+
 #include "georaster_priv.h"
 #include "cpl_vsi.h"
+#include "cpl_error.h"
 
 //  ---------------------------------------------------------------------------
 //                                                        GeoRasterRasterBand()
@@ -370,23 +373,44 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     poDefaultRAT = poRAT->Clone();
 
     // ----------------------------------------------------------
+    // Check if RAT is just colortable and/or histogram
+    // ----------------------------------------------------------
+
+    CPLString sColName = "";
+    int  iCol = 0;
+    int  nColCount = poRAT->GetColumnCount();
+
+    for( iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
+    {
+        sColName = poRAT->GetNameOfCol( iCol );
+
+        if( EQUAL( sColName, "histogram" ) ||
+            EQUAL( sColName, "red" ) ||
+            EQUAL( sColName, "green" ) ||
+            EQUAL( sColName, "blue" ) ||
+            EQUAL( sColName, "opacity" ) )
+        {
+            nColCount--;
+        }
+    }
+
+    if( nColCount < 2 )
+    {
+        return CE_None;
+    }
+
+    // ----------------------------------------------------------
     // Format Table description
     // ----------------------------------------------------------
 
     char szName[OWTEXT];
     char szDescription[OWTEXT];
-    int  iCol = 0;
 
     strcpy( szDescription, "( ID NUMBER" );
 
     for( iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
     {
         strcpy( szName, poRAT->GetNameOfCol( iCol ) );
-
-		if( EQUAL( szName, "histogram" ) )
-		{
-			return CE_None;
-		}
 
         strcpy( szDescription, CPLSPrintf( "%s, %s",
             szDescription, szName ) );
@@ -403,8 +427,8 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
         {
-            strcpy( szDescription, CPLSPrintf( "%s VARCHAR2(128)",
-                szDescription ) );
+            strcpy( szDescription, CPLSPrintf( "%s VARCHAR2(%d)",
+                szDescription, MAXLEN_VATSTR) );
         }
     }
     strcpy( szDescription, CPLSPrintf( "%s )", szDescription ) );
@@ -417,9 +441,9 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     {
         pszVATName = CPLStrdup( CPLSPrintf(
             "RAT_%s_%d_%d", 
-			poGeoRaster->sDataTable.c_str(),
-			poGeoRaster->nRasterId,
-			nBand ) );
+            poGeoRaster->sDataTable.c_str(),
+            poGeoRaster->nRasterId,
+            nBand ) );
     }
 
     // ----------------------------------------------------------
@@ -459,68 +483,131 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     int iEntry       = 0;
     int nEntryCount  = poRAT->GetRowCount();
     int nColunsCount = poRAT->GetColumnCount();
+    int nVATStrSize  = MAXLEN_VATSTR * poGeoRaster->poConnection->GetCharSize();
 
-    char szInsert[OWTEXT];
+    // ---------------------------
+    // Allocate array of buffers
+    // ---------------------------
 
-    CPLString osInserts = 
-        "DECLARE\n"
-        "  GR1  SDO_GEORASTER   := NULL;\n"
-        "BEGIN\n";
+    void** papWriteFields = (void**) VSIMalloc2(sizeof(void*), nColunsCount + 1);
+
+    papWriteFields[0] = 
+        (void*) VSIMalloc3(sizeof(int), sizeof(int), nEntryCount ); // ID field
+
+    for(iCol = 0; iCol < nColunsCount; iCol++)
+    {
+        if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
+        {
+            papWriteFields[iCol + 1] =
+                (void*) VSIMalloc3(sizeof(char), nVATStrSize, nEntryCount );
+        }
+        if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer )
+        {
+            papWriteFields[iCol + 1] =
+                (void*) VSIMalloc3(sizeof(int), sizeof(int), nEntryCount );
+        }
+        if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
+        {
+            papWriteFields[iCol + 1] =
+                 (void*) VSIMalloc3(sizeof(double), sizeof(double), nEntryCount );
+        }
+    }
+    
+    // ---------------------------
+    // Load data to buffers
+    // ---------------------------
 
     for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
     {
-        szInsert[0] = '\0';
+        ((int *)(papWriteFields[0]))[iEntry] = iEntry; // ID field
 
-        strcat( szInsert, CPLSPrintf ( "  INSERT INTO %s VALUES (%d", 
-            pszVATName, iEntry ) );
-
-        for( iCol = 0; iCol < nColunsCount; iCol++ )
+        for(iCol = 0; iCol < nColunsCount; iCol++)
         {
             if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
             {
-                strcat( szInsert, CPLSPrintf ( ", '%s'", 
-                    poRAT->GetValueAsString( iEntry, iCol ) ) );
+
+                int nOffset = iEntry * nVATStrSize;
+                char* pszTarget = ((char*)papWriteFields[iCol + 1]) + nOffset;
+                const char *pszStrValue = poRAT->GetValueAsString(iEntry, iCol);
+                int nLen = strlen( pszStrValue );
+                nLen = nLen > ( nVATStrSize - 1 ) ? nVATStrSize : ( nVATStrSize - 1 );
+                strncpy( pszTarget, pszStrValue, nLen );
+                pszTarget[nLen] = '\0';
             }
-            if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer ||
-                poRAT->GetTypeOfCol( iCol ) == GFT_Real )
+            if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer )
             {
-                strcat( szInsert, CPLSPrintf ( ", %s", 
-                    poRAT->GetValueAsString( iEntry, iCol ) ) );
+                ((int *)(papWriteFields[iCol + 1]))[iEntry] =
+                    poRAT->GetValueAsInt(iEntry, iCol);
+            }
+            if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
+            {
+                ((double *)(papWriteFields[iCol]))[iEntry + 1] =
+                    poRAT->GetValueAsDouble(iEntry, iCol);
             }
         }
-
-		strcat( szInsert, ");\n" );
-		osInserts += szInsert;
     }
 
-	osInserts += CPLSPrintf(
-        "  SELECT %s INTO GR1 FROM %s T WHERE\n"
-        "    T.%s.RasterDataTable = '%s' AND\n"
-        "    T.%s.RasterId = %d FOR UPDATE;\n"
-        "  SDO_GEOR.setVAT(GR1, %d, '%s');\n"
-        "  UPDATE %s T SET %s = GR1 WHERE\n"
-        "    T.%s.RasterDataTable = '%s' AND\n"
-        "    T.%s.RasterId = %d;\n"
-        "END;",
-        poGeoRaster->sColumn.c_str(), poGeoRaster->sTable.c_str(),
-        poGeoRaster->sColumn.c_str(), poGeoRaster->sDataTable.c_str(),
-	poGeoRaster->sColumn.c_str(), poGeoRaster->nRasterId,
-        nBand, pszVATName,
-        poGeoRaster->sTable.c_str(),  poGeoRaster->sColumn.c_str(),
-        poGeoRaster->sColumn.c_str(), poGeoRaster->sDataTable.c_str(),
-	poGeoRaster->sColumn.c_str(), poGeoRaster->nRasterId  );
+    // ---------------------------
+    // Prepare insert statement
+    // ---------------------------
 
-    poStmt = poGeoRaster->poConnection->CreateStatement( osInserts.c_str() );
-
-	if( ! poStmt->Execute() )
+    CPLString osInsert = CPLSPrintf( "INSERT INTO %s VALUES (", pszVATName );
+    
+    for( iCol = 0; iCol < ( nColunsCount + 1); iCol++ )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Insert/registering VAT Error!" );
-        return CE_Failure;
+        if( iCol > 0 )
+        {
+            osInsert.append(", ");
+        }
+        osInsert.append( CPLSPrintf(":%d", iCol + 1) );
     }
+    osInsert.append(")");
+
+    poStmt = poGeoRaster->poConnection->CreateStatement( osInsert.c_str() );
+
+    // ---------------------------
+    // Bind buffers to columns
+    // ---------------------------
+
+    poStmt->Bind((int*) papWriteFields[0]); // ID field
+    
+    for(iCol = 0; iCol < nColunsCount; iCol++)
+    {
+        if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
+        {
+            poStmt->Bind( (char*) papWriteFields[iCol + 1], nVATStrSize );
+        }
+        if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer )
+        {
+            poStmt->Bind( (int*) papWriteFields[iCol + 1]);
+        }
+        if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
+        {
+            poStmt->Bind( (double*) papWriteFields[iCol + 1]);
+        }
+    }
+
+    if( poStmt->Execute( iEntry ) )
+    {
+        poGDS->poGeoRaster->SetVAT( nBand, pszVATName );
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Insert VAT Error!" );
+    }
+
+    // ---------------------------
+    // Clean up
+    // ---------------------------
+
+    for(iCol = 0; iCol < ( nColunsCount + 1); iCol++)
+    {
+        CPLFree( papWriteFields[iCol] );
+    }
+    
+    CPLFree( papWriteFields );
 
     delete poStmt;
-
-    poGDS->poGeoRaster->SetVAT( nBand, pszVATName );
 
     return CE_None;
 }

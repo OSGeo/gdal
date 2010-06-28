@@ -58,6 +58,10 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
 //  System constants
 //  ---------------------------------------------------------------------------
 
+//  VAT maximum string len
+
+#define MAXLEN_VATSTR 128
+
 //  Geographic system without EPSG parameters
 
 #define UNKNOWN_CRS 999999
@@ -392,6 +396,7 @@ public:
     CPLString           sDataTable;
     int                 nRasterId;
     CPLString           sWhere;
+    CPLString           sValueAttributeTab;
 
     int                 nSRID;
     CPLXMLNode*         phMetadata;
