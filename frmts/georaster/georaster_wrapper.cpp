@@ -85,6 +85,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     nBlockBytes         = 0;
     bFlushBlock         = false;
     bUniqueFound        = false;
+    sValueAttributeTab  = "";
 }
 
 //  ---------------------------------------------------------------------------
@@ -2025,14 +2026,14 @@ bool GeoRasterWrapper::FlushBlock( void )
 
     CPLDebug( "GEOR", "FlushBlock = %ld; Size = %ld", nCurrentBlock, nFlushBlockSize );
 
-    bFlushBlock = false;
-
     if( ! poBlockStmt->WriteBlob( pahLocator[nCurrentBlock],
                                   pabyFlushBuffer,
                                   nFlushBlockSize ) )
     {
         return false;
     }
+
+    bFlushBlock = false;
 
     bFlushMetadata = true;
 
@@ -2115,6 +2116,12 @@ bool GeoRasterWrapper::SetVAT( int nBand, const char* pszName )
         }
 
         CPLCreateXMLElementAndValue(psLayers, "vatTableName", pszName );
+
+        // ------------------------------------------------------------
+        // To be updated at Flush Metadata in SDO_GEOR.setVAT()
+        // ------------------------------------------------------------
+
+        sValueAttributeTab = pszName;
 
         return true;
     }
@@ -2280,6 +2287,7 @@ bool GeoRasterWrapper::FlushMetadata()
         "DECLARE\n"
         "  GR1  sdo_georaster;\n"
         "  SRID number;\n"
+        "  VAT varchar2(128);\n"
         "BEGIN\n"
         "\n"
         "  SELECT %s INTO GR1 FROM %s%s T WHERE %s FOR UPDATE;\n"
@@ -2300,6 +2308,11 @@ bool GeoRasterWrapper::FlushMetadata()
         "    GR1.spatialExtent := SDO_GEOR.generateSpatialExtent( GR1 );\n"
         "  END IF;\n"
         "\n"
+        "  VAT := '%s';\n"
+        "  IF VAT != '' THEN\n"
+        "    SDO_GEOR.setVAT(GR1, 1, VAT);\n"
+        "  END IF;\n"
+        "\n"
         "  UPDATE %s%s T SET %s = GR1 WHERE %s;\n"
         "\n"
         "  COMMIT;\n"
@@ -2311,6 +2324,7 @@ bool GeoRasterWrapper::FlushMetadata()
         CPLSerializeXMLTree( phMetadata ),
         UNKNOWN_CRS,
         UNKNOWN_CRS,
+        sValueAttributeTab.c_str(),
         sSchema.c_str(),
         sTable.c_str(),
         sColumn.c_str(),
