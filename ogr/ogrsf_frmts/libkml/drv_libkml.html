@@ -117,6 +117,13 @@
     <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#placemark">
     &lt;Placemark&gt;</a>.
   </p>
+  <p>
+     When reading a kml feature and the enviroment variable LIBKML_RESOLVE_STYLE
+     is set to yes, styleurls are looked up in the style tables and the features
+     style string is set to the style from the table. This is to allow reading 
+     of shared styles by applications, like mapserver, that do not read style
+     tables.
+  </p>
   
   <h2>Fields</h2>
   
