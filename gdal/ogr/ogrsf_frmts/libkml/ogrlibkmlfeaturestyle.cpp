@@ -229,35 +229,68 @@ void kml2featurestyle (
         if ( *pszTmp == '#'
              && ( poOgrSTBLLayer = poOgrLayer->GetStyleTable (  ) ) )
             pszTest = poOgrSTBLLayer->Find ( pszTmp + 1 );
-
+        
         if ( pszTest ) {
 
-            *pszTmp = '@';
-            poOgrFeat->SetStyleStringDirectly ( pszTmp );
+            /***** should we resolve the style *****/
+            
+            const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
+
+            if (EQUAL(pszResolve, "yes")) {
+                poOgrFeat->SetStyleString ( pszTest );
+            }
+
+            else {
+                *pszTmp = '@';
+
+                poOgrFeat->SetStyleStringDirectly ( pszTmp );
+
+            }
 
         }
 
-        /***** is it a dataset style? *****/
-
-        else if ( !strncmp
-                  ( pszTmp, poOgrDS->GetStylePath (  ),
-                    strlen ( poOgrDS->GetStylePath (  ) ) ) ) {
-            int nPathLen = strlen ( poOgrDS->GetStylePath (  ) );
-
-            pszTmp[nPathLen] = '@';
-            poOgrFeat->SetStyleString ( pszTmp + nPathLen );
-
-            CPLFree ( pszTmp );
-
-        }
-
-        /**** its someplace else *****/
+        /***** not a layer style *****/
+        
 
         else {
 
-            //todo Handle out of DS style tables 
+            /***** is it a dataset style? *****/
 
+            int nPathLen = strlen ( poOgrDS->GetStylePath (  ) );
+             
+            if ( !strncmp ( pszTmp, poOgrDS->GetStylePath (  ), nPathLen )) {
+                
+
+                /***** should we resolve the style *****/
+            
+                const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
+
+                if ( EQUAL(pszResolve, "yes") &&
+                     ( poOgrSTBLLayer = poOgrDS->GetStyleTable (  ) ) &&
+                     ( pszTest = poOgrSTBLLayer->Find ( pszTmp + nPathLen + 1) )
+                    ) {
+                    
+                    poOgrFeat->SetStyleString ( pszTest );
+                }
+
+                else {
+
+                    pszTmp[nPathLen] = '@';
+                    poOgrFeat->SetStyleString ( pszTmp + nPathLen );
+                }
+
+                CPLFree ( pszTmp );
+            }
+        
+            /**** its someplace else *****/
+
+            else {
+
+//todo Handle out of DS style tables 
+
+            }
         }
+
     }
 
     /***** does the placemark have a style selector *****/
