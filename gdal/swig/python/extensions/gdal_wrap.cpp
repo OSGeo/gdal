@@ -2835,27 +2835,43 @@ typedef int FALSE_IS_ERR;
 
 
 int bUseExceptions=0;
+CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
 void CPL_STDCALL 
-VeryQuietErrorHandler(CPLErr eclass, int code, const char *msg ) 
+PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg ) 
 {
+  /* 
+  ** Generally we want to supress error reporting if we have exceptions
+  ** enabled as the error message will be in the exception thrown in 
+  ** Python.  
+  */
+
   /* If the error class is CE_Fatal, we want to have a message issued
      because the CPL support code does an abort() before any exception
      can be generated */
   if (eclass == CE_Fatal ) {
-    CPLDefaultErrorHandler(eclass, code, msg );
+    pfnPreviousHandler(eclass, code, msg );
+  }
+
+  /*
+  ** We do not want to interfere with warnings or debug messages since
+  ** they won't be translated into exceptions.
+  */
+  if (eclass == CE_Warning || eclass == CE_Debug ) {
+    pfnPreviousHandler(eclass, code, msg );
   }
 }
 
 
 void UseExceptions() {
   bUseExceptions = 1;
-  CPLSetErrorHandler( (CPLErrorHandler) VeryQuietErrorHandler );
+  pfnPreviousHandler = 
+    CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
 }
 
 void DontUseExceptions() {
   bUseExceptions = 0;
-  CPLSetErrorHandler( CPLDefaultErrorHandler );
+  CPLSetErrorHandler( pfnPreviousHandler );
 }
 
 
@@ -4390,6 +4406,8 @@ SWIGINTERN int GDALRasterAttributeTableShadow_GetRowOfValue(GDALRasterAttributeT
         return GDALRATGetRowOfValue( self, dfValue );
     }
 
+#include "gdalgrid.h"
+
 #ifdef DEBUG 
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
@@ -4601,6 +4619,40 @@ int  RegenerateOverview( GDALRasterBandShadow *srcBand,
 
     return GDALRegenerateOverviews( srcBand, 1, &overviewBand,
     	   			    resampling ? resampling : "average", callback, callback_data );
+}
+
+
+int ContourGenerate( GDALRasterBandShadow *srcBand,
+                     double dfContourInterval,
+                     double dfContourBase,
+                     int nFixedLevelCount,
+                     double *padfFixedLevels,
+                     int bUseNoData,
+                     double dfNoDataValue,
+                     OGRLayerShadow* hLayer, 
+                     int iIDField,
+                     int iElevField,
+                     GDALProgressFunc callback = NULL,
+                     void* callback_data = NULL)
+{
+    CPLErr eErr;
+
+    CPLErrorReset();
+
+    eErr =  GDALContourGenerate( srcBand,
+                                 dfContourInterval,
+                                 dfContourBase,
+                                 nFixedLevelCount,
+                                 padfFixedLevels,
+                                 bUseNoData,
+                                 dfNoDataValue,
+                                 hLayer,
+                                 iIDField,
+                                 iElevField,
+                                 callback,
+                                 callback_data);
+
+    return eErr;
 }
 
 
@@ -16909,6 +16961,202 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_ContourGenerate(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  int arg4 ;
+  double *arg5 = (double *) 0 ;
+  int arg6 ;
+  double arg7 ;
+  OGRLayerShadow *arg8 = (OGRLayerShadow *) 0 ;
+  int arg9 ;
+  int arg10 ;
+  GDALProgressFunc arg11 = (GDALProgressFunc) NULL ;
+  void *arg12 = (void *) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  int val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  void *argp8 = 0 ;
+  int res8 = 0 ;
+  int val9 ;
+  int ecode9 = 0 ;
+  int val10 ;
+  int ecode10 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
+  PyObject * obj9 = 0 ;
+  PyObject * obj10 = 0 ;
+  char *  kwnames[] = {
+    (char *) "srcBand",(char *) "dfContourInterval",(char *) "dfContourBase",(char *) "nFixedLevelCount",(char *) "bUseNoData",(char *) "dfNoDataValue",(char *) "hLayer",(char *) "iIDField",(char *) "iElevField",(char *) "callback",(char *) "callback_data", NULL 
+  };
+  int result;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg12 = psProgressInfo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOOOO|OO:ContourGenerate",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ContourGenerate" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ContourGenerate" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "ContourGenerate" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  {
+    /* %typemap(in,numinputs=1) (int nList, double* pList)*/
+    /* check if is List */
+    if ( !PySequence_Check(obj3) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg4 = PySequence_Size(obj3);
+    arg5 = (double*) malloc(arg4*sizeof(double));
+    for( int i = 0; i<arg4; i++ ) {
+      PyObject *o = PySequence_GetItem(obj3,i);
+      if ( !PyArg_Parse(o,"d",&arg5[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not a number");
+        Py_DECREF(o);
+        SWIG_fail;
+      }
+      Py_DECREF(o);
+    }
+  }
+  ecode6 = SWIG_AsVal_int(obj4, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "ContourGenerate" "', argument " "6"" of type '" "int""'");
+  } 
+  arg6 = static_cast< int >(val6);
+  ecode7 = SWIG_AsVal_double(obj5, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "ContourGenerate" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  res8 = SWIG_ConvertPtr(obj6, &argp8,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res8)) {
+    SWIG_exception_fail(SWIG_ArgError(res8), "in method '" "ContourGenerate" "', argument " "8"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg8 = reinterpret_cast< OGRLayerShadow * >(argp8);
+  ecode9 = SWIG_AsVal_int(obj7, &val9);
+  if (!SWIG_IsOK(ecode9)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "ContourGenerate" "', argument " "9"" of type '" "int""'");
+  } 
+  arg9 = static_cast< int >(val9);
+  ecode10 = SWIG_AsVal_int(obj8, &val10);
+  if (!SWIG_IsOK(ecode10)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode10), "in method '" "ContourGenerate" "', argument " "10"" of type '" "int""'");
+  } 
+  arg10 = static_cast< int >(val10);
+  if (obj9) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj9 && obj9 != Py_None ) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj9, 
+          (void**)&cbfunction, 
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int, 
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg11 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj9)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj9;
+          arg11 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj10) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj10 ;
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if (!arg8) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    result = (int)ContourGenerate(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (int nList, double* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (int nList, double* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_AutoCreateWarpedVRT(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
@@ -18777,6 +19025,13 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"RegenerateOverview", (PyCFunction) _wrap_RegenerateOverview, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"RegenerateOverview(Band srcBand, Band overviewBand, char resampling = \"average\", \n"
 		"    GDALProgressFunc callback = None, \n"
+		"    void callback_data = None) -> int\n"
+		""},
+	 { (char *)"ContourGenerate", (PyCFunction) _wrap_ContourGenerate, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
+		"ContourGenerate(Band srcBand, double dfContourInterval, double dfContourBase, \n"
+		"    int nFixedLevelCount, int bUseNoData, \n"
+		"    double dfNoDataValue, OGRLayerShadow hLayer, \n"
+		"    int iIDField, int iElevField, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> int\n"
 		""},
 	 { (char *)"AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT, METH_VARARGS, (char *)"\n"

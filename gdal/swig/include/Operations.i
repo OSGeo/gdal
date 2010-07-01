@@ -459,17 +459,20 @@ int wrapper_GridCreate( char* algorithmOptions,
 /*                          ContourGenerate()                           */
 /************************************************************************/
 
-%apply Pointer NONNULL {GDALRasterBandShadow *srcBand};
-#ifdef SWIGJAVA
+#ifndef SWIGJAVA
+%feature( "kwargs" ) ContourGenerate;
+#endif
+%apply Pointer NONNULL {GDALRasterBandShadow *srcBand, OGRLayerShadow* hLayer};
+%apply (int nList, double *pList ) { (int nFixedLevelCount, double *padfFixedLevels ) };
 %inline %{
-int ContourGenerate( GDALRasterBandH *srcBand,
+int ContourGenerate( GDALRasterBandShadow *srcBand,
                      double dfContourInterval,
                      double dfContourBase,
                      int nFixedLevelCount,
                      double *padfFixedLevels,
                      int bUseNoData,
                      double dfNoDataValue,
-                     void *hLayer, 
+                     OGRLayerShadow* hLayer, 
                      int iIDField,
                      int iElevField,
                      GDALProgressFunc callback = NULL,
@@ -495,8 +498,9 @@ int ContourGenerate( GDALRasterBandH *srcBand,
     return eErr;
 }
 %}
-#endif
 %clear GDALRasterBandShadow *srcBand;
+%clear OGRLayerShadow* hLayer;
+%clear  (int nFixedLevelCount, double *padfFixedLevels );
 
 /************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
