@@ -222,7 +222,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( pImage != NULL )
         {
             if( eDataType == GDT_Float32 )
-                ((float *) pImage)[iPixel] = (float) atof(szToken);
+                ((float *) pImage)[iPixel] = (float) CPLAtofM(szToken);
             else
                 ((GInt32 *) pImage)[iPixel] = (GInt32) atoi(szToken);
         }
@@ -456,8 +456,8 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        dfCellDX = atof( papszTokens[iDX+1] );
-        dfCellDY = atof( papszTokens[iDY+1] );
+        dfCellDX = CPLAtofM( papszTokens[iDX+1] );
+        dfCellDY = CPLAtofM( papszTokens[iDY+1] );
     }    
     else
     {
@@ -467,17 +467,17 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
             delete poDS;
             return NULL;
         }
-        dfCellDX = dfCellDY = atof( papszTokens[i + 1] );
+        dfCellDX = dfCellDY = CPLAtofM( papszTokens[i + 1] );
     }
 
     if ((i = CSLFindString( papszTokens, "xllcorner" )) >= 0 &&
         (j = CSLFindString( papszTokens, "yllcorner" )) >= 0 &&
         i + 1 < nTokens && j + 1 < nTokens)
     {
-        poDS->adfGeoTransform[0] = atof( papszTokens[i + 1] );
+        poDS->adfGeoTransform[0] = CPLAtofM( papszTokens[i + 1] );
         poDS->adfGeoTransform[1] = dfCellDX;
         poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = atof( papszTokens[j + 1] )
+        poDS->adfGeoTransform[3] = CPLAtofM( papszTokens[j + 1] )
             + poDS->nRasterYSize * dfCellDY;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - dfCellDY;
@@ -488,10 +488,10 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
 
-        poDS->adfGeoTransform[0] = atof(papszTokens[i + 1]) - 0.5 * dfCellDX;
+        poDS->adfGeoTransform[0] = CPLAtofM(papszTokens[i + 1]) - 0.5 * dfCellDX;
         poDS->adfGeoTransform[1] = dfCellDX;
         poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = atof( papszTokens[j + 1] )
+        poDS->adfGeoTransform[3] = CPLAtofM( papszTokens[j + 1] )
             - 0.5 * dfCellDY
             + poDS->nRasterYSize * dfCellDY;
         poDS->adfGeoTransform[4] = 0.0;
@@ -513,8 +513,9 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszNoData = papszTokens[i + 1];
 
         poDS->bNoDataSet = TRUE;
-        poDS->dfNoDataValue = atof(pszNoData);
+        poDS->dfNoDataValue = CPLAtofM(pszNoData);
         if( strchr( pszNoData, '.' ) != NULL ||
+            strchr( pszNoData, ',' ) != NULL ||
             INT_MIN > poDS->dfNoDataValue || poDS->dfNoDataValue > INT_MAX )
         {
             eDataType = GDT_Float32;
@@ -590,7 +591,8 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
             VSIFReadL( pabyChunk, sizeof(GByte), nChunkSize, poDS->fp );
             CPLAssert( pabyChunk[nChunkSize] == '\0' );
 
-            if( strchr( (const char *)pabyChunk, '.' ) != NULL )
+            if( strchr( (const char *)pabyChunk, '.' ) != NULL ||
+                strchr( (const char *)pabyChunk, ',' ) != NULL )
             {
                 eDataType = GDT_Float32;
                 break;
