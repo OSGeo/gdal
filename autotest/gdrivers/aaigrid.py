@@ -74,6 +74,36 @@ def aaigrid_2():
 
     return 'success'
 
+
+###############################################################################
+# Test reading a file where decimal separator is comma (#3668)
+
+def aaigrid_comma():
+
+    ds = gdal.Open( 'data/pixel_per_line_comma.asc' )
+
+    gt = ds.GetGeoTransform()
+
+    if gt[0] != 100000.0 or gt[1] != 50 or gt[2] != 0 \
+       or gt[3] != 650600.0 or gt[4] != 0 or gt[5] != -50:
+        gdaltest.post_reason( 'Aaigrid geotransform wrong.' )
+        return 'fail'
+
+    band1 = ds.GetRasterBand(1)
+    if band1.Checksum() != 1123:
+        gdaltest.post_reason( 'Did not get expected nodata value.' )
+        return 'fail'
+
+    if band1.GetNoDataValue() != -99999:
+        gdaltest.post_reason( 'Grid NODATA value wrong or missing.' )
+        return 'fail'
+
+    if band1.DataType != gdal.GDT_Float32:
+        gdaltest.post_reason( 'Data type is not Float32!' )
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Create simple copy and check.
 
@@ -207,6 +237,7 @@ def aaigrid_9():
 gdaltest_list = [
     aaigrid_1,
     aaigrid_2,
+    aaigrid_comma,
     aaigrid_3,
     aaigrid_4,
     aaigrid_5,
