@@ -2859,27 +2859,43 @@ typedef void OSRCoordinateTransformationShadow;
 
 
 int bUseExceptions=0;
+CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
 void CPL_STDCALL 
-VeryQuietErrorHandler(CPLErr eclass, int code, const char *msg ) 
+PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg ) 
 {
+  /* 
+  ** Generally we want to supress error reporting if we have exceptions
+  ** enabled as the error message will be in the exception thrown in 
+  ** Python.  
+  */
+
   /* If the error class is CE_Fatal, we want to have a message issued
      because the CPL support code does an abort() before any exception
      can be generated */
   if (eclass == CE_Fatal ) {
-    CPLDefaultErrorHandler(eclass, code, msg );
+    pfnPreviousHandler(eclass, code, msg );
+  }
+
+  /*
+  ** We do not want to interfere with warnings or debug messages since
+  ** they won't be translated into exceptions.
+  */
+  if (eclass == CE_Warning || eclass == CE_Debug ) {
+    pfnPreviousHandler(eclass, code, msg );
   }
 }
 
 
 void UseExceptions() {
   bUseExceptions = 1;
-  CPLSetErrorHandler( (CPLErrorHandler) VeryQuietErrorHandler );
+  pfnPreviousHandler = 
+    CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
 }
 
 void DontUseExceptions() {
   bUseExceptions = 0;
-  CPLSetErrorHandler( CPLDefaultErrorHandler );
+  CPLSetErrorHandler( pfnPreviousHandler );
 }
 
 

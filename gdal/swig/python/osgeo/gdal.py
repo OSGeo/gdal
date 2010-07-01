@@ -1232,6 +1232,17 @@ def RegenerateOverview(*args, **kwargs):
   return _gdal.RegenerateOverview(*args, **kwargs)
 RegenerateOverview = _gdal.RegenerateOverview
 
+def ContourGenerate(*args, **kwargs):
+  """
+    ContourGenerate(Band srcBand, double dfContourInterval, double dfContourBase, 
+        int nFixedLevelCount, int bUseNoData, 
+        double dfNoDataValue, OGRLayerShadow hLayer, 
+        int iIDField, int iElevField, GDALProgressFunc callback = None, 
+        void callback_data = None) -> int
+    """
+  return _gdal.ContourGenerate(*args, **kwargs)
+ContourGenerate = _gdal.ContourGenerate
+
 def AutoCreateWarpedVRT(*args):
   """
     AutoCreateWarpedVRT(Dataset src_ds, char src_wkt = None, char dst_wkt = None, 
