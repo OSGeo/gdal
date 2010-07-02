@@ -591,11 +591,14 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
             VSIFReadL( pabyChunk, sizeof(GByte), nChunkSize, poDS->fp );
             CPLAssert( pabyChunk[nChunkSize] == '\0' );
 
-            if( strchr( (const char *)pabyChunk, '.' ) != NULL ||
-                strchr( (const char *)pabyChunk, ',' ) != NULL )
+            for(i = 0; i < (int)nChunkSize; i++)
             {
-                eDataType = GDT_Float32;
-                break;
+                GByte ch = pabyChunk[i];
+                if (ch == '.' || ch == ',' || ch == 'e' || ch == 'E')
+                {
+                    eDataType = GDT_Float32;
+                    break;
+                }
             }
         }
 
