@@ -292,7 +292,7 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     if( poTransfer->GetLayerType(iLayer) == SLTPoly )
     {
-        ((SDTSPolygonReader *) poReader)->AssembleRings(poTransfer);
+        ((SDTSPolygonReader *) poReader)->AssembleRings(poTransfer,iLayer);
     }
 
 /* -------------------------------------------------------------------- */

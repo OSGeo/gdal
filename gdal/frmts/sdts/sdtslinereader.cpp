@@ -263,10 +263,13 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
 
   @param poTransfer the SDTSTransfer of this SDTSLineReader, and from
   which the related SDTSPolygonReader will be instantiated.
+  @param iTargetPolyLayer the polygon reader instance number, used to avoid 
+  processing lines for other layers.
 
 */
 
-void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer )
+void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer, 
+                                       int iTargetPolyLayer )
 
 {
 /* -------------------------------------------------------------------- */
@@ -313,6 +316,9 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer )
             }
 
             if( iPolyLayer == -1 )
+                continue;
+
+            if( iPolyLayer != iTargetPolyLayer )
                 continue;
 
             poPolyReader = (SDTSPolygonReader *)
