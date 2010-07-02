@@ -326,7 +326,7 @@ class SDTSLineReader : public SDTSIndexedReader
     
     SDTSFeature *GetNextRawFeature( void ) { return GetNextLine(); }
 
-    void        AttachToPolygons( SDTSTransfer * );
+    void        AttachToPolygons( SDTSTransfer *, int iPolyLayer  );
 };
 
 /************************************************************************/
@@ -527,7 +527,7 @@ class SDTSPolygonReader : public SDTSIndexedReader
 
     SDTSFeature *GetNextRawFeature( void ) { return GetNextPolygon(); }
 
-    void        AssembleRings( SDTSTransfer * );
+    void        AssembleRings( SDTSTransfer *, int iPolyLayer );
 };
 
 /************************************************************************/
