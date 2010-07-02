@@ -4,8 +4,8 @@ $Id$
 Updating libpng in GDAL tree should follow update of zlib library in frmts/zlib.
 *****************
 
-libpng 1.2.35 is the official PNG reference library.
+libpng 1.2.44 is the official PNG reference library.
 It supports almost all PNG features, is extensible,
-and has been extensively tested for over 13 years.
+and has been extensively tested for over 15 years.
 
 http://www.libpng.org
