@@ -552,7 +552,7 @@ static void WritePolygonShapefile( const char * pszShapefile,
 /* -------------------------------------------------------------------- */
 /*      Assemble polygon geometries from all the line layers.           */
 /* -------------------------------------------------------------------- */
-    poPolyReader->AssembleRings( poTransfer );
+    poPolyReader->AssembleRings( poTransfer, poTransfer->FindLayer(pszMODN) );
     
 /* -------------------------------------------------------------------- */
 /*      Create the Shapefile.                                           */

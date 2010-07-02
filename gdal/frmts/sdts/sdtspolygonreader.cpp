@@ -577,9 +577,12 @@ SDTSRawPolygon * SDTSPolygonReader::GetNextPolygon()
  *
  * @param poTransfer the SDTSTransfer that this reader is a part of.  Used
  * to get a list of line layers that might be needed.
+ * @param iPolyLayer the polygon reader instance number, used to avoid processing
+ * lines for other layers.
  */
 
-void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer )
+void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer, 
+                                       int iPolyLayer )
 
 {
     if( bRingsAssembled )
@@ -607,7 +610,7 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer )
         if( poLineReader == NULL )
             continue;
 
-        poLineReader->AttachToPolygons( poTransfer );
+        poLineReader->AttachToPolygons( poTransfer, iPolyLayer );
         poLineReader->Rewind();
     }
 
