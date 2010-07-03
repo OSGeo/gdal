@@ -2105,11 +2105,14 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
                                                        char** papszOptions )
 {
     OGRGeometry* poDstGeom = poSrcGeom->clone();
-    OGRErr eErr = poDstGeom->transform(poCT);
-    if (eErr != OGRERR_NONE)
+    if (poCT != NULL)
     {
-        delete poDstGeom;
-        return NULL;
+        OGRErr eErr = poDstGeom->transform(poCT);
+        if (eErr != OGRERR_NONE)
+        {
+            delete poDstGeom;
+            return NULL;
+        }
     }
     
     if (CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")))
