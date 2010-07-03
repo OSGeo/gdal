@@ -236,6 +236,13 @@
     and default to GeometryCollection in case of mixed content.
   </p>
   
+  <p>
+    Sometimes kml geometry will span the dateline, In applications like qgis or
+    mapserver this will create horizontal lines all the way around the globe.
+    Setting the enviroment variable LIBKML_WRAPDATELINE to "yes" will cause the
+    libkml driver to split the geometry at the dateline when read.
+  </p>
+  
   <h2>Example</h2>
  
   <p>
