@@ -1110,6 +1110,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         {
             fprintf( stderr, 
                      "DeleteLayer() failed when overwrite requested.\n" );
+            CSLDestroy(papszTransformOptions);
             return FALSE;
         }
         poDstLayer = NULL;
@@ -1138,7 +1139,10 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                                            papszLCO );
 
         if( poDstLayer == NULL )
+        {
+            CSLDestroy(papszTransformOptions);
             return FALSE;
+        }
 
         bAppend = FALSE;
     }
@@ -1242,6 +1246,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 if( !bSkipFailures )
                 {
                     VSIFree(panMap);
+                    CSLDestroy(papszTransformOptions);
                     return FALSE;
                 }
             }
@@ -1303,6 +1308,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         {
             fprintf( stderr, "poDstFDefn == NULL.\n" );
             VSIFree(panMap);
+            CSLDestroy(papszTransformOptions);
             return FALSE;
         }
         
@@ -1367,6 +1373,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             OGRFeature::DestroyFeature( poFeature );
             OGRFeature::DestroyFeature( poDstFeature );
             VSIFree(panMap);
+            CSLDestroy(papszTransformOptions);
             return FALSE;
         }
 
@@ -1407,6 +1414,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                         OGRFeature::DestroyFeature( poFeature );
                         OGRFeature::DestroyFeature( poDstFeature );
                         VSIFree(panMap);
+                        CSLDestroy(papszTransformOptions);
                         return FALSE;
                     }
                 }
@@ -1462,6 +1470,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             OGRFeature::DestroyFeature( poFeature );
             OGRFeature::DestroyFeature( poDstFeature );
             VSIFree(panMap);
+            CSLDestroy(papszTransformOptions);
             return FALSE;
         }
 
@@ -1484,6 +1493,7 @@ end_loop:
     OGRCoordinateTransformation::DestroyCT(poCT);
     
     VSIFree(panMap);
+    CSLDestroy(papszTransformOptions);
 
     return TRUE;
 }
