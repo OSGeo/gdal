@@ -713,6 +713,32 @@ def warp_23():
     return ret
 
 ###############################################################################
+# Test fix for #3658 (numerical imprecision with Ubuntu 8.10 GCC 4.4.3 -O2 leading to upper
+# left pixel being not set in GWKBilinearResample() case)
+
+def warp_24():
+
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -r bilinear data/test3658.tif tmp/test3658.tif')
+    
+    ds_ref = gdal.Open('data/test3658.tif')
+    cs_ref = ds_ref.GetRasterBand(1).Checksum()
+    ds_ref = None
+    ds = gdal.Open('tmp/test3658.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    os.remove('tmp/test3658.tif')
+
+    if cs != cs_ref:
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -742,7 +768,8 @@ gdaltest_list = [
     warp_20,
     warp_21,
     warp_22,
-    warp_23
+    warp_23,
+    warp_24
     ]
 
 if __name__ == '__main__':
