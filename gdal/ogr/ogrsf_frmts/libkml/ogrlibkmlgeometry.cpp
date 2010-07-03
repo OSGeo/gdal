@@ -27,7 +27,7 @@
  *****************************************************************************/
 
 #include <ogr_geometry.h>
-
+#include "ogr_p.h"
 #include <kml/dom.h>
 
 using kmldom::KmlFactory;
@@ -326,7 +326,7 @@ ElementPtr geom2kml (
 }
 
 /******************************************************************************
- function to read a kml geometry and translate to ogr
+ recursive function to read a kml geometry and translate to ogr
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
@@ -337,7 +337,7 @@ Returns:
 
 ******************************************************************************/
 
-OGRGeometry *kml2geom (
+OGRGeometry *kml2geom_rec (
     GeometryPtr poKmlGeometry,
     OGRSpatialReference *poOgrSRS)
 
@@ -525,6 +525,68 @@ OGRGeometry *kml2geom (
 
     if (poOgrGeometry)
         poOgrGeometry->assignSpatialReference(poOgrSRS);
+
+    return poOgrGeometry;
+}
+
+/******************************************************************************
+ main function to read a kml geometry and translate to ogr
+
+Args:
+            poKmlGeometry   pointer to the kml geometry to translate
+            poOgrSRS        pointer to the spatial ref to set on the geometry 
+
+Returns:
+            pointer to the new ogr geometry object
+
+******************************************************************************/
+
+OGRGeometry *kml2geom (
+    GeometryPtr poKmlGeometry,
+    OGRSpatialReference *poOgrSRS)
+
+{
+
+    /***** get the geometry *****/
+    
+    OGRGeometry *poOgrGeometry = kml2geom_rec (poKmlGeometry, poOgrSRS);
+
+    /***** split the geometry at the dateline? *****/
+    
+    const char *pszWrap = CPLGetConfigOption ( "LIBKML_WRAPDATELINE", "no" );
+    if (EQUAL(pszWrap, "yes")) {
+        
+        OGRCoordinateTransformation *poCT = NULL;
+
+        /***** create the transform *****/
+        
+        if ((poCT = OGRCreateCoordinateTransformation( poOgrSRS, poOgrSRS ))) {
+
+            char **papszTransformOptions = NULL;
+            papszTransformOptions = CSLAddString( papszTransformOptions,
+                                                  "WRAPDATELINE=YES");
+
+            /***** transform *****/
+            
+            OGRGeometry *poOgrDstGeometry = 
+                OGRGeometryFactory::transformWithOptions(poOgrGeometry,
+                                                         poCT,
+                                                         papszTransformOptions);
+            
+            /***** delete the transform *****/
+            
+            OGRCoordinateTransformation::DestroyCT(poCT);
+
+            /***** replace the original geom *****/
+            
+            if (poOgrDstGeometry) {
+                delete poOgrGeometry;
+                poOgrGeometry = poOgrDstGeometry;
+            }
+
+        }
+        
+	}
 
     return poOgrGeometry;
 }
