@@ -1402,7 +1402,7 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
     
     int     iSrcX = (int) floor(dfSrcX - 0.5);
     int     iSrcY = (int) floor(dfSrcY - 0.5);
-    int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+    int     iSrcOffset;
     double  dfRatioX = 1.5 - (dfSrcX - iSrcX);
     double  dfRatioY = 1.5 - (dfSrcY - iSrcY);
     double  adfDensity[2], adfReal[2], adfImag[2];
@@ -1410,7 +1410,19 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
     double  dfAccumulatorDensity = 0.0;
     double  dfAccumulatorDivisor = 0.0;
     int     bShifted = FALSE;
-    
+
+    if (iSrcX == -1)
+    {
+        iSrcX = 0;
+        dfRatioX = 1;
+    }
+    if (iSrcY == -1)
+    {
+        iSrcY = 0;
+        dfRatioY = 1;
+    }
+    iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+
     // Shift so we don't overrun the array
     if( nSrcXSize * nSrcYSize == iSrcOffset + 1
         || nSrcXSize * nSrcYSize == iSrcOffset + nSrcXSize + 1 )
