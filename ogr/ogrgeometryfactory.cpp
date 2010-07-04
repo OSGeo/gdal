@@ -1872,55 +1872,119 @@ OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *pabyData,
                                               nBytes, pnBytesConsumed );
 }
 
-
 /************************************************************************/
-/*                           Add360ToNegLon()                           */
+/*                SplitLineStringAtDateline()                           */
 /************************************************************************/
 
-static void Add360ToNegLon( OGRGeometry* poGeom )
+#define SWAP_DBL(a,b) do { double tmp = a; a = b; b = tmp; } while(0)
+
+static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
+                                      const OGRLineString* poLS)
 {
-    switch (wkbFlatten(poGeom->getGeometryType()))
+    int i;
+    int bIs3D = poLS->getCoordinateDimension() == 3;
+    OGRLineString* poNewLS = new OGRLineString();
+    poMulti->addGeometryDirectly(poNewLS);
+    for(i=0;i<poLS->getNumPoints();i++)
     {
-        case wkbPolygon:
-        case wkbMultiLineString:
-        case wkbMultiPolygon:
-        case wkbGeometryCollection:
+        double dfX = poLS->getX(i);
+        if (i > 0 && fabs(dfX - poLS->getX(i-1)) > 350)
         {
-            int nSubGeomCount = OGR_G_GetGeometryCount((OGRGeometryH)poGeom);
-            for( int iGeom = 0; iGeom < nSubGeomCount; iGeom++ )
+            double dfX1 = poLS->getX(i-1);
+            double dfY1 = poLS->getY(i-1);
+            double dfZ1 = poLS->getY(i-1);
+            double dfX2 = poLS->getX(i);
+            double dfY2 = poLS->getY(i);
+            double dfZ2 = poLS->getY(i);
+            if (dfX1 < -170 && dfX2 > 170)
             {
-                Add360ToNegLon((OGRGeometry*)OGR_G_GetGeometryRef((OGRGeometryH)poGeom, iGeom));
+                SWAP_DBL(dfX1, dfX2);
+                SWAP_DBL(dfY1, dfY2);
+                SWAP_DBL(dfZ1, dfZ2);
             }
-            
-            break;
-        }
-            
-        case wkbLineString:
-        case wkbLinearRing:
-        {
-            OGRLineString* poLineString = (OGRLineString* )poGeom;
-            int nPointCount = poLineString->getNumPoints();
-            int nCoordDim = poLineString->getCoordinateDimension();
-            for( int iPoint = 0; iPoint < nPointCount; iPoint++)
+            if (dfX1 > 170 && dfX2 < -170)
+                dfX2 += 360;
+
+            if (dfX1 < 180 && dfX2 > 180)
             {
-                if (poLineString->getX(iPoint) < -90)
+                double dfRatio = (180 - dfX1) / (dfX2 - dfX1);
+                double dfY = dfRatio * dfY2 + (1 - dfRatio) * dfY1;
+                double dfZ = dfRatio * dfZ2 + (1 - dfRatio) * dfZ1;
+                if( bIs3D )
+                    poNewLS->addPoint(poLS->getX(i-1) > 170 ? 180 : -180, dfY, dfZ);
+                else
+                    poNewLS->addPoint(poLS->getX(i-1) > 170 ? 180 : -180, dfY);
+                poNewLS = new OGRLineString();
+                if( bIs3D )
+                    poNewLS->addPoint(poLS->getX(i-1) > 170 ? -180 : 180, dfY, dfZ);
+                else
+                    poNewLS->addPoint(poLS->getX(i-1) > 170 ? -180 : 180, dfY);
+                poMulti->addGeometryDirectly(poNewLS);
+            }
+            else
+            {
+                poNewLS = new OGRLineString();
+                poMulti->addGeometryDirectly(poNewLS);
+            }
+        }
+        if( bIs3D )
+            poNewLS->addPoint(dfX, poLS->getY(i), poLS->getZ(i));
+        else
+            poNewLS->addPoint(dfX, poLS->getY(i));
+    }
+}
+
+/************************************************************************/
+/*               FixPolygonCoordinatesAtDateLine()                      */
+/************************************************************************/
+
+static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly)
+{
+    int i, iPart;
+    for(iPart = 0; iPart < 1 + poPoly->getNumInteriorRings(); iPart++)
+    {
+        OGRLineString* poLS = (iPart == 0) ? poPoly->getExteriorRing() :
+                                             poPoly->getInteriorRing(iPart-1);
+        int bGoEast = FALSE;
+        int bIs3D = poLS->getCoordinateDimension() == 3;
+        for(i=1;i<poLS->getNumPoints();i++)
+        {
+            double dfX = poLS->getX(i);
+            double dfPrevX = poLS->getX(i-1);
+            double dfDiffLong = fabs(dfX - dfPrevX);
+            if (dfDiffLong > 350)
+            {
+                if ((dfPrevX > 170 && dfX < -170) || (dfX < 0 && bGoEast))
                 {
-                    if (nCoordDim == 2)
-                        poLineString->setPoint(iPoint,
-                                         poLineString->getX(iPoint) + 360,
-                                         poLineString->getY(iPoint));
+                    dfX += 360;
+                    bGoEast = TRUE;
+                    if( bIs3D )
+                        poLS->setPoint(i, dfX, poLS->getY(i), poLS->getZ(i));
                     else
-                        poLineString->setPoint(iPoint,
-                                         poLineString->getX(iPoint) + 360,
-                                         poLineString->getY(iPoint),
-                                         poLineString->getZ(iPoint));
+                        poLS->setPoint(i, dfX, poLS->getY(i));
+                }
+                else if (dfPrevX < -170 && dfX > 170)
+                {
+                    int j;
+                    for(j=i-1;j>=0;j--)
+                    {
+                        dfX = poLS->getX(j);
+                        if (dfX < 0)
+                        {
+                            if( bIs3D )
+                                poLS->setPoint(j, dfX + 360, poLS->getY(j), poLS->getZ(j));
+                            else
+                                poLS->setPoint(j, dfX + 360, poLS->getY(j));
+                        }
+                    }
+                    bGoEast = FALSE;
+                }
+                else
+                {
+                    bGoEast = FALSE;
                 }
             }
-            break;
         }
-            
-        default:
-            break;
     }
 }
 
@@ -2012,12 +2076,14 @@ static void AddSimpleGeomToMulti(OGRGeometryCollection* poMulti,
 static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                                                const OGRGeometry* poGeom)
 {
-    switch (wkbFlatten(poGeom->getGeometryType()))
+    OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
+    switch (eGeomType)
     {
         case wkbPolygon:
         case wkbLineString:
         {
             int bWrapDateline = FALSE;
+            int bSplitLineStringAtDateline = FALSE;
             OGREnvelope oEnvelope;
             
             poGeom->getEnvelope(&oEnvelope);
@@ -2025,23 +2091,64 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
             /* Naive heuristics... Place to improvement... */
             OGRGeometry* poDupGeom = NULL;
             
-            if (oEnvelope.MinX < -170 && oEnvelope.MaxX > 170)
-            {
-                bWrapDateline = TRUE;
-                poDupGeom = poGeom->clone();
-                Add360ToNegLon(poDupGeom);
-            }
-            else if (oEnvelope.MinX > 170 && oEnvelope.MaxX > 180)
-                bWrapDateline = TRUE;
-
-            if (bWrapDateline)
+            if (oEnvelope.MinX > 170 && oEnvelope.MaxX > 180)
             {
 #ifndef HAVE_GEOS
                 CPLError( CE_Failure, CPLE_NotSupported, 
-                          "GEOS support not enabled." );
-
-                poMulti->addGeometry(poGeom);
+                        "GEOS support not enabled." );
 #else
+                bWrapDateline = TRUE;
+#endif
+            }
+            else
+            {
+                OGRLineString* poLS;
+                if (eGeomType == wkbPolygon)
+                    poLS = ((OGRPolygon*)poGeom)->getExteriorRing();
+                else
+                    poLS = (OGRLineString*)poGeom;
+                if (poLS)
+                {
+                    int i;
+                    double dfMaxSmallDiffLong = 0;
+                    int bHasBigDiff = FALSE;
+                    /* Detect big gaps in longitude */
+                    for(i=1;i<poLS->getNumPoints();i++)
+                    {
+                        double dfPrevX = poLS->getX(i-1);
+                        double dfX = poLS->getX(i);
+                        double dfDiffLong = fabs(dfX - dfPrevX);
+                        if (dfDiffLong > 350 &&
+                            ((dfX > 170 && dfPrevX < -170) || (dfPrevX > 170 && dfX < -170)))
+                            bHasBigDiff = TRUE;
+                        else if (dfDiffLong > dfMaxSmallDiffLong)
+                            dfMaxSmallDiffLong = dfDiffLong;
+                    }
+                    if (bHasBigDiff && dfMaxSmallDiffLong < 10)
+                    {
+                        if (eGeomType == wkbLineString)
+                            bSplitLineStringAtDateline = TRUE;
+                        else
+                        {
+#ifndef HAVE_GEOS
+                            CPLError( CE_Failure, CPLE_NotSupported, 
+                                    "GEOS support not enabled." );
+#else
+                            bWrapDateline = TRUE;
+                            poDupGeom = poGeom->clone();
+                            FixPolygonCoordinatesAtDateLine((OGRPolygon*)poDupGeom);
+#endif
+                        }
+                    }
+                }
+            }
+
+            if (bSplitLineStringAtDateline)
+            {
+                SplitLineStringAtDateline(poMulti, (OGRLineString*)poGeom);
+            }
+            else if (bWrapDateline)
+            {
                 const OGRGeometry* poWorkGeom = (poDupGeom) ? poDupGeom : poGeom;
                 OGRGeometry* poRectangle1 = NULL;
                 OGRGeometry* poRectangle2 = NULL;
@@ -2068,7 +2175,6 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                 delete poGeom1;
                 delete poGeom2;
                 delete poDupGeom;
-#endif
             }
             else
             {
