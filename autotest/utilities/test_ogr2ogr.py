@@ -902,6 +902,59 @@ def test_ogr2ogr_27():
 
     return 'success'
 
+
+###############################################################################
+# Test -wrapdateline on linestrings
+
+def test_ogr2ogr_28():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/wrapdateline_src.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
+    except:
+        pass
+        
+    try:
+        os.stat('tmp/wrapdateline_dst.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
+    except:
+        pass
+        
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326);
+    lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(160 0,165 1,170 2,175 3,177 4,-177 5,-175 6,-170 7,-177 8,177 9,170 10)')
+    feat.SetGeometryDirectly(geom)
+    lyr.CreateFeature(feat)
+    feat.Destroy()
+    ds.Destroy()
+    
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -wrapdateline tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp')
+    
+    expected_wkt = 'MULTILINESTRING ((160 0,165 1,170 2,175 3,177 4,180 4.5),(-180 4.5,-177 5,-175 6,-170 7,-177 8,-180 8.5),(180 8.5,177 9,170 10))'
+    expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
+    ds = ogr.Open('tmp/wrapdateline_dst.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    ret = ogrtest.check_feature_geometry(feat, expected_geom)
+    feat.Destroy()
+    expected_geom.Destroy()
+    ds.Destroy()
+    
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
+
+    if ret == 0:
+        return 'success'
+    else:
+        return 'fail'
+    
+    
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -929,7 +982,8 @@ gdaltest_list = [
     test_ogr2ogr_24,
     test_ogr2ogr_25,
     test_ogr2ogr_26,
-    test_ogr2ogr_27 ]
+    test_ogr2ogr_27,
+    test_ogr2ogr_28 ]
     
 if __name__ == '__main__':
 
