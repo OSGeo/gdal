@@ -81,6 +81,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     m_poStyleTable = NULL;
     iFeature = 0;
     nFeatures = 0;
+    nFID = 1;
 
     this->bUpdate = bUpdate;
     m_pszName = CPLStrdup ( pszLayerName );
@@ -369,6 +370,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
         poOgrFeature =
             kml2feat ( AsPlacemark ( poKmlFeature ), m_poOgrDS, this,
                        m_poOgrFeatureDefn, m_poOgrSRS );
+        poOgrFeature->SetFID(nFID ++);
     }
 
     return poOgrFeature;
