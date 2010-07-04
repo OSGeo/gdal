@@ -1612,6 +1612,25 @@ def ogr_shape_38():
     return 'success'
 
 ###############################################################################
+# Check that we can detect correct winding order even with polygons with big
+# coordinate offset (#3356)
+def ogr_shape_39():
+
+    ds = ogr.Open('data/multipatch.shp')
+    lyr = ds.GetLayer(0)
+    feat_read = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('MULTIPOLYGON (((5 4 10,0 0 5,10 0 5,5 4 10)),((5 4 10,10 0 5,10 8 5,5 4 10)),((5 4 10,10 8 5,0 8 5,5 4 10)),((5 4 10,0 8 5,0 0 5,5 4 10)),((10 0 5,10 0 0,10 8 5,10 0 5)),((10 0 0,10 8 5,10 8 0,10 0 0)),((10 8 5,10 8 0,0 8 5,10 8 5)),((10 8 0,0 8 5,0 8 0,10 8 0)),((0 8 5,0 8 0,0 0 5,0 8 5)),((0 8 0,0 0 5,0 0 0,0 8 0)),((0 0 0,0 0 5,10 0 5,10 0 0,6 0 0,6 0 3,4 0 3,4 0 0,0 0 0),(1 0 2,3 0 2,3 0 4,1 0 4,1 0 2),(7 0 2,9 0 2,9 0 4,7 0 4,7 0 2)))'),
+                                max_error = 0.000000001 ) != 0:
+        print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1670,6 +1689,7 @@ gdaltest_list = [
     ogr_shape_36,
     ogr_shape_37,
     ogr_shape_38,
+    ogr_shape_39,
     ogr_shape_cleanup ]
  
 if __name__ == '__main__':
