@@ -26,17 +26,20 @@ The same applies for SHPT_POLYGON shapefiles, reported as layers of type
 wkbPolygon, but depending on the number of parts of each geometry, the
 actual type can be either OGRPolygon or OGRMultiPolygon.</p>
 
-<p>The new ESRI measure values are discarded if encountered.</p>
+<p>The new ESRI measure values are discarded if encountered.  MultiPatch 
+files are read and each patch geometry is turned into a multi-polygon 
+representation with one polygon per triangle in triangle fans and meshes.</p>
 
 <p>If a .prj files in old Arc/Info style or new ESRI OGC WKT style is present,
 it will be read and used to associate a projection with features.</p>
 
-<p>The read driver assumes that multipart polygons follow the specification, that
-is to say the vertices of outer rings should be oriented clockwise on the X/Y plane,
-and those of inner rings counterclockwise.
-If a Shapefile is broken w.r.t. that rule, it is possible to define the configuration option
-OGR_ORGANIZE_POLYGONS=DEFAULT to proceed to a full analysis based on topological
-relationships of the parts of the polygons so that the resulting polygons are correctly
+<p>The read driver assumes that multipart polygons follow the specification, 
+that is to say the vertices of outer rings should be oriented clockwise on the 
+X/Y plane, and those of inner rings counterclockwise.
+If a Shapefile is broken w.r.t. that rule, it is possible to define the 
+configuration option OGR_ORGANIZE_POLYGONS=DEFAULT to proceed to a full 
+analysis based on topological relationships of the parts of the polygons so 
+that the resulting polygons are correctly
 defined in the OGC Simple Feature convention. </p>
 
 <h2>Spatial and Attribute Indexing</h2>
