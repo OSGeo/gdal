@@ -62,6 +62,7 @@ class OGRLIBKMLLayer:public OGRLayer
     int                       bUpdated;
     int                       nFeatures;
     int                       iFeature;
+    long                      nFID;
     const char                *m_pszName;
     const char                *m_pszFileName;
 
@@ -87,7 +88,7 @@ class OGRLIBKMLLayer:public OGRLayer
                                 int bUpdate);
     ~OGRLIBKMLLayer           (  );
 
-    void                      ResetReading  (  ) { iFeature = 0; };
+    void                      ResetReading  (  ) { iFeature = 0; nFID = 1; };
     OGRFeature               *GetNextFeature (  );
     OGRFeature               *GetNextRawFeature (  );
     OGRFeatureDefn           *GetLayerDefn (  ) { return m_poOgrFeatureDefn; };

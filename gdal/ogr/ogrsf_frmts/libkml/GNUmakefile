@@ -26,5 +26,6 @@ $(O_OBJ):	ogrlibkmlgeometry.h \
             ogrlibkmlfield.h \
             ogrlibkmlfeature.h \
             ogrlibkmlfeaturestyle.h \
-            ogrlibkmlstyle.h
+            ogrlibkmlstyle.h \
+            ogr_libkml.h
           
