@@ -1062,7 +1062,15 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     
     if (bWrapDateline)
     {
+        if( poSourceSRS == NULL )
+            poSourceSRS = poSrcLayer->GetSpatialRef();
+
         if (poCT != NULL && poOutputSRS->IsGeographic())
+        {
+            papszTransformOptions =
+                CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
+        }
+        else if (poSourceSRS != NULL && poOutputSRS == NULL && poSourceSRS->IsGeographic())
         {
             papszTransformOptions =
                 CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
@@ -1398,7 +1406,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 poDstGeometry = poClipped;
             }
 
-            if( poCT )
+            if( poCT != NULL || papszTransformOptions != NULL)
             {
                 OGRGeometry* poReprojectedGeom =
                     OGRGeometryFactory::transformWithOptions(poDstGeometry, poCT, papszTransformOptions);
