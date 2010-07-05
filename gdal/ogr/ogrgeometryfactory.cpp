@@ -1896,6 +1896,42 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
             double dfX2 = poLS->getX(i);
             double dfY2 = poLS->getY(i);
             double dfZ2 = poLS->getY(i);
+
+            if (dfX1 > -180 && dfX1 < -170 && dfX2 == 180 &&
+                i+1 < poLS->getNumPoints() &&
+                poLS->getX(i+1) > -180 && poLS->getX(i+1) < -170)
+            {
+                if( bIs3D )
+                    poNewLS->addPoint(-180, poLS->getY(i), poLS->getZ(i));
+                else
+                    poNewLS->addPoint(-180, poLS->getY(i));
+
+                i++;
+
+                if( bIs3D )
+                    poNewLS->addPoint(poLS->getX(i), poLS->getY(i), poLS->getZ(i));
+                else
+                    poNewLS->addPoint(poLS->getX(i), poLS->getY(i));
+                continue;
+            }
+            else if (dfX1 > 170 && dfX1 < 180 && dfX2 == -180 &&
+                     i+1 < poLS->getNumPoints() &&
+                     poLS->getX(i+1) > 170 && poLS->getX(i+1) < 180)
+            {
+                if( bIs3D )
+                    poNewLS->addPoint(180, poLS->getY(i), poLS->getZ(i));
+                else
+                    poNewLS->addPoint(180, poLS->getY(i));
+
+                i++;
+
+                if( bIs3D )
+                    poNewLS->addPoint(poLS->getX(i), poLS->getY(i), poLS->getZ(i));
+                else
+                    poNewLS->addPoint(poLS->getX(i), poLS->getY(i));
+                continue;
+            }
+
             if (dfX1 < -170 && dfX2 > 170)
             {
                 SWAP_DBL(dfX1, dfX2);
@@ -1905,7 +1941,7 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
             if (dfX1 > 170 && dfX2 < -170)
                 dfX2 += 360;
 
-            if (dfX1 < 180 && dfX2 > 180)
+            if (dfX1 <= 180 && dfX2 >= 180 && dfX1 < dfX2)
             {
                 double dfRatio = (180 - dfX1) / (dfX2 - dfX1);
                 double dfY = dfRatio * dfY2 + (1 - dfRatio) * dfY1;
