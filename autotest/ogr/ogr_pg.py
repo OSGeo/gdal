@@ -160,7 +160,8 @@ def ogr_pg_2():
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
-                                      ('SHORTNAME', ogr.OFTString, 8) ] )
+                                      ('SHORTNAME', ogr.OFTString, 8),
+                                      ('REALLIST', ogr.OFTRealList) ] )
 
     ######################################################
     # Copy in poly.shp
@@ -2371,7 +2372,7 @@ def ogr_pg_49():
     return 'success'
 
 ###############################################################################
-# Write and read NaN values
+# Write and read NaN values (#3667)
 # This tests writing using COPY and INSERT
 
 def ogr_pg_50():
@@ -2384,21 +2385,28 @@ def ogr_pg_50():
         gdaltest.post_reason( 'did not get tpoly layer' )
         return 'fail'
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.pg_lyr.GetLayerDefn() )
+    feature_def = gdaltest.pg_lyr.GetLayerDefn()
+    dst_feat = ogr.Feature( feature_def )
+
+    try:
+        dst_feat.SetFieldDoubleList
+        bHasSetFieldDoubleList = True
+    except:
+        bHasSetFieldDoubleList = False
 
     for option in [ 'NO', 'YES' ]:
         gdal.SetConfigOption( 'PG_USE_COPY', option )
         for value in [ 'NaN', 'Inf', '-Inf' ]:
             dst_feat.SetField( 'AREA', float(value) )
-            dst_feat.SetField( 'EAS_ID', float(value) )
             dst_feat.SetField( 'PRFEDEA', value )
             dst_feat.SetField( 'SHORTNAME', option )
+            if bHasSetFieldDoubleList:
+                dst_feat.SetFieldDoubleList( feature_def.GetFieldIndex('REALLIST'), [float(value), float(value)])
             gdaltest.pg_lyr.CreateFeature( dst_feat )
 
     gdal.SetConfigOption( 'PG_USE_COPY', 'NO' )
     dst_feat.Destroy()
 
-#TODO: test the integer values too
     for option in [ 'NO', 'YES' ]:
         for value in [ 'NaN', 'Inf', '-Inf' ]:
             gdaltest.pg_lyr.SetAttributeFilter( 'PRFEDEA = \''+value+'\' AND SHORTNAME = \''+option+'\'' )
@@ -2411,6 +2419,16 @@ def ogr_pg_50():
             elif got_val != float(value):
                 print(feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value)
                 return 'fail'
+
+            if bHasSetFieldDoubleList:
+                got_val = feat.GetFieldAsDoubleList( feature_def.GetFieldIndex('REALLIST') )
+                if value == 'NaN':
+                    if got_val[0] == got_val[0] or got_val[1] == got_val[1]:
+                        print(feat.GetFieldAsString( 'REALLIST' )+' returned for REALLIST instead of '+value)
+                        return 'fail'
+                elif got_val[0] != float(value) or got_val[1] != float(value):
+                    print(feat.GetFieldAsString( 'REALLIST' )+' returned for REALLIST instead of '+value)
+                    return 'fail'
 
     return 'success'
 
