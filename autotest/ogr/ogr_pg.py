@@ -28,6 +28,7 @@
 import os
 import sys
 import string
+import math
 
 sys.path.append( '../pymod' )
 
@@ -2370,6 +2371,49 @@ def ogr_pg_49():
     return 'success'
 
 ###############################################################################
+# Write and read NaN values
+# This tests writing using COPY and INSERT
+
+def ogr_pg_50():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdaltest.pg_lyr = gdaltest.pg_ds.GetLayerByName( 'tpoly' )
+    if gdaltest.pg_lyr is None:
+        gdaltest.post_reason( 'did not get tpoly layer' )
+        return 'fail'
+
+    dst_feat = ogr.Feature( feature_def = gdaltest.pg_lyr.GetLayerDefn() )
+
+    for option in [ 'NO', 'YES' ]:
+        gdal.SetConfigOption( 'PG_USE_COPY', option )
+        for value in [ 'NaN', 'Inf', '-Inf' ]:
+            dst_feat.SetField( 'AREA', float(value) )
+            dst_feat.SetField( 'EAS_ID', float(value) )
+            dst_feat.SetField( 'PRFEDEA', value )
+            dst_feat.SetField( 'SHORTNAME', option )
+            gdaltest.pg_lyr.CreateFeature( dst_feat )
+
+    gdal.SetConfigOption( 'PG_USE_COPY', 'NO' )
+    dst_feat.Destroy()
+
+#TODO: test the integer values too
+    for option in [ 'NO', 'YES' ]:
+        for value in [ 'NaN', 'Inf', '-Inf' ]:
+            gdaltest.pg_lyr.SetAttributeFilter( 'PRFEDEA = \''+value+'\' AND SHORTNAME = \''+option+'\'' )
+            feat = gdaltest.pg_lyr.GetNextFeature()
+            if value == 'NaN':
+                if not math.isnan(feat.GetField( 'AREA' )):
+                    print feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value
+                    return 'fail'
+            elif feat.GetField( 'AREA' ) != float(value):
+                print feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2481,6 +2525,7 @@ gdaltest_list_internal = [
     ogr_pg_47,
     ogr_pg_48,
     ogr_pg_49,
+    ogr_pg_50,
     ogr_pg_cleanup ]
 
 ###############################################################################

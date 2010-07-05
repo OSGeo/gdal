@@ -878,6 +878,13 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
 
             nOff += strlen(pszNeedToFree+nOff);
             sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
+            //Check for special values. They need to be quoted.
+            if( strcmp( pszNeedToFree+nOff, "nan" ) == 0 )
+                sprintf( pszNeedToFree+nOff, "'NaN'" );
+            else if( strcmp( pszNeedToFree+nOff, "inf" ) == 0 )
+                sprintf( pszNeedToFree+nOff, "'Infinity'" );
+            else if( strcmp( pszNeedToFree+nOff, "-inf" ) == 0 )
+                sprintf( pszNeedToFree+nOff, "'-Infinity'" );
         }
         strcat( pszNeedToFree+nOff, "}'" );
 
@@ -903,6 +910,13 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
 
             nOff += strlen(pszNeedToFree+nOff);
             sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+            //Check for special values. They need to be quoted.
+            if( strcmp( pszNeedToFree+nOff, "nan" ) == 0 )
+                sprintf( pszNeedToFree+nOff, "'NaN'" );
+            else if( strcmp( pszNeedToFree+nOff, "inf" ) == 0 )
+                sprintf( pszNeedToFree+nOff, "'Infinity'" );
+            else if( strcmp( pszNeedToFree+nOff, "-inf" ) == 0 )
+                sprintf( pszNeedToFree+nOff, "'-Infinity'" );
 
             char* pszComma = strchr(pszNeedToFree+nOff, ',');
             if (pszComma)
@@ -974,7 +988,15 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
     }
     else
     {
-        osCommand += pszStrValue;
+        //Check for special values. They need to be quoted.
+        if( strcmp( pszStrValue, "nan" ) == 0 )
+            osCommand += "'NaN'";
+        else if( strcmp( pszStrValue, "inf" ) == 0 )
+            osCommand += "'Infinity'";
+        else if( strcmp( pszStrValue, "-inf" ) == 0 )
+            osCommand += "'-Infinity'";
+        else
+            osCommand += pszStrValue;
     }
 }
 
@@ -1553,6 +1575,13 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
                 nOff += strlen(pszNeedToFree+nOff);
                 sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
+                //Check for special values. They need to be quoted.
+                if( strcmp( pszNeedToFree+nOff, "nan" ) == 0 )
+                    sprintf( pszNeedToFree+nOff, "'NaN'" );
+                else if( strcmp( pszNeedToFree+nOff, "inf" ) == 0 )
+                    sprintf( pszNeedToFree+nOff, "'Infinity'" );
+                else if( strcmp( pszNeedToFree+nOff, "-inf" ) == 0 )
+                    sprintf( pszNeedToFree+nOff, "'-Infinity'" );
             }
             strcat( pszNeedToFree+nOff, "}" );
             pszStrValue = pszNeedToFree;
@@ -1573,6 +1602,13 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
                 nOff += strlen(pszNeedToFree+nOff);
                 sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+                //Check for special values. They need to be quoted.
+                if( strcmp( pszNeedToFree+nOff, "nan" ) == 0 )
+                    sprintf( pszNeedToFree+nOff, "'NaN'" );
+                else if( strcmp( pszNeedToFree+nOff, "inf" ) == 0 )
+                    sprintf( pszNeedToFree+nOff, "'Infinity'" );
+                else if( strcmp( pszNeedToFree+nOff, "-inf" ) == 0 )
+                    sprintf( pszNeedToFree+nOff, "'-Infinity'" );
 
                 char* pszComma = strchr(pszNeedToFree+nOff, ',');
                 if (pszComma)
@@ -1643,7 +1679,15 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         }
         else
         {
-            osCommand += pszStrValue;
+            //Check for special values. They need to be quoted.
+            if( strcmp( pszStrValue, "nan" ) == 0 )
+                osCommand += "'NaN'";
+            else if( strcmp( pszStrValue, "inf" ) == 0 )
+                osCommand += "'Infinity'";
+            else if( strcmp( pszStrValue, "-inf" ) == 0 )
+                osCommand += "'-Infinity'";
+            else
+                osCommand += pszStrValue;
         }
 
         if( pszNeedToFree )
