@@ -2403,12 +2403,13 @@ def ogr_pg_50():
         for value in [ 'NaN', 'Inf', '-Inf' ]:
             gdaltest.pg_lyr.SetAttributeFilter( 'PRFEDEA = \''+value+'\' AND SHORTNAME = \''+option+'\'' )
             feat = gdaltest.pg_lyr.GetNextFeature()
+            got_val = feat.GetField( 'AREA' )
             if value == 'NaN':
-                if not math.isnan(feat.GetField( 'AREA' )):
-                    print feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value
+                if got_val == got_val:
+                    print(feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value)
                     return 'fail'
-            elif feat.GetField( 'AREA' ) != float(value):
-                print feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value
+            elif got_val != float(value):
+                print(feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value)
                 return 'fail'
 
     return 'success'
