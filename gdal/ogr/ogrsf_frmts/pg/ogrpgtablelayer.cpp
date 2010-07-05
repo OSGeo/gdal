@@ -878,13 +878,6 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
 
             nOff += strlen(pszNeedToFree+nOff);
             sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
-            //Check for special values. They need to be quoted.
-            if( strcmp( pszNeedToFree+nOff, "nan" ) == 0 )
-                sprintf( pszNeedToFree+nOff, "'NaN'" );
-            else if( strcmp( pszNeedToFree+nOff, "inf" ) == 0 )
-                sprintf( pszNeedToFree+nOff, "'Infinity'" );
-            else if( strcmp( pszNeedToFree+nOff, "-inf" ) == 0 )
-                sprintf( pszNeedToFree+nOff, "'-Infinity'" );
         }
         strcat( pszNeedToFree+nOff, "}'" );
 
@@ -912,11 +905,11 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
             sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
             //Check for special values. They need to be quoted.
             if( strcmp( pszNeedToFree+nOff, "nan" ) == 0 )
-                sprintf( pszNeedToFree+nOff, "'NaN'" );
+                sprintf( pszNeedToFree+nOff, "NaN" );
             else if( strcmp( pszNeedToFree+nOff, "inf" ) == 0 )
-                sprintf( pszNeedToFree+nOff, "'Infinity'" );
+                sprintf( pszNeedToFree+nOff, "Infinity" );
             else if( strcmp( pszNeedToFree+nOff, "-inf" ) == 0 )
-                sprintf( pszNeedToFree+nOff, "'-Infinity'" );
+                sprintf( pszNeedToFree+nOff, "-Infinity" );
 
             char* pszComma = strchr(pszNeedToFree+nOff, ',');
             if (pszComma)
@@ -977,6 +970,13 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
         char* pszComma = strchr((char*)pszStrValue, ',');
         if (pszComma)
             *pszComma = '.';
+        //Check for special values. They need to be quoted.
+        if( strcmp( pszStrValue, "nan" ) == 0 )
+            pszStrValue = "'NaN'";
+        else if( strcmp( pszStrValue, "inf" ) == 0 )
+            pszStrValue = "'Infinity'";
+        else if( strcmp( pszStrValue, "-inf" ) == 0 )
+            pszStrValue = "'-Infinity'";
     }
 
     if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTReal
@@ -988,15 +988,7 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
     }
     else
     {
-        //Check for special values. They need to be quoted.
-        if( strcmp( pszStrValue, "nan" ) == 0 )
-            osCommand += "'NaN'";
-        else if( strcmp( pszStrValue, "inf" ) == 0 )
-            osCommand += "'Infinity'";
-        else if( strcmp( pszStrValue, "-inf" ) == 0 )
-            osCommand += "'-Infinity'";
-        else
-            osCommand += pszStrValue;
+        osCommand += pszStrValue;
     }
 }
 
@@ -1575,13 +1567,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
                 nOff += strlen(pszNeedToFree+nOff);
                 sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
-                //Check for special values. They need to be quoted.
-                if( strcmp( pszNeedToFree+nOff, "nan" ) == 0 )
-                    sprintf( pszNeedToFree+nOff, "'NaN'" );
-                else if( strcmp( pszNeedToFree+nOff, "inf" ) == 0 )
-                    sprintf( pszNeedToFree+nOff, "'Infinity'" );
-                else if( strcmp( pszNeedToFree+nOff, "-inf" ) == 0 )
-                    sprintf( pszNeedToFree+nOff, "'-Infinity'" );
             }
             strcat( pszNeedToFree+nOff, "}" );
             pszStrValue = pszNeedToFree;
@@ -1643,6 +1628,13 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             char* pszComma = strchr((char*)pszStrValue, ',');
             if (pszComma)
                 *pszComma = '.';
+            //Check for special values. They need to be quoted.
+            if( strcmp( pszStrValue, "nan" ) == 0 )
+                pszStrValue = "'NaN'";
+            else if( strcmp( pszStrValue, "inf" ) == 0 )
+                pszStrValue = "'Infinity'";
+            else if( strcmp( pszStrValue, "-inf" ) == 0 )
+                pszStrValue = "'-Infinity'";
         }
 
         if( nOGRFieldType != OFTIntegerList &&
@@ -1679,15 +1671,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         }
         else
         {
-            //Check for special values. They need to be quoted.
-            if( strcmp( pszStrValue, "nan" ) == 0 )
-                osCommand += "'NaN'";
-            else if( strcmp( pszStrValue, "inf" ) == 0 )
-                osCommand += "'Infinity'";
-            else if( strcmp( pszStrValue, "-inf" ) == 0 )
-                osCommand += "'-Infinity'";
-            else
-                osCommand += pszStrValue;
+            osCommand += pszStrValue;
         }
 
         if( pszNeedToFree )
