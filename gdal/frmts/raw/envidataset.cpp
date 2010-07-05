@@ -1839,6 +1839,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         const char * pszEnviFileType;
         pszEnviFileType = CSLFetchNameValue(poDS->papszHeader,"file_type");
         if(!EQUAL(pszEnviFileType, "ENVI Standard") &&
+           !EQUAL(pszEnviFileType, "ENVI") &&
            !EQUAL(pszEnviFileType, "ENVI Classification"))
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
