@@ -397,6 +397,18 @@ def ogr_geos_centroid():
 
     centroid.Destroy()
 
+# Test with a self intersecting polygon too.
+# This particular polygon has two triangles. The right triangle is larger.
+    g2 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 0 2, 2 -0.1, 2 2.1, 0 0))' )
+    centroid2 = g2.Centroid()
+    g2.Destroy()
+
+    if ogrtest.check_feature_geometry( centroid2, 'POINT (8.0 1.0)') != 0:
+        print('Got: ', centroid2.ExportToWkt())
+        return 'fail'
+
+    centroid2.Destroy()
+
     return 'success'
 
 ###############################################################################
