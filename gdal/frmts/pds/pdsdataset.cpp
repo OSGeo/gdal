@@ -636,13 +636,14 @@ int PDSDataset::ParseUncompressedImage()
     /* -------------------------------------------------------------------- */
     const char *value;
 
-    value = GetKeyword( "IMAGE.ENCODING_TYPE", "N/A" );
-    if ( !(EQUAL(value,"N/A") ) )
+    CPLString osEncodingType = GetKeyword( "IMAGE.ENCODING_TYPE", "N/A" );
+    CleanString(osEncodingType);
+    if ( !EQUAL(osEncodingType.c_str(),"N/A") )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "*** PDS image file has an ENCODING_TYPE parameter:\n"
                   "*** gdal pds driver does not support compressed image types\n"
-                  "found: (%s)\n\n", value );
+                  "found: (%s)\n\n", osEncodingType.c_str() );
         return FALSE;
     } 
     /**************** end ENCODING_TYPE check ***********************/
@@ -862,6 +863,22 @@ int PDSDataset::ParseUncompressedImage()
 #endif        
                                TRUE );
 
+        if( nBands == 1 )
+        {
+            const char* pszMin = GetKeyword("IMAGE.MINIMUM", NULL);
+            const char* pszMax = GetKeyword("IMAGE.MAXIMUM", NULL);
+            const char* pszMean = GetKeyword("IMAGE.MEAN", NULL);
+            const char* pszStdDev= GetKeyword("IMAGE.STANDARD_DEVIATION", NULL);
+            if (pszMin != NULL && pszMax != NULL &&
+                pszMean != NULL && pszStdDev != NULL)
+            {
+                poBand->SetStatistics( CPLAtofM(pszMin),
+                                       CPLAtofM(pszMax),
+                                       CPLAtofM(pszMean),
+                                       CPLAtofM(pszStdDev));
+            }
+        }
+        
         if( bNoDataSet )
             poBand->SetNoDataValue( dfNoData );
 
