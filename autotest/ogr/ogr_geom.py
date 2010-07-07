@@ -216,6 +216,7 @@ def ogr_geom_boundary_linestring():
     bnd = geom.GetBoundary()
     if bnd.GetGeometryType() is not ogr.wkbMultiPoint:
         gdaltest.post_reason( 'Boundary not reported as MULTIPOINT' )
+        print(bnd)
         return 'fail'
 
     if bnd.GetGeometryCount() != 2:
@@ -257,6 +258,7 @@ def ogr_geom_boundary_polygon():
     bnd = geom.GetBoundary()
     if bnd.GetGeometryType() is not ogr.wkbLineString:
         gdaltest.post_reason( 'Boundary not reported as non-empty LINESTRING' )
+        print(bnd)
         return 'fail'
 
     bnd.Destroy()
