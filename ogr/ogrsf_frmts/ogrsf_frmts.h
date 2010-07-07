@@ -340,7 +340,8 @@ void CPL_DLL RegisterOGRGTM();
 void CPL_DLL RegisterOGRVFK();
 void CPL_DLL RegisterOGRPGDump();
 void CPL_DLL RegisterOGRGPSBabel();
-
+void CPL_DLL RegisterOGRSUA();
+void CPL_DLL RegisterOGRPDS();
 CPL_C_END
 
 

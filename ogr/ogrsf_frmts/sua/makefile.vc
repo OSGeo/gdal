@@ -1,0 +1,15 @@
+
+OBJ	=	ogrsuadriver.obj ogrsuadatasource.obj ogrsualayer.obj
+EXTRAFLAGS =	-I.. -I..\.. -I..\xplane
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+
