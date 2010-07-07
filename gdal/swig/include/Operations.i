@@ -462,19 +462,19 @@ int wrapper_GridCreate( char* algorithmOptions,
 #ifndef SWIGJAVA
 %feature( "kwargs" ) ContourGenerate;
 #endif
-%apply Pointer NONNULL {GDALRasterBandShadow *srcBand, OGRLayerShadow* hLayer};
-%apply (int nList, double *pList ) { (int nFixedLevelCount, double *padfFixedLevels ) };
+%apply Pointer NONNULL {GDALRasterBandShadow *srcBand, OGRLayerShadow* dstLayer};
+%apply (int nList, double *pList ) { (int fixedLevelCount, double *fixedLevels ) };
 %inline %{
 int ContourGenerate( GDALRasterBandShadow *srcBand,
-                     double dfContourInterval,
-                     double dfContourBase,
-                     int nFixedLevelCount,
-                     double *padfFixedLevels,
-                     int bUseNoData,
-                     double dfNoDataValue,
-                     OGRLayerShadow* hLayer, 
-                     int iIDField,
-                     int iElevField,
+                     double contourInterval,
+                     double contourBase,
+                     int fixedLevelCount,
+                     double *fixedLevels,
+                     int useNoData,
+                     double noDataValue,
+                     OGRLayerShadow* dstLayer, 
+                     int idField,
+                     int elevField,
                      GDALProgressFunc callback = NULL,
                      void* callback_data = NULL)
 {
@@ -483,15 +483,15 @@ int ContourGenerate( GDALRasterBandShadow *srcBand,
     CPLErrorReset();
 
     eErr =  GDALContourGenerate( srcBand,
-                                 dfContourInterval,
-                                 dfContourBase,
-                                 nFixedLevelCount,
-                                 padfFixedLevels,
-                                 bUseNoData,
-                                 dfNoDataValue,
-                                 hLayer,
-                                 iIDField,
-                                 iElevField,
+                                 contourInterval,
+                                 contourBase,
+                                 fixedLevelCount,
+                                 fixedLevels,
+                                 useNoData,
+                                 noDataValue,
+                                 dstLayer,
+                                 idField,
+                                 elevField,
                                  callback,
                                  callback_data);
 
@@ -499,8 +499,8 @@ int ContourGenerate( GDALRasterBandShadow *srcBand,
 }
 %}
 %clear GDALRasterBandShadow *srcBand;
-%clear OGRLayerShadow* hLayer;
-%clear  (int nFixedLevelCount, double *padfFixedLevels );
+%clear OGRLayerShadow* dstLayer;
+%clear  (int fixedLevelCount, double *fixedLevels );
 
 /************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
