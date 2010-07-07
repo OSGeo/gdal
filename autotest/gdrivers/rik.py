@@ -69,9 +69,26 @@ def rik_online_1():
     tst = gdaltest.GDALTest('RIK', file_to_test, 1, 17162, filename_absolute = 1 )
     return tst.testOpen()
 
+###############################################################################
+# Test a LZW compressed RIK dataset
+
+def rik_online_2():
+
+    try:
+        if gdal.GetDriverByName('RIK') is None:
+            return 'skip'
+    except:
+        return 'skip'
+
+    if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/3674/ab-del.rik', 'ab-del.rik'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest('RIK', 'tmp/cache/ab-del.rik', 1, 44971, filename_absolute = 1 )
+    return tst.testOpen()
 
 gdaltest_list = [
-    rik_online_1
+    rik_online_1,
+    rik_online_2
     ]
 
 
