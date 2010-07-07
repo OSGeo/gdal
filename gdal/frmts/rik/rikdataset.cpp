@@ -375,10 +375,9 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         GByte character[8192]; // only need LZW_CODES for size.
 
         int i;
-        GByte j;
 
-        for( j = 0; j < LZW_CLEAR; j++ )
-            character[j] = j;
+        for( i = 0; i < LZW_CLEAR; i++ )
+            character[i] = (GByte)i;
         for( i = 0; i < LZW_CODES; i++ )
             prefix[i] = LZW_NO_SUCH_CODE;
 
