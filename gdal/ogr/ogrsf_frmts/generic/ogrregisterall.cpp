@@ -173,5 +173,11 @@ void OGRRegisterAll()
 #ifdef GPSBABEL_ENABLED
     RegisterOGRGPSBabel();
 #endif
+#ifdef SUA_ENABLED
+    RegisterOGRSUA();
+#endif
+#ifdef PDS_ENABLED
+    RegisterOGRPDS();
+#endif
 } /* OGRRegisterAll */
 
