@@ -1,0 +1,1305 @@
+<OGRVRTDataSource>
+  <OGRVRTLayer name="ap_darstellung">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="8"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="art_" type="String" width="3"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="dientzurdarstellungvon" type="String"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="signaturnummer" type="Integer"/>
+    <Field name="uri" type="String" width="28"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ap_lpo">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="StringList"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="5"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="dientzurdarstellungvon" type="String"/>
+    <Field name="gml_id" type="String" width="16"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ap_lto">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="8"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="3"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="dientzurdarstellungvon" type="String"/>
+    <Field name="fontsperrung" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="horizontaleausrichtung" type="String" width="12"/>
+    <Field name="schriftinhalt" type="String" width="11"/>
+    <Field name="skalierung" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="7"/>
+    <Field name="vertikaleausrichtung" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bahnverkehrsanlage">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bahnhofskategorie" type="Integer"/>
+    <Field name="bahnkategorie" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ap_ppo">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="StringList"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="11"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="dientzurdarstellungvon" type="String"/>
+    <Field name="drehwinkel" type="Real"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="7"/>
+    <Field name="uri" type="String" width="28"/>
+    <Field name="zeigtaufexternes|aa_fachdatenverbindung|art" type="String" width="37"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ap_pto">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="StringList"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="10"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="dientzurdarstellungvon" type="String"/>
+    <Field name="drehwinkel" type="Real"/>
+    <Field name="fontsperrung" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="hat" type="String"/>
+    <Field name="horizontaleausrichtung" type="String" width="12"/>
+    <Field name="schriftinhalt" type="String" width="30"/>
+    <Field name="signaturnummer" type="Integer"/>
+    <Field name="skalierung" type="Real"/>
+    <Field name="sonstigesmodell" type="String" width="7"/>
+    <Field name="uri" type="String" width="28"/>
+    <Field name="vertikaleausrichtung" type="String" width="5"/>
+    <Field name="zeigtaufexternes|aa_fachdatenverbindung|art" type="String" width="37"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_anschrift">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bestimmungsland" type="String" width="18"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="hausnummer" type="String" width="6"/>
+    <Field name="ort_post" type="String" width="30"/>
+    <Field name="postleitzahlpostzustellung" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="strasse" type="String" width="28"/>
+    <Field name="uri" type="String" width="28"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_aufnahmepunkt">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="punktkennung" type="Integer"/>
+    <Field name="sonstigeeigenschaft" type="StringList"/>
+    <Field name="stelle" type="Integer"/>
+    <Field name="vermarkung_marke" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bahnverkehr">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bahnkategorie" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="unverschluesselt" type="String" width="27"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bauteil">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bauart" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="lagezurerdoberflaeche" type="Integer"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bauraumoderbodenordnungsrecht">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="artderfestlegung" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="stelle" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bauwerkimgewaesserbereich">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bauwerksfunktion" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bauwerkimverkehrsbereich">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bauwerksfunktion" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bodenschaetzung">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="ackerzahlodergruenlandzahl" type="Integer"/>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bodenart" type="Integer"/>
+    <Field name="bodenzahlodergruenlandgrundzahl" type="Integer"/>
+    <Field name="entstehungsartoderklimastufewasserverhaeltnisse" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kulturart" type="Integer"/>
+    <Field name="zustandsstufeoderbodenstufe" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_besonderegebaeudelinie">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="beschaffenheit" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bauwerkoderanlagefuerindustrieundgewerbe">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bauwerksfunktion" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_besondererbauwerkspunkt">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="punktkennung" type="Integer"/>
+    <Field name="sonstigeeigenschaft" type="String" width="26"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="stelle" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bauwerkoderanlagefuersportfreizeitunderholung">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bauwerksfunktion" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="description" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="name" type="String" width="15"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_besonderergebaeudepunkt">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="punktkennung" type="Integer"/>
+    <Field name="sonstigeeigenschaft" type="String" width="26"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="stelle" type="Integer"/>
+    <Field name="uri" type="String" width="28"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_besondereflurstuecksgrenze">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="artderflurstuecksgrenze" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_besonderertopographischerpunkt">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="punktkennung" type="Integer"/>
+    <Field name="sonstigeeigenschaft" type="String" width="26"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="stelle" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_boeschungkliff">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_boeschungsflaeche">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="istteilvon" type="String"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_buchungsblatt">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezirk" type="Integer"/>
+    <Field name="blattart" type="Integer"/>
+    <Field name="buchungsblattkennzeichen" type="String" width="13"/>
+    <Field name="buchungsblattnummermitbuchstabenerweiterung" type="String" width="7"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_buchungsblattbezirk">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="String" width="26"/>
+    <Field name="bezirk" type="Integer"/>
+    <Field name="gehoertzu|ax_dienststelle_schluessel|land" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="schluesselgesamt" type="Integer"/>
+    <Field name="stelle" type="String" width="4"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_buchungsstelle">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="an" type="String"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="beschreibungdessondereigentums" type="String" width="291"/>
+    <Field name="buchungsart" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="istbestandteilvon" type="String"/>
+    <Field name="laufendenummer" type="Integer"/>
+    <Field name="nenner" type="Integer"/>
+    <Field name="nummerimaufteilungsplan" type="String" width="32"/>
+    <Field name="uri" type="String" width="12"/>
+    <Field name="zaehler" type="Real"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_bundesland">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="String" width="22"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="schluesselgesamt" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_felsenfelsblockfelsnadel">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="name" type="String" width="30"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_dammwalldeich">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_dienststelle">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="String" width="21"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="hat" type="String"/>
+    <Field name="land" type="Integer"/>
+    <Field name="schluesselgesamt" type="String" width="7"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="stelle" type="String" width="5"/>
+    <Field name="stellenart" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_firstlinie">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="uri" type="String" width="28"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_flaechebesondererfunktionalerpraegung">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_friedhof">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="name" type="String" width="22"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_flaechegemischternutzung">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="zustand" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_fliessgewaesser">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="unverschluesselt" type="String" width="13"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_flurstueck">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="abweichenderrechtszustand" type="String" width="5"/>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="amtlicheflaeche" type="Integer"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="StringList"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="flurnummer" type="Integer"/>
+    <Field name="flurstueckskennzeichen" type="String" width="20"/>
+    <Field name="gemarkungsnummer" type="Integer"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gemeindezugehoerigkeit|ax_gemeindekennzeichen|land" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="istgebucht" type="String"/>
+    <Field name="kennungschluessel" type="String" width="31"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="name" type="StringList"/>
+    <Field name="rechtsbehelfsverfahren" type="String" width="5"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="stelle" type="Integer"/>
+    <Field name="uri" type="String" width="28"/>
+    <Field name="weistauf" type="String"/>
+    <Field name="zaehler" type="Integer"/>
+    <Field name="zeigtauf" type="String"/>
+    <Field name="zeitpunktderentstehung" type="String" width="10"/>
+    <Field name="zustaendigestelle|ax_dienststelle_schluessel|land" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_gemarkung">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="String" width="23"/>
+    <Field name="gemarkungsnummer" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="istamtsbezirkvon|ax_dienststelle_schluessel|land" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="schluesselgesamt" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="stelle" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_gebaeude">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="anzahlderoberirdischengeschosse" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="bauweise" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="description" type="Integer"/>
+    <Field name="gebaeudefunktion" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="grundflaeche" type="Integer"/>
+    <Field name="hat" type="String"/>
+    <Field name="individualname" type="String" width="7"/>
+    <Field name="lagezurerdoberflaeche" type="Integer"/>
+    <Field name="name" type="String" width="22"/>
+    <Field name="qualitaetsangaben|ax_dqmitdatenerhebung|herkunft|li_lineage|pro" type="String" width="8"/>
+    <Field name="role" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="uri" type="String" width="28"/>
+    <Field name="zeigtauf" type="String"/>
+    <Field name="zustand" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_gehoelz">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_gemarkungsteilflur">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="Integer"/>
+    <Field name="gemarkung" type="Integer"/>
+    <Field name="gemarkungsteilflur" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="schluesselgesamt" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_gemeinde">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="String" width="25"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="schluesselgesamt" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_halde">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="lagergut" type="Integer"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_georeferenziertegebaeudeadresse">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="adressierungszusatz" type="String" width="1"/>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="hatauch" type="String"/>
+    <Field name="hausnummer" type="Integer"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="ortsnamepost" type="String" width="40"/>
+    <Field name="ortsteil" type="Integer"/>
+    <Field name="postleitzahl" type="Integer"/>
+    <Field name="qualitaetsangaben" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="strassenname" type="String" width="50"/>
+    <Field name="strassenschluessel" type="Integer"/>
+    <Field name="uri" type="String" width="57"/>
+    <Field name="zusatzortsname" type="String" width="30"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_gewaessermerkmal">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_gleis">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bahnkategorie" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_grenzpunkt">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="abmarkung_marke" type="Integer"/>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="punktkennung" type="Integer"/>
+    <Field name="sonstigeeigenschaft" type="StringList"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+    <Field name="stelle" type="Integer"/>
+    <Field name="uri" type="String" width="28"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_heide">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_historischesbauwerkoderhistorischeeinrichtung">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="archaeologischertyp" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_industrieundgewerbeflaeche">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="zustand" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_kleinraeumigerlandschaftsteil">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="landschaftstyp" type="Integer"/>
+    <Field name="name" type="String" width="14"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_landwirtschaft">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+    <Field name="vegetationsmerkmal" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_kommunalesgebiet">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="schluesselgesamt" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_kreisregion">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="String" width="10"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="schluesselgesamt" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_lagebezeichnungkatalogeintrag">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="String" width="28"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="String" width="5"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="schluesselgesamt" type="String" width="13"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_lagebezeichnungmithausnummer">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="hausnummer" type="String" width="5"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_lagebezeichnungmitpseudonummer">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="laufendenummer" type="String" width="2"/>
+    <Field name="pseudonummer" type="String" width="5"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_lagebezeichnungohnehausnummer">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+    <Field name="unverschluesselt" type="String" width="40"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_leitung">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bauwerksfunktion" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_musterlandesmusterundvergleichsstueck">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="ackerzahlodergruenlandzahl" type="Integer"/>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bodenart" type="Integer"/>
+    <Field name="bodenzahlodergruenlandgrundzahl" type="Integer"/>
+    <Field name="entstehungsartoderklimastufewasserverhaeltnisse" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kulturart" type="Integer"/>
+    <Field name="merkmal" type="Integer"/>
+    <Field name="zustandsstufeoderbodenstufe" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_namensnummer">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="artderrechtsgemeinschaft" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="benennt" type="String"/>
+    <Field name="beschriebderrechtsgemeinschaft" type="String" width="61"/>
+    <Field name="eigentuemerart" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="istbestandteilvon" type="String"/>
+    <Field name="laufendenummernachdin1421" type="String" width="16"/>
+    <Field name="nenner" type="Integer"/>
+    <Field name="uri" type="String" width="28"/>
+    <Field name="zaehler" type="Real"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_punktortag">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="StringList"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="datetime" type="StringList"/>
+    <Field name="description" type="Integer"/>
+    <Field name="genauigkeitsstufe" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="hinweise" type="String" width="11"/>
+    <Field name="individualname" type="String" width="7"/>
+    <Field name="istteilvon" type="String"/>
+    <Field name="kartendarstellung" type="String" width="4"/>
+    <Field name="koordinatenstatus" type="Integer"/>
+    <Field name="name" type="String" width="9"/>
+    <Field name="qualitaetsangaben|ax_dqpunktort|herkunft|li_lineage|processstep" type="StringList"/>
+    <Field name="role" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="uri" type="String" width="28"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_naturumweltoderbodenschutzrecht">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="artderfestlegung" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_person">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="akademischergrad" type="String" width="8"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="anrede" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="geburtsdatum" type="String" width="10"/>
+    <Field name="geburtsname" type="String" width="50"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="hat" type="String"/>
+    <Field name="nachnameoderfirma" type="String" width="90"/>
+    <Field name="namensbestandteil" type="String" width="15"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="uri" type="String" width="28"/>
+    <Field name="vorname" type="String" width="40"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_platz">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="unverschluesselt" type="String" width="16"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_regierungsbezirk">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bezeichnung" type="String" width="11"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="schluesselgesamt" type="Integer"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_punktortau">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="61"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="datetime" type="StringList"/>
+    <Field name="description" type="Integer"/>
+    <Field name="genauigkeitsstufe" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="hinweise" type="String" width="11"/>
+    <Field name="individualname" type="String" width="7"/>
+    <Field name="istteilvon" type="String"/>
+    <Field name="kartendarstellung" type="String" width="5"/>
+    <Field name="koordinatenstatus" type="Integer"/>
+    <Field name="name" type="String" width="9"/>
+    <Field name="qualitaetsangaben|ax_dqpunktort|herkunft|li_lineage|processstep" type="StringList"/>
+    <Field name="role" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_punktortta">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPoint</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="61"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="datetime" type="StringList"/>
+    <Field name="description" type="Integer"/>
+    <Field name="genauigkeitsstufe" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="hinweise" type="String" width="11"/>
+    <Field name="individualname" type="String" width="7"/>
+    <Field name="istteilvon" type="String"/>
+    <Field name="kartendarstellung" type="String" width="4"/>
+    <Field name="koordinatenstatus" type="Integer"/>
+    <Field name="name" type="String" width="9"/>
+    <Field name="qualitaetsangaben|ax_dqpunktort|herkunft|li_lineage|processstep" type="StringList"/>
+    <Field name="role" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_schutzgebietnachwasserrecht">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="artderfestlegung" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_stehendesgewaesser">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="unverschluesselt" type="String" width="13"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_schutzzone">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="istteilvon" type="String"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="zone" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_sonstigervermessungspunkt">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="land" type="Integer"/>
+    <Field name="punktkennung" type="Integer"/>
+    <Field name="sonstigeeigenschaft" type="StringList"/>
+    <Field name="sonstigesmodell" type="String" width="6"/>
+    <Field name="stelle" type="Integer"/>
+    <Field name="vermarkung_marke" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_sonstigesbauwerkodersonstigeeinrichtung">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="bauwerksfunktion" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="description" type="Integer"/>
+    <Field name="gehoertzu" type="String"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_sportfreizeitunderholungsflaeche">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="name" type="String" width="10"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="zustand" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_strassenverkehr">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="unverschluesselt" type="String" width="27"/>
+    <Field name="zweitname" type="String" width="41"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_strassenverkehrsanlage">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_sumpf">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_vegetationsmerkmal">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="bewuchs" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_tagebaugrubesteinbruch">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="abbaugut" type="Integer"/>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_unlandvegetationsloseflaeche">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_vorratsbehaelterspeicherbauwerk">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="speicherinhalt" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_untergeordnetesgewaesser">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_wald">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="String" width="5"/>
+    <Field name="vegetationsmerkmal" type="Integer"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_weg">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="funktion" type="Integer"/>
+    <Field name="gemeinde" type="Integer"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="kreis" type="Integer"/>
+    <Field name="lage" type="Integer"/>
+    <Field name="land" type="Integer"/>
+    <Field name="regierungsbezirk" type="Integer"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="unverschluesselt" type="String" width="40"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_wegpfadsteig">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbLineString</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+  </OGRVRTLayer>
+  <OGRVRTLayer name="ax_wohnbauflaeche">
+    <SrcDataSource relativeToVRT="0" shared="0">@dummy@</SrcDataSource>
+    <SrcLayer>@dummy@</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <LayerSRS>PROJCS[&quot;ETRS89 / UTM zone 32N&quot;,GEOGCS[&quot;ETRS89&quot;,DATUM[&quot;European_Terrestrial_Reference_System_1989&quot;,SPHEROID[&quot;GRS 1980&quot;,6378137,298.257222101,AUTHORITY[&quot;EPSG&quot;,&quot;7019&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6258&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.01745329251994328,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4258&quot;]],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,9],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],AUTHORITY[&quot;EPSG&quot;,&quot;25832&quot;],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]</LayerSRS>
+    <Field name="advstandardmodell" type="String" width="4"/>
+    <Field name="anlass" type="Integer"/>
+    <Field name="art" type="String" width="37"/>
+    <Field name="artderbebauung" type="Integer"/>
+    <Field name="beginnt" type="String" width="20"/>
+    <Field name="gml_id" type="String" width="16"/>
+    <Field name="sonstigesmodell" type="StringList"/>
+    <Field name="uri" type="String" width="28"/>
+    <Field name="zustand" type="Integer"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
