@@ -210,9 +210,6 @@ JPEG12_SUPPORTED = 1
 #XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
 #XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_2.lib
 
-# Uncomment if the NAS source is available, and Xerces is available.
-#NAS_ENABLED = YES
-
 # Uncomment the following for Interlis support.  Note that a Xercex 2.x
 # is also required (see above).  Also, Interlis support only works with
 # Visual Studio.NET or newer, not VC6.
@@ -463,6 +460,10 @@ HDF5_LIB_LINK = $(HDF5_LIB)
 !ELSE
 HDF5_LIB_LINK =
 !ENDIF
+!ENDIF
+
+!IFDEF XERCES_DIR
+NAS_ENABLED = YES
 !ENDIF
 
 # Under win64, symbols for function names lack the underscore prefix

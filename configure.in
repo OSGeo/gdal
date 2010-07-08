@@ -1865,10 +1865,10 @@ AC_SUBST([HAVE_XERCES], $HAVE_XERCES)
 AC_SUBST([XERCES_INCLUDE], $XERCES_CFLAGS)
   
 dnl ---------------------------------------------------------------------------
-dnl Enable NAS if we have Xerces, and a nas directory.
+dnl Enable NAS if we have Xerces.
 dnl ---------------------------------------------------------------------------
 
-if test "$HAVE_XERCES" = "yes" -a -d ogr/ogrsf_frmts/nas ; then
+if test "$HAVE_XERCES" = "yes" ; then
   HAVE_NAS=yes
 else
   HAVE_NAS=no
