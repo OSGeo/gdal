@@ -1,0 +1,19 @@
+
+OBJ	=	ogrnasdriver.obj ogrnasdatasource.obj ogrnaslayer.obj \
+		nashandler.obj nasreader.obj gml3ogrgeometry.obj \
+		ogrnasrelationlayer.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF XERCES_DIR
+EXTRAFLAGS =	-I.. -I..\.. -I..\gml $(XERCES_INCLUDE) -DHAVE_XERCES=1
+!ENDIF
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+

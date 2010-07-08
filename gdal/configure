@@ -20522,7 +20522,7 @@ fi
 
                 run_xerces_test="no"
 
-    if test -n "$xerces_prefix"; then
+    if test -n "$xerces_prefix" -a -z "$xerces_include_dir" -a -z "$xerces_lib_flags"; then
         xerces_include_dir="$xerces_prefix/include"
         xerces_include_dir2="$xerces_prefix/include/xercesc"
         if test "$xerces_prefix" = "/usr"; then
@@ -20756,7 +20756,7 @@ XERCES_INCLUDE=$XERCES_CFLAGS
 
 
 
-if test "$HAVE_XERCES" = "yes" -a -d ogr/ogrsf_frmts/nas ; then
+if test "$HAVE_XERCES" = "yes" ; then
   HAVE_NAS=yes
 else
   HAVE_NAS=no
