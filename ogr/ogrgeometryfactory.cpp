@@ -528,13 +528,15 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
 /************************************************************************/
 
 /**
- * \brief change to polygon.
+ * \brief Convert to polygon.
  *
  * This function is the same as the C++ method 
  * OGRGeometryFactory::forceToPolygon().
  *
  * @param hGeom handle to the geometry to convert (ownership surrendered).
- * @return the converted geometry (ownership to caller). 
+ * @return the converted geometry (ownership to caller).
+ *
+ * @since GDAL/OGR 1.8.0
  */
 
 OGRGeometryH OGR_G_ForceToPolygon( OGRGeometryH hGeom )
@@ -625,13 +627,15 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 /************************************************************************/
 
 /**
- * \brief change to multipolygon.
+ * \brief Convert to multipolygon.
  *
  * This function is the same as the C++ method 
  * OGRGeometryFactory::forceToMultiPolygon().
  *
  * @param hGeom handle to the geometry to convert (ownership surrendered).
- * @return the converted geometry (ownership to caller). 
+ * @return the converted geometry (ownership to caller).
+ *
+ * @since GDAL/OGR 1.8.0
  */
 
 OGRGeometryH OGR_G_ForceToMultiPolygon( OGRGeometryH hGeom )
@@ -718,13 +722,15 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
 /************************************************************************/
 
 /**
- * \brief change to multipoint.
+ * \brief Convert to multipoint.
  *
  * This function is the same as the C++ method 
  * OGRGeometryFactory::forceToMultiPoint().
  *
  * @param hGeom handle to the geometry to convert (ownership surrendered).
- * @return the converted geometry (ownership to caller). 
+ * @return the converted geometry (ownership to caller).
+ *
+ * @since GDAL/OGR 1.8.0
  */
 
 OGRGeometryH OGR_G_ForceToMultiPoint( OGRGeometryH hGeom )
@@ -896,13 +902,15 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 /************************************************************************/
 
 /**
- * \brief change to multilinestring.
+ * \brief Convert to multilinestring.
  *
  * This function is the same as the C++ method 
  * OGRGeometryFactory::forceToMultiLineString().
  *
  * @param hGeom handle to the geometry to convert (ownership surrendered).
- * @return the converted geometry (ownership to caller). 
+ * @return the converted geometry (ownership to caller).
+ *
+ * @since GDAL/OGR 1.8.0
  */
 
 OGRGeometryH OGR_G_ForceToMultiLineString( OGRGeometryH hGeom )
