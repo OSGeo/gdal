@@ -399,7 +399,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         lastOutput = (GByte)code;
 
         while( imageLine >= 0 &&
-               (imageLine || imagePos < poRDS->nBlockXSize - 1) &&
+               (imageLine || imagePos < poRDS->nBlockXSize) &&
                filePos < nBlockSize ) try
         {
             lastCode = code;
