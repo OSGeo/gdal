@@ -6544,6 +6544,8 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
         }
     }
 
+    poDS->oOvManager.Initialize( poDS, pszFilename );
+
     return( poDS );
 }
 
