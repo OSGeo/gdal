@@ -174,7 +174,7 @@ lists information about a raster dataset
 \section synopsis SYNOPSIS
 
 \verbatim
-gdalinfo [--help-general] [-mm] [-stats] [-nogcp] [-nomd]
+gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
          [-noct] [-checksum] [-mdd domain]* datasetname
 \endverbatim
 
@@ -186,6 +186,7 @@ raster dataset.
 <dt> <b>-mm</b></dt><dd> Force computation of the actual min/max values for each
 band in the dataset.</dd>
 <dt> <b>-stats</b></dt><dd> Read and display image statistics. Force computation if no statistics are stored in an image.</dd>
+<dt> <b>-hist</b></dt><dd> Report histogram information for all bands.</dd>
 <dt> <b>-nogcp</b></dt><dd> Suppress ground control points list printing. It may be
 useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
 which contain thousands of the ones.</dd>
