@@ -866,6 +866,65 @@ def mask_21():
     return 'success'
 
 ###############################################################################
+# Test creation of external TIFF mask band just after Create()
+
+def mask_22():
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    drv = gdal.GetDriverByName('GTiff')
+    ds = drv.Create( 'tmp/mask_22.tif', 20 ,20 )
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 0:
+        print(cs)
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    ds.GetRasterBand(1).GetMaskBand().Fill(1)
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 400:
+        print(cs)
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('tmp/mask_22.tif.msk')
+    except:
+        gdaltest.post_reason( 'tmp/mask_22.tif.msk is absent' )
+        return 'fail'
+
+    ds = gdal.Open('tmp/mask_22.tif')
+
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
+        gdaltest.post_reason( 'wrong mask flags' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 400:
+        print(cs)
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/mask_22.tif' )
+
+    try:
+        os.stat('tmp/mask_22.tif.msk')
+        gdaltest.post_reason( 'tmp/mask_22.tif.msk is still there' )
+        return 'fail'
+    except:
+        pass
+
+    return 'success' 
+
+###############################################################################
 # Cleanup.
 
 
@@ -890,7 +949,8 @@ gdaltest_list = [
     mask_18,
     mask_19,
     mask_20,
-    mask_21]
+    mask_21,
+    mask_22]
 
 if __name__ == '__main__':
 
