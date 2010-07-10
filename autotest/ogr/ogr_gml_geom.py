@@ -363,6 +363,154 @@ def gml_out_geometrycollection_srs():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test GML Box
+
+def gml_Box():
+
+    gml = """<gml:Box xmlns:gml="http://www.opengis.net/gml" srsName="foo">
+  <gml:coord>
+    <gml:X>1</gml:X>
+    <gml:Y>2</gml:Y>
+  </gml:coord>
+  <gml:coord>
+    <gml:X>3</gml:X>
+    <gml:Y>4</gml:Y>
+  </gml:coord>
+</gml:Box>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((1 2 0,3 2 0,3 4 0,1 4 0,1 2 0))':
+        gdaltest.post_reason( '<gml:Box> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML Curve
+
+def gml_Curve():
+
+    gml = """<gml:Curve xmlns:gml="http://www.opengis.net/gml" srsName="foo">
+    <gml:segments>
+        <gml:LineStringSegment>
+            <gml:posList>1 2 3 4</gml:posList>
+        </gml:LineStringSegment>
+    </gml:segments>
+</gml:Curve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'LINESTRING (1 2,3 4)':
+        gdaltest.post_reason( '<gml:Curve> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML MultiCurve
+
+def gml_MultiCurve():
+
+    gml = """<gml:MultiCurve xmlns:gml="http://www.opengis.net/gml" srsName="foo">
+    <gml:curveMember>
+        <gml:LineString>
+            <gml:posList>1 2 2 3</gml:posList>
+        </gml:LineString>
+    </gml:curveMember>
+    <gml:curveMember>
+        <gml:LineString>
+            <gml:posList>3 4 4 5</gml:posList>
+        </gml:LineString>
+    </gml:curveMember>
+</gml:MultiCurve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'MULTILINESTRING ((1 2,2 3),(3 4,4 5))':
+        gdaltest.post_reason( '<gml:MultiCurve> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML MultiSurface with PolygonPatch
+
+def gml_MultiSurface():
+
+    gml = """<gml:MultiSurface xmlns:gml="http://www.opengis.net/gml" srsName="foo">
+    <gml:surfaceMember>
+        <gml:Surface>
+            <gml:patches>
+                <gml:PolygonPatch interpolation="planar">
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>1 2 3 4 5 6 1 2</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                    <gml:interior>
+                        <gml:LinearRing>
+                            <gml:posList>2 3 4 5 6 7 2 3</gml:posList>
+                        </gml:LinearRing>
+                    </gml:interior>   
+                    <gml:interior>
+                        <gml:LinearRing>
+                            <gml:posList>3 4 5 6 7 8 3 4</gml:posList>
+                        </gml:LinearRing>
+                    </gml:interior>
+                </gml:PolygonPatch>
+            </gml:patches>
+        </gml:Surface>
+    </gml:surfaceMember>
+    <gml:surfaceMember>
+        <gml:Surface>
+            <gml:patches>
+                <gml:PolygonPatch interpolation="planar">
+                    <gml:exterior>
+                        <gml:Ring>
+                            <gml:curveMember>
+                                <gml:Curve>
+                                    <gml:segments>
+                                        <gml:LineStringSegment>
+                                            <gml:pos>4 5</gml:pos>
+                                            <gml:pos>6 7</gml:pos>
+                                        </gml:LineStringSegment>
+                                    </gml:segments>
+                                </gml:Curve>
+                            </gml:curveMember>
+                            <gml:curveMember>
+                                <gml:Curve>
+                                    <gml:segments>
+                                        <gml:LineStringSegment>
+                                            <gml:pos>8 9</gml:pos>
+                                            <gml:pos>4 5</gml:pos>
+                                        </gml:LineStringSegment>
+                                    </gml:segments>
+                                </gml:Curve>
+                            </gml:curveMember>
+                        </gml:Ring>
+                    </gml:exterior>
+                </gml:PolygonPatch>
+            </gml:patches>
+        </gml:Surface>
+    </gml:surfaceMember>
+</gml:MultiSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'MULTIPOLYGON (((1 2,3 4,5 6,1 2),(2 3,4 5,6 7,2 3),(3 4,5 6,7 8,3 4)),((4 5,6 7,8 9,4 5)))':
+        gdaltest.post_reason( '<gml:MultiSurface> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 # When imported build a list of units based on the files available.
 
@@ -391,6 +539,10 @@ gdaltest_list.append( gml_out_multipoint_srs )
 gdaltest_list.append( gml_out_multilinestring_srs )
 gdaltest_list.append( gml_out_multipolygon_srs )
 gdaltest_list.append( gml_out_geometrycollection_srs )
+gdaltest_list.append( gml_Box )
+gdaltest_list.append( gml_Curve )
+gdaltest_list.append( gml_MultiCurve )
+gdaltest_list.append( gml_MultiSurface )
 
 if __name__ == '__main__':
 
