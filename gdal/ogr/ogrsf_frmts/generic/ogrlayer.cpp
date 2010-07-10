@@ -197,19 +197,17 @@ OGRErr OGRLayer::GetExtent(OGREnvelope *psExtent, int bForce )
     OGREnvelope oEnv;
     GBool       bExtentSet = FALSE;
 
+    psExtent->MinX = 0.0;
+    psExtent->MaxX = 0.0;
+    psExtent->MinY = 0.0;
+    psExtent->MaxY = 0.0;
+
 /* -------------------------------------------------------------------- */
 /*      If this layer has a none geometry type, then we can             */
 /*      reasonably assume there are not extents available.              */
 /* -------------------------------------------------------------------- */
     if( GetLayerDefn()->GetGeomType() == wkbNone )
-    {
-        psExtent->MinX = 0.0;
-        psExtent->MaxX = 0.0;
-        psExtent->MinY = 0.0;
-        psExtent->MaxY = 0.0;
-        
         return OGRERR_FAILURE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If not forced, we should avoid having to scan all the           */
@@ -226,12 +224,16 @@ OGRErr OGRLayer::GetExtent(OGREnvelope *psExtent, int bForce )
     while( (poFeature = GetNextFeature()) != NULL )
     {
         OGRGeometry *poGeom = poFeature->GetGeometryRef();
-        if (poGeom && !bExtentSet)
+        if (poGeom == NULL || poGeom->IsEmpty())
+        {
+            /* Do nothing */
+        }
+        else if (!bExtentSet)
         {
             poGeom->getEnvelope(psExtent);
             bExtentSet = TRUE;
         }
-        else if (poGeom)
+        else
         {
             poGeom->getEnvelope(&oEnv);
             if (oEnv.MinX < psExtent->MinX) 
