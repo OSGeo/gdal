@@ -1167,7 +1167,13 @@ void OGRLineString::getEnvelope( OGREnvelope * psEnvelope ) const
     double      dfMinX, dfMinY, dfMaxX, dfMaxY;
 
     if( nPointCount == 0 )
+    {
+        psEnvelope->MinX = 0;
+        psEnvelope->MaxX = 0;
+        psEnvelope->MinY = 0;
+        psEnvelope->MaxY = 0;
         return;
+    }
     
     dfMinX = dfMaxX = paoPoints[0].x;
     dfMinY = dfMaxY = paoPoints[0].y;
