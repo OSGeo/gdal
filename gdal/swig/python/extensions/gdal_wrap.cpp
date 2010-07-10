@@ -4623,15 +4623,15 @@ int  RegenerateOverview( GDALRasterBandShadow *srcBand,
 
 
 int ContourGenerate( GDALRasterBandShadow *srcBand,
-                     double dfContourInterval,
-                     double dfContourBase,
-                     int nFixedLevelCount,
-                     double *padfFixedLevels,
-                     int bUseNoData,
-                     double dfNoDataValue,
-                     OGRLayerShadow* hLayer, 
-                     int iIDField,
-                     int iElevField,
+                     double contourInterval,
+                     double contourBase,
+                     int fixedLevelCount,
+                     double *fixedLevels,
+                     int useNoData,
+                     double noDataValue,
+                     OGRLayerShadow* dstLayer, 
+                     int idField,
+                     int elevField,
                      GDALProgressFunc callback = NULL,
                      void* callback_data = NULL)
 {
@@ -4640,15 +4640,15 @@ int ContourGenerate( GDALRasterBandShadow *srcBand,
     CPLErrorReset();
 
     eErr =  GDALContourGenerate( srcBand,
-                                 dfContourInterval,
-                                 dfContourBase,
-                                 nFixedLevelCount,
-                                 padfFixedLevels,
-                                 bUseNoData,
-                                 dfNoDataValue,
-                                 hLayer,
-                                 iIDField,
-                                 iElevField,
+                                 contourInterval,
+                                 contourBase,
+                                 fixedLevelCount,
+                                 fixedLevels,
+                                 useNoData,
+                                 noDataValue,
+                                 dstLayer,
+                                 idField,
+                                 elevField,
                                  callback,
                                  callback_data);
 
@@ -9749,6 +9749,11 @@ SWIGINTERN PyObject *_wrap_Dataset_SetProjection(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_SetProjection" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     result = (CPLErr)GDALDatasetShadow_SetProjection(arg1,(char const *)arg2);
     if ( bUseExceptions ) {
@@ -17003,7 +17008,7 @@ SWIGINTERN PyObject *_wrap_ContourGenerate(PyObject *SWIGUNUSEDPARM(self), PyObj
   PyObject * obj9 = 0 ;
   PyObject * obj10 = 0 ;
   char *  kwnames[] = {
-    (char *) "srcBand",(char *) "dfContourInterval",(char *) "dfContourBase",(char *) "nFixedLevelCount",(char *) "bUseNoData",(char *) "dfNoDataValue",(char *) "hLayer",(char *) "iIDField",(char *) "iElevField",(char *) "callback",(char *) "callback_data", NULL 
+    (char *) "srcBand",(char *) "contourInterval",(char *) "contourBase",(char *) "fixedLevelCount",(char *) "useNoData",(char *) "noDataValue",(char *) "dstLayer",(char *) "idField",(char *) "elevField",(char *) "callback",(char *) "callback_data", NULL 
   };
   int result;
   
@@ -19028,10 +19033,10 @@ static PyMethodDef SwigMethods[] = {
 		"    void callback_data = None) -> int\n"
 		""},
 	 { (char *)"ContourGenerate", (PyCFunction) _wrap_ContourGenerate, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
-		"ContourGenerate(Band srcBand, double dfContourInterval, double dfContourBase, \n"
-		"    int nFixedLevelCount, int bUseNoData, \n"
-		"    double dfNoDataValue, OGRLayerShadow hLayer, \n"
-		"    int iIDField, int iElevField, GDALProgressFunc callback = None, \n"
+		"ContourGenerate(Band srcBand, double contourInterval, double contourBase, \n"
+		"    int fixedLevelCount, int useNoData, double noDataValue, \n"
+		"    OGRLayerShadow dstLayer, int idField, \n"
+		"    int elevField, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> int\n"
 		""},
 	 { (char *)"AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT, METH_VARARGS, (char *)"\n"

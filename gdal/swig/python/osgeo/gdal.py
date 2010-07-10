@@ -1234,10 +1234,10 @@ RegenerateOverview = _gdal.RegenerateOverview
 
 def ContourGenerate(*args, **kwargs):
   """
-    ContourGenerate(Band srcBand, double dfContourInterval, double dfContourBase, 
-        int nFixedLevelCount, int bUseNoData, 
-        double dfNoDataValue, OGRLayerShadow hLayer, 
-        int iIDField, int iElevField, GDALProgressFunc callback = None, 
+    ContourGenerate(Band srcBand, double contourInterval, double contourBase, 
+        int fixedLevelCount, int useNoData, double noDataValue, 
+        OGRLayerShadow dstLayer, int idField, 
+        int elevField, GDALProgressFunc callback = None, 
         void callback_data = None) -> int
     """
   return _gdal.ContourGenerate(*args, **kwargs)
