@@ -874,24 +874,37 @@ void OGRPolygon::getEnvelope( OGREnvelope * psEnvelope ) const
 
 {
     OGREnvelope         oRingEnv;
-    
-    if( nRingCount == 0 )
-        return;
+    int                 bExtentSet = FALSE;
 
-    papoRings[0]->getEnvelope( psEnvelope );
-
-    for( int iRing = 1; iRing < nRingCount; iRing++ )
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
     {
-        papoRings[iRing]->getEnvelope( &oRingEnv );
+        if (!papoRings[iRing]->IsEmpty())
+        {
+            if (!bExtentSet)
+            {
+                papoRings[iRing]->getEnvelope( psEnvelope );
+                bExtentSet = TRUE;
+            }
+            else
+            {
+                papoRings[iRing]->getEnvelope( &oRingEnv );
 
-        if( psEnvelope->MinX > oRingEnv.MinX )
-            psEnvelope->MinX = oRingEnv.MinX;
-        if( psEnvelope->MinY > oRingEnv.MinY )
-            psEnvelope->MinY = oRingEnv.MinY;
-        if( psEnvelope->MaxX < oRingEnv.MaxX )
-            psEnvelope->MaxX = oRingEnv.MaxX;
-        if( psEnvelope->MaxY < oRingEnv.MaxY )
-            psEnvelope->MaxY = oRingEnv.MaxY;
+                if( psEnvelope->MinX > oRingEnv.MinX )
+                    psEnvelope->MinX = oRingEnv.MinX;
+                if( psEnvelope->MinY > oRingEnv.MinY )
+                    psEnvelope->MinY = oRingEnv.MinY;
+                if( psEnvelope->MaxX < oRingEnv.MaxX )
+                    psEnvelope->MaxX = oRingEnv.MaxX;
+                if( psEnvelope->MaxY < oRingEnv.MaxY )
+                    psEnvelope->MaxY = oRingEnv.MaxY;
+            }
+        }
+    }
+
+    if (!bExtentSet)
+    {
+        psEnvelope->MinX = psEnvelope->MinY = 0;
+        psEnvelope->MaxX = psEnvelope->MaxY = 0;
     }
 }
 
