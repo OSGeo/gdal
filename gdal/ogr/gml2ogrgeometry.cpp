@@ -459,7 +459,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 /* -------------------------------------------------------------------- */
 /*      Polygon                                                         */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"Polygon") )
+    if( EQUAL(pszBaseGeometry,"Polygon") ||
+        EQUAL(pszBaseGeometry,"PolygonPatch") )
     {
         const CPLXMLNode *psChild;
         OGRPolygon *poPolygon = new OGRPolygon();
@@ -1266,6 +1267,56 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         }*/
 
         return poTS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Surface                                                         */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"Surface") )
+    {
+        const CPLXMLNode *psChild;
+        OGRGeometry *poResult = NULL;
+
+        // Find outer ring.
+        psChild = FindBareXMLChild( psNode, "patches" );
+        if( psChild == NULL )
+            psChild = FindBareXMLChild( psNode, "polygonPatches" );
+
+        if( psChild == NULL || psChild->psChild == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Missing <patches> for Surface." );
+            return NULL;
+        }
+
+        for( psChild = psChild->psChild; 
+             psChild != NULL; psChild = psChild->psNext )
+        {
+            if( psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"PolygonPatch") )
+            {
+                OGRPolygon *poPolygon = (OGRPolygon *) 
+                    GML2OGRGeometry_XMLNode( psChild );
+                if( poPolygon == NULL )
+                    return NULL;
+                
+                if( poResult == NULL )
+                    poResult = poPolygon;
+                else if( wkbFlatten(poResult->getGeometryType()) == wkbPolygon )
+                {
+                    OGRMultiPolygon *poMP = new OGRMultiPolygon();
+                    poMP->addGeometryDirectly( poResult );
+                    poMP->addGeometryDirectly( poPolygon );
+                    poResult = poMP;
+                }
+                else
+                {
+                    ((OGRMultiPolygon *) poResult)->addGeometryDirectly( poPolygon );
+                }
+            }
+        }
+        
+        return poResult;
     }
 
     CPLError( CE_Failure, CPLE_AppDefined, 
