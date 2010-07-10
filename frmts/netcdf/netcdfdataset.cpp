@@ -780,6 +780,9 @@ void netCDFDataset::SetProjection( int var )
 /*      Look for dimension: lon                                         */
 /* -------------------------------------------------------------------- */
 
+    memset( szDimNameX, '\0', sizeof( char ) * MAX_NC_NAME );
+    memset( szDimNameY, '\0', sizeof( char ) * MAX_NC_NAME );
+
     for( i = 0; (i < strlen( poDS->papszDimName[ poDS->nDimXid ] )  && 
 		 i < 3 ); i++ ) {
 	szDimNameX[i] = tolower( ( poDS->papszDimName[poDS->nDimXid] )[i] );
@@ -1423,7 +1426,8 @@ void netCDFDataset::SetProjection( int var )
                     node_offset = 0;
                 }
                 /* for CF-1 conventions, assume bottom first */
-                if( EQUAL( szDimNameY, "lat" ) && pdfYCoord[0] < pdfYCoord[1] )
+                if( ( EQUAL( szDimNameY, "lat" ) || EQUAL( szDimNameY, "y" ) )
+                        && pdfYCoord[0] < pdfYCoord[1] )
                     poDS->bBottomUp = TRUE;
 
                 // Check for reverse order of y-coordinate
