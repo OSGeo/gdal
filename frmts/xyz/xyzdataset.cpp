@@ -324,17 +324,15 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo, int& bHasHeaderLine )
 /*      Chech that it looks roughly as a XYZ dataset                    */
 /* -------------------------------------------------------------------- */
     const char* pszData = (const char*)poOpenInfo->pabyHeader;
-    int bHasFoundNewLine = FALSE, bHasFoundSeparator = FALSE;
     for(i=0;i<poOpenInfo->nHeaderBytes;i++)
     {
         char ch = pszData[i];
         if (ch == 13 || ch == 10)
         {
-            bHasFoundNewLine = TRUE;
             break;
         }
         else if (ch == ' ' || ch == ',' || ch == '\t' || ch == ';')
-            bHasFoundSeparator = TRUE;
+            ;
         else if ((ch >= '0' && ch <= '9') || ch == '.' || ch == '+' ||
                  ch == '-' || ch == 'e' || ch == 'E')
             ;
@@ -347,21 +345,39 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo, int& bHasHeaderLine )
             return FALSE;
         }
     }
+    int bHasFoundNewLine = FALSE;
+    int bPrevWasSep = TRUE;
+    int nCols = 0;
+    int nMaxCols = 0;
     for(;i<poOpenInfo->nHeaderBytes;i++)
     {
         char ch = pszData[i];
         if (ch == 13 || ch == 10)
         {
             bHasFoundNewLine = TRUE;
+            if (!bPrevWasSep)
+            {
+                nCols ++;
+                if (nCols > nMaxCols)
+                    nMaxCols = nCols;
+            }
+            bPrevWasSep = TRUE;
+            nCols = 0;
         }
         else if (ch == ' ' || ch == ',' || ch == '\t' || ch == ';')
         {
-            bHasFoundSeparator = TRUE;
+            if (!bPrevWasSep)
+            {
+                nCols ++;
+                if (nCols > nMaxCols)
+                    nMaxCols = nCols;
+            }
+            bPrevWasSep = TRUE;
         }
         else if ((ch >= '0' && ch <= '9') || ch == '.' || ch == '+' ||
                  ch == '-' || ch == 'e' || ch == 'E')
         {
-            ;
+            bPrevWasSep = FALSE;
         }
         else
         {
@@ -371,7 +387,7 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo, int& bHasHeaderLine )
     }
 
     delete poOpenInfoToDelete;
-    return TRUE;
+    return bHasFoundNewLine && nMaxCols >= 3;
 }
 
 /************************************************************************/
