@@ -449,6 +449,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode )
             GML2OGRGeometry_XMLNode( psChild->psChild );
         if( poRing == NULL )
         {
+            CPLError( CE_Failure, CPLE_AppDefined, "Invalid exterior ring");
             delete poPolygon;
             return NULL;
         }
@@ -474,8 +475,17 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode )
                 && (EQUAL(BareGMLElement(psChild->pszValue),"innerBoundaryIs") ||
                     EQUAL(BareGMLElement(psChild->pszValue),"interior")))
             {
-                poRing = (OGRLinearRing *) 
-                    GML2OGRGeometry_XMLNode( psChild->psChild );
+                if (psChild->psChild != NULL)
+                    poRing = (OGRLinearRing *) 
+                        GML2OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poRing = NULL;
+                if (poRing == NULL)
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "Invalid interior ring");
+                    delete poPolygon;
+                    return NULL;
+                }
                 if( !EQUAL(poRing->getGeometryName(),"LINEARRING") )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
@@ -595,11 +605,16 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode )
             {
                 OGRPolygon *poPolygon;
 
-                poPolygon = (OGRPolygon *) 
-                    GML2OGRGeometry_XMLNode( psChild->psChild );
+                if (psChild->psChild != NULL)
+                    poPolygon = (OGRPolygon *) 
+                        GML2OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poPolygon = NULL;
 
                 if( poPolygon == NULL )
                 {
+                    CPLError( CE_Failure, CPLE_AppDefined, "Invalid %s",
+                              BareGMLElement(psChild->pszValue));
                     delete poMPoly;
                     return NULL;
                 }
@@ -639,8 +654,11 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode )
             {
                 OGRPoint *poPoint;
 
-                poPoint = (OGRPoint *) 
-                    GML2OGRGeometry_XMLNode( psChild->psChild );
+                if (psChild->psChild != NULL)
+                    poPoint = (OGRPoint *) 
+                        GML2OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poPoint = NULL;
                 if( poPoint == NULL 
                     || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
                 {
@@ -677,7 +695,10 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode )
             {
                 OGRGeometry *poGeom;
 
-                poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
+                if (psChild->psChild != NULL)
+                    poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poGeom = NULL;
                 if( poGeom == NULL 
                     || wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
                 {
@@ -714,7 +735,10 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode )
             {
                 OGRGeometry *poGeom;
 
-                poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
+                if (psChild->psChild != NULL)
+                    poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poGeom = NULL;
                 if( poGeom == NULL )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
