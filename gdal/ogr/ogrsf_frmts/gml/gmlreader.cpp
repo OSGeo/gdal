@@ -508,7 +508,11 @@ int GMLReader::IsFeatureElement( const char *pszElement )
     const char *pszLast = m_poState->GetLastComponent();
     int        nLen = strlen(pszLast);
 
-    if( nLen < 6 || !(EQUAL(pszLast+nLen-6,"member") ||
+    if (strcmp(pszLast, "dane") == 0)
+    {
+         /* Polish TBD GML */
+    }
+    else if( nLen < 6 || !(EQUAL(pszLast+nLen-6,"member") ||
                       EQUAL(pszLast+nLen-7,"members")) )
         return FALSE;
 
