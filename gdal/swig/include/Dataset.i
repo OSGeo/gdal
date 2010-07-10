@@ -343,9 +343,11 @@ public:
     return GDALGetProjectionRef( self );
   }
 
+  %apply Pointer NONNULL {char const *prj};
   CPLErr SetProjection( char const *prj ) {
     return GDALSetProjection( self, prj );
   }
+  %clear char const *prj;
 
 #ifdef SWIGPYTHON
 %feature("kwargs") GetGeoTransform;
