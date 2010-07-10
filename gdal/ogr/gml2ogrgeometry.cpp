@@ -555,6 +555,44 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Ring GML3                                                       */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"Ring") )
+    {
+        OGRLinearRing   *poLinearRing = new OGRLinearRing();
+        const CPLXMLNode *psChild;
+
+        for( psChild = psNode->psChild; 
+             psChild != NULL; psChild = psChild->psNext )
+        {
+            if( psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"curveMember") )
+            {
+                OGRLineString *poLS;
+                if (psChild->psChild)
+                    poLS = (OGRLineString *) 
+                        GML2OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poLS = NULL;
+
+                if( poLS == NULL 
+                    || wkbFlatten(poLS->getGeometryType()) != wkbLineString )
+                {
+                    delete poLS;
+                    delete poLinearRing;
+                    return NULL;
+                }
+
+                // we might need to take steps to avoid duplicate points...
+                poLinearRing->addSubLineString( poLS );
+                delete poLS;
+            }
+        }
+
+        return poLinearRing;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      LineString                                                      */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"LineString")
