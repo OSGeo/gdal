@@ -1338,7 +1338,9 @@ by the OGRSFDriverManager.
  \brief Fetch the next available feature from this layer.
 
  The returned feature
- becomes the responsiblity of the caller to delete with OGRFeature::DestroyFeature(). 
+ becomes the responsiblity of the caller to delete with OGRFeature::DestroyFeature(). It is critical that
+ all features associated with an OGRLayer (more specifically an 
+ OGRFeatureDefn) be deleted before that layer/datasource is deleted.
 
  Only features matching the current spatial filter (set with 
  SetSpatialFilter()) will be returned.  
@@ -1368,8 +1370,7 @@ by the OGRSFDriverManager.
 
  This function implements sequential access to the features of a layer.
  The OGR_L_ResetReading() function can be used to start at the beginning 
- again.  Random reading, writing and spatial filtering will be added to
- the OGRLayer in the future.
+ again.
 
  This function is the same as the C++ method OGRLayer::GetNextFeature().
 
@@ -1392,6 +1393,9 @@ by the OGRSFDriverManager.
 
  The returned count takes the spatial filter into account. 
 
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
+
  This method is the same as the C function OGR_L_GetFeatureCount().
 
  @param bForce Flag indicating whether the count should be computed even
@@ -1413,6 +1417,9 @@ by the OGRSFDriverManager.
  actually scan the entire layer once to count objects. 
 
  The returned count takes the spatial filter into account. 
+
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
 
  This function is the same as the CPP OGRLayer::GetFeatureCount().
 
@@ -1443,6 +1450,9 @@ by the OGRSFDriverManager.
  Layers without any geometry may return OGRERR_FAILURE just indicating that
  no meaningful extents could be collected.
 
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
+
  This method is the same as the C function OGR_L_GetExtent().
 
  @param psExtent the structure in which the extent value will be returned.
@@ -1472,6 +1482,9 @@ by the OGRSFDriverManager.
 
  Layers without any geometry may return OGRERR_FAILURE just indicating that
  no meaningful extents could be collected.
+
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
 
  This function is the same as the C++ method OGRLayer::GetExtent().
 
@@ -2127,6 +2140,8 @@ OGRLayers will return FALSE for any unrecognised capabilities.<p>
 
  @return the value of the requested tag, or NULL if that tag does not
  have a value, or is unknown.
+
+ @deprecated
 
 */
 
