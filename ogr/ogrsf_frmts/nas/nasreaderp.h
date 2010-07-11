@@ -74,8 +74,13 @@ public:
         const   XMLCh* const    localname,
         const   XMLCh* const    qname
     );
+#if XERCES_VERSION_MAJOR >= 3
+    void characters( const XMLCh *const chars,
+                     const XMLSize_t length );
+#else
     void characters( const XMLCh *const chars,
                      const unsigned int length );
+#endif
 
     void fatalError(const SAXParseException&);
 };
