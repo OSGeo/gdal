@@ -62,6 +62,7 @@ class VSITarReader : public VSIArchiveReader
         GUIntBig nCurOffset;
         GUIntBig nNextFileSize;
         CPLString osNextFileName;
+        GIntBig nModifiedTime;
 
     public:
         VSITarReader(const char* pszTarFileName);
@@ -74,6 +75,7 @@ class VSITarReader : public VSIArchiveReader
         virtual VSIArchiveEntryFileOffset* GetFileOffset() { return new VSITarEntryFileOffset(nCurOffset); }
         virtual GUIntBig GetFileSize() { return nNextFileSize; }
         virtual CPLString GetFileName() { return osNextFileName; }
+        virtual GIntBig GetModifiedTime() { return nModifiedTime; }
         virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
 };
 
@@ -100,6 +102,7 @@ VSITarReader::VSITarReader(const char* pszTarFileName)
     fp = VSIFOpenL(pszTarFileName, "rb");
     nNextFileSize = 0;
     nCurOffset = 0;
+    nModifiedTime = 0;
 }
 
 /************************************************************************/
@@ -137,6 +140,10 @@ int VSITarReader::GotoNextFile()
     int i;
     for(i=0;i<11;i++)
         nNextFileSize = nNextFileSize * 8 + (abyHeader[124+i] - '0');
+
+    nModifiedTime = 0;
+    for(i=0;i<11;i++)
+        nModifiedTime = nModifiedTime * 8 + (abyHeader[136+i] - '0');
 
     nCurOffset = VSIFTellL(fp);
 

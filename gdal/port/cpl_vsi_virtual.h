@@ -129,6 +129,7 @@ typedef struct
     vsi_l_offset  uncompressed_size;
     VSIArchiveEntryFileOffset*      file_pos;
     int           bIsDir;
+    GIntBig       nModifiedTime;
 } VSIArchiveEntry;
 
 typedef struct
@@ -147,6 +148,7 @@ class VSIArchiveReader
         virtual VSIArchiveEntryFileOffset* GetFileOffset() = 0;
         virtual GUIntBig GetFileSize() = 0;
         virtual CPLString GetFileName() = 0;
+        virtual GIntBig GetModifiedTime() = 0;
         virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset) = 0;
 };
 
