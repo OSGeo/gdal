@@ -339,6 +339,8 @@ int VSISubFileFilesystemHandler::Stat( const char * pszFilename,
     CPLString osSubFilePath;
     vsi_l_offset nOff, nSize;
 
+    memset( psStatBuf, 0, sizeof(VSIStatBufL) );
+
     if( !DecomposePath( pszFilename, osSubFilePath, nOff, nSize ) )
     {
         errno = ENOENT;

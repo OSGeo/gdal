@@ -376,6 +376,9 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pSt
 {
     int ret = -1;
     CPLString osFileInArchive;
+
+    memset(pStatBuf, 0, sizeof(VSIStatBufL));
+
     char* archiveFilename = SplitFilename(pszFilename, osFileInArchive);
     if (archiveFilename == NULL)
         return -1;

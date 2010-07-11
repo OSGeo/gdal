@@ -183,6 +183,8 @@ int VSIStdoutFilesystemHandler::Stat( const char * pszFilename,
                                       VSIStatBufL * pStatBuf )
 
 {
+    memset( pStatBuf, 0, sizeof(VSIStatBufL) );
+
     return -1;
 }
 
