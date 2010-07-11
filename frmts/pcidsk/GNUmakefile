@@ -83,7 +83,7 @@ clean:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/segment/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS ) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
