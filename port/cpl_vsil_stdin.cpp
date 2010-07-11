@@ -343,6 +343,8 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
                                       VSIStatBufL * pStatBuf )
 
 {
+    memset( pStatBuf, 0, sizeof(VSIStatBufL) );
+
     if (strcmp(pszFilename, "/vsistdin/") != 0)
         return -1;
 
