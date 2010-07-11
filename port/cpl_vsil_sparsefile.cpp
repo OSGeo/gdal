@@ -431,6 +431,8 @@ int VSISparseFileFilesystemHandler::Stat( const char * pszFilename,
 {
     VSIVirtualHandle *poFile = Open( pszFilename, "r" );
 
+    memset( psStatBuf, 0, sizeof(VSIStatBufL) );
+
     if( poFile == NULL )
         return -1;
 
