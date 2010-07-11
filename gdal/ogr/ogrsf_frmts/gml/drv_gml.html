@@ -40,6 +40,14 @@ field.  In some applications it is easier if all fields are just treated as
 string fields.  This can be accomplished by setting the configuration option
 <b>GML_FIELDTYPES</b> to the value <b>ALWAYS_STRING</b>.<p>
 
+OGR 1.8.0 adds support for detecting feature attributes in nested GML elements
+(non-flat attribute hierarchy) that can be found in some GML profiles
+such as UK Ordnance Survey MasterMap. OGR 1.8.0 also brings support for reading
+IntegerList, RealList and StringList field types when a GML element has several occurences.<p>
+
+Since OGR 1.8.0, a specialized GML driver - the NAS driver - is available to read
+German AAA GML Exchange Format (NAS).<p>
+
 Configuration options can be set via the CPLSetConfigOption() function or as
 environment variables.<p>
 
@@ -82,8 +90,9 @@ Expat library supports reading the following built-in encodings :
 <li>ISO-8859-1</li>
 </ul>
 
-OGR 1.8.0 adds supports for Windows-1252 encoding (for previous versions, altering the encoding
-mentionned in the XML header to ISO-8859-1 might work in some cases).<p>
+When used with Expat library, OGR 1.8.0 adds supports for Windows-1252 encoding (
+for previous versions, altering the encoding mentionned in the XML header to
+ISO-8859-1 might work in some cases).<p>
 
 The content returned by OGR will be encoded in UTF-8, after the conversion from the
 encoding mentionned in the file header is.<p>

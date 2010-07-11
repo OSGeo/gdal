@@ -251,13 +251,64 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         for( iField = 0; iField < poFClass->GetPropertyCount(); iField++ )
         {
             const char *pszProperty = poGMLFeature->GetProperty( iField );
-            
-            if( pszProperty != NULL )
+            if( pszProperty == NULL )
+                continue;
+
+            switch( poFClass->GetProperty(iField)->GetType()  )
             {
-                if (GetLayerDefn()->GetFieldDefn(iField)->GetType() == OFTReal)
-                    poOGRFeature->SetField( iField, CPLAtof(pszProperty) );
-                else
-                    poOGRFeature->SetField( iField, pszProperty );
+              case GMLPT_Real:
+              {
+                  poOGRFeature->SetField( iField, CPLAtof(pszProperty) );
+              }
+              break;
+
+              case GMLPT_IntegerList:
+              {
+                  char **papszItems = 
+                      CSLTokenizeString2( pszProperty, ",", 0 );
+                  int nCount = CSLCount(papszItems);
+                  int *panIntList = (int *) CPLMalloc(sizeof(int) * nCount );
+                  int i;
+
+                  for( i = 0; i < nCount; i++ )
+                      panIntList[i] = atoi(papszItems[i]);
+
+                  poOGRFeature->SetField( iField, nCount, panIntList );
+                  CPLFree( panIntList );
+                  CSLDestroy( papszItems );
+              }
+              break;
+
+              case GMLPT_RealList:
+              {
+                  char **papszItems = 
+                      CSLTokenizeString2( pszProperty, ",", 0 );
+                  int nCount = CSLCount(papszItems);
+                  double *padfList = (double *)CPLMalloc(sizeof(double)*nCount);
+                  int i;
+
+                  for( i = 0; i < nCount; i++ )
+                      padfList[i] = CPLAtof(papszItems[i]);
+
+                  poOGRFeature->SetField( iField, nCount, padfList );
+                  CPLFree( padfList );
+                  CSLDestroy( papszItems );
+              }
+              break;
+
+              case GMLPT_StringList:
+              {
+                  char **papszItems = 
+                      CSLTokenizeString2( pszProperty, ",", 0 );
+                  
+                  poOGRFeature->SetField( iField, papszItems );
+                  CSLDestroy( papszItems );
+              }
+              break;
+
+              default:
+                poOGRFeature->SetField( iField, pszProperty );
+                break;
             }
         }
 

@@ -29,6 +29,7 @@
 
 #include "gmlreader.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 
 #define SUPPORT_GEOMETRY
 
@@ -541,16 +542,28 @@ int GMLReader::IsAttributeElement( const char *pszElement )
     if( m_poState->m_poFeature == NULL )
         return FALSE;
 
-    if( m_poState->m_nPathLength > 0 )
-        return FALSE;
-
     GMLFeatureClass *poClass = m_poState->m_poFeature->GetClass();
 
+    // If the schema is not yet locked, then any simple element
+    // is potentially an attribute.
     if( !poClass->IsSchemaLocked() )
         return TRUE;
 
+    // Otherwise build the path to this element into a single string
+    // and compare against known attributes.
+    CPLString osElemPath;
+
+    if( m_poState->m_nPathLength == 0 )
+        osElemPath = pszElement;
+    else
+    {
+        osElemPath = m_poState->m_pszPath;
+        osElemPath += "|";
+        osElemPath += pszElement;
+    }
+
     for( int i = 0; i < poClass->GetPropertyCount(); i++ )
-        if( EQUAL(poClass->GetProperty(i)->GetSrcElement(),pszElement) )
+        if( EQUAL(poClass->GetProperty(i)->GetSrcElement(),osElemPath) )
             return TRUE;
 
     return FALSE;
@@ -704,25 +717,68 @@ void GMLReader::SetFeatureProperty( const char *pszElement,
             return;
         }
 
-        GMLPropertyDefn *poPDefn = new GMLPropertyDefn(pszElement,pszElement);
+        CPLString osFieldName;
+        
+        if( strchr(pszElement,'|') == NULL )
+            osFieldName = pszElement;
+        else
+        {
+            osFieldName = strrchr(pszElement,'|') + 1;
+            if( poClass->GetPropertyIndex(osFieldName) != -1 )
+                osFieldName = pszElement;
+        }
+
+        // Does this conflict with an existing property name? 
+        while( poClass->GetProperty(osFieldName) != NULL )
+        {
+            osFieldName += "_";
+        }
+
+        GMLPropertyDefn *poPDefn = new GMLPropertyDefn(osFieldName,pszElement);
 
         if( EQUAL(CPLGetConfigOption( "GML_FIELDTYPES", ""), "ALWAYS_STRING") )
             poPDefn->SetType( GMLPT_String );
 
         poClass->AddProperty( poPDefn );
-
     }
-
-/* -------------------------------------------------------------------- */
-/*      Set the property                                                */
-/* -------------------------------------------------------------------- */
-    poFeature->SetProperty( iProperty, pszValue );
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to update the property type?                         */
 /* -------------------------------------------------------------------- */
     if( !poClass->IsSchemaLocked() )
-        poClass->GetProperty( iProperty )->AnalysePropertyValue(pszValue);
+    {
+        poClass->GetProperty(iProperty)->AnalysePropertyValue(
+                             pszValue, 
+                             poFeature->GetProperty(iProperty));
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the property                                                */
+/* -------------------------------------------------------------------- */
+    switch( poClass->GetProperty( iProperty )->GetType() )
+    {
+      case GMLPT_StringList:
+      case GMLPT_IntegerList:
+      case GMLPT_RealList:
+      {
+          if( poFeature->GetProperty( iProperty ) != NULL )
+          {
+              CPLString osJoinedValue = poFeature->GetProperty( iProperty );
+              osJoinedValue += ",";
+              osJoinedValue += pszValue;
+
+              poFeature->SetProperty( iProperty, osJoinedValue );
+          }
+          else
+              poFeature->SetProperty( iProperty, pszValue );
+      }
+      break;
+
+      default:
+        poFeature->SetProperty( iProperty, pszValue );
+        break;
+    }
+
 }
 
 /************************************************************************/
