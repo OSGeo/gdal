@@ -151,7 +151,7 @@ GMLReader::~GMLReader()
 }
 
 /************************************************************************/
-/*                             SetSource()                              */
+/*                          SetSourceFile()                             */
 /************************************************************************/
 
 void GMLReader::SetSourceFile( const char *pszFilename )
@@ -159,6 +159,16 @@ void GMLReader::SetSourceFile( const char *pszFilename )
 {
     CPLFree( m_pszFilename );
     m_pszFilename = CPLStrdup( pszFilename );
+}
+
+/************************************************************************/
+/*                       GetSourceFileName()                           */
+/************************************************************************/
+
+const char* GMLReader::GetSourceFileName()
+
+{
+    return m_pszFilename;
 }
 
 #ifdef HAVE_EXPAT
