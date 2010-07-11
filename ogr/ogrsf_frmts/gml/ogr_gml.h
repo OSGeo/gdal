@@ -81,6 +81,8 @@ class OGRGMLLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
     
     int                 TestCapability( const char * );
+    
+    virtual const char *GetGeometryColumn();
 };
 
 /************************************************************************/
