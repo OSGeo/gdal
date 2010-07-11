@@ -490,6 +490,34 @@ def ogr_gml_11():
     return 'success'
 
 ###############################################################################
+# Test reading a virtual GML file
+
+def ogr_gml_12():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('/vsizip/data/testgeometryelementpath.zip/testgeometryelementpath.gml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeometryColumn() != 'location1container|location1':
+        gdaltest.post_reason('did not get expected geometry column name')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('attrib1') != 'attrib1_value':
+        gdaltest.post_reason('did not get expected value for attrib1')
+        return 'fail'
+    if feat.GetField('attrib2') != 'attrib2_value':
+        gdaltest.post_reason('did not get expected value for attrib2')
+        return 'fail'
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (3 50)':
+        gdaltest.post_reason('did not get expected geometry')
+        return 'fail'
+    ds = None
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -535,6 +563,7 @@ gdaltest_list = [
     ogr_gml_9,
     ogr_gml_10,
     ogr_gml_11,
+    ogr_gml_12,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
