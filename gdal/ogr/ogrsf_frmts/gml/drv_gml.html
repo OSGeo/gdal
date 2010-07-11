@@ -31,7 +31,7 @@ with the same basename as the target gml file.  Subsequent accesses to the
 same GML file will use the .gfs file to predefine dataset level information
 accelerating access.  To a limited extent the .gfs file can be manually edited
 to alter how the GML file will be parsed.  Be warned that the .gfs file will
-be automatically regenerated if the associated .gml file has a newer timestamp.
+be ignored if the associated .gml file has a newer timestamp.
 <p>
 
 When prescanning the GML file to determine the list of feature types, and
@@ -128,6 +128,78 @@ OFF disables schema generation (and is implicit if XSISCHEMAURI is used).
 <p>
 
 </ul>
+
+<h2>Syntax of .gfs file by example</h2>
+
+Let's consider the following test.gml file :
+
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml"&gt;
+  &lt;gml:featureMember&gt;
+    &lt;LAYER&gt;
+      &lt;attrib1&gt;attrib1_value&lt;/attrib1&gt;
+      &lt;attrib2container&gt;
+        &lt;attrib2&gt;attrib2_value&lt;/attrib2&gt;
+      &lt;/attrib2container&gt;
+      &lt;location1container&gt;
+        &lt;location1&gt;
+            &lt;gml:Point&gt;&lt;gml:coordinates&gt;3,50&lt;/gml:coordinates&gt;&lt;/gml:Point&gt;
+        &lt;/location1&gt;
+      &lt;/location1container&gt;
+      &lt;location2&gt;
+        &lt;gml:Point&gt;&lt;gml:coordinates&gt;2,49&lt;/gml:coordinates&gt;&lt;/gml:Point&gt;
+      &lt;/location2&gt;
+    &lt;/LAYER&gt;
+  &lt;/gml:featureMember&gt;
+&lt;/gml:FeatureCollection&gt;
+</pre>
+
+and the following associated .gfs file.
+
+<pre>
+&lt;GMLFeatureClassList&gt;
+  &lt;GMLFeatureClass&gt;
+    &lt;Name&gt;LAYER&lt;/Name&gt;
+    &lt;ElementPath&gt;LAYER&lt;/ElementPath&gt;
+    &lt;GeometryElementPath&gt;location1container|location1&lt;/GeometryElementPath&gt;
+    &lt;PropertyDefn&gt;
+      &lt;Name&gt;attrib1&lt;/Name&gt;
+      &lt;ElementPath&gt;attrib1&lt;/ElementPath&gt;
+      &lt;Type&gt;String&lt;/Type&gt;
+      &lt;Width&gt;13&lt;/Width&gt;
+    &lt;/PropertyDefn&gt;
+    &lt;PropertyDefn&gt;
+      &lt;Name&gt;attrib2&lt;/Name&gt;
+      &lt;ElementPath&gt;attrib2container|attrib2&lt;/ElementPath&gt;
+      &lt;Type&gt;String&lt;/Type&gt;
+      &lt;Width&gt;13&lt;/Width&gt;
+    &lt;/PropertyDefn&gt;
+  &lt;/GMLFeatureClass&gt;
+&lt;/GMLFeatureClassList&gt;
+</pre>
+
+Note the presence of the '|' character in the &lt;ElementPath&gt; and &lt;GeometryElementPath&gt elements to
+specify the wished field/geometry element that is a nested XML element. Nested field elements are only supported from OGR 1.8.0, as well
+ as specifying &lt;GeometryElementPath&gt; If GeometryElementPath is not specified, the
+GML driver will use the last recognized geometry element.<p>
+
+The output of <i>ogrinfo test.gml -ro -al</i> is:
+<pre>
+Layer name: LAYER
+Geometry: Unknown (any)
+Feature Count: 1
+Extent: (3.000000, 50.000000) - (3.000000, 50.000000)
+Layer SRS WKT:
+(unknown)
+Geometry Column = location1container|location1
+attrib1: String (13.0)
+attrib2: String (13.0)
+OGRFeature(LAYER):0
+  attrib1 (String) = attrib1_value
+  attrib2 (String) = attrib2_value
+  POINT (3 50)
+</pre>
 
 <h2>Example</h2>
 

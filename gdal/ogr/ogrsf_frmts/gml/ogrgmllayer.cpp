@@ -550,3 +550,14 @@ OGRSpatialReference *OGRGMLLayer::GetSpatialRef()
     return poSRS;
 }
 
+/************************************************************************/
+/*                         GetGeometryColumn()                          */
+/************************************************************************/
+
+const char* OGRGMLLayer::GetGeometryColumn()
+{
+    if( poFClass == NULL || poFClass->GetGeometryElement() == NULL )
+        return "";
+
+    return poFClass->GetGeometryElement();
+}

@@ -421,34 +421,52 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
     {
         /* should save attributes too! */
 
+        int bReadGeometry;
+
         if( m_pszGeometry == NULL )
-            m_nGeometryDepth = poState->m_nPathLength;
-        
-        char* pszAttributes = GetAttributes(attr);
-
-        if( m_nGeomLen + nLNLenBytes + 4 + strlen( pszAttributes ) >
-            m_nGeomAlloc )
         {
-            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000 +
-                                  strlen( pszAttributes ));
-            char* pszNewGeometry = (char *) 
-                VSIRealloc( m_pszGeometry, m_nGeomAlloc);
-            if (pszNewGeometry == NULL)
-            {
-                CPLFree(pszAttributes);
-                return CE_Failure;
-            }
-            m_pszGeometry = pszNewGeometry;
+            /* If the <GeometryElementPath> is defined in the .gfs, use it */
+            /* to read the appropriate geometry element */
+            const char* pszGeometryElement = (poState->m_poFeature) ?
+                    poState->m_poFeature->GetClass()->GetGeometryElement() : NULL;
+            if (pszGeometryElement != NULL)
+                bReadGeometry = strcmp(poState->m_pszPath, pszGeometryElement) == 0;
+            else
+                bReadGeometry = TRUE;
+            if (bReadGeometry)
+                m_nGeometryDepth = poState->m_nPathLength;
         }
+        else
+            bReadGeometry = TRUE;
 
-        strcpy( m_pszGeometry+m_nGeomLen++, "<" );
-        strcpy( m_pszGeometry+m_nGeomLen, pszName );
-        m_nGeomLen += nLNLenBytes;
-        /* saving attributes */
-        strcat( m_pszGeometry + m_nGeomLen, pszAttributes );
-        m_nGeomLen += strlen( pszAttributes );
-        CPLFree(pszAttributes);
-        strcat( m_pszGeometry + (m_nGeomLen++), ">" );
+        if (bReadGeometry)
+        {
+            char* pszAttributes = GetAttributes(attr);
+
+            if( m_nGeomLen + nLNLenBytes + 4 + strlen( pszAttributes ) >
+                m_nGeomAlloc )
+            {
+                m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000 +
+                                    strlen( pszAttributes ));
+                char* pszNewGeometry = (char *) 
+                    VSIRealloc( m_pszGeometry, m_nGeomAlloc);
+                if (pszNewGeometry == NULL)
+                {
+                    CPLFree(pszAttributes);
+                    return CE_Failure;
+                }
+                m_pszGeometry = pszNewGeometry;
+            }
+
+            strcpy( m_pszGeometry+m_nGeomLen++, "<" );
+            strcpy( m_pszGeometry+m_nGeomLen, pszName );
+            m_nGeomLen += nLNLenBytes;
+            /* saving attributes */
+            strcat( m_pszGeometry + m_nGeomLen, pszAttributes );
+            m_nGeomLen += strlen( pszAttributes );
+            CPLFree(pszAttributes);
+            strcat( m_pszGeometry + (m_nGeomLen++), ">" );
+        }
     }
     
 /* -------------------------------------------------------------------- */
