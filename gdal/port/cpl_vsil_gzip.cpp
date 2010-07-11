@@ -1355,6 +1355,8 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
 {
     CPLMutexHolder oHolder(&hMutex);
 
+    memset(pStatBuf, 0, sizeof(VSIStatBufL));
+
     if (poHandleLastGZipFile != NULL &&
         strcmp(pszFilename+strlen("/vsigzip/"), poHandleLastGZipFile->GetBaseFileName()) == 0)
     {
