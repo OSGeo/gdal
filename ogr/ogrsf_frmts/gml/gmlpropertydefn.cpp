@@ -85,8 +85,6 @@ void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue,
                                             const char *pszOldValue )
 
 {
-    (void) pszOldValue; // not used yet. 
-
 /* -------------------------------------------------------------------- */
 /*      If it is a zero length string, just return.  We can't deduce    */
 /*      much from this.                                                 */
@@ -100,8 +98,16 @@ void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue,
     int bIsReal = FALSE;
 
     CPLValueType valueType = CPLGetValueType(pszValue);
-    if (valueType == CPL_VALUE_STRING)
-        m_eType = GMLPT_String;
+    if (valueType == CPL_VALUE_STRING
+        && m_eType != GMLPT_String 
+        && m_eType != GMLPT_StringList )
+    {
+        if( m_eType == GMLPT_IntegerList
+            || m_eType == GMLPT_RealList )
+            m_eType = GMLPT_StringList;
+        else
+            m_eType = GMLPT_String;
+    }
     else
         bIsReal = (valueType == CPL_VALUE_REAL);
 
@@ -120,5 +126,25 @@ void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue,
         else
             m_eType = GMLPT_Integer;
     }
-}
+    else if( m_eType == GMLPT_IntegerList && bIsReal )
+    {
+        m_eType = GMLPT_RealList;
+    }
 
+/* -------------------------------------------------------------------- */
+/*      If we already had a value then we are dealing with a list       */
+/*      type value.                                                     */
+/* -------------------------------------------------------------------- */
+    if( pszOldValue != NULL && strlen(pszOldValue) > 0 )
+    {
+        if( m_eType == GMLPT_Integer )
+            m_eType = GMLPT_IntegerList;
+        else if( m_eType == GMLPT_Real )
+            m_eType = GMLPT_RealList;
+        else if( m_eType == GMLPT_String )
+        {
+            m_eType = GMLPT_StringList;
+            m_nWidth = 0;
+        }
+    }
+}
