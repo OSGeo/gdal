@@ -82,10 +82,51 @@ public:
 #include <sax2/SAX2XMLReader.hpp>
 #include <sax2/XMLReaderFactory.hpp>
 #include <sax2/Attributes.hpp>
+#include <sax/InputSource.hpp>
+#include <util/BinInputStream.hpp>
 
 #ifdef XERCES_CPP_NAMESPACE_USE
 XERCES_CPP_NAMESPACE_USE
 #endif
+
+/************************************************************************/
+/*                        GMLBinInputStream                             */
+/************************************************************************/
+class GMLBinInputStream : public BinInputStream
+{
+    FILE* fp;
+    XMLCh emptyString;
+
+public :
+
+             GMLBinInputStream(FILE* fp);
+    virtual ~GMLBinInputStream();
+
+#if XERCES_VERSION_MAJOR >= 3
+    virtual XMLFilePos curPos() const;
+    virtual XMLSize_t readBytes(XMLByte* const toFill, const XMLSize_t maxToRead);
+    virtual const XMLCh* getContentType() const ;
+#else
+    virtual unsigned int curPos() const;
+    virtual unsigned int readBytes(XMLByte* const toFill, const unsigned int maxToRead);
+#endif
+};
+
+/************************************************************************/
+/*                           GMLInputSource                             */
+/************************************************************************/
+
+class GMLInputSource : public InputSource
+{
+    GMLBinInputStream* binInputStream;
+
+public:
+             GMLInputSource(FILE* fp, 
+                            MemoryManager* const manager = XMLPlatformUtils::fgMemoryManager);
+    virtual ~GMLInputSource();
+
+    virtual BinInputStream* makeStream() const;
+};
 
 
 /************************************************************************/
@@ -214,14 +255,15 @@ private:
     SAX2XMLReader *m_poSAXReader;
     XMLPScanToken m_oToFill;
     GMLFeature   *m_poCompleteFeature;
+    GMLInputSource *m_GMLInputSource;
 #else
     GMLExpatHandler    *m_poGMLHandler;
-    FILE*         fpGML;
     XML_Parser    oParser;
     GMLFeature ** ppoFeatureTab;
     int           nFeatureTabLength;
     int           nFeatureTabIndex;
 #endif
+    FILE*         fpGML;
     int           m_bReadStarted;
 
     GMLReadState *m_poState;

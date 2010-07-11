@@ -396,12 +396,12 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     if( !bWriter )
         return OGRERR_FAILURE;
 
-    VSIFPrintf( fp, "  <gml:featureMember>\n" );
+    poDS->PrintLine( fp, "  <gml:featureMember>" );
 
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( iNextGMLId++ );
 
-    VSIFPrintf( fp, "    <ogr:%s fid=\"F%ld\">\n", 
+    poDS->PrintLine( fp, "    <ogr:%s fid=\"F%ld\">", 
                 poFeatureDefn->GetName(),
                 poFeature->GetFID() );
 
@@ -412,7 +412,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         OGREnvelope sGeomBounds;
 
         pszGeometry = poFeature->GetGeometryRef()->exportToGML();
-        VSIFPrintf( fp, "      <ogr:geometryProperty>%s</ogr:geometryProperty>\n",
+        poDS->PrintLine( fp, "      <ogr:geometryProperty>%s</ogr:geometryProperty>",
                     pszGeometry );
         CPLFree( pszGeometry );
 
@@ -443,15 +443,15 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
                     *pszComma = '.';
             }
 
-            VSIFPrintf( fp, "      <ogr:%s>%s</ogr:%s>\n", 
+            poDS->PrintLine( fp, "      <ogr:%s>%s</ogr:%s>", 
                         poFieldDefn->GetNameRef(), pszEscaped, 
                         poFieldDefn->GetNameRef() );
             CPLFree( pszEscaped );
         }
     }
 
-    VSIFPrintf( fp, "    </ogr:%s>\n", poFeatureDefn->GetName() );
-    VSIFPrintf( fp, "  </gml:featureMember>\n" );
+    poDS->PrintLine( fp, "    </ogr:%s>", poFeatureDefn->GetName() );
+    poDS->PrintLine( fp, "  </gml:featureMember>" );
 
     return OGRERR_NONE;
 }

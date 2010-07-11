@@ -106,13 +106,14 @@ GMLReader::GMLReader()
 #if HAVE_XERCES == 1
     m_poSAXReader = NULL;
     m_poCompleteFeature = NULL;
+    m_GMLInputSource = NULL;
 #else
     oParser = NULL;
     ppoFeatureTab = NULL;
     nFeatureTabIndex = 0;
     nFeatureTabLength = 0;
-    fpGML = NULL;
 #endif
+    fpGML = NULL;
     m_bReadStarted = FALSE;
     
     m_poState = NULL;
@@ -144,11 +145,9 @@ GMLReader::~GMLReader()
     }
 #endif
 
-#ifdef HAVE_EXPAT
     if (fpGML)
         VSIFCloseL(fpGML);
     fpGML = NULL;
-#endif
 }
 
 /************************************************************************/
@@ -189,6 +188,11 @@ static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen)
 int GMLReader::SetupParser()
 
 {
+    if (fpGML == NULL)
+        fpGML = VSIFOpenL(m_pszFilename, "rt");
+    if (fpGML != NULL)
+        VSIFSeekL( fpGML, 0, SEEK_SET );
+
 #if HAVE_XERCES == 1
 
     if( !m_bXercesInitialized )
@@ -261,6 +265,9 @@ int GMLReader::SetupParser()
                   "Exception initializing Xerces based GML reader.\n" );
         return FALSE;
     }
+
+    if (m_GMLInputSource == NULL && fpGML != NULL)
+        m_GMLInputSource = new GMLInputSource(fpGML);
 #else
     // Cleanup any old parser.
     if( oParser != NULL )
@@ -272,9 +279,6 @@ int GMLReader::SetupParser()
     XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
     XML_SetUserData(oParser, m_poGMLHandler);
-
-    if (fpGML != NULL)
-        VSIFSeekL( fpGML, 0, SEEK_SET );
 #endif
 
     m_bReadStarted = FALSE;
@@ -306,6 +310,8 @@ void GMLReader::CleanupParser()
 #if HAVE_XERCES == 1
     delete m_poSAXReader;
     m_poSAXReader = NULL;
+    delete m_GMLInputSource;
+    m_GMLInputSource = NULL;
 #else
     if (oParser)
         XML_ParserFree(oParser);
@@ -327,6 +333,61 @@ void GMLReader::CleanupParser()
     m_bReadStarted = FALSE;
 }
 
+#if HAVE_XERCES == 1
+
+GMLBinInputStream::GMLBinInputStream(FILE* fp)
+{
+    this->fp = fp;
+    emptyString = 0;
+}
+
+GMLBinInputStream::~ GMLBinInputStream()
+{
+}
+
+#if XERCES_VERSION_MAJOR >= 3
+XMLFilePos GMLBinInputStream::curPos() const
+{
+    return (XMLFilePos)VSIFTellL(fp);
+}
+
+XMLSize_t GMLBinInputStream::readBytes(XMLByte* const toFill, const XMLSize_t maxToRead)
+{
+    return (XMLSize_t)VSIFReadL(toFill, 1, maxToRead, fp);
+}
+
+const XMLCh* GMLBinInputStream::getContentType() const
+{
+    return &emptyString;
+}
+#else
+unsigned int GMLBinInputStream::curPos() const
+{
+    return (unsigned int)VSIFTellL(fp);
+}
+
+unsigned int GMLBinInputStream::readBytes(XMLByte* const toFill, const unsigned int maxToRead)
+{
+    return (unsigned int)VSIFReadL(toFill, 1, maxToRead, fp);
+}
+#endif
+
+GMLInputSource::GMLInputSource(FILE* fp, MemoryManager* const manager) : InputSource(manager)
+{
+    binInputStream = new GMLBinInputStream(fp);
+}
+
+GMLInputSource::~GMLInputSource()
+{
+}
+
+BinInputStream* GMLInputSource::makeStream() const
+{
+    return binInputStream;
+}
+
+#endif
+
 /************************************************************************/
 /*                            NextFeature()                             */
 /************************************************************************/
@@ -344,9 +405,13 @@ GMLFeature *GMLReader::NextFeature()
             if( m_poSAXReader == NULL )
                 SetupParser();
 
-            if( !m_poSAXReader->parseFirst( m_pszFilename, m_oToFill ) )
-                return NULL;
             m_bReadStarted = TRUE;
+
+            if (m_GMLInputSource == NULL)
+                return NULL;
+
+            if( !m_poSAXReader->parseFirst( *m_GMLInputSource, m_oToFill ) )
+                return NULL;
         }
 
         while( m_poCompleteFeature == NULL 
@@ -384,9 +449,6 @@ GMLFeature *GMLReader::NextFeature()
     {
         if (oParser == NULL)
             SetupParser();
-
-        if (fpGML == NULL)
-            fpGML = VSIFOpenL(m_pszFilename, "rt");
 
         m_bReadStarted = TRUE;
     }
@@ -799,7 +861,7 @@ int GMLReader::LoadClasses( const char *pszFile )
     int         nLength;
     char        *pszWholeText;
 
-    fp = VSIFOpen( pszFile, "rb" );
+    fp = VSIFOpenL( pszFile, "rb" );
 
     if( fp == NULL )
     {
@@ -808,9 +870,9 @@ int GMLReader::LoadClasses( const char *pszFile )
         return FALSE;
     }
 
-    VSIFSeek( fp, 0, SEEK_END );
-    nLength = VSIFTell( fp );
-    VSIFSeek( fp, 0, SEEK_SET );
+    VSIFSeekL( fp, 0, SEEK_END );
+    nLength = VSIFTellL( fp );
+    VSIFSeekL( fp, 0, SEEK_SET );
 
     pszWholeText = (char *) VSIMalloc(nLength+1);
     if( pszWholeText == NULL )
@@ -819,21 +881,21 @@ int GMLReader::LoadClasses( const char *pszFile )
                   "Failed to allocate %d byte buffer for %s,\n"
                   "is this really a GMLFeatureClassList file?",
                   nLength, pszFile );
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return FALSE;
     }
     
-    if( VSIFRead( pszWholeText, nLength, 1, fp ) != 1 )
+    if( VSIFReadL( pszWholeText, nLength, 1, fp ) != 1 )
     {
         VSIFree( pszWholeText );
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Read failed on %s.", pszFile );
         return FALSE;
     }
     pszWholeText[nLength] = '\0';
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     if( strstr( pszWholeText, "<GMLFeatureClassList>" ) == NULL )
     {
@@ -934,14 +996,14 @@ int GMLReader::SaveClasses( const char *pszFile )
     
     CPLDestroyXMLNode( psRoot );
  
-    fp = VSIFOpen( pszFile, "wb" );
+    fp = VSIFOpenL( pszFile, "wb" );
     
     if( fp == NULL )
         bSuccess = FALSE;
-    else if( VSIFWrite( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
+    else if( VSIFWriteL( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
         bSuccess = FALSE;
     else
-        VSIFClose( fp );
+        VSIFCloseL( fp );
 
     CPLFree( pszWholeText );
 
