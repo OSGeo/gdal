@@ -671,6 +671,11 @@ def ogr_georss_cleanup():
         except:
             pass
 
+    files = os.listdir('data')
+    for filename in files:
+        if len(filename) > 13 and filename[-13:] == '.resolved.gml':
+            os.unlink('data/' + filename)
+
     return 'success'
 
 gdaltest_list = [ 
