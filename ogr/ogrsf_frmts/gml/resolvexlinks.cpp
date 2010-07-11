@@ -502,13 +502,24 @@ int GMLReader::ResolveXlinks( const char *pszFile,
     Resolve( papsSrcTree[0], &papsSrcTree, &papszResourceHREF, papszSkip, bStrict );
 
     char *pszTmpName = NULL;
+    int bTryWithTempFile = FALSE;
     int bReturn = TRUE;
-    if( !CPLSerializeXMLTreeToFile( papsSrcTree[0], pszFile ) )
+    if( EQUALN(pszFile, "/vsitar/", strlen("/vsitar/")) ||
+        EQUALN(pszFile, "/vsigzip/", strlen("/vsigzip/")) ||
+        EQUALN(pszFile, "/vsizip/", strlen("/vsizip/")) )
+    {
+        bTryWithTempFile = TRUE;
+    }
+    else if( !CPLSerializeXMLTreeToFile( papsSrcTree[0], pszFile ) )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Cannot serialize resolved file %s to %s.",
                   m_pszFilename, pszFile );
+        bTryWithTempFile = TRUE;
+    }
 
+    if (bTryWithTempFile)
+    {
         pszTmpName = CPLStrdup( CPLGenerateTempFilename( "ResolvedGML" ) );
         if( !CPLSerializeXMLTreeToFile( papsSrcTree[0], pszTmpName ) )
         {
