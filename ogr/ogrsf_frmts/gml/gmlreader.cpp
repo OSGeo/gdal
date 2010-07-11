@@ -996,7 +996,18 @@ int GMLReader::PrescanForSchema( int bGetExtents )
             {
                 double  dfXMin, dfXMax, dfYMin, dfYMax;
                 OGREnvelope sEnvelope;
+                OGRwkbGeometryType eGType = (OGRwkbGeometryType) 
+                    poClass->GetGeometryType();
 
+                // Merge geometry type into layer.
+                if( poClass->GetFeatureCount() == 1 && eGType == wkbUnknown )
+                    eGType = wkbNone;
+
+                poClass->SetGeometryType( 
+                    (int) OGRMergeGeometryTypes(
+                        eGType, poGeometry->getGeometryType() ) );
+
+                // merge extents.
                 poGeometry->getEnvelope( &sEnvelope );
                 delete poGeometry;
                 if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
