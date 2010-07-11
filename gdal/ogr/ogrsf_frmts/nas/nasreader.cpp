@@ -134,6 +134,9 @@ int NASReader::SetupParser()
         CleanupParser();
 
     // Create and initialize parser.
+    XMLCh* xmlUriValid = NULL;
+    XMLCh* xmlUriNS = NULL;
+
     try{
         m_poSAXReader = XMLReaderFactory::createXMLReader();
     
@@ -145,11 +148,12 @@ int NASReader::SetupParser()
         m_poSAXReader->setEntityResolver( m_poNASHandler );
         m_poSAXReader->setDTDHandler( m_poNASHandler );
 
+        xmlUriValid = XMLString::transcode("http://xml.org/sax/features/validation");
+        xmlUriNS = XMLString::transcode("http://xml.org/sax/features/namespaces");
+
 #if (OGR_GML_VALIDATION)
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/validation"), true);
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/namespaces"), true);
+        m_poSAXReader->setFeature( xmlUriValid, true);
+        m_poSAXReader->setFeature( xmlUriNS, true);
 
         m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, true );
         m_poSAXReader->setFeature( XMLUni::fgXercesSchema, true );
@@ -157,14 +161,23 @@ int NASReader::SetupParser()
 //    m_poSAXReader->setDoSchema(true);
 //    m_poSAXReader->setValidationSchemaFullChecking(true);
 #else
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/validation"), false);
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/namespaces"), false);
+        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreValidation, false);
+
+#if XERCES_VERSION_MAJOR >= 3
+        m_poSAXReader->setFeature( XMLUni::fgXercesSchema, false);
+#else
+        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, false);
 #endif
+
+#endif
+        XMLString::release( &xmlUriValid );
+        XMLString::release( &xmlUriNS );
     }
     catch (...)
     {
+        XMLString::release( &xmlUriValid );
+        XMLString::release( &xmlUriNS );
+
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Exception initializing Xerces based GML reader.\n" );
         return FALSE;
