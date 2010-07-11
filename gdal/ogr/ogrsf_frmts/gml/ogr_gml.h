@@ -102,6 +102,7 @@ class OGRGMLDataSource : public OGRDataSource
 
     // output related parameters 
     FILE                *fpOutput;
+    int                 bFpOutputIsStdout;
     OGREnvelope         sBoundingRect;
     int                 nBoundedByLocation;
     
@@ -134,6 +135,8 @@ class OGRGMLDataSource : public OGRDataSource
     IGMLReader          *GetReader() { return poReader; }
 
     void                GrowExtents( OGREnvelope *psGeomBounds );
+
+    static void         PrintLine(FILE* fp, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
 };
 
 /************************************************************************/
