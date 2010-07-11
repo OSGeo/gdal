@@ -93,7 +93,7 @@ NASReader::~NASReader()
 }
 
 /************************************************************************/
-/*                             SetSource()                              */
+/*                          SetSourceFile()                             */
 /************************************************************************/
 
 void NASReader::SetSourceFile( const char *pszFilename )
@@ -101,6 +101,16 @@ void NASReader::SetSourceFile( const char *pszFilename )
 {
     CPLFree( m_pszFilename );
     m_pszFilename = CPLStrdup( pszFilename );
+}
+
+/************************************************************************/
+/*                       GetSourceFileName()                            */
+/************************************************************************/
+
+const char* NASReader::GetSourceFileName()
+
+{
+    return m_pszFilename;
 }
 
 /************************************************************************/
@@ -981,6 +991,7 @@ void NASReader::CheckForRelations( const char *pszElement,
 /************************************************************************/
 
 int NASReader::ResolveXlinks( const char *pszFile,
+                              int* pbOutIsTempFile,
                               char **papszSkip,
                               const int bStrict )
 

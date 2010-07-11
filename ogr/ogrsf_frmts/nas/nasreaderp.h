@@ -151,6 +151,7 @@ public:
         { m_bClassListLocked = bFlag; }
 
     void             SetSourceFile( const char *pszFilename );
+    const char      *GetSourceFileName();
 
     int              GetClassCount() const { return m_nClassCount; }
     GMLFeatureClass *GetClass( int i ) const;
@@ -170,6 +171,7 @@ public:
     int              ParseXSD( const char *pszFile ) { return FALSE; }
 
     int              ResolveXlinks( const char *pszFile,
+                                    int* pbOutIsTempFile,
                                     char **papszSkip = NULL,
                                     const int bStrict = FALSE );
 
