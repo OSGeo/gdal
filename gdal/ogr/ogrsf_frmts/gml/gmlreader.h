@@ -196,6 +196,7 @@ public:
     virtual void SetClassListLocked( int bFlag ) = 0;
 
     virtual void SetSourceFile( const char *pszFilename ) = 0;
+    virtual const char* GetSourceFileName() = 0;
 
     virtual int  GetClassCount() const = 0;
     virtual GMLFeatureClass *GetClass( int i ) const = 0;
@@ -213,6 +214,7 @@ public:
     virtual int  ParseXSD( const char *pszFile ) = 0;
 
     virtual int  ResolveXlinks( const char *pszFile,
+                                int* pbOutIsTempFile,
                                 char **papszSkip = NULL,
                                 const int bStrict = FALSE ) = 0;
 
