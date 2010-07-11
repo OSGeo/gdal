@@ -29,6 +29,7 @@
 
 #include "gmlreader.h"
 #include "cpl_conv.h"
+#include "ogr_core.h"
 
 /************************************************************************/
 /*                          GMLFeatureClass()                           */
@@ -267,9 +268,17 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
     if( strlen( pszGPath ) > 0 )
         SetGeometryElement( pszGPath );
 
-    if( CPLGetXMLValue( psRoot, "GeometryType", NULL ) != NULL )
+    const char* pszGeometryType = CPLGetXMLValue( psRoot, "GeometryType", NULL );
+    if( pszGeometryType != NULL )
     {
-        SetGeometryType( atoi(CPLGetXMLValue( psRoot, "GeometryType", NULL )) );
+        int nGeomType = atoi(pszGeometryType) & (~wkb25DBit);
+        if ((nGeomType >= 0 && nGeomType <= 7) || nGeomType == 100)
+            SetGeometryType( atoi(pszGeometryType) );
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Unrecognised geometry type : %s",
+                     pszGeometryType);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -355,6 +364,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Unrecognised property type %s.", 
                           pszType );
+                delete poPDefn;
                 return FALSE;
             }
 
