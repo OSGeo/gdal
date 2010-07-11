@@ -231,6 +231,11 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                           pszXlinkResolvedFilename );
                 bResolve = FALSE;
             }
+            else
+            {
+                poReader->SetSourceFile( pszXlinkResolvedFilename );
+                bResolve = FALSE;
+            }
         }
     }
 
