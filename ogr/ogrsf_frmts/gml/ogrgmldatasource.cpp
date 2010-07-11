@@ -349,12 +349,17 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 
 {
     OGRGMLLayer *poLayer;
+    OGRwkbGeometryType eGType 
+        = (OGRwkbGeometryType) poClass->GetGeometryType();
 
+    if( poClass->GetFeatureCount() == 0 )
+        eGType = wkbUnknown;
+    
 /* -------------------------------------------------------------------- */
 /*      Create an empty layer.                                          */
 /* -------------------------------------------------------------------- */
     poLayer = new OGRGMLLayer( poClass->GetName(), NULL, FALSE, 
-                               wkbUnknown, this );
+                               eGType, this );
 
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */
