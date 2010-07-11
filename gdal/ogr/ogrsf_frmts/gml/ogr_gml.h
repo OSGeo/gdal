@@ -110,6 +110,7 @@ class OGRGMLDataSource : public OGRDataSource
 
     // input related parameters.
     IGMLReader          *poReader;
+    int                 bOutIsTempFile;
 
     void                InsertHeader();
 

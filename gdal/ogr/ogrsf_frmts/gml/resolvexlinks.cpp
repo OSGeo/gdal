@@ -464,10 +464,13 @@ static CPLErr Resolve( CPLXMLNode * psNode,
 /************************************************************************/
 
 int GMLReader::ResolveXlinks( const char *pszFile,
+                              int* pbOutIsTempFile,
                               char **papszSkip,
-                              const int bStrict )
+                              const int bStrict)
 
 {
+    *pbOutIsTempFile = FALSE;
+
 // Check if the original source file is set.
     if( m_pszFilename == NULL )
     {
@@ -520,6 +523,7 @@ int GMLReader::ResolveXlinks( const char *pszFile,
         //set the source file to the resolved file
             CPLFree( m_pszFilename );
             m_pszFilename = pszTmpName;
+            *pbOutIsTempFile = TRUE;
         }
     }
     else

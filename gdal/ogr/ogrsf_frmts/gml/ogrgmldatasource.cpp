@@ -49,6 +49,7 @@ OGRGMLDataSource::OGRGMLDataSource()
     bFpOutputIsStdout = FALSE;
 
     papszCreateOptions = NULL;
+    bOutIsTempFile = FALSE;
 }
 
 /************************************************************************/
@@ -96,7 +97,11 @@ OGRGMLDataSource::~OGRGMLDataSource()
     CPLFree( papoLayers );
 
     if( poReader )
+    {
+        if (bOutIsTempFile)
+            VSIUnlink(poReader->GetSourceFileName());
         delete poReader;
+    }
 }
 
 /************************************************************************/
@@ -240,7 +245,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                                            CSLT_STRIPENDSPACES );
 
     if( bResolve )
-        poReader->ResolveXlinks( pszXlinkResolvedFilename, papszSkip );
+        poReader->ResolveXlinks( pszXlinkResolvedFilename, &bOutIsTempFile, papszSkip );
 
     CPLFree( pszXlinkResolvedFilename );
     CSLDestroy( papszSkip );
