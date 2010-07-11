@@ -461,7 +461,13 @@ def ogr_gml_cleanup():
 def ogr_gml_clean_files():
     try:
         os.remove( 'data/bom.gfs' )
+    except:
+        pass
+    try:
         os.remove( 'data/utf8.gfs' )
+    except:
+        pass
+    try:
         os.remove( 'data/ticket_2349_test_1.gfs' )
     except:
         pass
