@@ -309,7 +309,10 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Save the schema file if possible.  Don't make a fuss if we      */
 /*      can't ... could be read-only directory or something.            */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema && !poReader->HasStoppedParsing())
+    if( !bHaveSchema && !poReader->HasStoppedParsing() &&
+        !EQUALN(pszNewName, "/vsitar/", strlen("/vsitar/")) &&
+        !EQUALN(pszNewName, "/vsigzip/", strlen("/vsigzip/")) &&
+        !EQUALN(pszNewName, "/vsizip/", strlen("/vsizip/")))
     {
         FILE    *fp = NULL;
 
