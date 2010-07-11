@@ -129,6 +129,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
         content->entries = (VSIArchiveEntry*)CPLRealloc(content->entries,
                             sizeof(VSIArchiveEntry) * (content->nEntries + 1));
         content->entries[content->nEntries].fileName = CPLStrdup(fileName);
+        content->entries[content->nEntries].nModifiedTime = poReader->GetModifiedTime();
         content->entries[content->nEntries].uncompressed_size = poReader->GetFileSize();
         content->entries[content->nEntries].bIsDir =
                 strlen(fileName) > 0 &&
@@ -393,6 +394,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pSt
         {
             /* Patching st_size with uncompressed file size */
             pStatBuf->st_size = (long)archiveEntry->uncompressed_size;
+            pStatBuf->st_mtime = (time_t)archiveEntry->nModifiedTime;
             if (archiveEntry->bIsDir)
                 pStatBuf->st_mode = S_IFDIR;
             else
@@ -430,6 +432,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pSt
             {
                 /* Patching st_size with uncompressed file size */
                 pStatBuf->st_size = (long)poReader->GetFileSize();
+                pStatBuf->st_mtime = (time_t)poReader->GetModifiedTime();
                 pStatBuf->st_mode = S_IFREG;
             }
 

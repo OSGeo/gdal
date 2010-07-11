@@ -81,6 +81,7 @@
 
 #include <zlib.h>
 #include "cpl_minizip_unzip.h"
+#include "cpl_time.h"
 
 CPL_CVSID("$Id$");
 
@@ -1543,6 +1544,7 @@ class VSIZipReader : public VSIArchiveReader
         unz_file_pos file_pos;
         GUIntBig nNextFileSize;
         CPLString osNextFileName;
+        GIntBig nModifiedTime;
 
         void SetInfo();
 
@@ -1559,6 +1561,7 @@ class VSIZipReader : public VSIArchiveReader
         virtual VSIArchiveEntryFileOffset* GetFileOffset() { return new VSIZipEntryFileOffset(file_pos); }
         virtual GUIntBig GetFileSize() { return nNextFileSize; }
         virtual CPLString GetFileName() { return osNextFileName; }
+        virtual GIntBig GetModifiedTime() { return nModifiedTime; }
         virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
 };
 
@@ -1571,6 +1574,7 @@ VSIZipReader::VSIZipReader(const char* pszZipFileName)
 {
     unzF = cpl_unzOpen(pszZipFileName);
     nNextFileSize = 0;
+    nModifiedTime = 0;
 }
 
 /************************************************************************/
@@ -1594,6 +1598,14 @@ void VSIZipReader::SetInfo()
     cpl_unzGetCurrentFileInfo (unzF, &file_info, fileName, 512, NULL, 0, NULL, 0);
     osNextFileName = fileName;
     nNextFileSize = file_info.uncompressed_size;
+    struct tm brokendowntime;
+    brokendowntime.tm_sec = file_info.tmu_date.tm_sec;
+    brokendowntime.tm_min = file_info.tmu_date.tm_min;
+    brokendowntime.tm_hour = file_info.tmu_date.tm_hour;
+    brokendowntime.tm_mday = file_info.tmu_date.tm_mday;
+    brokendowntime.tm_mon = file_info.tmu_date.tm_mon;
+    brokendowntime.tm_year = file_info.tmu_date.tm_year;
+    nModifiedTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
     cpl_unzGetFilePos(unzF, &this->file_pos);
 }
