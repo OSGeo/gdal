@@ -554,8 +554,17 @@ static OGRGeometry *GML3OGRGeometry_XMLNode( CPLXMLNode *psNode )
             if( psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"interior") )
             {
-                poRing = (OGRLinearRing *) 
-                    GML3OGRGeometry_XMLNode( psChild->psChild );
+                if (psChild->psChild)
+                    poRing = (OGRLinearRing *) 
+                        GML3OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poRing = NULL;
+                if (poRing == NULL)
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "Invalid interior ring");
+                    delete poPolygon;
+                    return NULL;
+                }
                 if( !EQUAL(poRing->getGeometryName(),"LINEARRING") )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
@@ -587,12 +596,20 @@ static OGRGeometry *GML3OGRGeometry_XMLNode( CPLXMLNode *psNode )
             if( psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"curveMember") )
             {
-                OGRLineString *poLS = (OGRLineString *) 
-                    GML3OGRGeometry_XMLNode( psChild->psChild );
+                OGRLineString *poLS;
+                if (psChild->psChild)
+                    poLS = (OGRLineString *) 
+                        GML3OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poLS = NULL;
 
                 if( poLS == NULL 
                     || wkbFlatten(poLS->getGeometryType()) != wkbLineString )
+                {
+                    delete poLS;
+                    delete poLinearRing;
                     return NULL;
+                }
              
                 // we might need to take steps to avoid duplicate points...
                 poLinearRing->addSubLineString( poLS );
@@ -621,8 +638,11 @@ static OGRGeometry *GML3OGRGeometry_XMLNode( CPLXMLNode *psNode )
             {
                 OGRPoint *poPoint;
 
-                poPoint = (OGRPoint *) 
-                    GML3OGRGeometry_XMLNode( psChild->psChild );
+                if (psChild->psChild != NULL)
+                    poPoint = (OGRPoint *) 
+                        GML3OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poPoint = NULL;
                 if( poPoint == NULL 
                     || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
                 {
@@ -659,8 +679,11 @@ static OGRGeometry *GML3OGRGeometry_XMLNode( CPLXMLNode *psNode )
             {
                 OGRPolygon *poPolygon;
 
-                poPolygon = (OGRPolygon *) 
-                    GML3OGRGeometry_XMLNode( psChild->psChild );
+                if (psChild->psChild)
+                    poPolygon = (OGRPolygon *) 
+                        GML3OGRGeometry_XMLNode( psChild->psChild );
+                else
+                    poPolygon = NULL;
 
                 // We likely ought to support getting back a multipolygon
                 // and merging it's contents into our aggregate multipolygon.
@@ -687,228 +710,6 @@ static OGRGeometry *GML3OGRGeometry_XMLNode( CPLXMLNode *psNode )
 
         return poMP;
     }
-
-#ifdef notdef
-/* -------------------------------------------------------------------- */
-/*      LineString                                                      */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"LineString") )
-    {
-        OGRLineString   *poLine = new OGRLineString();
-        
-        if( !ParseGMLCoordinates( psNode, poLine ) )
-        {
-            delete poLine;
-            return NULL;
-        }
-
-        return poLine;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      PointType                                                       */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"PointType") 
-        || EQUAL(pszBaseGeometry,"Point") )
-    {
-        OGRPoint *poPoint = new OGRPoint();
-        
-        if( !ParseGMLCoordinates( psNode, poPoint ) )
-        {
-            delete poPoint;
-            return NULL;
-        }
-
-        return poPoint;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Box                                                             */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"BoxType") || EQUAL(pszBaseGeometry,"Box") )
-    {
-        OGRLineString  oPoints;
-
-        if( !ParseGMLCoordinates( psNode, &oPoints ) )
-            return NULL;
-
-        if( oPoints.getNumPoints() < 2 )
-            return NULL;
-
-        OGRLinearRing *poBoxRing = new OGRLinearRing();
-        OGRPolygon *poBoxPoly = new OGRPolygon();
-
-        poBoxRing->setNumPoints( 5 );
-        poBoxRing->setPoint( 
-            0, oPoints.getX(0), oPoints.getY(0), oPoints.getZ(0) );
-        poBoxRing->setPoint( 
-            1, oPoints.getX(1), oPoints.getY(0), oPoints.getZ(0) );
-        poBoxRing->setPoint( 
-            2, oPoints.getX(1), oPoints.getY(1), oPoints.getZ(1) );
-        poBoxRing->setPoint( 
-            3, oPoints.getX(0), oPoints.getY(1), oPoints.getZ(0) );
-        poBoxRing->setPoint( 
-            4, oPoints.getX(0), oPoints.getY(0), oPoints.getZ(0) );
-
-        poBoxPoly->addRingDirectly( poBoxRing );
-
-        return poBoxPoly;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      MultiPolygon                                                    */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"MultiPolygon") )
-    {
-        CPLXMLNode *psChild;
-        OGRMultiPolygon *poMPoly = new OGRMultiPolygon();
-
-        // Find all inner rings 
-        for( psChild = psNode->psChild; 
-             psChild != NULL;
-             psChild = psChild->psNext ) 
-        {
-            if( psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"polygonMember") )
-            {
-                OGRPolygon *poPolygon;
-
-                poPolygon = (OGRPolygon *) 
-                    GML2OGRGeometry_XMLNode( psChild->psChild );
-
-                if( poPolygon == NULL )
-                {
-                    delete poMPoly;
-                    return NULL;
-                }
-
-                if( !EQUAL(poPolygon->getGeometryName(),"POLYGON") )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Got %.500s geometry as polygonMember instead of MULTIPOLYGON.",
-                              poPolygon->getGeometryName() );
-                    delete poPolygon;
-                    delete poMPoly;
-                    return NULL;
-                }
-
-                poMPoly->addGeometryDirectly( poPolygon );
-            }
-        }
-
-        return poMPoly;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      MultiPoint                                                      */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"MultiPoint") )
-    {
-        CPLXMLNode *psChild;
-        OGRMultiPoint *poMP = new OGRMultiPoint();
-
-        // collect points.
-        for( psChild = psNode->psChild; 
-             psChild != NULL;
-             psChild = psChild->psNext ) 
-        {
-            if( psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"pointMember") )
-            {
-                OGRPoint *poPoint;
-
-                poPoint = (OGRPoint *) 
-                    GML2OGRGeometry_XMLNode( psChild->psChild );
-                if( poPoint == NULL 
-                    || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Got %.500s geometry as pointMember instead of MULTIPOINT",
-                              poPoint ? poPoint->getGeometryName() : "NULL" );
-                    delete poPoint;
-                    delete poMP;
-                    return NULL;
-                }
-
-                poMP->addGeometryDirectly( poPoint );
-            }
-        }
-
-        return poMP;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      MultiLineString                                                 */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"MultiLineString") )
-    {
-        CPLXMLNode *psChild;
-        OGRMultiLineString *poMP = new OGRMultiLineString();
-
-        // collect lines
-        for( psChild = psNode->psChild; 
-             psChild != NULL;
-             psChild = psChild->psNext ) 
-        {
-            if( psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"lineStringMember") )
-            {
-                OGRGeometry *poGeom;
-
-                poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
-                if( poGeom == NULL 
-                    || wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Got %.500s geometry as Member instead of LINESTRING.",
-                              poGeom ? poGeom->getGeometryName() : "NULL" );
-                    delete poGeom;
-                    delete poMP;
-                    return NULL;
-                }
-
-                poMP->addGeometryDirectly( poGeom );
-            }
-        }
-
-        return poMP;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      GeometryCollection                                              */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"GeometryCollection") )
-    {
-        CPLXMLNode *psChild;
-        OGRGeometryCollection *poGC = new OGRGeometryCollection();
-
-        // collect geoms
-        for( psChild = psNode->psChild; 
-             psChild != NULL;
-             psChild = psChild->psNext ) 
-        {
-            if( psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"geometryMember") )
-            {
-                OGRGeometry *poGeom;
-
-                poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
-                if( poGeom == NULL )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Failed to get geometry in geometryMember" );
-                    delete poGeom;
-                    delete poGC;
-                    return NULL;
-                }
-
-                poGC->addGeometryDirectly( poGeom );
-            }
-        }
-
-        return poGC;
-    }
-#endif
 
     CPLError( CE_Failure, CPLE_AppDefined, 
               "Unrecognised geometry type <%.500s>.", 
