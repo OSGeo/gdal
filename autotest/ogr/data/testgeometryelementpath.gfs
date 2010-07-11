@@ -1,0 +1,19 @@
+<GMLFeatureClassList>
+  <GMLFeatureClass>
+    <Name>LAYER</Name>
+    <ElementPath>LAYER</ElementPath>
+    <GeometryElementPath>location1container|location1</GeometryElementPath>
+    <PropertyDefn>
+      <Name>attrib1</Name>
+      <ElementPath>attrib1</ElementPath>
+      <Type>String</Type>
+      <Width>13</Width>
+    </PropertyDefn>
+    <PropertyDefn>
+      <Name>attrib2</Name>
+      <ElementPath>attrib2container|attrib2</ElementPath>
+      <Type>String</Type>
+      <Width>13</Width>
+    </PropertyDefn>
+  </GMLFeatureClass>
+</GMLFeatureClassList>
