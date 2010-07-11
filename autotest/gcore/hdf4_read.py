@@ -275,6 +275,34 @@ def hdf4_read_online_8():
 
     return 'success'
 
+###############################################################################
+# Test reading L1G MTL metadata metadata
+
+def hdf4_read_online_9():
+
+    if gdaltest.hdf4_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://www.geogratis.cgdi.gc.ca/download/landsat_7/hdf/L71002025_02520010722/L71002025_02520010722_MTL.L1G', 'L71002025_02520010722_MTL.L1G'):
+        return 'skip'
+
+    if not gdaltest.download_file('http://www.geogratis.cgdi.gc.ca/download/landsat_7/hdf/L71002025_02520010722/L71002025_02520010722_HDF.L1G', 'L71002025_02520010722_HDF.L1G'):
+        return 'skip'
+
+    f = open('tmp/cache/L71002025_02520010722_B10.L1G', 'wb')
+    f.close()
+
+    ds = gdal.Open('HDF4_SDS:UNKNOWN:"tmp/cache/L71002025_02520010722_HDF.L1G":0')
+    gcp_count = ds.GetGCPCount()
+    ds = None
+
+    if gcp_count != 4:
+        gdaltest.post_reason('did not get expected gcp count')
+        print(gcp_count)
+        return 'fail'
+
+    return 'success'
+
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'HDF4Image', item[0], item[1], item[2] )
@@ -291,6 +319,7 @@ gdaltest_list.append( hdf4_read_online_5 )
 gdaltest_list.append( hdf4_read_online_6 )
 gdaltest_list.append( hdf4_read_online_7 )
 gdaltest_list.append( hdf4_read_online_8 )
+gdaltest_list.append( hdf4_read_online_9 )
 
 if __name__ == '__main__':
 
