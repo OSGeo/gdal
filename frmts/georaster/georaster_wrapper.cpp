@@ -2065,25 +2065,26 @@ bool GeoRasterWrapper::GetNoData( double* pdfNoDataValue )
 bool GeoRasterWrapper::SetNoData( double dfNoDataValue )
 {
     CPLXMLNode* psRInfo = CPLGetXMLNode( phMetadata, "rasterInfo" );
-    CPLXMLNode* psNData = CPLGetXMLNode( psRInfo, "NODATA");
+    CPLXMLNode* psNData = CPLSearchXMLNode( psRInfo, "NODATA" );
 
-    if( psNData )
+    if( psNData == NULL )
     {
-        CPLRemoveXMLChild( psRInfo, psNData );
-        CPLDestroyXMLNode( psNData );
+        psNData = CPLCreateXMLNode( NULL, CXT_Element, "NODATA" );
+
+        // Plug NOTADA just after cellDepth node
+
+        CPLXMLNode* psCDepth = CPLGetXMLNode( psRInfo, "cellDepth" );
+        CPLXMLNode* psPointer = psCDepth->psNext;
+        psCDepth->psNext = psNData;
+        psNData->psNext = psPointer;
     }
 
-    psNData = CPLCreateXMLElementAndValue( psRInfo, "NODATA",
-        CPLSPrintf( "%f", dfNoDataValue ) );
+    const char* pszFormat = EQUAL( &sCellDepth[6], "REAL") ? "%f" : "%.0f";
+    CPLSetXMLValue( psRInfo, "NODATA", CPLSPrintf( pszFormat, dfNoDataValue ) );
 
-    if( psNData )
-    {
-        bFlushMetadata = true;
+    bFlushMetadata = true;
 
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 //  ---------------------------------------------------------------------------
