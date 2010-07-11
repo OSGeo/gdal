@@ -9,3 +9,9 @@ It supports almost all PNG features, is extensible,
 and has been extensively tested for over 15 years.
 
 http://www.libpng.org
+
+
+GDAL changes
+------------
+
+* Make screwy MSPaint "zero chunks" only a warning, not error. See r18808 and #3416
