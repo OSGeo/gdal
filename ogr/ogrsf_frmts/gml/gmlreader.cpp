@@ -1008,24 +1008,28 @@ int GMLReader::PrescanForSchema( int bGetExtents )
                         eGType, poGeometry->getGeometryType() ) );
 
                 // merge extents.
-                poGeometry->getEnvelope( &sEnvelope );
-                delete poGeometry;
-                if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
+                if (!poGeometry->IsEmpty())
                 {
-                    dfXMin = MIN(dfXMin,sEnvelope.MinX);
-                    dfXMax = MAX(dfXMax,sEnvelope.MaxX);
-                    dfYMin = MIN(dfYMin,sEnvelope.MinY);
-                    dfYMax = MAX(dfYMax,sEnvelope.MaxY);
-                }
-                else
-                {
-                    dfXMin = sEnvelope.MinX;
-                    dfXMax = sEnvelope.MaxX;
-                    dfYMin = sEnvelope.MinY;
-                    dfYMax = sEnvelope.MaxY;
-                }
+                    poGeometry->getEnvelope( &sEnvelope );
+                    if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
+                    {
+                        dfXMin = MIN(dfXMin,sEnvelope.MinX);
+                        dfXMax = MAX(dfXMax,sEnvelope.MaxX);
+                        dfYMin = MIN(dfYMin,sEnvelope.MinY);
+                        dfYMax = MAX(dfYMax,sEnvelope.MaxY);
+                    }
+                    else
+                    {
+                        dfXMin = sEnvelope.MinX;
+                        dfXMax = sEnvelope.MaxX;
+                        dfYMin = sEnvelope.MinY;
+                        dfYMax = sEnvelope.MaxY;
+                    }
 
-                poClass->SetExtents( dfXMin, dfXMax, dfYMin, dfYMax );
+                    poClass->SetExtents( dfXMin, dfXMax, dfYMin, dfYMax );
+                }
+                delete poGeometry;
+
             }
 #endif /* def SUPPORT_GEOMETRY */
         }
