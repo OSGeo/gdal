@@ -158,6 +158,7 @@ def ogr_gml_3():
 
 ###############################################################################
 # Test of read GML file with UTF-8 BOM indicator.
+# Test also support for nested GML elements (#3680)
 
 def ogr_gml_4():
     if not gdaltest.have_gml_reader:
@@ -180,6 +181,10 @@ def ogr_gml_4():
 
     if feat.GetField('featureCode') != 10198:
         gdaltest.post_reason( 'Wrong featureCode field value' )
+        return 'fail'
+
+    if feat.GetField('anchorPosition') != 8:
+        gdaltest.post_reason( 'Wrong anchorPosition field value' )
         return 'fail'
 
     wkt = 'POINT (347243.85 461299.5)'
@@ -450,11 +455,17 @@ def ogr_gml_cleanup():
     
     gdaltest.clean_tmp()
     try:
+        os.remove( 'data/bom.gfs' )
         os.remove( 'data/utf8.gfs' )
         os.remove( 'data/ticket_2349_test_1.gfs' )
     except:
         pass
-    
+
+    files = os.listdir('data')
+    for filename in files:
+        if len(filename) > 13 and filename[-13:] == '.resolved.gml':
+            os.unlink('data/' + filename)
+
     return 'success'
 
 gdaltest_list = [ 
