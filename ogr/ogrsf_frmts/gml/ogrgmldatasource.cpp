@@ -372,6 +372,12 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             eFType = OFTInteger;
         else if( poProperty->GetType() == GMLPT_Real )
             eFType = OFTReal;
+        else if( poProperty->GetType() == GMLPT_StringList )
+            eFType = OFTStringList;
+        else if( poProperty->GetType() == GMLPT_IntegerList )
+            eFType = OFTIntegerList;
+        else if( poProperty->GetType() == GMLPT_RealList )
+            eFType = OFTRealList;
         else
             eFType = OFTString;
         

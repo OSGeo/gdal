@@ -511,7 +511,7 @@ OGRErr GMLHandler::endElement(const char* pszName )
     {
         CPLAssert( poState->m_poFeature != NULL );
         
-        m_poReader->SetFeatureProperty( pszName, m_pszCurField );
+        m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszCurField );
         CPLFree( m_pszCurField );
         m_pszCurField = NULL;
     }
