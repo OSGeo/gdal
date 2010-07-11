@@ -454,6 +454,11 @@ def ogr_gml_cleanup():
         return 'skip'
     
     gdaltest.clean_tmp()
+    
+    return ogr_gml_clean_files()
+
+
+def ogr_gml_clean_files():
     try:
         os.remove( 'data/bom.gfs' )
         os.remove( 'data/utf8.gfs' )
@@ -469,6 +474,7 @@ def ogr_gml_cleanup():
     return 'success'
 
 gdaltest_list = [ 
+    ogr_gml_clean_files,
     ogr_gml_1,
     ogr_gml_2,
     ogr_gml_3,
