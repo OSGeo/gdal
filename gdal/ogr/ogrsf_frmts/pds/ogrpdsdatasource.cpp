@@ -289,8 +289,8 @@ int OGRPDSDataSource::Open( const char * pszFilename, int bUpdateIn)
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    if( VSIStatL( pszFilename, &sStatBuf ) != 0 &&
-        VSI_ISREG(sStatBuf.st_mode) )
+    if( VSIStatL( pszFilename, &sStatBuf ) != 0 ||
+        !VSI_ISREG(sStatBuf.st_mode) )
         return FALSE;
     
 // -------------------------------------------------------------------- 
