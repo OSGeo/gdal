@@ -81,70 +81,69 @@ void GMLPropertyDefn::SetSrcElement( const char *pszSrcElement )
 /*      make the field type more specific, or more general.             */
 /************************************************************************/
 
-void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue,
-                                            const char *pszOldValue )
+void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty )
 
 {
-/* -------------------------------------------------------------------- */
-/*      If it is a zero length string, just return.  We can't deduce    */
-/*      much from this.                                                 */
-/* -------------------------------------------------------------------- */
-    if( *pszValue == '\0' )
-        return;
-
 /* -------------------------------------------------------------------- */
 /*      Does the string consist entirely of numeric values?             */
 /* -------------------------------------------------------------------- */
     int bIsReal = FALSE;
 
-    CPLValueType valueType = CPLGetValueType(pszValue);
-    if (valueType == CPL_VALUE_STRING
-        && m_eType != GMLPT_String 
-        && m_eType != GMLPT_StringList )
+    int j;
+    for(j=0;j<psGMLProperty->nSubProperties;j++)
     {
-        if( m_eType == GMLPT_IntegerList
-            || m_eType == GMLPT_RealList )
-            m_eType = GMLPT_StringList;
-        else
-            m_eType = GMLPT_String;
-    }
-    else
-        bIsReal = (valueType == CPL_VALUE_REAL);
-
-    if( m_eType == GMLPT_String )
-    {
-        /* grow the Width to the length of the string passed in */
-        int nWidth;
-        nWidth = strlen(pszValue);
-        if ( m_nWidth < nWidth ) 
-            SetWidth( nWidth );
-    }
-    else if( m_eType == GMLPT_Untyped || m_eType == GMLPT_Integer )
-    {
-        if( bIsReal )
-            m_eType = GMLPT_Real;
-        else
-            m_eType = GMLPT_Integer;
-    }
-    else if( m_eType == GMLPT_IntegerList && bIsReal )
-    {
-        m_eType = GMLPT_RealList;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If we already had a value then we are dealing with a list       */
-/*      type value.                                                     */
-/* -------------------------------------------------------------------- */
-    if( pszOldValue != NULL && strlen(pszOldValue) > 0 )
-    {
-        if( m_eType == GMLPT_Integer )
-            m_eType = GMLPT_IntegerList;
-        else if( m_eType == GMLPT_Real )
-            m_eType = GMLPT_RealList;
-        else if( m_eType == GMLPT_String )
+        if (j > 0)
         {
-            m_eType = GMLPT_StringList;
-            m_nWidth = 0;
+            if( m_eType == GMLPT_Integer )
+                m_eType = GMLPT_IntegerList;
+            else if( m_eType == GMLPT_Real )
+                m_eType = GMLPT_RealList;
+            else if( m_eType == GMLPT_String )
+            {
+                m_eType = GMLPT_StringList;
+                m_nWidth = 0;
+            }
+        }
+        const char* pszValue = psGMLProperty->papszSubProperties[j];
+/* -------------------------------------------------------------------- */
+/*      If it is a zero length string, just return.  We can't deduce    */
+/*      much from this.                                                 */
+/* -------------------------------------------------------------------- */
+        if( *pszValue == '\0' )
+            continue;
+
+        CPLValueType valueType = CPLGetValueType(pszValue);
+        if (valueType == CPL_VALUE_STRING
+            && m_eType != GMLPT_String 
+            && m_eType != GMLPT_StringList )
+        {
+            if( m_eType == GMLPT_IntegerList
+                || m_eType == GMLPT_RealList )
+                m_eType = GMLPT_StringList;
+            else
+                m_eType = GMLPT_String;
+        }
+        else
+            bIsReal = (valueType == CPL_VALUE_REAL);
+    
+        if( m_eType == GMLPT_String )
+        {
+            /* grow the Width to the length of the string passed in */
+            int nWidth;
+            nWidth = strlen(pszValue);
+            if ( m_nWidth < nWidth ) 
+                SetWidth( nWidth );
+        }
+        else if( m_eType == GMLPT_Untyped || m_eType == GMLPT_Integer )
+        {
+            if( bIsReal )
+                m_eType = GMLPT_Real;
+            else
+                m_eType = GMLPT_Integer;
+        }
+        else if( m_eType == GMLPT_IntegerList && bIsReal )
+        {
+            m_eType = GMLPT_RealList;
         }
     }
 }
