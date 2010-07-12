@@ -187,6 +187,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]
+               [-splitlistfields] [-maxsubfields val]
                dst_datasource_name src_datasource_name
                [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]
 \endverbatim
@@ -245,6 +246,8 @@ you will generally want to use it in combination of the -clipdstlayer, -clipdstw
 <dt> <b>-clipdstsql</b> <em>sql_statement</em>:</dt><dd>Select desired geometries using an SQL query instead.</dd>
 <dt> <b>-clipdstlayer</b> <em>layername</em>:</dt><dd>Select the named layer from the destination clip datasource.</dd>
 <dt> <b>-clipdstwhere</b> <em>expression</em>:</dt><dd>Restrict desired geometries based on attribute query.</dd>
+<dt> <b>-splitlistfields</b> :</dt><dd>(starting with GDAL 1.8.0) split fields of type StringList, RealList or IntegerList into as many fields of type String, Real or Integer as necessary.</dd>
+<dt> <b>-maxsubfields</b> <em>val</em>:</dt><dd>To be combined with -splitlistfields to limit the number of subfields created for each split field.</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
 <dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>
