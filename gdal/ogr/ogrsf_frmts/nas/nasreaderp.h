@@ -190,11 +190,6 @@ public:
     void        SetFeatureProperty( const char *pszElement,
                                     const char *pszValue );
 
-
-    void       AnalysePropertyValue( GMLPropertyDefn *poDefn,
-                                     const char *pszValue, 
-                                     const char *pszOldValue );
-
     int         HasStoppedParsing() { return FALSE; }
 
     void        CheckForRelations( const char *pszElement, 

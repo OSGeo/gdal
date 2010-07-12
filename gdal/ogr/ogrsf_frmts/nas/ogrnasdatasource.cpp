@@ -328,15 +328,15 @@ void OGRNASDataSource::PopulateRelations()
         for( i = 0; papszOBProperties != NULL && papszOBProperties[i] != NULL;
              i++ )
         {
-            const char *pszGMLId = poFeature->GetProperty( "gml_id" );
+            const GMLProperty *psGMLId = poFeature->GetProperty( "gml_id" );
             char *pszName = NULL;
             const char *pszValue = CPLParseNameValue( papszOBProperties[i], 
                                                       &pszName );
 
             if( EQUALN(pszValue,"urn:adv:oid:",12) 
-                && pszGMLId != NULL )
+                && psGMLId != NULL && psGMLId->nSubProperties == 1 )
             {
-                poRelationLayer->AddRelation( pszGMLId,
+                poRelationLayer->AddRelation( psGMLId->papszSubProperties[0],
                                               pszName, 
                                               pszValue + 12 );
             }

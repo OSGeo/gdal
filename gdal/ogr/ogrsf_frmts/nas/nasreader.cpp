@@ -566,42 +566,18 @@ void NASReader::SetFeatureProperty( const char *pszElement,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Set the property                                                */
+/* -------------------------------------------------------------------- */
+    poFeature->SetProperty( iProperty, pszValue );
+
+/* -------------------------------------------------------------------- */
 /*      Do we need to update the property type?                         */
 /* -------------------------------------------------------------------- */
     if( !poClass->IsSchemaLocked() )
     {
-        AnalysePropertyValue(poClass->GetProperty(iProperty),
-                             pszValue, 
+        poClass->GetProperty(iProperty)->AnalysePropertyValue(
                              poFeature->GetProperty(iProperty));
     }
-
-/* -------------------------------------------------------------------- */
-/*      Set the property                                                */
-/* -------------------------------------------------------------------- */
-    switch( poClass->GetProperty( iProperty )->GetType() )
-    {
-      case GMLPT_StringList:
-      case GMLPT_IntegerList:
-      case GMLPT_RealList:
-      {
-          if( poFeature->GetProperty( iProperty ) != NULL )
-          {
-              CPLString osJoinedValue = poFeature->GetProperty( iProperty );
-              osJoinedValue += ",";
-              osJoinedValue += pszValue;
-
-              poFeature->SetProperty( iProperty, osJoinedValue );
-          }
-          else
-              poFeature->SetProperty( iProperty, pszValue );
-      }
-      break;
-
-      default:
-        poFeature->SetProperty( iProperty, pszValue );
-        break;
-    }
-
 }
 
 /************************************************************************/
@@ -875,85 +851,6 @@ void NASReader::ResetReading()
 
 {
     CleanupParser();
-}
-
-/************************************************************************/
-/*                        AnalysePropertyValue()                        */
-/*                                                                      */
-/*      Examine the passed property value, and see if we need to        */
-/*      make the field type more specific, or more general.             */
-/************************************************************************/
-
-void NASReader::AnalysePropertyValue( GMLPropertyDefn *poDefn,
-                                      const char *pszValue,
-                                      const char *pszOldValue )
-
-{
-/* -------------------------------------------------------------------- */
-/*      If it is a zero length string, just return.  We can't deduce    */
-/*      much from this.                                                 */
-/* -------------------------------------------------------------------- */
-    if( *pszValue == '\0' )
-        return;
-
-/* -------------------------------------------------------------------- */
-/*      Does the string consist entirely of numeric values?             */
-/* -------------------------------------------------------------------- */
-    int bIsReal = FALSE;
-    GMLPropertyType eType = poDefn->GetType();
-
-    CPLValueType valueType = CPLGetValueType(pszValue);
-    if (valueType == CPL_VALUE_STRING
-        && eType != GMLPT_String 
-        && eType != GMLPT_StringList )
-    {
-        if( eType == GMLPT_IntegerList
-            || eType == GMLPT_RealList )
-            eType = GMLPT_StringList;
-        else
-            eType = GMLPT_String;
-    }
-    else
-        bIsReal = (valueType == CPL_VALUE_REAL);
-
-    if( eType == GMLPT_String )
-    {
-        /* grow the Width to the length of the string passed in */
-        int nWidth;
-        nWidth = strlen(pszValue);
-        if ( poDefn->GetWidth() < nWidth ) 
-            poDefn->SetWidth( nWidth );
-    }
-    else if( eType == GMLPT_Untyped || eType == GMLPT_Integer )
-    {
-        if( bIsReal )
-            eType = GMLPT_Real;
-        else
-            eType = GMLPT_Integer;
-    }
-    else if( eType == GMLPT_IntegerList && bIsReal )
-    {
-        eType = GMLPT_RealList;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If we already had a value then we are dealing with a list       */
-/*      type value.                                                     */
-/* -------------------------------------------------------------------- */
-    if( pszOldValue != NULL && strlen(pszOldValue) > 0 )
-    {
-        if( eType == GMLPT_Integer )
-            eType = GMLPT_IntegerList;
-        if( eType == GMLPT_Real )
-            eType = GMLPT_RealList;
-        if( eType == GMLPT_String )
-        {
-            eType = GMLPT_StringList;
-            poDefn->SetWidth( 0 );
-        }
-    }
-
-    poDefn->SetType( eType );
 }
 
 /************************************************************************/
