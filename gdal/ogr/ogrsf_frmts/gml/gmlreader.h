@@ -47,6 +47,13 @@ typedef enum {
 /************************************************************************/
 /*                           GMLPropertyDefn                            */
 /************************************************************************/
+
+typedef struct
+{
+    int     nSubProperties;
+    char**  papszSubProperties;
+} GMLProperty;
+
 class CPL_DLL GMLPropertyDefn
 {
     char             *m_pszName;
@@ -71,8 +78,7 @@ public:
     void        SetSrcElement( const char *pszSrcElement );
     const char *GetSrcElement() { return m_pszSrcElement; }
 
-    void        AnalysePropertyValue( const char *pszValue, 
-                                      const char *pszOldValue = NULL );
+    void        AnalysePropertyValue( const GMLProperty* psGMLProperty );
 };
 
 /************************************************************************/
@@ -143,13 +149,14 @@ public:
 /************************************************************************/
 /*                              GMLFeature                              */
 /************************************************************************/
+
 class CPL_DLL GMLFeature
 {
     GMLFeatureClass *m_poClass;
     char            *m_pszFID;
 
     int              m_nPropertyCount;
-    char           **m_papszProperty;
+    GMLProperty     *m_pasProperties;
 
     char            *m_pszGeometry;
 
@@ -169,8 +176,8 @@ public:
     void            SetProperty( const char *pszName, const char *pszValue )
         { SetProperty( m_poClass->GetPropertyIndex(pszName), pszValue ); }
 
-    const char      *GetProperty( int i ) const;
-    const char      *GetProperty( const char *pszName ) const
+    const GMLProperty*GetProperty( int i ) const;
+    const GMLProperty*GetProperty( const char *pszName ) const
         { return GetProperty( m_poClass->GetPropertyIndex(pszName) ); }
 
     const char      *GetFID() const { return m_pszFID; }

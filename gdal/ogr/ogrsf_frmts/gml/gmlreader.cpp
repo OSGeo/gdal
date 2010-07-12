@@ -817,42 +817,18 @@ void GMLReader::SetFeatureProperty( const char *pszElement,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Set the property                                                */
+/* -------------------------------------------------------------------- */
+    poFeature->SetProperty( iProperty, pszValue );
+
+/* -------------------------------------------------------------------- */
 /*      Do we need to update the property type?                         */
 /* -------------------------------------------------------------------- */
     if( !poClass->IsSchemaLocked() )
     {
         poClass->GetProperty(iProperty)->AnalysePropertyValue(
-                             pszValue, 
                              poFeature->GetProperty(iProperty));
     }
-
-/* -------------------------------------------------------------------- */
-/*      Set the property                                                */
-/* -------------------------------------------------------------------- */
-    switch( poClass->GetProperty( iProperty )->GetType() )
-    {
-      case GMLPT_StringList:
-      case GMLPT_IntegerList:
-      case GMLPT_RealList:
-      {
-          if( poFeature->GetProperty( iProperty ) != NULL )
-          {
-              CPLString osJoinedValue = poFeature->GetProperty( iProperty );
-              osJoinedValue += ",";
-              osJoinedValue += pszValue;
-
-              poFeature->SetProperty( iProperty, osJoinedValue );
-          }
-          else
-              poFeature->SetProperty( iProperty, pszValue );
-      }
-      break;
-
-      default:
-        poFeature->SetProperty( iProperty, pszValue );
-        break;
-    }
-
 }
 
 /************************************************************************/
