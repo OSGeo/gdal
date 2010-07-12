@@ -518,6 +518,32 @@ def ogr_gml_12():
     return 'success'
 
 ###############################################################################
+# Test reading GML with StringList, IntegerList and RealList fields
+
+def ogr_gml_13():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+    
+    ds = ogr.Open('data/testlistfields.gml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsStringList(feat.GetFieldIndex('attrib1')) != ['value1','value2']:
+        gdaltest.post_reason('did not get expected value for attrib1')
+        return 'fail'
+    if feat.GetField(feat.GetFieldIndex('attrib2')) != 'value3':
+        gdaltest.post_reason('did not get expected value for attrib2')
+        return 'fail'
+    if feat.GetFieldAsIntegerList(feat.GetFieldIndex('attrib3')) != [4,5]:
+        gdaltest.post_reason('did not get expected value for attrib3')
+        return 'fail'
+    if feat.GetFieldAsDoubleList(feat.GetFieldIndex('attrib4')) != [6.1,7.1]:
+        gdaltest.post_reason('did not get expected value for attrib4')
+        return 'fail'
+    ds = None
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -564,6 +590,7 @@ gdaltest_list = [
     ogr_gml_10,
     ogr_gml_11,
     ogr_gml_12,
+    ogr_gml_13,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
