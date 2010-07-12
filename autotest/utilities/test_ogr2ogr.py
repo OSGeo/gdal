@@ -1016,7 +1016,48 @@ def test_ogr2ogr_29():
             return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test -splitlistfields option
+
+def test_ogr2ogr_30():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        ds = ogr.Open('../ogr/data/testlistfields.gml')
+    except:
+        ds = None
+
+    if ds is None:
+        return 'skip'
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -splitlistfields tmp/test_ogr2ogr_30.shp ../ogr/data/testlistfields.gml')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_30.shp')
+    if ds is None:
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    if feat.GetField('attrib11') != 'value1' or \
+       feat.GetField('attrib12') != 'value2' or \
+       feat.GetField('attrib2') != 'value3' or \
+       feat.GetField('attrib31') != 4 or \
+       feat.GetField('attrib32') != 5 or \
+       feat.GetField('attrib41') != 6.1 or \
+       feat.GetField('attrib42') != 7.1:
+        gdaltest.post_reason('did not get expected attribs')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_30.shp')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1046,7 +1087,8 @@ gdaltest_list = [
     test_ogr2ogr_26,
     test_ogr2ogr_27,
     test_ogr2ogr_28,
-    test_ogr2ogr_29 ]
+    test_ogr2ogr_29,
+    test_ogr2ogr_30 ]
     
 if __name__ == '__main__':
 
