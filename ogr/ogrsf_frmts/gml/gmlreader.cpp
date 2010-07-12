@@ -322,6 +322,8 @@ void GMLReader::CleanupParser()
     m_poSAXReader = NULL;
     delete m_GMLInputSource;
     m_GMLInputSource = NULL;
+    delete m_poCompleteFeature;
+    m_poCompleteFeature = NULL;
 #else
     if (oParser)
         XML_ParserFree(oParser);
