@@ -2028,7 +2028,7 @@ bool GeoRasterWrapper::SetNoData( double dfNoDataValue )
         psNData->psNext = psPointer;
     }
 
-    const char* pszFormat = EQUAL( &sCellDepth[6], "REAL") ? "%f" : "%.0f";
+    const char* pszFormat = EQUAL( &pszCellDepth[6], "REAL") ? "%f" : "%.0f";
     CPLSetXMLValue( psRInfo, "NODATA", CPLSPrintf( pszFormat, dfNoDataValue ) );
 
     bFlushMetadata = true;
