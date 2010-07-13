@@ -439,6 +439,10 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "DTED_OriginLongitude", pszValue );
     free( pszValue );
     
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_NIMA_DESIGNATOR ); 
+    poDS->SetMetadataItem( "DTED_NimaDesignator", pszValue ); 
+    free( pszValue );
+    
     poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
 
 /* -------------------------------------------------------------------- */

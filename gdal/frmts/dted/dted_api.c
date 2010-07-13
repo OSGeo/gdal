@@ -656,6 +656,11 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
         *pnLength = 15;
         break;
 
+      case DTEDMD_NIMA_DESIGNATOR: 
+        *ppszLocation = psDInfo->pachDSIRecord + 59;
+        *pnLength = 5;
+        break;
+
       default:
         *ppszLocation = NULL;
         *pnLength = 0;
