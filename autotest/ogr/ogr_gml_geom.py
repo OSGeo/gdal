@@ -510,6 +510,28 @@ def gml_MultiSurface():
 
     return 'success'
 
+###############################################################################
+# Test OGRFormatDouble() to check for rounding errors (would also apply for KML output, or ogrinfo output)
+
+def gml_out_precision():
+    
+    geom = ogr.CreateGeometryFromWkt('POINT(93538.15 1.23456789)')
+    expected_gml = '<gml:Point><gml:coordinates>93538.15,1.23456789</gml:coordinates></gml:Point>'
+    got_gml = geom.ExportToGML()
+    if got_gml != expected_gml:
+        gdaltest.post_reason('did not get expected gml')
+        print(got_gml)
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt('POINT(93538.55 1234567.89)')
+    expected_gml = '<gml:Point><gml:coordinates>93538.55,1234567.89</gml:coordinates></gml:Point>'
+    got_gml = geom.ExportToGML()
+    if got_gml != expected_gml:
+        gdaltest.post_reason('did not get expected gml')
+        print(got_gml)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # When imported build a list of units based on the files available.
@@ -543,6 +565,7 @@ gdaltest_list.append( gml_Box )
 gdaltest_list.append( gml_Curve )
 gdaltest_list.append( gml_MultiCurve )
 gdaltest_list.append( gml_MultiSurface )
+gdaltest_list.append( gml_out_precision )
 
 if __name__ == '__main__':
 
