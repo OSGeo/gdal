@@ -396,7 +396,9 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
                 poFeature->GetFID() );
 
     // Write out Geometry - for now it isn't indented properly.
-    if( poFeature->GetGeometryRef() != NULL )
+    /* GML geometries don't like very much the concept of empty geometry */
+    if( poFeature->GetGeometryRef() != NULL &&
+        !poFeature->GetGeometryRef()->IsEmpty())
     {
         char    *pszGeometry;
         OGREnvelope sGeomBounds;
