@@ -743,38 +743,30 @@ void OGRGMLDataSource::InsertHeader()
             {
                 int nWidth, nDecimals;
 
-                if( poFieldDefn->GetPrecision() == 0 )
-                    nDecimals = 0;
-                else
-                    nDecimals = poFieldDefn->GetPrecision();
-
-                if( poFieldDefn->GetWidth() > 0 )
-                    nWidth = poFieldDefn->GetWidth();
-                else
-                    nWidth = 33;
+                nWidth = poFieldDefn->GetWidth();
+                nDecimals = poFieldDefn->GetPrecision();
 
                 PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">",  poFieldDefn->GetNameRef());
                 PrintLine( fpSchema, "          <xs:simpleType>");
                 PrintLine( fpSchema, "            <xs:restriction base=\"xs:decimal\">");
-                PrintLine( fpSchema, "              <xs:totalDigits value=\"%d\"/>", nWidth);
-                PrintLine( fpSchema, "              <xs:fractionDigits value=\"%d\"/>", nDecimals);
+                if (nWidth > 0)
+                {
+                    PrintLine( fpSchema, "              <xs:totalDigits value=\"%d\"/>", nWidth);
+                    PrintLine( fpSchema, "              <xs:fractionDigits value=\"%d\"/>", nDecimals);
+                }
                 PrintLine( fpSchema, "            </xs:restriction>");
                 PrintLine( fpSchema, "          </xs:simpleType>");
                 PrintLine( fpSchema, "        </xs:element>");
             }
             else if( poFieldDefn->GetType() == OFTString )
             {
-                char szMaxLength[48];
-
-                if( poFieldDefn->GetWidth() == 0 )
-                    sprintf( szMaxLength, "unbounded" );
-                else
-                    sprintf( szMaxLength, "%d", poFieldDefn->GetWidth() );
-
                 PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">",  poFieldDefn->GetNameRef());
                 PrintLine( fpSchema, "          <xs:simpleType>");
                 PrintLine( fpSchema, "            <xs:restriction base=\"xs:string\">");
-                PrintLine( fpSchema, "              <xs:maxLength value=\"%s\"/>", szMaxLength);
+                if( poFieldDefn->GetWidth() != 0 )
+                {
+                    PrintLine( fpSchema, "              <xs:maxLength value=\"%d\"/>", poFieldDefn->GetWidth());
+                }
                 PrintLine( fpSchema, "            </xs:restriction>");
                 PrintLine( fpSchema, "          </xs:simpleType>");
                 PrintLine( fpSchema, "        </xs:element>");
@@ -784,7 +776,6 @@ void OGRGMLDataSource::InsertHeader()
                 PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">",  poFieldDefn->GetNameRef());
                 PrintLine( fpSchema, "          <xs:simpleType>");
                 PrintLine( fpSchema, "            <xs:restriction base=\"xs:string\">");
-                PrintLine( fpSchema, "              <xs:maxLength value=\"unbounded\"/>");
                 PrintLine( fpSchema, "            </xs:restriction>");
                 PrintLine( fpSchema, "          </xs:simpleType>");
                 PrintLine( fpSchema, "        </xs:element>");
