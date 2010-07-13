@@ -358,8 +358,9 @@ def gml_out_geometrycollection_srs():
         gdaltest.post_reason( 'Conversion to GML failed.')
         return 'fail'
 
-    if gml[0:44] != '<gml:GeometryCollection srsName="EPSG:4326">':
+    if gml[0:39] != '<gml:MultiGeometry srsName="EPSG:4326">':
         gdaltest.post_reason( 'No srsName attribute in GML output')
+        print(gml)
         return 'fail'
 
     return 'success'
