@@ -913,9 +913,13 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
     }
 
 /* -------------------------------------------------------------------- */
-/*      GeometryCollection                                              */
+/*      MultiGeometry                                                   */
+/* CAUTION: OGR < 1.8.0 produced GML with GeometryCollection, which is  */
+/* not a valid GML 2 keyword! The right name is MultiGeometry. Let's be */
+/* tolerant with the non compliant files we produced...                 */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"GeometryCollection") )
+    if( EQUAL(pszBaseGeometry,"MultiGeometry") ||
+        EQUAL(pszBaseGeometry,"GeometryCollection") )
     {
         const CPLXMLNode *psChild;
         OGRGeometryCollection *poGC = new OGRGeometryCollection();
