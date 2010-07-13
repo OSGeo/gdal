@@ -662,7 +662,8 @@ int GMLHandler::IsGeometryElement( const char *pszElement )
         || strcmp(pszElement,"MultiPoint") == 0 
         || strcmp(pszElement,"MultiLineString") == 0 
         || strcmp(pszElement,"MultiSurface") == 0 
-        || strcmp(pszElement,"GeometryCollection") == 0
+        || strcmp(pszElement,"MultiGeometry") == 0
+        || strcmp(pszElement,"GeometryCollection") == 0 /* OGR < 1.8.0 bug... */
         || strcmp(pszElement,"Point") == 0 
         || strcmp(pszElement,"Curve") == 0 
         || strcmp(pszElement,"Surface") == 0 
