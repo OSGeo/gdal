@@ -276,6 +276,8 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
             (ListFieldDesc*)CPLCalloc(sizeof(ListFieldDesc), nSrcFields);
     nListFieldCount = 0;
     int i;
+    
+    /* Establish the list of fields of list type */
     for(i=0;i<nSrcFields;i++)
     {
         OGRFieldType eType = poSrcFieldDefn->GetFieldDefn(i)->GetType();
@@ -285,6 +287,8 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
         {
             pasListFields[nListFieldCount].iSrcIndex = i;
             pasListFields[nListFieldCount].eType = eType;
+            if (nMaxSplitListSubFields == 1)
+                pasListFields[nListFieldCount].nMaxOccurences = 1;
             nListFieldCount++;
         }
     }
@@ -292,64 +296,73 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
     if (nListFieldCount == 0)
         return FALSE;
 
+    /* No need for full scan if the limit is 1. We just to have to create */
+    /* one and a single one field */
+    if (nMaxSplitListSubFields != 1)
+    {
+        poSrcLayer->ResetReading();
+        OGRFeature* poSrcFeature;
+
+        int nFeatureCount = 0;
+        if (poSrcLayer->TestCapability(OLCFastFeatureCount))
+            nFeatureCount = poSrcLayer->GetFeatureCount();
+        int nFeatureIndex = 0;
+
+        /* Scan the whole layer to compute the maximum number of */
+        /* items for each field of list type */
+        while( (poSrcFeature = poSrcLayer->GetNextFeature()) != NULL )
+        {
+            for(i=0;i<nListFieldCount;i++)
+            {
+                int nCount = 0;
+                OGRField* psField =
+                        poSrcFeature->GetRawFieldRef(pasListFields[i].iSrcIndex);
+                switch(pasListFields[i].eType)
+                {
+                    case OFTIntegerList:
+                        nCount = psField->IntegerList.nCount;
+                        break;
+                    case OFTRealList:
+                        nCount = psField->RealList.nCount;
+                        break;
+                    case OFTStringList:
+                    {
+                        nCount = psField->StringList.nCount;
+                        char** paList = psField->StringList.paList;
+                        int j;
+                        for(j=0;j<nCount;j++)
+                        {
+                            int nWidth = strlen(paList[j]);
+                            if (nWidth > pasListFields[i].nWidth)
+                                pasListFields[i].nWidth = nWidth;
+                        }
+                        break;
+                    }
+                    default:
+                        CPLAssert(0);
+                        break;
+                }
+                if (nCount > pasListFields[i].nMaxOccurences)
+                {
+                    if (nCount > nMaxSplitListSubFields)
+                        nCount = nMaxSplitListSubFields;
+                    pasListFields[i].nMaxOccurences = nCount;
+                }
+            }
+            OGRFeature::DestroyFeature(poSrcFeature);
+
+            nFeatureIndex ++;
+            if (pfnProgress != NULL && nFeatureCount != 0)
+                pfnProgress(nFeatureIndex * 1.0 / nFeatureCount, "", pProgressArg);
+        }
+    }
+
+    /* Now let's build the target feature definition */
+
     poFeatureDefn =
             OGRFeatureDefn::CreateFeatureDefn( poSrcFieldDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( poSrcFieldDefn->GetGeomType() );
-
-    poSrcLayer->ResetReading();
-    OGRFeature* poSrcFeature;
-
-    int nFeatureCount = 0;
-    if (poSrcLayer->TestCapability(OLCFastFeatureCount))
-        nFeatureCount = poSrcLayer->GetFeatureCount();
-    int nFeatureIndex = 0;
-
-    while( (poSrcFeature = poSrcLayer->GetNextFeature()) != NULL )
-    {
-        for(i=0;i<nListFieldCount;i++)
-        {
-            int nCount = 0;
-            OGRField* psField =
-                    poSrcFeature->GetRawFieldRef(pasListFields[i].iSrcIndex);
-            switch(pasListFields[i].eType)
-            {
-                case OFTIntegerList:
-                    nCount = psField->IntegerList.nCount;
-                    break;
-                case OFTRealList:
-                    nCount = psField->RealList.nCount;
-                    break;
-                case OFTStringList:
-                {
-                    nCount = psField->StringList.nCount;
-                    char** paList = psField->StringList.paList;
-                    int j;
-                    for(j=0;j<nCount;j++)
-                    {
-                        int nWidth = strlen(paList[j]);
-                        if (nWidth > pasListFields[i].nWidth)
-                            pasListFields[i].nWidth = nWidth;
-                    }
-                    break;
-                }
-                default:
-                    CPLAssert(0);
-                    break;
-            }
-            if (nCount > pasListFields[i].nMaxOccurences)
-            {
-                if (nCount > nMaxSplitListSubFields)
-                    nCount = nMaxSplitListSubFields;
-                pasListFields[i].nMaxOccurences = nCount;
-            }
-        }
-        OGRFeature::DestroyFeature(poSrcFeature);
-
-        nFeatureIndex ++;
-        if (pfnProgress != NULL && nFeatureCount != 0)
-            pfnProgress(nFeatureIndex * 1.0 / nFeatureCount, "", pProgressArg);
-    }
 
     int iListField = 0;
     for(i=0;i<nSrcFields;i++)
@@ -363,18 +376,28 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
             int nWidth = pasListFields[iListField].nWidth;
             iListField ++;
             int j;
-            for(j=0;j<nMaxOccurences;j++)
+            if (nMaxOccurences == 1)
             {
-                CPLString osFieldName;
-                osFieldName.Printf("%s%d",
-                   poSrcFieldDefn->GetFieldDefn(i)->GetNameRef(), j+1);
-                OGRFieldDefn oFieldDefn(osFieldName.c_str(),
-                                        (eType == OFTIntegerList) ? OFTInteger :
-                                        (eType == OFTRealList) ?    OFTReal :
-                                                                    OFTString);
-                if (nWidth)
-                    oFieldDefn.SetWidth(nWidth);
+                OGRFieldDefn oFieldDefn(poSrcFieldDefn->GetFieldDefn(i)->GetNameRef(),
+                                            (eType == OFTIntegerList) ? OFTInteger :
+                                            (eType == OFTRealList) ?    OFTReal :
+                                                                        OFTString);
                 poFeatureDefn->AddFieldDefn(&oFieldDefn);
+            }
+            else
+            {
+                for(j=0;j<nMaxOccurences;j++)
+                {
+                    CPLString osFieldName;
+                    osFieldName.Printf("%s%d",
+                        poSrcFieldDefn->GetFieldDefn(i)->GetNameRef(), j+1);
+                    OGRFieldDefn oFieldDefn(osFieldName.c_str(),
+                                            (eType == OFTIntegerList) ? OFTInteger :
+                                            (eType == OFTRealList) ?    OFTReal :
+                                                                        OFTString);
+                    oFieldDefn.SetWidth(nWidth);
+                    poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                }
             }
         }
         else
@@ -1219,7 +1242,7 @@ int main( int nArgc, char ** papszArgv )
             {
                 poPassedLayer = new OGRSplitListFieldLayer(poPassedLayer, nMaxSplitListSubFields);
 
-                if (bDisplayProgress)
+                if (bDisplayProgress && nMaxSplitListSubFields != 1)
                 {
                     pfnProgress = GDALScaledProgress;
                     pProgressArg = 
@@ -1250,7 +1273,7 @@ int main( int nArgc, char ** papszArgv )
             {
                 pfnProgress = GDALScaledProgress;
                 int nStart = 0;
-                if (poPassedLayer != poLayer)
+                if (poPassedLayer != poLayer && nMaxSplitListSubFields != 1)
                     nStart = panLayerCountFeatures[iLayer] / 2;
                 pProgressArg = 
                     GDALCreateScaledProgress((nAccCountFeatures + nStart) * 1.0 / nCountLayersFeatures,
