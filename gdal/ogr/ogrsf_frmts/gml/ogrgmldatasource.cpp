@@ -667,7 +667,7 @@ void OGRGMLDataSource::InsertHeader()
                 pszTargetNameSpace, pszPrefix, pszTargetNameSpace );
     
     PrintLine( fpSchema, 
-                "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengeospatial.net/gml/2.1.2/feature.xsd\"/>" );
+                "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengis.net/gml/2.1.2/feature.xsd\"/>" );
 
 /* -------------------------------------------------------------------- */
 /*      Define the FeatureCollection                                    */
