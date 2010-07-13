@@ -354,7 +354,7 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
     }
 
 /* -------------------------------------------------------------------- */
-/*      MultiPolygon                                                    */
+/*      MultiPolygon, MultiLineString, MultiPoint, MultiGeometry        */
 /* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon 
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiLineString
@@ -396,9 +396,9 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         else
         {
             pszElemOpen = (char *) CPLMalloc( 19 + nSrsNameLength + 1 );
-            sprintf( pszElemOpen, "GeometryCollection%s>", szSrsName );
+            sprintf( pszElemOpen, "MultiGeometry%s>", szSrsName );
 
-            pszElemClose = "GeometryCollection>";
+            pszElemClose = "MultiGeometry>";
             pszMemberElem = "geometryMember>";
         }
 
