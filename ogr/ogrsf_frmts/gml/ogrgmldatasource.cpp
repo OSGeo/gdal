@@ -713,7 +713,7 @@ void OGRGMLDataSource::InsertHeader()
 /*      particulars if available.                                       */
 /* -------------------------------------------------------------------- */
         PrintLine( fpSchema,
-            "        <xs:element name=\"geometryProperty\" type=\"gml:GeometryPropertyType\" nillable=\"true\" minOccurs=\"1\" maxOccurs=\"1\"/>" );
+            "        <xs:element name=\"geometryProperty\" type=\"gml:GeometryPropertyType\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>" );
             
 /* -------------------------------------------------------------------- */
 /*      Emit each of the attributes.                                    */
