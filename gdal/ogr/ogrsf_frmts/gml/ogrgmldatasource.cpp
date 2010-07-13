@@ -708,12 +708,37 @@ void OGRGMLDataSource::InsertHeader()
         PrintLine( fpSchema, "      <xs:sequence>");
 
 /* -------------------------------------------------------------------- */
-/*      Define the geometry attribute.  For now I always use the        */
-/*      generic geometry type, but eventually we should express         */
-/*      particulars if available.                                       */
+/*      Define the geometry attribute.                                  */
 /* -------------------------------------------------------------------- */
+        const char* pszGeometryTypeName = "GeometryPropertyType";
+        switch(wkbFlatten(poFDefn->GetGeomType()))
+        {
+            case wkbPoint:
+                pszGeometryTypeName = "PointPropertyType";
+                break;
+            case wkbLineString:
+                pszGeometryTypeName = "LineStringPropertyType";
+                break;
+            case wkbPolygon:
+                pszGeometryTypeName = "PolygonPropertyType";
+                break;
+            case wkbMultiPoint:
+                pszGeometryTypeName = "MultiPointPropertyType";
+                break;
+            case wkbMultiLineString:
+                pszGeometryTypeName = "MultiLineStringPropertyType";
+                break;
+            case wkbMultiPolygon:
+                pszGeometryTypeName = "MultiPolygonPropertyType";
+                break;
+            case wkbGeometryCollection:
+                pszGeometryTypeName = "MultiGeometryPropertyType";
+                break;
+            default:
+                break;
+        }
         PrintLine( fpSchema,
-            "        <xs:element name=\"geometryProperty\" type=\"gml:GeometryPropertyType\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>" );
+            "        <xs:element name=\"geometryProperty\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>", pszGeometryTypeName );
             
 /* -------------------------------------------------------------------- */
 /*      Emit each of the attributes.                                    */
