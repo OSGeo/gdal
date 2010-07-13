@@ -182,7 +182,8 @@ typedef enum {
     DTEDMD_HORIZDATUM = 19,             /* DSI 145+5 */ 
     DTEDMD_ORIGINLONG = 20,             /* UHL 5+7 */
     DTEDMD_ORIGINLAT = 21,              /* UHL 13+7 */
-    DTEDMD_MAX = 21
+    DTEDMD_NIMA_DESIGNATOR = 22,        /* DSI 60 + 5 */
+    DTEDMD_MAX = 22
 } DTEDMetaDataCode;
 
     
