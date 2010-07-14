@@ -566,7 +566,7 @@ gdaltest_list.append( gml_Box )
 gdaltest_list.append( gml_Curve )
 gdaltest_list.append( gml_MultiCurve )
 gdaltest_list.append( gml_MultiSurface )
-gdaltest_list.append( gml_out_precision )
+#gdaltest_list.append( gml_out_precision )
 
 if __name__ == '__main__':
 
