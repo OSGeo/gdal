@@ -2480,8 +2480,16 @@ CPLXMLNode *GDALSerializeTransformer( GDALTransformerFunc pfnFunc,
                   "Attempt to serialize non-GTI transformer." );
         return NULL;
     }
+    else if ( psInfo->pfnSerialize == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "No serialization function available for this transformer." );
+        return NULL;
+    }
     else
+    {
         return psInfo->pfnSerialize( pTransformArg );
+    }
 }
 
 /************************************************************************/
