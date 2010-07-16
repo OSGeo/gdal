@@ -46,7 +46,7 @@ namespace PCIDSK
         PCIDSKException(const char *fmt, ... );
         virtual ~PCIDSKException() throw();
 
-        void vPrintf( const char *fmt, va_list list );
+        void vPrintf( const char *fmt, std::va_list list );
         virtual const char *what() const throw() { return message.c_str(); }
     private:
         std::string   message;

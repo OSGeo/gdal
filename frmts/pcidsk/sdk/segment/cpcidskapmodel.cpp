@@ -335,7 +335,7 @@ namespace {
     /*      Allocate the APModel.                                         	*/
     /* -------------------------------------------------------------------- */
 
-        if (!strncmp(&buf.buffer[22],"DS",2))
+        if (!std::strncmp(&buf.buffer[22],"DS",2))
     	    downsample = buf.GetInt(22, 3);
 
     /* -------------------------------------------------------------------- */
@@ -463,7 +463,7 @@ namespace {
     /* -------------------------------------------------------------------- */
         buf.Get(512 * 4, 16, map_units);
     
-        if (!strncmp(buf.Get(512 * 4 + 16, 3), "UTM", 3))
+        if (!std::strncmp(buf.Get(512 * 4 + 16, 3), "UTM", 3))
         {
             buf.Get(512 * 4, 3, utm_units);
         }

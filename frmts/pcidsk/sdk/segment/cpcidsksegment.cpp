@@ -146,6 +146,19 @@ void CPCIDSKSegment::LoadSegmentHeader()
 }
 
 /************************************************************************/
+/*                            FlushHeader()                             */
+/*                                                                      */
+/*      This is used primarily after this class or subclasses have      */
+/*      modified the header buffer and need it pushed back to disk.     */
+/************************************************************************/
+
+void CPCIDSKSegment::FlushHeader()
+
+{
+    file->WriteToFile( header.buffer, data_offset, 1024 );
+}
+
+/************************************************************************/
 /*                            ReadFromFile()                            */
 /************************************************************************/
 
@@ -252,7 +265,7 @@ void CPCIDSKSegment::SetHistoryEntries(const std::vector<std::string> &entries)
         header.Put( msg, 384 + i * 80, 80 );
     }
 
-    file->WriteToFile( header.buffer, data_offset, 1024 );
+    FlushHeader();
 
     // Force reloading of history_
     LoadSegmentHeader();
@@ -291,3 +304,56 @@ void CPCIDSKSegment::PushHistory( const std::string &app,
 }
 
 
+/************************************************************************/
+/*                              MoveData()                              */
+/*                                                                      */
+/*      Move a chunk of data within a segment. Overlapping source       */
+/*      and destination are permitted.                                  */
+/************************************************************************/
+
+void CPCIDSKSegment::MoveData( uint64 src_offset, uint64 dst_offset, 
+                               uint64 size_in_bytes )
+
+{
+    bool copy_backwards = false;
+
+    // We move things backwards if the areas overlap and the destination
+    // is further on in the segment. 
+    if( dst_offset > src_offset
+        && src_offset + size_in_bytes > dst_offset )
+        copy_backwards = true;
+
+    
+    // Move the segment data to the new location.
+    uint8 copy_buf[16384];
+    uint64 bytes_to_go;
+
+    bytes_to_go = size_in_bytes;
+
+    while( bytes_to_go > 0 )
+    {
+        uint64 bytes_this_chunk = sizeof(copy_buf);
+        if( bytes_to_go < bytes_this_chunk )
+            bytes_this_chunk = bytes_to_go;
+
+        if( copy_backwards )
+        {
+            ReadFromFile( copy_buf, 
+                          src_offset + bytes_to_go - bytes_this_chunk, 
+                          bytes_this_chunk );
+            WriteToFile( copy_buf, 
+                         dst_offset + bytes_to_go - bytes_this_chunk, 
+                         bytes_this_chunk );
+        }
+        else
+        {
+            ReadFromFile( copy_buf, src_offset, bytes_this_chunk );
+            WriteToFile( copy_buf, dst_offset, bytes_this_chunk );
+
+            src_offset += bytes_this_chunk;
+            dst_offset += bytes_this_chunk;
+        }
+
+        bytes_to_go -= bytes_this_chunk;
+    }
+}

@@ -36,6 +36,9 @@ SDKOBJ 	=	\
 	cpcidskgeoref.o \
 	cpcidsksegment.o \
 	cpcidskvectorsegment.o \
+	cpcidskvectorsegment_consistencycheck.o \
+	vecsegheader.o \
+	vecsegdataindex.o \
 	metadatasegment_p.o \
 	sysblockmap.o \
 	cpcidskpct.o \

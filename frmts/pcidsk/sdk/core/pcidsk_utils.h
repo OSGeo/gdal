@@ -30,6 +30,7 @@
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
 #include <string>
+#include <vector>
 
 namespace PCIDSK
 {
@@ -55,7 +56,10 @@ namespace PCIDSK
     void   SwapPixels(void* const data, 
                       const eChanType type, 
                       const std::size_t count);
-                                                
+
+    std::vector<double> ProjParmsFromText( std::string geosys, 
+                                           std::string parms );
+    std::string         ProjParmsToText( std::vector<double> );
 
     void LibJPEG_DecompressBlock(
         uint8 *src_data, int src_bytes, uint8 *dst_data, int dst_bytes,

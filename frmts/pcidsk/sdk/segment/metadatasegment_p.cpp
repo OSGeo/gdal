@@ -112,8 +112,8 @@ void MetadataSegment::FetchMetadata( const char *group, int id,
     char key_prefix[200];
     int  prefix_len;
 
-    sprintf( key_prefix, "METADATA_%s_%d_", group, id );
-    prefix_len = strlen(key_prefix);
+    std::sprintf( key_prefix, "METADATA_%s_%d_", group, id );
+    prefix_len = std::strlen(key_prefix);
 
 /* -------------------------------------------------------------------- */
 /*      Process all the metadata entries in this segment, searching     */
@@ -142,7 +142,7 @@ void MetadataSegment::FetchMetadata( const char *group, int id,
 /* -------------------------------------------------------------------- */
 /*      If this matches our prefix, capture the key and value.          */
 /* -------------------------------------------------------------------- */
-        if( i_split != -1 && strncmp(pszNext,key_prefix,prefix_len) == 0 )
+        if( i_split != -1 && std::strncmp(pszNext,key_prefix,prefix_len) == 0 )
         {
             std::string key, value;
 
@@ -177,7 +177,7 @@ void MetadataSegment::SetMetadataValue( const char *group, int id,
 
     char key_prefix[200];
 
-    sprintf( key_prefix, "METADATA_%s_%d_", group, id );
+    std::sprintf( key_prefix, "METADATA_%s_%d_", group, id );
 
     std::string full_key;
 
@@ -277,7 +277,7 @@ void MetadataSegment::Save()
     }
 
     seg_data.SetSize( new_data.size() );
-    memcpy( seg_data.buffer, new_data.c_str(), new_data.size() );
+    std::memcpy( seg_data.buffer, new_data.c_str(), new_data.size() );
 
     WriteToFile( seg_data.buffer, 0, seg_data.buffer_size );
 }

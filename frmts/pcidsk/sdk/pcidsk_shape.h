@@ -154,6 +154,31 @@ namespace PCIDSK
                 return *this;
             }
 
+        //! Assignment operator.
+        bool operator==( const ShapeField &other )
+            {
+                if( GetType() != other.GetType() )
+                    return false;
+
+                switch( other.GetType() )
+                {
+                  case FieldTypeFloat: 
+                    return GetValueFloat() == other.GetValueFloat();
+                  case FieldTypeDouble: 
+                    return GetValueDouble() == other.GetValueDouble();
+                  case FieldTypeInteger: 
+                    return GetValueInteger() == other.GetValueInteger();
+                  case FieldTypeString: 
+                    return GetValueString() == other.GetValueString();
+                  case FieldTypeCountedInt: 
+                    return GetValueCountedInt() == other.GetValueCountedInt();
+                  case FieldTypeNone:
+                    return false;
+                  default:
+                    return false;
+                }
+            }
+
         //! Clear field value.
         void Clear()
             { 
