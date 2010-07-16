@@ -52,16 +52,31 @@ class OGRPCIDSKLayer : public OGRLayer
     int                 iRingStartField;
     PCIDSK::ShapeId     hLastShapeId;
 
+    bool                bUpdateAccess;
+
+    OGRSpatialReference *poSRS;
+
   public:
-    OGRPCIDSKLayer( PCIDSK::PCIDSKSegment* );
+    OGRPCIDSKLayer( PCIDSK::PCIDSKSegment*, bool bUpdate );
     ~OGRPCIDSKLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
+    OGRFeature         *GetFeature( long nFeatureId );
+    OGRErr              SetFeature( OGRFeature *poFeature );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     int                 TestCapability( const char * );
+
+    OGRErr              DeleteFeature( long nFID );
+    OGRErr              CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+
+    virtual OGRSpatialReference *GetSpatialRef();
+    int                 GetFeatureCount( int );
+    OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
 };
 
 /************************************************************************/
@@ -74,7 +89,7 @@ class OGRPCIDSKDataSource : public OGRDataSource
 
     std::vector<OGRPCIDSKLayer*> apoLayers;
 
-    int                 bUpdate;
+    bool                bUpdate;
 
     PCIDSK::PCIDSKFile  *poFile;
     
@@ -90,6 +105,9 @@ class OGRPCIDSKDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int );
 
     int                 TestCapability( const char * );
+
+    OGRLayer           *CreateLayer( const char *, OGRSpatialReference *,
+                                     OGRwkbGeometryType, char ** );
 };
 
 /************************************************************************/
@@ -103,6 +121,8 @@ class OGRPCIDSKDriver : public OGRSFDriver
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
+    OGRDataSource *CreateDataSource( const char *pszName, 
+                                     char **papszOptions );
     int         TestCapability( const char * );
 };
 
