@@ -88,7 +88,7 @@ SysVirtualFile::SysVirtualFile( CPCIDSKFile *file, int start_block,
         next_block = block_map_data.GetInt( offset + 20, 8 );
     }
 
-    assert( block_index.size() * block_size >= file_length );
+    assert( (uint64)block_index.size() * (uint64)block_size >= file_length );
 }
 
 /************************************************************************/
