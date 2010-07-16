@@ -117,4 +117,12 @@ public:
     void     Clear();
 };
 
+
+typedef void* (*GDALTransformDeserializeFunc)( CPLXMLNode *psTree );
+
+void* GDALRegisterTransformDeserializer(const char* pszTransformName,
+                                       GDALTransformerFunc pfnTransformerFunc,
+                                       GDALTransformDeserializeFunc pfnDeserializeFunc);
+void GDALUnregisterTransformDeserializer(void* pData);
+
 #endif /* ndef GDAL_ALG_PRIV_H_INCLUDED */
