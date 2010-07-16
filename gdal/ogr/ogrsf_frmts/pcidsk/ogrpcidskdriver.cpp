@@ -70,13 +70,55 @@ OGRDataSource *OGRPCIDSKDriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRPCIDSKDriver::CreateDataSource( const char * pszName,
+                                                  char **papszOptions )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Try creation.                                                   */
+/* -------------------------------------------------------------------- */
+    try {
+        PCIDSK::PCIDSKFile *poFile;
+
+        // at some point we should use gdal/frmts/pcidsk io interface.
+        poFile = PCIDSK::Create( pszName, 512, 512, 0, NULL, "BAND", NULL );
+        delete poFile;
+
+        // TODO: should we ensure this driver gets used?
+
+        return Open( pszName, TRUE );
+    }
+/* -------------------------------------------------------------------- */
+/*      Trap exceptions.                                                */
+/* -------------------------------------------------------------------- */
+    catch( PCIDSK::PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return NULL;
+    }
+    catch( ... )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "PCIDSK::Create() failed, unexpected exception." );
+        return NULL;
+    }
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRPCIDSKDriver::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
