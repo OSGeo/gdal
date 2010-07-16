@@ -33,6 +33,9 @@
 #include "gdal_alg.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_alg_priv.h"
+#include "cpl_list.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 CPL_C_START
@@ -2493,6 +2496,66 @@ CPLXMLNode *GDALSerializeTransformer( GDALTransformerFunc pfnFunc,
 }
 
 /************************************************************************/
+/*                  GDALRegisterTransformDeserializer()                 */
+/************************************************************************/
+
+static CPLList* psListDeserializer = NULL;
+static void* hDeserializerMutex = NULL;
+
+typedef struct
+{
+    char* pszTransformName;
+    GDALTransformerFunc pfnTransformerFunc;
+    GDALTransformDeserializeFunc pfnDeserializeFunc;
+} TransformDeserializerInfo;
+
+void* GDALRegisterTransformDeserializer(const char* pszTransformName,
+                                       GDALTransformerFunc pfnTransformerFunc,
+                                       GDALTransformDeserializeFunc pfnDeserializeFunc)
+{
+    TransformDeserializerInfo* psInfo =
+        (TransformDeserializerInfo*)CPLMalloc(sizeof(TransformDeserializerInfo));
+    psInfo->pszTransformName = CPLStrdup(pszTransformName);
+    psInfo->pfnTransformerFunc = pfnTransformerFunc;
+    psInfo->pfnDeserializeFunc = pfnDeserializeFunc;
+
+    CPLMutexHolderD(&hDeserializerMutex);
+    psListDeserializer = CPLListInsert(psListDeserializer, psInfo, 0);
+
+    return psInfo;
+}
+
+/************************************************************************/
+/*                GDALUnregisterTransformDeserializer()                 */
+/************************************************************************/
+
+void GDALUnregisterTransformDeserializer(void* pData)
+{
+    CPLMutexHolderD(&hDeserializerMutex);
+    CPLList* psList = psListDeserializer;
+    CPLList* psLast = NULL;
+    while(psList)
+    {
+        if (psList->pData == pData)
+        {
+            TransformDeserializerInfo* psInfo =
+                    (TransformDeserializerInfo*)pData;
+            CPLFree(psInfo->pszTransformName);
+            CPLFree(pData);
+            if (psLast)
+                psLast->psNext = psList->psNext;
+            else
+                psListDeserializer = NULL;
+            CPLFree(psList);
+            break;
+        }
+        psLast = psList;
+        psList = psList->psNext;
+    }
+}
+
+
+/************************************************************************/
 /*                     GDALDeserializeTransformer()                     */
 /************************************************************************/
 
@@ -2545,9 +2608,36 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
         *ppTransformArg = GDALDeserializeApproxTransformer( psTree );
     }
     else
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unrecognised element '%s' GDALDeserializeTransformer",
-                  psTree->pszValue );
+    {
+        GDALTransformDeserializeFunc pfnDeserializeFunc = NULL;
+        {
+            CPLMutexHolderD(&hDeserializerMutex);
+            CPLList* psList = psListDeserializer;
+            while(psList)
+            {
+                TransformDeserializerInfo* psInfo =
+                            (TransformDeserializerInfo*)psList->pData;
+                if (strcmp(psInfo->pszTransformName, psTree->pszValue) == 0)
+                {
+                    *ppfnFunc = psInfo->pfnTransformerFunc;
+                    pfnDeserializeFunc = psInfo->pfnDeserializeFunc;
+                    break;
+                }
+                psList = psList->psNext;
+            }
+        }
+
+        if (pfnDeserializeFunc != NULL)
+        {
+            *ppTransformArg = pfnDeserializeFunc( psTree );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Unrecognised element '%s' GDALDeserializeTransformer",
+                    psTree->pszValue );
+        }
+    }
 
     return CPLGetLastErrorType();
 }
