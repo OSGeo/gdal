@@ -38,6 +38,12 @@
 int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
 
+int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
+                                int nPointCount,
+                                double *padfX, double *padfY, double *padfZ,
+                                int *panSuccess );
+void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree );
+
 /************************************************************************/
 /*                          VRTOverviewInfo()                           */
 /************************************************************************/
@@ -440,6 +446,8 @@ class CPL_DLL VRTRawRasterBand : public VRTRasterBand
 
 class VRTDriver : public GDALDriver
 {
+    void        *pDeserializerData;
+
   public:
                  VRTDriver();
                  ~VRTDriver();

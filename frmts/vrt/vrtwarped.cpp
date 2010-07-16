@@ -31,6 +31,7 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "gdalwarper.h"
+#include "gdal_alg_priv.h"
 #include <cassert>
 
 CPL_CVSID("$Id$");
@@ -390,8 +391,12 @@ char** VRTWarpedDataset::GetFileList()
     return papszFileList;
 }
 
+
+
 /************************************************************************/
-/*                     VRTWarpedOverviewTransform()                     */
+/* ==================================================================== */
+/*                    VRTWarpedOverviewTransformer                      */
+/* ==================================================================== */
 /************************************************************************/
 
 typedef struct {
@@ -399,14 +404,166 @@ typedef struct {
 
     GDALTransformerFunc pfnBaseTransformer;
     void              *pBaseTransformerArg;
+    int                bOwnSubtransformer;
 
     double            dfXOverviewFactor;
     double            dfYOverviewFactor;
 } VWOTInfo;
 
+
 static
-int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc, 
-                                int nPointCount, 
+void* VRTCreateWarpedOverviewTransformer( GDALTransformerFunc pfnBaseTransformer,
+                                          void *pBaseTransformArg,
+                                          double dfXOverviewFactor,
+                                          double dfYOverviewFactor );
+static
+void VRTDestroyWarpedOverviewTransformer(void* pTransformArg);
+
+/************************************************************************/
+/*                VRTSerializeWarpedOverviewTransformer()               */
+/************************************************************************/
+
+static CPLXMLNode *
+VRTSerializeWarpedOverviewTransformer( void *pTransformArg )
+
+{
+    CPLXMLNode *psTree;
+    VWOTInfo *psInfo = (VWOTInfo *) pTransformArg;
+
+    psTree = CPLCreateXMLNode( NULL, CXT_Element, "WarpedOverviewTransformer" );
+
+    CPLCreateXMLElementAndValue( psTree, "XFactor",
+                                 CPLString().Printf("%g",psInfo->dfXOverviewFactor) );
+    CPLCreateXMLElementAndValue( psTree, "YFactor",
+                                 CPLString().Printf("%g",psInfo->dfYOverviewFactor) );
+
+/* -------------------------------------------------------------------- */
+/*      Capture underlying transformer.                                 */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psTransformerContainer;
+    CPLXMLNode *psTransformer;
+
+    psTransformerContainer =
+        CPLCreateXMLNode( psTree, CXT_Element, "BaseTransformer" );
+
+    psTransformer = GDALSerializeTransformer( psInfo->pfnBaseTransformer,
+                                              psInfo->pBaseTransformerArg );
+    if( psTransformer != NULL )
+        CPLAddXMLChild( psTransformerContainer, psTransformer );
+
+    return psTree;
+}
+
+/************************************************************************/
+/*           VRTWarpedOverviewTransformerOwnsSubtransformer()           */
+/************************************************************************/
+
+static void VRTWarpedOverviewTransformerOwnsSubtransformer( void *pTransformArg,
+                                                          int bOwnFlag )
+{
+    VWOTInfo *psInfo =
+            (VWOTInfo *) pTransformArg;
+
+    psInfo->bOwnSubtransformer = bOwnFlag;
+}
+
+/************************************************************************/
+/*            VRTDeserializeWarpedOverviewTransformer()                 */
+/************************************************************************/
+
+void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree )
+
+{
+    double dfXOverviewFactor = atof(CPLGetXMLValue( psTree, "XFactor",  "1" ));
+    double dfYOverviewFactor = atof(CPLGetXMLValue( psTree, "YFactor",  "1" ));
+    CPLXMLNode *psContainer;
+    GDALTransformerFunc pfnBaseTransform = NULL;
+    void *pBaseTransformerArg = NULL;
+
+    psContainer = CPLGetXMLNode( psTree, "BaseTransformer" );
+
+    if( psContainer != NULL && psContainer->psChild != NULL )
+    {
+        GDALDeserializeTransformer( psContainer->psChild,
+                                    &pfnBaseTransform,
+                                    &pBaseTransformerArg );
+
+    }
+
+    if( pfnBaseTransform == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot get base transform for scaled coord transformer." );
+        return NULL;
+    }
+    else
+    {
+        void *pApproxCBData =
+                       VRTCreateWarpedOverviewTransformer( pfnBaseTransform,
+                                                           pBaseTransformerArg,
+                                                           dfXOverviewFactor,
+                                                           dfYOverviewFactor );
+        VRTWarpedOverviewTransformerOwnsSubtransformer( pApproxCBData, TRUE );
+
+        return pApproxCBData;
+    }
+}
+
+
+/************************************************************************/
+/*                   VRTCreateWarpedOverviewTransformer()               */
+/************************************************************************/
+
+static
+void* VRTCreateWarpedOverviewTransformer( GDALTransformerFunc pfnBaseTransformer,
+                                          void *pBaseTransformerArg,
+                                          double dfXOverviewFactor,
+                                          double dfYOverviewFactor)
+
+{
+    VWOTInfo *psSCTInfo;
+
+    if (pfnBaseTransformer == NULL)
+        return NULL;
+
+    psSCTInfo = (VWOTInfo*)
+                    CPLMalloc(sizeof(VWOTInfo));
+    psSCTInfo->pfnBaseTransformer = pfnBaseTransformer;
+    psSCTInfo->pBaseTransformerArg = pBaseTransformerArg;
+    psSCTInfo->dfXOverviewFactor = dfXOverviewFactor;
+    psSCTInfo->dfYOverviewFactor = dfYOverviewFactor;
+    psSCTInfo->bOwnSubtransformer = FALSE;
+
+    strcpy( psSCTInfo->sTI.szSignature, "GTI" );
+    psSCTInfo->sTI.pszClassName = "VRTWarpedOverviewTransformer";
+    psSCTInfo->sTI.pfnTransform = VRTWarpedOverviewTransform;
+    psSCTInfo->sTI.pfnCleanup = VRTDestroyWarpedOverviewTransformer;
+    psSCTInfo->sTI.pfnSerialize = VRTSerializeWarpedOverviewTransformer;
+
+    return psSCTInfo;
+}
+
+/************************************************************************/
+/*               VRTDestroyWarpedOverviewTransformer()                  */
+/************************************************************************/
+
+static
+void VRTDestroyWarpedOverviewTransformer(void* pTransformArg)
+{
+    VWOTInfo *psInfo = (VWOTInfo *) pTransformArg;
+
+    if( psInfo->bOwnSubtransformer )
+        GDALDestroyTransformer( psInfo->pBaseTransformerArg );
+
+    CPLFree( psInfo );
+}
+
+/************************************************************************/
+/*                     VRTWarpedOverviewTransform()                     */
+/************************************************************************/
+
+int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
+                                int nPointCount,
                                 double *padfX, double *padfY, double *padfZ,
                                 int *panSuccess )
 
@@ -423,9 +580,9 @@ int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
         }
     }
 
-    bSuccess = psInfo->pfnBaseTransformer( psInfo->pBaseTransformerArg, 
+    bSuccess = psInfo->pfnBaseTransformer( psInfo->pBaseTransformerArg,
                                            bDstToSrc,
-                                           nPointCount, padfX, padfY, padfZ, 
+                                           nPointCount, padfX, padfY, padfZ,
                                            panSuccess );
 
     if( !bDstToSrc )
@@ -438,13 +595,6 @@ int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
     }
 
     return bSuccess;
-}
-
-static void VRTWarpedOverviewCleanup(void* pTransformArg)
-{
-    VWOTInfo *psInfo = (VWOTInfo *) pTransformArg;
-
-    CPLFree( psInfo );
 }
 
 /************************************************************************/
@@ -509,7 +659,6 @@ VRTWarpedDataset::IBuildOverviews( const char *pszResampling,
     for( i = 0; i < nNewOverviews; i++ )
     {
         int    nOXSize, nOYSize, iBand;
-        VWOTInfo *psInfo;
         VRTWarpedDataset *poOverviewDS;
         
 /* -------------------------------------------------------------------- */
@@ -548,31 +697,25 @@ VRTWarpedDataset::IBuildOverviews( const char *pszResampling,
 /*      the overview decimation.                                        */
 /* -------------------------------------------------------------------- */
         GDALWarpOptions *psWO = (GDALWarpOptions *) poWarper->GetOptions();
-        psInfo = (VWOTInfo *) CPLCalloc(sizeof(VWOTInfo),1);
-
-        strcpy( psInfo->sTI.szSignature, "GTI" );
-        psInfo->sTI.pszClassName = "VRTWarpedOverviewTransform";
-        psInfo->sTI.pfnTransform = VRTWarpedOverviewTransform;
-        psInfo->sTI.pfnCleanup = VRTWarpedOverviewCleanup;
-        psInfo->sTI.pfnSerialize = NULL;
-
-        psInfo->pfnBaseTransformer = psWO->pfnTransformer;
-        psInfo->pBaseTransformerArg = psWO->pTransformerArg;
-
-        psInfo->dfXOverviewFactor = GetRasterXSize() / (double) nOXSize;
-        psInfo->dfYOverviewFactor = GetRasterYSize() / (double) nOYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the new dataset with adjusted warp options, and      */
 /*      then restore to original condition.                             */
 /* -------------------------------------------------------------------- */
+        GDALTransformerFunc pfnTransformerBase = psWO->pfnTransformer;
+        void* pTransformerBaseArg = psWO->pTransformerArg;
+
         psWO->pfnTransformer = VRTWarpedOverviewTransform;
-        psWO->pTransformerArg = psInfo;
+        psWO->pTransformerArg = VRTCreateWarpedOverviewTransformer(
+                                        pfnTransformerBase,
+                                        pTransformerBaseArg,
+                                        GetRasterXSize() / (double) nOXSize,
+                                        GetRasterYSize() / (double) nOYSize );
 
         poOverviewDS->Initialize( psWO );
 
-        psWO->pfnTransformer = psInfo->pfnBaseTransformer;
-        psWO->pTransformerArg = psInfo->pBaseTransformerArg;
+        psWO->pfnTransformer = pfnTransformerBase;
+        psWO->pTransformerArg = pTransformerBaseArg;
     }
 
     CPLFree( panNewOverviewList );

@@ -30,6 +30,7 @@
 #include "vrtdataset.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_alg_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -41,6 +42,9 @@ VRTDriver::VRTDriver()
 
 {
     papszSourceParsers = NULL;
+    pDeserializerData = GDALRegisterTransformDeserializer("WarpedOverviewTransformer",
+                                                          VRTWarpedOverviewTransform,
+                                                          VRTDeserializeWarpedOverviewTransformer);
 }
 
 /************************************************************************/
@@ -51,6 +55,11 @@ VRTDriver::~VRTDriver()
 
 {
     CSLDestroy( papszSourceParsers );
+
+    if ( pDeserializerData )
+    {
+        GDALUnregisterTransformDeserializer( pDeserializerData );
+    }
 }
 
 /************************************************************************/
