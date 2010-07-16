@@ -41,6 +41,7 @@ CPL_CVSID("$Id: ogrcsvdatasource.cpp 17806 2009-10-13 17:27:54Z rouault $");
 OGRPCIDSKDataSource::OGRPCIDSKDataSource()
 
 {
+    poFile = NULL;
     bUpdate = FALSE;
 }
 
@@ -56,6 +57,12 @@ OGRPCIDSKDataSource::~OGRPCIDSKDataSource()
         delete apoLayers.back();
         apoLayers.pop_back();
     }
+    
+    if( poFile != NULL )
+    {
+        delete poFile;
+        poFile = NULL;
+    }
 }
 
 /************************************************************************/
@@ -65,7 +72,10 @@ OGRPCIDSKDataSource::~OGRPCIDSKDataSource()
 int OGRPCIDSKDataSource::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return bUpdate;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
@@ -100,15 +110,19 @@ int OGRPCIDSKDataSource::Open( const char * pszFilename, int bUpdateIn )
     try 
     {
         PCIDSK::PCIDSKSegment *segobj;
+        const char *pszAccess = "r";
 
-        poFile = PCIDSK::Open( pszFilename, "r", NULL );
+        if( bUpdateIn )
+            pszAccess = "r+";
+
+        poFile = PCIDSK::Open( pszFilename, pszAccess, NULL );
 
         for( segobj = poFile->GetSegment( PCIDSK::SEG_VEC, "" );
              segobj != NULL;
              segobj = poFile->GetSegment( PCIDSK::SEG_VEC, "",
                                           segobj->GetSegmentNumber() ) )
         {
-            apoLayers.push_back( new OGRPCIDSKLayer( segobj ) );
+            apoLayers.push_back( new OGRPCIDSKLayer( segobj, bUpdate ) );
         }
     }
 
@@ -129,9 +143,125 @@ int OGRPCIDSKDataSource::Open( const char * pszFilename, int bUpdateIn )
     }
 
 /* -------------------------------------------------------------------- */
-/*      We presume that this is indeed intended to be a PCIDSK             */
+/*      We presume that this is indeed intended to be a PCIDSK          */
 /*      datasource if over half the files were .csv files.              */
 /* -------------------------------------------------------------------- */
     return TRUE;
+}
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *
+OGRPCIDSKDataSource::CreateLayer( const char * pszLayerName,
+                                  OGRSpatialReference *poSRS,
+                                  OGRwkbGeometryType eType,
+                                  char ** papszOptions )
+    
+{
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( !bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "New layer %s cannot be created.\n",
+                  osName.c_str(), pszLayerName );
+        
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Figure out what type of layer we need.                          */
+/* -------------------------------------------------------------------- */
+    std::string osLayerType;
+
+    switch( wkbFlatten(eType) )
+    {
+      case wkbPoint:
+        osLayerType = "POINTS";
+        break;
+    
+      case wkbLineString:
+        osLayerType = "ARCS";
+        break;
+
+      case wkbPolygon:
+        osLayerType = "WHOLE_POLYGONS";
+        break;
+        
+      case wkbNone:
+        osLayerType = "TABLE";
+        break;
+
+      default:
+        break;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the segment.                                             */
+/* -------------------------------------------------------------------- */
+    int     nSegNum = poFile->CreateSegment( pszLayerName, "", 
+                                             PCIDSK::SEG_VEC, 0L );
+    PCIDSK::PCIDSKSegment *poSeg = poFile->GetSegment( nSegNum );
+    PCIDSK::PCIDSKVectorSegment *poVecSeg = 
+        dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( poSeg );
+
+    if( osLayerType != "" )
+        poSeg->SetMetadataValue( "LAYER_TYPE", osLayerType );
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to apply a coordinate system?                        */
+/* -------------------------------------------------------------------- */
+    char *pszGeosys = NULL;
+    char *pszUnits = NULL;
+    double *padfPrjParams = NULL;
+
+    if( poSRS != NULL 
+        && poSRS->exportToPCI( &pszGeosys, &pszUnits, 
+                               &padfPrjParams ) == OGRERR_NONE )
+    {
+        try
+        {
+            std::vector<double> adfPCIParameters;
+            int i;
+
+            for( i = 0; i < 17; i++ )
+                adfPCIParameters.push_back( padfPrjParams[i] );
+            
+            if( EQUALN(pszUnits,"FOOT",4) )
+                adfPCIParameters.push_back( 
+                    (double)(int) PCIDSK::UNIT_US_FOOT );
+            else if( EQUALN(pszUnits,"INTL FOOT",9) )
+                adfPCIParameters.push_back( 
+                    (double)(int) PCIDSK::UNIT_INTL_FOOT );
+            else if( EQUALN(pszUnits,"DEGREE",6) )
+                adfPCIParameters.push_back( 
+                    (double)(int) PCIDSK::UNIT_DEGREE );
+            else 
+                adfPCIParameters.push_back( 
+                    (double)(int) PCIDSK::UNIT_METER );
+            
+            poVecSeg->SetProjection( pszGeosys, adfPCIParameters );
+        }
+        catch( PCIDSK::PCIDSKException ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", ex.what() );
+        }
+        
+        CPLFree( pszGeosys );
+        CPLFree( pszUnits );
+        CPLFree( padfPrjParams );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    apoLayers.push_back( new OGRPCIDSKLayer( poSeg, TRUE ) );
+
+    return apoLayers[apoLayers.size()-1];
 }
 
