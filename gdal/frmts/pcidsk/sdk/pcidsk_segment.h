@@ -70,6 +70,8 @@ namespace PCIDSK
                                  const std::string &message) = 0;
 
         virtual void Synchronize() = 0;
+
+        virtual std::string ConsistencyCheck() = 0;
     };
 
 } // end namespace PCIDSK

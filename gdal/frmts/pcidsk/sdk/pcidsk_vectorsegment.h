@@ -94,6 +94,17 @@ for older RSTs.
 
 
 /**
+\brief Fetch Projection
+
+The returned values are the projection parameters in the same form returned
+by PCIDSKGeoref::GetParameters() and the passed in geosys argument is 
+updated with the coordinate system string.
+
+@return Projection parameters as a vector.
+*/
+        virtual std::vector<double> GetProjection( std::string &geosys ) = 0;
+
+/**
 \brief Get field count.
 
 Note that this includes any system attributes, like RingStart, that would
@@ -169,6 +180,14 @@ not normally be shown to the user.
 */
         virtual ShapeId     FindNext(ShapeId id) = 0;
         
+
+/**
+\brief Fetch the number of shapes in this segment.
+@return the shape count.
+*/
+
+        virtual int         GetShapeCount() = 0;
+
 /**
 \brief Fetch the vertices for the indicated shape.
 @param id the shape to fetch
@@ -184,6 +203,81 @@ not normally be shown to the user.
 */
         virtual void        GetFields( ShapeId id, 
                                        std::vector<ShapeField>& list ) = 0;
+
+
+/** 
+\brief Set the projection for the segment. 
+
+For details on the geosys and parms values see the PCIDSKGeoref class.
+
+@param geosys the usual 16 character coordinate system string.
+@param parms additional parameters needed for user parametrized projection.
+*/
+        virtual void        SetProjection(std::string geosys,
+                                          std::vector<double> parms ) = 0;
+
+/** 
+\brief Create new attribute field.
+
+@param name the field name, should be unique in layer.
+@param type the field type.
+@param description the field description.
+@param format the C style format string or "" for default formatting.
+@param default_value the default value for this field or NULL for system default.
+*/
+
+        virtual void        AddField( std::string name, ShapeFieldType type,
+                                      std::string description,
+                                      std::string format,
+                                      ShapeField *default_value=NULL ) = 0;
+
+/**
+\brief Create a new shape.
+
+Newly created shapes have no geometry or attribute values. 
+
+@param id The ShapeId to assign to the new shape, or default to assign the next available shapeid. 
+
+@return the shapeid assigned to the newly created shape.
+*/
+
+        virtual ShapeId     CreateShape( ShapeId id = NullShapeId ) = 0;
+
+/**
+\brief Delete a shape.
+
+An exception is thrown if the shape does not exist.
+
+@param id the shapeid to delete.
+
+*/
+        virtual void        DeleteShape( ShapeId id ) = 0;
+
+/**
+\brief Assign vertices to shape. 
+
+@param id the shape to assign vertices to.
+@param list the list of vertices to assign.
+*/
+
+        virtual void        SetVertices( ShapeId id, 
+                                         const std::vector<ShapeVertex> &list ) = 0;
+
+
+/**
+\brief Assign attribute value to a shape.
+
+The list of fields should match the types and length from the schema 
+(GetFieldCount(), GetFieldType()). 
+
+@param id the shape to update.
+@param list the list of field value to assign.
+*/
+        virtual void        SetFields( ShapeId id, 
+                                       const std::vector<ShapeField>& list) = 0;
+
+// Methods needed 
+        // DeleteField
     };
 
 /************************************************************************/
