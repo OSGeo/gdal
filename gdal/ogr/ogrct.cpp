@@ -126,6 +126,15 @@ class OGRProj4CT : public OGRCoordinateTransformation
 
     int         InitializeNoLock( OGRSpatialReference *poSource, 
                                   OGRSpatialReference *poTarget );
+
+    int         nMaxCount;
+    double     *padfOriX;
+    double     *padfOriY;
+    double     *padfOriZ;
+    double     *padfTargetX;
+    double     *padfTargetY;
+    double     *padfTargetZ;
+
 public:
                 OGRProj4CT();
     virtual     ~OGRProj4CT();
@@ -445,7 +454,15 @@ OGRProj4CT::OGRProj4CT()
     
     bCheckWithInvertProj = FALSE;
     dfThreshold = 0;
-    
+
+    nMaxCount = 0;
+    padfOriX = NULL;
+    padfOriY = NULL;
+    padfOriZ = NULL;
+    padfTargetX = NULL;
+    padfTargetY = NULL;
+    padfTargetZ = NULL;
+
     if (pfn_pj_ctx_alloc != NULL)
         pjctx = pfn_pj_ctx_alloc();
     else
@@ -491,6 +508,13 @@ OGRProj4CT::~OGRProj4CT()
         if( psPJTarget != NULL )
             pfn_pj_free( psPJTarget );
     }
+
+    CPLFree(padfOriX);
+    CPLFree(padfOriY);
+    CPLFree(padfOriZ);
+    CPLFree(padfTargetX);
+    CPLFree(padfTargetY);
+    CPLFree(padfTargetZ);
 }
 
 /************************************************************************/
@@ -831,56 +855,48 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
         /* For some projections, we cannot detect if we are trying to reproject */
         /* coordinates outside the validity area of the projection. So let's do */
         /* the reverse reprojection and compare with the source coordinates */
-        
-        double *ori_x = NULL;
-        double *ori_y = NULL;
-        double *ori_z = NULL;
-        ori_x = (double*)CPLMalloc(sizeof(double)*nCount);
-        memcpy(ori_x, x, sizeof(double)*nCount);
-        ori_y = (double*)CPLMalloc(sizeof(double)*nCount);
-        memcpy(ori_y, y, sizeof(double)*nCount);
+        if (nCount > nMaxCount)
+        {
+            nMaxCount = nCount;
+            padfOriX = (double*) CPLRealloc(padfOriX, sizeof(double)*nCount);
+            padfOriY = (double*) CPLRealloc(padfOriY, sizeof(double)*nCount);
+            padfOriZ = (double*) CPLRealloc(padfOriZ, sizeof(double)*nCount);
+            padfTargetX = (double*) CPLRealloc(padfTargetX, sizeof(double)*nCount);
+            padfTargetY = (double*) CPLRealloc(padfTargetY, sizeof(double)*nCount);
+            padfTargetZ = (double*) CPLRealloc(padfTargetZ, sizeof(double)*nCount);
+        }
+        memcpy(padfOriX, x, sizeof(double)*nCount);
+        memcpy(padfOriY, y, sizeof(double)*nCount);
         if (z)
         {
-            ori_z = (double*)CPLMalloc(sizeof(double)*nCount);
-            memcpy(ori_z, z, sizeof(double)*nCount);
+            memcpy(padfOriZ, z, sizeof(double)*nCount);
         }
         err = pfn_pj_transform( psPJSource, psPJTarget, nCount, 1, x, y, z );
         if (err == 0)
         {
-            double* target_x = (double*)CPLMalloc(sizeof(double)*nCount);
-            double* target_y = (double*)CPLMalloc(sizeof(double)*nCount);
-            double* target_z = NULL;
-            memcpy(target_x, x, sizeof(double)*nCount);
-            memcpy(target_y, y, sizeof(double)*nCount);
+            memcpy(padfTargetX, x, sizeof(double)*nCount);
+            memcpy(padfTargetY, y, sizeof(double)*nCount);
             if (z)
             {
-                target_z = (double*)CPLMalloc(sizeof(double)*nCount);
-                memcpy(target_z, z, sizeof(double)*nCount);
+                memcpy(padfTargetZ, z, sizeof(double)*nCount);
             }
             
             err = pfn_pj_transform( psPJTarget, psPJSource , nCount, 1,
-                                    target_x, target_y, target_z );
+                                    padfTargetX, padfTargetY, (z) ? padfTargetZ : NULL);
             if (err == 0)
             {
                 for( i = 0; i < nCount; i++ )
                 {
                     if ( x[i] != HUGE_VAL && y[i] != HUGE_VAL &&
-                        (fabs(target_x[i] - ori_x[i]) > dfThreshold ||
-                         fabs(target_y[i] - ori_y[i]) > dfThreshold) )
+                        (fabs(padfTargetX[i] - padfOriX[i]) > dfThreshold ||
+                         fabs(padfTargetY[i] - padfOriY[i]) > dfThreshold) )
                     {
                         x[i] = HUGE_VAL;
                         y[i] = HUGE_VAL;
                     }
                 }
             }
-            
-            CPLFree(target_x);
-            CPLFree(target_y);
-            CPLFree(target_z);
         }
-        CPLFree(ori_x);
-        CPLFree(ori_y);
-        CPLFree(ori_z);
     }
     else
     {
