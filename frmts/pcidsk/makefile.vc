@@ -38,6 +38,9 @@ OBJ	=	pcidskdataset2.obj vsi_pcidsk_io.obj gdal_edb.obj \
 	sdk\segment\cpcidskpct.obj \
 	sdk\segment\cpcidsksegment.obj \
 	sdk\segment\cpcidskvectorsegment.obj \
+	sdk\segment\cpcidskvectorsegment_consistencycheck.obj \
+	sdk\segment\vecsegheader.obj \
+	sdk\segment\vecsegdataindex.obj \
 	sdk\segment\metadatasegment_p.obj \
 	sdk\segment\sysblockmap.obj \
 	sdk\segment\cpcidskrpcmodel.obj \

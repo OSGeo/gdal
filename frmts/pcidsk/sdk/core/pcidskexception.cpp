@@ -80,7 +80,7 @@ should be caught like this:
 PCIDSKException::PCIDSKException( const char *fmt, ... )
 
 {
-    va_list args;
+    std::va_list args;
 
     va_start( args, fmt );
     vPrintf( fmt, args );
@@ -115,7 +115,7 @@ PCIDSKException::~PCIDSKException() throw()
  */
 
 
-void PCIDSKException::vPrintf( const char *fmt, va_list args )
+void PCIDSKException::vPrintf( const char *fmt, std::va_list args )
 
 {
 /* -------------------------------------------------------------------- */
@@ -209,7 +209,7 @@ void PCIDSKException::vPrintf( const char *fmt, va_list args )
 void PCIDSK::ThrowPCIDSKException( const char *fmt, ... )
 
 {
-    va_list args;
+    std::va_list args;
     PCIDSKException ex("");
 
     va_start( args, fmt );
