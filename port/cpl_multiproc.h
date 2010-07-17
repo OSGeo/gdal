@@ -98,7 +98,7 @@ class CPL_DLL CPLMutexHolder
 #define CTLS_CSVTABLEPTR                3         /* cpl_csv.cpp */
 #define CTLS_CSVDEFAULTFILENAME         4         /* cpl_csv.cpp */
 #define CTLS_ERRORCONTEXT               5         /* cpl_error.cpp */
-#define CTLS_FINDERINFO                 6         /* cpl_finder.cpp */
+#define CTLS_UNUSED1                    6
 #define CTLS_PATHBUF                    7         /* cpl_path.cpp */
 #define CTLS_SPRINTFBUF                 8         /* cpl_string.cpp */
 #define CTLS_SWQ_ERRBUF                 9         /* swq.c */
@@ -114,6 +114,12 @@ class CPL_DLL CPLMutexHolder
 CPL_C_START
 void CPL_DLL * CPLGetTLS( int nIndex );
 void CPL_DLL CPLSetTLS( int nIndex, void *pData, int bFreeOnExit );
+
+/* Warning : the CPLTLSFreeFunc must not in any case directly or indirectly */
+/* use or fetch any TLS data, or a terminating thread will hang ! */
+typedef void (*CPLTLSFreeFunc)( void* pData );
+void CPL_DLL CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree );
+
 void CPL_DLL CPLCleanupTLS();
 CPL_C_END
 
