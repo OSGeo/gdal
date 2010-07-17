@@ -931,9 +931,9 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     /* Set SQLITE_LIST_ALL_TABLES option as we wan't to be able to */
     /* fetch non spatial tables */
     CPLString osOldVal = CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
-    CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
+    CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
     OGRDataSourceH hDS = OGROpen(osFileName.c_str(), TRUE, NULL);
-    CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
+    CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
     CPLDebug("RASTERLITE", "SQLite DB Open");
     
     RasterliteDataset* poDS = NULL;
