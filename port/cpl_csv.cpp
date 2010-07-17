@@ -65,6 +65,18 @@ typedef struct ctb {
     char        *pszRawData;
 } CSVTable;
 
+
+static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS, const char * pszFilename );
+
+/************************************************************************/
+/*                            CSVFreeTLS()                              */
+/************************************************************************/
+static void CSVFreeTLS(void* pData)
+{
+    CSVDeaccessInternal( (CSVTable **)pData, FALSE, NULL );
+    CPLFree(pData);
+}
+
 /* It would likely be better to share this list between threads, but
    that will require some rework. */
 
@@ -95,7 +107,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
     if( ppsCSVTableList == NULL )
     {
         ppsCSVTableList = (CSVTable **) CPLCalloc(1,sizeof(CSVTable*));
-        CPLSetTLS( CTLS_CSVTABLEPTR, ppsCSVTableList, TRUE );
+        CPLSetTLSWithFreeFunc( CTLS_CSVTABLEPTR, ppsCSVTableList, CSVFreeTLS );
     }
 
 /* -------------------------------------------------------------------- */
@@ -148,18 +160,11 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*                            CSVDeaccess()                             */
 /************************************************************************/
 
-void CSVDeaccess( const char * pszFilename )
+static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS, const char * pszFilename )
 
 {
     CSVTable    *psLast, *psTable;
     
-/* -------------------------------------------------------------------- */
-/*      Fetch the table, and allocate the thread-local pointer to it    */
-/*      if there isn't already one.                                     */
-/* -------------------------------------------------------------------- */
-    CSVTable **ppsCSVTableList;
-
-    ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
     if( ppsCSVTableList == NULL )
         return;
     
@@ -169,7 +174,7 @@ void CSVDeaccess( const char * pszFilename )
     if( pszFilename == NULL )
     {
         while( *ppsCSVTableList != NULL )
-            CSVDeaccess( (*ppsCSVTableList)->pszFilename );
+            CSVDeaccessInternal( ppsCSVTableList, bCanUseTLS, (*ppsCSVTableList)->pszFilename );
         
         return;
     }
@@ -187,7 +192,8 @@ void CSVDeaccess( const char * pszFilename )
 
     if( psTable == NULL )
     {
-        CPLDebug( "CPL_CSV", "CPLDeaccess( %s ) - no match.", pszFilename );
+        if (bCanUseTLS)
+            CPLDebug( "CPL_CSV", "CPLDeaccess( %s ) - no match.", pszFilename );
         return;
     }
 
@@ -214,7 +220,20 @@ void CSVDeaccess( const char * pszFilename )
 
     CPLFree( psTable );
 
-    CPLReadLine( NULL );
+    if (bCanUseTLS)
+        CPLReadLine( NULL );
+}
+
+void CSVDeaccess( const char * pszFilename )
+{
+    CSVTable **ppsCSVTableList;
+/* -------------------------------------------------------------------- */
+/*      Fetch the table, and allocate the thread-local pointer to it    */
+/*      if there isn't already one.                                     */
+/* -------------------------------------------------------------------- */
+    ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
+
+    CSVDeaccessInternal(ppsCSVTableList, TRUE, pszFilename);
 }
 
 /************************************************************************/
