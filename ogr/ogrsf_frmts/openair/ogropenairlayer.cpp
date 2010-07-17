@@ -452,6 +452,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
     }
 
     OGRPolygon* poPoly = new OGRPolygon();
+    oLR.closeRings();
     poPoly->addRing(&oLR);
     poPoly->assignSpatialReference(poSRS);
     poFeature->SetGeometryDirectly(poPoly);
