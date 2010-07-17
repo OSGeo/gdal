@@ -197,24 +197,22 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     char *pszXlinkResolvedFilename = NULL;
     const char *pszOption = CPLGetConfigOption("GML_SAVE_RESOLVED_TO", NULL);
     int bResolve = TRUE;
-    if( pszOption != NULL )
+    if( pszOption != NULL && EQUALN( pszOption, "SAME", 4 ) )
     {
-        if( EQUALN( pszOption, "SAME", 4 ) )
-        {
-            // "SAME" will overwrite the existing gml file
-            pszXlinkResolvedFilename = CPLStrdup( pszNewName );
-        }
-        else if( ( CPLStrnlen( pszOption, 5 ) >= 5 ) &&
-                 EQUALN( pszOption - 4 + strlen( pszOption ), ".gml", 4 ) )
-        {
-            // Any string ending with ".gml" will try and write to it
-            pszXlinkResolvedFilename = CPLStrdup( pszNewName );
-        }
+        // "SAME" will overwrite the existing gml file
+        pszXlinkResolvedFilename = CPLStrdup( pszNewName );
+    }
+    else if( pszOption != NULL &&
+             CPLStrnlen( pszOption, 5 ) >= 5 &&
+             EQUALN( pszOption - 4 + strlen( pszOption ), ".gml", 4 ) )
+    {
+        // Any string ending with ".gml" will try and write to it
+        pszXlinkResolvedFilename = CPLStrdup( pszOption );
     }
     else
     {
-        // Default action would be to use a file with the extension
-        // changed to resolved.gml
+        // When no option is given or is not recognised,
+        // use the same file name with the extension changed to .resolved.gml
         pszXlinkResolvedFilename = CPLStrdup(
                             CPLResetExtension( pszNewName, "resolved.gml" ) );
 
@@ -229,7 +227,6 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                           "Found %s but ignoring because it appears\n"
                           "be older than the associated GML file.", 
                           pszXlinkResolvedFilename );
-                bResolve = FALSE;
             }
             else
             {
@@ -240,17 +237,21 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     }
 
     const char *pszSkipOption = CPLGetConfigOption( "GML_SKIP_RESOLVE_ELEMS",
-                                                    "");
+                                                    "ALL");
     char **papszSkip = NULL;
     if( EQUAL( pszSkipOption, "ALL" ) )
         bResolve = FALSE;
-    else
+    else if( !EQUAL( pszSkipOption, "NONE" ) )//use this to resolve everything
         papszSkip = CSLTokenizeString2( pszSkipOption, ",",
                                            CSLT_STRIPLEADSPACES |
                                            CSLT_STRIPENDSPACES );
 
     if( bResolve )
-        poReader->ResolveXlinks( pszXlinkResolvedFilename, &bOutIsTempFile, papszSkip );
+    {
+        poReader->ResolveXlinks( pszXlinkResolvedFilename,
+                                 &bOutIsTempFile,
+                                 papszSkip );
+    }
 
     CPLFree( pszXlinkResolvedFilename );
     CSLDestroy( papszSkip );
