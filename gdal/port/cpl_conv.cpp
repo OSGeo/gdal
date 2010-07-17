@@ -1491,7 +1491,7 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
     papszTLConfigOptions = 
         CSLSetNameValue( papszTLConfigOptions, pszKey, pszValue );
 
-    CPLSetTLS( CTLS_CONFIGOPTIONS, papszTLConfigOptions, FALSE );
+    CPLSetTLSWithFreeFunc( CTLS_CONFIGOPTIONS, papszTLConfigOptions, (CPLTLSFreeFunc)CSLDestroy );
 }
 
 /************************************************************************/
