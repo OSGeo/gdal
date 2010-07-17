@@ -15,7 +15,7 @@ clean:
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ) $(O_OBJ):	vrtdataset.h ../raw/rawdataset.h ../../gcore/gdal_proxy.h
+$(OBJ) $(O_OBJ):	vrtdataset.h ../../alg/gdalwarper.h ../raw/rawdataset.h ../../gcore/gdal_proxy.h
 
 install:
 	$(INSTALL_DATA) vrtdataset.h $(DESTDIR)$(INST_INCLUDE)
