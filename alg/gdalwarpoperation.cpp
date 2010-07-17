@@ -833,8 +833,10 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     memset((void*)&asThreadData, 0, sizeof(asThreadData));
     asThreadData[0].hThreadMutex = hThread1Mutex;
     asThreadData[0].poOperation = this;
+    asThreadData[0].bFinished = TRUE;
     asThreadData[1].hThreadMutex = hThread2Mutex;
     asThreadData[1].poOperation = this;
+    asThreadData[1].bFinished = TRUE;
 
     int iChunk;
     double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
