@@ -180,7 +180,9 @@ static void CPLCleanupTLSList( void **papTLSList )
     {
         if( papTLSList[i] != NULL && papTLSList[i+CTLS_MAX] != NULL )
         {
-            CPLFree( papTLSList[i] );
+            CPLTLSFreeFunc pfnFree = (CPLTLSFreeFunc) papTLSList[i + CTLS_MAX];
+            pfnFree( papTLSList[i] );
+            papTLSList[i] = NULL;
         }
     }
 
@@ -602,7 +604,7 @@ static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
     psInfo->pfnMain( psInfo->pAppData );
 
     CPLFree( psInfo );
-    
+
     CPLCleanupTLS();
 
     return 0;
@@ -943,7 +945,7 @@ static void *CPLStdCallThreadJacket( void *pData )
     psInfo->pfnMain( psInfo->pAppData );
 
     CPLFree( psInfo );
-    
+
     return NULL;
 }
 
@@ -1078,10 +1080,22 @@ void *CPLGetTLS( int nIndex )
 void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
 
 {
+    CPLSetTLSWithFreeFunc(nIndex, pData, (bFreeOnExit) ? CPLFree : NULL);
+}
+
+/************************************************************************/
+/*                      CPLSetTLSWithFreeFunc()                         */
+/************************************************************************/
+
+/* Warning : the CPLTLSFreeFunc must not in any case directly or indirectly */
+/* use or fetch any TLS data, or a terminating thread will hang ! */
+void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
+
+{
     void **papTLSList = CPLGetTLSList();
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
     papTLSList[nIndex] = pData;
-    papTLSList[CTLS_MAX + nIndex] = (void *) (long) bFreeOnExit;
+    papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
 }
