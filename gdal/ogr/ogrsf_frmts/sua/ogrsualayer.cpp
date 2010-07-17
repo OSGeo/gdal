@@ -348,6 +348,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
     poFeature->SetField(4, osBASE.c_str());
 
     OGRPolygon* poPoly = new OGRPolygon();
+    oLR.closeRings();
     poPoly->addRing(&oLR);
     poFeature->SetGeometryDirectly(poPoly);
     poFeature->SetFID(nNextFID++);
