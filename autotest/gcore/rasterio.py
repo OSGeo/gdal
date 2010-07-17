@@ -207,18 +207,25 @@ def rasterio_5():
             print(error_msg)
             return 'fail'
 
-        gdal.ErrorReset()
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        res = obj.ReadRaster(0,0,1000000,1000000)
-        gdal.PopErrorHandler()
-        error_msg = gdal.GetLastErrorMsg()
-        if res is not None:
-            gdaltest.post_reason('expected None')
-            return 'fail'
-        if error_msg.find('Integer overflow') == -1:
-            gdaltest.post_reason('did not get expected error msg (2)')
-            print(error_msg)
-            return 'fail'
+        import sys
+        # This should only fail on a 32bit build
+        try:
+            maxsize = sys.maxint
+        except:
+            maxsize = sys.maxsize
+        if maxsize == 2147483647:
+            gdal.ErrorReset()
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            res = obj.ReadRaster(0,0,1000000,1000000)
+            gdal.PopErrorHandler()
+            error_msg = gdal.GetLastErrorMsg()
+            if res is not None:
+                gdaltest.post_reason('expected None')
+                return 'fail'
+            if error_msg.find('Integer overflow') == -1:
+                gdaltest.post_reason('did not get expected error msg (2)')
+                print(error_msg)
+                return 'fail'
 
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
