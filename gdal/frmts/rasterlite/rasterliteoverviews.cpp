@@ -547,9 +547,9 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
             OGRReleaseDataSource(hDS);
             
             CPLString osOldVal = CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
-            CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
+            CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
             hDS = OGROpen(osFileName.c_str(), TRUE, NULL);
-            CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
+            CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
             
             osSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE "
                           "pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
