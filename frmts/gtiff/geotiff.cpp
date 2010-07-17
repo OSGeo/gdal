@@ -248,6 +248,8 @@ class GTiffDataset : public GDALPamDataset
     CPLString     osIMDFile;
     int           FindIMDFile(char** papszSiblingFiles);
 
+    int           bHasWarnedDisableAggressiveBandCaching;
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -336,10 +338,14 @@ protected:
 public:
                    GTiffRasterBand( GTiffDataset *, int );
 
-    // should override RasterIO eventually.
-    
     virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * ); 
+    virtual CPLErr IWriteBlock( int, int, void * );
+
+    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  int nPixelSpace, int nLineSpace );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
@@ -534,6 +540,51 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 
     bNoDataSet = FALSE;
     dfNoDataValue = -9999.0;
+}
+
+/************************************************************************/
+/*                            IRasterIO()                               */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  int nPixelSpace, int nLineSpace )
+{
+    CPLErr eErr;
+
+    if (poGDS->nBands != 1 && eRWFlag == GF_Read &&
+        nXSize == nBufXSize && nYSize == nBufYSize)
+    {
+        int nBlockX1 = nXOff / nBlockXSize;
+        int nBlockY1 = nYOff / nBlockYSize;
+        int nBlockX2 = (nXOff + nXSize - 1) / nBlockXSize;
+        int nBlockY2 = (nYOff + nYSize - 1) / nBlockYSize;
+        int nXBlocks = nBlockX2 - nBlockX1 + 1;
+        int nYBlocks = nBlockY2 - nBlockY1 + 1;
+        GIntBig nRequiredMem = (GIntBig)poGDS->nBands * nXBlocks * nYBlocks *
+                                nBlockXSize * nBlockYSize *
+                               (GDALGetDataTypeSize(eDataType) / 8);
+        if (nRequiredMem > (GIntBig)GDALGetCacheMax())
+        {
+            if (!poGDS->bHasWarnedDisableAggressiveBandCaching)
+            {
+                CPLDebug("GTiff", "Disable aggressive band caching. Cache not big enough. "
+                         "At least " CPL_FRMT_GIB " bytes necessary", nRequiredMem);
+                poGDS->bHasWarnedDisableAggressiveBandCaching = TRUE;
+            }
+            poGDS->bLoadingOtherBands = TRUE;
+        }
+    }
+
+    eErr = GDALPamRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                        pData, nBufXSize, nBufYSize, eBufType,
+                                        nPixelSpace, nLineSpace);
+
+    poGDS->bLoadingOtherBands = FALSE;
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -2576,6 +2627,7 @@ GTiffDataset::GTiffDataset()
     bTreatAsSplit = FALSE;
     bTreatAsSplitBitmap = FALSE;
     bClipWarn = FALSE;
+    bHasWarnedDisableAggressiveBandCaching = FALSE;
 }
 
 /************************************************************************/
