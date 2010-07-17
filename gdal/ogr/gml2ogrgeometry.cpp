@@ -1272,7 +1272,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                     wkbFlatten(poEdgeGeom->getGeometryType()) != wkbLineString )
                 {
                   CPLError( CE_Failure, CPLE_AppDefined, 
-                            "Failed to get geometry in geometryMember" );
+                            "Failed to get geometry in directedEdge" );
                   delete poEdgeGeom;
                   return NULL;
                 }

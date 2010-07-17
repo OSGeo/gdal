@@ -63,7 +63,10 @@ reported.<p>
 OGR 1.8.0 adds support for gml:xlink resolving.  When the resolver finds an
 element containing the tag xlink:href, it tries to find the corresponding
 element with the gml:id in the same gml file, other gml file in the file system
-or on the web using cURL.  By default the resolved file will be saved in the
+or on the web using cURL.  Set the configuration option
+<b>GML_SKIP_RESOLVE_ELEMS</b> to <b>NONE</b> to enable resolution.<p>
+
+By default the resolved file will be saved in the
 same directory as the original file with the extension ".resolved.gml", if it
 doesn't exist already.  This behaviour can be changed using the configuration
 option <b>GML_SAVE_RESOLVED_TO</b>.  Set it to <b>SAME</b> to overwrite the
@@ -74,11 +77,13 @@ CPLGenerateTempFilename("ResolvedGML"); if it cannot, resolution fails.<p>
 
 Note that the resolution algorithm is not optimised for large files.  For files
 with more than a couple of thousand xlink:href tags, the process can go beyond
-a few minutes.  A rough progress can be displayed through CPLDebug() for every
-256 links.  The resolution time can be reduced if you know any elements that
+a few minutes.  A rough progress is displayed through CPLDebug() for every
+256 links.  It can be seen by setting the environment variable CPL_DEBUG.
+The resolution time can be reduced if you know any elements that
 won't be needed.  Mention a comma seperated list of names of such elements with
 the configuration option <b>GML_SKIP_RESOLVE_ELEMS</b>.  Set it to <b>ALL</b>
-to skip resolving altogether.<p>
+to skip resolving altogether (default action).  Set it to <b>NONE</b> to
+resolve all the xlinks.<p>
 
 <h2>Encoding issues</h2>
 
