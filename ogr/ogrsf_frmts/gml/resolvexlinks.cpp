@@ -72,7 +72,7 @@ static const char* GetID( CPLXMLNode * psNode )
 /*      Compares two nodes by their IDs                                 */
 /************************************************************************/
 
-static int CompareNodeIDs( CPLXMLNode * psNode1, CPLXMLNode * psNode2 )
+/*static int CompareNodeIDs( CPLXMLNode * psNode1, CPLXMLNode * psNode2 )
 
 {
     if( psNode2 == NULL )
@@ -82,7 +82,7 @@ static int CompareNodeIDs( CPLXMLNode * psNode1, CPLXMLNode * psNode2 )
         return FALSE;
 
     return ( strcmp( GetID(psNode2), GetID(psNode1) ) > 0 );
-}
+}*/
 
 /************************************************************************/
 /*                       BuildIDIndex()                                 */
@@ -223,34 +223,81 @@ static int TrimTree( CPLXMLNode * psRoot )
 /************************************************************************/
 /*                          CorrectURLs()                               */
 /*                                                                      */
-/*      Replaces all empty URLs in URL#id pairs with pszURL in the      */
-/*      node and it's children recursively                              */
+/*  Processes the node and all it's children recursively. Siblings of   */
+/*  psRoot are ignored.                                                 */
+/*  - Replaces all every URL in URL#id pairs with pszURL.               */
+/*  - Leaves it alone if the paths are same or the URL is not relative. */
+/*  - If it is relative, the path from pszURL is prepended.             */
 /************************************************************************/
 
 static void CorrectURLs( CPLXMLNode * psRoot, const char *pszURL )
 
 {
-    if( psRoot == NULL )
+    if( psRoot == NULL || pszURL == NULL )
+        return;
+    if( pszURL[0] == '\0' )
         return;
 
     CPLXMLNode *psChild = psRoot->psChild;
 
 // check for xlink:href attribute
     while( psChild != NULL && !( ( psChild->eType == CXT_Attribute ) &&
-                                 ( EQUAL(psChild->pszValue, "xlink:href") ) &&
-                                 ( psChild->psChild->pszValue[0] == '#' ) ) )
+                                 ( EQUAL(psChild->pszValue, "xlink:href") )) )
         psChild = psChild->psNext;
 
-    if( psChild != NULL )
+    if( psChild != NULL &&
+        !( strstr( psChild->psChild->pszValue, pszURL ) == psChild->psChild->pszValue
+        && psChild->psChild->pszValue[strlen(pszURL)] == '#' ) )
     {
-        size_t nLen = CPLStrnlen( pszURL, 512 ) +
-                      CPLStrnlen( psChild->psChild->pszValue, 512 ) + 1;
+    //href has a different url
+        size_t nLen;
         char *pszNew;
-        pszNew = (char *)CPLMalloc( nLen * sizeof(char));
-        CPLStrlcpy( pszNew, pszURL, nLen );
-        CPLStrlcat( pszNew, psChild->psChild->pszValue, nLen );
-        CPLSetXMLValue( psRoot, "#xlink:href", pszNew );
-        CPLFree( pszNew );
+        if( psChild->psChild->pszValue[0] == '#' )
+        {
+        //empty URL: prepend the given URL
+            nLen = CPLStrnlen( pszURL, 1024 ) +
+                   CPLStrnlen( psChild->psChild->pszValue, 1024 ) + 1;
+            pszNew = (char *)CPLMalloc( nLen * sizeof(char));
+            CPLStrlcpy( pszNew, pszURL, nLen );
+            CPLStrlcat( pszNew, psChild->psChild->pszValue, nLen );
+            CPLSetXMLValue( psRoot, "#xlink:href", pszNew );
+            CPLFree( pszNew );
+        }
+        else
+        {
+            size_t nPathLen;
+            for( nPathLen = strlen(pszURL);
+                 nPathLen > 0 && pszURL[nPathLen - 1] != '/'
+                              && pszURL[nPathLen - 1] != '\\';
+                 nPathLen--);
+
+            if( strncmp( pszURL, psChild->psChild->pszValue, nPathLen ) != 0 )
+            {
+            //different path
+                int nURLLen = strchr( psChild->psChild->pszValue, '#' ) -
+                              psChild->psChild->pszValue;
+                char *pszURLWithoutID = (char *)CPLMalloc( (nURLLen+1) * sizeof(char));
+                strncpy( pszURLWithoutID, psChild->psChild->pszValue, nURLLen );
+                pszURLWithoutID[nURLLen] = '\0';
+
+                if( CPLIsFilenameRelative( pszURLWithoutID ) &&
+                    strstr( pszURLWithoutID, ":" ) == NULL )
+                {
+                    //relative URL: prepend the path of pszURL
+                    nLen = nPathLen +
+                           CPLStrnlen( psChild->psChild->pszValue, 1024 ) + 1;
+                    pszNew = (char *)CPLMalloc( nLen * sizeof(char));
+                    size_t i;
+                    for( i = 0; i < nPathLen; i++ )
+                        pszNew[i] = pszURL[i];
+                    pszNew[nPathLen] = '\0';
+                    CPLStrlcat( pszNew, psChild->psChild->pszValue, nLen );
+                    CPLSetXMLValue( psRoot, "#xlink:href", pszNew );
+                    CPLFree( pszNew );
+                }
+                CPLFree( pszURLWithoutID );
+            }
+        }
     }
 
 // search the child elements of psRoot
@@ -262,7 +309,8 @@ static void CorrectURLs( CPLXMLNode * psRoot, const char *pszURL )
 /************************************************************************/
 /*                          FindTreeByURL()                             */
 /*                                                                      */
-/*      Find a doc tree that is located at pszURL.                      */
+/*  Find a doc tree that is located at pszURL.                          */
+/*  If not present in ppapsRoot, it updates it and ppapszResourceHREF.  */
 /************************************************************************/
 
 static CPLXMLNode *FindTreeByURL( CPLXMLNode *** ppapsRoot,
@@ -301,12 +349,17 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode *** ppapsRoot,
                 CPLHTTPDestroyResult( psResult );
             }
         }
-        CPLFree( pszLocation );
 
+        //report error in case the resource cannot be retrieved.
+        if( psSrcTree == NULL )
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "Could not access %s", pszLocation );
+
+        CPLFree( pszLocation );
 
 /************************************************************************/
 /*      In the external GML resource we will only need elements         */
-/*      identified by a "gml:id".                                       */
+/*      identified by a "gml:id". So trim them.                         */
 /************************************************************************/
         psSibling = psSrcTree;
         while( psSibling != NULL )
@@ -333,6 +386,11 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode *** ppapsRoot,
 /************************************************************************/
 /*                           ResolveTree()                              */
 /*  Resolves the xlinks in a node and it's siblings                     */
+/*  If any error is encountered or any element is skipped(papszSkip):   */
+/*      If bStrict is TRUE, process is stopped and CE_Error is returned */
+/*      If bStrict is FALSE, the process is continued but CE_Warning is */
+/*       returned at the end.                                           */
+/*  If everything goes fine, CE_None is returned.                       */
 /************************************************************************/
 
 static CPLErr Resolve( CPLXMLNode * psNode,
@@ -346,14 +404,11 @@ static CPLErr Resolve( CPLXMLNode * psNode,
     CPLXMLNode *psSibling = NULL;
     CPLXMLNode *psResource = NULL;
     CPLXMLNode *psTarget = NULL;
-    CPLErr eReturn;
+    CPLErr eReturn = CE_None, eReturned;
     
     for( psSibling = psNode; psSibling != NULL; psSibling = psSibling->psNext )
     {
         if( psSibling->eType != CXT_Element )
-            continue;
-
-        if( CSLFindString( papszSkip, psSibling->pszValue ) >= 0 )
             continue;
 
         CPLXMLNode *psChild = psSibling->psChild;
@@ -363,19 +418,24 @@ static CPLErr Resolve( CPLXMLNode * psNode,
             psChild = psChild->psNext;
 
         //if a child has a "xlink:href" attribute
-        if( psChild != NULL )
+        if( psChild != NULL && psChild->psChild != NULL )
         {
-            char **papszTokens;
-            if( strstr( psChild->psChild->pszValue, "#" ) == NULL )
-            {
-                CPLError( bStrict ? CE_Failure : CE_Warning,
-                          CPLE_NotSupported,
-                          "Couldn't find '#' while parsing the href %s. "
-                          "Can't possibly have an id.",
-                          psChild->psChild->pszValue );
-                if( bStrict ) break;
-                else          continue;
+            if( CSLFindString( papszSkip, psSibling->pszValue ) >= 0 )
+            {//Skipping a specified element
+                eReturn = CE_Warning;
+                continue;
             }
+
+            static int i = 0;
+            if( i-- == 0 )
+            {//a way to track progress
+                i = 256;
+                CPLDebug( "GML",
+                          "Resolving xlinks... (currently %s)",
+                          psChild->psChild->pszValue );
+            }
+
+            char **papszTokens;
             papszTokens = CSLTokenizeString2( psChild->psChild->pszValue, "#",
                                               CSLT_ALLOWEMPTYTOKENS |
                                               CSLT_STRIPLEADSPACES |
@@ -384,33 +444,31 @@ static CPLErr Resolve( CPLXMLNode * psNode,
             {
                 CPLError( bStrict ? CE_Failure : CE_Warning,
                           CPLE_NotSupported,
-                          "Error parsing the href %s",
-                          psChild->psChild->pszValue );
+                          "Error parsing the href %s.%s",
+                          psChild->psChild->pszValue,
+                          bStrict ? "" : " Skipping..." );
                 CSLDestroy( papszTokens );
-                if( bStrict ) break;
-                else          continue;
+                if( bStrict )
+                    return CE_Failure;
+                eReturn = CE_Warning;
+                continue;
             }
 
             //look for the resource with that URL
             psResource = FindTreeByURL( ppapsRoot,
                                         ppapszResourceHREF,
                                         papszTokens[0] );
-            if( bStrict && psResource == NULL )
+            if( psResource == NULL )
             {
                 CSLDestroy( papszTokens );
-                return CE_Failure;
+                if( bStrict )
+                    return CE_Failure;
+                eReturn = CE_Warning;
+                continue;
             }
 
             //look for the element with the ID
             psTarget = FindElementByID( psResource, papszTokens[1] );
-            static int i = 0;
-            if( i-- == 0 )
-            {
-                i = 256;
-                CPLDebug( "GML",
-                          "Resolving xlinks... (currently %s)",
-                          psChild->psChild->pszValue );
-            }
             if( psTarget != NULL )
             {
                 //remove the xlink:href attribute
@@ -433,34 +491,42 @@ static CPLErr Resolve( CPLXMLNode * psNode,
             }
             else
             {
-                //nothing found
+                //element not found
                 CSLDestroy( papszTokens );
+                CPLError( bStrict ? CE_Failure : CE_Warning,
+                          CPLE_ObjectNull,
+                          "Couldn't find the element with id %s.",
+                          psChild->psChild->pszValue );
                 if( bStrict )
-                {
-                    CPLError( CE_Failure,
-                              CPLE_ObjectNull,
-                              "Couldn't find the element with id %s.",
-                              psChild->psChild->pszValue );
                     return CE_Failure;
-                }
+                eReturn = CE_Warning;
             }
         }
 
         //Recurse with the first child
-        eReturn = Resolve( psSibling->psChild,
+        eReturned=Resolve( psSibling->psChild,
                            ppapsRoot,
                            ppapszResourceHREF,
                            papszSkip,
                            bStrict );
-        if( bStrict && eReturn != CE_None )
-            return eReturn;
+
+        if( eReturned == CE_Failure )
+            return CE_Failure;
+
+        if( eReturned == CE_Warning )
+                eReturn = CE_Warning;
     }
-    return CE_None;
+    return eReturn;
 }
 
 /************************************************************************/
 /*                           ResolveXlinks()                            */
 /*      Returns TRUE for success                                        */
+/*    - Returns CE_None for success,                                    */
+/*      CE_Warning if the resolved file is saved to a different file or */
+/*      CE_Failure if it could not be saved at all.                     */
+/*    - m_pszFilename will be set to the file the resolved file was     */
+/*      saved to.                                                       */
 /************************************************************************/
 
 int GMLReader::ResolveXlinks( const char *pszFile,
@@ -493,55 +559,68 @@ int GMLReader::ResolveXlinks( const char *pszFile,
         return FALSE;
     }
 
-//setup resource data structure
+    //make all the URLs absolute
+    CPLXMLNode *psSibling = NULL;
+    for( psSibling = papsSrcTree[0]; psSibling != NULL; psSibling = psSibling->psNext )
+        CorrectURLs( psSibling, m_pszFilename );
+
+    //setup resource data structure
     char **papszResourceHREF = NULL;
     // "" is the href of the original source file
-    papszResourceHREF = CSLAddString( papszResourceHREF, "" );
+    papszResourceHREF = CSLAddString( papszResourceHREF, m_pszFilename );
 
-//call resolver
-    Resolve( papsSrcTree[0], &papsSrcTree, &papszResourceHREF, papszSkip, bStrict );
+    //call resolver
+    CPLErr eReturned = CE_None;
+    eReturned = Resolve( papsSrcTree[0], &papsSrcTree, &papszResourceHREF, papszSkip, bStrict );
 
-    char *pszTmpName = NULL;
-    int bTryWithTempFile = FALSE;
     int bReturn = TRUE;
-    if( EQUALN(pszFile, "/vsitar/", strlen("/vsitar/")) ||
-        EQUALN(pszFile, "/vsigzip/", strlen("/vsigzip/")) ||
-        EQUALN(pszFile, "/vsizip/", strlen("/vsizip/")) )
+    if( eReturned != CE_Failure )
     {
-        bTryWithTempFile = TRUE;
-    }
-    else if( !CPLSerializeXMLTreeToFile( papsSrcTree[0], pszFile ) )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Cannot serialize resolved file %s to %s.",
-                  m_pszFilename, pszFile );
-        bTryWithTempFile = TRUE;
-    }
-
-    if (bTryWithTempFile)
-    {
-        pszTmpName = CPLStrdup( CPLGenerateTempFilename( "ResolvedGML" ) );
-        if( !CPLSerializeXMLTreeToFile( papsSrcTree[0], pszTmpName ) )
+        char *pszTmpName = NULL;
+        int bTryWithTempFile = FALSE;
+        if( EQUALN(pszFile, "/vsitar/", strlen("/vsitar/")) ||
+            EQUALN(pszFile, "/vsigzip/", strlen("/vsigzip/")) ||
+            EQUALN(pszFile, "/vsizip/", strlen("/vsizip/")) )
+        {
+            bTryWithTempFile = TRUE;
+        }
+        else if( !CPLSerializeXMLTreeToFile( papsSrcTree[0], pszFile ) )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Cannot serialize resolved file %s to %s either.",
-                      m_pszFilename, pszTmpName );
-            CPLFree( pszTmpName );
-            bReturn = FALSE;
+                      "Cannot serialize resolved file %s to %s.",
+                      m_pszFilename, pszFile );
+            bTryWithTempFile = TRUE;
+        }
+
+        if (bTryWithTempFile)
+        {
+            pszTmpName = CPLStrdup( CPLGenerateTempFilename( "ResolvedGML" ) );
+            if( !CPLSerializeXMLTreeToFile( papsSrcTree[0], pszTmpName ) )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Cannot serialize resolved file %s to %s either.",
+                          m_pszFilename, pszTmpName );
+                CPLFree( pszTmpName );
+                bReturn = FALSE;
+            }
+            else
+            {
+            //set the source file to the resolved file
+                CPLFree( m_pszFilename );
+                m_pszFilename = pszTmpName;
+                *pbOutIsTempFile = TRUE;
+            }
         }
         else
         {
         //set the source file to the resolved file
             CPLFree( m_pszFilename );
-            m_pszFilename = pszTmpName;
-            *pbOutIsTempFile = TRUE;
+            m_pszFilename = CPLStrdup( pszFile );
         }
     }
     else
     {
-    //set the source file to the resolved file
-        CPLFree( m_pszFilename );
-        m_pszFilename = CPLStrdup( pszFile );
+        bReturn = FALSE;
     }
 
     int nItems = CSLCount( papszResourceHREF );
