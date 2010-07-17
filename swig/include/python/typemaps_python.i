@@ -379,6 +379,56 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   }
 }
 
+
+%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) (int alloc = 0)
+{
+  /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+%#if PY_VERSION_HEX>=0x03000000
+  if (PyUnicode_Check($input))
+  {
+    size_t safeLen = 0;
+    int ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    if (!SWIG_IsOK(ret)) {
+      SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+    }
+
+    if (safeLen) safeLen--;
+    $1 = (GIntBig) safeLen;
+  }
+  else if (PyBytes_Check($input))
+  {
+    Py_ssize_t safeLen = 0;
+    PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
+    $1 = (GIntBig) safeLen;
+  }
+  else
+  {
+    PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+    SWIG_fail;
+  }
+%#else
+  if (PyString_Check($input))
+  {
+    Py_ssize_t safeLen = 0;
+    PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
+    $1 = (GIntBig) safeLen;
+  }
+  else
+  {
+    PyErr_SetString(PyExc_TypeError, "not a string");
+    SWIG_fail;
+  }
+%#endif
+}
+
+%typemap(freearg) (GIntBig nLen, char *pBuf )
+{
+  /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
+  if( alloc$argnum == SWIG_NEWOBJ ) {
+    delete[] $2;
+  }
+}
+
 /* required for GDALAsyncReader */
 
 %typemap(in,numinputs=1) (int nLenKeepObject, char *pBufKeepObject, void* pyObject)

@@ -38,11 +38,16 @@
 %{
 /* Returned size is in bytes or 0 if an error occured */
 static
-int ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
+GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                              int nPixelSpace, int nLineSpace,
                              int bSpacingShouldBeMultipleOfPixelSize )
 {
-    const int MAX_INT = 0x7fffffff;
+#if SIZEOF_VOIDP == 8
+    const GIntBig MAX_INT = (((GIntBig)0x7fffffff) << 32) | 0xffffffff;
+#else
+    const GIntBig MAX_INT = 0x7fffffff;
+#endif
+    const GIntBig MAX_INT32 = 0x7fffffff;
     if (buf_xsize <= 0 || buf_ysize <= 0)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
@@ -71,9 +76,9 @@ int ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
 
     if( nLineSpace == 0 )
     {
-        if (nPixelSpace > MAX_INT / buf_xsize)
+        if (nPixelSpace > MAX_INT32 / buf_xsize)
         {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+            CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow for nLineSpace");
             return 0;
         }
         nLineSpace = nPixelSpace * buf_xsize;
@@ -84,16 +89,14 @@ int ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
         return 0;
     }
 
-    if ((buf_ysize - 1) > MAX_INT / nLineSpace ||
-        (buf_xsize - 1) > MAX_INT / nPixelSpace ||
-        (buf_ysize - 1) * nLineSpace > MAX_INT - (buf_xsize - 1) * nPixelSpace ||
-        (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace > MAX_INT - nPixelSize)
+    GIntBig nRet = (GIntBig)(buf_ysize - 1) * nLineSpace + (GIntBig)(buf_xsize - 1) * nPixelSpace + nPixelSize;
+    if (nRet > MAX_INT)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
         return 0;
     }
 
-    return (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + nPixelSize;
+    return nRet;
 }
 %}
 
@@ -108,9 +111,15 @@ CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
                             int pixel_space, int line_space )
 {
   CPLErr result;
-  
-  *buf_size = ComputeBandRasterIOSize( buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
+
+  GIntBig nRequiredSize = ComputeBandRasterIOSize( buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
                                        pixel_space, line_space, FALSE );
+  if (nRequiredSize > 0x7fffffff)
+  {
+     CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+     nRequiredSize = 0;
+  }
+  *buf_size = (int)nRequiredSize;
   
   if ( *buf_size == 0 )
   {
@@ -151,10 +160,10 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
                              int xoff, int yoff, int xsize, int ysize,
                              int buf_xsize, int buf_ysize,
                              GDALDataType buf_type,
-                             int buf_size, char *buffer,
+                             GIntBig buf_size, char *buffer,
                              int pixel_space, int line_space)
 {
-    int min_buffer_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
+    GIntBig min_buffer_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
                                                    pixel_space, line_space, FALSE );
     if ( min_buffer_size == 0 )
       return CE_Failure;
@@ -362,7 +371,29 @@ public:
 %clear (int*);
 #endif /* !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON) */
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+#if defined(SWIGPYTHON)
+%apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
+%apply ( int *optional_int ) {(int*)};
+%feature( "kwargs" ) WriteRaster;
+  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
+                      GIntBig buf_len, char *buf_string,
+                      int *buf_xsize = 0,
+                      int *buf_ysize = 0,
+                      int *buf_type = 0,
+                      int *buf_pixel_space = 0,
+                      int *buf_line_space = 0) {
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
+                                        : (GDALDataType)*buf_type;
+    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
+                                 nxsize, nysize, ntype, buf_len, buf_string, pixel_space, line_space );
+  }
+%clear (GIntBig buf_len, char *buf_string);
+%clear (int*);
+#elif !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
 %apply ( int *optional_int ) {(int*)};
 %feature( "kwargs" ) WriteRaster;

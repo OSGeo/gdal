@@ -645,7 +645,7 @@ class Dataset(MajorObject):
 
     def WriteRaster(self, *args, **kwargs):
         """
-        WriteRaster(self, int xoff, int yoff, int xsize, int ysize, int buf_len, 
+        WriteRaster(self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, 
             int buf_xsize = None, int buf_ysize = None, 
             GDALDataType buf_type = None, int band_list = 0, 
             int buf_pixel_space = None, int buf_line_space = None, 
@@ -888,7 +888,7 @@ class Band(MajorObject):
 
     def WriteRaster(self, *args, **kwargs):
         """
-        WriteRaster(self, int xoff, int yoff, int xsize, int ysize, int buf_len, 
+        WriteRaster(self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, 
             int buf_xsize = None, int buf_ysize = None, 
             int buf_type = None, int buf_pixel_space = None, 
             int buf_line_space = None) -> CPLErr
