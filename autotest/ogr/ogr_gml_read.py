@@ -544,6 +544,64 @@ def ogr_gml_13():
     return 'success'
 
 ###############################################################################
+# Test xlink resolution
+
+def ogr_gml_14():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if 'GDAL_DOWNLOAD_TEST_DATA' not in os.environ:
+        return 'skip'
+
+    files = [ 'xlink1.gml', 'xlink2.gml', 'expected1.gml', 'expected2.gml' ]
+    for file in files:
+        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gml/' + file, file ):
+            return 'skip'
+
+    gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', 'NONE' )
+    gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', 'tmp/cache/xlink1resolved.gml' )
+    gml_ds = ogr.Open( 'tmp/cache/xlink1.gml' )
+    gml_ds = None
+    gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', 'gml:directedNode' )
+    gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', 'tmp/cache/xlink2resolved.gml' )
+    gml_ds = ogr.Open( 'tmp/cache/xlink1.gml' )
+    gml_ds = None
+    gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', 'ALL' )
+
+    try:
+        fp = open( 'tmp/cache/xlink1resolved.gml', 'r' )
+        text = fp.read()
+        fp.close()
+        os.remove( 'tmp/cache/xlink1resolved.gml' )
+        fp = open( 'tmp/cache/expected1.gml', 'r' )
+        expectedtext = fp.read()
+        fp.close()
+    except:
+        return 'fail'
+
+    if text != expectedtext:
+        print 'Problem with file 1'
+        return 'fail'
+
+    try:
+        fp = open( 'tmp/cache/xlink2resolved.gml', 'r' )
+        text = fp.read()
+        fp.close()
+        os.remove( 'tmp/cache/xlink2resolved.gml' )
+        fp = open( 'tmp/cache/expected2.gml', 'r' )
+        expectedtext = fp.read()
+        fp.close()
+    except:
+        return 'fail'
+
+    if text != expectedtext:
+        print 'Problem with file 2'
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -591,6 +649,7 @@ gdaltest_list = [
     ogr_gml_11,
     ogr_gml_12,
     ogr_gml_13,
+    ogr_gml_14,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
