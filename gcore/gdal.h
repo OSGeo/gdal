@@ -759,6 +759,10 @@ int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH , double
 void CPL_DLL CPL_STDCALL GDALSetCacheMax( int nBytes );
 int CPL_DLL CPL_STDCALL GDALGetCacheMax(void);
 int CPL_DLL CPL_STDCALL GDALGetCacheUsed(void);
+void CPL_DLL CPL_STDCALL GDALSetCacheMax64( GIntBig nBytes );
+GIntBig CPL_DLL CPL_STDCALL GDALGetCacheMax64(void);
+GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
+
 int CPL_DLL CPL_STDCALL GDALFlushCacheBlock(void);
 
 CPL_C_END
