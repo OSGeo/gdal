@@ -738,6 +738,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 }
             }
         }
+#undef COPY_TO_DST_BUFFER
     }
 
     else
@@ -855,8 +856,9 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     int iBand; 
     int nWordBytes = poGDS->nBitsPerSample / 8;
+    int nBands = poGDS->nBands;
 
-    for( iBand = 0; iBand < poGDS->nBands; iBand++ )
+    for( iBand = 0; iBand < nBands; iBand++ )
     {
         const GByte *pabyThisImage = NULL;
         GDALRasterBlock *poBlock = NULL;
@@ -883,12 +885,69 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         int i, nBlockPixels = nBlockXSize * nBlockYSize;
         GByte *pabyOut = poGDS->pabyBlockBuf + iBand*nWordBytes;
 
-        for( i = 0; i < nBlockPixels; i++ )
+        if (nWordBytes == 1)
         {
-            memcpy( pabyOut, pabyThisImage, nWordBytes );
-            
-            pabyOut += nWordBytes * poGDS->nBands;
-            pabyThisImage += nWordBytes;
+
+/* ==================================================================== */
+/*     Optimization for high number of words to transfer and some       */
+/*     typical band numbers : we unroll the loop.                       */
+/* ==================================================================== */
+#define COPY_TO_DST_BUFFER(nBands) \
+            if (nBlockPixels > 100) \
+            { \
+                for ( i = nBlockPixels / 16; i != 0; i -- ) \
+                { \
+                    pabyOut[0*nBands] = pabyThisImage[0]; \
+                    pabyOut[1*nBands] = pabyThisImage[1]; \
+                    pabyOut[2*nBands] = pabyThisImage[2]; \
+                    pabyOut[3*nBands] = pabyThisImage[3]; \
+                    pabyOut[4*nBands] = pabyThisImage[4]; \
+                    pabyOut[5*nBands] = pabyThisImage[5]; \
+                    pabyOut[6*nBands] = pabyThisImage[6]; \
+                    pabyOut[7*nBands] = pabyThisImage[7]; \
+                    pabyOut[8*nBands] = pabyThisImage[8]; \
+                    pabyOut[9*nBands] = pabyThisImage[9]; \
+                    pabyOut[10*nBands] = pabyThisImage[10]; \
+                    pabyOut[11*nBands] = pabyThisImage[11]; \
+                    pabyOut[12*nBands] = pabyThisImage[12]; \
+                    pabyOut[13*nBands] = pabyThisImage[13]; \
+                    pabyOut[14*nBands] = pabyThisImage[14]; \
+                    pabyOut[15*nBands] = pabyThisImage[15]; \
+                    pabyThisImage += 16; \
+                    pabyOut += 16*nBands; \
+                } \
+                nBlockPixels = nBlockPixels % 16; \
+            } \
+            for( i = 0; i < nBlockPixels; i++ ) \
+            { \
+                *pabyOut = pabyThisImage[i]; \
+                pabyOut += nBands; \
+            }
+
+            switch (nBands)
+            {
+                case 3:  COPY_TO_DST_BUFFER(3); break;
+                case 4:  COPY_TO_DST_BUFFER(4); break;
+                default:
+                {
+                    for( i = 0; i < nBlockPixels; i++ )
+                    {
+                        *pabyOut = pabyThisImage[i];
+                        pabyOut += nBands;
+                    }
+                }
+            }
+#undef COPY_TO_DST_BUFFER
+        }
+        else
+        {
+            for( i = 0; i < nBlockPixels; i++ )
+            {
+                memcpy( pabyOut, pabyThisImage, nWordBytes );
+
+                pabyOut += nWordBytes * nBands;
+                pabyThisImage += nWordBytes;
+            }
         }
         
         if( poBlock != NULL )
