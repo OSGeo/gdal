@@ -229,10 +229,15 @@ import org.gdal.gdalconst.gdalconstConstants;
       band_list = GDALGetRasterCount(self);
   }
 
-  int nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
+  GIntBig nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
                          buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                          band_list, pband_list, band_list,
                          nPixelSpace, nLineSpace, nBandSpace, FALSE );
+  if (nMinBufferSizeInBytes > 0x7fffffff)
+  {
+     CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+     nMinBufferSizeInBytes = 0;
+  }
   if (nMinBufferSizeInBytes == 0)
       return CE_Failure;
   if (nioBufferSize < nMinBufferSizeInBytes)
@@ -274,10 +279,15 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
       band_list = GDALGetRasterCount(self);
   }
 
-  int nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
+  GIntBig nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
                          buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                          band_list, pband_list, band_list,
                          nPixelSpace, nLineSpace, nBandSpace, sizeof(ctype) > 1 );
+  if (nMinBufferSizeInBytes > 0x7fffffff)
+  {
+     CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+     nMinBufferSizeInBytes = 0;
+  }
   if (nMinBufferSizeInBytes == 0)
       return CE_Failure;
   if (nRegularArraySizeOut < nMinBufferSizeInBytes)
@@ -315,10 +325,15 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
       band_list = GDALGetRasterCount(self);
   }
 
-  int nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
+  GIntBig nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
                          buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                          band_list, pband_list, band_list,
                          nPixelSpace, nLineSpace, nBandSpace, FALSE );
+  if (nMinBufferSizeInBytes > 0x7fffffff)
+  {
+     CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+     nMinBufferSizeInBytes = 0;
+  }
   if (nMinBufferSizeInBytes == 0)
       return CE_Failure;
   if (nioBufferSize < nMinBufferSizeInBytes)
@@ -358,10 +373,15 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
       band_list = GDALGetRasterCount(self);
   }
 
-  int nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
+  GIntBig nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
                          buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                          band_list, pband_list, band_list,
                          nPixelSpace, nLineSpace, nBandSpace, sizeof(ctype) > 1 );
+  if (nMinBufferSizeInBytes > 0x7fffffff)
+  {
+     CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+     nMinBufferSizeInBytes = 0;
+  }
   if (nMinBufferSizeInBytes == 0)
       return CE_Failure;
   if (nRegularArraySizeIn < nMinBufferSizeInBytes)
@@ -393,9 +413,14 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
                             void *nioBuffer, long nioBufferSize,
                             int nPixelSpace = 0, int nLineSpace = 0)
   {
-    int nMinBufferSizeInBytes = ComputeBandRasterIOSize (
+    GIntBig nMinBufferSizeInBytes = ComputeBandRasterIOSize (
                             buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                             nPixelSpace, nLineSpace, FALSE );
+    if (nMinBufferSizeInBytes > 0x7fffffff)
+    {
+       CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+       nMinBufferSizeInBytes = 0;
+    }
     if (nMinBufferSizeInBytes == 0)
         return CE_Failure;
     if (nioBufferSize < nMinBufferSizeInBytes)
@@ -428,9 +453,14 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
         return CE_Failure;
     }
   
-    int nMinBufferSizeInBytes = ComputeBandRasterIOSize (
+    GIntBig nMinBufferSizeInBytes = ComputeBandRasterIOSize (
                             buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                             nPixelSpace, nLineSpace, sizeof(ctype) > 1 );
+    if (nMinBufferSizeInBytes > 0x7fffffff)
+    {
+       CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+       nMinBufferSizeInBytes = 0;
+    }
     if (nMinBufferSizeInBytes == 0)
         return CE_Failure;
     if (nRegularArraySizeOut < nMinBufferSizeInBytes)
@@ -458,9 +488,14 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
                             void *nioBuffer, long nioBufferSize,
                             int nPixelSpace = 0, int nLineSpace = 0)
   {
-    int nMinBufferSizeInBytes = ComputeBandRasterIOSize (
+    GIntBig nMinBufferSizeInBytes = ComputeBandRasterIOSize (
                             buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                             nPixelSpace, nLineSpace, FALSE );
+    if (nMinBufferSizeInBytes > 0x7fffffff)
+    {
+       CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+       nMinBufferSizeInBytes = 0;
+    }
     if (nMinBufferSizeInBytes == 0)
         return CE_Failure;
     if (nioBufferSize < nMinBufferSizeInBytes)
@@ -492,9 +527,14 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
         return CE_Failure;
     }
     
-    int nMinBufferSizeInBytes = ComputeBandRasterIOSize (
+    GIntBig nMinBufferSizeInBytes = ComputeBandRasterIOSize (
                             buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                             nPixelSpace, nLineSpace, sizeof(ctype) > 1 );
+    if (nMinBufferSizeInBytes > 0x7fffffff)
+    {
+       CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+       nMinBufferSizeInBytes = 0;
+    }
     if (nMinBufferSizeInBytes == 0)
         return CE_Failure;
     if (nRegularArraySizeIn < nMinBufferSizeInBytes)

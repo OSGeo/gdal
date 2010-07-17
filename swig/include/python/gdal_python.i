@@ -130,7 +130,7 @@
     int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
     int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
 
-    int buf_size = ComputeBandRasterIOSize( nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8, 
+    GIntBig buf_size = ComputeBandRasterIOSize( nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
                                             pixel_space, line_space, FALSE ); 
     if (buf_size == 0)
     {
@@ -229,7 +229,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     int band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
-    int buf_size = ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
+    GIntBig buf_size = ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
                                                band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
                                                pixel_space, line_space, band_space, FALSE);
     if (buf_size == 0)
