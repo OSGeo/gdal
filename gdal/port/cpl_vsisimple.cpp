@@ -368,20 +368,20 @@ void *VSIMalloc( size_t nSize )
 
 {
 #ifdef DEBUG_VSIMALLOC
-    char* ptr = (char*) malloc(4 + sizeof(size_t) + nSize);
+    char* ptr = (char*) malloc(2 * sizeof(void*) + nSize);
     if (ptr == NULL)
         return NULL;
     ptr[0] = 'V';
     ptr[1] = 'S';
     ptr[2] = 'I';
     ptr[3] = 'M';
-    memcpy(ptr + 4, &nSize, sizeof(size_t));
+    memcpy(ptr + sizeof(void*), &nSize, sizeof(void*));
 #if defined(DEBUG_VSIMALLOC_STATS) || defined(DEBUG_VSIMALLOC_VERBOSE)
     {
         CPLMutexHolderD(&hMemStatMutex);
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         fprintf(stderr, "Thread[%p] VSIMalloc(%d) = %p\n",
-                (void*)CPLGetPID(), (int)nSize, ptr + 4 + sizeof(size_t));
+                (void*)CPLGetPID(), (int)nSize, ptr + 2 * sizeof(void*));
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSIMallocs ++;
@@ -393,7 +393,7 @@ void *VSIMalloc( size_t nSize )
 #endif
     }
 #endif
-    return ptr + 4 + sizeof(size_t);
+    return ptr + 2 * sizeof(void*);
 #else
     return( malloc( nSize ) );
 #endif
@@ -423,24 +423,24 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     if (pData == NULL)
         return VSIMalloc(nNewSize);
         
-    char* ptr = ((char*)pData) - 4 - sizeof(size_t);
+    char* ptr = ((char*)pData) - 2 * sizeof(void*);
     VSICheckMarker(ptr);
 #ifdef DEBUG_VSIMALLOC_STATS
     size_t nOldSize;
-    memcpy(&nOldSize, ptr + 4, sizeof(size_t));
+    memcpy(&nOldSize, ptr + sizeof(void*), sizeof(void*));
 #endif
 
-    ptr = (char*) realloc(ptr, nNewSize + 4 + sizeof(size_t));
+    ptr = (char*) realloc(ptr, nNewSize + 2 * sizeof(void*));
     if (ptr == NULL)
         return NULL;
-    memcpy(ptr + 4, &nNewSize, sizeof(size_t));
+    memcpy(ptr + sizeof(void*), &nNewSize, sizeof(void*));
 
 #if defined(DEBUG_VSIMALLOC_STATS) || defined(DEBUG_VSIMALLOC_VERBOSE)
     {
         CPLMutexHolderD(&hMemStatMutex);
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         fprintf(stderr, "Thread[%p] VSIRealloc(%p, %d) = %p\n",
-                (void*)CPLGetPID(), pData, (int)nNewSize, ptr + 4 + sizeof(size_t));
+                (void*)CPLGetPID(), pData, (int)nNewSize, ptr + 2 * sizeof(void*));
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSIReallocs ++;
@@ -451,7 +451,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 #endif
     }
 #endif
-    return ptr + 4 + sizeof(size_t);
+    return ptr + 2 * sizeof(void*);
 #else
     return( realloc( pData, nNewSize ) );
 #endif
@@ -468,7 +468,7 @@ void VSIFree( void * pData )
     if (pData == NULL)
         return;
 
-    char* ptr = ((char*)pData) - 4 - sizeof(size_t);
+    char* ptr = ((char*)pData) - 2 * sizeof(void*);
     VSICheckMarker(ptr);
     ptr[0] = 'M';
     ptr[1] = 'I';
@@ -476,7 +476,7 @@ void VSIFree( void * pData )
     ptr[3] = 'V';
 #if defined(DEBUG_VSIMALLOC_STATS) || defined(DEBUG_VSIMALLOC_VERBOSE)
     size_t nOldSize;
-    memcpy(&nOldSize, ptr + 4, sizeof(size_t));
+    memcpy(&nOldSize, ptr + sizeof(void*), sizeof(void*));
     {
         CPLMutexHolderD(&hMemStatMutex);
 #ifdef DEBUG_VSIMALLOC_VERBOSE
