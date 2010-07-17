@@ -2728,11 +2728,11 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
         nTargetSwathSize = 1000000;
 
     /* But let's check that  */
-    if (bDstIsCompressed && bInterleave && nTargetSwathSize > GDALGetCacheMax())
+    if (bDstIsCompressed && bInterleave && nTargetSwathSize > GDALGetCacheMax64())
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "When translating into a compressed interleave format, the block cache size (%d) "
-                 "should be at least the size of the swath (%d)", GDALGetCacheMax(), nTargetSwathSize);
+                 "When translating into a compressed interleave format, the block cache size (" CPL_FRMT_GIB ") "
+                 "should be at least the size of the swath (%d)", GDALGetCacheMax64(), nTargetSwathSize);
     }
 
     void *pSwathBuf;

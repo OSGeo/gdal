@@ -738,7 +738,13 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     if ( pszYChunkSize && (nYChunkSize = atoi(pszYChunkSize)) )
         ;
     else
-        nYChunkSize = GDALGetCacheMax() / nScanlineBytes;
+    {
+        GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
+        if (nYChunkSize64 > INT_MAX)
+            nYChunkSize = INT_MAX;
+        else
+            nYChunkSize = (int)nYChunkSize64;
+    }
 
     if( nYChunkSize < 1 )
         nYChunkSize = 1;
