@@ -82,6 +82,7 @@
 
 #include "mitab.h"
 #include "mitab_utils.h"
+#include "cpl_minixml.h"
 
 #include <ctype.h>      /* isspace() */
 
@@ -144,6 +145,10 @@ int TABFile::GetFeatureCount (int bForce)
 /************************************************************************/
 void TABFile::ResetReading()
 {
+    CPLFree(m_panMatchingFIDs);
+    m_panMatchingFIDs = NULL;
+    m_iMatchingFID = 0;
+    
     m_nCurFeatureId = 0;
     if( m_poMAPFile != NULL )
         m_poMAPFile->ResetReading();
@@ -470,6 +475,36 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
         return -1;
     }
 
+    /*-----------------------------------------------------------------
+     * Initializing the attribute index (.IND) support
+     *----------------------------------------------------------------*/
+
+    CPLXMLNode *psRoot = CPLCreateXMLNode( NULL, CXT_Element, "OGRMILayerAttrIndex" );
+    CPLCreateXMLElementAndValue( psRoot, "MIIDFilename", CPLResetExtension( pszFname, "IND" ) );
+    OGRFeatureDefn *poLayerDefn = GetLayerDefn();
+    int iField, iIndexIndex, bHasIndex = 0;
+    for( iField = 0; iField < poLayerDefn->GetFieldCount(); iField++ )
+    {
+        iIndexIndex = GetFieldIndexNumber(iField);
+        if (iIndexIndex > 0)
+        {
+            CPLXMLNode *psIndex = CPLCreateXMLNode( psRoot, CXT_Element, "OGRMIAttrIndex" );
+            CPLCreateXMLElementAndValue( psIndex, "FieldIndex", CPLSPrintf( "%d", iField ) );
+            CPLCreateXMLElementAndValue( psIndex, "FieldName", 
+                                     poLayerDefn->GetFieldDefn(iField)->GetNameRef() );
+            CPLCreateXMLElementAndValue( psIndex, "IndexIndex", CPLSPrintf( "%d", iIndexIndex ) );
+            bHasIndex = 1;
+        }     
+    }
+
+    if (bHasIndex)
+    {
+        char *pszRawXML = CPLSerializeXMLTree( psRoot );
+        InitializeIndexSupport( pszRawXML );
+        CPLFree( pszRawXML );
+    }
+
+    CPLDestroyXMLNode( psRoot );
 
     CPLFree(pszTmpFname);
     pszTmpFname = NULL;
@@ -1085,6 +1120,9 @@ int TABFile::Close()
     CPLFree(m_panIndexNo);
     m_panIndexNo = NULL;
 
+    CPLFree(m_panMatchingFIDs);
+    m_panMatchingFIDs = NULL;
+
     return 0;
 }
 
@@ -1140,6 +1178,26 @@ int TABFile::GetNextFeatureId(int nPrevId)
      *----------------------------------------------------------------*/
     if( bUseSpatialTraversal )
         return m_poMAPFile->GetNextFeatureId( nPrevId );
+
+    /*-----------------------------------------------------------------
+     * Should we use an attribute index traversal?
+     *----------------------------------------------------------------*/
+    if( m_poAttrQuery != NULL)
+    {
+        if( m_panMatchingFIDs == NULL )
+        {
+            m_iMatchingFID = 0;
+            m_panMatchingFIDs = m_poAttrQuery->EvaluateAgainstIndices( this,
+                                                                 NULL );
+        }
+        if( m_panMatchingFIDs != NULL )
+        {
+            if( m_panMatchingFIDs[m_iMatchingFID] == OGRNullFID )
+                return OGRNullFID;
+
+            return m_panMatchingFIDs[m_iMatchingFID++] + 1;
+        }
+    }
 
     /*-----------------------------------------------------------------
      * Establish what the next logical feature ID should be
