@@ -53,7 +53,10 @@ static void *hRBMutex = NULL;
  * This function sets the maximum amount of memory that GDAL is permitted
  * to use for GDALRasterBlock caching.
  *
- * @param nNewSize the maximum number of bytes for caching.  Maximum is 2GB.
+ * The maximum value is 2GB, due to the use of a signed 32 bit integer.
+ * Use GDALSetCacheMax64() to be able to set a higher value.
+ *
+ * @param nNewSize the maximum number of bytes for caching.
  */
 
 void CPL_STDCALL GDALSetCacheMax( int nNewSize )
@@ -73,7 +76,10 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSize )
  * This function sets the maximum amount of memory that GDAL is permitted
  * to use for GDALRasterBlock caching.
  *
- * On 32bit platforms, the maximum allowed value is 2 GB.
+ * Note: On 32 bit platforms, the maximum amount of memory that can be addressed
+ * by a process might be 2 GB or 3 GB, depending on the operating system
+ * capabilities. This function will not make any attempt to check the
+ * consistency of the passed value with the effective capabilities of the OS.
  *
  * @param nNewSize the maximum number of bytes for caching.
  *
@@ -83,14 +89,6 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSize )
 void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSize )
 
 {
-#if SIZEOF_VOIDP == 4
-    if (nNewSize > INT_MAX)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                    "On this platform, the maximum value supported is 2 GB. Truncating to 2 GB.");
-        nNewSize = INT_MAX;
-    }
-#endif
     nCacheMax = nNewSize;
 
 /* -------------------------------------------------------------------- */
@@ -116,7 +114,13 @@ void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSize )
  * \brief Get maximum cache memory.
  *
  * Gets the maximum amount of memory available to the GDALRasterBlock
- * caching system for caching GDAL read/write imagery. 
+ * caching system for caching GDAL read/write imagery.
+ *
+ * The first type this function is called, it will read the GDAL_CACHEMAX
+ * configuation option to initialize the maximum cache memory.
+ *
+ * This function cannot return a value higher than 2 GB. Use
+ * GDALGetCacheMax64() to get a non-truncated value.
  *
  * @return maximum in bytes. 
  */
@@ -149,6 +153,9 @@ int CPL_STDCALL GDALGetCacheMax()
  * Gets the maximum amount of memory available to the GDALRasterBlock
  * caching system for caching GDAL read/write imagery.
  *
+ * The first type this function is called, it will read the GDAL_CACHEMAX
+ * configuation option to initialize the maximum cache memory.
+ *
  * @return maximum in bytes.
  *
  * @since GDAL 1.8.0
@@ -171,24 +178,8 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                              "Invalid value for GDAL_CACHEMAX. Using default value.");
                     return nCacheMax;
                 }
-#if SIZEOF_VOIDP == 4
-                else if (nNewCacheMax > 2047)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "On this platform, the maximum value supported for GDAL_CACHEMAX is 2 GB. Using default value.");
-                    return nCacheMax;
-                }
-#endif
                 nNewCacheMax *= 1024 * 1024;
             }
-#if SIZEOF_VOIDP == 4
-            else if (nNewCacheMax > INT_MAX)
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                            "On this platform, the maximum value supported for GDAL_CACHEMAX is 2 GB. Using default value.");
-                return nCacheMax;
-            }
-#endif
             nCacheMax = nNewCacheMax;
         }
     }
