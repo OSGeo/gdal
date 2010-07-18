@@ -551,9 +551,6 @@ def ogr_gml_14():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    if 'GDAL_DOWNLOAD_TEST_DATA' not in os.environ:
-        return 'skip'
-
     files = [ 'xlink1.gml', 'xlink2.gml', 'expected1.gml', 'expected2.gml' ]
     for file in files:
         if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gml/' + file, file ):

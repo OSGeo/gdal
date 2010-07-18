@@ -1159,3 +1159,16 @@ def unzip(target_dir, zipfilename):
 
     return
 
+###############################################################################
+# Return if a number is the NaN number
+
+def isnan(val):
+    if val == val:
+        # Python 2.3 unlike later versions return True for nan == nan
+        val_str = '%f' % val
+        if val_str == 'nan':
+            return True
+        else:
+            return False
+    else:
+        return True
