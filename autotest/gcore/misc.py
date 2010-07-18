@@ -356,6 +356,23 @@ def misc_8():
     return 'success'
 
 ###############################################################################
+# Test setting and retrieving > 2 GB values for GDAL max cache (#3689)
+
+def misc_9():
+
+    old_val = gdal.GetCacheMax()
+    gdal.SetCacheMax(3000000000)
+    ret_val = gdal.GetCacheMax()
+    gdal.SetCacheMax(old_val)
+
+    if ret_val != 3000000000:
+        gdaltest.post_reason('did not get expected value')
+        print(ret_val)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def misc_cleanup():
 
     try:
@@ -373,6 +390,7 @@ gdaltest_list = [ misc_1,
                   misc_6,
                   misc_7,
                   misc_8,
+                  misc_9,
                   misc_cleanup ]
 
 if __name__ == '__main__':
