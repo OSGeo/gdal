@@ -271,6 +271,8 @@ class TABFile: public IMapInfoFile
 
     int         m_nLastFeatureId;
 
+    long        *m_panMatchingFIDs;
+    int         m_iMatchingFID;
 
     ///////////////
     // Private Read access specific stuff
