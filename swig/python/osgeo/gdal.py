@@ -1306,19 +1306,19 @@ def GDALDestroyDriverManager(*args):
 GDALDestroyDriverManager = _gdal.GDALDestroyDriverManager
 
 def GetCacheMax(*args):
-  """GetCacheMax() -> int"""
+  """GetCacheMax() -> GIntBig"""
   return _gdal.GetCacheMax(*args)
 GetCacheMax = _gdal.GetCacheMax
 
-def SetCacheMax(*args):
-  """SetCacheMax(int nBytes)"""
-  return _gdal.SetCacheMax(*args)
-SetCacheMax = _gdal.SetCacheMax
-
 def GetCacheUsed(*args):
-  """GetCacheUsed() -> int"""
+  """GetCacheUsed() -> GIntBig"""
   return _gdal.GetCacheUsed(*args)
 GetCacheUsed = _gdal.GetCacheUsed
+
+def SetCacheMax(*args):
+  """SetCacheMax(GIntBig nBytes)"""
+  return _gdal.SetCacheMax(*args)
+SetCacheMax = _gdal.SetCacheMax
 
 def GetDataTypeSize(*args):
   """GetDataTypeSize(GDALDataType eDataType) -> int"""

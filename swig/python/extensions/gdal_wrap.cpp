@@ -4791,6 +4791,24 @@ SWIGINTERN int GDALTransformerInfoShadow_TransformPoints(GDALTransformerInfoShad
     return nRet;
   }
 
+GIntBig wrapper_GDALGetCacheMax()
+{
+    return GDALGetCacheMax64();
+}
+
+
+GIntBig wrapper_GDALGetCacheUsed()
+{
+    return GDALGetCacheUsed64();
+}
+
+
+void wrapper_GDALSetCacheMax(GIntBig nBytes)
+{
+    return GDALSetCacheMax64(nBytes);
+}
+
+
 /************************************************************************/
 /*                          XMLTreeToPyList()                           */
 /************************************************************************/
@@ -17904,11 +17922,11 @@ fail:
 
 SWIGINTERN PyObject *_wrap_GetCacheMax(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
-  int result;
+  GIntBig result;
   
   if (!PyArg_ParseTuple(args,(char *)":GetCacheMax")) SWIG_fail;
   {
-    result = (int)GDALGetCacheMax();
+    result = wrapper_GDALGetCacheMax();
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -17916,36 +17934,15 @@ SWIGINTERN PyObject *_wrap_GetCacheMax(PyObject *SWIGUNUSEDPARM(self), PyObject 
       }
     }
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SetCacheMax(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  int arg1 ;
-  int val1 ;
-  int ecode1 = 0 ;
-  PyObject * obj0 = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:SetCacheMax",&obj0)) SWIG_fail;
-  ecode1 = SWIG_AsVal_int(obj0, &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "SetCacheMax" "', argument " "1"" of type '" "int""'");
-  } 
-  arg1 = static_cast< int >(val1);
   {
-    GDALSetCacheMax(arg1);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
+#if PY_VERSION_HEX>=0x03000000
+    resultobj = PyLong_FromSsize_t((Py_ssize_t )result);
+#elif PY_VERSION_HEX>=0x02500000
+    resultobj = PyInt_FromSsize_t((Py_ssize_t )result);
+#else
+    resultobj = PyInt_FromLong((long)result);
+#endif
   }
-  resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
   return NULL;
@@ -17954,11 +17951,11 @@ fail:
 
 SWIGINTERN PyObject *_wrap_GetCacheUsed(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
-  int result;
+  GIntBig result;
   
   if (!PyArg_ParseTuple(args,(char *)":GetCacheUsed")) SWIG_fail;
   {
-    result = (int)GDALGetCacheUsed();
+    result = wrapper_GDALGetCacheUsed();
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -17966,7 +17963,45 @@ SWIGINTERN PyObject *_wrap_GetCacheUsed(PyObject *SWIGUNUSEDPARM(self), PyObject
       }
     }
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+#if PY_VERSION_HEX>=0x03000000
+    resultobj = PyLong_FromSsize_t((Py_ssize_t )result);
+#elif PY_VERSION_HEX>=0x02500000
+    resultobj = PyInt_FromSsize_t((Py_ssize_t )result);
+#else
+    resultobj = PyInt_FromLong((long)result);
+#endif
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SetCacheMax(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GIntBig arg1 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SetCacheMax",&obj0)) SWIG_fail;
+  {
+    PY_LONG_LONG val;
+    if ( !PyArg_Parse(obj0,"L",&val) ) {
+      PyErr_SetString(PyExc_TypeError, "not an integer");
+      SWIG_fail;
+    }
+    arg1 = (GIntBig)val;
+  }
+  {
+    wrapper_GDALSetCacheMax(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
   return NULL;
@@ -19063,9 +19098,9 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"VersionInfo", _wrap_VersionInfo, METH_VARARGS, (char *)"VersionInfo(char request = \"VERSION_NUM\") -> char"},
 	 { (char *)"AllRegister", _wrap_AllRegister, METH_VARARGS, (char *)"AllRegister()"},
 	 { (char *)"GDALDestroyDriverManager", _wrap_GDALDestroyDriverManager, METH_VARARGS, (char *)"GDALDestroyDriverManager()"},
-	 { (char *)"GetCacheMax", _wrap_GetCacheMax, METH_VARARGS, (char *)"GetCacheMax() -> int"},
-	 { (char *)"SetCacheMax", _wrap_SetCacheMax, METH_VARARGS, (char *)"SetCacheMax(int nBytes)"},
-	 { (char *)"GetCacheUsed", _wrap_GetCacheUsed, METH_VARARGS, (char *)"GetCacheUsed() -> int"},
+	 { (char *)"GetCacheMax", _wrap_GetCacheMax, METH_VARARGS, (char *)"GetCacheMax() -> GIntBig"},
+	 { (char *)"GetCacheUsed", _wrap_GetCacheUsed, METH_VARARGS, (char *)"GetCacheUsed() -> GIntBig"},
+	 { (char *)"SetCacheMax", _wrap_SetCacheMax, METH_VARARGS, (char *)"SetCacheMax(GIntBig nBytes)"},
 	 { (char *)"GetDataTypeSize", _wrap_GetDataTypeSize, METH_VARARGS, (char *)"GetDataTypeSize(GDALDataType eDataType) -> int"},
 	 { (char *)"DataTypeIsComplex", _wrap_DataTypeIsComplex, METH_VARARGS, (char *)"DataTypeIsComplex(GDALDataType eDataType) -> int"},
 	 { (char *)"GetDataTypeName", _wrap_GetDataTypeName, METH_VARARGS, (char *)"GetDataTypeName(GDALDataType eDataType) -> char"},

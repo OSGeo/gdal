@@ -24,6 +24,27 @@
 
 %apply (double *OUTPUT) { double *argout };
 
+%typemap(in) GIntBig bigint
+{
+    PY_LONG_LONG val;
+    if ( !PyArg_Parse($input,"L",&val) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        SWIG_fail;
+    }
+    $1 = (GIntBig)val;
+}
+
+%typemap(out) GIntBig bigint
+{
+%#if PY_VERSION_HEX>=0x03000000
+    $result = PyLong_FromSsize_t((Py_ssize_t )$1);
+%#elif PY_VERSION_HEX>=0x02500000
+    $result = PyInt_FromSsize_t((Py_ssize_t )$1);
+%#else
+    $result = PyInt_FromLong((long)$1);
+%#endif
+}
+
 /*
  * double *val, int*hasval, is a special contrived typemap used for
  * the RasterBand GetNoDataValue, GetMinimum, GetMaximum, GetOffset, GetScale methods.
