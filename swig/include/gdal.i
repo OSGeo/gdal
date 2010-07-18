@@ -242,9 +242,9 @@ $1;
 
 #ifdef SWIGRUBY
 %rename (all_register) GDALAllRegister;
-%rename (get_cache_max) GDALGetCacheMax;
-%rename (set_cache_max) GDALSetCacheMax;
-%rename (set_cache_used) GDALGetCacheUsed;
+%rename (get_cache_max) wrapper_GDALGetCacheMax;
+%rename (set_cache_max) wrapper_GDALSetCacheMax;
+%rename (get_cache_used) wrapper_GDALGetCacheUsed;
 %rename (get_data_type_size) GDALGetDataTypeSize;
 %rename (data_type_is_complex) GDALDataTypeIsComplex;
 %rename (gcps_to_geo_transform) GDALGCPsToGeoTransform;
@@ -264,9 +264,9 @@ $1;
 %rename (InvGeoTransform) GDALInvGeoTransform;
 %rename (VersionInfo) GDALVersionInfo;
 %rename (AllRegister) GDALAllRegister;
-%rename (GetCacheMax) GDALGetCacheMax;
-%rename (SetCacheMax) GDALSetCacheMax;
-%rename (GetCacheUsed) GDALGetCacheUsed;
+%rename (GetCacheMax) wrapper_GDALGetCacheMax;
+%rename (SetCacheMax) wrapper_GDALSetCacheMax;
+%rename (GetCacheUsed) wrapper_GDALGetCacheUsed;
 %rename (GetDataTypeSize) GDALGetDataTypeSize;
 %rename (DataTypeIsComplex) GDALDataTypeIsComplex;
 %rename (GetDataTypeName) GDALGetDataTypeName;
@@ -541,11 +541,51 @@ void GDALAllRegister();
 
 void GDALDestroyDriverManager();
 
-int GDALGetCacheMax();
+#ifdef SWIGPYTHON
+%apply (GIntBig bigint) { GIntBig };
+%inline {
+GIntBig wrapper_GDALGetCacheMax()
+{
+    return GDALGetCacheMax64();
+}
+}
 
-void GDALSetCacheMax( int nBytes );
-    
-int GDALGetCacheUsed();
+%inline {
+GIntBig wrapper_GDALGetCacheUsed()
+{
+    return GDALGetCacheUsed64();
+}
+}
+
+%inline {
+void wrapper_GDALSetCacheMax(GIntBig nBytes)
+{
+    return GDALSetCacheMax64(nBytes);
+}
+}
+
+#else
+%inline {
+int wrapper_GDALGetCacheMax()
+{
+    return GDALGetCacheMax();
+}
+}
+
+%inline {
+int wrapper_GDALGetCacheUsed()
+{
+    return GDALGetCacheUsed();
+}
+}
+
+%inline {
+void wrapper_GDALSetCacheMax(int nBytes)
+{
+    return GDALSetCacheMax(nBytes);
+}
+}
+#endif
 
 int GDALGetDataTypeSize( GDALDataType eDataType );
 
