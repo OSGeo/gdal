@@ -36,12 +36,12 @@
 
 %typemap(out) GIntBig bigint
 {
+    char szTmp[32];
+    sprintf(szTmp, CPL_FRMT_GIB, $1);
 %#if PY_VERSION_HEX>=0x03000000
-    $result = PyLong_FromSsize_t((Py_ssize_t )$1);
-%#elif PY_VERSION_HEX>=0x02500000
-    $result = PyInt_FromSsize_t((Py_ssize_t )$1);
+    $result = PyLong_FromString(szTmp, NULL, 10);
 %#else
-    $result = PyInt_FromLong((long)$1);
+    $result = PyInt_FromString(szTmp, NULL, 10);
 %#endif
 }
 
