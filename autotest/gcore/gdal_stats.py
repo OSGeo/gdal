@@ -159,7 +159,7 @@ def stats_nan_3():
 
     src_ds = gdal.Open('data/nan32_nodata.tif')
     nodata = src_ds.GetRasterBand(1).GetNoDataValue()
-    if nodata == nodata:
+    if not gdaltest.isnan(nodata):
         gdaltest.post_reason('expected nan, got %f' % nodata)
         return 'fail'
 
@@ -178,7 +178,7 @@ def stats_nan_3():
     ds = None
 
     gdaltest.gtiff_drv.Delete('tmp/nan32_nodata.tif')
-    if nodata == nodata:
+    if not gdaltest.isnan(nodata):
         gdaltest.post_reason('expected nan, got %f' % nodata)
         return 'fail'
 
@@ -200,7 +200,7 @@ def stats_nan_4():
         print(cs)
         return 'fail'
 
-    if nodata == nodata:
+    if not gdaltest.isnan(nodata):
         gdaltest.post_reason('expected nan, got %f' % nodata)
         return 'fail'
 
@@ -244,7 +244,7 @@ def stats_nan_6():
         print(cs)
         return 'fail'
 
-    if nodata == nodata:
+    if not gdaltest.isnan(nodata):
         gdaltest.post_reason('expected nan, got %f' % nodata)
         return 'fail'
 
@@ -287,7 +287,7 @@ def stats_nan_8():
         print(cs)
         return 'fail'
 
-    if nodata == nodata:
+    if not gdaltest.isnan(nodata):
         gdaltest.post_reason('expected nan, got %f' % nodata)
         return 'fail'
 

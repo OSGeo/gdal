@@ -2413,7 +2413,7 @@ def ogr_pg_50():
             feat = gdaltest.pg_lyr.GetNextFeature()
             got_val = feat.GetField( 'AREA' )
             if value == 'NaN':
-                if got_val == got_val:
+                if not gdaltest.isnan(got_val):
                     print(feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value)
                     return 'fail'
             elif got_val != float(value):
@@ -2423,7 +2423,7 @@ def ogr_pg_50():
             if bHasSetFieldDoubleList:
                 got_val = feat.GetFieldAsDoubleList( feature_def.GetFieldIndex('REALLIST') )
                 if value == 'NaN':
-                    if got_val[0] == got_val[0] or got_val[1] == got_val[1]:
+                    if not gdaltest.isnan(got_val[0]) or not gdaltest.isnan(got_val[1]):
                         print(feat.GetFieldAsString( 'REALLIST' )+' returned for REALLIST instead of '+value)
                         return 'fail'
                 elif got_val[0] != float(value) or got_val[1] != float(value):
