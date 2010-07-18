@@ -59,6 +59,7 @@ public:
     GByte      *BuildKey( OGRField *psKey );
     long        GetFirstMatch( OGRField *psKey );
     long       *GetAllMatches( OGRField *psKey );
+    long       *GetAllMatches( OGRField *psKey, long* panFIDList, int* nFIDCount, int* nLength );
 
     OGRErr      AddEntry( OGRField *psKey, long nFID );
     OGRErr      RemoveEntry( OGRField *psKey, long nFID );
@@ -754,31 +755,40 @@ long OGRMIAttrIndex::GetFirstMatch( OGRField *psKey )
 /*                           GetAllMatches()                            */
 /************************************************************************/
 
-long *OGRMIAttrIndex::GetAllMatches( OGRField *psKey )
-
+long *OGRMIAttrIndex::GetAllMatches( OGRField *psKey, long* panFIDList, int* nFIDCount, int* nLength )
 {
     GByte *pabyKey = BuildKey( psKey );
-    long  *panFIDList = NULL, nFID;
-    int   nFIDCount=0, nFIDMax=2;
+    long nFID;
 
-    panFIDList = (long *) CPLMalloc(sizeof(long) * 2);
+    if (panFIDList == NULL)
+    {
+        panFIDList = (long *) CPLMalloc(sizeof(long) * 2);
+        *nFIDCount = 0;
+        *nLength = 2;
+    }
 
     nFID = poINDFile->FindFirst( iIndex, pabyKey );
     while( nFID > 0 )
     {
-        if( nFIDCount >= nFIDMax-1 )
+        if( *nFIDCount >= *nLength-1 )
         {
-            nFIDMax = nFIDMax * 2 + 10;
-            panFIDList = (long *) CPLRealloc(panFIDList, sizeof(long)*nFIDMax);
+            *nLength = (*nLength) * 2 + 10;
+            panFIDList = (long *) CPLRealloc(panFIDList, sizeof(long)* (*nLength));
         }
-        panFIDList[nFIDCount++] = nFID - 1;
+        panFIDList[(*nFIDCount)++] = nFID - 1;
         
         nFID = poINDFile->FindNext( iIndex, pabyKey );
     }
 
-    panFIDList[nFIDCount] = OGRNullFID;
+    panFIDList[*nFIDCount] = OGRNullFID;
     
     return panFIDList;
+}
+
+long *OGRMIAttrIndex::GetAllMatches( OGRField *psKey )
+{
+    int nFIDCount, nLength;
+    return GetAllMatches( psKey, NULL, &nFIDCount, &nLength );
 }
 
 /************************************************************************/

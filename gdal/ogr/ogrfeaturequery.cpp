@@ -482,8 +482,8 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
 /*      Does the expression meet our requirements?  Do we have an       */
 /*      index on the targetted field?                                   */
 /* -------------------------------------------------------------------- */
-    if( psExpr == NULL || psExpr->operation != SWQ_EQ 
-        || poLayer->GetIndex() == NULL )
+    if( psExpr == NULL || !(psExpr->operation == SWQ_EQ || 
+        psExpr->operation == SWQ_IN) || poLayer->GetIndex() == NULL )
         return NULL;
 
     poIndex = poLayer->GetIndex()->GetFieldIndex( psExpr->field_index );
@@ -497,6 +497,41 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
     OGRFieldDefn *poFieldDefn;
 
     poFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(psExpr->field_index);
+
+    if (psExpr->operation == SWQ_IN)
+    {
+        const char *pszSrc;
+        int nFIDCount, nLength;
+        long *panFIDs = NULL;
+              
+        pszSrc = psExpr->string_value;
+        while( *pszSrc != '\0' )
+        {
+            switch( poFieldDefn->GetType() )
+            {
+              case OFTInteger:
+                sValue.Integer = atoi(pszSrc);
+                break;
+
+              case OFTReal:
+                sValue.Real = atof(pszSrc);
+                break;
+
+              case OFTString:
+                sValue.String = (char*)pszSrc;
+                break;
+
+              default:
+                CPLAssert( FALSE );
+                return NULL;
+            }
+
+            panFIDs = poIndex->GetAllMatches( &sValue, panFIDs, &nFIDCount, &nLength );
+
+            pszSrc += strlen(pszSrc) + 1;
+        }
+        return panFIDs;
+    }
 
     switch( poFieldDefn->GetType() )
     {
