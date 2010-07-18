@@ -48,6 +48,7 @@ public:
 
     virtual long   GetFirstMatch( OGRField *psKey ) = 0;
     virtual long  *GetAllMatches( OGRField *psKey ) = 0;
+    virtual long  *GetAllMatches( OGRField *psKey, long* panFIDList, int* nFIDCount, int* nLength ) = 0;
     
     virtual OGRErr AddEntry( OGRField *psKey, long nFID ) = 0;
     virtual OGRErr RemoveEntry( OGRField *psKey, long nFID ) = 0;
