@@ -17935,12 +17935,12 @@ SWIGINTERN PyObject *_wrap_GetCacheMax(PyObject *SWIGUNUSEDPARM(self), PyObject 
     }
   }
   {
+    char szTmp[32];
+    sprintf(szTmp, CPL_FRMT_GIB, result);
 #if PY_VERSION_HEX>=0x03000000
-    resultobj = PyLong_FromSsize_t((Py_ssize_t )result);
-#elif PY_VERSION_HEX>=0x02500000
-    resultobj = PyInt_FromSsize_t((Py_ssize_t )result);
+    resultobj = PyLong_FromString(szTmp, NULL, 10);
 #else
-    resultobj = PyInt_FromLong((long)result);
+    resultobj = PyInt_FromString(szTmp, NULL, 10);
 #endif
   }
   return resultobj;
@@ -17964,12 +17964,12 @@ SWIGINTERN PyObject *_wrap_GetCacheUsed(PyObject *SWIGUNUSEDPARM(self), PyObject
     }
   }
   {
+    char szTmp[32];
+    sprintf(szTmp, CPL_FRMT_GIB, result);
 #if PY_VERSION_HEX>=0x03000000
-    resultobj = PyLong_FromSsize_t((Py_ssize_t )result);
-#elif PY_VERSION_HEX>=0x02500000
-    resultobj = PyInt_FromSsize_t((Py_ssize_t )result);
+    resultobj = PyLong_FromString(szTmp, NULL, 10);
 #else
-    resultobj = PyInt_FromLong((long)result);
+    resultobj = PyInt_FromString(szTmp, NULL, 10);
 #endif
   }
   return resultobj;
