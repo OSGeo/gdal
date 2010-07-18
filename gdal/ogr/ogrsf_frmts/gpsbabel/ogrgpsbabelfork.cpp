@@ -50,7 +50,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
-
+#include <signal.h>
 
 static void WriteToPipe(FILE* fin, int pipe_fd)
 {
