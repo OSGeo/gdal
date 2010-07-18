@@ -115,6 +115,9 @@ TABFile::TABFile()
     m_panIndexNo = NULL;
 
     bUseSpatialTraversal = FALSE;
+
+    m_panMatchingFIDs = NULL;
+    m_iMatchingFID = 0;
 }
 
 /**********************************************************************
