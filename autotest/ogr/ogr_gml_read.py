@@ -551,6 +551,16 @@ def ogr_gml_14():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
+    # We need CURL for xlink resolution, and a sign that Curl is available
+    # is the availability of the WMS driver
+    try:
+        gdaltest.wms_drv = gdal.GetDriverByName( 'WMS' )
+    except:
+        gdaltest.wms_drv = None
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+
     files = [ 'xlink1.gml', 'xlink2.gml', 'expected1.gml', 'expected2.gml' ]
     for file in files:
         if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gml/' + file, file ):
