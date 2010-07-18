@@ -7602,7 +7602,7 @@ int GTiffDataset::FindRPCFile(char** papszSiblingFiles)
     CPLString soPt(".");
     size_t found = osSrcPath.rfind(soPt);
     if (found == CPLString::npos)
-        return NULL;
+        return FALSE;
     osSrcPath.replace (found, osSrcPath.size() - found, "_rpc.txt");
     CPLString osTarget = osSrcPath; 
 
