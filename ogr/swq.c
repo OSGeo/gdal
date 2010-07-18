@@ -540,8 +540,9 @@ static char *swq_parse_in_list( char **tokens, int *tokens_consumed )
 
         *tokens_consumed += 1;
 
-        if( strcasecmp(tokens[*tokens_consumed],",") != 0
-            && strcasecmp(tokens[*tokens_consumed],")") != 0 )
+        if( tokens[*tokens_consumed] == NULL ||
+            (strcasecmp(tokens[*tokens_consumed],",") != 0
+             && strcasecmp(tokens[*tokens_consumed],")") != 0) )
         {
             SNPRINTF_ERR1("Contents of IN predicate missing comma or closing bracket." );
             SWQ_FREE( result );
