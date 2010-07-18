@@ -1373,23 +1373,32 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
 {
     uint32 i;
     int shape_index = IndexFromShapeId( id );
+    std::vector<ShapeField> full_list;
+    const std::vector<ShapeField> *listp = NULL;
 
     if( shape_index == -1 )
         ThrowPCIDSKException( "Attempt to call SetFields() on non-existing shape id '%d'.",
                               (int) id );
 
-    std::vector<ShapeField> list = list_in;
-
-    if( list.size() > vh.field_names.size() )
+    if( list_in.size() > vh.field_names.size() )
     {
         ThrowPCIDSKException( 
             "Attempt to write %d fields to a layer with only %d fields.", 
-            list.size(), vh.field_names.size() );
+            list_in.size(), vh.field_names.size() );
     }
 
-    // fill out missing fields in list with defaults.
-    for( i = list.size(); i < vh.field_names.size(); i++ )
-        list[i] = vh.field_defaults[i];
+    if( list_in.size() < vh.field_names.size() )
+    {
+        full_list = list_in;
+
+        // fill out missing fields in list with defaults.
+        for( i = list_in.size(); i < vh.field_names.size(); i++ )
+            full_list[i] = vh.field_defaults[i];
+        
+        listp = &full_list;
+    }
+    else
+        listp = &list_in;
 
     AccessShapeByIndex( shape_index );
 
@@ -1399,8 +1408,8 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
     PCIDSKBuffer fbuf(4);
     uint32 offset = 4;
 
-    for( i = 0; i < list.size(); i++ )
-        offset = WriteField( offset, list[i], fbuf );
+    for( i = 0; i < listp->size(); i++ )
+        offset = WriteField( offset, (*listp)[i], fbuf );
 
     fbuf.SetSize( offset );
 

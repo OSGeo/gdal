@@ -381,18 +381,28 @@ bool VecSegHeader::GrowSection( int hsec, uint32 new_size )
 /* -------------------------------------------------------------------- */
 /*      Move the old section to the new location.                       */
 /* -------------------------------------------------------------------- */
-    vs->MoveData( section_offsets[hsec], new_base, section_sizes[hsec] );
+    bool actual_move = false;
+
+    if( new_base != section_offsets[hsec] )
+    {
+        vs->MoveData( section_offsets[hsec], new_base, section_sizes[hsec] );
+        actual_move = true;
+    }
+
     section_sizes[hsec] = new_size;
     section_offsets[hsec] = new_base;
 
 /* -------------------------------------------------------------------- */
 /*      Update the section offsets list.                                */
 /* -------------------------------------------------------------------- */
-    uint32 new_offset = section_offsets[hsec];
-    if( needs_swap )
-        SwapData( &new_offset, 4, 1 );
-    vs->WriteToFile( &new_offset, 72 + hsec * 4, 4 );
-
+    if( actual_move )
+    {
+        uint32 new_offset = section_offsets[hsec];
+        if( needs_swap )
+            SwapData( &new_offset, 4, 1 );
+        vs->WriteToFile( &new_offset, 72 + hsec * 4, 4 );
+    }
+        
     return true;
 }
 
