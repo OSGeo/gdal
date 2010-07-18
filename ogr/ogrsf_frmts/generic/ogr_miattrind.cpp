@@ -107,6 +107,7 @@ public:
     /* custom to OGRMILayerAttrIndex */
     OGRErr      SaveConfigToXML();
     OGRErr      LoadConfigFromXML();
+    OGRErr      LoadConfigFromXML(const char* pszRawXML);
     void        AddAttrInd( int iField, int iINDIndex );
 
     OGRLayer   *GetLayer() { return poLayer; }
@@ -124,6 +125,8 @@ OGRMILayerAttrIndex::OGRMILayerAttrIndex()
     papoIndexList = NULL;
     bUnlinkINDFile = FALSE;
     bINDAsReadOnly = TRUE;
+    pszMIINDFilename = NULL;
+    pszMetadataFilename = NULL;
 }
 
 /************************************************************************/
@@ -168,6 +171,10 @@ OGRErr OGRMILayerAttrIndex::Initialize( const char *pszIndexPathIn,
     poLayer = poLayerIn;
 
     pszIndexPath = CPLStrdup( pszIndexPathIn );
+
+    /* try to process the XML string directly */
+    if (EQUALN(pszIndexPathIn, "<OGRMILayerAttrIndex>", 21))
+        return LoadConfigFromXML(pszIndexPathIn);
     
     pszMetadataFilename = CPLStrdup(
         CPLResetExtension( pszIndexPathIn, "idm" ) );
@@ -194,37 +201,13 @@ OGRErr OGRMILayerAttrIndex::Initialize( const char *pszIndexPathIn,
 /*                         LoadConfigFromXML()                          */
 /************************************************************************/
 
-OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
+OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 
 {
-    FILE *fp;
-    int  nXMLSize;
-    char *pszRawXML;
-
-    CPLAssert( poINDFile == NULL );
-
-/* -------------------------------------------------------------------- */
-/*      Read the XML file.                                              */
-/* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszMetadataFilename, "rb" );
-    if( fp == NULL )
-        return OGRERR_NONE;
-
-    VSIFSeek( fp, 0, SEEK_END );
-    nXMLSize = VSIFTell( fp );
-    VSIFSeek( fp, 0, SEEK_SET );
-
-    pszRawXML = (char *) CPLMalloc(nXMLSize+1);
-    pszRawXML[nXMLSize] = '\0';
-    VSIFRead( pszRawXML, nXMLSize, 1, fp );
-
-    VSIFClose( fp );
-
 /* -------------------------------------------------------------------- */
 /*      Parse the XML.                                                  */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psRoot = CPLParseXMLString( pszRawXML );
-    CPLFree( pszRawXML );
 
     if( psRoot == NULL )
         return OGRERR_FAILURE;
@@ -233,12 +216,18 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
 /*      Open the index file.                                            */
 /* -------------------------------------------------------------------- */
     poINDFile = new TABINDFile();
+    
+    if (pszMIINDFilename == NULL)
+        pszMIINDFilename = CPLStrdup(CPLGetXMLValue(psRoot,"MIIDFilename",""));
+    
+    if( pszMIINDFilename == NULL )
+        return OGRERR_FAILURE;
 
     /* NOTE: Replaced r+ with r according to explanation in Ticket #1620.
      * This change has to be observed if it doesn't cause any
      * problems in future. (mloskot)
      */
-    if( poINDFile->Open( pszMetadataFilename, "r" ) != 0 )
+    if( poINDFile->Open( pszMIINDFilename, "r" ) != 0 )
     {
         CPLDestroyXMLNode( psRoot );
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -246,7 +235,6 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
                   pszMIINDFilename );
         return OGRERR_FAILURE;
     }
-
 /* -------------------------------------------------------------------- */
 /*      Process each attrindex.                                         */
 /* -------------------------------------------------------------------- */
@@ -282,6 +270,37 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
               pszMetadataFilename, pszMIINDFilename );
 
     return OGRERR_NONE;
+}
+
+OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
+{
+    FILE *fp;
+    int  nXMLSize;
+    char *pszRawXML;
+
+    CPLAssert( poINDFile == NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Read the XML file.                                              */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpen( pszMetadataFilename, "rb" );
+    if( fp == NULL )
+        return OGRERR_NONE;
+
+    VSIFSeek( fp, 0, SEEK_END );
+    nXMLSize = VSIFTell( fp );
+    VSIFSeek( fp, 0, SEEK_SET );
+
+    pszRawXML = (char *) CPLMalloc(nXMLSize+1);
+    pszRawXML[nXMLSize] = '\0';
+    VSIFRead( pszRawXML, nXMLSize, 1, fp );
+
+    VSIFClose( fp );
+
+    OGRErr eErr = LoadConfigFromXML(pszRawXML);
+    CPLFree(pszRawXML);
+
+    return eErr;
 }
 
 /************************************************************************/
