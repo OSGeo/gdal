@@ -57,6 +57,7 @@ def ogr_mysql_1():
     try:
         mysql_dr = ogr.GetDriverByName( 'MySQL' )
     except:
+#        print 'no driver'
         return 'skip'
     
     try:
@@ -67,6 +68,7 @@ def ogr_mysql_1():
     if gdaltest.mysql_ds is not None:
         return 'success'
     else:
+#        print 'no dataset'
         return 'skip'
 
 ###############################################################################
@@ -658,6 +660,43 @@ def ogr_mysql_22():
     return 'success'
 
 ###############################################################################
+# Check for right precision
+
+def ogr_mysql_23():
+
+    if gdaltest.mysql_ds is None:
+        return 'skip'
+
+    fields = ( 'zero', 'widthonly', 'onedecimal', 'twentynine', 'thirtyone' )
+    values = ( 1, 2, 1.1, 0.12345678901234567890123456789, 0.1234567890123456789012345678901 )
+    precision = ( 0, 0, 1, 29, 0 )
+
+    ######################################################
+    # Create a layer with a single feature through SQL
+    gdaltest.mysql_lyr = gdaltest.mysql_ds.ExecuteSQL( "SELECT ROUND(1.1,0) AS zero, ROUND(2.0, 0) AS widthonly, ROUND(1.1,1) AS onedecimal, ROUND(0.12345678901234567890123456789,29) AS twentynine, GeomFromText(CONVERT('POINT(1.0 2.0)',CHAR)) as the_geom;" )
+
+    feat = gdaltest.mysql_lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    ######################################################
+    # Check the values and the precisions
+    for i in range(4):
+        if feat.GetFieldIndex(fields[i]) < 0:
+            print 'field not found'
+            return 'fail'
+        if feat.GetField( feat.GetFieldIndex(fields[i]) ) != values[i]:
+            print 'value not right'
+#            print feat.GetField( feat.GetFieldIndex(fields[i]) )
+            return 'fail'
+        if feat.GetFieldDefnRef( feat.GetFieldIndex(fields[i]) ).GetPrecision() != precision[i]:
+            print 'precision not right'
+#            print feat.GetFieldDefnRef( feat.GetFieldIndex(fields[i]) ).GetPrecision()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_mysql_cleanup():
@@ -699,6 +738,7 @@ gdaltest_list = [
     ogr_mysql_20,
     ogr_mysql_21,
     ogr_mysql_22,
+    ogr_mysql_23,
     ogr_mysql_cleanup
     ]
 
