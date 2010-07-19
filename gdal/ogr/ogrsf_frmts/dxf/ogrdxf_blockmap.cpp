@@ -44,6 +44,7 @@ void OGRDXFDataSource::ReadBlocksSection()
 {
     char szLineBuf[257];
     int  nCode;
+    OGRDXFLayer *poReaderLayer = (OGRDXFLayer *) GetLayerByName( "Entities" );
 
     iEntitiesSectionOffset = iSrcBufferFileOffset + iSrcBufferOffset;
 
@@ -79,7 +80,7 @@ void OGRDXFDataSource::ReadBlocksSection()
         OGRGeometryCollection *poColl = new OGRGeometryCollection();
         std::vector<OGRFeature*> apoFeatures;
 
-        while( (poFeature = apoLayers[0]->GetNextUnfilteredFeature()) != NULL )
+        while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != NULL )
         {
             if( poFeature->GetStyleString() != NULL
                 && strstr(poFeature->GetStyleString(),"LABEL") != NULL )

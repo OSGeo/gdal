@@ -55,10 +55,37 @@ public:
 };
 
 /************************************************************************/
+/*                         OGRDXFBlocksLayer()                          */
+/************************************************************************/
+
+class OGRDXFBlocksLayer : public OGRLayer
+{
+    OGRDXFDataSource   *poDS;
+
+    OGRFeatureDefn     *poFeatureDefn;
+    
+    int                 iNextFID;
+    unsigned int        iNextSubFeature;
+
+    std::map<CPLString,DXFBlockDefinition>::iterator oIt;
+
+  public:
+    OGRDXFBlocksLayer( OGRDXFDataSource *poDS );
+    ~OGRDXFBlocksLayer();
+
+    void                ResetReading();
+    OGRFeature *        GetNextFeature();
+
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+
+    int                 TestCapability( const char * );
+
+    OGRFeature *        GetNextUnfilteredFeature();
+};
+
+/************************************************************************/
 /*                             OGRDXFLayer                              */
 /************************************************************************/
-class OGRDXFDataSource;
-
 class OGRDXFLayer : public OGRLayer
 {
     OGRDXFDataSource   *poDS;
@@ -112,7 +139,7 @@ class OGRDXFLayer : public OGRLayer
 class OGRDXFDataSource : public OGRDataSource
 {
     CPLString           osName;
-    std::vector<OGRDXFLayer*> apoLayers;
+    std::vector<OGRLayer*> apoLayers;
 
     FILE                *fp;
 
@@ -132,6 +159,10 @@ class OGRDXFDataSource : public OGRDataSource
     std::map< CPLString, std::map<CPLString,CPLString> > 
                         oLayerTable;
 
+    std::map<CPLString,CPLString> oLineTypeTable;
+
+    bool                bInlineBlocks;
+
   public:
                         OGRDXFDataSource();
                         ~OGRDXFDataSource();
@@ -147,6 +178,9 @@ class OGRDXFDataSource : public OGRDataSource
 
     // The following is only used by OGRDXFLayer
 
+    bool                InlineBlocks() { return bInlineBlocks; }
+    void                AddStandardFields( OGRFeatureDefn *poDef );
+
     // Implemented in ogrdxf_diskio.cpp 
     int                 ReadValue( char *pszValueBuffer, 
                                    int nValueBufferSize = 81 );
@@ -160,17 +194,22 @@ class OGRDXFDataSource : public OGRDataSource
     void                ReadBlocksSection();
     OGRGeometry        *SimplifyBlockGeometry( OGRGeometryCollection * );
     DXFBlockDefinition *LookupBlock( const char *pszName );
+    std::map<CPLString,DXFBlockDefinition> &GetBlockMap() { return oBlockMap; }
 
-    // Layer Table Handling (ogrdxf_tables.cpp)
+    // Layer and other Table Handling (ogrdatasource.cpp)
     void                ReadTablesSection();
     void                ReadLayerDefinition();
+    void                ReadLineTypeDefinition();
     const char         *LookupLayerProperty( const char *pszLayer, 
                                              const char *pszProperty );
+    const char         *LookupLineType( const char *pszName );
 
     // Header variables. 
     void                ReadHeaderSection();
     const char         *GetVariable(const char *pszName, 
                                     const char *pszDefault=NULL );
+
+    
 };
 
 /************************************************************************/

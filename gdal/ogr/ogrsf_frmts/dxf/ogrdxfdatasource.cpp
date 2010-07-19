@@ -111,6 +111,9 @@ int OGRDXFDataSource::Open( const char * pszFilename )
 
     osName = pszFilename;
 
+    bInlineBlocks = CSLTestBoolean(
+        CPLGetConfigOption( "DXF_INLINE_BLOCKS", "TRUE" ) );
+
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
@@ -179,6 +182,12 @@ int OGRDXFDataSource::Open( const char * pszFilename )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create a blocks layer if we are not in inlining mode.           */
+/* -------------------------------------------------------------------- */
+    if( !bInlineBlocks )
+        apoLayers.push_back( new OGRDXFBlocksLayer( this ) );
+
+/* -------------------------------------------------------------------- */
 /*      Create out layer object - we will need it when interpreting     */
 /*      blocks.                                                         */
 /* -------------------------------------------------------------------- */
@@ -237,14 +246,18 @@ void OGRDXFDataSource::ReadTablesSection()
         // Currently we are only interested in the LAYER table.
         nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
 
-        if( nCode != 2 || !EQUAL(szLineBuf,"LAYER") )
+        if( nCode != 2 )
             continue;
+
+        //CPLDebug( "DXF", "Found table %s.", szLineBuf );
 
         while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
                && !EQUAL(szLineBuf,"ENDTAB") )
         {
             if( nCode == 0 && EQUAL(szLineBuf,"LAYER") )
                 ReadLayerDefinition();
+            if( nCode == 0 && EQUAL(szLineBuf,"LTYPE") )
+                ReadLineTypeDefinition();
         }
     }
 
@@ -318,6 +331,64 @@ const char *OGRDXFDataSource::LookupLayerProperty( const char *pszLayer,
 }
 
 /************************************************************************/
+/*                       ReadLineTypeDefinition()                       */
+/************************************************************************/
+
+void OGRDXFDataSource::ReadLineTypeDefinition()
+
+{
+    char szLineBuf[257];
+    int  nCode;
+    CPLString osLineTypeName;
+    CPLString osLineTypeDef;
+
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
+    {
+        switch( nCode )
+        {
+          case 2:
+            osLineTypeName = szLineBuf;
+            break;
+
+          case 49:
+          {
+              if( osLineTypeDef != "" )
+                  osLineTypeDef += " ";
+
+              if( szLineBuf[0] == '-' )
+                  osLineTypeDef += szLineBuf+1;
+              else
+                  osLineTypeDef += szLineBuf;
+
+              osLineTypeDef += "g";
+          }
+          break;
+            
+          default:
+            break;
+        }
+    }
+
+    if( osLineTypeDef != "" )
+        oLineTypeTable[osLineTypeName] = osLineTypeDef;
+    
+    UnreadValue();
+}
+
+/************************************************************************/
+/*                           LookupLineType()                           */
+/************************************************************************/
+
+const char *OGRDXFDataSource::LookupLineType( const char *pszName )
+
+{
+    if( oLineTypeTable.count(pszName) > 0 )
+        return oLineTypeTable[pszName];
+    else
+        return NULL;
+}
+
+/************************************************************************/
 /*                         ReadHeaderSection()                          */
 /************************************************************************/
 
@@ -362,3 +433,34 @@ const char *OGRDXFDataSource::GetVariable( const char *pszName,
         return oHeaderVariables[pszName];
 }
 
+/************************************************************************/
+/*                         AddStandardFields()                          */
+/************************************************************************/
+
+void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
+
+{
+    OGRFieldDefn  oLayerField( "Layer", OFTString );
+    poFeatureDefn->AddFieldDefn( &oLayerField );
+
+    OGRFieldDefn  oClassField( "SubClasses", OFTString );
+    poFeatureDefn->AddFieldDefn( &oClassField );
+
+    OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
+    poFeatureDefn->AddFieldDefn( &oExtendedField );
+
+    OGRFieldDefn  oLinetypeField( "Linetype", OFTString );
+    poFeatureDefn->AddFieldDefn( &oLinetypeField );
+
+    OGRFieldDefn  oEntityHandleField( "EntityHandle", OFTString );
+    poFeatureDefn->AddFieldDefn( &oEntityHandleField );
+
+    OGRFieldDefn  oTextField( "Text", OFTString );
+    poFeatureDefn->AddFieldDefn( &oTextField );
+
+    if( !bInlineBlocks )
+    {
+        OGRFieldDefn  oTextField( "BlockName", OFTString );
+        poFeatureDefn->AddFieldDefn( &oTextField );
+    }
+}
