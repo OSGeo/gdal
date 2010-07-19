@@ -31,7 +31,6 @@
 #include "cpl_conv.h"
 #include "ogrdxf_polyline_smooth.h"
 
-        
 CPL_CVSID("$Id$");
 
 #ifndef PI
@@ -52,23 +51,16 @@ OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDS )
     poFeatureDefn = new OGRFeatureDefn( "entities" );
     poFeatureDefn->Reference();
 
-    OGRFieldDefn  oLayerField( "Layer", OFTString );
-    poFeatureDefn->AddFieldDefn( &oLayerField );
+    poDS->AddStandardFields( poFeatureDefn );
 
-    OGRFieldDefn  oClassField( "SubClasses", OFTString );
-    poFeatureDefn->AddFieldDefn( &oClassField );
+    if( !poDS->InlineBlocks() )
+    {
+        OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oScaleField );
 
-    OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
-    poFeatureDefn->AddFieldDefn( &oExtendedField );
-
-    OGRFieldDefn  oLinetypeField( "Linetype", OFTString );
-    poFeatureDefn->AddFieldDefn( &oLinetypeField );
-
-    OGRFieldDefn  oEntityHandleField( "EntityHandle", OFTString );
-    poFeatureDefn->AddFieldDefn( &oEntityHandleField );
-
-    OGRFieldDefn  oTextField( "Text", OFTString );
-    poFeatureDefn->AddFieldDefn( &oTextField );
+        OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
+        poFeatureDefn->AddFieldDefn( &oBlockAngleField );
+    }
 }
 
 /************************************************************************/
@@ -201,10 +193,6 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
 
 /************************************************************************/
 /*                          PrepareLineStyle()                          */
-/*                                                                      */
-/*      For now I don't bother trying to translate the dash/dot         */
-/*      linetype into the style string since I'm not aware of any       */
-/*      application that will honour it anyways.                        */
 /************************************************************************/
 
 void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
@@ -247,6 +235,12 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have a dash/dot line style?                               */
+/* -------------------------------------------------------------------- */
+    const char *pszPattern = poDS->LookupLineType(
+        poFeature->GetFieldAsString("Linetype") );
+
+/* -------------------------------------------------------------------- */
 /*      Format the style string.                                        */
 /* -------------------------------------------------------------------- */
     CPLString osStyle;
@@ -265,6 +259,13 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
         if (pszComma)
             *pszComma = '.';
         osStyle += CPLString().Printf( ",w:%smm", szBuffer );
+    }
+
+    if( pszPattern )
+    {
+        osStyle += ",p:\"";
+        osStyle += pszPattern;
+        osStyle += "\"";
     }
 
     osStyle += ")";
@@ -764,7 +765,6 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
     int                 nNumVertices = 1;   // use 1 based index
     int                 npolyarcVertexCount = 1;
-    int                 bPLineGen = FALSE;
     double              dfBulge = 0.0;
     DXFSmoothPolyline   smoothPolyline;
 
@@ -1423,6 +1423,25 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
 
     if( nCode == 0 )
         poDS->UnreadValue();
+
+/* -------------------------------------------------------------------- */
+/*      In the case where we do not inlined blocks we just capture      */
+/*      info on a point feature.                                        */
+/* -------------------------------------------------------------------- */
+    if( !poDS->InlineBlocks() )
+    {
+        poFeature->SetGeometryDirectly(
+            new OGRPoint( oTransformer.dfXOffset, 
+                          oTransformer.dfYOffset,
+                          oTransformer.dfZOffset ) );
+
+        poFeature->SetField( "BlockName", osBlockName );
+
+        poFeature->SetField( "BlockAngle", oTransformer.dfAngle );
+        poFeature->SetField( "BlockScale", 3, &(oTransformer.dfXScale) );
+
+        return poFeature;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Lookup the block.                                               */
