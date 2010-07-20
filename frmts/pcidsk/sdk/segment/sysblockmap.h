@@ -49,7 +49,7 @@ namespace PCIDSK
     /*                             SysBlockMap                              */
     /************************************************************************/
 
-    class SysBlockMap : public CPCIDSKSegment
+    class SysBlockMap : virtual public CPCIDSKSegment
     {
     public:
         SysBlockMap( PCIDSKFile *file, int segment,const char *segment_pointer );
