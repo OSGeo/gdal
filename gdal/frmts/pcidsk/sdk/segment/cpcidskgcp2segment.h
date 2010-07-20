@@ -32,7 +32,7 @@
 #include "segment/cpcidsksegment.h"
 
 namespace PCIDSK {
-    class CPCIDSKGCP2Segment : public PCIDSKGCPSegment,
+    class CPCIDSKGCP2Segment : virtual public PCIDSKGCPSegment,
                                public CPCIDSKSegment
     {
     public:

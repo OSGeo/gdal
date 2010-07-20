@@ -43,7 +43,7 @@ namespace PCIDSK
     /*                            CPCIDSK_PCT                               */
     /************************************************************************/
 
-    class CPCIDSK_PCT : public CPCIDSKSegment, 
+    class CPCIDSK_PCT : virtual public CPCIDSKSegment, 
                         public PCIDSK_PCT
     {
     public:
