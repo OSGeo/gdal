@@ -35,7 +35,7 @@
 
 namespace PCIDSK {
 
-    class CPCIDSKAPModelSegment : public CPCIDSKSegment,
+    class CPCIDSKAPModelSegment : virtual public CPCIDSKSegment,
                                   public PCIDSKAPModelSegment
     {
     public:

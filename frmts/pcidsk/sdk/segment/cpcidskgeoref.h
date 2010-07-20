@@ -43,7 +43,7 @@ namespace PCIDSK
     /*                            CPCIDSKGeoref                             */
     /************************************************************************/
 
-    class CPCIDSKGeoref : public CPCIDSKSegment, 
+    class CPCIDSKGeoref : virtual public CPCIDSKSegment, 
                           public PCIDSKGeoref
     {
     public:
