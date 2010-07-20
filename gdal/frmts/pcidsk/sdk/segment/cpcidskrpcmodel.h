@@ -33,7 +33,7 @@
 namespace PCIDSK {
     class PCIDSKFile;
     
-    class CPCIDSKRPCModelSegment : public PCIDSKRPCSegment,
+    class CPCIDSKRPCModelSegment : virtual public PCIDSKRPCSegment,
                                    public CPCIDSKSegment
     {
     public:
