@@ -468,6 +468,11 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
 /*      multi-part queries with ranges.                                 */
 /************************************************************************/
 
+static int CompareLong(const void *a, const void *b)
+{
+	return (*(const long *)a) - (*(const long *)b);
+}
+
 long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer, 
                                                OGRErr *peErr )
 
@@ -529,6 +534,12 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
             panFIDs = poIndex->GetAllMatches( &sValue, panFIDs, &nFIDCount, &nLength );
 
             pszSrc += strlen(pszSrc) + 1;
+        }
+
+        if (nFIDCount > 1)
+        {
+            /* the returned FIDs are expected to be in sorted order */
+            qsort(panFIDs, nFIDCount, sizeof(long), CompareLong);
         }
         return panFIDs;
     }
