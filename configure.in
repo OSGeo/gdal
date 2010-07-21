@@ -750,40 +750,36 @@ AC_ARG_WITH(libtiff,[  --with-libtiff=ARG    Libtiff library to use (ARG=interna
 
 AC_MSG_CHECKING([for libtiff])
 
-if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
+if test "x${with_libtiff}" = "xyes" -o "x${with_libtiff}" = "x" ; then
 
-  dnl We now effectively require libtiff 3.6.0.
-  AC_CHECK_LIB(tiff,TIFFGetTagListCount,TIFF_SETTING=external,TIFF_SETTING=internal,)
+  dnl Only automatically pick up the external libtiff if it is >= 4.0.
+  AC_CHECK_LIB(tiff,TIFFScanlineSize64,TIFF_SETTING=external HAVE_BIGTIFF=yes,TIFF_SETTING=internal HAVE_BIGTIFF=yes,)
 
-  dnl Cygwin takes a somewhat restrictive view of what should be exported
-  dnl from the dll, so don't use the external library if missing semi-private
-  dnl functions.
   if test "$TIFF_SETTING" = "external" ; then
+    dnl Cygwin takes a somewhat restrictive view of what should be exported
+    dnl from the dll, so don't use the external library if missing semi-private
+    dnl functions.
     AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
-    dnl Check for the BigTIFF enabled library (libtiff >= 4.0)
-    AC_CHECK_LIB(tiff,TIFFScanlineSize64,HAVE_BIGTIFF=yes,HAVE_BIGTIFF=no,)
-  else
-    HAVE_BIGTIFF=yes
   fi
 
   if test "$TIFF_SETTING" = "external" ; then   
     LIBS="-ltiff $LIBS"
-    echo "using pre-installed libtiff."
+    AC_MSG_RESULT([using pre-installed libtiff.])
   else
-    echo "using internal TIFF code."
+    AC_MSG_RESULT([using internal TIFF code.])
   fi
 
-elif test "$with_libtiff" = "internal" ; then
+elif test "x${with_libtiff}" = "xinternal" ; then
 
   TIFF_SETTING=internal
   HAVE_BIGTIFF=yes
 
-  echo "using internal TIFF code."
+  AC_MSG_RESULT([using internal TIFF code.])
 
 else
 
   TIFF_SETTING=external
-  if test -r $with_libtiff/tiff.h ; then
+  if test -r "$with_libtiff/tiff.h" ; then
     LIBS="-L$with_libtiff -ltiff $LIBS"
     EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
   else
@@ -791,7 +787,7 @@ else
     EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
   fi
 
-  echo "using libtiff from $with_libtiff."
+  AC_MSG_RESULT([using libtiff from ${with_libtiff}.])
 
   dnl Check for the BigTIFF enabled library (libtiff >= 4.0)
   AC_CHECK_LIB(tiff,TIFFScanlineSize64,HAVE_BIGTIFF=yes,HAVE_BIGTIFF=no,)
@@ -801,7 +797,7 @@ fi
 if test "${HAVE_BIGTIFF}" = "yes" ; then
   TIFF_OPTS="-DBIGTIFF_SUPPORT"
 
-  echo "BigTIFF support enabled."
+  LOC_MSG([BigTIFF support enabled.])
 fi
 
 AC_SUBST(TIFF_SETTING,${TIFF_SETTING})
