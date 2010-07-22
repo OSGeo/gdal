@@ -43,8 +43,8 @@ class GMLHandler
     char       *m_pszCurField;
 
     char       *m_pszGeometry;
-    int        m_nGeomAlloc;
-    int        m_nGeomLen;
+    size_t     m_nGeomAlloc;
+    size_t     m_nGeomLen;
 
     int        m_nGeometryDepth;
 

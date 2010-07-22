@@ -398,8 +398,6 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 {
     GMLReadState *poState = m_poReader->GetState();
 
-    int nLNLenBytes = strlen(pszName);
-
 /* -------------------------------------------------------------------- */
 /*      If we are in the midst of collecting a feature attribute        */
 /*      value, then this must be a complex attribute which we don't     */
@@ -442,13 +440,14 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         if (bReadGeometry)
         {
             char* pszAttributes = GetAttributes(attr);
+            size_t nLNLenBytes = strlen(pszName);
 
             if( m_nGeomLen + nLNLenBytes + 4 + strlen( pszAttributes ) >
                 m_nGeomAlloc )
             {
-                m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000 +
+                m_nGeomAlloc = (size_t) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000 +
                                     strlen( pszAttributes ));
-                char* pszNewGeometry = (char *) 
+                char* pszNewGeometry = (char *)
                     VSIRealloc( m_pszGeometry, m_nGeomAlloc);
                 if (pszNewGeometry == NULL)
                 {
@@ -468,7 +467,7 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
             strcat( m_pszGeometry + (m_nGeomLen++), ">" );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Is it a feature?  If so push a whole new state, and return.     */
 /* -------------------------------------------------------------------- */
@@ -517,8 +516,6 @@ OGRErr GMLHandler::endElement(const char* pszName )
 
     GMLReadState *poState = m_poReader->GetState();
 
-    int nLNLenBytes = strlen(pszName);
-
 /* -------------------------------------------------------------------- */
 /*      Is this closing off an attribute value?  We assume so if        */
 /*      we are collecting an attribute value and got to this point.     */
@@ -528,7 +525,7 @@ OGRErr GMLHandler::endElement(const char* pszName )
     if( m_pszCurField != NULL )
     {
         CPLAssert( poState->m_poFeature != NULL );
-        
+
         m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszCurField );
         CPLFree( m_pszCurField );
         m_pszCurField = NULL;
@@ -542,10 +539,12 @@ OGRErr GMLHandler::endElement(const char* pszName )
     {
         /* should save attributes too! */
 
+        size_t nLNLenBytes = strlen(pszName);
+
         if( m_nGeomLen + nLNLenBytes + 4 > m_nGeomAlloc )
         {
-            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000);
-            char* pszNewGeometry = (char *) 
+            m_nGeomAlloc = (size_t) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000);
+            char* pszNewGeometry = (char *)
                 VSIRealloc( m_pszGeometry, m_nGeomAlloc);
             if (pszNewGeometry == NULL)
             {
@@ -622,10 +621,10 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
                 nIter ++;
         }
 
-        int nCharsLen = nLen - nIter;
+        size_t nCharsLen = nLen - nIter;
 
-        char *pszNewCurField = (char *) 
-            VSIRealloc( m_pszCurField, 
+        char *pszNewCurField = (char *)
+            VSIRealloc( m_pszCurField,
                         nCurFieldLength+ nCharsLen +1 );
         if (pszNewCurField == NULL)
         {
@@ -647,12 +646,12 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
                 nIter ++;
         }
 
-        int nCharsLen = nLen - nIter;
+        size_t nCharsLen = nLen - nIter;
 
         if( m_nGeomLen + nCharsLen + 4 > m_nGeomAlloc )
         {
-            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nCharsLen + 1000);
-            char* pszNewGeometry = (char *) 
+            m_nGeomAlloc = (size_t) (m_nGeomAlloc * 1.3 + nCharsLen + 1000);
+            char* pszNewGeometry = (char *)
                 VSIRealloc( m_pszGeometry, m_nGeomAlloc);
             if (pszNewGeometry == NULL)
             {
