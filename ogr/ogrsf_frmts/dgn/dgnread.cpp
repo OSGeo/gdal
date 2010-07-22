@@ -965,8 +965,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
           // Read array
           for (int i=0;i<numelems;i++) {
-            psArray->array[i] = 
-              1.0f * DGN_INT32(psDGN->abyElem + 36 + i*4) / ((1L << 31) - 1);
+            psArray->array[i] =
+              1.0f * DGN_INT32(psDGN->abyElem + 36 + i*4) / ((1UL << 31) - 1);
           }
         }
       break;
