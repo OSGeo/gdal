@@ -2971,7 +2971,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               delete poDS;
               return NULL;
           }
-                
+
           if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
           {
               delete poDS;
@@ -2989,7 +2989,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
           if (poDS->iDataset < 0 || poDS->iDataset >= nDatasets)
           {
               CPLError(CE_Failure, CPLE_AppDefined,
-                       "Subdataset index should be between 0 and %d", nDatasets - 1);
+                       "Subdataset index should be between 0 and %ld",
+                       (long int)nDatasets - 1);
               delete poDS;
               return NULL;
           }
