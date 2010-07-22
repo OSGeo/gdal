@@ -336,14 +336,13 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
 /*      According to the C++ Standard/23.2.4, elements of a vector are  */
 /*      stored in continuous memory block.                              */
 /* -------------------------------------------------------------------- */
-    unsigned int j,n;
 
     // TODO - mloskot: Check if vectors are empty, otherwise it may
     // lead to undefined behavior by returning non-referencable pointer.
     // if (!aPointX.empty())
     //    /* fill polygon */
     // else
-    //    /* How to report this problem? */    
+    //    /* How to report this problem? */
     switch ( wkbFlatten(poShape->getGeometryType()) )
     {
         case wkbPoint:
@@ -399,15 +398,19 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
                 }
                 else
                 {
-                for( i = 0, n = 0; i < aPartSize.size(); i++ )
-                    for( j = 0; j < aPartSize[i]; j++ )
-                        aPointVariant[n++] = aPointVariant[0];
-                   
-                GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
-                                            aPartSize.size(), &(aPartSize[0]), 
-                                            &(aPointX[0]), &(aPointY[0]), 
-                                            &(aPointVariant[0]),
-                                            gvBurnPoint, &sInfo );
+                    unsigned int n;
+                    for ( i = 0, n = 0; i < aPartSize.size(); i++ )
+                    {
+                        int j;
+                        for ( j = 0; j < aPartSize[i]; j++ )
+                            aPointVariant[n++] = aPointVariant[0];
+                    }
+
+                    GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
+                                                aPartSize.size(), &(aPartSize[0]), 
+                                                &(aPointX[0]), &(aPointY[0]), 
+                                                &(aPointVariant[0]),
+                                                gvBurnPoint, &sInfo );
                 }
             }
         }
