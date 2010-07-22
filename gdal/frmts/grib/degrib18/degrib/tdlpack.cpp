@@ -1595,6 +1595,7 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
    if (f_bms) {
 /*      errSprintf ("Bitmap data is Not Supported\n");*/
       /* Need to allocate bitmap when this is implemented. */
+      bitmap = NULL;
       ReadTDLPSect3 (c_ipack + curLoc, tdlpLen, &curLoc, bitmap,
                      meta->gds.numPts);
       return -1;
