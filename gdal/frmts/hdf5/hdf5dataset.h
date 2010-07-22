@@ -78,8 +78,8 @@ class HDF5Dataset : public GDALPamDataset
   CPLErr HDF5ListGroupObjects(HDF5GroupObjects *, int );
   CPLErr CreateMetadata( HDF5GroupObjects *, int );
 
-  HDF5GroupObjects* HDF5FindDatasetObjects( HDF5GroupObjects *, char * );
-  HDF5GroupObjects* HDF5FindDatasetObjectsbyPath( HDF5GroupObjects *, char * );
+  HDF5GroupObjects* HDF5FindDatasetObjects( HDF5GroupObjects *, const char * );
+  HDF5GroupObjects* HDF5FindDatasetObjectsbyPath( HDF5GroupObjects *, const char * );
   char* CreatePath(HDF5GroupObjects *);
   void DestroyH5Objects(HDF5GroupObjects *);
  

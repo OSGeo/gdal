@@ -771,7 +771,7 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 /*      Find object by name                                             */
 /************************************************************************/
 HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
-    ( HDF5GroupObjects *poH5Objects, char* pszDatasetPath )
+    ( HDF5GroupObjects *poH5Objects, const char* pszDatasetPath )
 {
     int i;
     HDF5Dataset *poDS;
@@ -807,7 +807,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
 /*      Find object by name                                             */
 /************************************************************************/
 HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
-    ( HDF5GroupObjects *poH5Objects, char* pszDatasetName )
+    ( HDF5GroupObjects *poH5Objects, const char* pszDatasetName )
 {
     int i;
     HDF5Dataset *poDS;
