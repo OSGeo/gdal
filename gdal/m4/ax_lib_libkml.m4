@@ -252,7 +252,8 @@ kmldom::KmlFactory* factory = kmldom::KmlFactory::GetFactory();
                         AC_MSG_RESULT([yes])
                     else
                         AC_MSG_RESULT([no])
-                        AC_MSG_WARN([Found Google libkml $LIBKML_VERSION, which is older than required. Possible compilation failure.])
+                        AC_MSG_WARN([Found Google libkml ${LIBKML_VERSION}, which is older than required (${libkml_version_req}). KML support disabled.])
+			HAVE_LIBKML="no"
                     fi
                 else
                     AC_MSG_RESULT([no])
