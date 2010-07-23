@@ -69,6 +69,8 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
     bCheckedForQIX = FALSE;
     fpQIX = NULL;
 
+    bSbnSbxDeleted = FALSE;
+    
     bHeaderDirty = FALSE;
 
     if( hSHP != NULL )
@@ -385,6 +387,8 @@ OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 
 {
     bHeaderDirty = TRUE;
+    if( CheckForQIX() )
+        DropSpatialIndex();
 
     return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
 }
@@ -427,6 +431,8 @@ OGRErr OGRShapeLayer::DeleteFeature( long nFID )
         return OGRERR_FAILURE;
 
     bHeaderDirty = TRUE;
+    if( CheckForQIX() )
+        DropSpatialIndex();
 
     return OGRERR_NONE;
 }
@@ -441,6 +447,8 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
     OGRErr eErr;
 
     bHeaderDirty = TRUE;
+    if( CheckForQIX() )
+        DropSpatialIndex();
 
     poFeature->SetFID( OGRNullFID );
 
@@ -872,8 +880,28 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
                   pszQIXFilename, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
     }
-    else
-        return OGRERR_NONE;
+
+    if( !bSbnSbxDeleted )
+    {
+        const char *pszIndexFilename;
+        const char papszExt[2][4] = { "sbn", "sbx" };
+        int i;
+        for( i = 0; i < 2; i++ )
+        {
+            pszIndexFilename = CPLResetExtension( pszFullName, papszExt[i] );
+            CPLDebug( "SHAPE", "Trying to unlink index file %s", pszIndexFilename );
+
+            if( VSIUnlink( pszIndexFilename ) != 0 )
+            {
+                CPLDebug( "SHAPE",
+                          "Failed to delete file %s.\n%s", 
+                          pszIndexFilename, VSIStrerror( errno ) );
+            }
+        }
+    }
+    bSbnSbxDeleted = TRUE;
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
