@@ -1631,6 +1631,87 @@ def ogr_shape_39():
 
 
 ###############################################################################
+# Make some changes to a shapefile and check the index files. qix, sbn & sbx
+
+def ogr_shape_40():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    datafiles = ( 'gjpoint.dbf', 'gjpoint.shp', 'gjpoint.shx' )
+    indexfiles = ( 'gjpoint.sbn', 'gjpoint.sbx', 'gjpoint.qix' )
+    for f in datafiles:
+        shutil.copy( os.path.join('data', f), os.path.join('tmp', f) )
+    for i in range(2):
+        shutil.copy( os.path.join('data', indexfiles[i]), os.path.join('tmp', indexfiles[i]) )
+
+    gdaltest.shape_ds = ogr.Open( 'tmp/gjpoint.shp', update=1 )
+    gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
+    gdaltest.shape_lyr.SetAttributeFilter( None )
+    gdaltest.shape_ds.ExecuteSQL( 'CREATE SPATIAL INDEX ON gjpoint' )
+
+    # Check if updating a feature removes the indices
+    feat = gdaltest.shape_lyr.GetFeature( 0 )
+    geom = ogr.CreateGeometryFromWkt( 'POINT (99 1)')
+    feat.SetGeometry( geom )
+    for f in indexfiles:
+        if not os.path.exists( os.path.join('tmp', f) ):
+            print 'SetFeature(): ' + f
+            return 'fail'
+    gdaltest.shape_lyr.SetFeature( feat )
+    for f in indexfiles:
+        if os.path.exists( os.path.join('tmp', f) ):
+            print 'SetFeature(): ' + f
+            return 'fail'
+
+    # Check if adding a feature removes the indices
+    for i in range(2):
+        shutil.copy( os.path.join('data', indexfiles[i]), os.path.join('tmp', indexfiles[i]) )
+
+    gdaltest.shape_ds = ogr.Open( 'tmp/gjpoint.shp', update=1 )
+    gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
+    gdaltest.shape_lyr.SetAttributeFilter( None )
+    gdaltest.shape_ds.ExecuteSQL( 'CREATE SPATIAL INDEX ON gjpoint' )
+    feat = ogr.Feature(gdaltest.shape_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt( 'POINT (98 2)')
+    feat.SetGeometry( geom )
+    feat.SetField( 'NAME', 'Point 2' )
+    feat.SetField( 'FID', '2' )
+    feat.SetFID( 1 )
+
+    for f in indexfiles:
+        if not os.path.exists( os.path.join('tmp', f) ):
+            print 'CreateFeature(): ' + f
+            return 'fail'
+    gdaltest.shape_lyr.CreateFeature( feat )
+    for f in indexfiles:
+        if os.path.exists( os.path.join('tmp', f) ):
+            print 'CreateFeature(): ' + f
+            return 'fail'
+
+    # Check if deleting a feature removes the indices
+    for i in range(2):
+        shutil.copy( os.path.join('data', indexfiles[i]), os.path.join('tmp', indexfiles[i]) )
+    gdaltest.shape_ds = ogr.Open( 'tmp/gjpoint.shp', update=1 )
+    gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
+    gdaltest.shape_lyr.SetAttributeFilter( None )
+    gdaltest.shape_ds.ExecuteSQL( 'CREATE SPATIAL INDEX ON gjpoint' )
+
+    for f in indexfiles:
+        if not os.path.exists( os.path.join('tmp', f) ):
+            print 'DeleteFeature(): ' + f
+            return 'fail'
+    if gdaltest.shape_lyr.DeleteFeature( 0 ) != 0:
+        gdaltest.post_reason( 'DeleteFeature failed.' )
+        return 'fail'
+    for f in indexfiles:
+        if os.path.exists( os.path.join('tmp', f) ):
+            print 'DeleteFeature(): ' + f
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1690,6 +1771,7 @@ gdaltest_list = [
     ogr_shape_37,
     ogr_shape_38,
     ogr_shape_39,
+    ogr_shape_40,
     ogr_shape_cleanup ]
  
 if __name__ == '__main__':
