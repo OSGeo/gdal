@@ -80,6 +80,8 @@ class OGRShapeLayer : public OGRLayer
 
     int                 CheckForQIX();
 
+    int                 bSbnSbxDeleted;
+
   public:
     OGRErr              CreateSpatialIndex( int nMaxDepth );
     OGRErr              DropSpatialIndex();
