@@ -258,7 +258,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
     /*      Identify Geometry dimension                                     */
     /* -------------------------------------------------------------------- */
 
-    if( poDefn->GetGeomType() == wkbNone )
+    if( pszGeomName != NULL && strlen(pszGeomName) > 0 )
     {
         OGROCIStringBuf oDimCmd;
         OGROCIStatement oDimStatement( poSession );
