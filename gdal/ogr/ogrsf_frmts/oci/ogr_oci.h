@@ -423,7 +423,7 @@ class OGROCITableLayer : public OGROCIWritableLayer
     OCIInd            **papaeWriteFieldInd;
     int                *panWriteFIDs;
 
-    int                 AllocAndBindForWrite();
+    int                 AllocAndBindForWrite(int eType);
     OGRErr              FlushPendingFeatures();
 
     OGRErr              UnboundCreateFeature( OGRFeature *poFeature );
