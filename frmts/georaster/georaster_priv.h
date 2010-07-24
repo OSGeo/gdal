@@ -367,8 +367,8 @@ public:
                         }
     
     bool                FlushBlock( void );
-    bool                GetNoData( double* pdfNoDataValue );
-    bool                SetNoData( double dfNoDataValue );
+    bool                GetNoData( int nLayer, double* pdfNoDataValue );
+    bool                SetNoData( int nLayer, const char* pszValue );
     CPLXMLNode*         GetMetadata() { return phMetadata; };
     bool                SetVAT( int nBand, const char* pszName );
     char*               GetVAT( int nBand );
