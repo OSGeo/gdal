@@ -2044,47 +2044,213 @@ bool GeoRasterWrapper::FlushBlock( void )
 //                                                                  GetNoData()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::GetNoData( double* pdfNoDataValue )
+bool GeoRasterWrapper::GetNoData( int nLayer, double* pdfNoDataValue )
 {
-    if( EQUAL( CPLGetXMLValue( phMetadata,
-        "rasterInfo.NODATA", "NONE" ), "NONE" ) )
+    // ------------------------------------------------------------
+    //  Look for a global single NoData value on "rasterInfo" section
+    // ------------------------------------------------------------
+
+    const char* pszValue = CPLGetXMLValue( phMetadata, "rasterInfo.NODATA", "NONE" );
+
+    if( EQUAL( pszValue, "NONE" ) == false )
+    {
+        *pdfNoDataValue = CPLAtof( pszValue );
+        return true;
+    }
+
+    // ------------------------------------------------------------
+    //  Look for global NoData(s) on "layerInfo.objectLayer" section
+    // ------------------------------------------------------------
+
+    CPLXMLNode* phObject = CPLGetXMLNode( phMetadata, "layerInfo.objectLayer.NODATA" );
+
+    if( phObject != NULL )
+    {
+        CPLXMLNode* phNode = NULL;
+        
+        int nCount = 0;
+
+        for( phNode = phObject->psChild; phNode != NULL; phNode = phNode->psNext )
+        {
+            nCount++;
+        }
+
+        // --------------------------------------------------------
+        //  Ignore if there are more than one valuer for NoData
+        // --------------------------------------------------------
+
+        if( nCount == 1 )
+        {
+            *pdfNoDataValue = CPLAtof( 
+                CPLGetXMLValue( phObject, "value", "n/a" ) );
+        }
+
+        // --------------------------------------------------------
+        //  Override (Ignore) any other "subLayer" NoData notation
+        // --------------------------------------------------------
+
+        return true;
+    }
+
+    // ------------------------------------------------------------
+    //  Look for NoData(s) on band specific "layerInfo.subLayer" section
+    // ------------------------------------------------------------
+
+    int i = 0;
+
+    CPLXMLNode* phLayer = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
+
+    bool bFound = false;
+
+    for( i = 0; i < nRasterBands; i++ )
+    {
+        const char* pszNum = CPLGetXMLValue( phLayer, "layerNumber", "NONE" );
+
+        if( EQUAL( pszNum, "NONE") == false && nLayer == atoi(pszNum) )
+        {
+            bFound = true;
+            break;
+        }
+
+        phLayer = phLayer->psNext;
+    }
+
+    if( ! bFound )
     {
         return false;
     }
 
-    *pdfNoDataValue = atof( CPLGetXMLValue( phMetadata,
-        "rasterInfo.NODATA", "0.0" ) );
+    phObject = CPLGetXMLNode( phLayer, "NODATA" );
 
-    return true;
+    if( phObject != NULL )
+    {
+        CPLXMLNode* phNode = NULL;
+
+        int nCount = 0;
+
+        for( phNode = phObject->psChild; phNode != NULL; phNode = phNode->psNext )
+        {
+            nCount++;
+        }
+
+        // --------------------------------------------------------
+        //  Ignore if there are more than one valuer for NoData
+        // --------------------------------------------------------
+
+        if( nCount == 1 )
+        {
+            *pdfNoDataValue = CPLAtof(
+                CPLGetXMLValue( phObject, "value", "n/a" ) );
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 //  ---------------------------------------------------------------------------
 //                                                             SetNoDataValue()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::SetNoData( double dfNoDataValue )
+bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
 {
-    CPLXMLNode* psRInfo = CPLGetXMLNode( phMetadata, "rasterInfo" );
-    CPLXMLNode* psNData = CPLSearchXMLNode( psRInfo, "NODATA" );
+    // ------------------------------------------------------------
+    //  Set one NoData per dataset on "rasterInfo" section (10g)
+    // ------------------------------------------------------------
 
-    if( psNData == NULL )
+    if( poConnection->GetVersion() < 11 )
     {
-        psNData = CPLCreateXMLNode( NULL, CXT_Element, "NODATA" );
+        CPLXMLNode* psRInfo = CPLGetXMLNode( phMetadata, "rasterInfo" );
+        CPLXMLNode* psNData = CPLSearchXMLNode( psRInfo, "NODATA" );
 
-        // Plug NOTADA just after cellDepth node
+        if( psNData == NULL )
+        {
+            psNData = CPLCreateXMLNode( NULL, CXT_Element, "NODATA" );
 
-        CPLXMLNode* psCDepth = CPLGetXMLNode( psRInfo, "cellDepth" );
-        CPLXMLNode* psPointer = psCDepth->psNext;
-        psCDepth->psNext = psNData;
-        psNData->psNext = psPointer;
+            CPLXMLNode* psCDepth = CPLGetXMLNode( psRInfo, "cellDepth" );
+
+            CPLXMLNode* psPointer = psCDepth->psNext;
+            psCDepth->psNext = psNData;
+            psNData->psNext = psPointer;
+        }
+
+        CPLSetXMLValue( psRInfo, "NODATA", pszValue );
+        bFlushMetadata = true;
+        return true;
     }
 
-    const char* pszFormat = EQUAL( &sCellDepth[6], "REAL") ? "%f" : "%.0f";
-    CPLSetXMLValue( psRInfo, "NODATA", CPLSPrintf( pszFormat, dfNoDataValue ) );
+    // ------------------------------------------------------------
+    //  Add NoData for all bands (layer=0) or for a specific band
+    // ------------------------------------------------------------
+
+    CPLString osStatement;
+    
+    char szRDT[OWCODE];
+    char szNoData[OWTEXT];
+    
+    strcpy( szRDT, sDataTable.c_str() );
+    strcpy( szNoData, pszValue );
+
+    int nRID = nRasterId;
+
+    // ------------------------------------------------------------
+    //  Write the in memory XML metada to avoid lossing other changes
+    // ------------------------------------------------------------
+
+    OCILobLocator* phLocator = NULL;
+    
+    osStatement.Printf(
+        "DECLARE\n"
+        "  GR1 sdo_georaster;\n"
+        "BEGIN\n"
+        "  SELECT %s INTO GR1 FROM %s%s T WHERE %s FOR UPDATE;\n"
+        "  GR1.metadata := XMLTYPE('%s');\n"
+        "  SDO_GEOR.addNODATA( GR1, :1, :2 );\n"
+        "  UPDATE %s%s T SET %s = GR1 WHERE %s;\n"
+        "  EXECUTE IMMEDIATE\n"
+        "    'SELECT T.%s.METADATA.getClobVal() FROM %s%s T \n"
+        "     WHERE  T.%s.RASTERDATATABLE = UPPER(:1)\n"
+        "       AND  T.%s.RASTERID = :2'\n"
+        "    INTO :metadata USING :rdt, :rid;\n"
+        "END;",
+            sColumn.c_str(), sSchema.c_str(), sTable.c_str(), sWhere.c_str(),
+            CPLSerializeXMLTree( phMetadata ),
+            sSchema.c_str(), sTable.c_str(), sColumn.c_str(), sWhere.c_str(),
+            sColumn.c_str(), sSchema.c_str(), sTable.c_str(),
+            sColumn.c_str(),
+            sColumn.c_str() );
+
+    OWStatement* poStmt = poConnection->CreateStatement( osStatement );
+
+    poStmt->Bind( &nLayer );
+    poStmt->Bind( szNoData );
+    poStmt->BindName( ":metadata", &phLocator );
+    poStmt->BindName( ":rdt", szRDT );
+    poStmt->BindName( ":rid", &nRID );
+
+    if( ! poStmt->Execute() )
+    {
+        delete poStmt;
+        return false;
+    }
+
+    // ------------------------------------------------------------
+    //  Read the XML metadata from db to memory with nodata updates
+    // ------------------------------------------------------------
+
+    char* pszXML = poStmt->ReadCLob( phLocator );
+
+    if( pszXML )
+    {
+        CPLDestroyXMLNode( phMetadata );
+        
+        phMetadata = CPLParseXMLString( pszXML );
+    }
 
     bFlushMetadata = true;
-
-    return true;
+    delete poStmt;
+    return false;
 }
 
 //  ---------------------------------------------------------------------------

@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "gdal_priv.h"
+
+
 #include <string.h>
 
 #include "georaster_priv.h"
@@ -335,7 +338,7 @@ double GeoRasterRasterBand::GetNoDataValue( int *pbSuccess )
 {
     if( pbSuccess )
     {
-        *pbSuccess = (int) poGeoRaster->GetNoData( &dfNoData );
+        *pbSuccess = (int) poGeoRaster->GetNoData( nBand, &dfNoData );
     }
 
     return dfNoData;
@@ -347,7 +350,11 @@ double GeoRasterRasterBand::GetNoDataValue( int *pbSuccess )
 
 CPLErr GeoRasterRasterBand::SetNoDataValue( double dfNoDataValue )
 {
-    poGeoRaster->SetNoData( dfNoDataValue );
+    const char* pszFormat = 
+        (eDataType == GDT_Float32 || eDataType == GDT_Float64) ? "%f" : "%.0f";
+
+    poGeoRaster->SetNoData( (poDS->GetRasterCount() == 1) ? 0 : nBand,
+        CPLSPrintf( pszFormat, dfNoDataValue ) );
 
     return CE_None;
 }
