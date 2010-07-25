@@ -342,6 +342,63 @@ def osr_basic_10():
 
     return 'success'
 
+###############################################################################
+# Test the IsSame() method (and the IsSameGeogCS() method through that)
+
+def osr_basic_11():
+
+    srs1 = osr.SpatialReference()
+    srs1.SetFromUserInput("""PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
+    GEOGCS["NAD83(CSRS98)",
+        DATUM["NAD83_Canadian_Spatial_Reference_System",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6140"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9108"]],
+        AUTHORITY["EPSG","4140"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-63],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    AUTHORITY["EPSG","2038"],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
+
+    srs2 = osr.SpatialReference()
+    srs2.SetFromUserInput("""PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
+    GEOGCS["NAD83(CSRS98)",
+        DATUM["NAD83_Canadian_Spatial_Reference_System",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6140"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        AUTHORITY["EPSG","4140"]],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["central_meridian",-63],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    AUTHORITY["EPSG","2038"],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
+
+    if srs1.IsSame( srs2 ):
+        return 'success'
+
+    return 'fail'
+
+###############################################################################
+
 gdaltest_list = [ 
     osr_basic_1,
     osr_basic_2,
@@ -353,6 +410,7 @@ gdaltest_list = [
     osr_basic_8,
     osr_basic_9,
     osr_basic_10,
+    osr_basic_11,
     None ]
 
 if __name__ == '__main__':
