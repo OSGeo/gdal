@@ -414,7 +414,7 @@ void OGRSpatialReference::SetRoot( OGR_SRSNode * poNewRoot )
  * more specific. 
  *
  * @param pszNodePath the name of the node to search for.  May contain multiple
- * components such as "GEOGCS|UNITS".
+ * components such as "GEOGCS|UNIT".
  *
  * @return a pointer to the node found, or NULL if none.
  */
@@ -736,7 +736,7 @@ OGRErr OSRImportFromWkt( OGRSpatialReferenceH hSRS, char **ppszInput )
  * This method does the same as the C function OSRSetAttrValue(). 
  *
  * @param pszNodePath full path to attribute to be set.  For instance
- * "PROJCS|GEOGCS|UNITS".
+ * "PROJCS|GEOGCS|UNIT".
  * 
  * @param pszNewNodeValue value to be assigned to node, such as "meter". 
  * This may be NULL if you just want to force creation of the intermediate
@@ -842,7 +842,7 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
 /**
  * \brief Set the angular units for the geographic coordinate system.
  *
- * This method creates a UNITS subnode with the specified values as a
+ * This method creates a UNIT subnode with the specified values as a
  * child of the GEOGCS node. 
  *
  * This method does the same as the C function OSRSetAngularUnits(). 
@@ -985,7 +985,7 @@ double OSRGetAngularUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
 /**
  * \brief Set the linear units for the projection.
  *
- * This method creates a UNITS subnode with the specified values as a
+ * This method creates a UNIT subnode with the specified values as a
  * child of the PROJCS or LOCAL_CS node.   It works the same as the
  * SetLinearUnits() method, but it also updates all existing linear
  * projection parameter values from the old units to the new units. 
@@ -1065,7 +1065,7 @@ OGRErr OSRSetLinearUnitsAndUpdateParameters( OGRSpatialReferenceH hSRS,
 /**
  * \brief Set the linear units for the projection.
  *
- * This method creates a UNITS subnode with the specified values as a
+ * This method creates a UNIT subnode with the specified values as a
  * child of the PROJCS or LOCAL_CS node. 
  *
  * This method does the same as the C function OSRSetLinearUnits(). 
@@ -5324,11 +5324,11 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
 /* -------------------------------------------------------------------- */
 /*      Do the units match?                                             */
 /* -------------------------------------------------------------------- */
-    pszThisValue = this->GetAttrValue( "GEOGCS|UNITS", 1 );
+    pszThisValue = this->GetAttrValue( "GEOGCS|UNIT", 1 );
     if( pszThisValue == NULL )
         pszThisValue = SRS_UA_DEGREE_CONV;
 
-    pszOtherValue = poOther->GetAttrValue( "GEOGCS|UNITS", 1 );
+    pszOtherValue = poOther->GetAttrValue( "GEOGCS|UNIT", 1 );
     if( pszOtherValue == NULL )
         pszOtherValue = SRS_UA_DEGREE_CONV;
 
