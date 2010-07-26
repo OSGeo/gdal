@@ -930,7 +930,7 @@ char **EHdrDataset::GetFileList()
         papszFileList = CSLAddString( papszFileList, osFilename );
     
     CPLString imageRepFilename = GetImageRepFilename( GetDescription() );
-    if (imageRepFilename[0])
+    if (!imageRepFilename.empty())
         papszFileList = CSLAddString( papszFileList, (const char*)imageRepFilename );
     
     return papszFileList;
@@ -1382,7 +1382,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*   see http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download */
 /* -------------------------------------------------------------------- */
         CPLString pszImageRepFilename = GetImageRepFilename(poOpenInfo->pszFilename );
-        if (pszImageRepFilename[0])
+        if (!pszImageRepFilename.empty())
         {
             fp = VSIFOpenL( (const char*)pszImageRepFilename, "r" );
         }
