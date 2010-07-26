@@ -194,17 +194,12 @@ AC_DEFUN([AX_LIB_EXPAT],
 
                 if test -f "$expat_include_dir/expat.h"; then
 
-                    expat_major=`cat $expat_include_dir/expat.h | \
-                                    grep '^#define.*XML_MAJOR_VERSION.*[0-9]$' | \
-                                    sed -e 's/#define XML_MAJOR_VERSION.//'`
-
-                    expat_minor=`cat $expat_include_dir/expat.h | \
-                                    grep '^#define.*XML_MINOR_VERSION.*[0-9]$' | \
-                                    sed -e 's/#define XML_MINOR_VERSION.//'`
-
-                    expat_revision=`cat $expat_include_dir/expat.h | \
-                                    grep '^#define.*XML_MICRO_VERSION.*[0-9]$' | \
-                                    sed -e 's/#define XML_MICRO_VERSION.//'`
+                    expat_major=$(sed -n '/^#define.\+XML_MAJOR_VERSION.\+[[:digit:]]\+.*$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+		    	$expat_include_dir/expat.h)
+                    expat_minor=$(sed -n '/^#define.\+XML_MINOR_VERSION.\+[[:digit:]]\+.*$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+		    	$expat_include_dir/expat.h)
+                    expat_revision=$(sed -n '/^#define.\+XML_MICRO_VERSION.\+[[:digit:]]\+.*$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+		    	$expat_include_dir/expat.h)
 
                     EXPAT_VERSION="$expat_major.$expat_minor.$expat_revision"
                     AC_SUBST([EXPAT_VERSION])

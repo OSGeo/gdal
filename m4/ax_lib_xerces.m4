@@ -215,17 +215,12 @@ XMLPlatformUtils::Initialize();
 
                 if test -f "$xerces_include_dir2/util/XercesVersion.hpp"; then
 
-                    xerces_major=`cat $xerces_include_dir2/util/XercesVersion.hpp | \
-                                    grep '^#define.*XERCES_VERSION_MAJOR.*[0-9]$' | \
-                                    sed -e 's/#define XERCES_VERSION_MAJOR.//'`
-
-                    xerces_minor=`cat $xerces_include_dir2/util/XercesVersion.hpp | \
-                                    grep '^#define.*XERCES_VERSION_MINOR.*[0-9]$' | \
-                                    sed -e 's/#define XERCES_VERSION_MINOR.//'`
-
-                    xerces_revision=`cat $xerces_include_dir2/util/XercesVersion.hpp | \
-                                    grep '^#define.*XERCES_VERSION_REVISION.*[0-9]$' | \
-                                    sed -e 's/#define XERCES_VERSION_REVISION.//'`
+                    xerces_major=$(sed -n '/^#define.\+XERCES_VERSION_MAJOR.\+[[:digit:]]\+$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+		    	$xerces_include_dir2/util/XercesVersion.hpp)
+                    xerces_minor=$(sed -n '/^#define.\+XERCES_VERSION_MINOR.\+[[:digit:]]\+$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+		    	$xerces_include_dir2/util/XercesVersion.hpp)
+                    xerces_revision=$(sed -n '/^#define.\+XERCES_VERSION_REVISION.\+[[:digit:]]\+$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+		    	$xerces_include_dir2/util/XercesVersion.hpp)
 
                     XERCES_VERSION="$xerces_major.$xerces_minor.$xerces_revision"
                     AC_SUBST([XERCES_VERSION])
