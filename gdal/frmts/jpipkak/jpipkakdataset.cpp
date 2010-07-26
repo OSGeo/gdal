@@ -560,7 +560,9 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
         poDecompressor = new kdu_region_decompressor();
 
         int bFinished = FALSE;
-        bFinished = ReadFromInput(psResult->pabyData, psResult->nDataLen);
+        int bError = FALSE;
+        bFinished = ReadFromInput(psResult->pabyData, psResult->nDataLen,
+                                  bError );
         CPLHTTPDestroyResult(psResult);
 
         // continue making requests in the main thread to get all the available 
@@ -578,12 +580,16 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
 			
         osRequestUrl.Printf("%s%s/%s?cid=%s&stream=0&len=%i", osProtocol.c_str(), osRequest.c_str(), pszPath, pszCid, 2000);
 
-        while (!bFinished)
+        while (!bFinished && !bError )
         {
             CPLHTTPResult *psResult = CPLHTTPFetch(osRequestUrl, apszOptions);
-            bFinished = ReadFromInput(psResult->pabyData, psResult->nDataLen);
+            bFinished = ReadFromInput(psResult->pabyData, psResult->nDataLen,
+                                      bError );
             CPLHTTPDestroyResult(psResult);
         }
+
+        if( bError )
+            return FALSE;
 
         // clean up osRequest, remove variable len= parameter
         size_t pos = osRequestUrl.find_last_of("&");	
@@ -791,7 +797,7 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
 /******************************************/
 /*           ReadVBAS()                   */
 /******************************************/
-long JPIPKAKDataset::ReadVBAS(GByte* pabyData, int nLen)
+long JPIPKAKDataset::ReadVBAS(GByte* pabyData, int nLen )
 {
     int c = -1;
     long val = 0;
@@ -803,7 +809,7 @@ long JPIPKAKDataset::ReadVBAS(GByte* pabyData, int nLen)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "VBAS Length not supported");
-            break;
+            return -1;
         }
 
         if (nPos > nLen)
@@ -840,11 +846,17 @@ long JPIPKAKDataset::ReadVBAS(GByte* pabyData, int nLen)
 /******************************************/
 /*            ReadSegment()               */
 /******************************************/
-JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen)
+JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
+                                             int& bError )
 {
     long nId = ReadVBAS(pabyData, nLen);
+    bError = FALSE;
+
     if (nId < 0)
+    {
+        bError = TRUE;
         return NULL;
+    }
     else
     {
         JPIPDataSegment* segment = new JPIPDataSegment();
@@ -868,17 +880,44 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid Bin-ID value format");
+                bError = TRUE;
+                return NULL;
             }
             else if (m >= 2) {
                 nClassId = ReadVBAS(pabyData, nLen);
                 if (m > 2)
+                {
                     nCodestream = ReadVBAS(pabyData, nLen);
+                    if( nCodestream < 0 )
+                    {
+                        bError = TRUE;
+                        return NULL;
+                    }
+                }
             }
+
+            long nNextVal;
 
             segment->SetClassId(nClassId);
             segment->SetCodestreamIdx(nCodestream);
-            segment->SetOffset(ReadVBAS(pabyData, nLen));
-            segment->SetLen(ReadVBAS(pabyData, nLen));
+            
+            nNextVal = ReadVBAS(pabyData, nLen);
+            if( nNextVal == -1 )
+            {
+                bError = TRUE;
+                return NULL;
+            }
+            else
+                segment->SetOffset( nNextVal );
+
+            nNextVal = ReadVBAS(pabyData, nLen);
+            if( nNextVal == -1 )
+            {
+                bError = TRUE;
+                return NULL;
+            }
+            else
+                segment->SetLen(nNextVal);
         }
 
         if ((segment->GetLen() > 0) && (!segment->IsEOR()))
@@ -910,82 +949,86 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen)
 /******************************************/
 int JPIPKAKDataset::KakaduClassId(int nClassId)
 {
-	if (nClassId == 0)
+    if (nClassId == 0)
         return KDU_PRECINCT_DATABIN;
     else if (nClassId == 2)
         return KDU_TILE_HEADER_DATABIN;
-	else if (nClassId == 6)
+    else if (nClassId == 6)
         return KDU_MAIN_HEADER_DATABIN;
     else if (nClassId == 8)  
         return KDU_META_DATABIN;
     else if (nClassId == 4)
         return KDU_TILE_DATABIN;
-	else
-		return -1;
+    else
+        return -1;
 }
 
 /******************************************/
 /*            ReadFromInput()             */
 /******************************************/
-int JPIPKAKDataset::ReadFromInput(GByte* pabyData, int nLen)
+int JPIPKAKDataset::ReadFromInput(GByte* pabyData, int nLen, int &bError )
 {
     int res = FALSE;
-    if (nLen > 0)
-    {
+    bError = FALSE;
+
+    if (nLen <= 0 )
+        return FALSE;
+
 #ifdef PST_DEBUG
-        nPSTThisInstance++;
-        if( CPLGetConfigOption( "PST_OFFSET", NULL ) != NULL )
-        {
-            nPSTTargetOffset = atoi(CPLGetConfigOption("PST_OFFSET","0"));
-            nPSTTargetInstance = 0;
-        }
-        if( CPLGetConfigOption( "PST_INSTANCE", NULL ) != NULL )
-        {
-            nPSTTargetInstance = atoi(CPLGetConfigOption("PST_INSTANCE","0"));
-        }
-
-        if( nPSTTargetOffset != -1 && nPSTThisInstance == 0 )
-        {
-            CPLDebug( "JPIPKAK", "Premature Stream Termination Activated, PST_OFFSET=%d, PST_INSTANCE=%d",
-                      nPSTTargetOffset, nPSTTargetInstance );
-        }
-        if( nPSTTargetOffset != -1 
-            && nPSTThisInstance == nPSTTargetInstance )
-        {
-            CPLDebug( "JPIPKAK", "Premature Stream Termination in force for this input instance, PST_OFFSET=%d, data length=%d", 
-                      nPSTTargetOffset, nLen );
-        }
+    nPSTThisInstance++;
+    if( CPLGetConfigOption( "PST_OFFSET", NULL ) != NULL )
+    {
+        nPSTTargetOffset = atoi(CPLGetConfigOption("PST_OFFSET","0"));
+        nPSTTargetInstance = 0;
+    }
+    if( CPLGetConfigOption( "PST_INSTANCE", NULL ) != NULL )
+    {
+        nPSTTargetInstance = atoi(CPLGetConfigOption("PST_INSTANCE","0"));
+    }
+    
+    if( nPSTTargetOffset != -1 && nPSTThisInstance == 0 )
+    {
+        CPLDebug( "JPIPKAK", "Premature Stream Termination Activated, PST_OFFSET=%d, PST_INSTANCE=%d",
+                  nPSTTargetOffset, nPSTTargetInstance );
+    }
+    if( nPSTTargetOffset != -1 
+        && nPSTThisInstance == nPSTTargetInstance )
+    {
+        CPLDebug( "JPIPKAK", "Premature Stream Termination in force for this input instance, PST_OFFSET=%d, data length=%d", 
+                  nPSTTargetOffset, nLen );
+    }
 #endif // def PST_DEBUG 
-        
-        // parse the data stream, reading the vbas and adding to the kakadu cache
-        // we could parse all the boxes by hand, and just add data to the kakadu cache
-        // we will do it the easy way and retrieve the metadata through the kakadu query api
-        nPos = 0;
-        JPIPDataSegment* pSegment = NULL;
-        while ((pSegment = ReadSegment(pabyData, nLen)) != NULL)
+    
+    // parse the data stream, reading the vbas and adding to the kakadu cache
+    // we could parse all the boxes by hand, and just add data to the kakadu cache
+    // we will do it the easy way and retrieve the metadata through the kakadu query api
+    
+    nPos = 0;
+    JPIPDataSegment* pSegment = NULL;
+    
+    while ((pSegment = ReadSegment(pabyData, nLen, bError)) != NULL)
+    {
+	
+        if (pSegment->IsEOR())
+        {		
+            if ((pSegment->GetId() == JPIPKAKDataset::JPIP_EOR_IMAGE_DONE) || 
+                (pSegment->GetId() == JPIPKAKDataset::JPIP_EOR_WINDOW_DONE))
+                res = TRUE;
+            
+            delete pSegment;
+            break;
+        }
+        else
         {
-			
-            if (pSegment->IsEOR())
-            {		
-                if ((pSegment->GetId() == JPIPKAKDataset::JPIP_EOR_IMAGE_DONE) || 
-                    (pSegment->GetId() == JPIPKAKDataset::JPIP_EOR_WINDOW_DONE))
-                    res = TRUE;
-				
-                delete pSegment;
-                break;
-            }
-            else
-            {
-                // add data to kakadu
-                //CPLDebug("JPIPKAK", "Parsed JPIP Segment class=%i stream=%i id=%i offset=%i len=%i isFinal=%i isEOR=%i", pSegment->GetClassId(), pSegment->GetCodestreamIdx(), pSegment->GetId(), pSegment->GetOffset(), pSegment->GetLen(), pSegment->IsFinal(), pSegment->IsEOR());
-                poCache->add_to_databin(KakaduClassId(pSegment->GetClassId()), pSegment->GetCodestreamIdx(),
-                                             pSegment->GetId(), pSegment->GetData(), pSegment->GetOffset(), pSegment->GetLen(), pSegment->IsFinal());
-
-                delete pSegment;
-            }
-
+            // add data to kakadu
+            //CPLDebug("JPIPKAK", "Parsed JPIP Segment class=%i stream=%i id=%i offset=%i len=%i isFinal=%i isEOR=%i", pSegment->GetClassId(), pSegment->GetCodestreamIdx(), pSegment->GetId(), pSegment->GetOffset(), pSegment->GetLen(), pSegment->IsFinal(), pSegment->IsEOR());
+            poCache->add_to_databin(KakaduClassId(pSegment->GetClassId()), pSegment->GetCodestreamIdx(),
+                                    pSegment->GetId(), pSegment->GetData(), pSegment->GetOffset(), pSegment->GetLen(), pSegment->IsFinal());
+            
+            delete pSegment;
         }
     }
+
     return res;
 }
 
@@ -1944,7 +1987,8 @@ static void JPIPWorkerFunc(void *req)
 
         CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
 
-        int bComplete = ((JPIPKAKDataset*)pRequest->poARIO->GetGDALDataset())->ReadFromInput(psResult->pabyData, psResult->nDataLen);
+        int bError;
+        int bComplete = ((JPIPKAKDataset*)pRequest->poARIO->GetGDALDataset())->ReadFromInput(psResult->pabyData, psResult->nDataLen, bError);
         if (bPriority)
             poJDS->nHighThreadByteCount += psResult->nDataLen;
         else
@@ -1955,7 +1999,7 @@ static void JPIPWorkerFunc(void *req)
         CPLReleaseMutex(poJDS->pGlobalMutex);
         CPLHTTPDestroyResult(psResult);
 
-        if (bComplete)
+        if (bComplete || bError )
             break;
     }
 
