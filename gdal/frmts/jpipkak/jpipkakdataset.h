@@ -127,7 +127,7 @@ private:
     kdu_cache *poCache;
 
     long ReadVBAS(GByte* pabyData, int nLen);
-    JPIPDataSegment* ReadSegment(GByte* pabyData, int nLen);
+    JPIPDataSegment* ReadSegment(GByte* pabyData, int nLen, int& bError);
     int Initialise(char* url);
     int KakaduClassId(int nClassId);
 
@@ -163,7 +163,7 @@ public:
     int GetNResolutionLevels(){return nResLevels;}
     int GetNComponents(){return nComps;}
 
-    int ReadFromInput(GByte* pabyData, int nLen);
+    int ReadFromInput(GByte* pabyData, int nLen, int& bError );
 
     int TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
                         int nBufXSize, int nBufYSize, GDALDataType eDataType, 
