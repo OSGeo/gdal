@@ -1546,6 +1546,11 @@ void JPIPKAKAsyncReader::Start()
         pRequest->osRequest = jpipUrl;
         pRequest->poARIO = this;
 
+        if( bHighPriority )
+            poJDS->bHighThreadFinished = 0;
+        else
+            poJDS->bLowThreadFinished = 0;
+        
         //CPLDebug("JPIPKAKAsyncReader", "THREADING TURNED OFF");
         if (CPLCreateThread(JPIPWorkerFunc, pRequest) == -1)
             CPLError(CE_Failure, CPLE_AppDefined, 
@@ -1568,6 +1573,8 @@ void JPIPKAKAsyncReader::Stop()
         if (((bHighPriority) && (!poJDS->bHighThreadFinished)) || 
             ((!bHighPriority) && (!poJDS->bLowThreadFinished)))
         {
+            CPLDebug( "JPIPKAK", "JPIPKAKAsyncReader::Stop() requested." );
+
             // stop the thread
             if (bHighPriority)
             {
@@ -1589,6 +1596,7 @@ void JPIPKAKAsyncReader::Stop()
                     CPLSleep(0.1);
                 }
             }
+            CPLDebug( "JPIPKAK", "JPIPKAKAsyncReader::Stop() confirmed." );
         }
     }
 }
@@ -1672,7 +1680,10 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
                           "%s", osErrorMsg.c_str() );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "Working thread failed without complete data." );
+                          "Working thread failed without complete data. (%d,%d,%d)",
+                          bHighPriority, 
+                          poJDS->bHighThreadRunning,
+                          poJDS->bHighThreadFinished );
             return GARIO_ERROR;
         }
 
@@ -1923,6 +1934,7 @@ static void JPIPWorkerFunc(void *req)
 
     CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
 
+    CPLDebug( "JPIPKAK", "working thread starting." );
     // set the running status
     if (bPriority)
     {
@@ -2004,6 +2016,8 @@ static void JPIPWorkerFunc(void *req)
     }
 
     CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
+
+    CPLDebug( "JPIPKAK", "Worker shutting down." );
 
     if (bPriority)
     {
