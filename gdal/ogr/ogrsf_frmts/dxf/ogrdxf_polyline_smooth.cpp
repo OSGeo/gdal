@@ -345,7 +345,7 @@ bool DXFSmoothPolyline::HasConstantZ(double& dfZ) const
 
     const double d = m_vertices[0].z;
 
-    for(int i = 1; i < m_vertices.size(); i++)
+    for(size_t i = 1; i < m_vertices.size(); i++)
     {
         if(m_vertices[i].bulge != 0.0)
         {

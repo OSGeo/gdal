@@ -777,7 +777,7 @@ long VFKDataBlock::LoadGeometry()
 	bool bIsPar, bNewRing, bFound;
 	
 	int id, idOb;
-	int idxId, idxPar1, idxPar2, idxBud, idxOb, idxIdOb;
+	int idxId, idxPar1 = 0, idxPar2 = 0, idxBud = 0, idxOb = 0, idxIdOb = 0;
 
 	VFKDataBlock *poDataBlockLines1, *poDataBlockLines2;
 	
