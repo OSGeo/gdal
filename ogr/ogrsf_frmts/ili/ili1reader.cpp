@@ -515,7 +515,7 @@ int ILI1Reader::ReadTable(const char *layername) {
     int ret = TRUE;
     int warned = FALSE;
     int fIndex;
-    int geomIdx;
+    int geomIdx = 0;
 
     // curLayer is NULL if we have more than one
     // point geometry column
