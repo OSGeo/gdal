@@ -319,14 +319,14 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
         char* geomlayername = '\0';
         OGRILI1Layer* layer = NULL;
 
-        for(int i=0; i<attributes.size(); i++) {
+        for(size_t i=0; i<attributes.size(); i++) {
           IOM_OBJECT obj = attributes.at(i);
           const char* typenam = GetTypeName(model, obj);
           if (EQUAL(typenam, "iom04.metamodel.CoordType")  || EQUAL(typenam, "iom04.metamodel.AreaType")) {
             feature = OGRFeature::CreateFeature(metaLayer->GetLayerDefn());
             feature->SetFID(j+1);
             feature->SetField("layername", layername);
-            feature->SetField("geomIdx", i);
+            feature->SetField("geomIdx", (int)i);
 
             if(multiple > 0) {
               geomlayername = GetPointLayerName(layername, iom_getattrvalue(obj, "name"));
@@ -351,7 +351,7 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
         OGRFieldDefn fieldDef("_TID", OFTString);
         layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
 
-        for(int i=0; i<attributes.size(); i++) {
+        for(size_t i=0; i<attributes.size(); i++) {
           IOM_OBJECT obj = attributes.at(i);
           AddField(layer, model, obj);
         }
