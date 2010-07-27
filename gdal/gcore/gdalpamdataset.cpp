@@ -996,7 +996,10 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
     PamInitialize();
     if( psPam == NULL )
-        return CE_None;
+        return GDALDataset::IBuildOverviews( pszResampling,
+                                             nOverviews, panOverviewList,
+                                             nListBands, panBandList,
+                                             pfnProgress, pProgressData );
 
 /* -------------------------------------------------------------------- */
 /*      If we appear to have subdatasets and to have a physical         */
