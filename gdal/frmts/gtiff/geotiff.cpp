@@ -185,6 +185,8 @@ class GTiffDataset : public GDALPamDataset
     int           bTreatAsSplit;
     int           bTreatAsSplitBitmap;
 
+    int           bDontReloadFirstBlock; /* Hack for libtiff 3.X and #3633 */
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -2395,6 +2397,7 @@ GTiffDataset::GTiffDataset()
     nLastBandRead = -1;
     bTreatAsSplit = FALSE;
     bTreatAsSplitBitmap = FALSE;
+    bDontReloadFirstBlock = FALSE;
 }
 
 /************************************************************************/
@@ -2726,6 +2729,17 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, int bReadFromDisk )
 /* -------------------------------------------------------------------- */
     if( !bReadFromDisk )
     {
+        nLoadedBlock = nBlockId;
+        return CE_None;
+    }
+
+    /* libtiff 3.X doesn't like mixing read&write of JPEG compressed blocks */
+    /* The below hack is necessary due to another hack that consist in */
+    /* writing zero block to force creation of JPEG tables */
+    if( nBlockId == 0 && bDontReloadFirstBlock )
+    {
+        bDontReloadFirstBlock = FALSE;
+        memset( pabyBlockBuf, 0, nBlockBufSize );
         nLoadedBlock = nBlockId;
         return CE_None;
     }
@@ -6702,7 +6716,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      imagery to force the jpegtables to get created.  This is,       */
 /*      likely only needed with libtiff 3.9.x.                          */
 /* -------------------------------------------------------------------- */
-    if( nCompression == COMPRESSION_JPEG 
+    int bDontReloadFirstBlock = FALSE;
+    if( nCompression == COMPRESSION_JPEG
         && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != NULL )
     {
         CPLDebug( "GDAL", 
@@ -6721,6 +6736,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             TIFFWriteEncodedStrip(hTIFF, 0, pabyZeros, cc);
             CPLFree( pabyZeros );
         }
+        bDontReloadFirstBlock = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -6761,6 +6777,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->osProfile = pszProfile;
     poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
     poDS->papszCreationOptions = CSLDuplicate( papszOptions );
+    poDS->bDontReloadFirstBlock = bDontReloadFirstBlock;
 
 /* -------------------------------------------------------------------- */
 /*      CloneInfo() doesn't merge metadata, it just replaces it totally */
