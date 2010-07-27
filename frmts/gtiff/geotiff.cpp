@@ -3209,21 +3209,25 @@ void GTiffDataset::FlushDirectory()
     // case we should not risk a flush. 
     if( TIFFCurrentDirOffset(hTIFF) == nDirOffset )
     {
-#if defined(HAVE_TIFFGETSIZEPROC)
+#if defined(BIGTIFF_SUPPORT)
         TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
 
         toff_t nNewDirOffset = pfnSizeProc( TIFFClientdata( hTIFF ) );
         if( (nNewDirOffset % 2) == 1 )
             nNewDirOffset++;
-#endif
+
         TIFFFlush( hTIFF );
-#if defined(HAVE_TIFFGETSIZEPROC)
+
         if( nDirOffset != TIFFCurrentDirOffset( hTIFF ) )
         {
             nDirOffset = nNewDirOffset;
             CPLDebug( "GTiff", 
                       "directory moved during flush in FlushDirectory()" );
         }
+#else
+        /* For libtiff 3.X, the above causes regressions and crashes in */
+        /* tiff_write.py and tiff_ovr.py */
+        TIFFFlush( hTIFF );
 #endif
     }
 }
