@@ -72,6 +72,7 @@ class WKTRasterDataset : public GDALDataset {
     GBool bCloseConnection;
     GBool bTableHasGISTIndex;
     GBool bTableHasRegularBlocking;
+    CPLString osProjection;
     char * pszSchemaName;
     char * pszTableName;
     char * pszRasterColumnName;

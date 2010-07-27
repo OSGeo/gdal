@@ -997,8 +997,6 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     GDALDataType hDataType = GDT_Byte;
     double dfNoDataValue = 0.0;
     int nCountNoDataValues = 0;
-    char ** papszTokenizedStr = NULL;
-    const char * pszTmp;
 
 
     /********************************************************
@@ -1556,23 +1554,6 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
  *            fetched.
  */
 CPLErr WKTRasterDataset::GetGeoTransform(double * padfTransform) {
-    // checking input parameters
-    // NOT NEEDED (Is illegal to call GetGeoTransform with a NULL
-    // argument. Thanks to Even Rouault)
-    /*
-    if (padfTransform == NULL)
-    {
-            // default matrix
-            padfTransform[0] = 0.0;
-            padfTransform[1] = 1.0;
-            padfTransform[2] = 0.0;
-            padfTransform[3] = 0.0;
-            padfTransform[4] = 0.0;
-            padfTransform[5] = 1.0;
-
-            return CE_Failure;
-    }
-     */
 
     // copy necessary values in supplied buffer
     padfTransform[0] = dfUpperLeftX;
@@ -1599,7 +1580,6 @@ CPLErr WKTRasterDataset::GetGeoTransform(double * padfTransform) {
 const char * WKTRasterDataset::GetProjectionRef() {
     CPLString osCommand;
     PGresult * hResult;
-    char * pszProjection;
 
     if (nSrid == -1) {
         return "";
@@ -1616,13 +1596,13 @@ const char * WKTRasterDataset::GetProjectionRef() {
     if (hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
             && PQntuples(hResult) > 0) 
     {
-        pszProjection = CPLStrdup(PQgetvalue(hResult, 0, 0));
+        osProjection = PQgetvalue(hResult, 0, 0);
     }
 
     if (hResult)
         PQclear(hResult);
 
-    return pszProjection;
+    return osProjection.c_str();
 }
 
 /**
