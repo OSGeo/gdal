@@ -195,6 +195,30 @@ def pam_6():
     return 'success'
 
 ###############################################################################
+# Verify we can create overviews on PNG with PAM disabled (#3693)
+#
+def pam_7():
+
+    gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'NO' )
+
+    shutil.copyfile( 'data/stefan_full_rgba.png', 'tmp/stefan_full_rgba.png' )
+    ds = gdal.Open('tmp/stefan_full_rgba.png')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    ds = gdal.Open('tmp/stefan_full_rgba.png')
+    ovr_count = ds.GetRasterBand(1).GetOverviewCount()
+    ds = None
+
+    os.remove( 'tmp/stefan_full_rgba.png' )
+    os.remove( 'tmp/stefan_full_rgba.png.ovr' )
+
+    if ovr_count != 1:
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Cleanup.
 
 def pam_cleanup():
@@ -212,6 +236,7 @@ gdaltest_list = [
     pam_4,
     pam_5,
     pam_6,
+    pam_7,
     pam_cleanup ]
 
 if __name__ == '__main__':
