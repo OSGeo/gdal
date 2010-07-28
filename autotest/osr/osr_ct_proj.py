@@ -74,6 +74,7 @@ class ProjTest:
         try:
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             ct = osr.CoordinateTransformation( src, dst )
+            gdal.PopErrorHandler()
         except ValueError:
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
