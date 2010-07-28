@@ -333,11 +333,10 @@ OGRLayer *OGRDataSource::CopyLayer( OGRLayer *poSrcLayer,
       int i, bStopTransfer = FALSE, bStopTransaction = FALSE;
       int nFeatCount = 0; // Number of features in the temporary array
       int nFeaturesToAdd = 0;
+      OGRFeature **papoDstFeature =
+          (OGRFeature **)CPLCalloc(sizeof(OGRFeature *), nGroupTransactions);
       while( !bStopTransfer )
       {
-        OGRFeature **papoDstFeature =
-            (OGRFeature **)CPLCalloc(sizeof(OGRFeature *), nGroupTransactions);
-
 /* -------------------------------------------------------------------- */
 /*      Fill the array with features                                    */
 /* -------------------------------------------------------------------- */
@@ -395,6 +394,7 @@ OGRLayer *OGRDataSource::CopyLayer( OGRLayer *poSrcLayer,
         for( i = 0; i < nFeatCount; i++ )
             OGRFeature::DestroyFeature( papoDstFeature[i] );
       }
+      CPLFree(papoDstFeature);
     }
     return poDstLayer;
 }
