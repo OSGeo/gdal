@@ -536,17 +536,6 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     char *pszPtemp;
     char *pszGCPtemp;
 
-    /* clear old gcps, initialize new list */
- 
-    if( nGCPCount > 0 )
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
-        pasGCPList = NULL;
-    }
-    nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),5);
-
     /* Projection parameter checking will have been done */
     /* in SetProjection.                                 */
     if(( CSLFetchNameValue( papszGeoref, "projection.name" ) != NULL ) &&
@@ -572,6 +561,10 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     {
       return CE_Failure;
     }
+
+    nGCPCount = 0;
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),5);
+
     /* -------------------------------------------------------------------- */
     /*      top left                                                        */
     /* -------------------------------------------------------------------- */
@@ -1068,6 +1061,12 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
                           GetRasterXSize()-0.5, GetRasterYSize()-0.5 );
         ProcessGeorefGCP( papszGeoref, "centre", 
                           GetRasterXSize()/2.0, GetRasterYSize()/2.0 );
+    }
+
+    if (nGCPCount == 0)
+    {
+        CPLFree(pasGCPList);
+        pasGCPList = NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1600,6 +1599,9 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
         return NULL;
     }
 
+    CPLFree( pszBaseDir );
+    pszBaseDir = NULL;
+
     if( VSIMkdir( pszFilenameIn, 0755 ) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1607,8 +1609,6 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
                   pszFilenameIn );
         return NULL;
     }
-
-    CPLFree( pszBaseDir );
 
 /* -------------------------------------------------------------------- */
 /*      Create the header file.                                         */
