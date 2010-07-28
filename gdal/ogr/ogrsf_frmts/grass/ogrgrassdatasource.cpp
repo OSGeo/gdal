@@ -71,10 +71,10 @@ OGRGRASSDataSource::~OGRGRASSDataSource()
     
     if ( pszName ) CPLFree( pszName );
     if ( papoLayers ) CPLFree( papoLayers );
-    if ( pszGisdbase ) CPLFree( pszGisdbase );
-    if ( pszLocation ) CPLFree( pszLocation );
-    if ( pszMapset ) CPLFree( pszMapset );
-    if ( pszMap ) CPLFree( pszMap );
+    if ( pszGisdbase ) G_free( pszGisdbase );
+    if ( pszLocation ) G_free( pszLocation );
+    if ( pszMapset ) G_free( pszMapset );
+    if ( pszMap ) G_free( pszMap );
     
     if (bOpened)
         Vect_close(&map);

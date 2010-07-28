@@ -212,7 +212,7 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
 	if ( srsWkt ) 
 	{
 	    poSRS = new OGRSpatialReference ( srsWkt );
-	    CPLFree ( srsWkt );
+	    G_free ( srsWkt );
 	}
 
         G_free_key_value(projinfo);
@@ -245,7 +245,7 @@ OGRGRASSLayer::~OGRGRASSLayer()
     
     if ( paFeatureIndex ) CPLFree ( paFeatureIndex );
     
-    if ( poLink ) CPLFree ( poLink );
+    if ( poLink ) G_free ( poLink );
     
     Vect_destroy_line_struct ( poPoints );
     Vect_destroy_cats_struct ( poCats );
@@ -640,7 +640,11 @@ bool OGRGRASSLayer::SetSpatialMatch()
 	
 	Vect_cidx_get_cat_by_index ( poMap, iLayerIndex, cidx, &cat, &type, &id );
 
+#if GRASS_VERSION_MAJOR  >= 7
+    struct bound_box box;
+#else
 	BOUND_BOX box;
+#endif
 
 	switch ( type ) 
 	{
@@ -781,7 +785,7 @@ OGRFeature *OGRGRASSLayer::GetNextFeature()
 OGRFeature *OGRGRASSLayer::GetFeature( long nFeatureId )
 
 {
-    CPLDebug ( "GRASS", "OGRGRASSLayer::GetFeature nFeatureId = %d", nFeatureId );
+    CPLDebug ( "GRASS", "OGRGRASSLayer::GetFeature nFeatureId = %ld", nFeatureId );
 
     int cat;
     OGRFeature *poFeature = NULL;
@@ -857,7 +861,7 @@ OGRFeature *OGRGRASSLayer::GetFeature( long nFeatureId )
 /************************************************************************/
 OGRGeometry *OGRGRASSLayer::GetFeatureGeometry ( long nFeatureId, int *cat )
 {
-    CPLDebug ( "GRASS", "OGRGRASSLayer::GetFeatureGeometry nFeatureId = %d", nFeatureId );
+    CPLDebug ( "GRASS", "OGRGRASSLayer::GetFeatureGeometry nFeatureId = %ld", nFeatureId );
 
     int cidx = paFeatureIndex[(int)nFeatureId];
 
@@ -1027,7 +1031,11 @@ int OGRGRASSLayer::GetFeatureCount( int bForce )
 /************************************************************************/
 OGRErr OGRGRASSLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 {
+#if GRASS_VERSION_MAJOR  >= 7
+    struct bound_box box;
+#else
     BOUND_BOX box;
+#endif
 
     Vect_get_map_box ( poMap, &box );
 
