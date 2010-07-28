@@ -694,6 +694,9 @@ def ogr_mysql_23():
 #            print feat.GetFieldDefnRef( feat.GetFieldIndex(fields[i]) ).GetPrecision()
             return 'fail'
 
+    gdaltest.mysql_ds.ReleaseResultSet(gdaltest.mysql_lyr)
+    gdaltest.mysql_lyr = None
+
     return 'success'
 
 ###############################################################################
