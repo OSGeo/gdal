@@ -132,9 +132,9 @@ if test "$with_grass" != "yes" ; then
   else
 
     # Check for GRASS >= 7.0
-    AC_CHECK_LIB(grass_gis,G_putenv,GRASS_SETTING=grass7+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm)
-    if test "$GRASS_SETTING" = "grass7+" ; then   
-        LIBS="-L$with_grass/lib -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
+    AC_CHECK_LIB(grass_gis.7.0.svn,G_putenv,GRASS_SETTING=grass7+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_raster.7.0.svn -lgrass_gmath.7.0.svn -lgrass_gis.7.0.svn -lgrass_datetime.7.0.svn -lgrass_gproj.7.0.svn -lgrass_vector.7.0.svn -lgrass_dbmibase.7.0.svn -lgrass_dbmiclient.7.0.svn -lgrass_dgl.7.0.svn -lgrass_dig2.7.0.svn -lgrass_rtree.7.0.svn -lgrass_linkm.7.0.svn -lgrass_btree2.7.0.svn -lgrass_ccmath.7.0.svn)
+    if test "$GRASS_SETTING" = "grass7+" ; then
+        LIBS="-L$with_grass/lib -lgrass_raster.7.0.svn -lgrass_gmath.7.0.svn -lgrass_gis.7.0.svn -lgrass_datetime.7.0.svn -lgrass_gproj.7.0.svn -lgrass_vector.7.0.svn -lgrass_dbmibase.7.0.svn -lgrass_dbmiclient.7.0.svn -lgrass_dgl.7.0.svn -lgrass_dig2.7.0.svn -lgrass_rtree.7.0.svn -lgrass_linkm.7.0.svn -lgrass_btree2.7.0.svn -lgrass_ccmath.7.0.svn $LIBS"
         GRASS_INCLUDE="-I$with_grass/include"
         GRASS_GISBASE="$with_grass"
     else
