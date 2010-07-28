@@ -287,7 +287,11 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
     pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoint,
                                  &nPointCount );
     if( pszInput == NULL )
+    {
+        OGRFree( paoPoints );
+        OGRFree( padfZ );
         return OGRERR_CORRUPT_DATA;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Transform raw points into point objects.                        */
@@ -378,7 +382,11 @@ OGRErr OGRMultiPoint::importFromWkt_Bracketed( char ** ppszInput, int bHasM, int
                                      &nPointCount );
 
         if( pszInput == NULL || nPointCount != 1 )
+        {
+            OGRFree( paoPoints );
+            OGRFree( padfZ );
             return OGRERR_CORRUPT_DATA;
+        }
 
         /* Ignore Z array when we have a MULTIPOINT M */
         if( padfZ && !(bHasM && !bHasZ))
