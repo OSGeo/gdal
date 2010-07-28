@@ -111,6 +111,7 @@ class MetaCRSTest:
         try:
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             ct = osr.CoordinateTransformation( self.src_srs, self.dst_srs )
+            gdal.PopErrorHandler()
         except ValueError:
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
