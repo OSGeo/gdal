@@ -413,7 +413,11 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     pszInput = OGRWktReadPoints( pszInput, &poPoints, &padfZ,
                                  &nMaxPoint, &nPoints );
     if( pszInput == NULL || nPoints != 1 )
+    {
+        CPLFree( poPoints );
+        CPLFree( padfZ );
         return OGRERR_CORRUPT_DATA;
+    }
 
     x = poPoints[0].x;
     y = poPoints[0].y;
