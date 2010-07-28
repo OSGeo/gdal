@@ -169,7 +169,6 @@ def ogr_pg_2():
     dst_feat = ogr.Feature( feature_def = gdaltest.pg_lyr.GetLayerDefn() )
 
     shp_ds = ogr.Open( 'data/poly.shp' )
-    gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
     
     feat = shp_lyr.GetNextFeature()
@@ -228,7 +227,6 @@ def ogr_pg_3():
         orig_feat.Destroy()
 
     gdaltest.poly_feat = None
-    gdaltest.shp_ds.Destroy()
 
     if tr:
         return 'success'
@@ -544,7 +542,6 @@ def ogr_pg_11():
     dst_feat = ogr.Feature( feature_def = gdaltest.pgc_lyr.GetLayerDefn() )
 
     shp_ds = ogr.Open( 'data/poly.shp' )
-    gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
     
     feat = shp_lyr.GetNextFeature()
@@ -592,8 +589,6 @@ def ogr_pg_12():
         orig_feat.Destroy()
 
     gdaltest.poly_feat = None
-    gdaltest.shp_ds.Destroy()
-    gdaltest.shp_ds = None
 
     return 'success'
 
@@ -991,7 +986,6 @@ def ogr_pg_22():
     dst_feat = ogr.Feature( feature_def = gdaltest.pg_lyr.GetLayerDefn() )
 
     shp_ds = ogr.Open( 'data/poly.shp' )
-    gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
     
     # Insert 3 features only
