@@ -37,7 +37,11 @@ extern "C" {
     #include <grass/gprojects.h>
     #include <grass/gis.h>
     #include <grass/dbmi.h>
+#if GRASS_VERSION_MAJOR  >= 7
+    #include <grass/vector.h>
+#else
     #include <grass/Vect.h>
+#endif
 }
 
 /************************************************************************/

@@ -3014,13 +3014,13 @@ fi
   else
 
     # Check for GRASS >= 7.0
-    echo "$as_me:$LINENO: checking for G_putenv in -lgrass_gis" >&5
-echo $ECHO_N "checking for G_putenv in -lgrass_gis... $ECHO_C" >&6
-if test "${ac_cv_lib_grass_gis_G_putenv+set}" = set; then
+    echo "$as_me:$LINENO: checking for G_putenv in -lgrass_gis.7.0.svn" >&5
+echo $ECHO_N "checking for G_putenv in -lgrass_gis.7.0.svn... $ECHO_C" >&6
+if test "${ac_cv_lib_grass_gis_7_0_svn_G_putenv+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgrass_gis -L$with_grass/lib -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
+LIBS="-lgrass_gis.7.0.svn -L$with_grass/lib -lgrass_raster.7.0.svn -lgrass_gmath.7.0.svn -lgrass_gis.7.0.svn -lgrass_datetime.7.0.svn -lgrass_gproj.7.0.svn -lgrass_vector.7.0.svn -lgrass_dbmibase.7.0.svn -lgrass_dbmiclient.7.0.svn -lgrass_dgl.7.0.svn -lgrass_dig2.7.0.svn -lgrass_rtree.7.0.svn -lgrass_linkm.7.0.svn -lgrass_btree2.7.0.svn -lgrass_ccmath.7.0.svn $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -3065,27 +3065,27 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_grass_gis_G_putenv=yes
+  ac_cv_lib_grass_gis_7_0_svn_G_putenv=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_grass_gis_G_putenv=no
+ac_cv_lib_grass_gis_7_0_svn_G_putenv=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_grass_gis_G_putenv" >&5
-echo "${ECHO_T}$ac_cv_lib_grass_gis_G_putenv" >&6
-if test $ac_cv_lib_grass_gis_G_putenv = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_grass_gis_7_0_svn_G_putenv" >&5
+echo "${ECHO_T}$ac_cv_lib_grass_gis_7_0_svn_G_putenv" >&6
+if test $ac_cv_lib_grass_gis_7_0_svn_G_putenv = yes; then
   GRASS_SETTING=grass7+
 else
   GRASS_SETTING=no
 fi
 
     if test "$GRASS_SETTING" = "grass7+" ; then
-        LIBS="-L$with_grass/lib -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
+        LIBS="-L$with_grass/lib -lgrass_raster.7.0.svn -lgrass_gmath.7.0.svn -lgrass_gis.7.0.svn -lgrass_datetime.7.0.svn -lgrass_gproj.7.0.svn -lgrass_vector.7.0.svn -lgrass_dbmibase.7.0.svn -lgrass_dbmiclient.7.0.svn -lgrass_dgl.7.0.svn -lgrass_dig2.7.0.svn -lgrass_rtree.7.0.svn -lgrass_linkm.7.0.svn -lgrass_btree2.7.0.svn -lgrass_ccmath.7.0.svn $LIBS"
         GRASS_INCLUDE="-I$with_grass/include"
         GRASS_GISBASE="$with_grass"
     else
