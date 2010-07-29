@@ -1779,8 +1779,8 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                                    OFTString);
 #endif
         poFieldDefn->SetWidth(19);
-        break;
         m_nVersion = MAX(m_nVersion, 900);
+        break;
       case TABFLogical:
         /*-------------------------------------------------
          * LOGICAL type (value "T" or "F")
