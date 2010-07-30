@@ -4,7 +4,7 @@ Delimiter ","
 CoordSys Nonearth Units "M" Bounds (406547, 153897) (407967, 155532)
 Columns 7
   NAME Char (50)
-  BLOCK Integer
+  DATA Integer
   OWNER Char (64)
   APPRAISED_VALUE Float
   TAXES Float
