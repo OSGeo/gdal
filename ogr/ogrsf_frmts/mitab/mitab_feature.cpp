@@ -8356,11 +8356,20 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
         {
             break;
         }
+        else
+        {
+            delete poStylePart;
+            poStylePart = NULL;
+        }
     }
 
     // If the no Pen found, do nothing.
     if(i >= numParts)
+    {
+        delete poStylePart;
+        delete poStyleMgr;
         return;
+    }
 
     OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
 
@@ -8603,11 +8612,20 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
         {
             break;
         }
+        else
+        {
+            delete poStylePart;
+            poStylePart = NULL;
+        }
     }
 
     // If the no Brush found, do nothing.
     if(i >= numParts)
+    {
+        delete poStylePart;
+        delete poStyleMgr;
         return;
+    }
 
     OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
 
@@ -8865,11 +8883,20 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
         {
             break;
         }
+        else
+        {
+            delete poStylePart;
+            poStylePart = NULL;
+        }
     }
 
     // If the no Symbol found, do nothing.
     if(i >= numParts)
+    {
+        delete poStylePart;
+        delete poStyleMgr;
         return;
+    }
 
     OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
 
