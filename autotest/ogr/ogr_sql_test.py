@@ -380,21 +380,21 @@ def ogr_sql_17():
         
     fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(1)
 
-    if fld_def.GetName() != 'block':
-        gdaltest.post_reason( 'got wrong block field name' )
+    if fld_def.GetName() != 'data':
+        gdaltest.post_reason( 'got wrong data field name' )
         print(fld_def.GetName())
         return 'fail'
 
     if fld_def.GetType() != ogr.OFTReal:
-        gdaltest.post_reason( 'got wrong block field type' )
+        gdaltest.post_reason( 'got wrong data field type' )
         print(fld_def.GetType())
         
     if fld_def.GetWidth() != 7:
-        gdaltest.post_reason( 'got wrong block field width' )
+        gdaltest.post_reason( 'got wrong data field width' )
         print(fld_def.GetWidth())
         
     if fld_def.GetPrecision() != 3:
-        gdaltest.post_reason( 'got wrong block field precision' )
+        gdaltest.post_reason( 'got wrong data field precision' )
         print(fld_def.GetPrecision())
         
     tr = ogrtest.check_features_against_list( sql_lyr, 'fid', expect )
