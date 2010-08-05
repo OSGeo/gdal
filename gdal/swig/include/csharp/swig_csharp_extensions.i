@@ -9,6 +9,12 @@
  *
 */
 
+// Ensure the class is not marked BeforeFieldInit causing memory corruption with CLR4 
+%pragma(csharp) imclasscode=%{
+  static $imclassname() {
+  }
+%}
+
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE {
     $&csclassname ret = new $&csclassname($imcall, true, null);$excode
     return ret;
