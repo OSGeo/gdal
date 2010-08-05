@@ -670,7 +670,7 @@ OGRStyleTool *OGRStyleMgr::GetPart(int nPartId,
 
     pszString = CSLGetField( papszStyleString, nPartId );
     
-    if ( pszString || strlen(pszString) > 0 )
+    if ( strlen(pszString) > 0 )
     {
         poStyleTool = CreateStyleToolFromStyleString(pszString);
         if ( poStyleTool )
