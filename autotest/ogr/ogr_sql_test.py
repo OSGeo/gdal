@@ -361,7 +361,7 @@ def ogr_sql_17():
     expect = [ '1', '2' ]
 
     ds = ogr.Open( 'data/small.mif' )
-    sql_lyr = ds.ExecuteSQL( "select CAST(fid as CHARACTER(10)), CAST(block as numeric(7,3)) from small" )
+    sql_lyr = ds.ExecuteSQL( "select CAST(fid as CHARACTER(10)), CAST(data as numeric(7,3)) from small" )
 
     fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(0)
 
