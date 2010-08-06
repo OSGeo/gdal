@@ -27,6 +27,13 @@ limited.  Additional sample .prj files may be sent to the maintainer,
 <p>The NODATA value for the grid read is also preserved when available.
 </p>
 
+<p>By default, the datatype returned for AAIGRID datasets by GDAL is autodetected,
+and set to Float32 for grid with floating point values or Int32 otherwise. This is
+done by analysing the format of the NODATA value and the first 100k bytes of data of the
+grid. From GDAL 1.8.0, you can explictely specify the datatype by setting the
+AAIGRID_DATATYPE configuration option (Int32, Float32 and Float64 values are
+supported currently)</p>
+
 <p>If pixels being written are not square (the width and height of a pixel in
 georeferenced units differ) then DX and DY parameters will be output instead
 of CELLSIZE.  Such files can be used in Golden Surfer, but not most other
