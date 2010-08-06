@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR PGEO driver.
