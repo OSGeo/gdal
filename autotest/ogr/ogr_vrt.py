@@ -888,6 +888,26 @@ def ogr_vrt_18():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+def ogr_vrt_19():
+
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_vrt.vrt')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -919,6 +939,7 @@ gdaltest_list = [
     ogr_vrt_16,
     ogr_vrt_17,
     ogr_vrt_18,
+    ogr_vrt_19,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
