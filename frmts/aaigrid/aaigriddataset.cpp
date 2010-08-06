@@ -221,7 +221,9 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         if( pImage != NULL )
         {
-            if( eDataType == GDT_Float32 )
+            if( eDataType == GDT_Float64 )
+                ((double *) pImage)[iPixel] = CPLAtofM(szToken);
+            else if( eDataType == GDT_Float32 )
                 ((float *) pImage)[iPixel] = (float) CPLAtofM(szToken);
             else
                 ((GInt32 *) pImage)[iPixel] = (GInt32) atoi(szToken);
@@ -250,6 +252,7 @@ double AAIGRasterBand::GetNoDataValue( int * pbSuccess )
 
     return poODS->dfNoDataValue;
 }
+
 
 /************************************************************************/
 /*                           SetNoDataValue()                           */
@@ -387,6 +390,20 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     /* Default data type */
     GDALDataType eDataType = GDT_Int32;
 
+    const char* pszDataType = CPLGetConfigOption("AAIGRID_DATATYPE", NULL);
+    if (pszDataType != NULL)
+    {
+        eDataType = GDALGetDataTypeByName(pszDataType);
+        if (!(eDataType == GDT_Int32 || eDataType == GDT_Float32 ||
+              eDataType == GDT_Float64))
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Unsupported value for AAIGRID_DATATYPE : %s", pszDataType);
+            eDataType = GDT_Int32;
+            pszDataType = NULL;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Does this look like an AI grid file?                            */
 /* -------------------------------------------------------------------- */
@@ -514,11 +531,15 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->bNoDataSet = TRUE;
         poDS->dfNoDataValue = CPLAtofM(pszNoData);
-        if( strchr( pszNoData, '.' ) != NULL ||
-            strchr( pszNoData, ',' ) != NULL ||
-            INT_MIN > poDS->dfNoDataValue || poDS->dfNoDataValue > INT_MAX )
+        if( pszDataType == NULL &&
+            (strchr( pszNoData, '.' ) != NULL ||
+             strchr( pszNoData, ',' ) != NULL ||
+             INT_MIN > poDS->dfNoDataValue || poDS->dfNoDataValue > INT_MAX) )
         {
             eDataType = GDT_Float32;
+        }
+        if( eDataType == GDT_Float32 )
+        {
             poDS->dfNoDataValue = (double) (float) poDS->dfNoDataValue;
         }
     }
@@ -576,7 +597,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CPLAssert( NULL != poDS->fp );
 
-    if( eDataType != GDT_Float32)
+    if( pszDataType == NULL && eDataType != GDT_Float32)
     {
         /* Allocate 100K chunk + 1 extra byte for NULL character. */
         const size_t nChunkSize = 1024 * 100;
