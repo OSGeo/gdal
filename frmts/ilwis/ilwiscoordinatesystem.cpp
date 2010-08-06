@@ -352,12 +352,11 @@ static int mapTMParms(string sProj, double dfZone, double &dfFalseEasting, doubl
  * Compute the scale factor from Latitude_Of_True_Scale parameter.
  *
 **/
-static int scaleFromLATTS( string sEllips, double phits, double &scale )  
+static void scaleFromLATTS( string sEllips, double phits, double &scale )
 {
     if( EQUALN( sEllips.c_str(), "Sphere", 6 ) ) 
     {
         scale = cos(phits);
-        return true;
     }
     else
     {
@@ -375,9 +374,7 @@ static int scaleFromLATTS( string sEllips, double phits, double &scale )
             piwEllips++;
         }
         scale = cos(phits) / sqrt (1. - e2 * sin(phits) * sin(phits));
-        return true;
     }
-    return false;
 }
 
 /************************************************************************/
