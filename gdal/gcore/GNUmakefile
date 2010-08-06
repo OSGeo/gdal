@@ -23,7 +23,7 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 $(OBJ):	gdal_priv.h
 
 clean:
-	$(RM) *.o
+	$(RM) *.o $(O_OBJ)
 
 docs:	
 	(cd ..; $(MAKE) docs)

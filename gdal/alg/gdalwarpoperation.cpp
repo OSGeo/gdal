@@ -1311,10 +1311,16 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
                                     psOptions->nBandCount, 
                                     psOptions->panDstBands,
                                     0, 0, 0 );
-        if( CSLFetchBoolean( psOptions->papszWarpOptions, "WRITE_FLUSH", 
+        if( eErr == CE_None &&
+            CSLFetchBoolean( psOptions->papszWarpOptions, "WRITE_FLUSH",
                              FALSE ) )					
         {
+            CPLErr eOldErr = CPLGetLastErrorType();
+            CPLString osLastErrMsg = CPLGetLastErrorMsg();
             GDALFlushCache( psOptions->hDstDS );
+            CPLErr eNewErr = CPLGetLastErrorType();
+            if (eNewErr != eOldErr || osLastErrMsg.compare(CPLGetLastErrorMsg()) != 0)
+                eErr = CE_Failure;
         }
         ReportTiming( "Output buffer write" );
     }
