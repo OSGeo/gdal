@@ -303,7 +303,7 @@ OGRErr OGRPGeoTableLayer::SetAttributeFilter( const char *pszQuery )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = CPLStrdup( pszQuery );
+    this->pszQuery = pszQuery ? CPLStrdup( pszQuery ) : NULL; 
 
     ClearStatement();
 
