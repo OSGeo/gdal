@@ -43,6 +43,8 @@ import ogrtest
 
 def ogr_pgeo_1():
 
+    ogrtest.pgeo_ds = None
+
     try:
         drv = ogr.GetDriverByName('PGEO')
     except:
