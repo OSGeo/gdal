@@ -651,7 +651,7 @@ end:
 /*                         TestSpatialFilter()                          */
 /*                                                                      */
 /*      This is intended to be a simple test of the spatial             */
-/*      filting.  We read the first feature.  Then construct a          */
+/*      filtering.  We read the first feature.  Then construct a        */
 /*      spatial filter geometry which includes it, install and          */
 /*      verify that we get the feature.  Next install a spatial         */
 /*      filter that doesn't include this feature, and test again.       */
@@ -789,6 +789,162 @@ static int TestSpatialFilter( OGRLayer *poLayer )
 
 
 /************************************************************************/
+/*                      TestAttributeFilter()                           */
+/*                                                                      */
+/*      This is intended to be a simple test of the attribute           */
+/*      filtering.  We read the first feature.  Then construct a        */
+/*      attribute filter which includes it, install and                 */
+/*      verify that we get the feature.  Next install a attribute       */
+/*      filter that doesn't include this feature, and test again.       */
+/************************************************************************/
+
+static int TestAttributeFilter( OGRLayer *poLayer )
+
+{
+    int bRet = TRUE;
+    OGRFeature  *poFeature, *poTargetFeature;
+    int         nInclusiveCount, nExclusiveCount, nTotalCount;
+    CPLString osAttributeFilter;
+
+/* -------------------------------------------------------------------- */
+/*      Read the target feature.                                        */
+/* -------------------------------------------------------------------- */
+    poLayer->ResetReading();
+    poTargetFeature = poLayer->GetNextFeature();
+
+    if( poTargetFeature == NULL )
+    {
+        printf( "INFO: Skipping Attribute Filter test for %s.\n"
+                "      No features in layer.\n",
+                poLayer->GetLayerDefn()->GetName() );
+        return bRet;
+    }
+
+    int i;
+    for(i=0;i<poTargetFeature->GetFieldCount();i++)
+    {
+        if (poTargetFeature->IsFieldSet(i))
+        {
+            break;
+        }
+    }
+    if( i == poTargetFeature->GetFieldCount() )
+    {
+        printf( "INFO: Skipping Attribute Filter test for %s.\n"
+                "      Could not find non NULL field.\n",
+                poLayer->GetLayerDefn()->GetName() );
+        OGRFeature::DestroyFeature(poTargetFeature);
+        return bRet;
+    }
+
+    const char* pszFieldName = poTargetFeature->GetFieldDefnRef(i)->GetNameRef();
+    OGRFieldType eType = poTargetFeature->GetFieldDefnRef(i)->GetType();
+    CPLString osValue = poTargetFeature->GetFieldAsString(i);
+
+/* -------------------------------------------------------------------- */
+/*      Construct inclusive filter.                                     */
+/* -------------------------------------------------------------------- */
+
+    osAttributeFilter = pszFieldName;
+    osAttributeFilter += " = ";
+    if (eType == OFTString)
+        osAttributeFilter += "'";
+    osAttributeFilter += osValue;
+    if (eType == OFTString)
+        osAttributeFilter += "'";
+    poLayer->SetAttributeFilter( osAttributeFilter );
+
+/* -------------------------------------------------------------------- */
+/*      Verify that we can find the target feature.                     */
+/* -------------------------------------------------------------------- */
+    poLayer->ResetReading();
+
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        if( poFeature->Equal(poTargetFeature) )
+        {
+            OGRFeature::DestroyFeature(poFeature);
+            break;
+        }
+        else
+            OGRFeature::DestroyFeature(poFeature);
+    }
+
+    if( poFeature == NULL )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attribute filter eliminated a feature unexpectedly!\n");
+    }
+    else if( bVerbose )
+    {
+        printf( "INFO: Attribute filter inclusion seems to work.\n" );
+    }
+
+    nInclusiveCount = poLayer->GetFeatureCount();
+
+/* -------------------------------------------------------------------- */
+/*      Construct exclusive filter.                                     */
+/* -------------------------------------------------------------------- */
+    osAttributeFilter = pszFieldName;
+    osAttributeFilter += " != ";
+    if (eType == OFTString)
+        osAttributeFilter += "'";
+    osAttributeFilter += osValue;
+    if (eType == OFTString)
+        osAttributeFilter += "'";
+    poLayer->SetAttributeFilter( osAttributeFilter );
+
+/* -------------------------------------------------------------------- */
+/*      Verify that we can find the target feature.                     */
+/* -------------------------------------------------------------------- */
+    poLayer->ResetReading();
+
+    int nExclusiveCountWhileIterating = 0;
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        if( poFeature->Equal(poTargetFeature) )
+        {
+            OGRFeature::DestroyFeature(poFeature);
+            break;
+        }
+        else
+            OGRFeature::DestroyFeature(poFeature);
+        nExclusiveCountWhileIterating ++;
+    }
+
+    nExclusiveCount = poLayer->GetFeatureCount();
+
+    poLayer->SetAttributeFilter( NULL );
+
+    nTotalCount = poLayer->GetFeatureCount();
+
+    if( poFeature != NULL )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attribute filter failed to eliminate "
+                "a feature unexpectedly!\n");
+    }
+    else if( nExclusiveCountWhileIterating != nExclusiveCount ||
+             nExclusiveCount >= nTotalCount ||
+             nInclusiveCount > nTotalCount ||
+             (nInclusiveCount == nTotalCount && nExclusiveCount != 0))
+    {
+        bRet = FALSE;
+        printf( "ERROR: GetFeatureCount() may not be taking attribute "
+                "filter into account (nInclusiveCount = %d, nExclusiveCount = %d, nExclusiveCountWhileIterating = %d, nTotalCount = %d).\n",
+                 nInclusiveCount, nExclusiveCount, nExclusiveCountWhileIterating, nTotalCount);
+    }
+    else if( bVerbose )
+    {
+        printf( "INFO: Attribute filter exclusion seems to work.\n" );
+    }
+
+    OGRFeature::DestroyFeature(poTargetFeature);
+
+    return bRet;
+}
+
+/************************************************************************/
 /*                            TestOGRLayer()                            */
 /************************************************************************/
 
@@ -816,6 +972,11 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
 /*      Test spatial filtering                                          */
 /* -------------------------------------------------------------------- */
     bRet &= TestSpatialFilter( poLayer );
+
+/* -------------------------------------------------------------------- */
+/*      Test attribute filtering                                        */
+/* -------------------------------------------------------------------- */
+    bRet &= TestAttributeFilter( poLayer );
 
 /* -------------------------------------------------------------------- */
 /*      Test random reading.                                            */
