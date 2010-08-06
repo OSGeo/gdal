@@ -867,6 +867,8 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
 CPLErr GDALRasterBand::FlushCache()
 
 {
+    CPLErr eGlobalErr = CE_None;
+
     if (papoBlocks == NULL)
         return CE_None;
 
@@ -883,14 +885,14 @@ CPLErr GDALRasterBand::FlushCache()
                 {
                     CPLErr    eErr;
 
-                    eErr = FlushBlock( iX, iY );
+                    eErr = FlushBlock( iX, iY, eGlobalErr == CE_None );
 
                     if( eErr != CE_None )
-                        return eErr;
+                        eGlobalErr = eErr;
                 }
             }
         }
-        return CE_None;
+        return eGlobalErr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -919,9 +921,10 @@ CPLErr GDALRasterBand::FlushCache()
                         CPLErr eErr;
 
                         eErr = FlushBlock( iX + iSBX * SUBBLOCK_SIZE, 
-                                           iY + iSBY * SUBBLOCK_SIZE );
+                                           iY + iSBY * SUBBLOCK_SIZE,
+                                           eGlobalErr == CE_None );
                         if( eErr != CE_None )
-                            return eErr;
+                            eGlobalErr = eErr;
                     }
                 }
             }
@@ -933,7 +936,7 @@ CPLErr GDALRasterBand::FlushCache()
         }
     }
 
-    return( CE_None );
+    return( eGlobalErr );
 }
 
 /************************************************************************/
@@ -964,7 +967,7 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 /*      Protected method.                                               */
 /************************************************************************/
 
-CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
+CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDirtyBlock )
 
 {
     int             nBlockIndex;
@@ -1045,7 +1048,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
 
     poBlock->Detach();
 
-    if( poBlock->GetDirty() )
+    if( bWriteDirtyBlock && poBlock->GetDirty() )
         eErr = poBlock->Write();
 
 /* -------------------------------------------------------------------- */

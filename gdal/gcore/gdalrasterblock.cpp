@@ -388,6 +388,8 @@ GDALRasterBlock::~GDALRasterBlock()
 {
     Detach();
 
+    CPLDebug("BLOCK", "Free block %p. pData = %p. size = %d", this, pData, (nXSize * nYSize * GDALGetDataTypeSize(eType)+7)/8);
+
     if( pData != NULL )
     {
         int nSizeInBytes;
@@ -599,6 +601,8 @@ CPLErr GDALRasterBlock::Internalize()
         memcpy( pNewData, pData, nSizeInBytes );
     
     pData = pNewData;
+
+    CPLDebug("BLOCK", "Internalize block %p. pData = %p. size = %d", this, pData, (int)nSizeInBytes);
 
 /* -------------------------------------------------------------------- */
 /*      Flush old blocks if we are nearing our memory limit.            */
