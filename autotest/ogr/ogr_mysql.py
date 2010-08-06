@@ -683,14 +683,14 @@ def ogr_mysql_23():
     # Check the values and the precisions
     for i in range(4):
         if feat.GetFieldIndex(fields[i]) < 0:
-            print 'field not found'
+            print('field not found')
             return 'fail'
         if feat.GetField( feat.GetFieldIndex(fields[i]) ) != values[i]:
-            print 'value not right'
+            print('value not right')
 #            print feat.GetField( feat.GetFieldIndex(fields[i]) )
             return 'fail'
         if feat.GetFieldDefnRef( feat.GetFieldIndex(fields[i]) ).GetPrecision() != precision[i]:
-            print 'precision not right'
+            print('precision not right')
 #            print feat.GetFieldDefnRef( feat.GetFieldIndex(fields[i]) ).GetPrecision()
             return 'fail'
 

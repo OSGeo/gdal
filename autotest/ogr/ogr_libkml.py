@@ -82,7 +82,7 @@ def ogr_libkml_datastore():
 
     if ogrtest.kml_ds.GetLayerCount() != 10:
         gdaltest.post_reason( 'wrong number of layers' )
-        print ogrtest.kml_ds.GetLayerCount()
+        print(ogrtest.kml_ds.GetLayerCount())
         return 'fail'
 
     return 'success'
