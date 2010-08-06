@@ -30,6 +30,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "ogr_api.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
@@ -55,7 +56,15 @@ int main( int nArgc, char ** papszArgv )
 /*      Register format(s).                                             */
 /* -------------------------------------------------------------------- */
     OGRRegisterAll();
-    
+
+/* -------------------------------------------------------------------- */
+/*      Processing command line arguments.                              */
+/* -------------------------------------------------------------------- */
+    nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
+
+    if( nArgc < 1 )
+        exit( -nArgc );
+
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
@@ -205,6 +214,7 @@ int main( int nArgc, char ** papszArgv )
     OGRCleanupAll();
 
     CSLDestroy(papszLayers);
+    CSLDestroy(papszArgv);
     
 #ifdef DBMALLOC
     malloc_dump(1);
