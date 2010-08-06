@@ -169,6 +169,7 @@ class GTiffDataset : public GDALPamDataset
 
     CPLErr      LoadBlockBuf( int nBlockId, int bReadFromDisk = TRUE );
     CPLErr      FlushBlockBuf();
+    int         bWriteErrorInFlushBlockBuf;
 
     char	*pszProjection;
     int         bLookedForProjection;
@@ -869,6 +870,14 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 {
     int		nBlockId;
     CPLErr      eErr = CE_None;
+
+    if (poGDS->bWriteErrorInFlushBlockBuf)
+    {
+        /* Report as an error if a previously loaded block couldn't be */
+        /* written correctly */
+        poGDS->bWriteErrorInFlushBlockBuf = FALSE;
+        return CE_Failure;
+    }
 
     if (!poGDS->SetDirectory())
         return CE_Failure;
@@ -1841,6 +1850,14 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int		nBlockId;
     CPLErr      eErr = CE_None;
 
+    if (poGDS->bWriteErrorInFlushBlockBuf)
+    {
+        /* Report as an error if a previously loaded block couldn't be */
+        /* written correctly */
+        poGDS->bWriteErrorInFlushBlockBuf = FALSE;
+        return CE_Failure;
+    }
+
     if (!poGDS->SetDirectory())
         return CE_Failure;
 
@@ -2582,6 +2599,7 @@ GTiffDataset::GTiffDataset()
     nLoadedBlock = -1;
     bLoadedBlockDirty = FALSE;
     pabyBlockBuf = NULL;
+    bWriteErrorInFlushBlockBuf = FALSE;
     hTIFF = NULL;
     bNeedsRewrite = FALSE;
     bMetadataChanged = FALSE;
@@ -2903,6 +2921,7 @@ CPLErr GTiffDataset::FlushBlockBuf()
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "WriteEncodedTile/Strip() failed." );
+        bWriteErrorInFlushBlockBuf = TRUE;
     }
 
     return eErr;
