@@ -609,6 +609,26 @@ def ogr_gml_14():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+def ogr_gml_15():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_point.gml')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -657,6 +677,7 @@ gdaltest_list = [
     ogr_gml_12,
     ogr_gml_13,
     ogr_gml_14,
+    ogr_gml_15,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
