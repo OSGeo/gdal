@@ -225,6 +225,7 @@ OGRFeature *OGROGDILayer::GetNextFeature()
         ecs_Point       *psPoint = &(ECSGEOM(psResult).point);
         OGRPoint        *poOGRPoint = new OGRPoint(psPoint->c.x, psPoint->c.y);
 
+        poOGRPoint->assignSpatialReference(m_poSpatialRef);
         poFeature->SetGeometryDirectly(poOGRPoint);
     }
     else if (m_eFamily == Line)
@@ -239,6 +240,7 @@ OGRFeature *OGROGDILayer::GetNextFeature()
             poOGRLine->setPoint(i, psLine->c.c_val[i].x, psLine->c.c_val[i].y);
         }
 
+        poOGRLine->assignSpatialReference(m_poSpatialRef);
         poFeature->SetGeometryDirectly(poOGRLine);
     }
     else if (m_eFamily == Area)
@@ -264,6 +266,7 @@ OGRFeature *OGROGDILayer::GetNextFeature()
         // __TODO__
         // When OGR supports polygon centroids then we should carry them here
 
+        poOGRPolygon->assignSpatialReference(m_poSpatialRef);
         poFeature->SetGeometryDirectly(poOGRPolygon);
     }
     else if (m_eFamily == Text)
@@ -274,6 +277,7 @@ OGRFeature *OGROGDILayer::GetNextFeature()
         ecs_Text       *psText = &(ECSGEOM(psResult).text);
         OGRPoint        *poOGRPoint = new OGRPoint(psText->c.x, psText->c.y);
 
+        poOGRPoint->assignSpatialReference(m_poSpatialRef);
         poFeature->SetGeometryDirectly(poOGRPoint);
     }
     else
