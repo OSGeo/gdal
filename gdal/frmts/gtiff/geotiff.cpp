@@ -2778,7 +2778,10 @@ void GTiffDataset::FillEmptyTiles()
     for( iBlock = 0; iBlock < nBlockCount; iBlock++ )
     {
         if( panByteCounts[iBlock] == 0 )
-            WriteEncodedTileOrStrip( iBlock, pabyData, FALSE );
+        {
+            if( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE ) != CE_None )
+                break;
+        }
     }
 
     CPLFree( pabyData );
