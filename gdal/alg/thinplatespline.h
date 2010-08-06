@@ -70,9 +70,6 @@ class VizGeorefSpline2D
         _AA = NULL;
         _Ainv = NULL;
         grow_points();
-        for ( int v = 0; v < _nof_vars; v++ )
-            for ( int i = 0; i < 3; i++ )
-                rhs[i][v] = 0.0;
         type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
     }
 
@@ -118,7 +115,7 @@ class VizGeorefSpline2D
             {
                 fprintf(stderr, "X = %f Y = %f Vars = ", x[i], y[i]);
                 for ( int v = 0; v < _nof_vars; v++ )
-                    fprintf(stderr, "%f ", rhs[i+3][v]);
+                    fprintf(stderr, "%f ", rhs[v][i+3]);
                 fprintf(stderr, "\n");
             }
 	}
