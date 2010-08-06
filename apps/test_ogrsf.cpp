@@ -61,7 +61,13 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
-        if( EQUAL(papszArgv[iArg],"-ro") )
+        if( EQUAL(papszArgv[iArg], "--utility_version") )
+        {
+            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+                   papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            return 0;
+        }
+        else if( EQUAL(papszArgv[iArg],"-ro") )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet"))
             bVerbose = FALSE;
