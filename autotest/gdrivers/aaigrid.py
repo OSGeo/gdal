@@ -233,6 +233,34 @@ def aaigrid_9():
         return 'fail'
 
 ###############################################################################
+# Test AAIGRID_DATATYPE configuration option
+
+def aaigrid_10():
+
+    gdal.SetConfigOption('AAIGRID_DATATYPE', 'Float64')
+    ds = gdal.Open('data/float64.asc')
+    gdal.SetConfigOption('AAIGRID_DATATYPE', None)
+
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
+        gdaltest.post_reason( 'Data type is not Float64!' )
+        return 'fail'
+
+    nv = ds.GetRasterBand(1).GetNoDataValue()
+    if abs(nv - -1.234567890123) > 1e-16:
+        gdaltest.post_reason( 'did not get expected nodata value' )
+        return 'fail'
+
+    got_minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
+    if abs(got_minmax[0] - 1.234567890123) > 1e-16:
+        gdaltest.post_reason( 'did not get expected min value' )
+        return 'fail'
+    if abs(got_minmax[1] - 1.234567890123) > 1e-16:
+        gdaltest.post_reason( 'did not get expected max value' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     aaigrid_1,
@@ -245,7 +273,8 @@ gdaltest_list = [
     aaigrid_6bis,
     aaigrid_7,
     aaigrid_8,
-    aaigrid_9 ]
+    aaigrid_9,
+    aaigrid_10 ]
   
 
 
