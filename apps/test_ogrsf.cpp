@@ -51,6 +51,19 @@ int main( int nArgc, char ** papszArgv )
     char** papszLayers = NULL;
     const char  *pszSQLStatement = NULL;
     int bRet = TRUE;
+
+    /* Must process OGR_SKIP before OGRRegisterAll(), but we can't call */
+    /* OGRGeneralCmdLineProcessor before it needs the drivers to be registered */
+    /* for the --format or --formats options */
+    for( int iArg = 1; iArg < nArgc; iArg++ )
+    {
+        if( EQUAL(papszArgv[iArg], "--config") && iArg + 2 < nArgc &&
+            EQUAL(papszArgv[iArg+1], "OGR_SKIP") )
+        {
+            CPLSetConfigOption(papszArgv[iArg+1], papszArgv[iArg+2]);
+            break;
+        }
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
