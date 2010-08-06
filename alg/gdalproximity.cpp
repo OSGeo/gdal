@@ -147,17 +147,17 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     if( pszOpt )
         dfMaxDist = atof(pszOpt) / dfDistMult;
     else
-        dfMaxDist = GDALGetRasterXSize(hSrcBand) + GDALGetRasterYSize(hSrcBand);
+        dfMaxDist = GDALGetRasterBandXSize(hSrcBand) + GDALGetRasterBandYSize(hSrcBand);
 
     CPLDebug( "GDAL", "MAXDIST=%g, DISTMULT=%g", dfMaxDist, dfDistMult );
 
 /* -------------------------------------------------------------------- */
 /*      Verify the source and destination are compatible.               */
 /* -------------------------------------------------------------------- */
-    nXSize = GDALGetRasterXSize( hSrcBand );
-    nYSize = GDALGetRasterYSize( hSrcBand );
-    if( nXSize != GDALGetRasterXSize( hProximityBand )
-        || nYSize != GDALGetRasterYSize( hProximityBand ))
+    nXSize = GDALGetRasterBandXSize( hSrcBand );
+    nYSize = GDALGetRasterBandYSize( hSrcBand );
+    if( nXSize != GDALGetRasterBandXSize( hProximityBand )
+        || nYSize != GDALGetRasterBandYSize( hProximityBand ))
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Source and proximity bands are not the same size." );
