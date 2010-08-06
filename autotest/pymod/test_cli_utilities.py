@@ -157,3 +157,8 @@ def get_gdal_rasterize_path():
 # 
 def get_nearblack_path():
     return get_cli_utility_path('nearblack')
+
+###############################################################################
+#
+def get_test_ogrsf_path():
+    return get_cli_utility_path('test_ogrsf')
