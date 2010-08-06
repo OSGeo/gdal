@@ -2102,7 +2102,7 @@ bool GeoRasterWrapper::GetNoData( int nLayer, double* pdfNoDataValue )
 
     bool bFound = false;
 
-    for( i = 0; i < nRasterBands; i++ )
+    for( ; phLayer; phLayer = phLayer->psNext )
     {
         const char* pszNum = CPLGetXMLValue( phLayer, "layerNumber", "NONE" );
 
@@ -2111,8 +2111,6 @@ bool GeoRasterWrapper::GetNoData( int nLayer, double* pdfNoDataValue )
             bFound = true;
             break;
         }
-
-        phLayer = phLayer->psNext;
     }
 
     if( ! bFound )
