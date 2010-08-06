@@ -237,6 +237,11 @@ def aaigrid_9():
 
 def aaigrid_10():
 
+    try:
+        os.remove('data/float64.asc.aux.xml')
+    except:
+        pass
+
     gdal.SetConfigOption('AAIGRID_DATATYPE', 'Float64')
     ds = gdal.Open('data/float64.asc')
     gdal.SetConfigOption('AAIGRID_DATATYPE', None)
@@ -257,6 +262,11 @@ def aaigrid_10():
     if abs(got_minmax[1] - 1.234567890123) > 1e-16:
         gdaltest.post_reason( 'did not get expected max value' )
         return 'fail'
+
+    try:
+        os.remove('data/float64.asc.aux.xml')
+    except:
+        pass
 
     return 'success'
 
