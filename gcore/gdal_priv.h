@@ -481,7 +481,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBlock *GetLockedBlockRef( int nXBlockOff, int nYBlockOff, 
                                         int bJustInitialize = FALSE );
-    CPLErr      FlushBlock( int = -1, int = -1 );
+    CPLErr      FlushBlock( int = -1, int = -1, int bWriteDirtyBlock = TRUE );
 
     unsigned char*  GetIndexColorTranslationTo(/* const */ GDALRasterBand* poReferenceBand,
                                                unsigned char* pTranslationTable = NULL,
