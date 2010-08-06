@@ -61,6 +61,7 @@ OGRPGeoSelectLayer::~OGRPGeoSelectLayer()
 
 {
     ClearStatement();
+    CPLFree(pszBaseStatement);
 }
 
 /************************************************************************/
