@@ -995,6 +995,11 @@ def nitf_41():
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
 
+    try:
+        os.remove('data/U_4017A.NTF.aux.xml')
+    except:
+        pass
+
     ds = gdal.Open('data/U_4017A.NTF')
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         return 'fail'
@@ -1003,6 +1008,11 @@ def nitf_41():
         print(stats)
         return 'fail'
     ds = None
+
+    try:
+        os.remove('data/U_4017A.NTF.aux.xml')
+    except:
+        pass
 
     return 'success'
 
