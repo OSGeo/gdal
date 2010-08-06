@@ -588,7 +588,7 @@ def ogr_gml_14():
         return 'fail'
 
     if text != expectedtext:
-        print 'Problem with file 1'
+        print('Problem with file 1')
         return 'fail'
 
     try:
@@ -603,7 +603,7 @@ def ogr_gml_14():
         return 'fail'
 
     if text != expectedtext:
-        print 'Problem with file 2'
+        print('Problem with file 2')
         return 'fail'
 
     return 'success'
