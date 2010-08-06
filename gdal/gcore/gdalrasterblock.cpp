@@ -329,7 +329,12 @@ int GDALRasterBlock::FlushCacheBlock()
         poBand = poTarget->GetBand();
     }
 
-    poBand->FlushBlock( nXOff, nYOff );
+    CPLErr eErr = poBand->FlushBlock( nXOff, nYOff );
+    if (eErr != CE_None)
+    {
+        /* Save the error for later reporting */
+        poBand->SetFlushBlockErr(eErr);
+    }
 
     return TRUE;
 }

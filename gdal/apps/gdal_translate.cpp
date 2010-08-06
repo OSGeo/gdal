@@ -1019,7 +1019,14 @@ static int ProxyMain( int argc, char ** argv )
                              pfnProgress, NULL );
     if( hOutDS != NULL )
     {
+        int bHasGotErr = FALSE;
+        CPLErrorReset();
+        GDALFlushCache( hOutDS );
+        if (CPLGetLastErrorType() != CE_None)
+            bHasGotErr = TRUE;
         GDALClose( hOutDS );
+        if (bHasGotErr)
+            hOutDS = NULL;
     }
     
     GDALClose( (GDALDatasetH) poVDS );

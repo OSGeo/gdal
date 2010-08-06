@@ -21,7 +21,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
-	$(RM) *.o
+	$(RM) *.o $(O_OBJ)
 
 docs:	
 	(cd ..; $(MAKE) docs)
