@@ -3770,7 +3770,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     double dfMean = dfSum / nSampleCount;
     double dfStdDev = sqrt((dfSum2 / nSampleCount) - (dfMean * dfMean));
 
-    if( nSampleCount > 1 )
+    if( nSampleCount > 0 )
         SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
 
 /* -------------------------------------------------------------------- */
