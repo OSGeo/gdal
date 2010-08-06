@@ -20,6 +20,8 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(PAM_SETTING)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
+$(OBJ):	gdal_priv.h
+
 clean:
 	$(RM) *.o
 
