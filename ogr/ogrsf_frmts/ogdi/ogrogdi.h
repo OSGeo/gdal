@@ -57,6 +57,7 @@ class OGROGDILayer : public OGRLayer
 
     int                 m_iNextShapeId;
     int                 m_nTotalShapeCount;
+    int                 m_nFilteredOutShapes;
 
   public:
                         OGROGDILayer(OGROGDIDataSource *, const char *, 
@@ -64,6 +65,7 @@ class OGROGDILayer : public OGRLayer
                         ~OGROGDILayer();
 
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual OGRErr      SetAttributeFilter( const char *pszQuery );
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
