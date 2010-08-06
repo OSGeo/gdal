@@ -1712,6 +1712,56 @@ def ogr_shape_40():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+def ogr_shape_41():
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    shutil.copy('data/poly.shp', 'tmp/poly.shp')
+    shutil.copy('data/poly.shx', 'tmp/poly.shx')
+    shutil.copy('data/poly.dbf', 'tmp/poly.dbf')
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.shp')
+
+    os.remove('tmp/poly.shp')
+    os.remove('tmp/poly.shx')
+    os.remove('tmp/poly.dbf')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Run test_ogrsf with -sql
+
+def ogr_shape_42():
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    shutil.copy('data/poly.shp', 'tmp/poly.shp')
+    shutil.copy('data/poly.shx', 'tmp/poly.shx')
+    shutil.copy('data/poly.dbf', 'tmp/poly.dbf')
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.shp -sql "SELECT * FROM poly"')
+
+    os.remove('tmp/poly.shp')
+    os.remove('tmp/poly.shx')
+    os.remove('tmp/poly.dbf')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1772,6 +1822,8 @@ gdaltest_list = [
     ogr_shape_38,
     ogr_shape_39,
     ogr_shape_40,
+    ogr_shape_41,
+    ogr_shape_42,
     ogr_shape_cleanup ]
  
 if __name__ == '__main__':
