@@ -2427,6 +2427,46 @@ def ogr_pg_50():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+def ogr_pg_51():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'PG:' + gdaltest.pg_connection_string + '" tpoly testview')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Run test_ogrsf with -sql
+
+def ogr_pg_52():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'PG:' + gdaltest.pg_connection_string + '" -sql "SELECT * FROM tpoly"')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2539,6 +2579,8 @@ gdaltest_list_internal = [
     ogr_pg_48,
     ogr_pg_49,
     ogr_pg_50,
+    ogr_pg_51,
+    ogr_pg_52,
     ogr_pg_cleanup ]
 
 ###############################################################################
