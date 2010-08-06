@@ -216,6 +216,44 @@ def ogr_pgeo_5():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+def ogr_pgeo_6():
+    if ogrtest.pgeo_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "tmp/cache/Autodesk Test.mdb"')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Run test_ogrsf with -sql
+
+def ogr_pgeo_7():
+    if ogrtest.pgeo_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "tmp/cache/Autodesk Test.mdb" -sql "SELECT * FROM SDPipes"')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 
 def ogr_pgeo_cleanup():
     if ogrtest.pgeo_ds is None:
@@ -230,6 +268,8 @@ gdaltest_list = [
     ogr_pgeo_3,
     ogr_pgeo_4,
     ogr_pgeo_5,
+    ogr_pgeo_6,
+    ogr_pgeo_7,
     ogr_pgeo_cleanup    ]
 
 if __name__ == '__main__':
