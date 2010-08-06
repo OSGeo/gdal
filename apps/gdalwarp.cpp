@@ -283,6 +283,7 @@ int main( int argc, char ** argv )
     char                *pszCutlineDSName = NULL;
     char                *pszCLayer = NULL, *pszCWHERE = NULL, *pszCSQL = NULL;
     void                *hCutline = NULL;
+    int                  bHasGotErr = FALSE;
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -1029,14 +1030,17 @@ int main( int argc, char ** argv )
 
         if( oWO.Initialize( psWO ) == CE_None )
         {
+            CPLErr eErr;
             if( bMulti )
-                oWO.ChunkAndWarpMulti( 0, 0, 
+                eErr = oWO.ChunkAndWarpMulti( 0, 0, 
                                        GDALGetRasterXSize( hDstDS ),
                                        GDALGetRasterYSize( hDstDS ) );
             else
-                oWO.ChunkAndWarpImage( 0, 0, 
+                eErr = oWO.ChunkAndWarpImage( 0, 0, 
                                        GDALGetRasterXSize( hDstDS ),
                                        GDALGetRasterYSize( hDstDS ) );
+            if (eErr != CE_None)
+                bHasGotErr = TRUE;
         }
 
 /* -------------------------------------------------------------------- */
@@ -1056,6 +1060,10 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Final Cleanup.                                                  */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
+    GDALFlushCache( hDstDS );
+    if( CPLGetLastErrorType() != CE_None )
+        bHasGotErr = TRUE;
     GDALClose( hDstDS );
     
     CPLFree( pszDstFilename );
@@ -1074,7 +1082,7 @@ int main( int argc, char ** argv )
     OGRCleanupAll();
 #endif
 
-    return 0;
+    return (bHasGotErr) ? 1 : 0;
 }
 
 /************************************************************************/

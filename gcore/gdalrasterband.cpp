@@ -72,6 +72,8 @@ GDALRasterBand::GDALRasterBand()
     nBlockReads = 0;
     bForceCachedIO =  CSLTestBoolean( 
         CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
+
+    eFlushBlockErr = CE_None;
 }
 
 /************************************************************************/
@@ -204,6 +206,15 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
                   nBufXSize, nBufYSize );
 
         return CE_None;
+    }
+
+    if( eRWFlag == GF_Write && eFlushBlockErr != CE_None )
+    {
+        CPLError(eFlushBlockErr, CPLE_AppDefined,
+                 "An error occured while writing a dirty block");
+        CPLErr eErr = eFlushBlockErr;
+        eFlushBlockErr = CE_None;
+        return eErr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -515,7 +526,16 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 
         return( CE_Failure );
     }
-    
+
+    if( eFlushBlockErr != CE_None )
+    {
+        CPLError(eFlushBlockErr, CPLE_AppDefined,
+                 "An error occured while writing a dirty block");
+        CPLErr eErr = eFlushBlockErr;
+        eFlushBlockErr = CE_None;
+        return eErr;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
@@ -867,10 +887,17 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
 CPLErr GDALRasterBand::FlushCache()
 
 {
-    CPLErr eGlobalErr = CE_None;
+    CPLErr eGlobalErr = eFlushBlockErr;
+
+    if (eFlushBlockErr != CE_None)
+    {
+        CPLError(eFlushBlockErr, CPLE_AppDefined,
+                 "An error occured while writing a dirty block");
+        eFlushBlockErr = CE_None;
+    }
 
     if (papoBlocks == NULL)
-        return CE_None;
+        return eGlobalErr;
 
 /* -------------------------------------------------------------------- */
 /*      Flush all blocks in memory ... this case is without subblocking.*/
@@ -4829,4 +4856,25 @@ unsigned char* GDALRasterBand::GetIndexColorTranslationTo(GDALRasterBand* poRefe
         }
     }
     return NULL;
+}
+
+/************************************************************************/
+/*                         SetFlushBlockErr()                           */
+/************************************************************************/
+
+/**
+ * \brief Store that an error occured while writing a dirty block.
+ *
+ * This function stores the fact that an error occured while writing a dirty
+ * block from GDALRasterBlock::FlushCacheBlock(). Indeed when dirty blocks are
+ * flushed when the block cache get full, it is not convenient/possible to
+ * report that a dirty block could not be written correctly. This function
+ * remembers the error and re-issue it from GDALRasterBand::FlushCache(),
+ * GDALRasterBand::WriteBlock() and GDALRasterBand::RasterIO(), which are
+ * places where the user can easily match the error with the relevant dataset.
+ */
+
+void GDALRasterBand::SetFlushBlockErr( CPLErr eErr )
+{
+    eFlushBlockErr = eErr;
 }

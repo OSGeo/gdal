@@ -411,6 +411,13 @@ public:
 
 class CPL_DLL GDALRasterBand : public GDALMajorObject
 {
+  private:
+    CPLErr eFlushBlockErr;
+
+    void           SetFlushBlockErr( CPLErr eErr );
+
+    friend class GDALRasterBlock;
+
   protected:
     GDALDataset *poDS;
     int         nBand; /* 1 based */
@@ -440,7 +447,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int         nMaskFlags;
 
     friend class GDALDataset;
-    friend class GDALRasterBlock;
     friend class GDALProxyRasterBand;
 
   protected:
