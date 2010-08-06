@@ -41,6 +41,8 @@ import ogrtest
 ###############################################################################
 def ogr_ogdi_1():
 
+    ogrtest.ogdi_ds = None
+
     try:
         drv = ogr.GetDriverByName('OGDI')
     except:
@@ -67,6 +69,7 @@ def ogr_ogdi_1():
     url_name ='gltp:/vrf/' + os.getcwd()+ '/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash'
 
     ds = ogr.Open(url_name)
+    ogrtest.ogdi_ds = ds
     if ds is None:
         gdaltest.post_reason('cannot open ' + url_name)
         return 'fail'
@@ -105,8 +108,43 @@ def ogr_ogdi_1():
 
     return 'success'
 
+###############################################################################
+# Run test_ogrsf
+
+def ogr_ogdi_2():
+
+    if ogrtest.ogdi_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    url_name ='gltp:/vrf/' + os.getcwd()+ '/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash'
+    
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_OGDI_LAUNDER_LAYER_NAMES YES -ro "' + url_name + '" markersp_bnd contourl_elev polbnda_bnd extractp_ind')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_ogdi_cleanup():
+
+    if ogrtest.ogdi_ds is None:
+        return 'skip'
+
+    ogrtest.ogdi_ds = None
+    return 'success'
+
+
 gdaltest_list = [
-    ogr_ogdi_1 ]
+    ogr_ogdi_1,
+    ogr_ogdi_2,
+    ogr_ogdi_cleanup]
 
 if __name__ == '__main__':
 
