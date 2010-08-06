@@ -1656,12 +1656,12 @@ def ogr_shape_40():
     feat.SetGeometry( geom )
     for f in indexfiles:
         if not os.path.exists( os.path.join('tmp', f) ):
-            print 'SetFeature(): ' + f
+            print('SetFeature(): ' + f)
             return 'fail'
     gdaltest.shape_lyr.SetFeature( feat )
     for f in indexfiles:
         if os.path.exists( os.path.join('tmp', f) ):
-            print 'SetFeature(): ' + f
+            print('SetFeature(): ' + f)
             return 'fail'
 
     # Check if adding a feature removes the indices
@@ -1681,12 +1681,12 @@ def ogr_shape_40():
 
     for f in indexfiles:
         if not os.path.exists( os.path.join('tmp', f) ):
-            print 'CreateFeature(): ' + f
+            print('CreateFeature(): ' + f)
             return 'fail'
     gdaltest.shape_lyr.CreateFeature( feat )
     for f in indexfiles:
         if os.path.exists( os.path.join('tmp', f) ):
-            print 'CreateFeature(): ' + f
+            print('CreateFeature(): ' + f)
             return 'fail'
 
     # Check if deleting a feature removes the indices
@@ -1699,14 +1699,14 @@ def ogr_shape_40():
 
     for f in indexfiles:
         if not os.path.exists( os.path.join('tmp', f) ):
-            print 'DeleteFeature(): ' + f
+            print('DeleteFeature(): ' + f)
             return 'fail'
     if gdaltest.shape_lyr.DeleteFeature( 0 ) != 0:
         gdaltest.post_reason( 'DeleteFeature failed.' )
         return 'fail'
     for f in indexfiles:
         if os.path.exists( os.path.join('tmp', f) ):
-            print 'DeleteFeature(): ' + f
+            print('DeleteFeature(): ' + f)
             return 'fail'
 
     return 'success'
