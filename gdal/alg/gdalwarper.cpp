@@ -607,11 +607,11 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
         /* the size of the raster for the partial blocks at the right */
         /* and bottom of the band. So let's adjust the size */
         int nDstXSize = nXSize;
-        if (nXOff + nXSize > GDALGetRasterXSize(hAlphaBand))
-            nDstXSize = GDALGetRasterXSize(hAlphaBand) - nXOff;
+        if (nXOff + nXSize > GDALGetRasterBandXSize(hAlphaBand))
+            nDstXSize = GDALGetRasterBandXSize(hAlphaBand) - nXOff;
         int nDstYSize = nYSize;
-        if (nYOff + nYSize > GDALGetRasterYSize(hAlphaBand))
-            nDstYSize = GDALGetRasterYSize(hAlphaBand) - nYOff;
+        if (nYOff + nYSize > GDALGetRasterBandYSize(hAlphaBand))
+            nDstYSize = GDALGetRasterBandYSize(hAlphaBand) - nYOff;
 
         eErr = GDALRasterIO( hAlphaBand, GF_Write, 
                              nXOff, nYOff, nDstXSize, nDstYSize, 
