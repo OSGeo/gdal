@@ -337,6 +337,11 @@ def jpeg_10():
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
 
+    try:
+        os.remove('data/12bit_rose_extract.jpg.aux.xml')
+    except:
+        pass
+
     ds = gdal.Open('data/12bit_rose_extract.jpg')
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         return 'fail'
@@ -345,6 +350,11 @@ def jpeg_10():
         print(stats)
         return 'fail'
     ds = None
+
+    try:
+        os.remove('data/12bit_rose_extract.jpg.aux.xml')
+    except:
+        pass
 
     return 'success'
 
