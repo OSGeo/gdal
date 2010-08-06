@@ -127,7 +127,15 @@ def ogr_pgeo_2():
         gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
         return 'fail'
-
+        
+    # Check that geometry filter is well cleared
+    lyr.SetSpatialFilter(None)
+    feat_count = lyr.GetFeatureCount()
+    if feat_count != 9418:
+        gdaltest.post_reason('did not get expected feature count')
+        print(feat_count)
+        return 'fail'
+        
     return 'success'
 
 ###############################################################################
@@ -152,6 +160,14 @@ def ogr_pgeo_3():
        feat.GetField('OWNER') != 'City':
         gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
+        return 'fail'
+        
+    # Check that attribute filter is well cleared (#3706)
+    lyr.SetAttributeFilter(None)
+    feat_count = lyr.GetFeatureCount()
+    if feat_count != 9418:
+        gdaltest.post_reason('did not get expected feature count')
+        print(feat_count)
         return 'fail'
 
     return 'success'
