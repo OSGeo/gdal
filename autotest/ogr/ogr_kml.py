@@ -593,6 +593,26 @@ def ogr_kml_read_geometries():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+def ogr_kml_test_ogrsf():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_SKIP LIBKML -ro data/samples.kml')
+
+    if ret.find("using driver `KML'") == -1 or ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_kml_cleanup():
@@ -626,6 +646,7 @@ gdaltest_list = [
     ogr_kml_check_write_1,
     ogr_kml_xml_attributes,
     ogr_kml_read_geometries,
+    ogr_kml_test_ogrsf,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
