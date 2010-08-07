@@ -709,5 +709,7 @@ int GMLHandler::IsGeometryElement( const char *pszElement )
         || strcmp(pszElement,"Surface") == 0
         || strcmp(pszElement,"TopoSurface") == 0
         || strcmp(pszElement,"PolygonPatch") == 0
-        || strcmp(pszElement,"LineString") == 0;
+        || strcmp(pszElement,"LineString") == 0
+        || strcmp(pszElement,"CompositeSurface") == 0
+        || strcmp(pszElement,"Solid") == 0;
 }
