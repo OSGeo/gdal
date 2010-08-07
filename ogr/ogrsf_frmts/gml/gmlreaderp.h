@@ -51,6 +51,8 @@ class GMLHandler
     int        m_nDepth;
     int        m_nDepthFeature;
 
+    int        m_bInBoundedBy;
+    int        m_inBoundedByDepth;
 protected:
     GMLReader  *m_poReader;
 
