@@ -375,6 +375,8 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_pszGeometry = NULL;
     m_nGeomAlloc = m_nGeomLen = 0;
     m_nDepthFeature = m_nDepth = 0;
+    m_bInBoundedBy = FALSE;
+    m_inBoundedByDepth = 0;
 }
 
 /************************************************************************/
@@ -410,11 +412,16 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         m_pszCurField = NULL;
     }
 
+    if( m_bInBoundedBy)
+    {
+        ;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If we are collecting geometry, or if we determine this is a     */
 /*      geometry element then append to the geometry info.              */
 /* -------------------------------------------------------------------- */
-    if( m_pszGeometry != NULL 
+    else if( m_pszGeometry != NULL 
         || IsGeometryElement( pszName ) )
     {
         /* should save attributes too! */
@@ -486,6 +493,12 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         return CE_None;
     }
 
+    else if( strcmp(pszName, "boundedBy") == 0 )
+    {
+        m_bInBoundedBy = TRUE;
+        m_inBoundedByDepth = m_nDepth;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If it is (or at least potentially is) a simple attribute,       */
 /*      then start collecting it.                                       */
@@ -515,6 +528,12 @@ OGRErr GMLHandler::endElement(const char* pszName )
     m_nDepth --;
 
     GMLReadState *poState = m_poReader->GetState();
+
+    if( m_bInBoundedBy && strcmp(pszName, "boundedBy") == 0 &&
+        m_inBoundedByDepth == m_nDepth)
+    {
+        m_bInBoundedBy = FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Is this closing off an attribute value?  We assume so if        */
