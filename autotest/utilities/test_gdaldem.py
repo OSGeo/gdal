@@ -109,6 +109,7 @@ def test_gdaldem_hillshade_azimuth():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
+    from sys import version_info
     ds = gdal.GetDriverByName('GTiff').Create('tmp/pyramid.tif', 100, 100, 1)
     ds.SetGeoTransform([2,0.01,0,49,0,-0.01])
     sr = osr.SpatialReference()
@@ -119,6 +120,8 @@ def test_gdaldem_hillshade_azimuth():
         for i in range(100):
             val = 255 - 5 * max(abs(50-i),abs(50-j))
             data = data + ('%c' % (val))
+        if version_info >= (3,0,0):
+            data = bytes(data, 'ISO-8859-1')
         ds.GetRasterBand(1).WriteRaster(0,j,100,1,data)
 
     ds = None
