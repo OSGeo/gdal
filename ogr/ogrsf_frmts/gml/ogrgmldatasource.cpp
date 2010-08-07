@@ -112,7 +112,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 
 {
     FILE        *fp;
-    char        szHeader[1000];
+    char        szHeader[2048];
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
