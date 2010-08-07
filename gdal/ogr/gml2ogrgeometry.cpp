@@ -1407,6 +1407,26 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         return poGeom;
     }
 
+/* -------------------------------------------------------------------- */
+/*      OrientableSurface                                               */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"OrientableSurface") )
+    {
+        const CPLXMLNode *psChild;
+
+        // Find baseSurface.
+        psChild = FindBareXMLChild( psNode, "baseSurface" );
+
+        if( psChild == NULL || psChild->psChild == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Missing <baseSurface> for OrientableSurface." );
+            return NULL;
+        }
+
+        return GML2OGRGeometry_XMLNode( psChild->psChild );
+    }
+
     CPLError( CE_Failure, CPLE_AppDefined, 
               "Unrecognised geometry type <%.500s>.", 
               pszBaseGeometry );
