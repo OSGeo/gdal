@@ -439,19 +439,25 @@ static int ProxyMain( int argc, char ** argv )
         char *pszSubDest = (char *) CPLMalloc(strlen(pszDest)+32);
         int i;
         int bOldSubCall = bSubCall;
-        
-        argv[iDstFileArg] = pszSubDest;
+        char** papszDupArgv = CSLDuplicate(argv);
+        int nRet = 0;
+
+        CPLFree(papszDupArgv[iDstFileArg]);
+        papszDupArgv[iDstFileArg] = pszSubDest;
         bSubCall = TRUE;
         for( i = 0; papszSubdatasets[i] != NULL; i += 2 )
         {
-            argv[iSrcFileArg] = strstr(papszSubdatasets[i],"=")+1;
+            CPLFree(papszDupArgv[iSrcFileArg]);
+            papszDupArgv[iSrcFileArg] = CPLStrdup(strstr(papszSubdatasets[i],"=")+1);
             sprintf( pszSubDest, "%s%d", pszDest, i/2 + 1 );
-            if( ProxyMain( argc, argv ) != 0 )
+            nRet = ProxyMain( argc, papszDupArgv );
+            if (nRet != 0)
                 break;
         }
+        CSLDestroy(papszDupArgv);
         
         bSubCall = bOldSubCall;
-        CPLFree( pszSubDest );
+        CSLDestroy(argv);
 
         GDALClose( hDataset );
 
@@ -460,7 +466,7 @@ static int ProxyMain( int argc, char ** argv )
             GDALDumpOpenDatasets( stderr );
             GDALDestroyDriverManager();
         }
-        return 1;
+        return nRet;
     }
 
 /* -------------------------------------------------------------------- */
