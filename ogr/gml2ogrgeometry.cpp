@@ -661,10 +661,14 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
     }
 
 /* -------------------------------------------------------------------- */
-/*      MultiPolygon                                                    */
+/*      MultiPolygon / MultiSurface / CompositeSurface                  */
+/*                                                                      */
+/* For CompositeSurface, this is a very rough approximation to deal with*/
+/* it as a MultiPolygon, because it can several faces of a 3D volume... */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"MultiPolygon") ||
-        EQUAL(pszBaseGeometry,"MultiSurface") )
+        EQUAL(pszBaseGeometry,"MultiSurface") ||
+        EQUAL(pszBaseGeometry,"CompositeSurface") )
     {
         const CPLXMLNode *psChild;
         OGRMultiPolygon *poMPoly = new OGRMultiPolygon();
@@ -1359,6 +1363,48 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         }
         
         return poResult;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Solid                                                           */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"Solid") )
+    {
+        const CPLXMLNode *psChild;
+        OGRGeometry* poGeom;
+
+        // Find exterior element
+        psChild = FindBareXMLChild( psNode, "exterior");
+
+        if( psChild == NULL || psChild->psChild == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Missing exterior property on Solid." );
+            return NULL;
+        }
+
+        // Get the geometry inside <exterior>
+        poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
+        if( poGeom == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Invalid exterior element");
+            delete poGeom;
+            return NULL;
+        }
+
+        psChild = FindBareXMLChild( psNode, "interior");
+        if( psChild != NULL )
+        {
+            static int bWarnedOnce = FALSE;
+            if (!bWarnedOnce)
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "<interior> elements of <Solid> are ignored");
+                bWarnedOnce = TRUE;
+            }
+        }
+
+        return poGeom;
     }
 
     CPLError( CE_Failure, CPLE_AppDefined, 
