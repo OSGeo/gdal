@@ -57,6 +57,8 @@ class GMLHandler
     int        m_bInCityGMLGenericAttr;
     char      *m_pszCityGMLGenericAttrName;
     int        m_inCityGMLGenericAttrDepth;
+
+    int        m_bIsCityGML;
 protected:
     GMLReader  *m_poReader;
 
