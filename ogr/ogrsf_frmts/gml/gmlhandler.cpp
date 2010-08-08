@@ -454,12 +454,7 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         m_pszCurField = NULL;
     }
 
-    if( m_bInBoundedBy)
-    {
-        ;
-    }
-
-    else if ( m_bInCityGMLGenericAttr )
+    if ( m_bInCityGMLGenericAttr )
     {
         if( strcmp(pszName, "value") == 0 )
         {
@@ -524,6 +519,11 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
             CPLFree(pszAttributes);
             strcat( m_pszGeometry + (m_nGeomLen++), ">" );
         }
+    }
+
+    else if( m_bInBoundedBy)
+    {
+        ;
     }
 
 /* -------------------------------------------------------------------- */
