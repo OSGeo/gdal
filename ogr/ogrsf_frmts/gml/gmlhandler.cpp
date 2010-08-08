@@ -225,6 +225,26 @@ char* GMLXercesHandler::GetAttributes(void* attr)
     return CPLStrdup(osRes);
 }
 
+/************************************************************************/
+/*                    GetAttributeValue()                               */
+/************************************************************************/
+
+char* GMLXercesHandler::GetAttributeValue(void* attr, const char* pszAttributeName)
+{
+    const Attributes* attrs = (const Attributes*) attr;
+    for(unsigned int i=0; i < attrs->getLength(); i++)
+    {
+        char* pszString = tr_strdup(attrs->getQName(i));
+        if (strcmp(pszString, pszAttributeName) == 0)
+        {
+            CPLFree(pszString);
+            return tr_strdup(attrs->getValue(i));
+        }
+        CPLFree(pszString);
+    }
+    return NULL;
+}
+
 #else
 
 
@@ -359,6 +379,24 @@ char* GMLExpatHandler::GetAttributes(void* attr)
     return CPLStrdup( osRes );
 }
 
+/************************************************************************/
+/*                    GetAttributeValue()                               */
+/************************************************************************/
+
+char* GMLExpatHandler::GetAttributeValue(void* attr, const char* pszAttributeName)
+{
+    const char** papszIter = (const char** )attr;
+    while(*papszIter)
+    {
+        if (strcmp(*papszIter, pszAttributeName) == 0)
+        {
+            return CPLStrdup(papszIter[1]);
+        }
+        papszIter += 2;
+    }
+    return NULL;
+}
+
 #endif
 
 
@@ -377,6 +415,9 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_nDepthFeature = m_nDepth = 0;
     m_bInBoundedBy = FALSE;
     m_inBoundedByDepth = 0;
+    m_bInCityGMLGenericAttr = FALSE;
+    m_pszCityGMLGenericAttrName = NULL;
+    m_inCityGMLGenericAttrDepth = 0;
 }
 
 /************************************************************************/
@@ -388,6 +429,7 @@ GMLHandler::~GMLHandler()
 {
     CPLFree( m_pszCurField );
     CPLFree( m_pszGeometry );
+    CPLFree( m_pszCityGMLGenericAttrName );
 }
 
 
@@ -415,6 +457,15 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
     if( m_bInBoundedBy)
     {
         ;
+    }
+
+    else if ( m_bInCityGMLGenericAttr )
+    {
+        if( strcmp(pszName, "value") == 0 )
+        {
+            CPLFree( m_pszCurField );
+            m_pszCurField = CPLStrdup("");
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -500,6 +551,17 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Is it a CityGML generic attribute ?                             */
+/* -------------------------------------------------------------------- */
+    else if( m_poReader->IsCityGMLGenericAttributeElement( pszName, attr ) )
+    {
+        m_bInCityGMLGenericAttr = TRUE;
+        CPLFree(m_pszCityGMLGenericAttrName);
+        m_pszCityGMLGenericAttrName = GetAttributeValue(attr, "name");
+        m_inCityGMLGenericAttrDepth = m_nDepth;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If it is (or at least potentially is) a simple attribute,       */
 /*      then start collecting it.                                       */
 /* -------------------------------------------------------------------- */
@@ -535,13 +597,32 @@ OGRErr GMLHandler::endElement(const char* pszName )
         m_bInBoundedBy = FALSE;
     }
 
+    else if( m_bInCityGMLGenericAttr )
+    {
+        if( m_pszCityGMLGenericAttrName != NULL && m_pszCurField != NULL )
+        {
+            CPLAssert( poState->m_poFeature != NULL );
+
+            m_poReader->SetFeatureProperty( m_pszCityGMLGenericAttrName, m_pszCurField );
+            CPLFree( m_pszCurField );
+            m_pszCurField = NULL;
+            CPLFree(m_pszCityGMLGenericAttrName);
+            m_pszCityGMLGenericAttrName = NULL;
+        }
+
+        if( m_inCityGMLGenericAttrDepth == m_nDepth )
+        {
+            m_bInCityGMLGenericAttr = FALSE;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Is this closing off an attribute value?  We assume so if        */
 /*      we are collecting an attribute value and got to this point.     */
 /*      We don't bother validating that the closing tag matches the     */
 /*      opening tag.                                                    */
 /* -------------------------------------------------------------------- */
-    if( m_pszCurField != NULL )
+    else if( m_pszCurField != NULL )
     {
         CPLAssert( poState->m_poFeature != NULL );
 
