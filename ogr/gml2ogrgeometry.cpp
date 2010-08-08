@@ -354,7 +354,7 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
         }
 
         papszTokens = CSLTokenizeStringComplex( 
-            GetElementText( psPosList ), " ,", FALSE, FALSE );
+            GetElementText( psPosList ), " ,\t", FALSE, FALSE );
 
         nCount = CSLCount( papszTokens );
 
