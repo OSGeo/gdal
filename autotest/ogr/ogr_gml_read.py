@@ -629,6 +629,27 @@ def ogr_gml_15():
     return 'success'
 
 ###############################################################################
+# Read CityGML generic attributes
+
+def ogr_gml_16():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/citygml.gml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    if feat.GetField('Name_') != 'aname' or \
+       feat.GetField('a_int_attr') != 2 or \
+       feat.GetField('a_double_attr') != 3.45:
+        feat.DumpReadable()
+        gdaltest.post_reason('did not get expected values')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -651,6 +672,10 @@ def ogr_gml_clean_files():
         pass
     try:
         os.remove( 'data/ticket_2349_test_1.gfs' )
+    except:
+        pass
+    try:
+        os.remove( 'data/citygml.gfs' )
     except:
         pass
 
@@ -678,6 +703,7 @@ gdaltest_list = [
     ogr_gml_13,
     ogr_gml_14,
     ogr_gml_15,
+    ogr_gml_16,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
