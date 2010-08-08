@@ -53,6 +53,10 @@ class GMLHandler
 
     int        m_bInBoundedBy;
     int        m_inBoundedByDepth;
+
+    int        m_bInCityGMLGenericAttr;
+    char      *m_pszCityGMLGenericAttrName;
+    int        m_inCityGMLGenericAttrDepth;
 protected:
     GMLReader  *m_poReader;
 
@@ -65,6 +69,7 @@ public:
     virtual OGRErr      dataHandler(const char *data, int nLen);
     virtual char*       GetFID(void* attr) = 0;
     virtual char*       GetAttributes(void* attr) = 0;
+    virtual char*       GetAttributeValue(void* attr, const char* pszAttributeName) = 0;
 
     int         IsGeometryElement( const char *pszElement );
 };
@@ -175,6 +180,7 @@ public:
 
     virtual char*       GetFID(void* attr);
     virtual char*       GetAttributes(void* attr);
+    virtual char*       GetAttributeValue(void* attr, const char* pszAttributeName);
 };
 
 #elif defined(HAVE_EXPAT)
@@ -204,6 +210,7 @@ public:
 
     virtual char*       GetFID(void* attr);
     virtual char*       GetAttributes(void* attr);
+    virtual char*       GetAttributeValue(void* attr, const char* pszAttributeName);
 };
 
 #endif
@@ -316,6 +323,7 @@ public:
 
     int         IsFeatureElement( const char *pszElement );
     int         IsAttributeElement( const char *pszElement );
+    int         IsCityGMLGenericAttributeElement( const char *pszElement, void* attr );
 
     void        PushFeature( const char *pszElement, 
                              const char *pszFID );
