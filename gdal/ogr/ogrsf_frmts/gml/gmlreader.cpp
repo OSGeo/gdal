@@ -607,6 +607,48 @@ int GMLReader::IsFeatureElement( const char *pszElement )
 }
 
 /************************************************************************/
+/*                IsCityGMLGenericAttributeElement()                    */
+/************************************************************************/
+
+int GMLReader::IsCityGMLGenericAttributeElement( const char *pszElement, void* attr )
+
+{
+    if( strcmp(pszElement, "stringAttribute") != 0 &&
+        strcmp(pszElement, "intAttribute") != 0 &&
+        strcmp(pszElement, "doubleAttribute") != 0 )
+        return FALSE;
+
+    if( m_poState->m_poFeature == NULL )
+        return FALSE;
+
+    char* pszVal = m_poGMLHandler->GetAttributeValue(attr, "name");
+    if (pszVal == NULL)
+        return FALSE;
+
+    GMLFeatureClass *poClass = m_poState->m_poFeature->GetClass();
+
+    // If the schema is not yet locked, then any simple element
+    // is potentially an attribute.
+    if( !poClass->IsSchemaLocked() )
+    {
+        CPLFree(pszVal);
+        return TRUE;
+    }
+
+    for( int i = 0; i < poClass->GetPropertyCount(); i++ )
+    {
+        if( strcmp(poClass->GetProperty(i)->GetSrcElement(),pszVal) == 0 )
+        {
+            CPLFree(pszVal);
+            return TRUE;
+        }
+    }
+
+    CPLFree(pszVal);
+    return FALSE;
+}
+
+/************************************************************************/
 /*                         IsAttributeElement()                         */
 /************************************************************************/
 
@@ -637,7 +679,7 @@ int GMLReader::IsAttributeElement( const char *pszElement )
     }
 
     for( int i = 0; i < poClass->GetPropertyCount(); i++ )
-        if( EQUAL(poClass->GetProperty(i)->GetSrcElement(),osElemPath) )
+        if( strcmp(poClass->GetProperty(i)->GetSrcElement(),osElemPath) == 0 )
             return TRUE;
 
     return FALSE;
@@ -778,8 +820,8 @@ void GMLReader::SetFeatureProperty( const char *pszElement,
 
     for( iProperty=0; iProperty < poClass->GetPropertyCount(); iProperty++ )
     {
-        if( EQUAL(poClass->GetProperty( iProperty )->GetSrcElement(),
-                  pszElement ) )
+        if( strcmp(poClass->GetProperty( iProperty )->GetSrcElement(),
+                  pszElement ) == 0 )
             break;
     }
     
