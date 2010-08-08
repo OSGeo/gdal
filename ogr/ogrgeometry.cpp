@@ -1512,7 +1512,10 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
     {
       case wkbUnknown:
         return "Unknown (any)";
-        
+
+      case (wkbUnknown | wkb25DBit):
+        return "3D Unknown (any)";
+
       case wkbPoint:
         return "Point";
 
