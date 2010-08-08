@@ -418,6 +418,7 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_bInCityGMLGenericAttr = FALSE;
     m_pszCityGMLGenericAttrName = NULL;
     m_inCityGMLGenericAttrDepth = 0;
+    m_bIsCityGML = FALSE;
 }
 
 /************************************************************************/
@@ -441,6 +442,9 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 
 {
     GMLReadState *poState = m_poReader->GetState();
+
+    if ( m_nDepth == 0 && strcmp(pszName, "CityModel") == 0 )
+        m_bIsCityGML = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      If we are in the midst of collecting a feature attribute        */
@@ -494,6 +498,16 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         {
             char* pszAttributes = GetAttributes(attr);
             size_t nLNLenBytes = strlen(pszName);
+
+            /* Some CityGML lack a srsDimension="3" in posList, such as in */
+            /* http://www.citygml.org/fileadmin/count.php?f=fileadmin%2Fcitygml%2Fdocs%2FFrankfurt_Street_Setting_LOD3.zip */
+            /* So we have to add it manually */
+            if (m_bIsCityGML && strcmp(pszName, "posList") == 0 &&
+                strstr(pszAttributes, "srsDimension") == NULL)
+            {
+                CPLFree(pszAttributes);
+                pszAttributes = CPLStrdup(" srsDimension=\"3\"");
+            }
 
             if( m_nGeomLen + nLNLenBytes + 4 + strlen( pszAttributes ) >
                 m_nGeomAlloc )
