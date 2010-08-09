@@ -660,7 +660,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         return poBoxPoly;
     }
 
-/* -------------------------------------------------------------------- */
+/* ------------------------const CPLXMLNode *psChild;-------------------------------------------- */
 /*      MultiPolygon / MultiSurface / CompositeSurface                  */
 /*                                                                      */
 /* For CompositeSurface, this is a very rough approximation to deal with*/
@@ -673,7 +673,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         const CPLXMLNode *psChild;
         OGRMultiPolygon *poMPoly = new OGRMultiPolygon();
 
-        // Find all inner rings 
+        // Iterate over children
         for( psChild = psNode->psChild; 
              psChild != NULL;
              psChild = psChild->psNext ) 
@@ -709,6 +709,54 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 }
 
                 poMPoly->addGeometryDirectly( poPolygon );
+            }
+            else if (psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"surfaceMembers") )
+            {
+                const CPLXMLNode *psChild2;
+                for( psChild2 = psChild->psChild;
+                     psChild2 != NULL;
+                     psChild2 = psChild2->psNext )
+                {
+                    if( psChild2->eType == CXT_Element
+                        && (EQUAL(BareGMLElement(psChild2->pszValue),"Surface") ||
+                            EQUAL(BareGMLElement(psChild2->pszValue),"Polygon") ||
+                            EQUAL(BareGMLElement(psChild2->pszValue),"PolygonPatch")) )
+                    {
+                        OGRGeometry* poGeom = GML2OGRGeometry_XMLNode( psChild2 );
+                        if (poGeom == NULL)
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined, "Invalid %s",
+                                    BareGMLElement(psChild2->pszValue));
+                            delete poMPoly;
+                            return NULL;
+                        }
+
+                        if (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
+                        {
+                            poMPoly->addGeometryDirectly( (OGRPolygon*) poGeom );
+                        }
+                        else if (wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
+                        {
+                            OGRMultiPolygon* poMPoly2 = (OGRMultiPolygon*) poGeom;
+                            int i;
+                            for(i=0;i<poMPoly2->getNumGeometries();i++)
+                            {
+                                poMPoly->addGeometry(poMPoly2->getGeometryRef(i));
+                            }
+                            delete poGeom;
+                        }
+                        else
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                    "Got %.500s geometry as polygonMember instead of POLYGON/MULTIPOLYGON.",
+                                    poGeom->getGeometryName() );
+                            delete poGeom;
+                            delete poMPoly;
+                            return NULL;
+                        }
+                    }
+                }
             }
         }
 
