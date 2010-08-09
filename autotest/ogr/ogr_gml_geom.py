@@ -35,6 +35,7 @@ import gdaltest
 import ogrtest
 import ogr
 import osr
+import gdal
 
 ###############################################################################
 
@@ -647,6 +648,117 @@ def gml_out_precision():
     return 'success'
 
 ###############################################################################
+# Test various error cases of gml2ogrgeometry.cpp
+
+def gml_invalid_geoms():
+
+    gml_expected_wkt_list = [
+        ('<foo/>', None),
+        ('<gml:Point><gml:pos>31 29 16</gml:pos><gml:pos>31 29 16</gml:pos></gml:Point>', None),
+        ('<gml:Point><gml:coordinates/></gml:Point>', None),
+        ('<gml:Point><gml:coordinates>0</gml:Coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates>0 1</gml:Coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates>0,1 2,3</gml:Coordinates></gml:Point>', None),
+        ('<gml:Point><gml:pos>0</gml:pos></gml:Point>', None),
+        ('<gml:Point><gml:pos/></gml:Point>', None),
+        ('<gml:Point/>', None),
+        ('<gml:Point><foo/></gml:Point>', None),
+        ('<gml:LineString/>', None),
+        ('<gml:LineString><foo/></gml:LineString>', None),
+        ('<gml:LineString><gml:posList></gml:posList></gml:LineString>', None),
+        ('<gml:LineString><gml:posList>0</gml:posList></gml:LineString>', None),
+        ('<gml:LineString><gml:posList srsDimension="4">0 1 2 3</gml:posList></gml:LineString>', None),
+        ('<gml:LineString><gml:posList srsDimension="3">0 1 2 3</gml:posList></gml:LineString>', None),
+        ('<gml:Point><gml:coord></gml:coord></gml:Point>', None),
+        ('<gml:Point><gml:coord><gml:X/><gml:Y/></gml:coord></gml:Point>', None),
+        ('<gml:Point><gml:coord><gml:X>0</gml:X></gml:coord></gml:Point>', None),
+        ('<gml:Polygon/>', None),
+        ('<gml:Polygon><gml:outerBoundaryIs/></gml:Polygon>', None),
+        ('<gml:Polygon><gml:outerBoundaryIs><foo/></gml:outerBoundaryIs></gml:Polygon>', None),
+        ('<gml:Polygon><gml:outerBoundaryIs><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:outerBoundaryIs></gml:Polygon>', None),
+        ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:outerBoundaryIs><gml:innerBoundaryIs/></gml:Polygon>', None),
+        ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing/></gml:outerBoundaryIs><gml:innerBoundaryIs/></gml:Polygon>', None),
+        ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:outerBoundaryIs><gml:innerBoundaryIs><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:innerBoundaryIs></gml:Polygon>', None),
+        ('<gml:Ring/>', 'LINEARRING EMPTY'), # Probably illegal GML
+        ('<gml:Ring><foo/></gml:Ring>', 'LINEARRING EMPTY'), # Probably illegal GML
+        ('<gml:Ring><gml:curveMember><foo/></gml:curveMember></gml:Ring>', None),
+        ('<gml:Ring><gml:curveMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:curveMember></gml:Ring>', None),
+        ('<gml:Box/>', None),
+        ('<gml:Box><gml:pos>31 29 16</gml:pos></gml:Box>', None),
+        ('<gml:MultiPolygon/>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
+        ('<gml:MultiPolygon><foo/></gml:MultiPolygon>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
+        ('<gml:MultiPolygon><gml:polygonMember/></gml:MultiPolygon>', None),
+        ('<gml:MultiPolygon><gml:polygonMember><foo/></gml:polygonMember></gml:MultiPolygon>', None),
+        ('<gml:MultiPolygon><gml:polygonMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:polygonMember></gml:MultiPolygon>', None),
+        ('<gml:MultiSurface><gml:surfaceMembers/></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
+        ('<gml:MultiSurface><gml:surfaceMembers><foo/></gml:surfaceMembers></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
+        ('<gml:MultiPoint/>', 'MULTIPOINT EMPTY'),
+        ('<gml:MultiPoint><foo/></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
+        ('<gml:MultiPoint><gml:pointMember/></gml:MultiPoint>', None),
+        ('<gml:MultiPoint><gml:pointMember><gml:LineString><gml:posList>0 1 2 3</gml:posList></gml:LineString></gml:pointMember></gml:MultiPoint>', None),
+        ('<gml:MultiLineString/>', 'MULTILINESTRING EMPTY'),
+        ('<gml:MultiLineString><foo/></gml:MultiLineString>', 'MULTILINESTRING EMPTY'),
+        ('<gml:MultiLineString><gml:lineStringMember/></gml:MultiLineString>', None),
+        ('<gml:MultiLineString><gml:lineStringMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:lineStringMember></gml:MultiLineString>', None),
+        ('<gml:MultiCurve/>', 'MULTILINESTRING EMPTY'),
+        ('<gml:MultiCurve><foo/></gml:MultiCurve>', 'MULTILINESTRING EMPTY'),
+        ('<gml:MultiCurve><gml:curveMember/></gml:MultiCurve>', None),
+        ('<gml:MultiCurve><gml:curveMember><foo/></gml:curveMember></gml:MultiCurve>', None),
+        ('<gml:MultiCurve><gml:curveMember><gml:Curve/></gml:curveMember></gml:MultiCurve>', None),
+        ('<gml:MultiCurve><gml:curveMember><gml:Curve><foo/></gml:Curve></gml:curveMember></gml:MultiCurve>', None),
+        ('<gml:MultiCurve><gml:curveMember><gml:Curve><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:Curve></gml:curveMember></gml:MultiCurve>', None),
+        ('<gml:Curve/>', None),
+        ('<gml:Curve><foo/></gml:Curve>', None),
+        ('<gml:Curve><gml:segments/></gml:Curve>', 'LINESTRING EMPTY'),
+        ('<gml:Curve><gml:segments><foo/></gml:segments></gml:Curve>', 'LINESTRING EMPTY'),
+        ('<gml:Curve><gml:segments><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:segments></gml:Curve>', 'LINESTRING EMPTY'),
+        ('<gml:segments/>', 'LINESTRING EMPTY'),
+        ('<gml:segments><foo/></gml:segments>', 'LINESTRING EMPTY'),
+        ('<gml:segments><gml:LineStringSegment/></gml:segments>', 'LINESTRING EMPTY'),
+        ('<gml:segments><gml:LineStringSegment><foo/></gml:LineStringSegment></gml:segments>', 'LINESTRING EMPTY'),
+        ('<gml:segments><gml:LineStringSegment><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:LineStringSegment></gml:segments>', 'LINESTRING EMPTY'),
+        ('<gml:MultiGeometry/>', 'GEOMETRYCOLLECTION EMPTY'),
+        ('<gml:MultiGeometry><foo/></gml:MultiGeometry>', 'GEOMETRYCOLLECTION EMPTY'),
+        ('<gml:MultiGeometry><gml:geometryMember/></gml:MultiGeometry>', None),
+        ('<gml:MultiGeometry><gml:geometryMember><foo/></gml:geometryMember></gml:MultiGeometry>', None),
+        ('<gml:Surface/>', None),
+        ('<gml:Surface><foo/></gml:Surface>', None),
+        ('<gml:Surface><gml:patches/></gml:Surface>', None),
+        ('<gml:Surface><gml:patches><foo/></gml:patches></gml:Surface>', None),
+        ('<gml:Surface><gml:patches><gml:PolygonPatch/></gml:patches></gml:Surface>', None),
+        ('<gml:Solid/>', None),
+        ('<gml:Solid><foo/></gml:Solid>', None),
+        ('<gml:Solid><gml:exterior/></gml:Solid>', None),
+        ('<gml:Solid><gml:exterior><foo/></gml:exterior></gml:Solid>', None),
+        ('<gml:Solid><gml:exterior><Polygon><exterior><LinearRing><posList>0 0 4 0 4 4 0 4 0 0</posList></LinearRing></exterior></Polygon></gml:exterior><gml:interior/></gml:Solid>', 'POLYGON ((0 0,4 0,4 4,0 4,0 0))'),
+        ('<gml:OrientableSurface/>', None),
+        ('<gml:OrientableSurface><foo/></gml:OrientableSurface>', None),
+        ('<gml:OrientableSurface><gml:baseSurface/></gml:OrientableSurface>', None),
+        ('<gml:OrientableSurface><gml:baseSurface><foo/></gml:baseSurface></gml:OrientableSurface>', None),
+    ]
+
+    for (gml, expected_wkt) in gml_expected_wkt_list:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        #print gml
+        geom = ogr.CreateGeometryFromGML(gml)
+        gdal.PopErrorHandler()
+        if geom is None:
+            if expected_wkt is not None:
+                gdaltest.post_reason('did not get expected result for %s. Got None instead of %s' % (gml, expected_wkt))
+                return 'fail'
+        else:
+            wkt = geom.ExportToWkt()
+            if expected_wkt is None:
+                gdaltest.post_reason('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
+                return 'fail'
+            else:
+                if wkt != expected_wkt:
+                    gdaltest.post_reason('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
+                    return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -682,6 +794,8 @@ gdaltest_list.append( gml_MultiSurface_surfaceMembers )
 gdaltest_list.append( gml_Solid )
 gdaltest_list.append( gml_OrientableSurface )
 #gdaltest_list.append( gml_out_precision )
+gdaltest_list.append( gml_invalid_geoms )
+
 
 if __name__ == '__main__':
 
