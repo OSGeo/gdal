@@ -195,6 +195,32 @@ int GMLReader::ParseXSD( const char *pszFile )
             if( !EQUAL(psAttrDef->pszValue,"element") )
                 continue;
 
+            /* MapServer WFS writes element type as an attribute of element */
+            /* not as a simpleType definition */
+            const char* pszType = CPLGetXMLValue( psAttrDef, "type", NULL );
+            if (pszType != NULL)
+            {
+                GMLPropertyType gmlType = GMLPT_Untyped;
+                if (EQUAL(pszType, "string") ||
+                    EQUAL(pszType, "Character"))
+                    gmlType = GMLPT_String;
+                else if (EQUAL(pszType, "Real"))
+                    gmlType = GMLPT_Real;
+                else if (EQUAL(pszType, "Integer"))
+                    gmlType = GMLPT_Integer;
+
+                if (gmlType != GMLPT_Untyped)
+                {
+                    GMLPropertyDefn *poProp = new GMLPropertyDefn(
+                        CPLGetXMLValue( psAttrDef, "name", "unnamed" ),
+                        CPLGetXMLValue( psAttrDef, "name", "unnamed" ) );
+
+                    poProp->SetType( gmlType );
+                    poClass->AddProperty( poProp );
+                    continue;
+                }
+            }
+
             // For now we skip geometries .. fixup later.
             if( CPLGetXMLNode( psAttrDef, "simpleType" ) == NULL )
                 continue;
