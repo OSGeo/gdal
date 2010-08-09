@@ -211,7 +211,8 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
             return false;
             
         /* Clear the new allocated part of the buffer */
-        memset(pabyNewData + nAllocLength, 0, nNewAlloc - nAllocLength);
+        memset(pabyNewData + nAllocLength, 0, 
+               (size_t) (nNewAlloc - nAllocLength));
 
         pabyData = pabyNewData;
         nAllocLength = nNewAlloc;
