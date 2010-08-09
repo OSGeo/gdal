@@ -511,6 +511,118 @@ def gml_MultiSurface():
 
     return 'success'
 
+
+###############################################################################
+# Test GML MultiSurface with surfaceMembers
+
+def gml_MultiSurface_surfaceMembers():
+
+    gml = """<gml:MultiSurface>
+          <gml:surfaceMembers>
+            <gml:Surface>
+              <gml:patches>
+                <gml:PolygonPatch>
+                  <gml:exterior>
+                      <gml:LinearRing>
+                          <gml:posList>1 2 3 4 5 6 1 2</gml:posList>
+                      </gml:LinearRing>
+                    </gml:exterior>
+                    <gml:interior>
+                      <gml:LinearRing>
+                          <gml:posList>2 3 4 5 6 7 2 3</gml:posList>
+                      </gml:LinearRing>
+                    </gml:interior> 
+                </gml:PolygonPatch>
+              </gml:patches>
+            </gml:Surface>
+            <gml:Surface>
+              <gml:patches>
+                <gml:PolygonPatch>
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>3 4 5 6 7 8 3 4</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:PolygonPatch>
+                <gml:PolygonPatch>
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>30 40 50 60 70 80 30 40</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:PolygonPatch>
+              </gml:patches>
+            </gml:Surface>
+          </gml:surfaceMembers>
+        </gml:MultiSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'MULTIPOLYGON (((1 2,3 4,5 6,1 2),(2 3,4 5,6 7,2 3)),((3 4,5 6,7 8,3 4)),((30 40,50 60,70 80,30 40)))':
+        gdaltest.post_reason( '<gml:MultiSurface> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML Solid
+
+def gml_Solid():
+
+    gml = """<gml:Solid gml:id="UUID_cc5a9513-2d85-4f1a-869a-620400182e1f">
+          <gml:exterior>
+            <gml:CompositeSurface gml:id="UUID_2c83341e-a9ce-4abe-9c40-b5208eed5588">
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="UUID_d8e4b04b-ce0a-441e-b940-5ab99fcf6112">
+                  <gml:exterior>
+                    <gml:LinearRing gml:id="UUID_d8e4b04b-ce0a-441e-b940-5ab99fcf6112_0">
+                      <gml:posList srsDimension="3">1 2 0 3 4 0 5 6 0 1 2 0</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+            </gml:CompositeSurface>
+          </gml:exterior>
+        </gml:Solid>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'MULTIPOLYGON (((1 2 0,3 4 0,5 6 0,1 2 0)))':
+        gdaltest.post_reason( '<gml:Solid> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML OrientableSurface
+
+def gml_OrientableSurface():
+
+    gml = """<gml:OrientableSurface orientation="+">
+                                            <gml:baseSurface>
+                                                <gml:Polygon>
+                                                  <gml:exterior>
+                                                  <gml:LinearRing>
+                                                  <gml:posList srsDimension="3">-213.475 24.989 0
+                                                  -213.475 24.989 8.0 -215.704 25.077 8.0 -215.704
+                                                  25.077 0 -213.475 24.989 0 </gml:posList>
+                                                  </gml:LinearRing>
+                                                  </gml:exterior>
+                                                </gml:Polygon>
+                                            </gml:baseSurface>
+                                        </gml:OrientableSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((-213.475 24.989 0,-213.475 24.989 8,-215.704 25.077 8,-215.704 25.077 0,-213.475 24.989 0))':
+        gdaltest.post_reason( '<gml:OrientableSurface> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test OGRFormatDouble() to check for rounding errors (would also apply for KML output, or ogrinfo output)
 
@@ -566,6 +678,9 @@ gdaltest_list.append( gml_Box )
 gdaltest_list.append( gml_Curve )
 gdaltest_list.append( gml_MultiCurve )
 gdaltest_list.append( gml_MultiSurface )
+gdaltest_list.append( gml_MultiSurface_surfaceMembers )
+gdaltest_list.append( gml_Solid )
+gdaltest_list.append( gml_OrientableSurface )
 #gdaltest_list.append( gml_out_precision )
 
 if __name__ == '__main__':
