@@ -430,7 +430,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                                     iBestEntry = i;
                                 }
                             }
-                            pafDstScanline[iDstPixel - nDstXOff] = iBestEntry;
+                            pafDstScanline[iDstPixel - nDstXOff] = 
+                                (float)iBestEntry;
                         }
                     }
                 }
@@ -524,7 +525,7 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     if( iMaxInd == -1 )
                         pafDstScanline[iDstPixel - nDstXOff] = fNoDataValue;
                     else
-                        pafDstScanline[iDstPixel - nDstXOff] = iMaxInd;
+                        pafDstScanline[iDstPixel - nDstXOff] = (float)iMaxInd;
                 }
             }
             else if ( eResampling == GRM_Gauss )
@@ -619,7 +620,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                                     iBestEntry = i;
                                 }
                             }
-                            pafDstScanline[iDstPixel - nDstXOff] = iBestEntry;
+                            pafDstScanline[iDstPixel - nDstXOff] = 
+                                (float) iBestEntry;
                         }
                     }
                 }

@@ -670,7 +670,7 @@ inline void CopyWord(const Tin tValueIn, Tout &tValueOut)
 template <class Tin>
 inline void CopyWord(const Tin tValueIn, float &fValueOut)
 {
-    fValueOut = tValueIn;
+    fValueOut = (float) tValueIn;
 }
 
 template <class Tin>
