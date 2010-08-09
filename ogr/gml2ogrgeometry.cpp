@@ -790,7 +790,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                     || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
-                              "MultiPoint: Got %.500s geometry as pointMember instead of MULTIPOINT",
+                              "MultiPoint: Got %.500s geometry as pointMember instead of POINT",
                               poPoint ? poPoint->getGeometryName() : "NULL" );
                     delete poPoint;
                     delete poMP;
