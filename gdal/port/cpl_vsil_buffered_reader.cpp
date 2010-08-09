@@ -133,7 +133,7 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
         nCurOffset >= nBufferOffset && nCurOffset <= nBufferOffset + nBufferSize)
     {
         /* We try to read from an offset located within the buffer */
-        const int nReadInBuffer = MIN(nTotalToRead, nBufferOffset + nBufferSize - nCurOffset);
+        const int nReadInBuffer = (int) MIN(nTotalToRead, nBufferOffset + nBufferSize - nCurOffset);
         memcpy(pBuffer, pabyBuffer + nCurOffset - nBufferOffset, nReadInBuffer);
         const int nToReadInFile = nTotalToRead - nReadInBuffer;
         if (nToReadInFile > 0)

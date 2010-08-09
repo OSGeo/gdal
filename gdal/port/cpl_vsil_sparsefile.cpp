@@ -205,7 +205,8 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
     if( nCurOffset + nBytesRequested > nBytesAvailable )
     {
-        size_t nExtraBytes = nCurOffset + nBytesRequested - nBytesAvailable;
+        size_t nExtraBytes = 
+            (size_t) (nCurOffset + nBytesRequested - nBytesAvailable);
         // Recurse to get the rest of the request.
         
         GUIntBig nCurOffsetSave = nCurOffset;
@@ -226,7 +227,8 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /* -------------------------------------------------------------------- */
     if( aoRegions[iRegion].osFilename.size() == 0 )
     {
-        memset( pBuffer, aoRegions[iRegion].byValue, nBytesRequested );
+        memset( pBuffer, aoRegions[iRegion].byValue, 
+                (size_t) nBytesRequested );
     }
 
 /* -------------------------------------------------------------------- */
@@ -260,7 +262,7 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
                        SEEK_SET ) != 0 )
             return 0;
 
-        size_t nBytesRead = VSIFReadL( pBuffer, 1, nBytesRequested, 
+        size_t nBytesRead = VSIFReadL( pBuffer, 1, (size_t) nBytesRequested, 
                                        aoRegions[iRegion].fp );
 
         if( nBytesAvailable < nBytesRequested )
@@ -437,7 +439,7 @@ int VSISparseFileFilesystemHandler::Stat( const char * pszFilename,
         return -1;
 
     poFile->Seek( 0, SEEK_END );
-    size_t nLength = poFile->Tell();
+    size_t nLength = (size_t) poFile->Tell();
     delete poFile;
 
     int nResult = VSIStatL( pszFilename + strlen("/vsisparse/"), 
