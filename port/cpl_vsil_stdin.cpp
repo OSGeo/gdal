@@ -183,7 +183,7 @@ int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
     nCurOff = nRealPos;
     while(TRUE)
     {
-        int nToRead = MIN(8192, nOffset - nCurOff);
+        int nToRead = (int) MIN(8192, nOffset - nCurOff);
         int nRead = fread(abyTemp, 1, nToRead, stdin);
         if (nRead < nToRead)
             return -1;
@@ -223,12 +223,12 @@ size_t VSIStdinHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
             return nCount;
         }
 
-        memcpy(pBuffer, pabyBuffer + nCurOff, nBufferLen - nCurOff);
+        memcpy(pBuffer, pabyBuffer + nCurOff, (size_t)(nBufferLen - nCurOff));
 
         int nRead = fread((GByte*)pBuffer + nBufferLen - nCurOff, 1,
-                           nSize * nCount - (nBufferLen - nCurOff), stdin);
+                          (size_t)(nSize*nCount - (nBufferLen-nCurOff)), stdin);
 
-        int nRet = (nRead + nBufferLen - nCurOff) / nSize;
+        int nRet = (int) ((nRead + nBufferLen - nCurOff) / nSize);
 
         nRealPos = nCurOff = nBufferLen + nRead;
 
