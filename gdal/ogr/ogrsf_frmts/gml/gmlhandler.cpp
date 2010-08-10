@@ -419,6 +419,8 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_pszCityGMLGenericAttrName = NULL;
     m_inCityGMLGenericAttrDepth = 0;
     m_bIsCityGML = FALSE;
+    m_bReportHref = FALSE;
+    m_pszHref = NULL;
 }
 
 /************************************************************************/
@@ -431,6 +433,7 @@ GMLHandler::~GMLHandler()
     CPLFree( m_pszCurField );
     CPLFree( m_pszGeometry );
     CPLFree( m_pszCityGMLGenericAttrName );
+    CPLFree( m_pszHref );
 }
 
 
@@ -443,8 +446,13 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 {
     GMLReadState *poState = m_poReader->GetState();
 
-    if ( m_nDepth == 0 && strcmp(pszName, "CityModel") == 0 )
-        m_bIsCityGML = TRUE;
+    if ( m_nDepth == 0 )
+    {
+        if (strcmp(pszName, "CityModel") == 0 )
+            m_bIsCityGML = TRUE;
+        else if (strcmp(pszName, "AIXMBasicMessage") == 0)
+            m_bReportHref = TRUE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are in the midst of collecting a feature attribute        */
@@ -472,7 +480,8 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 /*      geometry element then append to the geometry info.              */
 /* -------------------------------------------------------------------- */
     else if( m_pszGeometry != NULL 
-        || IsGeometryElement( pszName ) )
+        || IsGeometryElement( pszName )
+        /* AIXM ElevatedPoint */ || strcmp( pszName, "ElevatedPoint") == 0 )
     {
         /* should save attributes too! */
 
@@ -583,6 +592,11 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
     {
         CPLFree( m_pszCurField );
         m_pszCurField = CPLStrdup("");
+        if (m_bReportHref)
+        {
+            CPLFree(m_pszHref);
+            m_pszHref = GetAttributeValue(attr, "xlink:href");
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -640,9 +654,25 @@ OGRErr GMLHandler::endElement(const char* pszName )
     {
         CPLAssert( poState->m_poFeature != NULL );
 
-        m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszCurField );
+        if ( m_pszHref != NULL && (m_pszCurField == NULL || EQUAL(m_pszCurField, "")))
+        {
+            CPLString osPropNameHref = CPLSPrintf("%s_href", poState->m_pszPath);
+            m_poReader->SetFeatureProperty( osPropNameHref, m_pszHref );
+        }
+        else
+        {
+            m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszCurField );
+
+            if (m_pszHref != NULL)
+            {
+                CPLString osPropNameHref = CPLSPrintf("%s_href", poState->m_pszPath);
+                m_poReader->SetFeatureProperty( osPropNameHref, m_pszHref );
+            }
+        }
         CPLFree( m_pszCurField );
         m_pszCurField = NULL;
+        CPLFree( m_pszHref );
+        m_pszHref = NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -676,10 +706,70 @@ OGRErr GMLHandler::endElement(const char* pszName )
         {
             if( poState->m_poFeature != NULL )
             {
-                if (m_poReader->FetchAllGeometries())
-                    poState->m_poFeature->AddGeometry( m_pszGeometry );
-                else
-                    poState->m_poFeature->SetGeometryDirectly( m_pszGeometry );
+                /* AIXM ElevatedPoint. We want to parse this */
+                /* a bit specially because ElevatedPoint is aixm: stuff and */
+                /* the srsDimension of the <gml:pos> can be set to TRUE although */
+                /* they are only 2 coordinates in practice */
+                if ( strcmp(pszName, "ElevatedPoint") == 0 )
+                {
+                    CPLXMLNode *psGML = CPLParseXMLString( m_pszGeometry );
+                    if (psGML)
+                    {
+                        const char* pszElevation =
+                            CPLGetXMLValue( psGML, "elevation", NULL );
+                        if (pszElevation)
+                        {
+                            m_poReader->SetFeatureProperty( "elevation",
+                                                            pszElevation );
+                                const char* pszElevationUnit =
+                            CPLGetXMLValue( psGML, "elevation.uom", NULL );
+                            if (pszElevationUnit)
+                            {
+                                m_poReader->SetFeatureProperty( "elevation_uom",
+                                                             pszElevationUnit );
+                            }
+                        }
+
+                        const char* pszPos =
+                                        CPLGetXMLValue( psGML, "pos", NULL );
+                        const char* pszCoordinates =
+                                  CPLGetXMLValue( psGML, "coordinates", NULL );
+                        if (pszPos != NULL)
+                        {
+                            char* pszNewGeometry = CPLStrdup(CPLSPrintf(
+                                "<gml:Point><gml:pos>%s</gml:pos></gml:Point>",
+                                                                      pszPos));
+                            CPLFree(m_pszGeometry);
+                            m_pszGeometry = pszNewGeometry;
+                        }
+                        else if (pszCoordinates != NULL)
+                        {
+                            char* pszNewGeometry = CPLStrdup(CPLSPrintf(
+                                "<gml:Point><gml:coordinates>%s</gml:coordinates></gml:Point>",
+                                                              pszCoordinates));
+                            CPLFree(m_pszGeometry);
+                            m_pszGeometry = pszNewGeometry;
+                        }
+                        else
+                        {
+                            CPLFree(m_pszGeometry);
+                            m_pszGeometry = NULL;
+                        }
+                        CPLDestroyXMLNode( psGML );
+                    }
+                    else
+                    {
+                        CPLFree(m_pszGeometry);
+                        m_pszGeometry = NULL;
+                    }
+                }
+                if (m_pszGeometry)
+                {
+                    if (m_poReader->FetchAllGeometries())
+                        poState->m_poFeature->AddGeometry( m_pszGeometry );
+                    else
+                        poState->m_poFeature->SetGeometryDirectly( m_pszGeometry );
+                }
             }
             else
                 CPLFree( m_pszGeometry );
