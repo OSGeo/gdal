@@ -225,6 +225,37 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
 
             if( *pszCoordString == '\0' || isspace((unsigned char)*pszCoordString) )
             {
+                /* In theory, the coordinates inside a 2 or 3 tuple should be */
+                /* separated by a comma. However it has been found in the wild */
+                /* that for <gml:Point>, the coordinates are in rare cases separated by a space */
+                /* See https://52north.org/twiki/bin/view/Processing/WPS-IDWExtension-ObservationCollectionExample */
+                /* or http://agisdemo.faa.gov/aixmServices/getAllFeaturesByLocatorId?locatorId=DFW */
+                if ( poGeometry->getGeometryType() == wkbPoint )
+                {
+                    char **papszTokens = CSLTokenizeStringComplex(
+                        GetElementText( psCoordinates ), " ,", FALSE, FALSE );
+                    int bSuccess = FALSE;
+
+                    if( CSLCount( papszTokens ) == 3 )
+                    {
+                        bSuccess = AddPoint( poGeometry,
+                                            OGRFastAtof(papszTokens[0]),
+                                            OGRFastAtof(papszTokens[1]),
+                                            OGRFastAtof(papszTokens[2]), 3 );
+                    }
+                    else if( CSLCount( papszTokens ) == 2 )
+                    {
+                        bSuccess = AddPoint( poGeometry,
+                                            OGRFastAtof(papszTokens[0]),
+                                            OGRFastAtof(papszTokens[1]),
+                                            0.0, 2 );
+                    }
+
+                    CSLDestroy(papszTokens);
+                    if (bSuccess)
+                        return TRUE;
+                }
+
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Corrupt <coordinates> value." );
                 return FALSE;
