@@ -657,7 +657,8 @@ def gml_invalid_geoms():
         ('<gml:Point><gml:pos>31 29 16</gml:pos><gml:pos>31 29 16</gml:pos></gml:Point>', None),
         ('<gml:Point><gml:coordinates/></gml:Point>', None),
         ('<gml:Point><gml:coordinates>0</gml:Coordinates></gml:Point>', None),
-        ('<gml:Point><gml:coordinates>0 1</gml:Coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates>0 1</gml:Coordinates></gml:Point>', 'POINT (0 1)'), # Support for uncommon formatting of coordinates
+        ('<gml:Point><gml:coordinates>0 1 2</gml:Coordinates></gml:Point>', 'POINT (0 1 2)'), # Support for uncommon formatting of coordinates
         ('<gml:Point><gml:coordinates>0,1 2,3</gml:Coordinates></gml:Point>', None),
         ('<gml:Point><gml:pos>0</gml:pos></gml:Point>', None),
         ('<gml:Point><gml:pos/></gml:Point>', None),
