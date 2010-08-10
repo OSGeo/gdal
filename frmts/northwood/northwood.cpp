@@ -507,8 +507,8 @@ void nwtPrintGridHeader( NWT_GRID * pGrd )
         }
     }
     printf( "\nDim (x,y) = (%d,%d)", pGrd->nXSide, pGrd->nYSide );
-    printf( "\nStep Size = %lf", pGrd->dfStepSize );
-    printf( "\nBounds = (%lf,%lf) (%lf,%lf)", pGrd->dfMinX, pGrd->dfMinY,
+    printf( "\nStep Size = %f", pGrd->dfStepSize );
+    printf( "\nBounds = (%f,%f) (%f,%f)", pGrd->dfMinX, pGrd->dfMinY,
             pGrd->dfMaxX, pGrd->dfMaxY );
     printf( "\nCoordinate System = %s", pGrd->cMICoordSys );
 
