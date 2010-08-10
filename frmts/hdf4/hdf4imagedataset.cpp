@@ -979,7 +979,7 @@ void HDF4ImageDataset::FlushCache()
         if ( poBand->bNoDataSet )
         {
             pszName = CPLStrdup( CPLSPrintf( "NoDataValue%d", iBand ) );
-            pszValue = CPLSPrintf( "%lf", poBand->dfNoDataValue );
+            pszValue = CPLSPrintf( "%f", poBand->dfNoDataValue );
             if ( (SDsetattr( hSD, pszName, DFNT_CHAR8,
                              strlen(pszValue) + 1, pszValue )) < 0 )
                 {

@@ -1031,7 +1031,7 @@ char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec
                     osTemp.Printf( "%f", ((float *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_FLOAT64:
-                    osTemp.Printf( "%lf", ((double *)pData)[k++] );
+                    osTemp.Printf( "%f", ((double *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_ASCII:
                     osTemp = ((const char **)pData)[k++];
