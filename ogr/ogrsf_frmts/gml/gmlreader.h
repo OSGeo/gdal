@@ -158,7 +158,7 @@ class CPL_DLL GMLFeature
     int              m_nPropertyCount;
     GMLProperty     *m_pasProperties;
 
-    char            *m_pszGeometry;
+    char           **m_papszGeometryList;
 
     // string list of named non-schema properties - used by NAS driver.
     char           **m_papszOBProperties; 
@@ -170,7 +170,10 @@ public:
     GMLFeatureClass*GetClass() const { return m_poClass; }
 
     void            SetGeometryDirectly( char * );
-    const char     *GetGeometry() const { return m_pszGeometry; }
+    const char     *GetGeometry() const { return (m_papszGeometryList) ? m_papszGeometryList[0] : NULL; }
+
+    void            AddGeometry( char * );
+    char**          GetGeometryList() { return m_papszGeometryList; }
 
     void            SetProperty( int i, const char *pszValue );
     void            SetProperty( const char *pszName, const char *pszValue )
