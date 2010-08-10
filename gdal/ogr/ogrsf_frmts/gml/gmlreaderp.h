@@ -58,8 +58,10 @@ class GMLHandler
     int        m_bInCityGMLGenericAttr;
     char      *m_pszCityGMLGenericAttrName;
     int        m_inCityGMLGenericAttrDepth;
-
     int        m_bIsCityGML;
+
+    int        m_bReportHref;
+    char      *m_pszHref;
 protected:
     GMLReader  *m_poReader;
 
