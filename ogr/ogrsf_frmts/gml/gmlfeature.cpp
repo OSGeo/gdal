@@ -40,7 +40,7 @@ GMLFeature::GMLFeature( GMLFeatureClass *poClass )
 {
     m_poClass = poClass;
     m_pszFID = NULL;
-    m_pszGeometry = NULL;
+    m_papszGeometryList = NULL;
     
     m_nPropertyCount = 0;
     m_pasProperties = NULL;
@@ -65,7 +65,7 @@ GMLFeature::~GMLFeature()
     }
 
     CPLFree( m_pasProperties );
-    CPLFree( m_pszGeometry );
+    CSLDestroy( m_papszGeometryList );
     CSLDestroy( m_papszOBProperties );
 }
 
@@ -155,8 +155,15 @@ void GMLFeature::Dump( FILE * fp )
         printf("\n");
     }
 
-    if( m_pszGeometry )
-        printf( "  %s\n", m_pszGeometry );
+    if( m_papszGeometryList )
+    {
+        char** papszIter = m_papszGeometryList;
+        while(*papszIter)
+        {
+            printf( "  %s\n", *papszIter );
+            papszIter ++;
+        }
+    }
 }
 
 /************************************************************************/
@@ -166,10 +173,29 @@ void GMLFeature::Dump( FILE * fp )
 void GMLFeature::SetGeometryDirectly( char *pszGeometry )
 
 {
-    if( m_pszGeometry )
-        CPLFree( m_pszGeometry );
+    if (m_papszGeometryList != NULL && m_papszGeometryList[0] != NULL &&
+        m_papszGeometryList[1] == NULL)
+    {
+        CPLFree(m_papszGeometryList[0]);
+    }
+    else
+    {
+        CSLDestroy(m_papszGeometryList);
+        m_papszGeometryList = (char**)CPLMalloc(sizeof(char*) * 2);
+        m_papszGeometryList[1] = NULL;
+    }
+    m_papszGeometryList[0] = pszGeometry;
+}
 
-    m_pszGeometry = pszGeometry;
+/************************************************************************/
+/*                             AddGeometry()                            */
+/************************************************************************/
+
+void GMLFeature::AddGeometry( char *pszGeometry )
+
+{
+    m_papszGeometryList = CSLAddString(m_papszGeometryList, pszGeometry);
+    CPLFree(pszGeometry);
 }
 
 /************************************************************************/

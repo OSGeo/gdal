@@ -675,7 +675,12 @@ OGRErr GMLHandler::endElement(const char* pszName )
         if( poState->m_nPathLength == m_nGeometryDepth+1 )
         {
             if( poState->m_poFeature != NULL )
-                poState->m_poFeature->SetGeometryDirectly( m_pszGeometry );
+            {
+                if (m_poReader->FetchAllGeometries())
+                    poState->m_poFeature->AddGeometry( m_pszGeometry );
+                else
+                    poState->m_poFeature->SetGeometryDirectly( m_pszGeometry );
+            }
             else
                 CPLFree( m_pszGeometry );
 

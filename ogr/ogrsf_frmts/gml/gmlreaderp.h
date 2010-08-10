@@ -32,6 +32,7 @@
 
 #include "gmlreader.h"
 #include "ogr_api.h"
+#include "ogr_geometry.h"
 
 class GMLReader;
 
@@ -284,6 +285,8 @@ private:
     int           SetupParser();
     void          CleanupParser();
 
+    int           m_bFetchAllGeometries;
+
 public:
                 GMLReader();
     virtual     ~GMLReader();
@@ -335,6 +338,9 @@ public:
 
     int         HasStoppedParsing() { return m_bStopParsing; }
 
+    int         FetchAllGeometries() { return m_bFetchAllGeometries; }
 };
+
+OGRGeometry* BuildOGRGeometryFromList(char** papszGeometryList, int bTryToMakeMultipolygons = TRUE);
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */
