@@ -121,6 +121,9 @@ GMLReader::GMLReader()
     m_pszFilename = NULL;
 
     m_bStopParsing = FALSE;
+
+    /* A bit experimental. Not publicly advertized. See commented doc in drv_gml.html */
+    m_bFetchAllGeometries = CSLTestBoolean(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"));
 }
 
 /************************************************************************/
@@ -1075,14 +1078,7 @@ int GMLReader::PrescanForSchema( int bGetExtents )
 #ifdef SUPPORT_GEOMETRY
         if( bGetExtents )
         {
-            OGRGeometry *poGeometry = NULL;
-
-            if( poFeature->GetGeometry() != NULL 
-                && strlen(poFeature->GetGeometry()) != 0 )
-            {
-                poGeometry = OGRGeometryFactory::createFromGML( 
-                    poFeature->GetGeometry() );
-            }
+            OGRGeometry *poGeometry = BuildOGRGeometryFromList(poFeature->GetGeometryList());
 
             if( poGeometry != NULL )
             {

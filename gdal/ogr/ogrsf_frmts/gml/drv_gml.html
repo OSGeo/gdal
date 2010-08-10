@@ -8,7 +8,9 @@
 <h1>GML - Geography Markup Language</h1>
 
 OGR has limited support for GML reading and writing. Update of existing
-files is not currently supported. OGR is based on GML 2.0. The reading only
+files is not currently supported. OGR is based on GML 2.0 : it will only write
+GML 2 geometries, but can read GML 2 and part of GML 3 geometries that can be
+translated into the simple feature model. The reading part of the driver only
 works if OGR is built with Xerces linked in. Starting with GDAL 1.7.0, when
 Xerces is unavailable, read support also works if OGR is built with Expat linked in.
 XML validation is disabled by default.
@@ -45,11 +47,31 @@ OGR 1.8.0 adds support for detecting feature attributes in nested GML elements
 such as UK Ordnance Survey MasterMap. OGR 1.8.0 also brings support for reading
 IntegerList, RealList and StringList field types when a GML element has several occurences.<p>
 
-Since OGR 1.8.0, a specialized GML driver - the NAS driver - is available to read
-German AAA GML Exchange Format (NAS).<p>
+Since OGR 1.8.0, a specialized GML driver - the <a href="drv_nas.html">NAS</a> driver - is available to read
+German AAA GML Exchange Format (NAS/ALKIS).<p>
 
 Configuration options can be set via the CPLSetConfigOption() function or as
 environment variables.<p>
+
+<h2>Geometry reading</h2>
+
+When reading a feature, the driver will by default only take into account the
+last recognized GML geometry found (in case they are multiples) in the XML subtree describing the feature.<p>
+
+Starting with OGR 1.8.0, the user can change the .gfs file to select the appropriate
+geometry by specifying its path with the &lt;GeometryElementPath&gt; element. See the
+description of the .gfs syntax below.<p>
+
+<!-- Voluntary commented : a bit experimental for now and perhaps a better solution
+     will emerge later -->
+<!--
+OGR 1.8.0 adds support to "merge" the multiple geometries found in a feature by
+setting the configuration option <b>GML_FETCH_ALL_GEOMETRIES</b> to <b>YES</b>. The geometries
+will be collected into a GeometryCollection (or Multipolygon if individual geometries
+are polygons or multipolygons). This can be usefull when reading some GML application profiles.
+If a &lt;GeometryElementPath&gt; element is specified in the .gfs, the fetching will be limited
+to paths that match the value of &lt;GeometryElementPath&gt;.<p>
+-->
 
 OGR 1.8.0 adds support for more GML geometries including TopoCurve,
 TopoSurface, MultiCurve. The TopoCurve type GML geometry can be interpreted as
@@ -59,6 +81,8 @@ are reported as OGRMultiLineString.  To retrieve the nodes, as OGRMultiPoint,
 the configuration option <b>GML_GET_SECONDARY_GEOM</b> should be set to the
 value <b>YES</b>.  When this is set only the secondary geometries are
 reported.<p>
+
+<h2>gml:xlink resolving</h2>
 
 OGR 1.8.0 adds support for gml:xlink resolving.  When the resolver finds an
 element containing the tag xlink:href, it tries to find the corresponding
@@ -230,6 +254,7 @@ ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_19
 <ul>
 <li> <a href="http://www.opengis.net/gml/">GML Specifications</a><p>
 <li> <a href="http://xml.apache.org/xerces2-j/index.html">Xerces</a><p>
+<li> <a href="drv_nas.html">NAS/ALKIS : specialized GML driver for cadastral data in Germany</a><p>
 </ul>
 
 </body>

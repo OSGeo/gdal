@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_gml.h"
+#include "gmlreaderp.h"
 #include "cpl_conv.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
@@ -225,9 +226,11 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /*      Does it satisfy the spatial query, if there is one?             */
 /* -------------------------------------------------------------------- */
 
-        if( poGMLFeature->GetGeometry() != NULL )
+        char** papszGeometryList = poGMLFeature->GetGeometryList();
+        if( papszGeometryList != NULL )
         {
-            poGeom = OGRGeometryFactory::createFromGML( poGMLFeature->GetGeometry() );
+            poGeom = BuildOGRGeometryFromList(papszGeometryList);
+
             // We assume the createFromGML() function would have already
             // reported the error. 
             if( poGeom == NULL )

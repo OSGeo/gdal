@@ -1,6 +1,6 @@
 
 LL_OBJ	=	gmlpropertydefn.obj gmlfeatureclass.obj gmlfeature.obj \
-		gmlreader.obj parsexsd.obj resolvexlinks.obj $(X_OBJ)
+		gmlreader.obj parsexsd.obj resolvexlinks.obj gmlutils.obj $(X_OBJ)
 OGR_OBJ	=	ogrgmldriver.obj ogrgmldatasource.obj ogrgmllayer.obj
 
 OBJ	=	$(LL_OBJ) $(OGR_OBJ)
