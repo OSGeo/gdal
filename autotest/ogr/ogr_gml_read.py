@@ -650,6 +650,98 @@ def ogr_gml_16():
     return 'success'
 
 ###############################################################################
+# Read layer SRS for WFS 1.0.0 return
+
+def ogr_gml_17():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/gnis_pop_100.gml')
+    lyr = ds.GetLayer(0)
+    sr = lyr.GetSpatialRef()
+    expected_wgs84 = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""
+    got_wkt = sr.ExportToWkt()
+    if got_wkt != expected_wgs84:
+        gdaltest.post_reason('did not get expected SRS')
+        print(got_wkt)
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    if got_wkt != 'POINT (2.09 34.12)':
+        gdaltest.post_reason('did not get expected geometry')
+        print(got_wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Read layer SRS for WFS 1.1.0 return
+
+def ogr_gml_18():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/gnis_pop_110.gml')
+    lyr = ds.GetLayer(0)
+    sr = lyr.GetSpatialRef()
+    expected_wgs84 = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""
+    got_wkt = sr.ExportToWkt()
+    if got_wkt != expected_wgs84:
+        gdaltest.post_reason('did not get expected SRS')
+        print(got_wkt)
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    if got_wkt != 'POINT (2.09 34.12)':
+        gdaltest.post_reason('did not get expected geometry')
+        print(got_wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Read layer SRS for WFS 1.1.0 return, but without trying to restore
+# (long, lat) order. So we should get EPSGA:4326 and (lat, long) order
+
+def ogr_gml_19():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.remove( 'data/gnis_pop_110.gfs' )
+    except:
+        pass
+
+    gdal.SetConfigOption('GML_INVERT_AXIS_ORDER_IF_LAT_LONG', 'NO')
+    ds = ogr.Open('data/gnis_pop_110.gml')
+    gdal.SetConfigOption('GML_INVERT_AXIS_ORDER_IF_LAT_LONG', None)
+
+    lyr = ds.GetLayer(0)
+    sr = lyr.GetSpatialRef()
+    expected_wgs84_latlong = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]"""
+    got_wkt = sr.ExportToWkt()
+    if got_wkt != expected_wgs84_latlong:
+        gdaltest.post_reason('did not get expected SRS')
+        print(got_wkt)
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    if got_wkt != 'POINT (34.12 2.09)':
+        gdaltest.post_reason('did not get expected geometry')
+        print(got_wkt)
+        return 'fail'
+
+    return 'success'
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -678,6 +770,14 @@ def ogr_gml_clean_files():
         os.remove( 'data/citygml.gfs' )
     except:
         pass
+    try:
+        os.remove( 'data/gnis_pop_100.gfs' )
+    except:
+        pass
+    try:
+        os.remove( 'data/gnis_pop_110.gfs' )
+    except:
+        pass
 
     files = os.listdir('data')
     for filename in files:
@@ -704,6 +804,9 @@ gdaltest_list = [
     ogr_gml_14,
     ogr_gml_15,
     ogr_gml_16,
+    ogr_gml_17,
+    ogr_gml_18,
+    ogr_gml_19,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
