@@ -67,7 +67,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
         InsertHeader();
 
-        if( nBoundedByLocation != -1 
+        if( !bFpOutputIsStdout
+            && nBoundedByLocation != -1
             && sBoundingRect.IsInit() 
             && VSIFSeekL( fpOutput, nBoundedByLocation, SEEK_SET ) == 0 )
         {
