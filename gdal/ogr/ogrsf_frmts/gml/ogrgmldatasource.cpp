@@ -500,6 +500,9 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         CPLFree( pszBasename );
     }
 
+    CSLDestroy(papszCreateOptions);
+    papszCreateOptions = CSLDuplicate(papszOptions);
+
     PrintLine( fpOutput, "%s", 
                 "     xmlns:ogr=\"http://ogr.maptools.org/\"" );
     PrintLine( fpOutput, "%s", 
@@ -841,7 +844,7 @@ void OGRGMLDataSource::InsertHeader()
 /* ==================================================================== */
 /*      Move schema to the start of the file.                           */
 /* ==================================================================== */
-    if( bFpOutputIsStdout )
+    if( fpSchema == fpOutput )
     {
 /* -------------------------------------------------------------------- */
 /*      Read the schema into memory.                                    */
@@ -889,6 +892,8 @@ void OGRGMLDataSource::InsertHeader()
         VSIFSeekL( fpOutput, 0, SEEK_END );
 
         nBoundedByLocation += nSchemaSize;
+
+        CPLFree(pszSchema);
     }
 /* -------------------------------------------------------------------- */
 /*      Close external schema files.                                    */
