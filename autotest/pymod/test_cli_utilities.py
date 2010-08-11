@@ -41,22 +41,22 @@ def get_cli_utility_path_internal(cli_utility_name):
     # This is the case for the buildbot directory tree
     try:
         cli_utility_path = os.path.join(os.getcwd(), '..', '..', 'gdal', 'apps', cli_utility_name)
-        ret = gdaltest.runexternal(cli_utility_path + ' --utility_version')
+        if os.path.isfile(cli_utility_path):
+            ret = gdaltest.runexternal(cli_utility_path + ' --utility_version')
 
-        if ret.find('GDAL') != -1:
-            #print ret
-            return cli_utility_path
+            if ret.find('GDAL') != -1:
+                return cli_utility_path
     except:
         pass
 
     # Second try : the autotest directory is a subdirectory of gdal/ (FrankW's layout)
     try:
         cli_utility_path = os.path.join(os.getcwd(), '..', '..', 'apps', cli_utility_name)
-        ret = gdaltest.runexternal(cli_utility_path + ' --utility_version')
+        if os.path.isfile(cli_utility_path):
+            ret = gdaltest.runexternal(cli_utility_path + ' --utility_version')
 
-        if ret.find('GDAL') != -1:
-            #print ret
-            return cli_utility_path
+            if ret.find('GDAL') != -1:
+                return cli_utility_path
     except:
         pass
 
@@ -66,7 +66,6 @@ def get_cli_utility_path_internal(cli_utility_name):
         ret = gdaltest.runexternal(cli_utility_path + ' --utility_version')
 
         if ret.find('GDAL') != -1:
-            #print ret
             return cli_utility_path
     except:
         pass
