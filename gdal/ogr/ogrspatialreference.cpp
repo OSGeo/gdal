@@ -2014,7 +2014,7 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 /* -------------------------------------------------------------------- */
 /*      Find code (ignoring version) out of string like:                */
 /*                                                                      */
-/*      authority:version:code                                          */
+/*      authority:[version]:code                                          */
 /* -------------------------------------------------------------------- */
     const char *pszAuthority = pszCur;
 
@@ -2025,10 +2025,16 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
         pszCur++;
 
     // skip version
+    const char* pszBeforeVersion = pszCur;
     while( *pszCur != ':' && *pszCur )
         pszCur++;
     if( *pszCur == ':' )
         pszCur++;
+    else
+        /* We come here in the case, the content to parse is authority:code (instead of authority::code) */
+        /* which is probably illegal according to http://www.opengeospatial.org/ogcUrnPolicy */
+        /* but such content is found for example in what is returned by GeoServer */
+        pszCur = pszBeforeVersion;
 
     const char *pszCode = pszCur;
 
