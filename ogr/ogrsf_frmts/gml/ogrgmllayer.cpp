@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_gml.h"
-#include "gmlreaderp.h"
+#include "gmlutils.h"
 #include "cpl_conv.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
