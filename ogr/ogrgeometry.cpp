@@ -3229,3 +3229,16 @@ int OGR_G_Centroid( OGRGeometryH hGeom, OGRGeometryH hCentroidPoint )
 
     return poGeom->Centroid( poCentroid );
 }
+
+/************************************************************************/
+/*                               swapXY()                               */
+/************************************************************************/
+
+/**
+ * \brief Swap x and y coordinates.
+ */
+
+void OGRGeometry::swapXY()
+
+{
+}
