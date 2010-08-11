@@ -60,8 +60,11 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
     bValidStats         = false;
     nOverviewLevel      = nLevel;
     papoOverviews       = NULL;
-    nOverviewCount          = 0;
-
+    nOverviewCount      = 0;
+    pahNoDataArray      = NULL;
+    nNoDataArraySz      = 0;
+    bHasNoDataArray     = false;
+    
     //  -----------------------------------------------------------------------
     //  Initialize overview list
     //  -----------------------------------------------------------------------
@@ -96,6 +99,81 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
             nBlockYSize = nRasterYSize;
         }
     }
+
+    //  -----------------------------------------------------------------------
+    //  Load NoData values and value ranges for this band (layer)
+    //  -----------------------------------------------------------------------
+
+    if( ( (GeoRasterDataset*) poDS)->bApplyNoDataArray )
+    {
+        CPLList* psList = NULL;
+        int nLayerCount = 0;
+        int nObjCount = 0;
+
+        /*
+         *  Count the number of NoData values and value ranges
+         */
+
+        for( psList = poGeoRaster->psNoDataList; psList ; psList = psList->psNext )
+        {
+            hNoDataItem* phItem = (hNoDataItem*) psList->pData;
+
+            if( phItem->nBand == nBand )
+            {
+                nLayerCount++;
+            }
+
+            if( phItem->nBand == 0 )
+            {
+                nObjCount++;
+            }
+
+            if( phItem->nBand > nBand )
+            {
+                break;
+            }
+        }
+
+        /*
+         * Join the object nodata values to layer NoData values
+         */
+
+        nNoDataArraySz = nLayerCount + nObjCount;
+
+        pahNoDataArray = (hNoDataItem*) VSIMalloc2( sizeof(hNoDataItem),
+                nNoDataArraySz );
+
+        int i = 0;
+        bool bFirst = true;
+
+        for( psList = poGeoRaster->psNoDataList ; psList && i < nNoDataArraySz;
+             psList = psList->psNext )
+        {
+            hNoDataItem* phItem = (hNoDataItem*) psList->pData;
+
+            if( phItem->nBand == nBand || phItem->nBand == 0 )
+            {
+                pahNoDataArray[i].nBand = nBand;
+                pahNoDataArray[i].dfLower = phItem->dfLower;
+                pahNoDataArray[i].dfUpper = phItem->dfUpper;
+                i++;
+
+                if( bFirst )
+                {
+                    bFirst = false;
+
+                    /*
+                     * Use the first value to assigned pixel values
+                     * on method ApplyNoDataArray()
+                     */
+                    
+                    dfNoData = phItem->dfLower;
+                }
+            }
+        }
+
+        bHasNoDataArray = nNoDataArraySz > 0;
+    }
 }
 
 //  ---------------------------------------------------------------------------
@@ -108,6 +186,7 @@ GeoRasterRasterBand::~GeoRasterRasterBand()
     delete poDefaultRAT;
     
     CPLFree( pszVATName );
+    CPLFree( pahNoDataArray );
 
     if( nOverviewCount && papoOverviews )
     {
@@ -134,6 +213,11 @@ CPLErr GeoRasterRasterBand::IReadBlock( int nBlockXOff,
                                    nBlockYOff,
                                    pImage ) )
     {
+        if( bHasNoDataArray )
+        {
+            ApplyNoDataArry( pImage );
+        }
+
         return CE_None;
     }
     else
@@ -338,7 +422,14 @@ double GeoRasterRasterBand::GetNoDataValue( int *pbSuccess )
 {
     if( pbSuccess )
     {
-        *pbSuccess = (int) poGeoRaster->GetNoData( nBand, &dfNoData );
+        if( nNoDataArraySz )
+        {
+            *pbSuccess = true;
+        }
+        else
+        {
+            *pbSuccess = (int) poGeoRaster->GetNoData( nBand, &dfNoData );
+        }
     }
 
     return dfNoData;
@@ -835,3 +926,156 @@ int GeoRasterRasterBand::GetMaskFlags()
     return GMF_ALL_VALID;
 }
 
+//  ---------------------------------------------------------------------------
+//                                                            ApplyNoDataArry()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterRasterBand::ApplyNoDataArry(void* pBuffer)
+{
+    int i = 0;
+    int j = 0;
+    long n = nBlockXSize * nBlockYSize;
+
+    switch( eDataType )
+    {
+        case GDT_Byte:
+        {
+            GByte* pbBuffer = (GByte*) pBuffer;
+
+            for( i = 0; i < n; i++ )
+            {
+                for( j = 0; j < nNoDataArraySz; j++ )
+                {
+                    if( pbBuffer[i] == (GByte) pahNoDataArray[j].dfLower ||
+                      ( pbBuffer[i] >  (GByte) pahNoDataArray[j].dfLower &&
+                        pbBuffer[i] <  (GByte) pahNoDataArray[j].dfUpper ) )
+                    {
+                        pbBuffer[i] = (GByte) dfNoData;
+                    }
+                }
+            }
+
+            break;
+        }
+        case GDT_Float32:
+        case GDT_CFloat32:
+        {
+            float* pfBuffer = (float*) pBuffer;
+
+            for( i = 0; i < n; i++ )
+            {
+                for( j = 0; j < nNoDataArraySz; j++ )
+                {
+                    if( pfBuffer[i] == (float) pahNoDataArray[j].dfLower ||
+                      ( pfBuffer[i] >  (float) pahNoDataArray[j].dfLower &&
+                        pfBuffer[i] <  (float) pahNoDataArray[j].dfUpper ) )
+                    {
+                        pfBuffer[i] = (float) dfNoData;
+                    }
+                }
+            }
+
+            break;
+        }
+        case GDT_Float64:
+        case GDT_CFloat64:
+        {
+            double* pdfBuffer = (double*) pBuffer;
+
+            for( i = 0; i < n; i++ )
+            {
+                for( j = 0; j < nNoDataArraySz; j++ )
+                {
+                    if( pdfBuffer[i] == (double) pahNoDataArray[j].dfLower ||
+                      ( pdfBuffer[i] >  (double) pahNoDataArray[j].dfLower &&
+                        pdfBuffer[i] <  (double) pahNoDataArray[j].dfUpper ) )
+                    {
+                        pdfBuffer[i] = (double) dfNoData;
+                    }
+                }
+            }
+
+            break;
+        }
+        case GDT_Int16:
+        case GDT_CInt16:
+        {
+            GInt16* pnBuffer = (GInt16*) pBuffer;
+
+            for( i = 0; i < n; i++ )
+            {
+                for( j = 0; j < nNoDataArraySz; j++ )
+                {
+                    if( pnBuffer[i] == (GInt16) pahNoDataArray[j].dfLower ||
+                      ( pnBuffer[i] >  (GInt16) pahNoDataArray[j].dfLower &&
+                        pnBuffer[i] <  (GInt16) pahNoDataArray[j].dfUpper ) )
+                    {
+                        pnBuffer[i] = (GInt16) dfNoData;
+                    }
+                }
+            }
+
+            break;
+        }
+        case GDT_Int32:
+        case GDT_CInt32:
+        {
+            GInt32* pnBuffer = (GInt32*) pBuffer;
+
+            for( i = 0; i < n; i++ )
+            {
+                for( j = 0; j < nNoDataArraySz; j++ )
+                {
+                    if( pnBuffer[i] == (GInt32) pahNoDataArray[j].dfLower ||
+                      ( pnBuffer[i] >  (GInt32) pahNoDataArray[j].dfLower &&
+                        pnBuffer[i] <  (GInt32) pahNoDataArray[j].dfUpper ) )
+                    {
+                        pnBuffer[i] = (GInt32) dfNoData;
+                    }
+                }
+            }
+
+            break;
+        }
+        case GDT_UInt16:
+        {
+            GUInt16* pnBuffer = (GUInt16*) pBuffer;
+
+            for( i = 0; i < n; i++ )
+            {
+                for( j = 0; j < nNoDataArraySz; j++ )
+                {
+                    if( pnBuffer[i] == (GUInt16) pahNoDataArray[j].dfLower ||
+                      ( pnBuffer[i] >  (GUInt16) pahNoDataArray[j].dfLower &&
+                        pnBuffer[i] <  (GUInt16) pahNoDataArray[j].dfUpper ) )
+                    {
+                        pnBuffer[i] = (GUInt16) dfNoData;
+                    }
+                }
+            }
+
+            break;
+        }
+        case GDT_UInt32:
+        {
+            GUInt32* pnBuffer = (GUInt32*) pBuffer;
+
+            for( i = 0; i < n; i++ )
+            {
+                for( j = 0; j < nNoDataArraySz; j++ )
+                {
+                    if( pnBuffer[i] == (GUInt32) pahNoDataArray[j].dfLower ||
+                      ( pnBuffer[i] >  (GUInt32) pahNoDataArray[j].dfLower &&
+                        pnBuffer[i] <  (GUInt32) pahNoDataArray[j].dfUpper ) )
+                    {
+                        pnBuffer[i] = (GUInt32) dfNoData;
+                    }
+                }
+            }
+
+            break;
+        }
+        default:
+            ;
+    }
+}

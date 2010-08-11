@@ -36,6 +36,7 @@
 #include "gdal_rat.h"
 #include "ogr_spatialref.h"
 #include "cpl_minixml.h"
+#include "cpl_list.h"
 
 //  ---------------------------------------------------------------------------
 //  DEFLATE compression support
@@ -81,7 +82,7 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
 #define MCL_UPPERLEFT   1
 #define MCL_DEFAULT     MCL_CENTER
 
-struct hLevelDetails{
+struct hLevelDetails {
     int             nColumnBlockSize;
     int             nRowBlockSize;
     int             nTotalColumnBlocks;
@@ -90,6 +91,16 @@ struct hLevelDetails{
     unsigned long   nBlockBytes;
     unsigned long   nGDALBlockBytes;
     long            nOffset;
+};
+
+//  ---------------------------------------------------------------------------
+//  Support for multi-values NoData support
+//  ---------------------------------------------------------------------------
+
+struct hNoDataItem {
+    int             nBand;
+    double          dfLower;
+    double          dfUpper;
 };
 
 //  ---------------------------------------------------------------------------
@@ -151,6 +162,8 @@ private:
     GDAL_GCP*           pasGCPList;
     GeoRasterRasterBand*
                         poMaskBand;
+    bool                bApplyNoDataArray;
+
 public:
 
     void                SetSubdatasets( GeoRasterWrapper* poGRW );
@@ -233,6 +246,11 @@ private:
     int                 nOverviewLevel;
     GeoRasterRasterBand** papoOverviews;
     int                 nOverviewCount;
+    hNoDataItem*        pahNoDataArray;
+    int                 nNoDataArraySz;
+    bool                bHasNoDataArray;
+    
+    void                ApplyNoDataArry( void* pBuffer );
 
 public:
 
@@ -306,6 +324,8 @@ private:
     bool                InitializeIO( void );
     void                InitializeLevel( int nLevel );
     bool                FlushMetadata( void );
+
+    void                LoadNoDataValues( void );
 
     void                UnpackNBits( GByte* pabyData );
     void                PackNBits( GByte* pabyData );
@@ -405,6 +425,7 @@ public:
     int                 nCompressQuality;
     CPLString           sWKText;
     CPLString           sAuthority;
+    CPLList*            psNoDataList;
 
     int                 nRasterColumns;
     int                 nRasterRows;

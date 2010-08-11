@@ -60,6 +60,7 @@ GeoRasterDataset::GeoRasterDataset()
     nGCPCount           = 0;
     pasGCPList          = NULL;
     poMaskBand          = NULL;
+    bApplyNoDataArray   = false;
     poDriver            = (GDALDriver *) GDALGetDriverByName( "GEORASTER" );
 }
 
@@ -212,6 +213,17 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         poGRD->poMaskBand = new GeoRasterRasterBand( poGRD, 0, DEFAULT_BMP_MASK );
     }
     
+    //  -------------------------------------------------------------------
+    //  Check for filter Nodata environment variable, default is YES
+    //  -------------------------------------------------------------------
+
+    const char *pszGEOR_FILTER_NODATA =
+        CPLGetConfigOption( "GEOR_FILTER_NODATA_VALUES", "NO" );
+
+    if( ! EQUAL(pszGEOR_FILTER_NODATA, "NO") )
+    {
+        poGRD->bApplyNoDataArray = true;
+    }
     //  -------------------------------------------------------------------
     //  Create bands
     //  -------------------------------------------------------------------
