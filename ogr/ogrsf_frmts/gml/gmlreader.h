@@ -106,6 +106,9 @@ class CPL_DLL GMLFeatureClass
 
     int         m_nGeometryType;
 
+    char       *m_pszSRSName;
+    int         m_bSRSNameConsistant;
+
 public:
             GMLFeatureClass( const char *pszName = "" );
            ~GMLFeatureClass();
@@ -141,6 +144,10 @@ public:
 
     int         GetGeometryType() const { return m_nGeometryType; }
     void        SetGeometryType( int nNewType ) { m_nGeometryType = nNewType; }
+
+    void        SetSRSName( const char* pszSRSName );
+    void        MergeSRSName( const char* pszSRSName );
+    const char *GetSRSName() { return m_pszSRSName; }
 
     CPLXMLNode *SerializeToXML();
     int         InitializeFromXML( CPLXMLNode * );

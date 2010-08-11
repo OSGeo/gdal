@@ -32,6 +32,12 @@
 
 #include "ogr_geometry.h"
 
-OGRGeometry* BuildOGRGeometryFromList(char** papszGeometryList, int bTryToMakeMultipolygons = TRUE);
+char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList);
+
+int GML_IsSRSLatLongOrder(const char* pszSRSName);
+
+OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
+                                          int bTryToMakeMultipolygons,
+                                          int bInvertAxisOrderIfLatLong);
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */

@@ -50,6 +50,9 @@ GMLFeatureClass::GMLFeatureClass( const char *pszName )
     m_nFeatureCount = -1; // unknown
 
     m_nGeometryType = 0; // wkbUnknown
+
+    m_pszSRSName = NULL;
+    m_bSRSNameConsistant = TRUE;
 }
 
 /************************************************************************/
@@ -66,6 +69,7 @@ GMLFeatureClass::~GMLFeatureClass()
     for( int i = 0; i < m_nPropertyCount; i++ )
         delete m_papoProperty[i];
     CPLFree( m_papoProperty );
+    CPLFree( m_pszSRSName );
 }
 
 /************************************************************************/
@@ -228,6 +232,45 @@ int GMLFeatureClass::GetExtents( double *pdfXMin, double *pdfXMax,
 }
 
 /************************************************************************/
+/*                            SetSRSName()                              */
+/************************************************************************/
+
+void GMLFeatureClass::SetSRSName( const char* pszSRSName )
+
+{
+    m_bSRSNameConsistant = TRUE;
+    CPLFree(m_pszSRSName);
+    m_pszSRSName = (pszSRSName) ? CPLStrdup(pszSRSName) : NULL;
+}
+
+/************************************************************************/
+/*                           MergeSRSName()                             */
+/************************************************************************/
+
+void GMLFeatureClass::MergeSRSName( const char* pszSRSName )
+
+{
+    if(!m_bSRSNameConsistant)
+        return;
+
+    if( m_pszSRSName == NULL )
+    {
+        if (pszSRSName)
+            m_pszSRSName = CPLStrdup(pszSRSName);
+    }
+    else
+    {
+        m_bSRSNameConsistant = pszSRSName != NULL &&
+                                  strcmp(m_pszSRSName, pszSRSName) == 0;
+        if (!m_bSRSNameConsistant)
+        {
+            CPLFree(m_pszSRSName);
+            m_pszSRSName = NULL;
+        }
+    }
+}
+
+/************************************************************************/
 /*                         InitializeFromXML()                          */
 /************************************************************************/
 
@@ -280,6 +323,8 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                      pszGeometryType);
         }
     }
+
+    SetSRSName( CPLGetXMLValue( psRoot, "SRSName", NULL ) );
 
 /* -------------------------------------------------------------------- */
 /*      Collect dataset specific info.                                  */
@@ -402,6 +447,12 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
 
         sprintf( szValue, "%d", GetGeometryType() );
         CPLCreateXMLElementAndValue( psRoot, "GeometryType", szValue );
+    }
+
+    const char* pszSRSName = GetSRSName();
+    if( pszSRSName )
+    {
+        CPLCreateXMLElementAndValue( psRoot, "SRSName", pszSRSName );
     }
 
 /* -------------------------------------------------------------------- */
