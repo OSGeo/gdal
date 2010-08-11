@@ -32,7 +32,6 @@
 
 #include "gmlreader.h"
 #include "ogr_api.h"
-#include "ogr_geometry.h"
 
 class GMLReader;
 
@@ -270,7 +269,7 @@ private:
     XMLPScanToken m_oToFill;
     GMLFeature   *m_poCompleteFeature;
     GMLInputSource *m_GMLInputSource;
-#elif defined(HAVE_EXPAT)
+#else
     GMLExpatHandler    *m_poGMLHandler;
     XML_Parser    oParser;
     GMLFeature ** ppoFeatureTab;
@@ -342,7 +341,5 @@ public:
 
     int         FetchAllGeometries() { return m_bFetchAllGeometries; }
 };
-
-OGRGeometry* BuildOGRGeometryFromList(char** papszGeometryList, int bTryToMakeMultipolygons = TRUE);
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */
