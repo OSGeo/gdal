@@ -125,7 +125,7 @@ int OGRNASDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
         if( szPtr[0] != '<' 
             || strstr(szPtr,"opengis.net/gml") == NULL 
-            || strstr(szPtr,"NAS") == NULL )
+            || strstr(szPtr,"NAS-Operationen.xsd") == NULL )
         {
             VSIFClose( fp );
             return FALSE;
