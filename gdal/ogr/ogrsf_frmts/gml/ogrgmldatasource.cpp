@@ -372,8 +372,22 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 /* -------------------------------------------------------------------- */
 /*      Create an empty layer.                                          */
 /* -------------------------------------------------------------------- */
-    poLayer = new OGRGMLLayer( poClass->GetName(), NULL, FALSE, 
+
+    const char* pszSRSName = poClass->GetSRSName();
+    OGRSpatialReference* poSRS = NULL;
+    if (pszSRSName)
+    {
+        poSRS = new OGRSpatialReference();
+        if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
+    }
+
+    poLayer = new OGRGMLLayer( poClass->GetName(), poSRS, FALSE,
                                eGType, this );
+    delete poSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */

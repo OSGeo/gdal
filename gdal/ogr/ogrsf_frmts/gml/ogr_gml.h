@@ -56,6 +56,8 @@ class OGRGMLLayer : public OGRLayer
 
     GMLFeatureClass     *poFClass;
 
+    int                 m_bInvertAxisOrderIfLatLong;
+
   public:
                         OGRGMLLayer( const char * pszName, 
                                      OGRSpatialReference *poSRS, 
