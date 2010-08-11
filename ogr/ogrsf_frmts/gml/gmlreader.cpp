@@ -125,6 +125,8 @@ GMLReader::GMLReader()
 
     /* A bit experimental. Not publicly advertized. See commented doc in drv_gml.html */
     m_bFetchAllGeometries = CSLTestBoolean(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"));
+
+    m_bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
 }
 
 /************************************************************************/
@@ -1079,7 +1081,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
 #ifdef SUPPORT_GEOMETRY
         if( bGetExtents )
         {
-            OGRGeometry *poGeometry = BuildOGRGeometryFromList(poFeature->GetGeometryList());
+            OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
+                poFeature->GetGeometryList(), TRUE, m_bInvertAxisOrderIfLatLong);
 
             if( poGeometry != NULL )
             {
@@ -1087,6 +1090,10 @@ int GMLReader::PrescanForSchema( int bGetExtents )
                 OGREnvelope sEnvelope;
                 OGRwkbGeometryType eGType = (OGRwkbGeometryType) 
                     poClass->GetGeometryType();
+
+                char* pszSRSName = GML_ExtractSrsNameFromGeometry(poFeature->GetGeometryList());
+                poClass->MergeSRSName(pszSRSName);
+                CPLFree(pszSRSName);
 
                 // Merge geometry type into layer.
                 if( poClass->GetFeatureCount() == 1 && eGType == wkbUnknown )
@@ -1124,6 +1131,29 @@ int GMLReader::PrescanForSchema( int bGetExtents )
         }
         
         delete poFeature;
+    }
+
+    for( int i = 0; i < m_nClassCount; i++ )
+    {
+        GMLFeatureClass *poClass = m_papoClass[i];
+        const char* pszSRSName = poClass->GetSRSName();
+        if (m_bInvertAxisOrderIfLatLong && GML_IsSRSLatLongOrder(pszSRSName))
+        {
+            OGRSpatialReference oSRS;
+            if (oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
+            {
+                OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode( "GEOGCS" );
+                if( poGEOGCS != NULL )
+                {
+                    poGEOGCS->StripNodes( "AXIS" );
+
+                    char* pszWKT = NULL;
+                    if (oSRS.exportToWkt(&pszWKT) == OGRERR_NONE)
+                        poClass->SetSRSName(pszWKT);
+                    CPLFree(pszWKT);
+                }
+            }
+        }
     }
 
     CleanupParser();

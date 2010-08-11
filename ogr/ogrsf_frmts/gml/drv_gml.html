@@ -16,7 +16,17 @@ Xerces is unavailable, read support also works if OGR is built with Expat linked
 XML validation is disabled by default.
 GML writing is always supported, even without Xerces or Expat.<p>
 
-The GML driver has no coordinate system support at this time.<p>
+Since OGR 1.8.0, the GML driver has coordinate system support. This is
+only reported when all the geometries of a layer have a srsName attribute,
+whose value is the same for all geometries. For srsName such as "urn:ogc:def:crs:EPSG:",
+for geographic coordinate systems (as returned by WFS 1.1.0), the axis order
+should be (latitude, longitude) as required by the standards, but this is
+unusual and can cause issues with applications unaware of axis order. So
+by default, the driver will swap the coordinates so that they are in the
+(longitude, latitude) order and report a SRS without axis order specified.
+It is possible to get (latitude, longitude) order and SRS with axis order
+by setting the configuration option <b>GML_INVERT_AXIS_ORDER_IF_LAT_LONG</b>
+to <b>NO</b>.<p>
 
 In contrast to most GML readers, the OGR GML reader makes no effort to read
 the format XML Schema definition of the feature classes in a GML file.

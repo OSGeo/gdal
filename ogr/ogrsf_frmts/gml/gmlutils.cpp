@@ -27,13 +27,82 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_string.h"
+
 #include "gmlutils.h"
 
 /************************************************************************/
-/*                          BuildOGRGeometry()                          */
+/*                GML_ExtractSrsNameFromGeometry()                      */
 /************************************************************************/
 
-OGRGeometry* BuildOGRGeometryFromList(char** papszGeometryList, int bTryToMakeMultipolygons)
+char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList)
+{
+    if (papszGeometryList != NULL &&
+        *papszGeometryList != NULL &&
+        papszGeometryList[1] == NULL)
+    {
+        const char* pszSRSName = strstr(*papszGeometryList, "srsName=\"");
+        if (pszSRSName)
+        {
+            pszSRSName += strlen("srsName=\"");
+
+            char* pszRet;
+            if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#",
+                        strlen("http://www.opengis.net/gml/srs/epsg.xml#")) == 0)
+            {
+                pszRet = CPLStrdup(CPLSPrintf("EPSG:%s", pszSRSName +
+                            strlen("http://www.opengis.net/gml/srs/epsg.xml#")));
+            }
+            else
+            {
+                pszRet = CPLStrdup(pszSRSName);
+            }
+            char* pszEndQuote = strchr(pszRet, '"');
+            if (pszEndQuote)
+                *pszEndQuote = 0;
+            return pszRet;
+        }
+    }
+    return NULL;
+}
+
+
+/************************************************************************/
+/*                       GML_IsSRSLatLongOrder()                        */
+/************************************************************************/
+
+int GML_IsSRSLatLongOrder(const char* pszSRSName)
+{
+    if (pszSRSName == NULL)
+        return FALSE;
+
+    if (strncmp(pszSRSName, "urn:", 4) == 0)
+    {
+        if (strstr(pszSRSName, ":4326") != NULL)
+        {
+            /* Shortcut ... */
+            return TRUE;
+        }
+        else
+        {
+            OGRSpatialReference oSRS;
+            if (oSRS.importFromURN(pszSRSName) == OGRERR_NONE)
+            {
+                if (oSRS.EPSGTreatsAsLatLong())
+                    return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                 GML_BuildOGRGeometryFromList()                       */
+/************************************************************************/
+
+OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
+                                          int bTryToMakeMultipolygons,
+                                          int bInvertAxisOrderIfLatLong)
 {
     OGRGeometry* poGeom = NULL;
     if( papszGeometryList != NULL )
@@ -86,7 +155,8 @@ OGRGeometry* BuildOGRGeometryFromList(char** papszGeometryList, int bTryToMakeMu
                         {
                             delete poGeom;
                             delete poSubGeom;
-                            return BuildOGRGeometryFromList(papszGeometryList, FALSE);
+                            return GML_BuildOGRGeometryFromList(papszGeometryList, FALSE,
+                                                                bInvertAxisOrderIfLatLong);
                         }
                         else
                         {
@@ -104,5 +174,14 @@ OGRGeometry* BuildOGRGeometryFromList(char** papszGeometryList, int bTryToMakeMu
             papszIter ++;
         }
     }
+
+    if (bInvertAxisOrderIfLatLong)
+    {
+        char* pszSRSName = GML_ExtractSrsNameFromGeometry(papszGeometryList);
+        if (GML_IsSRSLatLongOrder(pszSRSName))
+            poGeom->swapXY();
+        CPLFree(pszSRSName);
+    }
+    
     return poGeom;
 }

@@ -288,6 +288,8 @@ private:
 
     int           m_bFetchAllGeometries;
 
+    int           m_bInvertAxisOrderIfLatLong;
+
 public:
                 GMLReader();
     virtual     ~GMLReader();
