@@ -1368,3 +1368,18 @@ void OGRLineString::segmentize( double dfMaxLength )
         padfZ = padfNewZ;
     }
 }
+
+/************************************************************************/
+/*                               swapXY()                               */
+/************************************************************************/
+
+void OGRLineString::swapXY()
+{
+    int i;
+    for( i = 0; i < nPointCount; i++ )
+    {
+        double dfTemp = paoPoints[i].x;
+        paoPoints[i].x = paoPoints[i].y;
+        paoPoints[i].y = dfTemp;
+    }
+}

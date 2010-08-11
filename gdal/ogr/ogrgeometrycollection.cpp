@@ -947,3 +947,13 @@ void OGRGeometryCollection::segmentize( double dfMaxLength )
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
         papoGeoms[iGeom]->segmentize(dfMaxLength);
 }
+
+/************************************************************************/
+/*                               swapXY()                               */
+/************************************************************************/
+
+void OGRGeometryCollection::swapXY()
+{
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+        papoGeoms[iGeom]->swapXY();
+}

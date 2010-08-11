@@ -157,6 +157,8 @@ class CPL_DLL OGRGeometry
 
     // Special HACK for DB2 7.2 support
     static int bGenerate_DB2_V72_BYTE_ORDER;
+
+    virtual void        swapXY();
 };
 
 /************************************************************************/
@@ -214,6 +216,8 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() const;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
+
+    virtual void        swapXY();
 };
 
 /************************************************************************/
@@ -314,6 +318,8 @@ class CPL_DLL OGRLineString : public OGRCurve
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
     virtual void segmentize(double dfMaxLength);
+
+    virtual void        swapXY();
 };
 
 /************************************************************************/
@@ -453,6 +459,8 @@ class CPL_DLL OGRPolygon : public OGRSurface
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
 
     virtual void closeRings();
+
+    virtual void        swapXY();
 };
 
 /************************************************************************/
@@ -513,6 +521,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr removeGeometry( int iIndex, int bDelete = TRUE );
 
     void closeRings();
+
+    virtual void        swapXY();
 };
 
 /************************************************************************/
