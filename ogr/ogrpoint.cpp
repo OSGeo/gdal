@@ -598,3 +598,14 @@ OGRBoolean OGRPoint::IsEmpty(  ) const
 {
     return nCoordDimension == 0;
 }
+
+/************************************************************************/
+/*                               swapXY()                               */
+/************************************************************************/
+
+void OGRPoint::swapXY()
+{
+    double dfTemp = x;
+    x = y;
+    y = dfTemp;
+}
