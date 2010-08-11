@@ -30,6 +30,7 @@
 #include "gmlreader.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "gmlutils.h"
 
 #define SUPPORT_GEOMETRY
 
