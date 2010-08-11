@@ -1078,3 +1078,13 @@ void OGRPolygon::segmentize( double dfMaxLength )
     for( int iRing = 0; iRing < nRingCount; iRing++ )
         papoRings[iRing]->segmentize(dfMaxLength);
 }
+
+/************************************************************************/
+/*                               swapXY()                               */
+/************************************************************************/
+
+void OGRPolygon::swapXY()
+{
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
+        papoRings[iRing]->swapXY();
+}
