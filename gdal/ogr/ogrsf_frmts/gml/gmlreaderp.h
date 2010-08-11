@@ -270,7 +270,7 @@ private:
     XMLPScanToken m_oToFill;
     GMLFeature   *m_poCompleteFeature;
     GMLInputSource *m_GMLInputSource;
-#else
+#elif defined(HAVE_EXPAT)
     GMLExpatHandler    *m_poGMLHandler;
     XML_Parser    oParser;
     GMLFeature ** ppoFeatureTab;
