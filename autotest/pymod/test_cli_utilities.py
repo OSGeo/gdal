@@ -29,6 +29,7 @@
 ###############################################################################
 
 import os
+import sys
 
 try:
     from osgeo import gdal
@@ -42,6 +43,10 @@ cli_exe_path = { }
 ###############################################################################
 # 
 def get_cli_utility_path_internal(cli_utility_name):
+
+    if sys.platform == 'win32':
+        cli_utility_name = cli_utility_name + '.exe'
+
     # First try : in the apps directory of the GDAL source tree
     # This is the case for the buildbot directory tree
     try:
