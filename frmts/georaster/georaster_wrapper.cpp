@@ -86,6 +86,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     bFlushBlock         = false;
     bUniqueFound        = false;
     sValueAttributeTab  = "";
+    psNoDataList        = NULL;
 }
 
 //  ---------------------------------------------------------------------------
@@ -106,6 +107,18 @@ GeoRasterWrapper::~GeoRasterWrapper()
     CPLFree( pabyCompressBuf );
     CPLFree( pahLevels );
     
+    if( CPLListCount( psNoDataList ) )
+    {
+        CPLList* psList = NULL;
+        
+        for( psList = psNoDataList; psList ; psList = psList->psNext )
+        {
+            CPLFree( psList->pData );
+        }
+        
+        CPLListDestroy( psNoDataList );
+    }
+
     if( poBlockStmt )
     {
         delete poBlockStmt;
@@ -1160,6 +1173,12 @@ void GeoRasterWrapper::GetRasterInfo( void )
     }
 
     //  -------------------------------------------------------------------
+    //  Load NoData Values 
+    //  -------------------------------------------------------------------
+
+    LoadNoDataValues();
+
+    //  -------------------------------------------------------------------
     //  Get Interleaving mode
     //  -------------------------------------------------------------------
 
@@ -2040,108 +2059,162 @@ bool GeoRasterWrapper::FlushBlock( void )
     return true;
 }
 
+
+//  ---------------------------------------------------------------------------
+//                                                           LoadNoDataValues()
+//  ---------------------------------------------------------------------------
+
+CPLList* AddToNoDataList( CPLXMLNode* phNode, int nNumber, CPLList* poList )
+{
+    CPLXMLNode* psChild = phNode->psChild;
+
+    const char* pszMin = NULL;
+    const char* pszMax = NULL;
+
+    for( ; psChild ; psChild = psChild->psNext )
+    {
+        if( EQUAL( psChild->pszValue, "value" ) )
+        {
+            pszMin = CPLGetXMLValue( psChild, NULL, "NONE" );
+            pszMax = pszMin;
+        }
+        else if ( EQUAL( psChild->pszValue, "range" ) )
+        {
+            pszMin = CPLGetXMLValue( psChild, "min", "NONE" );
+            pszMax = CPLGetXMLValue( psChild, "max", "NONE" );
+        }
+        else
+        {
+            continue;
+        }
+
+        hNoDataItem* poItem = (hNoDataItem*) CPLMalloc( sizeof( hNoDataItem ) );
+
+        poItem->nBand = nNumber;
+        poItem->dfLower = CPLAtof( pszMin );
+        poItem->dfUpper = CPLAtof( pszMax );
+
+        poList = CPLListAppend( poList, poItem );
+    }
+
+    return poList;
+}
+
+void GeoRasterWrapper::LoadNoDataValues( void )
+{
+    CPLListDestroy( psNoDataList );
+
+    CPLXMLNode* phLayerInfo = CPLGetXMLNode( phMetadata, "layerInfo" );
+
+    if( phLayerInfo == NULL )
+    {
+        return;
+    }
+
+    //  -------------------------------------------------------------------
+    //  Load NoDatas from list of values and list of value ranges
+    //  -------------------------------------------------------------------
+
+    CPLXMLNode* phObjNoData = CPLGetXMLNode( phLayerInfo, "objectLayer.NODATA" );
+
+    for( ; phObjNoData ; phObjNoData = phObjNoData->psNext )
+    {
+        psNoDataList = AddToNoDataList( phObjNoData, 0, psNoDataList );
+    }
+
+    CPLXMLNode* phSubLayer = CPLGetXMLNode( phLayerInfo, "subLayer" );
+
+    for( ; phSubLayer ; phSubLayer = phSubLayer->psNext )
+    {
+        int nNumber = atoi( CPLGetXMLValue( phSubLayer, "layerNumber", "-1") );
+
+        CPLXMLNode* phSubNoData = CPLGetXMLNode( phSubLayer, "NODATA" );
+
+        if( phSubNoData )
+        {
+            psNoDataList = AddToNoDataList( phSubNoData, nNumber, psNoDataList );
+        }
+    }
+}
+
 //  ---------------------------------------------------------------------------
 //                                                                  GetNoData()
 //  ---------------------------------------------------------------------------
 
 bool GeoRasterWrapper::GetNoData( int nLayer, double* pdfNoDataValue )
 {
-    // ------------------------------------------------------------
-    //  Look for a global single NoData value on "rasterInfo" section
-    // ------------------------------------------------------------
-
-    const char* pszValue = CPLGetXMLValue( phMetadata, "rasterInfo.NODATA", "NONE" );
-
-    if( EQUAL( pszValue, "NONE" ) == false )
-    {
-        *pdfNoDataValue = CPLAtof( pszValue );
-        return true;
-    }
-
-    // ------------------------------------------------------------
-    //  Look for global NoData(s) on "layerInfo.objectLayer" section
-    // ------------------------------------------------------------
-
-    CPLXMLNode* phObject = CPLGetXMLNode( phMetadata, "layerInfo.objectLayer.NODATA" );
-
-    if( phObject != NULL )
-    {
-        CPLXMLNode* phNode = NULL;
-        
-        int nCount = 0;
-
-        for( phNode = phObject->psChild; phNode != NULL; phNode = phNode->psNext )
-        {
-            nCount++;
-        }
-
-        // --------------------------------------------------------
-        //  Ignore if there are more than one valuer for NoData
-        // --------------------------------------------------------
-
-        if( nCount == 1 )
-        {
-            *pdfNoDataValue = CPLAtof( 
-                CPLGetXMLValue( phObject, "value", "n/a" ) );
-        }
-
-        // --------------------------------------------------------
-        //  Override (Ignore) any other "subLayer" NoData notation
-        // --------------------------------------------------------
-
-        return true;
-    }
-
-    // ------------------------------------------------------------
-    //  Look for NoData(s) on band specific "layerInfo.subLayer" section
-    // ------------------------------------------------------------
-
-    int i = 0;
-
-    CPLXMLNode* phLayer = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
-
-    bool bFound = false;
-
-    for( ; phLayer; phLayer = phLayer->psNext )
-    {
-        const char* pszNum = CPLGetXMLValue( phLayer, "layerNumber", "NONE" );
-
-        if( EQUAL( pszNum, "NONE") == false && nLayer == atoi(pszNum) )
-        {
-            bFound = true;
-            break;
-        }
-    }
-
-    if( ! bFound )
+    if( psNoDataList == NULL || CPLListCount( psNoDataList ) == 0 )
     {
         return false;
     }
 
-    phObject = CPLGetXMLNode( phLayer, "NODATA" );
+    //  -------------------------------------------------------------------
+    //  Get only single value NoData, no list of values or value ranges
+    //  -------------------------------------------------------------------
 
-    if( phObject != NULL )
+    int nCount = 0;
+    double dfValue = 0.0;
+
+    CPLList* psList = NULL;
+
+    //  -------------------------------------------------------------------
+    //  Process Object Layer values
+    //  -------------------------------------------------------------------
+
+    for( psList = psNoDataList; psList ; psList = psList->psNext )
     {
-        CPLXMLNode* phNode = NULL;
+        hNoDataItem* phItem = (hNoDataItem*) psList->pData;
 
-        int nCount = 0;
-
-        for( phNode = phObject->psChild; phNode != NULL; phNode = phNode->psNext )
+        if( phItem->nBand == 0 )
         {
-            nCount++;
+            if( phItem->dfLower == phItem->dfUpper )
+            {
+                dfValue = phItem->dfLower;
+                nCount++;
+            }
+            else
+            {
+                return false; // value range
+            }
         }
+    }
 
-        // --------------------------------------------------------
-        //  Ignore if there are more than one valuer for NoData
-        // --------------------------------------------------------
+    //  -------------------------------------------------------------------
+    //  Values from the Object Layer override values from the layers 
+    //  -------------------------------------------------------------------
 
-        if( nCount == 1 )
+    if( nCount == 1 )
+    {
+        *pdfNoDataValue = dfValue;
+        return true;
+    }
+
+    //  -------------------------------------------------------------------
+    //  Process SubLayer values
+    //  -------------------------------------------------------------------
+
+    for( psList = psNoDataList; psList ; psList = psList->psNext )
+    {
+        hNoDataItem* phItem = (hNoDataItem*) psList->pData;
+
+        if( phItem->nBand == nLayer )
         {
-            *pdfNoDataValue = CPLAtof(
-                CPLGetXMLValue( phObject, "value", "n/a" ) );
-
-            return true;
+            if( phItem->dfLower == phItem->dfUpper )
+            {
+                dfValue = phItem->dfLower;
+                nCount++;
+            }
+            else
+            {
+                return false; // value range
+            }
         }
+    }
+
+    if( nCount == 1 )
+    {
+        *pdfNoDataValue = dfValue;
+        return true;
     }
 
     return false;
