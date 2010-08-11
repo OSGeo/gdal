@@ -75,6 +75,8 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
         poFClass = poDS->GetReader()->GetClass( pszName );
     else
         poFClass = NULL;
+
+    m_bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
 }
 
 /************************************************************************/
@@ -229,7 +231,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         char** papszGeometryList = poGMLFeature->GetGeometryList();
         if( papszGeometryList != NULL )
         {
-            poGeom = BuildOGRGeometryFromList(papszGeometryList);
+            poGeom = GML_BuildOGRGeometryFromList(papszGeometryList, TRUE, m_bInvertAxisOrderIfLatLong);
+            if (poGeom != NULL && poSRS != NULL)
+                poGeom->assignSpatialReference(poSRS);
 
             // We assume the createFromGML() function would have already
             // reported the error. 
