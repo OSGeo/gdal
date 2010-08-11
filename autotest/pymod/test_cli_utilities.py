@@ -28,9 +28,14 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdal
-import gdaltest
 import os
+
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
+
+import gdaltest
 
 cli_exe_path = { }
 
