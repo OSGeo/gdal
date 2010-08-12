@@ -314,18 +314,30 @@ void OGRLineString::setNumPoints( int nNewPointCount )
 
     if( nNewPointCount > nPointCount )
     {
-        paoPoints = (OGRRawPoint *)
-            OGRRealloc(paoPoints, sizeof(OGRRawPoint) * nNewPointCount);
-
-        assert( paoPoints != NULL );
+        OGRRawPoint* paoNewPoints = (OGRRawPoint *)
+            VSIRealloc(paoPoints, sizeof(OGRRawPoint) * nNewPointCount);
+        if (paoNewPoints == NULL)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Could not allocate array for %d points", nNewPointCount);
+            return;
+        }
+        paoPoints = paoNewPoints;
         
         memset( paoPoints + nPointCount,
                 0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount) );
         
         if( getCoordinateDimension() == 3 )
         {
-            padfZ = (double *)
-                OGRRealloc( padfZ, sizeof(double)*nNewPointCount );
+            double* padfNewZ = (double *)
+                VSIRealloc( padfZ, sizeof(double)*nNewPointCount );
+            if (padfNewZ == NULL)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Could not allocate array for %d points", nNewPointCount);
+                return;
+            }
+            padfZ = padfNewZ;
             memset( padfZ + nPointCount, 0,
                     sizeof(double) * (nNewPointCount - nPointCount) );
         }
@@ -383,7 +395,11 @@ void OGRLineString::setPoint( int iPoint, double xIn, double yIn, double zIn )
         Make3D();
 
     if( iPoint >= nPointCount )
+    {
         setNumPoints( iPoint+1 );
+        if (nPointCount < iPoint + 1)
+            return;
+    }
 
     paoPoints[iPoint].x = xIn;
     paoPoints[iPoint].y = yIn;
@@ -403,7 +419,11 @@ void OGRLineString::setPoint( int iPoint, double xIn, double yIn )
 
 {
     if( iPoint >= nPointCount )
+    {
         setNumPoints( iPoint+1 );
+        if (nPointCount < iPoint + 1)
+            return;
+    }
 
     paoPoints[iPoint].x = xIn;
     paoPoints[iPoint].y = yIn;
@@ -482,6 +502,9 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 
 {
     setNumPoints( nPointsIn );
+    if (nPointCount < nPointsIn)
+        return;
+
     memcpy( paoPoints, paoPointsIn, sizeof(OGRRawPoint) * nPointsIn);
 
 /* -------------------------------------------------------------------- */
@@ -535,6 +558,8 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
 /*      Assign values.                                                  */
 /* -------------------------------------------------------------------- */
     setNumPoints( nPointsIn );
+    if (nPointCount < nPointsIn)
+        return;
 
     for( i = 0; i < nPointsIn; i++ )
     {
@@ -626,6 +651,8 @@ void OGRLineString::addSubLineString( const OGRLineString *poOtherLine,
     int nPointsToAdd = ABS(nEndVertex-nStartVertex) + 1;
 
     setNumPoints( nPointsToAdd + nOldPoints );
+    if (nPointCount < nPointsToAdd + nOldPoints)
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Copy the x/y points - forward copies use memcpy.                */
@@ -742,6 +769,8 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
     }
 
     setNumPoints( nNewNumPoints );
+    if (nPointCount < nNewNumPoints)
+        return OGRERR_FAILURE;
     
     if( bIs3D )
         Make3D();
