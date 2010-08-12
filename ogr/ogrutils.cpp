@@ -708,6 +708,17 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         }
 
 /* -------------------------------------------------------------------- */
+/*      --pause - "hit enter" pause useful to connect a debugger.       */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--pause") )
+        {
+            char szLine[81];
+
+            printf( "Hit <ENTER> to continue.\n" );
+            fgets( szLine, sizeof(szLine), stdin );
+        }
+
+/* -------------------------------------------------------------------- */
 /*      --help-general                                                  */
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--help-general") )
