@@ -262,12 +262,22 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
     OGRFeature  *poFeature;
     OGRSpatialReference * poSRS = poLayer->GetSpatialRef();
     int         bWarnAboutSRS = FALSE;
+    OGRFeatureDefn* poLayerDefn = poLayer->GetLayerDefn();
 
     poLayer->ResetReading();
 
     while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
         nFC++;
+
+        if (poFeature->GetDefnRef() != poLayerDefn)
+        {
+            bRet = FALSE;
+            printf( "ERROR: Feature defn differs from layer defn.\n"
+                    "Feature defn = %p\n"
+                    "Layer defn = %p\n",
+                     poFeature->GetDefnRef(), poLayerDefn);
+        }
 
         if( poFeature->GetGeometryRef() != NULL
             && poFeature->GetGeometryRef()->getSpatialReference() != poSRS
@@ -290,9 +300,10 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
 
             bRet = FALSE;
             printf( "ERROR: Feature SRS differs from layer SRS.\n"
-                    "Feature SRS = %s\n"
-                    "Layer SRS = %s\n",
-                    pszFeatureSRSWKT, pszLayerSRSWKT );
+                    "Feature SRS = %s (%p)\n"
+                    "Layer SRS = %s (%p)\n",
+                    pszFeatureSRSWKT, poFeature->GetGeometryRef()->getSpatialReference(),
+                    pszLayerSRSWKT, poSRS );
             CPLFree( pszLayerSRSWKT );
             CPLFree( pszFeatureSRSWKT );
         }
