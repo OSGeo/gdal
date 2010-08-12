@@ -495,6 +495,79 @@ def ogr_geom_flattenTo2D():
     return 'success'
 
 ###############################################################################
+def ogr_geom_linestring_limits():
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING EMPTY')
+    if geom.Length() != 0:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    geom.GetPoint(-1)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() == 0:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    geom.GetPoint(0)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() == 0:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    geom.GetPoint_2D(-1)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() == 0:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    geom.GetPoint_2D(0)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() == 0:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    geom.SetPoint(-1, 5,6,7)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() == 0:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    geom.SetPoint_2D(-1, 5,6)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() == 0:
+        return 'fail'
+
+    if False:
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        geom.SetPoint(2147000000, 5,6,7)
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorType() == 0:
+            return 'fail'
+
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        geom.SetPoint_2D(2147000000, 5,6)
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorType() == 0:
+            return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0)')
+    if geom.Length() != 0:
+        return 'fail'
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0, 1 0)')
+    if geom.Length() != 1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -519,6 +592,7 @@ gdaltest_list = [
     ogr_geom_closerings,
     ogr_geom_segmentize,
     ogr_geom_flattenTo2D,
+    ogr_geom_linestring_limits,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
