@@ -98,7 +98,15 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
       }
 
       case wkbLineString:
-        return ((OGRLineString *) hGeom)->getX( i );
+      {
+          OGRLineString* poLS = (OGRLineString *) hGeom;
+          if (i < 0 || i >= poLS->getNumPoints())
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              return 0.0;
+          }
+          return poLS->getX( i );
+      }
 
       default:
         CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
@@ -136,7 +144,15 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
       }
 
       case wkbLineString:
-          return ((OGRLineString *) hGeom)->getY( i );
+      {
+          OGRLineString* poLS = (OGRLineString *) hGeom;
+          if (i < 0 || i >= poLS->getNumPoints())
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              return 0.0;
+          }
+          return poLS->getY( i );
+      }
 
       default:
         CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
@@ -174,7 +190,15 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
       }
 
       case wkbLineString:
-          return ((OGRLineString *) hGeom)->getZ( i );
+      {
+          OGRLineString* poLS = (OGRLineString *) hGeom;
+          if (i < 0 || i >= poLS->getNumPoints())
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              return 0.0;
+          }
+          return poLS->getZ( i );
+      }
 
       default:
           CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
@@ -222,10 +246,21 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
 
       case wkbLineString:
       {
-          *pdfX = ((OGRLineString *) hGeom)->getX( i );
-          *pdfY = ((OGRLineString *) hGeom)->getY( i );
-          if( pdfZ != NULL )
-              *pdfZ = ((OGRLineString *) hGeom)->getZ( i );
+          OGRLineString* poLS = (OGRLineString *) hGeom;
+          if (i < 0 || i >= poLS->getNumPoints())
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              *pdfX = *pdfY = 0;
+              if( pdfZ != NULL )
+                  *pdfZ = 0;
+          }
+          else
+          {
+            *pdfX = poLS->getX( i );
+            *pdfY = poLS->getY( i );
+            if( pdfZ != NULL )
+                *pdfZ =  poLS->getZ( i );
+          }
       }
       break;
 
@@ -277,8 +312,15 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
       break;
 
       case wkbLineString:
-        ((OGRLineString *) hGeom)->setPoint( i, dfX, dfY, dfZ );
-        break;
+      {
+          if (i < 0)
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              return;
+          }
+          ((OGRLineString *) hGeom)->setPoint( i, dfX, dfY, dfZ );
+          break;
+      }
 
       default:
         CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
@@ -326,8 +368,15 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
       break;
 
       case wkbLineString:
-        ((OGRLineString *) hGeom)->setPoint( i, dfX, dfY );
-        break;
+      {
+          if (i < 0)
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              return;
+          }
+          ((OGRLineString *) hGeom)->setPoint( i, dfX, dfY );
+          break;
+      }
 
       default:
         CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
