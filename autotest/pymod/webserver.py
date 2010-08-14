@@ -181,12 +181,12 @@ def launch():
     if process is None:
         (process, process_stdout) = gdaltest.spawn_async('python3 ../pymod/webserver.py')
         if process is None:
-            return 'skip'
+            return (None, 0)
 
     line = process_stdout.readline()
     line = line.decode('ascii')
     if line.find('port=') == -1:
-        return 'skip'
+        return (None, 0)
 
     port = int(line[5:])
     if port != 0:
