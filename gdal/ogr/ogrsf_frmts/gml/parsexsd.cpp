@@ -54,6 +54,189 @@ const char *StripNS( const char *pszFullValue )
 }
 
 /************************************************************************/
+/*                      ParseFeatureType()                              */
+/************************************************************************/
+
+typedef struct
+{
+    const char* pszName;
+    OGRwkbGeometryType eType;
+} AssocNameType;
+
+static const AssocNameType apsPropertyTypes [] =
+{
+    {"GeometryPropertyType", wkbUnknown},
+    {"PointPropertyType", wkbPoint},
+    {"LineStringPropertyType", wkbLineString},
+    {"CurvePropertyType", wkbLineString},
+    {"PolygonPropertyType", wkbPolygon},
+    {"SurfacePropertyType", wkbPolygon},
+    {"MultiPointPropertyType", wkbMultiPoint},
+    {"MultiLineStringPropertyType", wkbMultiLineString},
+    {"MultiCurvePropertyType", wkbMultiLineString},
+    {"MultiPolygonPropertyType", wkbMultiPolygon},
+    {"MultiSurfacePropertyType", wkbMultiPolygon},
+    {"MultiGeometryPropertyType", wkbGeometryCollection},
+    {NULL, wkbUnknown},
+};
+
+int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
+                                const char* pszName,
+                                const char *pszType)
+{
+    CPLXMLNode *psThis;
+    for( psThis = psSchemaNode->psChild;
+         psThis != NULL; psThis = psThis->psNext )
+    {
+        if( psThis->eType == CXT_Element
+           && EQUAL(psThis->pszValue,"complexType")
+           && EQUAL(CPLGetXMLValue(psThis,"name",""),pszType) )
+        {
+            break;
+        }
+    }
+    if (psThis == NULL)
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Grab the sequence of extensions greatgrandchild.                */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psAttrSeq =
+        CPLGetXMLNode( psThis,
+                        "complexContent.extension.sequence" );
+
+    if( psAttrSeq == NULL )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We are pretty sure this going to be a valid Feature class       */
+/*      now, so create it.                                              */
+/* -------------------------------------------------------------------- */
+    GMLFeatureClass *poClass = new GMLFeatureClass( pszName );
+
+/* -------------------------------------------------------------------- */
+/*      Loop over each of the attribute elements being defined for      */
+/*      this feature class.                                             */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psAttrDef;
+
+    for( psAttrDef = psAttrSeq->psChild;
+            psAttrDef != NULL;
+            psAttrDef = psAttrDef->psNext )
+    {
+        if( !EQUAL(psAttrDef->pszValue,"element") )
+            continue;
+
+        /* MapServer WFS writes element type as an attribute of element */
+        /* not as a simpleType definition */
+        const char* pszType = CPLGetXMLValue( psAttrDef, "type", NULL );
+        if (pszType != NULL)
+        {
+            const char* pszStrippedNSType = StripNS(pszType);
+
+            GMLPropertyType gmlType = GMLPT_Untyped;
+            if (EQUAL(pszStrippedNSType, "string") ||
+                EQUAL(pszStrippedNSType, "Character"))
+                gmlType = GMLPT_String;
+            else if (EQUAL(pszStrippedNSType, "Real"))
+                gmlType = GMLPT_Real;
+            else if (EQUAL(pszStrippedNSType, "Integer") || EQUAL(pszStrippedNSType, "long"))
+                gmlType = GMLPT_Integer;
+            else if (strncmp(pszType, "gml:", 4) == 0)
+            {
+                const AssocNameType* psIter = apsPropertyTypes;
+                while(psIter->pszName)
+                {
+                    if (strncmp(pszType + 4, psIter->pszName, strlen(psIter->pszName)) == 0)
+                    {
+                        poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
+                        poClass->SetGeometryType(psIter->eType);
+                        break;
+                    }
+
+                    psIter ++;
+                }
+                continue;
+            }
+
+            if (gmlType != GMLPT_Untyped)
+            {
+                GMLPropertyDefn *poProp = new GMLPropertyDefn(
+                    CPLGetXMLValue( psAttrDef, "name", "unnamed" ),
+                    CPLGetXMLValue( psAttrDef, "name", "unnamed" ) );
+
+                poProp->SetType( gmlType );
+                poClass->AddProperty( poProp );
+                continue;
+            }
+        }
+
+        // For now we skip geometries .. fixup later.
+        if( CPLGetXMLNode( psAttrDef, "simpleType" ) == NULL )
+            continue;
+
+        GMLPropertyDefn *poProp = new GMLPropertyDefn(
+            CPLGetXMLValue( psAttrDef, "name", "unnamed" ),
+            CPLGetXMLValue( psAttrDef, "name", "unnamed" ) );
+
+        const char *pszBase =
+            StripNS( CPLGetXMLValue( psAttrDef,
+                                        "simpleType.restriction.base", "" ));
+
+        if( EQUAL(pszBase,"decimal") )
+        {
+            poProp->SetType( GMLPT_Real );
+            const char *pszWidth =
+                CPLGetXMLValue( psAttrDef,
+                            "simpleType.restriction.totalDigits.value", "0" );
+            const char *pszPrecision =
+                CPLGetXMLValue( psAttrDef,
+                            "simpleType.restriction.fractionDigits.value", "0" );
+            poProp->SetWidth( atoi(pszWidth) );
+            poProp->SetPrecision( atoi(pszPrecision) );
+        }
+
+        else if( EQUAL(pszBase,"float")
+                    || EQUAL(pszBase,"double") )
+            poProp->SetType( GMLPT_Real );
+
+        else if( EQUAL(pszBase,"integer") )
+        {
+            poProp->SetType( GMLPT_Integer );
+            const char *pszWidth =
+                CPLGetXMLValue( psAttrDef,
+                            "simpleType.restriction.totalDigits.value", "0" );
+            poProp->SetWidth( atoi(pszWidth) );
+        }
+
+        else if( EQUAL(pszBase,"string") )
+        {
+            poProp->SetType( GMLPT_String );
+            const char *pszWidth =
+                CPLGetXMLValue( psAttrDef,
+                            "simpleType.restriction.maxLength.value", "0" );
+            poProp->SetWidth( atoi(pszWidth) );
+        }
+
+        else
+            poProp->SetType( GMLPT_Untyped );
+
+        poClass->AddProperty( poProp );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Class complete, add to reader class list.                       */
+/* -------------------------------------------------------------------- */
+    poClass->SetSchemaLocked( TRUE );
+
+    AddClass( poClass );
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                              ParseXSD()                              */
 /************************************************************************/
 
@@ -90,7 +273,6 @@ int GMLReader::ParseXSD( const char *pszFile )
 /*      Process each feature class definition.                          */
 /* ==================================================================== */
     CPLXMLNode *psThis;
-    int         bIsLevel0 = TRUE;
 
     for( psThis = psSchemaNode->psChild; 
          psThis != NULL; psThis = psThis->psNext )
@@ -114,7 +296,6 @@ int GMLReader::ParseXSD( const char *pszFile )
 
         if( !EQUAL(pszSubGroup, "_Feature") )
         {
-            bIsLevel0 = FALSE;
             break;
         }
         
@@ -126,7 +307,6 @@ int GMLReader::ParseXSD( const char *pszFile )
         pszName = CPLGetXMLValue( psThis, "name", NULL );
         if( pszName == NULL )
         {
-            bIsLevel0 = FALSE;
             break;
         }
 
@@ -142,144 +322,11 @@ int GMLReader::ParseXSD( const char *pszFile )
             || !(EQUAL(pszType+strlen(pszName),"_Type") ||
                     EQUAL(pszType+strlen(pszName),"Type")) )
         {
-            bIsLevel0 = FALSE;
             break;
         }
 
-/* -------------------------------------------------------------------- */
-/*      The very next element should be the corresponding               */
-/*      complexType declaration for the element.                        */
-/* -------------------------------------------------------------------- */
-        psThis = psThis->psNext;
-        while( psThis != NULL && psThis->eType == CXT_Comment )
-            psThis = psThis->psNext;
+        ParseFeatureType(psSchemaNode, pszName, pszType);
 
-        if( psThis == NULL 
-            || psThis->eType != CXT_Element
-            || !EQUAL(psThis->pszValue,"complexType") 
-            || !EQUAL(CPLGetXMLValue(psThis,"name",""),pszType) )
-        {
-            bIsLevel0 = FALSE;
-            break;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Grab the sequence of extensions greatgrandchild.                */
-/* -------------------------------------------------------------------- */
-        CPLXMLNode *psAttrSeq = 
-            CPLGetXMLNode( psThis, 
-                           "complexContent.extension.sequence" );
-
-        if( psAttrSeq == NULL )
-        {
-            bIsLevel0 = FALSE;
-            break;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      We are pretty sure this going to be a valid Feature class       */
-/*      now, so create it.                                              */
-/* -------------------------------------------------------------------- */
-        GMLFeatureClass *poClass = new GMLFeatureClass( pszName );
-
-/* -------------------------------------------------------------------- */
-/*      Loop over each of the attribute elements being defined for      */
-/*      this feature class.                                             */
-/* -------------------------------------------------------------------- */
-        CPLXMLNode *psAttrDef;
-
-        for( psAttrDef = psAttrSeq->psChild; 
-             psAttrDef != NULL; 
-             psAttrDef = psAttrDef->psNext )
-        {
-            if( !EQUAL(psAttrDef->pszValue,"element") )
-                continue;
-
-            /* MapServer WFS writes element type as an attribute of element */
-            /* not as a simpleType definition */
-            const char* pszType = CPLGetXMLValue( psAttrDef, "type", NULL );
-            if (pszType != NULL)
-            {
-                GMLPropertyType gmlType = GMLPT_Untyped;
-                if (EQUAL(pszType, "string") ||
-                    EQUAL(pszType, "Character"))
-                    gmlType = GMLPT_String;
-                else if (EQUAL(pszType, "Real"))
-                    gmlType = GMLPT_Real;
-                else if (EQUAL(pszType, "Integer"))
-                    gmlType = GMLPT_Integer;
-
-                if (gmlType != GMLPT_Untyped)
-                {
-                    GMLPropertyDefn *poProp = new GMLPropertyDefn(
-                        CPLGetXMLValue( psAttrDef, "name", "unnamed" ),
-                        CPLGetXMLValue( psAttrDef, "name", "unnamed" ) );
-
-                    poProp->SetType( gmlType );
-                    poClass->AddProperty( poProp );
-                    continue;
-                }
-            }
-
-            // For now we skip geometries .. fixup later.
-            if( CPLGetXMLNode( psAttrDef, "simpleType" ) == NULL )
-                continue;
-
-            GMLPropertyDefn *poProp = new GMLPropertyDefn( 
-                CPLGetXMLValue( psAttrDef, "name", "unnamed" ),
-                CPLGetXMLValue( psAttrDef, "name", "unnamed" ) );
-
-            const char *pszBase = 
-                StripNS( CPLGetXMLValue( psAttrDef, 
-                                         "simpleType.restriction.base", "" ));
-
-            if( EQUAL(pszBase,"decimal") )
-            {
-                poProp->SetType( GMLPT_Real );
-                const char *pszWidth = 
-                    CPLGetXMLValue( psAttrDef, 
-                              "simpleType.restriction.totalDigits.value", "0" );
-                const char *pszPrecision = 
-                    CPLGetXMLValue( psAttrDef, 
-                              "simpleType.restriction.fractionDigits.value", "0" );
-                poProp->SetWidth( atoi(pszWidth) );
-                poProp->SetPrecision( atoi(pszPrecision) );
-            }
-            
-            else if( EQUAL(pszBase,"float") 
-                     || EQUAL(pszBase,"double") )
-                poProp->SetType( GMLPT_Real );
-
-            else if( EQUAL(pszBase,"integer") )
-            {
-                poProp->SetType( GMLPT_Integer );
-                const char *pszWidth = 
-                    CPLGetXMLValue( psAttrDef, 
-                              "simpleType.restriction.totalDigits.value", "0" );
-                poProp->SetWidth( atoi(pszWidth) );
-            }
-
-            else if( EQUAL(pszBase,"string") )
-            {
-                poProp->SetType( GMLPT_String );
-                const char *pszWidth = 
-                    CPLGetXMLValue( psAttrDef, 
-                              "simpleType.restriction.maxLength.value", "0" );
-                poProp->SetWidth( atoi(pszWidth) );
-            }
-
-            else
-                poProp->SetType( GMLPT_Untyped );
-
-            poClass->AddProperty( poProp );
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Class complete, add to reader class list.                       */
-/* -------------------------------------------------------------------- */
-        poClass->SetSchemaLocked( TRUE );
-
-        AddClass( poClass );
     }
 
     CPLDestroyXMLNode( psXSDTree );
