@@ -82,7 +82,10 @@ def warn_if_memleak(cmd, out_str):
         print(out_str)
 
 def spawn_async(cmd):
-    process = popen2.Popen3(cmd)
+    try:
+        process = popen2.Popen3(cmd)
+    except:
+        return (None, None)
     if process is None:
         return (None, None)
     process.tochild.close()
