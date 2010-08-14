@@ -47,6 +47,16 @@ import socket
 
 def ogr_wfs_1():
 
+    gdaltest.wfs_drv = None
+
+    try:
+        gdaltest.wfs_drv = ogr.GetDriverByName('WFS')
+    except:
+        pass
+        
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    
     gdaltest.have_gml_reader = 0
 
     try:
@@ -69,6 +79,8 @@ def ogr_wfs_1():
 # Test reading a MapServer WFS server
 
 def ogr_wfs_2():
+    if gdaltest.wfs_drv is None:
+        return 'skip'
     if not gdaltest.have_gml_reader:
         return 'skip'
 
@@ -123,6 +135,8 @@ def ogr_wfs_2():
 # Test reading a GeoServer WFS server
 
 def ogr_wfs_3():
+    if gdaltest.wfs_drv is None:
+        return 'skip'
     if not gdaltest.have_gml_reader:
         return 'skip'
 
@@ -195,6 +209,8 @@ def ogr_wfs_3():
 # Test reading a GeoServer WFS server with OUTPUTFORMAT=json
 
 def ogr_wfs_4():
+    if gdaltest.wfs_drv is None:
+        return 'skip'
 
     timeout =  10
     socket.setdefaulttimeout(timeout)
@@ -246,6 +262,8 @@ def ogr_wfs_4():
 # Test reading a Deegree WFS server
 
 def ogr_wfs_5():
+    if gdaltest.wfs_drv is None:
+        return 'skip'
     if not gdaltest.have_gml_reader:
         return 'skip'
 
@@ -289,6 +307,8 @@ def ogr_wfs_5():
 # Run test_ogrsf
 
 def ogr_wfs_6():
+    if gdaltest.wfs_drv is None:
+        return 'skip'
     if not gdaltest.have_gml_reader:
         return 'skip'
 
