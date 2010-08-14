@@ -42,7 +42,9 @@ OGRDXFWriterDS::OGRDXFWriterDS()
 
 {
     fp = NULL;
+    fpTemp = NULL;
     poLayer = NULL;
+    papszLayersToCreate = NULL;
 }
 
 /************************************************************************/
