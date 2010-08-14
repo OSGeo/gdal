@@ -566,6 +566,29 @@ def gml_MultiSurface_surfaceMembers():
 
     return 'success'
 
+
+###############################################################################
+# Test GML MultiCurve with curveMembers
+
+def gml_MultiCurve_curveMembers():
+
+    gml = """<gml:MultiCurve>
+          <gml:curveMembers>
+            <gml:LineString>
+                <gml:posList srsDimension="2">0 0 1 1</gml:posList>
+              </gml:LineString>
+            </gml:curveMembers>
+          </gml:MultiCurve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'MULTILINESTRING ((0 0,1 1))':
+        gdaltest.post_reason( '<gml:MultiCurve> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test GML Solid
 
@@ -792,6 +815,7 @@ gdaltest_list.append( gml_Curve )
 gdaltest_list.append( gml_MultiCurve )
 gdaltest_list.append( gml_MultiSurface )
 gdaltest_list.append( gml_MultiSurface_surfaceMembers )
+gdaltest_list.append( gml_MultiCurve_curveMembers )
 gdaltest_list.append( gml_Solid )
 gdaltest_list.append( gml_OrientableSurface )
 #gdaltest_list.append( gml_out_precision )
