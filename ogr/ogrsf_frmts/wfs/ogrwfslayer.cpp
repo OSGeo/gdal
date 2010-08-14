@@ -541,6 +541,13 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         }
         poNewFeature->SetFID(poSrcFeature->GetFID());
         poGeom = poNewFeature->GetGeometryRef();
+
+        if (bAxisOrderAlreadyInverted &&
+            strcmp(poBaseDS->GetDriver()->GetName(), "GML") != 0)
+        {
+            poGeom->swapXY();
+        }
+
         if (poGeom && poSRS)
             poGeom->assignSpatialReference(poSRS);
         delete poSrcFeature;
