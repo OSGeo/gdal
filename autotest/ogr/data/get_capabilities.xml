@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<wfs:WFS_Capabilities xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" xmlns:ows="http://www.opengis.net/ows" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" xmlns="http://www.opengis.net/wfs" version="1.1.0" xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+  <ows:ServiceIdentification>
+    <ows:Title>Overzichtskaart NL</ows:Title>
+    <ows:Abstract>Overzichtskaart NL</ows:Abstract>
+<!--WARNING: Optional metadata "ows_keywordlist" was missing for ows:KeywordList-->
+    <ows:ServiceType codeSpace="OGC">OGC WFS</ows:ServiceType>
+    <ows:ServiceTypeVersion>1.1.0</ows:ServiceTypeVersion>
+    <ows:Fees/>
+<!--WARNING: Optional metadata "ows_fees" was missing for ows:Fees-->
+    <ows:AccessConstraints/>
+<!--WARNING: Optional metadata "ows_accessconstraints" was missing for ows:AccessConstraints-->
+  </ows:ServiceIdentification>
+  <ows:ServiceProvider>
+    <ows:ProviderName/>
+<!--WARNING: Mandatory metadata "ows_contactorganization" was missing for ows:ProviderName-->
+    <ows:ProviderSite xlink:type="simple" xlink:href=""/>
+<!--WARNING: Optional metadata "ows_service_onlineresource" was missing for ows:ProviderSite/@xlink:href-->
+    <ows:ServiceContact>
+      <ows:IndividualName/>
+<!--WARNING: Optional metadata "ows_contactperson" was missing for ows:IndividualName-->
+      <ows:PositionName/>
+<!--WARNING: Optional metadata "ows_contactposition" was missing for ows:PositionName-->
+      <ows:ContactInfo>
+        <ows:Phone>
+          <ows:Voice/>
+<!--WARNING: Optional metadata "ows_contactvoicetelephone" was missing for ows:Voice-->
+          <ows:Facsimile/>
+<!--WARNING: Optional metadata "ows_contactfacsimiletelephone" was missing for ows:Facsimile-->
+        </ows:Phone>
+        <ows:Address>
+          <ows:DeliveryPoint/>
+<!--WARNING: Optional metadata "ows_address" was missing for ows:DeliveryPoint-->
+          <ows:City/>
+<!--WARNING: Optional metadata "ows_city" was missing for ows:City-->
+          <ows:AdministrativeArea/>
+<!--WARNING: Optional metadata "ows_stateorprovince" was missing for ows:AdministrativeArea-->
+          <ows:PostalCode/>
+<!--WARNING: Optional metadata "ows_postcode" was missing for ows:PostalCode-->
+          <ows:Country/>
+<!--WARNING: Optional metadata "ows_country" was missing for ows:Country-->
+          <ows:ElectronicMailAddress/>
+<!--WARNING: Optional metadata "ows_contactelectronicmailaddress" was missing for ows:ElectronicMailAddress-->
+        </ows:Address>
+        <ows:OnlineResource xlink:type="simple" xlink:href=""/>
+<!--WARNING: Optional metadata "ows_service_onlineresource" was missing for ows:OnlineResource/@xlink:href-->
+        <ows:HoursOfService/>
+<!--WARNING: Optional metadata "ows_hoursofservice" was missing for ows:HoursOfService-->
+        <ows:ContactInstructions/>
+<!--WARNING: Optional metadata "ows_contactinstructions" was missing for ows:ContactInstructions-->
+      </ows:ContactInfo>
+      <ows:Role/>
+<!--WARNING: Optional metadata "ows_role" was missing for ows:Role-->
+    </ows:ServiceContact>
+  </ows:ServiceProvider>
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://www.rijkswaterstaat.nl/services/geoservices/overzichtskaartnl?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://www.rijkswaterstaat.nl/services/geoservices/overzichtskaartnl?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:Value>WFS</ows:Value>
+      </ows:Parameter>
+      <ows:Parameter name="AcceptVersions">
+        <ows:Value>1.0.0</ows:Value>
+        <ows:Value> 1.1.0</ows:Value>
+      </ows:Parameter>
+      <ows:Parameter name="AcceptFormats">
+        <ows:Value>text/xml</ows:Value>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="DescribeFeatureType">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://www.rijkswaterstaat.nl/services/geoservices/overzichtskaartnl?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://www.rijkswaterstaat.nl/services/geoservices/overzichtskaartnl?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="outputFormat">
+        <ows:Value>XMLSCHEMA</ows:Value>
+        <ows:Value>text/xml; subtype=gml/2.1.2</ows:Value>
+        <ows:Value>text/xml; subtype=gml/3.1.1</ows:Value>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="GetFeature">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://www.rijkswaterstaat.nl/services/geoservices/overzichtskaartnl?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://www.rijkswaterstaat.nl/services/geoservices/overzichtskaartnl?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="resultType">
+        <ows:Value>results</ows:Value>
+      </ows:Parameter>
+      <ows:Parameter name="outputFormat">
+        <ows:Value>text/xml; subtype=gml/3.1.1</ows:Value>
+      </ows:Parameter>
+    </ows:Operation>
+  </ows:OperationsMetadata>
+  <FeatureTypeList>
+    <Operations>
+      <Operation>Query</Operation>
+    </Operations>
+    <FeatureType>
+      <Name>rijkswegen</Name>
+      <Title>rijkswegen</Title>
+      <Abstract>rijkswegen</Abstract>
+      <DefaultSRS>EPSG:28992</DefaultSRS>
+      <OutputFormats>
+        <Format>text/xml; subtype=gml/3.1.1</Format>
+      </OutputFormats>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>3.20018847986592 50.7175338039051</ows:LowerCorner>
+        <ows:UpperCorner>7.2735430151281 53.5582047896104</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+    </FeatureType>
+    <FeatureType>
+      <Name>vaarwegen</Name>
+      <Title>vaarwegen</Title>
+      <Abstract>vaarwegen</Abstract>
+      <DefaultSRS>EPSG:28992</DefaultSRS>
+      <OutputFormats>
+        <Format>text/xml; subtype=gml/3.1.1</Format>
+      </OutputFormats>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>3.20018847986592 50.7175338039051</ows:LowerCorner>
+        <ows:UpperCorner>7.2735430151281 53.5582047896104</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+    </FeatureType>
+    <FeatureType>
+      <Name>bebouwing</Name>
+      <Title>bebouwing</Title>
+      <Abstract>bebouwing</Abstract>
+      <DefaultSRS>EPSG:28992</DefaultSRS>
+      <OutputFormats>
+        <Format>text/xml; subtype=gml/3.1.1</Format>
+      </OutputFormats>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>3.20018847986592 50.7175338039051</ows:LowerCorner>
+        <ows:UpperCorner>7.2735430151281 53.5582047896104</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+    </FeatureType>
+    <FeatureType>
+      <Name>NL-prov</Name>
+      <Title>NL-prov</Title>
+      <Abstract>NL-prov</Abstract>
+      <DefaultSRS>EPSG:28992</DefaultSRS>
+      <OutputFormats>
+        <Format>text/xml; subtype=gml/3.1.1</Format>
+      </OutputFormats>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>3.20018847986592 50.7175338039051</ows:LowerCorner>
+        <ows:UpperCorner>7.2735430151281 53.5582047896104</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+    </FeatureType>
+  </FeatureTypeList>
+  <ogc:Filter_Capabilities>
+    <ogc:Spatial_Capabilities>
+      <ogc:GeometryOperands>
+        <ogc:GeometryOperand>gml:Point</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:LineString</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Polygon</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Envelope</ogc:GeometryOperand>
+      </ogc:GeometryOperands>
+      <ogc:SpatialOperators>
+        <ogc:SpatialOperator name="Equals"/>
+        <ogc:SpatialOperator name="Disjoint"/>
+        <ogc:SpatialOperator name="Touches"/>
+        <ogc:SpatialOperator name="Within"/>
+        <ogc:SpatialOperator name="Overlaps"/>
+        <ogc:SpatialOperator name="Crosses"/>
+        <ogc:SpatialOperator name="Intersects"/>
+        <ogc:SpatialOperator name="Contains"/>
+        <ogc:SpatialOperator name="DWithin"/>
+        <ogc:SpatialOperator name="Beyond"/>
+        <ogc:SpatialOperator name="BBOX"/>
+      </ogc:SpatialOperators>
+    </ogc:Spatial_Capabilities>
+    <ogc:Scalar_Capabilities>
+      <ogc:LogicalOperators/>
+      <ogc:ComparisonOperators>
+        <ogc:ComparisonOperator>LessThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>LessThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>EqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NotEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Like</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Between</ogc:ComparisonOperator>
+      </ogc:ComparisonOperators>
+    </ogc:Scalar_Capabilities>
+    <ogc:Id_Capabilities>
+      <ogc:FID/>
+    </ogc:Id_Capabilities>
+  </ogc:Filter_Capabilities>
+</wfs:WFS_Capabilities>
