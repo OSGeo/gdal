@@ -296,7 +296,7 @@ int GMLReader::ParseXSD( const char *pszFile )
 
         if( !EQUAL(pszSubGroup, "_Feature") )
         {
-            break;
+            continue;
         }
         
 /* -------------------------------------------------------------------- */
@@ -307,7 +307,7 @@ int GMLReader::ParseXSD( const char *pszFile )
         pszName = CPLGetXMLValue( psThis, "name", NULL );
         if( pszName == NULL )
         {
-            break;
+            continue;
         }
 
 /* -------------------------------------------------------------------- */
@@ -316,13 +316,15 @@ int GMLReader::ParseXSD( const char *pszFile )
         const char *pszType;
 
         pszType = CPLGetXMLValue( psThis, "type", NULL );
+        if (pszType == NULL)
+            continue;
         if( strstr( pszType, ":" ) != NULL )
             pszType = strstr( pszType, ":" ) + 1; 
-        if( pszType == NULL || !EQUALN(pszType,pszName,strlen(pszName)) 
+        if( !EQUALN(pszType,pszName,strlen(pszName))
             || !(EQUAL(pszType+strlen(pszName),"_Type") ||
                     EQUAL(pszType+strlen(pszName),"Type")) )
         {
-            break;
+            continue;
         }
 
         ParseFeatureType(psSchemaNode, pszName, pszType);
