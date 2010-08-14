@@ -1,0 +1,45 @@
+<html>
+<head>
+<title>WFS - OGC WFS service</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>WFS - OGC WFS service</h1>
+
+(GDAL/OGR >= 1.8.0)<p>
+
+This driver can connect to a OGC WFS server. It supports WFS 1.0.0 and WFS 1.1.0 protocols. Usually WFS return results in GML format,
+so the GML driver should generally be set-up for read-only (configured with Xerces or Expat support). It is possible to use alternate
+underlying formats when the server supports them (such as OUTPUTFORMAT=json)<p>
+
+The driver is currently read-only (no WFS-T).<p>
+
+The minimal syntax to open a WFS datasource is : <i>WFS:http://path/to/WFS/service</i> or <i>http://path/to/WFS/service?SERVICE=WFS</i><p>
+
+Additionnal optional parameters can be specified such as <i>TYPENAME</i> or <i>VERSION</i>, as specified in WFS specification.<p>
+
+<h3>Examples</h3>
+
+<li>
+Listing the types of a WFS server :
+<pre>
+ogrinfo -ro WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap
+</pre>
+<p>
+
+<li>
+Listing the types of the popplace layer with a spatial filter :
+<pre>
+ogrinfo -ro WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap popplace -spat 0 0 2961766.250000 3798856.750000
+<pre>
+<p>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.opengeospatial.org/standards/wfs">OGC WFS Standard</a><p>
+</ul>
+
+</body>
+</html>
