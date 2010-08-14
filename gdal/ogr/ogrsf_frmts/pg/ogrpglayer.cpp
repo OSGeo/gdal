@@ -157,6 +157,8 @@ void OGRPGLayer::ResetReading()
     PGconn      *hPGConn = poDS->GetPGConn();
     CPLString    osCommand;
 
+    GetLayerDefn();
+
     iNextShapeId = 0;
 
     if( hCursorResult != NULL )
@@ -1364,6 +1366,8 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 OGRErr OGRPGLayer::SetNextByIndex( long nIndex )
 
 {
+    GetLayerDefn();
+
     if( !TestCapability(OLCFastSetNextByIndex) )
         return OGRLayer::SetNextByIndex(nIndex);
 
@@ -1823,6 +1827,8 @@ OGRErr OGRPGLayer::RollbackTransaction()
 OGRSpatialReference *OGRPGLayer::GetSpatialRef()
 
 {
+    GetLayerDefn();
+
     if( poSRS == NULL && nSRSId > -1 )
     {
         poSRS = poDS->FetchSRS( nSRSId );
@@ -1842,6 +1848,8 @@ OGRSpatialReference *OGRPGLayer::GetSpatialRef()
 const char *OGRPGLayer::GetFIDColumn() 
 
 {
+    GetLayerDefn();
+
     if( pszFIDColumn != NULL )
         return pszFIDColumn;
     else
@@ -1855,6 +1863,8 @@ const char *OGRPGLayer::GetFIDColumn()
 const char *OGRPGLayer::GetGeometryColumn() 
 
 {
+    GetLayerDefn();
+
     if( pszGeomColumn != NULL )
         return pszGeomColumn;
     else
@@ -1936,4 +1946,13 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
     }
 
     return OGRLayer::GetExtent( psExtent, bForce );
+}
+
+/************************************************************************/
+/*                         GetLayerDefn()                              */
+/************************************************************************/
+
+OGRFeatureDefn * OGRPGLayer::GetLayerDefn()
+{
+    return poFeatureDefn;
 }

@@ -142,7 +142,7 @@ class OGRPGLayer : public OGRLayer
 
     virtual void        ResetReading();
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *    GetLayerDefn();
 
     virtual OGRErr      StartTransaction();
     virtual OGRErr      CommitTransaction();
@@ -169,11 +169,7 @@ class OGRPGTableLayer : public OGRPGLayer
 {
     int                 bUpdateAccess;
 
-    OGRFeatureDefn     *ReadTableDefinition(CPLString& osCurrentSchema,
-                                            const char * pszTableName,
-                                            const char * pszSchemaName,
-                                            const char * pszGeomColumnIn,
-                                            int bAdvertizeGeomColumn);
+    OGRFeatureDefn     *ReadTableDefinition();
 
     void                BuildWhere(void);
     CPLString           BuildFields(void);
@@ -183,8 +179,12 @@ class OGRPGTableLayer : public OGRPGLayer
     char               *pszSchemaName;
     char               *pszSqlTableName;
 
+    int                 nSRSIdIn;
+
     /* Name of the parent table with the geometry definition if it is a derived table or NULL */
-    char               *pszSqlGeomParentTableName; 
+    char               *pszSqlGeomParentTableName;
+
+    CPLString           osDefnName;
 
     CPLString           osQuery;
     CPLString           osWHERE;
@@ -203,7 +203,7 @@ class OGRPGTableLayer : public OGRPGLayer
                   
     int                 bHasWarnedIncompatibleGeom;
     void                CheckGeomTypeCompatibility(OGRGeometry* poGeom);
-    
+
 public:
                         OGRPGTableLayer( OGRPGDataSource *,
                                          CPLString& osCurrentSchema,
@@ -214,6 +214,10 @@ public:
                                          int bAdvertizeGeomColumn,
                                          int nSRSId = -2 );
                         ~OGRPGTableLayer();
+
+    const char         *GetName() { return osDefnName.c_str(); }
+
+    virtual OGRFeatureDefn *    GetLayerDefn();
 
     virtual OGRFeature *GetFeature( long nFeatureId );
     virtual void        ResetReading();
@@ -248,6 +252,8 @@ public:
 
     virtual OGRErr      StartCopy();
     virtual OGRErr      EndCopy();
+
+    OGRFeatureDefn     *GetLayerDefnCanReturnNULL();
 };
 
 /************************************************************************/
