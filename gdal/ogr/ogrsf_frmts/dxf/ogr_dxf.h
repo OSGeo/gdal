@@ -161,13 +161,13 @@ class OGRDXFDataSource : public OGRDataSource
 
     std::map<CPLString,CPLString> oLineTypeTable;
 
-    bool                bInlineBlocks;
+    int                 bInlineBlocks;
 
   public:
                         OGRDXFDataSource();
                         ~OGRDXFDataSource();
 
-    int                 Open( const char * pszFilename );
+    int                 Open( const char * pszFilename, int bHeaderOnly=FALSE );
     
     const char          *GetName() { return osName; }
 
@@ -178,7 +178,7 @@ class OGRDXFDataSource : public OGRDataSource
 
     // The following is only used by OGRDXFLayer
 
-    bool                InlineBlocks() { return bInlineBlocks; }
+    int                 InlineBlocks() { return bInlineBlocks; }
     void                AddStandardFields( OGRFeatureDefn *poDef );
 
     // Implemented in ogrdxf_diskio.cpp 
@@ -224,6 +224,8 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
     int                 nNextFID;
 
+    OGRDXFWriterDS     *poDS;
+
     int                 WriteValue( int nCode, const char *pszValue );
     int                 WriteValue( int nCode, int nValue );
     int                 WriteValue( int nCode, double dfValue );
@@ -236,7 +238,7 @@ class OGRDXFWriterLayer : public OGRLayer
     int                 ColorStringToDXFColor( const char * );
 
   public:
-    OGRDXFWriterLayer( FILE *fp );
+    OGRDXFWriterLayer( OGRDXFWriterDS *poDS, FILE *fp );
     ~OGRDXFWriterLayer();
 
     void                ResetReading() {}
@@ -256,10 +258,25 @@ class OGRDXFWriterLayer : public OGRLayer
 
 class OGRDXFWriterDS : public OGRDataSource
 {
+    friend class OGRDXFWriterLayer;
+    
     CPLString           osName;
     OGRDXFWriterLayer  *poLayer;
     FILE               *fp;
     CPLString           osTrailerFile;
+
+    CPLString           osTempFilename;
+    FILE               *fpTemp;
+
+    CPLString           osHeaderFile;
+    OGRDXFDataSource    oHeaderDS;
+    char               **papszLayersToCreate;
+
+    std::vector<int>    anDefaultLayerCode;
+    std::vector<CPLString> aosDefaultLayerText;
+
+    int                 WriteNewLayerDefinitions( FILE * );
+    int                 TransferUpdateHeader( FILE * );
 
   public:
                         OGRDXFWriterDS();
