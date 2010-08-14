@@ -3842,7 +3842,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /* -------------------------------------------------------------------- */
     if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
-        || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 )
+        || adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0 )
     {
         bNeedsRewrite = TRUE;
 
@@ -6985,7 +6985,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
         && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
             || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
-            || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 ))
+            || adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0 ))
     {
         if( bGeoTIFF )
         {
