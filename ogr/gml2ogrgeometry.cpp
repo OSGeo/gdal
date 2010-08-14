@@ -920,6 +920,42 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
                 poMLS->addGeometryDirectly( (OGRLineString *)poGeom );
             }
+            else if (psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"curveMembers") )
+            {
+                const CPLXMLNode *psChild2;
+                for( psChild2 = psChild->psChild;
+                     psChild2 != NULL;
+                     psChild2 = psChild2->psNext )
+                {
+                    if( psChild2->eType == CXT_Element
+                        && (EQUAL(BareGMLElement(psChild2->pszValue),"LineString")) )
+                    {
+                        OGRGeometry* poGeom = GML2OGRGeometry_XMLNode( psChild2 );
+                        if (poGeom == NULL)
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined, "Invalid %s",
+                                    BareGMLElement(psChild2->pszValue));
+                            delete poMLS;
+                            return NULL;
+                        }
+
+                        if (wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
+                        {
+                            poMLS->addGeometryDirectly( (OGRLineString *)poGeom );
+                        }
+                        else
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                    "Got %.500s geometry as curveMember instead of LINESTRING.",
+                                    poGeom->getGeometryName() );
+                            delete poGeom;
+                            delete poMLS;
+                            return NULL;
+                        }
+                    }
+                }
+            }
         }
         return poMLS;
     }
