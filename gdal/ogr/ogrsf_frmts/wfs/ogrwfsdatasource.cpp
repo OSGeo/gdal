@@ -326,6 +326,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     CPLDebug("WFS", "%s", osURL.c_str());
 
     CPLHTTPResult* psResult = CPLHTTPFetch( osURL, NULL);
+    if (psResult == NULL)
+    {
+        return FALSE;
+    }
     if (psResult->nStatus != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
