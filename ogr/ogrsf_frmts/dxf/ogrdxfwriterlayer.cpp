@@ -43,10 +43,11 @@ CPL_CVSID("$Id$");
 /*                         OGRDXFWriterLayer()                          */
 /************************************************************************/
 
-OGRDXFWriterLayer::OGRDXFWriterLayer( FILE *fp )
+OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDS, FILE *fp )
 
 {
     this->fp = fp;
+    this->poDS = poDS;
 
     nNextFID = 80;
 
@@ -197,7 +198,24 @@ OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
 /*      For now we assign everything to the default layer - layer       */
 /*      "0".                                                            */
 /* -------------------------------------------------------------------- */
-    WriteValue( 8, "0" ); // layer 
+    const char *pszLayer = poFeature->GetFieldAsString( "Layer" );
+    if( pszLayer == NULL )
+    {
+        WriteValue( 8, "0" );
+    }
+    else
+    {
+        const char *pszExists = 
+            poDS->oHeaderDS.LookupLayerProperty( pszLayer, "Exists" );
+        if( (pszExists == NULL || strlen(pszExists) == 0)
+            && CSLFindString( poDS->papszLayersToCreate, pszLayer ) == -1 )
+        {
+            poDS->papszLayersToCreate = 
+                CSLAddString( poDS->papszLayersToCreate, pszLayer );
+        }
+
+        WriteValue( 8, pszLayer );
+    }
 
     return OGRERR_NONE;
 }
