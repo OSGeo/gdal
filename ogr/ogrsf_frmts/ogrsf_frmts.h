@@ -343,6 +343,7 @@ void CPL_DLL RegisterOGRGPSBabel();
 void CPL_DLL RegisterOGRSUA();
 void CPL_DLL RegisterOGROpenAir();
 void CPL_DLL RegisterOGRPDS();
+void CPL_DLL RegisterOGRWFS();
 CPL_C_END
 
 
