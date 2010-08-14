@@ -1,0 +1,15 @@
+
+OBJ	=	ogrwfsdriver.obj ogrwfsdatasource.obj ogrwfslayer.obj
+EXTRAFLAGS =	-I.. -I..\.. -I..\gml
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

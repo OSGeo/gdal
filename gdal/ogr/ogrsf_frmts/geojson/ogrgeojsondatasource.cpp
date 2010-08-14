@@ -89,6 +89,10 @@ int OGRGeoJSONDataSource::Open( const char* pszName )
     nSrcType = GeoJSONGetSourceType( pszName );
     if( eGeoJSONSourceService == nSrcType )
     {
+        if( (strstr(pszName, "SERVICE=WFS") || strstr(pszName, "service=WFS") ||
+             strstr(pszName, "service=wfs")) && !strstr(pszName, "json"))
+            return FALSE;
+
         if( !ReadFromService( pszName ) )
             return FALSE;
     }
