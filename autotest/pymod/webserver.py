@@ -111,13 +111,7 @@ class GDAL_HttpServer(HTTPServer):
 
     def stop_server(self, stop_url):
         self.stopped = True
-        from sys import version_info
-        if version_info < (3,0,0):
-            import urllib2
-            handle = urllib2.urlopen(stop_url)
-        else:
-            import urllib.request
-            handle = urllib.request.urlopen(stop_url)
+        handle = gdaltest.gdalurlopen(stop_url)
 
     def serve_until_stop_server(self):
         while not self.stopped:
@@ -159,7 +153,6 @@ class GDAL_ThreadedHttpServer(Thread):
 
     def wait_ready(self):
         while not self.running:
-            import time
             time.sleep(1)
 
     def stop(self):
@@ -203,7 +196,7 @@ def main():
         print('port=%d' % server.getPort())
         server.start()
         server.wait_ready()
-        printf('\n')
+        print('\n')
         sys.stdout.flush()
     except:
         print('port=0\n')

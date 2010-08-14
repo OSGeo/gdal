@@ -30,7 +30,7 @@
 import urllib2
 import socket
 import os
-import popen2
+from sys import version_info
 
 def run_func(func):
     try:
@@ -81,7 +81,21 @@ def warn_if_memleak(cmd, out_str):
         print('memory leak detected')
         print(out_str)
 
+def spawn_async26(cmd):
+    import shlex
+    import subprocess
+    command = shlex.split(cmd)
+    try:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE)
+        return (process, process.stdout)
+    except:
+        return (None, None)
+
 def spawn_async(cmd):
+    if version_info >= (2,6,0):
+        return spawn_async26(cmd)
+
+    import popen2
     try:
         process = popen2.Popen3(cmd)
     except:
