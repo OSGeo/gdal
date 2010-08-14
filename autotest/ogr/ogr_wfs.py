@@ -198,7 +198,8 @@ def ogr_wfs_3():
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
     if feat.GetField('name') != 'Alexander Bay' or \
-       geom_wkt.find("POINT (16.4827778 -28.5947222)") == -1:
+       ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
+                                      max_error = 0.000000001 ) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
@@ -250,7 +251,8 @@ def ogr_wfs_4():
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
     if feat.GetField('name') != 'Alexander Bay' or \
-       geom_wkt.find("POINT (16.4827778 -28.5947222)") == -1:
+       ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
+                                      max_error = 0.000000001 ) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
@@ -296,7 +298,8 @@ def ogr_wfs_5():
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
     if feat.GetField('objectid') != 1 or \
-       geom_wkt.find("POINT (558750.703125 4402882.05)") == -1:
+       ogrtest.check_feature_geometry(feat,'POINT (558750.703125 4402882.05)',
+                                      max_error = 0.000000001 ) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
