@@ -114,6 +114,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 {
     FILE        *fp;
     char        szHeader[2048];
+    int         nNumberOfFeatures = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
@@ -168,6 +169,23 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             VSIFCloseL( fp );
             return FALSE;
+        }
+
+        /* Small optimization: if we parse a <wfs:FeatureCollection>  and */
+        /* that numberOfFeatures is set, we can use it to set the FeatureCount */
+        /* but *ONLY* if there's just one class ! */
+        const char* pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
+        if (pszFeatureCollection)
+        {
+            const char* pszNumberOfFeatures = strstr(szPtr, "numberOfFeatures=");
+            if (pszNumberOfFeatures)
+            {
+                char ch = pszNumberOfFeatures[17];
+                if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 17 + 1, ch) != NULL)
+                {
+                    nNumberOfFeatures = atoi(pszNumberOfFeatures + 17 + 1);
+                }
+            }
         }
     }
     
@@ -344,6 +362,20 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     papoLayers = (OGRGMLLayer **)
         CPLCalloc( sizeof(OGRGMLLayer *), poReader->GetClassCount());
     nLayers = 0;
+
+    if (poReader->GetClassCount() == 1 && nNumberOfFeatures != 0)
+    {
+        GMLFeatureClass *poClass = poReader->GetClass(0);
+        int nFeatureCount = poClass->GetFeatureCount();
+        if (nFeatureCount < 0)
+        {
+            poClass->SetFeatureCount(nNumberOfFeatures);
+        }
+        else if (nFeatureCount != nNumberOfFeatures)
+        {
+            CPLDebug("GML", "Feature count in header, and actual feature count don't match");
+        }
+    }
 
     while( nLayers < poReader->GetClassCount() )
     {
