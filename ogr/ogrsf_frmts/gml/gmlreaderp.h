@@ -290,6 +290,9 @@ private:
 
     int           m_bInvertAxisOrderIfLatLong;
 
+    int           ParseFeatureType(CPLXMLNode *psSchemaNode,
+                                const char* pszName,
+                                const char *pszType);
 public:
                 GMLReader();
     virtual     ~GMLReader();
