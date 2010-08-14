@@ -115,6 +115,9 @@ int OGRDXFDataSource::ReadValue( char *pszValueBuf, int nValueBufSize )
            && achSrcBuffer[iSrcBufferOffset] != '\0' ) 
         iSrcBufferOffset++;
 
+    if( achSrcBuffer[iSrcBufferOffset] == '\0' )
+        return -1;
+
     // skip past newline.  CR, CRLF, or LFCR
     if( (achSrcBuffer[iSrcBufferOffset] == '\r'
          && achSrcBuffer[iSrcBufferOffset+1] == '\n' )
