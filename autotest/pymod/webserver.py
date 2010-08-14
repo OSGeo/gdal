@@ -167,8 +167,6 @@ class GDAL_ThreadedHttpServer(Thread):
             self.server.stop_server("http://127.0.0.1:%d/shutdown" % self.port)
 
     def run_server(self, timeout):
-        self.start()
-        self.wait_ready()
         count = 0
         while (timeout <= 0 or count < timeout) and self.server.is_running():
             #print(count)
@@ -185,6 +183,7 @@ def launch():
 
     line = process_stdout.readline()
     line = line.decode('ascii')
+    process_stdout.close()
     if line.find('port=') == -1:
         return (None, 0)
 
@@ -201,12 +200,17 @@ def server_stop(process, port):
 def main():
     try:
         server = GDAL_ThreadedHttpServer(GDAL_Handler)
-        print('port=%d\n' % server.getPort())
+        print('port=%d' % server.getPort())
+        server.start()
+        server.wait_ready()
+        printf('\n')
         sys.stdout.flush()
-        server.run_server(60)
     except:
         print('port=0\n')
         sys.stdout.flush()
+        sys.exit(0)
+
+    server.run_server(60)
 
 if __name__ == '__main__':
     main()
