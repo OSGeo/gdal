@@ -741,6 +741,55 @@ def ogr_gml_19():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test parsing a .xsd where the type definition is before its reference
+
+def ogr_gml_20():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.remove( 'data/archsites.gfs' )
+    except:
+        pass
+
+    ds = ogr.Open('data/archsites.gml')
+    lyr = ds.GetLayer(0)
+    ldefn = lyr.GetLayerDefn()
+
+    try:
+        ldefn.GetFieldDefn(0).GetFieldTypeName
+    except:
+        return 'skip'
+
+    if ldefn.GetFieldDefn(0).GetFieldTypeName(ldefn.GetFieldDefn(0).GetType())\
+       != 'Integer':
+        gdaltest.post_reason('did not get expected column type for col 0')
+        return 'fail'
+    if ldefn.GetFieldDefn(1).GetFieldTypeName(ldefn.GetFieldDefn(1).GetType())\
+       != 'String':
+        gdaltest.post_reason('did not get expected column type for col 1')
+        return 'fail'
+
+    if lyr.GetGeometryColumn() != 'the_geom':
+        gdaltest.post_reason('did not get expected geometry column name')
+        return 'fail'
+
+    if ldefn.GetGeomType() != ogr.wkbPoint:
+        gdaltest.post_reason('did not get expected geometry type')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/archsites.gfs')
+        gdaltest.post_reason('did not expected .gfs -> XSD parsing failed')
+        return 'fail'
+    except:
+        return 'success'
+    
 ###############################################################################
 #  Cleanup
 
@@ -807,6 +856,7 @@ gdaltest_list = [
     ogr_gml_17,
     ogr_gml_18,
     ogr_gml_19,
+    ogr_gml_20,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
