@@ -182,5 +182,8 @@ void OGRRegisterAll()
 #ifdef PDS_ENABLED
     RegisterOGRPDS();
 #endif
+#ifdef WFS_ENABLED
+    RegisterOGRWFS();
+#endif
 } /* OGRRegisterAll */
 
