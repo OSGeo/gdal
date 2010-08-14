@@ -5,7 +5,7 @@ SUBDIRS-yes	:= \
 	generic avc bna csv dgn geojson gml gmt mem kml \
 	mitab ntf gpx rec s57 sdts shape tiger vrt \
 	geoconcept xplane georss gtm dxf pgdump gpsbabel \
-	sua openair pds wfs
+	sua openair pds
 
 SUBDIRS-$(HAVE_DODS)	+= dods
 SUBDIRS-$(HAVE_DWGDIRECT) += dxfdwg
@@ -24,6 +24,7 @@ SUBDIRS-$(HAVE_SDE)     += sde
 SUBDIRS-$(HAVE_INGRES)  += ingres
 SUBDIRS-$(HAVE_VFK)     += vfk
 SUBDIRS-$(HAVE_LIBKML)  += libkml
+SUBDIRS-$(CURL_SETTING) += wfs
 
 ifeq ($(PCIDSK_SETTING),internal)
 SUBDIRS-yes  += pcidsk

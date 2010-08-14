@@ -132,6 +132,10 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
     CPLDebug("WFS", "%s", osURL.c_str());
 
     CPLHTTPResult* psResult = CPLHTTPFetch( osURL, NULL);
+    if (psResult == NULL)
+    {
+        return NULL;
+    }
     if (psResult->nStatus != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
@@ -318,6 +322,10 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     CPLDebug("WFS", "%s", osURL.c_str());
 
     CPLHTTPResult* psResult = CPLHTTPFetch( osURL, NULL);
+    if (psResult == NULL)
+    {
+        return NULL;
+    }
     if (psResult->nStatus != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
@@ -638,6 +646,10 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
     CPLDebug("WFS", "%s", osURL.c_str());
 
     CPLHTTPResult* psResult = CPLHTTPFetch( osURL, NULL);
+    if (psResult == NULL)
+    {
+        return -1;
+    }
     if (psResult->nStatus != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
