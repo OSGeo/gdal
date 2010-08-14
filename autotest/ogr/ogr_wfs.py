@@ -40,6 +40,7 @@ import ogr
 import osr
 import gdal
 import socket
+import webserver
 
 ###############################################################################
 # Test underlying OGR drivers
@@ -333,13 +334,63 @@ def ogr_wfs_6():
 
     return 'success'
 
+###############################################################################
+# Test reading a local fake WFS server
+
+def ogr_wfs_7():
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    (process, port) = webserver.launch()
+    if port == 0:
+        return 'skip'
+
+    ds = ogr.Open("WFS:http://127.0.0.1:%d/fakewfs" % port)
+    if ds is None:
+        gdaltest.post_reason('did not managed to open WFS datastore')
+        webserver.server_stop(process, port)
+        return 'fail'
+
+    lyr = ds.GetLayerByName('rijkswegen')
+    if lyr.GetName() != 'rijkswegen':
+        gdaltest.post_reason('did not get expected layer name')
+        print(lyr.GetName())
+        webserver.server_stop(process, port)
+        return 'fail'
+
+    sr = lyr.GetSpatialRef()
+    sr2 = osr.SpatialReference()
+    sr2.ImportFromEPSG(28992)
+    if not sr.IsSame(sr2):
+        gdaltest.post_reason('did not get expected SRS')
+        print(sr)
+        webserver.server_stop(process, port)
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('MPLength') != '33513.' or \
+       ogrtest.check_feature_geometry(feat,'MULTILINESTRING ((154898.65286 568054.62753,160108.36082 566076.78094,164239.254332 563024.70188,170523.31535 561231.219583,172676.42256 559253.37299,175912.80562 557459.89069,180043.699132 553508.779495,183294.491306 552250.182732))',
+                                      max_error = 0.00001 ) != 0:
+        gdaltest.post_reason('did not get expected feature')
+        feat.DumpReadable()
+        webserver.server_stop(process, port)
+        return 'fail'
+
+    webserver.server_stop(process, port)
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_wfs_1,
     ogr_wfs_2,
     ogr_wfs_3,
     ogr_wfs_4,
     ogr_wfs_5,
-    ogr_wfs_6]
+    ogr_wfs_6,
+    ogr_wfs_7
+    ]
 
 if __name__ == '__main__':
 

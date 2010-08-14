@@ -71,6 +71,17 @@ def gdalurlopen(url):
         socket.setdefaulttimeout(old_timeout)
         return None
 
+def spawn_async(cmd):
+    command = shlex.split(cmd)
+    try:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE)
+        return (process, process.stdout)
+    except:
+        return (None, None)
+
+def wait_process(process):
+    process.wait()
+
 def runexternal(cmd, strin = None):
     command = shlex.split(cmd)
     if strin is None:

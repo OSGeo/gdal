@@ -30,6 +30,7 @@
 import urllib2
 import socket
 import os
+import popen2
 
 def run_func(func):
     try:
@@ -70,16 +71,45 @@ def gdalurlopen(url):
         socket.setdefaulttimeout(old_timeout)
         return None
 
+def warn_if_memleak(cmd, out_str):
+
+    # If DEBUG_VSIMALLOC_STATS is defined, this is an easy way
+    # to catch some memory leaks
+    if cmd.find('--utility_version') == -1 and \
+       out_str.find('VSIMalloc + VSICalloc - VSIFree') != -1 and \
+       out_str.find('VSIMalloc + VSICalloc - VSIFree : 0') == -1:
+        print('memory leak detected')
+        print(out_str)
+
+def spawn_async(cmd):
+    process = popen2.Popen3(cmd)
+    if process is None:
+        return (None, None)
+    process.tochild.close()
+    return (process, process.fromchild)
+
+def wait_process(process):
+    process.wait()
+
 def runexternal(cmd, strin = None):
     if strin is None:
-        return os.popen(cmd).read()
+        out_str = os.popen(cmd).read()
     else:
         (ret_stdin, ret_stdout) = os.popen2(cmd)
         ret_stdin.write(strin)
         ret_stdin.close()
-        return ret_stdout.read()
+        out_str = ret_stdout.read()
+
+    warn_if_memleak(cmd, out_str)
+
+    return out_str
 
 def runexternal_out_and_err(cmd):
     (ret_stdin, ret_stdout, ret_stderr) = os.popen3(cmd)
     ret_stdin.close()
-    return (ret_stdout.read(), ret_stderr.read())
+    out_str = ret_stdout.read()
+    err_str = ret_stderr.read()
+
+    warn_if_memleak(cmd, out_str)
+
+    return (out_str, err_str)

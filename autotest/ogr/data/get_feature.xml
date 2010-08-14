@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding="ISO-8859-1" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://www.rijkswaterstaat.nl/services/geoservices/overzichtskaartnl?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=rijkswegen&amp;OUTPUTFORMAT=text/xml; subtype=gml/3.1.1  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" numberOfFeatures="1">
+      <gml:boundedBy>
+      	<gml:Envelope srsName="EPSG:28992">
+      		<gml:lowerCorner>13769.899683 307792.962538</gml:lowerCorner>
+      		<gml:upperCorner>277562.882370 607385.957220</gml:upperCorner>
+      	</gml:Envelope>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:rijkswegen>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="EPSG:28992">
+        		<gml:lowerCorner>154898.652858 552250.182732</gml:lowerCorner>
+        		<gml:upperCorner>183294.491306 568054.627532</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:geometry>
+          <gml:MultiCurve srsName="EPSG:28992">
+            <gml:curveMembers>
+              <gml:LineString>
+                <gml:posList srsDimension="2">154898.652858 568054.627532 160108.360820 566076.780944 164239.254332 563024.701882 170523.315346 561231.219583 172676.422559 559253.372994 175912.805620 557459.890695 180043.699132 553508.779495 183294.491306 552250.182732 </gml:posList>
+              </gml:LineString>
+            </gml:curveMembers>
+          </gml:MultiCurve>
+        </ms:geometry>
+        <ms:MPLength>33513.</ms:MPLength>
+      </ms:rijkswegen>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+
