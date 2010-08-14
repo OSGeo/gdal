@@ -103,7 +103,7 @@ OGRLayer *OGRDXFDataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDXFDataSource::Open( const char * pszFilename )
+int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
 {
     if( !EQUAL(CPLGetExtension(pszFilename),"dxf") )
@@ -113,6 +113,10 @@ int OGRDXFDataSource::Open( const char * pszFilename )
 
     bInlineBlocks = CSLTestBoolean(
         CPLGetConfigOption( "DXF_INLINE_BLOCKS", "TRUE" ) );
+
+    if( CSLTestBoolean(
+            CPLGetConfigOption( "DXF_HEADER_ONLY", "FALSE" ) ) )
+        bHeaderOnly = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -211,6 +215,9 @@ int OGRDXFDataSource::Open( const char * pszFilename )
         }
     }
 
+    if( bHeaderOnly )
+        return TRUE;
+
 /* -------------------------------------------------------------------- */
 /*      Now we are at the entities section, hopefully.  Confirm.        */
 /* -------------------------------------------------------------------- */
@@ -282,6 +289,7 @@ void OGRDXFDataSource::ReadLayerDefinition()
         {
           case 2:
             osLayerName = szLineBuf;
+            oLayerProperties["Exists"] = "1";
             break;
 
           case 6:
