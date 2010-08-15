@@ -116,6 +116,8 @@ class OGRGMLDataSource : public OGRDataSource
 
     void                InsertHeader();
 
+    int                 bExposeGMLId;
+
   public:
                         OGRGMLDataSource();
                         ~OGRGMLDataSource();
@@ -138,6 +140,8 @@ class OGRGMLDataSource : public OGRDataSource
     IGMLReader          *GetReader() { return poReader; }
 
     void                GrowExtents( OGREnvelope *psGeomBounds );
+
+    int                 ExposeGMLId() { return bExposeGMLId; }
 
     static void         PrintLine(FILE* fp, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
 };

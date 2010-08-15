@@ -196,6 +196,13 @@ char* GMLXercesHandler::GetFID(void* attr)
     nFIDIndex = attrs->getIndex( anFID );
     if( nFIDIndex != -1 )
         return tr_strdup( attrs->getValue( nFIDIndex ) );
+    else
+    {
+        tr_strcpy( anFID, "gml:id" );
+        nFIDIndex = attrs->getIndex( anFID );
+        if( nFIDIndex != -1 )
+            return tr_strdup( attrs->getValue( nFIDIndex ) );
+    }
 
     return NULL;
 }
@@ -352,7 +359,15 @@ char* GMLExpatHandler::GetFID(void* attr)
         {
             return CPLStrdup(papszIter[1]);
         }
-        
+        papszIter += 2;
+    }
+    papszIter = (const char** )attr;
+    while(*papszIter)
+    {
+        if (strcmp(*papszIter, "gml:id") == 0)
+        {
+            return CPLStrdup(papszIter[1]);
+        }
         papszIter += 2;
     }
     return NULL;
