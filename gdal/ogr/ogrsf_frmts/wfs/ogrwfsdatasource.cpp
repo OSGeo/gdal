@@ -52,6 +52,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     bNeedNAMESPACE = FALSE;
     bHasMinOperators = FALSE;
     bHasNullCheck = FALSE;
+    bPropertyIsNotEqualToSupported = TRUE; /* advertized by deegree but not implemented */
 }
 
 /************************************************************************/
