@@ -50,8 +50,6 @@ def test_ogr2ogr_py_1():
     if script_path is None:
         return 'skip'
 
-    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -fields=no')
-
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -59,7 +57,6 @@ def test_ogr2ogr_py_1():
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp')
-
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
@@ -759,6 +756,8 @@ def test_ogr2ogr_py_22():
 def test_ogr2ogr_py_23():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
+        return 'skip'
+    if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
