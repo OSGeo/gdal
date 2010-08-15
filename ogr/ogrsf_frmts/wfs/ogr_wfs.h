@@ -34,6 +34,7 @@
 
 CPLString FetchValueFromURL(const char* pszURL, const char* pszKey);
 CPLString AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue);
+CPLString TurnSQLFilterToWFSFilter( const char * pszFilter, int* pbNeedsNullCheck );
 
 /************************************************************************/
 /*                             OGRWFSLayer                              */
@@ -74,6 +75,8 @@ class OGRWFSLayer : public OGRLayer
     int                 bHasExtents;
 
     OGRGeometry        *poFetchedFilterGeom;
+
+    CPLString           osWFSWhere;
 
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
@@ -123,6 +126,8 @@ class OGRWFSDataSource : public OGRDataSource
     int                 bGetFeatureSupportHits;
     CPLString           osVersion;
     int                 bNeedNAMESPACE;
+    int                 bHasMinOperators;
+    int                 bHasNullCheck;
 
   public:
                         OGRWFSDataSource();
@@ -144,6 +149,8 @@ class OGRWFSDataSource : public OGRDataSource
 
     int                         IsOldDeegree(const char* pszErrorString);
     int                         GetNeedNAMESPACE() { return bNeedNAMESPACE; }
+    int                         HasMinOperators() { return bHasMinOperators; }
+    int                         HasNullCheck() { return bHasNullCheck; }
 };
 
 /************************************************************************/

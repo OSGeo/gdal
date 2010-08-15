@@ -177,7 +177,7 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
 
     osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.gml", this);
     fp = VSIFOpenL(osTmpFileName, "wb");
-    VSIFPrintfL(fp, "<?xml version=\"1.0\"?><foo xmlns:gml=\"http://www.opengis.net/gml\"></foo>");
+    VSIFPrintfL(fp, "<?xml version=\"1.0\"?><wfs:FeatureCollection xmlns:gml=\"http://www.opengis.net/gml\"></wfs:FeatureCollection>");
     VSIFCloseL(fp);
 
     OGRDataSource* poDS = (OGRDataSource*) OGROpen(osTmpFileName, FALSE, NULL);
@@ -257,6 +257,8 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
     delete poFetchedFilterGeom;
     poFetchedFilterGeom = NULL;
 
+    CPLString osGeomFilter;
+
     if (m_poFilterGeom != NULL && osGeometryColumnName.size() > 0)
     {
         OGREnvelope oEnvelope;
@@ -264,6 +266,34 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
 
         poFetchedFilterGeom = m_poFilterGeom->clone();
 
+        osGeomFilter = "<BBOX>";
+        osGeomFilter += "<PropertyName>";
+        if (pszNS)
+        {
+            osGeomFilter += pszNS;
+            osGeomFilter += ":";
+        }
+        osGeomFilter += osGeometryColumnName;
+        osGeomFilter += "</PropertyName>";
+        osGeomFilter += "<gml:Box>";
+        osGeomFilter += "<gml:coordinates>";
+        if (bAxisOrderAlreadyInverted)
+        {
+            /* We can go here in WFS 1.1 with geographic coordinate systems */
+            /* that are natively return in lat,long order, but as we have */
+            /* presented long,lat order to the user, we must switch back */
+            /* for the server... */
+            osGeomFilter += CPLSPrintf("%.16f,%.16f %.16f,%.16f", oEnvelope.MinY, oEnvelope.MinX, oEnvelope.MaxY, oEnvelope.MaxX);
+        }
+        else
+            osGeomFilter += CPLSPrintf("%.16f,%.16f %.16f,%.16f", oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX, oEnvelope.MaxY);
+        osGeomFilter += "</gml:coordinates>";
+        osGeomFilter += "</gml:Box>";
+        osGeomFilter += "</BBOX>";
+    }
+
+    if (osGeomFilter.size() != 0 || osWFSWhere.size() != 0)
+    {
         CPLString osFilter = "<Filter ";
         if (pszNS)
         {
@@ -274,35 +304,18 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
             osFilter += "\"";
         }
         osFilter += " xmlns:gml=\"http://www.opengis.net/gml\">";
-        osFilter += "<BBOX>";
-        osFilter += "<PropertyName>";
-        if (pszNS)
-        {
-            osFilter += pszNS;
-            osFilter += ":";
-        }
-        osFilter += osGeometryColumnName;
-        osFilter += "</PropertyName>";
-        osFilter += "<gml:Box>";
-        osFilter += "<gml:coordinates>";
-        if (bAxisOrderAlreadyInverted)
-        {
-            /* We can go here in WFS 1.1 with geographic coordinate systems */
-            /* that are natively return in lat,long order, but as we have */
-            /* presented long,lat order to the user, we must switch back */
-            /* for the server... */
-            osFilter += CPLSPrintf("%.16f,%.16f %.16f,%.16f", oEnvelope.MinY, oEnvelope.MinX, oEnvelope.MaxY, oEnvelope.MaxX);
-        }
-        else
-            osFilter += CPLSPrintf("%.16f,%.16f %.16f,%.16f", oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX, oEnvelope.MaxY);
-        osFilter += "</gml:coordinates>";
-        osFilter += "</gml:Box>";
-        osFilter += "</BBOX>";
+        if (osGeomFilter.size() != 0 && osWFSWhere.size() != 0)
+            osFilter += "<And>";
+        osFilter += osWFSWhere;
+        osFilter += osGeomFilter;
+        if (osGeomFilter.size() != 0 && osWFSWhere.size() != 0)
+            osFilter += "</And>";
         osFilter += "</Filter>";
 
         osURL = AddKVToURL(osURL, "FILTER", osFilter);
         osURL = EscapeURL(osURL);
     }
+        
     if (bRequestHits)
     {
         osURL = AddKVToURL(osURL, "RESULTTYPE", "hits");
@@ -600,7 +613,17 @@ void OGRWFSLayer::SetSpatialFilter( OGRGeometry * poGeom )
 OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
 {
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
-    //bReloadNeeded = TRUE;
+    if (poDS->HasMinOperators())
+    {
+        int bNeedsNullCheck = FALSE;
+        osWFSWhere = TurnSQLFilterToWFSFilter(pszFilter, &bNeedsNullCheck);
+        if (bNeedsNullCheck && !poDS->HasNullCheck())
+            osWFSWhere = "";
+    }
+    if (osWFSWhere.size() != 0)
+        bReloadNeeded = TRUE;
+    else
+        bReloadNeeded = FALSE;
     nFeatures = -1;
     return eErr;
 }
@@ -728,7 +751,7 @@ int OGRWFSLayer::GetFeatureCount( int bForce )
     if (TestCapability(OLCFastFeatureCount))
         return poBaseLayer->GetFeatureCount(bForce);
 
-    if (m_poAttrQuery == NULL && poDS->GetFeatureSupportHits() &&
+    if ((m_poAttrQuery == NULL || osWFSWhere.size() != 0) && poDS->GetFeatureSupportHits() &&
         strcmp(FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
     {
         nFeatures = ExecuteGetFeatureResultTypeHits();
