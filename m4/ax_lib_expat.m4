@@ -194,11 +194,11 @@ AC_DEFUN([AX_LIB_EXPAT],
 
                 if test -f "$expat_include_dir/expat.h"; then
 
-                    expat_major=$(sed -n '/^#define.\+XML_MAJOR_VERSION.\+[[:digit:]]\+.*$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+                    expat_major=$(sed -n '/^#define XML_MAJOR_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		    	$expat_include_dir/expat.h)
-                    expat_minor=$(sed -n '/^#define.\+XML_MINOR_VERSION.\+[[:digit:]]\+.*$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+                    expat_minor=$(sed -n '/^#define XML_MINOR_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		    	$expat_include_dir/expat.h)
-                    expat_revision=$(sed -n '/^#define.\+XML_MICRO_VERSION.\+[[:digit:]]\+.*$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+                    expat_revision=$(sed -n '/^#define XML_MICRO_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		    	$expat_include_dir/expat.h)
 
                     EXPAT_VERSION="$expat_major.$expat_minor.$expat_revision"
