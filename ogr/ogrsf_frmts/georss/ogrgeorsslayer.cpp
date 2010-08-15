@@ -442,6 +442,9 @@ void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     else if (strcmp(pszName, "gml:Point") == 0 ||
              strcmp(pszName, "gml:LineString") == 0 ||
              strcmp(pszName, "gml:Polygon") == 0 ||
+             strcmp(pszName, "gml:MultiPoint") == 0 ||
+             strcmp(pszName, "gml:MultiLineString") == 0 ||
+             strcmp(pszName, "gml:MultiPolygon") == 0 ||
              strcmp(pszName, "gml:Envelope") == 0)
     {
         CPLFree(pszSubElementValue);
@@ -711,55 +714,7 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
 
                 if (bSwapCoordinates)
                 {
-                    switch ( wkbFlatten(poGeom->getGeometryType()) )
-                    {
-                        case wkbPoint:
-                        {
-                            OGRPoint* poPoint = (OGRPoint*) poGeom;
-                            double x = poPoint->getX();
-                            double y = poPoint->getY();
-                            poPoint->setX(y);
-                            poPoint->setY(x);
-                            break;
-                        }
-
-                        case wkbLineString:
-                        {
-                            OGRLineString* poLineString = (OGRLineString*) poGeom;
-                            int n = poLineString->getNumPoints();
-                            for(int i=0;i<n;i++)
-                            {
-                                double x = poLineString->getX(i);
-                                double y = poLineString->getY(i);
-                                if (poLineString->getCoordinateDimension() == 2)
-                                    poLineString->setPoint(i, y, x);
-                                else
-                                    poLineString->setPoint(i, y, x, poLineString->getZ(i));
-                            }
-                            break;
-                        }
-
-                        case wkbPolygon:
-                        {
-                            OGRPolygon* poPolygon = (OGRPolygon*) poGeom;
-                            OGRLineString* poLineString = poPolygon->getExteriorRing();
-                            int n = poLineString->getNumPoints();
-                            for(int i=0;i<n;i++)
-                            {
-                                double x = poLineString->getX(i);
-                                double y = poLineString->getY(i);
-                                if (poLineString->getCoordinateDimension() == 2)
-                                    poLineString->setPoint(i, y, x);
-                                else
-                                    poLineString->setPoint(i, y, x, poLineString->getZ(i));
-
-                            }
-                            break;
-                        }
-
-                        default:
-                            break;
-                    }
+                    poGeom->swapXY();
                 }
             }
             bInGMLGeometry = FALSE;
@@ -2094,6 +2049,9 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
     else if (strcmp(pszName, "gml:Point") == 0 ||
              strcmp(pszName, "gml:LineString") == 0 ||
              strcmp(pszName, "gml:Polygon") == 0 ||
+             strcmp(pszName, "gml:MultiPoint") == 0 ||
+             strcmp(pszName, "gml:MultiLineString") == 0 ||
+             strcmp(pszName, "gml:MultiPolygon") == 0 ||
              strcmp(pszName, "gml:Envelope") == 0)
     {
         if (bSameSRS)
@@ -2138,11 +2096,19 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
         {
             eFoundGeomType = wkbPoint;
         }
+        else if (strcmp(pszName, "gml:MultiPoint") == 0)
+        {
+            eFoundGeomType = wkbMultiPoint;
+        }
         else if (strcmp(pszName, "georss:line") == 0 ||
                 strcmp(pszName, "geo:line") == 0 ||
                 strcmp(pszName, "gml:LineString") == 0)
         {
             eFoundGeomType = wkbLineString;
+        }
+        else if (strcmp(pszName, "gml:MultiLineString") == 0)
+        {
+            eFoundGeomType = wkbMultiLineString;
         }
         else if (strcmp(pszName, "georss:polygon") == 0 ||
                  strcmp(pszName, "gml:Polygon") == 0 ||
@@ -2150,6 +2116,10 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
                  strcmp(pszName, "georss:box") == 0)
         {
             eFoundGeomType = wkbPolygon;
+        }
+        else if (strcmp(pszName, "gml:MultiPolygon") == 0)
+        {
+            eFoundGeomType = wkbMultiPolygon;
         }
 
         if (eFoundGeomType != wkbUnknown)
