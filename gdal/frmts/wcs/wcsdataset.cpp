@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
+#include "cpl_base64.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -1749,6 +1750,7 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
     GByte *pabyData = psResult->pabyData;
     int    nDataLen = psResult->nDataLen;
+    GByte *pabyDataAllocated = NULL;
 
     if( psResult->pszContentType 
         && strstr(psResult->pszContentType,"multipart") 
@@ -1758,6 +1760,14 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
         {
             pabyData = psResult->pasMimePart[1].pabyData;
             nDataLen = psResult->pasMimePart[1].nDataLen;
+
+            if (CSLFindString(psResult->pasMimePart[1].papszHeaders,
+                              "Content-Transfer-Encoding: base64") != -1)
+            {
+                pabyDataAllocated = (GByte*)CPLMalloc(nDataLen);
+                nDataLen = CPLBase64Decode(pabyDataAllocated, (const char*)pabyData, nDataLen);
+                pabyData = pabyDataAllocated;
+            }
         }
     }
 
@@ -1775,6 +1785,7 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
     if( fp == NULL )
     {
         CPLHTTPDestroyResult(psResult);
+        CPLFree(pabyDataAllocated);
         return NULL;
     }
 
@@ -1830,10 +1841,17 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Steal the memory buffer from HTTP result.                       */
 /* -------------------------------------------------------------------- */
-    pabySavedDataBuffer = psResult->pabyData;
+    if (pabyDataAllocated)
+    {
+        pabySavedDataBuffer = pabyDataAllocated;
+    }
+    else
+    {
+        pabySavedDataBuffer = psResult->pabyData;
 
-    psResult->pabyData = NULL;
-    psResult->nDataLen = psResult->nDataAlloc = 0;
+        psResult->pabyData = NULL;
+        psResult->nDataLen = psResult->nDataAlloc = 0;
+    }
 
     if( poDS == NULL )
         FlushMemoryResult();
