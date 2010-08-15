@@ -31,6 +31,7 @@
 import gdal
 import gdaltest
 import os
+import sys
 
 ###############################################################################
 # Return the path in which the Python script is found
@@ -86,11 +87,7 @@ def run_py_script_as_external_script(script_path, script_name, concatenated_argv
 
     #print(script_file_path + ' ' + concatenated_argv)
 
-    py_interpreter = gdal.GetConfigOption('PYTHON_INTERPRETER', None)
-    if py_interpreter is None:
-        return gdaltest.runexternal(script_file_path + ' ' + concatenated_argv)
-    else:
-        return gdaltest.runexternal(py_interpreter + ' ' + script_file_path + ' ' + concatenated_argv)
+    return gdaltest.runexternal(sys.executable + ' ' + script_file_path + ' ' + concatenated_argv)
 
 ###############################################################################
 # Runs a Python script as a py module

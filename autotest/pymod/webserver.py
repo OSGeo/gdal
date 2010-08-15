@@ -38,6 +38,7 @@ from threading import Thread
 import time
 import sys
 import gdaltest
+from sys import version_info
 
 class GDAL_Handler(BaseHTTPRequestHandler):
 
@@ -53,8 +54,8 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
-                #print('stop requested')
-                self.server.stopped = True
+                #sys.stderr.write('stop requested\n')
+                self.server.stop_requested = True
                 return
 
             if self.path == '/index.html':
@@ -104,75 +105,84 @@ class GDAL_HttpServer(HTTPServer):
 
     def __init__ (self, server_address, handlerClass):
         HTTPServer.__init__(self, server_address, handlerClass)
-        self.stopped = False
+        self.running = False
+        self.stop_requested = False
 
     def is_running(self):
-        return not self.stopped
+        return self.running
 
-    def stop_server(self, stop_url):
-        self.stopped = True
-        handle = gdaltest.gdalurlopen(stop_url)
+    def stop_server(self):
+        if self.running:
+            if version_info >= (2,6,0):
+                self.shutdown()
+            else:
+                handle = gdaltest.gdalurlopen("http://127.0.0.1:%d/shutdown" % self.port)
+        self.running = False
 
     def serve_until_stop_server(self):
-        while not self.stopped:
-            self.handle_request()
-
-        self.stopped = True
+        self.running = True
+        if version_info >= (2,6,0):
+            self.serve_forever(0.25)
+        else:
+            while self.running and not self.stop_requested:
+                self.handle_request()
+        self.running = False
+        self.stop_requested = False
 
 class GDAL_ThreadedHttpServer(Thread):
 
     def __init__ (self, handlerClass = None):
         Thread.__init__(self)
         ok = False
+        self.server = 0
         if handlerClass is None:
             handlerClass = GDAL_Handler
-        for i in range(8080,8100):
+        for port in range(8080,8100):
             try:
-                self.port = i
-                self.server = GDAL_HttpServer(('', self.port), handlerClass)
+                self.server = GDAL_HttpServer(('', port), handlerClass)
+                self.server.port = port
                 ok = True
                 break
             except:
                 pass
         if not ok:
             raise Exception('could not start server')
-        self.running = False
 
     def getPort(self):
-        return self.port
+        return self.server.port
 
     def run(self):
         try:
-            print('started httpserver...')
-            self.running = True
             self.server.serve_until_stop_server()
         except KeyboardInterrupt:
             print('^C received, shutting down server')
             self.server.socket.close()
-        self.running = False
 
-    def wait_ready(self):
-        while not self.running:
+    def start_and_wait_ready(self):
+        if self.server.running:
+            raise Exception('server already started')
+        self.start()
+        while not self.server.running:
             time.sleep(1)
 
     def stop(self):
-        if self.running:
-            self.server.stop_server("http://127.0.0.1:%d/shutdown" % self.port)
+        self.server.stop_server()
 
     def run_server(self, timeout):
+        if not self.server.running:
+            raise Exception('server not started')
         count = 0
-        while (timeout <= 0 or count < timeout) and self.server.is_running():
+        while (timeout <= 0 or count < timeout) and self.server.running and not self.server.stop_requested:
             #print(count)
             #print(self.server.is_running())
-            time.sleep(1)
-            count = count + 1
+            time.sleep(0.5)
+            count = count + 0.5
+        self.stop()
 
 def launch():
-    (process, process_stdout) = gdaltest.spawn_async('python ../pymod/webserver.py')
+    (process, process_stdout) = gdaltest.spawn_async(sys.executable + ' ../pymod/webserver.py')
     if process is None:
-        (process, process_stdout) = gdaltest.spawn_async('python3 ../pymod/webserver.py')
-        if process is None:
-            return (None, 0)
+        return (None, 0)
 
     line = process_stdout.readline()
     line = line.decode('ascii')
@@ -193,17 +203,15 @@ def server_stop(process, port):
 def main():
     try:
         server = GDAL_ThreadedHttpServer(GDAL_Handler)
+        server.start_and_wait_ready()
         print('port=%d' % server.getPort())
-        server.start()
-        server.wait_ready()
-        print('\n')
         sys.stdout.flush()
     except:
-        print('port=0\n')
+        print('port=0')
         sys.stdout.flush()
         sys.exit(0)
 
-    server.run_server(60)
+    server.run_server(10)
 
 if __name__ == '__main__':
     main()
