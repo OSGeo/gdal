@@ -204,6 +204,7 @@ static int ExprDumpGmlObjectIdFilter(CPLString& osFilter,
 static int ExprDumpFilter(CPLString& osFilter,
                           const Expr* expr,
                           int bExpectBinary,
+                          int bPropertyIsNotEqualToSupported,
                           int* pbNeedsNullCheck)
 {
     switch(expr->eType)
@@ -233,16 +234,16 @@ static int ExprDumpFilter(CPLString& osFilter,
 
         case TOKEN_NOT:
             osFilter += "<Not>";
-            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
                 return FALSE;
             osFilter += "</Not>";
             break;
 
         case TOKEN_LIKE:
             osFilter += "<PropertyIsLike wildcard='%' singleChar='_' escape='!'>";
-            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
                 return FALSE;
-            if (!ExprDumpFilter(osFilter, expr->expr2, FALSE, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr2, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
                 return FALSE;
             osFilter += "</PropertyIsLike>";
             break;
@@ -258,7 +259,7 @@ static int ExprDumpFilter(CPLString& osFilter,
                 EQUAL(expr->expr2->pszVal, "NULL"))
             {
                 osFilter += "<PropertyIsNull>";
-                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, pbNeedsNullCheck))
+                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
                     return FALSE;
                 osFilter += "</PropertyIsNull>";
                 *pbNeedsNullCheck = TRUE;
@@ -268,15 +269,23 @@ static int ExprDumpFilter(CPLString& osFilter,
                 EQUAL(expr->expr2->pszVal, "NULL"))
             {
                 osFilter += "<Not><PropertyIsNull>";
-                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, pbNeedsNullCheck))
+                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
                     return FALSE;
                 osFilter += "</PropertyIsNull></Not>";
                 *pbNeedsNullCheck = TRUE;
                 break;
             }
+            TokenType eType = expr->eType;
+            int bAddClosingNot = FALSE;
+            if (!bPropertyIsNotEqualToSupported && eType == TOKEN_NOT_EQUAL)
+            {
+                osFilter += "<Not>";
+                eType = TOKEN_EQUAL;
+                bAddClosingNot = TRUE;
+            }
 
             const char* pszName = NULL;
-            switch(expr->eType)
+            switch(eType)
             {
                 case TOKEN_EQUAL:           pszName = "PropertyIsEqualTo"; break;
                 case TOKEN_NOT_EQUAL:       pszName = "PropertyIsNotEqualTo"; break;
@@ -289,13 +298,15 @@ static int ExprDumpFilter(CPLString& osFilter,
             osFilter += "<";
             osFilter += pszName;
             osFilter += ">";
-            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
                 return FALSE;
-            if (!ExprDumpFilter(osFilter, expr->expr2, FALSE, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr2, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
                 return FALSE;
             osFilter += "</";
             osFilter += pszName;
             osFilter += ">";
+            if (bAddClosingNot)
+                osFilter += "</Not>";
             break;
         }
 
@@ -306,9 +317,9 @@ static int ExprDumpFilter(CPLString& osFilter,
             osFilter += "<";
             osFilter += pszName;
             osFilter += ">";
-            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
                 return FALSE;
-            if (!ExprDumpFilter(osFilter, expr->expr2, TRUE, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr2, TRUE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
                 return FALSE;
             osFilter += "</";
             osFilter += pszName;
@@ -646,7 +657,9 @@ static char** Tokenize(const char* pszFilter)
 /*                  TurnSQLFilterToWFSFilter()                          */
 /************************************************************************/
 
-CPLString TurnSQLFilterToWFSFilter( const char * pszFilter, int* pbNeedsNullCheck )
+CPLString TurnSQLFilterToWFSFilter( const char * pszFilter,
+                                    int bPropertyIsNotEqualToSupported,
+                                    int* pbNeedsNullCheck )
 {
     char** papszTokens = Tokenize(pszFilter);
 
@@ -664,7 +677,8 @@ CPLString TurnSQLFilterToWFSFilter( const char * pszFilter, int* pbNeedsNullChec
     if (!ExprDumpGmlObjectIdFilter(osFilter, expr))
     {
         osFilter = "";
-        if (!ExprDumpFilter(osFilter, expr, TRUE, pbNeedsNullCheck))
+        if (!ExprDumpFilter(osFilter, expr, TRUE,
+            bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
             osFilter = "";
     }
 
