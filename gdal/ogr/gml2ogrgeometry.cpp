@@ -830,6 +830,42 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
                 poMP->addGeometryDirectly( poPoint );
             }
+            else if (psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"pointMembers") )
+            {
+                const CPLXMLNode *psChild2;
+                for( psChild2 = psChild->psChild;
+                     psChild2 != NULL;
+                     psChild2 = psChild2->psNext )
+                {
+                    if( psChild2->eType == CXT_Element
+                        && (EQUAL(BareGMLElement(psChild2->pszValue),"Point")) )
+                    {
+                        OGRGeometry* poGeom = GML2OGRGeometry_XMLNode( psChild2 );
+                        if (poGeom == NULL)
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined, "Invalid %s",
+                                    BareGMLElement(psChild2->pszValue));
+                            delete poMP;
+                            return NULL;
+                        }
+
+                        if (wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
+                        {
+                            poMP->addGeometryDirectly( (OGRPoint *)poGeom );
+                        }
+                        else
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                    "Got %.500s geometry as pointMember instead of POINT.",
+                                    poGeom->getGeometryName() );
+                            delete poGeom;
+                            delete poMP;
+                            return NULL;
+                        }
+                    }
+                }
+            }
         }
 
         return poMP;
