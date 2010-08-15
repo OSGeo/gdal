@@ -590,6 +590,30 @@ def gml_MultiCurve_curveMembers():
     return 'success'
 
 ###############################################################################
+# Test GML MultiPoint with pointMembers
+
+def gml_MultiCurve_pointMembers():
+
+    gml = """<gml:MultiPoint>
+          <gml:pointMembers>
+              <gml:Point>
+                <gml:pos>0 0</gml:pos>
+              </gml:Point>
+              <gml:Point>
+                <gml:pos>1 1</gml:pos>
+              </gml:Point>
+            </gml:pointMembers>
+          </gml:MultiPoint>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'MULTIPOINT (0 0,1 1)':
+        gdaltest.post_reason( '<gml:MultiPoint> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+###############################################################################
 # Test GML Solid
 
 def gml_Solid():
@@ -720,6 +744,8 @@ def gml_invalid_geoms():
         ('<gml:MultiPoint><foo/></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
         ('<gml:MultiPoint><gml:pointMember/></gml:MultiPoint>', None),
         ('<gml:MultiPoint><gml:pointMember><gml:LineString><gml:posList>0 1 2 3</gml:posList></gml:LineString></gml:pointMember></gml:MultiPoint>', None),
+        ('<gml:MultiPoint><gml:pointMembers></gml:pointMembers></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
+        ('<gml:MultiPoint><gml:pointMembers><foo/></gml:pointMembers></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
         ('<gml:MultiLineString/>', 'MULTILINESTRING EMPTY'),
         ('<gml:MultiLineString><foo/></gml:MultiLineString>', 'MULTILINESTRING EMPTY'),
         ('<gml:MultiLineString><gml:lineStringMember/></gml:MultiLineString>', None),
@@ -818,6 +844,7 @@ gdaltest_list.append( gml_MultiCurve )
 gdaltest_list.append( gml_MultiSurface )
 gdaltest_list.append( gml_MultiSurface_surfaceMembers )
 gdaltest_list.append( gml_MultiCurve_curveMembers )
+gdaltest_list.append( gml_MultiCurve_pointMembers )
 gdaltest_list.append( gml_Solid )
 gdaltest_list.append( gml_OrientableSurface )
 #gdaltest_list.append( gml_out_precision )
