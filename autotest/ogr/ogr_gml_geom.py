@@ -731,6 +731,8 @@ def gml_invalid_geoms():
         ('<gml:MultiCurve><gml:curveMember><gml:Curve/></gml:curveMember></gml:MultiCurve>', None),
         ('<gml:MultiCurve><gml:curveMember><gml:Curve><foo/></gml:Curve></gml:curveMember></gml:MultiCurve>', None),
         ('<gml:MultiCurve><gml:curveMember><gml:Curve><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:Curve></gml:curveMember></gml:MultiCurve>', None),
+        ('<gml:MultiCurve><gml:curveMembers></gml:curveMembers></gml:MultiCurve>', 'MULTILINESTRING EMPTY'),
+        ('<gml:MultiCurve><gml:curveMembers><foo/></gml:curveMembers></gml:MultiCurve>', 'MULTILINESTRING EMPTY'),
         ('<gml:Curve/>', None),
         ('<gml:Curve><foo/></gml:Curve>', None),
         ('<gml:Curve><gml:segments/></gml:Curve>', 'LINESTRING EMPTY'),
