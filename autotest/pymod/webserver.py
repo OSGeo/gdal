@@ -180,7 +180,11 @@ class GDAL_ThreadedHttpServer(Thread):
         self.stop()
 
 def launch():
-    (process, process_stdout) = gdaltest.spawn_async(sys.executable + ' ../pymod/webserver.py')
+    python_exe = sys.executable
+    if sys.platform == 'win32':
+        python_exe = python_exe.replace('\\', '/')
+
+    (process, process_stdout) = gdaltest.spawn_async(python_exe + ' ../pymod/webserver.py')
     if process is None:
         return (None, 0)
 
