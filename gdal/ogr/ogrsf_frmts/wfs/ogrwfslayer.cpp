@@ -376,6 +376,21 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         return NULL;
     }
 
+    /* Deegree server does not support PropertyIsNotEqualTo */
+    /* We have to turn it into <Not><PropertyIsEqualTo> */
+    if (osWFSWhere.size() != 0 && poDS->PropertyIsNotEqualToSupported() &&
+        strstr((const char*)psResult->pabyData, "Unknown comparison operation: 'PropertyIsNotEqualTo'") != NULL)
+    {
+        poDS->SetPropertyIsNotEqualToUnSupported();
+
+        SetAttributeFilter(osSQLWhere);
+        bHasFetched = TRUE;
+        bReloadNeeded = FALSE;
+        
+        CPLHTTPDestroyResult(psResult);
+        return FetchGetFeature(nMaxFeatures);
+    }
+
     CPLString osTmpFileName;
 
     osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.gfs", this);
@@ -613,13 +628,19 @@ void OGRWFSLayer::SetSpatialFilter( OGRGeometry * poGeom )
 OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
 {
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
-    if (poDS->HasMinOperators())
+    if (poDS->HasMinOperators() && pszFilter != NULL)
     {
         int bNeedsNullCheck = FALSE;
-        osWFSWhere = TurnSQLFilterToWFSFilter(pszFilter, &bNeedsNullCheck);
+        osWFSWhere = TurnSQLFilterToWFSFilter(pszFilter,
+             poDS->PropertyIsNotEqualToSupported(), &bNeedsNullCheck);
         if (bNeedsNullCheck && !poDS->HasNullCheck())
             osWFSWhere = "";
     }
+    else
+        osWFSWhere = "";
+
+    osSQLWhere = (pszFilter) ? pszFilter : "";
+
     if (osWFSWhere.size() != 0)
         bReloadNeeded = TRUE;
     else
