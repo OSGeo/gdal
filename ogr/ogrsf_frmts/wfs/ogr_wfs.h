@@ -34,7 +34,9 @@
 
 CPLString FetchValueFromURL(const char* pszURL, const char* pszKey);
 CPLString AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue);
-CPLString TurnSQLFilterToWFSFilter( const char * pszFilter, int* pbNeedsNullCheck );
+CPLString TurnSQLFilterToWFSFilter( const char * pszFilter,
+                                    int bPropertyIsNotEqualToSupported,
+                                    int* pbNeedsNullCheck );
 
 /************************************************************************/
 /*                             OGRWFSLayer                              */
@@ -76,6 +78,7 @@ class OGRWFSLayer : public OGRLayer
 
     OGRGeometry        *poFetchedFilterGeom;
 
+    CPLString           osSQLWhere;
     CPLString           osWFSWhere;
 
   public:
@@ -128,6 +131,7 @@ class OGRWFSDataSource : public OGRDataSource
     int                 bNeedNAMESPACE;
     int                 bHasMinOperators;
     int                 bHasNullCheck;
+    int                 bPropertyIsNotEqualToSupported;
 
   public:
                         OGRWFSDataSource();
@@ -151,6 +155,9 @@ class OGRWFSDataSource : public OGRDataSource
     int                         GetNeedNAMESPACE() { return bNeedNAMESPACE; }
     int                         HasMinOperators() { return bHasMinOperators; }
     int                         HasNullCheck() { return bHasNullCheck; }
+
+    void                        SetPropertyIsNotEqualToUnSupported() { bPropertyIsNotEqualToSupported = FALSE; }
+    int                         PropertyIsNotEqualToSupported() { return bPropertyIsNotEqualToSupported; }
 };
 
 /************************************************************************/
