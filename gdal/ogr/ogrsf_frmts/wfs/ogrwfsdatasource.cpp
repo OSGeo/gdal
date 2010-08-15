@@ -50,6 +50,8 @@ OGRWFSDataSource::OGRWFSDataSource()
 
     bGetFeatureSupportHits = FALSE;
     bNeedNAMESPACE = FALSE;
+    bHasMinOperators = FALSE;
+    bHasNullCheck = FALSE;
 }
 
 /************************************************************************/
@@ -292,6 +294,26 @@ CPLString AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValu
 }
 
 /************************************************************************/
+/*                      FindComparisonOperator()                        */
+/************************************************************************/
+
+static int FindComparisonOperator(CPLXMLNode* psNode, const char* pszVal)
+{
+    CPLXMLNode* psChild = psNode->psChild;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "ComparisonOperator") == 0)
+        {
+            if (strcmp(CPLGetXMLValue(psChild, NULL, ""), pszVal) == 0)
+                return TRUE;
+        }
+        psChild = psChild->psNext;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -366,6 +388,26 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         osVersion = CPLGetXMLValue(psRoot, "version", "1.0.0");
 
         bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psRoot);
+
+        CPLXMLNode* psFilterCap = CPLGetXMLNode(psRoot, "Filter_Capabilities.Scalar_Capabilities");
+        if (psFilterCap)
+        {
+            bHasMinOperators = CPLGetXMLNode(psFilterCap, "LogicalOperators") != NULL;
+            psFilterCap = CPLGetXMLNode(psFilterCap, "ComparisonOperators");
+            if (psFilterCap)
+            {
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThan");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThan");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThanEqualTo");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThanEqualTo");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "EqualTo");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "NotEqualTo");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "Like");
+                bHasNullCheck = FindComparisonOperator(psFilterCap, "NullCheck");
+            }
+            else
+                bHasMinOperators = FALSE;
+        }
         
         CPLXMLNode* psChild = CPLGetXMLNode(psRoot, "FeatureTypeList");
         if (psChild == NULL)

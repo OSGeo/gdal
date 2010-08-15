@@ -2,7 +2,7 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogrwfsdriver.o ogrwfsdatasource.o ogrwfslayer.o
+OBJ	=	ogrwfsdriver.o ogrwfsdatasource.o ogrwfslayer.o ogrwfsfilter.o
 
 CPPFLAGS	:=	-I.. -I../.. -I../gml $(GDAL_INCLUDE) $(CPPFLAGS)
 
