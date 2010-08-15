@@ -764,13 +764,20 @@ def ogr_gml_20():
     except:
         return 'skip'
 
-    if ldefn.GetFieldDefn(0).GetFieldTypeName(ldefn.GetFieldDefn(0).GetType())\
-       != 'Integer':
-        gdaltest.post_reason('did not get expected column type for col 0')
+    idx = ldefn.GetFieldIndex("gml_id")
+    if idx == -1:
+        gdaltest.post_reason('did not get expected column "gml_id"')
         return 'fail'
-    if ldefn.GetFieldDefn(1).GetFieldTypeName(ldefn.GetFieldDefn(1).GetType())\
-       != 'String':
-        gdaltest.post_reason('did not get expected column type for col 1')
+
+    idx = ldefn.GetFieldIndex("cat")
+    fddefn = ldefn.GetFieldDefn(idx)
+    if fddefn.GetFieldTypeName(fddefn.GetType()) != 'Integer':
+        gdaltest.post_reason('did not get expected column type for col "cat"')
+        return 'fail'
+    idx = ldefn.GetFieldIndex("str1")
+    fddefn = ldefn.GetFieldDefn(idx)
+    if fddefn.GetFieldTypeName(fddefn.GetType()) != 'String':
+        gdaltest.post_reason('did not get expected column type for col "str1"')
         return 'fail'
 
     if lyr.GetGeometryColumn() != 'the_geom':
