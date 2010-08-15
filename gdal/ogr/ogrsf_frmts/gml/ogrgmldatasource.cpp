@@ -50,6 +50,8 @@ OGRGMLDataSource::OGRGMLDataSource()
 
     papszCreateOptions = NULL;
     bOutIsTempFile = FALSE;
+
+    bExposeGMLId = FALSE;
 }
 
 /************************************************************************/
@@ -177,6 +179,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         const char* pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
         if (pszFeatureCollection)
         {
+            bExposeGMLId = TRUE;
             const char* pszNumberOfFeatures = strstr(szPtr, "numberOfFeatures=");
             if (pszNumberOfFeatures)
             {
@@ -425,6 +428,12 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */
 /* -------------------------------------------------------------------- */
+    if (bExposeGMLId)
+    {
+        OGRFieldDefn oField( "gml_id", OFTString );
+        poLayer->GetLayerDefn()->AddFieldDefn( &oField );
+    }
+
     for( int iField = 0; iField < poClass->GetPropertyCount(); iField++ )
     {
         GMLPropertyDefn *poProperty = poClass->GetProperty( iField );
