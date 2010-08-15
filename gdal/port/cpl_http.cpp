@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  WCS Client Driver
- * Purpose:  Implementation of Dataset and RasterBand classes for WCS.
+ * Project:  libcurl based HTTP client
+ * Purpose:  libcurl based HTTP client
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -353,6 +353,14 @@ void CPLHTTPDestroyResult( CPLHTTPResult *psResult )
         CPLFree( psResult->pszErrBuf );
         CPLFree( psResult->pszContentType );
         CSLDestroy( psResult->papszHeaders );
+
+        int i;
+        for(i=0;i<psResult->nMimePartCount;i++)
+        {
+            CSLDestroy( psResult->pasMimePart[i].papszHeaders );
+        }
+        CPLFree(psResult->pasMimePart);
+        
         CPLFree( psResult );
     }
 }
@@ -403,6 +411,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to parse multi-part mime, boundary not parsable." );
+        CSLDestroy( papszTokens );
         return FALSE;
     }
     
@@ -424,7 +433,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
     }
 
     pszNext += strlen(osBoundary);
-    while( *pszNext != '\n' && *pszNext != '\0' )
+    while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
+        pszNext++;
+    if( *pszNext == '\r' )
         pszNext++;
     if( *pszNext == '\n' )
         pszNext++;
@@ -446,7 +457,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Collect headers.                                                */
 /* -------------------------------------------------------------------- */
-        while( *pszNext != '\n' && *pszNext != '\0' )
+        while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
         {
             char *pszEOL = strstr(pszNext,"\n");
 
@@ -457,13 +468,23 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
             }
 
             *pszEOL = '\0';
+            int bRestoreAntislashR = FALSE;
+            if (pszEOL - pszNext > 1 && pszEOL[-1] == '\r')
+            {
+                bRestoreAntislashR = TRUE;
+                pszEOL[-1] = '\0';
+            }
             psPart->papszHeaders = 
                 CSLAddString( psPart->papszHeaders, pszNext );
+            if (bRestoreAntislashR)
+                pszEOL[-1] = '\r';
             *pszEOL = '\n';
             
             pszNext = pszEOL + 1;
         }
 
+        if( *pszNext == '\r' )
+            pszNext++;
         if( *pszNext == '\n' )
             pszNext++;
             
@@ -496,7 +517,10 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         {
             break;
         }
-        else if( *pszNext == '\n' )
+
+        if( *pszNext == '\r' )
+            pszNext++;
+        if( *pszNext == '\n' )
             pszNext++;
         else
         {
