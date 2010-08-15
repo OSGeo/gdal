@@ -215,11 +215,11 @@ kmldom::KmlFactory* factory = kmldom::KmlFactory::GetFactory();
 
                 if test -f "$libkml_include_dir2/base/version.h"; then
 
-                    libkml_major=$(sed -n '/^#define.\+LIBKML_MAJOR_VERSION.\+[[:digit:]]\+$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+                    libkml_major=$(sed -n '/^#define LIBKML_MAJOR_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		    	$libkml_include_dir2/base/version.h)
-                    libkml_minor=$(sed -n '/^#define.\+LIBKML_MINOR_VERSION.\+[[:digit:]]\+$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+                    libkml_minor=$(sed -n '/^#define LIBKML_MINOR_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		    	$libkml_include_dir2/base/version.h)
-                    libkml_revision=$(sed -n '/^#define.\+LIBKML_MICRO_VERSION.\+[[:digit:]]\+$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+                    libkml_revision=$(sed -n '/^#define LIBKML_MICRO_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		    	$libkml_include_dir2/base/version.h)
 
                     LIBKML_VERSION="$libkml_major.$libkml_minor.$libkml_revision"
