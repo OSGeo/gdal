@@ -341,7 +341,8 @@ void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     if (bStopParsing) return;
 
     if ((eFormat == GEORSS_ATOM && currentDepth == 1 && strcmp(pszName, "entry") == 0) ||
-        (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0))
+        (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0) ||
+        (eFormat == GEORSS_RSS_RDF && currentDepth == 1 && strcmp(pszName, "item") == 0))
     {
         featureDepth = currentDepth;
 
@@ -619,7 +620,8 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
     currentDepth--;
 
     if ((eFormat == GEORSS_ATOM && currentDepth == 1 && strcmp(pszName, "entry") == 0) ||
-        (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0))
+        (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0) ||
+        (eFormat == GEORSS_RSS_RDF && currentDepth == 1 && strcmp(pszName, "item") == 0))
     {
         bInFeature = FALSE;
         bInTagWithSubTag = FALSE;
@@ -1888,7 +1890,8 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
     nWithoutEventCounter = 0;
 
     if ((eFormat == GEORSS_ATOM && currentDepth == 1 && strcmp(pszName, "entry") == 0) ||
-        (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0))
+        (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0) ||
+        (eFormat == GEORSS_RSS_RDF && currentDepth == 1 && strcmp(pszName, "item") == 0))
     {
         bInFeature = TRUE;
         featureDepth = currentDepth;
@@ -1955,12 +1958,12 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
         {
             currentFieldDefn = poFeatureDefn->GetFieldDefn(iField);
         }
-        else if ( ! (eFormat == GEORSS_RSS && strcmp(pszName, "enclosure") == 0) &&
+        else if ( ! ((eFormat == GEORSS_RSS || eFormat == GEORSS_RSS_RDF) && strcmp(pszName, "enclosure") == 0) &&
                   ! (eFormat == GEORSS_ATOM && strcmp(pszName, "link") == 0) &&
                   ! (eFormat == GEORSS_ATOM && strcmp(pszName, "category") == 0))
         {
             OGRFieldType eFieldType;
-            if ((eFormat == GEORSS_RSS && strcmp(pszName, "pubDate") == 0) ||
+            if (((eFormat == GEORSS_RSS || eFormat == GEORSS_RSS_RDF) && strcmp(pszName, "pubDate") == 0) ||
                 (eFormat == GEORSS_ATOM && strcmp(pszName, "updated") == 0) ||
                 (eFormat == GEORSS_ATOM && strcmp(pszName, "published") == 0) ||
                 strcmp(pszName, "dc:date") == 0)
@@ -2156,7 +2159,8 @@ void OGRGeoRSSLayer::endElementLoadSchemaCbk(const char *pszName)
         return;
 
     if ((eFormat == GEORSS_ATOM && currentDepth == 1 && strcmp(pszName, "entry") == 0) ||
-        (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0))
+        (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0)  ||
+        (eFormat == GEORSS_RSS_RDF && currentDepth == 1 && strcmp(pszName, "item") == 0))
     {
         bInFeature = FALSE;
     }

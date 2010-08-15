@@ -44,6 +44,7 @@ typedef enum
 {
     GEORSS_ATOM,
     GEORSS_RSS,
+    GEORSS_RSS_RDF,
 } OGRGeoRSSFormat;
 
 typedef enum
