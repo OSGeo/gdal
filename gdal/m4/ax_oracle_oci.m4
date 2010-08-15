@@ -260,9 +260,9 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
         if test -f "$oracle_include_dir3/oci.h"; then
             ACTIVE_INCLUDE_DIR="$oracle_include_dir3"
         fi        
-        oracle_version_major=$(sed -n '/^#define.\+OCI_MAJOR_VERSION.\+[[:digit:]]\+.*$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\).\+$/\1/; P}' \
+        oracle_version_major=$(sed -n '/^#define OCI_MAJOR_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		$ACTIVE_INCLUDE_DIR/oci.h)
-        oracle_version_minor=$(sed -n '/^#define.\+OCI_MINOR_VERSION.\+[[:digit:]]\+.*$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\).\+$/\1/; P}' \
+        oracle_version_minor=$(sed -n '/^#define OCI_MINOR_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		$ACTIVE_INCLUDE_DIR/oci.h)
 
         AC_MSG_CHECKING([if Oracle OCI version is >= $oracle_version_req ])

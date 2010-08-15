@@ -215,11 +215,11 @@ XMLPlatformUtils::Initialize();
 
                 if test -f "$xerces_include_dir2/util/XercesVersion.hpp"; then
 
-                    xerces_major=$(sed -n '/^#define.\+XERCES_VERSION_MAJOR.\+[[:digit:]]\+$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+                    xerces_major=$(sed -n '/^#define XERCES_VERSION_MAJOR.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		    	$xerces_include_dir2/util/XercesVersion.hpp)
-                    xerces_minor=$(sed -n '/^#define.\+XERCES_VERSION_MINOR.\+[[:digit:]]\+$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+                    xerces_minor=$(sed -n '/^#define XERCES_VERSION_MINOR.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		    	$xerces_include_dir2/util/XercesVersion.hpp)
-                    xerces_revision=$(sed -n '/^#define.\+XERCES_VERSION_REVISION.\+[[:digit:]]\+$/ {s/^[^[:digit:]]\+\([[:digit:]]\+\)$/\1/; P}' \
+                    xerces_revision=$(sed -n '/^#define XERCES_VERSION_REVISION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		    	$xerces_include_dir2/util/XercesVersion.hpp)
 
                     XERCES_VERSION="$xerces_major.$xerces_minor.$xerces_revision"
