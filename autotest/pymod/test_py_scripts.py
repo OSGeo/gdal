@@ -87,7 +87,12 @@ def run_py_script_as_external_script(script_path, script_name, concatenated_argv
 
     #print(script_file_path + ' ' + concatenated_argv)
 
-    return gdaltest.runexternal(sys.executable + ' ' + script_file_path + ' ' + concatenated_argv)
+    python_exe = sys.executable
+    if sys.platform == 'win32':
+        python_exe = python_exe.replace('\\', '/')
+        script_file_path = script_file_path.replace('\\', '/')
+
+    return gdaltest.runexternal(python_exe + ' ' + script_file_path + ' ' + concatenated_argv)
 
 ###############################################################################
 # Runs a Python script as a py module
