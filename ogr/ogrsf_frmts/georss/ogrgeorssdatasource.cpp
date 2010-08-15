@@ -163,6 +163,19 @@ void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszName, const cha
             validity = GEORSS_VALIDITY_VALID;
             eFormat = GEORSS_ATOM;
         }
+        else if (strcmp(pszName, "rdf:RDF") == 0)
+        {
+            const char** ppszIter = ppszAttr;
+            while(*ppszIter)
+            {
+                if (strcmp(*ppszIter, "xmlns:georss") == 0)
+                {
+                    validity = GEORSS_VALIDITY_VALID;
+                    eFormat = GEORSS_RSS_RDF;
+                }
+                ppszIter += 2;
+            }
+        }
         else
         {
             validity = GEORSS_VALIDITY_INVALID;
