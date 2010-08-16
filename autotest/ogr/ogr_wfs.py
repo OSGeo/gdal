@@ -205,6 +205,16 @@ def ogr_wfs_3():
         feat.DumpReadable()
         return 'fail'
 
+    # Test attribute filter
+    ds = ogr.Open("WFS:http://sigma.openplans.org/geoserver/ows?TYPENAME=za:za_points")
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter("type is not null and name >= 'W'")
+    feat_count = lyr.GetFeatureCount()
+    if feat_count != 1:
+        gdaltest.post_reason('did not get expected feature count after SetAttributeFilter')
+        print(feat_count)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -303,6 +313,16 @@ def ogr_wfs_5():
                                       max_error = 0.000000001 ) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
+        return 'fail'
+
+    # Test attribute filter
+    ds = ogr.Open("WFS:http://demo.deegree.org/deegree-wfs/services")
+    lyr = ds.GetLayerByName('app:Springs')
+    lyr.SetAttributeFilter('objectid = 9 or objectid = 100 or (objectid >= 20 and objectid <= 30 and objectid != 27)')
+    feat_count = lyr.GetFeatureCount()
+    if feat_count != 12:
+        gdaltest.post_reason('did not get expected feature count after SetAttributeFilter')
+        print(feat_count)
         return 'fail'
 
     return 'success'
