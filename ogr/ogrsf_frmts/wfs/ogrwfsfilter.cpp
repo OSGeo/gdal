@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  WFS Translator
- * Purpose:  Implements OGRWFSLayer class.
+ * Purpose:  Implements OGR SQL into OGC Filter translation.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -54,12 +54,16 @@ typedef struct _Expr Expr;
 struct _Expr
 {
     TokenType eType;
-    char*  pszVal;
-    Expr* expr1;
-    Expr* expr2;
+    char*     pszVal;
+    Expr*     expr1;
+    Expr*     expr2;
 };
 
-static int ExprGetPriority(const Expr* expr)
+/************************************************************************/
+/*                      WFS_ExprGetPriority()                           */
+/************************************************************************/
+
+static int WFS_ExprGetPriority(const Expr* expr)
 {
     if (expr->eType == TOKEN_NOT)
         return 9;
@@ -80,29 +84,41 @@ static int ExprGetPriority(const Expr* expr)
         return 0;
 }
 
-static void ExprFree(Expr* expr)
+/************************************************************************/
+/*                          WFS_ExprFree()                              */
+/************************************************************************/
+
+static void WFS_ExprFree(Expr* expr)
 {
     if (expr == NULL) return;
     if (expr->expr1)
-        ExprFree(expr->expr1);
+        WFS_ExprFree(expr->expr1);
     if (expr->expr2)
-        ExprFree(expr->expr2);
+        WFS_ExprFree(expr->expr2);
     CPLFree(expr->pszVal);
     CPLFree(expr);
 }
 
-static void ExprFreeList(CPLList* psExprList)
+/************************************************************************/
+/*                        WFS_ExprFreeList()                            */
+/************************************************************************/
+
+static void WFS_ExprFreeList(CPLList* psExprList)
 {
     CPLList* psIterList = psExprList;
     while(psIterList)
     {
-        ExprFree((Expr*)psIterList->pData);
+        WFS_ExprFree((Expr*)psIterList->pData);
         psIterList = psIterList->psNext;
     }
     CPLListDestroy(psExprList);
 }
 
-static Expr* ExprBuildVarName(const char* pszVal)
+/************************************************************************/
+/*                    WFS_ExprBuildVarName()                            */
+/************************************************************************/
+
+static Expr* WFS_ExprBuildVarName(const char* pszVal)
 {
     Expr* expr = (Expr*)CPLCalloc(1, sizeof(Expr));
     expr->eType = TOKEN_VAR_NAME;
@@ -110,7 +126,11 @@ static Expr* ExprBuildVarName(const char* pszVal)
     return expr;
 }
 
-static Expr* ExprBuildValue(const char* pszVal)
+/************************************************************************/
+/*                      WFS_ExprBuildValue()                            */
+/************************************************************************/
+
+static Expr* WFS_ExprBuildValue(const char* pszVal)
 {
     Expr* expr = (Expr*)CPLCalloc(1, sizeof(Expr));
     expr->eType = TOKEN_LITERAL;
@@ -118,14 +138,22 @@ static Expr* ExprBuildValue(const char* pszVal)
     return expr;
 }
 
-static Expr* ExprBuildOperator(TokenType eType)
+/************************************************************************/
+/*                    WFS_ExprBuildOperator()                           */
+/************************************************************************/
+
+static Expr* WFS_ExprBuildOperator(TokenType eType)
 {
     Expr* expr = (Expr*)CPLCalloc(1, sizeof(Expr));
     expr->eType = eType;
     return expr;
 }
 
-static Expr* ExprBuildBinary(TokenType eType, Expr* expr1, Expr* expr2)
+/************************************************************************/
+/*                     WFS_ExprBuildBinary()                            */
+/************************************************************************/
+
+static Expr* WFS_ExprBuildBinary(TokenType eType, Expr* expr1, Expr* expr2)
 {
     Expr* expr = (Expr*)CPLCalloc(1, sizeof(Expr));
     expr->eType = eType;
@@ -135,7 +163,12 @@ static Expr* ExprBuildBinary(TokenType eType, Expr* expr1, Expr* expr2)
 }
 
 #ifdef notdef
-static void ExprDump(FILE* fp, const Expr* expr)
+
+/************************************************************************/
+/*                          WFS_ExprDump()                              */
+/************************************************************************/
+
+static void WFS_ExprDump(FILE* fp, const Expr* expr)
 {
     switch(expr->eType)
     {
@@ -146,13 +179,13 @@ static void ExprDump(FILE* fp, const Expr* expr)
 
         case TOKEN_NOT:
             fprintf(fp, "NOT (");
-            ExprDump(fp, expr->expr1);
+            WFS_ExprDump(fp, expr->expr1);
             fprintf(fp, ")");
             break;
 
         default:
             fprintf(fp, "(");
-            ExprDump(fp, expr->expr1);
+            WFS_ExprDump(fp, expr->expr1);
             switch(expr->eType)
             {
                 case TOKEN_EQUAL:           fprintf(fp, " = "); break;
@@ -166,14 +199,18 @@ static void ExprDump(FILE* fp, const Expr* expr)
                 case TOKEN_OR:              fprintf(fp, " OR "); break;
                 default: break;
             }
-            ExprDump(fp, expr->expr2);
+            WFS_ExprDump(fp, expr->expr2);
             fprintf(fp, ")");
             break;
     }
 }
 #endif
 
-static int ExprDumpGmlObjectIdFilter(CPLString& osFilter,
+/************************************************************************/
+/*                WFS_ExprDumpGmlObjectIdFilter()                       */
+/************************************************************************/
+
+static int WFS_ExprDumpGmlObjectIdFilter(CPLString& osFilter,
                                      const Expr* expr)
 {
     if (expr->eType == TOKEN_EQUAL &&
@@ -195,11 +232,15 @@ static int ExprDumpGmlObjectIdFilter(CPLString& osFilter,
     }
     else if (expr->eType == TOKEN_OR)
     {
-        return ExprDumpGmlObjectIdFilter(osFilter, expr->expr1) &&
-               ExprDumpGmlObjectIdFilter(osFilter, expr->expr2);
+        return WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr1) &&
+               WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr2);
     }
     return FALSE;
 }
+
+/************************************************************************/
+/*                     WFS_ExprDumpAsOGCFilter()                        */
+/************************************************************************/
 
 typedef struct
 {
@@ -208,7 +249,7 @@ typedef struct
     int bOutNeedsNullCheck;
 } ExprDumpFilterOptions;
 
-static int ExprDumpFilter(CPLString& osFilter,
+static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                           const Expr* expr,
                           int bExpectBinary,
                           ExprDumpFilterOptions* psOptions)
@@ -216,8 +257,18 @@ static int ExprDumpFilter(CPLString& osFilter,
     switch(expr->eType)
     {
         case TOKEN_VAR_NAME:
-            if (bExpectBinary || EQUAL(expr->pszVal, "gml_id"))
+            if (bExpectBinary)
                 return FALSE;
+
+            /* Special fields not understood by server */
+            if (EQUAL(expr->pszVal, "gml_id") ||
+                EQUAL(expr->pszVal, "FID") ||
+                EQUAL(expr->pszVal, "OGR_GEOMETRY") ||
+                EQUAL(expr->pszVal, "OGR_GEOM_WKT") ||
+                EQUAL(expr->pszVal, "OGR_GEOM_AREA") ||
+                EQUAL(expr->pszVal, "OGR_STYLE"))
+                return FALSE;
+
             osFilter += "<PropertyName>";
             osFilter += expr->pszVal;
             osFilter += "</PropertyName>";
@@ -240,7 +291,7 @@ static int ExprDumpFilter(CPLString& osFilter,
 
         case TOKEN_NOT:
             osFilter += "<Not>";
-            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, psOptions))
+            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, TRUE, psOptions))
                 return FALSE;
             osFilter += "</Not>";
             break;
@@ -255,11 +306,14 @@ static int ExprDumpFilter(CPLString& osFilter,
                 osFilter += "<PropertyIsLike wildCard='*' singleChar='_' escape='!'>";
             else
                 osFilter += "<PropertyIsLike wildCard='*' singleChar='_' escapeChar='!'>";
-            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, psOptions))
+            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, FALSE, psOptions))
                 return FALSE;
             if (expr->expr2->eType != TOKEN_LITERAL)
                 return FALSE;
             osFilter += "<Literal>";
+
+            /* Escape value according to above special characters */
+            /* For URL compatibility reason, we remap the OGR SQL '%' wildchard into '*' */
             i = 0;
             ch = expr->expr2->pszVal[i];
             if (ch == '\'' || ch == '"')
@@ -302,7 +356,7 @@ static int ExprDumpFilter(CPLString& osFilter,
                 EQUAL(expr->expr2->pszVal, "NULL"))
             {
                 osFilter += "<PropertyIsNull>";
-                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, psOptions))
+                if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, FALSE, psOptions))
                     return FALSE;
                 osFilter += "</PropertyIsNull>";
                 psOptions->bOutNeedsNullCheck = TRUE;
@@ -312,7 +366,7 @@ static int ExprDumpFilter(CPLString& osFilter,
                 EQUAL(expr->expr2->pszVal, "NULL"))
             {
                 osFilter += "<Not><PropertyIsNull>";
-                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, psOptions))
+                if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, FALSE, psOptions))
                     return FALSE;
                 osFilter += "</PropertyIsNull></Not>";
                 psOptions->bOutNeedsNullCheck = TRUE;
@@ -341,9 +395,9 @@ static int ExprDumpFilter(CPLString& osFilter,
             osFilter += "<";
             osFilter += pszName;
             osFilter += ">";
-            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, psOptions))
+            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, FALSE, psOptions))
                 return FALSE;
-            if (!ExprDumpFilter(osFilter, expr->expr2, FALSE, psOptions))
+            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr2, FALSE, psOptions))
                 return FALSE;
             osFilter += "</";
             osFilter += pszName;
@@ -360,9 +414,9 @@ static int ExprDumpFilter(CPLString& osFilter,
             osFilter += "<";
             osFilter += pszName;
             osFilter += ">";
-            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, psOptions))
+            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, TRUE, psOptions))
                 return FALSE;
-            if (!ExprDumpFilter(osFilter, expr->expr2, TRUE, psOptions))
+            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr2, TRUE, psOptions))
                 return FALSE;
             osFilter += "</";
             osFilter += pszName;
@@ -378,8 +432,12 @@ static int ExprDumpFilter(CPLString& osFilter,
     return TRUE;
 }
 
-static Expr* ExprBuildInternal(char*** ppapszTokens,
-                               int bExpectClosingParenthesis)
+/************************************************************************/
+/*                      WFS_ExprBuildInternal()                         */
+/************************************************************************/
+
+static Expr* WFS_ExprBuildInternal(char*** ppapszTokens,
+                                   int bExpectClosingParenthesis)
 {
     Expr* expr = NULL;
     Expr* op = NULL;
@@ -423,7 +481,7 @@ static Expr* ExprBuildInternal(char*** ppapszTokens,
         if (EQUAL(pszToken, "("))
         {
             char** papszSub = papszTokens;
-            Expr* expr = ExprBuildInternal(&papszSub, TRUE);
+            Expr* expr = WFS_ExprBuildInternal(&papszSub, TRUE);
             if (expr == NULL)
                 goto invalid_expr;
             PUSH_VAL(expr);
@@ -449,10 +507,10 @@ static Expr* ExprBuildInternal(char*** ppapszTokens,
         if (bExpectVarName)
         {
             if (EQUAL(pszToken, "NOT"))
-                op = ExprBuildOperator(TOKEN_NOT);
+                op = WFS_ExprBuildOperator(TOKEN_NOT);
             else
             {
-                PUSH_VAL(ExprBuildVarName(pszToken));
+                PUSH_VAL(WFS_ExprBuildVarName(pszToken));
                 bExpectVarName = FALSE;
                 bExpectComparisonOperator = TRUE;
             }
@@ -465,26 +523,26 @@ static Expr* ExprBuildInternal(char*** ppapszTokens,
             {
                 if (*papszTokens != NULL && EQUAL(*papszTokens, "NOT"))
                 {
-                    op = ExprBuildOperator(TOKEN_NOT_EQUAL);
+                    op = WFS_ExprBuildOperator(TOKEN_NOT_EQUAL);
                     papszTokens ++;
                 }
                 else
-                    op = ExprBuildOperator(TOKEN_EQUAL);
+                    op = WFS_ExprBuildOperator(TOKEN_EQUAL);
             }
             else if (EQUAL(pszToken, "="))
-                op = ExprBuildOperator(TOKEN_EQUAL);
+                op = WFS_ExprBuildOperator(TOKEN_EQUAL);
             else if (EQUAL(pszToken, "LIKE") || EQUAL(pszToken, "ILIKE"))
-                op = ExprBuildOperator(TOKEN_LIKE);
+                op = WFS_ExprBuildOperator(TOKEN_LIKE);
             else if (EQUAL(pszToken, "!=") || EQUAL(pszToken, "<>"))
-                op = ExprBuildOperator(TOKEN_NOT_EQUAL);
+                op = WFS_ExprBuildOperator(TOKEN_NOT_EQUAL);
             else if (EQUAL(pszToken, "<"))
-                op = ExprBuildOperator(TOKEN_LESSER);
+                op = WFS_ExprBuildOperator(TOKEN_LESSER);
             else if (EQUAL(pszToken, "<="))
-                op = ExprBuildOperator(TOKEN_LESSER_OR_EQUAL);
+                op = WFS_ExprBuildOperator(TOKEN_LESSER_OR_EQUAL);
             else if (EQUAL(pszToken, ">"))
-                op = ExprBuildOperator(TOKEN_GREATER);
+                op = WFS_ExprBuildOperator(TOKEN_GREATER);
             else if (EQUAL(pszToken, ">="))
-                op = ExprBuildOperator(TOKEN_GREATER_OR_EQUAL);
+                op = WFS_ExprBuildOperator(TOKEN_GREATER_OR_EQUAL);
             else
                 goto invalid_expr;
         }
@@ -493,17 +551,17 @@ static Expr* ExprBuildInternal(char*** ppapszTokens,
             bExpectLogicalOperator = FALSE;
             bExpectVarName = TRUE;
             if (EQUAL(pszToken, "AND"))
-                op = ExprBuildOperator(TOKEN_AND);
+                op = WFS_ExprBuildOperator(TOKEN_AND);
             else if (EQUAL(pszToken, "OR"))
-                op = ExprBuildOperator(TOKEN_OR);
+                op = WFS_ExprBuildOperator(TOKEN_OR);
             else if (EQUAL(pszToken, "NOT"))
-                op = ExprBuildOperator(TOKEN_NOT);
+                op = WFS_ExprBuildOperator(TOKEN_NOT);
             else
                 goto invalid_expr;
         }
         else if (bExpectValue)
         {
-            PUSH_VAL(ExprBuildValue(pszToken));
+            PUSH_VAL(WFS_ExprBuildValue(pszToken));
             bExpectValue = FALSE;
             bExpectLogicalOperator = TRUE;
         }
@@ -519,7 +577,7 @@ static Expr* ExprBuildInternal(char*** ppapszTokens,
                 PEEK_OP(prevOp);
 
                 if (prevOp != NULL &&
-                    (ExprGetPriority(op) <= ExprGetPriority(prevOp)))
+                    (WFS_ExprGetPriority(op) <= WFS_ExprGetPriority(prevOp)))
                 {
                     if (prevOp->eType != TOKEN_NOT)
                     {
@@ -529,9 +587,9 @@ static Expr* ExprBuildInternal(char*** ppapszTokens,
                     POP_VAL(val1);
                     if (val1 == NULL) goto invalid_expr;
 
-                    PUSH_VAL(ExprBuildBinary(prevOp->eType, val1, val2));
+                    PUSH_VAL(WFS_ExprBuildBinary(prevOp->eType, val1, val2));
                     POP_OP(prevOp);
-                    ExprFree(prevOp);
+                    WFS_ExprFree(prevOp);
                     val1 = val2 = NULL;
                 }
                 else
@@ -558,10 +616,10 @@ static Expr* ExprBuildInternal(char*** ppapszTokens,
         }
         POP_VAL(val1);
         if (val1 == NULL) goto invalid_expr;
-        PUSH_VAL(ExprBuildBinary(op->eType, val1, val2));
+        PUSH_VAL(WFS_ExprBuildBinary(op->eType, val1, val2));
         val1 = val2 = NULL;
 
-        ExprFree(op);
+        WFS_ExprFree(op);
         op = NULL;
     }
 
@@ -569,16 +627,20 @@ static Expr* ExprBuildInternal(char*** ppapszTokens,
     return expr;
 
 invalid_expr:
-    ExprFree(op);
-    ExprFree(val1);
-    ExprFree(val2);
-    ExprFreeList(psValExprList);
-    ExprFreeList(psOpExprList);
+    WFS_ExprFree(op);
+    WFS_ExprFree(val1);
+    WFS_ExprFree(val2);
+    WFS_ExprFreeList(psValExprList);
+    WFS_ExprFreeList(psOpExprList);
 
     return NULL;
 }
 
-static char** Tokenize(const char* pszFilter)
+/************************************************************************/
+/*                         WFS_ExprTokenize()                           */
+/************************************************************************/
+
+static char** WFS_ExprTokenize(const char* pszFilter)
 {
     const char* pszIter = pszFilter;
     CPLString osToken;
@@ -697,40 +759,42 @@ static char** Tokenize(const char* pszFilter)
 }
 
 /************************************************************************/
-/*                  TurnSQLFilterToWFSFilter()                          */
+/*               WFS_TurnSQLFilterToOGCFilter()                         */
 /************************************************************************/
 
-CPLString TurnSQLFilterToWFSFilter( const char * pszFilter,
-                                    int nVersion,
-                                    int bPropertyIsNotEqualToSupported,
-                                    int* pbOutNeedsNullCheck )
+CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
+                                        int nVersion,
+                                        int bPropertyIsNotEqualToSupported,
+                                        int* pbOutNeedsNullCheck )
 {
-    char** papszTokens = Tokenize(pszFilter);
+    char** papszTokens = WFS_ExprTokenize(pszFilter);
 
     if (papszTokens == NULL)
         return "";
 
     char** papszTokens2 = papszTokens;
-    Expr* expr = ExprBuildInternal(&papszTokens2, FALSE);
+    Expr* expr = WFS_ExprBuildInternal(&papszTokens2, FALSE);
     CSLDestroy(papszTokens);
 
     if (expr == NULL)
         return "";
 
     CPLString osFilter;
-    if (!ExprDumpGmlObjectIdFilter(osFilter, expr))
+    /* If the filter is only made of querying one or several gml_id */
+    /* (with OR operator), we turn this to <GmlObjectId> list */
+    if (!WFS_ExprDumpGmlObjectIdFilter(osFilter, expr))
     {
         ExprDumpFilterOptions sOptions;
         sOptions.nVersion = nVersion;
         sOptions.bPropertyIsNotEqualToSupported = bPropertyIsNotEqualToSupported;
         sOptions.bOutNeedsNullCheck = FALSE;
         osFilter = "";
-        if (!ExprDumpFilter(osFilter, expr, TRUE, &sOptions))
+        if (!WFS_ExprDumpAsOGCFilter(osFilter, expr, TRUE, &sOptions))
             osFilter = "";
         *pbOutNeedsNullCheck = sOptions.bOutNeedsNullCheck;
     }
 
-    ExprFree(expr);
+    WFS_ExprFree(expr);
 
     return osFilter;
 }

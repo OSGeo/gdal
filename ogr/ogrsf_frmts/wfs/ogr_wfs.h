@@ -32,9 +32,9 @@
 
 #include "ogrsf_frmts.h"
 
-CPLString FetchValueFromURL(const char* pszURL, const char* pszKey);
-CPLString AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue);
-CPLString TurnSQLFilterToWFSFilter( const char * pszFilter,
+CPLString WFS_FetchValueFromURL(const char* pszURL, const char* pszKey);
+CPLString WFS_AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue);
+CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
                                     int nVersion,
                                     int bPropertyIsNotEqualToSupported,
                                     int* pbOutNeedsNullCheck );

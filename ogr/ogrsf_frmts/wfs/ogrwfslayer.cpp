@@ -111,11 +111,11 @@ OGRWFSLayer::~OGRWFSLayer()
 OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
 {
     CPLString osURL(pszBaseURL);
-    osURL = AddKVToURL(osURL, "SERVICE", "WFS");
-    osURL = AddKVToURL(osURL, "VERSION", poDS->GetVersion());
-    osURL = AddKVToURL(osURL, "REQUEST", "DescribeFeatureType");
-    osURL = AddKVToURL(osURL, "TYPENAME", pszName);
-    osURL = AddKVToURL(osURL, "PROPERTYNAME", NULL);
+    osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
+    osURL = WFS_AddKVToURL(osURL, "VERSION", poDS->GetVersion());
+    osURL = WFS_AddKVToURL(osURL, "REQUEST", "DescribeFeatureType");
+    osURL = WFS_AddKVToURL(osURL, "TYPENAME", pszName);
+    osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
 
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -126,7 +126,7 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
         osValue += "=";
         osValue += pszNSVal;
         osValue += ")";
-        osURL = AddKVToURL(osURL, "NAMESPACE", osValue);
+        osURL = WFS_AddKVToURL(osURL, "NAMESPACE", osValue);
     }
 
     CPLDebug("WFS", "%s", osURL.c_str());
@@ -202,10 +202,10 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
 }
 
 /************************************************************************/
-/*                             EscapeURL()                              */
+/*                         WFS_EscapeURL()                              */
 /************************************************************************/
 
-static CPLString EscapeURL(CPLString osURL)
+static CPLString WFS_EscapeURL(CPLString osURL)
 {
     CPLString osNewURL;
     size_t i;
@@ -235,14 +235,14 @@ static CPLString EscapeURL(CPLString osURL)
 CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
 {
     CPLString osURL(pszBaseURL);
-    osURL = AddKVToURL(osURL, "SERVICE", "WFS");
-    osURL = AddKVToURL(osURL, "VERSION", poDS->GetVersion());
-    osURL = AddKVToURL(osURL, "REQUEST", "GetFeature");
-    osURL = AddKVToURL(osURL, "TYPENAME", pszName);
+    osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
+    osURL = WFS_AddKVToURL(osURL, "VERSION", poDS->GetVersion());
+    osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetFeature");
+    osURL = WFS_AddKVToURL(osURL, "TYPENAME", pszName);
 
     if (nMaxFeatures)
     {
-        osURL = AddKVToURL(osURL, "MAXFEATURES", CPLSPrintf("%d", nMaxFeatures));
+        osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", CPLSPrintf("%d", nMaxFeatures));
     }
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -253,7 +253,7 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         osValue += "=";
         osValue += pszNSVal;
         osValue += ")";
-        osURL = AddKVToURL(osURL, "NAMESPACE", osValue);
+        osURL = WFS_AddKVToURL(osURL, "NAMESPACE", osValue);
     }
 
     delete poFetchedFilterGeom;
@@ -314,13 +314,13 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
             osFilter += "</And>";
         osFilter += "</Filter>";
 
-        osURL = AddKVToURL(osURL, "FILTER", osFilter);
-        osURL = EscapeURL(osURL);
+        osURL = WFS_AddKVToURL(osURL, "FILTER", osFilter);
+        osURL = WFS_EscapeURL(osURL);
     }
         
     if (bRequestHits)
     {
-        osURL = AddKVToURL(osURL, "RESULTTYPE", "hits");
+        osURL = WFS_AddKVToURL(osURL, "RESULTTYPE", "hits");
     }
 
     return osURL;
@@ -351,7 +351,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
 
     int bJSON = FALSE;
     if (strstr(psResult->pszContentType, "application/json") != NULL &&
-        strcmp(FetchValueFromURL(osURL, "OUTPUTFORMAT"), "json") == 0)
+        strcmp(WFS_FetchValueFromURL(osURL, "OUTPUTFORMAT"), "json") == 0)
     {
         bJSON = TRUE;
     }
@@ -446,7 +446,7 @@ OGRFeatureDefn * OGRWFSLayer::GetLayerDefn()
     OGRDataSource* poDS = NULL;
 
     OGRFeatureDefn* poSrcFDefn = NULL;
-    if (strcmp(FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
+    if (strcmp(WFS_FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
         poSrcFDefn = DescribeFeatureType();
     if (poSrcFDefn == NULL)
     {
@@ -459,7 +459,7 @@ OGRFeatureDefn * OGRWFSLayer::GetLayerDefn()
         bGotApproximateLayerDefn = TRUE;
     }
 
-    const char* pszPropertyName = FetchValueFromURL(pszBaseURL, "PROPERTYNAME");
+    const char* pszPropertyName = WFS_FetchValueFromURL(pszBaseURL, "PROPERTYNAME");
 
     int i;
     poFeatureDefn->SetGeomType(poSrcFDefn->GetGeomType());
@@ -633,12 +633,14 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
     if (poDS->HasMinOperators() && pszFilter != NULL)
     {
         int bNeedsNullCheck = FALSE;
-        osWFSWhere = TurnSQLFilterToWFSFilter(pszFilter,
-                                              (strcmp(poDS->GetVersion(),"1.0.0") == 0) ? 100 : 110,
+        int nVersion = (strcmp(poDS->GetVersion(),"1.0.0") == 0) ? 100 : 110;
+        osWFSWhere = WFS_TurnSQLFilterToOGCFilter(pszFilter,
+                                              nVersion,
                                               poDS->PropertyIsNotEqualToSupported(),
                                               &bNeedsNullCheck);
         if (bNeedsNullCheck && !poDS->HasNullCheck())
             osWFSWhere = "";
+        CPLDebug("WFS", "Using client-side only mode for filter \"%s\"", pszFilter);
     }
     else
         osWFSWhere = "";
@@ -778,7 +780,7 @@ int OGRWFSLayer::GetFeatureCount( int bForce )
 
     if ((m_poAttrQuery == NULL || osWFSWhere.size() != 0) &&
          poDS->GetFeatureSupportHits() &&
-         strcmp(FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
+         strcmp(WFS_FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
     {
         nFeatures = ExecuteGetFeatureResultTypeHits();
         if (nFeatures >= 0)
