@@ -220,6 +220,8 @@ static CPLString EscapeURL(CPLString osURL)
             osNewURL += "%20";
         else if (ch == '"')
             osNewURL += "%22";
+        else if (ch == '%')
+            osNewURL += "%25";
         else
             osNewURL += ch;
     }
@@ -632,7 +634,9 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
     {
         int bNeedsNullCheck = FALSE;
         osWFSWhere = TurnSQLFilterToWFSFilter(pszFilter,
-             poDS->PropertyIsNotEqualToSupported(), &bNeedsNullCheck);
+                                              (strcmp(poDS->GetVersion(),"1.0.0") == 0) ? 100 : 110,
+                                              poDS->PropertyIsNotEqualToSupported(),
+                                              &bNeedsNullCheck);
         if (bNeedsNullCheck && !poDS->HasNullCheck())
             osWFSWhere = "";
     }
@@ -772,8 +776,9 @@ int OGRWFSLayer::GetFeatureCount( int bForce )
     if (TestCapability(OLCFastFeatureCount))
         return poBaseLayer->GetFeatureCount(bForce);
 
-    if ((m_poAttrQuery == NULL || osWFSWhere.size() != 0) && poDS->GetFeatureSupportHits() &&
-        strcmp(FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
+    if ((m_poAttrQuery == NULL || osWFSWhere.size() != 0) &&
+         poDS->GetFeatureSupportHits() &&
+         strcmp(FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
     {
         nFeatures = ExecuteGetFeatureResultTypeHits();
         if (nFeatures >= 0)
