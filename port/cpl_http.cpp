@@ -121,10 +121,12 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  *                  For example "Accept: application/x-ogcwkt"
  * <li>HTTPAUTH=[BASIC/NTLM/ANY] to specify an authentication scheme to use.
  * <li>USERPWD=userid:password to specify a user and password for authentication
+ * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the server
+ *                     with a POST request.
  * </ul>
  *
  * @return a CPLHTTPResult* structure that must be freed by CPLHTTPDestroyResult(),
- *         or NULL if libcurl support is diabled
+ *         or NULL if libcurl support is disabled
  */
 CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
@@ -211,6 +213,14 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     // turn off SSL verification, accept all servers with ssl
     curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, FALSE);
+
+    /* Set POST mode */
+    const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
+    if( pszPost != NULL && CSLTestBoolean(pszPost) )
+    {
+        curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
+        curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
+    }
 
     /* Enable following redirections.  Requires libcurl 7.10.1 at least */
     curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
