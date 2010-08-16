@@ -48,11 +48,14 @@ OGRWFSDataSource::OGRWFSDataSource()
 
     pszName = NULL;
 
+    bUpdate = FALSE;
     bGetFeatureSupportHits = FALSE;
     bNeedNAMESPACE = FALSE;
     bHasMinOperators = FALSE;
     bHasNullCheck = FALSE;
     bPropertyIsNotEqualToSupported = TRUE; /* advertized by deegree but not implemented */
+    bTransactionSupport = FALSE;
+    papszIdGenMethods = NULL;
 }
 
 /************************************************************************/
@@ -67,6 +70,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
     CPLFree( papoLayers );
 
     CPLFree( pszName );
+    CSLDestroy( papszIdGenMethods );
 }
 
 /************************************************************************/
@@ -224,6 +228,79 @@ static int DetectIfGetFeatureSupportHits(CPLXMLNode* psRoot)
 }
 
 /************************************************************************/
+/*                    DetectTransactionSupport()                        */
+/************************************************************************/
+
+int OGRWFSDataSource::DetectTransactionSupport(CPLXMLNode* psRoot)
+{
+    CPLXMLNode* psOperationsMetadata =
+        CPLGetXMLNode(psRoot, "OperationsMetadata");
+    if (!psOperationsMetadata)
+    {
+        return FALSE;
+    }
+
+    CPLXMLNode* psChild = psOperationsMetadata->psChild;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "Operation") == 0 &&
+            strcmp(CPLGetXMLValue(psChild, "name", ""), "Transaction") == 0)
+        {
+            break;
+        }
+        psChild = psChild->psNext;
+    }
+    if (!psChild)
+    {
+        CPLDebug("WFS", "No transaction support");
+        return FALSE;
+    }
+
+    bTransactionSupport = TRUE;
+    CPLDebug("WFS", "Transaction support !");
+
+    psChild = psChild->psChild;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "Parameter") == 0 &&
+            strcmp(CPLGetXMLValue(psChild, "name", ""), "idgen") == 0)
+        {
+            break;
+        }
+        psChild = psChild->psNext;
+    }
+   if (!psChild)
+    {
+        papszIdGenMethods = CSLAddString(NULL, "GenerateNew");
+        return TRUE;
+    }
+
+    psChild = psChild->psChild;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "Value") == 0)
+        {
+            CPLXMLNode* psChild2 = psChild->psChild;
+            while(psChild2)
+            {
+                if (psChild2->eType == CXT_Text)
+                {
+                    papszIdGenMethods = CSLAddString(papszIdGenMethods,
+                                                     psChild2->pszValue);
+                }
+                psChild2 = psChild2->psNext;
+            }
+        }
+        psChild = psChild->psNext;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                      WFS_FetchValueFromURL()                         */
 /************************************************************************/
 
@@ -321,22 +398,21 @@ static int FindComparisonOperator(CPLXMLNode* psNode, const char* pszVal)
 int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
-
-    if (!EQUALN(pszFilename, "WFS:http", 8) &&
+    if (!EQUALN(pszFilename, "WFS:", 4) &&
         FindSubStringInsensitive(pszFilename, "SERVICE=WFS") == NULL)
     {
         return FALSE;
     }
 
-    pszName = CPLStrdup(pszFilename);
-
     const char* pszBaseURL = pszFilename;
     if (EQUALN(pszFilename, "WFS:", 4))
         pszBaseURL += 4;
+
+    if (strncmp(pszBaseURL, "http://", 7) != 0)
+        return FALSE;
+
+    bUpdate = bUpdateIn;
+    pszName = CPLStrdup(pszFilename);
 
     CPLString osURL(pszBaseURL);
     osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
@@ -389,6 +465,17 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         osVersion = CPLGetXMLValue(psRoot, "version", "1.0.0");
 
         bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psRoot);
+
+        DetectTransactionSupport(psRoot);
+
+        if (bUpdate && !bTransactionSupport)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Server is read-only WFS; no WFS-T feature advertized");
+            CPLDestroyXMLNode( psXML );
+            CPLHTTPDestroyResult(psResult);
+            return FALSE;
+        }
 
         CPLXMLNode* psFilterCap = CPLGetXMLNode(psRoot, "Filter_Capabilities.Scalar_Capabilities");
         if (psFilterCap)
