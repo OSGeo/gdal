@@ -35,8 +35,9 @@
 CPLString FetchValueFromURL(const char* pszURL, const char* pszKey);
 CPLString AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue);
 CPLString TurnSQLFilterToWFSFilter( const char * pszFilter,
+                                    int nVersion,
                                     int bPropertyIsNotEqualToSupported,
-                                    int* pbNeedsNullCheck );
+                                    int* pbOutNeedsNullCheck );
 
 /************************************************************************/
 /*                             OGRWFSLayer                              */

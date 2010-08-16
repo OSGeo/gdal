@@ -201,11 +201,17 @@ static int ExprDumpGmlObjectIdFilter(CPLString& osFilter,
     return FALSE;
 }
 
+typedef struct
+{
+    int nVersion;
+    int bPropertyIsNotEqualToSupported;
+    int bOutNeedsNullCheck;
+} ExprDumpFilterOptions;
+
 static int ExprDumpFilter(CPLString& osFilter,
                           const Expr* expr,
                           int bExpectBinary,
-                          int bPropertyIsNotEqualToSupported,
-                          int* pbNeedsNullCheck)
+                          ExprDumpFilterOptions* psOptions)
 {
     switch(expr->eType)
     {
@@ -234,19 +240,56 @@ static int ExprDumpFilter(CPLString& osFilter,
 
         case TOKEN_NOT:
             osFilter += "<Not>";
-            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, psOptions))
                 return FALSE;
             osFilter += "</Not>";
             break;
 
         case TOKEN_LIKE:
-            osFilter += "<PropertyIsLike wildcard='%' singleChar='_' escape='!'>";
-            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+        {
+            CPLString osVal;
+            char ch;
+            char firstCh = 0;
+            int i;
+            if (psOptions->nVersion == 100)
+                osFilter += "<PropertyIsLike wildCard='*' singleChar='_' escape='!'>";
+            else
+                osFilter += "<PropertyIsLike wildCard='*' singleChar='_' escapeChar='!'>";
+            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, psOptions))
                 return FALSE;
-            if (!ExprDumpFilter(osFilter, expr->expr2, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+            if (expr->expr2->eType != TOKEN_LITERAL)
                 return FALSE;
+            osFilter += "<Literal>";
+            i = 0;
+            ch = expr->expr2->pszVal[i];
+            if (ch == '\'' || ch == '"')
+            {
+                firstCh = ch;
+                i ++;
+            }
+            for(;(ch = expr->expr2->pszVal[i]) != '\0';i++)
+            {
+                if (ch == '%')
+                    osVal += "*";
+                else if (ch == '!')
+                    osVal += "!!";
+                else if (ch == '*')
+                    osVal += "!*";
+                else if (ch == firstCh && expr->expr2->pszVal[i + 1] == 0)
+                    break;
+                else
+                {
+                    char ach[2];
+                    ach[0] = ch;
+                    ach[1] = 0;
+                    osVal += ach;
+                }
+            }
+            osFilter += osVal;
+            osFilter += "</Literal>";
             osFilter += "</PropertyIsLike>";
             break;
+        }
 
         case TOKEN_EQUAL:
         case TOKEN_NOT_EQUAL:
@@ -259,25 +302,25 @@ static int ExprDumpFilter(CPLString& osFilter,
                 EQUAL(expr->expr2->pszVal, "NULL"))
             {
                 osFilter += "<PropertyIsNull>";
-                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, psOptions))
                     return FALSE;
                 osFilter += "</PropertyIsNull>";
-                *pbNeedsNullCheck = TRUE;
+                psOptions->bOutNeedsNullCheck = TRUE;
                 break;
             }
             if (expr->eType == TOKEN_NOT_EQUAL && expr->expr2->eType == TOKEN_LITERAL &&
                 EQUAL(expr->expr2->pszVal, "NULL"))
             {
                 osFilter += "<Not><PropertyIsNull>";
-                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+                if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, psOptions))
                     return FALSE;
                 osFilter += "</PropertyIsNull></Not>";
-                *pbNeedsNullCheck = TRUE;
+                psOptions->bOutNeedsNullCheck = TRUE;
                 break;
             }
             TokenType eType = expr->eType;
             int bAddClosingNot = FALSE;
-            if (!bPropertyIsNotEqualToSupported && eType == TOKEN_NOT_EQUAL)
+            if (!psOptions->bPropertyIsNotEqualToSupported && eType == TOKEN_NOT_EQUAL)
             {
                 osFilter += "<Not>";
                 eType = TOKEN_EQUAL;
@@ -298,9 +341,9 @@ static int ExprDumpFilter(CPLString& osFilter,
             osFilter += "<";
             osFilter += pszName;
             osFilter += ">";
-            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr1, FALSE, psOptions))
                 return FALSE;
-            if (!ExprDumpFilter(osFilter, expr->expr2, FALSE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr2, FALSE, psOptions))
                 return FALSE;
             osFilter += "</";
             osFilter += pszName;
@@ -317,9 +360,9 @@ static int ExprDumpFilter(CPLString& osFilter,
             osFilter += "<";
             osFilter += pszName;
             osFilter += ">";
-            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr1, TRUE, psOptions))
                 return FALSE;
-            if (!ExprDumpFilter(osFilter, expr->expr2, TRUE, bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+            if (!ExprDumpFilter(osFilter, expr->expr2, TRUE, psOptions))
                 return FALSE;
             osFilter += "</";
             osFilter += pszName;
@@ -658,8 +701,9 @@ static char** Tokenize(const char* pszFilter)
 /************************************************************************/
 
 CPLString TurnSQLFilterToWFSFilter( const char * pszFilter,
+                                    int nVersion,
                                     int bPropertyIsNotEqualToSupported,
-                                    int* pbNeedsNullCheck )
+                                    int* pbOutNeedsNullCheck )
 {
     char** papszTokens = Tokenize(pszFilter);
 
@@ -676,10 +720,14 @@ CPLString TurnSQLFilterToWFSFilter( const char * pszFilter,
     CPLString osFilter;
     if (!ExprDumpGmlObjectIdFilter(osFilter, expr))
     {
+        ExprDumpFilterOptions sOptions;
+        sOptions.nVersion = nVersion;
+        sOptions.bPropertyIsNotEqualToSupported = bPropertyIsNotEqualToSupported;
+        sOptions.bOutNeedsNullCheck = FALSE;
         osFilter = "";
-        if (!ExprDumpFilter(osFilter, expr, TRUE,
-            bPropertyIsNotEqualToSupported, pbNeedsNullCheck))
+        if (!ExprDumpFilter(osFilter, expr, TRUE, &sOptions))
             osFilter = "";
+        *pbOutNeedsNullCheck = sOptions.bOutNeedsNullCheck;
     }
 
     ExprFree(expr);
