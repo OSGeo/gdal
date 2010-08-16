@@ -93,6 +93,7 @@ public:
 class JPIPKAKDataset: public GDALPamDataset
 {
 private:
+    int       bNeedReinitialize;
     CPLString osRequestUrl;
     char* pszTid;
     char* pszPath;
@@ -128,7 +129,8 @@ private:
 
     long ReadVBAS(GByte* pabyData, int nLen);
     JPIPDataSegment* ReadSegment(GByte* pabyData, int nLen, int& bError);
-    int Initialise(char* url);
+    int Initialize(const char* url, int bReinitializing );
+    void Deinitialize();
     int KakaduClassId(int nClassId);
 
     void *pGlobalMutex;
