@@ -30,6 +30,7 @@
 #ifndef _OGR_WFS_H_INCLUDED
 #define _OGR_WFS_H_INCLUDED
 
+#include "cpl_minixml.h"
 #include "ogrsf_frmts.h"
 
 CPLString WFS_FetchValueFromURL(const char* pszURL, const char* pszKey);
@@ -82,6 +83,10 @@ class OGRWFSLayer : public OGRLayer
     CPLString           osSQLWhere;
     CPLString           osWFSWhere;
 
+    const char         *GetShortName();
+    CPLString           osTargetNamespace;
+    CPLString           GetDescribeFeatureTypeURL();
+
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
                                     OGRSpatialReference* poSRS,
@@ -95,7 +100,8 @@ class OGRWFSLayer : public OGRLayer
     const char                 *GetName() { return pszName; }
 
     virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
+    virtual OGRFeature*         GetNextFeature();
+    virtual OGRFeature*         GetFeature(long nFID);
 
     virtual OGRFeatureDefn *    GetLayerDefn();
 
@@ -114,6 +120,8 @@ class OGRWFSLayer : public OGRLayer
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      DeleteFeature( long nFID );
 };
 
 /************************************************************************/
@@ -127,12 +135,18 @@ class OGRWFSDataSource : public OGRDataSource
     OGRWFSLayer**       papoLayers;
     int                 nLayers;
 
+    int                 bUpdate;
+
     int                 bGetFeatureSupportHits;
     CPLString           osVersion;
     int                 bNeedNAMESPACE;
     int                 bHasMinOperators;
     int                 bHasNullCheck;
     int                 bPropertyIsNotEqualToSupported;
+
+    int                 bTransactionSupport;
+    char**              papszIdGenMethods;
+    int                 DetectTransactionSupport(CPLXMLNode* psRoot);
 
   public:
                         OGRWFSDataSource();
@@ -149,6 +163,8 @@ class OGRWFSDataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 
+    int                         UpdateMode() { return bUpdate; }
+    int                         SupportTransactions() { return bTransactionSupport; }
     int                         GetFeatureSupportHits() { return bGetFeatureSupportHits; }
     const char                 *GetVersion() { return osVersion.c_str(); }
 
