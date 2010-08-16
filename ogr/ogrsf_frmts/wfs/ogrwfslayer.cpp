@@ -1143,8 +1143,14 @@ OGRErr OGRWFSLayer::DeleteFeature( long nFID )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot delete a feature with gml_id unset");
+        delete poFeature;
         return OGRERR_FAILURE;
     }
+
+    CPLString osGMLID = pszGMLID;
+    pszGMLID = NULL;
+    delete poFeature;
+    poFeature = NULL;
 
     CPLString osRootURL(pszBaseURL);
     const char* pszFirstSlashAfterHttpRadix = strchr(pszBaseURL + 7, '/');
@@ -1176,7 +1182,7 @@ OGRErr OGRWFSLayer::DeleteFeature( long nFID )
     osPost += "  <wfs:Delete xmlns:feature=\""; osPost += osTargetNamespace;
     osPost += "\" typeName=\"feature:"; osPost += pszShortName; osPost += "\">\n";
     osPost += "    <ogc:Filter>\n";
-    osPost += "      <ogc:FeatureId fid=\""; osPost += pszGMLID; osPost += "\"/>\n";
+    osPost += "      <ogc:FeatureId fid=\""; osPost += osGMLID; osPost += "\"/>\n";
     osPost += "    </ogc:Filter>\n";
     osPost += "  </wfs:Delete>\n";
     osPost += "</wfs:Transaction>\n";
