@@ -224,10 +224,10 @@ static int DetectIfGetFeatureSupportHits(CPLXMLNode* psRoot)
 }
 
 /************************************************************************/
-/*                         FetchValueFromURL()                          */
+/*                      WFS_FetchValueFromURL()                         */
 /************************************************************************/
 
-CPLString FetchValueFromURL(const char* pszURL, const char* pszKey)
+CPLString WFS_FetchValueFromURL(const char* pszURL, const char* pszKey)
 {
     CPLString osKey(pszKey);
     osKey += "=";
@@ -247,10 +247,10 @@ CPLString FetchValueFromURL(const char* pszURL, const char* pszKey)
 }
 
 /************************************************************************/
-/*                          AddKVToURL()                                */
+/*                        WFS_AddKVToURL()                              */
 /************************************************************************/
 
-CPLString AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue)
+CPLString WFS_AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue)
 {
     CPLString osURL(pszURL);
     if (strchr(osURL, '?') == NULL)
@@ -339,12 +339,12 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         pszBaseURL += 4;
 
     CPLString osURL(pszBaseURL);
-    osURL = AddKVToURL(osURL, "SERVICE", "WFS");
-    osURL = AddKVToURL(osURL, "REQUEST", "GetCapabilities");
-    CPLString osTypeName = FetchValueFromURL(osURL, "TYPENAME");
-    osURL = AddKVToURL(osURL, "TYPENAME", NULL);
-    osURL = AddKVToURL(osURL, "FILTER", NULL);
-    osURL = AddKVToURL(osURL, "PROPERTYNAME", NULL);
+    osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
+    osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetCapabilities");
+    CPLString osTypeName = WFS_FetchValueFromURL(osURL, "TYPENAME");
+    osURL = WFS_AddKVToURL(osURL, "TYPENAME", NULL);
+    osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
+    osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
     
     CPLDebug("WFS", "%s", osURL.c_str());
 
