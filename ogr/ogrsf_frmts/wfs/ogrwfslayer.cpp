@@ -640,7 +640,10 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
                                               &bNeedsNullCheck);
         if (bNeedsNullCheck && !poDS->HasNullCheck())
             osWFSWhere = "";
-        CPLDebug("WFS", "Using client-side only mode for filter \"%s\"", pszFilter);
+        if (osWFSWhere.size() == 0)
+        {
+            CPLDebug("WFS", "Using client-side only mode for filter \"%s\"", pszFilter);
+        }
     }
     else
         osWFSWhere = "";
