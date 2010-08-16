@@ -9,9 +9,9 @@
 
 (GDAL/OGR >= 1.8.0)<p>
 
-This driver can connect to a OGC WFS server. It supports WFS 1.0.0 and WFS 1.1.0 protocols. Curl must be configured for the
-driver to be returned. Usually WFS return results in GML format, so the GML driver should generally be set-up for read-only
-(configured with Xerces or Expat support). It is possible to use alternate underlying formats when the server supports them
+This driver can connect to a OGC WFS service. It supports WFS 1.0.0 and WFS 1.1.0 protocols. GDAL/OGR must be built with Curl support in order to the
+WFS driver to be compiled. Usually WFS requests return results in GML format, so the GML driver should generally be set-up for read support
+(thus requiring GDAL/OGR to be built with Xerces or Expat support). It is sometimes possible to use alternate underlying formats when the server supports them
 (such as OUTPUTFORMAT=json).<p>
 
 The driver is currently read-only (no WFS-T).<p>
@@ -19,6 +19,9 @@ The driver is currently read-only (no WFS-T).<p>
 The minimal syntax to open a WFS datasource is : <i>WFS:http://path/to/WFS/service</i> or <i>http://path/to/WFS/service?SERVICE=WFS</i><p>
 
 Additionnal optional parameters can be specified such as <i>TYPENAME</i> or <i>VERSION</i>, as specified in WFS specification.<p>
+
+The driver will forward any spatial filter set with SetSpatialFilter() to the server, and makes best effort to do the same for attribute
+filter set with SetAttributeFilter() when possible (turning OGR SQL language into OGC filter description).<p>
 
 <h3>Examples</h3>
 
@@ -30,16 +33,30 @@ ogrinfo -ro WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap
 <p>
 
 <li>
-Listing the types of the popplace layer with a spatial filter :
+Listing the features of the popplace layer, with a spatial filter :
 <pre>
 ogrinfo -ro WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap popplace -spat 0 0 2961766.250000 3798856.750000
 </pre>
+
+<li>
+Listing the features of the popplace layer, with a spatial filter :
+<pre>
+ogrinfo -ro WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap popplace -spat 0 0 2961766.250000 3798856.750000
+</pre>
+
+<li>
+Retrieving the features of gml:id "world.2" and "world.3" from the tows:world layer :
+<pre>
+ogrinfo "WFS:http://www.tinyows.org/cgi-bin/tinyows" tows:world -ro -al -where "gml_id='world.2' or gml_id='world.3'"
+</pre>
+
 <p>
 
 <h3>See Also</h3>
 
 <ul>
 <li> <a href="http://www.opengeospatial.org/standards/wfs">OGC WFS Standard</a><p>
+<li> <a href="drv_gml">GML driver documentation</a></a><p>
 </ul>
 
 </body>
