@@ -418,37 +418,54 @@ JPIPKAKDataset::~JPIPKAKDataset()
 {
     CPLHTTPCleanup();
 
-    if (pszPath)
-        CPLFree(pszPath);
+    Deinitialize();
 
-    if (pszCid)
-        CPLFree(pszCid);
+    CPLFree(pszProjection);
+    pszProjection = NULL;
 
-    if (pszProjection)
-        CPLFree(pszProjection);
+    CPLFree(pszPath);
 
     if (nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
+}
+
+/************************************************************************/
+/*                            Deinitialize()                            */
+/*                                                                      */
+/*      Cleanup stuff that we will rebuild during a                     */
+/*      reinitialization.                                               */
+/************************************************************************/
+
+void JPIPKAKDataset::Deinitialize()
+
+{
+    CPLFree(pszCid);
+    pszCid = NULL;
 
     // frees decompressor as well
     if (poCodestream)
     {
         poCodestream->destroy();
         delete poCodestream;
+        poCodestream = NULL;
     }
-    delete poDecompressor;
 
-    if (poCache)
-        delete poCache;
+    delete poDecompressor;
+    poDecompressor = NULL;
+
+    delete poCache;
+    poCache = NULL;
+
+    bNeedReinitialize = TRUE;
 }
 
 /*****************************************/
-/*         Initialise()                  */
+/*         Initialize()                  */
 /*****************************************/
-int JPIPKAKDataset::Initialise(char* pszUrl)
+int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 {
     // set up message handlers
     kdu_cpl_error_message oErrHandler( CE_Failure );
@@ -467,14 +484,20 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
         (char *) osPersistent.c_str(),
         NULL 
     };
-        
+
+    // Setup url to have http in place of jpip protocol indicator.
+    CPLString osURL = "http";
+    osURL += (pszDatasetName + 4);
+    
+    CPLAssert( strncmp(pszDatasetName,"jpip",4) == 0 );
+
     // make initial request to the server for a session, we are going to 
     // assume that the jpip communication is stateful, rather than one-shot
     // stateless requests append pszUrl with jpip request parameters for a 
     // stateful session (multi-shot communications)
     // "cnew=http&type=jpp-stream&stream=0&tid=0&len="
     CPLString osRequest;
-    osRequest.Printf("%s?%s%i", pszUrl, 
+    osRequest.Printf("%s?%s%i", osURL.c_str(),
                      "cnew=http&type=jpp-stream&stream=0&tid=0&len=", 2000);
 	
     CPLHTTPResult *psResult = CPLHTTPFetch(osRequest, apszOptions);
@@ -508,7 +531,7 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
     {
         if( psResult->pszContentType != NULL 
             && EQUALN(psResult->pszContentType,"text/html",9) )
-            CPLDebug( "JPIPKAK", "%s\n", 
+            CPLDebug( "JPIPKAK", "%s", 
                       psResult->pabyData );
 
         CPLHTTPDestroyResult( psResult );
@@ -600,6 +623,17 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
         poCodestream->create(poCache);
         poCodestream->set_persistent();
 
+/* -------------------------------------------------------------------- */
+/*      If this is a reinitialization then we can hop out at this       */
+/*      point.  The rest of the stuff was already done, and             */
+/*      hopefully the configuration is unchanged.                       */
+/* -------------------------------------------------------------------- */
+        if( bReinitializing )
+            return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Collect GDAL raster configuration information.                  */
+/* -------------------------------------------------------------------- */
         kdu_channel_mapping oChannels;
         oChannels.configure(*poCodestream);
         kdu_coords* ref_expansion = new kdu_coords(1, 1);
@@ -790,6 +824,8 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
 
     VSIFCloseL(fpLL);
     VSIUnlink( osFileBoxName.c_str());
+
+    bNeedReinitialize = FALSE;
 
     return TRUE;
 }
@@ -1211,6 +1247,18 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
               xOff, yOff, xSize, ySize, bufXSize, bufYSize );
 
 /* -------------------------------------------------------------------- */
+/*      Recreate the code stream access if needed.                      */
+/* -------------------------------------------------------------------- */
+    if( bNeedReinitialize )
+    {
+        CPLDebug( "JPIPKAK", "\n\nReinitializing after error! ******\n" );
+
+        Deinitialize();
+        if( !Initialize(GetDescription(),TRUE) )
+            return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Provide default packing if needed.                              */
 /* -------------------------------------------------------------------- */
     if( nPixelSpace == 0 )
@@ -1366,27 +1414,19 @@ GDALDataset *JPIPKAKDataset::Open(GDALOpenInfo * poOpenInfo)
     if (EQUALN(poOpenInfo->pszFilename,"jpip://", 7)
         || EQUALN(poOpenInfo->pszFilename,"jpips://",8))
     {
-        // swap the protocol to http / https as jpip in this implementations
-        // is using http
-        char* request = CPLStrdup(poOpenInfo->pszFilename);
-        CPLPrintString(request, "http", 4);
-        //CPLDebug("JPIPKAK", "Connecting to %s", poOpenInfo->pszFilename);
-
         // perform the initial connection
         // using cpl_http for the connection
         if  (CPLHTTPEnabled() == TRUE)
         {
             JPIPKAKDataset *poDS;
             poDS = new JPIPKAKDataset();
-            if (poDS->Initialise(request))
+            if (poDS->Initialize(poOpenInfo->pszFilename,FALSE))
             {
                 poDS->SetDescription( poOpenInfo->pszFilename );
-                CPLFree(request);			
                 return poDS;
             }
             else
             {
-                CPLFree(request);	
                 delete poDS;
                 return NULL;
             }
@@ -1396,7 +1436,6 @@ GDALDataset *JPIPKAKDataset::Open(GDALOpenInfo * poOpenInfo)
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to open %s within JPIPKAK driver CPL HTTP not enabled.\n",
                       poOpenInfo->pszFilename );
-            CPLFree(request);
             return NULL;
         }
     }
@@ -1684,6 +1723,7 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
                           bHighPriority, 
                           poJDS->bHighThreadRunning,
                           poJDS->bHighThreadFinished );
+            poJDS->bNeedReinitialize = TRUE;
             return GARIO_ERROR;
         }
 
@@ -1890,6 +1930,9 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         result = GARIO_UPDATE;
     
     nDataRead += nSize;
+
+    if( result == GARIO_ERROR )
+        poJDS->bNeedReinitialize = TRUE;
     
     return result;	
 }
@@ -1988,6 +2031,15 @@ static void JPIPWorkerFunc(void *req)
             CPLDebug("JPIPWorkerFunc", "zero data returned from server");
             CPLReleaseMutex(poJDS->pGlobalMutex);
             break;
+        }
+
+        if( psResult->pszContentType != NULL )
+            CPLDebug( "JPIPKAK", "Content-type: %s", psResult->pszContentType );
+
+        if( psResult->pszContentType != NULL 
+            && strstr(psResult->pszContentType,"html") != NULL )
+        {
+            CPLDebug( "JPIPKAK", "%s", psResult->pabyData );
         }
 
         int bytes = psResult->nDataLen;
