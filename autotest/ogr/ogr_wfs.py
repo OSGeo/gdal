@@ -188,7 +188,7 @@ def ogr_wfs_3():
     geom_wkt = geom.ExportToWkt()
     if feat.GetField('name') != 'Alexander Bay' or \
        geom_wkt.find("POINT (16.4827778 -28.5947222)") == -1:
-        gdaltest.post_reason('did not get expected feature')
+        gdaltest.post_reason('did not get expected feature (1)')
         feat.DumpReadable()
         return 'fail'
 
@@ -201,19 +201,38 @@ def ogr_wfs_3():
     if feat.GetField('name') != 'Alexander Bay' or \
        ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
                                       max_error = 0.000000001 ) != 0:
-        gdaltest.post_reason('did not get expected feature')
+        gdaltest.post_reason('did not get expected feature (2)')
         feat.DumpReadable()
         return 'fail'
 
     # Test attribute filter
     ds = ogr.Open("WFS:http://sigma.openplans.org/geoserver/ows?TYPENAME=za:za_points")
     lyr = ds.GetLayer(0)
-    lyr.SetAttributeFilter("type is not null and name >= 'W'")
+    lyr.SetAttributeFilter("type is not null and name >= 'W' and type LIKE 'att%%ion'")
     feat_count = lyr.GetFeatureCount()
     if feat_count != 1:
-        gdaltest.post_reason('did not get expected feature count after SetAttributeFilter')
+        gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (1)')
         print(feat_count)
         return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('gml_id') != 'za_points.2839':
+        gdaltest.post_reason('did not get expected feature (3)')
+        feat.DumpReadable()
+        return 'fail'
+
+    if False:
+        # This GeoServer version doesn't understand <GmlObjectId>
+        lyr.SetAttributeFilter("gml_id = 'za_points.2839'")
+        feat_count = lyr.GetFeatureCount()
+        if feat_count != 1:
+            gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
+            print(feat_count)
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        if feat.GetField('gml_id') != 'za_points.2839':
+            gdaltest.post_reason('did not get expected feature (4)')
+            feat.DumpReadable()
+            return 'fail'
 
     return 'success'
 
@@ -325,6 +344,13 @@ def ogr_wfs_5():
         print(feat_count)
         return 'fail'
 
+    # Test attribute filter with gml_id
+    lyr.SetAttributeFilter("gml_id = 'SGID024_Springs30' or gml_id = 'SGID024_Springs100'")
+    feat_count = lyr.GetFeatureCount()
+    if feat_count != 2:
+        gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
+        print(feat_count)
+        return 'fail'
     return 'success'
 
 ###############################################################################
