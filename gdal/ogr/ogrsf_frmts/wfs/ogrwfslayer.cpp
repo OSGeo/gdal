@@ -105,10 +105,10 @@ OGRWFSLayer::~OGRWFSLayer()
 }
 
 /************************************************************************/
-/*                      DescribeFeatureType()                           */
+/*                    GetDescribeFeatureTypeURL()                       */
 /************************************************************************/
 
-OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
+CPLString OGRWFSLayer::GetDescribeFeatureTypeURL()
 {
     CPLString osURL(pszBaseURL);
     osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
@@ -116,6 +116,16 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
     osURL = WFS_AddKVToURL(osURL, "REQUEST", "DescribeFeatureType");
     osURL = WFS_AddKVToURL(osURL, "TYPENAME", pszName);
     osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
+    return osURL;
+}
+
+/************************************************************************/
+/*                      DescribeFeatureType()                           */
+/************************************************************************/
+
+OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
+{
+    CPLString osURL = GetDescribeFeatureTypeURL();
 
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -164,6 +174,28 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
+
+    CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
+    if (psXML == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
+                psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+    CPLStripXMLNamespace( psXML, NULL, TRUE );
+    CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=Schema" );
+    if (psRoot == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find <Schema>");
+        CPLDestroyXMLNode( psXML );
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+
+    osTargetNamespace = CPLGetXMLValue(psRoot, "targetNamespace", "");
+    
+    CPLDestroyXMLNode(psXML);
 
     CPLString osTmpFileName;
     FILE* fp;
@@ -686,6 +718,13 @@ int OGRWFSLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return poBaseLayer != NULL && poBaseLayer->TestCapability(pszCap);
 
+    else if( EQUAL(pszCap, OLCSequentialWrite) ||
+             EQUAL(pszCap, OLCDeleteFeature) )
+    {
+        GetLayerDefn();
+        return poDS->SupportTransactions() && poDS->UpdateMode() && poFeatureDefn->GetFieldIndex("gml_id") == 0;
+    }
+
     return FALSE;
 }
 
@@ -827,4 +866,387 @@ OGRErr OGRWFSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         return poBaseLayer->GetExtent(psExtent, bForce);
 
     return OGRLayer::GetExtent(psExtent, bForce);
+}
+
+/************************************************************************/
+/*                          GetShortName()                              */
+/************************************************************************/
+
+const char* OGRWFSLayer::GetShortName()
+{
+    const char* pszShortName = strchr(pszName, ':');
+    if (pszShortName == NULL)
+        pszShortName = pszName;
+    else
+        pszShortName ++;
+    return pszShortName;
+}
+
+/************************************************************************/
+/*                          CreateFeature()                             */
+/************************************************************************/
+
+OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
+{
+    if (!TestCapability(OLCSequentialWrite))
+    {
+        if (!poDS->SupportTransactions())
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CreateFeature() not supported: no WMS-T features advertized by server");
+        else if (!poDS->UpdateMode())
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CreateFeature() not supported: datasource opened as read-only");
+        return OGRERR_FAILURE;
+    }
+
+    if (poFeatureDefn->GetFieldIndex("gml_id") != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find gml_id field");
+        return OGRERR_FAILURE;
+    }
+
+    if (poFeature->IsFieldSet(0))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot insert a feature when gml_id field is already seet");
+        return OGRERR_FAILURE;
+    }
+
+    CPLString osPost;
+    osPost += "<?xml version=\"1.0\"?>\n";
+    osPost += "<wfs:Transaction xmlns:wfs=\"http://www.opengis.net/wfs\"\n";
+    osPost += "                 xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n";
+    osPost += "                 service=\"WFS\" version=\""; osPost += poDS->GetVersion(); osPost += "\"\n";
+    osPost += "                 xmlns:gml=\"http://www.opengis.net/gml\"\n";
+    osPost += "                 xmlns:ogc=\"http://www.opengis.net/ogc\"\n";
+    osPost += "                 xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/";
+    osPost += poDS->GetVersion();
+    osPost += "/wfs.xsd ";
+    osPost += osTargetNamespace;
+    osPost += " ";
+
+    char* pszXMLEncoded = CPLEscapeString(
+                    GetDescribeFeatureTypeURL(), -1, CPLES_XML);
+    osPost += pszXMLEncoded;
+    CPLFree(pszXMLEncoded);
+
+    const char* pszShortName = GetShortName();
+    
+    osPost += "\">\n";
+    osPost += "  <wfs:Insert>\n";
+    osPost += "    <feature:"; osPost += pszShortName; osPost += " xmlns:feature=\"";
+    osPost += osTargetNamespace; osPost += "\">\n";
+
+    int i;
+    for(i=1; i < poFeature->GetFieldCount(); i++)
+    {
+        if (poFeature->IsFieldSet(i))
+        {
+            OGRFieldDefn* poFDefn = poFeature->GetFieldDefnRef(i);
+            osPost += "      <feature:";
+            osPost += poFDefn->GetNameRef();
+            osPost += ">";
+            if (poFDefn->GetType() == OFTInteger)
+                osPost += CPLSPrintf("%d", poFeature->GetFieldAsInteger(i));
+            else if (poFDefn->GetType() == OFTReal)
+                osPost += CPLSPrintf("%.16g", poFeature->GetFieldAsDouble(i));
+            else
+            {
+                pszXMLEncoded = CPLEscapeString(poFeature->GetFieldAsString(i),
+                                                -1, CPLES_XML);
+                osPost += pszXMLEncoded;
+                CPLFree(pszXMLEncoded);
+            }
+            osPost += "</feature:";
+            osPost += poFDefn->GetNameRef();
+            osPost += ">\n";
+        }
+    }
+
+    OGRGeometry* poGeom = poFeature->GetGeometryRef();
+    if (poGeom != NULL && osGeometryColumnName.size() != 0)
+    {
+        if (poGeom->getSpatialReference() == NULL)
+            poGeom->assignSpatialReference(poSRS);
+        char* pszGML = OGR_G_ExportToGML((OGRGeometryH)poGeom);
+        osPost += "      <feature:"; osPost += osGeometryColumnName; osPost += ">";
+        osPost += pszGML;
+        osPost += "</feature:"; osPost += osGeometryColumnName; osPost += ">\n";
+        CPLFree(pszGML);
+    }
+    
+    osPost += "    </feature:"; osPost += pszShortName; osPost += ">\n";
+    osPost += "  </wfs:Insert>\n";
+    osPost += "</wfs:Transaction>\n";
+
+    CPLDebug("WFS", "Post : %s", osPost.c_str());
+
+    char** papszOptions = NULL;
+    papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", osPost.c_str());
+    papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
+                                   "Content-Type: application/xml; charset=UTF-8");
+    CPLString osURL(pszBaseURL);
+    const char* pszEsperluet = strchr(pszBaseURL, '?');
+    if (pszEsperluet)
+        osURL.resize(pszEsperluet - pszBaseURL);
+    CPLHTTPResult* psResult = CPLHTTPFetch(osURL.c_str(), papszOptions);
+    CSLDestroy(papszOptions);
+
+    if (psResult == NULL)
+    {
+        return OGRERR_FAILURE;
+    }
+    if (psResult->nStatus != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                psResult->pszErrBuf);
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    if (strstr((const char*)psResult->pabyData,
+                                    "<ServiceExceptionReport") != NULL ||
+        strstr((const char*)psResult->pabyData,
+                                    "<ows:ExceptionReport") != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                 psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    if (strstr(psResult->pszContentType, "xml") == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Non XML content returned by server : %s, %s",
+                psResult->pszContentType, psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    CPLDebug("WFS", "Response: %s", psResult->pabyData);
+
+    CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
+    if (psXML == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
+                psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    CPLStripXMLNamespace( psXML, NULL, TRUE );
+    CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=TransactionResponse" );
+    if (psRoot == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find <TransactionResponse>");
+        CPLDestroyXMLNode( psXML );
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    CPLXMLNode* psFeatureID =
+    CPLGetXMLNode( psRoot, "InsertResults.Feature.FeatureId");
+    if (psFeatureID == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find InsertResults.Feature.FeatureId");
+        CPLDestroyXMLNode( psXML );
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    const char* pszFID = CPLGetXMLValue(psFeatureID, "fid", NULL);
+    if (pszFID == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find fid");
+        CPLDestroyXMLNode( psXML );
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    poFeature->SetField("gml_id", pszFID);
+
+    /* If the returned fid is of the form layer_name.num, then use */
+    /* num as the OGR FID */
+    if (strncmp(pszFID, pszShortName, strlen(pszShortName)) == 0 &&
+        pszFID[strlen(pszShortName)] == '.')
+        poFeature->SetFID(atoi(pszFID + strlen(pszShortName) + 1));
+
+    CPLDebug("WFS", "Got FID = %ld", poFeature->GetFID());
+
+    CPLDestroyXMLNode( psXML );
+    CPLHTTPDestroyResult(psResult);
+
+    return OGRERR_NONE;
+}
+/************************************************************************/
+/*                               GetFeature()                           */
+/************************************************************************/
+
+OGRFeature* OGRWFSLayer::GetFeature(long nFID)
+{
+    if (poBaseLayer == NULL && poFeatureDefn->GetFieldIndex("gml_id") == 0)
+    {
+        /* This is lovely hackish. We assume that then gml_id will be */
+        /* layer_name.number. This is actually what we can observe with */
+        /* GeoServer and TinyOWS */
+        CPLString osVal = CPLSPrintf("gml_id = %s.%ld", GetShortName(), nFID);
+        CPLString osOldSQLWhere(osSQLWhere);
+        SetAttributeFilter(osVal);
+        OGRFeature* poFeature = GetNextFeature();
+        const char* pszOldFilter = osOldSQLWhere.size() ? osOldSQLWhere.c_str() : NULL;
+        SetAttributeFilter(pszOldFilter);
+        if (poFeature)
+            return poFeature;
+    }
+
+    return OGRLayer::GetFeature(nFID);
+}
+
+/************************************************************************/
+/*                            DeleteFeature()                           */
+/************************************************************************/
+
+OGRErr OGRWFSLayer::DeleteFeature( long nFID )
+{
+    if (!TestCapability(OLCDeleteFeature))
+    {
+        if (!poDS->SupportTransactions())
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "DeleteFeature() not supported: no WMS-T features advertized by server");
+        else if (!poDS->UpdateMode())
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "DeleteFeature() not supported: datasource opened as read-only");
+        return OGRERR_FAILURE;
+    }
+
+    if (poFeatureDefn->GetFieldIndex("gml_id") != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find gml_id field");
+        return OGRERR_FAILURE;
+    }
+
+    OGRFeature* poFeature = GetFeature(nFID);
+    if (poFeature == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find feature %ld", nFID);
+        return OGRERR_FAILURE;
+    }
+
+    const char* pszGMLID = poFeature->GetFieldAsString("gml_id");
+    if (pszGMLID == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot delete a feature with gml_id unset");
+        return OGRERR_FAILURE;
+    }
+
+    CPLString osRootURL(pszBaseURL);
+    const char* pszFirstSlashAfterHttpRadix = strchr(pszBaseURL + 7, '/');
+    if (pszFirstSlashAfterHttpRadix)
+        osRootURL.resize(pszFirstSlashAfterHttpRadix - pszBaseURL + 1);
+
+    CPLString osPost;
+    osPost += "<?xml version=\"1.0\"?>\n";
+    osPost += "<wfs:Transaction xmlns:wfs=\"http://www.opengis.net/wfs\"\n";
+    osPost += "                 xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n";
+    osPost += "                 service=\"WFS\" version=\""; osPost += poDS->GetVersion(); osPost += "\"\n";
+    osPost += "                 xmlns:gml=\"http://www.opengis.net/gml\"\n";
+    osPost += "                 xmlns:ogc=\"http://www.opengis.net/ogc\"\n";
+    osPost += "                 xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/";
+    osPost += poDS->GetVersion();
+    osPost += "/wfs.xsd ";
+    osPost += osTargetNamespace;
+    osPost += " ";
+
+    char* pszXMLEncoded = CPLEscapeString(
+                    GetDescribeFeatureTypeURL(), -1, CPLES_XML);
+    osPost += pszXMLEncoded;
+    CPLFree(pszXMLEncoded);
+
+    const char* pszShortName = GetShortName();
+
+    osPost += "\">\n";
+
+    osPost += "  <wfs:Delete xmlns:feature=\""; osPost += osTargetNamespace;
+    osPost += "\" typeName=\"feature:"; osPost += pszShortName; osPost += "\">\n";
+    osPost += "    <ogc:Filter>\n";
+    osPost += "      <ogc:FeatureId fid=\""; osPost += pszGMLID; osPost += "\"/>\n";
+    osPost += "    </ogc:Filter>\n";
+    osPost += "  </wfs:Delete>\n";
+    osPost += "</wfs:Transaction>\n";
+
+    CPLDebug("WFS", "Post : %s", osPost.c_str());
+
+    char** papszOptions = NULL;
+    papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", osPost.c_str());
+    papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
+                                   "Content-Type: application/xml; charset=UTF-8");
+    CPLString osURL(pszBaseURL);
+    const char* pszEsperluet = strchr(pszBaseURL, '?');
+    if (pszEsperluet)
+        osURL.resize(pszEsperluet - pszBaseURL);
+    CPLHTTPResult* psResult = CPLHTTPFetch(osURL.c_str(), papszOptions);
+    CSLDestroy(papszOptions);
+
+    if (psResult == NULL)
+    {
+        return OGRERR_FAILURE;
+    }
+    if (psResult->nStatus != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                psResult->pszErrBuf);
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    if (strstr((const char*)psResult->pabyData, "<ServiceExceptionReport") != NULL ||
+        strstr((const char*)psResult->pabyData, "<ows:ExceptionReport") != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                 psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    if (strstr(psResult->pszContentType, "xml") == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Non XML content returned by server : %s, %s",
+                psResult->pszContentType, psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    CPLDebug("WFS", "Response: %s", psResult->pabyData);
+
+    CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
+    if (psXML == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
+                psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    CPLStripXMLNamespace( psXML, NULL, TRUE );
+    CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=TransactionResponse" );
+    if (psRoot == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find <TransactionResponse>");
+        CPLDestroyXMLNode( psXML );
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    CPLDestroyXMLNode( psXML );
+    CPLHTTPDestroyResult(psResult);
+
+    return OGRERR_NONE;
 }
