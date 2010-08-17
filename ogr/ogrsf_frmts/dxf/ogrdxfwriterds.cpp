@@ -126,6 +126,8 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
         VSIFCloseL( fp );
         fp = NULL;
     }
+
+    CSLDestroy(papszLayersToCreate);
 }
 
 /************************************************************************/
