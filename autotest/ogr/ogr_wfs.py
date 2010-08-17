@@ -428,6 +428,87 @@ def ogr_wfs_7():
 
     return 'success'
 
+###############################################################################
+# Test CreateFeature() / DeleteFeature() (WFS-T)
+
+def ogr_wfs_8():
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    timeout =  10
+    socket.setdefaulttimeout(timeout)
+    if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
+        print('cannot open URL')
+        return 'skip'
+
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs', update = 1)
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayerByName('za:za_points')
+    geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(geom)
+    feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
+    feat.SetField('type', 'type_set_by_ogr_wfs_8_test')
+    if lyr.CreateFeature(feat) != 0:
+        gdaltest.post_reason('cannot create feature')
+        return 'fail'
+
+    print('Feature %d created !' % feat.GetFID())
+    
+    if lyr.DeleteFeature(feat.GetFID()) != 0:
+        gdaltest.post_reason('could not delete feature')
+        return 'fail'
+
+    print('Feature %d deleted !' % feat.GetFID())
+
+    return 'success'
+
+
+###############################################################################
+# Test CreateFeature() / DeleteFeature() with expected failure due to server not allowing insert & delete
+
+def ogr_wfs_9():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    timeout =  10
+    socket.setdefaulttimeout(timeout)
+    if gdaltest.gdalurlopen('http://testing.deegree.org/deegree-wfs/services') is None:
+        print('cannot open URL')
+        return 'skip'
+
+    ds = ogr.Open('WFS:http://testing.deegree.org/deegree-wfs/services', update = 1)
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayerByName('app:CountyBoundaries_edited')
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(geom)
+    feat.SetField('name', 'nameSetByOGR')
+    feat.SetField('fips', '10')
+    feat.SetField('feature_id', '123456')
+    feat.SetField('objectid', '7890123')
+    feat.SetField('shape_area', 12.34)
+    feat.SetField('shape_len', 56.78)
+
+    ret = lyr.CreateFeature(feat)
+    if ret != 0:
+        print('expected fail on CreateFeature')
+
+    ret = lyr.DeleteFeature(1)
+    if ret != 0:
+        print('expected fail on DeleteFeature')
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_wfs_1,
     ogr_wfs_2,
@@ -435,7 +516,9 @@ gdaltest_list = [
     ogr_wfs_4,
     ogr_wfs_5,
     ogr_wfs_6,
-    ogr_wfs_7
+    ogr_wfs_7,
+    ogr_wfs_8,
+    ogr_wfs_9
     ]
 
 if __name__ == '__main__':
