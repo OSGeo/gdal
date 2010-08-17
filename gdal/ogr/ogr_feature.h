@@ -190,11 +190,7 @@ class CPL_DLL OGRFeature
     int                 GetFieldIndex( const char * pszName)
                                       { return poDefn->GetFieldIndex(pszName);}
 
-    int                 IsFieldSet( int iField ) const
-                        { return
-                              pauFields[iField].Set.nMarker1 != OGRUnsetMarker
-                           || pauFields[iField].Set.nMarker2 != OGRUnsetMarker;
-                              }
+    int                 IsFieldSet( int iField ) const;
     
     void                UnsetField( int iField );
     

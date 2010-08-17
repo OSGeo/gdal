@@ -653,6 +653,42 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
  * @return TRUE if the field has been set, otherwise false.
  */
 
+int OGRFeature::IsFieldSet( int iField ) const
+
+{
+    int iSpecialField = iField - poDefn->GetFieldCount();
+    if (iSpecialField >= 0)
+    {
+        // special field value accessors
+        switch (iSpecialField)
+        {
+          case SPF_FID:
+            return ((OGRFeature *)this)->GetFID() != OGRNullFID;
+
+          case SPF_OGR_GEOM_WKT:
+          case SPF_OGR_GEOMETRY:
+            return poGeometry != NULL;
+
+          case SPF_OGR_STYLE:
+            return ((OGRFeature *)this)->GetStyleString() != NULL;
+
+          case SPF_OGR_GEOM_AREA:
+            if( poGeometry == NULL )
+                return FALSE;
+
+            return OGR_G_GetArea((OGRGeometryH)poGeometry) != 0.0;
+
+          default:
+            return FALSE;
+        }
+    }
+    else
+    { 
+        return pauFields[iField].Set.nMarker1 != OGRUnsetMarker
+            || pauFields[iField].Set.nMarker2 != OGRUnsetMarker;
+    }
+}
+
 /************************************************************************/
 /*                          OGR_F_IsFieldSet()                          */
 /************************************************************************/
