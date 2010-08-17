@@ -22,5 +22,5 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 update:
-	copymatch.sh /u/pkg/mitab *.TXT
-	copymatch.sh /u/pkg/mitab/mitab *.cpp *.h
+	copymatch.sh ~/pkg/mitab *.TXT
+	copymatch.sh ~/pkg/mitab/mitab *.cpp *.h
