@@ -3358,7 +3358,10 @@ SWIGINTERN void OGRLayerShadow_ResetReading(OGRLayerShadow *self){
     OGR_L_ResetReading(self);
   }
 SWIGINTERN char const *OGRLayerShadow_GetName(OGRLayerShadow *self){
-    return OGR_FD_GetName(OGR_L_GetLayerDefn(self));
+    return OGR_L_GetName(self);
+  }
+SWIGINTERN OGRwkbGeometryType OGRLayerShadow_GetGeomType(OGRLayerShadow *self){
+    return (OGRwkbGeometryType) OGR_L_GetGeomType(self);
   }
 SWIGINTERN char const *OGRLayerShadow_GetGeometryColumn(OGRLayerShadow *self){
     return OGR_L_GetGeometryColumn(self);
@@ -5608,6 +5611,36 @@ SWIGINTERN PyObject *_wrap_Layer_GetName(PyObject *SWIGUNUSEDPARM(self), PyObjec
     }
   }
   resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_GetGeomType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRwkbGeometryType result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Layer_GetGeomType",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetGeomType" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  {
+    result = (OGRwkbGeometryType)OGRLayerShadow_GetGeomType(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
   return NULL;
@@ -14441,6 +14474,7 @@ static PyMethodDef SwigMethods[] = {
 		"hLayer:  handle to the layer on which features are read. \n"
 		""},
 	 { (char *)"Layer_GetName", _wrap_Layer_GetName, METH_VARARGS, (char *)"Layer_GetName(Layer self) -> char"},
+	 { (char *)"Layer_GetGeomType", _wrap_Layer_GetGeomType, METH_VARARGS, (char *)"Layer_GetGeomType(Layer self) -> OGRwkbGeometryType"},
 	 { (char *)"Layer_GetGeometryColumn", _wrap_Layer_GetGeometryColumn, METH_VARARGS, (char *)"\n"
 		"Layer_GetGeometryColumn(Layer self) -> char\n"
 		"\n"
