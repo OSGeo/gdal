@@ -1294,7 +1294,7 @@ int main( int nArgc, char ** papszArgv )
                 CPLError( CE_Failure, CPLE_AppDefined, 
                         "Terminating translation prematurely after failed\n"
                         "translation of layer %s (use -skipfailures to skip errors)\n", 
-                        poLayer->GetLayerDefn()->GetName() );
+                        poLayer->GetName() );
 
                 exit( 1 );
             }
@@ -1453,7 +1453,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     char**      papszTransformOptions = NULL;
 
     if( pszNewLayerName == NULL )
-        pszNewLayerName = poSrcLayer->GetLayerDefn()->GetName();
+        pszNewLayerName = poSrcLayer->GetName();
 
     if( wkbFlatten(eGType) == wkbPolygon )
         bForceToPolygon = TRUE;
@@ -1541,7 +1541,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);
 
         if( poLayer != NULL 
-            && EQUAL(poLayer->GetLayerDefn()->GetName(),pszNewLayerName) )
+            && EQUAL(poLayer->GetName(),pszNewLayerName) )
         {
             poDstLayer = poLayer;
             break;
