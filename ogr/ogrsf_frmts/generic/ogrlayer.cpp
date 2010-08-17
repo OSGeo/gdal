@@ -1031,3 +1031,45 @@ void OGR_L_SetStyleTable( OGRLayerH hLayer,
     
     ((OGRLayer *) hLayer)->SetStyleTable( (OGRStyleTable *) hStyleTable);
 }
+
+/************************************************************************/
+/*                               GetName()                              */
+/************************************************************************/
+
+const char *OGRLayer::GetName()
+
+{
+    return GetLayerDefn()->GetName();
+}
+
+/************************************************************************/
+/*                           OGR_L_GetName()                            */
+/************************************************************************/
+
+const char* OGR_L_GetName( OGRLayerH hLayer )
+
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_GetName", "" );
+
+    return ((OGRLayer *) hLayer)->GetName();
+}
+
+/************************************************************************/
+/*                            GetGeomType()                             */
+/************************************************************************/
+
+OGRwkbGeometryType OGRLayer::GetGeomType()
+{
+    return GetLayerDefn()->GetGeomType();
+}
+/************************************************************************/
+/*                         OGR_L_GetGeomType()                          */
+/************************************************************************/
+
+OGRwkbGeometryType OGR_L_GetGeomType( OGRLayerH hLayer )
+
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_GetGeomType", wkbUnknown );
+
+    return ((OGRLayer *) hLayer)->GetGeomType();
+}

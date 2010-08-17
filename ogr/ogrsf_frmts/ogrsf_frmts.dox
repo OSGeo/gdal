@@ -1309,6 +1309,78 @@ by the OGRSFDriverManager.
 /************************************************************************/
 
 /**
+ \fn const char* OGRLayer::GetName();
+
+ \brief Return the layer name.
+
+ This returns the same content as GetLayerDefn()->GetName(), but for a
+ few drivers, calling GetName() directly can avoid lengthy layer
+ definition initialization.
+
+ This method is the same as the C function OGR_L_GetName().
+
+ If this method is derived in a driver, it must be done such that it
+ returns the same content as GetLayerDefn()->GetName().
+
+ @return the layer name (must not been freed)
+ @since OGR 1.8.0
+
+*/
+
+/**
+ \fn const char* OGR_L_GetName( OGRLayerH hLayer );
+
+ \brief Return the layer name.
+
+ This returns the same content as OGR_FD_GetName(OGR_L_GetLayerDefn(hLayer)),
+ but for a few drivers, calling OGR_L_GetName() directly can avoid lengthy
+ layer definition initialization.
+
+ This function is the same as the C++ method OGRLayer::GetName().
+
+ @param hLayer handle to the layer.
+ @return the layer name (must not been freed)
+ @since OGR 1.8.0
+*/
+
+
+/**
+ \fn OGRwkbGeometryType OGRLayer::GetGeomType();
+
+ \brief Return the layer geometry type.
+
+ This returns the same result as GetLayerDefn()->GetGeomType(), but for a
+ few drivers, calling GetGeomType() directly can avoid lengthy layer
+ definition initialization.
+
+ This method is the same as the C function OGR_L_GetGeomType().
+
+ If this method is derived in a driver, it must be done such that it
+ returns the same content as GetLayerDefn()->GetGeomType().
+
+ @return the geometry type
+ @since OGR 1.8.0
+
+*/
+
+/**
+ \fn OGRwkbGeometryType OGR_L_GetGeomType( OGRLayerH hLayer );
+
+ \brief Return the layer geometry type.
+
+ This returns the same result as OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hLayer)),
+ but for a few drivers, calling OGR_L_GetGeomType() directly can avoid lengthy
+ layer definition initialization.
+
+ This function is the same as the C++ method OGRLayer::GetGeomType().
+
+ @param hLayer handle to the layer.
+ @return the geometry type
+ @since OGR 1.8.0
+*/
+
+
+/**
  \fn void OGRLayer::ResetReading();
 
  \brief Reset feature reading to start on the first feature.
