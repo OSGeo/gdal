@@ -83,6 +83,8 @@ swq_select::~swq_select()
         CPLFree( column_defs[i].field_name );
         CPLFree( column_defs[i].field_alias );
 
+        delete column_defs[i].expr;
+
         if( column_summary != NULL 
             && column_summary[i].distinct_list != NULL )
         {
@@ -593,6 +595,8 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
 /*      Reallocate the column list larger.                              */
 /* -------------------------------------------------------------------- */
             CPLFree( column_defs[isrc].field_name );
+            delete column_defs[isrc].expr;
+
             column_defs = (swq_col_def *) 
                 CPLRealloc( column_defs, 
                             sizeof(swq_col_def) * 

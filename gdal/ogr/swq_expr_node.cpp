@@ -110,6 +110,7 @@ void swq_expr_node::Initialize()
     is_null = FALSE;
     string_value = NULL;
     papoSubExpr = NULL;
+    nSubExprCount = 0;
 }
 
 /************************************************************************/
@@ -121,13 +122,10 @@ swq_expr_node::~swq_expr_node()
 {
     CPLFree( string_value );
 
-    if( eNodeType == SNT_OPERATION )
-    {
-        int i;
-        for( i = 0; i < nSubExprCount; i++ )
-            delete papoSubExpr[i];
-        CPLFree( papoSubExpr );
-    }
+    int i;
+    for( i = 0; i < nSubExprCount; i++ )
+        delete papoSubExpr[i];
+    CPLFree( papoSubExpr );
 }
 
 /************************************************************************/

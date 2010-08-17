@@ -784,7 +784,10 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         }
 
         if( poResult->is_null )
+        {
+            delete poResult;
             continue;
+        }
 
         switch( poResult->field_type )
         {
@@ -800,6 +803,8 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             poDstFeat->SetField( iField, poResult->string_value );
             break;
         }
+
+        delete poResult;
     }
     
 /* -------------------------------------------------------------------- */
