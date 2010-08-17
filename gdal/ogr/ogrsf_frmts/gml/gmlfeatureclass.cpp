@@ -50,6 +50,7 @@ GMLFeatureClass::GMLFeatureClass( const char *pszName )
     m_nFeatureCount = -1; // unknown
 
     m_nGeometryType = 0; // wkbUnknown
+    m_nGeometryIndex = -1;
 
     m_pszSRSName = NULL;
     m_bSRSNameConsistant = TRUE;

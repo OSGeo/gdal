@@ -27,7 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <vector>
+
 #include "ogr_gml.h"
+#include "parsexsd.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
@@ -318,7 +321,20 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         pszXSDFilename = CPLResetExtension( pszNewName, "xsd" );
         if( VSIStatL( pszXSDFilename, &sGMLStatBuf ) == 0 )
         {
-            bHaveSchema = poReader->ParseXSD( pszXSDFilename );
+            std::vector<GMLFeatureClass*> aosClasses;
+            bHaveSchema = GMLParseXSD( pszXSDFilename, aosClasses );
+            if (bHaveSchema)
+            {
+                std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
+                std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
+                while (iter != eiter)
+                {
+                    GMLFeatureClass* poClass = *iter;
+                    iter ++;
+                    poReader->AddClass( poClass );
+                }
+                poReader->SetClassListLocked( TRUE );
+            }
         }
     }
     

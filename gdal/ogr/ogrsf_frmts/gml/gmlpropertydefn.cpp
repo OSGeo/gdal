@@ -47,6 +47,7 @@ GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
     m_eType = GMLPT_Untyped;
     m_nWidth = 0; 
     m_nPrecision = 0;
+    m_nIndex = -1;
 }
 
 /************************************************************************/
