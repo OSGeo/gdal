@@ -533,7 +533,12 @@ public:
   }
   
   const char * GetName() {
-    return OGR_FD_GetName(OGR_L_GetLayerDefn(self));
+    return OGR_L_GetName(self);
+  }
+
+  /* Added in OGR 1.8.0 */
+  OGRwkbGeometryType GetGeomType() {
+    return (OGRwkbGeometryType) OGR_L_GetGeomType(self);
   }
  
   const char * GetGeometryColumn() {

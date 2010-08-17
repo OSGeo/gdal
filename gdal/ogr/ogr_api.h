@@ -311,6 +311,8 @@ typedef void *OGRSFDriverH;
 
 /* OGRLayer */
 
+const char CPL_DLL* OGR_L_GetName( OGRLayerH );
+OGRwkbGeometryType CPL_DLL OGR_L_GetGeomType( OGRLayerH );
 OGRGeometryH CPL_DLL OGR_L_GetSpatialFilter( OGRLayerH );
 void   CPL_DLL OGR_L_SetSpatialFilter( OGRLayerH, OGRGeometryH );
 void   CPL_DLL OGR_L_SetSpatialFilterRect( OGRLayerH, 

@@ -80,6 +80,8 @@ class CPL_DLL OGRLayer
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
 
+    virtual const char *GetName();
+    virtual OGRwkbGeometryType GetGeomType();
     virtual OGRFeatureDefn *GetLayerDefn() = 0;
 
     virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
