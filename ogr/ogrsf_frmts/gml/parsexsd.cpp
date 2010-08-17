@@ -144,7 +144,8 @@ int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
                      EQUAL(pszStrippedNSType, "double") ||
                      EQUAL(pszStrippedNSType, "float"))
                 gmlType = GMLPT_Real;
-            else if (EQUAL(pszStrippedNSType, "integer") ||
+            else if (EQUAL(pszStrippedNSType, "short") ||
+                     EQUAL(pszStrippedNSType, "integer") ||
                      EQUAL(pszStrippedNSType, "long"))
                 gmlType = GMLPT_Integer;
             else if (strncmp(pszType, "gml:", 4) == 0)
