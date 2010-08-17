@@ -1,60 +1,22 @@
 /*! \page ogr_sql OGR SQL
 
 The OGRDataSource supports executing commands against a datasource via the
-OGRDataSource::ExecuteSQL() method.  While in theory any sort of command could
-be handled this way, in practice the mechanism is used to provide a subset of
-SQL SELECT capability to applications.  This page discusses the generic SQL
-implementation implemented within OGR, and issue with driver specific SQL
-support.<p>
+OGRDataSource::ExecuteSQL() method.  While in theory 
+any sort of command could be handled this way, in practice the mechanism is 
+used to provide a subset of SQL SELECT capability to applications.  This 
+page discusses the generic SQL implementation implemented within OGR, and 
+issue with driver specific SQL support.<p>
 
-\section ogr_sql_syntax Supported SQL syntax
+The OGRLayer class also supports applying an attribute query filter to 
+features returned using the OGRLayer::SetAttributeFilter() method.  The
+syntax for the attribute filter is the same as the WHERE clause in the 
+OGR SQL SELECT statement.  So everything here with regard to the WHERE 
+clause applies in the context of the SetAttributeFilter() method.<p>
 
-OGR SQL supports the following pseudo-syntax:
-
-\code
-SELECT <field-list> FROM <table_def>
-     [LEFT JOIN <table_def> 
-      ON [<table_ref>.]<key_field> = [<table_ref>.].<key_field>]*
-     [WHERE <where-expr>] 
-     [ORDER BY <sort specification list>]
-
-<field-list> ::= <column-spec> [ { , <column-spec> }... ]
-
-<column-spec> ::= <field-spec> [ <as clause> ]
-                 | CAST ( <field-spec> AS <data type> ) [ <as clause> ]
-
-<field-spec> ::= [DISTINCT] <field_ref>
-                 | <field_func> ( [DISTINCT] <field-ref> )
-                 | Count(*)
-
-<as clause> ::= [ AS ] <column_name>
-
-<data type> ::= character [ ( field_length ) ]
-                | float [ ( field_length ) ]
-                | numeric [ ( field_length [, field_precision ] ) ]
-                | integer [ ( field_length ) ]
-                | date [ ( field_length ) ]
-                | time [ ( field_length ) ]
-                | timestamp [ ( field_length ) ]
-
-<field-func> ::= AVG | MAX | MIN | SUM | COUNT
-
-<field_ref>  ::= [<table_ref>.]field_name
-
-<sort specification list> ::=
-              <sort specification> [ { <comma> <sort specification> }... ]
-
-<sort specification> ::= <sort key> [ <ordering specification> ]
-
-<sort key> ::=  <field_ref>
-
-<ordering specification> ::= ASC | DESC
-
-<table_def> ::= ['<datasource name>'.]table_name [table_alias]
-
-<table_ref> ::= table_name | table_alias
-\endcode
-
+NOTE: OGR SQL has been reimplemented for GDAL/OGR 1.8.0.  Many features
+discussed below, notably arithmetic expressions, and expressions in the 
+field list, were not support in GDAL/OGR 1.7.x and earlier.  See RFC 28 for
+details of the new features in GDAL/OGR 1.8.0.
 
 \section ogr_sql_select SELECT
 
@@ -141,8 +103,13 @@ a count of distinct values, for instance:
 SELECT COUNT(DISTINCT areacode) FROM polylayer
 \endcode
 
-Field definitions can be complex expressions using arithmetic, and 
-functional operators.   
+Field names can also be prefixed by a table name though this is only 
+really meaningful when performing joins.  It is further demonstrated in 
+the JOIN section.
+
+Field definitions can also be complex expressions using arithmetic, and 
+functional operators.   However, the DISTINCT keyword, and summarization 
+operators like MIN, MAX, AVG and SUM may not be applied to expression fields.
 
 \code
 SELECT cost+tax from invoice
@@ -153,10 +120,6 @@ or
 \code
 SELECT CONCAT(owner_first_name,' ',owner_last_name) from properties
 \endcode
-
-Field names can also be prefixed by a table name though this is only 
-really meaningful when performing joins.  It is further demonstrated in 
-the JOIN section.
 
 \subsubsection ogr_sql_fname_alias Using the field name alias
 
@@ -197,21 +160,31 @@ Currently casting to the following target types are supported:
 <li> timestamp(field_length)
 </ol>
 
-Specifying the field_length and/or the field_precision is optional.
-Conversion to the 'integer list', 'double list' and 'string list' OGR data types are not
-supported, which doesn't conform to the SQL92 specification.
+Specifying the field_length and/or the field_precision is optional.  An
+explicit value of zero can be used as the width for character() to indicate
+variable width.  Conversion to the 'integer list', 'double list' 
+and 'string list' OGR data types are not supported, which doesn't conform to 
+the SQL92 specification.
+
+While the CAST operator can be applied anywhere in an expression, including
+in a WHERE clause, the detailed control of output field format is only
+supported if the CAST operator is the "outer most" operators on a field
+in the field definition list.  In other contexts it is still useful to
+convert between numeric, string and date data types.
 
 \subsection ogr_sql_where WHERE
 
-The argument to the WHERE clause is a fairly simplistic logical expression
-used select records to be selected from the source layer.  In addition to its
-use within the WHERE statement, the WHERE clause handling is also used for
-OGR attribute queries on regular layers. 
+The argument to the WHERE clause is a logical expression used select records 
+from the source layer.  In addition to its use within the WHERE statement, 
+the WHERE clause handling is also used for OGR attribute queries on regular 
+layers via OGRLayer::SetAttributeFilter().
 
-A WHERE clause consists of
-a set of attribute tests.  Each basic test is of the form <b>fieldname 
-operator value</b>.  The <b>fieldname</b> is any of the fields in the source
-layer.  The operator is one of 
+In addition to the arithmetic and other functional operators available in
+expressions in the field selection clause of the SELECT statement, in the 
+WHERE context logical operators are also available and the evaluated value
+of the expression should be logical (true or false).
+
+The available logical operators are 
 <b>=</b>, 
 <b>!=</b>, 
 <b>&lt;&gt;</b>, 
@@ -222,7 +195,6 @@ layer.  The operator is one of
 <b>LIKE</b> and 
 <b>ILIKE</b> and 
 <b>IN</b>. 
-
 Most of the operators are self explanitory, but is is worth nothing that <b>
 !=</b> is the same as <b>&lt;&gt;</b>, the string equality is
 case insensitive, but the <b>&lt;</b>, <b>&gt;</b>, <b>&lt;=</b> and <b>&gt;=</b> operators <i>are</i> case sensitive.  Both the LIKE and ILIKE operators are case insensitive.
@@ -275,13 +247,8 @@ SELECT * FROM poly WHERE (prop_value IS NOT NULL) AND (prop_value < 100000)
 \subsection ogr_sql_where_limits WHERE Limitations
 
 <ol>
-<li> The left of any comparison operator must be a field name, and the right
-must be a literal value.  Fields cannot currently be compared to fields.  
 <li> Fields must all come from the primary table (the one listed in the FROM
-clause, and must not have any table prefix ... they must just be the field 
-name.
-<li> No arithmetric operations are supported.  You can't test 
-"WHERE (a+b) < 10" for instance.
+clause).
 <li> All string comparisons are case insensitive except for <b>&lt;</b>, <b>&gt;</b>, <b>&lt;=</b> and <b>&gt;=</b>.
 </ol>
 

@@ -433,12 +433,6 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               break;
           }
 
-          case SWQ_CAST:
-          {
-              
-              break;
-          }
-            
           default:
             CPLAssert( FALSE );
             delete poRet;
@@ -782,7 +776,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
                 int nWidth;
 
                 nWidth = sub_node_values[2]->int_value;
-                if( (int) strlen(osRet) > nWidth )
+                if( nWidth > 0 && (int) strlen(osRet) > nWidth )
                     osRet.resize(nWidth);
             }
 
