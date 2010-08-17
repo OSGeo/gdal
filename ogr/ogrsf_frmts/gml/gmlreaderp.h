@@ -316,8 +316,6 @@ public:
     int              LoadClasses( const char *pszFile = NULL );
     int              SaveClasses( const char *pszFile = NULL );
 
-    int              ParseXSD( const char *pszFile );
-
     int              ResolveXlinks( const char *pszFile,
                                     int* pbOutIsTempFile,
                                     char **papszSkip = NULL,
