@@ -27,11 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <vector>
+
 #include "ogr_wfs.h"
 
 #include "ogr_api.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
+#include "parsexsd.h"
 
 CPL_CVSID("$Id$");
 
@@ -57,6 +60,7 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDS,
     this->pszNSVal = pszNSVal ? CPLStrdup(pszNSVal) : NULL;
 
     poFeatureDefn = NULL;
+    poGMLFeatureClass = NULL;
     bGotApproximateLayerDefn = FALSE;
 
     poBaseDS = NULL;
@@ -83,6 +87,7 @@ OGRWFSLayer::~OGRWFSLayer()
 
     if (poFeatureDefn != NULL)
         poFeatureDefn->Release();
+    delete poGMLFeatureClass;
 
     CPLFree(pszBaseURL);
     CPLFree(pszName);
@@ -207,30 +212,76 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
     psResult->pabyData = NULL;
     CPLHTTPDestroyResult(psResult);
 
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.gml", this);
-    fp = VSIFOpenL(osTmpFileName, "wb");
-    VSIFPrintfL(fp, "<?xml version=\"1.0\"?><wfs:FeatureCollection xmlns:gml=\"http://www.opengis.net/gml\"></wfs:FeatureCollection>");
-    VSIFCloseL(fp);
+    std::vector<GMLFeatureClass*> aosClasses;
+    int bHaveSchema = GMLParseXSD( osTmpFileName, aosClasses );
 
-    OGRDataSource* poDS = (OGRDataSource*) OGROpen(osTmpFileName, FALSE, NULL);
-    if (poDS == NULL)
+    if (bHaveSchema && aosClasses.size() == 1)
     {
-        return NULL;
-    }
-    if (poDS->GetLayerCount() != 1)
-    {
-        OGRDataSource::DestroyDataSource(poDS);
-        return NULL;
-    }
+        poGMLFeatureClass = aosClasses[0];
 
-    OGRLayer* poLayer = poDS->GetLayer(0);
-    OGRFeatureDefn* poFeatureDefn = poLayer->GetLayerDefn()->Clone();
-    osGeometryColumnName = poLayer->GetGeometryColumn();
-    OGRDataSource::DestroyDataSource(poDS);
+        OGRFeatureDefn* poFDefn = new OGRFeatureDefn(poGMLFeatureClass->GetName());
+        poFDefn->SetGeomType( (OGRwkbGeometryType)poGMLFeatureClass->GetGeometryType() );
+
+    /* -------------------------------------------------------------------- */
+    /*      Added attributes (properties).                                  */
+    /* -------------------------------------------------------------------- */
+        OGRFieldDefn oField( "gml_id", OFTString );
+        poFDefn->AddFieldDefn( &oField );
+
+        for( int iField = 0; iField < poGMLFeatureClass->GetPropertyCount(); iField++ )
+        {
+            GMLPropertyDefn *poProperty = poGMLFeatureClass->GetProperty( iField );
+            OGRFieldType eFType;
+
+            if( poProperty->GetType() == GMLPT_Untyped )
+                eFType = OFTString;
+            else if( poProperty->GetType() == GMLPT_String )
+                eFType = OFTString;
+            else if( poProperty->GetType() == GMLPT_Integer )
+                eFType = OFTInteger;
+            else if( poProperty->GetType() == GMLPT_Real )
+                eFType = OFTReal;
+            else if( poProperty->GetType() == GMLPT_StringList )
+                eFType = OFTStringList;
+            else if( poProperty->GetType() == GMLPT_IntegerList )
+                eFType = OFTIntegerList;
+            else if( poProperty->GetType() == GMLPT_RealList )
+                eFType = OFTRealList;
+            else
+                eFType = OFTString;
+
+            OGRFieldDefn oField( poProperty->GetName(), eFType );
+            if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
+                oField.SetName(poProperty->GetName()+4);
+            if( poProperty->GetWidth() > 0 )
+                oField.SetWidth( poProperty->GetWidth() );
+            if( poProperty->GetPrecision() > 0 )
+                oField.SetPrecision( poProperty->GetPrecision() );
+
+            poFDefn->AddFieldDefn( &oField );
+        }
+
+        const char* pszGeometryColumnName = poGMLFeatureClass->GetGeometryElement();
+        if (pszGeometryColumnName)
+            osGeometryColumnName = pszGeometryColumnName;
+
+        return poFDefn;
+    }
+    else if (bHaveSchema)
+    {
+        std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
+        std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
+        while (iter != eiter)
+        {
+            GMLFeatureClass* poClass = *iter;
+            iter ++;
+            delete poClass;
+        }
+    }
 
     VSIUnlink(osTmpFileName);
 
-    return poFeatureDefn;
+    return NULL;
 }
 
 /************************************************************************/
@@ -603,6 +654,8 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         }
         else
         {
+            CPLAssert(poFeatureDefn->GetFieldCount() == poSrcFeature->GetFieldCount() );
+
             int iField;
             for(iField = 0;iField < poFeatureDefn->GetFieldCount(); iField++)
                 poNewFeature->SetField( iField, poSrcFeature->GetRawFieldRef(iField) );
@@ -900,6 +953,13 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    if (poGMLFeatureClass == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot insert feature because we didn't manage to parse the .XSD schema");
+        return OGRERR_FAILURE;
+    }
+
     if (poFeatureDefn->GetFieldIndex("gml_id") != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -940,8 +1000,25 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     osPost += osTargetNamespace; osPost += "\">\n";
 
     int i;
-    for(i=1; i < poFeature->GetFieldCount(); i++)
+    for(i=1; i <= poFeature->GetFieldCount(); i++)
     {
+        if (poGMLFeatureClass->GetGeometryAttributeIndex() == i - 1)
+        {
+            OGRGeometry* poGeom = poFeature->GetGeometryRef();
+            if (poGeom != NULL && osGeometryColumnName.size() != 0)
+            {
+                if (poGeom->getSpatialReference() == NULL)
+                    poGeom->assignSpatialReference(poSRS);
+                char* pszGML = OGR_G_ExportToGML((OGRGeometryH)poGeom);
+                osPost += "      <feature:"; osPost += osGeometryColumnName; osPost += ">";
+                osPost += pszGML;
+                osPost += "</feature:"; osPost += osGeometryColumnName; osPost += ">\n";
+                CPLFree(pszGML);
+            }
+        }
+        if (i == poFeature->GetFieldCount())
+            break;
+
         if (poFeature->IsFieldSet(i))
         {
             OGRFieldDefn* poFDefn = poFeature->GetFieldDefnRef(i);
@@ -963,18 +1040,7 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
             osPost += poFDefn->GetNameRef();
             osPost += ">\n";
         }
-    }
 
-    OGRGeometry* poGeom = poFeature->GetGeometryRef();
-    if (poGeom != NULL && osGeometryColumnName.size() != 0)
-    {
-        if (poGeom->getSpatialReference() == NULL)
-            poGeom->assignSpatialReference(poSRS);
-        char* pszGML = OGR_G_ExportToGML((OGRGeometryH)poGeom);
-        osPost += "      <feature:"; osPost += osGeometryColumnName; osPost += ">";
-        osPost += pszGML;
-        osPost += "</feature:"; osPost += osGeometryColumnName; osPost += ">\n";
-        CPLFree(pszGML);
     }
     
     osPost += "    </feature:"; osPost += pszShortName; osPost += ">\n";
