@@ -461,7 +461,7 @@ OGRLayer *OGRDataSource::GetLayerByName( const char *pszName )
     {
         OGRLayer *poLayer = GetLayer(i);
 
-        if( strcmp( pszName, poLayer->GetLayerDefn()->GetName() ) == 0 )
+        if( strcmp( pszName, poLayer->GetName() ) == 0 )
             return poLayer;
     }
 
@@ -470,7 +470,7 @@ OGRLayer *OGRDataSource::GetLayerByName( const char *pszName )
     {
         OGRLayer *poLayer = GetLayer(i);
 
-        if( EQUAL( pszName, poLayer->GetLayerDefn()->GetName() ) )
+        if( EQUAL( pszName, poLayer->GetName() ) )
             return poLayer;
     }
 
@@ -534,7 +534,7 @@ OGRErr OGRDataSource::ProcessSQLCreateIndex( const char *pszSQLCommand )
         {
             poLayer = GetLayer(i);
             
-            if( EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[3]) )
+            if( EQUAL(poLayer->GetName(),papszTokens[3]) )
                 break;
         }
         
@@ -642,7 +642,7 @@ OGRErr OGRDataSource::ProcessSQLDropIndex( const char *pszSQLCommand )
         {
             poLayer = GetLayer(i);
         
-            if( EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[3]) )
+            if( EQUAL(poLayer->GetName(),papszTokens[3]) )
                 break;
         }
 
