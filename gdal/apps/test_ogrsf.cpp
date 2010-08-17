@@ -168,7 +168,7 @@ int main( int nArgc, char ** papszArgv )
             exit(1);
             
         printf( "INFO: Testing layer %s.\n",
-                    poResultSet->GetLayerDefn()->GetName() );
+                    poResultSet->GetName() );
         bRet = TestOGRLayer( poDS, poResultSet, TRUE );
         
         poDS->ReleaseResultSet(poResultSet);
@@ -190,7 +190,7 @@ int main( int nArgc, char ** papszArgv )
             }
 
             printf( "INFO: Testing layer %s.\n",
-                    poLayer->GetLayerDefn()->GetName() );
+                    poLayer->GetName() );
             bRet &= TestOGRLayer( poDS, poLayer, FALSE );
         }
     }
@@ -212,7 +212,7 @@ int main( int nArgc, char ** papszArgv )
             }
             
             printf( "INFO: Testing layer %s.\n",
-                    poLayer->GetLayerDefn()->GetName() );
+                    poLayer->GetName() );
             bRet &= TestOGRLayer( poDS, poLayer, FALSE );
             
             papszLayerIter ++;
@@ -330,7 +330,7 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
     if (!bIsSQLLayer)
     {
         CPLString osSQL;
-        osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", poLayer->GetLayerDefn()->GetName());
+        osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", poLayer->GetName());
         OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
         if (poSQLLyr)
         {
@@ -711,7 +711,7 @@ static int TestSpatialFilter( OGRLayer *poLayer )
     {
         printf( "INFO: Skipping Spatial Filter test for %s.\n"
                 "      No features in layer.\n",
-                poLayer->GetLayerDefn()->GetName() );
+                poLayer->GetName() );
         return bRet;
     }
 
@@ -850,7 +850,7 @@ static int TestAttributeFilter( OGRLayer *poLayer )
     {
         printf( "INFO: Skipping Attribute Filter test for %s.\n"
                 "      No features in layer.\n",
-                poLayer->GetLayerDefn()->GetName() );
+                poLayer->GetName() );
         return bRet;
     }
 
@@ -866,7 +866,7 @@ static int TestAttributeFilter( OGRLayer *poLayer )
     {
         printf( "INFO: Skipping Attribute Filter test for %s.\n"
                 "      Could not find non NULL field.\n",
-                poLayer->GetLayerDefn()->GetName() );
+                poLayer->GetName() );
         OGRFeature::DestroyFeature(poTargetFeature);
         return bRet;
     }
@@ -993,7 +993,7 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
     if( poLayer->GetSpatialFilter() != NULL )
     {
         printf( "WARN: Spatial filter in place by default on layer %s.\n",
-                poLayer->GetLayerDefn()->GetName() );
+                poLayer->GetName() );
         poLayer->SetSpatialFilter( NULL );
     }
 
