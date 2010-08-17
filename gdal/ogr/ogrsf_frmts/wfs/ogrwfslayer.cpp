@@ -662,6 +662,7 @@ void OGRWFSLayer::SetSpatialFilter( OGRGeometry * poGeom )
 OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
 {
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
+    CPLString osOldWFSWhere(osWFSWhere);
     if (poDS->HasMinOperators() && pszFilter != NULL)
     {
         int bNeedsNullCheck = FALSE;
@@ -682,7 +683,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
 
     osSQLWhere = (pszFilter) ? pszFilter : "";
 
-    if (osWFSWhere.size() != 0)
+    if (osWFSWhere != osOldWFSWhere)
         bReloadNeeded = TRUE;
     else
         bReloadNeeded = FALSE;
@@ -1088,6 +1089,7 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
 
 OGRFeature* OGRWFSLayer::GetFeature(long nFID)
 {
+    GetLayerDefn();
     if (poBaseLayer == NULL && poFeatureDefn->GetFieldIndex("gml_id") == 0)
     {
         /* This is lovely hackish. We assume that then gml_id will be */
