@@ -141,6 +141,19 @@ a count of distinct values, for instance:
 SELECT COUNT(DISTINCT areacode) FROM polylayer
 \endcode
 
+Field definitions can be complex expressions using arithmetic, and 
+functional operators.   
+
+\code
+SELECT cost+tax from invoice
+\endcode
+
+or
+
+\code
+SELECT CONCAT(owner_first_name,' ',owner_last_name) from properties
+\endcode
+
 Field names can also be prefixed by a table name though this is only 
 really meaningful when performing joins.  It is further demonstrated in 
 the JOIN section.
@@ -151,21 +164,16 @@ OGR SQL supports renaming the fields following the SQL92 specification by
 using the AS keyword according to the following example:
 
 \code
-SELECT select *, OGR_STYLE AS 'STYLE' FROM polylayer
+SELECT *, OGR_STYLE AS STYLE FROM polylayer
 \endcode
 
 The field name alias can be used as the last operation in the column specification.
 Therefore we cannot rename the fields inside an operator, but we can
-rename whole column expression, like:
+rename whole column expression, like these two:
 
 \code
 SELECT COUNT(areacode) AS 'count' FROM polylayer
-\endcode
-
-We can optionally omit the AS keyword in the field name aliases, like:
-
-\code
-SELECT *, OGR_STYLE 'STYLE' FROM polylayer
+SELECT dollars/100.0 AS cents FROM polylayer
 \endcode
 
 \subsubsection ogr_sql_ftype_cast Changing the type of the fields
@@ -192,22 +200,6 @@ Currently casting to the following target types are supported:
 Specifying the field_length and/or the field_precision is optional.
 Conversion to the 'integer list', 'double list' and 'string list' OGR data types are not
 supported, which doesn't conform to the SQL92 specification.
-
-\subsubsection ogr_sql_flist_limits Field List Limitations
-
-<ol>
-
-<li>
-Field arithmetic, and other binary operators are not supported, so you can't 
-do something like:
-
-\code
-SELECT prop_value / area FROM invoices
-\endcode
-
-<li> Lots of operators are missing.  
-
-</ol>
 
 \subsection ogr_sql_where WHERE
 
