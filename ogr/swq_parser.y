@@ -483,6 +483,8 @@ column_spec: /* TODO: eventually this will be a full fledged expression */
 	            YYERROR;
 		}
 
+                delete $1;
+                
 		swq_expr_node *poNode = new swq_expr_node();
 		poNode->eNodeType = SNT_COLUMN;
 		poNode->string_value = CPLStrdup( "*" );
