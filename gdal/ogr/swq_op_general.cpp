@@ -189,11 +189,17 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
             
           case SWQ_MODULUS:
+          {
+            int nRight = (int) sub_node_values[1]->float_value;
             poRet->field_type = SWQ_INTEGER;
-            poRet->int_value = ((int) sub_node_values[0]->float_value) 
-                % ((int) sub_node_values[1]->float_value);
+            if (nRight == 0)
+                poRet->int_value = INT_MAX;
+            else
+                poRet->int_value = ((int) sub_node_values[0]->float_value)
+                    % nRight;
             break;
-            
+          }
+
           default:
             CPLAssert( FALSE );
             delete poRet;
@@ -300,8 +306,11 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
             
           case SWQ_MODULUS:
-            poRet->int_value = sub_node_values[0]->int_value 
-                % sub_node_values[1]->int_value;
+            if( sub_node_values[1]->int_value == 0 )
+                poRet->int_value = INT_MAX;
+            else
+                poRet->int_value = sub_node_values[0]->int_value
+                    % sub_node_values[1]->int_value;
             break;
             
           default:
