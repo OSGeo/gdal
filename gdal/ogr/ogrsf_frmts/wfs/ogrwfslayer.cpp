@@ -1161,7 +1161,7 @@ OGRFeature* OGRWFSLayer::GetFeature(long nFID)
         /* This is lovely hackish. We assume that then gml_id will be */
         /* layer_name.number. This is actually what we can observe with */
         /* GeoServer and TinyOWS */
-        CPLString osVal = CPLSPrintf("gml_id = %s.%ld", GetShortName(), nFID);
+        CPLString osVal = CPLSPrintf("gml_id = '%s.%ld'", GetShortName(), nFID);
         CPLString osOldSQLWhere(osSQLWhere);
         SetAttributeFilter(osVal);
         OGRFeature* poFeature = GetNextFeature();
