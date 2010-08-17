@@ -51,6 +51,16 @@ def ogr_basic_2():
 
     gdaltest.lyr = gdaltest.ds.GetLayerByName( 'poly' )
 
+    if gdaltest.lyr.GetName() != 'poly':
+        return 'fail'
+    if gdaltest.lyr.GetGeomType() != ogr.wkbPolygon:
+        return 'fail'
+
+    if gdaltest.lyr.GetLayerDefn().GetName() != 'poly':
+        return 'fail'
+    if gdaltest.lyr.GetLayerDefn().GetGeomType() != ogr.wkbPolygon:
+        return 'fail'
+
     count = gdaltest.lyr.GetFeatureCount()
     if count != 10:
         gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 10' % count )
