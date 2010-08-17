@@ -374,7 +374,7 @@ value_expr:
 		    }
 		}
 
-	| SWQT_CAST '(' field_value SWQT_AS type_def ')'
+	| SWQT_CAST '(' value_expr SWQT_AS type_def ')'
 	        {
 		    $$ = $5;
 		    $$->PushSubExpression( $3 );
@@ -493,6 +493,31 @@ column_spec: /* TODO: eventually this will be a full fledged expression */
 
 		if( !context->poSelect->PushField( count ) )
 		    YYERROR;
+	    }
+
+        | SWQT_IDENTIFIER '(' '*' ')' SWQT_AS SWQT_IDENTIFIER
+	    {
+	        // special case for COUNT(*), confirm it.
+		if( !EQUAL($1->string_value,"COUNT") )
+		{
+		    CPLError( CE_Failure, CPLE_AppDefined,
+		    	      "Syntax Error with %s(*).", 
+			      $1->string_value );
+	            YYERROR;
+		}
+
+		swq_expr_node *poNode = new swq_expr_node();
+		poNode->eNodeType = SNT_COLUMN;
+		poNode->string_value = CPLStrdup( "*" );
+		poNode->table_index = poNode->field_index = -1;
+
+		swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
+		count->PushSubExpression( poNode );
+
+		if( !context->poSelect->PushField( count, $6->string_value ) )
+		    YYERROR;
+
+                delete $6;
 	    }
 
 opt_where:  
