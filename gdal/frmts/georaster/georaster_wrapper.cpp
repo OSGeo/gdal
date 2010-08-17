@@ -30,10 +30,10 @@
 
 #include <string>
 
-
 #include "georaster_priv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_minixml.h"
 
 //  ---------------------------------------------------------------------------
 //                                                           GeoRasterWrapper()
@@ -548,6 +548,16 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     poGRW->dfYCoefficient[0] = -dfRotation;
     poGRW->dfYCoefficient[1] = ( dfLRy - dfULy ) / nSizeY;
     poGRW->dfYCoefficient[2] = dfULy;
+
+    //  -------------------------------------------------------------------
+    //  Apply ULTCoordinate
+    //  -------------------------------------------------------------------
+
+    poGRW->dfXCoefficient[2] += 
+                ( poGRW->anULTCoordinate[0] * poGRW->dfXCoefficient[0] );
+
+    poGRW->dfYCoefficient[2] += 
+                ( poGRW->anULTCoordinate[1] * poGRW->dfYCoefficient[1] );
 
     //  -------------------------------------------------------------------
     //  Clean up
@@ -1177,6 +1187,19 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  -------------------------------------------------------------------
 
     LoadNoDataValues();
+
+    //  -------------------------------------------------------------------
+    //  Get ULTCoordinate values
+    //  -------------------------------------------------------------------
+
+    anULTCoordinate[0] = atoi(CPLGetXMLValue( 
+            phMetadata, "rasterInfo.ULTCoordinate.row", "0"));
+
+    anULTCoordinate[1] = atoi(CPLGetXMLValue( 
+            phMetadata, "rasterInfo.ULTCoordinate.column", "0"));
+
+    anULTCoordinate[2] = atoi(CPLGetXMLValue( 
+            phMetadata, "rasterInfo.ULTCoordinate.band", "0"));
 
     //  -------------------------------------------------------------------
     //  Get Interleaving mode
