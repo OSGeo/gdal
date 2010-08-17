@@ -908,7 +908,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
     if( psSelectInfo->where_expr != NULL )
     {
         pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList );
-        CPLDebug( "OGR", "Unparse() -> %s", pszWHERE );
+        //CPLDebug( "OGR", "Unparse() -> %s", pszWHERE );
     }
 
 /* -------------------------------------------------------------------- */
