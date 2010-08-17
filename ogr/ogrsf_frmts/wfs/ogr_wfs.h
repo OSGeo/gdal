@@ -123,6 +123,7 @@ class OGRWFSLayer : public OGRLayer
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
 };
 
