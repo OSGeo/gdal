@@ -429,7 +429,7 @@ def ogr_wfs_7():
     return 'success'
 
 ###############################################################################
-# Test CreateFeature() / DeleteFeature() (WFS-T)
+# Test CreateFeature() / UpdateFeature() / DeleteFeature() (WFS-T)
 
 def ogr_wfs_8():
     if gdaltest.wfs_drv is None:
@@ -458,6 +458,12 @@ def ogr_wfs_8():
         return 'fail'
 
     print('Feature %d created !' % feat.GetFID())
+
+    feat.SetField('name', 'name_modified_by_ogr_wfs_8_test')
+    if lyr.SetFeature(feat) != 0:
+        gdaltest.post_reason('cannot update feature')
+        return 'fail'
+    print('Feature %d updated !' % feat.GetFID())
     
     if lyr.DeleteFeature(feat.GetFID()) != 0:
         gdaltest.post_reason('could not delete feature')
@@ -469,7 +475,8 @@ def ogr_wfs_8():
 
 
 ###############################################################################
-# Test CreateFeature() / DeleteFeature() with expected failure due to server not allowing insert & delete
+# Test CreateFeature() / UpdateFeature() / DeleteFeature() with expected
+# failure due to server not allowing insert & delete
 
 def ogr_wfs_9():
 
@@ -506,6 +513,11 @@ def ogr_wfs_9():
     ret = lyr.DeleteFeature(1)
     if ret != 0:
         print('expected fail on DeleteFeature')
+
+    feat = lyr.GetFeature(10)
+    ret = lyr.SetFeature(feat)
+    if ret != 0:
+        print('expected fail on SetFeature')
 
     return 'success'
 
