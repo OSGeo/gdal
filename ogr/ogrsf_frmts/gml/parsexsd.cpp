@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GML Reader
- * Purpose:  Implementation of GMLReader::ParseXSD() method.
+ * Purpose:  Implementation of GMLParseXSD()
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -27,13 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gmlreader.h"
+#include "parsexsd.h"
 #include "cpl_error.h"
-
-#if HAVE_XERCES != 0 || defined(HAVE_EXPAT)
-
-#include "gmlreaderp.h"
 #include "cpl_conv.h"
+#include "ogr_core.h"
 
 /************************************************************************/
 /*                              StripNS()                               */
@@ -80,7 +77,7 @@ static const AssocNameType apsPropertyTypes [] =
     {NULL, wkbUnknown},
 };
 
-int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
+GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                 const char* pszName,
                                 const char *pszType)
 {
@@ -96,7 +93,7 @@ int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
         }
     }
     if (psThis == NULL)
-        return FALSE;
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Grab the sequence of extensions greatgrandchild.                */
@@ -107,7 +104,7 @@ int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
 
     if( psAttrSeq == NULL )
     {
-        return FALSE;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -121,6 +118,7 @@ int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
 /*      this feature class.                                             */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psAttrDef;
+    int nAttributeIndex = 0;
 
     for( psAttrDef = psAttrSeq->psChild;
             psAttrDef != NULL;
@@ -157,6 +155,10 @@ int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
                     {
                         poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
                         poClass->SetGeometryType(psIter->eType);
+                        poClass->SetGeometryAttributeIndex( nAttributeIndex );
+
+                        nAttributeIndex ++;
+                        
                         break;
                     }
 
@@ -164,17 +166,23 @@ int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
                 }
                 continue;
             }
-
-            if (gmlType != GMLPT_Untyped)
+            else
             {
-                GMLPropertyDefn *poProp = new GMLPropertyDefn(
-                    CPLGetXMLValue( psAttrDef, "name", "unnamed" ),
-                    CPLGetXMLValue( psAttrDef, "name", "unnamed" ) );
-
-                poProp->SetType( gmlType );
-                poClass->AddProperty( poProp );
-                continue;
+                //CPLDebug("GML", "Unknown type (%s). Defaulting to string", pszType);
+                gmlType = GMLPT_String;
             }
+
+            GMLPropertyDefn *poProp = new GMLPropertyDefn(
+                CPLGetXMLValue( psAttrDef, "name", "unnamed" ),
+                CPLGetXMLValue( psAttrDef, "name", "unnamed" ) );
+
+            poProp->SetType( gmlType );
+            poProp->SetAttributeIndex( nAttributeIndex );
+            poClass->AddProperty( poProp );
+
+            nAttributeIndex ++;
+
+            continue;
         }
 
         // For now we skip geometries .. fixup later.
@@ -227,6 +235,10 @@ int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
         else
             poProp->SetType( GMLPT_Untyped );
 
+        poProp->SetAttributeIndex( nAttributeIndex );
+
+        nAttributeIndex ++;
+
         poClass->AddProperty( poProp );
     }
 
@@ -235,16 +247,15 @@ int GMLReader::ParseFeatureType(CPLXMLNode *psSchemaNode,
 /* -------------------------------------------------------------------- */
     poClass->SetSchemaLocked( TRUE );
 
-    AddClass( poClass );
-
-    return TRUE;
+    return poClass;
 }
 
 /************************************************************************/
-/*                              ParseXSD()                              */
+/*                          GMLParseXSD()                               */
 /************************************************************************/
 
-int GMLReader::ParseXSD( const char *pszFile )
+int GMLParseXSD( const char *pszFile,
+                 std::vector<GMLFeatureClass*> & aosClasses)
 
 {
     if( pszFile == NULL )
@@ -331,20 +342,18 @@ int GMLReader::ParseXSD( const char *pszFile )
             continue;
         }
 
-        ParseFeatureType(psSchemaNode, pszName, pszType);
-
+        GMLFeatureClass* poClass =
+                GMLParseFeatureType(psSchemaNode, pszName, pszType);
+        if (poClass)
+            aosClasses.push_back(poClass);
     }
 
     CPLDestroyXMLNode( psXSDTree );
 
-    if( m_nClassCount > 0 )
+    if( aosClasses.size() > 0 )
     {
-        SetClassListLocked( TRUE );
         return TRUE;
     }
     else
         return FALSE;
 }
-
-#endif /* HAVE_XERCES == 1  || defined(HAVE_EXPAT) */
-

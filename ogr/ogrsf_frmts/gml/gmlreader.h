@@ -61,6 +61,7 @@ class CPL_DLL GMLPropertyDefn
     int               m_nWidth;
     int               m_nPrecision;
     char             *m_pszSrcElement;
+    int               m_nIndex;
 
 public:
     
@@ -77,6 +78,8 @@ public:
     int         GetPrecision() { return m_nPrecision; }
     void        SetSrcElement( const char *pszSrcElement );
     const char *GetSrcElement() { return m_pszSrcElement; }
+    void        SetAttributeIndex( int nIndex ) { m_nIndex = nIndex; }
+    int         GetAttributeIndex() { return m_nIndex; }
 
     void        AnalysePropertyValue( const GMLProperty* psGMLProperty );
 };
@@ -105,6 +108,7 @@ class CPL_DLL GMLFeatureClass
     double      m_dfYMax;
 
     int         m_nGeometryType;
+    int         m_nGeometryIndex;
 
     char       *m_pszSRSName;
     int         m_bSRSNameConsistant;
@@ -144,6 +148,8 @@ public:
 
     int         GetGeometryType() const { return m_nGeometryType; }
     void        SetGeometryType( int nNewType ) { m_nGeometryType = nNewType; }
+    int         GetGeometryAttributeIndex() const { return m_nGeometryIndex; }
+    void        SetGeometryAttributeIndex( int nGeometryIndex ) { m_nGeometryIndex = nGeometryIndex; }
 
     void        SetSRSName( const char* pszSRSName );
     void        MergeSRSName( const char* pszSRSName );
@@ -227,8 +233,6 @@ public:
 
     virtual int  LoadClasses( const char *pszFile = NULL ) = 0;
     virtual int  SaveClasses( const char *pszFile = NULL ) = 0;
-
-    virtual int  ParseXSD( const char *pszFile ) = 0;
 
     virtual int  ResolveXlinks( const char *pszFile,
                                 int* pbOutIsTempFile,
