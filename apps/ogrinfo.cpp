@@ -269,12 +269,12 @@ int main( int nArgc, char ** papszArgv )
                 {
                     printf( "%d: %s",
                             iLayer+1,
-                            poLayer->GetLayerDefn()->GetName() );
+                            poLayer->GetName() );
 
-                    if( poLayer->GetLayerDefn()->GetGeomType() != wkbUnknown )
+                    if( poLayer->GetGeomType() != wkbUnknown )
                         printf( " (%s)", 
                                 OGRGeometryTypeToName( 
-                                    poLayer->GetLayerDefn()->GetGeomType() ) );
+                                    poLayer->GetGeomType() ) );
 
                     printf( "\n" );
                 }
@@ -367,12 +367,12 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /* -------------------------------------------------------------------- */
     printf( "\n" );
     
-    printf( "Layer name: %s\n", poDefn->GetName() );
+    printf( "Layer name: %s\n", poLayer->GetName() );
 
     if( bVerbose )
     {
         printf( "Geometry: %s\n", 
-                OGRGeometryTypeToName( poDefn->GetGeomType() ) );
+                OGRGeometryTypeToName( poLayer->GetGeomType() ) );
         
         printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
         
