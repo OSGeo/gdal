@@ -62,8 +62,7 @@ OGRFeatureQuery::OGRFeatureQuery()
 OGRFeatureQuery::~OGRFeatureQuery()
 
 {
-    if( pSWQExpr != NULL )
-        swq_expr_free( (swq_expr *) pSWQExpr );
+    delete (swq_expr_node *) pSWQExpr;
 }
 
 /************************************************************************/
@@ -78,7 +77,10 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 /*      Clear any existing expression.                                  */
 /* -------------------------------------------------------------------- */
     if( pSWQExpr != NULL )
-        swq_expr_free( (swq_expr *) pSWQExpr );
+    {
+        delete (swq_expr_node *) pSWQExpr;
+        pSWQExpr = NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Build list of fields.                                           */
@@ -136,17 +138,15 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 /* -------------------------------------------------------------------- */
 /*      Try to parse.                                                   */
 /* -------------------------------------------------------------------- */
-    const char  *pszError;
     OGRErr      eErr = OGRERR_NONE;
+    CPLErr      eCPLErr;
 
     poTargetDefn = poDefn;
-    pszError = swq_expr_compile( pszExpression, nFieldCount,
-                                 papszFieldNames, paeFieldTypes, 
-                                 (swq_expr **) &pSWQExpr );
-    if( pszError != NULL )
+    eCPLErr = swq_expr_compile( pszExpression, nFieldCount,
+                                papszFieldNames, paeFieldTypes, 
+                                (swq_expr_node **) &pSWQExpr );
+    if( eCPLErr != CE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", pszError );
         eErr = OGRERR_CORRUPT_DATA;
         pSWQExpr = NULL;
     }
@@ -159,284 +159,38 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 }
 
 /************************************************************************/
-/*                      OGRFeatureQueryEvaluator()                      */
+/*                         OGRFeatureFetcher()                          */
 /************************************************************************/
 
-static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
+static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
 
 {
-    OGRField sField;
-    OGRField *psField;
-
-    int iSpecialField = op->field_index - poFeature->GetDefnRef()->GetFieldCount();
-    if( iSpecialField >= 0 )
-    {
-        if ( iSpecialField < SPECIAL_FIELD_COUNT )
-        {
-            switch ( SpecialFieldTypes[iSpecialField] )
-            {
-              case SWQ_INTEGER:
-                sField.Integer = poFeature->GetFieldAsInteger(op->field_index);
-                break;
-                
-              case SWQ_FLOAT:
-                sField.Real = poFeature->GetFieldAsDouble(op->field_index);
-                break;
-                
-              case SWQ_STRING:
-                sField.String = (char*) 
-                    poFeature->GetFieldAsString( op->field_index );
-                break;
-
-              default:
-                CPLAssert( FALSE );
-                break;
-            }      
-        }
-        else
-        {
-            CPLDebug( "OGRFeatureQuery", "Illegal special field index.");
-            return FALSE;
-        }
-        psField = &sField;
-    }
-    else
-        psField = poFeature->GetRawFieldRef( op->field_index );
+    OGRFeature *poFeature = (OGRFeature *) pFeatureIn;
+    swq_expr_node *poRetNode = NULL;
 
     switch( op->field_type )
     {
       case SWQ_INTEGER:
-        switch( op->operation )
-        {
-          case SWQ_EQ:
-            return psField->Integer == op->int_value;
-          case SWQ_NE:
-            return psField->Integer != op->int_value;
-          case SWQ_LT:
-            return psField->Integer < op->int_value;
-          case SWQ_GT:
-            return psField->Integer > op->int_value;
-          case SWQ_LE:
-            return psField->Integer <= op->int_value;
-          case SWQ_GE:
-            return psField->Integer >= op->int_value;
-          case SWQ_ISNULL:
-            return !poFeature->IsFieldSet( op->field_index );
-
-          case SWQ_IN:
-          {
-              const char *pszSrc;
-              
-              pszSrc = op->string_value;
-              while( *pszSrc != '\0' )
-              {
-                  if( atoi(pszSrc) == psField->Integer )
-                      return TRUE;
-                  pszSrc += strlen(pszSrc) + 1;
-              }
-
-              return FALSE;
-          }
-
-          default:
-            CPLDebug( "OGRFeatureQuery", 
-                      "Illegal operation (%d) on integer field.",
-                      op->operation );
-            return FALSE;
-        }
+      case SWQ_BOOLEAN:
+        poRetNode = new swq_expr_node( 
+            poFeature->GetFieldAsInteger(op->field_index) );
+        poRetNode->is_null = poFeature->IsFieldSet(op->field_index);
+        break;
 
       case SWQ_FLOAT:
-        switch( op->operation )
-        {
-          case SWQ_EQ:
-            return psField->Real == op->float_value;
-          case SWQ_NE:
-            return psField->Real != op->float_value;
-          case SWQ_LT:
-            return psField->Real < op->float_value;
-          case SWQ_GT:
-            return psField->Real > op->float_value;
-          case SWQ_LE:
-            return psField->Real <= op->float_value;
-          case SWQ_GE:
-            return psField->Real >= op->float_value;
-          case SWQ_ISNULL:
-            return !poFeature->IsFieldSet( op->field_index );
-          case SWQ_IN:
-          {
-              const char *pszSrc;
-              
-              pszSrc = op->string_value;
-              while( *pszSrc != '\0' )
-              {
-                  if( atof(pszSrc) == psField->Real )
-                      return TRUE;
-                  pszSrc += strlen(pszSrc) + 1;
-              }
-
-              return FALSE;
-          }
-
-          default:
-            CPLDebug( "OGRFeatureQuery", 
-                      "Illegal operation (%d) on float field.",
-                      op->operation );
-            return FALSE;
-        }
-
-      case SWQ_STRING:
-        switch( op->operation )
-        {
-          case SWQ_EQ:
-            if (psField->Set.nMarker1 == OGRUnsetMarker
-                && psField->Set.nMarker2 == OGRUnsetMarker )
-            {
-                return (op->string_value[0] == '\0');
-            }
-            else
-            {
-                return EQUAL(psField->String,op->string_value);
-            }
-          case SWQ_NE:
-            if (psField->Set.nMarker1 == OGRUnsetMarker
-                && psField->Set.nMarker2 == OGRUnsetMarker )
-            {
-                return (op->string_value[0] != '\0');
-            }
-            else
-            {
-                return !EQUAL(psField->String,op->string_value);
-            }
-
-          case SWQ_LT:
-            if (psField->Set.nMarker1 == OGRUnsetMarker
-                && psField->Set.nMarker2 == OGRUnsetMarker )
-            {
-                return (op->string_value[0] != '\0');
-            }
-            else
-            {
-                return strcmp(psField->String,op->string_value) < 0;
-            }
-          case SWQ_GT:
-            if (psField->Set.nMarker1 == OGRUnsetMarker
-                && psField->Set.nMarker2 == OGRUnsetMarker )
-            {
-                return (op->string_value[0] != '\0');
-            }
-            else
-            {
-                return strcmp(psField->String,op->string_value) > 0;
-            }
-          case SWQ_LE:
-            if (psField->Set.nMarker1 == OGRUnsetMarker
-                && psField->Set.nMarker2 == OGRUnsetMarker )
-            {
-                return (op->string_value[0] != '\0');
-            }
-            else
-            {
-                return strcmp(psField->String,op->string_value) <= 0;
-            }
-          case SWQ_GE:
-            if (psField->Set.nMarker1 == OGRUnsetMarker
-                && psField->Set.nMarker2 == OGRUnsetMarker )
-            {
-                return (op->string_value[0] != '\0');
-            }
-            else
-            {
-                return strcmp(psField->String,op->string_value) >= 0;
-            }
-
-          case SWQ_ISNULL:
-            return !poFeature->IsFieldSet( op->field_index );
-
-          case SWQ_LIKE:
-            if (psField->Set.nMarker1 != OGRUnsetMarker
-                || psField->Set.nMarker2 != OGRUnsetMarker )
-                return swq_test_like(psField->String, op->string_value);
-            else
-                return FALSE;
-
-          case SWQ_IN:
-          {
-              const char *pszSrc;
-
-              if( !poFeature->IsFieldSet(op->field_index) )
-                  return FALSE;
-              
-              pszSrc = op->string_value;
-              while( *pszSrc != '\0' )
-              {
-                  if( EQUAL(pszSrc,psField->String) )
-                      return TRUE;
-                  pszSrc += strlen(pszSrc) + 1;
-              }
-
-              return FALSE;
-          }
-
-          default:
-            CPLDebug( "OGRFeatureQuery", 
-                      "Illegal operation (%d) on string field.",
-                      op->operation );
-            return FALSE;
-        }
-
-      case SWQ_TIMESTAMP:
-      {
-        OGRField sField2;
-        int bField1Valid = !(psField->Set.nMarker1 == OGRUnsetMarker
-                             && psField->Set.nMarker2 == OGRUnsetMarker );
-        int bField2Valid = op->string_value[0] != '\0' &&
-                           OGRParseDate(op->string_value, &sField2, 0);
-        int nRes = OGRCompareDate(psField, &sField2);
-        switch( op->operation )
-        {
-          case SWQ_EQ:
-            return (bField1Valid && bField2Valid && nRes == 0) ||
-                   (!bField1Valid && !bField2Valid);
-          case SWQ_NE:
-            return !((bField1Valid && bField2Valid && nRes == 0) ||
-                     (!bField1Valid && !bField2Valid));
-
-          case SWQ_LT:
-            return (bField1Valid && bField2Valid && nRes < 0);
-          case SWQ_GT:
-            return (bField1Valid && bField2Valid && nRes > 0);
-          case SWQ_LE:
-            return (bField1Valid && bField2Valid && nRes <= 0);
-          case SWQ_GE:
-            return (bField1Valid && bField2Valid && nRes >= 0);
-          case SWQ_ISNULL:
-            return !poFeature->IsFieldSet( op->field_index );
-
-          default:
-            CPLDebug( "OGRFeatureQuery", 
-                      "Illegal operation (%d) on timestamp field.",
-                      op->operation );
-            return FALSE;
-        }
-      }
-
-      case SWQ_OTHER:
-        switch( op->operation )
-        {
-          case SWQ_ISNULL:
-            return !poFeature->IsFieldSet( op->field_index );
-
-          default:
-            CPLDebug( "OGRFeatureQuery", 
-                      "Illegal operation (%d) on list or binary field.",
-                      op->operation );
-            return FALSE;
-        }
-
+        poRetNode = new swq_expr_node( 
+            poFeature->GetFieldAsDouble(op->field_index) );
+        poRetNode->is_null = poFeature->IsFieldSet(op->field_index);
+        break;
+        
       default:
-        assert( FALSE );
-        return FALSE;
+        poRetNode = new swq_expr_node( 
+            poFeature->GetFieldAsString(op->field_index) );
+        poRetNode->is_null = poFeature->IsFieldSet(op->field_index);
+        break;
     }
+
+    return poRetNode;
 }
 
 /************************************************************************/
@@ -449,9 +203,21 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
     if( pSWQExpr == NULL )
         return FALSE;
 
-    return swq_expr_evaluate( (swq_expr *) pSWQExpr, 
-                              (swq_op_evaluator) OGRFeatureQueryEvaluator, 
-                              (void *) poFeature );
+    swq_expr_node *poResult;
+
+    poResult = ((swq_expr_node *) pSWQExpr)->Evaluate( OGRFeatureFetcher,
+                                                       (void *) poFeature );
+
+    if( poResult == NULL )
+        return FALSE;
+
+    CPLAssert( poResult->field_type == SWQ_BOOLEAN );
+
+    int bLogicalResult = poResult->int_value;
+
+    delete poResult;
+
+    return bLogicalResult;
 }
 
 /************************************************************************/
@@ -477,7 +243,7 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
                                                OGRErr *peErr )
 
 {
-    swq_expr *psExpr = (swq_expr *) pSWQExpr;
+    swq_expr_node *psExpr = (swq_expr_node *) pSWQExpr;
     OGRAttrIndex *poIndex;
 
     if( peErr != NULL )
@@ -487,11 +253,21 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
 /*      Does the expression meet our requirements?  Do we have an       */
 /*      index on the targetted field?                                   */
 /* -------------------------------------------------------------------- */
-    if( psExpr == NULL || !(psExpr->operation == SWQ_EQ || 
-        psExpr->operation == SWQ_IN) || poLayer->GetIndex() == NULL )
+    if( psExpr == NULL 
+        || psExpr->eNodeType != SNT_OPERATION
+        || !(psExpr->nOperation == SWQ_EQ || psExpr->nOperation == SWQ_IN) 
+        || poLayer->GetIndex() == NULL
+        || psExpr->nSubExprCount < 2 )
         return NULL;
 
-    poIndex = poLayer->GetIndex()->GetFieldIndex( psExpr->field_index );
+    swq_expr_node *poColumn = psExpr->papoSubExpr[0];
+    swq_expr_node *poValue = psExpr->papoSubExpr[1];
+    
+    if( poColumn->eNodeType != SNT_COLUMN
+        || poValue->eNodeType != SNT_CONSTANT )
+        return NULL;
+
+    poIndex = poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
     if( poIndex == NULL )
         return NULL;
 
@@ -501,29 +277,31 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
     OGRField sValue;
     OGRFieldDefn *poFieldDefn;
 
-    poFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(psExpr->field_index);
+    poFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(poColumn->field_index);
 
-    if (psExpr->operation == SWQ_IN)
+/* -------------------------------------------------------------------- */
+/*      Handle the case of an IN operation.                             */
+/* -------------------------------------------------------------------- */
+    if (psExpr->nOperation == SWQ_IN)
     {
-        const char *pszSrc;
         int nFIDCount, nLength;
         long *panFIDs = NULL;
-              
-        pszSrc = psExpr->string_value;
-        while( *pszSrc != '\0' )
+        int iIN;
+
+        for( iIN = 1; iIN < psExpr->nSubExprCount; iIN++ )
         {
             switch( poFieldDefn->GetType() )
             {
               case OFTInteger:
-                sValue.Integer = atoi(pszSrc);
+                sValue.Integer = psExpr->papoSubExpr[iIN]->int_value;
                 break;
 
               case OFTReal:
-                sValue.Real = atof(pszSrc);
+                sValue.Real = psExpr->papoSubExpr[iIN]->float_value;
                 break;
 
               case OFTString:
-                sValue.String = (char*)pszSrc;
+                sValue.String = psExpr->papoSubExpr[iIN]->string_value;
                 break;
 
               default:
@@ -532,8 +310,6 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
             }
 
             panFIDs = poIndex->GetAllMatches( &sValue, panFIDs, &nFIDCount, &nLength );
-
-            pszSrc += strlen(pszSrc) + 1;
         }
 
         if (nFIDCount > 1)
@@ -544,25 +320,27 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
         return panFIDs;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Handle equality test.                                           */
+/* -------------------------------------------------------------------- */
     switch( poFieldDefn->GetType() )
     {
       case OFTInteger:
-        sValue.Integer = psExpr->int_value;
+        sValue.Integer = poValue->int_value;
         break;
-
+        
       case OFTReal:
-        sValue.Real = psExpr->float_value;
+        sValue.Real = poValue->float_value;
         break;
-
+        
       case OFTString:
-        sValue.String = psExpr->string_value;
+        sValue.String = poValue->string_value;
         break;
 
       default:
         CPLAssert( FALSE );
         return NULL;
     }
-
     return poIndex->GetAllMatches( &sValue );
 }
 
@@ -577,46 +355,52 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
                                         char **papszList )
 
 {
-    swq_field_op *op = (swq_field_op *) pBareOp;
+    swq_expr_node *op = (swq_expr_node *) pBareOp;
 
 /* -------------------------------------------------------------------- */
 /*      References to tables other than the primarily are currently     */
 /*      unsupported. Error out.                                         */
 /* -------------------------------------------------------------------- */
-    if( op->table_index != 0 )
+    if( op->eNodeType == SNT_COLUMN )
     {
-        CSLDestroy( papszList );
-        return NULL;
-    }
+        if( op->table_index != 0 )
+        {
+            CSLDestroy( papszList );
+            return NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Add the field name into our list if it is not already there.    */
 /* -------------------------------------------------------------------- */
-    const char *pszFieldName;
+        const char *pszFieldName;
 
-    if( op->field_index >= poTargetDefn->GetFieldCount()
-        && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT) 
-        pszFieldName = SpecialFieldNames[op->field_index];
-    else if( op->field_index >= 0 
-             && op->field_index < poTargetDefn->GetFieldCount() )
-        pszFieldName = 
-            poTargetDefn->GetFieldDefn(op->field_index)->GetNameRef();
-    else
-    {
-        CSLDestroy( papszList );
-        return NULL;
+        if( op->field_index >= poTargetDefn->GetFieldCount()
+            && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT) 
+            pszFieldName = SpecialFieldNames[op->field_index];
+        else if( op->field_index >= 0 
+                 && op->field_index < poTargetDefn->GetFieldCount() )
+            pszFieldName = 
+                poTargetDefn->GetFieldDefn(op->field_index)->GetNameRef();
+        else
+        {
+            CSLDestroy( papszList );
+            return NULL;
+        }
+        
+        if( CSLFindString( papszList, pszFieldName ) == -1 )
+            papszList = CSLAddString( papszList, pszFieldName );
     }
-
-    if( CSLFindString( papszList, pszFieldName ) == -1 )
-        papszList = CSLAddString( papszList, pszFieldName );
 
 /* -------------------------------------------------------------------- */
 /*      Add in fields from subexpressions.                              */
 /* -------------------------------------------------------------------- */
-    if( op->first_sub_expr != NULL )
-        papszList = FieldCollector( op->first_sub_expr, papszList );
-    if( op->second_sub_expr != NULL )
-        papszList = FieldCollector( op->second_sub_expr, papszList );
+    if( op->eNodeType == SNT_OPERATION )
+    {
+        for( int iSubExpr = 0; iSubExpr < op->nSubExprCount; iSubExpr++ )
+        {
+            papszList = FieldCollector( op->papoSubExpr[iSubExpr], papszList );
+        }
+    }
 
     return papszList;
 }
