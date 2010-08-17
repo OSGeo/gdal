@@ -456,6 +456,7 @@ public:
     
     int                 eModelCoordLocation;
     int                 eForceCoordLocation;
+    unsigned int        anULTCoordinate[3];
 };
 
 #endif /* ifndef _GEORASTER_PRIV_H_INCLUDED */
