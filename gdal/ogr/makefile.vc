@@ -23,12 +23,14 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj ogr_opt.obj \
                 ogrmultipoint.obj ogrfeature.obj ogrfeaturedefn.obj \
 		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
-		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj swq.obj \
+		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj \
 		ogrfeaturestyle.obj ogr_srs_esri.obj ogrfeaturequery.obj \
 		ogr_srs_validate.obj ogr_srs_xml.obj ograssemblepolygon.obj \
 		ogr2gmlgeometry.obj gml2ogrgeometry.obj ogr_srs_pci.obj \
 		ogr_srs_usgs.obj ogr_srs_dict.obj ogr_srs_panorama.obj \
-		ogr_srs_ozi.obj ogr_srs_erm.obj ogr_expat.obj
+		ogr_srs_ozi.obj ogr_srs_erm.obj ogr_expat.obj \
+		swq.obj swq_parser.obj swq_select.obj swq_op_registrar.obj \
+		swq_op_general.obj swq_expr_node.obj
 
 default:        ogr.lib 
 

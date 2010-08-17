@@ -78,3 +78,7 @@ install:
 	for f in $(INST_H_FILES) ; \
 	    do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; \
 	done
+
+parser:
+	bison -p swq -d -oswq_parser.cpp swq_parser.y
+
