@@ -174,21 +174,20 @@ static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
       case SWQ_BOOLEAN:
         poRetNode = new swq_expr_node( 
             poFeature->GetFieldAsInteger(op->field_index) );
-        poRetNode->is_null = poFeature->IsFieldSet(op->field_index);
         break;
 
       case SWQ_FLOAT:
         poRetNode = new swq_expr_node( 
             poFeature->GetFieldAsDouble(op->field_index) );
-        poRetNode->is_null = poFeature->IsFieldSet(op->field_index);
         break;
         
       default:
         poRetNode = new swq_expr_node( 
             poFeature->GetFieldAsString(op->field_index) );
-        poRetNode->is_null = poFeature->IsFieldSet(op->field_index);
         break;
     }
+
+    poRetNode->is_null = !(poFeature->IsFieldSet(op->field_index));
 
     return poRetNode;
 }
