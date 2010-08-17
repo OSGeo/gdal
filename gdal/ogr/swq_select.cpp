@@ -346,7 +346,7 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
     col_def->distinct_flag = distinct_flag;
 
 /* -------------------------------------------------------------------- */
-/*      Do we have a CAST operator in play.                             */
+/*      Do we have a CAST operator in play?                             */
 /* -------------------------------------------------------------------- */
     if( poExpr->eNodeType == SNT_OPERATION 
         && poExpr->nOperation == SWQ_CAST )
@@ -390,6 +390,7 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
                       "Unrecognized typename %s in CAST operator.", 
                       pszTypeName );
             result_columns--;
+            return FALSE;
         }
 
         // field width.
@@ -403,14 +404,6 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
         {
             col_def->field_precision = poExpr->papoSubExpr[3]->int_value;
         }
-        
-        // Strip off the CAST operator and replace with underlying expression.
-        swq_expr_node *poSubExpr = poExpr->papoSubExpr[0];
-        
-        poExpr->papoSubExpr[0] = NULL;
-        delete poExpr;
-        
-        poExpr = poSubExpr;
     }
 
 /* -------------------------------------------------------------------- */
