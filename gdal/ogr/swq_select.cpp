@@ -565,7 +565,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
         }
         else
         {
-            char *table_name = strdup( src_fieldname );
+            char *table_name = CPLStrdup( src_fieldname );
             table_name[strlen(src_fieldname)-2] = '\0';
 
             for( itable = 0; itable < field_list->table_count; itable++ )
@@ -679,7 +679,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
             }
 
             if( !compose )
-                def->field_name = strdup( field_list->names[i] );
+                def->field_name = CPLStrdup( field_list->names[i] );
             else
             {
                 int itable = field_list->table_ids[i];
