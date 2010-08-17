@@ -32,6 +32,7 @@
 
 #include "cpl_minixml.h"
 #include "ogrsf_frmts.h"
+#include "gmlreader.h"
 
 CPLString WFS_FetchValueFromURL(const char* pszURL, const char* pszKey);
 CPLString WFS_AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue);
@@ -52,6 +53,7 @@ class OGRWFSLayer : public OGRLayer
 
     OGRFeatureDefn*     poFeatureDefn;
     int                 bGotApproximateLayerDefn;
+    GMLFeatureClass*    poGMLFeatureClass;
 
     int                  bAxisOrderAlreadyInverted;
     OGRSpatialReference *poSRS;
