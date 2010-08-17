@@ -303,7 +303,7 @@ swq_select_summarize( swq_select *select_info,
             memcpy( summary->distinct_list, old_list, 
                     sizeof(char *) * summary->count );
             summary->distinct_list[(summary->count)++] = 
-                strdup( value );
+                CPLStrdup( value );
 
             CPLFree(old_list);
         }
