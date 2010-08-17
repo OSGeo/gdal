@@ -935,6 +935,10 @@ class Layer(_object):
         """GetName(self) -> char"""
         return _ogr.Layer_GetName(self, *args)
 
+    def GetGeomType(self, *args):
+        """GetGeomType(self) -> OGRwkbGeometryType"""
+        return _ogr.Layer_GetGeomType(self, *args)
+
     def GetGeometryColumn(self, *args):
         """
         GetGeometryColumn(self) -> char
