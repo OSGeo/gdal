@@ -516,9 +516,9 @@ static const yytype_uint16 yyrline[] =
      220,   229,   244,   251,   265,   271,   278,   285,   301,   306,
      310,   315,   320,   327,   334,   341,   348,   355,   377,   385,
      391,   398,   407,   413,   414,   418,   424,   430,   438,   445,
-     456,   475,   498,   523,   524,   529,   530,   539,   549,   550,
-     553,   554,   557,   563,   569,   577,   581,   587,   597,   608,
-     619
+     456,   475,   500,   525,   526,   531,   532,   541,   551,   552,
+     555,   556,   559,   565,   571,   579,   583,   589,   599,   610,
+     621
 };
 #endif
 
@@ -2118,6 +2118,8 @@ yyreduce:
 	            YYERROR;
 		}
 
+                delete (yyvsp[(1) - (4)]);
+                
 		swq_expr_node *poNode = new swq_expr_node();
 		poNode->eNodeType = SNT_COLUMN;
 		poNode->string_value = CPLStrdup( "*" );
@@ -2134,7 +2136,7 @@ yyreduce:
   case 52:
 
 /* Line 1455 of yacc.c  */
-#line 499 "swq_parser.y"
+#line 501 "swq_parser.y"
     {
 	        // special case for COUNT(*), confirm it.
 		if( !EQUAL((yyvsp[(1) - (6)])->string_value,"COUNT") )
@@ -2163,7 +2165,7 @@ yyreduce:
   case 54:
 
 /* Line 1455 of yacc.c  */
-#line 525 "swq_parser.y"
+#line 527 "swq_parser.y"
     {	     
 	    	 context->poSelect->where_expr = (yyvsp[(2) - (2)]);
 	    ;}
@@ -2172,7 +2174,7 @@ yyreduce:
   case 56:
 
 /* Line 1455 of yacc.c  */
-#line 531 "swq_parser.y"
+#line 533 "swq_parser.y"
     {
 	        context->poSelect->PushJoin( (yyvsp[(2) - (7)])->int_value, 
 					     (yyvsp[(4) - (7)])->string_value, 
@@ -2186,7 +2188,7 @@ yyreduce:
   case 57:
 
 /* Line 1455 of yacc.c  */
-#line 540 "swq_parser.y"
+#line 542 "swq_parser.y"
     {
 	        context->poSelect->PushJoin( (yyvsp[(3) - (8)])->int_value, 
 					     (yyvsp[(5) - (8)])->string_value, 
@@ -2200,7 +2202,7 @@ yyreduce:
   case 62:
 
 /* Line 1455 of yacc.c  */
-#line 558 "swq_parser.y"
+#line 560 "swq_parser.y"
     {
                 context->poSelect->PushOrderBy( (yyvsp[(1) - (1)])->string_value, TRUE );
                 delete (yyvsp[(1) - (1)]);
@@ -2211,7 +2213,7 @@ yyreduce:
   case 63:
 
 /* Line 1455 of yacc.c  */
-#line 564 "swq_parser.y"
+#line 566 "swq_parser.y"
     {
                 context->poSelect->PushOrderBy( (yyvsp[(1) - (2)])->string_value, TRUE );
                 delete (yyvsp[(1) - (2)]);
@@ -2222,7 +2224,7 @@ yyreduce:
   case 64:
 
 /* Line 1455 of yacc.c  */
-#line 570 "swq_parser.y"
+#line 572 "swq_parser.y"
     {
                 context->poSelect->PushOrderBy( (yyvsp[(1) - (2)])->string_value, FALSE );
                 delete (yyvsp[(1) - (2)]);
@@ -2233,7 +2235,7 @@ yyreduce:
   case 65:
 
 /* Line 1455 of yacc.c  */
-#line 578 "swq_parser.y"
+#line 580 "swq_parser.y"
     {
             (yyval) = (yyvsp[(1) - (1)]);
         ;}
@@ -2242,7 +2244,7 @@ yyreduce:
   case 66:
 
 /* Line 1455 of yacc.c  */
-#line 582 "swq_parser.y"
+#line 584 "swq_parser.y"
     {
             (yyval) = (yyvsp[(1) - (1)]);
         ;}
@@ -2251,7 +2253,7 @@ yyreduce:
   case 67:
 
 /* Line 1455 of yacc.c  */
-#line 588 "swq_parser.y"
+#line 590 "swq_parser.y"
     {
 	    int iTable;
 	    iTable =context->poSelect->PushTableDef( NULL, (yyvsp[(1) - (1)])->string_value, 
@@ -2265,7 +2267,7 @@ yyreduce:
   case 68:
 
 /* Line 1455 of yacc.c  */
-#line 598 "swq_parser.y"
+#line 600 "swq_parser.y"
     {
 	    int iTable;
 	    iTable = context->poSelect->PushTableDef( NULL, (yyvsp[(1) - (2)])->string_value, 
@@ -2280,7 +2282,7 @@ yyreduce:
   case 69:
 
 /* Line 1455 of yacc.c  */
-#line 609 "swq_parser.y"
+#line 611 "swq_parser.y"
     {
 	    int iTable;
 	    iTable = context->poSelect->PushTableDef( (yyvsp[(1) - (3)])->string_value, 
@@ -2295,7 +2297,7 @@ yyreduce:
   case 70:
 
 /* Line 1455 of yacc.c  */
-#line 620 "swq_parser.y"
+#line 622 "swq_parser.y"
     {
 	    int iTable;
 	    iTable = context->poSelect->PushTableDef( (yyvsp[(1) - (4)])->string_value, 
@@ -2312,7 +2314,7 @@ yyreduce:
 
 
 /* Line 1455 of yacc.c  */
-#line 2316 "swq_parser.cpp"
+#line 2318 "swq_parser.cpp"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
