@@ -31,6 +31,11 @@ OBJ =	ogrgeometryfactory.o \
 	ogr_srs_ozi.o \
 	ogr_srs_erm.o \
 	swq.o \
+	swq_expr_node.o \
+	swq_parser.o \
+	swq_select.o \
+	swq_op_registrar.o \
+	swq_op_general.o \
 	ogr_srs_validate.o \
 	ogr_srs_xml.o \
 	ograssemblepolygon.o \

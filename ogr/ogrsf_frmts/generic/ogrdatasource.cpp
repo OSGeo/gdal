@@ -728,7 +728,6 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
                                       const char *pszDialect )
 
 {
-    const char *pszError;
     swq_select *psSelectInfo = NULL;
 
     (void) pszDialect;
@@ -736,6 +735,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
     swq_field_list sFieldList;
     int            nFIDIndex = 0;
     OGRGenSQLResultsLayer *poResults = NULL;
+    char *pszWHERE = NULL;
 
     memset( &sFieldList, 0, sizeof(sFieldList) );
 
@@ -760,11 +760,10 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Preparse the SQL statement.                                     */
 /* -------------------------------------------------------------------- */
-    pszError = swq_select_preparse( pszStatement, &psSelectInfo );
-    if( pszError != NULL )
+    psSelectInfo = new swq_select();
+    if( psSelectInfo->preparse( pszStatement ) != CPLE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "SQL: %s", pszError );
+        delete psSelectInfo;
         return NULL;
     }
 
@@ -796,7 +795,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
                               "`%s' required by JOIN.",
                               psTableDef->data_source );
 
-                swq_select_free( psSelectInfo );
+                delete psSelectInfo;
                 goto end;
             }
 
@@ -813,7 +812,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "SELECT from table %s failed, no such table/featureclass.",
                       psTableDef->table_name );
-            swq_select_free( psSelectInfo );
+            delete psSelectInfo;
             goto end;
         }
 
@@ -879,14 +878,9 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Expand '*' in 'SELECT *' now before we add the pseudo fields    */
 /* -------------------------------------------------------------------- */
-    pszError = 
-        swq_select_expand_wildcard( psSelectInfo, &sFieldList );
-
-    if( pszError != NULL )
+    if( psSelectInfo->expand_wildcard( &sFieldList )  != CE_None )
     {
-        swq_select_free( psSelectInfo );
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "SQL: %s", pszError );
+        delete psSelectInfo;
         goto end;
     }
 
@@ -902,15 +896,19 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Finish the parse operation.                                     */
 /* -------------------------------------------------------------------- */
-    
-    pszError = swq_select_parse( psSelectInfo, &sFieldList, 0 );
-
-    if( pszError != NULL )
+    if( psSelectInfo->parse( &sFieldList, 0 ) != CE_None )
     {
-        swq_select_free( psSelectInfo );
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "SQL: %s", pszError );
+        delete psSelectInfo;
         goto end;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract the WHERE expression to use separately.                 */
+/* -------------------------------------------------------------------- */
+    if( psSelectInfo->where_expr != NULL )
+    {
+        pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList );
+        CPLDebug( "OGR", "Unparse() -> %s", pszWHERE );
     }
 
 /* -------------------------------------------------------------------- */
@@ -918,7 +916,10 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 
     poResults = new OGRGenSQLResultsLayer( this, psSelectInfo, 
-                                           poSpatialFilter );
+                                           poSpatialFilter,
+                                           pszWHERE );
+
+    CPLFree( pszWHERE );
 
     // Eventually, we should keep track of layers to cleanup.
 

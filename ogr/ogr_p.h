@@ -95,9 +95,7 @@ int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOpti
 /************************************************************************/
 /*     Support for special attributes (feature query and selection)     */
 /************************************************************************/
-CPL_C_START
 #include "swq.h"
-CPL_C_END
 
 #define SPF_FID 0
 #define SPF_OGR_GEOMETRY 1
