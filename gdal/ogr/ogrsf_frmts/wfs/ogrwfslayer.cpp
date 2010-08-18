@@ -146,16 +146,9 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
 
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    CPLHTTPResult* psResult = CPLHTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
-        return NULL;
-    }
-    if (psResult->nStatus != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                 psResult->pszErrBuf);
-        CPLHTTPDestroyResult(psResult);
         return NULL;
     }
 
@@ -411,16 +404,9 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     CPLString osURL = MakeGetFeatureURL(nMaxFeatures, FALSE);
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    CPLHTTPResult* psResult = CPLHTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
-        return NULL;
-    }
-    if (psResult->nStatus != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                 psResult->pszErrBuf);
-        CPLHTTPDestroyResult(psResult);
         return NULL;
     }
 
@@ -778,16 +764,9 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
     CPLString osURL = MakeGetFeatureURL(0, TRUE);
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    CPLHTTPResult* psResult = CPLHTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
-        return -1;
-    }
-    if (psResult->nStatus != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                psResult->pszErrBuf);
-        CPLHTTPDestroyResult(psResult);
         return -1;
     }
 
@@ -1034,18 +1013,11 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                    "Content-Type: application/xml; charset=UTF-8");
 
-    CPLHTTPResult* psResult = CPLHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
+    CPLHTTPResult* psResult = OGRWFSHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
     CSLDestroy(papszOptions);
 
     if (psResult == NULL)
     {
-        return OGRERR_FAILURE;
-    }
-    if (psResult->nStatus != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                psResult->pszErrBuf);
-        CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
     }
 
@@ -1270,18 +1242,11 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                    "Content-Type: application/xml; charset=UTF-8");
 
-    CPLHTTPResult* psResult = CPLHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
+    CPLHTTPResult* psResult = OGRWFSHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
     CSLDestroy(papszOptions);
 
     if (psResult == NULL)
     {
-        return OGRERR_FAILURE;
-    }
-    if (psResult->nStatus != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                psResult->pszErrBuf);
-        CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
     }
 
@@ -1456,18 +1421,11 @@ OGRErr OGRWFSLayer::DeleteFeature( long nFID )
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                    "Content-Type: application/xml; charset=UTF-8");
 
-    CPLHTTPResult* psResult = CPLHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
+    CPLHTTPResult* psResult = OGRWFSHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
     CSLDestroy(papszOptions);
 
     if (psResult == NULL)
     {
-        return OGRERR_FAILURE;
-    }
-    if (psResult->nStatus != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                psResult->pszErrBuf);
-        CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
     }
 
