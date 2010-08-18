@@ -211,14 +211,18 @@ static void WFS_ExprDump(FILE* fp, const Expr* expr)
 /************************************************************************/
 
 static int WFS_ExprDumpGmlObjectIdFilter(CPLString& osFilter,
-                                     const Expr* expr)
+                                         const Expr* expr,
+                                         int bUseFeatureId)
 {
     if (expr->eType == TOKEN_EQUAL &&
         expr->expr1->eType == TOKEN_VAR_NAME &&
         EQUAL(expr->expr1->pszVal, "gml_id") &&
         expr->expr2->eType == TOKEN_LITERAL)
     {
-        osFilter += "<GmlObjectId gml:id=\"";
+        if (bUseFeatureId)
+            osFilter += "<FeatureId fid=\"";
+        else
+            osFilter += "<GmlObjectId gml:id=\"";
         if (expr->expr2->pszVal[0] == '\'' || expr->expr2->pszVal[0] == '"')
         {
             CPLString osVal(expr->expr2->pszVal + 1);
@@ -232,8 +236,8 @@ static int WFS_ExprDumpGmlObjectIdFilter(CPLString& osFilter,
     }
     else if (expr->eType == TOKEN_OR)
     {
-        return WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr1) &&
-               WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr2);
+        return WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr1, bUseFeatureId) &&
+               WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr2, bUseFeatureId);
     }
     return FALSE;
 }
@@ -765,6 +769,7 @@ static char** WFS_ExprTokenize(const char* pszFilter)
 CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
                                         int nVersion,
                                         int bPropertyIsNotEqualToSupported,
+                                        int bUseFeatureId,
                                         int* pbOutNeedsNullCheck )
 {
     char** papszTokens = WFS_ExprTokenize(pszFilter);
@@ -782,7 +787,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
     CPLString osFilter;
     /* If the filter is only made of querying one or several gml_id */
     /* (with OR operator), we turn this to <GmlObjectId> list */
-    if (!WFS_ExprDumpGmlObjectIdFilter(osFilter, expr))
+    if (!WFS_ExprDumpGmlObjectIdFilter(osFilter, expr, bUseFeatureId))
     {
         ExprDumpFilterOptions sOptions;
         sOptions.nVersion = nVersion;

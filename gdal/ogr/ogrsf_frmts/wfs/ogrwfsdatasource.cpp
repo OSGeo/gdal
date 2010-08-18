@@ -56,6 +56,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     bPropertyIsNotEqualToSupported = TRUE; /* advertized by deegree but not implemented */
     bTransactionSupport = FALSE;
     papszIdGenMethods = NULL;
+    bUseFeatureId = FALSE; /* CubeWerx doesn't like GmlObjectId */
 }
 
 /************************************************************************/
@@ -228,6 +229,15 @@ static int DetectIfGetFeatureSupportHits(CPLXMLNode* psRoot)
 }
 
 /************************************************************************/
+/*                       GetPostTransactionURL()                        */
+/************************************************************************/
+
+CPLString OGRWFSDataSource::GetPostTransactionURL()
+{
+    return osPostTransactionURL.size() ? osPostTransactionURL : osBaseURL;
+}
+
+/************************************************************************/
 /*                    DetectTransactionSupport()                        */
 /************************************************************************/
 
@@ -259,6 +269,15 @@ int OGRWFSDataSource::DetectTransactionSupport(CPLXMLNode* psRoot)
 
     bTransactionSupport = TRUE;
     CPLDebug("WFS", "Transaction support !");
+
+
+    CPLXMLNode* psPostURL = CPLGetXMLNode(psChild, "DCP.HTTP.Post");
+    if (psPostURL)
+    {
+        const char* pszPOSTURL = CPLGetXMLValue(psPostURL, "href", NULL);
+        if (pszPOSTURL)
+            osPostTransactionURL = pszPOSTURL;
+    }
 
     psChild = psChild->psChild;
     while(psChild)
@@ -408,6 +427,11 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     if (EQUALN(pszFilename, "WFS:", 4))
         pszBaseURL += 4;
 
+    osBaseURL = pszBaseURL;
+    const char* pszEsperluet = strchr(pszBaseURL, '?');
+    if (pszEsperluet)
+        osBaseURL.resize(pszEsperluet - pszBaseURL);
+
     if (strncmp(pszBaseURL, "http://", 7) != 0)
         return FALSE;
 
@@ -435,6 +459,12 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                  psResult->pszErrBuf);
         CPLHTTPDestroyResult(psResult);
         return FALSE;
+    }
+
+    if (strstr((const char*) psResult->pabyData, "CubeWerx"))
+    {
+        /* At least true for CubeWerx Suite 4.15.1 */
+        bUseFeatureId = TRUE;
     }
 
     CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
@@ -685,7 +715,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
     CPLHTTPDestroyResult(psResult);
-    
+
     return TRUE;
 }
 
