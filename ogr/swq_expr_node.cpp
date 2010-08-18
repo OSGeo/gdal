@@ -482,7 +482,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
         poRetNode->float_value = float_value;
 
         if( string_value )
-            poRetNode->string_value = string_value;
+            poRetNode->string_value = CPLStrdup(string_value);
         else
             poRetNode->string_value = NULL;
 
