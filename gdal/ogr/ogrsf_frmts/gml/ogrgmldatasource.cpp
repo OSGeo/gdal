@@ -193,6 +193,13 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                 }
             }
         }
+        else if (strncmp(pszNewName, "/vsimem/tempwfs_", strlen("/vsimem/tempwfs_")) == 0)
+        {
+            /* http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a <G:FeatureCollection> */
+            /* Who knows what servers can return ? Ok, so when in the context of the WFS driver */
+            /* always expose the gml:id to avoid later crashes */
+            bExposeGMLId = TRUE;
+        }
     }
     
 /* -------------------------------------------------------------------- */
