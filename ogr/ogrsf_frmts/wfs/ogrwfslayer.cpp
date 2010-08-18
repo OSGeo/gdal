@@ -707,6 +707,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
         osWFSWhere = WFS_TurnSQLFilterToOGCFilter(pszFilter,
                                               nVersion,
                                               poDS->PropertyIsNotEqualToSupported(),
+                                              poDS->UseFeatureId(),
                                               &bNeedsNullCheck);
         if (bNeedsNullCheck && !poDS->HasNullCheck())
             osWFSWhere = "";
@@ -1032,11 +1033,8 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", osPost.c_str());
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                    "Content-Type: application/xml; charset=UTF-8");
-    CPLString osURL(pszBaseURL);
-    const char* pszEsperluet = strchr(pszBaseURL, '?');
-    if (pszEsperluet)
-        osURL.resize(pszEsperluet - pszBaseURL);
-    CPLHTTPResult* psResult = CPLHTTPFetch(osURL.c_str(), papszOptions);
+
+    CPLHTTPResult* psResult = CPLHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
     CSLDestroy(papszOptions);
 
     if (psResult == NULL)
@@ -1074,7 +1072,15 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     CPLStripXMLNamespace( psXML, NULL, TRUE );
+    int bUseOldSchema = FALSE;
     CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=TransactionResponse" );
+    if (psRoot == NULL)
+    {
+        psRoot = CPLGetXMLNode( psXML, "=WFS_TransactionResponse" );
+        if (psRoot)
+            bUseOldSchema = TRUE;
+    }
+
     if (psRoot == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1084,15 +1090,43 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    CPLXMLNode* psFeatureID =
-    CPLGetXMLNode( psRoot, "InsertResults.Feature.FeatureId");
-    if (psFeatureID == NULL)
+    CPLXMLNode* psFeatureID = NULL;
+
+    if (bUseOldSchema)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find InsertResults.Feature.FeatureId");
-        CPLDestroyXMLNode( psXML );
-        CPLHTTPDestroyResult(psResult);
-        return OGRERR_FAILURE;
+        if (CPLGetXMLNode( psRoot, "TransactionResult.Status.FAILED" ))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Insert failed : %s",
+                     psResult->pabyData);
+            CPLDestroyXMLNode( psXML );
+            CPLHTTPDestroyResult(psResult);
+            return OGRERR_FAILURE;
+        }
+
+        psFeatureID =
+            CPLGetXMLNode( psRoot, "InsertResult.FeatureId");
+        if (psFeatureID == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot find InsertResult.FeatureId");
+            CPLDestroyXMLNode( psXML );
+            CPLHTTPDestroyResult(psResult);
+            return OGRERR_FAILURE;
+        }
+    }
+    else
+    {
+        psFeatureID =
+            CPLGetXMLNode( psRoot, "InsertResults.Feature.FeatureId");
+        if (psFeatureID == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot find InsertResults.Feature.FeatureId");
+            CPLDestroyXMLNode( psXML );
+            CPLHTTPDestroyResult(psResult);
+            return OGRERR_FAILURE;
+        }
     }
 
     const char* pszFID = CPLGetXMLValue(psFeatureID, "fid", NULL);
@@ -1220,7 +1254,11 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
         osPost += "    </wfs:Property>\n";
     }
     osPost += "    <ogc:Filter>\n";
-    osPost += "      <ogc:GmlObjectId gml:id=\"";  osPost += poFeature->GetFieldAsString(0); osPost += "\"/>\n";
+    if (poDS->UseFeatureId())
+        osPost += "      <ogc:FeatureId fid=\"";
+    else
+        osPost += "      <ogc:GmlObjectId gml:id=\"";
+    osPost += poFeature->GetFieldAsString(0); osPost += "\"/>\n";
     osPost += "    </ogc:Filter>\n";
     osPost += "  </wfs:Update>\n";
     osPost += "</wfs:Transaction>\n";
@@ -1231,11 +1269,8 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
     papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", osPost.c_str());
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                    "Content-Type: application/xml; charset=UTF-8");
-    CPLString osURL(pszBaseURL);
-    const char* pszEsperluet = strchr(pszBaseURL, '?');
-    if (pszEsperluet)
-        osURL.resize(pszEsperluet - pszBaseURL);
-    CPLHTTPResult* psResult = CPLHTTPFetch(osURL.c_str(), papszOptions);
+
+    CPLHTTPResult* psResult = CPLHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
     CSLDestroy(papszOptions);
 
     if (psResult == NULL)
@@ -1273,7 +1308,14 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
     }
 
     CPLStripXMLNamespace( psXML, NULL, TRUE );
+    int bUseOldSchema = FALSE;
     CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=TransactionResponse" );
+    if (psRoot == NULL)
+    {
+        psRoot = CPLGetXMLNode( psXML, "=WFS_TransactionResponse" );
+        if (psRoot)
+            bUseOldSchema = TRUE;
+    }
     if (psRoot == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1283,6 +1325,19 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    if (bUseOldSchema)
+    {
+        if (CPLGetXMLNode( psRoot, "TransactionResult.Status.FAILED" ))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Update failed : %s",
+                     psResult->pabyData);
+            CPLDestroyXMLNode( psXML );
+            CPLHTTPDestroyResult(psResult);
+            return OGRERR_FAILURE;
+        }
+    }
+    
     CPLDestroyXMLNode( psXML );
     CPLHTTPDestroyResult(psResult);
 
@@ -1400,11 +1455,8 @@ OGRErr OGRWFSLayer::DeleteFeature( long nFID )
     papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", osPost.c_str());
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                    "Content-Type: application/xml; charset=UTF-8");
-    CPLString osURL(pszBaseURL);
-    const char* pszEsperluet = strchr(pszBaseURL, '?');
-    if (pszEsperluet)
-        osURL.resize(pszEsperluet - pszBaseURL);
-    CPLHTTPResult* psResult = CPLHTTPFetch(osURL.c_str(), papszOptions);
+
+    CPLHTTPResult* psResult = CPLHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
     CSLDestroy(papszOptions);
 
     if (psResult == NULL)
@@ -1440,13 +1492,33 @@ OGRErr OGRWFSLayer::DeleteFeature( long nFID )
     }
 
     CPLStripXMLNamespace( psXML, NULL, TRUE );
+    int bUseOldSchema = FALSE;
     CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=TransactionResponse" );
+    if (psRoot == NULL)
+    {
+        psRoot = CPLGetXMLNode( psXML, "=WFS_TransactionResponse" );
+        if (psRoot)
+            bUseOldSchema = TRUE;
+    }
     if (psRoot == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find <TransactionResponse>");
         CPLDestroyXMLNode( psXML );
         CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
+    }
+
+    if (bUseOldSchema)
+    {
+        if (CPLGetXMLNode( psRoot, "TransactionResult.Status.FAILED" ))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Delete failed : %s",
+                     psResult->pabyData);
+            CPLDestroyXMLNode( psXML );
+            CPLHTTPDestroyResult(psResult);
+            return OGRERR_FAILURE;
+        }
     }
 
     CPLDestroyXMLNode( psXML );
