@@ -39,6 +39,7 @@ CPLString WFS_AddKVToURL(const char* pszURL, const char* pszKey, const char* psz
 CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
                                     int nVersion,
                                     int bPropertyIsNotEqualToSupported,
+                                    int bUseFeatureId,
                                     int* pbOutNeedsNullCheck );
 
 /************************************************************************/
@@ -146,10 +147,14 @@ class OGRWFSDataSource : public OGRDataSource
     int                 bHasMinOperators;
     int                 bHasNullCheck;
     int                 bPropertyIsNotEqualToSupported;
+    int                 bUseFeatureId;
 
     int                 bTransactionSupport;
     char**              papszIdGenMethods;
     int                 DetectTransactionSupport(CPLXMLNode* psRoot);
+
+    CPLString           osBaseURL;
+    CPLString           osPostTransactionURL;
 
   public:
                         OGRWFSDataSource();
@@ -176,9 +181,12 @@ class OGRWFSDataSource : public OGRDataSource
     int                         GetNeedNAMESPACE() { return bNeedNAMESPACE; }
     int                         HasMinOperators() { return bHasMinOperators; }
     int                         HasNullCheck() { return bHasNullCheck; }
+    int                         UseFeatureId() { return bUseFeatureId; }
 
     void                        SetPropertyIsNotEqualToUnSupported() { bPropertyIsNotEqualToSupported = FALSE; }
     int                         PropertyIsNotEqualToSupported() { return bPropertyIsNotEqualToSupported; }
+
+    CPLString                   GetPostTransactionURL();
 };
 
 /************************************************************************/
