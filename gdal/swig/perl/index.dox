@@ -74,6 +74,32 @@ $return = $object->method(); # method called in scalar context
 Many of the methods may throw an error, which can be caught by putting
 the call into eval{}; and then examining the contents of $@.
 
+\section class_methods_vs_object_methods Class methods vs object methods
+
+Some methods are class methods and some methods are object
+methods. Object methods are always invoked for objects, i.e.
+
+\code
+$object->method();
+\endcode
+
+while class methods are invoked either as methods
+
+\code
+Geo::GDAL::Class->method();
+\endcode
+
+or as subroutines
+
+\code
+Geo::GDAL::Class::subroutine();
+\endcode
+
+The disctinction between class methods and subroutines is subtle but
+often important. The method invocation passes the class name as the
+first argument while the subroutine invocation does not. Thus
+constructors (new and create) must be called as class methods.
+
 \section index_exceptions Exceptions
 
 Geo::GDAL uses the Perl exception mechanism in such a way that

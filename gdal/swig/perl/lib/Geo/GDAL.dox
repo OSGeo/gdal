@@ -472,6 +472,11 @@
 # @param bands
 # @param type One of the data types this driver supports.
 # @param options An anonymous hash of driver specific parameters.
+#
+# Usage:
+# \code
+# $ds = Geo::GDAL::Dataset::Create(...arguments...);
+# \endcode
 # @return a new Geo::GDAL::Dataset object
 
 ## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, \%options = undef)
@@ -910,6 +915,11 @@
 # @return a new Geo::GDAL::ColorTable object
 
 ## @cmethod Geo::GDAL::ColorTable create($GDALPaletteInterp = 'RGB')
+#
+# Usage:
+# \code
+# $ct = Geo::GDAL::ColorTable->create(...arguments...);
+# \endcode
 # @return a new Geo::GDAL::ColorTable object
 
 ## @method Geo::GDAL::ColorTable Clone()
