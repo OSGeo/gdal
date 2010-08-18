@@ -355,7 +355,6 @@ void CPL_STDCALL GDALAllRegister()
 /* -------------------------------------------------------------------- */
 
 #ifdef FRMT_raw
-    GDALRegister_GTX();
     GDALRegister_PNM();
     GDALRegister_DOQ1();
     GDALRegister_DOQ2();
@@ -376,6 +375,8 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_EIR();
     GDALRegister_DIPEx();
     GDALRegister_LCP();
+    GDALRegister_GTX();
+    GDALRegister_LOSLAS();
 #endif
 
 /* -------------------------------------------------------------------- */
