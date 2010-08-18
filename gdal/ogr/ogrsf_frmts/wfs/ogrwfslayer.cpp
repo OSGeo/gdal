@@ -828,6 +828,8 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find numberOfFeatures");
         CPLDestroyXMLNode( psXML );
         CPLHTTPDestroyResult(psResult);
+        
+        poDS->DisableSupportHits();
         return -1;
     }
 
