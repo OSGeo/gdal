@@ -275,6 +275,8 @@ def ogr_rfc28_14():
 
     expect = [ '43411', '43423' ]
     tr = ogrtest.check_features_against_list( lyr, 'prfedea', expect )
+
+    gdaltest.ds.ReleaseResultSet( lyr )
     
     if tr:
         return 'success'
@@ -289,6 +291,8 @@ def ogr_rfc28_15():
 
     expect = [ '35043411 168', '35043423 179' ]
     tr = ogrtest.check_features_against_list( lyr, 'prfedea', expect )
+
+    gdaltest.ds.ReleaseResultSet( lyr )
     
     if tr:
         return 'success'
