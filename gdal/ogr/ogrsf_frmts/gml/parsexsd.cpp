@@ -51,6 +51,92 @@ const char *StripNS( const char *pszFullValue )
 }
 
 /************************************************************************/
+/*                   GetSimpleTypeProperties()                          */
+/************************************************************************/
+
+static
+int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
+                            GMLPropertyType *pGMLType,
+                            int *pnWidth,
+                            int *pnPrecision)
+{
+    const char *pszBase =
+            StripNS( CPLGetXMLValue( psTypeNode,
+                                        "restriction.base", "" ));
+
+    if( EQUAL(pszBase,"decimal") )
+    {
+        *pGMLType = GMLPT_Real;
+        const char *pszWidth =
+            CPLGetXMLValue( psTypeNode,
+                        "restriction.totalDigits.value", "0" );
+        const char *pszPrecision =
+            CPLGetXMLValue( psTypeNode,
+                        "restriction.fractionDigits.value", "0" );
+        *pnWidth = atoi(pszWidth);
+        *pnPrecision = atoi(pszPrecision);
+        return TRUE;
+    }
+
+    else if( EQUAL(pszBase,"float")
+                || EQUAL(pszBase,"double") )
+    {
+        *pGMLType = GMLPT_Real;
+        return TRUE;
+    }
+
+    else if( EQUAL(pszBase,"integer") )
+    {
+        *pGMLType = GMLPT_Integer;
+        const char *pszWidth =
+            CPLGetXMLValue( psTypeNode,
+                        "restriction.totalDigits.value", "0" );
+        *pnWidth = atoi(pszWidth);
+        return TRUE;
+    }
+
+    else if( EQUAL(pszBase,"string") )
+    {
+        *pGMLType = GMLPT_String;
+        const char *pszWidth =
+            CPLGetXMLValue( psTypeNode,
+                        "restriction.maxLength.value", "0" );
+        *pnWidth = atoi(pszWidth);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                      LookForSimpleType()                             */
+/************************************************************************/
+
+static
+int LookForSimpleType(CPLXMLNode *psSchemaNode,
+                      const char* pszStrippedNSType,
+                      GMLPropertyType *pGMLType,
+                      int *pnWidth,
+                      int *pnPrecision)
+{
+    CPLXMLNode *psThis;
+    for( psThis = psSchemaNode->psChild;
+         psThis != NULL; psThis = psThis->psNext )
+    {
+        if( psThis->eType == CXT_Element
+           && EQUAL(psThis->pszValue,"simpleType")
+           && EQUAL(CPLGetXMLValue(psThis,"name",""),pszStrippedNSType) )
+        {
+            break;
+        }
+    }
+    if (psThis == NULL)
+        return FALSE;
+
+    return GetSimpleTypeProperties(psThis, pGMLType, pnWidth, pnPrecision);
+}
+
+/************************************************************************/
 /*                      ParseFeatureType()                              */
 /************************************************************************/
 
@@ -77,6 +163,7 @@ static const AssocNameType apsPropertyTypes [] =
     {NULL, wkbUnknown},
 };
 
+static
 GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                 const char* pszName,
                                 const char *pszType)
@@ -133,6 +220,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         if (pszType != NULL)
         {
             const char* pszStrippedNSType = StripNS(pszType);
+            int nWidth = 0, nPrecision = 0;
 
             GMLPropertyType gmlType = GMLPT_Untyped;
             if (EQUAL(pszStrippedNSType, "string") ||
@@ -143,6 +231,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                      EQUAL(pszStrippedNSType, "float"))
                 gmlType = GMLPT_Real;
             else if (EQUAL(pszStrippedNSType, "short") ||
+                     EQUAL(pszStrippedNSType, "int") ||
                      EQUAL(pszStrippedNSType, "integer") ||
                      EQUAL(pszStrippedNSType, "long"))
                 gmlType = GMLPT_Integer;
@@ -166,10 +255,44 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 }
                 continue;
             }
+
+            /* Integraph stuff */
+            else if (strcmp(pszType, "G:Point_MultiPointPropertyType") == 0)
+            {
+                poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
+                poClass->SetGeometryType(wkbMultiPoint);
+                poClass->SetGeometryAttributeIndex( nAttributeIndex );
+
+                nAttributeIndex ++;
+                continue;
+            }
+            else if (strcmp(pszType, "G:LineString_MultiLineStringPropertyType") == 0)
+            {
+                poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
+                poClass->SetGeometryType(wkbMultiLineString);
+                poClass->SetGeometryAttributeIndex( nAttributeIndex );
+
+                nAttributeIndex ++;
+                continue;
+            }
+            else if (strcmp(pszType, "G:Polygon_MultiPolygonPropertyType") == 0)
+            {
+                poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
+                poClass->SetGeometryType(wkbMultiPolygon);
+                poClass->SetGeometryAttributeIndex( nAttributeIndex );
+
+                nAttributeIndex ++;
+                continue;
+            }
+
             else
             {
-                //CPLDebug("GML", "Unknown type (%s). Defaulting to string", pszType);
-                gmlType = GMLPT_String;
+                gmlType = GMLPT_Untyped;
+                if ( ! LookForSimpleType(psSchemaNode, pszStrippedNSType,
+                                         &gmlType, &nWidth, &nPrecision) )
+                {
+                    //CPLDebug("GML", "Unknown type (%s).", pszType);
+                }
             }
 
             GMLPropertyDefn *poProp = new GMLPropertyDefn(
@@ -178,6 +301,9 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 
             poProp->SetType( gmlType );
             poProp->SetAttributeIndex( nAttributeIndex );
+            poProp->SetWidth( nWidth );
+            poProp->SetPrecision( nPrecision );
+
             poClass->AddProperty( poProp );
 
             nAttributeIndex ++;
@@ -186,55 +312,21 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         }
 
         // For now we skip geometries .. fixup later.
-        if( CPLGetXMLNode( psAttrDef, "simpleType" ) == NULL )
+        CPLXMLNode* psSimpleType = CPLGetXMLNode( psAttrDef, "simpleType" );
+        if( psSimpleType == NULL )
             continue;
 
         GMLPropertyDefn *poProp = new GMLPropertyDefn(
             CPLGetXMLValue( psAttrDef, "name", "unnamed" ),
             CPLGetXMLValue( psAttrDef, "name", "unnamed" ) );
 
-        const char *pszBase =
-            StripNS( CPLGetXMLValue( psAttrDef,
-                                        "simpleType.restriction.base", "" ));
 
-        if( EQUAL(pszBase,"decimal") )
-        {
-            poProp->SetType( GMLPT_Real );
-            const char *pszWidth =
-                CPLGetXMLValue( psAttrDef,
-                            "simpleType.restriction.totalDigits.value", "0" );
-            const char *pszPrecision =
-                CPLGetXMLValue( psAttrDef,
-                            "simpleType.restriction.fractionDigits.value", "0" );
-            poProp->SetWidth( atoi(pszWidth) );
-            poProp->SetPrecision( atoi(pszPrecision) );
-        }
-
-        else if( EQUAL(pszBase,"float")
-                    || EQUAL(pszBase,"double") )
-            poProp->SetType( GMLPT_Real );
-
-        else if( EQUAL(pszBase,"integer") )
-        {
-            poProp->SetType( GMLPT_Integer );
-            const char *pszWidth =
-                CPLGetXMLValue( psAttrDef,
-                            "simpleType.restriction.totalDigits.value", "0" );
-            poProp->SetWidth( atoi(pszWidth) );
-        }
-
-        else if( EQUAL(pszBase,"string") )
-        {
-            poProp->SetType( GMLPT_String );
-            const char *pszWidth =
-                CPLGetXMLValue( psAttrDef,
-                            "simpleType.restriction.maxLength.value", "0" );
-            poProp->SetWidth( atoi(pszWidth) );
-        }
-
-        else
-            poProp->SetType( GMLPT_Untyped );
-
+        GMLPropertyType eType = GMLPT_Untyped;
+        int nWidth = 0, nPrecision = 0;
+        GetSimpleTypeProperties(psSimpleType, &eType, &nWidth, &nPrecision);
+        poProp->SetType( eType );
+        poProp->SetWidth( nWidth );
+        poProp->SetPrecision( nPrecision );
         poProp->SetAttributeIndex( nAttributeIndex );
 
         nAttributeIndex ++;
