@@ -158,14 +158,6 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (strstr(psResult->pszContentType, "xml") == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Non XML content returned by server : %s, %s",
-                 psResult->pszContentType, psResult->pabyData);
-        CPLHTTPDestroyResult(psResult);
-        return NULL;
-    }
 
     if (strstr((const char*)psResult->pabyData, "<ServiceExceptionReport") != NULL)
     {
@@ -438,14 +430,6 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     {
         bJSON = TRUE;
     }
-    else if (strstr(psResult->pszContentType, "xml") == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Non XML content returned by server : %s, %s",
-                 psResult->pszContentType, psResult->pabyData);
-        CPLHTTPDestroyResult(psResult);
-        return NULL;
-    }
 
     if (strstr((const char*)psResult->pabyData, "<ServiceExceptionReport") != NULL)
     {
@@ -590,7 +574,7 @@ void OGRWFSLayer::ResetReading()
     GetLayerDefn();
     if (bReloadNeeded)
     {
-        delete poBaseDS;
+        OGRDataSource::DestroyDataSource(poBaseDS);
         poBaseDS = NULL;
         poBaseLayer = NULL;
         bHasFetched = FALSE;
@@ -610,7 +594,7 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
     GetLayerDefn();
     if (bReloadNeeded)
     {
-        delete poBaseDS;
+        OGRDataSource::DestroyDataSource(poBaseDS);
         poBaseDS = NULL;
         poBaseLayer = NULL;
         bHasFetched = FALSE;
@@ -815,15 +799,6 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         }
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
                  psResult->pabyData);
-        CPLHTTPDestroyResult(psResult);
-        return -1;
-    }
-
-    if (strstr(psResult->pszContentType, "xml") == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Non XML content returned by server : %s, %s",
-                psResult->pszContentType, psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
         return -1;
     }
@@ -1085,15 +1060,6 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if (strstr(psResult->pszContentType, "xml") == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Non XML content returned by server : %s, %s",
-                psResult->pszContentType, psResult->pabyData);
-        CPLHTTPDestroyResult(psResult);
-        return OGRERR_FAILURE;
-    }
-
     CPLDebug("WFS", "Response: %s", psResult->pabyData);
 
     CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
@@ -1293,15 +1259,6 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if (strstr(psResult->pszContentType, "xml") == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Non XML content returned by server : %s, %s",
-                psResult->pszContentType, psResult->pabyData);
-        CPLHTTPDestroyResult(psResult);
-        return OGRERR_FAILURE;
-    }
-
     CPLDebug("WFS", "Response: %s", psResult->pabyData);
 
     CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
@@ -1465,15 +1422,6 @@ OGRErr OGRWFSLayer::DeleteFeature( long nFID )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
                  psResult->pabyData);
-        CPLHTTPDestroyResult(psResult);
-        return OGRERR_FAILURE;
-    }
-
-    if (strstr(psResult->pszContentType, "xml") == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Non XML content returned by server : %s, %s",
-                psResult->pszContentType, psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
     }

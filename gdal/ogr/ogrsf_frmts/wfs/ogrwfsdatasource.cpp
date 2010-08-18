@@ -436,14 +436,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         CPLHTTPDestroyResult(psResult);
         return FALSE;
     }
-    if (strstr(psResult->pszContentType, "xml") == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Non XML content returned by server : %s, %s",
-                 psResult->pszContentType, psResult->pabyData);
-        CPLHTTPDestroyResult(psResult);
-        return FALSE;
-    }
+
     CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
 
     int bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption(
