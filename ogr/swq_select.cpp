@@ -631,6 +631,8 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
 /*      The wildcard expands to nothing                                 */
 /* -------------------------------------------------------------------- */
             CPLFree( column_defs[isrc].field_name );
+            delete column_defs[isrc].expr;
+
             memmove( column_defs + isrc,
                      column_defs + isrc + 1,
                      sizeof( swq_col_def ) * (result_columns-1-isrc) );
