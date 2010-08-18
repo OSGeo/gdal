@@ -295,6 +295,11 @@
 # Create a new spatial reference object using named parameters. This
 # constructor recognizes the following named parameters: WKT, Text,
 # Proj4, ESRI, EPSG, PCI, USGS, XML.
+#
+# Usage:
+# \code
+# $sr = Geo::OSR::SpatialReference->create(...arguments...);
+# \endcode
 # @return a new Geo::OSR::SpatialReference object
 
 ## @method $IsSame($rhs)

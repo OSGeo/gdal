@@ -246,6 +246,11 @@
 # \note aka CreateDataSource
 # @param name The data source name.
 # @param options Driver specific options.
+#
+# Usage:
+# \code
+# $ds = Geo::OGR::DataSource::create(...arguments...);
+# \endcode
 # @return a new Geo::OGR::DataSource object.
 
 ## @method Geo::OGR::DataSource Copy($ds, $name, \@options = undef)
@@ -739,12 +744,22 @@
 
 ## @cmethod Geo::OGR::FieldDefn create($name = "unnamed", $field_type = 'String')
 # @param name
-# @param field_type one of field types
+# @param field_type one of field types. Optional. Default is String.
+#
+# Usage:
+# \code
+# $fd = Geo::OGR::FieldDefn->create(...arguments...);
+# \endcode
 # @return a new Geo::OGR::FieldDefn object
 
 ## @cmethod Geo::OGR::FieldDefn create(%parameters)
 # @param parameters named parameters: Name, Type, Justify, Width,
 # Precision
+#
+# Usage:
+# \code
+# $fd = Geo::OGR::FieldDefn->create(...arguments...);
+# \endcode
 # @return a new Geo::OGR::FieldDefn object
 
 ## @method \%Schema(%parameters)
@@ -839,6 +854,11 @@
 
 ## @cmethod Geo::OGR::Geometry create($type)
 # @param type One of geometry type strings: 'Point', 'LineString', etc.
+#
+# Usage:
+# \code
+# $g = Geo::OGR::Geometry->create(...arguments...);
+# \endcode
 # @return a new Geo::OGR::Geometry object
 
 ## @cmethod Geo::OGR::Geometry create(%params)
@@ -848,6 +868,11 @@
 # - \a arc An anonymous list of [CenterX, CenterY, CenterZ,
 #    PrimaryRadius, SecondaryRadius, Rotation, StartAngle, EndAngle,
 #    MaxAngleStepSizeDegrees]
+#
+# Usage:
+# \code
+# $g = Geo::OGR::Geometry->create(...arguments...);
+# \endcode
 # @return a new Geo::OGR::Geometry object
 
 ## @method FlattenTo2D()
