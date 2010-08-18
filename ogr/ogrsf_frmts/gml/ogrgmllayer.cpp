@@ -262,7 +262,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             iDstField ++;
         }
 
-        for( iField = 0; iField < poFClass->GetPropertyCount(); iField++ )
+        for( iField = 0; iField < poFClass->GetPropertyCount(); iField++, iDstField ++ )
         {
             const GMLProperty *psGMLProperty = poGMLFeature->GetProperty( iField );
             if( psGMLProperty == NULL || psGMLProperty->nSubProperties == 0 )
@@ -272,7 +272,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             {
               case GMLPT_Real:
               {
-                  poOGRFeature->SetField( iDstField ++, CPLAtof(psGMLProperty->papszSubProperties[0]) );
+                  poOGRFeature->SetField( iDstField, CPLAtof(psGMLProperty->papszSubProperties[0]) );
               }
               break;
 
@@ -285,7 +285,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                   for( i = 0; i < nCount; i++ )
                       panIntList[i] = atoi(psGMLProperty->papszSubProperties[i]);
 
-                  poOGRFeature->SetField( iDstField ++, nCount, panIntList );
+                  poOGRFeature->SetField( iDstField, nCount, panIntList );
                   CPLFree( panIntList );
               }
               break;
@@ -299,19 +299,19 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                   for( i = 0; i < nCount; i++ )
                       padfList[i] = CPLAtof(psGMLProperty->papszSubProperties[i]);
 
-                  poOGRFeature->SetField( iDstField ++, nCount, padfList );
+                  poOGRFeature->SetField( iDstField, nCount, padfList );
                   CPLFree( padfList );
               }
               break;
 
               case GMLPT_StringList:
               {
-                  poOGRFeature->SetField( iDstField ++, psGMLProperty->papszSubProperties );
+                  poOGRFeature->SetField( iDstField, psGMLProperty->papszSubProperties );
               }
               break;
 
               default:
-                poOGRFeature->SetField( iDstField ++, psGMLProperty->papszSubProperties[0] );
+                poOGRFeature->SetField( iDstField, psGMLProperty->papszSubProperties[0] );
                 break;
             }
         }
