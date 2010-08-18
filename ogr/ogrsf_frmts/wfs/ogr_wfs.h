@@ -33,6 +33,7 @@
 #include "cpl_minixml.h"
 #include "ogrsf_frmts.h"
 #include "gmlreader.h"
+#include "cpl_http.h"
 
 CPLString WFS_FetchValueFromURL(const char* pszURL, const char* pszKey);
 CPLString WFS_AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue);
@@ -41,6 +42,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
                                     int bPropertyIsNotEqualToSupported,
                                     int bUseFeatureId,
                                     int* pbOutNeedsNullCheck );
+CPLHTTPResult* OGRWFSHTTPFetch( const char* pszURL, char** papszOptions );
 
 /************************************************************************/
 /*                             OGRWFSLayer                              */
