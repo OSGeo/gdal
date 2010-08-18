@@ -448,16 +448,9 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    CPLHTTPResult* psResult = CPLHTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
-        return FALSE;
-    }
-    if (psResult->nStatus != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                 psResult->pszErrBuf);
-        CPLHTTPDestroyResult(psResult);
         return FALSE;
     }
 
@@ -733,4 +726,31 @@ int OGRWFSDataSource::IsOldDeegree(const char* pszErrorString)
         return TRUE;
     }
     return FALSE;
+}
+
+/************************************************************************/
+/*                         OGRWFSHTTPFetch()                            */
+/************************************************************************/
+
+CPLHTTPResult* OGRWFSHTTPFetch( const char* pszURL, char** papszOptions )
+{
+    CPLHTTPResult* psResult = CPLHTTPFetch( pszURL, papszOptions );
+    if (psResult == NULL)
+    {
+        return NULL;
+    }
+    if (psResult->nStatus != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                 psResult->pszErrBuf);
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+    if (psResult->pabyData == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Empty content returned by server");
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+    return psResult;
 }
