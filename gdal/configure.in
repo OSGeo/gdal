@@ -2633,7 +2633,53 @@ fi
 AC_SUBST([PY_HAVE_SETUPTOOLS])
 AC_SUBST([BINDINGS])
 
+dnl ---------------------------------------------------------------------------
+dnl Select Rasdaman or disable driver.
+dnl ---------------------------------------------------------------------------
 
+RASDAMAN_ENABLED=no
+
+AC_CHECKING(whether we should include rasdaman support)
+AC_ARG_WITH(rasdaman,
+[  --with-rasdaman[=DIR]        Include rasdaman support (DIR is rasdaman's install dir).],,)
+
+if test "$with_rasdaman" = "yes" ; then
+
+  AC_CHECK_LIB(raslib,main,RASDAMAN_ENABLED=yes,,,)
+
+  if test -n "$RASDAMAN_ENABLED" ; then
+      RASDAMAN_LIB="-lrasodmg -lclientcomm -lcompression -lnetwork -lraslib"
+      AC_MSG_RESULT([        using rasdaman from system libs.])
+  else
+      AC_MSG_WARN([        rasdaman not found in system libs... use --with-rasdaman=DIR.])
+  fi
+
+elif test -n "$with_rasdaman" -a "$with_rasdaman" != "no" ; then
+
+  AC_MSG_RESULT([        3])
+  RASDAMAN_DIR=$with_rasdaman
+
+  test -f $RASDAMAN_DIR/include/rasdaman.hh && RASDAMAN_INCDIR="$RASDAMAN/include/"
+
+  if test -n "$RASDAMAN_INCDIR" -a -n "$RASDAMAN_LIBDIR" ; then
+      RASDAMAN_INC=-I$RASDAMAN_INCDIR
+      RASDAMAN_LIB="-L$RASDAMAN_LIBDIR -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib"
+  else
+      AC_MSG_ERROR("Could not find rasdaman.hh or libraslib.a in $RASDAMAN_DIR.")
+  fi
+
+  RASDAMAN_ENABLED=yes
+  OPT_GDAL_FORMATS="rasdaman $OPT_GDAL_FORMATS"
+  AC_MSG_RESULT([        using rasdaman from $RASDAMAN_DIR.])
+
+else
+
+  AC_MSG_RESULT([        rasdaman support not requested.])
+fi
+
+AC_SUBST(RASDAMAN_ENABLED,$RASDAMAN_ENABLED)
+AC_SUBST(RASDAMAN_INC,    $RASDAMAN_INC)
+AC_SUBST(RASDAMAN_LIB,    $RASDAMAN_LIB)
 
 
 AC_OUTPUT(GDALmake.opt)
@@ -2692,6 +2738,7 @@ LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
 LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
 LOC_MSG([  SDE support:               ${SDE_ENABLED}])
+LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
