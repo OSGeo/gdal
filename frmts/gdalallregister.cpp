@@ -377,6 +377,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_LCP();
     GDALRegister_GTX();
     GDALRegister_LOSLAS();
+    GDALRegister_NTv2();
 #endif
 
 /* -------------------------------------------------------------------- */
