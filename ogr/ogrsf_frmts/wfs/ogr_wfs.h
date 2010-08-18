@@ -168,6 +168,7 @@ class OGRWFSDataSource : public OGRDataSource
 
     int                         UpdateMode() { return bUpdate; }
     int                         SupportTransactions() { return bTransactionSupport; }
+    void                        DisableSupportHits() { bGetFeatureSupportHits = FALSE; }
     int                         GetFeatureSupportHits() { return bGetFeatureSupportHits; }
     const char                 *GetVersion() { return osVersion.c_str(); }
 
