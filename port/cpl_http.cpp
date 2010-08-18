@@ -259,6 +259,15 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
+    static int bHasCheckVersion = FALSE;
+    static int bSupportGZip = FALSE;
+    if (!bHasCheckVersion)
+    {
+        bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
+    }
+    if (bSupportGZip)
+        curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
+
 /* -------------------------------------------------------------------- */
 /*      Execute the request, waiting for results.                       */
 /* -------------------------------------------------------------------- */
