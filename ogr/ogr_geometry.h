@@ -65,11 +65,6 @@ class OGRPoint;
 /**
  * Abstract base class for all geometry classes.
  *
- * Note that the family of spatial analysis methods (Equal(), Disjoint(), ...,
- * ConvexHull(), Buffer(), ...) are not implemented at ths time.  Some other
- * required and optional geometry methods have also been omitted at this
- * time.
- *
  * Some spatial analysis methods require that OGR is built on the GEOS library
  * to work properly. The precise meaning of methods that describe spatial relationships
  * between geometries is described in the SFCOM, or other simple features interface
