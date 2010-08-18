@@ -534,7 +534,8 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
         const char *src_fieldname = column_defs[isrc].field_name;
         int itable, new_fields, i, iout;
 
-        if( src_fieldname[strlen(src_fieldname)-1] != '*' )
+        if( *src_fieldname == '\0'
+            || src_fieldname[strlen(src_fieldname)-1] != '*' )
             continue;
 
         /* We don't want to expand COUNT(*) */
