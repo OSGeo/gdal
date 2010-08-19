@@ -598,23 +598,12 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode )
 
       case SWQ_SUBTRACT:
       case SWQ_MULTIPLY:
+      case SWQ_DIVIDE:
         SWQAutoPromoteIntegerToFloat( poNode );
         if( poNode->papoSubExpr[0]->field_type == SWQ_FLOAT )
             eRetType = eArgType = SWQ_FLOAT;
         else
             eRetType = eArgType = SWQ_INTEGER;
-        break;
-
-      case SWQ_DIVIDE:
-        SWQAutoPromoteIntegerToFloat( poNode );
-
-        if( poNode->papoSubExpr[0]->field_type == SWQ_FLOAT )
-            eRetType = eArgType = SWQ_FLOAT;
-        else
-        {
-            eRetType = SWQ_FLOAT;
-            eArgType = SWQ_INTEGER;
-        }
         break;
 
       case SWQ_CONCAT:

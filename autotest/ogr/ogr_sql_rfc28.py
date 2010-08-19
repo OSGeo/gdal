@@ -300,6 +300,67 @@ def ogr_rfc28_15():
         return 'fail'
 
 ###############################################################################
+# Test parse support for negative numbers (#3724)
+
+def ogr_rfc28_16():
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT -1, 3--1,3*-1,2e-1,3-1 from poly where eas_id = 168" )
+
+    expect = [ -1 ]
+    tr = ogrtest.check_features_against_list( lyr, 'field_1', expect )
+
+    expect = [ 4 ]
+    lyr.ResetReading()
+    tr = ogrtest.check_features_against_list( lyr, 'field_2', expect )
+
+    expect = [ -3 ]
+    lyr.ResetReading()
+    tr = ogrtest.check_features_against_list( lyr, 'field_3', expect )
+
+    expect = [ 0.2 ]
+    lyr.ResetReading()
+    tr = ogrtest.check_features_against_list( lyr, 'field_4', expect )
+
+    expect = [ 2 ]
+    lyr.ResetReading()
+    tr = ogrtest.check_features_against_list( lyr, 'field_5', expect )
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+    
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test evaluation of division - had a problem with type conversion.
+
+def ogr_rfc28_17():
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT 5/2, 5.0/2.0, 5/2.0, 5.0/2 from poly where eas_id = 168" )
+
+    expect = [ 2 ]
+    tr = ogrtest.check_features_against_list( lyr, 'field_1', expect )
+
+    expect = [ 2.5 ]
+    lyr.ResetReading()
+    tr = ogrtest.check_features_against_list( lyr, 'field_2', expect )
+
+    expect = [ 2.5 ]
+    lyr.ResetReading()
+    tr = ogrtest.check_features_against_list( lyr, 'field_3', expect )
+
+    expect = [ 2.5 ]
+    lyr.ResetReading()
+    tr = ogrtest.check_features_against_list( lyr, 'field_4', expect )
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+    
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -324,6 +385,8 @@ gdaltest_list = [
     ogr_rfc28_13,
     ogr_rfc28_14,
     ogr_rfc28_15,
+    ogr_rfc28_16,
+    ogr_rfc28_17,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
