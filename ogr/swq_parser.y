@@ -303,6 +303,13 @@ value_expr:
 			$$ = $1;
 		}
 
+	| '-' SWQT_NUMBER 
+	        {
+			$$ = $2;
+                        $$->int_value *= -1;
+                        $$->float_value *= -1;
+		}
+
 	| SWQT_STRING
 		{
 			$$ = $1;
