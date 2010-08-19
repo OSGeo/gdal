@@ -243,6 +243,24 @@ CPLString OGRWFSDataSource::GetPostTransactionURL()
 
 int OGRWFSDataSource::DetectTransactionSupport(CPLXMLNode* psRoot)
 {
+    CPLXMLNode* psTransactionWFS100 =
+        CPLGetXMLNode(psRoot, "Capability.Request.Transaction");
+    if (psTransactionWFS100)
+    {
+        CPLXMLNode* psPostURL = CPLGetXMLNode(psTransactionWFS100, "DCPType.HTTP.Post");
+        if (psPostURL)
+        {
+            const char* pszPOSTURL = CPLGetXMLValue(psPostURL, "onlineResource", NULL);
+            if (pszPOSTURL)
+            {
+                osPostTransactionURL = pszPOSTURL;
+            }
+        }
+
+        bTransactionSupport = TRUE;
+        return TRUE;
+    }
+    
     CPLXMLNode* psOperationsMetadata =
         CPLGetXMLNode(psRoot, "OperationsMetadata");
     if (!psOperationsMetadata)
