@@ -1513,6 +1513,10 @@ void JPIPKAKAsyncReader::Start()
         CPLError(CE_Failure, CPLE_AppDefined, "JPIPKAKAsyncReader supports at most two concurrent server communication threads");
     else
     {
+        // Ensure we are working against full res
+        ((JPIPKAKDataset*)poDS)->poCodestream->
+            apply_input_restrictions( 0, 0, 0, 0, NULL );
+
         // calculate the url the worker function is going to retrieve
         // calculate the kakadu adjust image size
         channels.configure(*(((JPIPKAKDataset*)poDS)->poCodestream));
@@ -1737,6 +1741,9 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
 /*      down to the target canvas.                                      */
 /* -------------------------------------------------------------------- */
     kdu_dims view_dims;
+
+    // Ensure we are working against full res
+    poJDS->poCodestream->apply_input_restrictions( 0, 0, 0, 0, NULL );
 
     view_dims = poJDS->poDecompressor->get_rendered_image_dims(
         *poJDS->poCodestream, &channels, 
