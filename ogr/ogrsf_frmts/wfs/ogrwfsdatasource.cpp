@@ -36,6 +36,33 @@
 
 CPL_CVSID("$Id$");
 
+
+class OGRWFSWrappedResultLayer : public OGRLayer
+{
+    OGRDataSource *poDS;
+    OGRLayer      *poLayer;
+
+    public:
+        OGRWFSWrappedResultLayer(OGRDataSource* poDS, OGRLayer* poLayer)
+        {
+            this->poDS = poDS;
+            this->poLayer = poLayer;
+        }
+        ~OGRWFSWrappedResultLayer()
+        {
+            delete poDS;
+        }
+
+        virtual void        ResetReading() { poLayer->ResetReading(); }
+        virtual OGRFeature *GetNextFeature() { return poLayer->GetNextFeature(); }
+        virtual OGRErr      SetNextByIndex( long nIndex ) { return poLayer->SetNextByIndex(nIndex); }
+        virtual OGRFeature *GetFeature( long nFID ) { return poLayer->GetFeature(nFID); }
+        virtual OGRFeatureDefn *GetLayerDefn() { return poLayer->GetLayerDefn(); }
+        virtual int         GetFeatureCount( int bForce = TRUE ) { return poLayer->GetFeatureCount(bForce); }
+        virtual int         TestCapability( const char * pszCap )  { return poLayer->TestCapability(pszCap); }
+};
+
+
 /************************************************************************/
 /*                          OGRWFSDataSource()                          */
 /************************************************************************/
@@ -771,4 +798,148 @@ CPLHTTPResult* OGRWFSHTTPFetch( const char* pszURL, char** papszOptions )
         return NULL;
     }
     return psResult;
+}
+
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
+
+OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
+                                        OGRGeometry *poSpatialFilter,
+                                        const char *pszDialect )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Use generic implementation for OGRSQL dialect.                  */
+/* -------------------------------------------------------------------- */
+    if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
+                                          pszDialect );
+
+/* -------------------------------------------------------------------- */
+/*      Deal with "SELECT _LAST_INSERTED_FIDS_ FROM layername" statement */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand, "SELECT _LAST_INSERTED_FIDS_ FROM ", 33) )
+    {
+        const char* pszIter = pszSQLCommand + 33;
+        while(*pszIter && *pszIter != ' ')
+            pszIter ++;
+
+        CPLString osName = pszSQLCommand + 33;
+        osName.resize(pszIter - (pszSQLCommand + 33));
+        OGRWFSLayer* poLayer = (OGRWFSLayer*)GetLayerByName(osName);
+        if (poLayer == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unknown layer : %s", osName.c_str());
+            return NULL;
+        }
+
+        OGRSFDriver* poMEMDrv = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+        if (poMEMDrv == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'Memory' driver");
+            return NULL;
+        }
+
+        OGRDataSource* poMEMDS = poMEMDrv->CreateDataSource("dummy_name", NULL);
+        OGRLayer* poMEMLayer = poMEMDS->CreateLayer("FID_LIST", NULL, wkbNone, NULL);
+        OGRFieldDefn oFDefn("gml_id", OFTString);
+        poMEMLayer->CreateField(&oFDefn);
+
+        const std::vector<CPLString>& aosFIDList = poLayer->GetLastInsertedFIDList();
+        std::vector<CPLString>::const_iterator iter = aosFIDList.begin();
+        std::vector<CPLString>::const_iterator eiter = aosFIDList.end();
+        while (iter != eiter)
+        {
+            const CPLString& osFID = *iter;
+            OGRFeature* poFeature = new OGRFeature(poMEMLayer->GetLayerDefn());
+            poFeature->SetField(0, osFID);
+            poMEMLayer->CreateFeature(poFeature);
+            delete poFeature;
+            iter ++;
+        }
+
+        return new OGRWFSWrappedResultLayer(poMEMDS, poMEMLayer);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Deal with "DELETE FROM layer_name WHERE expression" statement   */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand, "DELETE FROM ", 12) )
+    {
+        const char* pszIter = pszSQLCommand + 12;
+        while(*pszIter && *pszIter != ' ')
+            pszIter ++;
+        if (*pszIter == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid statement");
+            return NULL;
+        }
+
+        CPLString osName = pszSQLCommand + 12;
+        osName.resize(pszIter - (pszSQLCommand + 12));
+        OGRWFSLayer* poLayer = (OGRWFSLayer*)GetLayerByName(osName);
+        if (poLayer == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unknown layer : %s", osName.c_str());
+            return NULL;
+        }
+
+        while(*pszIter && *pszIter == ' ')
+            pszIter ++;
+        if (!EQUALN(pszIter, "WHERE ", 5))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "WHERE clause missing");
+            return NULL;
+        }
+        pszIter += 5;
+
+        const char* pszQuery = pszIter;
+
+        /* Check with the generic SQL engine that this is a valid WHERE clause */
+        OGRFeatureQuery oQuery;
+        OGRErr eErr = oQuery.Compile( poLayer->GetLayerDefn(), pszQuery );
+        if( eErr != OGRERR_NONE )
+        {
+            return NULL;
+        }
+
+        /* Now turn this into OGC Filter language if possible */
+        int bNeedsNullCheck = FALSE;
+        int nVersion = (strcmp(GetVersion(),"1.0.0") == 0) ? 100 : 110;
+        CPLString osOGCFilter = WFS_TurnSQLFilterToOGCFilter(pszQuery,
+                                                             nVersion,
+                                                             bPropertyIsNotEqualToSupported,
+                                                             bUseFeatureId,
+                                                             &bNeedsNullCheck);
+        if (bNeedsNullCheck && !HasNullCheck())
+            osOGCFilter = "";
+
+        if (osOGCFilter.size() == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot convert WHERE clause into a OGC filter");
+            return NULL;
+        }
+
+        poLayer->DeleteFromFilter(osOGCFilter);
+
+        return NULL;
+    }
+
+    return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                      poSpatialFilter,
+                                      pszDialect );
+
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+void OGRWFSDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
+{
+    delete poResultsSet;
 }

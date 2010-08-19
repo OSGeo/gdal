@@ -30,6 +30,8 @@
 #ifndef _OGR_WFS_H_INCLUDED
 #define _OGR_WFS_H_INCLUDED
 
+#include <vector>
+
 #include "cpl_minixml.h"
 #include "ogrsf_frmts.h"
 #include "gmlreader.h"
@@ -92,6 +94,14 @@ class OGRWFSLayer : public OGRLayer
     CPLString           osTargetNamespace;
     CPLString           GetDescribeFeatureTypeURL();
 
+    int                 nExpectedInserts;
+    CPLString           osGlobalInsert;
+    std::vector<CPLString> aosFIDList;
+    
+    int                 bInTransaction;
+
+    CPLString           GetPostHeader();
+
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
                                     OGRSpatialReference* poSRS,
@@ -128,6 +138,14 @@ class OGRWFSLayer : public OGRLayer
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
+
+    virtual OGRErr      StartTransaction();
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
+
+    OGRErr              DeleteFromFilter( CPLString osOGCFilter );
+
+    const std::vector<CPLString>& GetLastInsertedFIDList() { return aosFIDList; }
 };
 
 /************************************************************************/
@@ -172,6 +190,11 @@ class OGRWFSDataSource : public OGRDataSource
     virtual OGRLayer*           GetLayerByName(const char* pszLayerName);
 
     virtual int                 TestCapability( const char * );
+
+    virtual OGRLayer *          ExecuteSQL( const char *pszSQLCommand,
+                                        OGRGeometry *poSpatialFilter,
+                                        const char *pszDialect );
+    virtual void                ReleaseResultSet( OGRLayer * poResultsSet );
 
     int                         UpdateMode() { return bUpdate; }
     int                         SupportTransactions() { return bTransactionSupport; }
