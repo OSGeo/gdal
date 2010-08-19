@@ -651,6 +651,160 @@ def ogr_sql_27():
     else:
         return 'fail'
 
+
+###############################################################################
+# Test robustness against invalid SQL statements.
+# With RFC 28 new implementation, most of them are directly caught by the generated
+# code from the grammar
+
+def ogr_sql_28():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    lyr = ds.CreateLayer( "my_layer")
+    field_defn = ogr.FieldDefn( "strfield", ogr.OFTString )
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn( "intfield", ogr.OFTInteger )
+    lyr.CreateField(field_defn)
+
+    lyr = ds.CreateLayer( "my_layer2")
+    field_defn = ogr.FieldDefn( "strfield", ogr.OFTString )
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn( "strfield2", ogr.OFTString )
+    lyr.CreateField(field_defn)
+
+    try:
+        sql_lyr = ds.ExecuteSQL(None)
+        gdaltest.post_reason('expected error on NULL query')
+        return 'fail'
+    except:
+        pass
+
+    queries = [
+    '',
+    '1',
+    '*',
+    'SELECT',
+    "SELECT ' FROM my_layer",
+    'SELECT + FROM my_layer',
+    'SELECT (1 FROM my_layer',
+    'SELECT (1)) FROM my_layer',
+    'SELECT (1,) FROM my_layer',
+    'SELECT 1 + FROM my_layer',
+    "SELECT 1 + 'a' FROM my_layer",
+    'SELECT 1 - FROM my_layer',
+    'SELECT 1 * FROM my_layer',
+    'SELECT 1 % FROM my_layer',
+    'SELECT *',
+    'SELECT * FROM',
+    'SELECT * FROM foo',
+    'SELECT FROM my_layer',
+    'SELECT FROM FROM my_layer',
+    'SELECT strfield, FROM my_layer',
+    'SELECT strfield, foo FROM my_layer',
+    'SELECT strfield AS FROM my_layer',
+    'SELECT strfield AS 1 FROM my_layer',
+    'SELECT strfield AS strfield2 FROM',
+    'SELECT strfield + intfield FROM my_layer',
+    'SELECT CAST',
+    'SELECT CAST(',
+    'SELECT CAST(strfield',
+    'SELECT CAST(strfield AS',
+    'SELECT CAST(strfield AS foo',
+    'SELECT CAST(strfield AS foo)',
+    'SELECT CAST(strfield AS foo) FROM',
+    'SELECT CAST(strfield AS foo) FROM my_layer',
+    'SELECT CAST(strfield AS CHARACTER',
+    'SELECT CAST(strfield AS CHARACTER)',
+    'SELECT CAST(strfield AS CHARACTER) FROM',
+    'SELECT CAST(strfield AS CHARACTER) FROM foo',
+    'SELECT CAST(strfield AS CHARACTER(',
+    'SELECT CAST(strfield AS CHARACTER(2',
+    'SELECT CAST(strfield AS CHARACTER(2)',
+    'SELECT CAST(strfield AS CHARACTER(2))',
+    'SELECT CAST(strfield AS CHARACTER(2)) FROM',
+    'SELECT CAST(strfield AS CHARACTER(2)) FROM foo',
+    'SELECT CAST(strfield AS 1) FROM my_layer',
+    'SELECT * FROM my_layer WHERE',
+    'SELECT * FROM my_layer WHERE strfield',
+    'SELECT * FROM my_layer WHERE strfield = ',
+    'SELECT * FROM my_layer WHERE strfield = foo',
+    "SELECT * FROM my_layer WHERE foo = 'a'",
+    "SELECT * FROM my_layer WHERE strfield = 'a"
+    "SELECT * FROM my_layer WHERE strfield = 'a' ORDER ",
+    "SELECT * FROM my_layer WHERE strfield = 'a' ORDER BY",
+    "SELECT * FROM my_layer WHERE strfield = 'a' ORDER BY foo",
+    "SELECT * FROM my_layer WHERE strfield = 'a' ORDER BY strfield UNK",
+    "SELECT COUNT",
+    "SELECT COUNT(",
+    "SELECT COUNT() FROM my_layer",
+    "SELECT COUNT(*",
+    "SELECT COUNT(*)",
+    "SELECT COUNT(* FROM my_layer",
+    "SELECT COUNT(FOO intfield) FROM my_layer",
+    "SELECT COUNT(DISTINCT intfield FROM my_layer",
+    "SELECT COUNT(DISTINCT *) FROM my_layer",
+    "SELECT DISTINCT foo FROM my_layer",
+    "SELECT DISTINCT FROM my_layer",
+    "SELECT DISTINCT strfield, COUNT(DISTINCT intfield) FROM my_layer",
+    "SELECT MIN(intfield,2) FROM my_layer",
+    "SELECT MIN(foo) FROM my_layer",
+    "SELECT MAX(foo) FROM my_layer",
+    "SELECT SUM(foo) FROM my_layer",
+    "SELECT AVG(foo) FROM my_layer",
+    "SELECT MIN(strfield) FROM my_layer",
+    "SELECT MAX(strfield) FROM my_layer",
+    "SELECT SUM(strfield) FROM my_layer",
+    "SELECT AVG(strfield) FROM my_layer",
+    "SELECT * FROM my_layer WHERE strfield =" ,
+    "SELECT * FROM my_layer WHERE strfield = foo" ,
+    "SELECT * FROM my_layer WHERE strfield = intfield" ,
+    "SELECT * FROM my_layer WHERE strfield = 1" ,
+    "SELECT * FROM my_layer WHERE strfield = '1' AND" ,
+    "SELECT * FROM my_layer WHERE 1 AND 2" ,
+    "SELECT * FROM my_layer WHERE strfield LIKE" ,
+    "SELECT * FROM my_layer WHERE strfield LIKE 1" ,
+    "SELECT * FROM my_layer WHERE strfield IS" ,
+    "SELECT * FROM my_layer WHERE strfield IS NOT" ,
+    "SELECT * FROM my_layer WHERE strfield IS foo" ,
+    "SELECT * FROM my_layer WHERE strfield IS NOT foo" ,
+    "SELECT * FROM my_layer WHERE (strfield IS NOT NULL" ,
+    "SELECT * FROM my_layer WHERE strfield IN" ,
+    "SELECT * FROM my_layer WHERE strfield IN(" ,
+    "SELECT * FROM my_layer WHERE strfield IN()" ,
+    "SELECT * FROM my_layer WHERE strfield IN('a'" ,
+    "SELECT * FROM my_layer WHERE strfield IN('a'," ,
+    "SELECT * FROM my_layer WHERE strfield IN('a','b'" ,
+    "SELECT * FROM my_layer WHERE strfield IN('a','b'))" ,
+    "SELECT * FROM my_layer LEFT" ,
+    "SELECT * FROM my_layer LEFT JOIN" ,
+    "SELECT * FROM my_layer LEFT JOIN foo",
+    "SELECT * FROM my_layer LEFT JOIN foo ON my_layer.strfield = my_layer2.strfield",
+    "SELECT * FROM my_layer LEFT JOIN my_layer2 ON my_layer.strfield = foo.strfield",
+    "SELECT * FROM my_layer LEFT JOIN my_layer2 ON my_layer.strfield = my_layer2.foo",
+    "SELECT * FROM my_layer LEFT JOIN my_layer2 ON my_layer.strfield != my_layer2.strfield",
+    "SELECT *, my_layer2. FROM my_layer LEFT JOIN my_layer2 ON my_layer.strfield = my_layer2.strfield",
+    "SELECT *, my_layer2.foo FROM my_layer LEFT JOIN my_layer2 ON my_layer.strfield = my_layer2.strfield",
+    ]
+
+    for query in queries:
+        gdal.ErrorReset()
+        #print query
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        sql_lyr = ds.ExecuteSQL(query)
+        gdal.PopErrorHandler()
+        if sql_lyr is not None:
+            gdaltest.post_reason('expected None result on "%s"' % query)
+            return 'fail'
+        if gdal.GetLastErrorType() == 0:
+            gdaltest.post_reason('expected error on "%s"' % query)
+            return 'fail'
+
+    ds = None
+    ds2 = None
+
+    return 'success'
+
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -687,6 +841,7 @@ gdaltest_list = [
     ogr_sql_25,
     ogr_sql_26,
     ogr_sql_27,
+    ogr_sql_28,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
