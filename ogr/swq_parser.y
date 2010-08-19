@@ -420,8 +420,7 @@ select_field_list:
 	column_spec
 	| column_spec ',' select_field_list
 
-column_spec: /* TODO: eventually this will be a full fledged expression */
-	     /* TODO: missing CAST, and COUNT, field functions.  */
+column_spec: 
 	 SWQT_DISTINCT field_value
 	    {
 		if( !context->poSelect->PushField( $2, NULL, TRUE ) )
@@ -434,7 +433,7 @@ column_spec: /* TODO: eventually this will be a full fledged expression */
 		    YYERROR;
 	    }
 
-	| SWQT_DISTINCT field_value SWQT_AS SWQT_IDENTIFIER
+	| SWQT_DISTINCT field_value SWQT_AS string_or_identifier
 	    {
 		if( !context->poSelect->PushField( $2, $4->string_value, TRUE ))
 		    YYERROR;
@@ -442,7 +441,7 @@ column_spec: /* TODO: eventually this will be a full fledged expression */
 		delete $4;
 	    }
 
-	| value_expr SWQT_AS SWQT_IDENTIFIER
+	| value_expr SWQT_AS string_or_identifier
 	    {
 		if( !context->poSelect->PushField( $1, $3->string_value ) )
 		    YYERROR;
@@ -504,7 +503,7 @@ column_spec: /* TODO: eventually this will be a full fledged expression */
 		    YYERROR;
 	    }
 
-        | SWQT_IDENTIFIER '(' '*' ')' SWQT_AS SWQT_IDENTIFIER
+        | SWQT_IDENTIFIER '(' '*' ')' SWQT_AS string_or_identifier
 	    {
 	        // special case for COUNT(*), confirm it.
 		if( !EQUAL($1->string_value,"COUNT") )
@@ -527,6 +526,45 @@ column_spec: /* TODO: eventually this will be a full fledged expression */
 		    YYERROR;
 
                 delete $6;
+	    }
+
+	| SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')'
+	    {
+	        // special case for COUNT(DISTINCT x), confirm it.
+		if( !EQUAL($1->string_value,"COUNT") )
+		{
+		    CPLError( CE_Failure, CPLE_AppDefined,
+		    	      "DISTINCT keyword can only be used in COUNT() operator." );
+	            YYERROR;
+		}
+
+                delete $1;
+                
+                swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
+                count->PushSubExpression( $4 );
+                
+		if( !context->poSelect->PushField( count, NULL, TRUE ) )
+		    YYERROR;
+	    }
+
+	| SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')' SWQT_AS string_or_identifier
+	    {
+	        // special case for COUNT(DISTINCT x), confirm it.
+		if( !EQUAL($1->string_value,"COUNT") )
+		{
+		    CPLError( CE_Failure, CPLE_AppDefined,
+		    	      "DISTINCT keyword can only be used in COUNT() operator." );
+	            YYERROR;
+		}
+
+                swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
+                count->PushSubExpression( $4 );
+                
+		if( !context->poSelect->PushField( count, $7->string_value, TRUE ) )
+		    YYERROR;
+
+                delete $1;
+                delete $7;
 	    }
 
 opt_where:  
