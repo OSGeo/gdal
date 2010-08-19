@@ -475,6 +475,7 @@ public:
 #ifndef SWIGJAVA
   %feature( "kwargs" ) ExecuteSQL;
 #endif
+  %apply Pointer NONNULL {const char * statement};
   OGRLayerShadow *ExecuteSQL(const char* statement,
                         OGRGeometryShadow* spatialFilter=NULL,
                         const char* dialect="") {
