@@ -471,6 +471,53 @@ def ogr_wfs_8():
 
     print('Feature %d deleted !' % feat.GetFID())
 
+    # Test transactions
+    if lyr.StartTransaction() != 0:
+        gdaltest.post_reason('CommitTransaction() failed')
+        return 'fail'
+        
+    geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(geom)
+    feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
+    feat.SetField('type', 'type_set_by_ogr_wfs_8_test')
+    if lyr.CreateFeature(feat) != 0:
+        gdaltest.post_reason('cannot create feature')
+        return 'fail'
+    geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(geom)
+    feat.SetField('name', 'name_set_by_ogr_wfs_8_test_2')
+    feat.SetField('type', 'type_set_by_ogr_wfs_8_test_2')
+    if lyr.CreateFeature(feat) != 0:
+        gdaltest.post_reason('cannot create feature')
+        return 'fail'
+
+    if lyr.CommitTransaction() != 0:
+        gdaltest.post_reason('CommitTransaction() failed')
+        return 'fail'
+
+    # Retrieve inserted features
+    print('Retrieving created features gml:id')
+    sql_lyr = ds.ExecuteSQL("SELECT _LAST_INSERTED_FIDS_ FROM za:za_points");
+    feat = sql_lyr.GetNextFeature()
+    while feat is not None:
+        gml_id = feat.GetFieldAsString(0)
+        print('Feature %s has been created in transaction !' % gml_id)
+        feat = sql_lyr.GetNextFeature()
+    feat = None
+    count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+
+    if count != 2:
+        gdaltest.post_reason('did not get expected feature count')
+        return 'fail'
+
+    # Delete a bunch of features
+    print('Deleting created features')
+    sql_lyr = ds.ExecuteSQL("DELETE FROM za:za_points WHERE name = 'name_set_by_ogr_wfs_8_test' OR name = 'name_set_by_ogr_wfs_8_test_2'")
+    ds.ReleaseResultSet(sql_lyr)
+
     return 'success'
 
 
