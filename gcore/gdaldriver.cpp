@@ -108,14 +108,14 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
  * @param nYSize height of created raster in pixels.
  * @param nBands number of bands.
  * @param eType type of raster.
- * @param papszParmList list of driver specific control parameters.
+ * @param papszOptions list of driver specific control parameters.
  *
  * @return NULL on failure, or a new GDALDataset.
  */
 
 GDALDataset * GDALDriver::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
-                                  GDALDataType eType, char ** papszParmList )
+                                  GDALDataType eType, char ** papszOptions )
 
 {
     CPLLocaleC  oLocaleForcer;
@@ -157,10 +157,15 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /*      name.  But even if that seems to fail we will continue since    */
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
-    QuietDelete( pszFilename );
+    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+        QuietDelete( pszFilename );
 
+/* -------------------------------------------------------------------- */
+/*      Validate creation options.                                      */
+/* -------------------------------------------------------------------- */
     if (CSLTestBoolean(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES")))
-        GDALValidateCreationOptions( this, papszParmList);
+        GDALValidateCreationOptions( this, papszOptions );
+
 /* -------------------------------------------------------------------- */
 /*      Proceed with creation.                                          */
 /* -------------------------------------------------------------------- */
@@ -169,10 +174,10 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
     CPLDebug( "GDAL", "GDALDriver::Create(%s,%s,%d,%d,%d,%s,%p)",
               GetDescription(), pszFilename, nXSize, nYSize, nBands, 
               GDALGetDataTypeName( eType ), 
-              papszParmList );
+              papszOptions );
     
     poDS = pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
-                      papszParmList );
+                      papszOptions );
 
     if( poDS != NULL )
     {
@@ -633,8 +638,12 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      name.  But even if that seems to fail we will continue since    */
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
-    QuietDelete( pszFilename );
+    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+        QuietDelete( pszFilename );
 
+/* -------------------------------------------------------------------- */
+/*      Validate creation options.                                      */
+/* -------------------------------------------------------------------- */
     if (CSLTestBoolean(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES")))
         GDALValidateCreationOptions( this, papszOptions);
 
