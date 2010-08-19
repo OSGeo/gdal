@@ -361,6 +361,27 @@ def ogr_rfc28_17():
 
 
 ###############################################################################
+# Test some special distinct cases.
+
+def ogr_rfc28_18():
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT COUNT(distinct id), COUNT(distinct id) as 'xx' from departs" )
+
+    expect = [ 1 ]
+    tr = ogrtest.check_features_against_list( lyr, 'COUNT_id', expect )
+
+    expect = [ 1 ]
+    lyr.ResetReading()
+    tr = ogrtest.check_features_against_list( lyr, 'xx', expect )
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+    
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -387,6 +408,7 @@ gdaltest_list = [
     ogr_rfc28_15,
     ogr_rfc28_16,
     ogr_rfc28_17,
+    ogr_rfc28_18,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
