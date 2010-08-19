@@ -606,25 +606,25 @@ def ogr_sql_25():
 ###############################################################################
 # Test query 'SELECT 'literal_value' AS column_name FROM a_table'
 #
-#def ogr_sql_26():
-#
-#    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
-#    mem_lyr = mem_ds.CreateLayer( "my_layer")
-#
-#    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
-#    mem_lyr.CreateFeature( feat )
-#
-#    sql_lyr = mem_ds.ExecuteSQL("SELECT 'literal_value' AS my_column FROM my_layer")
-#    if sql_lyr.GetFeatureCount() != 1:
-#        return 'fail'
-#    feat = sql_lyr.GetNextFeature()
-#    if feat.GetFieldAsString('my_column') != 'literal_value':
-#        return 'fail'
-#    mem_ds.ReleaseResultSet(sql_lyr)
-#
-#    mem_ds = None
-#
-#    return 'success'
+def ogr_sql_26():
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    mem_lyr = mem_ds.CreateLayer( "my_layer")
+
+    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
+    mem_lyr.CreateFeature( feat )
+
+    sql_lyr = mem_ds.ExecuteSQL("SELECT 'literal_value' AS my_column FROM my_layer")
+    if sql_lyr.GetFeatureCount() != 1:
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetFieldAsString('my_column') != 'literal_value':
+        return 'fail'
+    mem_ds.ReleaseResultSet(sql_lyr)
+
+    mem_ds = None
+
+    return 'success'
 
 ###############################################################################
 
@@ -685,7 +685,7 @@ gdaltest_list = [
     ogr_sql_23,
     ogr_sql_24,
     ogr_sql_25,
-#    ogr_sql_26,
+    ogr_sql_26,
     ogr_sql_27,
     ogr_sql_cleanup ]
 
