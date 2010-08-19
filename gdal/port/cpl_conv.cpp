@@ -1680,7 +1680,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     else
         pszHemisphere = "N";
 
-    sprintf( szFormat, "%%3dd%%2d\'%%.%df\"%s", nPrecision, pszHemisphere );
+    sprintf( szFormat, "%%3dd%%2d\'%%%d.%df\"%s", nPrecision+3, nPrecision, pszHemisphere );
     sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
 
     return( szBuffer );
