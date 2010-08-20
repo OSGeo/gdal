@@ -382,6 +382,23 @@ def ogr_rfc28_18():
 
 
 ###############################################################################
+# Verify that NOT IN ( list ) works
+
+def ogr_rfc28_19():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from poly where eas_id not in (158,165)' )
+
+    count = sql_lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if count != 8:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 8' % count )
+        return 'fail'
+
+    return 'success'
+        
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -409,6 +426,7 @@ gdaltest_list = [
     ogr_rfc28_16,
     ogr_rfc28_17,
     ogr_rfc28_18,
+    ogr_rfc28_19,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
