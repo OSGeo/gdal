@@ -818,6 +818,48 @@ def ogr_sql_28():
 
     return 'success'
 
+###############################################################################
+# Verify that IS NULL and IS NOT NULL are working
+
+def ogr_sql_29():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    lyr = ds.CreateLayer( "my_layer")
+    field_defn = ogr.FieldDefn( "strfield", ogr.OFTString )
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'a')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'b')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+
+    sql_lyr = ds.ExecuteSQL( 'select * from my_layer where strfield is null'  )
+    count_is_null = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet( sql_lyr )
+
+    sql_lyr = ds.ExecuteSQL( 'select * from my_layer where strfield is not null'  )
+    count_is_not_null = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet( sql_lyr )
+
+    ds = None
+
+    if count_is_null != 1:
+        gdaltest.post_reason('IS NULL failed')
+        print(count_is_null)
+        return 'fail'
+
+    if count_is_not_null != 2:
+        gdaltest.post_reason('IS NOT NULL failed')
+        print(count_is_not_null)
+        return 'fail'
+
+    return 'success'
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -856,6 +898,7 @@ gdaltest_list = [
     ogr_sql_26,
     ogr_sql_27,
     ogr_sql_28,
+    ogr_sql_29,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
