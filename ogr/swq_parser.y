@@ -74,8 +74,12 @@ static void swqerror( swq_parse_context *context, const char *msg )
 %token SWQT_VALUE_START
 %token SWQT_SELECT_START
 
-%left SWQT_OR SWQT_AND SWQT_NOT
-%left '+' '-' '*' '/' '%'
+%left SWQT_NOT
+%left SWQT_OR
+%left SWQT_AND
+
+%left '+' '-'
+%left '*' '/' '%'
 
 /* Any grammar rule that does $$ =  must be listed afterwards */
 /* as well as SWQT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
