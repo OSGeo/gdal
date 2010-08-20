@@ -729,6 +729,7 @@ def gml_invalid_geoms():
         ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:outerBoundaryIs><gml:innerBoundaryIs><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:innerBoundaryIs></gml:Polygon>', None),
         ('<gml:Ring/>', 'LINEARRING EMPTY'), # Probably illegal GML
         ('<gml:Ring><foo/></gml:Ring>', 'LINEARRING EMPTY'), # Probably illegal GML
+        ('<gml:Ring><gml:curveMember/></gml:Ring>', None),
         ('<gml:Ring><gml:curveMember><foo/></gml:curveMember></gml:Ring>', None),
         ('<gml:Ring><gml:curveMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:curveMember></gml:Ring>', None),
         ('<gml:Box/>', None),
@@ -740,12 +741,14 @@ def gml_invalid_geoms():
         ('<gml:MultiPolygon><gml:polygonMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:polygonMember></gml:MultiPolygon>', None),
         ('<gml:MultiSurface><gml:surfaceMembers/></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
         ('<gml:MultiSurface><gml:surfaceMembers><foo/></gml:surfaceMembers></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
+        ('<gml:MultiSurface><gml:surfaceMembers><gml:Polygon/></gml:surfaceMembers></gml:MultiSurface>', None),
         ('<gml:MultiPoint/>', 'MULTIPOINT EMPTY'),
         ('<gml:MultiPoint><foo/></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
         ('<gml:MultiPoint><gml:pointMember/></gml:MultiPoint>', None),
         ('<gml:MultiPoint><gml:pointMember><gml:LineString><gml:posList>0 1 2 3</gml:posList></gml:LineString></gml:pointMember></gml:MultiPoint>', None),
         ('<gml:MultiPoint><gml:pointMembers></gml:pointMembers></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
         ('<gml:MultiPoint><gml:pointMembers><foo/></gml:pointMembers></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
+        ('<gml:MultiPoint><gml:pointMembers><gml:Point/></gml:pointMembers></gml:MultiPoint>', None),
         ('<gml:MultiLineString/>', 'MULTILINESTRING EMPTY'),
         ('<gml:MultiLineString><foo/></gml:MultiLineString>', 'MULTILINESTRING EMPTY'),
         ('<gml:MultiLineString><gml:lineStringMember/></gml:MultiLineString>', None),
@@ -759,6 +762,7 @@ def gml_invalid_geoms():
         ('<gml:MultiCurve><gml:curveMember><gml:Curve><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:Curve></gml:curveMember></gml:MultiCurve>', None),
         ('<gml:MultiCurve><gml:curveMembers></gml:curveMembers></gml:MultiCurve>', 'MULTILINESTRING EMPTY'),
         ('<gml:MultiCurve><gml:curveMembers><foo/></gml:curveMembers></gml:MultiCurve>', 'MULTILINESTRING EMPTY'),
+        ('<gml:MultiCurve><gml:curveMembers><gml:LineString/></gml:curveMembers></gml:MultiCurve>', None),
         ('<gml:Curve/>', None),
         ('<gml:Curve><foo/></gml:Curve>', None),
         ('<gml:Curve><gml:segments/></gml:Curve>', 'LINESTRING EMPTY'),
