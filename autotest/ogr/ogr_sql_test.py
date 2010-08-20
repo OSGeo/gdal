@@ -767,6 +767,7 @@ def ogr_sql_28():
     "SELECT SUM(strfield) FROM my_layer",
     "SELECT AVG(strfield) FROM my_layer",
     "SELECT AVG(intfield, intfield) FROM my_layer",
+    "SELECT * FROM my_layer WHERE AVG(intfield) = 1" ,
     "SELECT * FROM 'foo' foo" ,
     "SELECT * FROM my_layer WHERE strfield =" ,
     "SELECT * FROM my_layer WHERE strfield = foo" ,
