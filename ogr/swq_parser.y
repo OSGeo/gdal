@@ -77,6 +77,11 @@ static void swqerror( swq_parse_context *context, const char *msg )
 %left SWQT_OR SWQT_AND SWQT_NOT
 %left '+' '-' '*' '/' '%'
 
+/* Any grammar rule that does $$ =  must be listed afterwards */
+/* as well as SWQT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
+%destructor { delete $$; } SWQT_NUMBER SWQT_STRING SWQT_IDENTIFIER
+%destructor { delete $$; } logical_expr value_expr_list field_value value_expr type_def string_or_identifier table_def
+
 %%
 
 input:  
@@ -230,7 +235,7 @@ logical_expr:
 	             {
 		        swq_expr_node *in;
 
-			in = $4;
+			in = $5;
 			in->field_type = SWQ_BOOLEAN;
 			in->nOperation = SWQ_IN;
 			in->PushSubExpression( $1 );
@@ -369,6 +374,8 @@ value_expr:
 		        CPLError( CE_Failure, CPLE_AppDefined, 
                                   "Undefined function '%s' used.",
                                   $1->string_value );
+                delete $1;
+                delete $3;
 		        YYERROR;
 		    }
 		    else
@@ -424,19 +431,29 @@ column_spec:
 	 SWQT_DISTINCT field_value
 	    {
 		if( !context->poSelect->PushField( $2, NULL, TRUE ) )
+        {
+            delete $2;
 		    YYERROR;
+        }
 	    }
 
         | value_expr
 	    {
 		if( !context->poSelect->PushField( $1 ) )
+        {
+            delete $1;
 		    YYERROR;
+        }
 	    }
 
 	| SWQT_DISTINCT field_value SWQT_AS string_or_identifier
 	    {
 		if( !context->poSelect->PushField( $2, $4->string_value, TRUE ))
+        {
+            delete $2;
+            delete $4;
 		    YYERROR;
+        }
 
 		delete $4;
 	    }
@@ -444,7 +461,11 @@ column_spec:
 	| value_expr SWQT_AS string_or_identifier
 	    {
 		if( !context->poSelect->PushField( $1, $3->string_value ) )
+        {
+            delete $1;
+            delete $3;
 		    YYERROR;
+        }
 		delete $3;
 	    }
 
@@ -456,7 +477,10 @@ column_spec:
 		poNode->table_index = poNode->field_index = -1;
 
 		if( !context->poSelect->PushField( poNode ) )
+        {
+            delete poNode;
 		    YYERROR;
+        }
 	    }
 		
         | SWQT_IDENTIFIER '.' '*'
@@ -475,7 +499,10 @@ column_spec:
 		poNode->table_index = poNode->field_index = -1;
 
 		if( !context->poSelect->PushField( poNode ) )
+        {
+            delete poNode;
 		    YYERROR;
+        }
 	    }
 		
         | SWQT_IDENTIFIER '(' '*' ')'
@@ -486,10 +513,12 @@ column_spec:
 		    CPLError( CE_Failure, CPLE_AppDefined,
 		    	      "Syntax Error with %s(*).", 
 			      $1->string_value );
+            delete $1;
 	            YYERROR;
 		}
 
-                delete $1;
+        delete $1;
+        $1 = NULL;
                 
 		swq_expr_node *poNode = new swq_expr_node();
 		poNode->eNodeType = SNT_COLUMN;
@@ -500,7 +529,10 @@ column_spec:
 		count->PushSubExpression( poNode );
 
 		if( !context->poSelect->PushField( count ) )
+        {
+            delete count;
 		    YYERROR;
+        }
 	    }
 
         | SWQT_IDENTIFIER '(' '*' ')' SWQT_AS string_or_identifier
@@ -511,8 +543,13 @@ column_spec:
 		    CPLError( CE_Failure, CPLE_AppDefined,
 		    	      "Syntax Error with %s(*).", 
 			      $1->string_value );
+            delete $1;
+            delete $6;
 	            YYERROR;
 		}
+
+        delete $1;
+        $1 = NULL;
 
 		swq_expr_node *poNode = new swq_expr_node();
 		poNode->eNodeType = SNT_COLUMN;
@@ -523,7 +560,11 @@ column_spec:
 		count->PushSubExpression( poNode );
 
 		if( !context->poSelect->PushField( count, $6->string_value ) )
+        {
+            delete count;
+            delete $6;
 		    YYERROR;
+        }
 
                 delete $6;
 	    }
@@ -535,6 +576,8 @@ column_spec:
 		{
 		    CPLError( CE_Failure, CPLE_AppDefined,
 		    	      "DISTINCT keyword can only be used in COUNT() operator." );
+            delete $1;
+            delete $4;
 	            YYERROR;
 		}
 
@@ -544,7 +587,10 @@ column_spec:
                 count->PushSubExpression( $4 );
                 
 		if( !context->poSelect->PushField( count, NULL, TRUE ) )
+        {
+            delete count;
 		    YYERROR;
+        }
 	    }
 
 	| SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')' SWQT_AS string_or_identifier
@@ -554,6 +600,9 @@ column_spec:
 		{
 		    CPLError( CE_Failure, CPLE_AppDefined,
 		    	      "DISTINCT keyword can only be used in COUNT() operator." );
+            delete $1;
+            delete $4;
+            delete $7;
 	            YYERROR;
 		}
 
@@ -561,7 +610,12 @@ column_spec:
                 count->PushSubExpression( $4 );
                 
 		if( !context->poSelect->PushField( count, $7->string_value, TRUE ) )
+        {
+            delete $1;
+            delete count;
+            delete $7;
 		    YYERROR;
+        }
 
                 delete $1;
                 delete $7;
