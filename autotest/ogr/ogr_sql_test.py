@@ -752,6 +752,7 @@ def ogr_sql_28():
     "SELECT COUNT(DISTINCT intfield FROM my_layer",
     "SELECT COUNT(DISTINCT *) FROM my_layer",
     "SELECT FOO(DISTINCT intfield) FROM my_layer",
+    "SELECT FOO(DISTINCT intfield) as foo FROM my_layer",
     "SELECT DISTINCT foo FROM my_layer",
     "SELECT DISTINCT foo AS 'id' 'id2' FROM",
     "SELECT DISTINCT foo AS id id2 FROM",
