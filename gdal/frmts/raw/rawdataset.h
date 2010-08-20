@@ -85,6 +85,7 @@ protected:
 
     int		nLoadedScanline;
     void	*pLineBuffer;
+    void        *pLineStart;
     int         bDirty;
 
     GDALColorTable *poCT;
