@@ -699,6 +699,10 @@ def ogr_sql_28():
     'SELECT * FROM foo',
     'SELECT FROM my_layer',
     'SELECT FROM FROM my_layer',
+    "SELECT ('strfield'",
+    "SELECT 'strfield' +",
+    "SELECT 'strfield' 'strfield'",
+    "SELECT CONCAT('strfield')",
     'SELECT strfield, FROM my_layer',
     'SELECT strfield, foo FROM my_layer',
     'SELECT strfield AS FROM my_layer',
@@ -734,16 +738,23 @@ def ogr_sql_28():
     "SELECT * FROM my_layer WHERE strfield = 'a' ORDER BY",
     "SELECT * FROM my_layer WHERE strfield = 'a' ORDER BY foo",
     "SELECT * FROM my_layer WHERE strfield = 'a' ORDER BY strfield UNK",
+    "SELECT FOO(*) FROM my_layer",
+    "SELECT FOO(*) AS bar FROM my_layer",
     "SELECT COUNT",
     "SELECT COUNT(",
     "SELECT COUNT() FROM my_layer",
     "SELECT COUNT(*",
     "SELECT COUNT(*)",
+    "SELECT COUNT(*) FROM",
+    "SELECT COUNT(*) AS foo FROM",
     "SELECT COUNT(* FROM my_layer",
     "SELECT COUNT(FOO intfield) FROM my_layer",
     "SELECT COUNT(DISTINCT intfield FROM my_layer",
     "SELECT COUNT(DISTINCT *) FROM my_layer",
+    "SELECT FOO(DISTINCT intfield) FROM my_layer",
     "SELECT DISTINCT foo FROM my_layer",
+    "SELECT DISTINCT foo AS 'id' 'id2' FROM",
+    "SELECT DISTINCT foo AS id id2 FROM",
     "SELECT DISTINCT FROM my_layer",
     "SELECT DISTINCT strfield, COUNT(DISTINCT intfield) FROM my_layer",
     "SELECT MIN(intfield,2) FROM my_layer",
@@ -755,6 +766,8 @@ def ogr_sql_28():
     "SELECT MAX(strfield) FROM my_layer",
     "SELECT SUM(strfield) FROM my_layer",
     "SELECT AVG(strfield) FROM my_layer",
+    "SELECT AVG(intfield, intfield) FROM my_layer",
+    "SELECT * FROM 'foo' foo" ,
     "SELECT * FROM my_layer WHERE strfield =" ,
     "SELECT * FROM my_layer WHERE strfield = foo" ,
     "SELECT * FROM my_layer WHERE strfield = intfield" ,
@@ -794,6 +807,7 @@ def ogr_sql_28():
         gdal.PopErrorHandler()
         if sql_lyr is not None:
             gdaltest.post_reason('expected None result on "%s"' % query)
+            ds.ReleaseResultSet(sql_lyr)
             return 'fail'
         if gdal.GetLastErrorType() == 0:
             gdaltest.post_reason('expected error on "%s"' % query)
