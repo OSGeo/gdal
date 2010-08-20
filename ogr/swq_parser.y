@@ -250,14 +250,14 @@ logical_expr:
 			$$->PushSubExpression( in );
 		     }
 
-	| field_value SWQT_IS SWQT_NULL
+	| value_expr SWQT_IS SWQT_NULL
 	             {
 			$$ = new swq_expr_node( SWQ_ISNULL );
 			$$->field_type = SWQ_BOOLEAN;
 			$$->PushSubExpression( $1 );
 		     }
 
-	| field_value SWQT_IS SWQT_NOT SWQT_NULL
+	| value_expr SWQT_IS SWQT_NOT SWQT_NULL
 	             {
 		        swq_expr_node *isnull;
 
