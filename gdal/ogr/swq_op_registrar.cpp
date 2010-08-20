@@ -119,9 +119,11 @@ void swq_op_registrar::AddOperator( const char *pszName, swq_op eOpCode,
 
 static swq_field_type SWQColumnFuncChecker( swq_expr_node *poNode )
 {
+    const swq_operation *poOp =
+            swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Column Summary Function '%s' found in an inappropriate context.",
-              poNode->string_value );
+              poOp->osName.c_str() );
     return SWQ_ERROR;
 }
 
