@@ -63,8 +63,8 @@
      SWQT_VALUE_START = 279,
      SWQT_SELECT_START = 280,
      SWQT_NOT = 281,
-     SWQT_AND = 282,
-     SWQT_OR = 283
+     SWQT_OR = 282,
+     SWQT_AND = 283
    };
 #endif
 
