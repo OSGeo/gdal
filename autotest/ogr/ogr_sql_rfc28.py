@@ -397,7 +397,28 @@ def ogr_rfc28_19():
         return 'fail'
 
     return 'success'
-        
+
+
+###############################################################################
+# Verify arithmetic operator precedence
+
+def ogr_rfc28_20():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    lyr = ds.CreateLayer( "my_layer")
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+
+    sql_lyr = ds.ExecuteSQL( 'select 1 + 2 * 3 + 5 - 3 * 2 from my_layer' )
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField('FIELD_1') != 6:
+        return 'fail'
+    ds.ReleaseResultSet( sql_lyr )
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
@@ -427,6 +448,7 @@ gdaltest_list = [
     ogr_rfc28_17,
     ogr_rfc28_18,
     ogr_rfc28_19,
+    ogr_rfc28_20,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
