@@ -5,6 +5,7 @@
  * Purpose:  Implementation of NTv2 datum shift format used in Canada, France, 
  *           Australia and elsewhere.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Financial Support: i-cubed (http://www.i-cubed.com)
  *
  ******************************************************************************
  * Copyright (c) 2010, Frank Warmerdam
@@ -65,6 +66,12 @@ CPL_CVSID("$Id: landataset.cpp 17117 2009-05-25 19:26:01Z warmerdam $");
 00000150  47 53 5f 43 4f 55 4e 54  a4 43 00 00 00 00 00 00  |GS_COUNT.C......|
 00000160  94 f7 c1 3e 70 ee a3 3f  2a c7 84 3d ff 42 af 3d  |...>p..?*..=.B.=|
 
+the actual grid data is a raster with 4 float32 bands (lat offset, long
+offset, lat error, long error).  The offset values are in arc seconds.
+The grid is flipped in the x and y axis from our usual GDAL orientation.
+That is, the first pixel is the south east corner with scanlines going
+east to west, and rows from south to north.  As a GDAL dataset we represent
+these both in the more conventional orientation.
  */
 
 /************************************************************************/
@@ -398,7 +405,7 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
         for( i = 4; i <= 9; i++ )
             CPL_LSBPTR64( pachHeader + i*16 + 8 );
         
-        CPL_LSBPTR32( pachHeader + 10*16 + 8 );
+        CPL_LSBPTR32( achHeader + 10*16 + 8 );
         
         memcpy( &nGSCount, achHeader + 10*16 + 8, 4 );
 
@@ -486,6 +493,10 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffset )
 
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
+/*                                                                      */
+/*      We use unusual offsets to remap from bottom to top, to top      */
+/*      to bottom orientation, and also to remap east to west, to       */
+/*      west to east.                                                   */
 /* -------------------------------------------------------------------- */
     int iBand;
     
@@ -493,17 +504,18 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffset )
     {
         RawRasterBand *poBand = 
             new RawRasterBand( this, iBand+1, fpImage, 
-                               nGridOffset + 4*iBand + 11*16,
-                               16, 16 * nRasterXSize,
+                               nGridOffset + 4*iBand + 11*16
+                               + (nRasterXSize-1) * 16
+                               + (nRasterYSize-1) * 16 * nRasterXSize,
+                               -16, -16 * nRasterXSize,
                                GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
-
         SetBand( iBand+1, poBand );
     }
     
-    GetRasterBand(1)->SetDescription( "Longitude Offset" );
-    GetRasterBand(2)->SetDescription( "Latitude Offset" );
-    GetRasterBand(3)->SetDescription( "Longitude Error" );
-    GetRasterBand(4)->SetDescription( "Latitude Error" );
+    GetRasterBand(1)->SetDescription( "Latitude Offset" );
+    GetRasterBand(2)->SetDescription( "Longitude Offset" );
+    GetRasterBand(3)->SetDescription( "Latitude Error" );
+    GetRasterBand(4)->SetDescription( "Longitude Error" );
     
 /* -------------------------------------------------------------------- */
 /*      Setup georeferencing.                                           */
@@ -743,7 +755,7 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
     memcpy( achHeader +  0*16+8, pszValue, MIN(16,strlen(pszValue)) );
     
     memcpy( achHeader +  1*16, "PARENT          ", 16 );
-    pszValue = CSLFetchNameValueDef( papszOptions, "PARENT", "" );
+    pszValue = CSLFetchNameValueDef( papszOptions, "PARENT", "NONE" );
     memcpy( achHeader +  1*16+8, pszValue, MIN(16,strlen(pszValue)) );
     
     memcpy( achHeader +  2*16, "CREATED         ", 16 );
@@ -826,7 +838,7 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                        GDALRegister_NTv2()                         */
+/*                         GDALRegister_NTv2()                          */
 /************************************************************************/
 
 void GDALRegister_NTv2()

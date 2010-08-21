@@ -4,6 +4,7 @@
  * Project:  Horizontal Datum Formats
  * Purpose:  Implementation of NOAA/NADCON los/las datum shift format.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Financial Support: i-cubed (http://www.i-cubed.com)
  *
  ******************************************************************************
  * Copyright (c) 2010, Frank Warmerdam
