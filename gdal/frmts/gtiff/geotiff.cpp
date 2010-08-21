@@ -3371,6 +3371,18 @@ CPLErr GTiffDataset::IBuildOverviews(
     GTiffDataset *poODS;
 
 /* -------------------------------------------------------------------- */
+/*      If RRD or external OVR overviews requested, then invoke         */
+/*      generic handling.                                               */
+/* -------------------------------------------------------------------- */
+    if( CSLTestBoolean(CPLGetConfigOption( "USE_RRD", "NO" )) 
+        || CSLTestBoolean(CPLGetConfigOption( "TIFF_USE_OVR", "NO" )) )
+    {
+        return GDALDataset::IBuildOverviews( 
+            pszResampling, nOverviews, panOverviewList, 
+            nBands, panBandList, pfnProgress, pProgressData );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If we don't have read access, then create the overviews         */
 /*      externally.                                                     */
 /* -------------------------------------------------------------------- */
@@ -3380,16 +3392,6 @@ CPLErr GTiffDataset::IBuildOverviews(
                   "File open for read-only accessing, "
                   "creating overviews externally." );
 
-        return GDALDataset::IBuildOverviews( 
-            pszResampling, nOverviews, panOverviewList, 
-            nBands, panBandList, pfnProgress, pProgressData );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If RRD overviews requested, then invoke generic handling.       */
-/* -------------------------------------------------------------------- */
-    if( CSLTestBoolean(CPLGetConfigOption( "USE_RRD", "NO" )) )
-    {
         return GDALDataset::IBuildOverviews( 
             pszResampling, nOverviews, panOverviewList, 
             nBands, panBandList, pfnProgress, pProgressData );
