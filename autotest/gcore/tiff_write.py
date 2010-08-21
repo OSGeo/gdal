@@ -2611,6 +2611,8 @@ def tiff_write_78():
                              
     # Make sure the file is flushed so that we re-read from it rather from cached blocks
     new_ds.FlushCache()
+    #new_ds = None
+    #new_ds = gdal.Open('tmp/tiff_write_78.tif')
     
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
@@ -3145,6 +3147,100 @@ def tiff_write_85():
     return 'success'
 
 ###############################################################################
+# Test special handling of xml:ESRI domain.  When the ESRI_XML_PAM config
+# option is set we want to write this to PAM, not into the geotiff itself.
+# This is a special option so that ArcGIS 10 written geotiffs will still work
+# properly with earlier versions of ArcGIS, requested by ESRI.  
+
+def tiff_write_86():
+
+    gdal.SetConfigOption( 'ESRI_XML_PAM', 'YES' )
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_86.tif', 100, 100,
+                                   1, gdal.GDT_Byte )
+    ds.SetMetadata( ['<abc></abc>'], 'xml:ESRI' )
+    ds.SetMetadataItem( 'BaseTest', 'Value' )
+    ds = None
+
+    # Is the xml:ESRI data available?
+    ds = gdal.Open( 'tmp/tiff_write_86.tif' )
+    if ds.GetMetadata( 'xml:ESRI' ) != [ '<abc />\n' ]:
+        print ds.GetMetadata( 'xml:ESRI' )
+        gdaltest.post_reason( 'did not get expected xml:ESRI metadata.' )
+        return 'fail'
+    
+    if ds.GetMetadataItem('BaseTest') != 'Value':
+        gdaltest.post_value( 'missing metadata(1)' )
+        return 'fail'
+    ds = None
+
+    # After removing the pam file is it gone, but the conventional
+    # metadata still available?
+    
+    os.rename( 'tmp/tiff_write_86.tif.aux.xml',
+               'tmp/tiff_write_86.tif.aux.xml.hidden' )
+
+    ds = gdal.Open( 'tmp/tiff_write_86.tif' )
+    if ds.GetMetadata( 'xml:ESRI' ) != None:
+        print ds.GetMetadata( 'xml:ESRI' )
+        gdaltest.post_reason( 'unexpectedly got xml:ESRI metadata' )
+        return 'fail'
+    
+    if ds.GetMetadataItem('BaseTest') != 'Value':
+        gdaltest.post_value( 'missing metadata(2)' )
+        return 'fail'
+
+    ds = None
+
+    # now confirm that CreateCopy also preserves things similarly.
+
+    os.rename( 'tmp/tiff_write_86.tif.aux.xml.hidden',
+               'tmp/tiff_write_86.tif.aux.xml' )
+
+    ds_src = gdal.Open( 'tmp/tiff_write_86.tif' )
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_86_cc.tif', ds_src )
+    ds_src = None
+    ds = None
+    
+    # Is the xml:ESRI data available?
+    ds = gdal.Open( 'tmp/tiff_write_86_cc.tif' )
+    if ds.GetMetadata( 'xml:ESRI' ) != [ '<abc />\n' ]:
+        print ds.GetMetadata( 'xml:ESRI' )
+        gdaltest.post_reason( 'did not get expected xml:ESRI metadata (cc).' )
+        return 'fail'
+    
+    if ds.GetMetadataItem('BaseTest') != 'Value':
+        gdaltest.post_value( 'missing metadata(1cc)' )
+        return 'fail'
+    ds = None
+
+    # After removing the pam file is it gone, but the conventional
+    # metadata still available?
+    
+    os.remove( 'tmp/tiff_write_86_cc.tif.aux.xml' )
+
+    ds = gdal.Open( 'tmp/tiff_write_86_cc.tif' )
+    if ds.GetMetadata( 'xml:ESRI' ) != None:
+        print ds.GetMetadata( 'xml:ESRI' )
+        gdaltest.post_reason( 'unexpectedly got xml:ESRI metadata(2)' )
+        return 'fail'
+    
+    if ds.GetMetadataItem('BaseTest') != 'Value':
+        gdaltest.post_value( 'missing metadata(2cc)' )
+        return 'fail'
+
+    ds = None
+
+    # Cleanup
+    
+    gdal.SetConfigOption( 'ESRI_XML_PAM', 'NO' )
+    
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_86.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_86_cc.tif' )
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3240,6 +3336,7 @@ gdaltest_list = [
     tiff_write_83,
     tiff_write_84,
     tiff_write_85,
+    tiff_write_86,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
