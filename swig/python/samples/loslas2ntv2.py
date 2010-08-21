@@ -6,6 +6,7 @@
 #  Purpose:  Translate one or many LOS/LAS sets into an NTv2 datum shift grid
 #            file.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
+#  Financial Support: i-cubed (http://www.i-cubed.com)
 # 
 #******************************************************************************
 #  Copyright (c) 2010, Frank Warmerdam
@@ -44,10 +45,13 @@ def Usage():
     print('Usage: loslas2ntv2.py  [-a] [-auto] [-sub_name name] [-parent name]' )
     print('                       [-created date] [-updated date] [-gs_type name]')
     print('                       [-system_f name] [-system_t name] [-version version]')
-    print('                       [src_file.los]* dst_file.gsb ')
+    print('                       [-major_f axis] [-minor_f axis]')
+    print('                       [-major_t axis] [-minor_t axis]')
+    print('                       [-negate] [src_file.los]* dst_file.gsb ')
     print('')
     print(' -a: append to existing NTv2 file.')
     print(' -auto: process a whole directory of nad27/hpgn los/las files.')
+    print(' -negate: reverse direction of change.')
     print('')
     print('eg.')
     print(' loslas2ntv2.py -auto *.los' )
@@ -80,11 +84,15 @@ def TranslateLOSLAS( los, ntv2_filename, options ):
     ntv2_db.SetGeoTransform( los_db.GetGeoTransform() )
 
     # Copy offsets.
-    data = las_db.ReadRaster(0,0,los_db.RasterXSize,los_db.RasterYSize)
-    ntv2_db.GetRasterBand(1).WriteRaster(0,0,los_db.RasterXSize,los_db.RasterYSize,data)
+    data = las_db.ReadAsArray()
+    if options.negate:
+        data = -1 * data
+    ntv2_db.GetRasterBand(1).WriteArray(data)
 
-    data = los_db.ReadRaster(0,0,los_db.RasterXSize,los_db.RasterYSize)
-    ntv2_db.GetRasterBand(2).WriteRaster(0,0,los_db.RasterXSize,los_db.RasterYSize,data)
+    data = los_db.ReadAsArray()
+    if options.negate:
+        data = -1 * data
+    ntv2_db.GetRasterBand(2).WriteArray(data)
 
     if len(options.metadata) > 0:
         ntv2_db.SetMetadata( options.metadata)
@@ -110,13 +118,14 @@ def auto_noaa( options, loslas_list ):
         if los.find('hpgn') != -1:
             ntv2_filename = los[:-4]+'.gsb'
             options.append = 0
+            options.negate = 1
             options.metadata.append( 'SUB_NAME=' + los[:2] )
             options.metadata.append( 'MAJOR_F=6378137.0' )
             options.metadata.append( 'MINOR_F=6356752.31414' )
             options.metadata.append( 'MAJOR_T=6378137.0' )
             options.metadata.append( 'MINOR_T=6356752.31414' )
-            options.metadata.append( 'SYSTEM_F=NAD83' )
-            options.metadata.append( 'SYSTEM_T=HARN' )
+            options.metadata.append( 'SYSTEM_F=HARN' )
+            options.metadata.append( 'SYSTEM_T=NAD83' )
             
         else:
             ntv2_filename = 'nad27_usa.gsb'
@@ -152,6 +161,7 @@ if __name__ == '__main__':
     options.append = 0
     options.create_options = []
     options.metadata = []
+    options.negate = 0
     
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
     if argv is None:
@@ -214,6 +224,9 @@ if __name__ == '__main__':
             options.metadata.append( 'MINOR_T='+argv[i+1] )
             i = i+1
 
+        elif arg == '-negate':
+            options.negate = 1
+            
         elif arg == '-auto':
             auto_flag = 1
             
