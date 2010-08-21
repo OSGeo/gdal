@@ -2661,6 +2661,18 @@ GTiffDataset::~GTiffDataset()
     Crystalize();
 
 /* -------------------------------------------------------------------- */
+/*      Handle forcing xml:ESRI data to be written to PAM.              */
+/* -------------------------------------------------------------------- */
+    if( CSLTestBoolean(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
+    {
+        char **papszESRIMD = GetMetadata("xml:ESRI");
+        if( papszESRIMD )
+        {
+            GDALPamDataset::SetMetadata( papszESRIMD, "xml:ESRI");
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Ensure any blocks write cached by GDAL gets pushed through libtiff.*/
 /* -------------------------------------------------------------------- */
     GDALPamDataset::FlushCache();
@@ -4064,6 +4076,10 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             continue; // ignored
         if( EQUAL(papszDomainList[iDomain], "RPC") )
             continue; // handled elsewhere
+        if( EQUAL(papszDomainList[iDomain], "xml:ESRI") 
+            && CSLTestBoolean(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
+            continue; // handled elsewhere
+
         if( EQUALN(papszDomainList[iDomain], "xml:",4 ) )
             bIsXML = TRUE;
 
@@ -7199,6 +7215,18 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     hTIFF = (TIFF*) poDS->GetInternalHandle(NULL);
+
+/* -------------------------------------------------------------------- */
+/*      Handle forcing xml:ESRI data to be written to PAM.              */
+/* -------------------------------------------------------------------- */
+    if( CSLTestBoolean(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
+    {
+        char **papszESRIMD = poSrcDS->GetMetadata("xml:ESRI");
+        if( papszESRIMD )
+        {
+            poDS->SetMetadata( papszESRIMD, "xml:ESRI");
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Second chance : now that we have a PAM dataset, it is possible  */
