@@ -568,6 +568,35 @@ def ogr_wfs_9():
 
     return 'success'
 
+###############################################################################
+# Test opening a datasource from a XML description file
+# The following test should issue 0 WFS http request
+
+def ogr_wfs_10():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/testwfs.xml')
+    lyr = ds.GetLayer(0)
+    feature_defn = lyr.GetLayerDefn()
+    index = feature_defn.GetFieldIndex('name')
+    sr = lyr.GetSpatialRef()
+    ds = None
+
+    if index != 1:
+        print(index)
+        return 'fail'
+
+    wkt = sr.ExportToWkt()
+    if wkt.find('WGS 84') == -1:
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_wfs_1,
     ogr_wfs_2,
@@ -577,7 +606,8 @@ gdaltest_list = [
     ogr_wfs_6,
     ogr_wfs_7,
     ogr_wfs_8,
-    ogr_wfs_9
+    ogr_wfs_9,
+    ogr_wfs_10
     ]
 
 if __name__ == '__main__':
