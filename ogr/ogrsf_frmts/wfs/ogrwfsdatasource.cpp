@@ -37,6 +37,52 @@
 CPL_CVSID("$Id$");
 
 
+/************************************************************************/
+/*                            WFSFindNode()                             */
+/************************************************************************/
+
+CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName)
+{
+    CPLXMLNode* psIter = psXML;
+    while(psIter)
+    {
+        if (psIter->eType == CXT_Element)
+        {
+            const char* pszNodeName = psIter->pszValue;
+            const char* pszSep = strchr(pszNodeName, ':');
+            if (pszSep)
+                pszNodeName = pszSep + 1;
+            if (EQUAL(pszNodeName, pszRootName))
+            {
+                return psIter;
+            }
+        }
+        psIter = psIter->psNext;
+    }
+
+    psIter = psXML->psChild;
+    while(psIter)
+    {
+        if (psIter->eType == CXT_Element)
+        {
+            const char* pszNodeName = psIter->pszValue;
+            const char* pszSep = strchr(pszNodeName, ':');
+            if (pszSep)
+                pszNodeName = pszSep + 1;
+            if (EQUAL(pszNodeName, pszRootName))
+            {
+                return psIter;
+            }
+        }
+        psIter = psIter->psNext;
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                       OGRWFSWrappedResultLayer                       */
+/************************************************************************/
+
 class OGRWFSWrappedResultLayer : public OGRLayer
 {
     OGRDataSource *poDS;
@@ -84,6 +130,9 @@ OGRWFSDataSource::OGRWFSDataSource()
     bTransactionSupport = FALSE;
     papszIdGenMethods = NULL;
     bUseFeatureId = FALSE; /* CubeWerx doesn't like GmlObjectId */
+
+    bRewriteFile = FALSE;
+    psFileXML = NULL;
 }
 
 /************************************************************************/
@@ -93,6 +142,16 @@ OGRWFSDataSource::OGRWFSDataSource()
 OGRWFSDataSource::~OGRWFSDataSource()
 
 {
+    if (psFileXML)
+    {
+        if (bRewriteFile)
+        {
+            CPLSerializeXMLTreeToFile(psFileXML, pszName);
+        }
+
+        CPLDestroyXMLNode(psFileXML);
+    }
+
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
@@ -456,307 +515,500 @@ static int FindComparisonOperator(CPLXMLNode* psNode, const char* pszVal)
 }
 
 /************************************************************************/
+/*                          LoadFromFile()                              */
+/************************************************************************/
+
+CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
+{
+    FILE *fp;
+    char achHeader[18];
+
+    fp = VSIFOpenL( pszFilename, "rb" );
+
+    if( fp == NULL )
+        return NULL;
+
+    if( VSIFReadL( achHeader, sizeof(achHeader), 1, fp ) != 1 )
+    {
+        VSIFCloseL( fp );
+        return NULL;
+    }
+
+    if( !EQUALN(achHeader,"<OGRWFSDataSource>",18) )
+    {
+        VSIFCloseL( fp );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      It is the right file, now load the full XML definition.         */
+/* -------------------------------------------------------------------- */
+    int nLen;
+
+    VSIFSeekL( fp, 0, SEEK_END );
+    nLen = (int) VSIFTellL( fp );
+    VSIFSeekL( fp, 0, SEEK_SET );
+
+    char* pszXML = (char *) VSIMalloc(nLen+1);
+    if (pszXML == NULL)
+    {
+        VSIFCloseL( fp );
+        return NULL;
+    }
+    pszXML[nLen] = '\0';
+    if( ((int) VSIFReadL( pszXML, 1, nLen, fp )) != nLen )
+    {
+        CPLFree( pszXML );
+        VSIFCloseL( fp );
+
+        return NULL;
+    }
+    VSIFCloseL( fp );
+
+    if (strstr(pszXML, "CubeWerx"))
+    {
+        /* At least true for CubeWerx Suite 4.15.1 */
+        bUseFeatureId = TRUE;
+    }
+
+    CPLXMLNode* psXML = CPLParseXMLString( pszXML );
+    CPLFree( pszXML );
+
+    return psXML;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
-    if (!EQUALN(pszFilename, "WFS:", 4) &&
-        FindSubStringInsensitive(pszFilename, "SERVICE=WFS") == NULL)
-    {
-        return FALSE;
-    }
-
-    const char* pszBaseURL = pszFilename;
-    if (EQUALN(pszFilename, "WFS:", 4))
-        pszBaseURL += 4;
-
-    osBaseURL = pszBaseURL;
-    const char* pszEsperluet = strchr(pszBaseURL, '?');
-    if (pszEsperluet)
-        osBaseURL.resize(pszEsperluet - pszBaseURL);
-
-    if (strncmp(pszBaseURL, "http://", 7) != 0)
-        return FALSE;
-
     bUpdate = bUpdateIn;
+    CPLFree(pszName);
     pszName = CPLStrdup(pszFilename);
 
-    CPLString osURL(pszBaseURL);
-    osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
-    osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetCapabilities");
-    CPLString osTypeName = WFS_FetchValueFromURL(osURL, "TYPENAME");
-    osURL = WFS_AddKVToURL(osURL, "TYPENAME", NULL);
-    osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
-    osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
-    
-    CPLDebug("WFS", "%s", osURL.c_str());
+    CPLXMLNode* psWFSCapabilities = NULL;
+    CPLXMLNode* psXML = LoadFromFile(pszFilename);
+    CPLString osTypeName;
+    const char* pszBaseURL = NULL;
 
-    CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
-    if (psResult == NULL)
+    if (psXML == NULL)
     {
-        return FALSE;
-    }
+        if (!EQUALN(pszFilename, "WFS:", 4) &&
+            FindSubStringInsensitive(pszFilename, "SERVICE=WFS") == NULL)
+        {
+            return FALSE;
+        }
 
-    if (strstr((const char*) psResult->pabyData, "CubeWerx"))
+        pszBaseURL = pszFilename;
+        if (EQUALN(pszFilename, "WFS:", 4))
+            pszBaseURL += 4;
+
+        osBaseURL = pszBaseURL;
+        const char* pszEsperluet = strchr(pszBaseURL, '?');
+        if (pszEsperluet)
+            osBaseURL.resize(pszEsperluet - pszBaseURL);
+
+        if (strncmp(pszBaseURL, "http://", 7) != 0 &&
+            strncmp(pszBaseURL, "https://", 8) != 0)
+            return FALSE;
+
+        CPLString osURL(pszBaseURL);
+        osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
+        osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetCapabilities");
+        osTypeName = WFS_FetchValueFromURL(osURL, "TYPENAME");
+        osURL = WFS_AddKVToURL(osURL, "TYPENAME", NULL);
+        osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
+        osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
+        osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", NULL);
+
+        CPLDebug("WFS", "%s", osURL.c_str());
+
+        CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
+        if (psResult == NULL)
+        {
+            return FALSE;
+        }
+
+        if (strstr((const char*) psResult->pabyData, "CubeWerx"))
+        {
+            /* At least true for CubeWerx Suite 4.15.1 */
+            bUseFeatureId = TRUE;
+        }
+
+        psXML = CPLParseXMLString( (const char*) psResult->pabyData );
+        if (psXML == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
+                    psResult->pabyData);
+            CPLHTTPDestroyResult(psResult);
+            return FALSE;
+        }
+
+        CPLHTTPDestroyResult(psResult);
+    }
+    else
     {
-        /* At least true for CubeWerx Suite 4.15.1 */
-        bUseFeatureId = TRUE;
-    }
+        CPLXMLNode* psRoot = WFSFindNode( psXML, "OGRWFSDataSource" );
+        if (psRoot == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find <OGRWFSDataSource>");
+            CPLDestroyXMLNode( psXML );
+            return FALSE;
+        }
 
-    CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
+        pszBaseURL = CPLGetXMLValue(psRoot, "URL", NULL);
+        if (pszBaseURL == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find <URL>");
+            CPLDestroyXMLNode( psXML );
+            return FALSE;
+        }
+
+        osTypeName = WFS_FetchValueFromURL(pszBaseURL, "TYPENAME");
+
+        psWFSCapabilities = WFSFindNode( psRoot, "WFS_Capabilities" );
+        if (psWFSCapabilities == NULL)
+        {
+            CPLString osURL(pszBaseURL);
+            osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
+            osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetCapabilities");
+            osTypeName = WFS_FetchValueFromURL(osURL, "TYPENAME");
+            osURL = WFS_AddKVToURL(osURL, "TYPENAME", NULL);
+            osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
+            osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
+            osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", NULL);
+
+            CPLDebug("WFS", "%s", osURL.c_str());
+
+            CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
+            if (psResult == NULL)
+            {
+                CPLDestroyXMLNode( psXML );
+                return FALSE;
+            }
+
+            CPLXMLNode* psXML2 = CPLParseXMLString( (const char*) psResult->pabyData );
+            if (psXML2 == NULL)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
+                    psResult->pabyData);
+                CPLHTTPDestroyResult(psResult);
+                CPLDestroyXMLNode( psXML );
+                return FALSE;
+            }
+
+            CPLHTTPDestroyResult(psResult);
+
+            psWFSCapabilities = WFSFindNode( psXML2, "WFS_Capabilities" );
+            if (psWFSCapabilities == NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot find <WFS_Capabilities>");
+                CPLDestroyXMLNode( psXML );
+                CPLDestroyXMLNode( psXML2 );
+                return FALSE;
+            }
+
+            CPLAddXMLChild(psXML, CPLCloneXMLTree(psWFSCapabilities));
+
+            int bOK = CPLSerializeXMLTreeToFile(psXML, pszFilename);
+            
+            CPLDestroyXMLNode( psXML );
+            CPLDestroyXMLNode( psXML2 );
+
+            if (bOK)
+                return Open(pszFilename, bUpdate);
+            else
+                return FALSE;
+        }
+        else
+        {
+            psFileXML = psXML;
+        }
+    }
 
     int bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption(
                                   "GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
 
-    if (psXML)
+    CPLXMLNode* psStrippedXML = CPLCloneXMLTree(psXML);
+    CPLStripXMLNamespace( psStrippedXML, NULL, TRUE );
+    psWFSCapabilities = CPLGetXMLNode( psStrippedXML, "=WFS_Capabilities" );
+    if (psWFSCapabilities == NULL)
     {
-        CPLStripXMLNamespace( psXML, NULL, TRUE );
-        CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=WFS_Capabilities" );
-        if (psRoot == NULL)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find <WFS_Capabilities>");
-            CPLDestroyXMLNode( psXML );
-            CPLHTTPDestroyResult(psResult);
-            return FALSE;
-        }
-
-        osVersion = CPLGetXMLValue(psRoot, "version", "1.0.0");
-
-        bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psRoot);
-
-        DetectTransactionSupport(psRoot);
-
-        if (bUpdate && !bTransactionSupport)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Server is read-only WFS; no WFS-T feature advertized");
-            CPLDestroyXMLNode( psXML );
-            CPLHTTPDestroyResult(psResult);
-            return FALSE;
-        }
-
-        CPLXMLNode* psFilterCap = CPLGetXMLNode(psRoot, "Filter_Capabilities.Scalar_Capabilities");
-        if (psFilterCap)
-        {
-            bHasMinOperators = CPLGetXMLNode(psFilterCap, "LogicalOperators") != NULL;
-            psFilterCap = CPLGetXMLNode(psFilterCap, "ComparisonOperators");
-            if (psFilterCap)
-            {
-                bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThan");
-                bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThan");
-                bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThanEqualTo");
-                bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThanEqualTo");
-                bHasMinOperators &= FindComparisonOperator(psFilterCap, "EqualTo");
-                bHasMinOperators &= FindComparisonOperator(psFilterCap, "NotEqualTo");
-                bHasMinOperators &= FindComparisonOperator(psFilterCap, "Like");
-                bHasNullCheck = FindComparisonOperator(psFilterCap, "NullCheck");
-            }
-            else
-                bHasMinOperators = FALSE;
-        }
-        
-        CPLXMLNode* psChild = CPLGetXMLNode(psRoot, "FeatureTypeList");
-        if (psChild == NULL)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find <FeatureTypeList>");
-            CPLDestroyXMLNode( psXML );
-            CPLHTTPDestroyResult(psResult);
-            return FALSE;
-        }
-
-        CPLXMLNode* psChildIter;
-        for(psChildIter = psChild->psChild;
-            psChildIter != NULL;
-            psChildIter = psChildIter->psNext)
-        {
-            if (psChildIter->eType == CXT_Element &&
-                strcmp(psChildIter->pszValue, "FeatureType") == 0)
-            {
-                const char* pszNS = NULL;
-                const char* pszNSVal = NULL;
-                CPLXMLNode* psFeatureTypeIter = psChildIter->psChild;
-                while(psFeatureTypeIter != NULL)
-                {
-                    if (psFeatureTypeIter->eType == CXT_Attribute)
-                    {
-                        pszNS = psFeatureTypeIter->pszValue;
-                        pszNSVal = psFeatureTypeIter->psChild->pszValue;
-                    }
-                    psFeatureTypeIter = psFeatureTypeIter->psNext;
-                }
-
-                const char* pszName = CPLGetXMLValue(psChildIter, "Name", NULL);
-                if (pszName != NULL &&
-                    (osTypeName.size() == 0 ||
-                     strcmp(osTypeName.c_str(), pszName) == 0))
-                {
-                    const char* pszDefaultSRS =
-                            CPLGetXMLValue(psChildIter, "DefaultSRS", NULL);
-                    if (pszDefaultSRS == NULL)
-                        pszDefaultSRS = CPLGetXMLValue(psChildIter, "SRS", NULL);
-
-                    OGRSpatialReference* poSRS = NULL;
-                    int bAxisOrderAlreadyInverted = FALSE;
-                    if (pszDefaultSRS)
-                    {
-                        OGRSpatialReference oSRS;
-                        if (oSRS.SetFromUserInput(pszDefaultSRS) == OGRERR_NONE)
-                        {
-                            poSRS = oSRS.Clone();
-                            if (bInvertAxisOrderIfLatLong &&
-                                GML_IsSRSLatLongOrder(pszDefaultSRS))
-                            {
-                                bAxisOrderAlreadyInverted = TRUE;
-
-                                OGR_SRSNode *poGEOGCS =
-                                                poSRS->GetAttrNode( "GEOGCS" );
-                                if( poGEOGCS != NULL )
-                                {
-                                    poGEOGCS->StripNodes( "AXIS" );
-                                }
-                            }
-                        }
-                    }
-
-                    CPLXMLNode* psBBox = NULL;
-                    CPLXMLNode* psLatLongBBox = NULL;
-                    int bFoundBBox = FALSE;
-                    double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
-                    if ((psBBox = CPLGetXMLNode(psChildIter, "WGS84BoundingBox")) != NULL)
-                    {
-                        const char* pszLC = CPLGetXMLValue(psBBox, "LowerCorner", NULL);
-                        const char* pszUC = CPLGetXMLValue(psBBox, "UpperCorner", NULL);
-                        if (pszLC != NULL && pszUC != NULL)
-                        {
-                            CPLString osConcat(pszLC);
-                            osConcat += " ";
-                            osConcat += pszUC;
-                            char** papszTokens;
-                            papszTokens = CSLTokenizeStringComplex(
-                                                osConcat, " ,", FALSE, FALSE );
-                            if (CSLCount(papszTokens) == 4)
-                            {
-                                bFoundBBox = TRUE;
-                                dfMinX = CPLAtof(papszTokens[0]);
-                                dfMinY = CPLAtof(papszTokens[1]);
-                                dfMaxX = CPLAtof(papszTokens[2]);
-                                dfMaxY = CPLAtof(papszTokens[3]);
-                            }
-                            CSLDestroy(papszTokens);
-                        }
-                    }
-                    else if ((psLatLongBBox = CPLGetXMLNode(psChildIter,
-                                                "LatLongBoundingBox")) != NULL)
-                    {
-                        const char* pszMinX =
-                            CPLGetXMLValue(psLatLongBBox, "minx", NULL);
-                        const char* pszMinY =
-                            CPLGetXMLValue(psLatLongBBox, "miny", NULL);
-                        const char* pszMaxX =
-                            CPLGetXMLValue(psLatLongBBox, "maxx", NULL);
-                        const char* pszMaxY =
-                            CPLGetXMLValue(psLatLongBBox, "maxy", NULL);
-                        if (pszMinX != NULL && pszMinY != NULL &&
-                            pszMaxX != NULL && pszMaxY != NULL)
-                        {
-                            bFoundBBox = TRUE;
-                            dfMinX = CPLAtof(pszMinX);
-                            dfMinY = CPLAtof(pszMinY);
-                            dfMaxX = CPLAtof(pszMaxX);
-                            dfMaxY = CPLAtof(pszMaxY);
-                        }
-                    }
-
-                    OGRWFSLayer* poLayer = new OGRWFSLayer(
-                                this, poSRS, bAxisOrderAlreadyInverted,
-                                pszBaseURL, pszName, pszNS, pszNSVal);
-
-                    if (poSRS)
-                    {
-                        char* pszProj4 = NULL;
-                        if (poSRS->exportToProj4(&pszProj4) == OGRERR_NONE)
-                        {
-                            if (strcmp(pszProj4, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ") == 0)
-                            {
-                                poLayer->SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
-                            }
-#if 0
-                            else
-                            {
-                                OGRSpatialReference oWGS84;
-                                oWGS84.SetWellKnownGeogCS("WGS84");
-                                OGRCoordinateTransformation* poCT;
-                                poCT = OGRCreateCoordinateTransformation(&oWGS84, poSRS);
-                                if (poCT)
-                                {
-                                    double dfULX = dfMinX;
-                                    double dfULY = dfMaxY;
-                                    double dfURX = dfMaxX;
-                                    double dfURY = dfMaxY;
-                                    double dfLLX = dfMinX;
-                                    double dfLLY = dfMinY;
-                                    double dfLRX = dfMaxX;
-                                    double dfLRY = dfMinY;
-                                    if (poCT->Transform(1, &dfULX, &dfULY, NULL) &&
-                                        poCT->Transform(1, &dfURX, &dfURY, NULL) &&
-                                        poCT->Transform(1, &dfLLX, &dfLLY, NULL) &&
-                                        poCT->Transform(1, &dfLRX, &dfLRY, NULL))
-                                    {
-                                        dfMinX = dfULX;
-                                        dfMinX = MIN(dfMinX, dfURX);
-                                        dfMinX = MIN(dfMinX, dfLLX);
-                                        dfMinX = MIN(dfMinX, dfLRX);
-
-                                        dfMinY = dfULY;
-                                        dfMinY = MIN(dfMinY, dfURY);
-                                        dfMinY = MIN(dfMinY, dfLLY);
-                                        dfMinY = MIN(dfMinY, dfLRY);
-
-                                        dfMaxX = dfULX;
-                                        dfMaxX = MAX(dfMaxX, dfURX);
-                                        dfMaxX = MAX(dfMaxX, dfLLX);
-                                        dfMaxX = MAX(dfMaxX, dfLRX);
-
-                                        dfMaxY = dfULY;
-                                        dfMaxY = MAX(dfMaxY, dfURY);
-                                        dfMaxY = MAX(dfMaxY, dfLLY);
-                                        dfMaxY = MAX(dfMaxY, dfLRY);
-
-                                        poLayer->SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
-                                    }
-                                }
-                                delete poCT;
-                            }
-#endif
-                        }
-                        CPLFree(pszProj4);
-                    }
-
-                    papoLayers = (OGRWFSLayer **)CPLRealloc(papoLayers,
-                                        sizeof(OGRWFSLayer*) * (nLayers + 1));
-                    papoLayers[nLayers ++] = poLayer;
-                }
-            }
-        }
-
-        CPLDestroyXMLNode( psXML );
+        psWFSCapabilities = CPLGetXMLNode( psStrippedXML, "=OGRWFSDataSource.WFS_Capabilities" );
     }
-    else
+    if (psWFSCapabilities == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
-                 psResult->pabyData);
-        CPLHTTPDestroyResult(psResult);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot find <WFS_Capabilities>");
+        if (!psFileXML) CPLDestroyXMLNode( psXML );
+        CPLDestroyXMLNode( psStrippedXML );
         return FALSE;
     }
-    CPLHTTPDestroyResult(psResult);
+
+    osVersion = CPLGetXMLValue(psWFSCapabilities, "version", "1.0.0");
+
+    bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
+
+    DetectTransactionSupport(psWFSCapabilities);
+
+    if (bUpdate && !bTransactionSupport)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Server is read-only WFS; no WFS-T feature advertized");
+        if (!psFileXML) CPLDestroyXMLNode( psXML );
+        CPLDestroyXMLNode( psStrippedXML );
+        return FALSE;
+    }
+
+    CPLXMLNode* psFilterCap = CPLGetXMLNode(psWFSCapabilities, "Filter_Capabilities.Scalar_Capabilities");
+    if (psFilterCap)
+    {
+        bHasMinOperators = CPLGetXMLNode(psFilterCap, "LogicalOperators") != NULL;
+        psFilterCap = CPLGetXMLNode(psFilterCap, "ComparisonOperators");
+        if (psFilterCap)
+        {
+            bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThan");
+            bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThan");
+            bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThanEqualTo");
+            bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThanEqualTo");
+            bHasMinOperators &= FindComparisonOperator(psFilterCap, "EqualTo");
+            bHasMinOperators &= FindComparisonOperator(psFilterCap, "NotEqualTo");
+            bHasMinOperators &= FindComparisonOperator(psFilterCap, "Like");
+            bHasNullCheck = FindComparisonOperator(psFilterCap, "NullCheck");
+        }
+        else
+            bHasMinOperators = FALSE;
+    }
+
+    CPLXMLNode* psChild = CPLGetXMLNode(psWFSCapabilities, "FeatureTypeList");
+    if (psChild == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot find <FeatureTypeList>");
+        if (!psFileXML) CPLDestroyXMLNode( psXML );
+        CPLDestroyXMLNode( psStrippedXML );
+        return FALSE;
+    }
+
+    CPLXMLNode* psChildIter;
+    for(psChildIter = psChild->psChild;
+        psChildIter != NULL;
+        psChildIter = psChildIter->psNext)
+    {
+        if (psChildIter->eType == CXT_Element &&
+            strcmp(psChildIter->pszValue, "FeatureType") == 0)
+        {
+            const char* pszNS = NULL;
+            const char* pszNSVal = NULL;
+            CPLXMLNode* psFeatureTypeIter = psChildIter->psChild;
+            while(psFeatureTypeIter != NULL)
+            {
+                if (psFeatureTypeIter->eType == CXT_Attribute)
+                {
+                    pszNS = psFeatureTypeIter->pszValue;
+                    pszNSVal = psFeatureTypeIter->psChild->pszValue;
+                }
+                psFeatureTypeIter = psFeatureTypeIter->psNext;
+            }
+
+            const char* pszName = CPLGetXMLValue(psChildIter, "Name", NULL);
+            if (pszName != NULL &&
+                (osTypeName.size() == 0 ||
+                    strcmp(osTypeName.c_str(), pszName) == 0))
+            {
+                const char* pszDefaultSRS =
+                        CPLGetXMLValue(psChildIter, "DefaultSRS", NULL);
+                if (pszDefaultSRS == NULL)
+                    pszDefaultSRS = CPLGetXMLValue(psChildIter, "SRS", NULL);
+
+                OGRSpatialReference* poSRS = NULL;
+                int bAxisOrderAlreadyInverted = FALSE;
+                if (pszDefaultSRS)
+                {
+                    OGRSpatialReference oSRS;
+                    if (oSRS.SetFromUserInput(pszDefaultSRS) == OGRERR_NONE)
+                    {
+                        poSRS = oSRS.Clone();
+                        if (bInvertAxisOrderIfLatLong &&
+                            GML_IsSRSLatLongOrder(pszDefaultSRS))
+                        {
+                            bAxisOrderAlreadyInverted = TRUE;
+
+                            OGR_SRSNode *poGEOGCS =
+                                            poSRS->GetAttrNode( "GEOGCS" );
+                            if( poGEOGCS != NULL )
+                            {
+                                poGEOGCS->StripNodes( "AXIS" );
+                            }
+                        }
+                    }
+                }
+
+                CPLXMLNode* psBBox = NULL;
+                CPLXMLNode* psLatLongBBox = NULL;
+                int bFoundBBox = FALSE;
+                double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
+                if ((psBBox = CPLGetXMLNode(psChildIter, "WGS84BoundingBox")) != NULL)
+                {
+                    const char* pszLC = CPLGetXMLValue(psBBox, "LowerCorner", NULL);
+                    const char* pszUC = CPLGetXMLValue(psBBox, "UpperCorner", NULL);
+                    if (pszLC != NULL && pszUC != NULL)
+                    {
+                        CPLString osConcat(pszLC);
+                        osConcat += " ";
+                        osConcat += pszUC;
+                        char** papszTokens;
+                        papszTokens = CSLTokenizeStringComplex(
+                                            osConcat, " ,", FALSE, FALSE );
+                        if (CSLCount(papszTokens) == 4)
+                        {
+                            bFoundBBox = TRUE;
+                            dfMinX = CPLAtof(papszTokens[0]);
+                            dfMinY = CPLAtof(papszTokens[1]);
+                            dfMaxX = CPLAtof(papszTokens[2]);
+                            dfMaxY = CPLAtof(papszTokens[3]);
+                        }
+                        CSLDestroy(papszTokens);
+                    }
+                }
+                else if ((psLatLongBBox = CPLGetXMLNode(psChildIter,
+                                            "LatLongBoundingBox")) != NULL)
+                {
+                    const char* pszMinX =
+                        CPLGetXMLValue(psLatLongBBox, "minx", NULL);
+                    const char* pszMinY =
+                        CPLGetXMLValue(psLatLongBBox, "miny", NULL);
+                    const char* pszMaxX =
+                        CPLGetXMLValue(psLatLongBBox, "maxx", NULL);
+                    const char* pszMaxY =
+                        CPLGetXMLValue(psLatLongBBox, "maxy", NULL);
+                    if (pszMinX != NULL && pszMinY != NULL &&
+                        pszMaxX != NULL && pszMaxY != NULL)
+                    {
+                        bFoundBBox = TRUE;
+                        dfMinX = CPLAtof(pszMinX);
+                        dfMinY = CPLAtof(pszMinY);
+                        dfMaxX = CPLAtof(pszMaxX);
+                        dfMaxY = CPLAtof(pszMaxY);
+                    }
+                }
+
+                OGRWFSLayer* poLayer = new OGRWFSLayer(
+                            this, poSRS, bAxisOrderAlreadyInverted,
+                            pszBaseURL, pszName, pszNS, pszNSVal);
+
+                if (poSRS)
+                {
+                    char* pszProj4 = NULL;
+                    if (poSRS->exportToProj4(&pszProj4) == OGRERR_NONE)
+                    {
+                        if (strcmp(pszProj4, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ") == 0)
+                        {
+                            poLayer->SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
+                        }
+#if 0
+                        else
+                        {
+                            OGRSpatialReference oWGS84;
+                            oWGS84.SetWellKnownGeogCS("WGS84");
+                            OGRCoordinateTransformation* poCT;
+                            poCT = OGRCreateCoordinateTransformation(&oWGS84, poSRS);
+                            if (poCT)
+                            {
+                                double dfULX = dfMinX;
+                                double dfULY = dfMaxY;
+                                double dfURX = dfMaxX;
+                                double dfURY = dfMaxY;
+                                double dfLLX = dfMinX;
+                                double dfLLY = dfMinY;
+                                double dfLRX = dfMaxX;
+                                double dfLRY = dfMinY;
+                                if (poCT->Transform(1, &dfULX, &dfULY, NULL) &&
+                                    poCT->Transform(1, &dfURX, &dfURY, NULL) &&
+                                    poCT->Transform(1, &dfLLX, &dfLLY, NULL) &&
+                                    poCT->Transform(1, &dfLRX, &dfLRY, NULL))
+                                {
+                                    dfMinX = dfULX;
+                                    dfMinX = MIN(dfMinX, dfURX);
+                                    dfMinX = MIN(dfMinX, dfLLX);
+                                    dfMinX = MIN(dfMinX, dfLRX);
+
+                                    dfMinY = dfULY;
+                                    dfMinY = MIN(dfMinY, dfURY);
+                                    dfMinY = MIN(dfMinY, dfLLY);
+                                    dfMinY = MIN(dfMinY, dfLRY);
+
+                                    dfMaxX = dfULX;
+                                    dfMaxX = MAX(dfMaxX, dfURX);
+                                    dfMaxX = MAX(dfMaxX, dfLLX);
+                                    dfMaxX = MAX(dfMaxX, dfLRX);
+
+                                    dfMaxY = dfULY;
+                                    dfMaxY = MAX(dfMaxY, dfURY);
+                                    dfMaxY = MAX(dfMaxY, dfLLY);
+                                    dfMaxY = MAX(dfMaxY, dfLRY);
+
+                                    poLayer->SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
+                                }
+                            }
+                            delete poCT;
+                        }
+#endif
+                    }
+                    CPLFree(pszProj4);
+                }
+
+                papoLayers = (OGRWFSLayer **)CPLRealloc(papoLayers,
+                                    sizeof(OGRWFSLayer*) * (nLayers + 1));
+                papoLayers[nLayers ++] = poLayer;
+
+                if (psFileXML != NULL)
+                {
+                    CPLXMLNode* psIter = psXML->psChild;
+                    while(psIter)
+                    {
+                        if (psIter->eType == CXT_Element &&
+                            EQUAL(psIter->pszValue, "OGRWFSLayer") &&
+                            strcmp(CPLGetXMLValue(psIter, "name", ""), pszName) == 0)
+                        {
+                            CPLXMLNode* psSchema = WFSFindNode( psIter->psChild, "schema" );
+                            if (psSchema)
+                                poLayer->BuildLayerDefn(psSchema);
+                            break;
+                        }
+                        psIter = psIter->psNext;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!psFileXML) CPLDestroyXMLNode( psXML );
+    CPLDestroyXMLNode( psStrippedXML );
 
     return TRUE;
 }
 
+/************************************************************************/
+/*                         SaveLayerSchema()                            */
+/************************************************************************/
+
+void OGRWFSDataSource::SaveLayerSchema(const char* pszLayerName, CPLXMLNode* psSchema)
+{
+    if (psFileXML != NULL)
+    {
+        bRewriteFile = TRUE;
+        CPLXMLNode* psLayerNode = CPLCreateXMLNode(NULL, CXT_Element, "OGRWFSLayer");
+        CPLSetXMLValue(psLayerNode, "#name", pszLayerName);
+        CPLAddXMLChild(psLayerNode, CPLCloneXMLTree(psSchema));
+        CPLAddXMLChild(psFileXML, psLayerNode);
+    }
+}
 
 /************************************************************************/
 /*                           IsOldDeegree()                             */

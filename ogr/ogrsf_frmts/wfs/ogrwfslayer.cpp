@@ -119,7 +119,7 @@ OGRWFSLayer::~OGRWFSLayer()
 /*                    GetDescribeFeatureTypeURL()                       */
 /************************************************************************/
 
-CPLString OGRWFSLayer::GetDescribeFeatureTypeURL()
+CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(int bWithNS)
 {
     CPLString osURL(pszBaseURL);
     osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
@@ -127,16 +127,8 @@ CPLString OGRWFSLayer::GetDescribeFeatureTypeURL()
     osURL = WFS_AddKVToURL(osURL, "REQUEST", "DescribeFeatureType");
     osURL = WFS_AddKVToURL(osURL, "TYPENAME", pszName);
     osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
-    return osURL;
-}
-
-/************************************************************************/
-/*                      DescribeFeatureType()                           */
-/************************************************************************/
-
-OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
-{
-    CPLString osURL = GetDescribeFeatureTypeURL();
+    osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", NULL);
+    osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
 
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -149,6 +141,17 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
         osValue += ")";
         osURL = WFS_AddKVToURL(osURL, "NAMESPACE", osValue);
     }
+
+    return osURL;
+}
+
+/************************************************************************/
+/*                      DescribeFeatureType()                           */
+/************************************************************************/
+
+OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
+{
+    CPLString osURL = GetDescribeFeatureTypeURL(TRUE);
 
     CPLDebug("WFS", "%s", osURL.c_str());
 
@@ -179,29 +182,37 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    CPLStripXMLNamespace( psXML, NULL, TRUE );
-    CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=Schema" );
-    if (psRoot == NULL)
+    CPLHTTPDestroyResult(psResult);
+
+    CPLXMLNode* psSchema = WFSFindNode(psXML, "schema");
+    if (psSchema == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find <Schema>");
         CPLDestroyXMLNode( psXML );
-        CPLHTTPDestroyResult(psResult);
+
         return NULL;
     }
 
-    osTargetNamespace = CPLGetXMLValue(psRoot, "targetNamespace", "");
-    
-    CPLDestroyXMLNode(psXML);
+    OGRFeatureDefn* poFDefn = ParseSchema(psSchema);
+    if (poFDefn)
+        poDS->SaveLayerSchema(pszName, psSchema);
+
+    CPLDestroyXMLNode( psXML );
+    return poFDefn;
+}
+
+/************************************************************************/
+/*                            ParseSchema()                             */
+/************************************************************************/
+
+OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
+{
+    osTargetNamespace = CPLGetXMLValue(psSchema, "targetNamespace", "");
 
     CPLString osTmpFileName;
-    FILE* fp;
 
     osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.xsd", this);
-    fp = VSIFileFromMemBuffer( osTmpFileName, psResult->pabyData,
-                                     psResult->nDataLen, TRUE);
-    VSIFCloseL(fp);
-    psResult->pabyData = NULL;
-    CPLHTTPDestroyResult(psResult);
+    CPLSerializeXMLTreeToFile(psSchema, osTmpFileName);
 
     std::vector<GMLFeatureClass*> aosClasses;
     int bHaveSchema = GMLParseXSD( osTmpFileName, aosClasses );
@@ -499,13 +510,24 @@ OGRFeatureDefn * OGRWFSLayer::GetLayerDefn()
     if (poFeatureDefn)
         return poFeatureDefn;
 
+    return BuildLayerDefn();
+}
+
+/************************************************************************/
+/*                          BuildLayerDefn()                            */
+/************************************************************************/
+
+OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(CPLXMLNode* psSchema)
+{
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
 
     OGRDataSource* poDS = NULL;
 
     OGRFeatureDefn* poSrcFDefn = NULL;
-    if (strcmp(WFS_FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
+    if (psSchema)
+        poSrcFDefn = ParseSchema(psSchema);
+    else if (strcmp(WFS_FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
         poSrcFDefn = DescribeFeatureType();
     if (poSrcFDefn == NULL)
     {
@@ -691,6 +713,9 @@ void OGRWFSLayer::SetSpatialFilter( OGRGeometry * poGeom )
 OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
 {
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
+    if (eErr != CE_None)
+        return eErr;
+
     CPLString osOldWFSWhere(osWFSWhere);
     if (poDS->HasMinOperators() && pszFilter != NULL)
     {
@@ -718,7 +743,8 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
     else
         bReloadNeeded = FALSE;
     nFeatures = -1;
-    return eErr;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -926,7 +952,7 @@ CPLString OGRWFSLayer::GetPostHeader()
     osPost += " ";
 
     char* pszXMLEncoded = CPLEscapeString(
-                    GetDescribeFeatureTypeURL(), -1, CPLES_XML);
+                    GetDescribeFeatureTypeURL(FALSE), -1, CPLES_XML);
     osPost += pszXMLEncoded;
     CPLFree(pszXMLEncoded);
 
