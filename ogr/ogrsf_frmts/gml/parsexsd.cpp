@@ -243,11 +243,18 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 {
                     if (strncmp(pszType + 4, psIter->pszName, strlen(psIter->pszName)) == 0)
                     {
-                        poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
-                        poClass->SetGeometryType(psIter->eType);
-                        poClass->SetGeometryAttributeIndex( nAttributeIndex );
+                        if (poClass->GetGeometryAttributeIndex() != -1)
+                        {
+                            CPLDebug("GML", "Geometry field already found ! Ignoring the following ones");
+                        }
+                        else
+                        {
+                            poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
+                            poClass->SetGeometryType(psIter->eType);
+                            poClass->SetGeometryAttributeIndex( nAttributeIndex );
 
-                        nAttributeIndex ++;
+                            nAttributeIndex ++;
+                        }
                         
                         break;
                     }
