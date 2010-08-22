@@ -76,6 +76,7 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDS,
 
     nExpectedInserts = 0;
     bInTransaction = FALSE;
+    bUseFeatureIdAtLayerLevel = FALSE;
 }
 
 /************************************************************************/
@@ -448,17 +449,40 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         return NULL;
     }
 
+    int bRetry = FALSE;
+
     /* Deegree server does not support PropertyIsNotEqualTo */
     /* We have to turn it into <Not><PropertyIsEqualTo> */
     if (osWFSWhere.size() != 0 && poDS->PropertyIsNotEqualToSupported() &&
         strstr((const char*)psResult->pabyData, "Unknown comparison operation: 'PropertyIsNotEqualTo'") != NULL)
     {
         poDS->SetPropertyIsNotEqualToUnSupported();
+        bRetry = TRUE;
+    }
 
+    /* Deegree server requires the gml: prefix in GmlObjectId element, but ESRI */
+    /* doesn't like it at all ! Other servers don't care... */
+    if (osWFSWhere.size() != 0 && !poDS->DoesGmlObjectIdNeedGMLPrefix() &&
+        strstr((const char*)psResult->pabyData, "&lt;GmlObjectId&gt; requires 'gml:id'-attribute!") != NULL)
+    {
+        poDS->SetGmlObjectIdNeedsGMLPrefix();
+        bRetry = TRUE;
+    }
+
+    /* GeoServer can return the error 'Only FeatureIds are supported when encoding id filters to SDE' */
+    if (osWFSWhere.size() != 0 && !bUseFeatureIdAtLayerLevel &&
+        strstr((const char*)psResult->pabyData, "Only FeatureIds are supported") != NULL)
+    {
+        bUseFeatureIdAtLayerLevel = TRUE;
+        bRetry = TRUE;
+    }
+
+    if (bRetry)
+    {
         SetAttributeFilter(osSQLWhere);
         bHasFetched = TRUE;
         bReloadNeeded = FALSE;
-        
+
         CPLHTTPDestroyResult(psResult);
         return FetchGetFeature(nMaxFeatures);
     }
@@ -724,7 +748,8 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
         osWFSWhere = WFS_TurnSQLFilterToOGCFilter(pszFilter,
                                               nVersion,
                                               poDS->PropertyIsNotEqualToSupported(),
-                                              poDS->UseFeatureId(),
+                                              poDS->UseFeatureId() || bUseFeatureIdAtLayerLevel,
+                                              poDS->DoesGmlObjectIdNeedGMLPrefix(),
                                               &bNeedsNullCheck);
         if (bNeedsNullCheck && !poDS->HasNullCheck())
             osWFSWhere = "";
@@ -1283,7 +1308,7 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
         osPost += "    </wfs:Property>\n";
     }
     osPost += "    <ogc:Filter>\n";
-    if (poDS->UseFeatureId())
+    if (poDS->UseFeatureId() || bUseFeatureIdAtLayerLevel)
         osPost += "      <ogc:FeatureId fid=\"";
     else
         osPost += "      <ogc:GmlObjectId gml:id=\"";
