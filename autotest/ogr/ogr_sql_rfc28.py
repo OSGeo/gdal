@@ -400,18 +400,21 @@ def ogr_rfc28_19():
 
 
 ###############################################################################
-# Verify arithmetic operator precedence
+# Verify arithmetic operator precedence and unary minus
 
 def ogr_rfc28_20():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
     lyr = ds.CreateLayer( "my_layer")
+    field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
+    lyr.CreateField(field_defn)
     feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 2)
     lyr.CreateFeature(feat)
 
-    sql_lyr = ds.ExecuteSQL( 'select 1 + 2 * 3 + 5 - 3 * 2 from my_layer' )
+    sql_lyr = ds.ExecuteSQL( 'select -intfield + 1 + 2 * 3 + 5 - 3 * 2 from my_layer' )
     feat = sql_lyr.GetNextFeature()
-    if feat.GetField('FIELD_1') != 6:
+    if feat.GetField('FIELD_1') != 4:
         return 'fail'
     ds.ReleaseResultSet( sql_lyr )
 
