@@ -130,6 +130,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     bTransactionSupport = FALSE;
     papszIdGenMethods = NULL;
     bUseFeatureId = FALSE; /* CubeWerx doesn't like GmlObjectId */
+    bGmlObjectIdNeedsGMLPrefix = FALSE;
 
     bRewriteFile = FALSE;
     psFileXML = NULL;
@@ -570,6 +571,10 @@ CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
         /* At least true for CubeWerx Suite 4.15.1 */
         bUseFeatureId = TRUE;
     }
+    else if (strstr(pszXML, "deegree"))
+    {
+        bGmlObjectIdNeedsGMLPrefix = TRUE;
+    }
 
     CPLXMLNode* psXML = CPLParseXMLString( pszXML );
     CPLFree( pszXML );
@@ -635,6 +640,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             /* At least true for CubeWerx Suite 4.15.1 */
             bUseFeatureId = TRUE;
+        }
+        else if (strstr((const char*) psResult->pabyData, "deegree"))
+        {
+            bGmlObjectIdNeedsGMLPrefix = TRUE;
         }
 
         psXML = CPLParseXMLString( (const char*) psResult->pabyData );
@@ -751,6 +760,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
     osVersion = CPLGetXMLValue(psWFSCapabilities, "version", "1.0.0");
+    if (strcmp(osVersion.c_str(), "1.0.0") == 0)
+        bUseFeatureId = TRUE;
 
     bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
 
@@ -768,21 +779,38 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     CPLXMLNode* psFilterCap = CPLGetXMLNode(psWFSCapabilities, "Filter_Capabilities.Scalar_Capabilities");
     if (psFilterCap)
     {
-        bHasMinOperators = CPLGetXMLNode(psFilterCap, "LogicalOperators") != NULL;
-        psFilterCap = CPLGetXMLNode(psFilterCap, "ComparisonOperators");
+        bHasMinOperators = CPLGetXMLNode(psFilterCap, "LogicalOperators") != NULL ||
+                           CPLGetXMLNode(psFilterCap, "Logical_Operators") != NULL;
+        if (CPLGetXMLNode(psFilterCap, "ComparisonOperators"))
+            psFilterCap = CPLGetXMLNode(psFilterCap, "ComparisonOperators");
+        else if (CPLGetXMLNode(psFilterCap, "Comparison_Operators"))
+            psFilterCap = CPLGetXMLNode(psFilterCap, "Comparison_Operators");
+        else
+            psFilterCap = NULL;
         if (psFilterCap)
         {
-            bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThan");
-            bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThan");
-            bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThanEqualTo");
-            bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThanEqualTo");
-            bHasMinOperators &= FindComparisonOperator(psFilterCap, "EqualTo");
-            bHasMinOperators &= FindComparisonOperator(psFilterCap, "NotEqualTo");
-            bHasMinOperators &= FindComparisonOperator(psFilterCap, "Like");
-            bHasNullCheck = FindComparisonOperator(psFilterCap, "NullCheck");
+            if (CPLGetXMLNode(psFilterCap, "Simple_Comparisons") == NULL)
+            {
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThan");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThan");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThanEqualTo");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThanEqualTo");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "EqualTo");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "NotEqualTo");
+                bHasMinOperators &= FindComparisonOperator(psFilterCap, "Like");
+            }
+            else
+            {
+                bHasMinOperators &= CPLGetXMLNode(psFilterCap, "Simple_Comparisons") != NULL &&
+                                    CPLGetXMLNode(psFilterCap, "Like") != NULL;
+            }
+            bHasNullCheck = FindComparisonOperator(psFilterCap, "NullCheck") ||
+                            CPLGetXMLNode(psFilterCap, "NullCheck") != NULL;
         }
         else
+        {
             bHasMinOperators = FALSE;
+        }
     }
 
     CPLXMLNode* psChild = CPLGetXMLNode(psWFSCapabilities, "FeatureTypeList");
@@ -1166,6 +1194,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
                                                              nVersion,
                                                              bPropertyIsNotEqualToSupported,
                                                              bUseFeatureId,
+                                                             bGmlObjectIdNeedsGMLPrefix,
                                                              &bNeedsNullCheck);
         if (bNeedsNullCheck && !HasNullCheck())
             osOGCFilter = "";

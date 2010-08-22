@@ -44,6 +44,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
                                     int nVersion,
                                     int bPropertyIsNotEqualToSupported,
                                     int bUseFeatureId,
+                                    int bGmlObjectIdNeedsGMLPrefix,
                                     int* pbOutNeedsNullCheck );
 CPLHTTPResult* OGRWFSHTTPFetch( const char* pszURL, char** papszOptions );
 
@@ -104,6 +105,8 @@ class OGRWFSLayer : public OGRLayer
     CPLString           GetPostHeader();
 
     OGRFeatureDefn*     ParseSchema(CPLXMLNode* psSchema);
+
+    int                 bUseFeatureIdAtLayerLevel;
 
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
@@ -175,6 +178,7 @@ class OGRWFSDataSource : public OGRDataSource
     int                 bHasNullCheck;
     int                 bPropertyIsNotEqualToSupported;
     int                 bUseFeatureId;
+    int                 bGmlObjectIdNeedsGMLPrefix;
 
     int                 bTransactionSupport;
     char**              papszIdGenMethods;
@@ -216,6 +220,8 @@ class OGRWFSDataSource : public OGRDataSource
     int                         HasMinOperators() { return bHasMinOperators; }
     int                         HasNullCheck() { return bHasNullCheck; }
     int                         UseFeatureId() { return bUseFeatureId; }
+    void                        SetGmlObjectIdNeedsGMLPrefix() { bGmlObjectIdNeedsGMLPrefix = TRUE; }
+    int                         DoesGmlObjectIdNeedGMLPrefix() { return bGmlObjectIdNeedsGMLPrefix; }
 
     void                        SetPropertyIsNotEqualToUnSupported() { bPropertyIsNotEqualToSupported = FALSE; }
     int                         PropertyIsNotEqualToSupported() { return bPropertyIsNotEqualToSupported; }
