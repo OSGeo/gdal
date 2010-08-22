@@ -228,7 +228,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 gmlType = GMLPT_String;
             else if (EQUAL(pszStrippedNSType, "real") ||
                      EQUAL(pszStrippedNSType, "double") ||
-                     EQUAL(pszStrippedNSType, "float"))
+                     EQUAL(pszStrippedNSType, "float") ||
+                     EQUAL(pszStrippedNSType, "decimal"))
                 gmlType = GMLPT_Real;
             else if (EQUAL(pszStrippedNSType, "short") ||
                      EQUAL(pszStrippedNSType, "int") ||
