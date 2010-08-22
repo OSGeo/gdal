@@ -37,6 +37,7 @@
 #include "gmlreader.h"
 #include "cpl_http.h"
 
+CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName);
 CPLString WFS_FetchValueFromURL(const char* pszURL, const char* pszKey);
 CPLString WFS_AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue);
 CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
@@ -92,7 +93,7 @@ class OGRWFSLayer : public OGRLayer
 
     const char         *GetShortName();
     CPLString           osTargetNamespace;
-    CPLString           GetDescribeFeatureTypeURL();
+    CPLString           GetDescribeFeatureTypeURL(int bWithNS);
 
     int                 nExpectedInserts;
     CPLString           osGlobalInsert;
@@ -101,6 +102,8 @@ class OGRWFSLayer : public OGRLayer
     int                 bInTransaction;
 
     CPLString           GetPostHeader();
+
+    OGRFeatureDefn*     ParseSchema(CPLXMLNode* psSchema);
 
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
@@ -143,6 +146,8 @@ class OGRWFSLayer : public OGRLayer
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
 
+    OGRFeatureDefn*     BuildLayerDefn(CPLXMLNode* psSchema = NULL);
+
     OGRErr              DeleteFromFilter( CPLString osOGCFilter );
 
     const std::vector<CPLString>& GetLastInsertedFIDList() { return aosFIDList; }
@@ -155,6 +160,8 @@ class OGRWFSLayer : public OGRLayer
 class OGRWFSDataSource : public OGRDataSource
 {
     char*               pszName;
+    int                 bRewriteFile;
+    CPLXMLNode*         psFileXML;
 
     OGRWFSLayer**       papoLayers;
     int                 nLayers;
@@ -175,6 +182,8 @@ class OGRWFSDataSource : public OGRDataSource
 
     CPLString           osBaseURL;
     CPLString           osPostTransactionURL;
+
+    CPLXMLNode*         LoadFromFile( const char * pszFilename );
 
   public:
                         OGRWFSDataSource();
@@ -212,6 +221,8 @@ class OGRWFSDataSource : public OGRDataSource
     int                         PropertyIsNotEqualToSupported() { return bPropertyIsNotEqualToSupported; }
 
     CPLString                   GetPostTransactionURL();
+
+    void                        SaveLayerSchema(const char* pszLayerName, CPLXMLNode* psSchema);
 };
 
 /************************************************************************/
