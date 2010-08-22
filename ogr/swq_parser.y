@@ -80,6 +80,7 @@ static void swqerror( swq_parse_context *context, const char *msg )
 
 %left '+' '-'
 %left '*' '/' '%'
+%left SWQT_UMINUS
 
 /* Any grammar rule that does $$ =  must be listed afterwards */
 /* as well as SWQT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
@@ -312,13 +313,6 @@ value_expr:
 			$$ = $1;
 		}
 
-	| '-' SWQT_NUMBER 
-	        {
-			$$ = $2;
-                        $$->int_value *= -1;
-                        $$->float_value *= -1;
-		}
-
 	| SWQT_STRING
 		{
 			$$ = $1;
@@ -332,6 +326,22 @@ value_expr:
 		{
 			$$ = $2;
 		}
+
+    | '-' value_expr %prec SWQT_UMINUS
+        {
+            if ($2->eNodeType == SNT_CONSTANT)
+            {
+                $$ = $2;
+                $$->int_value *= -1;
+                $$->float_value *= -1;
+            }
+            else
+            {
+                $$ = new swq_expr_node( SWQ_MULTIPLY );
+                $$->PushSubExpression( new swq_expr_node(-1) );
+                $$->PushSubExpression( $2 );
+            }
+        }
 
 	| value_expr '+' value_expr
 		{

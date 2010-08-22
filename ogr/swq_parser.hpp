@@ -64,7 +64,8 @@
      SWQT_SELECT_START = 280,
      SWQT_NOT = 281,
      SWQT_OR = 282,
-     SWQT_AND = 283
+     SWQT_AND = 283,
+     SWQT_UMINUS = 284
    };
 #endif
 
