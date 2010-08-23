@@ -558,7 +558,7 @@ OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement )
 
     if( nStmtType != OCI_STMT_SELECT )
     {
-        nStmtMode = OCI_DEFAULT;// OCI_COMMIT_ON_SUCCESS; //?? Transaction ??//
+        nStmtMode = OCI_DEFAULT;
     }
 
     CPLDebug("PL/SQL","\n%s\n", pszStatement);
