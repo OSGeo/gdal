@@ -312,9 +312,10 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             poProp->SetWidth( nWidth );
             poProp->SetPrecision( nPrecision );
 
-            poClass->AddProperty( poProp );
-
-            nAttributeIndex ++;
+            if (poClass->AddProperty( poProp ) < 0)
+                delete poProp;
+            else
+                nAttributeIndex ++;
 
             continue;
         }
@@ -337,9 +338,10 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         poProp->SetPrecision( nPrecision );
         poProp->SetAttributeIndex( nAttributeIndex );
 
-        nAttributeIndex ++;
-
-        poClass->AddProperty( poProp );
+        if (poClass->AddProperty( poProp ) < 0)
+            delete poProp;
+        else
+            nAttributeIndex ++;
     }
 
 /* -------------------------------------------------------------------- */

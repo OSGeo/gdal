@@ -861,7 +861,11 @@ void GMLReader::SetFeatureProperty( const char *pszElement,
         if( EQUAL(CPLGetConfigOption( "GML_FIELDTYPES", ""), "ALWAYS_STRING") )
             poPDefn->SetType( GMLPT_String );
 
-        poClass->AddProperty( poPDefn );
+        if (poClass->AddProperty( poPDefn ) < 0)
+        {
+            delete poPDefn;
+            return;
+        }
     }
 
 /* -------------------------------------------------------------------- */
