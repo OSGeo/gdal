@@ -900,6 +900,8 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
         //  Block order
         // ----------------------------------------------------------------
 
+        poDstDS->poGeoRaster->SetWriteOnly( true );
+
         for( iYOffset = 0, iYBlock = 0;
              iYOffset < nYSize;
              iYOffset += nBlockYSize, iYBlock++ )
