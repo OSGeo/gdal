@@ -107,7 +107,13 @@ int GMLFeatureClass::GetPropertyIndex( const char *pszName ) const
 int GMLFeatureClass::AddProperty( GMLPropertyDefn *poDefn )
 
 {
-    CPLAssert( GetProperty(poDefn->GetName()) == NULL );
+    if( GetProperty(poDefn->GetName()) != NULL )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Field with same name (%s) already exists. Skipping newer ones",
+                 poDefn->GetName());
+        return -1;
+    }
 
     m_nPropertyCount++;
     m_papoProperty = (GMLPropertyDefn **)
