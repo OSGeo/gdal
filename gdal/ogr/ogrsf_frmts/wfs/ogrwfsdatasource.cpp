@@ -627,6 +627,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
         osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
         osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", NULL);
+        osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", NULL);
 
         CPLDebug("WFS", "%s", osURL.c_str());
 

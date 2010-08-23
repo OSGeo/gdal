@@ -130,6 +130,7 @@ CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(int bWithNS)
     osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
     osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", NULL);
     osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
+    osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", NULL);
 
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -646,6 +647,26 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         {
             poBaseLayer = poBaseDS->GetLayer(0);
             poBaseLayer->ResetReading();
+
+            /* Check that the layer field definition is consistant with the one */
+            /* we got in BuildLayerDefn() */
+            if (poFeatureDefn->GetFieldCount() != poBaseLayer->GetLayerDefn()->GetFieldCount())
+                bGotApproximateLayerDefn = TRUE;
+            else
+            {
+                int iField;
+                for(iField = 0;iField < poFeatureDefn->GetFieldCount(); iField++)
+                {
+                    OGRFieldDefn* poFDefn1 = poFeatureDefn->GetFieldDefn(iField);
+                    OGRFieldDefn* poFDefn2 = poBaseLayer->GetLayerDefn()->GetFieldDefn(iField);
+                    if (strcmp(poFDefn1->GetNameRef(), poFDefn2->GetNameRef()) != 0 ||
+                        poFDefn1->GetType() != poFDefn2->GetType())
+                    {
+                        bGotApproximateLayerDefn = TRUE;
+                        break;
+                    }
+                }
+            }
         }
     }
     if (!poBaseLayer)
@@ -676,8 +697,6 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         }
         else
         {
-            CPLAssert(poFeatureDefn->GetFieldCount() == poSrcFeature->GetFieldCount() );
-
             int iField;
             for(iField = 0;iField < poFeatureDefn->GetFieldCount(); iField++)
                 poNewFeature->SetField( iField, poSrcFeature->GetRawFieldRef(iField) );
