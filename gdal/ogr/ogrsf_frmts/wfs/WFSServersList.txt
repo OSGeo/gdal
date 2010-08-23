@@ -11,6 +11,8 @@ http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap
 http://www.rijkswaterstaat.nl/services/geoservices/overzichtskaartnl
 http://devgeo.cciw.ca/cgi-bin/mapserv/carts
 http://map.ns.ec.gc.ca/MapServer/mapserv.exe?map=/mapserver/services/envdat/config.map (4.8.3)
+http://nsidc.org/cgi-bin/acap.pl
+http://sdmdataaccess.nrcs.usda.gov/Spatial/SDMNAD83Geographic.wfs
 
 Deegree:
 http://www.nokis.org/deegree2/ogcwebservice
@@ -28,9 +30,11 @@ http://portal.cubewerx.com/cubewerx/cubeserv/cubeserv.cgi?CONFIG=haiti_vgi&DATAS
 
 Intergraph:
 http://regis.intergraph.com/wfs/dcmetro/request.asp
+http://geonames.nga.mil/nameswfs/request.aspx (fails often)
 
 ESRI:
 http://map.ngdc.noaa.gov/wfsconnector/com.esri.wfs.Esrimap/Sample_Index_f (no layers published)
+http://map.ngdc.noaa.gov/wfsconnector/com.esri.wfs.Esrimap/dart_atlantic_f (works)
 http://siga.cna.gob.mx/wfsconnector/com.esri.wfs.Esrimap/Acuiferos_Features (encoding reported as UTF-8, but ISO-8859-1 probably)
 http://sentinel.ga.gov.au/wfsconnector/com.esri.wfs.Esrimap (works)
 http://sima.gencat.cat/wfsconnector/com.esri.wfs.Esrimap/SIMA_WFS (returns invalid XML in GetFeature)
@@ -44,8 +48,17 @@ http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA (1.0.0 WFS-T)
 http://webservices.ionicsoft.com/gazetteer/wfs/GNS_GAZ
 http://demo.ionicsoft.com/agiRSW/wfs/PYLONS
 
+Safe Software:
+http://142.176.62.103:8194/servlet/WFS_NS_NAMES
+
+ERDAS Apollo:
+http://apollo.erdas.com/erdas-apollo/vector/Cherokee
+
 ???
 http://services.interactive-instruments.de/xtra/cgi-bin/wfs?Request=GetCapabilities (doesn't work well)
 
 Catalog with a lot of dead links, but a few of the above actually come from here :
 http://svn.geotools.org/branches/xdo-branch/plugin/wms/test/org/geotools/data/wms/test/test-data/servers.txt
+
+Other catalog with a lot of alive links :-) :
+http://ows-search-engine.appspot.com/index?st=WFS
