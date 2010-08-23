@@ -307,9 +307,12 @@ private:
     OWStatement*        poStmtWrite;
 
     long                nCurrentBlock;
+    long                nCacheBlockIn;
+    long                nCacheBlockOut;
     int                 nCurrentLevel;
     long                nLevelOffset;
     bool                bFlushBlock;
+    bool                bWriteOnly;
 
     hLevelDetails*      pahLevels;
 
@@ -385,8 +388,8 @@ public:
                                    nTotalColumnBlocks * nTotalRowBlocks ) +
                                    ( nY * nTotalColumnBlocks ) + nX );
                         }
-    
-    bool                FlushBlock( void );
+
+    bool                FlushBlock( long nCacheBlock );
     bool                GetNoData( int nLayer, double* pdfNoDataValue );
     bool                SetNoData( int nLayer, const char* pszValue );
     CPLXMLNode*         GetMetadata() { return phMetadata; };
@@ -404,6 +407,7 @@ public:
                                                 int nColumnBlocks,
                                                 int nRowBlocks,
                                                 int nBandBlocks );
+    void                SetWriteOnly( bool value ) { bWriteOnly = value; };
 
 public:
 
