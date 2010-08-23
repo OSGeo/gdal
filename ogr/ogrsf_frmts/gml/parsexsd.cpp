@@ -436,8 +436,14 @@ int GMLParseXSD( const char *pszFile,
         if (pszType == NULL)
             continue;
         if( strstr( pszType, ":" ) != NULL )
-            pszType = strstr( pszType, ":" ) + 1; 
-        if( !EQUALN(pszType,pszName,strlen(pszName))
+            pszType = strstr( pszType, ":" ) + 1;
+        if( EQUAL(pszType, pszName) )
+        {
+            /* A few WFS servers return a type name which is the element name */
+            /* without any _Type or Type suffix */
+            /* e.g. : http://apollo.erdas.com/erdas-apollo/vector/Cherokee?SERVICE=WFS&VERSION=1.0.0&REQUEST=DescribeFeatureType&TYPENAME=iwfs:Air */
+        }
+        else if( !EQUALN(pszType,pszName,strlen(pszName))
             || !(EQUAL(pszType+strlen(pszName),"_Type") ||
                     EQUAL(pszType+strlen(pszName),"Type")) )
         {
