@@ -176,6 +176,13 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             return FALSE;
         }
 
+        /* Ignore GeoRSS documents. They will be recognized by the GeoRSS driver */
+        if( strstr(szPtr, "<rss") != NULL && strstr(szPtr, "xmlns:georss") != NULL )
+        {
+            VSIFCloseL( fp );
+            return FALSE;
+        }
+
         /* Small optimization: if we parse a <wfs:FeatureCollection>  and */
         /* that numberOfFeatures is set, we can use it to set the FeatureCount */
         /* but *ONLY* if there's just one class ! */
