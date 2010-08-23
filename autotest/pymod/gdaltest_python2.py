@@ -54,6 +54,23 @@ def gdalurlopen(url):
     timeout = 10
     old_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(timeout)
+
+    if 'GDAL_HTTP_PROXY' in os.environ:
+        proxy = os.environ['GDAL_HTTP_PROXY']
+
+        if 'GDAL_HTTP_PROXYUSERPWD' in os.environ:
+            proxyuserpwd = os.environ['GDAL_HTTP_PROXYUSERPWD']
+            proxyHandler = urllib2.ProxyHandler({"http" : \
+                "http://%s@%s" % (proxyuserpwd, proxy)})
+        else:
+            proxyuserpwd = None
+            proxyHandler = urllib2.ProxyHandler({"http" : \
+                "http://%s" % (proxy)})
+
+        opener = urllib2.build_opener(proxyHandler, urllib2.HTTPHandler)
+
+        urllib2.install_opener(opener)
+
     try:
         handle = urllib2.urlopen(url)
         socket.setdefaulttimeout(old_timeout)

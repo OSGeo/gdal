@@ -31,6 +31,7 @@ import urllib.request, urllib.error, urllib.parse
 import socket
 import subprocess
 import shlex
+import os
 
 def run_func(func):
     try:
@@ -54,6 +55,23 @@ def gdalurlopen(url):
     timeout = 10
     old_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(timeout)
+
+    if 'GDAL_HTTP_PROXY' in os.environ:
+        proxy = os.environ['GDAL_HTTP_PROXY']
+
+        if 'GDAL_HTTP_PROXYUSERPWD' in os.environ:
+            proxyuserpwd = os.environ['GDAL_HTTP_PROXYUSERPWD']
+            proxyHandler = urllib.request.ProxyHandler({"http" : \
+                "http://%s@%s" % (proxyuserpwd, proxy)})
+        else:
+            proxyuserpwd = None
+            proxyHandler = urllib.request.ProxyHandler({"http" : \
+                "http://%s" % (proxy)})
+
+        opener = urllib.request.build_opener(proxyHandler, urllib.request.HTTPHandler)
+
+        urllib.request.install_opener(opener)
+
     try:
         handle = urllib.request.urlopen(url)
         socket.setdefaulttimeout(old_timeout)
