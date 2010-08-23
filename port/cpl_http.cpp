@@ -123,7 +123,15 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  * <li>USERPWD=userid:password to specify a user and password for authentication
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the server
  *                     with a POST request.
+ * <li>PROXY=val, to make requests go through a proxy server, where val is of the
+ *                form proxy.server.com:port_number
+ * <li>PROXYUSERPWD=val, where val is of the form username:password 
  * </ul>
+ *
+ * Alternatively, if not defined in the papszOptions arguments, the PROXY and PROXYUSERPWD
+ * values are searched in the configuration options named GDAL_HTTP_PROXY and GDAL_HTTP_PROXYUSERPWD,
+ * as proxy configuration belongs to networking setup and makes more sense at the configuration
+ * option level than at the connection level.
  *
  * @return a CPLHTTPResult* structure that must be freed by CPLHTTPDestroyResult(),
  *         or NULL if libcurl support is disabled
@@ -211,6 +219,19 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     if( pszUserPwd != NULL )
         curl_easy_setopt(http_handle, CURLOPT_USERPWD, pszUserPwd );
 
+    /* Set Proxy parameters */
+    const char* pszProxy = CSLFetchNameValue( papszOptions, "PROXY" );
+    if (pszProxy == NULL)
+        pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", NULL);
+    if (pszProxy)
+        curl_easy_setopt(http_handle,CURLOPT_PROXY,pszProxy);
+
+    const char* pszProxyUserPwd = CSLFetchNameValue( papszOptions, "PROXYUSERPWD" );
+    if (pszProxyUserPwd == NULL)
+        pszProxyUserPwd = CPLGetConfigOption("GDAL_HTTP_PROXYUSERPWD", NULL);
+    if (pszProxyUserPwd)
+        curl_easy_setopt(http_handle,CURLOPT_PROXYUSERPWD,pszProxyUserPwd);
+
     // turn off SSL verification, accept all servers with ssl
     curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, FALSE);
 
@@ -264,6 +285,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     if (!bHasCheckVersion)
     {
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
+        bHasCheckVersion = TRUE;
     }
     if (bSupportGZip)
         curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
