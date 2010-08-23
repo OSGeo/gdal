@@ -30,7 +30,6 @@
 
 #include "gdal_priv.h"
 
-
 #include <string.h>
 
 #include "georaster_priv.h"
