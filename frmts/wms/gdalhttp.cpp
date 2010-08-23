@@ -120,6 +120,19 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
     psRequest->m_curl_error = reinterpret_cast<char *>(CPLMalloc(CURL_ERROR_SIZE + 1));
     psRequest->m_curl_error[0] = '\0';
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, psRequest->m_curl_error);
+    
+    /* Set Proxy parameters */
+    const char* pszProxy = CSLFetchNameValue( const_cast<char **>(psRequest->papszOptions), "PROXY" );
+    if (pszProxy == NULL)
+        pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", NULL);
+    if (pszProxy)
+        curl_easy_setopt(psRequest->m_curl_handle,CURLOPT_PROXY,pszProxy);
+
+    const char* pszProxyUserPwd = CSLFetchNameValue( const_cast<char **>(psRequest->papszOptions), "PROXYUSERPWD" );
+    if (pszProxyUserPwd == NULL)
+        pszProxyUserPwd = CPLGetConfigOption("GDAL_HTTP_PROXYUSERPWD", NULL);
+    if (pszProxyUserPwd)
+        curl_easy_setopt(psRequest->m_curl_handle,CURLOPT_PROXYUSERPWD,pszProxyUserPwd);
 }
 
 void CPLHTTPCleanupRequest(CPLHTTPRequest *psRequest) {
