@@ -196,6 +196,7 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
         return NULL;
 
     int  i;
+    int  bHasFoundLayerWithColon = FALSE;
 
     /* first a case sensitive check */
     for( i = 0; i < nLayers; i++ )
@@ -204,6 +205,8 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
 
         if( strcmp( pszName, poLayer->GetName() ) == 0 )
             return poLayer;
+
+        bHasFoundLayerWithColon |= (strchr( poLayer->GetName(), ':') != NULL);
     }
 
     /* then case insensitive */
@@ -213,6 +216,19 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
 
         if( EQUAL( pszName, poLayer->GetName() ) )
             return poLayer;
+    }
+
+    /* now try looking after the colon character */
+    if (bHasFoundLayerWithColon && strchr(pszName, ':') == NULL)
+    {
+        for( i = 0; i < nLayers; i++ )
+        {
+            OGRWFSLayer *poLayer = papoLayers[i];
+
+            const char* pszAfterColon = strchr( poLayer->GetName(), ':');
+            if( pszAfterColon && EQUAL( pszName, pszAfterColon + 1 ) )
+                return poLayer;
+        }
     }
 
     return NULL;
@@ -1048,7 +1064,7 @@ void OGRWFSDataSource::SaveLayerSchema(const char* pszLayerName, CPLXMLNode* psS
 int OGRWFSDataSource::IsOldDeegree(const char* pszErrorString)
 {
     if (!bNeedNAMESPACE &&
-        strstr(pszErrorString, "<ServiceException code=\"InvalidParameterValue\" locator=\"-\">Invalid \"TYPENAME\" parameter. No binding for prefix") != NULL)
+        strstr(pszErrorString, "Invalid \"TYPENAME\" parameter. No binding for prefix") != NULL)
     {
         bNeedNAMESPACE = TRUE;
         return TRUE;

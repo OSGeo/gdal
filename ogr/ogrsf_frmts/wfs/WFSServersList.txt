@@ -31,6 +31,7 @@ http://portal.cubewerx.com/cubewerx/cubeserv/cubeserv.cgi?CONFIG=haiti_vgi&DATAS
 Intergraph:
 http://regis.intergraph.com/wfs/dcmetro/request.asp
 http://geonames.nga.mil/nameswfs/request.aspx (fails often)
+http://ideg.xunta.es/WFS_POL/request.aspx
 
 ESRI:
 http://map.ngdc.noaa.gov/wfsconnector/com.esri.wfs.Esrimap/Sample_Index_f (no layers published)
