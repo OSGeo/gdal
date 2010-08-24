@@ -54,6 +54,9 @@ http://142.176.62.103:8194/servlet/WFS_NS_NAMES
 ERDAS Apollo:
 http://apollo.erdas.com/erdas-apollo/vector/Cherokee
 
+SnowFlake software:
+http://demo.snowflakesoftware.com:8080/AIXM51FINAL_DONLON/GOPublisherWFS
+
 ???
 http://services.interactive-instruments.de/xtra/cgi-bin/wfs?Request=GetCapabilities (doesn't work well)
 
