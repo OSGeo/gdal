@@ -265,7 +265,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             }
 
             /* Integraph stuff */
-            else if (strcmp(pszType, "G:Point_MultiPointPropertyType") == 0)
+            else if (strcmp(pszType, "G:Point_MultiPointPropertyType") == 0 ||
+                     strcmp(pszType, "gmgml:Point_MultiPointPropertyType") == 0)
             {
                 poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
                 poClass->SetGeometryType(wkbMultiPoint);
@@ -274,7 +275,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 nAttributeIndex ++;
                 continue;
             }
-            else if (strcmp(pszType, "G:LineString_MultiLineStringPropertyType") == 0)
+            else if (strcmp(pszType, "G:LineString_MultiLineStringPropertyType") == 0 ||
+                     strcmp(pszType, "gmgml:LineString_MultiLineStringPropertyType") == 0)
             {
                 poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
                 poClass->SetGeometryType(wkbMultiLineString);
@@ -283,7 +285,9 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 nAttributeIndex ++;
                 continue;
             }
-            else if (strcmp(pszType, "G:Polygon_MultiPolygonPropertyType") == 0)
+            else if (strcmp(pszType, "G:Polygon_MultiPolygonPropertyType") == 0 ||
+                     strcmp(pszType, "gmgml:Polygon_MultiPolygonPropertyType") == 0 ||
+                     strcmp(pszType, "gmgml:Polygon_Surface_MultiSurface_CompositeSurfacePropertyType") == 0)
             {
                 poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
                 poClass->SetGeometryType(wkbMultiPolygon);
