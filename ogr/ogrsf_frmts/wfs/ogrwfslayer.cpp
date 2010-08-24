@@ -157,7 +157,7 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
 
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = poDS->HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
         return NULL;
@@ -423,7 +423,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     CPLString osURL = MakeGetFeatureURL(nMaxFeatures, FALSE);
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = poDS->HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
         return NULL;
@@ -844,7 +844,7 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
     CPLString osURL = MakeGetFeatureURL(0, TRUE);
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = poDS->HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
         return -1;
@@ -1120,7 +1120,7 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                    "Content-Type: application/xml; charset=UTF-8");
 
-    CPLHTTPResult* psResult = OGRWFSHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
+    CPLHTTPResult* psResult = poDS->HTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
     CSLDestroy(papszOptions);
 
     if (psResult == NULL)
@@ -1343,7 +1343,7 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                    "Content-Type: application/xml; charset=UTF-8");
 
-    CPLHTTPResult* psResult = OGRWFSHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
+    CPLHTTPResult* psResult = poDS->HTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
     CSLDestroy(papszOptions);
 
     if (psResult == NULL)
@@ -1481,7 +1481,7 @@ OGRErr OGRWFSLayer::DeleteFromFilter( CPLString osOGCFilter )
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                    "Content-Type: application/xml; charset=UTF-8");
 
-    CPLHTTPResult* psResult = OGRWFSHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
+    CPLHTTPResult* psResult = poDS->HTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
     CSLDestroy(papszOptions);
 
     if (psResult == NULL)
@@ -1683,7 +1683,7 @@ OGRErr OGRWFSLayer::CommitTransaction()
         papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
                                     "Content-Type: application/xml; charset=UTF-8");
 
-        CPLHTTPResult* psResult = OGRWFSHTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
+        CPLHTTPResult* psResult = poDS->HTTPFetch(poDS->GetPostTransactionURL(), papszOptions);
         CSLDestroy(papszOptions);
 
         if (psResult == NULL)
