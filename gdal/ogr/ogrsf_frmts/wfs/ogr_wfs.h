@@ -46,7 +46,6 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
                                     int bUseFeatureId,
                                     int bGmlObjectIdNeedsGMLPrefix,
                                     int* pbOutNeedsNullCheck );
-CPLHTTPResult* OGRWFSHTTPFetch( const char* pszURL, char** papszOptions );
 
 /************************************************************************/
 /*                             OGRWFSLayer                              */
@@ -189,6 +188,8 @@ class OGRWFSDataSource : public OGRDataSource
 
     CPLXMLNode*         LoadFromFile( const char * pszFilename );
 
+    int                 bUseHttp10;
+
   public:
                         OGRWFSDataSource();
                         ~OGRWFSDataSource();
@@ -229,6 +230,8 @@ class OGRWFSDataSource : public OGRDataSource
     CPLString                   GetPostTransactionURL();
 
     void                        SaveLayerSchema(const char* pszLayerName, CPLXMLNode* psSchema);
+
+    CPLHTTPResult*              HTTPFetch( const char* pszURL, char** papszOptions );
 };
 
 /************************************************************************/

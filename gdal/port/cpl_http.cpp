@@ -187,6 +187,11 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
+
+    const char *pszHttpVersion = CSLFetchNameValue( papszOptions, "HTTP_VERSION");
+    if( pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0 )
+        curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0 );
+
     /* Support control over HTTPAUTH */
     const char *pszHttpAuth = CSLFetchNameValue( papszOptions, "HTTPAUTH" );
     if( pszHttpAuth == NULL )

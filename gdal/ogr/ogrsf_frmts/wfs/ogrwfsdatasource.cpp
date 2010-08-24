@@ -134,6 +134,8 @@ OGRWFSDataSource::OGRWFSDataSource()
 
     bRewriteFile = FALSE;
     psFileXML = NULL;
+
+    bUseHttp10 = FALSE;
 }
 
 /************************************************************************/
@@ -631,7 +633,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
         CPLDebug("WFS", "%s", osURL.c_str());
 
-        CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
+        CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
         if (psResult == NULL)
         {
             return FALSE;
@@ -694,7 +696,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
             CPLDebug("WFS", "%s", osURL.c_str());
 
-            CPLHTTPResult* psResult = OGRWFSHTTPFetch( osURL, NULL);
+            CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
             if (psResult == NULL)
             {
                 CPLDestroyXMLNode( psXML );
@@ -1055,20 +1057,37 @@ int OGRWFSDataSource::IsOldDeegree(const char* pszErrorString)
 }
 
 /************************************************************************/
-/*                         OGRWFSHTTPFetch()                            */
+/*                            HTTPFetch()                               */
 /************************************************************************/
 
-CPLHTTPResult* OGRWFSHTTPFetch( const char* pszURL, char** papszOptions )
+CPLHTTPResult* OGRWFSDataSource::HTTPFetch( const char* pszURL, char** papszOptions )
 {
-    CPLHTTPResult* psResult = CPLHTTPFetch( pszURL, papszOptions );
+    char** papszNewOptions = CSLDuplicate(papszOptions);
+    if (bUseHttp10)
+        papszNewOptions = CSLAddNameValue(papszNewOptions, "HTTP_VERSION", "1.0");
+    CPLHTTPResult* psResult = CPLHTTPFetch( pszURL, papszNewOptions );
+    CSLDestroy(papszNewOptions);
+    
     if (psResult == NULL)
     {
         return NULL;
     }
     if (psResult->nStatus != 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                 psResult->pszErrBuf);
+        /* A few buggy servers return chunked data with errouneous remaining bytes value */
+        /* curl doesn't like this. Retry with HTTP 1.0 protocol instead that doesn't support */
+        /* chunked data */
+        if (psResult->pszErrBuf &&
+            strstr(psResult->pszErrBuf, "transfer closed with outstanding read data remaining") &&
+            !bUseHttp10)
+        {
+            CPLDebug("WFS", "Probably buggy remote server. Retrying with HTTP 1.0 protocol");
+            bUseHttp10 = TRUE;
+            return HTTPFetch(pszURL, papszOptions);
+        }
+
+        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s (%d)",
+                 (psResult->pszErrBuf) ? psResult->pszErrBuf : "unknown", psResult->nStatus);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
