@@ -293,6 +293,17 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 continue;
             }
 
+            /* ERDAS Apollo stuff (like in http://apollo.erdas.com/erdas-apollo/vector/WORLDWIDE?SERVICE=WFS&VERSION=1.0.0&REQUEST=DescribeFeatureType&TYPENAME=wfs:cntry98) */
+            else if (strcmp(pszType, "wfs:MixedPolygonPropertyType") == 0)
+            {
+                poClass->SetGeometryElement(CPLGetXMLValue( psAttrDef, "name", NULL ));
+                poClass->SetGeometryType(wkbMultiPolygon);
+                poClass->SetGeometryAttributeIndex( nAttributeIndex );
+
+                nAttributeIndex ++;
+                continue;
+            }
+
             else
             {
                 gmlType = GMLPT_Untyped;
