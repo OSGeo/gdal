@@ -84,9 +84,12 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         pszDSN = CPLStrdup( pszNewName + 5 );
     else
     {
-        pszDSN = (char *) CPLMalloc(strlen(pszNewName)+50);
-        sprintf( pszDSN, "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s", 
-                 pszNewName );
+        const char *pszDSNStringTemplate = NULL;
+        pszDSNStringTemplate = CPLGetConfigOption( "PGEO_DRIVER_TEMPLATE", "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s");
+        if (pszDSNStringTemplate) {
+            pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
+            sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+        }
     }
 
 /* -------------------------------------------------------------------- */
