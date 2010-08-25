@@ -340,16 +340,18 @@ void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[])
 {
     int i,j,icount,jcount;
     int i1;
-    int x[30];		/* allows for 20 data points with basis function of order 5 */
     int nplusc;
 
     double step;
     double t;
-    double nbasis[20];
     double temp;
-
+    std::vector<double> nbasis;
+    std::vector<int> x;
 
     nplusc = npts + k;
+
+    x.resize( nplusc+1);
+    nbasis.resize(npts+1);
 
 /*  zero and redimension the knot vector and the basis array */
 
@@ -363,7 +365,7 @@ void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[])
 
 /* generate the uniform periodic knot vector */
 
-    knotu(npts,k,x);
+    knotu(npts,k,&(x[0]));
 
 /*
   printf("The knot vector is ");
@@ -384,7 +386,7 @@ void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[])
 /*    calculate the points on the rational B-spline curve */
 
     t = k-1;
-    step = ((double)((npts)-(k-1)))/((double)(p1-1));	
+    step = ((double)((npts)-(k-1)))/((double)(p1-1));
 
     for (i1 = 1; i1<= p1; i1++){
 
@@ -392,7 +394,7 @@ void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[])
             t = (double)x[nplusc];
         }
 
-        rbasis(k,t,npts,x,h,nbasis);      /* generate the basis function for this value of t */
+        rbasis(k,t,npts,&(x[0]),h,&(nbasis[0]));      /* generate the basis function for this value of t */
 /*
   printf("t = %f \n",t);
   printf("nbasis = ");
@@ -417,7 +419,7 @@ void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[])
 /*
   printf("icount, p %d %f %f %f \n",icount,p[icount+1],p[icount+2],p[icount+3]);
 */
-    	icount = icount + 3;
+        icount = icount + 3;
         t = t + step;
     }
 }
