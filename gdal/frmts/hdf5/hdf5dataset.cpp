@@ -568,7 +568,7 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     hid_t           hAttrNativeType;
     hid_t           hAttrSpace;
 
-    char            szData[8192];
+    char           *szData = NULL;
     hsize_t        nSize[64];
     unsigned int            nAttrElmts;
     hsize_t        nAttrSize;
@@ -578,8 +578,8 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
 
 
     HDF5Dataset    *poDS;
-    char            szTemp[8192];
-    char            szValue[8192];
+    char           *szTemp = (char*) CPLMalloc( 8192 );
+    char           *szValue = NULL;
 
     poDS = (HDF5Dataset *) pDS;
     sprintf( szTemp, "%s:%s", poDS->poH5CurrentObject->pszName, 
@@ -592,10 +592,10 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     nAttrDims        = H5Sget_simple_extent_dims( hAttrSpace, nSize, NULL );
 
 
-    szValue[0] ='\0';
-
     if( H5Tget_class( hAttrNativeType ) == H5T_STRING ) {
 	nAttrSize = H5Tget_size( hAttrTypeID );
+	szData = (char*) CPLMalloc(nAttrSize+1);
+	szValue = (char*) CPLMalloc(nAttrSize+1);
 	H5Aread( hAttrID, hAttrNativeType, szData  );
 	szData[nAttrSize]='\0';
 	sprintf( szValue, "%s", szData );
@@ -609,6 +609,10 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
 	if( nAttrElmts > 0 ){
 	    buf = (void *) CPLMalloc( nAttrElmts*
 				      H5Tget_size( hAttrNativeType ));
+	    szData = (char*) CPLMalloc( 8192 );
+	    szValue = (char*) CPLMalloc( 32768 );
+	    szData[0]='\0';
+	    szValue[0] ='\0';
 	    H5Aread( hAttrID, hAttrNativeType, buf );
 	}
 	if( H5Tequal( H5T_NATIVE_CHAR, hAttrNativeType ) ){
@@ -679,6 +683,9 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     poDS->papszMetadata =
 	CSLSetNameValue( poDS->papszMetadata, szTemp,  
 			 CPLSPrintf( "%s", szValue ) );
+    CPLFree( szTemp );
+    CPLFree( szData );
+    CPLFree( szValue );
 
     return 0;
 }
