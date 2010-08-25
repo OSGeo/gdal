@@ -1137,6 +1137,13 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * @return OGRERR_NONE on success or an error code on failure. 
  */
 
+#define SAFE_PROJ4_STRCAT(szNewStr)  do { \
+    if(CPLStrlcat(szProj4, szNewStr, sizeof(szProj4)) >= sizeof(szProj4)) { \
+        CPLError(CE_Failure, CPLE_AppDefined, "String overflow when formatting proj.4 string"); \
+        *ppszProj4 = CPLStrdup(""); \
+        return OGRERR_FAILURE; \
+    } } while(0);
+
 OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
 {
@@ -1937,50 +1944,41 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
         if( poTOWGS84 != NULL )
         {
-            int bOverflow = FALSE;
             int iChild;
-            for(iChild=0;iChild<poTOWGS84->GetChildCount() && !bOverflow;iChild++)
-            {
-                if (strlen(poTOWGS84->GetChild(iChild)->GetValue()) > 24)
-                    bOverflow = TRUE;
-            }
-        
-            if( !bOverflow && poTOWGS84->GetChildCount() > 2
-                && (poTOWGS84->GetChildCount() < 6 
+            if( poTOWGS84->GetChildCount() >= 3
+                && (poTOWGS84->GetChildCount() < 7 
                     || (EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
                         && EQUAL(poTOWGS84->GetChild(4)->GetValue(),"")
                         && EQUAL(poTOWGS84->GetChild(5)->GetValue(),"")
                         && EQUAL(poTOWGS84->GetChild(6)->GetValue(),""))) )
             {
-                sprintf( szTOWGS84, "+towgs84=%s,%s,%s",
-                         poTOWGS84->GetChild(0)->GetValue(),
-                         poTOWGS84->GetChild(1)->GetValue(),
-                         poTOWGS84->GetChild(2)->GetValue() );
-                strcat( szProj4, szTOWGS84 );
-                strcat( szProj4, " " );
+                SAFE_PROJ4_STRCAT( "+towgs84=");
+                for(iChild = 0; iChild < 3; iChild ++)
+                {
+                    if (iChild > 0 ) SAFE_PROJ4_STRCAT( "," );
+                    SAFE_PROJ4_STRCAT( poTOWGS84->GetChild(iChild)->GetValue() );
+                }
+                SAFE_PROJ4_STRCAT( " " );
                 pszPROJ4Datum = NULL;
             }
-            else if( !bOverflow && poTOWGS84->GetChildCount() > 6)
+            else if( poTOWGS84->GetChildCount() >= 7)
             {
-                sprintf( szTOWGS84, "+towgs84=%s,%s,%s,%s,%s,%s,%s",
-                         poTOWGS84->GetChild(0)->GetValue(),
-                         poTOWGS84->GetChild(1)->GetValue(),
-                         poTOWGS84->GetChild(2)->GetValue(),
-                         poTOWGS84->GetChild(3)->GetValue(),
-                         poTOWGS84->GetChild(4)->GetValue(),
-                         poTOWGS84->GetChild(5)->GetValue(),
-                         poTOWGS84->GetChild(6)->GetValue() );
-                strcat( szProj4, szTOWGS84 );
-                strcat( szProj4, " " );
+                SAFE_PROJ4_STRCAT( "+towgs84=");
+                for(iChild = 0; iChild < 7; iChild ++)
+                {
+                    if (iChild > 0 ) SAFE_PROJ4_STRCAT( "," );
+                    SAFE_PROJ4_STRCAT( poTOWGS84->GetChild(iChild)->GetValue() );
+                }
+                SAFE_PROJ4_STRCAT( " " );
                 pszPROJ4Datum = NULL;
             }
         }
         
         else if( pszProj4Grids != NULL )
         {
-            strcat( szProj4, "+nadgrids=" );
-            strcat( szProj4, pszProj4Grids );
-            strcat( szProj4, " " );
+            SAFE_PROJ4_STRCAT( "+nadgrids=" );
+            SAFE_PROJ4_STRCAT( pszProj4Grids );
+            SAFE_PROJ4_STRCAT(  " " );
         }
 
         else if( nEPSGGeogCS != -1 )
@@ -1996,8 +1994,8 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                          padfTransform[4],
                          padfTransform[5],
                          padfTransform[6] );
-                strcat( szProj4, szTOWGS84 );
-                strcat( szProj4, " " );
+                SAFE_PROJ4_STRCAT( szTOWGS84 );
+                SAFE_PROJ4_STRCAT( " " );
                 pszPROJ4Datum = NULL;
             }
         }
@@ -2005,9 +2003,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     
     if( pszPROJ4Datum != NULL )
     {
-        strcat( szProj4, "+datum=" );
-        strcat( szProj4, pszPROJ4Datum );
-        strcat( szProj4, " " );
+        SAFE_PROJ4_STRCAT( "+datum=" );
+        SAFE_PROJ4_STRCAT( pszPROJ4Datum );
+        SAFE_PROJ4_STRCAT( " " );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2038,7 +2036,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
             sprintf( szPMValue, "%.16g", dfFromGreenwich );
         }
 
-        sprintf( szProj4+strlen(szProj4), "+pm=%s ", szPMValue );
+        SAFE_PROJ4_STRCAT( "+pm=" );
+        SAFE_PROJ4_STRCAT( szPMValue );
+        SAFE_PROJ4_STRCAT( " " );
     }
     
 /* -------------------------------------------------------------------- */
@@ -2088,19 +2088,25 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else
     {
-        sprintf( szProj4+strlen(szProj4), "+to_meter=%.16g ",
-                 dfLinearConv );
+        char szLinearConv[128];
+        sprintf( szLinearConv, "%.16g", dfLinearConv );
+        SAFE_PROJ4_STRCAT( "+to_meter=" );
+        SAFE_PROJ4_STRCAT( szLinearConv );
+        SAFE_PROJ4_STRCAT( " " );
     }
 
     if( pszPROJ4Units != NULL )
-        sprintf( szProj4+strlen(szProj4), "+units=%s ",
-                 pszPROJ4Units );
+    {
+        SAFE_PROJ4_STRCAT( "+units=");
+        SAFE_PROJ4_STRCAT( pszPROJ4Units );
+        SAFE_PROJ4_STRCAT( " " );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add the no_defs flag to ensure that no values from              */
 /*      proj_def.dat are implicitly used with our definitions.          */
 /* -------------------------------------------------------------------- */
-    sprintf( szProj4+strlen(szProj4), "+no_defs " );
+    SAFE_PROJ4_STRCAT( "+no_defs " );
     
     *ppszProj4 = CPLStrdup( szProj4 );
 
