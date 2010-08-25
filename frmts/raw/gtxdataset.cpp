@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: landataset.cpp 17117 2009-05-25 19:26:01Z warmerdam $
+ * $Id$
  *
  * Project:  Vertical Datum Transformation
  * Purpose:  Implementation of NOAA .gtx vertical datum shift file format.
@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id: landataset.cpp 17117 2009-05-25 19:26:01Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /**
 
