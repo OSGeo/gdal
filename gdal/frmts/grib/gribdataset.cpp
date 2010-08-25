@@ -488,6 +488,19 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new GRIBDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+
+	/* Check the return values */    
+	if (!poDS->fp) {
+        // we have no FP, so we don't have anywhere to read from
+        char * errMsg = errSprintf(NULL);
+        if( errMsg != NULL )
+            CPLDebug( "GRIB", "%s", errMsg );
+        free(errMsg);
+		
+		CPLError( CE_Failure, CPLE_OpenFailed, "Error (%d) opening file %s", errno, poOpenInfo->pszFilename);
+        delete poDS;
+        return NULL;
+	}
     
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
