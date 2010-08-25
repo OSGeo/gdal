@@ -403,7 +403,7 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFReadL( achHeader, 11, 16, poDS->fpImage );
 
         for( i = 4; i <= 9; i++ )
-            CPL_LSBPTR64( pachHeader + i*16 + 8 );
+            CPL_LSBPTR64( achHeader + i*16 + 8 );
         
         CPL_LSBPTR32( achHeader + 10*16 + 8 );
         
