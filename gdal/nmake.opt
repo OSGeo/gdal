@@ -41,12 +41,24 @@ MSVC_VER=1310
 !IFNDEF GDAL_HOME
 GDAL_HOME = "C:\warmerda\bld"
 !ENDIF
+!IFNDEF BINDIR
 BINDIR = $(GDAL_HOME)\bin
+!ENDIF
+!IFNDEF PLUGINDIR
 PLUGINDIR = $(BINDIR)\gdalplugins
+!ENDIF
+!IFNDEF LIBDIR
 LIBDIR = $(GDAL_HOME)\lib
+!ENDIF
+!IFNDEF INCDIR
 INCDIR = $(GDAL_HOME)\include
+!ENDIF
+!IFNDEF DATADIR
 DATADIR = $(GDAL_HOME)\data
+!ENDIF
+!IFNDEF HTMLDIR
 HTMLDIR = $(GDAL_HOME)\html
+!ENDIF
 
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now).
