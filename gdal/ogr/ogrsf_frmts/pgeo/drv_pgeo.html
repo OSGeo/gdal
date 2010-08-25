@@ -24,8 +24,16 @@
   no ODBC DSN is required. On Linux, there are problems with DSN-less
   connection due to incomplete or buggy implementation of this feature 
   in the <a href="http://mdbtools.sourceforge.net/">MDB Tools</a> package,
-  So, it is required to configure Data Source Name (DSN) if the MDB Tools driver is used (check instructions below).</p>
-
+  So, it is required to configure Data Source Name (DSN) if the MDB
+  Tools driver is used (check instructions below).</p>
+  
+  <p>In order to facilitate compatibility with different configurations, 
+  the PGEO_DRIVER_TEMPLATE Config Option was added to provide a way to 
+  programmatically set the DSN programmatically with the filename as 
+  an argument.   In cases where the driver name is known, this allows for
+  the construction of the DNS based on that information in a manner similar
+  to the default (used for Windows access to the Microsoft Access Driver).</p>
+  
   <p>OGR treats all feature tables as layers. Most geometry types
   should be supported, including 3D data. Measures information will
   be discarded. Coordinate system information should be properly
