@@ -1015,6 +1015,15 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Handle nadgrids via an extension node.                          */
+/* -------------------------------------------------------------------- */
+    pszValue = CSLFetchNameValue(papszNV, "nadgrids");
+    if( pszValue != NULL )
+    {
+        SetExtension( "DATUM", "PROJ4_GRIDS", pszValue );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Linear units translation                                        */
 /* -------------------------------------------------------------------- */
     if( IsProjected() || IsLocal() )
@@ -1185,7 +1194,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_CYLINDRICAL_EQUAL_AREA) )
     {
         sprintf( szProj4+strlen(szProj4),
-           "+proj=cea +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
+                 "+proj=cea +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1195,7 +1204,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_BONNE) )
     {
         sprintf( szProj4+strlen(szProj4),
-           "+proj=bonne +lon_0=%.16g +lat_1=%.16g +x_0=%.16g +y_0=%.16g ",
+                 "+proj=bonne +lon_0=%.16g +lat_1=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1205,7 +1214,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
     {
         sprintf( szProj4+strlen(szProj4),
-           "+proj=cass +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                 "+proj=cass +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1243,12 +1252,12 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         }            
         else
             sprintf( szProj4+strlen(szProj4),
-             "+proj=tmerc +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
-                 GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
-                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
-                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+                     "+proj=tmerc +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
+                     GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                     GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                     GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                     GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED) )
@@ -1290,7 +1299,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_MERCATOR_2SP) )
     {
         sprintf( szProj4+strlen(szProj4),
-           "+proj=merc +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
+                 "+proj=merc +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1300,7 +1309,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC) )
     {
         sprintf( szProj4+strlen(szProj4),
-         "+proj=sterea +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
+                 "+proj=sterea +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
 //         "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1312,7 +1321,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_STEREOGRAPHIC) )
     {
         sprintf( szProj4+strlen(szProj4),
-           "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
+                 "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
@@ -1355,14 +1364,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_GAUSSSCHREIBERTMERCATOR) )
     {
-      sprintf( szProj4+strlen(szProj4),
-               "+proj=gstmerc +lat_0=%.16g +lon_0=%.16g"
-               " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
-               GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,-21.116666667),
-               GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,55.53333333309),
-               GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
-               GetNormProjParm(SRS_PP_FALSE_EASTING,160000.000),
-               GetNormProjParm(SRS_PP_FALSE_NORTHING,50000.000) );
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=gstmerc +lat_0=%.16g +lon_0=%.16g"
+                 " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,-21.116666667),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,55.53333333309),
+                 GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,160000.000),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,50000.000) );
     }
 
     else if( EQUAL(pszProjection,SRS_PT_GNOMONIC) )
@@ -1421,7 +1430,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_MILLER_CYLINDRICAL) )
     {
         sprintf( szProj4+strlen(szProj4),
-                "+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A ",
+                 "+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1570,7 +1579,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
 
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
-         || EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
+             || EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=lcc +lat_1=%.16g +lat_2=%.16g +lat_0=%.16g +lon_0=%.16g"
@@ -1924,65 +1933,74 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     if( pszPROJ4Datum == NULL || CSLTestBoolean(CPLGetConfigOption("OVERRIDE_PROJ_DATUM_WITH_TOWGS84", "YES")) )
     {
-      if( poTOWGS84 != NULL )
-      {
-        int bOverflow = FALSE;
-        int iChild;
-        for(iChild=0;iChild<poTOWGS84->GetChildCount() && !bOverflow;iChild++)
+        const char *pszProj4Grids = GetExtension( "DATUM", "PROJ4_GRIDS" );
+
+        if( poTOWGS84 != NULL )
         {
-            if (strlen(poTOWGS84->GetChild(iChild)->GetValue()) > 24)
-                bOverflow = TRUE;
+            int bOverflow = FALSE;
+            int iChild;
+            for(iChild=0;iChild<poTOWGS84->GetChildCount() && !bOverflow;iChild++)
+            {
+                if (strlen(poTOWGS84->GetChild(iChild)->GetValue()) > 24)
+                    bOverflow = TRUE;
+            }
+        
+            if( !bOverflow && poTOWGS84->GetChildCount() > 2
+                && (poTOWGS84->GetChildCount() < 6 
+                    || (EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
+                        && EQUAL(poTOWGS84->GetChild(4)->GetValue(),"")
+                        && EQUAL(poTOWGS84->GetChild(5)->GetValue(),"")
+                        && EQUAL(poTOWGS84->GetChild(6)->GetValue(),""))) )
+            {
+                sprintf( szTOWGS84, "+towgs84=%s,%s,%s",
+                         poTOWGS84->GetChild(0)->GetValue(),
+                         poTOWGS84->GetChild(1)->GetValue(),
+                         poTOWGS84->GetChild(2)->GetValue() );
+                strcat( szProj4, szTOWGS84 );
+                strcat( szProj4, " " );
+                pszPROJ4Datum = NULL;
+            }
+            else if( !bOverflow && poTOWGS84->GetChildCount() > 6)
+            {
+                sprintf( szTOWGS84, "+towgs84=%s,%s,%s,%s,%s,%s,%s",
+                         poTOWGS84->GetChild(0)->GetValue(),
+                         poTOWGS84->GetChild(1)->GetValue(),
+                         poTOWGS84->GetChild(2)->GetValue(),
+                         poTOWGS84->GetChild(3)->GetValue(),
+                         poTOWGS84->GetChild(4)->GetValue(),
+                         poTOWGS84->GetChild(5)->GetValue(),
+                         poTOWGS84->GetChild(6)->GetValue() );
+                strcat( szProj4, szTOWGS84 );
+                strcat( szProj4, " " );
+                pszPROJ4Datum = NULL;
+            }
         }
         
-        if( !bOverflow && poTOWGS84->GetChildCount() > 2
-            && (poTOWGS84->GetChildCount() < 6 
-                || (EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
-                && EQUAL(poTOWGS84->GetChild(4)->GetValue(),"")
-                && EQUAL(poTOWGS84->GetChild(5)->GetValue(),"")
-                && EQUAL(poTOWGS84->GetChild(6)->GetValue(),""))) )
+        else if( pszProj4Grids != NULL )
         {
-            sprintf( szTOWGS84, "+towgs84=%s,%s,%s",
-                     poTOWGS84->GetChild(0)->GetValue(),
-                     poTOWGS84->GetChild(1)->GetValue(),
-                     poTOWGS84->GetChild(2)->GetValue() );
-            strcat( szProj4, szTOWGS84 );
+            strcat( szProj4, "+nadgrids=" );
+            strcat( szProj4, pszProj4Grids );
             strcat( szProj4, " " );
-            pszPROJ4Datum = NULL;
         }
-        else if( !bOverflow && poTOWGS84->GetChildCount() > 6)
-        {
-            sprintf( szTOWGS84, "+towgs84=%s,%s,%s,%s,%s,%s,%s",
-                     poTOWGS84->GetChild(0)->GetValue(),
-                     poTOWGS84->GetChild(1)->GetValue(),
-                     poTOWGS84->GetChild(2)->GetValue(),
-                     poTOWGS84->GetChild(3)->GetValue(),
-                     poTOWGS84->GetChild(4)->GetValue(),
-                     poTOWGS84->GetChild(5)->GetValue(),
-                     poTOWGS84->GetChild(6)->GetValue() );
-            strcat( szProj4, szTOWGS84 );
-            strcat( szProj4, " " );
-            pszPROJ4Datum = NULL;
-        }
-      }
 
-      else if( nEPSGGeogCS != -1 )
-      {
-        double padfTransform[7];
-        if( EPSGGetWGS84Transform( nEPSGGeogCS, padfTransform ) )
+        else if( nEPSGGeogCS != -1 )
         {
-            sprintf( szTOWGS84, "+towgs84=%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g",
-                     padfTransform[0],
-                     padfTransform[1],
-                     padfTransform[2],
-                     padfTransform[3],
-                     padfTransform[4],
-                     padfTransform[5],
-                     padfTransform[6] );
-            strcat( szProj4, szTOWGS84 );
-            strcat( szProj4, " " );
-            pszPROJ4Datum = NULL;
+            double padfTransform[7];
+            if( EPSGGetWGS84Transform( nEPSGGeogCS, padfTransform ) )
+            {
+                sprintf( szTOWGS84, "+towgs84=%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g",
+                         padfTransform[0],
+                         padfTransform[1],
+                         padfTransform[2],
+                         padfTransform[3],
+                         padfTransform[4],
+                         padfTransform[5],
+                         padfTransform[6] );
+                strcat( szProj4, szTOWGS84 );
+                strcat( szProj4, " " );
+                pszPROJ4Datum = NULL;
+            }
         }
-      }
     }
     
     if( pszPROJ4Datum != NULL )
