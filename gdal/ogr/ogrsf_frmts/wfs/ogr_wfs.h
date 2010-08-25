@@ -190,6 +190,8 @@ class OGRWFSDataSource : public OGRDataSource
 
     int                 bUseHttp10;
 
+    char**              papszHttpOptions;
+
   public:
                         OGRWFSDataSource();
                         ~OGRWFSDataSource();

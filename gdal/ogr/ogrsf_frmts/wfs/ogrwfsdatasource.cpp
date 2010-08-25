@@ -136,6 +136,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     psFileXML = NULL;
 
     bUseHttp10 = FALSE;
+    papszHttpOptions = NULL;
 }
 
 /************************************************************************/
@@ -161,6 +162,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
 
     CPLFree( pszName );
     CSLDestroy( papszIdGenMethods );
+    CSLDestroy( papszHttpOptions );
 }
 
 /************************************************************************/
@@ -696,6 +698,33 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             return FALSE;
         }
 
+/* -------------------------------------------------------------------- */
+/*      Captureother parameters.                                        */
+/* -------------------------------------------------------------------- */
+        const char  *pszParm;
+
+        pszParm = CPLGetXMLValue( psRoot, "Timeout", NULL );
+        if( pszParm )
+            papszHttpOptions =
+                CSLSetNameValue(papszHttpOptions,
+                                "TIMEOUT", pszParm );
+
+        pszParm = CPLGetXMLValue( psRoot, "HTTPAUTH", NULL );
+        if( pszParm )
+            papszHttpOptions =
+                CSLSetNameValue( papszHttpOptions,
+                                "HTTPAUTH", pszParm );
+
+        pszParm = CPLGetXMLValue( psRoot, "USERPWD", NULL );
+        if( pszParm )
+            papszHttpOptions =
+                CSLSetNameValue( papszHttpOptions,
+                                "USERPWD", pszParm );
+
+        pszParm = CPLGetXMLValue( psRoot, "Version", NULL );
+        if( pszParm )
+            osVersion = pszParm;
+
         osTypeName = WFS_FetchValueFromURL(pszBaseURL, "TYPENAME");
 
         psWFSCapabilities = WFSFindNode( psRoot, "WFS_Capabilities" );
@@ -778,7 +807,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
-    osVersion = CPLGetXMLValue(psWFSCapabilities, "version", "1.0.0");
+    if (osVersion.size() == 0)
+        osVersion = CPLGetXMLValue(psWFSCapabilities, "version", "1.0.0");
     if (strcmp(osVersion.c_str(), "1.0.0") == 0)
         bUseFeatureId = TRUE;
 
@@ -1081,6 +1111,8 @@ CPLHTTPResult* OGRWFSDataSource::HTTPFetch( const char* pszURL, char** papszOpti
     char** papszNewOptions = CSLDuplicate(papszOptions);
     if (bUseHttp10)
         papszNewOptions = CSLAddNameValue(papszNewOptions, "HTTP_VERSION", "1.0");
+    if (papszHttpOptions)
+        papszNewOptions = CSLMerge(papszNewOptions, papszHttpOptions);
     CPLHTTPResult* psResult = CPLHTTPFetch( pszURL, papszNewOptions );
     CSLDestroy(papszNewOptions);
     

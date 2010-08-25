@@ -33,6 +33,19 @@ It is also possible to specify the name of an XML file whose content matches the
 At the first opening, the content of the result of the <i>GetCapabilities</i> request will be appended to the file, so that it can be cached
 for later openings of the dataset. The same applies for the <i>DescribeFeatureType</i> request issued to discover the field definition of each layer.<p>
 
+The service description file has the following additional elements as
+immediate children of the <tt>OGRWFSDataSource</tt> element that may be optionally
+set.<p>
+
+<ul>
+<li> <b>Timeout</b>: The timeout to use for remote service requests.  If not provided, the libcurl default is used.
+<li> <b>UserPwd</b>: May be supplied with <i>userid:password</i> to pass a
+userid and password to the remote server.
+<li> <b>HttpAuth</b>: May be BASIC, NTLM or ANY to control the authentication scheme to be used.
+<li> <b>Version</b>:  Set a specific WFS version to use (either 1.0.0 or 1.1.0).
+</ul>
+
+
 Note about performance : When reading the first feature from a layer, the whole layer content will be fetched from the server.<p>
 
 <h2>Filtering</h2>
