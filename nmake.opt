@@ -120,7 +120,7 @@ DLLBUILD=1
 INCLUDE_OGR_FRMTS = YES
 
 # Location of Visual C++ directory (only required for following SETARGV stuff)
-VCDIR   = 	"D:\Software\VStudio\VC98"
+#VCDIR   = 	"D:\Software\VStudio\VC98"
 
 # Enable the following if VCDIR set properly, and you want the utility
 # programs to be able to expand wildcards. 
