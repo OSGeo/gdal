@@ -1827,7 +1827,8 @@ OGRErr OGRPGLayer::RollbackTransaction()
 OGRSpatialReference *OGRPGLayer::GetSpatialRef()
 
 {
-    GetLayerDefn();
+    if (nSRSId == -2)
+        GetLayerDefn();
 
     if( poSRS == NULL && nSRSId > -1 )
     {
