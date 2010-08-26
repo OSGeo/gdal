@@ -834,7 +834,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             }
 
             if( EQUAL(pszTable,"spatial_ref_sys")
-                || EQUAL(pszTable,"geometry_columns") )
+                || EQUAL(pszTable,"geometry_columns")
+                || EQUAL(pszTable,"geography_columns") )
                 continue;
 
             if( EQUAL(pszSchemaName,"information_schema") )
