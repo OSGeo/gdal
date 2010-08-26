@@ -349,9 +349,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      We must also strip this information from the connection         */
 /*      string; PQconnectdb() does not like unknown directives          */
 /* -------------------------------------------------------------------- */
-    char              **papszTableNames=NULL;
-    char              **papszSchemaNames=NULL;
-    char              **papszGeomColumnNames=NULL;
+    PGTableEntry **papsTables = NULL;
+    int            nTableCount = 0;
 
     char             *pszTableStart;
     pszTableStart = strstr(pszConnectionName, "tables=");
@@ -384,10 +383,11 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             // Get schema and table name
             papszQualifiedParts = CSLTokenizeString2( papszTableList[i],
                                                       ".", 0 );
+            int nParts = CSLCount( papszQualifiedParts );
 
-            /* Find the geometry column name if specified */
-            if( CSLCount( papszQualifiedParts ) >= 1 )
+            if( nParts == 1 || nParts == 2 )
             {
+                /* Find the geometry column name if specified */
                 char* pszGeomColumnName = NULL;
                 char* pos = strchr(papszQualifiedParts[CSLCount( papszQualifiedParts ) - 1], '(');
                 if (pos != NULL)
@@ -398,22 +398,23 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                     if (len > 0)
                         pszGeomColumnName[len - 1] = '\0';
                 }
-                papszGeomColumnNames = CSLAddString( papszGeomColumnNames,
-                        pszGeomColumnName ? pszGeomColumnName : "");
-            }
 
-            if( CSLCount( papszQualifiedParts ) == 2 )
-            {
-                papszSchemaNames = CSLAddString( papszSchemaNames, 
-                                                papszQualifiedParts[0] );
-                papszTableNames = CSLAddString( papszTableNames,
-                                                papszQualifiedParts[1] );
-            }
-            else if( CSLCount( papszQualifiedParts ) == 1 )
-            {
-                papszSchemaNames = CSLAddString( papszSchemaNames, osActiveSchema.c_str());
-                papszTableNames = CSLAddString( papszTableNames,
-                                                papszQualifiedParts[0] );
+                papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
+                papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
+                if (pszGeomColumnName)
+                    papsTables[nTableCount]->papszGeomColumnNames = CSLAddString(NULL, pszGeomColumnName);
+
+                if( nParts == 2 )
+                {
+                    papsTables[nTableCount]->pszSchemaName = CPLStrdup( papszQualifiedParts[0] );
+                    papsTables[nTableCount]->pszTableName = CPLStrdup( papszQualifiedParts[1] );
+                }
+                else
+                {
+                    papsTables[nTableCount]->pszSchemaName = CPLStrdup( osActiveSchema.c_str());
+                    papsTables[nTableCount]->pszTableName = CPLStrdup( papszQualifiedParts[0] );
+                }
+                nTableCount ++;
             }
 
             CSLDestroy(papszQualifiedParts);
@@ -422,6 +423,13 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         CSLDestroy(papszTableList);
         CPLFree(pszTableSpec);
     }
+
+
+    CPLString      osCurrentSchema;
+    CPLHashSet    *hSetTables = NULL;
+    int            bRet = FALSE;
+    int            bListAllTables = CSLTestBoolean(CPLGetConfigOption("PG_LIST_ALL_TABLES", "NO"));
+    PGresult      *hResult = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
@@ -432,20 +440,14 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( hPGConn == NULL || PQstatus(hPGConn) == CONNECTION_BAD )
     {
-        CSLDestroy( papszSchemaList );
-        CSLDestroy( papszSchemaNames );
-        CSLDestroy( papszTableNames );
-        CSLDestroy( papszGeomColumnNames );
-
-        CPLFree(pszName);
-        pszName = NULL;
-
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PQconnectdb failed.\n%s",
                   PQerrorMessage(hPGConn) );
+
         PQfinish(hPGConn);
         hPGConn = NULL;
-        return FALSE;
+
+        goto end;
     }
 
     bDSUpdate = bUpdate;
@@ -507,14 +509,10 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         {
             OGRPGClearResult( hResult );
 
-            CSLDestroy( papszSchemaList );
-            CSLDestroy( papszSchemaNames );
-            CSLDestroy( papszTableNames );
-            CSLDestroy( papszGeomColumnNames );
-
             CPLError( CE_Failure, CPLE_AppDefined,
                     "%s", PQerrorMessage(hPGConn) );
-            return FALSE;
+
+            goto end;
         }
 
         OGRPGClearResult(hResult);
@@ -523,8 +521,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Find out PostgreSQL version                                     */
 /* -------------------------------------------------------------------- */
-    PGresult    *hResult = NULL;
-
     sPostgreSQLVersion.nMajor = -1;
     sPostgreSQLVersion.nMinor = -1;
     sPostgreSQLVersion.nRelease = -1;
@@ -635,8 +631,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         nGeometryOID = (Oid) 0;
     }
 
-    int bListAllTables = CSLTestBoolean(CPLGetConfigOption("PG_LIST_ALL_TABLES", "NO"));
-
     OGRPGClearResult( hResult );
 
 /* -------------------------------------------------------------------- */
@@ -687,9 +681,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      specified through the TABLES connection string param           */
 /* -------------------------------------------------------------------- */
 
-    CPLHashSet* hSetTables = CPLHashSetNew(OGRPGHashTableEntry, OGRPGEqualTableEntry, OGRPGFreeTableEntry);
+    hSetTables = CPLHashSetNew(OGRPGHashTableEntry, OGRPGEqualTableEntry, OGRPGFreeTableEntry);
 
-    if (papszTableNames == NULL)
+    if (nTableCount == 0)
     {
         CPLString osCommand;
         const char* pszAllowedRelations;
@@ -761,16 +755,10 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
         {
             OGRPGClearResult( hResult );
-            CPLHashSetDestroy(hSetTables);
-
-            CSLDestroy( papszSchemaList );
-            CSLDestroy( papszSchemaNames );
-            CSLDestroy( papszTableNames );
-            CSLDestroy( papszGeomColumnNames );
 
             CPLError( CE_Failure, CPLE_AppDefined,
                     "%s", PQerrorMessage(hPGConn) );
-            return FALSE;
+            goto end;
         }
 
     /* -------------------------------------------------------------------- */
@@ -790,10 +778,13 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             if( EQUAL(pszSchemaName,"information_schema") )
                 continue;
 
-            papszTableNames = CSLAddString(papszTableNames, pszTable);
-            papszSchemaNames = CSLAddString(papszSchemaNames, pszSchemaName);
+            papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
+            papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
+            papsTables[nTableCount]->pszTableName = CPLStrdup( pszTable );
+            papsTables[nTableCount]->pszSchemaName = CPLStrdup( pszSchemaName );
             if (pszGeomColumnName)
-                papszGeomColumnNames = CSLAddString(papszGeomColumnNames, pszGeomColumnName);
+                papsTables[nTableCount]->papszGeomColumnNames = CSLAddString(NULL, pszGeomColumnName);
+            nTableCount ++;
 
             PGTableEntry* psEntry = OGRPGFindTableEntry(hSetTables, pszTable, pszSchemaName);
             if (psEntry == NULL)
@@ -841,16 +832,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             {
                 OGRPGClearResult( hResult );
 
-                CPLHashSetDestroy(hSetTables);
-
-                CSLDestroy( papszSchemaList );
-                CSLDestroy( papszSchemaNames );
-                CSLDestroy( papszTableNames );
-                CSLDestroy( papszGeomColumnNames );
-
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "%s", PQerrorMessage(hPGConn) );
-                return FALSE;
+                goto end;
             }
 
         /* -------------------------------------------------------------------- */
@@ -893,9 +877,12 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                             char** iterGeomColumnNames = psParentEntry->papszGeomColumnNames;
                             while(*iterGeomColumnNames)
                             {
-                                papszTableNames = CSLAddString(papszTableNames, pszTable);
-                                papszSchemaNames = CSLAddString(papszSchemaNames, pszSchemaName);
-                                papszGeomColumnNames = CSLAddString(papszGeomColumnNames, *iterGeomColumnNames);
+                                papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
+                                papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
+                                papsTables[nTableCount]->pszTableName = CPLStrdup( pszTable );
+                                papsTables[nTableCount]->pszSchemaName = CPLStrdup( pszSchemaName );
+                                papsTables[nTableCount]->papszGeomColumnNames = CSLAddString(NULL, *iterGeomColumnNames);
+                                nTableCount ++;
 
                                 psEntry->papszGeomColumnNames =
                                         CSLAddString(psEntry->papszGeomColumnNames, *iterGeomColumnNames);
@@ -924,25 +911,20 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     }
 
-    CPLString osCurrentSchema = GetCurrentSchema();
+    osCurrentSchema = GetCurrentSchema();
 
 /* -------------------------------------------------------------------- */
 /*      Register the available tables.                                  */
 /* -------------------------------------------------------------------- */
-    for( int iRecord = 0;
-         papszTableNames != NULL && papszTableNames[iRecord] != NULL;
-         iRecord++ )
+    for( int iRecord = 0; iRecord < nTableCount; iRecord++ )
     {
-        PGTableEntry sEntry;
         PGTableEntry* psEntry;
-        sEntry.pszTableName = (char*) papszTableNames[iRecord];
-        sEntry.pszSchemaName = (char*) papszSchemaNames[iRecord];
-        psEntry = (PGTableEntry* )CPLHashSetLookup(hSetTables, &sEntry);
+        psEntry = (PGTableEntry* )CPLHashSetLookup(hSetTables, papsTables[iRecord]);
 
         /* If SCHEMAS= is specified, only take into account tables inside */
         /* one of the specified schemas */
         if (papszSchemaList != NULL &&
-            CSLFindString(papszSchemaList, papszSchemaNames[iRecord]) == -1)
+            CSLFindString(papszSchemaList, papsTables[iRecord]->pszSchemaName) == -1)
         {
             continue;
         }
@@ -960,35 +942,40 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         if (psEntry != NULL && CSLCount(psEntry->papszGeomColumnNames) <= 1)
         {
             if (CSLCount(psEntry->papszGeomColumnNames) == 1)
-                OpenTable( osCurrentSchema, papszTableNames[iRecord],
-                           papszSchemaNames[iRecord],
+                OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
+                           papsTables[iRecord]->pszSchemaName,
                            psEntry->papszGeomColumnNames[0], bUpdate, FALSE, FALSE );
             else
-                OpenTable( osCurrentSchema, papszTableNames[iRecord],
-                           papszSchemaNames[iRecord], NULL, bUpdate, FALSE, FALSE );
+                OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
+                           papsTables[iRecord]->pszSchemaName, NULL, bUpdate, FALSE, FALSE );
         }
         else
         {
-            CPLAssert( papszGeomColumnNames && papszGeomColumnNames[iRecord]);
-            if (EQUAL(papszGeomColumnNames[iRecord], ""))
-                OpenTable( osCurrentSchema, papszTableNames[iRecord],
-                           papszSchemaNames[iRecord], NULL, bUpdate, FALSE, FALSE );
+            if (papsTables[iRecord]->papszGeomColumnNames == NULL)
+                OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
+                           papsTables[iRecord]->pszSchemaName, NULL, bUpdate, FALSE, FALSE );
             else
-                OpenTable( osCurrentSchema, papszTableNames[iRecord],
-                           papszSchemaNames[iRecord], papszGeomColumnNames[iRecord],
-                           bUpdate, FALSE, !EQUAL(papszGeomColumnNames[iRecord], "wkb_geometry") );
+            {
+                CPLAssert(papsTables[iRecord]->papszGeomColumnNames[0]);
+                OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
+                           papsTables[iRecord]->pszSchemaName, papsTables[iRecord]->papszGeomColumnNames[0],
+                           bUpdate, FALSE, !EQUAL(papsTables[iRecord]->papszGeomColumnNames[0], "wkb_geometry") );
+            }
         }
     }
 
-    CPLHashSetDestroy(hSetTables);
+    bRet = TRUE;
 
+end:
+    if (hSetTables)
+        CPLHashSetDestroy(hSetTables);
     CSLDestroy( papszSchemaList );
-    CSLDestroy( papszSchemaNames );
-    CSLDestroy( papszTableNames );
-    CSLDestroy( papszGeomColumnNames );
 
-/* -------------------------------------------------------------------- */
-    return TRUE;
+    for(int i=0;i<nTableCount;i++)
+        OGRPGFreeTableEntry(papsTables[i]);
+    CPLFree(papsTables);
+
+    return bRet;
 }
 
 /************************************************************************/
