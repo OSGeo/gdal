@@ -1429,7 +1429,11 @@ def ogr_pg_32():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 26632 )
 
-    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext4', srs = srs);
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext4', geom_type = ogr.wkbPoint, srs = srs);
+    sr = gdaltest.pg_lyr.GetSpatialRef()
+    if sr.ExportToWkt().find('26632') == -1:
+        gdaltest.post_reason('did not get expected SRS')
+        return 'fail'
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
     feat = sql_lyr.GetNextFeature()
@@ -1439,6 +1443,35 @@ def ogr_pg_32():
         feat.DumpReadable()
         return 'fail'
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    ######################################################
+    # Test getting SRS and geom type without requiring to fetch the layer defn
+
+    for i in range(2):
+        #sys.stderr.write('BEFORE OPEN\n')
+        ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+        #sys.stderr.write('AFTER Open\n')
+        lyr = ds.GetLayerByName('testsrtext4')
+        #sys.stderr.write('AFTER GetLayerByName\n')
+        if i == 0:
+            sr = lyr.GetSpatialRef()
+            #sys.stderr.write('AFTER GetSpatialRef\n')
+            geom_type = lyr.GetGeomType()
+            #sys.stderr.write('AFTER GetGeomType\n')
+        else:
+            geom_type = lyr.GetGeomType()
+            #sys.stderr.write('AFTER GetGeomType\n')
+            sr = lyr.GetSpatialRef()
+            #sys.stderr.write('AFTER GetSpatialRef\n')
+
+        if sr.ExportToWkt().find('26632') == -1:
+            gdaltest.post_reason('did not get expected SRS')
+            return 'fail'
+        if geom_type != ogr.wkbPoint:
+            gdaltest.post_reason('did not get expected geom type')
+            return 'fail'
+
+        ds = None
 
     ######################################################
     # Create Layer with non EPSG SRS
@@ -1581,14 +1614,14 @@ def ogr_pg_36():
     lyr = ds.GetLayerByName( 'table36_inherited2' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
         gdaltest.post_reason( 'wrong geometry type for layer table36_inherited2' )
         return 'fail'
 
     lyr = ds.GetLayerByName( 'AutoTest-schema.table36_inherited2' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbLineString:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbLineString:
         gdaltest.post_reason( 'wrong geometry type for layer AutoTest-schema.table36_inherited2' )
         return 'fail'
 
@@ -1611,7 +1644,7 @@ def ogr_pg_36_bis():
     lyr = ds.GetLayerByName( 'table36_inherited' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
         return 'fail'
 
     ds.Destroy()
@@ -1641,7 +1674,7 @@ def ogr_pg_37():
     lyr = ds.GetLayerByName( 'table37_inherited' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
         return 'fail'
 
     ds.Destroy()
@@ -1672,7 +1705,7 @@ def ogr_pg_38():
     lyr = ds.GetLayerByName( 'table37_inherited' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
         return 'fail'
 
     try:
@@ -1697,7 +1730,7 @@ def ogr_pg_38():
     lyr = ds.GetLayerByName( 'table37_inherited(pointBase)' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
         return 'fail'
 
     try:
@@ -1717,7 +1750,7 @@ def ogr_pg_38():
     lyr = ds.GetLayerByName( 'table37_inherited(point25D)' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint25D:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint25D:
         return 'fail'
 
     try:
@@ -1739,7 +1772,7 @@ def ogr_pg_38():
     lyr = ds.GetLayerByName( 'table37_inherited(point25D)' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint25D:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint25D:
         return 'fail'
 
     try:
@@ -1784,7 +1817,7 @@ def ogr_pg_39():
     lyr = ds.GetLayerByName( 'testview' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
         return 'fail'
 
     try:
@@ -1823,7 +1856,7 @@ def ogr_pg_39():
     lyr = ds.GetLayerByName( 'testview(point25D)' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint25D:
+    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint25D:
         return 'fail'
 
     try:
@@ -2308,6 +2341,11 @@ def ogr_pg_48():
     lyr = gdaltest.pg_ds.GetLayer('no_pk_table')
     if lyr is None:
         gdaltest.post_reason( 'could not get no_pk_table' )
+        return 'fail'
+
+    sr = lyr.GetSpatialRef()
+    if sr is not None:
+        gdaltest.post_reason( 'did not get expected SRS' )
         return 'fail'
 
     feat = lyr.GetNextFeature()
