@@ -164,6 +164,12 @@ class OGRPGLayer : public OGRLayer
 /*                           OGRPGTableLayer                            */
 /************************************************************************/
 
+typedef enum
+{
+    GEOM_TYPE_UNKNOWN = 0,
+    GEOM_TYPE_GEOMETRY = 1,
+    GEOM_TYPE_GEOGRAPHY = 2
+} PostgisType;
 
 class OGRPGTableLayer : public OGRPGLayer
 {
@@ -179,7 +185,10 @@ class OGRPGTableLayer : public OGRPGLayer
     char               *pszSchemaName;
     char               *pszSqlTableName;
 
-    int                 nSRSIdIn;
+    CPLString           osPrimaryKey;
+
+    int                 bGeometryInformationSet;
+    OGRwkbGeometryType  nGeomType;
 
     /* Name of the parent table with the geometry definition if it is a derived table or NULL */
     char               *pszSqlGeomParentTableName;
@@ -215,7 +224,13 @@ public:
                                          int nSRSId = -2 );
                         ~OGRPGTableLayer();
 
-    const char         *GetName() { return osDefnName.c_str(); }
+    void                SetGeometryInformation(const char* pszGeomType,
+                                               int nCoordDimension,
+                                               int nSRID,
+                                               PostgisType ePostgisType);
+
+    virtual const char  *GetName() { return osDefnName.c_str(); }
+    virtual OGRwkbGeometryType GetGeomType();
 
     virtual OGRFeatureDefn *    GetLayerDefn();
 
@@ -349,7 +364,7 @@ class OGRPGDataSource : public OGRDataSource
     OGRErr              InitializeMetadataTables();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( CPLString& osCurrentSchema,
+    OGRPGTableLayer*    OpenTable( CPLString& osCurrentSchema,
                                    const char * pszTableName,
                                    const char * pszSchemaName,
                                    const char * pszGeomColumnIn,

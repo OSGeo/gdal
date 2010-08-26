@@ -186,9 +186,19 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, char* pszVer)
 
 typedef struct
 {
+    char* pszName;
+    char* pszGeomType;
+    int   nCoordDimension;
+    int   nSRID;
+    PostgisType   ePostgisType;
+} PGGeomColumnDesc;
+
+typedef struct
+{
     char* pszTableName;
     char* pszSchemaName;
-    char** papszGeomColumnNames; /* list of geometry columns */
+    int   nGeomColumnCount;
+    PGGeomColumnDesc* pasGeomColumns;   /* list of geometry columns */
     int   bDerivedInfoAdded;            /* set to TRUE if it derives from another table */
 } PGTableEntry;
 
@@ -207,12 +217,47 @@ static int OGRPGEqualTableEntry(const void* _psTableEntry1, const void* _psTable
            strcmp(psTableEntry1->pszSchemaName, psTableEntry2->pszSchemaName) == 0;
 }
 
+static void OGRPGTableEntryAddGeomColumn(PGTableEntry* psTableEntry,
+                                         const char* pszName,
+                                         const char* pszGeomType = NULL,
+                                         int nCoordDimension = 0,
+                                         int nSRID = 0,
+                                         PostgisType ePostgisType = GEOM_TYPE_UNKNOWN)
+{
+    psTableEntry->pasGeomColumns = (PGGeomColumnDesc*)
+        CPLRealloc(psTableEntry->pasGeomColumns,
+               sizeof(PGGeomColumnDesc) * (psTableEntry->nGeomColumnCount + 1));
+    psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].pszName = CPLStrdup(pszName);
+    psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].pszGeomType = (pszGeomType) ? CPLStrdup(pszGeomType) : NULL;
+    psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].nCoordDimension = nCoordDimension;
+    psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].nSRID = nSRID;
+    psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].ePostgisType = ePostgisType;
+    psTableEntry->nGeomColumnCount ++;
+}
+
+static void OGRPGTableEntryAddGeomColumn(PGTableEntry* psTableEntry,
+                                         const PGGeomColumnDesc* psGeomColumnDesc)
+{
+    OGRPGTableEntryAddGeomColumn(psTableEntry,
+                                 psGeomColumnDesc->pszName,
+                                 psGeomColumnDesc->pszGeomType,
+                                 psGeomColumnDesc->nCoordDimension,
+                                 psGeomColumnDesc->nSRID,
+                                 psGeomColumnDesc->ePostgisType);
+}
+
 static void OGRPGFreeTableEntry(void * _psTableEntry)
 {
     PGTableEntry* psTableEntry = (PGTableEntry*)_psTableEntry;
     CPLFree(psTableEntry->pszTableName);
     CPLFree(psTableEntry->pszSchemaName);
-    CSLDestroy(psTableEntry->papszGeomColumnNames);
+    int i;
+    for(i=0;i<psTableEntry->nGeomColumnCount;i++)
+    {
+        CPLFree(psTableEntry->pasGeomColumns[i].pszName);
+        CPLFree(psTableEntry->pasGeomColumns[i].pszGeomType);
+    }
+    CPLFree(psTableEntry->pasGeomColumns);
     CPLFree(psTableEntry);
 }
 
@@ -402,7 +447,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                 papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
                 papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
                 if (pszGeomColumnName)
-                    papsTables[nTableCount]->papszGeomColumnNames = CSLAddString(NULL, pszGeomColumnName);
+                    OGRPGTableEntryAddGeomColumn(papsTables[nTableCount], pszGeomColumnName);
 
                 if( nParts == 2 )
                 {
@@ -704,8 +749,14 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             {
                 /* PostGIS 1.5 brings support for 'geography' type. */
                 /* Checks that the type exists */
-                if (sPostGISVersion.nMajor > 1 ||
-                    (sPostGISVersion.nMajor == 1 && sPostGISVersion.nMinor >= 5))
+
+                /* Note: the PG_USE_GEOGRAPHY config option is only used for testing */
+                /* purpose, to test the ability of the driver to work with older PostGIS */
+                /* versions, even when we have a newer one. It should not be used by */
+                /* *real* OGR users */
+                if ((sPostGISVersion.nMajor > 1 ||
+                    (sPostGISVersion.nMajor == 1 && sPostGISVersion.nMinor >= 5)) &&
+                    CSLTestBoolean(CPLGetConfigOption("PG_USE_GEOGRAPHY", "YES")) )
                 {
                     hResult = PQexec(hPGConn,
                                     "SELECT oid FROM pg_type WHERE typname = 'geography'" );
@@ -725,17 +776,17 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                 }
                 
                 osCommand.Printf("DECLARE mycursor CURSOR for "
-                                 "SELECT c.relname, n.nspname, g.f_geometry_column FROM pg_class c, pg_namespace n, geometry_columns g "
+                                 "SELECT c.relname, n.nspname, g.f_geometry_column, g.type, g.coord_dimension, g.srid, %d FROM pg_class c, pg_namespace n, geometry_columns g "
                                  "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid "
                                  "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)",
-                                 pszAllowedRelations);
+                                 GEOM_TYPE_GEOMETRY, pszAllowedRelations);
 
                 if (bHaveGeography)
                     osCommand += CPLString().Printf(
-                                     "UNION SELECT c.relname, n.nspname, g.f_geography_column FROM pg_class c, pg_namespace n, geography_columns g "
+                                     "UNION SELECT c.relname, n.nspname, g.f_geography_column, g.type, g.coord_dimension, g.srid, %d FROM pg_class c, pg_namespace n, geography_columns g "
                                      "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid "
                                      "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)",
-                                     pszAllowedRelations);
+                                     GEOM_TYPE_GEOGRAPHY, pszAllowedRelations);
             }
             else
                 osCommand.Printf("DECLARE mycursor CURSOR for "
@@ -768,8 +819,19 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         {
             const char *pszTable = PQgetvalue(hResult, iRecord, 0);
             const char *pszSchemaName = PQgetvalue(hResult, iRecord, 1);
-            const char *pszGeomColumnName =
-                    (bHavePostGIS && !bListAllTables) ? PQgetvalue(hResult, iRecord, 2) : NULL;
+            const char *pszGeomColumnName = NULL;
+            const char *pszGeomType = NULL;
+            int nGeomCoordDimension = 0;
+            int nSRID = 0;
+            PostgisType ePostgisType = GEOM_TYPE_UNKNOWN;
+            if (bHavePostGIS && !bListAllTables)
+            {
+                pszGeomColumnName = PQgetvalue(hResult, iRecord, 2);
+                pszGeomType = PQgetvalue(hResult, iRecord, 3);
+                nGeomCoordDimension = atoi(PQgetvalue(hResult, iRecord, 4));
+                nSRID = atoi(PQgetvalue(hResult, iRecord, 5));
+                ePostgisType = (PostgisType) atoi(PQgetvalue(hResult, iRecord, 6));
+            }
 
             if( EQUAL(pszTable,"spatial_ref_sys")
                 || EQUAL(pszTable,"geometry_columns") )
@@ -783,15 +845,21 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             papsTables[nTableCount]->pszTableName = CPLStrdup( pszTable );
             papsTables[nTableCount]->pszSchemaName = CPLStrdup( pszSchemaName );
             if (pszGeomColumnName)
-                papsTables[nTableCount]->papszGeomColumnNames = CSLAddString(NULL, pszGeomColumnName);
+                OGRPGTableEntryAddGeomColumn(papsTables[nTableCount],
+                                             pszGeomColumnName,
+                                             pszGeomType, nGeomCoordDimension,
+                                             nSRID, ePostgisType);
             nTableCount ++;
 
             PGTableEntry* psEntry = OGRPGFindTableEntry(hSetTables, pszTable, pszSchemaName);
             if (psEntry == NULL)
                 psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName);
             if (pszGeomColumnName)
-                psEntry->papszGeomColumnNames =
-                        CSLAddString(psEntry->papszGeomColumnNames, pszGeomColumnName);
+                OGRPGTableEntryAddGeomColumn(psEntry,
+                                             pszGeomColumnName,
+                                             pszGeomType,
+                                             nGeomCoordDimension,
+                                             nSRID, ePostgisType);
         }
 
     /* -------------------------------------------------------------------- */
@@ -874,20 +942,19 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                             if (psEntry == NULL)
                                 psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName);
 
-                            char** iterGeomColumnNames = psParentEntry->papszGeomColumnNames;
-                            while(*iterGeomColumnNames)
+                            int iGeomColumn;
+                            for(iGeomColumn = 0; iGeomColumn < psParentEntry->nGeomColumnCount; iGeomColumn++)
                             {
                                 papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
                                 papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
                                 papsTables[nTableCount]->pszTableName = CPLStrdup( pszTable );
                                 papsTables[nTableCount]->pszSchemaName = CPLStrdup( pszSchemaName );
-                                papsTables[nTableCount]->papszGeomColumnNames = CSLAddString(NULL, *iterGeomColumnNames);
+                                OGRPGTableEntryAddGeomColumn(papsTables[nTableCount],
+                                                             &psParentEntry->pasGeomColumns[iGeomColumn]);
                                 nTableCount ++;
 
-                                psEntry->papszGeomColumnNames =
-                                        CSLAddString(psEntry->papszGeomColumnNames, *iterGeomColumnNames);
-
-                                iterGeomColumnNames ++;
+                                OGRPGTableEntryAddGeomColumn(psEntry,
+                                                             &psParentEntry->pasGeomColumns[iGeomColumn]);
                             }
 
                             psEntry->bDerivedInfoAdded = TRUE;
@@ -939,27 +1006,37 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         /* - if we get no geometry column, let ReadTableDefinition() parses the columns */
         /*   and find the likely geometry column */
 
-        if (psEntry != NULL && CSLCount(psEntry->papszGeomColumnNames) <= 1)
+        OGRPGTableLayer* poLayer;
+        if (psEntry != NULL && psEntry->nGeomColumnCount <= 1)
         {
-            if (CSLCount(psEntry->papszGeomColumnNames) == 1)
-                OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
+            if (psEntry->nGeomColumnCount == 1)
+            {
+                poLayer = OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
                            papsTables[iRecord]->pszSchemaName,
-                           psEntry->papszGeomColumnNames[0], bUpdate, FALSE, FALSE );
+                           psEntry->pasGeomColumns[0].pszName, bUpdate, FALSE, FALSE );
+                poLayer->SetGeometryInformation(psEntry->pasGeomColumns[0].pszGeomType,
+                                                psEntry->pasGeomColumns[0].nCoordDimension,
+                                                psEntry->pasGeomColumns[0].nSRID,
+                                                psEntry->pasGeomColumns[0].ePostgisType);
+            }
             else
-                OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
+                poLayer = OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
                            papsTables[iRecord]->pszSchemaName, NULL, bUpdate, FALSE, FALSE );
         }
         else
         {
-            if (papsTables[iRecord]->papszGeomColumnNames == NULL)
-                OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
+            if (papsTables[iRecord]->nGeomColumnCount == 0)
+                poLayer = OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
                            papsTables[iRecord]->pszSchemaName, NULL, bUpdate, FALSE, FALSE );
             else
             {
-                CPLAssert(papsTables[iRecord]->papszGeomColumnNames[0]);
-                OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
-                           papsTables[iRecord]->pszSchemaName, papsTables[iRecord]->papszGeomColumnNames[0],
-                           bUpdate, FALSE, !EQUAL(papsTables[iRecord]->papszGeomColumnNames[0], "wkb_geometry") );
+                poLayer = OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
+                           papsTables[iRecord]->pszSchemaName, papsTables[iRecord]->pasGeomColumns[0].pszName,
+                           bUpdate, FALSE, !EQUAL(papsTables[iRecord]->pasGeomColumns[0].pszName, "wkb_geometry") );
+                poLayer->SetGeometryInformation(papsTables[iRecord]->pasGeomColumns[0].pszGeomType,
+                                                papsTables[iRecord]->pasGeomColumns[0].nCoordDimension,
+                                                papsTables[iRecord]->pasGeomColumns[0].nSRID,
+                                                papsTables[iRecord]->pasGeomColumns[0].ePostgisType);
             }
         }
     }
@@ -982,7 +1059,7 @@ end:
 /*                             OpenTable()                              */
 /************************************************************************/
 
-int OGRPGDataSource::OpenTable( CPLString& osCurrentSchema,
+OGRPGTableLayer* OGRPGDataSource::OpenTable( CPLString& osCurrentSchema,
                                 const char *pszNewName,
                                 const char *pszSchemaName,
                                 const char * pszGeomColumnIn,
@@ -1003,7 +1080,7 @@ int OGRPGDataSource::OpenTable( CPLString& osCurrentSchema,
     if( bTestOpen && poLayer->GetLayerDefnCanReturnNULL() == NULL )
     {
         delete poLayer;
-        return FALSE;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1013,7 +1090,7 @@ int OGRPGDataSource::OpenTable( CPLString& osCurrentSchema,
         CPLRealloc( papoLayers,  sizeof(OGRPGTableLayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
 
-    return TRUE;
+    return poLayer;
 }
 
 /************************************************************************/
@@ -1525,7 +1602,6 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
 
         if( strcmp( pszName, poLayer->GetName() ) == 0 )
         {
-            poLayer->GetLayerDefn();
             return poLayer;
         }
     }
@@ -1537,7 +1613,6 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
 
         if( EQUAL( pszName, poLayer->GetName() ) )
         {
-            poLayer->GetLayerDefn();
             return poLayer;
         }
     }
@@ -1568,20 +1643,14 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     pszNameWithoutBracket = NULL;
 
     CPLString osCurrentSchema = GetCurrentSchema();
-    int bRet = OpenTable( osCurrentSchema, pszTableName, pszSchemaName,
-                          pszGeomColumnName, TRUE, TRUE, TRUE );
+    OGRPGTableLayer* poLayer = OpenTable( osCurrentSchema, pszTableName,
+                                          pszSchemaName,
+                                          pszGeomColumnName, TRUE, TRUE, TRUE );
     CPLFree(pszTableName);
     CPLFree(pszSchemaName);
     CPLFree(pszGeomColumnName);
 
-    if (bRet)
-    {
-        return GetLayer(count);
-    }
-    else
-    {
-        return NULL;
-    }
+    return poLayer;
 }
 
 
