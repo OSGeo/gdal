@@ -13,9 +13,10 @@ EXTRAFLAGS = 	-I..\zlib -Ilibjpeg $(JPEG12_FLAGS)
 
 !IFDEF JPEG12_SUPPORTED
 JPEG12_FLAGS =  -DJPEG_DUAL_MODE_8_12 
+EXTRA_DEP    =  libjpeg12src
 !ENDIF
 
-default:	$(OBJ)
+default:	$(EXTRA_DEP) $(OBJ)
 	xcopy /D  /Y *.obj ..\o
 !IFNDEF JPEG_EXTERNAL_LIB
 	cd libjpeg
@@ -37,3 +38,7 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 
+libjpeg12src:
+	cd libjpeg12
+	$(MAKE) /f makefile.vc jcapimin12.c
+	cd ..
