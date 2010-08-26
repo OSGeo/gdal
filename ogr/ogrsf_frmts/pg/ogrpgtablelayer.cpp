@@ -62,6 +62,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     iNextShapeId = 0;
 
     nSRSId = nSRSIdIn;
+    nGeomType = wkbUnknown;
+    bGeometryInformationSet = FALSE;
 
     bLaunderColumnNames = TRUE;
     bCopyActive = FALSE;
@@ -78,8 +80,6 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
         pszSchemaName = NULL;
 
     pszSqlGeomParentTableName = NULL;
-
-    this->nSRSIdIn = nSRSIdIn;
 
     bHasWarnedIncompatibleGeom = FALSE;
 
@@ -107,6 +107,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
             osDefnName = pszTableName;
         pszSqlTableName = CPLStrdup(CPLString().Printf("\"%s\"", pszTableName ));
     }
+
+    osPrimaryKey = CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" );
 }
 
 //************************************************************************/
@@ -124,6 +126,66 @@ OGRPGTableLayer::~OGRPGTableLayer()
 }
 
 /************************************************************************/
+/*                      SetGeometryInformation()                        */
+/************************************************************************/
+
+void  OGRPGTableLayer::SetGeometryInformation(const char* pszType,
+                                               int nCoordDimension,
+                                               int nSRID,
+                                               PostgisType ePostgisType)
+{
+    if (pszType == NULL || nCoordDimension == 0 || nSRID == 0 ||
+        ePostgisType == GEOM_TYPE_UNKNOWN)
+        return;
+
+    bGeometryInformationSet = TRUE;
+
+    if ( EQUAL(pszType, "POINT") )
+        nGeomType = wkbPoint;
+    else if ( EQUAL(pszType,"LINESTRING"))
+        nGeomType = wkbLineString;
+    else if ( EQUAL(pszType,"POLYGON"))
+        nGeomType = wkbPolygon;
+    else if ( EQUAL(pszType,"MULTIPOINT"))
+        nGeomType = wkbMultiPoint;
+    else if ( EQUAL(pszType,"MULTILINESTRING"))
+        nGeomType = wkbMultiLineString;
+    else if ( EQUAL(pszType,"MULTIPOLYGON"))
+        nGeomType = wkbMultiPolygon;
+    else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))
+        nGeomType = wkbGeometryCollection;
+    else
+        nGeomType = wkbUnknown;
+
+    this->nCoordDimension = nCoordDimension;
+    this->nSRSId = nSRID;
+
+    if( nCoordDimension == 3 && nGeomType != wkbUnknown )
+        nGeomType = (OGRwkbGeometryType) (nGeomType | wkb25DBit);
+
+    if( ePostgisType == GEOM_TYPE_GEOMETRY)
+        bHasPostGISGeometry = TRUE;
+    else if( ePostgisType == GEOM_TYPE_GEOGRAPHY)
+        bHasPostGISGeography = TRUE;
+
+    CPLDebug("PG","Layer '%s' geometry type: %s:%s, Dim=%d",
+                pszTableName, pszType, OGRGeometryTypeToName(nGeomType),
+                nCoordDimension );
+}
+
+/************************************************************************/
+/*                            GetGeomType()                             */
+/************************************************************************/
+
+OGRwkbGeometryType  OGRPGTableLayer::GetGeomType()
+{
+    if (bGeometryInformationSet)
+        return nGeomType;
+
+    return GetLayerDefn()->GetGeomType();
+}
+    
+/************************************************************************/
 /*                        ReadTableDefinition()                         */
 /*                                                                      */
 /*      Build a schema from the named table.  Done by querying the      */
@@ -135,19 +197,9 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
 {
     PGresult            *hResult;
     CPLString           osCommand;
-    CPLString           osPrimaryKey;
     PGconn              *hPGConn = poDS->GetPGConn();
 
     poDS->FlushSoftTransaction();
-
-    /* -------------------------------------------- */
-    /*          Detect table primary key            */
-    /* -------------------------------------------- */
-
-    /* -------------------------------------------- */
-    /*          Check config options                */
-    /* -------------------------------------------- */
-    osPrimaryKey = CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" );
 
     CPLString osSchemaClause;
     if( pszSchemaName )
@@ -429,12 +481,19 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
     hResult = PQexec(hPGConn, "COMMIT");
     OGRPGClearResult( hResult );
 
+    /* If geometry type, SRID, etc... have always been set by SetGeometryInformation() */
+    /* no need to issue a new SQL query. Just record the geom type in the layer definition */
+    if (bGeometryInformationSet)
+    {
+        poDefn->SetGeomType( nGeomType );
+    }
     // get layer geometry type (for PostGIS dataset)
-    if ( bHasPostGISGeometry || bHasPostGISGeography )
+    else if ( bHasPostGISGeometry || bHasPostGISGeography )
     {
       /* Get the geometry type and dimensions from the table, or */
       /* from its parents if it is a derived table, or from the parent of the parent, etc.. */
       int bGoOn = TRUE;
+
       while(bGoOn)
       {
         osCommand.Printf(
@@ -458,35 +517,14 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
         if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
         {
             char * pszType = PQgetvalue(hResult,0,0);
-            OGRwkbGeometryType nGeomType = wkbUnknown;
 
             nCoordDimension = MAX(2,MIN(3,atoi(PQgetvalue(hResult,0,1))));
 
             if (nSRSId == -2)
                 nSRSId = atoi(PQgetvalue(hResult,0,2));
 
-            // check only standard OGC geometry types
-            if ( EQUAL(pszType, "POINT") )
-                nGeomType = wkbPoint;
-            else if ( EQUAL(pszType,"LINESTRING"))
-                nGeomType = wkbLineString;
-            else if ( EQUAL(pszType,"POLYGON"))
-                nGeomType = wkbPolygon;
-            else if ( EQUAL(pszType,"MULTIPOINT"))
-                nGeomType = wkbMultiPoint;
-            else if ( EQUAL(pszType,"MULTILINESTRING"))
-                nGeomType = wkbMultiLineString;
-            else if ( EQUAL(pszType,"MULTIPOLYGON"))
-                nGeomType = wkbMultiPolygon;
-            else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))
-                nGeomType = wkbGeometryCollection;
-
-            if( nCoordDimension == 3 && nGeomType != wkbUnknown )
-                nGeomType = (OGRwkbGeometryType) (nGeomType | wkb25DBit);
-
-            CPLDebug("PG","Layer '%s' geometry type: %s:%s, Dim=%d",
-                     pszTableName, pszType, OGRGeometryTypeToName(nGeomType),
-                     nCoordDimension );
+            SetGeometryInformation(pszType, nCoordDimension, nSRSId,
+                                   (bHasPostGISGeometry) ? GEOM_TYPE_GEOMETRY : GEOM_TYPE_GEOGRAPHY);
 
             poDefn->SetGeomType( nGeomType );
 
@@ -527,6 +565,9 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
 
         OGRPGClearResult( hResult );
       }
+
+      if (nSRSId == -2)
+          nSRSId = -1;
     }
 
     return poDefn;
@@ -2029,8 +2070,6 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
 OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
 {
-    GetLayerDefn();
-
     if( nSRSId == -2 )
     {
         PGconn      *hPGConn = poDS->GetPGConn();
@@ -2041,29 +2080,14 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
         poDS->SoftStartTransaction();
 
-        if (bHasPostGISGeography)
-        {
-            osCommand.Printf(
-                     "SELECT srid FROM geography_columns "
-                     "WHERE f_table_name = '%s'",
-                     (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
+        osCommand.Printf(
+                    "SELECT srid FROM geometry_columns "
+                    "WHERE f_table_name = '%s'",
+                    pszTableName);
 
-            if (pszGeomColumn)
-            {
-                osCommand += CPLString().Printf(" AND f_geography_column = '%s'", pszGeomColumn);
-            }
-        }
-        else
+        if (pszGeomColumn)
         {
-            osCommand.Printf(
-                     "SELECT srid FROM geometry_columns "
-                     "WHERE f_table_name = '%s'",
-                     (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
-
-            if (pszGeomColumn)
-            {
-                osCommand += CPLString().Printf(" AND f_geometry_column = '%s'", pszGeomColumn);
-            }
+            osCommand += CPLString().Printf(" AND f_geometry_column = '%s'", pszGeomColumn);
         }
 
         if (pszSchemaName)
@@ -2307,10 +2331,6 @@ OGRFeatureDefn * OGRPGTableLayer::GetLayerDefnCanReturnNULL()
     if( poFeatureDefn )
     {
         ResetReading();
-
-        // check SRID if it's necessary
-        if( nSRSId == -2 )
-            GetSpatialRef();
     }
 
     return poFeatureDefn;
