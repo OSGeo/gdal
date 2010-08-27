@@ -39,6 +39,11 @@ import ogrtest
 import ogr
 import osr
 
+# Other test data :
+# http://www.lv-bw.de/alkis.info/nas-bsp.html
+# http://www.lv-bw.de/lvshop2/Produktinfo/AAA/AAA.html
+# http://www.gll.niedersachsen.de/live/live.php?navigation_id=10640&article_id=51644&_psmand=34
+
 ###############################################################################
 # Test reading a NAS file
 #
@@ -97,8 +102,67 @@ def ogr_nas_1():
 
     return 'success'
 
+###############################################################################
+# Test reading a sample NAS file from PostNAS
+#
+
+def ogr_nas_2():
+
+    try:
+        drv = ogr.GetDriverByName('NAS')
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://trac.wheregroup.com/PostNAS/browser/trunk/demodaten/lverm_geo_rlp/gid-6.0/gm2566-testdaten-gid60-2008-11-11.xml.zip?format=raw', 'gm2566-testdaten-gid60-2008-11-11.xml.zip'):
+        return 'skip'
+
+    try:
+        os.stat('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
+    except:
+        try:
+            gdaltest.unzip( 'tmp/cache', 'tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml.zip')
+            try:
+                os.stat('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
+            except:
+                return 'skip'
+        except:
+            return 'skip'
+
+    ds = ogr.Open('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
+    if ds is None:
+        gdaltest.post_reason('could not open dataset')
+        return 'fail'
+
+    if ds.GetLayerCount() != 85:
+        gdaltest.post_reason('did not get expected layer count')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    lyr = ds.GetLayerByName('AX_Flurstueck')
+
+    # Loop until a feature that has a complex geometry including <gml:Arc>
+    feat = lyr.GetNextFeature()
+    while feat is not None and feat.GetField('identifier') != 'urn:adv:oid:DERP1234000002Iz':
+        feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    expected_geom = 'POLYGON ((350821.045 5532031.37,350924.309 5532029.513,350938.493 5532026.622,350951.435 5532021.471,350978.7 5532007.18,351026.406 5531971.088,351032.251 5531951.162,351032.251 5531951.162,351080.623 5531942.67,351154.886 5531963.718,351154.886 5531963.718,351207.689 5532019.797,351207.689 5532019.797,351211.063 5532044.067,351203.83 5532074.034,351165.959 5532114.315,351152.85 5532135.774,351152.85 5532135.774,351141.396 5532140.355,351141.396 5532140.355,351110.659 5532137.542,351080.17 5532132.742,351080.17 5532132.742,351002.887 5532120.75,350925.682 5532108.264,350925.682 5532108.264,350848.556 5532095.285,350771.515 5532081.814,350771.515 5532081.814,350769.548 5532071.196,350812.194 5532034.716,350821.045 5532031.37))'
+    if ogrtest.check_feature_geometry(feat, expected_geom) != 0:
+        geom = feat.GetGeometryRef()
+        print(geom)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [ 
-    ogr_nas_1 ]
+    ogr_nas_1,
+    ogr_nas_2 ]
 
 if __name__ == '__main__':
 
