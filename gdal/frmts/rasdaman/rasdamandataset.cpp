@@ -62,7 +62,6 @@ class RasdamanDataset : public GDALPamDataset
 {
   friend class RasdamanRasterBand;
   
-  //  FILE	*fp;
   GByte	abyHeader[1012];
 
   public:
@@ -73,7 +72,6 @@ class RasdamanDataset : public GDALPamDataset
     static regex_t openParamRegEx;
 
     CPLErr 	GetGeoTransform( double * padfTransform );
-//    const char *GetProjectionRef();
 
 private:
   void getTypes(const r_Base_Type* baseType, int &counter, int pos);
@@ -102,7 +100,6 @@ class RasdamanRasterBand : public GDALPamRasterBand
   friend class RasdamanDataset;
   
   int          nRecordSize;
-//  char*        pszRecord;
   int          typeOffset;
   int          typeSize;
   
@@ -153,7 +150,6 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
   cerr << "Read block " << nBlockXOff << " " << nBlockYOff << endl;
   RasdamanDataset *poGDS = (RasdamanDataset *) poDS;
-  int		i;
   
   r_Database database;  
   r_Transaction transaction;
@@ -170,10 +166,10 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int xPos = poGDS->xPos;
     int yPos = poGDS->yPos;
     
-    sprintf(x_lo, "%d", nBlockXOff * nBlockXSize);
-    sprintf(x_hi, "%d", (nBlockXOff+1) * nBlockXSize-1);
-    sprintf(y_lo, "%d", nBlockYOff * nBlockYSize);
-    sprintf(y_hi, "%d", (nBlockYOff+1) * nBlockYSize-1);
+    CPLSPrintf(x_lo, "%d", nBlockXOff * nBlockXSize);
+    CPLSPrintf(x_hi, "%d", (nBlockXOff+1) * nBlockXSize-1);
+    CPLSPrintf(y_lo, "%d", nBlockYOff * nBlockYSize);
+    CPLSPrintf(y_hi, "%d", (nBlockYOff+1) * nBlockYSize-1);
     char *queryString = getQuery(poGDS->queryParam, x_lo, x_hi, y_lo, y_hi);
   
     r_Set<r_Ref_Any> result_set;
@@ -203,8 +199,7 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     transaction.commit();
     database.close();
   } catch (r_Error error) {
-    std::cerr << error.what() << std::endl;
-    CPLError(CE_Failure, -1, error.what());
+    CPLError(CE_Failure, CPLE_AppDefined, error.what());
     return CPLGetLastErrorType();
   }
   return CE_None;
@@ -320,6 +315,8 @@ GDALDataType mapRasdamanTypesToGDAL(r_Type::r_Type_Id typeId) {
     return GDT_CFloat32;
   case r_Type::COMPLEXTYPE2:
     return GDT_CFloat64;
+  default:
+    return GDT_Unknown;
   }
 }
 
@@ -423,7 +420,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
   // should never happen 
   if (result != 0) {
     regerror(result, &optionRegEx, errbuffer, 4096);
-    std::cerr << "Internal error at compiling option parsing regex:" << errbuffer << std::endl;
+    CPLError(CE_Failure, CPLE_AppDefined, "Internal error at compiling option parsing regex: %s", errbuffer);
     return NULL; 
   }
 
@@ -431,7 +428,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
   // should never happen 
   if (result != 0) {
     regerror(result, &queryRegEx, errbuffer, 4096);
-    std::cerr << "Internal error at compiling query parsing regex:" << errbuffer << std::endl;
+    CPLError(CE_Failure, CPLE_AppDefined, "Internal error at compiling option parsing regex: %s", errbuffer);
     return NULL; 
   }
 
@@ -439,14 +436,14 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
   result = regexec(&optionRegEx, connString, 10, matches, 0);
   if (result != 0) {
     regerror(result, &optionRegEx, errbuffer, 4096);
-    std::cerr << "Parsing opening parameters failed with error: " << errbuffer << std::endl;
+    CPLError(CE_Failure, CPLE_AppDefined, "Parsing opening parameters failed with error: %s", errbuffer);
     return NULL; 
   }
 
   // checking if the whole expressions was matches, if not give an error where 
   // the matching stopped and exit
-  if (matches[0].rm_eo < strlen(connString)) {
-    std::cerr << "Parsing opening parameters failed at: " << connString+matches[0].rm_eo << std::endl;
+  if (size_t(matches[0].rm_eo) < strlen(connString)) {
+    CPLError(CE_Failure, CPLE_AppDefined, "Parsing opening parameters failed with error: %s", connString+matches[0].rm_eo);
     return NULL; 
   }
 
@@ -462,13 +459,13 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
   result = regexec(&queryRegEx, queryParam, 10, matches, 0);
   if (result != 0) {
     regerror(result, &queryRegEx, errbuffer, 4096);
-    std::cerr << "Parsing query parameter failed with error: " << errbuffer << std::endl;
+    CPLError(CE_Failure, CPLE_AppDefined, "Parsing query parameter failed with error: %s", errbuffer);
     return NULL; 
   }
 
   char * queryString = new char[50+strlen(queryParam)];
   
-  sprintf(queryString, "select sdom(%s) from %s", 
+  CPLSPrintf(queryString, "select sdom(%s) from %s",
 	  getOption(queryParam, matches[1], ""),
 	  getOption(queryParam, matches[2], "")
 	  );
@@ -501,7 +498,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
     transaction.commit();
     database.close();
   } catch (r_Error error) {
-    std::cerr << error.what() << std::endl;
+    CPLError(CE_Fatal, CPLE_AppDefined, error.what());
     return NULL;
   }
   rasDataset->queryParam = queryParam;
