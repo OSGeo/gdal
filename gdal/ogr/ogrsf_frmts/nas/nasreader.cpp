@@ -787,7 +787,7 @@ int NASReader::PrescanForSchema( int bGetExtents )
             if( poFeature->GetGeometry() != NULL 
                 && strlen(poFeature->GetGeometry()) != 0 )
             {
-                poGeometry = (OGRGeometry *) OGR_G_CreateFromGML3( 
+                poGeometry = (OGRGeometry *) OGR_G_CreateFromGML( 
                     poFeature->GetGeometry() );
             }
 

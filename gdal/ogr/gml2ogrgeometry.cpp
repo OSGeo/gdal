@@ -627,7 +627,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 /*      LineString                                                      */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"LineString")
-        || EQUAL(pszBaseGeometry,"LineStringSegment") )
+        || EQUAL(pszBaseGeometry,"LineStringSegment")
+        || EQUAL(pszBaseGeometry,"Arc") /* we should stroke arcs! */ )
     {
         OGRLineString   *poLine = new OGRLineString();
         
@@ -1041,7 +1042,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         {
             if( psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"LineStringSegment") )
+                && (EQUAL(BareGMLElement(psChild->pszValue),"LineStringSegment") ||
+                    EQUAL(BareGMLElement(psChild->pszValue),"Arc")) )
             {
                 OGRGeometry *poGeom;
 

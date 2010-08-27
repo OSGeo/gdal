@@ -146,7 +146,7 @@ OGRFeature *OGRNASLayer::GetNextFeature()
         if( poNASFeature->GetGeometry() != NULL )
         {
             poGeom = (OGRGeometry*) 
-                OGR_G_CreateFromGML3( poNASFeature->GetGeometry() );
+                OGR_G_CreateFromGML( poNASFeature->GetGeometry() );
 
             // We assume the createFromNAS() function would have already
             // reported the error. 
