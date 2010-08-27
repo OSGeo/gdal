@@ -987,41 +987,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         else
             nCoordDimension = 3;
 
-        switch( wkbFlatten(eType) )
-        {
-            case wkbPoint:
-                pszGeometryType = "POINT";
-                break;
-
-            case wkbLineString:
-                pszGeometryType = "LINESTRING";
-                break;
-
-            case wkbPolygon:
-                pszGeometryType = "POLYGON";
-                break;
-
-            case wkbMultiPoint:
-                pszGeometryType = "MULTIPOINT";
-                break;
-
-            case wkbMultiLineString:
-                pszGeometryType = "MULTILINESTRING";
-                break;
-
-            case wkbMultiPolygon:
-                pszGeometryType = "MULTIPOLYGON";
-                break;
-
-            case wkbGeometryCollection:
-                pszGeometryType = "GEOMETRYCOLLECTION";
-                break;
-
-            default:
-                pszGeometryType = "GEOMETRY";
-                break;
-
-        }
+        pszGeometryType = OGRToOGCGeomType(eType);
 
         if( nSRSId == -1 )
             osCommand.Printf(
