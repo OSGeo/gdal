@@ -254,23 +254,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         {
             pszType = papszRow[0];
 
-            OGRwkbGeometryType nGeomType = wkbUnknown;
-
-            // check only standard OGC geometry types
-            if ( EQUAL(pszType, "POINT") )
-                nGeomType = wkbPoint;
-            else if ( EQUAL(pszType,"LINESTRING"))
-                nGeomType = wkbLineString;
-            else if ( EQUAL(pszType,"POLYGON"))
-                nGeomType = wkbPolygon;
-            else if ( EQUAL(pszType,"MULTIPOINT"))
-                nGeomType = wkbMultiPoint;
-            else if ( EQUAL(pszType,"MULTILINESTRING"))
-                nGeomType = wkbMultiLineString;
-            else if ( EQUAL(pszType,"MULTIPOLYGON"))
-                nGeomType = wkbMultiPolygon;
-            else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))
-                nGeomType = wkbGeometryCollection;
+            OGRwkbGeometryType nGeomType = OGRFromOGCGeomType(pszType);
 
             poDefn->SetGeomType( nGeomType );
 
