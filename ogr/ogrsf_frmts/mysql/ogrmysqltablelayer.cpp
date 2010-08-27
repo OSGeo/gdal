@@ -277,7 +277,8 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         }
         else if( EQUAL(pszType, "geometry") ) 
         {
-            pszGeomColumn = CPLStrdup(papszRow[0]);
+            if (pszGeomColumn == NULL)
+                pszGeomColumn = CPLStrdup(papszRow[0]);
             continue;
         }
         // Is this an integer primary key field?
