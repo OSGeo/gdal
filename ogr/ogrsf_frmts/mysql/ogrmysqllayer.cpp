@@ -333,19 +333,19 @@ const char *OGRMySQLLayer::GetGeometryColumn()
 
 int OGRMySQLLayer::FetchSRSId()
 {
-	char         szCommand[1024];
+	CPLString        osCommand;
     char           **papszRow;  
     
     if( hResultSet != NULL )
         mysql_free_result( hResultSet );
 		hResultSet = NULL;
 				
-    sprintf( szCommand, 
+    osCommand.Printf(
              "SELECT srid FROM geometry_columns "
              "WHERE f_table_name = '%s'",
              pszGeomColumnTable );
 
-    if( !mysql_query( poDS->GetConn(), szCommand ) )
+    if( !mysql_query( poDS->GetConn(), osCommand ) )
         hResultSet = mysql_store_result( poDS->GetConn() );
 
     papszRow = NULL;

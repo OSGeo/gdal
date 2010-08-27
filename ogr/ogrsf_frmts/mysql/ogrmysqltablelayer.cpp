@@ -104,14 +104,14 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
 {
     MYSQL_RES    *hResult;
-    char         szCommand[1024];
+    CPLString     osCommand;
     
 /* -------------------------------------------------------------------- */
 /*      Fire off commands to get back the schema of the table.          */
 /* -------------------------------------------------------------------- */
-    sprintf( szCommand, "DESCRIBE `%s`", pszTable );
+    osCommand.Printf("DESCRIBE `%s`", pszTable );
     pszGeomColumnTable = CPLStrdup(pszTable);
-    if( mysql_query( poDS->GetConn(), szCommand ) )
+    if( mysql_query( poDS->GetConn(), osCommand ) )
     {
         poDS->ReportError( "DESCRIBE Failed" );
         return FALSE;
@@ -316,11 +316,12 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         // set to unknown first
         poDefn->SetGeomType( wkbUnknown );
         
-        sprintf(szCommand, "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
-                pszTable );
+        osCommand = "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='";
+        osCommand += pszTable;
+        osCommand += "'";
         
         hResult = NULL;
-        if( !mysql_query( poDS->GetConn(), szCommand ) )
+        if( !mysql_query( poDS->GetConn(), osCommand ) )
             hResult = mysql_store_result( poDS->GetConn() );
 
         papszRow = NULL;
@@ -863,7 +864,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 {
 
     MYSQL_RES           *hResult=NULL;
-    char        		szCommand[1024];
+    CPLString            osCommand;
     
     char                szFieldType[256];
     OGRFieldDefn        oField( poFieldIn );
@@ -946,13 +947,13 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         return OGRERR_FAILURE;
     }
 
-    sprintf( szCommand,
+    osCommand.Printf(
              "ALTER TABLE `%s` ADD COLUMN `%s` %s",
              poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
 
-    if( mysql_query(poDS->GetConn(), szCommand ) )
+    if( mysql_query(poDS->GetConn(), osCommand ) )
     {
-        poDS->ReportError( szCommand );
+        poDS->ReportError( osCommand );
         return OGRERR_FAILURE;
     }
 
@@ -988,9 +989,9 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( long nFeatureId )
 /*      interest.                                                       */
 /* -------------------------------------------------------------------- */
     char        *pszFieldList = BuildFields();
-    char        *pszCommand = (char *) CPLMalloc(strlen(pszFieldList)+2000);
+    CPLString    osCommand;
 
-    sprintf( pszCommand, 
+    osCommand.Printf(
              "SELECT %s FROM `%s` WHERE `%s` = %ld", 
              pszFieldList, poFeatureDefn->GetName(), pszFIDColumn, 
              nFeatureId );
@@ -999,12 +1000,11 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Issue the command.                                              */
 /* -------------------------------------------------------------------- */
-    if( mysql_query( poDS->GetConn(), pszCommand ) )
+    if( mysql_query( poDS->GetConn(), osCommand ) )
     {
-        poDS->ReportError( pszCommand );
+        poDS->ReportError( osCommand );
         return NULL;
     }
-    CPLFree( pszCommand );
 
     hResultSet = mysql_store_result( poDS->GetConn() );
     if( hResultSet == NULL )
