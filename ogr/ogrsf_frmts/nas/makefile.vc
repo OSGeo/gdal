@@ -1,6 +1,6 @@
 
 OBJ	=	ogrnasdriver.obj ogrnasdatasource.obj ogrnaslayer.obj \
-		nashandler.obj nasreader.obj gml3ogrgeometry.obj \
+		nashandler.obj nasreader.obj \
 		ogrnasrelationlayer.obj
 
 GDAL_ROOT	=	..\..\..
