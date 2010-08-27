@@ -883,7 +883,7 @@ success.
  or that have no results set, or an OGRLayer pointer representing a results
  set from the query.  Note that this OGRLayer is in addition to the layers
  in the data store and must be destroyed with 
- OGRDataSource::ReleaseResultsSet() before the data source is closed 
+ OGRDataSource::ReleaseResultSet() before the data source is closed
  (destroyed).  
 
  This method is the same as the C function OGR_DS_ExecuteSQL().
@@ -898,7 +898,7 @@ success.
  is assumed to be "generic" SQL, whatever that is. 
 
  @return an OGRLayer containing the results of the query.  Deallocate with
- ReleaseResultsSet().
+ ReleaseResultSet().
 
 */
 
@@ -915,7 +915,7 @@ success.
  or that have no results set, or an OGRLayer handle representing a results
  set from the query.  Note that this OGRLayer is in addition to the layers
  in the data store and must be destroyed with 
- OGR_DS_ReleaseResultsSet() before the data source is closed 
+ OGR_DS_ReleaseResultSet() before the data source is closed
  (destroyed).  
 
  For more information on the SQL dialect supported internally by OGR
@@ -931,7 +931,7 @@ success.
  is assumed to be "generic" SQL, whatever that is. 
 
  @return an handle to a OGRLayer containing the results of the query.  
- Deallocate with OGR_DS_ReleaseResultsSet().
+ Deallocate with OGR_DS_ReleaseResultSet().
 
 */
 
@@ -944,7 +944,7 @@ success.
  an ExecuteSQL() call on the same OGRDataSource.  Failure to deallocate a
  results set before destroying the OGRDataSource may cause errors. 
 
- This method is the same as the C function OGR_L_ReleaseResultsSet().
+ This method is the same as the C function OGR_L_ReleaseResultSet().
 
  @param poResultsSet the result of a previous ExecuteSQL() call.
 
@@ -962,7 +962,7 @@ success.
  may cause errors. 
 
  This function is the same as the C++ method 
- OGRDataSource::ReleaseResultsSet().
+ OGRDataSource::ReleaseResultSet().
 
  @param hDS an handle to the data source on which was executed an 
  SQL query.
