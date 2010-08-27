@@ -2,8 +2,7 @@
 include ../../../GDALmake.opt
 
 OBJ =	ogrnasdriver.o ogrnasdatasource.o ogrnaslayer.o \
-	nashandler.o nasreader.o ogrnasrelationlayer.o \
-	gml3ogrgeometry.o
+	nashandler.o nasreader.o ogrnasrelationlayer.o
 
 CPPFLAGS :=	-I../gml -I.. -I../.. -DHAVE_XERCES=1 \
 		$(GDAL_INCLUDE) $(XERCES_INCLUDE) $(CPPFLAGS)
