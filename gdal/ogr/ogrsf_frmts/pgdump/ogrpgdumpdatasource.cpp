@@ -309,41 +309,7 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
         }
     }
 
-    const char *pszGeometryType;
-    switch( wkbFlatten(eType) )
-    {
-        case wkbPoint:
-            pszGeometryType = "POINT";
-            break;
-
-        case wkbLineString:
-            pszGeometryType = "LINESTRING";
-            break;
-
-        case wkbPolygon:
-            pszGeometryType = "POLYGON";
-            break;
-
-        case wkbMultiPoint:
-            pszGeometryType = "MULTIPOINT";
-            break;
-
-        case wkbMultiLineString:
-            pszGeometryType = "MULTILINESTRING";
-            break;
-
-        case wkbMultiPolygon:
-            pszGeometryType = "MULTIPOLYGON";
-            break;
-
-        case wkbGeometryCollection:
-            pszGeometryType = "GEOMETRYCOLLECTION";
-            break;
-
-        default:
-            pszGeometryType = "GEOMETRY";
-            break;
-    }
+    const char *pszGeometryType = OGRToOGCGeomType(eType);
 
     const char *pszGFldName = NULL;
     if( bHavePostGIS && !EQUAL(pszGeomType, "geography"))

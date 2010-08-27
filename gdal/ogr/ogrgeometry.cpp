@@ -1490,6 +1490,64 @@ int OGR_G_IsRing( OGRGeometryH hGeom )
     return ((OGRGeometry *) hGeom)->IsRing();
 }
 
+
+/************************************************************************/
+/*                     OGRFromOGCGeomType()                             */
+/*      Map OGCgeometry format type to corresponding                    */
+/*      OGR constants.                                                  */
+/************************************************************************/
+
+OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
+{
+    if ( EQUAL(pszGeomType, "POINT") )
+        return wkbPoint;
+    else if ( EQUAL(pszGeomType, "LINESTRING") )
+        return wkbLineString;
+    else if ( EQUAL(pszGeomType, "POLYGON") )
+        return wkbPolygon;
+    else if ( EQUAL(pszGeomType, "MULTIPOINT") )
+        return wkbMultiPoint;
+    else if ( EQUAL(pszGeomType, "MULTILINESTRING") )
+        return wkbMultiLineString;
+    else if ( EQUAL(pszGeomType, "MULTIPOLYGON") )
+        return wkbMultiPolygon;
+    else if ( EQUAL(pszGeomType, "GEOMETRYCOLLECTION") )
+        return wkbGeometryCollection;
+    else
+        return wkbUnknown;
+}
+
+/************************************************************************/
+/*                     OGRToOGCGeomType()                               */
+/*      Map OGR geometry format constants to corresponding              */
+/*      OGC geometry type                                               */
+/************************************************************************/
+
+const char * OGRToOGCGeomType( OGRwkbGeometryType eGeomType )
+{
+    switch ( wkbFlatten(eGeomType) )
+    {
+        case wkbUnknown:
+            return "GEOMETRY";
+        case wkbPoint:
+            return "POINT";
+        case wkbLineString:
+            return "LINESTRING";
+        case wkbPolygon:
+            return "POLYGON";
+        case wkbMultiPoint:
+            return "MULTIPOINT";
+        case wkbMultiLineString:
+            return "MULTILINESTRING";
+        case wkbMultiPolygon:
+            return "MULTIPOLYGON";
+        case wkbGeometryCollection:
+            return "GEOMETRYCOLLECTION";
+        default:
+            return "";
+    }
+}
+
 /************************************************************************/
 /*                       OGRGeometryTypeToName()                        */
 /************************************************************************/
