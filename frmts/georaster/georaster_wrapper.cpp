@@ -89,6 +89,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     bUniqueFound        = false;
     sValueAttributeTab  = "";
     psNoDataList        = NULL;
+    bWriteOnly          = false;
 }
 
 //  ---------------------------------------------------------------------------
