@@ -183,8 +183,11 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             break;
                         
           case FIELD_TYPE_GEOMETRY:
-            pszGeomColumnTable = CPLStrdup( psMSField->table);
-            pszGeomColumn = CPLStrdup( psMSField->name);            
+            if (pszGeomColumn == NULL)
+            {
+                pszGeomColumnTable = CPLStrdup( psMSField->table);
+                pszGeomColumn = CPLStrdup( psMSField->name);
+            }
             break;
             
           default:
