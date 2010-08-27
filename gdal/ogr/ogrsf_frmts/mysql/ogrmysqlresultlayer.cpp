@@ -225,13 +225,13 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
     if (pszGeomColumn) 
     {
         char*        pszType=NULL;
-        char         szCommand[1024];
+        CPLString    osCommand;
         char           **papszRow;  
          
         // set to unknown first
         poDefn->SetGeomType( wkbUnknown );
         
-        sprintf(szCommand, 
+        osCommand.Printf(
                 "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
                 pszGeomColumnTable );
 
@@ -239,7 +239,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             mysql_free_result( hResultSet );
      		hResultSet = NULL;
 
-        if( !mysql_query( poDS->GetConn(), szCommand ) )
+        if( !mysql_query( poDS->GetConn(), osCommand ) )
             hResultSet = mysql_store_result( poDS->GetConn() );
 
         papszRow = NULL;
