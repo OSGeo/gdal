@@ -245,9 +245,6 @@ class OGRSQLiteDataSource : public OGRDataSource
     
     virtual void        DeleteLayer( const char *pszLayer );
 
-    static OGRwkbGeometryType SpatiaLiteToOGRGeomType( const char * );
-    static const char   *OGRToSpatiaLiteGeomType( OGRwkbGeometryType );
-
   public:
                         OGRSQLiteDataSource();
                         ~OGRSQLiteDataSource();

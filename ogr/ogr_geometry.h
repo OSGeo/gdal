@@ -648,4 +648,7 @@ class CPL_DLL OGRGeometryFactory
                               double dfMaxAngleStepSizeDegrees );
 };
 
+OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType );
+const char * OGRToOGCGeomType( OGRwkbGeometryType eGeomType );
+
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */

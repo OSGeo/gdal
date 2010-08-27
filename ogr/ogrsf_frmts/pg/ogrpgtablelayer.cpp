@@ -140,22 +140,7 @@ void  OGRPGTableLayer::SetGeometryInformation(const char* pszType,
 
     bGeometryInformationSet = TRUE;
 
-    if ( EQUAL(pszType, "POINT") )
-        nGeomType = wkbPoint;
-    else if ( EQUAL(pszType,"LINESTRING"))
-        nGeomType = wkbLineString;
-    else if ( EQUAL(pszType,"POLYGON"))
-        nGeomType = wkbPolygon;
-    else if ( EQUAL(pszType,"MULTIPOINT"))
-        nGeomType = wkbMultiPoint;
-    else if ( EQUAL(pszType,"MULTILINESTRING"))
-        nGeomType = wkbMultiLineString;
-    else if ( EQUAL(pszType,"MULTIPOLYGON"))
-        nGeomType = wkbMultiPolygon;
-    else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))
-        nGeomType = wkbGeometryCollection;
-    else
-        nGeomType = wkbUnknown;
+    nGeomType = OGRFromOGCGeomType(pszType);
 
     this->nCoordDimension = nCoordDimension;
     this->nSRSId = nSRID;

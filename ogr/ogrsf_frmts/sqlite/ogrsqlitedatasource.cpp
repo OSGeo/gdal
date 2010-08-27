@@ -90,65 +90,6 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 }
 
 /************************************************************************/
-/*                     SpatiaLiteToOGRGeomType()                        */
-/*      Map SpatiaLite geometry format strings to corresponding         */
-/*      OGR constants.                                                  */
-/************************************************************************/
-
-OGRwkbGeometryType
-OGRSQLiteDataSource::SpatiaLiteToOGRGeomType( const char *pszGeomType )
-{
-    if ( EQUAL(pszGeomType, "POINT") )
-        return wkbPoint;
-    else if ( EQUAL(pszGeomType, "LINESTRING") )
-        return wkbLineString;
-    else if ( EQUAL(pszGeomType, "POLYGON") )
-        return wkbPolygon;
-    else if ( EQUAL(pszGeomType, "MULTIPOINT") )
-        return wkbMultiPoint;
-    else if ( EQUAL(pszGeomType, "MULTILINESTRING") )
-        return wkbMultiLineString;
-    else if ( EQUAL(pszGeomType, "MULTIPOLYGON") )
-        return wkbMultiPolygon;
-    else if ( EQUAL(pszGeomType, "GEOMETRYCOLLECTION") )
-        return wkbGeometryCollection;
-    else
-        return wkbUnknown;
-}
-
-/************************************************************************/
-/*                     OGRToSpatiaLiteGeomType()                        */
-/*      Map OGR geometry format constants to corresponding              */
-/*      SpatiaLite strings                                              */
-/************************************************************************/
-
-const char *
-OGRSQLiteDataSource::OGRToSpatiaLiteGeomType( OGRwkbGeometryType eGeomType )
-{
-    switch ( wkbFlatten(eGeomType) )
-    {
-        case wkbUnknown:
-            return "GEOMETRY";
-        case wkbPoint:
-            return "POINT";
-        case wkbLineString:
-            return "LINESTRING";
-        case wkbPolygon:
-            return "POLYGON";
-        case wkbMultiPoint:
-            return "MULTIPOINT";
-        case wkbMultiLineString:
-            return "MULTILINESTRING";
-        case wkbMultiPolygon:
-            return "MULTIPOLYGON";
-        case wkbGeometryCollection:
-            return "GEOMETRYCOLLECTION";
-        default:
-            return "";
-    }
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /*                                                                      */
 /*      Note, the Open() will implicitly create the database if it      */
@@ -281,7 +222,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
                 papszRow[3] == NULL)
                 continue;
 
-            eGeomType = SpatiaLiteToOGRGeomType(papszRow[2]);
+            eGeomType = OGRFromOGCGeomType(papszRow[2]);
 
             if( atoi(papszRow[3]) > 2 )
                 eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | wkb25DBit);
@@ -740,7 +681,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "(f_table_name, f_geometry_column, type, "
                     "coord_dimension, srid, spatial_index_enabled) "
                     "VALUES ('%s','%s', '%s', %d, %d, 0)", 
-                    pszLayerName, pszGeomCol, OGRToSpatiaLiteGeomType(eType),
+                    pszLayerName, pszGeomCol, OGRToOGCGeomType(eType),
                     nCoordDim, nSRSId );
             else
                 osCommand.Printf(
@@ -759,7 +700,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "(f_table_name, f_geometry_column, type, "
                     "coord_dimension, spatial_index_enabled) "
                     "VALUES ('%s','%s', '%s', %d, 0)", 
-                    pszLayerName, pszGeomCol, OGRToSpatiaLiteGeomType(eType),
+                    pszLayerName, pszGeomCol, OGRToOGCGeomType(eType),
                     nCoordDim );
             else
                 osCommand.Printf(
