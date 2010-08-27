@@ -249,7 +249,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         if( EQUAL( poGRW->sInterleaving.c_str(), "BSQ" ) )
         {
-            poGRD->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+            poGRD->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
         }
         else if( EQUAL( poGRW->sInterleaving.c_str(), "BIP" ) )
         {
