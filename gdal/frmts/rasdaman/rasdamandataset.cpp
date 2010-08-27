@@ -162,14 +162,14 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     database.open(poGDS->databasename);
     transaction.begin();
 
-    char x_lo[10], x_hi[10], y_lo[10], y_hi[10];
+    char x_lo[11], x_hi[11], y_lo[11], y_hi[11];
     int xPos = poGDS->xPos;
     int yPos = poGDS->yPos;
     
-    CPLSPrintf(x_lo, "%d", nBlockXOff * nBlockXSize);
-    CPLSPrintf(x_hi, "%d", (nBlockXOff+1) * nBlockXSize-1);
-    CPLSPrintf(y_lo, "%d", nBlockYOff * nBlockYSize);
-    CPLSPrintf(y_hi, "%d", (nBlockYOff+1) * nBlockYSize-1);
+    sprintf(x_lo, "%d", nBlockXOff * nBlockXSize);
+    sprintf(x_hi, "%d", (nBlockXOff+1) * nBlockXSize-1);
+    sprintf(y_lo, "%d", nBlockYOff * nBlockYSize);
+    sprintf(y_hi, "%d", (nBlockYOff+1) * nBlockYSize-1);
     char *queryString = getQuery(poGDS->queryParam, x_lo, x_hi, y_lo, y_hi);
   
     r_Set<r_Ref_Any> result_set;
@@ -465,7 +465,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
 
   char * queryString = new char[50+strlen(queryParam)];
   
-  CPLSPrintf(queryString, "select sdom(%s) from %s",
+  sprintf(queryString, "select sdom(%s) from %s",
 	  getOption(queryParam, matches[1], ""),
 	  getOption(queryParam, matches[2], "")
 	  );
@@ -498,7 +498,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
     transaction.commit();
     database.close();
   } catch (r_Error error) {
-    CPLError(CE_Fatal, CPLE_AppDefined, error.what());
+    CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
     return NULL;
   }
   rasDataset->queryParam = queryParam;
