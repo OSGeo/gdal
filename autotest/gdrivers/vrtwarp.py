@@ -82,14 +82,15 @@ def vrtwarp_3():
 
     checksum = gdaltest.vrtwarp_ds.GetRasterBand(2).Checksum()
     expected = 21504
+
+    gdaltest.vrtwarp_ds = None
+    gdal.GetDriverByName('VRT').Delete( 'tmp/warp.vrt' )
+
     if checksum != expected:
         gdaltest.post_reason( 'Got checksum of %d instead of expected %d.' \
                               % (checksum, expected) )
         return 'fail'
 
-    gdaltest.vrtwarp_ds = None
-    gdal.GetDriverByName('VRT').Delete( 'tmp/warp.vrt' )
-    
     return 'success'
 
 gdaltest_list = [
