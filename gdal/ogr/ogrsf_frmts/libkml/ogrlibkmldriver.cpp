@@ -29,10 +29,13 @@
 #include "ogr_libkml.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_atomic_ops.h"
 
 #include <kml/dom.h>
 
 using kmldom::KmlFactory;
+
+static volatile int nKmlFactoryRefCount = 0;
 
 /******************************************************************************
  OGRLIBKMLDriver()
@@ -40,6 +43,7 @@ using kmldom::KmlFactory;
 
 OGRLIBKMLDriver::OGRLIBKMLDriver (  )
 {
+    CPLAtomicInc(&nKmlFactoryRefCount);
     m_poKmlFactory = KmlFactory::GetFactory (  );
 
 }
@@ -50,8 +54,8 @@ OGRLIBKMLDriver::OGRLIBKMLDriver (  )
 
 OGRLIBKMLDriver::~OGRLIBKMLDriver (  )
 {
-    delete m_poKmlFactory;
-
+    if (CPLAtomicDec(&nKmlFactoryRefCount) == 0)
+        delete m_poKmlFactory;
 }
 
 /******************************************************************************
