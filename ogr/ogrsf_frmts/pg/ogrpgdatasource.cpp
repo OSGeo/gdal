@@ -1248,7 +1248,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
             osSQLLayerName += pszTableName;
         }
 
-        if( EQUAL(osSQLLayerName.c_str(),papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+        if( EQUAL(osSQLLayerName.c_str(),papoLayers[iLayer]->GetName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
@@ -1281,7 +1281,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
             pszGeomType = "bytea";
     }
     
-    if( EQUAL(pszGeomType, "geography") && !bHaveGeography )
+    if( eType != wkbNone && EQUAL(pszGeomType, "geography") && !bHaveGeography )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "GEOM_TYPE=geography is only supported in PostGIS >= 1.5.\n"
@@ -1292,7 +1292,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         return NULL;
     }
 
-    if( bHavePostGIS && !EQUAL(pszGeomType,"geometry") &&
+    if( eType != wkbNone && bHavePostGIS && !EQUAL(pszGeomType,"geometry") &&
         !EQUAL(pszGeomType, "geography") )
     {
         if( bHaveGeography )
@@ -1342,7 +1342,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     else
         osCreateTable.Printf("CREATE TABLE \"%s\".\"%s\"", pszSchemaName, pszTableName);
     
-    if( !bHavePostGIS )
+    if( eType != wkbNone && !bHavePostGIS )
     {
         osCommand.Printf(
                  "%s ( "
@@ -1351,7 +1351,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
                  "   CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
                  osCreateTable.c_str(), pszGeomType, pszTableName );
     }
-    else if ( EQUAL(pszGeomType, "geography") )
+    else if ( eType != wkbNone && EQUAL(pszGeomType, "geography") )
     {
         if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
             pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
@@ -1395,7 +1395,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 /*      "geometric layers", capturing the WKT projection, and           */
 /*      perhaps some other housekeeping.                                */
 /* -------------------------------------------------------------------- */
-    if( bHavePostGIS && !EQUAL(pszGeomType, "geography"))
+    if( eType != wkbNone && bHavePostGIS && !EQUAL(pszGeomType, "geography"))
     {
         if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
             pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
@@ -1441,7 +1441,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         OGRPGClearResult( hResult );
     }
     
-    if( bHavePostGIS )
+    if( eType != wkbNone && bHavePostGIS )
     {
 /* -------------------------------------------------------------------- */
 /*      Create the spatial index.                                       */
@@ -2080,7 +2080,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
         
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
-            if( EQUAL(papoLayers[iLayer]->GetLayerDefn()->GetName(), 
+            if( EQUAL(papoLayers[iLayer]->GetName(), 
                       pszLayerName ))
             {
                 DeleteLayer( iLayer );
