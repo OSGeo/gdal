@@ -213,7 +213,12 @@ def rasterio_5():
             maxsize = sys.maxint
         except:
             maxsize = sys.maxsize
-        if maxsize == 2147483647:
+
+        # On win64, maxsize == 2147483647 and ReadRaster()
+        # fails because of out of memory condition, not
+        # because of integer overflow. I'm not sure on how
+        # to detect win64 better.
+        if maxsize == 2147483647 and sys.platform != 'win32':
             gdal.ErrorReset()
             gdal.PushErrorHandler('CPLQuietErrorHandler')
             res = obj.ReadRaster(0,0,1000000,1000000)
