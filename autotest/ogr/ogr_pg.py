@@ -2503,7 +2503,31 @@ def ogr_pg_52():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test creating a layer with explicitely wkbNone geometry type
+
+def ogr_pg_53():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    lyr = gdaltest.pg_ds.CreateLayer( 'no_geometry_table', geom_type = ogr.wkbNone )
+    field_defn = ogr.FieldDefn('foo')
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'bar')
+    lyr.CreateFeature(feat)
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('no_geometry_table')
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != 'bar':
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -2536,6 +2560,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:bigtable' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_geog' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:no_pk_table' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:no_geometry_table' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -2619,6 +2644,7 @@ gdaltest_list_internal = [
     ogr_pg_50,
     ogr_pg_51,
     ogr_pg_52,
+    ogr_pg_53,
     ogr_pg_cleanup ]
 
 ###############################################################################
