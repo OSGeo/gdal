@@ -32,6 +32,15 @@ The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
 library.  Also note that the GeoTIFF driver supports tiled TIFF with JPEG
 compressed tiles.<p>
 
+To be able to read and write JPEG images with 12-bit sample, you need to build GDAL
+with its internal libjpeg (based on IJG libjpeg-6b, with additional changes for 12-bit
+sample support). See <a href="http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG">
+"8 and 12 bit JPEG in TIFF"</a> wiki page for more details.<p>
+
+It is also possible to use the JPEG driver with the libjpeg-turbo, a
+version of libjpeg, API and ABI compatible with IJG libjpeg-6b, which uses MMX, SSE,
+and SSE2 SIMD instructions to accelerate baseline JPEG compression/decompression.<p>
+
 <h2>Creation Options</h2>
 
 JPEG files are created using the "JPEG" driver code.  Only Byte band types
@@ -60,11 +69,13 @@ read progressive jpegs, but takes no advantage of their progressive nature.<p>
 
 </ul>
 
-See Also:
+<h3>See Also:</h3>
 <p>
 
 <ul>
-<li> <a href="http://www.ijg.org/">Independent JPEG Group</a>
+<li> <a href="http://www.ijg.org/">Independent JPEG Group</a></li>
+<li> <a href="http://sourceforge.net/projects/libjpeg-turbo/">libjpeg-turbo</a></li>
+<li> <a href="frmt_gtiff.html">GDAL GeoTIFF driver</a></li>
 </ul>
 
 </body>
