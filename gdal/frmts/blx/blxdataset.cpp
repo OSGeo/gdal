@@ -345,6 +345,7 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Unable to create blx file %s.\n", 
                   pszFilename );
+        blx_free_context(ctx);
         return NULL;
     }
 
@@ -354,7 +355,14 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GInt16     *pabyTile;
     CPLErr      eErr=CE_None;
 
-    pabyTile = (GInt16 *) CPLMalloc( sizeof(GInt16)*ctx->cell_xsize*ctx->cell_ysize );
+    pabyTile = (GInt16 *) VSIMalloc( sizeof(GInt16)*ctx->cell_xsize*ctx->cell_ysize );
+    if (pabyTile == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        blxclose(ctx);
+        blx_free_context(ctx);
+        return NULL;
+    }
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         eErr = CE_Failure;

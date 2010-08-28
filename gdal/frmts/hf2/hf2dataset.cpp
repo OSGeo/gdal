@@ -904,7 +904,13 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     int nXBlocks = (nXSize + nTileSize - 1) / nTileSize;
     int nYBlocks = (nYSize + nTileSize - 1) / nTileSize;
 
-    void* pTileBuffer = (void*) CPLMalloc(nTileSize * nTileSize * (GDALGetDataTypeSize(eReqDT) / 8));
+    void* pTileBuffer = (void*) VSIMalloc(nTileSize * nTileSize * (GDALGetDataTypeSize(eReqDT) / 8));
+    if (pTileBuffer == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        VSIFCloseL(fp);
+        return NULL;
+    }
 
     int i, j, k, l;
     CPLErr eErr = CE_None;
