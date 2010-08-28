@@ -2680,12 +2680,18 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
 /* -------------------------------------------------------------------- */
     if( nBandCount == 0 )
         return CE_None;
-    
-    GDALRasterBand *poPrototypeBand = poDstDS->GetRasterBand(1);
-    GDALDataType eDT = poPrototypeBand->GetRasterDataType();
+
+    GDALRasterBand *poSrcPrototypeBand = poSrcDS->GetRasterBand(1);
+    GDALRasterBand *poDstPrototypeBand = poDstDS->GetRasterBand(1);
+    GDALDataType eDT = poDstPrototypeBand->GetRasterDataType();
+    int nSrcBlockXSize, nSrcBlockYSize;
     int nBlockXSize, nBlockYSize;
 
-    poPrototypeBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+    poSrcPrototypeBand->GetBlockSize( &nSrcBlockXSize, &nSrcBlockYSize );
+    poDstPrototypeBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+
+    int nMaxBlockXSize = MAX(nBlockXSize, nSrcBlockXSize);
+    int nMaxBlockYSize = MAX(nBlockYSize, nSrcBlockYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Do we want to try and do the operation in a pixel               */
@@ -2745,27 +2751,68 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     int nSwathCols  = nXSize;
     int nSwathLines = nBlockYSize;
 
-    int nMemoryPerLine = nXSize * nPixelSize;
+#define IS_MULTIPLE_OF(x,y) ((y)%(x) == 0)
+#define ROUND_TO(x,y) (((x)/(y))*(y))
+
+    /* if both input and output datasets are tiled, that the tile dimensions */
+    /* are "compatible", try to stick  to a swath dimension that is a multiple */
+    /* of input and output block dimensions */
+    if (nBlockXSize != nXSize && nSrcBlockXSize != nXSize &&
+        IS_MULTIPLE_OF(nBlockXSize, nMaxBlockXSize) &&
+        IS_MULTIPLE_OF(nSrcBlockXSize, nMaxBlockXSize) &&
+        IS_MULTIPLE_OF(nBlockYSize, nMaxBlockYSize) &&
+        IS_MULTIPLE_OF(nSrcBlockYSize, nMaxBlockYSize))
+    {
+        if (((GIntBig)nMaxBlockXSize) * nMaxBlockYSize * nPixelSize <=
+                                                    (GIntBig)nTargetSwathSize)
+        {
+            nSwathCols = nTargetSwathSize / (nMaxBlockYSize * nPixelSize);
+            nSwathCols = ROUND_TO(nSwathCols, nMaxBlockXSize);
+            if (nSwathCols == 0)
+                nSwathCols = nMaxBlockXSize;
+            if (nSwathCols > nXSize)
+                nSwathCols = nXSize;
+            nSwathLines = nMaxBlockYSize;
+
+            if (((GIntBig)nSwathCols) * nSwathLines * nPixelSize >
+                                                    (GIntBig)nTargetSwathSize)
+            {
+                nSwathCols  = nXSize;
+                nSwathLines = nBlockYSize;
+            }
+        }
+    }
+
+    int nMemoryPerCol = nSwathCols * nPixelSize;
 
     /* Do the computation on a big int since for example when translating */
     /* the JPL WMS layer, we overflow 32 bits*/
-    GIntBig nSwathBufSize = (GIntBig)nMemoryPerLine * nSwathLines;
+    GIntBig nSwathBufSize = (GIntBig)nMemoryPerCol * nSwathLines;
     if (nSwathBufSize > (GIntBig)nTargetSwathSize)
     {
-        nSwathLines = nTargetSwathSize / nMemoryPerLine;
+        nSwathLines = nTargetSwathSize / nMemoryPerCol;
         if (nSwathLines == 0)
             nSwathLines = 1;
+
         CPLDebug( "GDAL", 
               "GDALDatasetCopyWholeRaster(): adjusting to %d line swath "
               "since requirement (%d * %d bytes) exceed target swath size (%d bytes) ",
-              nSwathLines, nBlockYSize, nMemoryPerLine, nTargetSwathSize);
+              nSwathLines, nBlockYSize, nMemoryPerCol, nTargetSwathSize);
     }
     // If we are processing single scans, try to handle several at once.
     // If we are handling swaths already, only grow the swath if a row
     // of blocks is substantially less than our target buffer size.
     else if( nSwathLines == 1 
-        || nMemoryPerLine * nSwathLines < nTargetSwathSize / 10 )
-        nSwathLines = MIN(nYSize,MAX(1,nTargetSwathSize/nMemoryPerLine));
+        || nMemoryPerCol * nSwathLines < nTargetSwathSize / 10 )
+    {
+        nSwathLines = MIN(nYSize,MAX(1,nTargetSwathSize/nMemoryPerCol));
+
+        /* If possible try to align to source and target block height */
+        if ((nSwathLines % nMaxBlockYSize) != 0 && nSwathLines > nMaxBlockYSize &&
+            IS_MULTIPLE_OF(nBlockYSize, nMaxBlockYSize) &&
+            IS_MULTIPLE_OF(nSrcBlockYSize, nMaxBlockYSize))
+            nSwathLines = ROUND_TO(nSwathLines, nMaxBlockYSize);
+    }
 
 
     if (bDstIsCompressed)
@@ -2776,7 +2823,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
 
             /* Number of pixels that can be read/write simultaneously */
             nSwathCols = nTargetSwathSize / (nSwathLines * nPixelSize);
-            nSwathCols = (nSwathCols / nBlockXSize) * nBlockXSize;
+            nSwathCols = ROUND_TO(nSwathCols, nBlockXSize);
             if (nSwathCols == 0)
                 nSwathCols = nBlockXSize;
             if (nSwathCols > nXSize)
@@ -2786,10 +2833,10 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
               "GDALDatasetCopyWholeRaster(): because of compression and too high block,\n"
               "use partial width at one time");
         }
-        else
+        else if ((nSwathLines % nBlockYSize) != 0)
         {
             /* Round on a multiple of nBlockYSize */
-            nSwathLines = (nSwathLines / nBlockYSize) * nBlockYSize;
+            nSwathLines = ROUND_TO(nSwathLines, nBlockYSize);
             CPLDebug( "GDAL", 
               "GDALDatasetCopyWholeRaster(): because of compression, \n"
               "round nSwathLines to block height : %d", nSwathLines);
