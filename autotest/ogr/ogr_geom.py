@@ -568,6 +568,18 @@ def ogr_geom_linestring_limits():
     return 'success'
 
 ###############################################################################
+def ogr_geom_coord_round():
+
+    geom = ogr.CreateGeometryFromWkt('POINT(370441.860 5591000.590)')
+    wkt = geom.ExportToWkt()
+    if wkt != 'POINT (370441.86 5591000.59)':
+        gdaltest.post_reason('did not get expected WKT')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -593,6 +605,7 @@ gdaltest_list = [
     ogr_geom_segmentize,
     ogr_geom_flattenTo2D,
     ogr_geom_linestring_limits,
+    ogr_geom_coord_round,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
