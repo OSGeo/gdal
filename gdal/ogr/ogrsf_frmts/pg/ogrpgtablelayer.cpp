@@ -302,7 +302,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
     int            iRecord;
 
     poDefn->Reference();
-    poDefn->SetGeomType( wkbNone );
 
     for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
     {
@@ -326,7 +325,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
             bHasPostGISGeometry = TRUE;
             if (!pszGeomColumn)
                 pszGeomColumn = CPLStrdup(oField.GetNameRef());
-            poDefn->SetGeomType( wkbUnknown );
             continue;
         }
         else if( EQUAL(pszType,"geography") )
@@ -345,7 +343,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
                 if( EQUAL(pszType,"OID") )
                     bWkbAsOid = TRUE;
             }
-            poDefn->SetGeomType( wkbUnknown );
             continue;
         }
 
@@ -470,7 +467,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
     /* no need to issue a new SQL query. Just record the geom type in the layer definition */
     if (bGeometryInformationSet)
     {
-        poDefn->SetGeomType( nGeomType );
+        ;
     }
     // get layer geometry type (for PostGIS dataset)
     else if ( bHasPostGISGeometry || bHasPostGISGeography )
@@ -510,8 +507,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
 
             SetGeometryInformation(pszType, nCoordDimension, nSRSId,
                                    (bHasPostGISGeometry) ? GEOM_TYPE_GEOMETRY : GEOM_TYPE_GEOGRAPHY);
-
-            poDefn->SetGeomType( nGeomType );
 
             bGoOn = FALSE;
         }
@@ -554,6 +549,12 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
       if (nSRSId == -2)
           nSRSId = -1;
     }
+    else if (pszGeomColumn == NULL)
+    {
+        nGeomType = wkbNone;
+    }
+
+    poDefn->SetGeomType( nGeomType );
 
     return poDefn;
 }
@@ -1534,7 +1535,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         osCommand += pszGeom,
         CPLFree( pszGeom );
     }
-    else
+    else if (nGeomType != wkbNone)
     {
         osCommand = "\\N";
     }
