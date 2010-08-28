@@ -59,15 +59,15 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
     {
         i = 0;
         int nCountBeforeDot = 0;
-        int bHasFoundDot = FALSE;
+        int iDotPos = -1;
         while( pszBuffer[i] != '\0' )
         {
             if ((pszBuffer[i] == '.' || pszBuffer[i] == ',') && chDecimalSep != '\0')
             {
-                bHasFoundDot = TRUE;
+                iDotPos = i;
                 pszBuffer[i] = chDecimalSep;
             }
-            else if (!bHasFoundDot && pszBuffer[i] != '-')
+            else if (iDotPos < 0 && pszBuffer[i] != '-')
                 nCountBeforeDot ++;
             i++;
         }
@@ -75,7 +75,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
     /* -------------------------------------------------------------------- */
     /*      Trim trailing 00000x's as they are likely roundoff error.       */
     /* -------------------------------------------------------------------- */
-        if( i > 10)
+        if( i > 10 && iDotPos >=0 )
         {
             if (/* && pszBuffer[i-1] == '1' &&*/
                 pszBuffer[i-2] == '0' 
@@ -86,7 +86,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
             {
                 pszBuffer[--i] = '\0';
             }
-            else if( /* pszBuffer[i-1] == '1' */
+            else if( i - 8 > iDotPos && /* pszBuffer[i-1] == '1' */
                   /* && pszBuffer[i-2] == '0' && */
                     (nCountBeforeDot >= 4 || pszBuffer[i-3] == '0') 
                     && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '0') 
@@ -114,6 +114,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
     /* -------------------------------------------------------------------- */
         if( !bHasTruncated &&
             i > 10 &&
+            iDotPos >= 0 &&
             nPrecision >= 15)
         {
             if (/*pszBuffer[i-1] == '9' && */
@@ -127,7 +128,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
                 bHasTruncated = TRUE;
                 continue;
             }
-            else if (/*pszBuffer[i-1] == '9' && */
+            else if (i - 9 > iDotPos && /*pszBuffer[i-1] == '9' && */
                      /*pszBuffer[i-2] == '9' && */
                     (nCountBeforeDot >= 4 || pszBuffer[i-3] == '9') 
                     && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '9') 
