@@ -630,15 +630,19 @@ void OGRLineString::addSubLineString( const OGRLineString *poOtherLine,
                                       int nStartVertex, int nEndVertex )
 
 {
+    int nOtherLineNumPoints = poOtherLine->getNumPoints();
+    if (nOtherLineNumPoints == 0)
+        return;
+
 /* -------------------------------------------------------------------- */
 /*      Do a bit of argument defaulting and validation.                 */
 /* -------------------------------------------------------------------- */
     if( nEndVertex == -1 )
-        nEndVertex = poOtherLine->getNumPoints() - 1;
+        nEndVertex = nOtherLineNumPoints - 1;
 
     if( nStartVertex < 0 || nEndVertex < 0 
-        || nStartVertex >= poOtherLine->getNumPoints() 
-        || nEndVertex >= poOtherLine->getNumPoints() )
+        || nStartVertex >= nOtherLineNumPoints 
+        || nEndVertex >= nOtherLineNumPoints )
     {
         CPLAssert( FALSE );
         return;
