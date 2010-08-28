@@ -49,7 +49,7 @@ int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
 const char * GDALDefaultCSVFilename( const char *pszBasename );
 GUInt32 HalfToFloat( GUInt16 );
 GUInt32 TripleToFloat( GUInt32 );
-void    GTiffOneTimeInit();
+int    GTiffOneTimeInit();
 void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
 CPL_C_END
 
@@ -4718,7 +4718,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( EQUALN(pszFilename,"GTIFF_DIR:",strlen("GTIFF_DIR:")) )
         return OpenDir( poOpenInfo );
 
-    GTiffOneTimeInit();
+    if (!GTiffOneTimeInit())
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -5006,7 +5007,8 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     TIFF	*hTIFF;
 
-    GTiffOneTimeInit();
+    if (!GTiffOneTimeInit())
+        return NULL;
 
     hTIFF = VSI_TIFFOpen( pszFilename, "r" );
     if( hTIFF == NULL )
@@ -6007,7 +6009,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     const char          *pszProfile;
     int                 bCreateBigTIFF = FALSE;
 
-    GTiffOneTimeInit();
+    if (!GTiffOneTimeInit())
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Blow on a few errors.                                           */
@@ -7979,16 +7982,45 @@ static void GTiffTagExtender(TIFF *tif)
 /*      unnecessary paging in of the library for GDAL apps that         */
 /*      don't use it.                                                   */
 /************************************************************************/
+#if defined(HAVE_DLFCN_H) && !defined(WIN32)
+#include <dlfcn.h>
+#endif
 
-void GTiffOneTimeInit()
+int GTiffOneTimeInit()
 
 {
+    static int bInitIsOk = TRUE;
     static int bOneTimeInitDone = FALSE;
     
     if( bOneTimeInitDone )
-        return;
+        return bInitIsOk;
 
     bOneTimeInitDone = TRUE;
+
+    /* This is a frequent configuration error that is difficult to track down */
+    /* for people unaware of the issue : GDAL built against internal libtiff (4.X) */
+    /* but used by an application that links with external libtiff (3.X) */
+    /* Note: on my conf, the order that cause GDAL to crash - and that is detected */
+    /* by the following code - is "-ltiff -lgdal". "-lgdal -ltiff" works for the */
+    /* GTiff driver but probably breaks the application that believes it uses libtiff 3.X */
+    /* but we cannot detect that... */
+#ifdef BIGTIFF_SUPPORT
+#if defined(HAVE_DLFCN_H) && !defined(WIN32)
+    const char* (*pfnVersion)(void);
+    pfnVersion = (const char* (*)(void)) dlsym(RTLD_DEFAULT, "TIFFGetVersion");
+    if (pfnVersion)
+    {
+        const char* pszVersion = pfnVersion();
+        if (pszVersion && strstr(pszVersion, "Version 3.") != NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "WARNING ! libtiff version mismatch : You're linking against libtiff 3.X but GDAL has been compiled against libtiff >= 4.0.0");
+            bInitIsOk = FALSE;
+            return FALSE;
+        }
+    }
+#endif
+#endif
 
     _ParentExtender = TIFFSetTagExtender(GTiffTagExtender);
 
@@ -7998,6 +8030,8 @@ void GTiffOneTimeInit()
     // This only really needed if we are linked to an external libgeotiff
     // with its own (lame) file searching logic. 
     SetCSVFilenameHook( GDALDefaultCSVFilename );
+
+    return TRUE;
 }
 
 /************************************************************************/
