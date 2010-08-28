@@ -179,11 +179,11 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 #ifdef DEBUG
     for (unsigned int i=0; i < MSG_NUM_CHANNELS; i++) {
         if (_calibration[i].cal_slope < 0 || _calibration[i].cal_slope > 0.4) {
-            printf("Warning: calibration slope (%lf) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_slope);
+            printf("Warning: calibration slope (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_slope);
 
         }
         if (_calibration[i].cal_offset > 0 || _calibration[i].cal_offset < -20) {
-            printf("Warning: calibration offset (%lf) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_offset);
+            printf("Warning: calibration offset (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_offset);
         }
     }
 #endif
