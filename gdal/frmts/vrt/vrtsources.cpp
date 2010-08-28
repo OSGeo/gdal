@@ -1116,7 +1116,12 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     }
     else
     {
-        pafData = (float *) CPLMalloc(nOutXSize*nOutYSize*sizeof(float));
+        pafData = (float *) VSIMalloc3(nOutXSize,nOutYSize,sizeof(float));
+        if (pafData == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            return CE_Failure;
+        }
         eErr = poRasterBand->RasterIO( GF_Read, 
                                        nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                        pafData, nOutXSize, nOutYSize, GDT_Float32,

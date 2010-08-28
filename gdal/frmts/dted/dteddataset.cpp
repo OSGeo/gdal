@@ -695,7 +695,13 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GInt16      *panData;
 
     panData = (GInt16 *) 
-        CPLMalloc(sizeof(GInt16) * psDTED->nXSize * psDTED->nYSize);
+        VSIMalloc(sizeof(GInt16) * psDTED->nXSize * psDTED->nYSize);
+    if (panData == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        DTEDClose(psDTED);
+        return NULL;
+    }
 
     for( int iY = 0; iY < psDTED->nYSize; iY++ )
     {
