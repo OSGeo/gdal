@@ -45,7 +45,7 @@ CPL_CVSID("$Id$");
 #endif
 
 CPL_C_START
-void    GTiffOneTimeInit();
+int    GTiffOneTimeInit();
 void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
 CPL_C_END
 
@@ -220,7 +220,8 @@ GTIFFBuildOverviews( const char * pszFilename,
     if( nBands == 0 || nOverviews == 0 )
         return CE_None;
 
-    GTiffOneTimeInit();
+    if (!GTiffOneTimeInit())
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Verify that the list of bands is suitable for emitting in       */
