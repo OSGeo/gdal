@@ -45,7 +45,6 @@
 CPL_CVSID("$Id$")
 
 CPL_C_START
-void GTiffOneTimeInit();
 int CPL_DLL VSIFCloseL( FILE * );
 int CPL_DLL VSIUnlink( const char * );
 FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename, 
