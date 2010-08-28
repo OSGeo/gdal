@@ -128,6 +128,8 @@ class OGRVRTLayer : public OGRLayer
     virtual OGRErr      SetFeature( OGRFeature* poFeature );
 
     virtual OGRErr      DeleteFeature( long nFID );
+
+    virtual OGRErr      SyncToDisk();
 };
 
 /************************************************************************/
