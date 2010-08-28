@@ -1387,6 +1387,15 @@ void OGRVRTLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 }
 
 /************************************************************************/
+/*                             SyncToDisk()                             */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::SyncToDisk()
+{
+    return poSrcLayer->SyncToDisk();
+}
+
+/************************************************************************/
 /*                         createFromShapeBin()                         */
 /*                                                                      */
 /*      Translate shapefile binary representation to an OGR             */
