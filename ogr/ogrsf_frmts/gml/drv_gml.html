@@ -28,15 +28,17 @@ It is possible to get (latitude, longitude) order and SRS with axis order
 by setting the configuration option <b>GML_INVERT_AXIS_ORDER_IF_LAT_LONG</b>
 to <b>NO</b>.<p>
 
-In contrast to most GML readers, the OGR GML reader makes no effort to read
-the format XML Schema definition of the feature classes in a GML file.
-Instead it attempts to automatically discover them and their associated
-properties by scanning the file and looking for "known" gml objects in the
-gml namespace to determine the organization.  While this approach is error
-prone, it has the advantage of working for GML files even if the associated
-schema (.xsd) file has been lost.<p>
+In contrast to most GML readers, the OGR GML reader does not require
+the presence of an XML Schema definition of the feature classes (file with .xsd
+extension) to be able to read the GML file. If the .xsd file is absent or
+OGR is not able to parse it, the driver attempts to automatically discover
+the feature classes and their associated properties by scanning the file and
+looking for "known" gml objects in the gml namespace to determine the organization.
+While this approach is error prone, it has the advantage of working for GML files
+even if the associated schema (.xsd) file has been lost.<p>
 
-The first time a GML file is opened it is completely scanned in order to
+The first time a GML file is opened, if the associated .xsd is absent or could not been
+parsed correctly, it is completely scanned in order to
 determine the set of featuretypes, the attributes associated with each and
 other dataset level information.  This information is stored in a .gfs file
 with the same basename as the target gml file.  Subsequent accesses to the
