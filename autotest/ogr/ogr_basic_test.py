@@ -362,6 +362,17 @@ def ogr_basic_7():
     return 'success'
 
 ###############################################################################
+# Issue several RegisterAll() to check that OGR drivers are good citizens
+
+def ogr_basic_8():
+
+    ogr.RegisterAll()
+    ogr.RegisterAll()
+    ogr.RegisterAll()
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -379,6 +390,7 @@ gdaltest_list = [
     ogr_basic_5,
     ogr_basic_6,
     ogr_basic_7,
+    ogr_basic_8,
     ogr_basic_cleanup ]
 
 if __name__ == '__main__':

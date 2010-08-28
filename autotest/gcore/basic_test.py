@@ -84,11 +84,22 @@ def basic_test_5():
     else:
         return 'fail'
 
+###############################################################################
+# Issue several AllRegister() to check that GDAL drivers are good citizens
+
+def basic_test_6():
+    gdal.AllRegister()
+    gdal.AllRegister()
+    gdal.AllRegister()
+
+    return 'success'
+
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
                   basic_test_3,
                   basic_test_4,
-                  basic_test_5 ]
+                  basic_test_5,
+                  basic_test_6]
 
 
 if __name__ == '__main__':
