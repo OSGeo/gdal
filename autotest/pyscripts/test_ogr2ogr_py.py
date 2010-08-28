@@ -694,7 +694,12 @@ def test_ogr2ogr_py_21():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
         return 'skip'
-        
+
+    try:
+        os.remove('tmp/testogr2ogr21.gtm')
+    except:
+        pass
+
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', \
         '-f GPSTrackMaker tmp/testogr2ogr21.gtm ../utilities/data/dataforogr2ogr21.csv ' +
         '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')

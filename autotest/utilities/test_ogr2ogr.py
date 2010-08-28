@@ -673,6 +673,11 @@ def test_ogr2ogr_20():
 def test_ogr2ogr_21():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
+
+    try:
+        os.remove('tmp/testogr2ogr21.gtm')
+    except:
+        pass
         
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
         ' -f GPSTrackMaker tmp/testogr2ogr21.gtm data/dataforogr2ogr21.csv ' +
