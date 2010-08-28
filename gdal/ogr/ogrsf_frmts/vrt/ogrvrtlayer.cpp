@@ -192,9 +192,8 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory,
 
     bSrcDSShared = CSLTestBoolean( pszSharedSetting );
 
-    // update mode doesn't make sense for a shared datasource or if we
-    // have a SrcSQL element
-    if (bSrcDSShared || CPLGetXMLValue( psLTree, "SrcSQL", NULL ) != NULL)
+    // update mode doesn't make sense if we have a SrcSQL element
+    if (CPLGetXMLValue( psLTree, "SrcSQL", NULL ) != NULL)
         bUpdate = FALSE;
 
 /* -------------------------------------------------------------------- */
