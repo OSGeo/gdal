@@ -372,6 +372,11 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #GEOS_CFLAGS = -I$(GEOS_DIR)/capi -I$(GEOS_DIR)/source/headers -DHAVE_GEOS
 #GEOS_LIB     = $(GEOS_DIR)/source/geos_c_i.lib
 
+# Uncomment for SOSI support
+#SOSI_ENABLED = YES
+#SOSI_INC_DIR = e:/sosi
+#SOSI_LIBS = e:/sosi/FYBA.lib e:/sosi/GM.lib e:/sosi/UT.lib
+
 # Any extra libraries needed on this platform?
 # Uncomment first line and comment second line for KMLSUPEROVERLAY plugin
 #ADD_LIBS	= $(MINIZIP_LIBRARY)
@@ -493,7 +498,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(DWG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) \
-	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS)
+	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS)
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c

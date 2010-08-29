@@ -1,0 +1,15 @@
+
+OBJ	=	ogrsosidriver.obj ogrsosidatasource.obj ogrsosilayer.obj fyba_melding.obj \
+
+EXTRAFLAGS =	-I.. -I..\.. -I$(SOSI_INC_DIR)
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
