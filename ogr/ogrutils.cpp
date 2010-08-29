@@ -124,7 +124,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
                 && pszBuffer[i-5] == '9' 
                 && pszBuffer[i-6] == '9' )
             {
-                snprintf(pszBuffer, nBufferLen, "%.10f", dfVal);
+                snprintf(pszBuffer, nBufferLen, "%.9f", dfVal);
                 bHasTruncated = TRUE;
                 continue;
             }
