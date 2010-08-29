@@ -185,5 +185,7 @@ void OGRRegisterAll()
 #ifdef WFS_ENABLED
     RegisterOGRWFS();
 #endif
+#ifdef SOSI_ENABLED 
+	RegisterOGRSOSI(); 
+#endif 
 } /* OGRRegisterAll */
-
