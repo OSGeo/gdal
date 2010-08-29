@@ -426,6 +426,11 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
 /*      multi-part queries with ranges.                                 */
 /************************************************************************/
 
+static int CompareLong(const void *a, const void *b)
+{
+    return (*(const long *)a) - (*(const long *)b);
+}
+
 long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer, 
                                                OGRErr *peErr )
 
@@ -475,7 +480,18 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
         return NULL;
     }
 
-    return poIndex->GetAllMatches( &sValue );
+    long *panFIDs = poIndex->GetAllMatches( &sValue );
+    int nFIDCount = 0;
+    for( nFIDCount = 0; panFIDs[nFIDCount] != OGRNullFID; nFIDCount++ )
+    {
+        ;
+    }
+    if (nFIDCount > 1)
+    {
+        /* the returned FIDs are expected to be in sorted order */
+        qsort(panFIDs, nFIDCount, sizeof(long), CompareLong);
+    }
+    return panFIDs;
 }
 
 /************************************************************************/
