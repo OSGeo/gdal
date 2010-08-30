@@ -2665,7 +2665,13 @@ void NITFDataset::InitializeCGMMetadata()
 /* -------------------------------------------------------------------- */
         char *pabyCGMData, *pszEscapedCGMData;
 
-        pabyCGMData = (char *) CPLCalloc(1,(size_t)psSegment->nSegmentSize);
+        pabyCGMData = (char *) VSICalloc(1,(size_t)psSegment->nSegmentSize);
+        if (pabyCGMData == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            CSLDestroy( papszCGMMetadata );
+            return;
+        }
         if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
                        SEEK_SET ) != 0 
             || VSIFReadL( pabyCGMData, 1, (size_t)psSegment->nSegmentSize, 
@@ -2676,12 +2682,20 @@ void NITFDataset::InitializeCGMMetadata()
                       psSegment->nSegmentSize,
                       psSegment->nSegmentStart );
             CPLFree(pabyCGMData);
+            CSLDestroy( papszCGMMetadata );
             return;
         }
 
         pszEscapedCGMData = CPLEscapeString( pabyCGMData, 
                                              (int)psSegment->nSegmentSize, 
                                              CPLES_BackslashQuotable );
+        if (pszEscapedCGMData == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            CPLFree(pabyCGMData);
+            CSLDestroy( papszCGMMetadata );
+            return;
+        }
 
         papszCGMMetadata = 
             CSLSetNameValue( papszCGMMetadata, 
@@ -2759,7 +2773,12 @@ void NITFDataset::InitializeTextMetadata()
         char *pabyTextData;
 
         /* Allocate one extra byte for the NULL terminating character */
-        pabyTextData = (char *) CPLCalloc(1,(size_t)psSegment->nSegmentSize+1);
+        pabyTextData = (char *) VSICalloc(1,(size_t)psSegment->nSegmentSize+1);
+        if (pabyTextData == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            return;
+        }
         if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
                        SEEK_SET ) != 0 
             || VSIFReadL( pabyTextData, 1, (size_t)psSegment->nSegmentSize, 
@@ -2855,6 +2874,11 @@ void NITFDataset::InitializeTREMetadata()
             pszEscapedData = CPLEscapeString( pszTREData + 11,
                                               nThisTRESize,
                                               CPLES_BackslashQuotable );
+            if (pszEscapedData == NULL)
+            {
+                CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+                return;
+            }
 
             oSpecialMD.SetMetadataItem( szTag, pszEscapedData, "TRE" );
             CPLFree( pszEscapedData );
@@ -2889,6 +2913,13 @@ void NITFDataset::InitializeTREMetadata()
         {
             char* pszEscapedData = CPLEscapeString( pabyTREData, nThisTRESize,
                                                 CPLES_BackslashQuotable );
+            if (pszEscapedData == NULL)
+            {
+                CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+                NITFDESFreeTREData(pabyTREData);
+                NITFDESDeaccess(psDES);
+                return;
+            }
 
             // trim white off tag. 
             while( strlen(szTREName) > 0 && szTREName[strlen(szTREName)-1] == ' ' )
@@ -3218,8 +3249,13 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 /*      Allocate offset array                                           */
 /* -------------------------------------------------------------------- */
     panJPEGBlockOffset = (GIntBig *) 
-        CPLCalloc(sizeof(GIntBig),
+        VSICalloc(sizeof(GIntBig),
                   psImage->nBlocksPerRow*psImage->nBlocksPerColumn);
+    if (panJPEGBlockOffset == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        return CE_Failure;
+    }
     panJPEGBlockOffset[0] = nJPEGStart;
 
     if ( psImage->nBlocksPerRow * psImage->nBlocksPerColumn == 1)
@@ -3333,8 +3369,13 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
 /*      the whole file. We just use the psImage->panBlockStart table    */
 /* -------------------------------------------------------------------- */
             panJPEGBlockOffset = (GIntBig *) 
-                CPLCalloc(sizeof(GIntBig),
+                VSICalloc(sizeof(GIntBig),
                         psImage->nBlocksPerRow*psImage->nBlocksPerColumn);
+            if (panJPEGBlockOffset == NULL)
+            {
+                CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+                return CE_Failure;
+            }
             int i;
             for (i=0;i< psImage->nBlocksPerRow*psImage->nBlocksPerColumn;i++)
             {
@@ -3373,8 +3414,13 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
     {
         /* Allocate enough memory to hold 12bit JPEG data */
         pabyJPEGBlock = (GByte *) 
-            CPLCalloc(psImage->nBands,
+            VSICalloc(psImage->nBands,
                       psImage->nBlockWidth * psImage->nBlockHeight * 2);
+        if (pabyJPEGBlock == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            return CE_Failure;
+        }
     }
 
 
@@ -3681,6 +3727,12 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
     if( poJ2KDriver )
     {
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
+        if (psFile == NULL)
+        {
+            CSLDestroy(papszTextMD);
+            CSLDestroy(papszCgmMD);
+            return NULL;
+        }
         GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
 
         CPLString osDSName;
@@ -4025,6 +4077,13 @@ NITFDataset::NITFCreateCopy(
     if( bJPEG2000 )
     {
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
+        if (psFile == NULL)
+        {
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
+            return NULL;
+        }
+
         GDALDataset *poJ2KDataset = NULL;
         GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
         CPLString osDSName;
@@ -4097,6 +4156,12 @@ NITFDataset::NITFCreateCopy(
     {
 #ifdef JPEG_SUPPORTED
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
+        if (psFile == NULL)
+        {
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
+            return NULL;
+        }
         GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
         int bSuccess;
         
