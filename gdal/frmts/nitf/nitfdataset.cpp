@@ -1206,9 +1206,14 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
         }
         else
         {
-            poDS->poJ2KDataset = (GDALPamDataset *) 
-                GDALOpen( osDSName, GA_ReadOnly );
-                
+            /* We explicitely list the allowed drivers to avoid hostile content */
+            /* to be opened by a random driver, and also to make sure that */
+            /* a future new JPEG2000 compatible driver derives from GDALPamDataset */
+            static const char * const apszDrivers[] = { "JP2KAK", "JP2ECW", "JP2MRSID",
+                                          "JPEG2000", "JP2OPENJPEG", NULL };
+            poDS->poJ2KDataset = (GDALPamDataset *)
+                        GDALOpenInternal( osDSName, GA_ReadOnly, apszDrivers);
+
             if( poDS->poJ2KDataset == NULL )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1217,7 +1222,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
                 delete poDS;
                 return NULL;
             }
-            
+
             poDS->poJ2KDataset->SetPamFlags( 
                 poDS->poJ2KDataset->GetPamFlags() | GPF_NOSAVE );
         }
