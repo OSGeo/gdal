@@ -207,12 +207,20 @@ class CPL_DLL GDALDefaultOverviews
 /*                             GDALDataset                              */
 /* ******************************************************************** */
 
+/* Internal method for now. Might be subject to later revisions */
+GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
+                               const char* const * papszAllowedDrivers);
+
 //! A set of associated raster bands, usually from one file.
 
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
     friend GDALDatasetH CPL_STDCALL GDALOpen( const char *, GDALAccess);
     friend GDALDatasetH CPL_STDCALL GDALOpenShared( const char *, GDALAccess);
+
+    /* Internal method for now. Might be subject to later revisions */
+    friend GDALDatasetH GDALOpenInternal( const char *, GDALAccess, const char* const * papszAllowedDrivers);
+
     friend class GDALDriver;
     friend class GDALDefaultOverviews;
     friend class GDALProxyDataset;
