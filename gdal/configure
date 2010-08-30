@@ -1671,7 +1671,7 @@ Optional Packages:
   --with-unix-stdio-64=ARG Utilize 64 stdio api (yes/no)
   --with-hide-internal-symbols=ARG Try to hide internal symbols (ARG=yes/no)
   --with-local=dir      Include /usr/local or other local tree for INCLUDE/LIBS
-  --with-threads=linkoptInclude thread safe support
+  --with-threads=ARG    Include thread safe support (ARG=yes(default), no or linkopt)
   --with-libz=ARG       Include libz support (ARG=internal or libz directory)
   --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=path to
                           pg_config)
@@ -16501,7 +16501,7 @@ if test "${with_threads+set}" = set; then :
 fi
 
 
-if test "$with_threads" = "yes" ; then
+if test "$with_threads" = "yes" -o "$with_threads" = "" ; then
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lpthread" >&5
 $as_echo_n "checking for pthread_create in -lpthread... " >&6; }
@@ -16587,7 +16587,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
   PTHREAD_ENABLED="yes"
 
-elif test -n "$with_threads" -a "$with_threads" != "no" ; then
+elif test "$with_threads" != "no" ; then
 
   THREAD_FLAG=CPL_MULTIPROC_PTHREAD
   THREAD_LIB="$with_threads"
