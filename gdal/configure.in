@@ -273,9 +273,9 @@ THREAD_FLAG=""
 PTHREAD_ENABLED="no"
 
 AC_ARG_WITH(threads,
-[  --with-threads[=linkopt]Include thread safe support],,)
+[  --with-threads[=ARG]    Include thread safe support (ARG=yes(default), no or linkopt)],,)
 
-if test "$with_threads" = "yes" ; then
+if test "$with_threads" = "yes" -o "$with_threads" = "" ; then
 
   AC_CHECK_LIB(pthread,pthread_create,THREAD_FLAG=CPL_MULTIPROC_PTHREAD,,,)
 
@@ -302,7 +302,7 @@ if test "$with_threads" = "yes" ; then
 
   PTHREAD_ENABLED="yes"
 
-elif test -n "$with_threads" -a "$with_threads" != "no" ; then
+elif test "$with_threads" != "no" ; then
 
   THREAD_FLAG=CPL_MULTIPROC_PTHREAD
   THREAD_LIB="$with_threads"  
