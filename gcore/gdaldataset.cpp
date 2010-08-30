@@ -2149,8 +2149,16 @@ GDALDatasetH CPL_STDCALL
 GDALOpen( const char * pszFilename, GDALAccess eAccess )
 
 {
+    return GDALOpenInternal(pszFilename, eAccess, NULL);
+}
+
+/* The drivers listed in papszAllowedDrivers can be in any order */
+/* Only the order of registration will be taken into account */
+GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
+                               const char* const * papszAllowedDrivers)
+{
     VALIDATE_POINTER1( pszFilename, "GDALOpen", NULL );
-        
+
     int         iDriver;
     GDALDriverManager *poDM = GetGDALDriverManager();
     GDALOpenInfo oOpenInfo( pszFilename, eAccess );
@@ -2164,6 +2172,10 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
         GDALDriver      *poDriver = poDM->GetDriver( iDriver );
         GDALDataset     *poDS;
 
+        if (papszAllowedDrivers != NULL &&
+            CSLFindString((char**)papszAllowedDrivers, GDALGetDriverShortName(poDriver)) == -1)
+            continue;
+
         if ( poDriver->pfnOpen == NULL )
             continue;
 
@@ -2176,7 +2188,7 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
             if( poDS->poDriver == NULL )
                 poDS->poDriver = poDriver;
 
-            
+
             if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
                 CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
                           pszFilename, poDS, poDriver->GetDescription(),
@@ -2201,7 +2213,7 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
                   "`%s' does not exist in the file system,\n"
                   "and is not recognised as a supported dataset name.\n",
                   pszFilename );
-              
+
     return NULL;
 }
 
