@@ -483,7 +483,9 @@ EPSGGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
 /* -------------------------------------------------------------------- */
 /*      Use a special short cut for Greenwich, since it is so common.   */
 /* -------------------------------------------------------------------- */
-    if( nPMCode == 7022 /* PM_Greenwich */ )
+    /* FIXME? Where does 7022 come from ? Let's keep it just in case */
+    /* 8901 is the official current code for Greenwich */
+    if( nPMCode == 7022 /* PM_Greenwich */ || nPMCode == 8901 )
     {
         if( pdfOffset != NULL )
             *pdfOffset = 0.0;
