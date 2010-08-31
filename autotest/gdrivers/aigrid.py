@@ -59,7 +59,7 @@ def aigrid_2():
         return 'fail'
 
     prj = ds.GetProjection()
-    if prj != 'PROJCS["UTM Zone 55, Southern Hemisphere",GEOGCS["GDA94",DATUM["Geocentric_Datum_of_Australia_1994",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6283"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4283"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",147],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["METERS",1]]':
+    if prj.find('PROJCS["UTM Zone 55, Southern Hemisphere",GEOGCS["GDA94",DATUM["Geocentric_Datum_of_Australia_1994"') == -1:
         gdaltest.post_reason( 'Projection does not match expected:\n%s' % prj )
         return 'fail'
 

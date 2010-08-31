@@ -238,17 +238,14 @@ def osr_basic_6():
 
     # Without version
     wkt_1 = osr.GetUserInputAsWKT( 'urn:x-ogc:def:crs:EPSG::4326' )
-    wkt_2 = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]"""
-    if wkt_1 != wkt_2:
+    if wkt_1.find('GEOGCS["WGS 84",DATUM["WGS_1984"') == -1 or wkt_1.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') == -1:
         print(wkt_1)
-        print(wkt_2)
         gdaltest.post_reason( 'EPSG:4326 urn lookup not as expected.' )
         return 'fail'
 
     # With a version
     wkt_1 = osr.GetUserInputAsWKT( 'urn:x-ogc:def:crs:EPSG:6.6:4326' )
-    wkt_2 = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]"""
-    if wkt_1 != wkt_2:
+    if wkt_1.find('GEOGCS["WGS 84",DATUM["WGS_1984"') == -1 or wkt_1.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') == -1:
         print(wkt_1)
         print(wkt_2)
         gdaltest.post_reason( 'EPSG:4326 urn lookup not as expected.' )
@@ -258,8 +255,7 @@ def osr_basic_6():
     # of http://www.opengeospatial.org/ogcUrnPolicy, but found quite often in the wild
     # especially in content returned by GeoServer
     wkt_1 = osr.GetUserInputAsWKT( 'urn:x-ogc:def:crs:EPSG:4326' )
-    wkt_2 = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]"""
-    if wkt_1 != wkt_2:
+    if wkt_1.find('GEOGCS["WGS 84",DATUM["WGS_1984"') == -1 or wkt_1.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') == -1:
         print(wkt_1)
         print(wkt_2)
         gdaltest.post_reason( 'EPSG:4326 urn lookup not as expected.' )
