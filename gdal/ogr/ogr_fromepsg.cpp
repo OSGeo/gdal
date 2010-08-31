@@ -203,8 +203,24 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
 {
     const char  *pszUOMName = NULL;
     double      dfInDegrees = 1.0;
-    const char *pszFilename = CSVFilename( "unit_of_measure.csv" );
+    const char *pszFilename;
     char        szSearchKey[24];
+
+    /* We do a special override of some of the DMS formats name */
+    /* This will also solve accuracy problems when computing */
+    /* the dfInDegree value from the CSV values (#3643) */
+    if( nUOMAngleCode == 9102 || nUOMAngleCode == 9107
+        || nUOMAngleCode == 9108 || nUOMAngleCode == 9110
+        || nUOMAngleCode == 9122 )
+    {
+        if( ppszUOMName != NULL )
+            *ppszUOMName = CPLStrdup("degree");
+        if( pdfInDegrees != NULL )
+            *pdfInDegrees = 1.0;
+        return TRUE;
+    }
+
+    pszFilename = CSVFilename( "unit_of_measure.csv" );
 
     sprintf( szSearchKey, "%d", nUOMAngleCode );
     pszUOMName = CSVGetField( pszFilename,
@@ -234,12 +250,6 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
         if( dfFactorC != 0.0 )
             dfInDegrees = (dfFactorB / dfFactorC) * (180.0 / PI);
 
-        /* We do a special override of some of the DMS formats name */
-        if( nUOMAngleCode == 9102 || nUOMAngleCode == 9107
-            || nUOMAngleCode == 9108 || nUOMAngleCode == 9110 
-            || nUOMAngleCode == 9122 )
-            pszUOMName = "degree";
-
         // For some reason, (FactorB) is not very precise in EPSG, use
         // a more exact form for grads.
         if( nUOMAngleCode == 9105 )
@@ -256,15 +266,6 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
           case 9101:
             pszUOMName = "radian";
             dfInDegrees = 180.0 / PI;
-            break;
-        
-          case 9102:
-          case 9107:
-          case 9108:
-          case 9110:
-          case 9122:
-            pszUOMName = "degree";
-            dfInDegrees = 1.0;
             break;
 
           case 9103:
