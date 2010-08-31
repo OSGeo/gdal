@@ -74,7 +74,8 @@ void OGREPSGDatumNameMassage( char ** ppszDatum )
 /* -------------------------------------------------------------------- */
     for( i = 0; pszDatum[i] != '\0'; i++ )
     {
-        if( !(pszDatum[i] >= 'A' && pszDatum[i] <= 'Z')
+        if( pszDatum[i] != '+'
+            && !(pszDatum[i] >= 'A' && pszDatum[i] <= 'Z')
             && !(pszDatum[i] >= 'a' && pszDatum[i] <= 'z')
             && !(pszDatum[i] >= '0' && pszDatum[i] <= '9') )
         {
