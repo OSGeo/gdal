@@ -660,9 +660,8 @@ def ogr_gml_17():
     ds = ogr.Open('data/gnis_pop_100.gml')
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
-    expected_wgs84 = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""
     got_wkt = sr.ExportToWkt()
-    if got_wkt != expected_wgs84:
+    if got_wkt.find('GEOGCS["WGS 84"') == -1:
         gdaltest.post_reason('did not get expected SRS')
         print(got_wkt)
         return 'fail'
@@ -688,9 +687,8 @@ def ogr_gml_18():
     ds = ogr.Open('data/gnis_pop_110.gml')
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
-    expected_wgs84 = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""
     got_wkt = sr.ExportToWkt()
-    if got_wkt != expected_wgs84:
+    if got_wkt.find('GEOGCS["WGS 84"') == -1:
         gdaltest.post_reason('did not get expected SRS')
         print(got_wkt)
         return 'fail'
@@ -725,9 +723,9 @@ def ogr_gml_19():
 
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
-    expected_wgs84_latlong = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]"""
     got_wkt = sr.ExportToWkt()
-    if got_wkt != expected_wgs84_latlong:
+    if got_wkt.find('GEOGCS["WGS 84"') == -1 or \
+       got_wkt.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') == -1:
         gdaltest.post_reason('did not get expected SRS')
         print(got_wkt)
         return 'fail'
