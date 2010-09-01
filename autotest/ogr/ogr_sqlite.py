@@ -848,7 +848,7 @@ def ogr_sqlite_17():
     if feat.GetFieldAsString('ref_sys_name') != 'WGS 84':
         feat.DumpReadable()
         return 'fail'
-    if feat.GetFieldAsString('proj4text').find('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs') == -1:
+    if feat.GetFieldAsString('proj4text').find('+proj=longlat +datum=WGS84 +no_defs') == -1:
         feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet( sql_lyr )
