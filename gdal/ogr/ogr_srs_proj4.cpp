@@ -1892,12 +1892,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 //        pszPROJ4Ellipse = "GRS80:+datum=nad83";       /* NAD 83 */
         pszPROJ4Ellipse = "GRS80";
     }
-    
+
+    char szEllipseDef[128];
+
     if( pszPROJ4Ellipse == NULL )
-        sprintf( szProj4+strlen(szProj4), "+a=%.16g +b=%.16g ",
+        sprintf( szEllipseDef, "+a=%.16g +b=%.16g ",
                  GetSemiMajor(), GetSemiMinor() );
     else
-        sprintf( szProj4+strlen(szProj4), "+ellps=%s ",
+        sprintf( szEllipseDef, "+ellps=%s ",
                  pszPROJ4Ellipse );
 
 /* -------------------------------------------------------------------- */
@@ -1910,6 +1912,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     const char *pszAuthority;
     int nEPSGGeogCS = -1;
     const char *pszGeogCSAuthority;
+    const char *pszProj4Grids = GetExtension( "DATUM", "PROJ4_GRIDS" );
 
     pszAuthority = GetAuthorityName( "DATUM" );
 
@@ -1938,10 +1941,19 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         /* nothing */
     }
 
-    if( pszPROJ4Datum == NULL || CSLTestBoolean(CPLGetConfigOption("OVERRIDE_PROJ_DATUM_WITH_TOWGS84", "YES")) )
+    if( pszProj4Grids != NULL )
     {
-        const char *pszProj4Grids = GetExtension( "DATUM", "PROJ4_GRIDS" );
+        SAFE_PROJ4_STRCAT( szEllipseDef );
+        szEllipseDef[0] = '\0';
+        SAFE_PROJ4_STRCAT( "+nadgrids=" );
+        SAFE_PROJ4_STRCAT( pszProj4Grids );
+        SAFE_PROJ4_STRCAT(  " " );
+        pszPROJ4Datum = NULL;
+    }
 
+    if( pszPROJ4Datum == NULL 
+        || CSLTestBoolean(CPLGetConfigOption("OVERRIDE_PROJ_DATUM_WITH_TOWGS84", "YES")) )
+    {
         if( poTOWGS84 != NULL )
         {
             int iChild;
@@ -1952,6 +1964,8 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                         && EQUAL(poTOWGS84->GetChild(5)->GetValue(),"")
                         && EQUAL(poTOWGS84->GetChild(6)->GetValue(),""))) )
             {
+                SAFE_PROJ4_STRCAT( szEllipseDef );
+                szEllipseDef[0] = '\0';
                 SAFE_PROJ4_STRCAT( "+towgs84=");
                 for(iChild = 0; iChild < 3; iChild ++)
                 {
@@ -1963,6 +1977,8 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
             }
             else if( poTOWGS84->GetChildCount() >= 7)
             {
+                SAFE_PROJ4_STRCAT( szEllipseDef );
+                szEllipseDef[0] = '\0';
                 SAFE_PROJ4_STRCAT( "+towgs84=");
                 for(iChild = 0; iChild < 7; iChild ++)
                 {
@@ -1974,14 +1990,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
             }
         }
         
-        else if( pszProj4Grids != NULL )
-        {
-            SAFE_PROJ4_STRCAT( "+nadgrids=" );
-            SAFE_PROJ4_STRCAT( pszProj4Grids );
-            SAFE_PROJ4_STRCAT(  " " );
-        }
-
-        else if( nEPSGGeogCS != -1 )
+        // If we don't know the datum, trying looking up TOWGS84 parameters
+        // based on the EPSG GCS code.
+        else if( nEPSGGeogCS != -1 && pszPROJ4Datum == NULL )
         {
             double padfTransform[7];
             if( EPSGGetWGS84Transform( nEPSGGeogCS, padfTransform ) )
@@ -1994,6 +2005,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                          padfTransform[4],
                          padfTransform[5],
                          padfTransform[6] );
+                SAFE_PROJ4_STRCAT( szEllipseDef );
+                szEllipseDef[0] = '\0';
+
                 SAFE_PROJ4_STRCAT( szTOWGS84 );
                 SAFE_PROJ4_STRCAT( " " );
                 pszPROJ4Datum = NULL;
@@ -2006,6 +2020,12 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         SAFE_PROJ4_STRCAT( "+datum=" );
         SAFE_PROJ4_STRCAT( pszPROJ4Datum );
         SAFE_PROJ4_STRCAT( " " );
+    }
+    else // The ellipsedef may already have been appended and will now
+        // be empty, otherwise append now.
+    {
+        SAFE_PROJ4_STRCAT( szEllipseDef );
+        szEllipseDef[0] = '\0';
     }
 
 /* -------------------------------------------------------------------- */
