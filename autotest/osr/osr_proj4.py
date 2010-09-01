@@ -153,7 +153,7 @@ def osr_proj4_5():
 
 def osr_proj4_6():
 
-    expect_proj4 = '+proj=merc +lon_0=0 +lat_ts=46.1333331 +x_0=1000 +y_0=2000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs '
+    expect_proj4 = '+proj=merc +lon_0=0 +lat_ts=46.1333331 +x_0=1000 +y_0=2000 +datum=WGS84 +units=m +no_defs '
     
     wkt = """PROJCS["unnamed",
     GEOGCS["WGS 84",
@@ -285,6 +285,33 @@ def osr_proj4_8():
 
     return 'success'
 
+###############################################################################
+# NAD27 is a bit special - make sure no towgs84 values come through.
+#
+
+def osr_proj4_9():
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4267 )
+
+    proj4 = srs.ExportToProj4()
+    expected = '+proj=longlat +datum=NAD27 +no_defs '
+    if proj4 != expected:
+        gdaltest.post_reason( 'did not get expected EPSG:4267 (NAD27)' )
+        print(proj4)
+        return 'fail'
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( 'NAD27' )
+
+    proj4 = srs.ExportToProj4()
+    if proj4 != expected:
+        gdaltest.post_reason( 'did not get expected "NAD27"' )
+        print(proj4)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -294,6 +321,7 @@ gdaltest_list = [
     osr_proj4_6,
     osr_proj4_7,
     osr_proj4_8,
+    osr_proj4_9,
     None ]
 
 if __name__ == '__main__':
