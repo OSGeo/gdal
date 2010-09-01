@@ -17,11 +17,13 @@ generate: ${WRAPPERS}
 	if [ -f OGR.pm ]; then mv OGR.pm lib/Geo; fi
 	if [ -f OSR.pm ]; then mv OSR.pm lib/Geo; fi
 
-build: Makefile_Geo__GDAL
+build: Makefile_Geo__GDAL gdal_wrap.cc
 	$(MAKE) -f Makefile_Geo__GDAL
 	$(MAKE) -f Makefile_Geo__GDAL__Const
 	$(MAKE) -f Makefile_Geo__OGR
 	$(MAKE) -f Makefile_Geo__OSR
+
+gdal_wrap.cc: generate
 
 Makefile_Geo__GDAL:
 	perl Makefile.PL INSTALL_BASE=$(INST_PREFIX)
