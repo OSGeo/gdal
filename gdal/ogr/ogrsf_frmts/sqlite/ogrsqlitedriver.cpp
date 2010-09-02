@@ -140,6 +140,35 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
     CPLString osCommand;
     char *pszErrMsg = NULL;
 
+    const char* pszSqliteSync = CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", NULL);
+    if (pszSqliteSync != NULL)
+    {
+        if (EQUAL(pszSqliteSync, "OFF") || EQUAL(pszSqliteSync, "0") ||
+            EQUAL(pszSqliteSync, "FALSE"))
+            rc = sqlite3_exec( hDB, "PRAGMA synchronous = OFF", NULL, NULL, &pszErrMsg );
+        else if (EQUAL(pszSqliteSync, "NORMAL") || EQUAL(pszSqliteSync, "1"))
+            rc = sqlite3_exec( hDB, "PRAGMA synchronous = NORMAL", NULL, NULL, &pszErrMsg );
+        else if (EQUAL(pszSqliteSync, "ON") || EQUAL(pszSqliteSync, "FULL") ||
+            EQUAL(pszSqliteSync, "2") || EQUAL(pszSqliteSync, "TRUE"))
+            rc = sqlite3_exec( hDB, "PRAGMA synchronous = FULL", NULL, NULL, &pszErrMsg );
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, "Unrecognized value for OGR_SQLITE_SYNCHRONOUS : %s",
+                      pszSqliteSync);
+            rc = SQLITE_OK;
+        }
+
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to create view geom_cols_ref_sys: %s",
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            sqlite3_close( hDB );
+            return NULL;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the SpatiaLite metadata tables.                          */
 /* -------------------------------------------------------------------- */
@@ -160,6 +189,7 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                       "Unable to create table geometry_columns: %s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
+            sqlite3_close( hDB );
             return NULL;
         }
 
@@ -177,6 +207,7 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                       "Unable to create table spatial_ref_sys: %s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
+            sqlite3_close( hDB );
             return NULL;
         }
 
@@ -194,6 +225,7 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                       "Unable to create view geom_cols_ref_sys: %s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
+            sqlite3_close( hDB );
             return NULL;
         }
     }
@@ -218,6 +250,7 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                       "Unable to create table geometry_columns: %s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
+            sqlite3_close( hDB );
             return NULL;
         }
 
@@ -234,6 +267,7 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                       "Unable to create table spatial_ref_sys: %s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
+            sqlite3_close( hDB );
             return NULL;
         }
     }
