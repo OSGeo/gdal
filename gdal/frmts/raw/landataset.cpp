@@ -339,7 +339,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      We assume the user is pointing to the header (.pcb) file.       */
 /*      Does this appear to be a pcb file?                              */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < ERD_HEADER_SIZE || poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < ERD_HEADER_SIZE )
         return NULL;
 
     if( !EQUALN((const char *)poOpenInfo->pabyHeader,"HEADER",6)
@@ -721,6 +721,7 @@ void GDALRegister_LAN()
                                    "Erdas .LAN/.GIS" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#LAN" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         
         poDriver->pfnOpen = LANDataset::Open;
 

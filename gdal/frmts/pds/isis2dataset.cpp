@@ -768,6 +768,7 @@ void GDALRegister_ISIS2()
                                    "USGS Astrogeology ISIS cube (Version 2)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#ISIS2" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = ISIS2Dataset::Open;
 

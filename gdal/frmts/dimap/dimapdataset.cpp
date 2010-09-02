@@ -586,6 +586,7 @@ void GDALRegister_DIMAP()
                                    "SPOT DIMAP" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#DIMAP" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = DIMAPDataset::Open;
         poDriver->pfnIdentify = DIMAPDataset::Identify;

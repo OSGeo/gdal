@@ -100,17 +100,17 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if (poOpenInfo->fp == NULL)
-        return NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Read the whole file into a memory strings.                      */
 /* -------------------------------------------------------------------- */
     unsigned int nFileSize;
     char *pszFileContents;
+    FILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    if( fp == NULL )
+        return NULL;
 
-    VSIFSeek( poOpenInfo->fp, 0, SEEK_END );
-    nFileSize = VSIFTell( poOpenInfo->fp );
+    VSIFSeekL( fp, 0, SEEK_END );
+    nFileSize = VSIFTellL( fp );
     
     pszFileContents = (char *) VSIMalloc(nFileSize+1);
     if( pszFileContents == NULL )
@@ -122,9 +122,9 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     pszFileContents[nFileSize] = '\0';
     
-    VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
+    VSIFSeekL( fp, 0, SEEK_SET );
 
-    if( VSIFRead( pszFileContents, 1, nFileSize, poOpenInfo->fp ) != nFileSize)
+    if( VSIFReadL( pszFileContents, 1, nFileSize, fp ) != nFileSize)
     {
         CPLFree( pszFileContents );
         CPLError( CE_Failure, CPLE_FileIO, 
@@ -331,7 +331,7 @@ XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* ==================================================================== */
     FILE	*fpPBM;
 
-    fpPBM = VSIFOpen( pszFilename, "wt+" );
+    fpPBM = VSIFOpenL( pszFilename, "wt+" );
     if( fpPBM == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -344,13 +344,13 @@ XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Write the header lines.                                         */
 /* -------------------------------------------------------------------- */
-    fprintf( fpPBM, "/* XPM */\n" );
-    fprintf( fpPBM, "static char *%s[] = {\n", 
+    VSIFPrintfL( fpPBM, "/* XPM */\n" );
+    VSIFPrintfL( fpPBM, "static char *%s[] = {\n", 
              CPLGetBasename( pszFilename ) );
-    fprintf( fpPBM, "/* width height num_colors chars_per_pixel */\n" );
-    fprintf( fpPBM, "\"  %3d   %3d     %3d             1\",\n",
+    VSIFPrintfL( fpPBM, "/* width height num_colors chars_per_pixel */\n" );
+    VSIFPrintfL( fpPBM, "\"  %3d   %3d     %3d             1\",\n",
              nXSize, nYSize, nActiveColors );
-    fprintf( fpPBM, "/* colors */\n" );
+    VSIFPrintfL( fpPBM, "/* colors */\n" );
 
 /* -------------------------------------------------------------------- */
 /*      Write the color table.                                          */
@@ -358,9 +358,9 @@ XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     for( i = 0; i < nActiveColors; i++ )
     {
         if( asPixelColor[i].c4 < 128 )
-            fprintf( fpPBM, "\"%c c None\",\n", pszColorCodes[i] );
+            VSIFPrintfL( fpPBM, "\"%c c None\",\n", pszColorCodes[i] );
         else
-            fprintf( fpPBM, 
+            VSIFPrintfL( fpPBM, 
                      "\"%c c #%02x%02x%02x\",\n",
                      pszColorCodes[i],
                      asPixelColor[i].c1, 
@@ -384,7 +384,7 @@ XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         for( int iPixel = 0; iPixel < nXSize; iPixel++ )
             fputc( pszColorCodes[anPixelMapping[pabyScanline[iPixel]]], 
                    fpPBM);
-        fprintf( fpPBM, "\",\n" );
+        VSIFPrintfL( fpPBM, "\",\n" );
     }
     
     CPLFree( pabyScanline );
@@ -392,8 +392,8 @@ XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    fprintf( fpPBM, "};\n" );
-    VSIFClose( fpPBM );
+    VSIFPrintfL( fpPBM, "};\n" );
+    VSIFCloseL( fpPBM );
 
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
@@ -429,6 +429,7 @@ void GDALRegister_XPM()
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-xpixmap" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = XPMDataset::Open;
         poDriver->pfnCreateCopy = XPMCreateCopy;
