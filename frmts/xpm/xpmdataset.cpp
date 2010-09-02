@@ -118,6 +118,7 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                   "Insufficient memory for loading XPM file %s into memory.", 
                   poOpenInfo->pszFilename );
+        VSIFCloseL(fp);
         return NULL;
     }
     pszFileContents[nFileSize] = '\0';
@@ -130,8 +131,12 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Failed to read all %d bytes from file %s.",
                   nFileSize, poOpenInfo->pszFilename );
+        VSIFCloseL(fp);
         return NULL;
     }
+    
+    VSIFCloseL(fp);
+    fp = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Convert into a binary image.                                    */
