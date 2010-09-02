@@ -184,7 +184,12 @@ def misc_5():
         except:
             gdaltest.post_reason('Cannot create tmp/tmp')
             return 'fail'
-            
+
+    # This is to speed-up the runtime of tests on EXT4 filesystems
+    # Do not use this for production environment if you care about data safety
+    # w.r.t system/OS crashes, unless you know what you are doing.
+    gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
+
     # Test Create() with various band numbers, including 0
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
