@@ -1065,6 +1065,7 @@ void GDALRegister_BSB()
                                    "Maptech BSB Nautical Charts" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#BSB" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #ifdef BSB_CREATE
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 #endif

@@ -681,7 +681,7 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
 }
 
 /************************************************************************/
-/*			NormalizePath() 				*/
+/*                           NormalizePath()                            */
 /************************************************************************/
 
 void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )

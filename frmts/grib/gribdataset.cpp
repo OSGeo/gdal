@@ -447,9 +447,6 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      A fast "probe" on the header that is partially read in memory.  */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL)
-        return NULL;
-
     char *buff = NULL;
     uInt4 buffLen = 0;
     sInt4 sect0[SECT0LEN_WORD];
@@ -745,6 +742,7 @@ void GDALRegister_GRIB()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_grib.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grb" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = GRIBDataset::Open;
         poDriver->pfnIdentify = GRIBDataset::Identify;

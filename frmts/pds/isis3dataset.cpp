@@ -914,6 +914,7 @@ void GDALRegister_ISIS3()
                                    "USGS Astrogeology ISIS cube (Version 3)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#ISIS3" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = ISIS3Dataset::Open;
         poDriver->pfnIdentify = ISIS3Dataset::Identify;

@@ -246,10 +246,10 @@ void GDALRegister_CEOS()
                                    "CEOS Image" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#CEOS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         
         poDriver->pfnOpen = CEOSDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

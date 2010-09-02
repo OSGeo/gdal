@@ -1189,6 +1189,7 @@ void GDALRegister_PDS()
                                    "NASA Planetary Data System" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#PDS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = PDSDataset::Open;
         poDriver->pfnIdentify = PDSDataset::Identify;
