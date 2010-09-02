@@ -361,6 +361,13 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPL_LSBPTR32( achHeader + 2*16 + 8 );
     memcpy( &nSubFileCount, achHeader + 2*16 + 8, 4 );
+    if (nSubFileCount <= 0 || nSubFileCount >= 1024)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                  "Invalid value for NUM_FILE : %d", nSubFileCount);
+        delete poDS;
+        return NULL;
+    }
 
     poDS->CaptureMetadataItem( achHeader + 3*16 );
     poDS->CaptureMetadataItem( achHeader + 4*16 );
@@ -400,7 +407,13 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
         GUInt32 nGSCount;
 
         VSIFSeekL( poDS->fpImage, nGridOffset, SEEK_SET );
-        VSIFReadL( achHeader, 11, 16, poDS->fpImage );
+        if (VSIFReadL( achHeader, 11, 16, poDS->fpImage ) != 16)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot read header for subfile %d", iGrid);
+            delete poDS;
+            return NULL;
+        }
 
         for( i = 4; i <= 9; i++ )
             CPL_LSBPTR64( achHeader + i*16 + 8 );
@@ -436,7 +449,7 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetMetadataItem( osKey, osValue, "SUBDATASETS" );
         }
 
-        nGridOffset += (11+nGSCount) * 16;
+        nGridOffset += (11+(vsi_l_offset)nGSCount) * 16;
     }
 
 /* -------------------------------------------------------------------- */
