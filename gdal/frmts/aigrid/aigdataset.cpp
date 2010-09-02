@@ -1014,6 +1014,7 @@ void GDALRegister_AIGrid()
                                    "Arc/Info Binary Grid" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#AIG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         
         poDriver->pfnOpen = AIGDataset::Open;
 

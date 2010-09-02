@@ -2251,6 +2251,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             for( i = 0; papszFiles[i] != NULL; i++ )
             {
                 CPLString osOldPath, osNewPath;
+                VSIStatBufL sStatBuf;
                 
                 if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )
                     continue;
@@ -2259,11 +2260,24 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                                              papszFiles[i], NULL );
                 osNewPath.Printf( "/vsimem/%s", papszFiles[i] );
 
+                if( VSIStatL( osOldPath, &sStatBuf ) != 0
+                    || VSI_ISDIR( sStatBuf.st_mode ) )
+                {
+                    CPLDebug( "VSI", "Skipping preload of %s.", 
+                              osOldPath.c_str() );
+                    continue;
+                }
+
                 CPLDebug( "VSI", "Preloading %s to %s.", 
                           osOldPath.c_str(), osNewPath.c_str() );
 
                 if( CPLCopyFile( osNewPath, osOldPath ) != 0 )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Failed to copy %s to /vsimem", 
+                              osOldPath.c_str() );
                     return -1;
+                }
             }
             
             CSLDestroy( papszFiles );

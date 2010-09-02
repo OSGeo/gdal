@@ -886,10 +886,6 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new FITDataset();
     DeleteGuard<FITDataset> guard( poDS );
 
-    // close FILE* as it will not handle large files
-    VSIFClose( poOpenInfo->fp );
-    poOpenInfo->fp = NULL;
-
 	// re-open file for large file (64bit) access
     if ( poOpenInfo->eAccess == GA_ReadOnly )
 	poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
@@ -1359,6 +1355,7 @@ void GDALRegister_FIT()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = FITDataset::Open;
 #ifdef FIT_WRITE

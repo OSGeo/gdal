@@ -72,10 +72,10 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
 /* -------------------------------------------------------------------- */
 /*      Read the standard CEOS header.                                  */
 /* -------------------------------------------------------------------- */
-    if( VSIFEof( psImage->fpImage ) )
+    if( VSIFEofL( psImage->fpImage ) )
         return NULL;
 
-    if( VSIFRead( abyHeader, 1, 12, psImage->fpImage ) != 12 )
+    if( VSIFReadL( abyHeader, 1, 12, psImage->fpImage ) != 12 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Ran out of data reading CEOS record." );
@@ -139,7 +139,7 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
 
     memcpy( psRecord->pachData, abyHeader, 12 );
 
-    if( (int)VSIFRead( psRecord->pachData + 12, 1, psRecord->nLength-12, 
+    if( (int)VSIFReadL( psRecord->pachData + 12, 1, psRecord->nLength-12, 
                        psImage->fpImage )
         != psRecord->nLength - 12 )
     {
@@ -193,7 +193,7 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
 /*      Try to open the imagery file.                                   */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, pszAccess );
+    fp = VSIFOpenL( pszFilename, pszAccess );
 
     if( fp == NULL )
     {
@@ -215,8 +215,8 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
 /*      Preread info on the first record, to establish if it is         */
 /*      little endian.                                                  */
 /* -------------------------------------------------------------------- */
-    VSIFRead( abyHeader, 16, 1, fp );
-    VSIFSeek( fp, 0, SEEK_SET );
+    VSIFReadL( abyHeader, 16, 1, fp );
+    VSIFSeekL( fp, 0, SEEK_SET );
     
     if( abyHeader[0] != 0 || abyHeader[1] != 0 )
         psImage->bLittleEndian = TRUE;
@@ -336,7 +336,7 @@ CPLErr CEOSReadScanline( CEOSImage * psCEOS, int nBand, int nScanline,
     nOffset = psCEOS->panDataStart[nBand-1]
         	+ (nScanline-1) * psCEOS->nLineOffset;
 
-    if( VSIFSeek( psCEOS->fpImage, nOffset, SEEK_SET ) != 0 )
+    if( VSIFSeekL( psCEOS->fpImage, nOffset, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Seek to %d for scanline %d failed.\n",
@@ -348,7 +348,7 @@ CPLErr CEOSReadScanline( CEOSImage * psCEOS, int nBand, int nScanline,
 /*      Read the data.                                                  */
 /* -------------------------------------------------------------------- */
     nBytes = psCEOS->nPixels * psCEOS->nBitsPerPixel / 8;
-    if( (int) VSIFRead( pData, 1, nBytes, psCEOS->fpImage ) != nBytes )
+    if( (int) VSIFReadL( pData, 1, nBytes, psCEOS->fpImage ) != nBytes )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Read of %d bytes for scanline %d failed.\n",
@@ -373,7 +373,7 @@ void CEOSClose( CEOSImage * psCEOS )
 
 {
     CPLFree( psCEOS->panDataStart );
-    VSIFClose( psCEOS->fpImage );
+    VSIFCloseL( psCEOS->fpImage );
     CPLFree( psCEOS );
 }
 

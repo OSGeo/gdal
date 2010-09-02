@@ -573,6 +573,7 @@ void GDALRegister_EIR()
                                    "Erdas Imagine Raw" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#EIR" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = EIRDataset::Open;
         poDriver->pfnIdentify = EIRDataset::Identify;
