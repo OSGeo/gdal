@@ -513,8 +513,12 @@ const char *CPLFormCIFilename( const char * pszPath,
 
 {
 #if defined(WIN32) || defined(WIN32CE)
-    return CPLFormFilename( pszPath, pszBasename, pszExtension );
-#else
+    // On normal windows filesystems we do not worry about
+    // case sensitivity - what about macosx? 
+    if( !EQUALN(pszPath,"/vsi",4) )
+        return CPLFormFilename( pszPath, pszBasename, pszExtension );
+#endif
+
     const char  *pszAddedExtSep = "";
     char        *pszFilename;
     const char  *pszFullPath;
@@ -567,7 +571,6 @@ const char *CPLFormCIFilename( const char * pszPath,
     CPLFree( pszFilename );
 
     return pszFullPath;
-#endif
 }
 
 /************************************************************************/

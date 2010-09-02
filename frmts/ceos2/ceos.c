@@ -337,8 +337,8 @@ void SerializeCeosRecordsToFile(Link_t *record_list, FILE *fp)
 	memcpy(&crec,list->object,sizeof(CeosRecord_t));
 	Buffer = crec.Buffer;
 	crec.Buffer = NULL;
-	fwrite(&crec,sizeof(CeosRecord_t),1,fp);
-	fwrite(Buffer,crec.Length,1,fp);
+	VSIFWriteL(&crec,sizeof(CeosRecord_t),1,fp);
+	VSIFWriteL(Buffer,crec.Length,1,fp);
     }
 }
 
@@ -350,9 +350,9 @@ void SerializeCeosRecordsFromFile(Link_t *record_list, FILE *fp)
     while(!feof(fp))
     {
 	crec = HMalloc(sizeof(CeosRecord_t));
-	fread(crec,sizeof(CeosRecord_t),1,fp);
+	VSIFReadL(crec,sizeof(CeosRecord_t),1,fp);
 	crec->Buffer = HMalloc(crec->Length * sizeof(char) );
-	fread(crec->Buffer,sizeof(char),crec->Length,fp);
+	VSIFReadL(crec->Buffer,sizeof(char),crec->Length,fp);
 	Link = ceos2CreateLink(crec);
 	AddLink(record_list,Link);
     }

@@ -399,6 +399,7 @@ void GDALRegister_SDTS()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#SDTS" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ddf" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = SDTSDataset::Open;
 
