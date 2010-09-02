@@ -444,6 +444,7 @@ public:
 #ifndef SWIGJAVA
   %feature( "kwargs" ) CopyLayer;
 #endif
+%apply Pointer NONNULL {OGRLayerShadow *src_layer};
   OGRLayerShadow *CopyLayer(OGRLayerShadow *src_layer,
             const char* new_name,
             char** options=0) {
