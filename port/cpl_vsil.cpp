@@ -643,6 +643,11 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
             pszPath[nIterKeyLen-1] == '\\' &&
             strncmp(pszPath,pszIterKey,nIterKeyLen-1) == 0 )
             return iter->second;
+
+        /* /vsimem should be treated as a match for /vsimem/ */
+        if( nPathLen == nIterKeyLen - 1
+            && strncmp(pszPath,pszIterKey,nIterKeyLen-1) == 0 )
+            return iter->second;
     }
     
     return poThis->poDefaultHandler;
