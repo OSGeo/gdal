@@ -331,7 +331,7 @@ XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* ==================================================================== */
     FILE	*fpPBM;
 
-    fpPBM = VSIFOpenL( pszFilename, "wt+" );
+    fpPBM = VSIFOpenL( pszFilename, "wb+" );
     if( fpPBM == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -380,9 +380,9 @@ XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                           (void *) pabyScanline, nXSize, 1, GDT_Byte, 0, 0 );
         
-        fputc( '"', fpPBM );
+        VSIFPutcL( '"', fpPBM );
         for( int iPixel = 0; iPixel < nXSize; iPixel++ )
-            fputc( pszColorCodes[anPixelMapping[pabyScanline[iPixel]]], 
+            VSIFPutcL( pszColorCodes[anPixelMapping[pabyScanline[iPixel]]], 
                    fpPBM);
         VSIFPrintfL( fpPBM, "\",\n" );
     }
