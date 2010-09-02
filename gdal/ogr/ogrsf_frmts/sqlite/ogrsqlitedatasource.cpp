@@ -131,7 +131,37 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
                   
         return FALSE;
     }
-    
+
+    char *pszErrMsg;
+
+    const char* pszSqliteSync = CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", NULL);
+    if (pszSqliteSync != NULL)
+    {
+        if (EQUAL(pszSqliteSync, "OFF") || EQUAL(pszSqliteSync, "0") ||
+            EQUAL(pszSqliteSync, "FALSE"))
+            rc = sqlite3_exec( hDB, "PRAGMA synchronous = OFF", NULL, NULL, &pszErrMsg );
+        else if (EQUAL(pszSqliteSync, "NORMAL") || EQUAL(pszSqliteSync, "1"))
+            rc = sqlite3_exec( hDB, "PRAGMA synchronous = NORMAL", NULL, NULL, &pszErrMsg );
+        else if (EQUAL(pszSqliteSync, "ON") || EQUAL(pszSqliteSync, "FULL") ||
+            EQUAL(pszSqliteSync, "2") || EQUAL(pszSqliteSync, "TRUE"))
+            rc = sqlite3_exec( hDB, "PRAGMA synchronous = FULL", NULL, NULL, &pszErrMsg );
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, "Unrecognized value for OGR_SQLITE_SYNCHRONOUS : %s",
+                      pszSqliteSync);
+            rc = SQLITE_OK;
+        }
+
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to create view geom_cols_ref_sys: %s",
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return FALSE;
+        }
+    }
+
     CPLHashSet* hSet = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
 
 /* -------------------------------------------------------------------- */
@@ -140,7 +170,6 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 /* -------------------------------------------------------------------- */
     char **papszResult;
     int nRowCount, iRow, nColCount;
-    char *pszErrMsg;
 
     rc = sqlite3_get_table( 
         hDB,
@@ -344,7 +373,7 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
 
     if( poLayer->Initialize( pszNewName, pszGeomCol, 
                              eGeomType, pszGeomFormat,
-                             poSRS, nSRID, bHasSpatialIndex ) )
+                             poSRS, nSRID, bHasSpatialIndex ) != CE_None )
     {
         delete poLayer;
         return FALSE;
@@ -764,8 +793,13 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
     poLayer = new OGRSQLiteTableLayer( this );
 
-    poLayer->Initialize( pszLayerName, pszGeomCol, eType, pszGeomFormat, 
-                         FetchSRS(nSRSId), nSRSId );
+    if ( poLayer->Initialize( pszLayerName, pszGeomCol, eType, pszGeomFormat,
+                         FetchSRS(nSRSId), nSRSId ) != CE_None )
+    {
+        delete poLayer;
+        CPLFree( pszLayerName );
+        return NULL;
+    }
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
 
