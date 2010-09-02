@@ -46,6 +46,13 @@ with <a href="/ogr/ogr_sql.html">OGR SQL</a> engine,
 by passing <strong>"OGRSQL"</strong> string to the ExecuteSQL() 
 method, as name of the SQL dialect.</p>
 
+<p>Starting with OGR 1.8.0, the OGR_SQLITE_SYNCHRONOUS configuration option has been added.
+When set to OFF, this issues a 'PRAGMA synchronous = OFF' command to the SQLite database.
+This has the advantage of speeding-up some write operations (e.g. on EXT4 filesystems), but
+at the expense of data safety w.r.t system/OS crashes. So use it carefully in
+production environments and read the SQLite
+<a href="http://www.sqlite.org/pragma.html#pragma_synchronous">related documentation</a>.</p>
+
 <h2>Using the SpatiaLite library (Spatial extension for SQLite)</h2>
 
 (Starting with GDAL 1.7.0)<p>
