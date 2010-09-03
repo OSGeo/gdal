@@ -911,27 +911,30 @@ is on the edge of the external ring, or other topological anomalies.
 
 OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
 {
-    OGRLinearRing* poExternalRing = polygon.getExteriorRing();
+    OGRPolygon* poPolygon = &polygon;
+    OGRPolygon* poPolygonTemp = NULL;
+    OGRLinearRing* poExternalRing = poPolygon->getExteriorRing();
     if (poExternalRing->getNumPoints() < 4)
     {
         CPLDebug("XPLANE", "Discarded degenerated polygon at line %d", nLineNumber);
         return NULL;
     }
         
-    for(int i=0;i<polygon.getNumInteriorRings();i++)
+    for(int i=0;i<poPolygon->getNumInteriorRings();i++)
     {
-        OGRLinearRing* poInternalRing = polygon.getInteriorRing(i);
+        OGRLinearRing* poInternalRing = poPolygon->getInteriorRing(i);
         if (poInternalRing->getNumPoints() < 4)
         {
             CPLDebug("XPLANE", "Discarded degenerated interior ring (%d) at line %d", i, nLineNumber);
-            OGRPolygon polygon2;
-            polygon2.addRing(poExternalRing);
-            for(int j=0;j<polygon.getNumInteriorRings();j++)
+            OGRPolygon* poPolygon2 = new OGRPolygon();
+            poPolygon2->addRing(poExternalRing);
+            for(int j=0;j<poPolygon->getNumInteriorRings();j++)
             {
                 if (i != j)
-                    polygon2.addRing(polygon.getInteriorRing(j));
+                    poPolygon2->addRing(poPolygon->getInteriorRing(j));
             }
-            polygon = * (OGRPolygon*) (polygon2.clone());
+            delete poPolygonTemp;
+            poPolygon = poPolygonTemp = poPolygon2;
             i --;
             continue;
         }
@@ -975,18 +978,24 @@ OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
                             "Didn't manage to fix polygon topology at line %d", nLineNumber);
 
                 /* Invalid topology. Will split into several pieces */
-                return OGRXPlaneAptReaderSplitPolygon(polygon);
+                OGRGeometry* poRet = OGRXPlaneAptReaderSplitPolygon(*poPolygon);
+                delete poPolygonTemp;
+                return poRet;
             }
         }
         else
         {
             /* Two parts. Or other strange cases */
-            return OGRXPlaneAptReaderSplitPolygon(polygon);
+            OGRGeometry* poRet = OGRXPlaneAptReaderSplitPolygon(*poPolygon);
+            delete poPolygonTemp;
+            return poRet;
         }
     }
 
     /* The geometry is right */
-    return polygon.clone();
+    OGRGeometry* poRet = poPolygon->clone();
+    delete poPolygonTemp;
+    return poRet;
 }
 
 /************************************************************************/
