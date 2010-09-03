@@ -1,5 +1,5 @@
 /******************************************************************************
- *
+ * $Id$
  * Project:  rasdaman Driver
  * Purpose:  Implement Rasdaman GDAL driver 
  * Author:   Constantin Jucovschi, jucovschi@yahoo.com
@@ -28,6 +28,7 @@
 
 
 #include "gdal_pam.h"
+#include "cpl_string.h"
 #include "regex.h"
 #include <string>
 #include <memory>
@@ -41,6 +42,7 @@
 
 #include "rasodmg/database.hh"
 
+CPL_CVSID("$Id$");
 
 
 CPL_C_START
@@ -56,20 +58,16 @@ CPL_C_END
 
 
 class RasdamanRasterBand;
-char* getQuery(const char *templateString, const char* x_lo, const char* x_hi, const char* y_lo, const char* y_hi);
+static CPLString getQuery(const char *templateString, const char* x_lo, const char* x_hi, const char* y_lo, const char* y_hi);
 
 class RasdamanDataset : public GDALPamDataset
 {
   friend class RasdamanRasterBand;
-  
-  GByte	abyHeader[1012];
 
   public:
 		~RasdamanDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
-
-    static regex_t openParamRegEx;
 
     CPLErr 	GetGeoTransform( double * padfTransform );
 
@@ -77,12 +75,12 @@ private:
   void getTypes(const r_Base_Type* baseType, int &counter, int pos);
   void createBands(const char* queryString);
 
-  const char* queryParam;
-  const char* host;
+  CPLString queryParam;
+  CPLString host;
   int port;
-  const char* username;
-  const char* userpassword;
-  const char* databasename;
+  CPLString username;
+  CPLString userpassword;
+  CPLString databasename;
   int xPos;
   int yPos;
   int tileXSize;
@@ -148,7 +146,7 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 				       void * pImage )
   
 {
-  cerr << "Read block " << nBlockXOff << " " << nBlockYOff << endl;
+  //cerr << "Read block " << nBlockXOff << " " << nBlockYOff << endl;
   RasdamanDataset *poGDS = (RasdamanDataset *) poDS;
   
   r_Database database;  
@@ -170,7 +168,7 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     sprintf(x_hi, "%d", (nBlockXOff+1) * nBlockXSize-1);
     sprintf(y_lo, "%d", nBlockYOff * nBlockYSize);
     sprintf(y_hi, "%d", (nBlockYOff+1) * nBlockYSize-1);
-    char *queryString = getQuery(poGDS->queryParam, x_lo, x_hi, y_lo, y_hi);
+    CPLString queryString = getQuery(poGDS->queryParam, x_lo, x_hi, y_lo, y_hi);
   
     r_Set<r_Ref_Any> result_set;
     r_OQL_Query query (queryString);
@@ -183,7 +181,7 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       r_Point base = sp.get_origin();
       int tileX = extent[xPos];
       int tileY = extent[yPos];
-      r_Point access = base;      
+      r_Point access = base;
       char *resultPtr;
       for (int j=0; j<tileY; ++j) {
 	for (int i=0; i<tileX; ++i) {
@@ -240,25 +238,29 @@ CPLErr RasdamanDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *getOption(const char *string, regmatch_t cMatch, const char* defaultValue) {
+static CPLString getOption(const char *string, regmatch_t cMatch, const char* defaultValue) {
   if (cMatch.rm_eo == -1 || cMatch.rm_so == -1)
     return defaultValue;
   char *result = new char[cMatch.rm_eo-cMatch.rm_so+1];
   strncpy(result, string+cMatch.rm_so, cMatch.rm_eo-cMatch.rm_so);
   result[cMatch.rm_eo-cMatch.rm_so]=0;
-  return result;
+  CPLString osResult = result;
+  delete[] result;
+  return osResult;
 }
 
-int getOption(char *string, regmatch_t cMatch, int defaultValue) {
+static int getOption(const char *string, regmatch_t cMatch, int defaultValue) {
   if (cMatch.rm_eo == -1 || cMatch.rm_so == -1)
     return defaultValue;
   char *result = new char[cMatch.rm_eo-cMatch.rm_so+1];
   strncpy(result, string+cMatch.rm_so, cMatch.rm_eo-cMatch.rm_so);
   result[cMatch.rm_eo-cMatch.rm_so]=0;
-  return atoi(result);
+  int nRet = atoi(result);
+  delete[] result;
+  return nRet;
 }
 
-char* getQuery(const char *templateString, const char* x_lo, const char* x_hi, const char* y_lo, const char* y_hi) {
+static CPLString getQuery(const char *templateString, const char* x_lo, const char* x_hi, const char* y_lo, const char* y_hi) {
   static regex_t* replaceRegEx = NULL;
   regmatch_t match[3];
   if (replaceRegEx == NULL) {
@@ -291,7 +293,9 @@ char* getQuery(const char *templateString, const char* x_lo, const char* x_hi, c
   strncpy(result+resPos, templateString+pos, rest);
   resPos += rest;
   result[resPos]='\0';
-  return result;
+  CPLString osResult = result;
+  delete[] result;
+  return osResult;
 }
 
 GDALDataType mapRasdamanTypesToGDAL(r_Type::r_Type_Id typeId) {
@@ -352,7 +356,7 @@ void RasdamanDataset::createBands(const char* queryString) {
 }
 
 
-int getExtent(char *queryString, int &pos) {
+static int getExtent(const char *queryString, int &pos) {
   r_Set<r_Ref_Any> result_set;
   r_OQL_Query query (queryString);
   r_oql_execute (query, result_set);
@@ -437,22 +441,28 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
   if (result != 0) {
     regerror(result, &optionRegEx, errbuffer, 4096);
     CPLError(CE_Failure, CPLE_AppDefined, "Parsing opening parameters failed with error: %s", errbuffer);
+    regfree(&optionRegEx);
+    regfree(&queryRegEx);
     return NULL; 
   }
+
+  regfree(&optionRegEx);
+  
 
   // checking if the whole expressions was matches, if not give an error where 
   // the matching stopped and exit
   if (size_t(matches[0].rm_eo) < strlen(connString)) {
     CPLError(CE_Failure, CPLE_AppDefined, "Parsing opening parameters failed with error: %s", connString+matches[0].rm_eo);
+    regfree(&queryRegEx);
     return NULL; 
   }
 
-  const char *queryParam = getOption(connString, matches[QUERY_POSITION], (const char*)NULL);
-  const char *host = getOption(connString, matches[SERVER_POSITION], "localhost");
+  CPLString queryParam = getOption(connString, matches[QUERY_POSITION], (const char*)NULL);
+  CPLString host = getOption(connString, matches[SERVER_POSITION], "localhost");
   int port = getOption(connString, matches[PORT_POSITION], 7001);
-  const char* username = getOption(connString, matches[USERNAME_POSITION], "rasguest");
-  const char* userpassword = getOption(connString, matches[USERPASSWORD_POSITION], "rasguest");
-  const char* databasename = getOption(connString, matches[DATABASE_POSITION], "RASBASE");
+  CPLString username = getOption(connString, matches[USERNAME_POSITION], "rasguest");
+  CPLString userpassword = getOption(connString, matches[USERPASSWORD_POSITION], "rasguest");
+  CPLString databasename = getOption(connString, matches[DATABASE_POSITION], "RASBASE");
   int tileXSize = getOption(connString, matches[TILEXSIZE_POSITION], 1024);
   int tileYSize = getOption(connString, matches[TILEYSIZE_POSITION], 1024);
 
@@ -460,19 +470,20 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
   if (result != 0) {
     regerror(result, &queryRegEx, errbuffer, 4096);
     CPLError(CE_Failure, CPLE_AppDefined, "Parsing query parameter failed with error: %s", errbuffer);
+    regfree(&queryRegEx);
     return NULL; 
   }
 
-  char * queryString = new char[50+strlen(queryParam)];
-  
-  sprintf(queryString, "select sdom(%s) from %s",
-	  getOption(queryParam, matches[1], ""),
-	  getOption(queryParam, matches[2], "")
-	  );
+  regfree(&queryRegEx);
 
-  char *queryX = getQuery(queryString, "*", "*", "0", "0");
-  char *queryY = getQuery(queryString, "0", "0", "*", "*");
-  char *queryUnit = getQuery(queryParam, "0", "0", "0", "0");
+  CPLString osQueryString = "select sdom(";
+  osQueryString += getOption(queryParam, matches[1], "");
+  osQueryString += ") from ";
+  osQueryString += getOption(queryParam, matches[2], "");
+
+  CPLString queryX = getQuery(osQueryString, "*", "*", "0", "0");
+  CPLString queryY = getQuery(osQueryString, "0", "0", "*", "*");
+  CPLString queryUnit = getQuery(queryParam, "0", "0", "0", "0");
 
   stringstream queryStream;
   
@@ -499,6 +510,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
     database.close();
   } catch (r_Error error) {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
+    delete rasDataset;
     return NULL;
   }
   rasDataset->queryParam = queryParam;
@@ -528,7 +540,7 @@ extern void GDALRegister_RASDAMAN()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "RASDAMAN" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#RASDAMAN" );
+                                   "frmt_rasdaman.html" );
 
         poDriver->pfnOpen = RasdamanDataset::Open;
 
