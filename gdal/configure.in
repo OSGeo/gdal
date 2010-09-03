@@ -2656,14 +2656,11 @@ if test "$with_rasdaman" = "yes" ; then
 
 elif test -n "$with_rasdaman" -a "$with_rasdaman" != "no" ; then
 
-  AC_MSG_RESULT([        3])
   RASDAMAN_DIR=$with_rasdaman
 
-  test -f $RASDAMAN_DIR/include/rasdaman.hh && RASDAMAN_INCDIR="$RASDAMAN/include/"
-
-  if test -n "$RASDAMAN_INCDIR" -a -n "$RASDAMAN_LIBDIR" ; then
-      RASDAMAN_INC=-I$RASDAMAN_INCDIR
-      RASDAMAN_LIB="-L$RASDAMAN_LIBDIR -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib"
+  if test -f $RASDAMAN_DIR/include/rasdaman.hh -a -d$RASDAMAN_DIR/lib ; then
+      RASDAMAN_INC=-I$RASDAMAN_DIR/include
+      RASDAMAN_LIB="-L$RASDAMAN_DIR/lib -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib"
   else
       AC_MSG_ERROR("Could not find rasdaman.hh or libraslib.a in $RASDAMAN_DIR.")
   fi
