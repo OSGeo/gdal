@@ -60,7 +60,9 @@ class GMLHandler
     int        m_bIsCityGML;
 
     int        m_bReportHref;
+    int        m_bIsAIXM;
     char      *m_pszHref;
+    char      *m_pszUom;
 protected:
     GMLReader  *m_poReader;
 

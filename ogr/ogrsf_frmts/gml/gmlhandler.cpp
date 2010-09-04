@@ -428,14 +428,17 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_pszGeometry = NULL;
     m_nGeomAlloc = m_nGeomLen = 0;
     m_nDepthFeature = m_nDepth = 0;
+    m_nGeometryDepth = 0;
     m_bInBoundedBy = FALSE;
     m_inBoundedByDepth = 0;
     m_bInCityGMLGenericAttr = FALSE;
     m_pszCityGMLGenericAttrName = NULL;
     m_inCityGMLGenericAttrDepth = 0;
     m_bIsCityGML = FALSE;
+    m_bIsAIXM = FALSE;
     m_bReportHref = FALSE;
     m_pszHref = NULL;
+    m_pszUom = NULL;
 }
 
 /************************************************************************/
@@ -449,6 +452,7 @@ GMLHandler::~GMLHandler()
     CPLFree( m_pszGeometry );
     CPLFree( m_pszCityGMLGenericAttrName );
     CPLFree( m_pszHref );
+    CPLFree( m_pszUom );
 }
 
 
@@ -464,9 +468,13 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
     if ( m_nDepth == 0 )
     {
         if (strcmp(pszName, "CityModel") == 0 )
+        {
             m_bIsCityGML = TRUE;
+        }
         else if (strcmp(pszName, "AIXMBasicMessage") == 0)
-            m_bReportHref = TRUE;
+        {
+            m_bIsAIXM = m_bReportHref = TRUE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -494,12 +502,11 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 /*      If we are collecting geometry, or if we determine this is a     */
 /*      geometry element then append to the geometry info.              */
 /* -------------------------------------------------------------------- */
-    else if( m_pszGeometry != NULL 
-        || IsGeometryElement( pszName )
-        /* AIXM ElevatedPoint */ || strcmp( pszName, "ElevatedPoint") == 0 )
+    else if( poState->m_poFeature != NULL &&
+             (m_pszGeometry != NULL
+              || IsGeometryElement( pszName )
+              || (m_bIsAIXM && strcmp( pszName, "ElevatedPoint") == 0)) )
     {
-        /* should save attributes too! */
-
         int bReadGeometry;
 
         if( m_pszGeometry == NULL )
@@ -511,9 +518,17 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
             if (pszGeometryElement != NULL)
                 bReadGeometry = strcmp(poState->m_pszPath, pszGeometryElement) == 0;
             else
-                bReadGeometry = TRUE;
-            if (bReadGeometry)
-                m_nGeometryDepth = poState->m_nPathLength;
+            {
+                /* AIXM special case: for RouteSegment, we only want to read Curve geometries */
+                /* not 'start' and 'end' geometries */
+                if (m_bIsAIXM &&
+                    strcmp(poState->m_poFeature->GetClass()->GetName(), "RouteSegment") == 0)
+                    bReadGeometry = strcmp( pszName, "Curve") == 0;
+                else
+                    bReadGeometry = TRUE;
+            }
+            CPLAssert(m_nGeometryDepth == 0);
+            m_nGeometryDepth = m_nDepth;
         }
         else
             bReadGeometry = TRUE;
@@ -557,6 +572,11 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
             CPLFree(pszAttributes);
             strcat( m_pszGeometry + (m_nGeomLen++), ">" );
         }
+    }
+
+    else if (m_nGeometryDepth != 0 && m_nDepth > m_nGeometryDepth)
+    {
+        ;
     }
 
     else if( m_bInBoundedBy)
@@ -612,6 +632,15 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
             CPLFree(m_pszHref);
             m_pszHref = GetAttributeValue(attr, "xlink:href");
         }
+        CPLFree(m_pszUom);
+        m_pszUom = GetAttributeValue(attr, "uom");
+    }
+    else if( m_bReportHref && m_poReader->IsAttributeElement( CPLSPrintf("%s_href", pszName ) ) )
+    {
+        CPLFree( m_pszCurField );
+        m_pszCurField = CPLStrdup("");
+        CPLFree(m_pszHref);
+        m_pszHref = GetAttributeValue(attr, "xlink:href");
     }
 
 /* -------------------------------------------------------------------- */
@@ -684,10 +713,17 @@ OGRErr GMLHandler::endElement(const char* pszName )
                 m_poReader->SetFeatureProperty( osPropNameHref, m_pszHref );
             }
         }
+        if (m_pszUom != NULL)
+        {
+            CPLString osPropNameUom = CPLSPrintf("%s_uom", poState->m_pszPath);
+            m_poReader->SetFeatureProperty( osPropNameUom, m_pszUom );
+        }
         CPLFree( m_pszCurField );
         m_pszCurField = NULL;
         CPLFree( m_pszHref );
         m_pszHref = NULL;
+        CPLFree( m_pszUom );
+        m_pszUom = NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -717,7 +753,7 @@ OGRErr GMLHandler::endElement(const char* pszName )
         strcat( m_pszGeometry+m_nGeomLen+nLNLenBytes+2, ">" );
         m_nGeomLen += nLNLenBytes + 3;
 
-        if( poState->m_nPathLength == m_nGeometryDepth+1 )
+        if( m_nDepth == m_nGeometryDepth )
         {
             if( poState->m_poFeature != NULL )
             {
@@ -725,7 +761,7 @@ OGRErr GMLHandler::endElement(const char* pszName )
                 /* a bit specially because ElevatedPoint is aixm: stuff and */
                 /* the srsDimension of the <gml:pos> can be set to TRUE although */
                 /* they are only 2 coordinates in practice */
-                if ( strcmp(pszName, "ElevatedPoint") == 0 )
+                if ( m_bIsAIXM && strcmp(pszName, "ElevatedPoint") == 0 )
                 {
                     CPLXMLNode *psGML = CPLParseXMLString( m_pszGeometry );
                     if (psGML)
@@ -736,12 +772,27 @@ OGRErr GMLHandler::endElement(const char* pszName )
                         {
                             m_poReader->SetFeatureProperty( "elevation",
                                                             pszElevation );
-                                const char* pszElevationUnit =
-                            CPLGetXMLValue( psGML, "elevation.uom", NULL );
+                            const char* pszElevationUnit =
+                                CPLGetXMLValue( psGML, "elevation.uom", NULL );
                             if (pszElevationUnit)
                             {
                                 m_poReader->SetFeatureProperty( "elevation_uom",
                                                              pszElevationUnit );
+                            }
+                        }
+
+                        const char* pszGeoidUndulation =
+                            CPLGetXMLValue( psGML, "geoidUndulation", NULL );
+                        if (pszGeoidUndulation)
+                        {
+                            m_poReader->SetFeatureProperty( "geoidUndulation",
+                                                            pszGeoidUndulation );
+                            const char* pszGeoidUndulationUnit =
+                                CPLGetXMLValue( psGML, "geoidUndulation.uom", NULL );
+                            if (pszGeoidUndulationUnit)
+                            {
+                                m_poReader->SetFeatureProperty( "geoidUndulation_uom",
+                                                             pszGeoidUndulationUnit );
                             }
                         }
 
@@ -793,6 +844,9 @@ OGRErr GMLHandler::endElement(const char* pszName )
             m_nGeomAlloc = m_nGeomLen = 0;
         }
     }
+
+    if ( m_nGeometryDepth != 0 && m_nDepth == m_nGeometryDepth )
+        m_nGeometryDepth = 0;
 
 /* -------------------------------------------------------------------- */
 /*      If we are collecting a feature, and this element tag matches    */
