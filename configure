@@ -1725,7 +1725,7 @@ Optional Packages:
   --with-odbc=ARG       Include ODBC support (ARG=no or path)
   --with-dods-root=ARG  Include DODS support (ARG=no or absolute path)
   --with-curl=ARG       Include curl (ARG=path to curl-config.)
-  --with-spatialite=ARG Include SpatiaLite support (ARG=no or path)
+  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes or path)
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
   --with-dwgdirect=path Include DWG direct support
@@ -22037,13 +22037,60 @@ if test "${with_spatialite+set}" = set; then :
 fi
 
 
+HAVE_SPATIALITE=no
+
 if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
-    HAVE_SPATIALITE=no
+elif test "$with_spatialite" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
+$as_echo_n "checking for spatialite_init in -lspatialite... " >&6; }
+if test "${ac_cv_lib_spatialite_spatialite_init+set}" = set; then :
+  $as_echo_n "(cached) " >&6
 else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SpatiaLite" >&5
-$as_echo_n "checking for SpatiaLite... " >&6; }
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lspatialite  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char spatialite_init ();
+int
+main ()
+{
+return spatialite_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_spatialite_spatialite_init=yes
+else
+  ac_cv_lib_spatialite_spatialite_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_spatialite_spatialite_init" >&5
+$as_echo "$ac_cv_lib_spatialite_spatialite_init" >&6; }
+if test "x$ac_cv_lib_spatialite_spatialite_init" = x""yes; then :
+  SPATIALITE_INIT_FOUND=yes
+else
+  SPATIALITE_INIT_FOUND=no
+fi
+
+    if test "$SPATIALITE_INIT_FOUND" = "yes"; then
+        HAVE_SPATIALITE=yes
+        LIBS="$LIBS -lspatialite"
+        HAVE_SQLITE3=yes
+    fi
+else
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
 $as_echo_n "checking for spatialite_init in -lspatialite... " >&6; }
 if test "${ac_cv_lib_spatialite_spatialite_init+set}" = set; then :
@@ -22104,7 +22151,6 @@ $as_echo "enabled" >&6; }
     else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
-        HAVE_SPATIALITE=no
     fi
 fi
 

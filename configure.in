@@ -2076,14 +2076,21 @@ dnl Check for SpatiaLite.
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(spatialite,
-    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no or path)],
+    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes or path)],
     ,,)
+
+HAVE_SPATIALITE=no
 
 if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
     AC_MSG_RESULT(disabled)
-    HAVE_SPATIALITE=no
+elif test "$with_spatialite" = "yes"; then
+    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,)
+    if test "$SPATIALITE_INIT_FOUND" = "yes"; then
+        HAVE_SPATIALITE=yes
+        LIBS="$LIBS -lspatialite"
+        HAVE_SQLITE3=yes
+    fi
 else
-    AC_MSG_CHECKING(for SpatiaLite)
     AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
     if test -f "$with_spatialite/include/spatialite.h" -a \
         -f "$with_spatialite/include/spatialite/sqlite3.h" -a \
@@ -2101,7 +2108,6 @@ else
         HAVE_SQLITE3=yes
     else
         AC_MSG_RESULT(disabled)
-        HAVE_SPATIALITE=no
     fi
 fi
 
