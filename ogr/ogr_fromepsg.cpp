@@ -1634,6 +1634,183 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 }
 
 /************************************************************************/
+/*                           SetEPSGVertCS()                            */
+/************************************************************************/
+
+static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Fetch record from the vertcs.csv or override file.              */
+/* -------------------------------------------------------------------- */
+    char        **papszRecord;
+    char        szSearchKey[24];
+    const char  *pszFilename;
+    
+    pszFilename = CSVFilename( "vertcs.override.csv" );
+    sprintf( szSearchKey, "%d", nVertCSCode );
+    papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
+                                     szSearchKey, CC_Integer );
+
+    if( papszRecord == NULL )
+    {
+        pszFilename = CSVFilename( "vertcs.csv" );
+        papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
+                                         szSearchKey, CC_Integer );
+        
+    }
+
+    if( papszRecord == NULL )
+        return OGRERR_UNSUPPORTED_SRS;
+
+/* -------------------------------------------------------------------- */
+/*      Set the VERT_CS node with a name.                               */
+/* -------------------------------------------------------------------- */
+    poSRS->SetNode( "VERT_CS", 
+                    CSLGetField( papszRecord,
+                                 CSVGetFileFieldId(pszFilename,
+                                                   "COORD_REF_SYS_NAME")) );
+
+/* -------------------------------------------------------------------- */
+/*      Setup the VERT_DATUM node.                                      */
+/* -------------------------------------------------------------------- */
+    poSRS->SetNode( "VERT_CS|VERT_DATUM", 
+                    CSLGetField( papszRecord,
+                                 CSVGetFileFieldId(pszFilename,
+                                                   "DATUM_NAME")) );
+    poSRS->GetAttrNode( "VERT_CS|VERT_DATUM" )->
+        AddChild( new OGR_SRSNode( "2005" ) );
+
+    poSRS->SetAuthority( "VERT_CS|VERT_DATUM", "EPSG",
+                         atoi(CSLGetField( papszRecord,
+                                           CSVGetFileFieldId(pszFilename,
+                                                             "DATUM_CODE"))) );
+    
+/* -------------------------------------------------------------------- */
+/*      Set linear units.                                               */
+/* -------------------------------------------------------------------- */
+    char *pszUOMLengthName = NULL;
+    double dfInMeters;
+    int nUOM_CODE = atoi(CSLGetField( papszRecord,
+                                      CSVGetFileFieldId(pszFilename,
+                                                        "UOM_CODE")));
+
+    if( !EPSGGetUOMLengthInfo( nUOM_CODE, &pszUOMLengthName, &dfInMeters ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to lookup UOM CODE %d", nUOM_CODE );
+    }
+    else
+    {
+        poSRS->SetLinearUnits( pszUOMLengthName, dfInMeters );
+        poSRS->SetAuthority( "VERT_CS|UNIT", "EPSG", nUOM_CODE );
+
+        CPLFree( pszUOMLengthName );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set axes                                                        */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poAxis = new OGR_SRSNode( "AXIS" );
+
+    poAxis->AddChild( new OGR_SRSNode( "Up" ) );
+    poAxis->AddChild( new OGR_SRSNode( "UP" ) );
+
+    poSRS->GetRoot()->AddChild( poAxis );
+    
+/* -------------------------------------------------------------------- */
+/*      Set overall authority code.                                     */
+/* -------------------------------------------------------------------- */
+    poSRS->SetAuthority( "VERT_CS", "EPSG", nVertCSCode );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           SetEPSGCompdCS()                           */
+/************************************************************************/
+
+static OGRErr SetEPSGCompdCS( OGRSpatialReference * poSRS, int nCCSCode )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Fetch record from the compdcs.csv or override file.             */
+/* -------------------------------------------------------------------- */
+    char        **papszRecord = NULL;
+    char        szSearchKey[24];
+    const char  *pszFilename;
+    
+    sprintf( szSearchKey, "%d", nCCSCode );
+
+// So far no override file needed.    
+//    pszFilename = CSVFilename( "compdcs.override.csv" );
+//    papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
+//                                     szSearchKey, CC_Integer );
+
+    if( papszRecord == NULL )
+    {
+        pszFilename = CSVFilename( "compdcs.csv" );
+        papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
+                                         szSearchKey, CC_Integer );
+        
+    }
+
+    if( papszRecord == NULL )
+        return OGRERR_UNSUPPORTED_SRS;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch subinformation now before anything messes with the        */
+/*      last loaded record.                                             */
+/* -------------------------------------------------------------------- */
+    int nPCSCode = atoi(CSLGetField( papszRecord,
+                                     CSVGetFileFieldId(pszFilename,
+                                                       "CMPD_HORIZCRS_CODE")));
+    int nVertCSCode = atoi(CSLGetField( papszRecord,
+                                        CSVGetFileFieldId(pszFilename,
+                                                          "CMPD_VERTCRS_CODE")));
+
+/* -------------------------------------------------------------------- */
+/*      Set the COMPD_CS node with a name.                              */
+/* -------------------------------------------------------------------- */
+    poSRS->SetNode( "COMPD_CS", 
+                    CSLGetField( papszRecord,
+                                 CSVGetFileFieldId(pszFilename,
+                                                   "COORD_REF_SYS_NAME")) );
+
+/* -------------------------------------------------------------------- */
+/*      Lookup the the projected coordinate system.  Can the            */
+/*      horizontal CRS be a GCS?                                        */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oPCS;
+    OGRErr eErr;
+
+    eErr = SetEPSGProjCS( &oPCS, nPCSCode );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    poSRS->GetRoot()->AddChild( 
+        oPCS.GetRoot()->Clone() );
+
+/* -------------------------------------------------------------------- */
+/*      Lookup the VertCS.                                              */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oVertCS;
+    eErr = SetEPSGVertCS( &oVertCS, nVertCSCode );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    poSRS->GetRoot()->AddChild( 
+        oVertCS.GetRoot()->Clone() );
+
+/* -------------------------------------------------------------------- */
+/*      Set overall authority code.                                     */
+/* -------------------------------------------------------------------- */
+    poSRS->SetAuthority( "COMPD_CS", "EPSG", nCCSCode );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           importFromEPSG()                           */
 /************************************************************************/
 
@@ -1756,12 +1933,15 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Is this a GeogCS code?   this is inadequate as a criteria       */
+/*      Try this as various sorts of objects till one works.            */
 /* -------------------------------------------------------------------- */
-    if( EPSGGetGCSInfo( nCode, NULL, NULL, NULL, NULL, NULL, NULL, NULL ) )
-        eErr = SetEPSGGeogCS( this, nCode );
-    else
+    eErr = SetEPSGGeogCS( this, nCode );
+    if( eErr == OGRERR_UNSUPPORTED_SRS )
         eErr = SetEPSGProjCS( this, nCode );
+    if( eErr == OGRERR_UNSUPPORTED_SRS )
+        eErr = SetEPSGVertCS( this, nCode );
+    if( eErr == OGRERR_UNSUPPORTED_SRS )
+        eErr = SetEPSGCompdCS( this, nCode );
 
 /* -------------------------------------------------------------------- */
 /*      If we get it as an unsupported code, try looking it up in       */
