@@ -199,7 +199,8 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
             "     auth_name VARCHAR NOT NULL,"
             "     auth_srid INTEGER NOT NULL,"
             "     ref_sys_name VARCHAR,"
-            "     proj4text VARCHAR NOT NULL)";
+            "     proj4text VARCHAR NOT NULL,"
+            "     srs_wkt VARCHAR)";
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {
@@ -364,6 +365,13 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
                 OGRErr eErr = oSRS.exportToProj4( &pszProj4 );
                 CPLPopErrorHandler();
 
+                char    *pszWKT = NULL;
+                if( oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
+                {
+                    CPLFree(pszWKT);
+                    pszWKT = NULL;
+                }
+
                 if( eErr == OGRERR_NONE )
                 {
                     const char  *pszProjCS = oSRS.GetAttrValue("PROJCS");
@@ -373,14 +381,14 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
                     if ( pszProjCS )
                         osCommand.Printf(
                             "INSERT INTO spatial_ref_sys "
-                            "(srid, auth_name, auth_srid, ref_sys_name, proj4text) "
-                            "VALUES (%d, 'EPSG', '%d', ?, ?)",
+                            "(srid, auth_name, auth_srid, ref_sys_name, proj4text, srs_wkt) "
+                            "VALUES (%d, 'EPSG', '%d', ?, ?, ?)",
                             nSRSId, nSRSId);
                     else
                         osCommand.Printf(
                             "INSERT INTO spatial_ref_sys "
-                            "(srid, auth_name, auth_srid, proj4text) "
-                            "VALUES (%d, 'EPSG', '%d', ?)",
+                            "(srid, auth_name, auth_srid, proj4text, srs_wkt) "
+                            "VALUES (%d, 'EPSG', '%d', ?, ?)",
                             nSRSId, nSRSId);
 
                     sqlite3_stmt *hInsertStmt = NULL;
@@ -392,11 +400,15 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
                             rc = sqlite3_bind_text( hInsertStmt, 1, pszProjCS, -1, SQLITE_STATIC );
                         if( rc == SQLITE_OK)
                             rc = sqlite3_bind_text( hInsertStmt, 2, pszProj4, -1, SQLITE_STATIC );
+                        if( rc == SQLITE_OK && pszWKT != NULL)
+                            rc = sqlite3_bind_text( hInsertStmt, 3, pszWKT, -1, SQLITE_STATIC );
                     }
                     else
                     {
                         if( rc == SQLITE_OK)
                             rc = sqlite3_bind_text( hInsertStmt, 1, pszProj4, -1, SQLITE_STATIC );
+                        if( rc == SQLITE_OK && pszWKT != NULL)
+                            rc = sqlite3_bind_text( hInsertStmt, 2, pszWKT, -1, SQLITE_STATIC );
                     }
 
                     if( rc == SQLITE_OK)
@@ -411,6 +423,7 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
 
                         sqlite3_finalize( hInsertStmt );
                         CPLFree(pszProj4);
+                        CPLFree(pszWKT);
                         break;
                     }
                     rc = SQLITE_OK;
@@ -419,6 +432,7 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
                 }
 
                 CPLFree(pszProj4);
+                CPLFree(pszWKT);
             }
             else
             {
