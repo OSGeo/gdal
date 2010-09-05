@@ -1,0 +1,19 @@
+
+OBJ	=	geopdfdataset.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = $(POPPLER_CFLAGS) $(POPPLER_HAS_OPTCONTENT_FLAGS)
+
+!IFDEF POPPLER_HAS_OPTCONTENT
+POPPLER_HAS_OPTCONTENT_FLAGS = -DPOPPLER_HAS_OPTCONTENT
+!ENDIF
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+
