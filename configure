@@ -761,6 +761,9 @@ GDAL_VERSION_MINOR
 GDAL_VERSION_MAJOR
 PROJ_INCLUDE
 PROJ_STATIC
+POPPLER_INC
+POPPLER_HAS_OPTCONTENT
+HAVE_POPPLER
 PAM_SETTING
 GEOS_CONFIG
 GEOS_VERSION
@@ -1018,6 +1021,7 @@ with_vfk
 with_epsilon
 with_geos
 with_pam
+with_poppler
 with_static_proj4
 with_gdal_ver
 with_
@@ -1738,6 +1742,7 @@ Optional Packages:
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
                           path)
   --without-pam         Disable PAM (.aux.xml) support
+  --with-poppler=ARG    Include poppler(for GeoPDF) support (ARG=no(default), yes)
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
@@ -5908,13 +5913,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5911: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5916: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5914: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5919: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5917: output\"" >&5)
+  (eval echo "\"\$as_me:5922: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -7116,7 +7121,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 7119 "configure"' > conftest.$ac_ext
+  echo '#line 7124 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -9043,11 +9048,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9046: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9051: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9050: \$? = $ac_status" >&5
+   echo "$as_me:9055: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9382,11 +9387,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9385: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9390: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9389: \$? = $ac_status" >&5
+   echo "$as_me:9394: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9487,11 +9492,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9490: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9495: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9494: \$? = $ac_status" >&5
+   echo "$as_me:9499: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9542,11 +9547,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9545: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9550: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9549: \$? = $ac_status" >&5
+   echo "$as_me:9554: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11925,7 +11930,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11928 "configure"
+#line 11933 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12021,7 +12026,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12024 "configure"
+#line 12029 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13977,11 +13982,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13980: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13985: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13984: \$? = $ac_status" >&5
+   echo "$as_me:13989: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14076,11 +14081,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14079: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14084: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14083: \$? = $ac_status" >&5
+   echo "$as_me:14088: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14128,11 +14133,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14131: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14136: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14135: \$? = $ac_status" >&5
+   echo "$as_me:14140: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -23372,6 +23377,71 @@ PAM_SETTING=$PAM_SETTING
 
 
 
+
+# Check whether --with-poppler was given.
+if test "${with_poppler+set}" = set; then :
+  withval=$with_poppler;
+fi
+
+
+HAVE_POPPLER=no
+POPPLER_HAS_OPTCONTENT=no
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for poppler" >&5
+$as_echo_n "checking for poppler... " >&6; }
+
+if test "$with_poppler" = "yes" ; then
+
+    TEST_POPPLER_INC=-I/usr/include/poppler
+
+    # Check that we can accept Page::pageObj private member
+    rm -f testpoppler.*
+    echo '#define private public' > testpoppler.cpp
+    echo '#include <Page.h>' >> testpoppler.cpp
+    echo 'int main(int argc, char** argv) { return &(((Page*)0x8000)->pageObj) == 0; } ' >> testpoppler.cpp
+    if test -z "`${CXX} testpoppler.cpp -c ${TEST_POPPLER_INC} -lpoppler 2>&1`" ; then
+        HAVE_POPPLER=yes
+        LIBS="-lpoppler ${LIBS}"
+        OPT_GDAL_FORMATS="geopdf $OPT_GDAL_FORMATS"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        POPPLER_INC=$TEST_POPPLER_INC
+
+        # And now try another dirty thing, but this one is
+        # optional.
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Catalog::optContent exists" >&5
+$as_echo_n "checking if Catalog::optContent exists... " >&6; }
+        rm -f testpoppler.*
+        echo '#define private public' > testpoppler.cpp
+        echo '#include <Object.h>' >> testpoppler.cpp
+        echo '#include <Catalog.h>' >> testpoppler.cpp
+        echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
+        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} -lpoppler 2>&1`" ; then
+            POPPLER_HAS_OPTCONTENT=yes
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+    rm -f testpoppler.*
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+fi
+
+HAVE_POPPLER=$HAVE_POPPLER
+
+POPPLER_HAS_OPTCONTENT=$POPPLER_HAS_OPTCONTENT
+
+POPPLER_INC=$POPPLER_INC
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to link PROJ.4 library" >&5
 $as_echo_n "checking how to link PROJ.4 library... " >&6; }
 
@@ -26649,6 +26719,9 @@ echo "  GEOS support:              ${HAVE_GEOS_RESULT}"
 
 
 echo "  VFK support:               ${HAVE_VFK}"
+
+
+echo "  Poppler support:           ${HAVE_POPPLER}"
 
 
 echo ""

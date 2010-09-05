@@ -468,6 +468,10 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_hf2
     GDALRegister_HF2();
 #endif
+
+#ifdef FRMT_geopdf
+    GDALRegister_GeoPDF();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
