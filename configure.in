@@ -2345,7 +2345,7 @@ if test "${HAVE_GEOS}" = "yes" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl Check if geos library is available.
+dnl Check if we must enable PAM
 dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING([whether to enable PAM])
@@ -2362,6 +2362,59 @@ else
 fi
 
 AC_SUBST(PAM_SETTING, $PAM_SETTING)
+
+dnl ---------------------------------------------------------------------------
+dnl Check if libpoppler is available
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(poppler,[  --with-poppler[=ARG]    Include poppler(for GeoPDF) support (ARG=no(default), yes)],,)
+
+HAVE_POPPLER=no
+POPPLER_HAS_OPTCONTENT=no
+
+AC_MSG_CHECKING([for poppler])
+
+if test "$with_poppler" = "yes" ; then
+
+    TEST_POPPLER_INC=-I/usr/include/poppler
+
+    # Check that we can accept Page::pageObj private member
+    rm -f testpoppler.*
+    echo '#define private public' > testpoppler.cpp
+    echo '#include <Page.h>' >> testpoppler.cpp
+    echo 'int main(int argc, char** argv) { return &(((Page*)0x8000)->pageObj) == 0; } ' >> testpoppler.cpp
+    if test -z "`${CXX} testpoppler.cpp -c ${TEST_POPPLER_INC} -lpoppler 2>&1`" ; then
+        HAVE_POPPLER=yes
+        LIBS="-lpoppler ${LIBS}"
+        OPT_GDAL_FORMATS="geopdf $OPT_GDAL_FORMATS"
+        AC_MSG_RESULT([yes])
+        POPPLER_INC=$TEST_POPPLER_INC
+
+        # And now try another dirty thing, but this one is
+        # optional.
+        AC_MSG_CHECKING([if Catalog::optContent exists])
+        rm -f testpoppler.*
+        echo '#define private public' > testpoppler.cpp
+        echo '#include <Object.h>' >> testpoppler.cpp
+        echo '#include <Catalog.h>' >> testpoppler.cpp
+        echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
+        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} -lpoppler 2>&1`" ; then
+            POPPLER_HAS_OPTCONTENT=yes
+            AC_MSG_RESULT([yes])
+        else
+            AC_MSG_RESULT([no])
+        fi
+    else
+        AC_MSG_RESULT([no])
+    fi
+    rm -f testpoppler.*
+else
+    AC_MSG_RESULT([disabled])
+fi
+
+AC_SUBST(HAVE_POPPLER, $HAVE_POPPLER)
+AC_SUBST(POPPLER_HAS_OPTCONTENT, $POPPLER_HAS_OPTCONTENT)
+AC_SUBST(POPPLER_INC, $POPPLER_INC)
 
 dnl ---------------------------------------------------------------------------
 dnl PROJ.4 related stuff.
@@ -2749,6 +2802,7 @@ LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
 LOC_MSG([  VFK support:               ${HAVE_VFK}])
+LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
   LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])

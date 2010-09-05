@@ -32,7 +32,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-/* poppler includes */
+/* begin of poppler xpdf includes */
 #include <Object.h>
 
 #define private public /* Ugly! Page::pageObj is private but we need it... */
@@ -40,12 +40,17 @@
 #undef private
 
 #include <Dict.h>
+
+#define private public /* Ugly! Catalog::optContent is private but we need it... */
 #include <Catalog.h>
+#undef private
+
 #include <PDFDoc.h>
 #include <splash/SplashBitmap.h>
 #include <splash/Splash.h>
 #include <SplashOutputDev.h>
 #include <GlobalParams.h>
+/* end of poppler xpdf includes */
 
 /* g++ -fPIC -g -Wall frmts/geopdf/geopdfdataset.cpp -shared -o gdal_GeoPDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
@@ -78,6 +83,7 @@ class GeoPDFDataset : public GDALPamDataset
     double       adfCTM[6];
     double       adfGeoTransform[6];
     PDFDoc*      poDoc;
+    int          iPage;
 
     double       dfMaxArea;
     int          ParseLGIDictObject(Object& oLGIDict);
@@ -114,6 +120,7 @@ class GeoPDFRasterBand : public GDALPamRasterBand
                 GeoPDFRasterBand( GeoPDFDataset *, int );
 
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual GDALColorInterp GetColorInterpretation();
 };
 
 
@@ -131,6 +138,15 @@ GeoPDFRasterBand::GeoPDFRasterBand( GeoPDFDataset *poDS, int nBand )
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                        GetColorInterpretation()                      */
+/************************************************************************/
+
+GDALColorInterp GeoPDFRasterBand::GetColorInterpretation()
+{
+    return (GDALColorInterp)(GCI_RedBand + (nBand - 1));
 }
 
 /************************************************************************/
@@ -160,17 +176,37 @@ CPLErr GeoPDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         sColor[2] = 255;
         SplashOutputDev *poSplashOut;
         poSplashOut = new SplashOutputDev(splashModeRGB8, 4, gFalse, sColor);
-        poSplashOut->startDoc(poGDS->poDoc->getXRef());
-        Page* poPage = poGDS->poDoc->getCatalog()->getPage(1);
+        PDFDoc* poDoc = poGDS->poDoc;
+        poSplashOut->startDoc(poDoc->getXRef());
+        Page* poPage = poDoc->getCatalog()->getPage(poGDS->iPage);
         double dfDPI = poGDS->dfDPI;
+
+        /* EVIL: we modify a private member... */
+        /* poppler (at least 0.12 and 0.14 versions) don't render correctly */
+        /* some PDFs and display an error message 'Could not find a OCG with Ref' */
+        /* in those cases. This processing of optional content is an addition of */
+        /* poppler in comparison to original xpdf, which hasn't the issue. All in */
+        /* all, nullifying optContent removes the error message and improves the rendering */
+#ifdef POPPLER_HAS_OPTCONTENT
+        Catalog* poCatalog = poDoc->getCatalog();
+        OCGs* poOldOCGs = poCatalog->optContent;
+        poCatalog->optContent = NULL;
+#endif
+
         poGDS->poDoc->displayPageSlice(poSplashOut,
-                                       1,
+                                       poGDS->iPage,
                                        dfDPI, dfDPI,
                                        0,
                                        TRUE, gFalse, gFalse,
                                        0, 0,
                                        poPage->getMediaWidth() * dfDPI / 72,
                                        poPage->getMediaHeight() * dfDPI / 72);
+
+        /* Restore back */
+#ifdef POPPLER_HAS_OPTCONTENT
+        poCatalog->optContent = poOldOCGs;
+#endif
+
         SplashBitmap* poBitmap = poSplashOut->getBitmap();
         if (poBitmap->getWidth() != nRasterXSize || poBitmap->getHeight() != nRasterYSize)
         {
@@ -228,6 +264,7 @@ GeoPDFDataset::GeoPDFDataset()
     adfGeoTransform[5] = -1;
     bTried = FALSE;
     pabyData = NULL;
+    iPage = -1;
 }
 
 /************************************************************************/
@@ -247,6 +284,9 @@ GeoPDFDataset::~GeoPDFDataset()
 
 int GeoPDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
+    if (strncmp(poOpenInfo->pszFilename, "GEOPDF:", 7) == 0)
+        return TRUE;
+
     if (poOpenInfo->nHeaderBytes < 128)
         return FALSE;
 
@@ -263,21 +303,29 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo))
         return NULL;
 
-    if (poOpenInfo->fp == NULL)
+    int bOpenSubdataset = strncmp(poOpenInfo->pszFilename, "GEOPDF:", 7) == 0;
+    int iPage = -1;
+    const char* pszFilename = poOpenInfo->pszFilename;
+    if (bOpenSubdataset)
+    {
+        iPage = atoi(poOpenInfo->pszFilename + 7);
+        if (iPage <= 0)
+            return NULL;
+         pszFilename = strchr(pszFilename + 7, ':');
+        if (pszFilename == NULL)
+            return NULL;
+        pszFilename ++;
+    }
+    else if (poOpenInfo->fp == NULL)
         return NULL;
+    else
+        iPage = 1;
 
     /* TODO: use alternate constructor to support virtual I/O */
-    PDFDoc* poDoc = new PDFDoc(new GooString(poOpenInfo->pszFilename));
-    if ( !poDoc->isOk() )
+    PDFDoc* poDoc = new PDFDoc(new GooString(pszFilename));
+    if ( !poDoc->isOk() || poDoc->getNumPages() == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
-        delete poDoc;
-        return NULL;
-    }
-
-    if ( poDoc->getNumPages() != 1 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Currently, we only support 1-page PDF");
         delete poDoc;
         return NULL;
     }
@@ -290,7 +338,16 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    Page* poPage = poCatalog->getPage(1);
+    int nPages = poDoc->getNumPages();
+    if (iPage < 1 || iPage > nPages)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid page number (%d/%d)",
+                 iPage, nPages);
+        delete poDoc;
+        return NULL;
+    }
+
+    Page* poPage = poCatalog->getPage(iPage);
     if ( poPage == NULL || !poPage->isOk() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page");
@@ -317,10 +374,36 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     GeoPDFDataset* poDS = new GeoPDFDataset();
+
+    if ( nPages > 1 && !bOpenSubdataset )
+    {
+        int i;
+        char** papszSubDatasets = NULL;
+        for(i=0;i<nPages;i++)
+        {
+            char szKey[32];
+            sprintf( szKey, "SUBDATASET_%d_NAME", i+1 );
+            papszSubDatasets =
+                CSLSetNameValue( papszSubDatasets, szKey,
+                                 CPLSPrintf("GEOPDF:%d:%s", i+1, poOpenInfo->pszFilename));
+            sprintf( szKey, "SUBDATASET_%d_DESC", i+1 );
+            papszSubDatasets =
+                CSLSetNameValue( papszSubDatasets, szKey,
+                                 CPLSPrintf("Page %d of %s", i+1, poOpenInfo->pszFilename));
+        }
+        poDS->SetMetadata( papszSubDatasets, "SUBDATASETS" );
+        CSLDestroy(papszSubDatasets);
+    }
+
     poDS->poDoc = poDoc;
-    poDS->dfDPI = atof(CPLGetConfigOption("GDAL_GEOPDF_DPI", "72"));
+    poDS->iPage = iPage;
+    poDS->dfDPI = atof(CPLGetConfigOption("GDAL_GEOPDF_DPI", "150"));
     if (poDS->dfDPI < 1 || poDS->dfDPI > 7200)
-        poDS->dfDPI = 72;
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Invalid value for GDAL_GEOPDF_DPI. Using default value instead");
+        poDS->dfDPI = 150;
+    }
 
     PDFRectangle* psMediaBox = poPage->getMediaBox();
     double dfX1 = psMediaBox->x1;
@@ -339,7 +422,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("GeoPDF", "TerraGo/OGC GeoPDF style GeoPDF detected");
         if (poDS->ParseLGIDictObject(oLGIDict))
         {
-            double dfPixelPerPt = poDS->nRasterXSize / (dfX2 - dfX1);
+            double dfPixelPerPt = poDS->dfDPI / 72;
             poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[0] * dfX1 + poDS->adfCTM[2] * dfY2;
             poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfPixelPerPt;
             poDS->adfGeoTransform[2] = poDS->adfCTM[1] / dfPixelPerPt;
@@ -351,7 +434,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else if ( poPageDict->lookup((char*)"VP",&oVP) != NULL && !oVP.isNull())
     {
         /* Cf adobe_supplement_iso32000.pdf */
-        CPLDebug("GeoPDF", "Adobe ISO3200 style GeoPDF detected");
+        CPLDebug("GeoPDF", "Adobe ISO32000 style GeoPDF perhaps ?");
         poDS->ParseVP(oVP);
     }
     else
@@ -573,10 +656,10 @@ int GeoPDFDataset::ParseLGIDictDict(Dict* poLGIDict)
         double dfArea = (dfMaxX - dfMinX) * (dfMaxY - dfMinY);
         if (dfArea < dfMaxArea)
         {
-            CPLDebug("GeoPDF", "Not the larger neatline. Skipping it");
+            CPLDebug("GeoPDF", "Not the largest neatline. Skipping it");
             return TRUE;
         }
-        CPLDebug("GeoPDF", "This is a the larger neatline for now");
+        CPLDebug("GeoPDF", "This is a the largest neatline for now");
         dfMaxArea = dfArea;
     }
 
@@ -600,7 +683,11 @@ int GeoPDFDataset::ParseLGIDictDict(Dict* poLGIDict)
         for(i=0;i<nLength;i++)
         {
             adfCTM[i] = GetValue(oCTM, i);
-            CPLDebug("GeoPDF", "CTM[%d] = %f", i, adfCTM[i]);
+            /* Nullify rotation terms that are significantly smaller than */
+            /* scaling termes */
+            if ((i == 1 || i == 2) && fabs(adfCTM[i]) < fabs(adfCTM[0]) * 1e-10)
+                adfCTM[i] = 0;
+            CPLDebug("GeoPDF", "CTM[%d] = %.16g", i, adfCTM[i]);
         }
     }
 
@@ -680,6 +767,7 @@ int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
 /* -------------------------------------------------------------------- */
     int bIsWGS84 = FALSE;
     int bIsNAD83 = FALSE;
+    int bIsNAD27 = FALSE;
 
     ObjectAutoFree oDatum;
     if (poProjDict->lookup((char*)"Datum",&oDatum) != NULL)
@@ -692,21 +780,52 @@ int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
                 bIsWGS84 = TRUE;
                 oSRS.SetWellKnownGeogCS("WGS84");
             }
-            else if (EQUAL(pszDatum, "NAR"))
+            else if (EQUAL(pszDatum, "NAR") || EQUALN(pszDatum, "NAR-", 4))
             {
                 bIsNAD83 = TRUE;
                 oSRS.SetWellKnownGeogCS("NAD83");
             }
+            else if (EQUAL(pszDatum, "NAS") || EQUALN(pszDatum, "NAS-", 4))
+            {
+                bIsNAD27 = TRUE;
+                oSRS.SetWellKnownGeogCS("NAD27");
+            }
+            else if (EQUAL(pszDatum, "HEN")) /* HERAT North, Afghanistan */
+            {
+                oSRS.SetGeogCS( "unknown" /*const char * pszGeogName*/,
+                                "unknown" /*const char * pszDatumName */,
+                                "International 1924",
+                                6378388,297);
+                oSRS.SetTOWGS84(-333,-222,114);
+            }
+            else if (EQUAL(pszDatum, "ING-A")) /* INDIAN 1960, Vietnam 16N */
+            {
+                oSRS.importFromEPSG(4131);
+            }
+            else if (EQUAL(pszDatum, "GDS")) /* Geocentric Datum of Australia */
+            {
+                oSRS.importFromEPSG(4283);
+            }
             else
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                        "Unhandled (yet) value for Datum : %s",
+                        "Unhandled (yet) value for Datum : %s. Defaulting to WGS84...",
                         pszDatum);
+                oSRS.SetGeogCS( "unknown" /*const char * pszGeogName*/,
+                                "unknown" /*const char * pszDatumName */,
+                                "unknown",
+                                6378137,298.257223563);
             }
         }
         else if (oDatum.isDict())
         {
             /* TODO */
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Datum as dictionary unhandled yet. Defaulting to WGS84...");
+            oSRS.SetGeogCS( "unknown" /*const char * pszGeogName*/,
+                                "unknown" /*const char * pszDatumName */,
+                                "unknown",
+                                6378137,298.257223563);
         }
     }
 
@@ -735,7 +854,261 @@ int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
     CPLString osProjectionType(oProjectionType.getString()->getCString());
     CPLDebug("GeoPDF", "Projection.ProjectionType = %s", osProjectionType.c_str());
 
-    if (EQUAL(osProjectionType, "TC"))
+    /* Unhandled: NONE, GEODETIC */
+
+    if (EQUAL(osProjectionType, "GEOGRAPHIC"))
+    {
+        /* Nothing to do */
+    }
+
+    /* Unhandled: LOCAL CARTESIAN, MG (MGRS) */
+
+    else if (EQUAL(osProjectionType, "UT")) /* UTM */
+    {
+        int nZone = (int)GetValue(poProjDict, "Zone");
+        int bNorth = EQUAL(osHemisphere, "N");
+        if (bIsWGS84)
+            oSRS.importFromEPSG( ((bNorth) ? 32600 : 32700) + nZone );
+        else
+            oSRS.SetUTM( nZone, bNorth );
+    }
+
+    else if (EQUAL(osProjectionType, "UP")) /* Universal Polar Stereographic (UPS) */
+    {
+        int bNorth = EQUAL(osHemisphere, "N");
+        if (bIsWGS84)
+            oSRS.importFromEPSG( (bNorth) ? 32661 : 32761 );
+        else
+            oSRS.SetPS( (bNorth) ? 90 : -90, 0,
+                        0.994, 200000, 200000 );
+    }
+
+    else if (EQUAL(osProjectionType, "SPCS")) /* State Plane */
+    {
+        int nZone = (int)GetValue(poProjDict, "Zone");
+        oSRS.SetStatePlane( nZone, bIsNAD83 );
+    }
+
+    else if (EQUAL(osProjectionType, "AC")) /* Albers Equal Area Conic */
+    {
+        double dfStdP1 = GetValue(poProjDict, "StandardParallelOne");
+        double dfStdP2 = GetValue(poProjDict, "StandardParallelTwo");
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetACEA( dfStdP1, dfStdP2,
+                     dfCenterLat, dfCenterLong,
+                     dfFalseEasting, dfFalseNorthing );
+    }
+ 
+    else if (EQUAL(osProjectionType, "AL")) /* Azimuthal Equidistant */
+    {
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetAE(  dfCenterLat, dfCenterLong,
+                     dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "BF")) /* Bonne */
+    {
+        double dfStdP1 = GetValue(poProjDict, "OriginLatitude");
+        double dfCentralMeridian = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetBonne( dfStdP1, dfCentralMeridian,
+                       dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "CS")) /* Cassini */
+    {
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetCS(  dfCenterLat, dfCenterLong,
+                     dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "LI")) /* Cylindrical Equal Area */
+    {
+        double dfStdP1 = GetValue(poProjDict, "OriginLatitude");
+        double dfCentralMeridian = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetCEA( dfStdP1, dfCentralMeridian,
+                     dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "EF")) /* Eckert IV */
+    {
+        double dfCentralMeridian = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetEckertIV( dfCentralMeridian,
+                          dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "ED")) /* Eckert VI */
+    {
+        double dfCentralMeridian = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetEckertVI( dfCentralMeridian,
+                          dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "CP")) /* Equidistant Cylindrical */
+    {
+        double dfCenterLat = GetValue(poProjDict, "StandardParallel");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetEquirectangular( dfCenterLat, dfCenterLong,
+                                 dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "GN")) /* Gnomonic */
+    {
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetGnomonic(dfCenterLat, dfCenterLong,
+                         dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "LE")) /* Lambert Conformal Conic */
+    {
+        double dfStdP1 = GetValue(poProjDict, "StandardParallelOne");
+        double dfStdP2 = GetValue(poProjDict, "StandardParallelTwo");
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetLCC( dfStdP1, dfStdP2,
+                     dfCenterLat, dfCenterLong,
+                     dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "MC")) /* Mercator */
+    {
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfScale = GetValue(poProjDict, "ScaleFactor");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetMercator( dfCenterLat, dfCenterLong,
+                          dfScale,
+                          dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "MH")) /* Miller Cylindrical */
+    {
+        double dfCenterLat = 0 /* ? */;
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetMC( dfCenterLat, dfCenterLong,
+                    dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "MP")) /* Mollweide */
+    {
+        double dfCentralMeridian = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetMollweide( dfCentralMeridian,
+                           dfFalseEasting, dfFalseNorthing );
+    }
+
+    /* Unhandled:  "NY" : Ney's (Modified Lambert Conformal Conic) */
+
+    else if (EQUAL(osProjectionType, "NT")) /* New Zealand Map Grid */
+    {
+        /* No parameter specified in the PDF, so let's take the ones of EPSG:27200 */
+        double dfCenterLat = -41;
+        double dfCenterLong = 173;
+        double dfFalseEasting = 2510000;
+        double dfFalseNorthing = 6023150;
+        oSRS.SetNZMG( dfCenterLat, dfCenterLong,
+                      dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "OC")) /* Oblique Mercator */
+    {
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfLat1 = GetValue(poProjDict, "LatitudeOne");
+        double dfLong1 = GetValue(poProjDict, "LongitudeOne");
+        double dfLat2 = GetValue(poProjDict, "LatitudeTwo");
+        double dfLong2 = GetValue(poProjDict, "LongitudeTwo");
+        double dfScale = GetValue(poProjDict, "ScaleFactor");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetHOM2PNO( dfCenterLat,
+                         dfLat1, dfLong1,
+                         dfLat2, dfLong2,
+                         dfScale,
+                         dfFalseEasting,
+                         dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "OD")) /* Orthographic */
+    {
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetOrthographic( dfCenterLat, dfCenterLong,
+                           dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "PG")) /* Polar Stereographic */
+    {
+        double dfCenterLat = GetValue(poProjDict, "LatitudeTrueScale");
+        double dfCenterLong = GetValue(poProjDict, "LongitudeDownFromPole");
+        double dfScale = 1.0;
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetPS( dfCenterLat, dfCenterLong,
+                    dfScale,
+                    dfFalseEasting, dfFalseNorthing);
+    }
+
+    else if (EQUAL(osProjectionType, "PH")) /* Polyconic */
+    {
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetPolyconic( dfCenterLat, dfCenterLong,
+                           dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "SA")) /* Sinusoidal */
+    {
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetSinusoidal( dfCenterLong,
+                           dfFalseEasting, dfFalseNorthing );
+    }
+
+    else if (EQUAL(osProjectionType, "SD")) /* Stereographic */
+    {
+        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
+        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
+        double dfScale = 1.0;
+        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
+        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
+        oSRS.SetStereographic( dfCenterLat, dfCenterLong,
+                               dfScale,
+                               dfFalseEasting, dfFalseNorthing);
+    }
+
+    else if (EQUAL(osProjectionType, "TC")) /* Transverse Mercator */
     {
         double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
         double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
@@ -761,36 +1134,18 @@ int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
                         dfFalseEasting, dfFalseNorthing );
         }
     }
-    else if (EQUAL(osProjectionType, "LE"))
+
+    /* Unhandled TX : Transverse Cylindrical Equal Area */
+
+    else if (EQUAL(osProjectionType, "VA")) /* Van der Grinten */
     {
-        double dfStdP1 = GetValue(poProjDict, "StandardParallelOne");
-        double dfStdP2 = GetValue(poProjDict, "StandardParallelTwo");
-        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
         double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
         double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
         double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
-        oSRS.SetLCC( dfStdP1, dfStdP2,
-                     dfCenterLat, dfCenterLong,
+        oSRS.SetVDG( dfCenterLong,
                      dfFalseEasting, dfFalseNorthing );
     }
-    else if (EQUAL(osProjectionType, "PH"))
-    {
-        double dfCenterLat = GetValue(poProjDict, "OriginLatitude");
-        double dfCenterLong = GetValue(poProjDict, "CentralMeridian");
-        double dfFalseEasting = GetValue(poProjDict, "FalseEasting");
-        double dfFalseNorthing = GetValue(poProjDict, "FalseNorthing");
-        oSRS.SetPolyconic( dfCenterLat, dfCenterLong,
-                           dfFalseEasting, dfFalseNorthing );
-    }
-    else if (EQUAL(osProjectionType, "UT"))
-    {
-        int nZone = (int)GetValue(poProjDict, "Zone");
-        int bNorth = EQUAL(osHemisphere, "N");
-        if (bIsWGS84)
-            oSRS.importFromEPSG( ((bNorth) ? 32600 : 32700) + nZone );
-        else
-            oSRS.SetUTM( nZone, bNorth );
-    }
+
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -996,7 +1351,70 @@ int GeoPDFDataset::ParseVP(Object& oVP)
     }
 
     CPLDebug("GeoPDF", "GCS.WKT = %s", oGCSWKT.getString()->getCString());
+    CPLFree(pszWKT);
+    pszWKT = CPLStrdup(oGCSWKT.getString()->getCString());
 
+/* -------------------------------------------------------------------- */
+/*      Compute geotransform                                            */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+    char* pszWktTemp = pszWKT;
+    if (oSRS.importFromWkt(&pszWktTemp) != OGRERR_NONE)
+    {
+        CPLFree(pszWKT);
+        pszWKT = NULL;
+        return FALSE;
+    }
+
+    OGRSpatialReference* poSRSGeog = oSRS.CloneGeogCS();
+
+    OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation( poSRSGeog, &oSRS);
+    if (poCT == NULL)
+    {
+        delete poSRSGeog;
+        CPLFree(pszWKT);
+        pszWKT = NULL;
+        return FALSE;
+    }
+
+    GDAL_GCP asGCPS[4];
+
+    for(i=0;i<4;i++)
+    {
+        /* We probably assume LPTS is 0 or 1 */
+        asGCPS[i].dfGCPPixel = adfLPTS[2*i] * nRasterXSize;
+        asGCPS[i].dfGCPLine  = adfLPTS[2*i+1] * nRasterYSize;
+        double lat = adfGPTS[2*i], lon = adfGPTS[2*i+1];
+        double x = lon, y = lat;
+        if (!poCT->Transform(1, &x, &y, NULL))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot reproject (%f, %f)", lon, lat);
+            delete poSRSGeog;
+            delete poCT;
+            CPLFree(pszWKT);
+            pszWKT = NULL;
+            return FALSE;
+        }
+        asGCPS[i].dfGCPX     = x;
+        asGCPS[i].dfGCPY     = y;
+    }
+
+    delete poSRSGeog;
+    delete poCT;
+
+    if (!GDALGCPsToGeoTransform( 4, asGCPS,
+                               adfGeoTransform, FALSE))
+    {
+        CPLDebug("GeoPDF", "Could not compute GT with exact match. Try with approximate");
+        if (!GDALGCPsToGeoTransform( 4, asGCPS,
+                               adfGeoTransform, TRUE))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not compute GT with approximate match.");
+            return FALSE;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Extract PointData attribute                                     */
@@ -1008,9 +1426,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
         CPLDebug("GeoPDF", "Found PointData");
     }
 
-    /* TODO */
-
-    return FALSE;
+    return TRUE;
 }
 
 /************************************************************************/
@@ -1044,6 +1460,9 @@ void GDALRegister_GeoPDF()
 
 {
     GDALDriver  *poDriver;
+
+    if (! GDAL_CHECK_VERSION("GeoPDF driver"))
+        return;
 
     if( GDALGetDriverByName( "GeoPDF" ) == NULL )
     {
