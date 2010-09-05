@@ -1,0 +1,52 @@
+<html>
+<head>
+<title>GeoPDF</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GeoPDF</h1>
+
+(Available for GDAL >= 1.8.0)
+<p>
+GDAL supports reading GeoPDF documents, by extracting georeferencing information and rasterizing the data. Non-geographic
+PDF documents will also be recognized by the driver.
+<p>
+GDAL must be compiled with libpoppler support, and libpoppler itself must have been configured with
+--enable-xpdf-headers so that the xpdf C++ headers are available.
+<p>
+The driver supports reading georeferencing encoded in either of the 2 current existing ways : the OGC
+GeoPDF encoding best practice (promoted by TerraGo), or according to the Adobe Supplement to ISO 32000.
+<p>
+The dimensions of the raster can be controlled by specifying the DPI of the rasterization with the
+<i>GDAL_GEOPDF_DPI</i> configuration option. Its default value is 150.
+<p>
+Multipage documents are exposed as subdatasets, one subdataset par page of the document.
+<p>
+
+<h2>Restrictions</h2>
+
+The opening of a PDF document (to get the georeferencing) is fast, but at the first access to a raster block,
+the whole page will be rasterized, which can be a slow operation.
+<p>
+Only a few of the possible Datums available in the GeoPDF (OGC best practice) spec have been currently mapped
+in the driver. Unrecognized datums will be considered as being based on the WGS84 ellipsoid.
+<p>
+For GeoPDF (OGC best practice) documents that contain several NeatLines in a page (insets), the georeferencing will be
+extracted from the inset that has the largest area (in term of screen points).
+<p>
+There is currently no support for selective layer rendering.
+<p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="http://portal.opengeospatial.org/files/?artifact_id=33332">OGC GeoPDF Encoding Best Practice Version 2.2</a></li>
+<li><a href="http://www.adobe.com/devnet/acrobat/pdfs/adobe_supplement_iso32000.pdf">Adobe Supplement to ISO 32000</a></li>
+<li><a href="http://poppler.freedesktop.org/">Poppler homepage</a></li>
+<li><a href="http://acrobatusers.com/gallery/geospatial">A few GeoPDF samples</a></li>
+<li><a href="http://www.agc.army.mil/geopdf_gallery.html">Another set of GeoPDF samples</a></li>
+</ul>
+
+</body>
+</html>
