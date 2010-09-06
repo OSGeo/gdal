@@ -143,9 +143,9 @@ GooString *VSIPDFFileStream::getFileName()
 int VSIPDFFileStream::FillBuffer()
 {
     if (nBufferLength == 0)
-        return EOF;
+        return FALSE;
     if (nBufferLength != -1 && nBufferLength < BUFFER_SIZE)
-        return EOF;
+        return FALSE;
 
     nPosInBuffer = 0;
     int nToRead;
@@ -157,7 +157,9 @@ int VSIPDFFileStream::FillBuffer()
         nToRead = BUFFER_SIZE;
     nBufferLength = VSIFReadL(abyBuffer, 1, nToRead, f);
     if (nBufferLength == 0)
-        return EOF;
+        return FALSE;
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -179,7 +181,7 @@ int VSIPDFFileStream::getChar()
 #else
     if (nPosInBuffer == nBufferLength)
     {
-        if (FillBuffer() == EOF)
+        if (!FillBuffer())
             return EOF;
     }
 
