@@ -1558,11 +1558,13 @@ int ENVIDataset::ReadHeader( FILE * fpHdr )
             int		i;
 
             pszValue = pszWorkingLine + iEqual + 1;
-            while( *pszValue == ' ' )
+            while( *pszValue == ' ' || *pszValue == '\t' )
                 pszValue++;
             
             pszWorkingLine[iEqual--] = '\0';
-            while( iEqual > 0 && pszWorkingLine[iEqual] == ' ' )
+            while( iEqual > 0 
+                   && (pszWorkingLine[iEqual] == ' '
+                       || pszWorkingLine[iEqual] == '\t') )
                 pszWorkingLine[iEqual--] = '\0';
 
             // Convert spaces in the name to underscores.
