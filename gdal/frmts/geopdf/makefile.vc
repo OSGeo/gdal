@@ -1,5 +1,5 @@
 
-OBJ	=	geopdfdataset.obj
+OBJ	=	geopdfdataset.obj geopdfio.obj
 
 GDAL_ROOT	=	..\..
 

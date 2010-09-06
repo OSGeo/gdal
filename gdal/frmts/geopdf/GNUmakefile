@@ -1,5 +1,5 @@
 
-OBJ	=	geopdfdataset.o
+OBJ	=	geopdfdataset.o geopdfio.o
 
 include ../../GDALmake.opt
 

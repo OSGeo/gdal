@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "geopdfio.h"
 
 /* begin of poppler xpdf includes */
 #include <Object.h>
@@ -60,6 +61,10 @@ CPL_C_START
 void    GDALRegister_GeoPDF(void);
 CPL_C_END
 
+/************************************************************************/
+/*                          ObjectAutoFree                              */
+/************************************************************************/
+
 class ObjectAutoFree : public Object
 {
 public:
@@ -69,7 +74,7 @@ public:
 
 /************************************************************************/
 /* ==================================================================== */
-/*                              GeoPDFDataset                              */
+/*                              GeoPDFDataset                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -107,7 +112,7 @@ class GeoPDFDataset : public GDALPamDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*                            GeoPDFRasterBand                             */
+/*                         GeoPDFRasterBand                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -125,7 +130,7 @@ class GeoPDFRasterBand : public GDALPamRasterBand
 
 
 /************************************************************************/
-/*                           GeoPDFRasterBand()                            */
+/*                         GeoPDFRasterBand()                           */
 /************************************************************************/
 
 GeoPDFRasterBand::GeoPDFRasterBand( GeoPDFDataset *poDS, int nBand )
@@ -316,13 +321,19 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         pszFilename ++;
     }
-    else if (poOpenInfo->fp == NULL)
-        return NULL;
     else
         iPage = 1;
 
-    /* TODO: use alternate constructor to support virtual I/O */
-    PDFDoc* poDoc = new PDFDoc(new GooString(pszFilename));
+    FILE* fp = VSIFOpenL(pszFilename, "rb");
+    if (fp == NULL)
+        return NULL;
+
+    fp = (FILE*)VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
+
+    ObjectAutoFree oObj;
+    oObj.initNull();
+    PDFDoc* poDoc = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, 0, gFalse, 0, &oObj));
+    //PDFDoc* poDoc = new PDFDoc(new GooString(pszFilename));
     if ( !poDoc->isOk() || poDoc->getNumPages() == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
@@ -1475,7 +1486,7 @@ void GDALRegister_GeoPDF()
                                    "frmt_geopdf.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pdf" );
 
-        //poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = GeoPDFDataset::Open;
         poDriver->pfnIdentify = GeoPDFDataset::Identify;
