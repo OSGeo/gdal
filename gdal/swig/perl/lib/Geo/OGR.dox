@@ -685,13 +685,23 @@
 # @param name
 # @return a Geo::OGR::FeatureDefn object
 
+## @cmethod Geo::OGR::FeatureDefn create(%schema)
+# Example usage:
+# \code
+# $fd = Geo::OGR::FeatureDefn->create( Name => "name", GeometryType =>
+# "Polygon", Fields => [{Name => 'field1', Type => 'String'}] );
+# \endcode
+# @param schema The schema for the new feature definition, as in
+# Geo::OGR::FeatureDefn::Schema.
+# @return a Geo::OGR::FeatureDefn object
+
 ## @method \%Schema(%schema)
 # Get or set the schema. The schema is a hash (Name => name,
 # GeometryType => geometry_type, Fields => [list of
 # Geo::OGR::FieldDefn objects or hashrefs from which such can be
-# created]. The Name nor GeometryType cannot be set and the Fields are
-# added to the schema. Fields is an array of hashrefs that
-# contain schemas of FieldDefns
+# created (see Geo::OGR::FieldDefn::create)]. The Name cannot be set
+# and the Fields are added to the schema. Fields is an array of
+# hashrefs that contain schemas of FieldDefns.
 # @param schema [optional]
 # @return
 
@@ -758,7 +768,7 @@
 #
 # Usage:
 # \code
-# $fd = Geo::OGR::FieldDefn->create(...arguments...);
+# $fd = Geo::OGR::FieldDefn->create( Name => "name", Type => "FieldType", ...);
 # \endcode
 # @return a new Geo::OGR::FieldDefn object
 
