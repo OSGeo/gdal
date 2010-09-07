@@ -718,7 +718,9 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
  *
  * - CUTLINE: This may contain the WKT geometry for a cutline.  It will
  * be converted into a geometry by GDALWarpOperation::Initialize() and assigned
- * to the GDALWarpOptions hCutline field.
+ * to the GDALWarpOptions hCutline field. The coordinates must be expressed
+ * in source pixel/line coordinates. Note: this is different from the assumptions
+ * made for the -cutline option of the gdalwarp utility !
  *
  * - CUTLINE_BLEND_DIST: This may be set with a distance in pixels which
  * will be assigned to the dfCutlineBlendDist field in the GDALWarpOptions.
