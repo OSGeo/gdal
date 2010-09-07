@@ -42,6 +42,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 static void
 TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
                           char ***ppapszWarpOptions, char **papszTO );
+
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
                       const char *pszFormat, char **papszTO,
@@ -74,7 +75,7 @@ gdalwarp [--help-general] [--formats]
     [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha
     [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
     [-cutline datasource] [-cl layer] [-cwhere expression]
-    [-csql statement] [-cblend dist_in_pixels]
+    [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
     [-of format] [-co "NAME=VALUE"]*
     srcfile* dstfile
 \endverbatim
@@ -164,6 +165,7 @@ cutline datasource.</dd>
 <dt> <b>-cwhere</b> <em>expression</em>:</dt><dd>Restrict desired cutline features based on attribute query.</dd>
 <dt> <b>-csql</b> <em>query</em>:</dt><dd>Select cutline features using an SQL query instead of from a layer with -cl.</dd>
 <dt> <b>-cblend</b> <em>distance</em>:</dt><dd>Set a blend distance to use to blend over cutlines (in pixels).</dd>
+<dt> <b>-crop_to_cutline</b>:</dt><dd>Crop the extent of the target dataset to the extent of the cutline.</dd>
 
 <dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
 <dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
@@ -285,6 +287,7 @@ int main( int argc, char ** argv )
     char                *pszCLayer = NULL, *pszCWHERE = NULL, *pszCSQL = NULL;
     void                *hCutline = NULL;
     int                  bHasGotErr = FALSE;
+    int                  bCropToCutline = FALSE;
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -536,6 +539,11 @@ int main( int argc, char ** argv )
                 CSLSetNameValue( papszWarpOptions, 
                                  "CUTLINE_BLEND_DIST", argv[++i] );
         }
+        else if( EQUAL(argv[i],"-crop_to_cutline")  )
+        {
+            bCropToCutline = TRUE;
+            bCreateOutput = TRUE;
+        }
         else if( argv[i][0] == '-' )
             Usage();
 
@@ -612,6 +620,105 @@ int main( int argc, char ** argv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we have a cutline datasource read it and attach it in the    */
+/*      warp options.                                                   */
+/* -------------------------------------------------------------------- */
+    if( pszCutlineDSName != NULL )
+    {
+        LoadCutline( pszCutlineDSName, pszCLayer, pszCWHERE, pszCSQL,
+                     &hCutline );
+    }
+
+#ifdef OGR_ENABLED
+    if ( bCropToCutline && hCutline != NULL )
+    {
+        OGRGeometryH hCutlineGeom = OGR_G_Clone( (OGRGeometryH) hCutline );
+        OGRSpatialReferenceH hCutlineSRS = OGR_G_GetSpatialReference( hCutlineGeom );
+        const char *pszThisTargetSRS = CSLFetchNameValue( papszTO, "DST_SRS" );
+        OGRCoordinateTransformationH hCT = NULL;
+        if (hCutlineSRS == NULL)
+        {
+            /* We suppose it is in target coordinates */
+        }
+        else if (pszThisTargetSRS != NULL)
+        {
+            OGRSpatialReferenceH hTargetSRS = OSRNewSpatialReference(NULL);
+            if( OSRImportFromWkt( hTargetSRS, (char **)&pszThisTargetSRS ) != CE_None )
+            {
+                fprintf(stderr, "Cannot compute bounding box of cutline.\n");
+                exit(1);
+            }
+
+            hCT = OCTNewCoordinateTransformation(hCutlineSRS, hTargetSRS);
+
+            OSRDestroySpatialReference(hTargetSRS);
+        }
+        else if (pszThisTargetSRS == NULL)
+        {
+            if (papszSrcFiles[0] != NULL)
+            {
+                GDALDatasetH hSrcDS = GDALOpen(papszSrcFiles[0], GA_ReadOnly);
+                if (hSrcDS == NULL)
+                {
+                    fprintf(stderr, "Cannot compute bounding box of cutline.\n");
+                    exit(1);
+                }
+
+                OGRSpatialReferenceH  hRasterSRS = NULL;
+                const char *pszProjection = NULL;
+
+                if( GDALGetProjectionRef( hSrcDS ) != NULL
+                    && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
+                    pszProjection = GDALGetProjectionRef( hSrcDS );
+                else if( GDALGetGCPProjection( hSrcDS ) != NULL )
+                    pszProjection = GDALGetGCPProjection( hSrcDS );
+
+                if( pszProjection == NULL )
+                {
+                    fprintf(stderr, "Cannot compute bounding box of cutline.\n");
+                    exit(1);
+                }
+
+                hRasterSRS = OSRNewSpatialReference(NULL);
+                if( OSRImportFromWkt( hRasterSRS, (char **)&pszProjection ) != CE_None )
+                {
+                    fprintf(stderr, "Cannot compute bounding box of cutline.\n");
+                    exit(1);
+                }
+
+                hCT = OCTNewCoordinateTransformation(hCutlineSRS, hRasterSRS);
+
+                OSRDestroySpatialReference(hRasterSRS);
+
+                GDALClose(hSrcDS);
+            }
+            else
+            {
+                fprintf(stderr, "Cannot compute bounding box of cutline.\n");
+                exit(1);
+            }
+        }
+
+        if (hCT)
+        {
+            OGR_G_Transform( hCutlineGeom, hCT );
+
+            OCTDestroyCoordinateTransformation(hCT);
+        }
+
+        OGREnvelope sEnvelope;
+        OGR_G_GetEnvelope(hCutlineGeom, &sEnvelope);
+
+        dfMinX = sEnvelope.MinX;
+        dfMinY = sEnvelope.MinY;
+        dfMaxX = sEnvelope.MaxX;
+        dfMaxY = sEnvelope.MaxY;
+        
+        OGR_G_DestroyGeometry(hCutlineGeom);
+    }
+#endif
+    
+/* -------------------------------------------------------------------- */
 /*      If not, we need to create it.                                   */
 /* -------------------------------------------------------------------- */
     int   bInitDestSetForFirst = FALSE;
@@ -643,16 +750,6 @@ int main( int argc, char ** argv )
 
     if( hDstDS == NULL )
         exit( 1 );
-
-/* -------------------------------------------------------------------- */
-/*      If we have a cutline datasource read it and attach it in the    */
-/*      warp options.                                                   */
-/* -------------------------------------------------------------------- */
-    if( pszCutlineDSName != NULL )
-    {
-        LoadCutline( pszCutlineDSName, pszCLayer, pszCWHERE, pszCSQL, 
-                     &hCutline );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all source files, processing each in turn.            */
