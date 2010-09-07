@@ -345,50 +345,74 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /*      Setup sample points all around the edge of the input raster.    */
 /* -------------------------------------------------------------------- */
     int    nSamplePoints = 0;
-#define N_STEPS 20
-    int    abSuccess[(N_STEPS+1)*(N_STEPS+1)] = { 0 };;
-    double adfX[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
-    double adfY[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
-    double adfZ[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
-    double adfXRevert[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
-    double adfYRevert[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
-    double adfZRevert[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
-    double dfRatio = 0;
     int    nInXSize = GDALGetRasterXSize( hSrcDS );
     int    nInYSize = GDALGetRasterYSize( hSrcDS );
 
-    // Take N_STEPS steps 
-    for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 1. / N_STEPS )
+#define N_PIXELSTEP 50
+    int nSteps = double(MIN(nInYSize, nInXSize)) / N_PIXELSTEP + .5;
+    if (nSteps < 20)
+        nSteps = 20;
+
+retry:
+    int nSampleMax = (nSteps + 1)*(nSteps + 1);
+    int *pabSuccess = NULL;
+    double *padfX, *padfY, *padfZ;
+    double *padfXRevert, *padfYRevert, *padfZRevert;
+
+    double dfRatio = 0.0;
+    double dfStep = 1. / nSteps;
+
+    pabSuccess = (int *) VSIMalloc3(sizeof(int), nSteps + 1, nSteps + 1);
+    padfX = (double *) VSIMalloc3(sizeof(double) * 3, nSteps + 1, nSteps + 1);
+    padfXRevert = (double *) VSIMalloc3(sizeof(double) * 3, nSteps + 1, nSteps + 1);
+    if (pabSuccess == NULL || padfX == NULL || padfXRevert == NULL)
     {
-        
-        // Ensure we end exactly at the end.
-        if( dfRatio > 0.99 )
-            dfRatio = 1.0;
+        CPLFree( padfX );
+        CPLFree( padfXRevert );
+        CPLFree( pabSuccess );
+        if (nSteps > 20)
+        {
+            nSteps = 20;
+            goto retry;
+        }
+        return CE_Failure;
+    }
+    padfY = padfX + nSampleMax;
+    padfZ = padfX + nSampleMax * 2;
+    padfYRevert = padfXRevert + nSampleMax;
+    padfZRevert = padfXRevert + nSampleMax * 2;
+
+
+    // Take N_STEPS steps
+    int iStep;
+    for( iStep = 0; iStep <= nSteps; iStep ++ )
+    {
+        dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
 
         // Along top 
-        adfX[nSamplePoints]   = dfRatio * nInXSize;
-        adfY[nSamplePoints]   = 0.0;
-        adfZ[nSamplePoints++] = 0.0;
+        padfX[nSamplePoints]   = dfRatio * nInXSize;
+        padfY[nSamplePoints]   = 0.0;
+        padfZ[nSamplePoints++] = 0.0;
 
         // Along bottom 
-        adfX[nSamplePoints]   = dfRatio * nInXSize;
-        adfY[nSamplePoints]   = nInYSize;
-        adfZ[nSamplePoints++] = 0.0;
+        padfX[nSamplePoints]   = dfRatio * nInXSize;
+        padfY[nSamplePoints]   = nInYSize;
+        padfZ[nSamplePoints++] = 0.0;
 
         // Along left
-        adfX[nSamplePoints]   = 0.0;
-        adfY[nSamplePoints] = dfRatio * nInYSize;
-        adfZ[nSamplePoints++] = 0.0;
+        padfX[nSamplePoints]   = 0.0;
+        padfY[nSamplePoints] = dfRatio * nInYSize;
+        padfZ[nSamplePoints++] = 0.0;
 
         // Along right
-        adfX[nSamplePoints]   = nInXSize;
-        adfY[nSamplePoints] = dfRatio * nInYSize;
-        adfZ[nSamplePoints++] = 0.0;
+        padfX[nSamplePoints]   = nInXSize;
+        padfY[nSamplePoints] = dfRatio * nInYSize;
+        padfZ[nSamplePoints++] = 0.0;
     }
 
-    CPLAssert( nSamplePoints == 4 * (N_STEPS + 1) );
+    CPLAssert( nSamplePoints == 4 * (nSteps + 1) );
 
-    memset( abSuccess, 1, sizeof(abSuccess) );
+    memset( pabSuccess, 1, sizeof(int) * nSampleMax );
 
 /* -------------------------------------------------------------------- */
 /*      Transform them to the output coordinate system.                 */
@@ -396,17 +420,20 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     int    nFailedCount = 0, i;
 
     if( !pfnTransformer( pTransformArg, FALSE, nSamplePoints, 
-                         adfX, adfY, adfZ, abSuccess ) )
+                         padfX, padfY, padfZ, pabSuccess ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "GDALSuggestedWarpOutput() failed because the passed\n"
                   "transformer failed." );
+        CPLFree( padfX );
+        CPLFree( padfXRevert );
+        CPLFree( pabSuccess );
         return CE_Failure;
     }
 
     for( i = 0; i < nSamplePoints; i++ )
     {
-        if( !abSuccess[i] )
+        if( !pabSuccess[i] )
             nFailedCount++;
     }
     
@@ -416,11 +443,11 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
     if (nFailedCount == 0 )
     {
-        memcpy(adfXRevert, adfX, sizeof(adfX));
-        memcpy(adfYRevert, adfY, sizeof(adfY));
-        memcpy(adfZRevert, adfZ, sizeof(adfZ));
+        memcpy(padfXRevert, padfX, nSamplePoints * sizeof(double));
+        memcpy(padfYRevert, padfY, nSamplePoints * sizeof(double));
+        memcpy(padfZRevert, padfZ, nSamplePoints * sizeof(double));
         if( !pfnTransformer( pTransformArg, TRUE, nSamplePoints, 
-                             adfXRevert, adfYRevert,adfZRevert, abSuccess ) )
+                             padfXRevert, padfYRevert, padfZRevert, pabSuccess ) )
         {
             nFailedCount = 1;
         }
@@ -428,10 +455,10 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         {
             for( i = 0; nFailedCount == 0 && i < nSamplePoints; i++ )
             {
-                if( !abSuccess[i] )
+                if( !pabSuccess[i] )
                     nFailedCount++;
-                
-                dfRatio = 0.0 + (i/4)*(1.0/N_STEPS);
+
+                dfRatio = 0.0 + (i/4) * dfStep;
                 if (dfRatio>0.99)
                     dfRatio = 1.0;
 
@@ -457,8 +484,8 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                     dfExpectedY   = dfRatio * nInYSize;
                 }
                 
-                if (fabs(adfXRevert[i] - dfExpectedX) > nInXSize / N_STEPS ||
-                    fabs(adfYRevert[i] - dfExpectedY) > nInYSize / N_STEPS)
+                if (fabs(padfXRevert[i] - dfExpectedX) > nInXSize / nSteps ||
+                    fabs(padfYRevert[i] - dfExpectedY) > nInYSize / nSteps)
                     nFailedCount ++;
             }
         }
@@ -471,37 +498,39 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
     if( nFailedCount > 0 )
     {
+        int iStep2;
         double dfRatio2;
         nSamplePoints = 0;
 
         // Take N_STEPS steps 
-        for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 1. / N_STEPS )
+        for( iStep = 0; iStep <= nSteps; iStep ++ )
         {
-            // Ensure we end exactly at the end.
-            if( dfRatio > 0.99 )
-                dfRatio = 1.0;
+            dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
 
-            for( dfRatio2 = 0.0; dfRatio2 <= 1.01; dfRatio2 += 1. / N_STEPS )
+            for( iStep2 = 0; iStep2 <= nSteps; iStep2 ++ )
             {
-                // Ensure we end exactly at the end.
-                if( dfRatio2 > 0.99 )
-                    dfRatio2 = 1.0;
+                dfRatio2 = (iStep2 == nSteps) ? 1.0 : iStep2 * dfStep;
 
                 // Along top 
-                adfX[nSamplePoints]   = dfRatio2 * nInXSize;
-                adfY[nSamplePoints]   = dfRatio * nInYSize;
-                adfZ[nSamplePoints++] = 0.0;
+                padfX[nSamplePoints]   = dfRatio2 * nInXSize;
+                padfY[nSamplePoints]   = dfRatio * nInYSize;
+                padfZ[nSamplePoints++] = 0.0;
             }
         }
 
-        CPLAssert( nSamplePoints == (N_STEPS+1)*(N_STEPS+1) );
+        CPLAssert( nSamplePoints == nSampleMax );
 
         if( !pfnTransformer( pTransformArg, FALSE, nSamplePoints, 
-                             adfX, adfY, adfZ, abSuccess ) )
+                             padfX, padfY, padfZ, pabSuccess ) )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "GDALSuggestedWarpOutput() failed because the passed\n"
                       "transformer failed." );
+
+            CPLFree( padfX );
+            CPLFree( padfXRevert );
+            CPLFree( pabSuccess );
+
             return CE_Failure;
         }
     }
@@ -516,18 +545,18 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     for( i = 0; i < nSamplePoints; i++ )
     {
         
-        int x_i = i % (N_STEPS+1);
-        int y_i = i / (N_STEPS+1);
+        int x_i = i % (nSteps + 1);
+        int y_i = i / (nSteps + 1);
 
-        if (x_i > 0 && (abSuccess[i-1] || abSuccess[i]))
+        if (x_i > 0 && (pabSuccess[i-1] || pabSuccess[i]))
         {
-            double x_out_before = adfX[i-1];
-            double x_out_after = adfX[i];
+            double x_out_before = padfX[i-1];
+            double x_out_after = padfX[i];
             int nIter = 0;
-            double x_in_before = (x_i - 1) * nInXSize * 1.0 / N_STEPS;
-            double x_in_after = x_i * nInXSize * 1.0 / N_STEPS;
-            int valid_before = abSuccess[i-1];
-            int valid_after = abSuccess[i];
+            double x_in_before = (x_i - 1) * nInXSize * 1.0 / nSteps;
+            double x_in_after = x_i * nInXSize * 1.0 / nSteps;
+            int valid_before = pabSuccess[i-1];
+            int valid_after = pabSuccess[i];
             
             /* Detect discontinuity in target coordinates when the target x coordinates */
             /* change sign. This may be a false positive when the targe tx is around 0 */
@@ -537,7 +566,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                      x_out_before * x_out_after < 0) && nIter < 16 )
             {
                 double x = (x_in_before + x_in_after) / 2;
-                double y = y_i * nInYSize * 1.0 / N_STEPS;
+                double y = y_i * nInYSize * 1.0 / nSteps;
                 double z= 0;
                 //fprintf(stderr, "[%d] (%f, %f) -> ", nIter, x, y);
                 int bSuccess = TRUE;
@@ -591,7 +620,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
             }
         }
         
-        if( !abSuccess[i] )
+        if( !pabSuccess[i] )
         {
             nFailedCount++;
             continue;
@@ -600,15 +629,15 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         if( !bGotInitialPoint )
         {
             bGotInitialPoint = TRUE;
-            dfMinXOut = dfMaxXOut = adfX[i];
-            dfMinYOut = dfMaxYOut = adfY[i];
+            dfMinXOut = dfMaxXOut = padfX[i];
+            dfMinYOut = dfMaxYOut = padfY[i];
         }
         else
         {
-            dfMinXOut = MIN(dfMinXOut,adfX[i]);
-            dfMinYOut = MIN(dfMinYOut,adfY[i]);
-            dfMaxXOut = MAX(dfMaxXOut,adfX[i]);
-            dfMaxYOut = MAX(dfMaxYOut,adfY[i]);
+            dfMinXOut = MIN(dfMinXOut, padfX[i]);
+            dfMinYOut = MIN(dfMinYOut, padfY[i]);
+            dfMaxXOut = MAX(dfMaxXOut, padfX[i]);
+            dfMaxYOut = MAX(dfMaxYOut, padfY[i]);
         }
     }
 
@@ -618,6 +647,11 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                   "Too many points (%d out of %d) failed to transform,\n"
                   "unable to compute output bounds.",
                   nFailedCount, nSamplePoints );
+
+        CPLFree( padfX );
+        CPLFree( padfXRevert );
+        CPLFree( pabSuccess );
+
         return CE_Failure;
     }
 
@@ -635,10 +669,10 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
     double dfDiagonalDist, dfDeltaX, dfDeltaY;
 
-    if( abSuccess[0] && abSuccess[nSamplePoints-1] )
+    if( pabSuccess[0] && pabSuccess[nSamplePoints - 1] )
     {
-        dfDeltaX = adfX[nSamplePoints-1] - adfX[0];
-        dfDeltaY = adfY[nSamplePoints-1] - adfY[0];
+        dfDeltaX = padfX[nSamplePoints-1] - padfX[0];
+        dfDeltaY = padfY[nSamplePoints-1] - padfY[0];
     }
     else
     {
@@ -739,6 +773,10 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     padfGeoTransformOut[4] = 0.0;
     padfGeoTransformOut[5] = - dfPixelSizeY;
     
+    CPLFree( padfX );
+    CPLFree( padfXRevert );
+    CPLFree( pabSuccess );
+
     return CE_None;
 }
 
