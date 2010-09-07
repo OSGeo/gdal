@@ -174,8 +174,9 @@ already exists. The spatial extent of the existing file will not
 be modified to accomodate new data, so you may have to remove it in that case.
 
 Polygon cutlines may be used to restrict the the area of the destination file 
-that may be updated, including blending.  Cutline features must be in the 
-georeferenced units of the destination file. 
+that may be updated, including blending.  If the OGR layer containing the cutline
+features has no explicit SRS, the cutline features must be in the georeferenced
+units of the destination file.
 
 <p>
 \section wexample EXAMPLE
@@ -1561,9 +1562,7 @@ public:
 /************************************************************************/
 /*                            LoadCutline()                             */
 /*                                                                      */
-/*      Load blend cutline from OGR datasource and attach in warp       */
-/*      options, after potentially transforming to destination          */
-/*      pixel/line coordinates.                                         */
+/*      Load blend cutline from OGR datasource.                         */
 /************************************************************************/
 
 static void
@@ -1680,8 +1679,9 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 
 /************************************************************************/
 /*                      TransformCutlineToSource()                      */
+/*                                                                      */
+/*      Transform cutline from its SRS to source pixel/line coordinates.*/
 /************************************************************************/
-
 static void
 TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
                           char ***ppapszWarpOptions, char **papszTO_In )
@@ -1713,18 +1713,19 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
         }
     }
 
-    OGRSpatialReferenceH hSrcSRS = OGR_G_GetSpatialReference( hMultiPolygon );
-    if( hRasterSRS != NULL && hSrcSRS != NULL )
+    OGRSpatialReferenceH hCutlineSRS = OGR_G_GetSpatialReference( hMultiPolygon );
+    if( hRasterSRS != NULL && hCutlineSRS != NULL )
     {
         /* ok, we will reproject */
     }
-    else if( hRasterSRS != NULL && hSrcSRS == NULL )
+    else if( hRasterSRS != NULL && hCutlineSRS == NULL )
     {
         fprintf(stderr,
-                "Warning : the source raster dataset has a SRS, but the input vector layer\n"
-                "not.  Cutline results may be incorrect.\n");
+                "Warning : the source raster dataset has a SRS, but the cutline features\n"
+                "not.  We assume that the cutline coordinates are expressed in the destination SRS.\n"
+                "If not, cutline results may be incorrect.\n");
     }
-    else if( hRasterSRS == NULL && hSrcSRS != NULL )
+    else if( hRasterSRS == NULL && hCutlineSRS != NULL )
     {
         fprintf(stderr,
                 "Warning : the input vector layer has a SRS, but the source raster dataset does not.\n"
@@ -1737,19 +1738,13 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
 /* -------------------------------------------------------------------- */
 /*      Extract the cutline SRS WKT.                                    */
 /* -------------------------------------------------------------------- */
-    if( hSrcSRS != NULL )
+    if( hCutlineSRS != NULL )
     {
         char *pszCutlineSRS_WKT = NULL;
 
-        OSRExportToWkt( hSrcSRS, &pszCutlineSRS_WKT );
+        OSRExportToWkt( hCutlineSRS, &pszCutlineSRS_WKT );
         papszTO = CSLSetNameValue( papszTO, "DST_SRS", pszCutlineSRS_WKT );
         CPLFree( pszCutlineSRS_WKT );
-    }
-    else
-    {
-        int iDstSRS = CSLFindString( papszTO, "DST_SRS" );
-        if( iDstSRS >= 0 )
-            papszTO = CSLRemoveStrings( papszTO, iDstSRS, 1, NULL );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1757,6 +1752,9 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
 /* -------------------------------------------------------------------- */
     CutlineTransformer oTransformer;
 
+    /* The cutline transformer will *invert* the hSrcImageTransformer */
+    /* so it will convert from the cutline SRS to the source pixel/line */
+    /* coordinates */
     oTransformer.hSrcImageTransformer = 
         GDALCreateGenImgProjTransformer2( hSrcDS, NULL, papszTO );
 
