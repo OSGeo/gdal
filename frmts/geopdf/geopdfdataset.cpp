@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "ogr_geometry.h"
 #include "geopdfio.h"
 
 /* begin of poppler xpdf includes */
@@ -98,6 +99,8 @@ class GeoPDFDataset : public GDALPamDataset
 
     int          bTried;
     GByte       *pabyData;
+
+    OGRPolygon*  poNeatLine;
 
   public:
                  GeoPDFDataset();
@@ -270,6 +273,7 @@ GeoPDFDataset::GeoPDFDataset()
     bTried = FALSE;
     pabyData = NULL;
     iPage = -1;
+    poNeatLine = NULL;
 }
 
 /************************************************************************/
@@ -281,6 +285,7 @@ GeoPDFDataset::~GeoPDFDataset()
     CPLFree(pszWKT);
     CPLFree(pabyData);
     delete poDoc;
+    delete poNeatLine;
 }
 
 /************************************************************************/
@@ -422,8 +427,9 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfX2 = psMediaBox->x2;
     double dfY2 = psMediaBox->y2;
 
-    poDS->nRasterXSize = (dfX2 - dfX1) / 72 * poDS->dfDPI;
-    poDS->nRasterYSize = (dfY2 - dfY1) / 72 * poDS->dfDPI;
+    double dfPixelPerPt = poDS->dfDPI / 72;
+    poDS->nRasterXSize = (dfX2 - dfX1) * dfPixelPerPt;
+    poDS->nRasterYSize = (dfY2 - dfY1) * dfPixelPerPt;
 
     ObjectAutoFree oLGIDict;
     ObjectAutoFree oVP;
@@ -433,7 +439,6 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("GeoPDF", "TerraGo/OGC GeoPDF style GeoPDF detected");
         if (poDS->ParseLGIDictObject(oLGIDict))
         {
-            double dfPixelPerPt = poDS->dfDPI / 72;
             poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[0] * dfX1 + poDS->adfCTM[2] * dfY2;
             poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfPixelPerPt;
             poDS->adfGeoTransform[2] = poDS->adfCTM[1] / dfPixelPerPt;
@@ -451,6 +456,29 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         /* Not a GeoPDF doc */
+    }
+
+    if (poDS->poNeatLine)
+    {
+        char* pszNeatLineWkt = NULL;
+        OGRLinearRing* poRing = poDS->poNeatLine->getExteriorRing();
+        int nPoints = poRing->getNumPoints();
+        int i;
+
+        for(i=0;i<nPoints;i++)
+        {
+            double x = poRing->getX(i) * dfPixelPerPt;
+            double y = poDS->nRasterYSize - poRing->getY(i) * dfPixelPerPt;
+            double X = poDS->adfGeoTransform[0] + x * poDS->adfGeoTransform[1] +
+                                                  y * poDS->adfGeoTransform[2];
+            double Y = poDS->adfGeoTransform[3] + x * poDS->adfGeoTransform[4] +
+                                                  y * poDS->adfGeoTransform[5];
+            poRing->setPoint(i, X, Y);
+        }
+
+        poDS->poNeatLine->exportToWkt(&pszNeatLineWkt);
+        poDS->SetMetadataItem("NEATLINE", pszNeatLineWkt);
+        CPLFree(pszNeatLineWkt);
     }
 
     int iBand;
@@ -672,6 +700,17 @@ int GeoPDFDataset::ParseLGIDictDict(Dict* poLGIDict)
         }
         CPLDebug("GeoPDF", "This is a the largest neatline for now");
         dfMaxArea = dfArea;
+
+        delete poNeatLine;
+        poNeatLine = new OGRPolygon();
+        OGRLinearRing* poRing = new OGRLinearRing();
+        for(i=0;i<nLength;i+=2)
+        {
+            double dfX = GetValue(oNeatline, i);
+            double dfY = GetValue(oNeatline, i + 1);
+            poRing->addPoint(dfX, dfY);
+        }
+        poNeatLine->addRingDirectly(poRing);
     }
 
 /* -------------------------------------------------------------------- */
