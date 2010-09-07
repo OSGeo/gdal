@@ -3165,7 +3165,7 @@ def tiff_write_86():
     # Is the xml:ESRI data available?
     ds = gdal.Open( 'tmp/tiff_write_86.tif' )
     if ds.GetMetadata( 'xml:ESRI' ) != [ '<abc />\n' ]:
-        print ds.GetMetadata( 'xml:ESRI' )
+        print(ds.GetMetadata( 'xml:ESRI' ))
         gdaltest.post_reason( 'did not get expected xml:ESRI metadata.' )
         return 'fail'
     
@@ -3182,7 +3182,7 @@ def tiff_write_86():
 
     ds = gdal.Open( 'tmp/tiff_write_86.tif' )
     if ds.GetMetadata( 'xml:ESRI' ) != None:
-        print ds.GetMetadata( 'xml:ESRI' )
+        print(ds.GetMetadata( 'xml:ESRI' ))
         gdaltest.post_reason( 'unexpectedly got xml:ESRI metadata' )
         return 'fail'
     
@@ -3205,7 +3205,7 @@ def tiff_write_86():
     # Is the xml:ESRI data available?
     ds = gdal.Open( 'tmp/tiff_write_86_cc.tif' )
     if ds.GetMetadata( 'xml:ESRI' ) != [ '<abc />\n' ]:
-        print ds.GetMetadata( 'xml:ESRI' )
+        print(ds.GetMetadata( 'xml:ESRI' ))
         gdaltest.post_reason( 'did not get expected xml:ESRI metadata (cc).' )
         return 'fail'
     
@@ -3221,7 +3221,7 @@ def tiff_write_86():
 
     ds = gdal.Open( 'tmp/tiff_write_86_cc.tif' )
     if ds.GetMetadata( 'xml:ESRI' ) != None:
-        print ds.GetMetadata( 'xml:ESRI' )
+        print(ds.GetMetadata( 'xml:ESRI' ))
         gdaltest.post_reason( 'unexpectedly got xml:ESRI metadata(2)' )
         return 'fail'
     
