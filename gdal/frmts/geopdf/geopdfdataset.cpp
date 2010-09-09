@@ -35,23 +35,23 @@
 #include "geopdfio.h"
 
 /* begin of poppler xpdf includes */
-#include <Object.h>
+#include <poppler/Object.h>
 
 #define private public /* Ugly! Page::pageObj is private but we need it... */
-#include <Page.h>
+#include <poppler/Page.h>
 #undef private
 
-#include <Dict.h>
+#include <poppler/Dict.h>
 
 #define private public /* Ugly! Catalog::optContent is private but we need it... */
-#include <Catalog.h>
+#include <poppler/Catalog.h>
 #undef private
 
-#include <PDFDoc.h>
-#include <splash/SplashBitmap.h>
-#include <splash/Splash.h>
-#include <SplashOutputDev.h>
-#include <GlobalParams.h>
+#include <poppler/PDFDoc.h>
+#include <poppler/splash/SplashBitmap.h>
+#include <poppler/splash/Splash.h>
+#include <poppler/SplashOutputDev.h>
+#include <poppler/GlobalParams.h>
 /* end of poppler xpdf includes */
 
 /* g++ -fPIC -g -Wall frmts/geopdf/geopdfdataset.cpp -shared -o gdal_GeoPDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
