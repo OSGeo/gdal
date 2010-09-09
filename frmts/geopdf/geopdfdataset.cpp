@@ -62,6 +62,7 @@ CPL_C_START
 void    GDALRegister_GeoPDF(void);
 CPL_C_END
 
+
 /************************************************************************/
 /*                          ObjectAutoFree                              */
 /************************************************************************/
@@ -72,6 +73,158 @@ public:
     ObjectAutoFree() {}
     ~ObjectAutoFree() { free(); }
 };
+
+
+/************************************************************************/
+/*                         Dump routines                                */
+/************************************************************************/
+
+static void DumpObject(FILE* f, Object& o, int nDepth = 0, int nDepthLimit = -1);
+static void DumpDict(FILE* f, Dict* poDict, int nDepth = 0, int nDepthLimit = -1);
+static void DumpArray(FILE* f, Array* poArray, int nDepth = 0, int nDepthLimit = -1);
+static void DumpObjectSimplified(FILE* f, Object& o);
+
+static void DumpArray(FILE* f, Array* poArray, int nDepth, int nDepthLimit)
+{
+    if (nDepthLimit >= 0 && nDepth > nDepthLimit)
+        return;
+
+    int nLength = poArray->getLength();
+    int i;
+    CPLString osIndent;
+    for(i=0;i<nDepth;i++)
+        osIndent += " ";
+    for(i=0;i<nLength;i++)
+    {
+        fprintf(f, "%sItem[%d]:", osIndent.c_str(), i);
+        ObjectAutoFree oVal;
+        if (poArray->get(i, &oVal) != NULL)
+        {
+            if (oVal.getType() == objString ||
+                oVal.getType() == objInt ||
+                oVal.getType() == objReal ||
+                oVal.getType() == objName)
+            {
+                fprintf(f, " ");
+                DumpObjectSimplified(f, oVal);
+                fprintf(f, "\n");
+            }
+            else
+            {
+                fprintf(f, "\n");
+                DumpObject(f, oVal, nDepth+1, nDepthLimit);
+            }
+        }
+    }
+}
+
+static void DumpObjectSimplified(FILE* f, Object& o)
+{
+    switch(o.getType())
+    {
+        case objString:
+            fprintf(f, "%s (string)", o.getString()->getCString());
+            break;
+
+        case objInt:
+            fprintf(f, "%d (int)", o.getInt());
+            break;
+
+        case objReal:
+            fprintf(f, "%f (real)", o.getReal());
+            break;
+
+        case objName:
+            fprintf(f, "%s (name)", o.getName());
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void DumpObject(FILE* f, Object& o, int nDepth, int nDepthLimit)
+{
+    if (nDepthLimit >= 0 && nDepth > nDepthLimit)
+        return;
+
+    int i;
+    CPLString osIndent;
+    for(i=0;i<nDepth;i++)
+        osIndent += " ";
+    fprintf(f, "%sType = %s\n", osIndent.c_str(), o.getTypeName());
+    switch(o.getType())
+    {
+        case objArray:
+            DumpArray(f, o.getArray(), nDepth+1, nDepthLimit);
+            break;
+
+        case objDict:
+            DumpDict(f, o.getDict(), nDepth+1, nDepthLimit);
+            break;
+
+        case objStream:
+        {
+            Dict* poDict = o.getStream()->getDict();
+            if (poDict)
+                DumpDict(f, poDict, nDepth+1, nDepthLimit);
+            break;
+        }
+
+        case objString:
+        case objInt:
+        case objReal:
+        case objName:
+            fprintf(f, "%s", osIndent.c_str());
+            DumpObjectSimplified(f, o);
+            fprintf(f, "\n");
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void DumpDict(FILE* f, Dict* poDict, int nDepth, int nDepthLimit)
+{
+    if (nDepthLimit >= 0 && nDepth > nDepthLimit)
+        return;
+
+    int nLength = poDict->getLength();
+    int i;
+    CPLString osIndent;
+    for(i=0;i<nDepth;i++)
+        osIndent += " ";
+    for(i=0;i<nLength;i++)
+    {
+        char* pszKey = poDict->getKey(i);
+        fprintf(f, "%sItem[%d] : %s", osIndent.c_str(), i, pszKey);
+        if (strcmp(pszKey, "Parent") == 0)
+        {
+            fprintf(f, "\n");
+            continue;
+        }
+        ObjectAutoFree oVal;
+        if (poDict->getVal(i, &oVal) != NULL)
+        {
+            if (oVal.getType() == objString ||
+                oVal.getType() == objInt ||
+                oVal.getType() == objReal ||
+                oVal.getType() == objName)
+            {
+                fprintf(f, " = ");
+                DumpObjectSimplified(f, oVal);
+                fprintf(f, "\n");
+            }
+            else
+            {
+                fprintf(f, "\n");
+                DumpObject(f, oVal, nDepth+1, nDepthLimit);
+            }
+        }
+    }
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -93,7 +246,8 @@ class GeoPDFDataset : public GDALPamDataset
 
     double       dfMaxArea;
     int          ParseLGIDictObject(Object& oLGIDict);
-    int          ParseLGIDictDict(Dict* poLGIDict);
+    int          ParseLGIDictDictFirstPass(Dict* poLGIDict, int* pbIsLargestArea = NULL);
+    int          ParseLGIDictDictSecondPass(Dict* poLGIDict);
     int          ParseProjDict(Dict* poProjDict);
     int          ParseVP(Object& oVP);
 
@@ -389,6 +543,23 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    const char* pszDumpObject = CPLGetConfigOption("GEOPDF_DUMP_OBJECT", NULL);
+    if (pszDumpObject != NULL)
+    {
+        FILE* f;
+        if (strcmp(pszDumpObject, "stderr") == 0)
+            f = stderr;
+        else if (EQUAL(pszDumpObject, "YES"))
+            f = fopen(CPLSPrintf("dump_%s.txt", CPLGetFilename(pszFilename)), "wt");
+        else
+            f = fopen(pszDumpObject, "wt");
+        if (f == NULL)
+            f = stderr;
+        DumpObject(f, oPageObj);
+        if (f != stderr)
+            fclose(f);
+    }
+
     GeoPDFDataset* poDS = new GeoPDFDataset();
 
     if ( nPages > 1 && !bOpenSubdataset )
@@ -509,6 +680,7 @@ int GeoPDFDataset::ParseLGIDictObject(Object& oLGIDict)
     if (oLGIDict.isArray())
     {
         int nArrayLength = oLGIDict.arrayGetLength();
+        int iMax = -1;
         for (i=0; i<nArrayLength; i++)
         {
             ObjectAutoFree oArrayElt;
@@ -519,12 +691,24 @@ int GeoPDFDataset::ParseLGIDictObject(Object& oLGIDict)
                          "LGIDict[%d] is not a dictionary", i);
                 return FALSE;
             }
-            bOK |= ParseLGIDictDict(oArrayElt.getDict());
+
+            int bIsLargestArea = FALSE;
+            ParseLGIDictDictFirstPass(oArrayElt.getDict(), &bIsLargestArea);
+            if (bIsLargestArea)
+                iMax = i;
         }
+
+        if (iMax < 0)
+            return FALSE;
+
+        ObjectAutoFree oArrayElt;
+        oLGIDict.arrayGet(iMax,&oArrayElt);
+        bOK = ParseLGIDictDictSecondPass(oArrayElt.getDict());
     }
     else if (oLGIDict.isDict())
     {
-        bOK = ParseLGIDictDict(oLGIDict.getDict());
+        bOK = ParseLGIDictDictFirstPass(oLGIDict.getDict()) &&
+              ParseLGIDictDictSecondPass(oLGIDict.getDict());
     }
     else
     {
@@ -532,10 +716,7 @@ int GeoPDFDataset::ParseLGIDictObject(Object& oLGIDict)
                  "LGIDict is of type %s", oLGIDict.getTypeName());
     }
 
-    if (!bOK)
-        return FALSE;
-
-    return TRUE;
+    return bOK;
 }
 
 /************************************************************************/
@@ -607,12 +788,16 @@ static double GetValue(Dict* poDict, const char* pszName)
 }
 
 /************************************************************************/
-/*                       ParseLGIDictDict()                             */
+/*                   ParseLGIDictDictFirstPass()                        */
 /************************************************************************/
 
-int GeoPDFDataset::ParseLGIDictDict(Dict* poLGIDict)
+int GeoPDFDataset::ParseLGIDictDictFirstPass(Dict* poLGIDict,
+                                             int* pbIsLargestArea)
 {
     int i;
+
+    if (pbIsLargestArea)
+        *pbIsLargestArea = FALSE;
 
     if (poLGIDict == NULL)
         return FALSE;
@@ -698,8 +883,11 @@ int GeoPDFDataset::ParseLGIDictDict(Dict* poLGIDict)
             CPLDebug("GeoPDF", "Not the largest neatline. Skipping it");
             return TRUE;
         }
+
         CPLDebug("GeoPDF", "This is a the largest neatline for now");
         dfMaxArea = dfArea;
+        if (pbIsLargestArea)
+            *pbIsLargestArea = TRUE;
 
         delete poNeatLine;
         poNeatLine = new OGRPolygon();
@@ -712,6 +900,17 @@ int GeoPDFDataset::ParseLGIDictDict(Dict* poLGIDict)
         }
         poNeatLine->addRingDirectly(poRing);
     }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                  ParseLGIDictDictSecondPass()                        */
+/************************************************************************/
+
+int GeoPDFDataset::ParseLGIDictDictSecondPass(Dict* poLGIDict)
+{
+    int i;
 
 /* -------------------------------------------------------------------- */
 /*      Extract CTM attribute                                           */
@@ -825,6 +1024,7 @@ int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
         if (oDatum.isString())
         {
             char* pszDatum = oDatum.getString()->getCString();
+            CPLDebug("GeoPDF", "Datum = %s", pszDatum);
             if (EQUAL(pszDatum, "WE") || EQUAL(pszDatum, "WGE"))
             {
                 bIsWGS84 = TRUE;
