@@ -555,7 +555,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
             f = fopen(pszDumpObject, "wt");
         if (f == NULL)
             f = stderr;
-        DumpObject(f, oPageObj);
+        DumpObject(f, oPageObj, 0 ,20);
         if (f != stderr)
             fclose(f);
     }
