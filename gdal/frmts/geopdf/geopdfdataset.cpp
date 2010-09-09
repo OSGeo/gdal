@@ -646,6 +646,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
                                                   y * poDS->adfGeoTransform[5];
             poRing->setPoint(i, X, Y);
         }
+        poRing->closeRings();
 
         poDS->poNeatLine->exportToWkt(&pszNeatLineWkt);
         poDS->SetMetadataItem("NEATLINE", pszNeatLineWkt);
