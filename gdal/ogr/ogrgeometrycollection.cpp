@@ -872,6 +872,47 @@ void OGRGeometryCollection::setCoordinateDimension( int nNewDimension )
 
 
 /************************************************************************/
+/*                              get_Length()                            */
+/************************************************************************/
+
+/**
+ * \brief Compute the length of a multicurve.
+ *
+ * The length is computed as the sum of the length of all members
+ * in this collection.
+ *
+ * @note No warning will be issued if a member of the collection does not
+ *       support the get_Length method.
+ *
+ * @return computed area.
+ */
+
+double OGRGeometryCollection::get_Length() const
+{
+    double dfLength = 0.0;
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    {
+        OGRGeometry* geom = papoGeoms[iGeom];
+        switch( wkbFlatten(geom->getGeometryType()) )
+        {
+            case wkbLinearRing:
+            case wkbLineString:
+	        dfLength += ((OGRCurve *) geom)->get_Length();
+	        break;
+
+            case wkbGeometryCollection:
+                dfLength +=((OGRGeometryCollection *) geom)->get_Length();
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    return dfLength;
+}
+
+/************************************************************************/
 /*                              get_Area()                              */
 /************************************************************************/
 

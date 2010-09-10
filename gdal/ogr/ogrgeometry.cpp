@@ -80,7 +80,6 @@ OGRGeometry::~OGRGeometry()
         poSRS->Release();
 }
 
-
 /************************************************************************/
 /*                            dumpReadable()                            */
 /************************************************************************/
@@ -1490,64 +1489,6 @@ int OGR_G_IsRing( OGRGeometryH hGeom )
     return ((OGRGeometry *) hGeom)->IsRing();
 }
 
-
-/************************************************************************/
-/*                     OGRFromOGCGeomType()                             */
-/*      Map OGCgeometry format type to corresponding                    */
-/*      OGR constants.                                                  */
-/************************************************************************/
-
-OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
-{
-    if ( EQUAL(pszGeomType, "POINT") )
-        return wkbPoint;
-    else if ( EQUAL(pszGeomType, "LINESTRING") )
-        return wkbLineString;
-    else if ( EQUAL(pszGeomType, "POLYGON") )
-        return wkbPolygon;
-    else if ( EQUAL(pszGeomType, "MULTIPOINT") )
-        return wkbMultiPoint;
-    else if ( EQUAL(pszGeomType, "MULTILINESTRING") )
-        return wkbMultiLineString;
-    else if ( EQUAL(pszGeomType, "MULTIPOLYGON") )
-        return wkbMultiPolygon;
-    else if ( EQUAL(pszGeomType, "GEOMETRYCOLLECTION") )
-        return wkbGeometryCollection;
-    else
-        return wkbUnknown;
-}
-
-/************************************************************************/
-/*                     OGRToOGCGeomType()                               */
-/*      Map OGR geometry format constants to corresponding              */
-/*      OGC geometry type                                               */
-/************************************************************************/
-
-const char * OGRToOGCGeomType( OGRwkbGeometryType eGeomType )
-{
-    switch ( wkbFlatten(eGeomType) )
-    {
-        case wkbUnknown:
-            return "GEOMETRY";
-        case wkbPoint:
-            return "POINT";
-        case wkbLineString:
-            return "LINESTRING";
-        case wkbPolygon:
-            return "POLYGON";
-        case wkbMultiPoint:
-            return "MULTIPOINT";
-        case wkbMultiLineString:
-            return "MULTILINESTRING";
-        case wkbMultiPolygon:
-            return "MULTIPOLYGON";
-        case wkbGeometryCollection:
-            return "GEOMETRYCOLLECTION";
-        default:
-            return "";
-    }
-}
-
 /************************************************************************/
 /*                       OGRGeometryTypeToName()                        */
 /************************************************************************/
@@ -2083,7 +2024,7 @@ OGRGeometryH OGR_G_ConvexHull( OGRGeometryH hTarget )
 }
 
 /************************************************************************/
-/*                            getBoundary()                             */
+/*                            Boundary()                                */
 /************************************************************************/
 
 /**
@@ -2092,7 +2033,7 @@ OGRGeometryH OGR_G_ConvexHull( OGRGeometryH hTarget )
  * A new geometry object is created and returned containing the boundary
  * of the geometry on which the method is invoked.  
  *
- * This method is the same as the C function OGR_G_GetBoundary().
+ * This method is the same as the C function OGR_G_Boundary().
  *
  * This method is built on the GEOS library, check it for the definition
  * of the geometry operation.
@@ -2102,7 +2043,7 @@ OGRGeometryH OGR_G_ConvexHull( OGRGeometryH hTarget )
  * @return a newly allocated geometry now owned by the caller, or NULL on failure.
  */
 
-OGRGeometry *OGRGeometry::getBoundary() const
+OGRGeometry *OGRGeometry::Boundary() const
 
 {
 #ifndef HAVE_GEOS
@@ -2135,8 +2076,15 @@ OGRGeometry *OGRGeometry::getBoundary() const
 #endif /* HAVE_GEOS */
 }
 
+// Old API compatibility function.                                 
+OGRGeometry *OGRGeometry::getBoundary() const
+
+{
+    return Boundary();
+}
+
 /************************************************************************/
-/*                         OGR_G_GetBoundary()                          */
+/*                         OGR_G_Boundary()                             */
 /************************************************************************/
 /**
  * \brief Compute boundary.
@@ -2144,7 +2092,7 @@ OGRGeometry *OGRGeometry::getBoundary() const
  * A new geometry object is created and returned containing the boundary
  * of the geometry on which the method is invoked.  
  *
- * This function is the same as the C++ method OGR_G_GetBoundary().
+ * This function is the same as the C++ method OGR_G_Boundary().
  *
  * This function is built on the GEOS library, check it for the definition
  * of the geometry operation.
@@ -2156,14 +2104,21 @@ OGRGeometry *OGRGeometry::getBoundary() const
  * @return a handle to a newly allocated geometry now owned by the caller,
  *         or NULL on failure.
  */
+OGRGeometryH OGR_G_Boundary( OGRGeometryH hTarget )
+
+{
+    VALIDATE_POINTER1( hTarget, "OGR_G_Boundary", NULL );
+
+    return (OGRGeometryH) ((OGRGeometry *) hTarget)->Boundary();
+}
+
 OGRGeometryH OGR_G_GetBoundary( OGRGeometryH hTarget )
 
 {
     VALIDATE_POINTER1( hTarget, "OGR_G_GetBoundary", NULL );
 
-    return (OGRGeometryH) ((OGRGeometry *) hTarget)->getBoundary();
+    return (OGRGeometryH) ((OGRGeometry *) hTarget)->Boundary();
 }
-
 
 /************************************************************************/
 /*                               Buffer()                               */
@@ -2550,7 +2505,7 @@ OGRGeometryH OGR_G_Difference( OGRGeometryH hThis, OGRGeometryH hOther )
 }
 
 /************************************************************************/
-/*                        SymmetricDifference()                         */
+/*                        SymDifference()                               */
 /************************************************************************/
 
 /**
@@ -2559,7 +2514,7 @@ OGRGeometryH OGR_G_Difference( OGRGeometryH hThis, OGRGeometryH hOther )
  * Generates a new geometry which is the symmetric difference of this
  * geometry and the second geometry passed into the method.
  *
- * This method is the same as the C function OGR_G_SymmetricDifference().
+ * This method is the same as the C function OGR_G_SymDifference().
  *
  * This method is built on the GEOS library, check it for the definition
  * of the geometry operation.
@@ -2573,7 +2528,7 @@ OGRGeometryH OGR_G_Difference( OGRGeometryH hThis, OGRGeometryH hOther )
  */
 
 OGRGeometry *
-OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
+OGRGeometry::SymDifference( const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -2609,8 +2564,17 @@ OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
 #endif /* HAVE_GEOS */
 }
 
+// Old API compatibility function.                                 
+
+OGRGeometry *
+OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
+
+{
+    return SymDifference( poOtherGeom );
+}
+
 /************************************************************************/
-/*                      OGR_G_SymmetricDifference()                     */
+/*                      OGR_G_SymDifference()                           */
 /************************************************************************/
 
 /**
@@ -2633,13 +2597,22 @@ OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
  * difference is empty or an error occurs.
  */
 
+OGRGeometryH OGR_G_SymDifference( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    VALIDATE_POINTER1( hThis, "OGR_G_SymDifference", NULL );
+
+    return (OGRGeometryH) 
+        ((OGRGeometry *) hThis)->SymDifference( (OGRGeometry *) hOther );
+}
+
 OGRGeometryH OGR_G_SymmetricDifference( OGRGeometryH hThis, OGRGeometryH hOther )
 
 {
     VALIDATE_POINTER1( hThis, "OGR_G_SymmetricDifference", NULL );
 
     return (OGRGeometryH) 
-        ((OGRGeometry *) hThis)->SymmetricDifference( (OGRGeometry *) hOther );
+        ((OGRGeometry *) hThis)->SymDifference( (OGRGeometry *) hOther );
 }
 
 /************************************************************************/
@@ -3286,6 +3259,84 @@ int OGR_G_Centroid( OGRGeometryH hGeom, OGRGeometryH hCentroidPoint )
     }
 
     return poGeom->Centroid( poCentroid );
+}
+
+/************************************************************************/
+/*                              Simplify()                              */
+/************************************************************************/
+
+/**
+ * \brief Simplify the geometry.
+ *
+ * This function is the same as the C function OGR_G_Simplify().
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param dTolerance the distance tolerance for the simplification.
+ *
+ * @return the simplified geometry or NULL if an error occurs.
+ */
+
+OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return OGRERR_FAILURE;
+
+#else
+
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    hThisGeosGeom = exportToGEOS();
+    if( hThisGeosGeom != NULL ) 
+    {
+	hGeosProduct = GEOSSimplify( hThisGeosGeom, dTolerance );
+	GEOSGeom_destroy( hThisGeosGeom );
+	if( hGeosProduct != NULL )
+	{
+	    poOGRProduct = OGRGeometryFactory::createFromGEOS( hGeosProduct );
+            GEOSGeom_destroy( hGeosProduct );
+	}
+    }
+    return poOGRProduct;
+
+#endif /* HAVE_GEOS */
+
+}
+
+/************************************************************************/
+/*                         OGR_G_Simplify()                             */
+/************************************************************************/
+
+/**
+ * \brief Compute a simplified geometry.
+ *
+ * This function is the same as the C++ method OGRGeometry::Simplify().
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param hThis the geometry.
+ * @param dTolerance the distance tolerance for the simplification.
+ *
+ * @return the simplified geometry or NULL if an error occurs.
+ */
+
+OGRGeometryH OGR_G_Simplify( OGRGeometryH hThis, double dTolerance )
+
+{
+    VALIDATE_POINTER1( hThis, "OGR_G_Simplify", NULL );
+    return (OGRGeometryH) ((OGRGeometry *) hThis)->Simplify( dTolerance );
 }
 
 /************************************************************************/
