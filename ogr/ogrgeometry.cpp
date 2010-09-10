@@ -2470,6 +2470,84 @@ OGRGeometryH OGR_G_Union( OGRGeometryH hThis, OGRGeometryH hOther )
 }
 
 /************************************************************************/
+/*                               UnionCascaded()                        */
+/************************************************************************/
+
+/**
+ * \brief Compute union using cascading.
+ *
+ * This method is the same as the C function OGR_G_UnionCascaded().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @return a new geometry representing the union or NULL if an error occurs.
+ */
+
+OGRGeometry *OGRGeometry::UnionCascaded() const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    hThisGeosGeom = exportToGEOS();
+    if( hThisGeosGeom != NULL )
+    {
+        hGeosProduct = GEOSUnion( hThisGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            GEOSGeom_destroy( hGeosProduct );
+        }
+    }
+
+    return poOGRProduct;
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                            OGR_G_UnionCascaded()                     */
+/************************************************************************/
+
+/**
+ * \brief Compute union using cascading.
+ *
+ * This function is the same as the C++ method OGRGeometry::UnionCascaded().
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param hThis the geometry.
+ *
+ * @return a new geometry representing the union or NULL if an error occurs.
+ */
+
+OGRGeometryH OGR_G_Union( OGRGeometryH hThis )
+
+{
+    VALIDATE_POINTER1( hThis, "OGR_G_UnionCascaded", NULL );
+
+    return (OGRGeometryH) 
+        ((OGRGeometry *) hThis)->UnionCascaded();
+}
+
+/************************************************************************/
 /*                             Difference()                             */
 /************************************************************************/
 
