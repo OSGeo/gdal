@@ -765,10 +765,9 @@ double OGR_G_Length( OGRGeometryH hGeom )
 
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
-      
       case wkbLinearRing:
       case wkbLineString:
-	fLength = ((OGRCurve *) hGeom)->get_Length();
+        fLength = ((OGRCurve *) hGeom)->get_Length();
         break;
 
       case wkbGeometryCollection:
