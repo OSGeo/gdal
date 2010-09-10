@@ -3908,8 +3908,14 @@ SWIGINTERN OGRwkbGeometryType OGRGeometryShadow_GetGeometryType(OGRGeometryShado
 SWIGINTERN char const *OGRGeometryShadow_GetGeometryName(OGRGeometryShadow *self){
     return (const char *) OGR_G_GetGeometryName(self);
   }
+SWIGINTERN double OGRGeometryShadow_Length(OGRGeometryShadow *self){
+    return OGR_G_Length(self);
+  }
+SWIGINTERN double OGRGeometryShadow_Area(OGRGeometryShadow *self){
+    return OGR_G_Area(self);
+  }
 SWIGINTERN double OGRGeometryShadow_GetArea(OGRGeometryShadow *self){
-    return OGR_G_GetArea(self);
+    return OGR_G_Area(self);
   }
 SWIGINTERN int OGRGeometryShadow_GetPointCount(OGRGeometryShadow *self){
     return OGR_G_GetPointCount(self);
@@ -3943,8 +3949,14 @@ SWIGINTERN void OGRGeometryShadow_SetPoint_2D(OGRGeometryShadow *self,int point,
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_GetGeometryRef(OGRGeometryShadow *self,int geom){
     return (OGRGeometryShadow*) OGR_G_GetGeometryRef(self, geom);
   }
+SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Simplify(OGRGeometryShadow *self,double tolerance){
+    return (OGRGeometryShadow*) OGR_G_Simplify(self, tolerance);
+  }
+SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Boundary(OGRGeometryShadow *self){
+    return (OGRGeometryShadow*) OGR_G_Boundary(self);
+  }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_GetBoundary(OGRGeometryShadow *self){
-    return (OGRGeometryShadow*) OGR_G_GetBoundary(self);
+    return (OGRGeometryShadow*) OGR_G_Boundary(self);
   }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_ConvexHull(OGRGeometryShadow *self){
     return (OGRGeometryShadow*) OGR_G_ConvexHull(self);
@@ -3958,11 +3970,17 @@ SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Intersection(OGRGeometryShadow *
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Union(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return (OGRGeometryShadow*) OGR_G_Union( self, other );
   }
+SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_UnionCascaded(OGRGeometryShadow *self){
+    return (OGRGeometryShadow*) OGR_G_UnionCascaded( self );
+  }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Difference(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return (OGRGeometryShadow*) OGR_G_Difference( self, other );
   }
+SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_SymDifference(OGRGeometryShadow *self,OGRGeometryShadow *other){
+    return (OGRGeometryShadow*) OGR_G_SymDifference( self, other );
+  }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_SymmetricDifference(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return (OGRGeometryShadow*) OGR_G_SymmetricDifference( self, other );
+    return (OGRGeometryShadow*) OGR_G_SymDifference( self, other );
   }
 SWIGINTERN double OGRGeometryShadow_Distance(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Distance(self, other);
@@ -3973,38 +3991,6 @@ SWIGINTERN void OGRGeometryShadow_Empty(OGRGeometryShadow *self){
 SWIGINTERN bool OGRGeometryShadow_IsEmpty(OGRGeometryShadow *self){
     return (OGR_G_IsEmpty(self) > 0);
   }
-SWIGINTERN double OGRGeometryShadow_Length(OGRGeometryShadow *self){
-    /* get_Length is not exposed, redo simple euclidean length */
-    /* this is recursive if the geometry is not a simple list of points */
-    double l = 0;
-    int n = OGR_G_GetGeometryCount(self);
-    if (n > 0)
-    {
-      int i;
-      for (i = 0; i < n; i++) {
-        OGRGeometryShadow *g = (OGRGeometryShadow*)OGR_G_GetGeometryRef(self, i);
-        l += OGRGeometryShadow_Length(g);
-      }
-    } else {
-      int i;
-      int nPointCount = OGR_G_GetPointCount(self);
-      if (nPointCount != 0)
-      {
-        double x1 = OGR_G_GetX(self, 0);
-        double y1 = OGR_G_GetY(self, 0);
-        for (i = 1; i < nPointCount; i++) {
-            double x2 = OGR_G_GetX(self, i);
-            double y2 = OGR_G_GetY(self, i);
-            double dx = x2 - x1;
-            double dy = y2 - y1;
-            l += sqrt(dx*dx + dy*dy);
-            x1 = x2;
-            y1 = y2;
-        }
-      }
-    }
-    return l;
-  }
 SWIGINTERN bool OGRGeometryShadow_IsValid(OGRGeometryShadow *self){
     return (OGR_G_IsValid(self) > 0);
   }
@@ -4014,11 +4000,17 @@ SWIGINTERN bool OGRGeometryShadow_IsSimple(OGRGeometryShadow *self){
 SWIGINTERN bool OGRGeometryShadow_IsRing(OGRGeometryShadow *self){
     return (OGR_G_IsRing(self) > 0);
   }
+SWIGINTERN bool OGRGeometryShadow_Intersects(OGRGeometryShadow *self,OGRGeometryShadow *other){
+    return (OGR_G_Intersects(self, other) > 0);
+  }
 SWIGINTERN bool OGRGeometryShadow_Intersect(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return (OGR_G_Intersect(self, other) > 0);
+    return (OGR_G_Intersects(self, other) > 0);
+  }
+SWIGINTERN bool OGRGeometryShadow_Equals(OGRGeometryShadow *self,OGRGeometryShadow *other){
+    return (OGR_G_Equals(self, other) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Equal(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return (OGR_G_Equal(self, other) > 0);
+    return (OGR_G_Equals(self, other) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Disjoint(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return (OGR_G_Disjoint(self, other) > 0);
@@ -11569,6 +11561,66 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_Length(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_Length",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Length" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (double)OGRGeometryShadow_Length(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_Area(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_Area",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Area" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (double)OGRGeometryShadow_Area(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_GetArea(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -12061,6 +12113,75 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_Simplify(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  double arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Geometry_Simplify",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Simplify" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_Simplify" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_Simplify(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_Boundary(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_Boundary",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Boundary" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_Boundary(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_GetBoundary(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -12262,6 +12383,36 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_UnionCascaded(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_UnionCascaded",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_UnionCascaded" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_UnionCascaded(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_Difference(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -12292,6 +12443,50 @@ SWIGINTERN PyObject *_wrap_Geometry_Difference(PyObject *SWIGUNUSEDPARM(self), P
   }
   {
     result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_SymDifference(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Geometry_SymDifference",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_SymDifference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_SymDifference" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_SymDifference(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -12453,36 +12648,6 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Geometry_Length(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  double result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_Length",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Length" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  {
-    result = (double)OGRGeometryShadow_Length(arg1);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_From_double(static_cast< double >(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
 SWIGINTERN PyObject *_wrap_Geometry_IsValid(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -12573,6 +12738,50 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_Intersects(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Geometry_Intersects",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Intersects" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Intersects" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    result = (bool)OGRGeometryShadow_Intersects(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_Intersect(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -12603,6 +12812,50 @@ SWIGINTERN PyObject *_wrap_Geometry_Intersect(PyObject *SWIGUNUSEDPARM(self), Py
   }
   {
     result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_Equals(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Geometry_Equals",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Equals" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Equals" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    result = (bool)OGRGeometryShadow_Equals(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -16169,6 +16422,8 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"name used for this geometry type in well known text format. \n"
 		""},
+	 { (char *)"Geometry_Length", _wrap_Geometry_Length, METH_VARARGS, (char *)"Geometry_Length(Geometry self) -> double"},
+	 { (char *)"Geometry_Area", _wrap_Geometry_Area, METH_VARARGS, (char *)"Geometry_Area(Geometry self) -> double"},
 	 { (char *)"Geometry_GetArea", _wrap_Geometry_GetArea, METH_VARARGS, (char *)"Geometry_GetArea(Geometry self) -> double"},
 	 { (char *)"Geometry_GetPointCount", _wrap_Geometry_GetPointCount, METH_VARARGS, (char *)"Geometry_GetPointCount(Geometry self) -> int"},
 	 { (char *)"Geometry_GetX", (PyCFunction) _wrap_Geometry_GetX, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetX(Geometry self, int point = 0) -> double"},
@@ -16180,6 +16435,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_SetPoint", (PyCFunction) _wrap_Geometry_SetPoint, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_SetPoint(Geometry self, int point, double x, double y, double z = 0)"},
 	 { (char *)"Geometry_SetPoint_2D", (PyCFunction) _wrap_Geometry_SetPoint_2D, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_SetPoint_2D(Geometry self, int point, double x, double y)"},
 	 { (char *)"Geometry_GetGeometryRef", _wrap_Geometry_GetGeometryRef, METH_VARARGS, (char *)"Geometry_GetGeometryRef(Geometry self, int geom) -> Geometry"},
+	 { (char *)"Geometry_Simplify", _wrap_Geometry_Simplify, METH_VARARGS, (char *)"Geometry_Simplify(Geometry self, double tolerance) -> Geometry"},
+	 { (char *)"Geometry_Boundary", _wrap_Geometry_Boundary, METH_VARARGS, (char *)"Geometry_Boundary(Geometry self) -> Geometry"},
 	 { (char *)"Geometry_GetBoundary", _wrap_Geometry_GetBoundary, METH_VARARGS, (char *)"\n"
 		"Geometry_GetBoundary(Geometry self) -> Geometry\n"
 		"\n"
@@ -16327,6 +16584,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"a new geometry representing the union or NULL if an error occurs. \n"
 		""},
+	 { (char *)"Geometry_UnionCascaded", _wrap_Geometry_UnionCascaded, METH_VARARGS, (char *)"Geometry_UnionCascaded(Geometry self) -> Geometry"},
 	 { (char *)"Geometry_Difference", _wrap_Geometry_Difference, METH_VARARGS, (char *)"\n"
 		"Geometry_Difference(Geometry self, Geometry other) -> Geometry\n"
 		"\n"
@@ -16355,6 +16613,7 @@ static PyMethodDef SwigMethods[] = {
 		"a new geometry representing the difference or NULL if the difference\n"
 		"is empty or an error occurs. \n"
 		""},
+	 { (char *)"Geometry_SymDifference", _wrap_Geometry_SymDifference, METH_VARARGS, (char *)"Geometry_SymDifference(Geometry self, Geometry other) -> Geometry"},
 	 { (char *)"Geometry_SymmetricDifference", _wrap_Geometry_SymmetricDifference, METH_VARARGS, (char *)"\n"
 		"Geometry_SymmetricDifference(Geometry self, Geometry other) -> Geometry\n"
 		"\n"
@@ -16443,7 +16702,6 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"TRUE if the geometry has no points, otherwise FALSE. \n"
 		""},
-	 { (char *)"Geometry_Length", _wrap_Geometry_Length, METH_VARARGS, (char *)"Geometry_Length(Geometry self) -> double"},
 	 { (char *)"Geometry_IsValid", _wrap_Geometry_IsValid, METH_VARARGS, (char *)"\n"
 		"Geometry_IsValid(Geometry self) -> bool\n"
 		"\n"
@@ -16510,11 +16768,54 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"TRUE if the geometry has no points, otherwise FALSE. \n"
 		""},
+	 { (char *)"Geometry_Intersects", _wrap_Geometry_Intersects, METH_VARARGS, (char *)"\n"
+		"Geometry_Intersects(Geometry self, Geometry other) -> bool\n"
+		"\n"
+		"int OGR_G_Intersects(OGRGeometryH\n"
+		"hGeom, OGRGeometryH hOtherGeom)\n"
+		"\n"
+		"Do these features intersect?\n"
+		"\n"
+		"Currently this is not implemented in a rigerous fashion, and generally\n"
+		"just tests whether the envelopes of the two features intersect.\n"
+		"Eventually this will be made rigerous.\n"
+		"\n"
+		"This function is the same as the CPP method OGRGeometry::Intersects.\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hGeom:  handle on the first geometry.\n"
+		"\n"
+		"hOtherGeom:  handle on the other geometry to test against.\n"
+		"\n"
+		"TRUE if the geometries intersect, otherwise FALSE. \n"
+		""},
 	 { (char *)"Geometry_Intersect", _wrap_Geometry_Intersect, METH_VARARGS, (char *)"\n"
 		"Geometry_Intersect(Geometry self, Geometry other) -> bool\n"
 		"\n"
 		"int OGR_G_Intersect(OGRGeometryH\n"
 		"hGeom, OGRGeometryH hOtherGeom) \n"
+		""},
+	 { (char *)"Geometry_Equals", _wrap_Geometry_Equals, METH_VARARGS, (char *)"\n"
+		"Geometry_Equals(Geometry self, Geometry other) -> bool\n"
+		"\n"
+		"int OGR_G_Equals(OGRGeometryH hGeom,\n"
+		"OGRGeometryH hOther)\n"
+		"\n"
+		"Returns TRUE if two geometries are equivalent.\n"
+		"\n"
+		"This function is the same as the CPP method OGRGeometry::Equals()\n"
+		"method.\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hGeom:  handle on the first geometry.\n"
+		"\n"
+		"hOther:  handle on the other geometry to test against.\n"
+		"\n"
+		"TRUE if equivalent or FALSE otherwise. \n"
 		""},
 	 { (char *)"Geometry_Equal", _wrap_Geometry_Equal, METH_VARARGS, (char *)"\n"
 		"Geometry_Equal(Geometry self, Geometry other) -> bool\n"

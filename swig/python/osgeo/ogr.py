@@ -3119,6 +3119,14 @@ class Geometry(_object):
         """
         return _ogr.Geometry_GetGeometryName(self, *args)
 
+    def Length(self, *args):
+        """Length(self) -> double"""
+        return _ogr.Geometry_Length(self, *args)
+
+    def Area(self, *args):
+        """Area(self) -> double"""
+        return _ogr.Geometry_Area(self, *args)
+
     def GetArea(self, *args):
         """GetArea(self) -> double"""
         return _ogr.Geometry_GetArea(self, *args)
@@ -3162,6 +3170,14 @@ class Geometry(_object):
     def GetGeometryRef(self, *args):
         """GetGeometryRef(self, int geom) -> Geometry"""
         return _ogr.Geometry_GetGeometryRef(self, *args)
+
+    def Simplify(self, *args):
+        """Simplify(self, double tolerance) -> Geometry"""
+        return _ogr.Geometry_Simplify(self, *args)
+
+    def Boundary(self, *args):
+        """Boundary(self) -> Geometry"""
+        return _ogr.Geometry_Boundary(self, *args)
 
     def GetBoundary(self, *args):
         """
@@ -3325,6 +3341,10 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Union(self, *args)
 
+    def UnionCascaded(self, *args):
+        """UnionCascaded(self) -> Geometry"""
+        return _ogr.Geometry_UnionCascaded(self, *args)
+
     def Difference(self, *args):
         """
         Difference(self, Geometry other) -> Geometry
@@ -3355,6 +3375,10 @@ class Geometry(_object):
         is empty or an error occurs. 
         """
         return _ogr.Geometry_Difference(self, *args)
+
+    def SymDifference(self, *args):
+        """SymDifference(self, Geometry other) -> Geometry"""
+        return _ogr.Geometry_SymDifference(self, *args)
 
     def SymmetricDifference(self, *args):
         """
@@ -3456,10 +3480,6 @@ class Geometry(_object):
         """
         return _ogr.Geometry_IsEmpty(self, *args)
 
-    def Length(self, *args):
-        """Length(self) -> double"""
-        return _ogr.Geometry_Length(self, *args)
-
     def IsValid(self, *args):
         """
         IsValid(self) -> bool
@@ -3535,6 +3555,32 @@ class Geometry(_object):
         """
         return _ogr.Geometry_IsRing(self, *args)
 
+    def Intersects(self, *args):
+        """
+        Intersects(self, Geometry other) -> bool
+
+        int OGR_G_Intersects(OGRGeometryH
+        hGeom, OGRGeometryH hOtherGeom)
+
+        Do these features intersect?
+
+        Currently this is not implemented in a rigerous fashion, and generally
+        just tests whether the envelopes of the two features intersect.
+        Eventually this will be made rigerous.
+
+        This function is the same as the CPP method OGRGeometry::Intersects.
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the first geometry.
+
+        hOtherGeom:  handle on the other geometry to test against.
+
+        TRUE if the geometries intersect, otherwise FALSE. 
+        """
+        return _ogr.Geometry_Intersects(self, *args)
+
     def Intersect(self, *args):
         """
         Intersect(self, Geometry other) -> bool
@@ -3543,6 +3589,29 @@ class Geometry(_object):
         hGeom, OGRGeometryH hOtherGeom) 
         """
         return _ogr.Geometry_Intersect(self, *args)
+
+    def Equals(self, *args):
+        """
+        Equals(self, Geometry other) -> bool
+
+        int OGR_G_Equals(OGRGeometryH hGeom,
+        OGRGeometryH hOther)
+
+        Returns TRUE if two geometries are equivalent.
+
+        This function is the same as the CPP method OGRGeometry::Equals()
+        method.
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the first geometry.
+
+        hOther:  handle on the other geometry to test against.
+
+        TRUE if equivalent or FALSE otherwise. 
+        """
+        return _ogr.Geometry_Equals(self, *args)
 
     def Equal(self, *args):
         """
