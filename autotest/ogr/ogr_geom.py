@@ -677,7 +677,23 @@ def ogr_geom_length_geometrycollection():
     geom.Destroy()
 
     return 'success'
-    
+
+###############################################################################
+# Test OGRGeometry::empty()
+
+def ogr_geom_empty():
+
+    g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0,1 1,1 2,1 1,0 0))' )
+    g1.Empty()
+    wkt = g1.ExportToWkt()
+
+    g1.Destroy()
+
+    if wkt != 'POLYGON EMPTY':
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -710,6 +726,7 @@ gdaltest_list = [
     ogr_geom_length_point,
     ogr_geom_length_multilinestring,
     ogr_geom_length_geometrycollection,
+    ogr_geom_empty,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
