@@ -770,6 +770,7 @@ double OGR_G_Length( OGRGeometryH hGeom )
         fLength = ((OGRCurve *) hGeom)->get_Length();
         break;
 
+      case wkbMultiLineString:
       case wkbGeometryCollection:
         fLength = ((OGRGeometryCollection *) hGeom)->get_Length();
         break;
