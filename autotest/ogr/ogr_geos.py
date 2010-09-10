@@ -533,7 +533,139 @@ def ogr_geos_unioncascaded():
     cascadedunion.Destroy()
 
     return 'success'
-    
+
+###############################################################################
+
+def ogr_geos_convexhull():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION(POINT(0 1), POINT(0 0), POINT(1 0), POINT(1 1))' )
+
+    convexhull = g1.ConvexHull()
+
+    g1.Destroy()
+
+    if convexhull.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        print('Got: ', convexhull.ExportToWkt())
+        return 'fail'
+
+    convexhull.Destroy()
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geos_distance():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'POINT(0 0)' )
+    g2 = ogr.CreateGeometryFromWkt( 'POINT(1 0)' )
+
+    distance = g1.Distance(g2)
+
+    g1.Destroy()
+    g2.Destroy()
+
+    if abs(distance-1) > 0.00000000001:
+        gdaltest.post_reason( 'Distance() result wrong, got %g.' % distance )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geos_isring():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0,0 1,1 1,0 0)' )
+
+    isring = g1.IsRing()
+
+    g1.Destroy()
+
+    if isring != 1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geos_issimple_true():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'POLYGON ((0 0,0 1,1 1,1 0,0 0))' )
+
+    isring = g1.IsSimple()
+
+    g1.Destroy()
+
+    if isring != 1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geos_issimple_false():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'LINESTRING(1 1,2 2,2 3.5,1 3,1 2,2 1)' )
+
+    isring = g1.IsSimple()
+
+    g1.Destroy()
+
+    if isring != 0:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geos_isvalid_true():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0, 1 1)' )
+
+    isring = g1.IsValid()
+
+    g1.Destroy()
+
+    if isring != 1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geos_isvalid_false():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0,1 1,1 2,1 1,0 0))' )
+
+    isring = g1.IsValid()
+
+    g1.Destroy()
+
+    if isring != 0:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_geos_union,
     ogr_geos_intersection,
@@ -552,7 +684,14 @@ gdaltest_list = [
     ogr_geos_centroid_multipolygon,
     ogr_geos_centroid_point_empty,
     ogr_geos_simplify_linestring,
-    ogr_geos_unioncascaded]
+    ogr_geos_unioncascaded,
+    ogr_geos_convexhull,
+    ogr_geos_distance,
+    ogr_geos_isring,
+    ogr_geos_issimple_true,
+    ogr_geos_issimple_false,
+    ogr_geos_isvalid_true,
+    ogr_geos_isvalid_false ]
 
 if __name__ == '__main__':
 
