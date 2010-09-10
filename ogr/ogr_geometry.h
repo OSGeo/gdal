@@ -136,20 +136,23 @@ class CPL_DLL OGRGeometry
     virtual OGRBoolean  Overlaps( const OGRGeometry * ) const;
 //    virtual OGRBoolean  Relate( const OGRGeometry *, const char * ) const;
 
-    virtual OGRGeometry *getBoundary() const;
+    virtual OGRGeometry *Boundary() const;
     virtual double  Distance( const OGRGeometry * ) const;
     virtual OGRGeometry *ConvexHull() const;
     virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 ) const;
     virtual OGRGeometry *Intersection( const OGRGeometry *) const;
     virtual OGRGeometry *Union( const OGRGeometry * ) const;
     virtual OGRGeometry *Difference( const OGRGeometry * ) const;
-    virtual OGRGeometry *SymmetricDifference( const OGRGeometry * ) const;
+    virtual OGRGeometry *SymDifference( const OGRGeometry * ) const;
     virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
+    virtual OGRGeometry *Simplify(double dTolerance) const;
 
-    // backward compatibility methods. 
+    // backward compatibility to non-standard method names. 
     OGRBoolean  Intersect( OGRGeometry * ) const;
     OGRBoolean  Equal( OGRGeometry * ) const;
-
+    virtual OGRGeometry *SymmetricDifference( const OGRGeometry * ) const;
+    virtual OGRGeometry *getBoundary() const;
+    
     // Special HACK for DB2 7.2 support
     static int bGenerate_DB2_V72_BYTE_ORDER;
 
@@ -495,6 +498,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr importFromWkt( char ** );
     virtual OGRErr exportToWkt( char ** ppszDstText ) const;
 
+    virtual double get_Length() const;
     virtual double get_Area() const;
 
     // IGeometry methods
@@ -647,8 +651,5 @@ class CPL_DLL OGRGeometryFactory
                               double dfStartAngle, double dfEndAngle,
                               double dfMaxAngleStepSizeDegrees );
 };
-
-OGRwkbGeometryType CPL_DLL OGRFromOGCGeomType( const char *pszGeomType );
-const char CPL_DLL * OGRToOGCGeomType( OGRwkbGeometryType eGeomType );
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
