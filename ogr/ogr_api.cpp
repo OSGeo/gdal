@@ -752,6 +752,8 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
  *
  * @param hGeom the geometry to operate on.
  * @return the lenght or 0.0 for unsupported geometry types.
+ *
+ * @since OGR 1.8.0
  */
 
 double OGR_G_Length( OGRGeometryH hGeom )
@@ -798,6 +800,8 @@ double OGR_G_Length( OGRGeometryH hGeom )
  *
  * @param hGeom the geometry to operate on. 
  * @return the area or 0.0 for unsupported geometry types.
+ *
+ * @since OGR 1.8.0
  */
 
 double OGR_G_Area( OGRGeometryH hGeom )
@@ -842,6 +846,12 @@ double OGR_G_Area( OGRGeometryH hGeom )
     return fArea;
 }
 
+/**
+ * \brief Compute geometry area (deprecated)
+ *
+ * @deprecated
+ * @see OGR_G_Area()
+ */
 double OGR_G_GetArea( OGRGeometryH hGeom )
 
 {
