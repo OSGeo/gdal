@@ -33,6 +33,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 import ogr
+import gdal
 
 ###############################################################################
 # Establish whether we have GEOS support integrated, testing simple Union.
@@ -131,6 +132,31 @@ def ogr_geos_symmetric_difference():
 
     return 'success'
 
+###############################################################################
+# Test polygon symmetric difference.
+
+def ogr_geos_sym_difference():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
+    g2 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 0 10, 10 0, 0 0))' )
+
+    result = g1.SymDifference( g2 )
+
+    g1.Destroy()
+    g2.Destroy()
+
+    if ogrtest.check_feature_geometry( result,
+           'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))'):
+        print('Got: ', result.ExportToWkt())
+        return 'fail'
+
+    result.Destroy()
+
+    return 'success'
+    
 ###############################################################################
 # Test Intersect().
 
@@ -454,11 +480,66 @@ def ogr_geos_centroid_point_empty():
 
     return 'success'
 
+###############################################################################
+
+def ogr_geos_simplify_linestring():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0,1 0,10 0)' )
+
+    gdal.ErrorReset()
+    simplify = g1.Simplify(5)
+
+    g1.Destroy()
+
+    if simplify is None:
+        msg = gdal.GetLastErrorMsg()
+        if msg.find('GEOS >=') != -1:
+            return 'skip'
+
+    if simplify.ExportToWkt() != 'LINESTRING (0 0,10 0)':
+        print('Got: ', simplify.ExportToWkt())
+        return 'fail'
+
+    simplify.Destroy()
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geos_unioncascaded():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)),((0.5 0.5,0.5 1.5,1.5 1.5,1.5 0.5,0.5 0.5)))' )
+
+    gdal.ErrorReset()
+    cascadedunion = g1.UnionCascaded()
+
+    g1.Destroy()
+
+    if cascadedunion is None:
+        msg = gdal.GetLastErrorMsg()
+        if msg.find('GEOS >=') != -1:
+            return 'skip'
+
+    if cascadedunion.ExportToWkt() != 'POLYGON ((0 0,0 1,0.5 1.0,0.5 1.5,1.5 1.5,1.5 0.5,1.0 0.5,1 0,0 0))':
+        print('Got: ', cascadedunion.ExportToWkt())
+        return 'fail'
+
+    cascadedunion.Destroy()
+
+    return 'success'
+    
 gdaltest_list = [ 
     ogr_geos_union,
     ogr_geos_intersection,
     ogr_geos_difference,
     ogr_geos_symmetric_difference,
+    ogr_geos_sym_difference,
     ogr_geos_intersect,
     ogr_geos_disjoint,
     ogr_geos_touches,
@@ -469,7 +550,9 @@ gdaltest_list = [
     ogr_geos_buffer,
     ogr_geos_centroid,
     ogr_geos_centroid_multipolygon,
-    ogr_geos_centroid_point_empty ]
+    ogr_geos_centroid_point_empty,
+    ogr_geos_simplify_linestring,
+    ogr_geos_unioncascaded]
 
 if __name__ == '__main__':
 
