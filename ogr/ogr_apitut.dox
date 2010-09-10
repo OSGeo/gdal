@@ -395,8 +395,7 @@ lyr = ds.GetLayerByName( "point" )
 
 lyr.ResetReading()
 
-feat = lyr.GetNextFeature()
-while feat is not None:
+for feat in lyr:
 
     feat_defn = lyr.GetLayerDefn()
     for i in range(feat_defn.GetFieldCount()):
@@ -419,9 +418,7 @@ while feat is not None:
     else:
         print "no point geometry\n"
 
-    feat = lyr.GetNextFeature()
-
-ds.Destroy()
+ds = None
 \endcode
 
 \section ogr_apitut_write Writing To OGR
@@ -886,8 +883,7 @@ while len(linelist) == 3:
     linestring = raw_input()
     linelist = string.split(linestring)
 
-
-ds.Destroy()
+ds = None
 \endcode
 
 */
