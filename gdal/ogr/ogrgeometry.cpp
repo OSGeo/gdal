@@ -2098,6 +2098,8 @@ OGRGeometryH OGR_G_ConvexHull( OGRGeometryH hTarget )
  * issuing a CPLE_NotSupported error. 
  *
  * @return a newly allocated geometry now owned by the caller, or NULL on failure.
+ *
+ * @since OGR 1.8.0
  */
 
 OGRGeometry *OGRGeometry::Boundary() const
@@ -2133,7 +2135,14 @@ OGRGeometry *OGRGeometry::Boundary() const
 #endif /* HAVE_GEOS */
 }
 
-// Old API compatibility function.                                 
+
+/**
+ * \brief Compute boundary (deprecated)
+ *
+ * @deprecated
+ *
+ * @see Boundary()
+ */
 OGRGeometry *OGRGeometry::getBoundary() const
 
 {
@@ -2160,6 +2169,8 @@ OGRGeometry *OGRGeometry::getBoundary() const
  *
  * @return a handle to a newly allocated geometry now owned by the caller,
  *         or NULL on failure.
+ *
+ * @since OGR 1.8.0
  */
 OGRGeometryH OGR_G_Boundary( OGRGeometryH hTarget )
 
@@ -2169,6 +2180,13 @@ OGRGeometryH OGR_G_Boundary( OGRGeometryH hTarget )
     return (OGRGeometryH) ((OGRGeometry *) hTarget)->Boundary();
 }
 
+/**
+ * \brief Compute boundary (deprecated)
+ *
+ * @deprecated
+ *
+ * @see OGR_G_Boundary()
+ */
 OGRGeometryH OGR_G_GetBoundary( OGRGeometryH hTarget )
 
 {
@@ -2484,6 +2502,8 @@ OGRGeometryH OGR_G_Union( OGRGeometryH hThis, OGRGeometryH hOther )
  * issuing a CPLE_NotSupported error. 
  *
  * @return a new geometry representing the union or NULL if an error occurs.
+ *
+ * @since OGR 1.8.0
  */
 
 OGRGeometry *OGRGeometry::UnionCascaded() const
@@ -2665,6 +2685,8 @@ OGRGeometryH OGR_G_Difference( OGRGeometryH hThis, OGRGeometryH hOther )
  *
  * @return a new geometry representing the symmetric difference or NULL if the 
  * difference is empty or an error occurs.
+ *
+ * @since OGR 1.8.0
  */
 
 OGRGeometry *
@@ -2704,8 +2726,14 @@ OGRGeometry::SymDifference( const OGRGeometry *poOtherGeom ) const
 #endif /* HAVE_GEOS */
 }
 
-// Old API compatibility function.                                 
 
+/**
+ * \brief Compute symmetric difference (deprecated)
+ *
+ * @deprecated
+ *
+ * @see OGRGeometry::SymDifference()
+ */
 OGRGeometry *
 OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
 
@@ -2735,6 +2763,8 @@ OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
  *
  * @return a new geometry representing the symmetric difference or NULL if the 
  * difference is empty or an error occurs.
+ *
+ * @since OGR 1.8.0
  */
 
 OGRGeometryH OGR_G_SymDifference( OGRGeometryH hThis, OGRGeometryH hOther )
@@ -2746,6 +2776,13 @@ OGRGeometryH OGR_G_SymDifference( OGRGeometryH hThis, OGRGeometryH hOther )
         ((OGRGeometry *) hThis)->SymDifference( (OGRGeometry *) hOther );
 }
 
+/**
+ * \brief Compute symmetric difference (deprecated)
+ *
+ * @deprecated
+ *
+ * @see OGR_G_SymmetricDifference()
+ */
 OGRGeometryH OGR_G_SymmetricDifference( OGRGeometryH hThis, OGRGeometryH hOther )
 
 {
@@ -3294,7 +3331,7 @@ void OGR_G_CloseRings( OGRGeometryH hGeom )
  *
  * @return OGRERR_NONE on success or OGRERR_FAILURE on error.
  *
- * @since GDAL 1.8.0 as a OGRGeometry method (previously was restricted to OGRPolygon)
+ * @since OGR 1.8.0 as a OGRGeometry method (previously was restricted to OGRPolygon)
  */
 
 int OGRGeometry::Centroid( OGRPoint *poPoint ) const
@@ -3418,6 +3455,8 @@ int OGR_G_Centroid( OGRGeometryH hGeom, OGRGeometryH hCentroidPoint )
  * @param dTolerance the distance tolerance for the simplification.
  *
  * @return the simplified geometry or NULL if an error occurs.
+ *
+ * @since OGR 1.8.0
  */
 
 OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
@@ -3475,6 +3514,8 @@ OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
  * @param dTolerance the distance tolerance for the simplification.
  *
  * @return the simplified geometry or NULL if an error occurs.
+ *
+ * @since OGR 1.8.0
  */
 
 OGRGeometryH OGR_G_Simplify( OGRGeometryH hThis, double dTolerance )
@@ -3490,6 +3531,8 @@ OGRGeometryH OGR_G_Simplify( OGRGeometryH hThis, double dTolerance )
 
 /**
  * \brief Swap x and y coordinates.
+ *
+ * @since OGR 1.8.0
  */
 
 void OGRGeometry::swapXY()
