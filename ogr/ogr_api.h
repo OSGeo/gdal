@@ -124,6 +124,9 @@ void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH,
 OGRSpatialReferenceH CPL_DLL OGR_G_GetSpatialReference( OGRGeometryH );
 OGRErr CPL_DLL OGR_G_Transform( OGRGeometryH, OGRCoordinateTransformationH );
 OGRErr CPL_DLL OGR_G_TransformTo( OGRGeometryH, OGRSpatialReferenceH );
+
+OGRGeometryH CPL_DLL OGR_G_Simplify( OGRGeometryH hTarget, double tolerance );
+
 void   CPL_DLL OGR_G_Segmentize(OGRGeometryH hGeom, double dfMaxLength );
 int    CPL_DLL OGR_G_Intersects( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Equals( OGRGeometryH, OGRGeometryH );
@@ -134,16 +137,16 @@ int    CPL_DLL OGR_G_Within( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Contains( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Overlaps( OGRGeometryH, OGRGeometryH );
 
-OGRGeometryH CPL_DLL OGR_G_GetBoundary( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_Boundary( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_ConvexHull( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_Buffer( OGRGeometryH, double, int );
 OGRGeometryH CPL_DLL OGR_G_Intersection( OGRGeometryH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_Union( OGRGeometryH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_Difference( OGRGeometryH, OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_SymDifference( OGRGeometryH, OGRGeometryH );
 double CPL_DLL OGR_G_Distance( OGRGeometryH, OGRGeometryH );
-
-double CPL_DLL OGR_G_GetArea( OGRGeometryH );
+double CPL_DLL OGR_G_Length( OGRGeometryH );
+double CPL_DLL OGR_G_Area( OGRGeometryH );
 int    CPL_DLL OGR_G_Centroid( OGRGeometryH, OGRGeometryH );
 
 void   CPL_DLL OGR_G_Empty( OGRGeometryH );
@@ -152,9 +155,12 @@ int    CPL_DLL OGR_G_IsValid (OGRGeometryH );
 int    CPL_DLL OGR_G_IsSimple (OGRGeometryH );
 int    CPL_DLL OGR_G_IsRing (OGRGeometryH );
 
-/* backward compatibility */
+/* backward compatibility (non-standard methods) */
 int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Equal( OGRGeometryH, OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH );
+double CPL_DLL OGR_G_GetArea( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_GetBoundary( OGRGeometryH );
 
 /* Methods for getting/setting vertices in points, line strings and rings */
 int    CPL_DLL OGR_G_GetPointCount( OGRGeometryH );
