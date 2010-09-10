@@ -142,6 +142,7 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 ) const;
     virtual OGRGeometry *Intersection( const OGRGeometry *) const;
     virtual OGRGeometry *Union( const OGRGeometry * ) const;
+    virtual OGRGeometry *UnionCascaded() const;
     virtual OGRGeometry *Difference( const OGRGeometry * ) const;
     virtual OGRGeometry *SymDifference( const OGRGeometry * ) const;
     virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
