@@ -897,8 +897,8 @@ double OGRGeometryCollection::get_Length() const
         {
             case wkbLinearRing:
             case wkbLineString:
-	        dfLength += ((OGRCurve *) geom)->get_Length();
-	        break;
+                dfLength += ((OGRCurve *) geom)->get_Length();
+                break;
 
             case wkbGeometryCollection:
                 dfLength +=((OGRGeometryCollection *) geom)->get_Length();
