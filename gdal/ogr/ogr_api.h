@@ -125,11 +125,13 @@ OGRSpatialReferenceH CPL_DLL OGR_G_GetSpatialReference( OGRGeometryH );
 OGRErr CPL_DLL OGR_G_Transform( OGRGeometryH, OGRCoordinateTransformationH );
 OGRErr CPL_DLL OGR_G_TransformTo( OGRGeometryH, OGRSpatialReferenceH );
 
-OGRGeometryH CPL_DLL OGR_G_Simplify( OGRGeometryH hTarget, double tolerance );
+OGRGeometryH CPL_DLL OGR_G_Simplify( OGRGeometryH hThis, double tolerance );
+/*OGRGeometryH CPL_DLL OGR_G_TopologyPreserveSimplify( OGRGeometryH hThis, double tolerance );*/
 
 void   CPL_DLL OGR_G_Segmentize(OGRGeometryH hGeom, double dfMaxLength );
 int    CPL_DLL OGR_G_Intersects( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Equals( OGRGeometryH, OGRGeometryH );
+/*int    CPL_DLL OGR_G_EqualsExact( OGRGeometryH, OGRGeometryH, double );*/
 int    CPL_DLL OGR_G_Disjoint( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Touches( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Crosses( OGRGeometryH, OGRGeometryH );
@@ -142,6 +144,12 @@ OGRGeometryH CPL_DLL OGR_G_ConvexHull( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_Buffer( OGRGeometryH, double, int );
 OGRGeometryH CPL_DLL OGR_G_Intersection( OGRGeometryH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_Union( OGRGeometryH, OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_UnionCascaded( OGRGeometryH );
+/*OGRGeometryH CPL_DLL OGR_G_PointOnSurface( OGRGeometryH );*/
+/*OGRGeometryH CPL_DLL OGR_G_Polygonize( OGRGeometryH *, int);*/
+/*OGRGeometryH CPL_DLL OGR_G_Polygonizer_getCutEdges( OGRGeometryH *, int);*/
+/*OGRGeometryH CPL_DLL OGR_G_LineMerge( OGRGeometryH );*/
+
 OGRGeometryH CPL_DLL OGR_G_Difference( OGRGeometryH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_SymDifference( OGRGeometryH, OGRGeometryH );
 double CPL_DLL OGR_G_Distance( OGRGeometryH, OGRGeometryH );
@@ -150,10 +158,11 @@ double CPL_DLL OGR_G_Area( OGRGeometryH );
 int    CPL_DLL OGR_G_Centroid( OGRGeometryH, OGRGeometryH );
 
 void   CPL_DLL OGR_G_Empty( OGRGeometryH );
-int    CPL_DLL OGR_G_IsEmpty (OGRGeometryH );
-int    CPL_DLL OGR_G_IsValid (OGRGeometryH );
-int    CPL_DLL OGR_G_IsSimple (OGRGeometryH );
-int    CPL_DLL OGR_G_IsRing (OGRGeometryH );
+int    CPL_DLL OGR_G_IsEmpty( OGRGeometryH );
+int    CPL_DLL OGR_G_IsValid( OGRGeometryH );
+/*char    CPL_DLL *OGR_G_IsValidReason( OGRGeometryH );*/
+int    CPL_DLL OGR_G_IsSimple( OGRGeometryH );
+int    CPL_DLL OGR_G_IsRing( OGRGeometryH );
 
 /* backward compatibility (non-standard methods) */
 int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
