@@ -2538,7 +2538,7 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
  * @return a new geometry representing the union or NULL if an error occurs.
  */
 
-OGRGeometryH OGR_G_Union( OGRGeometryH hThis )
+OGRGeometryH OGR_G_UnionCascaded( OGRGeometryH hThis )
 
 {
     VALIDATE_POINTER1( hThis, "OGR_G_UnionCascaded", NULL );
