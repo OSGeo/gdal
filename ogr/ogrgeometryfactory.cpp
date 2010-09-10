@@ -1472,6 +1472,7 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
         return new OGRPoint();
 
 #if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 3)
+    /* GEOSGeom_getCoordinateDimension only available in GEOS 3.3.0 (unreleased at time of writing) */
     int nCoordDim = GEOSGeom_getCoordinateDimension(geosGeom);
     GEOSWKBWriter* wkbwriter = GEOSWKBWriter_create();
     GEOSWKBWriter_setOutputDimension(wkbwriter, nCoordDim);
@@ -1494,6 +1495,7 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
 
     if( pabyBuf != NULL )
     {
+        /* Since GEOS 3.1.1, so we test 3.2.0 */
 #if GEOS_CAPI_VERSION_MAJOR >= 2 || (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 6)
         GEOSFree( pabyBuf );
 #else
