@@ -2495,7 +2495,8 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
               "GEOS support not enabled." );
     return NULL;
 
-#else
+/* GEOS >= 3.1.0 */
+#elif GEOS_CAPI_VERSION_MAJOR >= 2 || (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 5)
 
     GEOSGeom hThisGeosGeom = NULL;
     GEOSGeom hGeosProduct = NULL;
@@ -2516,6 +2517,10 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
 
     return poOGRProduct;
 
+#else
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS >= 3.1.0 required for UnionCascaded() support." );
+    return NULL;
 #endif /* HAVE_GEOS */
 }
 
@@ -3424,7 +3429,8 @@ OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
               "GEOS support not enabled." );
     return NULL;
 
-#else
+/* GEOS >= 3.0.0 */
+#elif GEOS_CAPI_VERSION_MAJOR >= 2 || (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 4)
 
     GEOSGeom hThisGeosGeom = NULL;
     GEOSGeom hGeosProduct = NULL;
@@ -3443,6 +3449,10 @@ OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
     }
     return poOGRProduct;
 
+#else
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS >= 3.0.0 required for Simplify() support." );
+    return NULL;
 #endif /* HAVE_GEOS */
 
 }
