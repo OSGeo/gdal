@@ -2504,7 +2504,7 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
     hThisGeosGeom = exportToGEOS();
     if( hThisGeosGeom != NULL )
     {
-        hGeosProduct = GEOSUnion( hThisGeosGeom );
+        hGeosProduct = GEOSUnionCascaded( hThisGeosGeom );
         GEOSGeom_destroy( hThisGeosGeom );
 
         if( hGeosProduct != NULL )

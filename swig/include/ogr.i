@@ -1633,6 +1633,11 @@ public:
   %newobject Union;
   OGRGeometryShadow* Union( OGRGeometryShadow* other ) {
     return (OGRGeometryShadow*) OGR_G_Union( self, other );
+  }
+  
+  %newobject UnionCascaded;
+  OGRGeometryShadow* UnionCascaded() {
+    return (OGRGeometryShadow*) OGR_G_UnionCascaded( self );
   }  
   
   %newobject Difference;
