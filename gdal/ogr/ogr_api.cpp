@@ -716,7 +716,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
 OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_GetArea", 0 );
+    VALIDATE_POINTER1( hGeom, "OGR_G_RemoveGeometry", 0 );
 
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
@@ -739,7 +739,52 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 }
 
 /************************************************************************/
-/*                           OGR_G_GetArea()                            */
+/*                           OGR_G_Length()                             */
+/************************************************************************/
+
+/**
+ * \brief Compute length of a geometry.
+ *
+ * Computes the area for OGRCurve or MultiCurve objects.
+ * Undefined for all other geometry types (returns zero). 
+ *
+ * This function utilizes the C++ get_Length() method.
+ *
+ * @param hGeom the geometry to operate on.
+ * @return the lenght or 0.0 for unsupported geometry types.
+ */
+
+double OGR_G_Length( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetLength", 0 );
+
+    double fLength = 0.0;
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      
+      case wkbLinearRing:
+      case wkbLineString:
+	fLength = ((OGRCurve *) hGeom)->get_Length();
+        break;
+
+      case wkbGeometryCollection:
+        fLength = ((OGRGeometryCollection *) hGeom)->get_Length();
+        break;
+
+      default:
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "OGR_G_Length() called against a non-curve geometry type." );
+
+        fLength = 0.0;
+    }
+
+    return fLength;
+}
+
+/************************************************************************/
+/*                           OGR_G_Area()                               */
 /************************************************************************/
 
 /**
@@ -755,10 +800,10 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
  * @return the area or 0.0 for unsupported geometry types.
  */
 
-double OGR_G_GetArea( OGRGeometryH hGeom )
+double OGR_G_Area( OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_GetArea", 0 );
+    VALIDATE_POINTER1( hGeom, "OGR_G_Area", 0 );
 
     double fArea = 0.0;
 
@@ -789,7 +834,7 @@ double OGR_G_GetArea( OGRGeometryH hGeom )
 
       default:
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "OGR_G_GetArea() called against non-surface geometry type." );
+                  "OGR_G_Area() called against non-surface geometry type." );
 
         fArea = 0.0;
     }
@@ -797,3 +842,8 @@ double OGR_G_GetArea( OGRGeometryH hGeom )
     return fArea;
 }
 
+double OGR_G_GetArea( OGRGeometryH hGeom )
+
+{
+    return OGR_G_Area( hGeom );
+}

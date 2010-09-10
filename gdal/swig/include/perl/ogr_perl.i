@@ -1053,8 +1053,6 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	*AsBinary = *ExportToWkb;
 	*AsGML = *ExportToGML;
 	*AsKML = *ExportToKML;
-	*Equals = *Equal;
-	*Intersects = *Intersect;
 	*BuildPolygonFromEdges = *Geo::OGR::BuildPolygonFromEdges;
 	*ForceToPolygon = *Geo::OGR::ForceToPolygon;
 	

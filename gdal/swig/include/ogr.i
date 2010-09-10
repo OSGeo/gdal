@@ -444,7 +444,6 @@ public:
 #ifndef SWIGJAVA
   %feature( "kwargs" ) CopyLayer;
 #endif
-%apply Pointer NONNULL {OGRLayerShadow *src_layer};
   OGRLayerShadow *CopyLayer(OGRLayerShadow *src_layer,
             const char* new_name,
             char** options=0) {
@@ -1518,9 +1517,18 @@ public:
   const char * GetGeometryName() {
     return (const char *) OGR_G_GetGeometryName(self);
   }
+
+  double Length () {
+    return OGR_G_Length(self);
+  }
   
+  double Area() {
+    return OGR_G_Area(self);
+  }
+
+  /* old, non-standard API */
   double GetArea() {
-    return OGR_G_GetArea(self);
+    return OGR_G_Area(self);
   }
   
   int GetPointCount() {
@@ -1587,9 +1595,19 @@ public:
     return (OGRGeometryShadow*) OGR_G_GetGeometryRef(self, geom);
   }
 
+  %newobject Simplify;
+  OGRGeometryShadow* Simplify(double tolerance) {
+    return (OGRGeometryShadow*) OGR_G_Simplify(self, tolerance);
+  }
+
+  %newobject Boundary;
+  OGRGeometryShadow* Boundary() {
+    return (OGRGeometryShadow*) OGR_G_Boundary(self);
+  }  
+
   %newobject GetBoundary;
   OGRGeometryShadow* GetBoundary() {
-    return (OGRGeometryShadow*) OGR_G_GetBoundary(self);
+    return (OGRGeometryShadow*) OGR_G_Boundary(self);
   }  
 
   %newobject ConvexHull;
@@ -1621,9 +1639,15 @@ public:
     return (OGRGeometryShadow*) OGR_G_Difference( self, other );
   }  
 
+  %newobject SymDifference;
+  OGRGeometryShadow* SymDifference( OGRGeometryShadow* other ) {
+    return (OGRGeometryShadow*) OGR_G_SymDifference( self, other );
+  } 
+
+  /* old, non-standard API */
   %newobject SymmetricDifference;
   OGRGeometryShadow* SymmetricDifference( OGRGeometryShadow* other ) {
-    return (OGRGeometryShadow*) OGR_G_SymmetricDifference( self, other );
+    return (OGRGeometryShadow*) OGR_G_SymDifference( self, other );
   } 
   
   double Distance( OGRGeometryShadow* other) {
@@ -1637,39 +1661,6 @@ public:
 
   bool IsEmpty () {
     return (OGR_G_IsEmpty(self) > 0);
-  }
-
-  double Length () {
-    /* get_Length is not exposed, redo simple euclidean length */
-    /* this is recursive if the geometry is not a simple list of points */
-    double l = 0;
-    int n = OGR_G_GetGeometryCount(self);
-    if (n > 0)
-    {
-      int i;
-      for (i = 0; i < n; i++) {
-        OGRGeometryShadow *g = (OGRGeometryShadow*)OGR_G_GetGeometryRef(self, i);
-        l += OGRGeometryShadow_Length(g);
-      }
-    } else {
-      int i;
-      int nPointCount = OGR_G_GetPointCount(self);
-      if (nPointCount != 0)
-      {
-        double x1 = OGR_G_GetX(self, 0);
-        double y1 = OGR_G_GetY(self, 0);
-        for (i = 1; i < nPointCount; i++) {
-            double x2 = OGR_G_GetX(self, i);
-            double y2 = OGR_G_GetY(self, i);
-            double dx = x2 - x1;
-            double dy = y2 - y1;
-            l += sqrt(dx*dx + dy*dy);
-            x1 = x2;
-            y1 = y2;
-        }
-      }
-    }
-    return l;
   }
   
   bool IsValid () {
@@ -1685,12 +1676,23 @@ public:
   }  
   
 %apply Pointer NONNULL {OGRGeometryShadow* other};
-  bool Intersect (OGRGeometryShadow* other) {
-    return (OGR_G_Intersect(self, other) > 0);
+
+  bool Intersects (OGRGeometryShadow* other) {
+    return (OGR_G_Intersects(self, other) > 0);
   }
 
+  /* old, non-standard API */
+  bool Intersect (OGRGeometryShadow* other) {
+    return (OGR_G_Intersects(self, other) > 0);
+  }
+
+  bool Equals (OGRGeometryShadow* other) {
+    return (OGR_G_Equals(self, other) > 0);
+  }
+  
+  /* old, non-standard API */
   bool Equal (OGRGeometryShadow* other) {
-    return (OGR_G_Equal(self, other) > 0);
+    return (OGR_G_Equals(self, other) > 0);
   }
   
   bool Disjoint(OGRGeometryShadow* other) {
