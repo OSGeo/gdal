@@ -47,9 +47,15 @@ def ogr_geom_area():
 
     area = geom.GetArea()
     if abs(area-99.5) > 0.00000000001:
-        gdaltest.post_reason( 'Area result wrong, got %g.' % area )
+        gdaltest.post_reason( 'GetArea() result wrong, got %g.' % area )
         return 'fail'
 
+    # OGR >= 1.8.0
+    area = geom.Area()
+    if abs(area-99.5) > 0.00000000001:
+        gdaltest.post_reason( 'Area() result wrong, got %g.' % area )
+        return 'fail'
+        
     geom.Destroy()
     
     return 'success'
@@ -76,7 +82,24 @@ def ogr_geom_area_linearring():
     
     return 'success'
 
+###############################################################################
+# Test Area calculation for a GeometryCollection
 
+def ogr_geom_area_geometrycollection():
+
+    # OGR >= 1.8.0
+    geom_wkt = 'GEOMETRYCOLLECTION( POLYGON((0 0,1 1,1 0,0 0)), MULTIPOLYGON(((0 0,1 1,1 0,0 0))), LINESTRING(0 0,1 1), POINT(0 0), GEOMETRYCOLLECTION EMPTY )'
+    geom = ogr.CreateGeometryFromWkt( geom_wkt )
+
+    area = geom.Area()
+    if abs(area-1) > 0.00000000001:
+        gdaltest.post_reason( 'Area() result wrong, got %g.' % area )
+        return 'fail'
+
+    geom.Destroy()
+
+    return 'success'
+    
 ###############################################################################
 # Test Area calculation for a LinearRing whose coordinates are shifted by a huge value
 # With algorithm prior to #3556, this would return 0.
@@ -173,10 +196,15 @@ def ogr_geom_boundary_point():
 
     bnd = geom.GetBoundary()
     if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
+        gdaltest.post_reason( 'GetBoundary not reported as GEOMETRYCOLLECTION EMPTY' )
+        return 'fail'
+
+    # OGR >= 1.8.0
+    bnd = geom.Boundary()
+    if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'Boundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
 
-    bnd.Destroy()
     geom.Destroy()
     
     return 'success'
@@ -580,6 +608,77 @@ def ogr_geom_coord_round():
     return 'success'
 
 ###############################################################################
+# Test Area calculation for a Point
+
+def ogr_geom_area_point():
+
+    geom_wkt = 'POINT(0 0)'
+    geom = ogr.CreateGeometryFromWkt( geom_wkt )
+
+    area = geom.Area()
+    if area != 0:
+        gdaltest.post_reason( 'Area() result wrong, got %g.' % area )
+        return 'fail'
+
+    geom.Destroy()
+
+    return 'success'
+    
+###############################################################################
+# Test Length calculation for a Point
+
+def ogr_geom_length_point():
+
+    # OGR >= 1.8.0
+    geom_wkt = 'POINT(0 0)'
+    geom = ogr.CreateGeometryFromWkt( geom_wkt )
+
+    length = geom.Length()
+    if length != 0:
+        gdaltest.post_reason( 'Length() result wrong, got %g.' % length )
+        return 'fail'
+
+    geom.Destroy()
+
+    return 'success'
+    
+###############################################################################
+# Test Length calculation for a MultiLineString
+
+def ogr_geom_length_multilinestring():
+
+    # OGR >= 1.8.0
+    geom_wkt = 'MULTILINESTRING((0 0,0 1),(0 0,0 1))'
+    geom = ogr.CreateGeometryFromWkt( geom_wkt )
+
+    length = geom.Length()
+    if abs(length-2) > 0.00000000001:
+        gdaltest.post_reason( 'Length() result wrong, got %g.' % length )
+        return 'fail'
+
+    geom.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Test Length calculation for a GeometryCollection
+
+def ogr_geom_length_geometrycollection():
+
+    # OGR >= 1.8.0
+    geom_wkt = 'GEOMETRYCOLLECTION( POLYGON((0 0,0 1,1 1,1 0,0 0)), MULTILINESTRING((0 0,0 1),(0 0,0 1)), LINESTRING(0 0,0 1), LINESTRING(0 0,0 1), POINT(0 0), GEOMETRYCOLLECTION EMPTY )'
+    geom = ogr.CreateGeometryFromWkt( geom_wkt )
+
+    length = geom.Length()
+    if abs(length-2) > 0.00000000001:
+        gdaltest.post_reason( 'Length() result wrong, got %g.' % length )
+        return 'fail'
+
+    geom.Destroy()
+
+    return 'success'
+    
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -589,6 +688,7 @@ gdaltest_list = [
     ogr_geom_area,
     ogr_geom_area_linearring,
     ogr_geom_area_linearring_big_offset,
+    ogr_geom_area_geometrycollection,
     ogr_geom_empty,
     ogr_geom_pickle,
     ogr_geom_boundary_point,
@@ -606,6 +706,10 @@ gdaltest_list = [
     ogr_geom_flattenTo2D,
     ogr_geom_linestring_limits,
     ogr_geom_coord_round,
+    ogr_geom_area_point,
+    ogr_geom_length_point,
+    ogr_geom_length_multilinestring,
+    ogr_geom_length_geometrycollection,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
