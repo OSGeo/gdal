@@ -161,6 +161,8 @@ CPLODBCSession::CPLODBCSession()
     m_szLastError[0] = '\0';
     m_hEnv = NULL;
     m_hDBC = NULL;
+    m_bInTransaction = FALSE;
+    m_bAutoCommit = TRUE;
 }
 
 /************************************************************************/
@@ -198,6 +200,110 @@ int CPLODBCSession::CloseSession()
 }
 
 /************************************************************************/
+/*                       ClearTransaction()                             */
+/************************************************************************/
+
+int CPLODBCSession::ClearTransaction()
+
+{
+#if (ODBCVER >= 0x0300)
+
+    if (m_bAutoCommit)
+        return TRUE;
+
+    SQLUINTEGER bAutoCommit;
+    /* See if we already in manual commit mode */
+    if ( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit, sizeof(SQLUINTEGER), NULL) ) )
+        return FALSE;
+
+    if (bAutoCommit == SQL_AUTOCOMMIT_OFF)
+    {
+        /* switch the connection to auto commit mode (default) */
+        if( Failed( SQLSetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0 ) ) )
+            return FALSE;
+    }
+
+    m_bAutoCommit = TRUE;
+
+#endif
+    return TRUE;
+}
+
+/************************************************************************/
+/*                       CommitTransaction()                            */
+/************************************************************************/
+
+int CPLODBCSession::BeginTransaction()
+
+{
+#if (ODBCVER >= 0x0300)
+
+    SQLUINTEGER bAutoCommit;
+    /* See if we already in manual commit mode */
+    if ( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit, sizeof(SQLUINTEGER), NULL) ) )
+        return FALSE;
+
+    if (bAutoCommit == SQL_AUTOCOMMIT_ON)
+    {
+        /* switch the connection to manual commit mode */
+        if( Failed( SQLSetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0 ) ) )
+            return FALSE;
+    }
+
+    m_bInTransaction = TRUE;
+    m_bAutoCommit = FALSE;
+
+#endif
+    return TRUE;
+}
+
+/************************************************************************/
+/*                       CommitTransaction()                            */
+/************************************************************************/
+
+int CPLODBCSession::CommitTransaction()
+
+{
+#if (ODBCVER >= 0x0300)
+
+    if (m_bInTransaction)
+    {
+        if( Failed( SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_COMMIT ) ) )
+        {
+            return FALSE;
+        }
+        m_bInTransaction = FALSE;
+    }
+
+#endif
+    return TRUE;
+}
+
+/************************************************************************/
+/*                       RollbackTransaction()                          */
+/************************************************************************/
+
+int CPLODBCSession::RollbackTransaction()
+
+{
+#if (ODBCVER >= 0x0300)
+
+    if (m_bInTransaction)
+    {
+        /* To prevent from the recursion in the Failed method */
+        m_bInTransaction = FALSE;
+
+        if( Failed( SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK ) ) )
+        {
+            return FALSE;
+        }
+    }
+
+#endif
+    return TRUE;
+}
+
+/************************************************************************/
 /*                               Failed()                               */
 /*                                                                      */
 /*      Test if a return code indicates failure, return TRUE if that    */
@@ -220,6 +326,9 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
               (SQLCHAR *) m_szLastError, sizeof(m_szLastError)-1, 
               &nTextLength );
     m_szLastError[nTextLength] = '\0';
+
+    if( nRetCode == SQL_ERROR && m_bInTransaction )
+        RollbackTransaction();
 
     return TRUE;
 }
@@ -401,6 +510,16 @@ int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
         Clear();
         Append( pszStatement );
     }
+
+#if (ODBCVER >= 0x0300)
+
+    if ( !m_poSession->IsInTransaction() )
+    {
+        /* commit pending transactions and set to autocommit mode*/
+        m_poSession->ClearTransaction();
+    }
+
+#endif
 
     if( Failed( 
             SQLExecDirect( m_hStmt, (SQLCHAR *) m_pszStatement, SQL_NTS ) ) )
@@ -1137,6 +1256,10 @@ int CPLODBCStatement::Appendf( const char *pszFormat, ... )
 void CPLODBCStatement::Clear()
 
 {
+    /* Closing the cursor if opened */
+    if( m_hStmt != NULL )
+        SQLFreeStmt( m_hStmt, SQL_CLOSE );
+    
     ClearColumnData();
 
     if( m_pszStatement != NULL )
@@ -1147,6 +1270,8 @@ void CPLODBCStatement::Clear()
 
     m_nStatementLen = 0;
     m_nStatementMax = 0;
+
+    m_nColCount = 0;
 
     if( m_papszColNames )
     {
@@ -1212,6 +1337,16 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
         pszCatalog = "";
     if( pszSchema == NULL )
         pszSchema = "";
+#endif
+
+#if (ODBCVER >= 0x0300)
+
+    if ( !m_poSession->IsInTransaction() )
+    {
+        /* commit pending transactions and set to autocommit mode*/
+        m_poSession->ClearTransaction();
+    }
+
 #endif
 /* -------------------------------------------------------------------- */
 /*      Fetch columns resultset for this table.                         */
@@ -1332,6 +1467,16 @@ int CPLODBCStatement::GetPrimaryKeys( const char *pszTable,
     if( pszSchema == NULL )
         pszSchema = "";
 
+#if (ODBCVER >= 0x0300)
+
+    if ( !m_poSession->IsInTransaction() )
+    {
+        /* commit pending transactions and set to autocommit mode*/
+        m_poSession->ClearTransaction();
+    }
+
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Fetch columns resultset for this table.                         */
 /* -------------------------------------------------------------------- */
@@ -1371,6 +1516,16 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
 {
     CPLDebug( "ODBC", "CatalogNameL: %s\nSchema name: %s\n",
                 pszCatalog, pszSchema );
+
+#if (ODBCVER >= 0x0300)
+
+    if ( !m_poSession->IsInTransaction() )
+    {
+        /* commit pending transactions and set to autocommit mode*/
+        m_poSession->ClearTransaction();
+    }
+
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Fetch columns resultset for this table.                         */
