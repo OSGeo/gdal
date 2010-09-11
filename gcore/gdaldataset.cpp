@@ -458,7 +458,7 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
  *
  * Note that the new GDALRasterBand is not returned.  It may be fetched
  * after successful completion of the method by calling 
- * GDALDataset::GetRasterBand(GDALDataset::GetRasterCount()-1) as the newest
+ * GDALDataset::GetRasterBand(GDALDataset::GetRasterCount()) as the newest
  * band will always be the last band.
  *
  * @param eType the data type of the pixels in the new band. 
