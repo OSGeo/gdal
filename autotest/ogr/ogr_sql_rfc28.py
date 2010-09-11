@@ -427,13 +427,13 @@ def ogr_rfc28_20():
 
 def ogr_rfc28_21():
 
-    sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from poly where eas_id between 165 and 170' )
+    sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from poly where eas_id between 165 and 169' )
 
     count_between = sql_lyr.GetFeatureCount()
 
     gdaltest.ds.ReleaseResultSet( sql_lyr )
 
-    sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from poly where eas_id >= 165 and eas_id <= 170' )
+    sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from poly where eas_id >= 165 and eas_id <= 169' )
 
     count_ge_and_le = sql_lyr.GetFeatureCount()
 
@@ -441,6 +441,29 @@ def ogr_rfc28_21():
 
     if count_between != count_ge_and_le:
         gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_between, count_ge_and_le) )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Verify that NOT BETWEEN works
+
+def ogr_rfc28_22():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from poly where eas_id not between 165 and 169' )
+
+    count_not_between = sql_lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from poly where not(eas_id >= 165 and eas_id <= 169)' )
+
+    count_not_ge_and_le = sql_lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if count_not_between != count_not_ge_and_le:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_not_between, count_not_ge_and_le) )
         return 'fail'
 
     return 'success'
@@ -476,6 +499,7 @@ gdaltest_list = [
     ogr_rfc28_19,
     ogr_rfc28_20,
     ogr_rfc28_21,
+    ogr_rfc28_22,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
