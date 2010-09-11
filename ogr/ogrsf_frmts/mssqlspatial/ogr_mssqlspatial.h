@@ -296,7 +296,7 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
 
     const char          *GetCatalog() { return pszCatalog; }
 
-    int                 ParseValue(char** pszValue, char* pszSource, char* pszKey, 
+    int                 ParseValue(char** pszValue, char* pszSource, const char* pszKey,
                                   int nStart, int nNext, int nTerm, int bRemove);
 
     int                 Open( const char *, int bUpdate, int bTestOpen );

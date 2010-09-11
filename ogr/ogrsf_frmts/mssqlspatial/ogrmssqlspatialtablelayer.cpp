@@ -539,7 +539,8 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( long nFeatureId )
     iNextShapeId = nFeatureId;
 
     poStmt = new CPLODBCStatement( poDS->GetSession() );
-    poStmt->Appendf( "select %s from %s where %s = %d", BuildFields(), 
+    CPLString osFields = BuildFields();
+    poStmt->Appendf( "select %s from %s where %s = %d", osFields.c_str(), 
         poFeatureDefn->GetName(), pszFIDColumn, nFeatureId );
 
     if( !poStmt->ExecuteSQL() )
@@ -883,7 +884,7 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( long nFID )
     if( !oStatement.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to delete feature with FID %d failed. %s", 
+                  "Attempt to delete feature with FID %ld failed. %s", 
                   nFID, poDS->GetSession()->GetLastError() );
 
         return OGRERR_FAILURE;
