@@ -79,6 +79,14 @@ install:
 	    do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; \
 	done
 
+# The sed substition below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
+# that produces buggy compiled code.
+# Seen on gcc 4.1.2-27ubuntu1 (Ubuntu 10.04) (not the default compiler) and gcc-4.1.2-48.el5 (CentOS 5.5)
+# (default compiler...)
+# The memset isn't necessary at all with a non-buggy compiler, but I've found
+# that it helps gcc 4.1 generating correct code here...
 parser:
 	bison -p swq -d -oswq_parser.cpp swq_parser.y
+	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < swq_parser.cpp > swq_parser.cpp.tmp
+	mv swq_parser.cpp.tmp swq_parser.cpp
 
