@@ -1,0 +1,13 @@
+
+OBJ	=	ogrmssqlspatialdriver.obj ogrmssqlspatialdatasource.obj ogrmssqlspatiallayer.obj ogrmssqlspatialtablelayer.obj ogrmssqlspatialselectlayer.obj ogrmssqlgeometryparser.obj ogrmssqlgeometryvalidator.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\..
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
