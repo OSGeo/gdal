@@ -1611,7 +1611,7 @@ public class Dataset
  *
  * Note that the new Band object is not returned.  It may be fetched
  * after successful completion of the method by calling 
- * ds.GetRasterBand(ds.GetRasterCount()-1) as the newest
+ * ds.GetRasterBand(ds.GetRasterCount()) as the newest
  * band will always be the last band.
  *
  * @param datatype the data type of the pixels in the new band. 
@@ -6521,10 +6521,27 @@ public class Layer:public FeatureDefn GetLayerDefn()
 
 /**
  * Return the layer name.
- * This actually an alias for GetLayerDefn().GetName().
+ *
+ * This returns the same content as GetLayerDefn().GetName(), but for a
+ * few drivers, calling GetName() directly can avoid lengthy layer
+ * definition initialization.
+ *
  * @return the layer name
 */
 public class Layer:public String GetName()
+
+/**
+ * Return the layer geometry type.
+ *
+ * This returns the same result as GetLayerDefn().GetGeomType(), but for a
+ * few drivers, calling GetGeomType() directly can avoid lengthy layer
+ * definition initialization.
+ *
+ * @return the geometry name
+ *
+ * @since OGR 1.8.0
+ */
+public class Layer:public int GetGeomType()
 
 /**
  Fetch the next available feature from this layer.
@@ -7862,9 +7879,20 @@ public class Geometry:public void FlattenTo2D()
  * Compute geometry area.
  *
  * Computes the area for an OGRLinearRing, OGRPolygon or OGRMultiPolygon.
- * Undefined for all other geometry types (returns zero). 
+ * Undefined for all other geometry types (returns zero).
  *
  * @return the area or 0.0 for unsupported geometry types.
+ *
+ * @since OGR 1.8.0
+ */
+public class Geometry:public double Area()
+
+/**
+ * Compute geometry area (deprecated).
+ *
+ * @deprecated
+ *
+ * @see #Area()
  */
 public class Geometry:public double GetArea()
 
@@ -7872,13 +7900,24 @@ public class Geometry:public double GetArea()
  * Compute boundary.
  *
  * A new geometry object is created and returned containing the boundary
- * of the geometry on which the method is invoked.  
+ * of the geometry on which the method is invoked.
  * <p>
  * This method is built on the GEOS library, check it for the definition
  * of the geometry operation.
  * If OGR is built without the GEOS library, this method will always fail.
  *
  * @return a newly allocated geometry now owned by the caller, or null on failure.
+ *
+ * @since OGR 1.8.0
+ */
+public class Geometry:public Geometry Boundary()
+
+/**
+ * Compute boundary (deprecated).
+ *
+ * @deprecated
+ *
+ * @see #Boundary()
  */
 public class Geometry:public Geometry GetBoundary()
 
@@ -8244,6 +8283,23 @@ public class Geometry:public void SetPoint(int ipoint, double x, double y, doubl
 public class Geometry:public void SetPoint(int ipoint, double x, double y)
 
 /**
+ * Simplify the geometry.
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param dTolerance the distance tolerance for the simplification.
+ *
+ * @return the simplified geometry or null if an error occurs.
+ *
+ * @since OGR 1.8.0
+ */
+public class Geometry:public Geometry Simplify(double dTolerance)
+
+
+/**
  * Compute symmetric difference.
  *
  * Generates a new geometry which is the symmetric difference of this
@@ -8257,6 +8313,17 @@ public class Geometry:public void SetPoint(int ipoint, double x, double y)
  *
  * @return a new geometry representing the symmetric difference or null if the 
  * difference is empty or an error occurs.
+ *
+ * @since OGR 1.8.0
+ */
+public class Geometry:public Geometry SymDifference(Geometry other)
+
+/**
+ * Compute symmetric difference (deprecated).
+ *
+ * @deprecated
+ *
+ * @see #SymDifference(Geometry)
  */
 public class Geometry:public Geometry SymmetricDifference(Geometry other)
 
@@ -8337,6 +8404,20 @@ public class Geometry:public int Transform(CoordinateTransformation ct)
  * @return a new geometry representing the union or null if an error occurs.
  */
 public class Geometry:public Geometry Union(Geometry other)
+
+/**
+ * Compute union using cascading.
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @return a new geometry representing the union or null if an error occurs.
+ *
+ * @since OGR 1.8.0
+ */
+public class Geometry:public Geometry UnionCascaded()
 
 /**
  * Test for containment.
