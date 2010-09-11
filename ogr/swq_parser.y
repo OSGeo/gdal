@@ -54,6 +54,7 @@ static void swqerror( swq_parse_context *context, const char *msg )
 %token SWQT_IDENTIFIER
 %token SWQT_IN
 %token SWQT_LIKE
+%token SWQT_BETWEEN
 %token SWQT_NULL
 %token SWQT_IS
 %token SWQT_SELECT
@@ -250,6 +251,29 @@ logical_expr:
 			$$->field_type = SWQ_BOOLEAN;
 			$$->PushSubExpression( in );
 		     }
+
+    | value_expr SWQT_BETWEEN value_expr SWQT_AND value_expr
+                 {
+            $$ = new swq_expr_node( SWQ_BETWEEN );
+            $$->field_type = SWQ_BOOLEAN;
+            $$->PushSubExpression( $1 );
+            $$->PushSubExpression( $3 );
+            $$->PushSubExpression( $5 );
+             }
+
+    | value_expr SWQT_NOT SWQT_BETWEEN value_expr SWQT_AND value_expr
+                 {
+            swq_expr_node *between;
+            between = new swq_expr_node( SWQ_BETWEEN );
+            between->field_type = SWQ_BOOLEAN;
+            between->PushSubExpression( $1 );
+            between->PushSubExpression( $4 );
+            between->PushSubExpression( $6 );
+
+            $$ = new swq_expr_node( SWQ_NOT );
+            $$->field_type = SWQ_BOOLEAN;
+            $$->PushSubExpression( between );
+             }
 
 	| value_expr SWQT_IS SWQT_NULL
 	             {
