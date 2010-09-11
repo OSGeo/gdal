@@ -35,7 +35,7 @@ very-clean: clean
 
 lib:	sublibs $(OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ): ogr_feature.h ogr_geometry.h
+$(OBJ): ogr_feature.h ogr_geometry.h swq.h
 
 obj:	$(OBJ)
 
