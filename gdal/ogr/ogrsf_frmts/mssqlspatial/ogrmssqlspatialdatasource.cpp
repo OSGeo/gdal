@@ -297,7 +297,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
 
     if( eType != wkbNone )
     {
-        char* pszGeometryType;
+        const char* pszGeometryType;
 
         switch( wkbFlatten(eType) )
         {
@@ -434,7 +434,7 @@ int OGRMSSQLSpatialDataSource::GetLayerCount()
 /*                       ParseValue()                                   */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::ParseValue(char** pszValue, char* pszSource, char* pszKey, int nStart, int nNext, int nTerm, int bRemove)
+int OGRMSSQLSpatialDataSource::ParseValue(char** pszValue, char* pszSource, const char* pszKey, int nStart, int nNext, int nTerm, int bRemove)
 {
     int nLen = strlen(pszKey);
     if ((*pszValue) == NULL && nStart + nLen < nNext && 
@@ -843,7 +843,7 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
     if( !oStmt.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Error initializing the metadata tables", GetSession()->GetLastError() );
+                    "Error initializing the metadata tables : %s", GetSession()->GetLastError() );
         return OGRERR_FAILURE;
     }
 

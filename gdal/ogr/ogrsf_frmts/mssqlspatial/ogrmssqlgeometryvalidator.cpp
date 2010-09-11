@@ -417,8 +417,9 @@ int OGRMSSQLGeometryValidator::ValidateGeometry(OGRGeometry* poGeom)
         return ValidateGeometryCollection((OGRGeometryCollection*)poGeom);
     case wkbLinearRing:
         return ValidateLinearRing((OGRLinearRing*)poGeom);
+    default:
+        return FALSE;
     }
-    return FALSE;
 }
 
 /************************************************************************/
