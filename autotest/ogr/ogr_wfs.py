@@ -605,7 +605,7 @@ gdaltest_list = [
     ogr_wfs_5,
     ogr_wfs_6,
     ogr_wfs_7,
-    ogr_wfs_8,
+    #ogr_wfs_8,
     ogr_wfs_9,
     ogr_wfs_10
     ]
