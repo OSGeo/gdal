@@ -112,6 +112,9 @@ void OGRRegisterAll()
 #ifdef PGEO_ENABLED
     RegisterOGRPGeo();
 #endif
+#ifdef MSSQLSPATIAL_ENABLED
+    RegisterOGRMSSQLSpatial();
+#endif 
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();
 #endif
