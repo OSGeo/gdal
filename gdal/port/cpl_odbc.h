@@ -164,6 +164,8 @@ class CPL_DLL CPLODBCSession {
     char      m_szLastError[SQL_MAX_MESSAGE_LENGTH + 1];
     HENV      m_hEnv;
     HDBC      m_hDBC;
+    int       m_bInTransaction;
+    int       m_bAutoCommit;
 
   public:
     CPLODBCSession();
@@ -173,6 +175,14 @@ class CPL_DLL CPLODBCSession {
                                   const char *pszUserid, 
                                   const char *pszPassword );
     const char  *GetLastError();
+
+    // Transaction handling
+
+    int         ClearTransaction();
+    int         BeginTransaction();
+    int         CommitTransaction();
+    int         RollbackTransaction();
+    int         IsInTransaction() { return m_bInTransaction; }
 
     // Essentially internal. 
 
