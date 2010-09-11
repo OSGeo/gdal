@@ -1412,7 +1412,7 @@ YYSTYPE yylval;
        to reallocate them elsewhere.  */
 
     /* The state stack.  */
-    yytype_int16 yyssa[YYINITDEPTH];
+    yytype_int16 yyssa[YYINITDEPTH]; /* workaround bug with gcc 4.1 -O2 */ memset(yyssa, 0, sizeof(yyssa));
     yytype_int16 *yyss;
     yytype_int16 *yyssp;
 
