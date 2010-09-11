@@ -154,6 +154,7 @@ void swq_op_registrar::Initialize()
     AddOperator( "LIKE", SWQ_LIKE );
     AddOperator( "IS NULL", SWQ_ISNULL );
     AddOperator( "IN", SWQ_IN );
+    AddOperator( "BETWEEN", SWQ_BETWEEN );
     AddOperator( "+", SWQ_ADD );
     AddOperator( "-", SWQ_SUBTRACT );
     AddOperator( "*", SWQ_MULTIPLY );
