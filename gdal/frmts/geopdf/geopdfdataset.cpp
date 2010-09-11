@@ -1617,6 +1617,26 @@ int GeoPDFDataset::ParseVP(Object& oVP)
         return FALSE;
     }
 
+    /* For http://www.avenza.com/sites/default/files/spatialpdf/US_County_Populations.pdf */
+    /* or http://www.agmkt.state.ny.us/soilwater/aem/gis_mapping_tools/HUC12_Albany.pdf */
+    const char* pszDatum = oSRS.GetAttrValue("Datum");
+    if (pszDatum && strncmp(pszDatum, "D_", 2) == 0)
+    {
+        oSRS.morphFromESRI();
+
+        CPLFree(pszWKT);
+        pszWKT = NULL;
+        if (oSRS.exportToWkt(&pszWKT) != OGRERR_NONE)
+        {
+            CPLFree(pszWKT);
+            pszWKT = NULL;
+        }
+        else
+        {
+            CPLDebug("GeoPDF", "WKT after morphFromESRI() = %s", pszWKT);
+        }
+    }
+
     OGRSpatialReference* poSRSGeog = oSRS.CloneGeogCS();
 
     OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation( poSRSGeog, &oSRS);
