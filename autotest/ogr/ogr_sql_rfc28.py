@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id: ogr_sql_test.py 19725 2010-05-15 13:39:49Z winkey $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR SQL capabilities added as part of RFC 28 implementation.
@@ -467,6 +467,29 @@ def ogr_rfc28_22():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Verify that NOT LIKE works
+
+def ogr_rfc28_23():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "select * from poly where PRFEDEA NOT LIKE '35043413'" )
+
+    count_not_like1 = sql_lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "select * from poly where NOT (PRFEDEA LIKE '35043413')" )
+
+    count_not_like2 = sql_lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if count_not_like1 != count_not_like2:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_not_like1, count_not_like2) )
+        return 'fail'
+
+    return 'success'
     
 ###############################################################################
 def ogr_rfc28_cleanup():
@@ -500,6 +523,7 @@ gdaltest_list = [
     ogr_rfc28_20,
     ogr_rfc28_21,
     ogr_rfc28_22,
+    ogr_rfc28_23,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
