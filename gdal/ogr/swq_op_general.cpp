@@ -161,6 +161,13 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           }
           break;
 
+          case SWQ_BETWEEN:
+            poRet->int_value = sub_node_values[0]->float_value
+                                >= sub_node_values[1]->float_value &&
+                               sub_node_values[0]->float_value
+                                <= sub_node_values[2]->float_value;
+            break;
+
           case SWQ_ISNULL:
             poRet->int_value = sub_node_values[0]->is_null;
             break;
@@ -278,6 +285,13 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           }
           break;
 
+          case SWQ_BETWEEN:
+            poRet->int_value = sub_node_values[0]->int_value
+                                >= sub_node_values[1]->int_value &&
+                               sub_node_values[0]->int_value
+                                <= sub_node_values[2]->int_value;
+            break;
+
           case SWQ_ISNULL:
             poRet->int_value = sub_node_values[0]->is_null;
             break;
@@ -382,6 +396,14 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               }
           }
           break;
+
+          case SWQ_BETWEEN:
+            poRet->int_value =
+                strcasecmp(sub_node_values[0]->string_value,
+                           sub_node_values[1]->string_value) >= 0 &&
+                strcasecmp(sub_node_values[0]->string_value,
+                           sub_node_values[2]->string_value) <= 0;
+            break;
 
           case SWQ_LIKE:
             poRet->int_value = swq_test_like(sub_node_values[0]->string_value,
@@ -566,6 +588,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode )
       case SWQ_GE:
       case SWQ_LE:
       case SWQ_IN:
+      case SWQ_BETWEEN:
         eRetType = SWQ_BOOLEAN;
         SWQAutoPromoteIntegerToFloat( poNode );
         SWQAutoPromoteStringToDateTime( poNode );

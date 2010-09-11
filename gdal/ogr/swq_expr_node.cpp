@@ -436,6 +436,15 @@ char *swq_expr_node::Unparse( swq_field_list *field_list )
         osExpr += ")";
         break;
 
+      case SWQ_BETWEEN:
+        CPLAssert( nSubExprCount == 3 );
+        osExpr.Printf( "%s %s (%s) AND (%s)",
+                       apszSubExpr[0],
+                       poOp->osName.c_str(),
+                       apszSubExpr[1],
+                       apszSubExpr[2] );
+        break;
+
       default: // function style.
         osExpr.Printf( "%s(", poOp->osName.c_str() );
         for( i = 0; i < nSubExprCount; i++ )
