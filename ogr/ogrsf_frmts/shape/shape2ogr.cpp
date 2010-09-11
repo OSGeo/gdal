@@ -33,22 +33,11 @@
 
 CPL_CVSID("$Id$");
 
-static const double EPSILON = 1E-5;
-
-/************************************************************************/
-/*                            epsilonEqual()                            */
-/************************************************************************/
-
-static inline bool epsilonEqual(double a, double b, double eps) 
-{
-    return (::fabs(a - b) < eps);
-}
-
 /************************************************************************/
 /*                        RingStartEnd                                  */
 /*        set first and last vertex for given ring                      */
 /************************************************************************/
-void RingStartEnd ( SHPObject *psShape, int ring, int *start, int *end )
+static void RingStartEnd ( SHPObject *psShape, int ring, int *start, int *end )
 {
     if( psShape->panPartStart == NULL )
     {
@@ -70,7 +59,7 @@ void RingStartEnd ( SHPObject *psShape, int ring, int *start, int *end )
 /*                        CreateLinearRing                              */
 /*                                                                      */
 /************************************************************************/
-OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring )
+static OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring )
 {
     OGRLinearRing *poRing;
     int nRingStart, nRingEnd, nRingPoints;
