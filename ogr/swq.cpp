@@ -188,6 +188,8 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
             nReturn = SWQT_AND;
         else if( EQUAL(osToken,"OR") )
             nReturn = SWQT_OR;
+        else if( EQUAL(osToken,"BETWEEN") )
+            nReturn = SWQT_BETWEEN;
         else if( EQUAL(osToken,"SELECT") )
             nReturn = SWQT_SELECT;
         else if( EQUAL(osToken,"LEFT") )

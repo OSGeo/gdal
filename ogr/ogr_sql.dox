@@ -193,7 +193,8 @@ The available logical operators are
 <b>&lt;=</b>, 
 <b>&gt;=</b>, 
 <b>LIKE</b> and 
-<b>ILIKE</b> and 
+<b>ILIKE</b>,
+<b>BETWEEN</b> and
 <b>IN</b>. 
 Most of the operators are self explanitory, but is is worth nothing that <b>
 !=</b> is the same as <b>&lt;&gt;</b>, the string equality is
@@ -228,6 +229,9 @@ value for membership in the provided set.
     "Ont"              IN ("Ontario","BC")  No
     1                  IN (0,2,4,6)         No
 \endcode
+
+The syntax of the <b>BETWEEN</b> operator is "field_name BETWEEN value1 AND value2"
+and it is equivalent to "field_name >= value1 AND field_name <= value2".
 
 In addition to the above binary operators, there are additional operators
 for testing if a field is null or not. These are the <b>IS NULL</b>

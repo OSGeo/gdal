@@ -42,6 +42,7 @@ typedef enum {
     SWQ_LIKE,
     SWQ_ISNULL,
     SWQ_IN,
+    SWQ_BETWEEN,
     SWQ_ADD,
     SWQ_SUBTRACT,
     SWQ_MULTIPLY,
