@@ -50,6 +50,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            const char *pszNewLayerName,
                            int bTransform, 
                            OGRSpatialReference *poOutputSRS,
+                           int bNullifyOutputSRS,
                            OGRSpatialReference *poSourceSRS,
                            char **papszSelFields,
                            int bAppend, int eGType,
@@ -532,6 +533,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszOutputSRSDef = NULL;
     const char  *pszSourceSRSDef = NULL;
     OGRSpatialReference *poOutputSRS = NULL;
+    int         bNullifyOutputSRS = FALSE;
     OGRSpatialReference *poSourceSRS = NULL;
     const char  *pszNewLayerName = NULL;
     const char  *pszWHERE = NULL;
@@ -692,6 +694,12 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-a_srs") && iArg < nArgc-1 )
         {
             pszOutputSRSDef = papszArgv[++iArg];
+            if (EQUAL(pszOutputSRSDef, "NULL") ||
+                EQUAL(pszOutputSRSDef, "NONE"))
+            {
+                pszOutputSRSDef = NULL;
+                bNullifyOutputSRS = TRUE;
+            }
         }
         else if( EQUAL(papszArgv[iArg],"-t_srs") && iArg < nArgc-1 )
         {
@@ -1118,7 +1126,7 @@ int main( int nArgc, char ** papszArgv )
             }
 
             if( !TranslateLayer( poDS, poPassedLayer, poODS, papszLCO, 
-                                 pszNewLayerName, bTransform, poOutputSRS,
+                                 pszNewLayerName, bTransform, poOutputSRS, bNullifyOutputSRS,
                                  poSourceSRS, papszSelFields, bAppend, eGType,
                                  bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
                                  nCountLayerFeatures, bWrapDateline, poClipSrc, poClipDst, pfnProgress, pProgressArg))
@@ -1285,7 +1293,7 @@ int main( int nArgc, char ** papszArgv )
             nAccCountFeatures += panLayerCountFeatures[iLayer];
 
             if( !TranslateLayer( poDS, poPassedLayer, poODS, papszLCO, 
-                                pszNewLayerName, bTransform, poOutputSRS,
+                                pszNewLayerName, bTransform, poOutputSRS, bNullifyOutputSRS,
                                 poSourceSRS, papszSelFields, bAppend, eGType,
                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
                                 panLayerCountFeatures[iLayer], bWrapDateline, poClipSrc, poClipDst, pfnProgress, pProgressArg) 
@@ -1430,6 +1438,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            const char *pszNewLayerName,
                            int bTransform, 
                            OGRSpatialReference *poOutputSRS,
+                           int bNullifyOutputSRS,
                            OGRSpatialReference *poSourceSRS,
                            char **papszSelFields,
                            int bAppend, int eGType, int bOverwrite,
@@ -1527,7 +1536,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
     poSrcFDefn = poSrcLayer->GetLayerDefn();
     
-    if( poOutputSRS == NULL )
+    if( poOutputSRS == NULL && !bNullifyOutputSRS )
         poOutputSRS = poSrcLayer->GetSpatialRef();
 
 /* -------------------------------------------------------------------- */
