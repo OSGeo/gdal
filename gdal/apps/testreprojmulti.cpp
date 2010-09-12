@@ -44,6 +44,7 @@ OGRCoordinateTransformation *poCT;
 volatile int nIter = 0;
 int bCreateCTInThread = FALSE;
 OGRSpatialReference oSrcSRS, oDstSRS;
+int nCountIter = 10000;
 
 void ReprojFunc(void* unused)
 {
@@ -69,7 +70,7 @@ void ReprojFunc(void* unused)
         assert(memcmp(padfResultY, padfRefResultY, 1024 * sizeof(double)) == 0);
 
         if (bCreateCTInThread)
-            OCTDestroyCoordinateTransformation(poCTInThread);
+            OGRCoordinateTransformation::DestroyCT(poCTInThread);
     }
 }
 
@@ -82,6 +83,8 @@ int main(int argc, char* argv[])
     {
         if (EQUAL(argv[i], "-threads") && i+1 < argc)
             nThreads = atoi(argv[++i]);
+        else if (EQUAL(argv[i], "-iter") && i+1 < argc)
+            nCountIter = atoi(argv[++i]);
         else if (EQUAL(argv[i], "-createctinthread"))
             bCreateCTInThread = TRUE;
     }
@@ -110,7 +113,7 @@ int main(int argc, char* argv[])
     for(i=0;i<nThreads;i++)
         CPLCreateThread(ReprojFunc, NULL);
 
-    while(nIter < 10000)
+    while(nIter < nCountIter)
         CPLSleep(0.001);
 
     return 0;
