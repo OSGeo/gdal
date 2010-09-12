@@ -621,9 +621,14 @@ int OGRMSSQLSpatialTableLayer::GetFeatureCount( int bForce )
     CPLODBCStatement* poStatement = BuildStatement( "count(*)" );
 
     if (poStatement == NULL || !poStatement->Fetch())
+    {
+        delete poStatement;
         return OGRMSSQLSpatialLayer::GetFeatureCount( bForce );
+    }
 
-    return atoi(poStatement->GetColData( 0 ));
+    int nRet = atoi(poStatement->GetColData( 0 ));
+    delete poStatement;
+    return nRet;
 }
 
 
