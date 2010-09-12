@@ -1765,18 +1765,9 @@ int S_NameValueList_Parse( const char *text, int text_offset,
         /*
          * Add the entry to the name/value list. 
          */
-        if( entries == NULL )
-        {
-            *entry_count = 1;
-            *entries = (EnvisatNameValue **) 
-                calloc( 1, sizeof(EnvisatNameValue) );
-        }
-        else
-        {
-            (*entry_count)++;
-            *entries = (EnvisatNameValue **) 
-                realloc( *entries, *entry_count * sizeof(EnvisatNameValue*) );
-        }
+        (*entry_count)++;
+        *entries = (EnvisatNameValue **)
+            realloc( *entries, *entry_count * sizeof(EnvisatNameValue*) );
 
         if( *entries == NULL )
         {
