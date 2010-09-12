@@ -621,6 +621,8 @@ int OGRMSSQLSpatialTableLayer::GetFeatureCount( int bForce )
     if( TestCapability(OLCFastFeatureCount) == FALSE )
         return OGRMSSQLSpatialLayer::GetFeatureCount( bForce );
 
+    ClearStatement();
+        
     CPLODBCStatement* poStatement = BuildStatement( "count(*)" );
 
     if (poStatement == NULL || !poStatement->Fetch())
@@ -783,6 +785,8 @@ OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
         return eErr;
 
     }
+    
+    ClearStatement();
 
 /* -------------------------------------------------------------------- */
 /*      Form the UPDATE command.                                        */
@@ -868,7 +872,7 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( long nFID )
 
 {
     GetLayerDefn();
-
+    
     if( pszFIDColumn == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -882,6 +886,9 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( long nFID )
                   "DeleteFeature() with unset FID fails." );
         return OGRERR_FAILURE;
     }
+    
+    ClearStatement();
+
 /* -------------------------------------------------------------------- */
 /*      Drop the record with this FID.                                  */
 /* -------------------------------------------------------------------- */
@@ -917,6 +924,8 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
                   "NULL pointer to OGRFeature passed to CreateFeature()." );
         return OGRERR_FAILURE;
     }
+    
+    ClearStatement();
 
     CPLODBCStatement oStatement( poDS->GetSession() );
 
