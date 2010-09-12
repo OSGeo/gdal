@@ -866,11 +866,17 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                 if (nFetchType == SQL_C_CHAR) 
                     while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)) 
                         --cbDataLen; // trimming the extra terminators: bug 990
+                else if (nFetchType == SQL_C_WCHAR)
+                    while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)
+                        && (szWrkData[cbDataLen - 2] == 0)) 
+                        cbDataLen -= 2; // trimming the extra terminators
+
             }
 			
-            m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+1);
+            m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+2);
             memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
             m_papszColValues[iCol][cbDataLen] = '\0';
+            m_papszColValues[iCol][cbDataLen+1] = '\0';
             m_panColValueLengths[iCol] = cbDataLen;
 
             while( TRUE )
@@ -899,6 +905,11 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                         while ( (nChunkLen > 1)
                                 && (szWrkData[nChunkLen - 1] == 0) )
                             --nChunkLen;  // trimming the extra terminators
+                    else if (nFetchType == SQL_C_WCHAR)
+                        while ( (nChunkLen > 1)
+                                && (szWrkData[nChunkLen - 1] == 0)
+                                && (szWrkData[nChunkLen - 2] == 0) )
+                            nChunkLen -= 2;  // trimming the extra terminators
                 }
                 else
                     nChunkLen = cbDataLen;
