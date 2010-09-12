@@ -374,7 +374,12 @@ class GDALTest:
         if self.testDriver() == 'fail':
             return 'skip'
 
-        src_ds = gdal.Open( 'data/' + self.filename )
+        if self.filename_absolute:
+            wrk_filename = self.filename
+        else:
+            wrk_filename = 'data/' + self.filename
+
+        src_ds = gdal.Open( wrk_filename )
         if self.band > 0:
             minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
             
@@ -481,19 +486,27 @@ class GDALTest:
 
         return 'success'
 
-    def testCreate(self, new_filename = None, out_bands = 3,
+    def testCreate(self, vsimem = 0, new_filename = None, out_bands = 3,
                    check_minmax = 1 ):
         if self.testDriver() == 'fail':
             return 'skip'
 
-        src_ds = gdal.Open( 'data/' + self.filename )
+        if self.filename_absolute:
+            wrk_filename = self.filename
+        else:
+            wrk_filename = 'data/' + self.filename
+
+        src_ds = gdal.Open( wrk_filename )
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
         src_img = src_ds.GetRasterBand(self.band).ReadRaster(0,0,xsize,ysize)
         minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
 
         if new_filename is None:
-            new_filename = 'tmp/' + self.filename + '.tst'
+            if vsimem:
+                new_filename = '/vsimem/' + self.filename + '.tst'
+            else:
+                new_filename = 'tmp/' + self.filename + '.tst'
 
         new_ds = self.driver.Create( new_filename, xsize, ysize, out_bands,
                                      src_ds.GetRasterBand(self.band).DataType,
