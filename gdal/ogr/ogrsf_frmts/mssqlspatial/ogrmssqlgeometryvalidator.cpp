@@ -217,7 +217,7 @@ int OGRMSSQLGeometryValidator::ValidateMultiLineString(OGRMultiLineString * poGe
 
         if (!ValidateLineString((OGRLineString*)poLineString))
         {
-            // non valid polygon
+            // non valid linestring
             if (!poGeometries)
             {
                 poGeometries = new OGRGeometryCollection();
