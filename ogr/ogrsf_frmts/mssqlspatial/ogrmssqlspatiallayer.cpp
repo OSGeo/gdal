@@ -137,7 +137,8 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 continue;
         }
 
-        if( EQUAL(poStmt->GetColName(iCol), pszFIDColumn) )
+        if( pszFIDColumn != NULL &&
+		    EQUAL(poStmt->GetColName(iCol), pszFIDColumn) )
         {
             /* skip FID */
             continue;
