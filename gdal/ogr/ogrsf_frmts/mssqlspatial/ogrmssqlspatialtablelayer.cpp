@@ -465,7 +465,7 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
         poStatement->Appendf( " where %s", pszQuery );
 
     /* If we have a spatial filter, query on it */
-    if ( m_poFilterGeom != NULL)
+    if ( m_poFilterGeom != NULL )
     {
         if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY 
             || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
@@ -473,7 +473,9 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
             if( pszQuery == NULL )
                 poStatement->Append( " where" );
             else
-                poStatement->Append( " and [%s].STIntersects(" );
+                poStatement->Append( " and" );
+
+            poStatement->Appendf("[%s].STIntersects(", pszGeomColumn );
 
             if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
                 poStatement->Append( "geography::" );
@@ -483,10 +485,10 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
             if ( m_sFilterEnvelope.MinX == m_sFilterEnvelope.MaxX || 
                  m_sFilterEnvelope.MinY == m_sFilterEnvelope.MaxY)
                 poStatement->Appendf("STGeomFromText('POINT(%.15g %.15g)',%d)) = 1", 
-                pszGeomColumn, m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, nSRSId >= 0? nSRSId : 0);
+                            m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, nSRSId >= 0? nSRSId : 0);
             else
                 poStatement->Appendf( "STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%d)) = 1", 
-                             pszGeomColumn, m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, 
+                                            m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
                                             m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MinY, 
                                             m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MaxY,
                                             m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxY,
@@ -540,7 +542,7 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( long nFeatureId )
 
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     CPLString osFields = BuildFields();
-    poStmt->Appendf( "select %s from %s where %s = %d", osFields.c_str(), 
+    poStmt->Appendf( "select %s from %s where %s = %ld", osFields.c_str(), 
         poFeatureDefn->GetName(), pszFIDColumn, nFeatureId );
 
     if( !poStmt->ExecuteSQL() )
