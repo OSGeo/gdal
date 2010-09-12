@@ -72,11 +72,9 @@ OGRMSSQLSpatialLayer::~OGRMSSQLSpatialLayer()
         poStmt = NULL;
     }
 
-    if( pszGeomColumn )
-        CPLFree( pszGeomColumn );
-
-    if ( panFieldOrdinals )
-        CPLFree( panFieldOrdinals );
+    CPLFree( pszGeomColumn );
+    CPLFree( pszFIDColumn );
+    CPLFree( panFieldOrdinals );
 
     if( poFeatureDefn )
     {
