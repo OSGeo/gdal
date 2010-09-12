@@ -406,7 +406,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
         }
 
         // pick up the root shape
-        if ( ParentOffset(0) != -1)
+        if ( ParentOffset(0) != 0xFFFFFFFF)
         {
             return OGRERR_CORRUPT_DATA;
         }
