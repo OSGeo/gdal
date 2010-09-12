@@ -197,7 +197,7 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     transaction.commit();
     database.close();
   } catch (r_Error error) {
-    CPLError(CE_Failure, CPLE_AppDefined, error.what());
+    CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
     return CPLGetLastErrorType();
   }
   return CE_None;
