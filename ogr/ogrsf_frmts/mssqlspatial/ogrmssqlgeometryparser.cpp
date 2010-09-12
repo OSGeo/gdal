@@ -287,7 +287,7 @@ OGRGeometryCollection* OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape
 }
 
 /************************************************************************/
-/*                         CreateFromSqlGeometry()                      */
+/*                         ParseSqlGeometry()                           */
 /************************************************************************/
 
 
