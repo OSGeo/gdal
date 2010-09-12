@@ -26,7 +26,7 @@ Usage:
 \verbatim
 ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]
         [-spat xmin ymin xmax ymax] [-fid fid]
-        [-sql statement] [-al] [-so] [-fields={YES/NO}]
+        [-sql statement] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
         [-geom={YES/NO/SUMMARY}][--formats]
         datasource_name [layer [layer ...]]
 
@@ -53,6 +53,7 @@ form of the queries used in the SQL WHERE statement.   Only features matching
 the attribute query will be reported.</dd>
 <dt> <b>-sql</b> <i>statement</i>:</dt><dd> Execute the indicated SQL statement
 and return the result.</dd>
+<dt> <b>-dialect</b> <em>dialect</em>:</dt><dd> SQL dialect.  In some cases can be used to use (unoptimized) OGR SQL instead of the native SQL of an RDBMS by passing OGRSQL. </dd>
 <dt> <b>-spat</b> <i>xmin ymin xmax ymax</i>:</dt><dd> The area of interest.  Only
 features within the rectangle will be reported.</dd>
 <dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
