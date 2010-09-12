@@ -328,7 +328,7 @@ GBool ExistsRasterColumnsTable(PGconn * hPGconn)
         bExistsRasterColumnsTable = FALSE;
     }
 
-    if (hPGresult);
+    if (hPGresult)
         PQclear(hPGresult);
         
     return bExistsRasterColumnsTable;
@@ -381,7 +381,7 @@ GBool ExistsOverviewsTable(PGconn * hPGconn)
         bExistsRasterOverviewsTable = FALSE;
     }
 
-    if (hPGresult);
+    if (hPGresult)
         PQclear(hPGresult);
         
     return bExistsRasterOverviewsTable;
