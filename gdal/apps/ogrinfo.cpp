@@ -337,7 +337,7 @@ static void Usage()
 {
     printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
-            "               [-sql statement] [-al] [-so] [-fields={YES/NO}]\n"
+            "               [-sql statement] [-dialect sql_dialect] [-al] [-so] [-fields={YES/NO}]\n"
             "               [-geom={YES/NO/SUMMARY}][--formats]\n"
             "               datasource_name [layer [layer ...]]\n");
     exit( 1 );
