@@ -14,7 +14,8 @@
 <h2>Connecting to a database</h2>
 
 To connect to a MSSQL datasource, use a connection string specifying the database name,
-with additional parameters as necessary<br>
+with additional parameters as necessary. The connection strings must be prefixed 
+    with &#39;<i>MSSQL:</i>&#39;.<br>
 <blockquote><pre>MSSQL:server=.\MSSQLSERVER2008;database=dbname;Integrated Security=true</pre></blockquote>
 In addition to the standard parameters of the 
     <a href="http://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlconnection.connectionstring.aspx">connection string</a> 
@@ -22,11 +23,13 @@ In addition to the standard parameters of the
 
 <ul>
 	
-<li> <b>TABLES=schema1.table1(geometry column1),schema2.table2(geometry column2)</b>: 
-    By using this parameter you can specify the subsetset of the layers to be used by the driver. If this parameter is not set, the layers are retrieved from the geometry_columns metadata table. You can omit specifying the schema and the geometry column portions of the syntax. 
+<li> <b>Tables=schema1.table1(geometry column1),schema2.table2(geometry column2)</b>: 
+    By using this parameter you can specify the subset of the layers to be used by the driver. If this parameter is not set, the layers are retrieved from the geometry_columns metadata table. You can omit specifying the schema and the geometry column portions of the syntax. </li>
+<li> <b>GeometryFormat=native|wkb|wkt</b>: 
+    The desired format in which the geometries should be retrieved from the server. The default value is 'native' in this case the native SqlGeometry and SqlGeography serialization format is used. When using the 'wkb' or 'wkt' setting the geometry representation is converted to 'Well Known Binary' and 'Well Known Text' at the server. This conversion requires a significant overhead at the server and makes the feature access slower than using the native format.</li>
 
 </ul>
-    <p>The parameters names are not case sensitive in the connection strings.</p> 
+    <p>The parameter names are not case sensitive in the connection strings.</p> 
     <p>Specifying the <b>Initial Catalog (Database)</b> parameter is required by the driver in order to select the proper database.</p> 
 
 <h2>SQL statements</h2>
@@ -35,7 +38,7 @@ In addition to the standard parameters of the
 rather than evaluating them internally when using the ExecuteSQL() call on the
 OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
 expressions are also passed directly through to MSSQL. 
-It's also possible to request the ogr MSSQL driver to handle SQL commands 
+It's also possible to request the OGR MSSQL driver to handle SQL commands 
 with the <a href="/ogr/ogr_sql.html">OGR SQL</a> engine, by passing <strong>"OGRSQL"</strong> 
 string to the ExecuteSQL() method, as the name of the SQL dialect.</p>
 
@@ -45,7 +48,7 @@ calls in the normal SQL sense.</p>
 
 <h2>Creation Issues</h2>
 
-<p>This driver doesn't support creating new databases, you might want to use the Microsoft SQL Server Client Tools for this purpose, but it does allow creation of new layers within an
+<p>This driver doesn't support creating new databases, you might want to use the <i>Microsoft SQL Server Client Tools</i> for this purpose, but it does allow creation of new layers within an
 existing database.</P>
 
 <h3>Layer Creation Options</h3>
@@ -53,7 +56,12 @@ existing database.</P>
 <ul>
 <li>
 <b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to 
-one of "geometry", "geography". If this option is not specified the default value is "geography" if the spatial referece of the layer determines a geographic coordinate system otherwise the geometry data type is used.</li>
+one of "geometry" or "geography". If this option is not specified the default value is "geometry". 
+    So as to create the geometry column with &quot;geography&quot; type, this parameter should 
+    be set &quot;geography&quot;. In this case the layer must have a valid spatial referece of 
+    one of the geography coordinate systems defined in the <b>
+    sys.spatial_reference_systems</b> SQL Server metadata table. Projected 
+    coordinate systems are not supported in this case.</li>
 <li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
 desired name to be destroyed before creating the requested layer.</li>
 <li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
@@ -66,7 +74,7 @@ layer to try and represent the width and precision information, if available
 using numeric(width,precision) or char(width) types.  If "NO" then the types
 float, int and varchar will be used instead.  The default is "YES".
 <li> <b>DIM={2,3}</b>: Control the dimension of the layer.  Defaults to 3.</li>
-<li> <b>GEOM_NAME</b>: Set name of geometry column in new table.  If 
+<li> <b>GEOM_NAME</b>: Set the name of geometry column in the new table.  If 
 omitted it defaults to <i>ogr_geometry</i>.</li>
 <li> <b>SCHEMA</b>: Set name of schema for new table.
 If this parameter is not supported the default schema "<i>dbo"</i> is used.</li>
