@@ -2367,16 +2367,22 @@ dnl ---------------------------------------------------------------------------
 dnl Check if libpoppler is available
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(poppler,[  --with-poppler[=ARG]    Include poppler(for GeoPDF) support (ARG=no(default), yes)],,)
+AC_ARG_WITH(poppler,[  --with-poppler[=ARG]    Include poppler(for GeoPDF) support (ARG=no(default), yes or poppler install path)],,)
 
 HAVE_POPPLER=no
 POPPLER_HAS_OPTCONTENT=no
 
 AC_MSG_CHECKING([for poppler])
 
-if test "$with_poppler" = "yes" ; then
+if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
 
-    TEST_POPPLER_INC="-I/usr/include -I/usr/include/poppler"
+    if test "$with_poppler" = "yes" ; then
+        TEST_POPPLER_INC="-I/usr/include -I/usr/include/poppler"
+        TEST_POPPLER_LIB="-lpoppler"
+    else
+        TEST_POPPLER_INC="-I$with_poppler/include -I$with_poppler/include/poppler"
+        TEST_POPPLER_LIB="-L$with_poppler/lib -lpoppler"
+    fi
 
     # Check that we can accept Page::pageObj private member
     rm -f testpoppler.*
@@ -2384,9 +2390,9 @@ if test "$with_poppler" = "yes" ; then
     echo '#include <poppler/Page.h>' >> testpoppler.cpp
     echo '#include <poppler/splash/SplashBitmap.h>' >> testpoppler.cpp
     echo 'int main(int argc, char** argv) { return &(((Page*)0x8000)->pageObj) == 0; } ' >> testpoppler.cpp
-    if test -z "`${CXX} testpoppler.cpp -c ${TEST_POPPLER_INC} -lpoppler 2>&1`" ; then
+    if test -z "`${CXX} testpoppler.cpp -c ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
         HAVE_POPPLER=yes
-        LIBS="-lpoppler ${LIBS}"
+        LIBS="${TEST_POPPLER_LIB} ${LIBS}"
         OPT_GDAL_FORMATS="geopdf $OPT_GDAL_FORMATS"
         AC_MSG_RESULT([yes])
         POPPLER_INC=$TEST_POPPLER_INC
@@ -2399,7 +2405,7 @@ if test "$with_poppler" = "yes" ; then
         echo '#include <poppler/Object.h>' >> testpoppler.cpp
         echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
         echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} -lpoppler 2>&1`" ; then
+        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
             POPPLER_HAS_OPTCONTENT=yes
             AC_MSG_RESULT([yes])
         else
