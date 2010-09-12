@@ -960,7 +960,7 @@ void HDF4ImageDataset::FlushCache()
         {
             pszValue = CPLParseNameValue( *papszMeta++, &pszName );
             if ( (SDsetattr( hSD, pszName, DFNT_CHAR8,
-                             strlen(pszValue) + 1, pszValue )) < 0 );
+                             strlen(pszValue) + 1, pszValue )) < 0 )
             {
                 CPLDebug( "HDF4Image",
                           "Cannot write metadata information to output file");
