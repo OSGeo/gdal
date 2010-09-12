@@ -427,7 +427,7 @@ int OGRMSSQLGeometryValidator::ValidateGeometry(OGRGeometry* poGeom)
 /************************************************************************/
 OGRGeometry* OGRMSSQLGeometryValidator::GetValidGeometryRef()
 {
-    if (bIsValid)
+    if (bIsValid || poOriginalGeometry == NULL)
         return poOriginalGeometry;
 
     if (poValidGeometry)
