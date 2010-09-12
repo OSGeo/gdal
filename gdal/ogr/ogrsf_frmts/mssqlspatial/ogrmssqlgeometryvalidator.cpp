@@ -423,7 +423,7 @@ int OGRMSSQLGeometryValidator::ValidateGeometry(OGRGeometry* poGeom)
 }
 
 /************************************************************************/
-/*                         MakeValid()                                  */
+/*                      GetValidGeometryRef()                           */
 /************************************************************************/
 OGRGeometry* OGRMSSQLGeometryValidator::GetValidGeometryRef()
 {
