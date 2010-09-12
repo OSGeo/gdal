@@ -290,13 +290,12 @@ int CPLODBCSession::RollbackTransaction()
 
     if (m_bInTransaction)
     {
-        /* To prevent from the recursion in the Failed method */
         m_bInTransaction = FALSE;
 
-        if( Failed( SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK ) ) )
-        {
+        int nRetCode = SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK );
+        
+        if( nRetCode != SQL_SUCCESS && nRetCode != SQL_SUCCESS_WITH_INFO )
             return FALSE;
-        }
     }
 
 #endif
