@@ -622,6 +622,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", psResult->message );
+        CPLFree(pszURL);
         return NULL;
     }
 
