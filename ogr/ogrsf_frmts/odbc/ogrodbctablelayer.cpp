@@ -287,7 +287,7 @@ OGRFeature *OGRODBCTableLayer::GetFeature( long nFeatureId )
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     poStmt->Append( "SELECT * FROM " );
     poStmt->Append( poFeatureDefn->GetName() );
-    poStmt->Appendf( " WHERE %s = %d", pszFIDColumn, nFeatureId );
+    poStmt->Appendf( " WHERE %s = %ld", pszFIDColumn, nFeatureId );
 
     if( !poStmt->ExecuteSQL() )
     {
