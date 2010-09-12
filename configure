@@ -1742,7 +1742,7 @@ Optional Packages:
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
                           path)
   --without-pam         Disable PAM (.aux.xml) support
-  --with-poppler=ARG    Include poppler(for GeoPDF) support (ARG=no(default), yes)
+  --with-poppler=ARG    Include poppler(for GeoPDF) support (ARG=no(default), yes or poppler install path)
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
@@ -23390,9 +23390,15 @@ POPPLER_HAS_OPTCONTENT=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for poppler" >&5
 $as_echo_n "checking for poppler... " >&6; }
 
-if test "$with_poppler" = "yes" ; then
+if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
 
-    TEST_POPPLER_INC="-I/usr/include -I/usr/include/poppler"
+    if test "$with_poppler" = "yes" ; then
+        TEST_POPPLER_INC="-I/usr/include -I/usr/include/poppler"
+        TEST_POPPLER_LIB="-lpoppler"
+    else
+        TEST_POPPLER_INC="-I$with_poppler/include -I$with_poppler/include/poppler"
+        TEST_POPPLER_LIB="-L$with_poppler/lib -lpoppler"
+    fi
 
     # Check that we can accept Page::pageObj private member
     rm -f testpoppler.*
@@ -23400,9 +23406,9 @@ if test "$with_poppler" = "yes" ; then
     echo '#include <poppler/Page.h>' >> testpoppler.cpp
     echo '#include <poppler/splash/SplashBitmap.h>' >> testpoppler.cpp
     echo 'int main(int argc, char** argv) { return &(((Page*)0x8000)->pageObj) == 0; } ' >> testpoppler.cpp
-    if test -z "`${CXX} testpoppler.cpp -c ${TEST_POPPLER_INC} -lpoppler 2>&1`" ; then
+    if test -z "`${CXX} testpoppler.cpp -c ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
         HAVE_POPPLER=yes
-        LIBS="-lpoppler ${LIBS}"
+        LIBS="${TEST_POPPLER_LIB} ${LIBS}"
         OPT_GDAL_FORMATS="geopdf $OPT_GDAL_FORMATS"
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -23417,7 +23423,7 @@ $as_echo_n "checking if Catalog::optContent exists... " >&6; }
         echo '#include <poppler/Object.h>' >> testpoppler.cpp
         echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
         echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} -lpoppler 2>&1`" ; then
+        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
             POPPLER_HAS_OPTCONTENT=yes
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
