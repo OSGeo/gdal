@@ -181,7 +181,8 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszLayerName,
     if( eErr != CE_None )
         return eErr;
 
-    if( poFeatureDefn->GetFieldCount() == 0 )
+    if( poFeatureDefn->GetFieldCount() == 0 &&
+        pszFIDColumn == NULL && pszGeomColumn == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "No column definitions found for table '%s', layer not usable.", 
