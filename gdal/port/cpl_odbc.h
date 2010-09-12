@@ -236,7 +236,7 @@ class CPL_DLL CPLODBCStatement {
     void           Append( const char * );
     void           Append( int );
     void           Append( double );
-    int            Appendf( const char *, ... );
+    int            Appendf( const char *, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
     const char    *GetCommand() { return m_pszStatement; }
 
     int            ExecuteSQL( const char * = NULL );
