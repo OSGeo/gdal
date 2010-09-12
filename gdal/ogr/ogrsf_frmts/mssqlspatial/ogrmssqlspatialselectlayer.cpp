@@ -84,6 +84,7 @@ OGRMSSQLSpatialSelectLayer::~OGRMSSQLSpatialSelectLayer()
 
 {
     ClearStatement();
+    CPLFree(pszBaseStatement);
 }
 
 /************************************************************************/
