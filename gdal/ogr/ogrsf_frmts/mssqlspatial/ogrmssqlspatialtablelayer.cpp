@@ -794,11 +794,12 @@ OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
     OGRGeometry *poGeom = oValidator.GetValidGeometryRef();
 
     int bNeedComma = FALSE;
-    if(poGeom != NULL)
+    if(pszGeomColumn != NULL)
     {
         char    *pszWKT = NULL;
 
-        poGeom->exportToWkt( &pszWKT );
+        if (poGeom != NULL)
+            poGeom->exportToWkt( &pszWKT );
 
         oStmt.Appendf( "[%s] = ", pszGeomColumn );
 
@@ -825,9 +826,6 @@ OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
     int i;
     for( i = 0; i < nFieldCount; i++ )
     {
-        if( !poFeature->IsFieldSet( i ) )
-            continue;
-
         if (bNeedComma)
             oStmt.Appendf( ", [%s] = ", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
         else
@@ -836,7 +834,10 @@ OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
             bNeedComma = TRUE;
         }
 
-        AppendFieldValue(&oStmt, poFeature, i);
+        if( !poFeature->IsFieldSet( i ) )
+            oStmt.Append( "null" );
+        else
+            AppendFieldValue(&oStmt, poFeature, i);
     }
 
     /* Add the WHERE clause */
@@ -929,7 +930,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
 
     int bNeedComma = FALSE;
 
-    if (poGeom != NULL)
+    if (poGeom != NULL && pszGeomColumn != NULL)
     {
         oStatement.Append( pszGeomColumn );
         bNeedComma = TRUE;
@@ -966,7 +967,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
 
     /* Set the geometry */
     bNeedComma = FALSE;
-    if(poGeom != NULL)
+    if(poGeom != NULL && pszGeomColumn != NULL)
     {
         char    *pszWKT = NULL;
     
