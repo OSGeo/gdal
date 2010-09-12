@@ -673,6 +673,28 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           poSpatialFilter, 
                                           pszDialect );
 
+/* -------------------------------------------------------------------- */
+/*      Special case DELLAYER: command.                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    {
+        const char *pszLayerName = pszSQLCommand + 9;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+        
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+        {
+            if( EQUAL(papoLayers[iLayer]->GetName(), 
+                      pszLayerName ))
+            {
+                DeleteLayer( iLayer );
+                break;
+            }
+        }
+        return NULL;
+    }
+
     CPLDebug( "MSSQLSpatial", "ExecuteSQL(%s) called.", pszSQLCommand );
 
     if( EQUALN(pszSQLCommand, "DROP SPATIAL INDEX ON ", 22) )
@@ -973,6 +995,7 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         if ( oStmt.Fetch() && oStmt.GetColData( 0 ) )
         {
             nSRSId = atoi(oStmt.GetColData( 0 ));
+            CPLFree(pszWKT);
             return nSRSId;
         }
     }
@@ -980,7 +1003,10 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     {
         /* probably the table is missing at all */
         if( InitializeMetadataTables() != OGRERR_NONE )
+        {
+            CPLFree(pszWKT);
             return 0;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -990,6 +1016,7 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( oSRS.exportToProj4( &pszProj4 ) != OGRERR_NONE )
     {
         CPLFree( pszProj4 );
+        CPLFree(pszWKT);
         return 0;
     }
 
