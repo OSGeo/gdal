@@ -893,9 +893,10 @@ success.
  Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
  @param pszStatement the SQL statement to execute. 
- @param poSpatialFilter geometry which represents a spatial filter.
- @param pszDialect allows control of the statement dialect.  By default it 
- is assumed to be "generic" SQL, whatever that is. 
+ @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
+ @param pszDialect allows control of the statement dialect. If set to NULL, the
+OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
+unless OGRSQL is explicitely passed as the dialect.
 
  @return an OGRLayer containing the results of the query.  Deallocate with
  ReleaseResultSet().
@@ -926,9 +927,10 @@ success.
 
  @param hDS handle to the data source on which the SQL query is executed.
  @param pszSQLCommand the SQL statement to execute. 
- @param hSpatialFilter handle to a geometry which represents a spatial filter.
- @param pszDialect allows control of the statement dialect.  By default it 
- is assumed to be "generic" SQL, whatever that is. 
+ @param hSpatialFilter handle to a geometry which represents a spatial filter. Can be NULL.
+ @param pszDialect allows control of the statement dialect. If set to NULL, the
+OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
+unless OGRSQL is explicitely passed as the dialect.
 
  @return an handle to a OGRLayer containing the results of the query.  
  Deallocate with OGR_DS_ReleaseResultSet().
