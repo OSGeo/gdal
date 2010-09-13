@@ -1564,7 +1564,7 @@ const char * OGRToOGCGeomType( OGRwkbGeometryType eGeomType )
 const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
 
 {
-    switch( eType )
+    switch( (int)eType )
     {
       case wkbUnknown:
         return "Unknown (any)";
