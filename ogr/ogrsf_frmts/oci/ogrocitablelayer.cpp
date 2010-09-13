@@ -108,6 +108,8 @@ OGROCITableLayer::~OGROCITableLayer()
 
     if( bNewLayer )
         FinalizeNewLayer();
+    else
+        FlushPendingFeatures();
 
     CPLFree( panWriteFIDs );
     if( papWriteFields != NULL )
@@ -767,7 +769,7 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Do the actual creation.                                         */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "MULTI_LOAD", bNewLayer ) )
+    if( CSLFetchBoolean( papszOptions, "MULTI_LOAD", true ) )
         return BoundCreateFeature( poFeature );
     else
         return UnboundCreateFeature( poFeature );
