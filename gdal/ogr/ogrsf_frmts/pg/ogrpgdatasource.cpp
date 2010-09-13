@@ -134,9 +134,10 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, char* pszVer)
     char szNum[25];
     char szVer[10];
 
+    while ( *pszVer == ' ' ) pszVer++;
+
     ptr = pszVer;
     // get Version string
-    if ( *ptr == ' ' ) *ptr++;
     while (*ptr && *ptr != ' ') ptr++;
     iLen = ptr-pszVer;
     if ( iLen > sizeof(szVer) - 1 ) iLen = sizeof(szVer) - 1;

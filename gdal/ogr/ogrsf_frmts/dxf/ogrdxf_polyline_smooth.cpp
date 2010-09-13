@@ -204,7 +204,7 @@ void DXFSmoothPolyline::EmitArc
     v.x = start.x - end.x;
     v.y = start.y - end.y;
 
-#ifdef DEBUG
+#ifdef notdef
     const bool bMathissue = (v.x == 0.0 || v.y == 0.0);
 #endif
 
