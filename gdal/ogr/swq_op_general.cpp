@@ -448,16 +448,17 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               else
                   nSize = 0;
 
-              if( nOffset > strlen(pszSrcStr) )
+              int nSrcStrLen = (int)strlen(pszSrcStr);
+              if( nOffset > nSrcStrLen )
               {
                   nOffset = 0;
                   nSize = 0;
               }
-              else if( nOffset + nSize > strlen(pszSrcStr) )
-                  nSize = strlen(pszSrcStr) - nOffset;
+              else if( nOffset + nSize > nSrcStrLen )
+                  nSize = nSrcStrLen - nOffset;
 
               CPLString osResult = pszSrcStr + nOffset;
-              if( osResult.size() > nSize )
+              if( (int)osResult.size() > nSize )
                   osResult.resize( nSize );
               
               poRet->string_value = CPLStrdup(osResult);
