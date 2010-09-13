@@ -704,7 +704,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         if (poLayer)
         {
-            if( poLayer->Initialize( pszSQLCommand + 22, 0, 0, NULL ) != CE_None )
+            if( poLayer->Initialize( pszSQLCommand + 22, NULL, 0, 0 ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed to initialize layer '%s'", pszSQLCommand + 22 );   
@@ -721,7 +721,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         if (poLayer)
         {
-            if( poLayer->Initialize( pszSQLCommand + 24, 0, 0, NULL ) != CE_None )
+            if( poLayer->Initialize( pszSQLCommand + 24, NULL, 0, 0 ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed to initialize layer '%s'", pszSQLCommand + 24 );    

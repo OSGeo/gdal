@@ -652,7 +652,7 @@ Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
     if(nNum >= this->getNumFeatures())
         return NULL;
 
-    if (nLastAsked + 1 != nNum)
+    if (nLastAsked + 1 != (int)nNum)
     {
         nCount = 0;
         nCountP = 0;
