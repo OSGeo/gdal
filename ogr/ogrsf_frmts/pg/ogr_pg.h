@@ -342,7 +342,7 @@ class OGRPGDataSource : public OGRDataSource
 
     OGRPGTableLayer     *poLayerInCopyMode;
 
-    void                OGRPGDecodeVersionString(PGver* psVersion, char* pszVer);
+    void                OGRPGDecodeVersionString(PGver* psVersion, const char* pszVer);
 
     CPLString           GetCurrentSchema();
 
