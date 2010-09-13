@@ -127,10 +127,10 @@ CPLString OGRPGDataSource::GetCurrentSchema()
 /*                      OGRPGDecodeVersionString()                      */
 /************************************************************************/
 
-void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, char* pszVer)
+void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, const char* pszVer)
 {
     GUInt32 iLen;
-    char* ptr;
+    const char* ptr;
     char szNum[25];
     char szVer[10];
 
@@ -154,6 +154,8 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, char* pszVer)
     szNum[iLen] = '\0';
     psVersion->nMajor = atoi(szNum);
 
+    if (*ptr == 0)
+        return;
     pszVer = ++ptr;
 
     // get Minor number
