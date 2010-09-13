@@ -139,9 +139,8 @@ match the WKT the driver expects.<p>
 <li> <b>MULTI_LOAD</b>: If enabled new features will be created in 
 groups of 100 per SQL INSERT command, instead of each feature being a separate
 INSERT command.  Having this enabled is the fastest way to load data quickly.
-Multi-load mode is enabled by default for newly created layers, and may be
-forced on for existing layers by setting this option to YES, or disabled
-even for new layers by setting to NO.<p>
+Multi-load mode is enabled by default, and may be forced off for existing 
+layers or for new layers by setting to NO.<p>
 
 <li> <b>LOADER_FILE</b>: If this option is set, all feature information will
 be written to a file suitable for use with SQL*Loader instead of inserted
