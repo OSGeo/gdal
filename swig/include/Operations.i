@@ -430,6 +430,12 @@ int wrapper_GridCreate( char* algorithmOptions,
 
     CPLErrorReset();
 
+    if (xSize * ySize * (GDALGetDataTypeSize(dataType) / 8) > nioBufferSize)
+    {
+        CPLError( eErr, CPLE_AppDefined, "Buffer too small" );
+        return eErr;
+    }
+
     if ( algorithmOptions )
     {
         eErr = ParseAlgorithmAndOptions( algorithmOptions, &eAlgorithm, &pOptions );
@@ -448,6 +454,8 @@ int wrapper_GridCreate( char* algorithmOptions,
     eErr = GDALGridCreate( eAlgorithm, pOptions, points, x, y, z,
                            xMin, xMax, yMin, yMax, xSize, ySize, dataType, nioBuffer,
                            callback, callback_data );
+
+    CPLFree(pOptions);
 
     return eErr;
 }
