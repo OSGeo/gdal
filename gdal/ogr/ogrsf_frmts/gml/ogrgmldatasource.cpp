@@ -27,12 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <vector>
-
 #include "ogr_gml.h"
 #include "parsexsd.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+#include <vector>
 
 CPL_CVSID("$Id$");
 

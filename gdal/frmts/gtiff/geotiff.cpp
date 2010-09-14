@@ -27,6 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+/* If we use sunpro compiler on linux. Weird idea indeed ! */
+#if defined(__SUNPRO_CC) && defined(__linux__)
+#define _GNU_SOURCE
+#endif
+
 #include "gdal_pam.h"
 #define CPL_SERV_H_INCLUDED
 
