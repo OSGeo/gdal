@@ -377,7 +377,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #SOSI_INC_DIR = e:/sosi
 #SOSI_LIBS = e:/sosi/FYBA.lib e:/sosi/GM.lib e:/sosi/UT.lib
 
-# Uncomment for GeoPDF support
+# Uncomment for PDF support
 #POPPLER_ENABLED = YES
 #POPPLER_CFLAGS = -Ie:/kde/include -Ie:/kde/include/poppler
 #POPPLER_HAS_OPTCONTENT = YES
