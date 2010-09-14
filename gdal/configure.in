@@ -2367,7 +2367,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check if libpoppler is available
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(poppler,[  --with-poppler[=ARG]    Include poppler(for GeoPDF) support (ARG=no(default), yes or poppler install path)],,)
+AC_ARG_WITH(poppler,[  --with-poppler[=ARG]    Include poppler(for PDF) support (ARG=no(default), yes or poppler install path)],,)
 
 HAVE_POPPLER=no
 POPPLER_HAS_OPTCONTENT=no
@@ -2393,7 +2393,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
     if test -z "`${CXX} testpoppler.cpp -c ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
         HAVE_POPPLER=yes
         LIBS="${TEST_POPPLER_LIB} ${LIBS}"
-        OPT_GDAL_FORMATS="geopdf $OPT_GDAL_FORMATS"
+        OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
         AC_MSG_RESULT([yes])
         POPPLER_INC=$TEST_POPPLER_INC
 
