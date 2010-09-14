@@ -1,8 +1,8 @@
 /******************************************************************************
- * $Id$
+ * $Id $
  *
- * Project:  GeoPDF driver
- * Purpose:  GDALDataset driver for GeoPDF dataset.
+ * Project:  PDF driver
+ * Purpose:  GDALDataset driver for PDF dataset.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -27,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "geopdfio.h"
+#include "pdfio.h"
 
 #include "cpl_vsi.h"
 

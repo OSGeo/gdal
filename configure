@@ -1742,7 +1742,7 @@ Optional Packages:
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
                           path)
   --without-pam         Disable PAM (.aux.xml) support
-  --with-poppler=ARG    Include poppler(for GeoPDF) support (ARG=no(default), yes or poppler install path)
+  --with-poppler=ARG    Include poppler(for PDF) support (ARG=no(default), yes or poppler install path)
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
@@ -23409,7 +23409,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
     if test -z "`${CXX} testpoppler.cpp -c ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
         HAVE_POPPLER=yes
         LIBS="${TEST_POPPLER_LIB} ${LIBS}"
-        OPT_GDAL_FORMATS="geopdf $OPT_GDAL_FORMATS"
+        OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
         POPPLER_INC=$TEST_POPPLER_INC

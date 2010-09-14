@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GeoPDF driver
- * Purpose:  GDALDataset driver for GeoPDF dataset.
+ * Project:  PDF driver
+ * Purpose:  GDALDataset driver for PDF dataset.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef GEOPDFIO_H_INCLUDED
-#define GEOPDFIO_H_INCLUDED
+#ifndef PDFIO_H_INCLUDED
+#define PDFIO_H_INCLUDED
 
 #include "cpl_vsi_virtual.h"
 
@@ -90,4 +90,4 @@ class VSIPDFFileStream: public BaseStream
         int                FillBuffer();
 };
 
-#endif // GEOPDFIO_H_INCLUDED
+#endif // PDFIO_H_INCLUDED
