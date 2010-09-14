@@ -917,6 +917,12 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
         sscanf( szTemp+2, "%p", &pResult );
 #else
         sscanf( szTemp, "%p", &pResult );
+
+        /* Solaris actually behaves like MSVCRT... */
+        if (pResult == NULL)
+        {
+            sscanf( szTemp+2, "%p", &pResult );
+        }
 #endif
     }
     
