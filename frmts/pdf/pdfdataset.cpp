@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GeoPDF driver
- * Purpose:  GDALDataset driver for GeoPDF dataset.
+ * Project:  PDF driver
+ * Purpose:  GDALDataset driver for PDF dataset.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -32,7 +32,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
-#include "geopdfio.h"
+#include "pdfio.h"
 
 /* begin of poppler xpdf includes */
 #include <poppler/Object.h>
@@ -54,12 +54,12 @@
 #include <poppler/GlobalParams.h>
 /* end of poppler xpdf includes */
 
-/* g++ -fPIC -g -Wall frmts/geopdf/geopdfdataset.cpp -shared -o gdal_GeoPDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
+/* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_GeoPDF(void);
+void    GDALRegister_PDF(void);
 CPL_C_END
 
 
@@ -228,15 +228,15 @@ static void DumpDict(FILE* f, Dict* poDict, int nDepth, int nDepthLimit)
 
 /************************************************************************/
 /* ==================================================================== */
-/*                              GeoPDFDataset                           */
+/*                              PDFDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
-class GeoPDFRasterBand;
+class PDFRasterBand;
 
-class GeoPDFDataset : public GDALPamDataset
+class PDFDataset : public GDALPamDataset
 {
-    friend class GeoPDFRasterBand;
+    friend class PDFRasterBand;
     char        *pszWKT;
     double       dfDPI;
     double       adfCTM[6];
@@ -257,8 +257,8 @@ class GeoPDFDataset : public GDALPamDataset
     OGRPolygon*  poNeatLine;
 
   public:
-                 GeoPDFDataset();
-    virtual     ~GeoPDFDataset();
+                 PDFDataset();
+    virtual     ~PDFDataset();
 
     virtual const char* GetProjectionRef();
     virtual CPLErr GetGeoTransform( double * );
@@ -269,17 +269,17 @@ class GeoPDFDataset : public GDALPamDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*                         GeoPDFRasterBand                             */
+/*                         PDFRasterBand                                */
 /* ==================================================================== */
 /************************************************************************/
 
-class GeoPDFRasterBand : public GDALPamRasterBand
+class PDFRasterBand : public GDALPamRasterBand
 {
-    friend class GeoPDFDataset;
+    friend class PDFDataset;
 
   public:
 
-                GeoPDFRasterBand( GeoPDFDataset *, int );
+                PDFRasterBand( PDFDataset *, int );
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
@@ -287,10 +287,10 @@ class GeoPDFRasterBand : public GDALPamRasterBand
 
 
 /************************************************************************/
-/*                         GeoPDFRasterBand()                           */
+/*                         PDFRasterBand()                             */
 /************************************************************************/
 
-GeoPDFRasterBand::GeoPDFRasterBand( GeoPDFDataset *poDS, int nBand )
+PDFRasterBand::PDFRasterBand( PDFDataset *poDS, int nBand )
 
 {
     this->poDS = poDS;
@@ -306,7 +306,7 @@ GeoPDFRasterBand::GeoPDFRasterBand( GeoPDFDataset *poDS, int nBand )
 /*                        GetColorInterpretation()                      */
 /************************************************************************/
 
-GDALColorInterp GeoPDFRasterBand::GetColorInterpretation()
+GDALColorInterp PDFRasterBand::GetColorInterpretation()
 {
     return (GDALColorInterp)(GCI_RedBand + (nBand - 1));
 }
@@ -315,11 +315,11 @@ GDALColorInterp GeoPDFRasterBand::GetColorInterpretation()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GeoPDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    GeoPDFDataset *poGDS = (GeoPDFDataset *) poDS;
+    PDFDataset *poGDS = (PDFDataset *) poDS;
 
     if (poGDS->bTried == FALSE)
     {
@@ -410,10 +410,10 @@ CPLErr GeoPDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                            ~GeoPDFDataset()                            */
+/*                            ~PDFDataset()                            */
 /************************************************************************/
 
-GeoPDFDataset::GeoPDFDataset()
+PDFDataset::PDFDataset()
 {
     poDoc = NULL;
     pszWKT = NULL;
@@ -431,10 +431,10 @@ GeoPDFDataset::GeoPDFDataset()
 }
 
 /************************************************************************/
-/*                            ~GeoPDFDataset()                            */
+/*                            ~PDFDataset()                            */
 /************************************************************************/
 
-GeoPDFDataset::~GeoPDFDataset()
+PDFDataset::~PDFDataset()
 {
     CPLFree(pszWKT);
     CPLFree(pabyData);
@@ -446,9 +446,9 @@ GeoPDFDataset::~GeoPDFDataset()
 /*                             Identify()                               */
 /************************************************************************/
 
-int GeoPDFDataset::Identify( GDALOpenInfo * poOpenInfo )
+int PDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
-    if (strncmp(poOpenInfo->pszFilename, "GEOPDF:", 7) == 0)
+    if (strncmp(poOpenInfo->pszFilename, "PDF:", 4) == 0)
         return TRUE;
 
     if (poOpenInfo->nHeaderBytes < 128)
@@ -461,21 +461,21 @@ int GeoPDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if (!Identify(poOpenInfo))
         return NULL;
 
-    int bOpenSubdataset = strncmp(poOpenInfo->pszFilename, "GEOPDF:", 7) == 0;
+    int bOpenSubdataset = strncmp(poOpenInfo->pszFilename, "PDF:", 4) == 0;
     int iPage = -1;
     const char* pszFilename = poOpenInfo->pszFilename;
     if (bOpenSubdataset)
     {
-        iPage = atoi(poOpenInfo->pszFilename + 7);
+        iPage = atoi(poOpenInfo->pszFilename + 4);
         if (iPage <= 0)
             return NULL;
-         pszFilename = strchr(pszFilename + 7, ':');
+         pszFilename = strchr(pszFilename + 4, ':');
         if (pszFilename == NULL)
             return NULL;
         pszFilename ++;
@@ -543,7 +543,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    const char* pszDumpObject = CPLGetConfigOption("GEOPDF_DUMP_OBJECT", NULL);
+    const char* pszDumpObject = CPLGetConfigOption("PDF_DUMP_OBJECT", NULL);
     if (pszDumpObject != NULL)
     {
         FILE* f;
@@ -560,7 +560,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
             fclose(f);
     }
 
-    GeoPDFDataset* poDS = new GeoPDFDataset();
+    PDFDataset* poDS = new PDFDataset();
 
     if ( nPages > 1 && !bOpenSubdataset )
     {
@@ -572,7 +572,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
             sprintf( szKey, "SUBDATASET_%d_NAME", i+1 );
             papszSubDatasets =
                 CSLSetNameValue( papszSubDatasets, szKey,
-                                 CPLSPrintf("GEOPDF:%d:%s", i+1, poOpenInfo->pszFilename));
+                                 CPLSPrintf("PDF:%d:%s", i+1, poOpenInfo->pszFilename));
             sprintf( szKey, "SUBDATASET_%d_DESC", i+1 );
             papszSubDatasets =
                 CSLSetNameValue( papszSubDatasets, szKey,
@@ -584,11 +584,11 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->poDoc = poDoc;
     poDS->iPage = iPage;
-    poDS->dfDPI = atof(CPLGetConfigOption("GDAL_GEOPDF_DPI", "150"));
+    poDS->dfDPI = atof(CPLGetConfigOption("GDAL_PDF_DPI", "150"));
     if (poDS->dfDPI < 1 || poDS->dfDPI > 7200)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Invalid value for GDAL_GEOPDF_DPI. Using default value instead");
+                 "Invalid value for GDAL_PDF_DPI. Using default value instead");
         poDS->dfDPI = 150;
     }
 
@@ -607,7 +607,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poPageDict->lookup((char*)"LGIDict",&oLGIDict) != NULL && !oLGIDict.isNull())
     {
         /* Cf 08-139r2_GeoPDF_Encoding_Best_Practice_Version_2.2.pdf */
-        CPLDebug("GeoPDF", "TerraGo/OGC GeoPDF style GeoPDF detected");
+        CPLDebug("PDF", "OGC Encoding Best Practice style detected");
         if (poDS->ParseLGIDictObject(oLGIDict))
         {
             poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[0] * dfX1 + poDS->adfCTM[2] * dfY2;
@@ -621,12 +621,12 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else if ( poPageDict->lookup((char*)"VP",&oVP) != NULL && !oVP.isNull())
     {
         /* Cf adobe_supplement_iso32000.pdf */
-        CPLDebug("GeoPDF", "Adobe ISO32000 style GeoPDF perhaps ?");
+        CPLDebug("PDF", "Adobe ISO32000 style Geospatial PDF perhaps ?");
         poDS->ParseVP(oVP);
     }
     else
     {
-        /* Not a GeoPDF doc */
+        /* Not a geospatial PDF doc */
     }
 
     if (poDS->poNeatLine)
@@ -655,7 +655,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     int iBand;
     for(iBand = 1; iBand <= 3; iBand ++)
-        poDS->SetBand(iBand, new GeoPDFRasterBand(poDS, iBand));
+        poDS->SetBand(iBand, new PDFRasterBand(poDS, iBand));
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -674,7 +674,7 @@ GDALDataset *GeoPDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                       ParseLGIDictObject()                           */
 /************************************************************************/
 
-int GeoPDFDataset::ParseLGIDictObject(Object& oLGIDict)
+int PDFDataset::ParseLGIDictObject(Object& oLGIDict)
 {
     int i;
     int bOK = FALSE;
@@ -792,7 +792,7 @@ static double GetValue(Dict* poDict, const char* pszName)
 /*                   ParseLGIDictDictFirstPass()                        */
 /************************************************************************/
 
-int GeoPDFDataset::ParseLGIDictDictFirstPass(Dict* poLGIDict,
+int PDFDataset::ParseLGIDictDictFirstPass(Dict* poLGIDict,
                                              int* pbIsLargestArea)
 {
     int i;
@@ -842,14 +842,14 @@ int GeoPDFDataset::ParseLGIDictDictFirstPass(Dict* poLGIDict,
 
     if (oVersion.isString())
     {
-        /* OGC GeoPDF is 2.1 */
-        CPLDebug("GeoPDF", "LGIDict Version : %s",
+        /* OGC best practice is 2.1 */
+        CPLDebug("PDF", "LGIDict Version : %s",
                  oVersion.getString()->getCString());
     }
     else if (oVersion.isInt())
     {
         /* Old TerraGo is 2 */
-        CPLDebug("GeoPDF", "LGIDict Version : %d",
+        CPLDebug("PDF", "LGIDict Version : %d",
                  oVersion.getInt());
     }
 
@@ -881,11 +881,11 @@ int GeoPDFDataset::ParseLGIDictDictFirstPass(Dict* poLGIDict,
         double dfArea = (dfMaxX - dfMinX) * (dfMaxY - dfMinY);
         if (dfArea < dfMaxArea)
         {
-            CPLDebug("GeoPDF", "Not the largest neatline. Skipping it");
+            CPLDebug("PDF", "Not the largest neatline. Skipping it");
             return TRUE;
         }
 
-        CPLDebug("GeoPDF", "This is a the largest neatline for now");
+        CPLDebug("PDF", "This is a the largest neatline for now");
         dfMaxArea = dfArea;
         if (pbIsLargestArea)
             *pbIsLargestArea = TRUE;
@@ -909,7 +909,7 @@ int GeoPDFDataset::ParseLGIDictDictFirstPass(Dict* poLGIDict,
 /*                  ParseLGIDictDictSecondPass()                        */
 /************************************************************************/
 
-int GeoPDFDataset::ParseLGIDictDictSecondPass(Dict* poLGIDict)
+int PDFDataset::ParseLGIDictDictSecondPass(Dict* poLGIDict)
 {
     int i;
 
@@ -937,7 +937,7 @@ int GeoPDFDataset::ParseLGIDictDictSecondPass(Dict* poLGIDict)
             /* scaling termes */
             if ((i == 1 || i == 2) && fabs(adfCTM[i]) < fabs(adfCTM[0]) * 1e-10)
                 adfCTM[i] = 0;
-            CPLDebug("GeoPDF", "CTM[%d] = %.16g", i, adfCTM[i]);
+            CPLDebug("PDF", "CTM[%d] = %.16g", i, adfCTM[i]);
         }
     }
 
@@ -980,7 +980,7 @@ int GeoPDFDataset::ParseLGIDictDictSecondPass(Dict* poLGIDict)
 /*                         ParseProjDict()                               */
 /************************************************************************/
 
-int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
+int PDFDataset::ParseProjDict(Dict* poProjDict)
 {
     if (poProjDict == NULL)
         return FALSE;
@@ -1025,7 +1025,7 @@ int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
         if (oDatum.isString())
         {
             char* pszDatum = oDatum.getString()->getCString();
-            CPLDebug("GeoPDF", "Datum = %s", pszDatum);
+            CPLDebug("PDF", "Datum = %s", pszDatum);
             if (EQUAL(pszDatum, "WE") || EQUAL(pszDatum, "WGE"))
             {
                 bIsWGS84 = TRUE;
@@ -1103,7 +1103,7 @@ int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
         return FALSE;
     }
     CPLString osProjectionType(oProjectionType.getString()->getCString());
-    CPLDebug("GeoPDF", "Projection.ProjectionType = %s", osProjectionType.c_str());
+    CPLDebug("PDF", "Projection.ProjectionType = %s", osProjectionType.c_str());
 
     /* Unhandled: NONE, GEODETIC */
 
@@ -1414,7 +1414,7 @@ int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
         oUnits.isString())
     {
         osUnits = oUnits.getString()->getCString();
-        CPLDebug("GeoPDF", "Projection.Units = %s", osUnits.c_str());
+        CPLDebug("PDF", "Projection.Units = %s", osUnits.c_str());
 
         if (EQUAL(osUnits, "FT"))
             oSRS.SetLinearUnits( "Foot", 0.3048 );
@@ -1438,7 +1438,7 @@ int GeoPDFDataset::ParseProjDict(Dict* poProjDict)
 /*                              ParseVP()                               */
 /************************************************************************/
 
-int GeoPDFDataset::ParseVP(Object& oVP)
+int PDFDataset::ParseVP(Object& oVP)
 {
     int i;
 
@@ -1446,7 +1446,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
         return FALSE;
 
     int nLength = oVP.arrayGetLength();
-    CPLDebug("GeoPDF", "VP length = %d", nLength);
+    CPLDebug("PDF", "VP length = %d", nLength);
     if (nLength < 1)
         return FALSE;
 
@@ -1480,7 +1480,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
         return FALSE;
     }
 
-    CPLDebug("GeoPDF", "Subtype = %s", oSubtype.getName());
+    CPLDebug("PDF", "Subtype = %s", oSubtype.getName());
 
 /* -------------------------------------------------------------------- */
 /*      Extract Bounds attribute                                       */
@@ -1506,7 +1506,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
     for(i=0;i<8;i++)
     {
         adfBounds[i] = GetValue(oBounds, i);
-        CPLDebug("GeoPDF", "Bounds[%d] = %f", i, adfBounds[i]);
+        CPLDebug("PDF", "Bounds[%d] = %f", i, adfBounds[i]);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1533,7 +1533,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
     for(i=0;i<8;i++)
     {
         adfGPTS[i] = GetValue(oGPTS, i);
-        CPLDebug("GeoPDF", "GPTS[%d] = %f", i, adfGPTS[i]);
+        CPLDebug("PDF", "GPTS[%d] = %f", i, adfGPTS[i]);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1560,7 +1560,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
     for(i=0;i<8;i++)
     {
         adfLPTS[i] = GetValue(oLPTS, i);
-        CPLDebug("GeoPDF", "LPTS[%d] = %f", i, adfLPTS[i]);
+        CPLDebug("PDF", "LPTS[%d] = %f", i, adfLPTS[i]);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1587,7 +1587,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
         return FALSE;
     }
 
-    CPLDebug("GeoPDF", "GCS.Type = %s", oGCSType.getName());
+    CPLDebug("PDF", "GCS.Type = %s", oGCSType.getName());
 
 /* -------------------------------------------------------------------- */
 /*      Extract GCS.WKT attribute                                      */
@@ -1601,7 +1601,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
         return FALSE;
     }
 
-    CPLDebug("GeoPDF", "GCS.WKT = %s", oGCSWKT.getString()->getCString());
+    CPLDebug("PDF", "GCS.WKT = %s", oGCSWKT.getString()->getCString());
     CPLFree(pszWKT);
     pszWKT = CPLStrdup(oGCSWKT.getString()->getCString());
 
@@ -1633,7 +1633,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
         }
         else
         {
-            CPLDebug("GeoPDF", "WKT after morphFromESRI() = %s", pszWKT);
+            CPLDebug("PDF", "WKT after morphFromESRI() = %s", pszWKT);
         }
     }
 
@@ -1677,7 +1677,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
     if (!GDALGCPsToGeoTransform( 4, asGCPS,
                                adfGeoTransform, FALSE))
     {
-        CPLDebug("GeoPDF", "Could not compute GT with exact match. Try with approximate");
+        CPLDebug("PDF", "Could not compute GT with exact match. Try with approximate");
         if (!GDALGCPsToGeoTransform( 4, asGCPS,
                                adfGeoTransform, TRUE))
         {
@@ -1694,7 +1694,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
     if( oVPElt.dictLookup((char*)"PtData",&oPointData) &&
         oPointData.isDict() )
     {
-        CPLDebug("GeoPDF", "Found PointData");
+        CPLDebug("PDF", "Found PointData");
     }
 
     return TRUE;
@@ -1704,7 +1704,7 @@ int GeoPDFDataset::ParseVP(Object& oVP)
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char* GeoPDFDataset::GetProjectionRef()
+const char* PDFDataset::GetProjectionRef()
 {
     if (pszWKT)
         return pszWKT;
@@ -1715,7 +1715,7 @@ const char* GeoPDFDataset::GetProjectionRef()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GeoPDFDataset::GetGeoTransform( double * padfTransform )
+CPLErr PDFDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
@@ -1724,32 +1724,32 @@ CPLErr GeoPDFDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                         GDALRegister_GeoPDF()                           */
+/*                         GDALRegister_PDF()                           */
 /************************************************************************/
 
-void GDALRegister_GeoPDF()
+void GDALRegister_PDF()
 
 {
     GDALDriver  *poDriver;
 
-    if (! GDAL_CHECK_VERSION("GeoPDF driver"))
+    if (! GDAL_CHECK_VERSION("PDF driver"))
         return;
 
-    if( GDALGetDriverByName( "GeoPDF" ) == NULL )
+    if( GDALGetDriverByName( "PDF" ) == NULL )
     {
         poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GeoPDF" );
+        poDriver->SetDescription( "PDF" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "GeoPDF" );
+                                   "Geospatial PDF" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_geopdf.html" );
+                                   "frmt_pdf.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pdf" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = GeoPDFDataset::Open;
-        poDriver->pfnIdentify = GeoPDFDataset::Identify;
+        poDriver->pfnOpen = PDFDataset::Open;
+        poDriver->pfnIdentify = PDFDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
