@@ -423,7 +423,7 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Column Summary Function '%s' has wrong number of arguments.", 
-                      poExpr->string_value );
+                      poExpr->string_value ? poExpr->string_value : "(null)");
             CPLFree(col_def->field_name);
             col_def->field_name = NULL;
             CPLFree(col_def->field_alias);
