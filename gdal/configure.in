@@ -2286,12 +2286,22 @@ AC_MSG_CHECKING([for VFK support])
 
 AC_ARG_WITH(vfk,[  --without-vfk         Disable VFK support],,)
 
+HAVE_VFK=no
+
 if test "$with_vfk" = "no"; then
   AC_MSG_RESULT([no])
-  HAVE_VFK=no
 else
-  AC_MSG_RESULT([yes])
-  HAVE_VFK=yes
+
+    # Check that C++ compiler isn't too broken
+    rm -f testrlist.*
+    echo '#include <vector>' > testrlist.cpp
+    echo 'int main(int argc, char** argv) { std::vector<int> a, b; a.insert(a.begin(), b.rbegin(), b.rend()); return 0; } ' >> testrlist.cpp
+    if test -z "`${CXX} testrlist.cpp -c 2>&1`" ; then
+        AC_MSG_RESULT([yes])
+        HAVE_VFK=yes
+    else
+        AC_MSG_RESULT([disabled, broken C++ compiler])
+    fi
 fi
 
 AC_SUBST(HAVE_VFK)
