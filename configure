@@ -22950,14 +22950,25 @@ if test "${with_vfk+set}" = set; then :
 fi
 
 
+HAVE_VFK=no
+
 if test "$with_vfk" = "no"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-  HAVE_VFK=no
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+
+    # Check that C++ compiler isn't too broken
+    rm -f testrlist.*
+    echo '#include <vector>' > testrlist.cpp
+    echo 'int main(int argc, char** argv) { std::vector<int> a, b; a.insert(a.begin(), b.rbegin(), b.rend()); return 0; } ' >> testrlist.cpp
+    if test -z "`${CXX} testrlist.cpp -c 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-  HAVE_VFK=yes
+        HAVE_VFK=yes
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled, broken C++ compiler" >&5
+$as_echo "disabled, broken C++ compiler" >&6; }
+    fi
 fi
 
 
