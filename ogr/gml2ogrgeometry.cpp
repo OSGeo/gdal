@@ -330,7 +330,7 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Did not get 2+ values in <gml:pos>%s</gml:pos> tuple.",
-                      GetElementText( psPos ) );
+                      GetElementText( psPos ) ? GetElementText( psPos ) : "" );
         }
 
         CSLDestroy( papszTokens );
@@ -394,7 +394,7 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Did not get at least %d values or invalid number of \n"
                       "set of coordinates <gml:posList>%s</gml:posList>",
-                      nDimension, GetElementText( psPosList ) );
+                      nDimension, GetElementText( psPosList ) ? GetElementText( psPosList ) : "");
         }
         else
         {
