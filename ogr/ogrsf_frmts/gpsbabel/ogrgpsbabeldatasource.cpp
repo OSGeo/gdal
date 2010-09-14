@@ -27,11 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <string.h>
 #include "ogr_gpsbabel.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_error.h"
+
+#include <string.h>
 
 CPL_CVSID("$Id$");
 

@@ -27,12 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "IngrTypes.h"
+#include "JpegHelper.h"
+
 #ifdef DEBUG
 #include "stdio.h"
 #endif
-
-#include "IngrTypes.h"
-#include "JpegHelper.h"
 
 static const INGR_FormatDescription INGR_FormatTable[] = {
     {PackedBinary,            "Packed Binary",               GDT_Byte},
