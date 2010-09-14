@@ -147,7 +147,7 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_rasterlite
 !ENDIF
 
 !IFDEF POPPLER_ENABLED
-EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_geopdf
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_pdf
 !ENDIF
 
 default:	o\gdalallregister.obj subdirs
