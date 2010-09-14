@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  GeoPDF Testing.
+# Purpose:  PDF Testing.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
 #
 ###############################################################################
@@ -38,10 +38,10 @@ import gdaltest
 
 ###############################################################################
 
-def geopdf_online_1():
+def pdf_online_1():
 
     try:
-        if gdal.GetDriverByName('GeoPDF') is None:
+        if gdal.GetDriverByName('PDF') is None:
             return 'skip'
     except:
         return 'skip'
@@ -88,10 +88,10 @@ def geopdf_online_1():
 
 ###############################################################################
 
-def geopdf_online_2():
+def pdf_online_2():
 
     try:
-        if gdal.GetDriverByName('GeoPDF') is None:
+        if gdal.GetDriverByName('PDF') is None:
             return 'skip'
     except:
         return 'skip'
@@ -101,7 +101,7 @@ def geopdf_online_2():
     except:
         return 'skip'
 
-    ds = gdal.Open('GEOPDF:1:tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
+    ds = gdal.Open('PDF:1:tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
     if ds is None:
         return 'fail'
 
@@ -123,13 +123,13 @@ def geopdf_online_2():
     return 'success'
     
 gdaltest_list = [
-    geopdf_online_1,
-    geopdf_online_2 ]
+    pdf_online_1,
+    pdf_online_2 ]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'GeoPDF' )
+    gdaltest.setup_run( 'PDF' )
 
     gdaltest.run_tests( gdaltest_list )
 
