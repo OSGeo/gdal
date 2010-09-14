@@ -28,12 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <algorithm>
-
 #include "vrtdataset.h"
 #include "gdal_proxy.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
