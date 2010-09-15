@@ -59,10 +59,6 @@
 %javaconst(0);
 #endif
 
-%inline %{
-typedef char retStringAndCPLFree;
-%}
-
 %{
 #include <iostream>
 using namespace std;
@@ -203,23 +199,6 @@ public:
     }
   }
 
-/* FIXME : all bindings should avoid using the #else case */
-/* as the deallocator for the char* is delete[] where as */
-/* OSRExportToPrettyWkt uses CPL/VSIMalloc() */
-#if defined(SWIGCSHARP)||defined(SWIGPYTHON)||defined(SWIGJAVA)||defined(SWIGPERL)
-  retStringAndCPLFree *__str__() {
-    char *buf = 0;
-    OSRExportToPrettyWkt( self, &buf, 0 );
-    return buf;
-  }
-#else
-%newobject __str__;
-  char *__str__() {
-    char *buf = 0;
-    OSRExportToPrettyWkt( self, &buf, 0 );
-    return buf;
-  }
-#endif
 %apply Pointer NONNULL {OSRSpatialReferenceShadow* rhs};
   int IsSame( OSRSpatialReferenceShadow *rhs ) {
     return OSRIsSame( self, rhs );
