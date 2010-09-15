@@ -95,6 +95,9 @@ typedef char retStringAndCPLFree;
 %rename (finder_clean) CPLFinderClean;
 %rename (find_file) CPLFindFile;
 %rename (read_dir) VSIReadDir;
+%rename (mkdir) VSIMkdir;
+%rename (rmdir) VSIRmdir;
+%rename (rename) VSIRename;
 %rename (set_config_option) CPLSetConfigOption;
 %rename (get_config_option) wrapper_CPLGetConfigOption;
 %rename (binary_to_hex) CPLBinaryToHex;
@@ -114,6 +117,9 @@ typedef char retStringAndCPLFree;
 %rename (FinderClean) CPLFinderClean;
 %rename (FindFile) CPLFindFile;
 %rename (ReadDir) VSIReadDir;
+%rename (Mkdir) VSIMkdir;
+%rename (Rmdir) VSIRmdir;
+%rename (Rename) VSIRename;
 %rename (SetConfigOption) CPLSetConfigOption;
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
@@ -268,5 +274,27 @@ int wrapper_HasThreadSupport()
     return strcmp(CPLGetThreadingModel(), "stub") != 0;
 }
 }
+
+/* Added for GDAL 1.8 */
+int VSIMkdir(const char * pszPath, int mode );
+int VSIRmdir(const char * pszPath );
+int VSIRename(const char * pszOld, const char *pszNew );
+
+/* Added for GDAL 1.8 
+
+   We do not bother renaming the VSI*L api as this wrapping is not
+   considered "official", or available for use by application code. 
+   It is just for some testing stuff. 
+*/
+
+typedef void FILE;
+
+FILE   *VSIFOpenL( const char *pszFilename, const char *pszMode );
+void    VSIFCloseL( FILE * );
+int     VSIFSeekL( FILE *, long, int );
+long    VSIFTellL( FILE * );
+int     VSIFWriteL( const char *, int, int, FILE * );
+
+/* VSIFReadL() handled specially in python/gdal_python.i */
 
 #endif
