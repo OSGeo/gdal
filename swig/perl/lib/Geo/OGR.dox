@@ -249,7 +249,7 @@
 #
 # Usage:
 # \code
-# $ds = Geo::OGR::DataSource::create(...arguments...);
+# $ds = Geo::OGR::Driver('driver name')->Create('data source name', {});
 # \endcode
 # @return a new Geo::OGR::DataSource object.
 
