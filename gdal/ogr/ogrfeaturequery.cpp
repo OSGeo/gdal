@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include <assert.h>
+#include "swq.h"
 #include "ogr_feature.h"
 #include "ogr_p.h"
 #include "ogr_attrind.h"

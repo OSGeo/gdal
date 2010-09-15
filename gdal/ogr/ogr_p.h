@@ -95,8 +95,6 @@ int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOpti
 /************************************************************************/
 /*     Support for special attributes (feature query and selection)     */
 /************************************************************************/
-#include "swq.h"
-
 #define SPF_FID 0
 #define SPF_OGR_GEOMETRY 1
 #define SPF_OGR_STYLE 2
@@ -105,7 +103,10 @@ int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOpti
 #define SPECIAL_FIELD_COUNT 5
 
 extern const char* SpecialFieldNames[SPECIAL_FIELD_COUNT];
+
+#ifdef _SWQ_H_INCLUDED_
 extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
+#endif
 
 /************************************************************************/
 /*     Some SRS related stuff, search in SRS data files.                */
