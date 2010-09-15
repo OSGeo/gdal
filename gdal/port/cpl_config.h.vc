@@ -100,7 +100,7 @@
 
 #define lfind _lfind
 
-#if (_MSC_VER < 1500)
+#if (_MSC_VER < 1310)
 #  define VSI_STAT64 _stat
 #  define VSI_STAT64_T _stat
 #else
