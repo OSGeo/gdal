@@ -31,6 +31,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "cpl_multiproc.h"
+#include "swq.h"
 
 CPL_CVSID("$Id$");
 
