@@ -195,6 +195,12 @@ void CPLFinderClean();
 
 const char * CPLFindFile( const char *pszClass, const char *pszBasename );
 
+#if defined(SWIGPERL)
+%apply IF_ZERO_NO_ERROR {int};
+int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf );
+%clear IF_ZERO_NO_ERROR;
+#endif
+
 #if defined(SWIGPYTHON) || defined (SWIGJAVA)
 %apply (char **out_ppsz_and_free) {char **};
 #elif defined(SWIGPERL)
