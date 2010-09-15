@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "swq.h"
 #include "ogr_p.h"
 #include "ogr_gensql.h"
 #include "cpl_string.h"

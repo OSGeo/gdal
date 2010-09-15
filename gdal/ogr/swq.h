@@ -323,5 +323,4 @@ const char *swq_select_summarize( swq_select *select_info,
                                   int dest_column, 
                                   const char *value );
 
-
 #endif /* def _SWQ_H_INCLUDED_ */
