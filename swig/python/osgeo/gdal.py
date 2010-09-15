@@ -138,6 +138,10 @@ def DontUseExceptions(*args):
   """DontUseExceptions()"""
   return _gdal.DontUseExceptions(*args)
 
+def VSIFReadL(*args):
+  """VSIFReadL(int nMembSize, int nMembCount, FILE fp) -> int"""
+  return _gdal.VSIFReadL(*args)
+
 def Debug(*args):
   """Debug(char msg_class, char message)"""
   return _gdal.Debug(*args)
@@ -217,6 +221,38 @@ def Unlink(*args):
 def HasThreadSupport(*args):
   """HasThreadSupport() -> int"""
   return _gdal.HasThreadSupport(*args)
+
+def Mkdir(*args):
+  """Mkdir(char pszPath, int mode) -> int"""
+  return _gdal.Mkdir(*args)
+
+def Rmdir(*args):
+  """Rmdir(char pszPath) -> int"""
+  return _gdal.Rmdir(*args)
+
+def Rename(*args):
+  """Rename(char pszOld, char pszNew) -> int"""
+  return _gdal.Rename(*args)
+
+def VSIFOpenL(*args):
+  """VSIFOpenL(char pszFilename, char pszMode) -> FILE"""
+  return _gdal.VSIFOpenL(*args)
+
+def VSIFCloseL(*args):
+  """VSIFCloseL(FILE arg0)"""
+  return _gdal.VSIFCloseL(*args)
+
+def VSIFSeekL(*args):
+  """VSIFSeekL(FILE arg0, long arg1, int arg2) -> int"""
+  return _gdal.VSIFSeekL(*args)
+
+def VSIFTellL(*args):
+  """VSIFTellL(FILE arg0) -> long"""
+  return _gdal.VSIFTellL(*args)
+
+def VSIFWriteL(*args):
+  """VSIFWriteL(char arg0, int arg1, int arg2, FILE arg3) -> int"""
+  return _gdal.VSIFWriteL(*args)
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class"""
     __swig_setmethods__ = {}
