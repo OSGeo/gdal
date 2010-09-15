@@ -44,18 +44,30 @@
 %typemap(out) (char **CSL)
 {
     /* %typemap(out) char **CSL */
-    AV *av = (AV*)sv_2mortal((SV*)newAV());
-    if ($1) {
-	int i;
-	for (i = 0; $1[i]; i++) {
-	    SV *s = newSVpv($1[i], 0);
-	    if (!av_store(av, i, s))
-		SvREFCNT_dec(s);
+    if (GIMME_V == G_ARRAY) {
+	if ($1) {
+	    int i;
+	    for (i = 0; $1[i]; i++) {
+		EXTEND(SP, 1);
+		PUSHs(sv_2mortal(newSVpv($1[i], 0)));
+		argvi++;
+	    }
+	    CSLDestroy($1);
 	}
-	CSLDestroy($1);
+    } else {
+	AV *av = (AV*)sv_2mortal((SV*)newAV());
+	if ($1) {
+	    int i;
+	    for (i = 0; $1[i]; i++) {
+		SV *s = newSVpv($1[i], 0);
+		if (!av_store(av, i, s))
+		    SvREFCNT_dec(s);
+	    }
+	    CSLDestroy($1);
+	}
+	$result = newRV_noinc((SV*)av);
+	argvi++;
     }
-    $result = newRV_noinc((SV*)av);
-    argvi++;
 }
 %typemap(out) (char **free)
 {
@@ -91,6 +103,12 @@
 {
   /* %typemap(out) IF_ERROR_RETURN_NONE (do not return the error code) */
 }
+
+%typemap(out) IF_ZERO_NO_ERROR
+{
+  /* %typemap(out) IF_ZERO_NO_ERROR */
+}
+
 
 /*
  * SWIG macro to define fixed length array typemaps
@@ -941,4 +959,24 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 	saved_env.data = (SV *)$input;
     if (saved_env.fct)
 	$1 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
+}
+
+/*
+ * Typemaps for VSIStatL
+ */
+%typemap(in,numinputs=0) (VSIStatBufL *) (VSIStatBufL sStatBuf)
+{
+  /* %typemap(in,numinputs=0) (VSIStatBufL *) (VSIStatBufL sStatBuf) */
+  $1 = &sStatBuf;
+}
+%typemap(argout) (VSIStatBufL *)
+{
+  /* %typemap(argout) (VSIStatBufL *) */
+  SP -= 1; /* should be somewhere else, remove the filename arg */
+  EXTEND(SP, 1);
+  PUSHs(sv_2mortal(newSViv(sStatBuf2.st_mode)));
+  argvi++;
+  EXTEND(SP, 1);
+  PUSHs(sv_2mortal(newSViv(sStatBuf2.st_size)));
+  argvi++;
 }

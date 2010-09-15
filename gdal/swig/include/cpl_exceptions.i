@@ -74,7 +74,7 @@ void DontUseExceptions() {
     message if DontUseExceptions() is in effect (it is not by default).
     */
     if ( eclass == CE_Warning ) {
-      warn( CPLGetLastErrorMsg() );
+      warn( CPLGetLastErrorMsg(), "%s" );
     }
 #endif
 
