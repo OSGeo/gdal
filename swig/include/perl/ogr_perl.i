@@ -99,6 +99,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %rename (_ExportToWkb) ExportToWkb;
 %rename (_GetDriver) GetDriver;
 %rename (_TestCapability) TestCapability;
+%rename (_GetName) GetName;
 
 %perlcode %{
     use strict;
@@ -107,6 +108,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	package Geo::OGR::Driver;
 	use strict;
 	use vars qw /@CAPABILITIES %CAPABILITIES/;
+	use Encode;
         @CAPABILITIES = qw/CreateDataSource DeleteDataSource/; 
 	for my $s (@CAPABILITIES) {
 	    my $cap = eval "\$Geo::OGR::ODrC$s";
@@ -125,6 +127,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my($self, $cap) = @_;
 	    return _TestCapability($self, $CAPABILITIES{$cap});
 	}
+	sub GetName {
+	  return decode('UTF-8', $_[0]->_GetName);
+	}
 	*Create = *CreateDataSource;
 	*Copy = *CopyDataSource;
 	*OpenDataSource = *Open;
@@ -134,6 +139,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	use Carp;
 	use strict;
 	use vars qw /@CAPABILITIES %CAPABILITIES %LAYERS/;
+	use Encode;
         @CAPABILITIES = qw/CreateLayer DeleteLayer/;
 	for my $s (@CAPABILITIES) {
 	    my $cap = eval "\$Geo::OGR::ODsC$s";
@@ -162,6 +168,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub OpenShared {
 	    return Geo::OGR::OpenShared(@_);
+	}
+	sub GetName {
+	  return decode('UTF-8', $_[0]->_GetName);
 	}
 	sub Layer {
 	    my($self, $name) = @_;
@@ -248,6 +257,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	package Geo::OGR::Layer;
 	use strict;
 	use vars qw /@CAPABILITIES %CAPABILITIES/;
+	use Encode;
         @CAPABILITIES = qw/RandomRead SequentialWrite RandomWrite 
 		   FastSpatialFilter FastFeatureCount FastGetExtent 
 		   CreateField Transactions DeleteFeature FastSetNextByIndex/;
@@ -286,6 +296,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub TestCapability {
 	    my($self, $cap) = @_;
 	    return _TestCapability($self, $CAPABILITIES{$cap});
+	}
+	sub GetName {
+	  return decode('UTF-8', $_[0]->_GetName);
 	}
 	sub Schema {
 	    my $self = shift;
@@ -408,6 +421,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 	package Geo::OGR::FeatureDefn;
 	use strict;
+	use Encode;
 	sub create {
 	    my $pkg = shift;
 	    my %schema;
@@ -426,6 +440,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		AddFieldDefn($self, $fd);
 	    }
 	    return $self;
+	}
+	sub GetName {
+	  return decode('UTF-8', $_[0]->_GetName);
 	}
 	sub Schema {
 	    my $self = shift;
@@ -713,6 +730,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    %TYPE_STRING2INT %TYPE_INT2STRING
 	    %JUSTIFY_STRING2INT %JUSTIFY_INT2STRING
 	    /;
+	use Encode;
 	@FIELD_TYPES = qw/Integer IntegerList Real RealList String StringList 
 			WideString WideStringList Binary Date Time DateTime/;
 	@JUSTIFY_TYPES = qw/Undefined Left Right/;
@@ -756,6 +774,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$self->Precision($param{Precision}) if exists $param{Precision};
 	    }
 	    return $self;
+	}
+	sub GetName {
+	  return decode('UTF-8', $_[0]->_GetName);
 	}
 	sub Name {
 	    my $self = shift;
