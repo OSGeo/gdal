@@ -32,6 +32,7 @@ import gdal
 import sys
 import os
 import shutil
+from sys import version_info
 
 sys.path.append( '../pymod' )
 
@@ -42,10 +43,12 @@ import gdaltest
 
 def rfc30_1():
 
-    filename =  u'data/xx\u4E2D\u6587.\u4E2D\u6587'
+    if version_info >= (3,0,0):
+        filename =  'data/xx\u4E2D\u6587.\u4E2D\u6587'
+    else:
+        exec("filename =  u'data/xx\u4E2D\u6587.\u4E2D\u6587'")
+        filename = filename.encode( 'utf-8' )
 
-    filename = filename.encode( 'utf-8' )
-    
     ds = gdal.Open( filename )
 
     if ds is not None:
@@ -60,9 +63,11 @@ def rfc30_1():
 
 def rfc30_2():
 
-    filename =  u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
-
-    filename = filename.encode( 'utf-8' )
+    if version_info >= (3,0,0):
+        filename =  'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
+    else:
+        exec("filename =  u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
+        filename = filename.encode( 'utf-8' )
 
     fd = gdal.VSIFOpenL( filename, 'w' )
     if fd is None:
@@ -74,8 +79,11 @@ def rfc30_2():
 
     # rename
 
-    new_filename = u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
-    new_filename = new_filename.encode( 'utf-8' )
+    if version_info >= (3,0,0):
+        new_filename = 'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
+    else:
+        exec("new_filename = u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
+        new_filename = new_filename.encode( 'utf-8' )
 
     if gdal.Rename( filename, new_filename ) != 0:
         gdaltest.post_reason( 'utf-8 rename failed.' )
@@ -89,7 +97,11 @@ def rfc30_2():
     data = gdal.VSIFReadL( 3, 1, fd )
     gdal.VSIFCloseL( fd )
 
-    if data != 'abc':
+    if version_info >= (3,0,0):
+        ok = eval("data == b'abc'")
+    else:
+        ok = data == 'abc'
+    if not ok:
         gdaltest.post_reason( 'did not get expected data.' )
         return 'failure'
 
