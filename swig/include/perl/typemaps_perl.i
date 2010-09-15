@@ -616,7 +616,7 @@ CreateArrayFromStringArray( char **first ) {
     if ( stringarray != NULL ) {
 	int n = CSLCount( stringarray );
 	for ( int i = 0; i < n; i++ ) {
-	    SV *s = newSVpv(stringarray[i], strlen(*stringarray));
+	    SV *s = newSVpv(stringarray[i], 0);
 	    if (!av_store(av, i, s))
 		SvREFCNT_dec(s);
 	}
