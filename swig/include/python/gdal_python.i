@@ -86,6 +86,53 @@
 %include "python_exceptions.i"
 %include "python_strings.i"
 
+%import typemaps_python.i
+
+/* -------------------------------------------------------------------- */
+/*      VSIFReadL()                                                     */
+/* -------------------------------------------------------------------- */
+
+%rename (VSIFReadL) wrapper_VSIFReadL;
+
+%apply ( void **outPythonObject ) { (void **buf ) };
+%inline %{
+int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, FILE *fp)
+{
+    GIntBig buf_size = nMembSize * nMembCount;
+
+    if (buf_size == 0)
+    {
+        *buf = NULL;
+        return 0;
+    }
+#if PY_VERSION_HEX >= 0x03000000 
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        *buf = Py_None;
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return 0;
+    }
+    char *data = PyBytes_AsString( (PyObject *)*buf ); 
+#else 
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return 0;
+    }
+    char *data = PyString_AsString( (PyObject *)*buf ); 
+#endif
+
+    return VSIFReadL( data, nMembSize, nMembCount, fp );
+} 
+%}
+%clear (void **buf );
+
+/* -------------------------------------------------------------------- */
+/*      GDAL_GCP                                                        */
+/* -------------------------------------------------------------------- */
+
 %extend GDAL_GCP {
 %pythoncode {
   def __str__(self):
@@ -433,4 +480,3 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 }
 %}
 
-%import typemaps_python.i
