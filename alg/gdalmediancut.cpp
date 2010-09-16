@@ -104,7 +104,7 @@ static	Colorbox* largest_box(Colorbox *usedboxes);
  * @return returns CE_None on success or CE_Failure if an error occurs. 
  */
 
-int CPL_STDCALL
+extern "C" int CPL_STDCALL
 GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
                          GDALRasterBandH hGreen, 
                          GDALRasterBandH hBlue, 
