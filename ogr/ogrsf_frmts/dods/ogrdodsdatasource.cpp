@@ -195,6 +195,11 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 
 #ifdef LIBDAP_39
     AttrTable* poTable = oDAS.container();
+    if (poTable == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot get container");
+        return FALSE;
+    }
 #else
     AttrTable* poTable = &oDAS;
 #endif
