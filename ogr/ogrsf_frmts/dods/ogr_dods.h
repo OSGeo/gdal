@@ -162,7 +162,7 @@ private:
     OGRDODSFieldDefn    oYField;
     OGRDODSFieldDefn    oZField;
 
-    char               *pszSubSeqPath;
+    const char         *pszSubSeqPath;
 
     Sequence           *poSuperSeq;
 
