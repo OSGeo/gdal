@@ -239,6 +239,7 @@ CPLThreadMutex::CPLThreadMutex()
 
 {
     hMutex = CPLCreateMutex();
+    CPLReleaseMutex( hMutex ); // it is created acquired, but we want it free.
 }
 
 /************************************************************************/
