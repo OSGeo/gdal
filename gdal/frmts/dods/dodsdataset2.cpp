@@ -1066,7 +1066,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         string msg =
 "An error occurred while creating a virtual connection to the DAP server:\n";
         msg += e.get_error_message();
-        CPLError(CE_Failure, CPLE_AppDefined, msg.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", msg.c_str());
         delete poDS;
         poDS = NULL;
     }
@@ -1631,7 +1631,7 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /*      Catch exceptions                                                */
 /* -------------------------------------------------------------------- */
     catch (Error &e) {
-        CPLError(CE_Failure, CPLE_AppDefined, e.get_error_message().c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.get_error_message().c_str());
         return CE_Failure;
     }
     

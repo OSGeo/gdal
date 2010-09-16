@@ -156,7 +156,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     catch (Error &e) 
     {
         CPLError(CE_Failure, CPLE_OpenFailed, 
-                 e.get_error_message().c_str() );
+                 "%s", e.get_error_message().c_str() );
         return FALSE;
     }
 
