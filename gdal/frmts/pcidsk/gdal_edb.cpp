@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: pcidskdataset.cpp 17097 2009-05-21 19:59:35Z warmerdam $
+ * $Id$
  *
  * Project:  PCIDSK Database File
  * Purpose:  External Database access interface implementation (EDBFile).
@@ -32,7 +32,7 @@
 #include "gdal_priv.h"
 #include "pcidsk.h"
 
-CPL_CVSID("$Id: pcidskdataset.cpp 17097 2009-05-21 19:59:35Z warmerdam $");
+CPL_CVSID("$Id$");
 
 using namespace PCIDSK;
 

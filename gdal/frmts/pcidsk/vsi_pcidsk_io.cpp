@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: pcidskdataset.cpp 17097 2009-05-21 19:59:35Z warmerdam $
+ * $Id$
  *
  * Project:  PCIDSK Database File
  * Purpose:  PCIDSK SDK compatiable io interface built on VSI.
@@ -31,7 +31,7 @@
 #include "cpl_multiproc.h"
 #include "pcidsk.h"
 
-CPL_CVSID("$Id: pcidskdataset.cpp 17097 2009-05-21 19:59:35Z warmerdam $");
+CPL_CVSID("$Id$");
 
 using namespace PCIDSK;
 
