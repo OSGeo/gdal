@@ -50,7 +50,14 @@
 #include <Sequence.h>
 #include <Grid.h>
 
-#include <AISConnect.h>		
+#ifdef LIBDAP_310
+/* AISConnect.h/AISConnect class was renamed to Connect.h/Connect in libdap 3.10 */
+#include <Connect.h>
+#define AISConnect Connect
+#else
+#include <AISConnect.h>
+#endif
+
 #include <DDS.h>
 #include <DAS.h>
 #include <BaseTypeFactory.h>
