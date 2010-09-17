@@ -70,7 +70,8 @@ typedef void GDALRasterAttributeTableShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
 
-typedef int FALSE_IS_ERR;
+/* use this to not return the int returned by GDAL */
+typedef int RETURN_NONE;
 
 %}
 
@@ -466,10 +467,10 @@ int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 }
 }
 #else
-%apply (IF_FALSE_RETURN_NONE) { (FALSE_IS_ERR) };
-FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
+%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
+RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
     	                             double argout[6], int bApproxOK = 1 ); 
-%clear (FALSE_IS_ERR);
+%clear (RETURN_NONE);
 #endif
 
 //************************************************************************
