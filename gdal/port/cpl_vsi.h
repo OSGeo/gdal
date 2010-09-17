@@ -191,6 +191,7 @@ char CPL_DLL *VSIStrerror( int );
 void CPL_DLL VSIInstallMemFileHandler(void);
 void CPL_DLL VSIInstallLargeFileHandler(void);
 void CPL_DLL VSIInstallSubFileHandler(void);
+void VSIInstallCurlFileHandler(void);
 void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void); /* No reason to export that */
 void VSIInstallStdinHandler(void); /* No reason to export that */
