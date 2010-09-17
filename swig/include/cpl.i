@@ -196,9 +196,9 @@ void CPLFinderClean();
 const char * CPLFindFile( const char *pszClass, const char *pszBasename );
 
 #if defined(SWIGPERL)
-%apply IF_ZERO_NO_ERROR {int};
-int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf );
-%clear IF_ZERO_NO_ERROR;
+%apply RETURN_NONE_TRUE_IS_ERROR {RETURN_NONE};
+RETURN_NONE VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf );
+%clear RETURN_NONE;
 #endif
 
 #if defined(SWIGPYTHON) || defined (SWIGJAVA)

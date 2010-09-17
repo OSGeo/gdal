@@ -83,32 +83,37 @@
   $result = newRV_noinc((SV*)av);
   argvi++;
 }
-/* if the call to the fct failed, return an undef */
+/* drop GDAL return value */
 %typemap(out) IF_FALSE_RETURN_NONE
 {
   /* %typemap(out) IF_FALSE_RETURN_NONE */
 }
+/* croak if GDAL return FALSE */
 %typemap(ret) IF_FALSE_RETURN_NONE
 {
  /* %typemap(ret) IF_FALSE_RETURN_NONE */
   if ($1 == 0 ) {
-    /* this is currently used only in GDALGCPsToGeoTransform
-       this is probably a memory leak
-       ST(argvi-1) is at this point an array which needs to be destr
-     */
-    ST(argvi-1) = sv_newmortal();
+    SWIG_croak("unexpected error in $symname");
   }
 }
+/* drop GDAL return value */
+%typemap(out) RETURN_NONE_TRUE_IS_ERROR
+{
+  /* %typemap(out) RETURN_NONE_TRUE_IS_ERROR */
+}
+/* croak if GDAL return TRUE */
+%typemap(ret) RETURN_NONE_TRUE_IS_ERROR
+{
+ /* %typemap(ret) RETURN_NONE_TRUE_IS_ERROR */
+  if ($1 != 0 ) {
+    SWIG_croak("unexpected error in $symname");
+  }
+}
+/* drop GDAL return value */
 %typemap(out) IF_ERROR_RETURN_NONE
 {
-  /* %typemap(out) IF_ERROR_RETURN_NONE (do not return the error code) */
+  /* %typemap(out) IF_ERROR_RETURN_NONE */
 }
-
-%typemap(out) IF_ZERO_NO_ERROR
-{
-  /* %typemap(out) IF_ZERO_NO_ERROR */
-}
-
 
 /*
  * SWIG macro to define fixed length array typemaps
