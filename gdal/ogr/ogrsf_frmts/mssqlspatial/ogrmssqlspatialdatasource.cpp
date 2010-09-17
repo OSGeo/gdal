@@ -287,7 +287,10 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     int nSRSId = 0;
 
-    if( poSRS != NULL )
+    if( CSLFetchNameValue( papszOptions, "SRID") != NULL )
+        nSRSId = atoi(CSLFetchNameValue( papszOptions, "SRID"));
+
+    if( nSRSId == 0 && poSRS != NULL )
         nSRSId = FetchSRSId( poSRS );
 
 /* -------------------------------------------------------------------- */
@@ -909,7 +912,7 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
 /*      it to the table.                                                */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS )
+int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
 
 {
     char                *pszWKT = NULL;
@@ -948,10 +951,9 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      Check whether the EPSG authority code is already mapped to a    */
 /*      SRS ID.                                                         */
 /* -------------------------------------------------------------------- */
+    int  nAuthorityCode = 0;
     if( pszAuthorityName != NULL && EQUAL( pszAuthorityName, "EPSG" ) )
     {
-        int             nAuthorityCode;
-
         /* For the root authority name 'EPSG', the authority code
          * should always be integral
          */
@@ -1021,26 +1023,48 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get the current maximum srid in the srs table.                  */
+/*      Check whether the auth_code can be used as srid.                */
 /* -------------------------------------------------------------------- */
-    nSRSId = 1;
+    nSRSId = nAuthorityCode;
+
     oStmt.Clear();
     oSession.BeginTransaction();
-   
-    oStmt.Append("SELECT MAX(srid) FROM spatial_ref_sys");
-
-    if ( oStmt.ExecuteSQL() && oStmt.Fetch() && oStmt.GetColData( 0 ) )
+    if (nAuthorityCode > 0)
     {
-        nSRSId = atoi(oStmt.GetColData( 0 )) + 1;
+        oStmt.Appendf("SELECT srid FROM spatial_ref_sys where srid = %d", nAuthorityCode);
+        if ( oStmt.ExecuteSQL() && oStmt.Fetch())
+        {
+            nSRSId = 0;
+        }
     }
-    oStmt.Clear();
 
-    if( pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG") )
+/* -------------------------------------------------------------------- */
+/*      Get the current maximum srid in the srs table.                  */
+/* -------------------------------------------------------------------- */
+    
+    if (nSRSId == 0)
     {
-        int             nAuthorityCode;
+        oStmt.Clear();
+        oStmt.Append("SELECT COALESCE(MAX(srid) + 1, 32768) FROM spatial_ref_sys where srid between 32768 and 65536");
 
-        nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
+        if ( oStmt.ExecuteSQL() && oStmt.Fetch() && oStmt.GetColData( 0 ) )
+        {
+            nSRSId = atoi(oStmt.GetColData( 0 ));
+        }
+    }
 
+    if (nSRSId == 0)
+    {
+        /* unable to allocate srid */
+        oSession.RollbackTransaction();
+        CPLFree( pszProj4 );
+        CPLFree(pszWKT);
+        return 0;
+    }
+    
+    oStmt.Clear();
+    if( nAuthorityCode > 0 )
+    {
         oStmt.Appendf(
                  "INSERT INTO spatial_ref_sys (srid, auth_srid, auth_name, srtext, proj4text) "
                  "VALUES (%d, %d, ", nSRSId, nAuthorityCode );
