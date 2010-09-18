@@ -52,6 +52,7 @@
 #include <poppler/splash/Splash.h>
 #include <poppler/SplashOutputDev.h>
 #include <poppler/GlobalParams.h>
+#include <poppler/ErrorCodes.h>
 /* end of poppler xpdf includes */
 
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
@@ -458,6 +459,24 @@ int PDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                    PDFDatasetErrorFunction()                         */
+/************************************************************************/
+
+static void PDFDatasetErrorFunction(int nPos, char *pszMsg, va_list args)
+{
+    CPLString osError;
+
+    if (nPos >= 0)
+        osError.Printf("Pos = %d, ", nPos);
+    osError += CPLString().vPrintf(pszMsg, args);
+
+    if (strcmp(osError.c_str(), "Incorrect password") == 0)
+        return;
+
+    CPLError(CE_Failure, CPLE_AppDefined, "%s", osError.c_str());
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -467,12 +486,16 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo))
         return NULL;
 
+    const char* pszUserPwd = CPLGetConfigOption("PDF_USER_PWD", NULL);
+
     int bOpenSubdataset = strncmp(poOpenInfo->pszFilename, "PDF:", 4) == 0;
     int iPage = -1;
     const char* pszFilename = poOpenInfo->pszFilename;
+    char szPassword[81];
+
     if (bOpenSubdataset)
     {
-        iPage = atoi(poOpenInfo->pszFilename + 4);
+        iPage = atoi(pszFilename + 4);
         if (iPage <= 0)
             return NULL;
          pszFilename = strchr(pszFilename + 4, ':');
@@ -483,21 +506,64 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         iPage = 1;
 
-    FILE* fp = VSIFOpenL(pszFilename, "rb");
-    if (fp == NULL)
-        return NULL;
+    GooString* poUserPwd = NULL;
 
-    fp = (FILE*)VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
+    /* Set custom error handler for poppler errors */
+    setErrorFunction(PDFDatasetErrorFunction);
 
+    PDFDoc* poDoc = NULL;
     ObjectAutoFree oObj;
-    oObj.initNull();
-    PDFDoc* poDoc = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, 0, gFalse, 0, &oObj));
-    //PDFDoc* poDoc = new PDFDoc(new GooString(pszFilename));
-    if ( !poDoc->isOk() || poDoc->getNumPages() == 0 )
+    while(TRUE)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
-        delete poDoc;
-        return NULL;
+        FILE* fp = VSIFOpenL(pszFilename, "rb");
+        if (fp == NULL)
+            return NULL;
+
+        fp = (FILE*)VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
+
+        if (pszUserPwd)
+            poUserPwd = new GooString(pszUserPwd);
+
+        oObj.initNull();
+        poDoc = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, 0, gFalse, 0, &oObj), NULL, poUserPwd);
+        delete poUserPwd;
+
+        if ( !poDoc->isOk() || poDoc->getNumPages() == 0 )
+        {
+            if (poDoc->getErrorCode() == errEncrypted)
+            {
+                if (pszUserPwd && EQUAL(pszUserPwd, "ASK_INTERACTIVE"))
+                {
+                    printf( "Enter password (will be echo'ed in the console): " );
+                    fgets( szPassword, sizeof(szPassword), stdin );
+                    szPassword[sizeof(szPassword)-1] = 0;
+                    char* sz10 = strchr(szPassword, '\n');
+                    if (sz10)
+                        *sz10 = 0;
+                    pszUserPwd = szPassword;
+                    delete poDoc;
+                    continue;
+                }
+                else if (pszUserPwd == NULL)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "A password is needed. You can specify it through the PDF_USER_PWD "
+                             "configuration option (that can be set to ASK_INTERACTIVE)");
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid password");
+                }
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
+            }
+            delete poDoc;
+            return NULL;
+        }
+        else
+            break;
     }
 
     Catalog* poCatalog = poDoc->getCatalog();
