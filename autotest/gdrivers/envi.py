@@ -161,7 +161,26 @@ def envi_7():
 
     tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
     return tst.testCreateCopy( check_gt = 1, vsimem = 1 )
-    
+
+###############################################################################
+# Test fix for #3751
+
+def envi_8():
+
+    ds = gdal.GetDriverByName('ENVI').Create('/vsimem/foo.bsq', 10, 10, 1)
+    set_gt = (50000, 1, 0, 4500000, 0, -1)
+    ds.SetGeoTransform(set_gt)
+    got_gt = ds.GetGeoTransform()
+    if set_gt != got_gt:
+        gdaltest.post_reason('did not get expected geotransform')
+        print(got_gt)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('ENVI').Delete('/vsimem/foo.bsq')
+
+    return 'success'
+
 gdaltest_list = [
     envi_1,
     envi_2,
@@ -169,7 +188,8 @@ gdaltest_list = [
     envi_4,
     envi_5,
     envi_6,
-    envi_7
+    envi_7,
+    envi_8
     ]
   
 
