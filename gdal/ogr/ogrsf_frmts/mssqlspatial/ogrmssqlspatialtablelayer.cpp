@@ -112,8 +112,10 @@ OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
 /************************************************************************/
 
 CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszLayerName, 
-                                      const char *pszGeomCol, int nCoordDimension, 
-                                    int nSRId )
+                                              const char *pszGeomCol,
+                                              int nCoordDimension, 
+                                              int nSRId,
+                                              OGRwkbGeometryType eType )
 
 {
     CPLODBCSession *poSession = poDS->GetSession();
@@ -180,6 +182,8 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszLayerName,
     eErr = BuildFeatureDefn( pszLayerName, &oGetCol );
     if( eErr != CE_None )
         return eErr;
+        
+    poFeatureDefn->SetGeomType(eType);
 
     if( poFeatureDefn->GetFieldCount() == 0 &&
         pszFIDColumn == NULL && pszGeomColumn == NULL )
