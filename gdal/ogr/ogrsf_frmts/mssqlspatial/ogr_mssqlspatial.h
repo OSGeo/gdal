@@ -204,7 +204,8 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     CPLErr              Initialize( const char *pszTableName, 
                                     const char *pszGeomCol, 
                                     int nCoordDimension, 
-                                    int nSRId );
+                                    int nSRId,
+                                    OGRwkbGeometryType eType);
 
     OGRErr              CreateSpatialIndex();
     void                DropSpatialIndex();
@@ -302,7 +303,7 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName, 
                                    const char *pszGeomCol,int nCoordDimension,
-                                   int nSRID, int bUpdate );
+                                   int nSRID, OGRwkbGeometryType eType, int bUpdate );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount();
