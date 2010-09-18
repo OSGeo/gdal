@@ -130,6 +130,10 @@ def RGBFile2PCTFile( src_filename, dst_filename ):
   return 0
 
 
+def GetUseExceptions(*args):
+  """GetUseExceptions() -> int"""
+  return _gdal.GetUseExceptions(*args)
+
 def UseExceptions(*args):
   """UseExceptions()"""
   return _gdal.UseExceptions(*args)
@@ -167,7 +171,7 @@ def GetLastErrorNo(*args):
   return _gdal.GetLastErrorNo(*args)
 
 def GetLastErrorType(*args):
-  """GetLastErrorType() -> CPLErr"""
+  """GetLastErrorType() -> int"""
   return _gdal.GetLastErrorType(*args)
 
 def GetLastErrorMsg(*args):
@@ -563,7 +567,7 @@ def GDAL_GCP_set_Id(*args):
   return _gdal.GDAL_GCP_set_Id(*args)
 
 def GCPsToGeoTransform(*args):
-  """GCPsToGeoTransform(int nGCPs, int bApproxOK = 1) -> FALSE_IS_ERR"""
+  """GCPsToGeoTransform(int nGCPs, int bApproxOK = 1) -> RETURN_NONE"""
   return _gdal.GCPsToGeoTransform(*args)
 class AsyncReader(_object):
     """Proxy of C++ GDALAsyncReaderShadow class"""

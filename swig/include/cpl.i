@@ -181,11 +181,37 @@ char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
 %clear (int len, char *bin_string);
 #endif
 
+#if defined(SWIGPYTHON)
+/* We don't want errors to be cleared or thrown by this */
+/* call */
+%exception CPLGetLastErrorNo
+{
+    result = CPLGetLastErrorNo();
+}
+#endif
 int CPLGetLastErrorNo();
 
+#if defined(SWIGPYTHON)
+/* We don't want errors to be cleared or thrown by this */
+/* call */
+%exception CPLGetLastErrorType
+{
+    result = CPLGetLastErrorType();
+}
+int CPLGetLastErrorType();
+#else
 CPLErr CPLGetLastErrorType();
+#endif
 
-char const *CPLGetLastErrorMsg();
+#if defined(SWIGPYTHON)
+/* We don't want errors to be cleared or thrown by this */
+/* call */
+%exception CPLGetLastErrorMsg
+{
+    result = (char*)CPLGetLastErrorMsg();
+}
+#endif
+const char *CPLGetLastErrorMsg();
 
 void CPLPushFinderLocation( const char * pszLocation );
 
