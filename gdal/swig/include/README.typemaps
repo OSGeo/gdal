@@ -82,6 +82,9 @@ out OGRErr -
 out (char **CSL) - Required - The return value is a list that is copied
 into a list in the target language and then CSLDestroyed
 
+out (retStringAndCPLFree*) - Required - The returned string should be
+copied to target language and then CPLFree'd
+
 -------------------
 
 Optional checks against nullness. Some language bindings (e.g. Perl's)

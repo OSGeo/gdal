@@ -221,12 +221,6 @@ void CPLFinderClean();
 
 const char * CPLFindFile( const char *pszClass, const char *pszBasename );
 
-#if defined(SWIGPERL)
-%apply RETURN_NONE_TRUE_IS_ERROR {RETURN_NONE};
-RETURN_NONE VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf );
-%clear RETURN_NONE;
-#endif
-
 #if defined(SWIGPYTHON) || defined (SWIGJAVA)
 %apply (char **out_ppsz_and_free) {char **};
 #elif defined(SWIGPERL)
@@ -250,17 +244,15 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
 %clear const char * pszKey;
 
 /* Provide hooks to hex encoding methods */
-#ifdef SWIGJAVA
+#ifdef (SWIGJAVA) || (SWIGPERL)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
 retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
 %clear ( int nBytes, const GByte *pabyData );
-#else
-#ifdef SWIGCSHARP
+#elif defined(SWIGCSHARP)
 retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
 #else
 /* FIXME : wrong typemap. The string should be freed */
 char * CPLBinaryToHex( int nBytes, const GByte *pabyData );
-#endif
 #endif
 
 #ifdef SWIGJAVA
@@ -322,6 +314,12 @@ int VSIRename(const char * pszOld, const char *pszNew );
 */
 
 typedef void FILE;
+
+#if defined(SWIGPERL)
+%apply RETURN_NONE_TRUE_IS_ERROR {RETURN_NONE};
+RETURN_NONE VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf );
+%clear RETURN_NONE;
+#endif
 
 FILE   *VSIFOpenL( const char *pszFilename, const char *pszMode );
 void    VSIFCloseL( FILE * );

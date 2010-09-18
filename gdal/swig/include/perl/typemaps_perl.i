@@ -69,6 +69,22 @@
 	argvi++;
     }
 }
+%typemap(out) (char **CSL_REF)
+{
+    /* %typemap(out) char **CSL_REF */
+  AV *av = (AV*)sv_2mortal((SV*)newAV());
+  if ($1) {
+    int i;
+    for (i = 0; $1[i]; i++) {
+      SV *s = newSVpv($1[i], 0);
+      if (!av_store(av, i, s))
+	SvREFCNT_dec(s);
+    }
+    CSLDestroy($1);
+  }
+  $result = newRV_noinc((SV*)av);
+  argvi++;
+}
 %typemap(out) (char **free)
 {
   /* %typemap(out) char **free */
@@ -293,7 +309,7 @@ CreateArrayFromStringArray( char **first ) {
 }
 
 /*
- *  Typemap for counted arrays of ints <- PySequence
+ *  Typemap for counted arrays of ints <- Perl list
  */
 %typemap(in,numinputs=1) (int nList, int* pList)
 {
@@ -400,6 +416,20 @@ CreateArrayFromStringArray( char **first ) {
 	$1 = 0;
     }
 }
+%typemap(in,numinputs=1) (int nLen, unsigned char *pBuf )
+{
+    /* %typemap(in,numinputs=1) (int nLen, unsigned char *pBuf ) */
+    if (SvOK($input)) {
+	if (!SvPOK($input))
+	    SWIG_croak("expected binary data as input");
+	STRLEN len = SvCUR($input);
+	$2 = (unsigned char *)SvPV_nolen($input);
+	$1 = len;
+    } else {
+	$2 = NULL;
+	$1 = 0;
+    }
+}
 
 /***************************************************
  * Typemaps for  (retStringAndCPLFree*)
@@ -415,7 +445,7 @@ CreateArrayFromStringArray( char **first ) {
     }
     else
     {
-        $result = NULL;
+        $result = sv_newmortal();
     }
     argvi++ ;
 %}
