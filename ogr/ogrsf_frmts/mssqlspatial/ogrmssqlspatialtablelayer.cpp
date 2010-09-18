@@ -816,13 +816,17 @@ OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
             || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
         {
             if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+            {
                 oStmt.Append( "geography::STGeomFromText(" );
+                OGRMSSQLAppendEscaped(&oStmt, pszWKT);
+                oStmt.Appendf(",%d)", nSRSId );
+            }
             else
+            {
                 oStmt.Append( "geometry::STGeomFromText(" );
-
-            OGRMSSQLAppendEscaped(&oStmt, pszWKT);
-            oStmt.Appendf(",%d)", nSRSId );
-            
+                OGRMSSQLAppendEscaped(&oStmt, pszWKT);
+                oStmt.Appendf(",%d).MakeValid()", nSRSId );
+            }
         }
         else
             oStmt.Append( "null" );
@@ -993,13 +997,17 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
             || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
         {
             if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+            {
                 oStatement.Append( "geography::STGeomFromText(" );
+                OGRMSSQLAppendEscaped(&oStatement, pszWKT);
+                oStatement.Appendf(",%d)", nSRSId );
+            }
             else
+            {
                 oStatement.Append( "geometry::STGeomFromText(" );
-
-            OGRMSSQLAppendEscaped(&oStatement, pszWKT);
-            oStatement.Appendf(",%d)", nSRSId );
-            
+                OGRMSSQLAppendEscaped(&oStatement, pszWKT);
+                oStatement.Appendf(",%d).MakeValid()", nSRSId );
+            }     
         }
         else
             oStatement.Append( "null" );
