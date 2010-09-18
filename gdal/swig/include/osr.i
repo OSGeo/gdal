@@ -161,6 +161,8 @@ char **OPTGetProjectionMethods();
 #ifdef SWIGJAVA
 %apply (char **retAsStringArrayAndFree) {(char **)};
 %apply (char **OUTPUT) { char **username };
+#elif defined(SWIGPERL)
+%apply (char **CSL_REF) {(char **)};
 #else
 %apply (char **CSL) {(char **)};
 #endif
