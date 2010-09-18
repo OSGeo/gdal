@@ -308,10 +308,8 @@ ENVIDataset::~ENVIDataset()
         VSIFCloseL( fpImage );
     if( fp )
         VSIFCloseL( fp );
-    if ( pszProjection )
-	CPLFree( pszProjection );
-    if ( papszHeader )
-	CSLDestroy( papszHeader );
+    CPLFree( pszProjection );
+    CSLDestroy( papszHeader );
     CPLFree(pszHDRFilename);
 }
 
@@ -856,8 +854,7 @@ const char *ENVIDataset::GetProjectionRef()
 CPLErr ENVIDataset::SetProjection( const char *pszNewProjection )
 
 {
-    if ( pszProjection )
-	CPLFree( pszProjection );
+    CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
 
     bHeaderDirty = TRUE;
@@ -889,6 +886,7 @@ CPLErr ENVIDataset::SetGeoTransform( double * padfTransform )
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
 
     bHeaderDirty = TRUE;
+    bFoundMapinfo = TRUE;
     
     return CE_None;
 }
