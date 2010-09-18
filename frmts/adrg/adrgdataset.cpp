@@ -714,12 +714,7 @@ CPLErr ADRGDataset::GetGeoTransform( double * padfGeoTransform)
     if (papszSubDatasets != NULL)
         return CE_Failure;
 
-    padfGeoTransform[0] = LSO;
-    padfGeoTransform[1] = 360. / ARV;
-    padfGeoTransform[2] = 0.0;
-    padfGeoTransform[3] = PSO;
-    padfGeoTransform[4] = 0.0;
-    padfGeoTransform[5] = - 360. / BRV;
+    memcpy( padfGeoTransform, adfGeoTransform, sizeof(double)*6 );
 
     return CE_None;
 }
@@ -1276,7 +1271,14 @@ ADRGDataset* ADRGDataset::OpenDataset(
     poDS->fdIMG = fdIMG;
     poDS->offsetInIMG = offsetInIMG;
     poDS->poOverviewDS = NULL;
-    
+
+    poDS->adfGeoTransform[0] = LSO;
+    poDS->adfGeoTransform[1] = 360. / ARV;
+    poDS->adfGeoTransform[2] = 0.0;
+    poDS->adfGeoTransform[3] = PSO;
+    poDS->adfGeoTransform[4] = 0.0;
+    poDS->adfGeoTransform[5] = - 360. / BRV;
+
     if (isGIN)
     {
         char pszValue[32];
