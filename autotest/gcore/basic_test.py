@@ -94,12 +94,48 @@ def basic_test_6():
 
     return 'success'
 
+###############################################################################
+# Test fix for #3077 (check that errors are cleared when using UseExceptions())
+
+def basic_test_7():
+    old_use_exceptions_status = gdal.GetUseExceptions()
+    gdal.UseExceptions()
+    try:
+        ds = gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
+        gdaltest.post_reason('opening should have thrown an exception')
+        return 'fail'
+    except:
+        # Special case: we should still be able to get the error message
+        # until we call a new GDAL function
+        if gdal.GetLastErrorMsg() != '`non_existing_ds\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
+            gdaltest.post_reason('did not get expected error message')
+            return 'fail'
+
+        if gdal.GetLastErrorType() == 0:
+            gdaltest.post_reason('did not get expected error type')
+            return 'fail'
+
+        # Should issue an implicit CPLErrorReset()
+        gdal.GetCacheMax()
+
+        if gdal.GetLastErrorType() != 0:
+            gdaltest.post_reason('got unexpected error type')
+            return 'fail'
+
+        return 'success'
+
+    finally:
+        if old_use_exceptions_status == 0:
+            gdal.DontUseExceptions()
+
+
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
                   basic_test_3,
                   basic_test_4,
                   basic_test_5,
-                  basic_test_6]
+                  basic_test_6,
+                  basic_test_7 ]
 
 
 if __name__ == '__main__':
