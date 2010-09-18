@@ -237,7 +237,7 @@ my $methods = Geo::OSR::GetProjectionMethods;
 
 for my $method (@$methods) {
     my($params, $name) = Geo::OSR::GetProjectionMethodParameterList($method);
-    ok(ref($params) eq 'ARRAY', "$method: GetProjectionMethodParameterList params");
+    ok(ref($params) eq 'ARRAY', "$method: GetProjectionMethodParameterList params, out=($params, $name)");
     ok($name ne '', "$method: GetProjectionMethodParameterList name");
     next if $method =~ /^International_Map_of_the_World/; # there is a bug in there...
     for my $parameter (@$params) {
