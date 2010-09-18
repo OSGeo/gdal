@@ -149,11 +149,7 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
 
 #if !defined(SWIGPYTHON)
 %rename (GetProjectionMethods) OPTGetProjectionMethods;
-#ifdef SWIGJAVA
-%apply (char **out_ppsz_and_free) {(char **)};
-#else
 %apply (char **CSL) {(char **)};
-#endif
 char **OPTGetProjectionMethods();
 %clear (char **);
 
