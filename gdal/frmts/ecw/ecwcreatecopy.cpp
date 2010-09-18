@@ -1218,7 +1218,9 @@ class CPL_DLL ECWWriteDataset : public GDALDataset
     		~ECWWriteDataset();
 
     virtual void   FlushCache( void );
-                
+
+    virtual CPLErr GetGeoTransform( double * );
+    virtual const char* GetProjectionRef();
     virtual CPLErr SetGeoTransform( double * );
     virtual CPLErr SetProjection( const char *pszWKT );
 };
@@ -1318,6 +1320,26 @@ void ECWWriteDataset::FlushCache()
 
 {
     BlockBasedFlushCache();
+}
+
+/************************************************************************/
+/*                         GetProjectionRef()                           */
+/************************************************************************/
+
+const char*  ECWWriteDataset::GetProjectionRef()
+{
+    return pszProjection;
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr ECWWriteDataset::GetGeoTransform( double *padfGeoTransform )
+
+{
+    memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
+    return CE_None;
 }
 
 /************************************************************************/
