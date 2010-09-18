@@ -18,7 +18,15 @@
 ## @ignore GetLastErrorNo
 ## @ignore GetLastErrorType
 ## @ignore GetLastErrorMsg
-## @ignore ReadDir
+
+## @fn @ReadDir($dir)
+# @return Contents of the directory.
+
+## @fn @Stat($filename)
+# @return ($filemode, $filesize). filemode is f for a plain file, d
+# for a directory, l for a symbolic link, p for a named pipe (FIFO), S
+# for a socket, b for a block special file, and c for a character
+# special file.
 
 ## @fn $VersionInfo($request = 'VERSION_NUM')
 # @param request A string specifying the request. Currently either
