@@ -177,6 +177,10 @@ SRS_DN_WGS84 = _osr.SRS_DN_WGS84
 SRS_WGS84_SEMIMAJOR = _osr.SRS_WGS84_SEMIMAJOR
 SRS_WGS84_INVFLATTENING = _osr.SRS_WGS84_INVFLATTENING
 
+def GetUseExceptions(*args):
+  """GetUseExceptions() -> int"""
+  return _osr.GetUseExceptions(*args)
+
 def UseExceptions(*args):
   """UseExceptions()"""
   return _osr.UseExceptions(*args)
