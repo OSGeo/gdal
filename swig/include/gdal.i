@@ -737,7 +737,7 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 /* FIXME: other bindings should also use those typemaps to avoid memory leaks */
 %apply (char **options) {char ** papszArgv};
-%apply (char **out_ppsz_and_free) {(char **)};
+%apply (char **CSL) {(char **)};
 #else
 %apply (char **options) {char **};
 #endif

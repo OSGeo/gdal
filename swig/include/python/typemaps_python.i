@@ -769,9 +769,9 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 
 /* Almost same as %typemap(out) char **options */
 /* but we CSLDestroy the char** pointer at the end */
-%typemap(out) char **out_ppsz_and_free
+%typemap(out) char **CSL
 {
-  /* %typemap(out) char **options -> ( string ) */
+  /* %typemap(out) char **CSL -> ( string ) */
   char **stringarray = $1;
   if ( stringarray == NULL ) {
     $result = Py_None;

@@ -14724,7 +14724,7 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
     }
   }
   {
-    /* %typemap(out) char **options -> ( string ) */
+    /* %typemap(out) char **CSL -> ( string ) */
     char **stringarray = result;
     if ( stringarray == NULL ) {
       resultobj = Py_None;
