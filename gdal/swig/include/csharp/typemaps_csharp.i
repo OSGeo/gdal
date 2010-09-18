@@ -161,6 +161,9 @@ OPTIONAL_POD(int, int);
  * Typemap for char** options
  */
 
+/* FIXME: all those typemaps are not equivalent... out(char **CSL) should free */
+/* the list with CSLDestroy() for example */
+
 %typemap(imtype, out="IntPtr") char **options, char **dict, char **CSL "IntPtr[]"
 %typemap(cstype) char **options, char **dict, char **CSL %{string[]%}
 %typemap(in) char **options, char **dict, char **CSL %{ $1 = ($1_ltype)$input; %}
