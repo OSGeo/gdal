@@ -34,6 +34,11 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 %}
 
 %inline %{
+
+int GetUseExceptions() {
+  return bUseExceptions;
+}
+
 void UseExceptions() {
   bUseExceptions = 1;
   pfnPreviousHandler = 
@@ -50,6 +55,9 @@ void DontUseExceptions() {
 
 %exception {
 
+    if ( bUseExceptions ) {
+        CPLErrorReset();
+    }
     $action
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -58,3 +66,4 @@ void DontUseExceptions() {
       }
     }
 }
+

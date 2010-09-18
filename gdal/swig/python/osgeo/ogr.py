@@ -119,6 +119,10 @@ ODsCDeleteLayer = _ogr.ODsCDeleteLayer
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
 ODrCDeleteDataSource = _ogr.ODrCDeleteDataSource
 
+def GetUseExceptions(*args):
+  """GetUseExceptions() -> int"""
+  return _ogr.GetUseExceptions(*args)
+
 def UseExceptions(*args):
   """UseExceptions()"""
   return _ogr.UseExceptions(*args)
