@@ -130,7 +130,7 @@ def misc_5_internal(drv, datatype, nBands):
         except:
             reason = 'Cannot create %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
             gdaltest.post_reason(reason)
-            return
+            return 0
 
     filename = '%s/foo' % dirname
     if drv.ShortName == 'GTX':
@@ -143,8 +143,19 @@ def misc_5_internal(drv, datatype, nBands):
         filename = '%s/ABCDEF01.GEN' % dirname
     ds = drv.Create(filename, 100, 100, nBands, datatype)
     if ds is not None:
-        ds.SetGeoTransform([2,1.0/10,0,49,0,-1.0/10])
+        set_gt = (2,1.0/10,0,49,0,-1.0/10)
+        ds.SetGeoTransform(set_gt)
         ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]]')
+
+        # PNM and MFF have no SetGeoTransform() method implemented
+        if drv.ShortName not in ['PNM', 'MFF']:
+            got_gt = ds.GetGeoTransform()
+            for i in range(6):
+                if abs(got_gt[i] - set_gt[i]) > 1e-10:
+                    print('Did not get expected GT for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+                    print(got_gt)
+                    return -1
+        
         #if ds.RasterCount > 0:
         #    ds.GetRasterBand(1).Fill(255)
     ds = None
@@ -162,9 +173,9 @@ def misc_5_internal(drv, datatype, nBands):
     except:
         reason = 'Cannot remove %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
         gdaltest.post_reason(reason)
-        return
+        return 0
 
-    return
+    return 1
 
 def misc_5():
 
@@ -190,6 +201,8 @@ def misc_5():
     # w.r.t system/OS crashes, unless you know what you are doing.
     gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
 
+    ret = 'success'
+
     # Test Create() with various band numbers, including 0
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
@@ -197,7 +210,8 @@ def misc_5():
         if 'DCAP_CREATE' in md:
             datatype = gdal.GDT_Byte
             for nBands in range(6):
-                misc_5_internal(drv, datatype, nBands)
+                if misc_5_internal(drv, datatype, nBands) < 0:
+                    ret = 'fail'
 
             for nBands in [1,3]:
                 for datatype in (gdal.GDT_UInt16,
@@ -210,11 +224,12 @@ def misc_5():
                                 gdal.GDT_CInt32,
                                 gdal.GDT_CFloat32,
                                 gdal.GDT_CFloat64):
-                    misc_5_internal(drv, datatype, nBands)
+                    if misc_5_internal(drv, datatype, nBands) < 0:
+                        ret = 'fail'
 
     gdal.PopErrorHandler()
 
-    return 'success'
+    return ret
 
 ###############################################################################
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype
