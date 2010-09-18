@@ -341,7 +341,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
     
-    if (poLayer->Initialize(pszLayerName, pszGeomColumn, nCoordDimension, nSRSId) == OGRERR_FAILURE)
+    if (poLayer->Initialize(pszLayerName, pszGeomColumn, nCoordDimension, nSRSId, eType) == OGRERR_FAILURE)
     {
         return NULL;
     }
@@ -364,7 +364,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
 
 int OGRMSSQLSpatialDataSource::OpenTable( const char *pszNewName, 
                     const char *pszGeomCol, int nCoordDimension,
-                          int nSRID, int bUpdate )
+                    int nSRID, OGRwkbGeometryType eType, int bUpdate )
 
 {
 /* -------------------------------------------------------------------- */
@@ -372,7 +372,7 @@ int OGRMSSQLSpatialDataSource::OpenTable( const char *pszNewName,
 /* -------------------------------------------------------------------- */
     OGRMSSQLSpatialTableLayer  *poLayer = new OGRMSSQLSpatialTableLayer( this );
 
-    if( poLayer->Initialize( pszNewName, pszGeomCol, nCoordDimension, nSRID ) )
+    if( poLayer->Initialize( pszNewName, pszGeomCol, nCoordDimension, nSRID, eType ) )
     {
         delete poLayer;
         return FALSE;
@@ -595,13 +595,15 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         CPLFree(pszConnectionName);
         return FALSE;
     }
+    
+    char** papszTypes = NULL;
 
     /* Determine the available tables if not specified. */
     if (papszTableNames == NULL)
     {
         CPLODBCStatement oStmt( &oSession );
             
-        oStmt.Append( "SELECT f_table_schema, f_table_name, f_geometry_column, coord_dimension, srid FROM dbo.geometry_columns");
+        oStmt.Append( "SELECT f_table_schema, f_table_name, f_geometry_column, coord_dimension, srid, type FROM dbo.geometry_columns");
 
         if( oStmt.ExecuteSQL() )
         {
@@ -617,11 +619,14 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
                         CSLAddString( papszCoordDimensions, oStmt.GetColData(3) );
                 papszSRIds = 
                         CSLAddString( papszSRIds, oStmt.GetColData(4) );
+                papszTypes = 
+                        CSLAddString( papszTypes, oStmt.GetColData(5) );
             }
         }
     }
 
     int nSRId, nCoordDimension;
+    OGRwkbGeometryType eType;
         
     for( int iTable = 0; 
          papszTableNames != NULL && papszTableNames[iTable] != NULL; 
@@ -636,13 +641,18 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             nCoordDimension = atoi(papszCoordDimensions[iTable]);
         else
             nCoordDimension = 2;
-        
+
+        if (papszTypes != NULL)
+            eType = OGRFromOGCGeomType(papszTypes[iTable]);
+        else
+            eType = wkbUnknown;
+
         if( strlen(papszGeomColumnNames[iTable]) > 0 )
             OpenTable( papszTableNames[iTable], papszGeomColumnNames[iTable], 
-                    nCoordDimension, nSRId, bUpdate );
+                    nCoordDimension, nSRId, eType, bUpdate );
         else
             OpenTable( papszTableNames[iTable], NULL, 
-                    nCoordDimension, nSRId, bUpdate );
+                    nCoordDimension, nSRId, eType, bUpdate );
     }
 
     CSLDestroy( papszTableNames );
@@ -650,6 +660,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     CSLDestroy( papszGeomColumnNames );
     CSLDestroy( papszCoordDimensions );
     CSLDestroy( papszSRIds );
+    CSLDestroy( papszTypes );
 
     CPLFree(pszGeometryFormat);
     CPLFree(pszConnectionName);
@@ -707,7 +718,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         if (poLayer)
         {
-            if( poLayer->Initialize( pszSQLCommand + 22, NULL, 0, 0 ) != CE_None )
+            if( poLayer->Initialize( pszSQLCommand + 22, NULL, 0, 0, wkbUnknown ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed to initialize layer '%s'", pszSQLCommand + 22 );   
@@ -724,7 +735,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         if (poLayer)
         {
-            if( poLayer->Initialize( pszSQLCommand + 24, NULL, 0, 0 ) != CE_None )
+            if( poLayer->Initialize( pszSQLCommand + 24, NULL, 0, 0, wkbUnknown ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed to initialize layer '%s'", pszSQLCommand + 24 );    
