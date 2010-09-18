@@ -471,12 +471,7 @@ public:
       return GDALCreateDatasetMaskBand( self, nFlags );
   }
 
-#if defined(SWIGPYTHON) || defined (SWIGJAVA)
-%apply (char **out_ppsz_and_free) {char **};
-#else
-/*  this is a required typemap (hi, Python and Java guys!) returned list is copied and CSLDestroy'ed */
 %apply (char **CSL) {char **};
-#endif
   char **GetFileList() {
     return GDALGetFileList( self );
   }

@@ -221,14 +221,7 @@ void CPLFinderClean();
 
 const char * CPLFindFile( const char *pszClass, const char *pszBasename );
 
-#if defined(SWIGPYTHON) || defined (SWIGJAVA)
-%apply (char **out_ppsz_and_free) {char **};
-#elif defined(SWIGPERL)
-%apply (char **CSL) {char **}; /* this is a required typemap according to README.typemaps */
-#else
-/* FIXME: wrong typemap. VSIReadDir() return should be CSLDestroy'ed */
-%apply (char **options) {char **};
-#endif
+%apply (char **CSL) {char **};
 char **VSIReadDir( const char * pszDirName );
 %clear char **;
 
