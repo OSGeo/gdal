@@ -889,6 +889,7 @@ CPLErr ENVIDataset::SetGeoTransform( double * padfTransform )
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
 
     bHeaderDirty = TRUE;
+    bFoundMapinfo = TRUE;
     
     return CE_None;
 }
