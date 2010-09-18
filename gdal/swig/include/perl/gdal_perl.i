@@ -127,6 +127,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_GetTypeOfCol) GetTypeOfCol;
 %rename (_CreateColumn) CreateColumn;
 
+%rename (Stat) VSIStatL;
+
 %perlcode %{
     use strict;
     use Carp;

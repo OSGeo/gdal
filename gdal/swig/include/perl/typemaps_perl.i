@@ -1009,9 +1009,19 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
   /* %typemap(argout) (VSIStatBufL *) */
   SP -= 1; /* should be somewhere else, remove the filename arg */
   EXTEND(SP, 1);
-  PUSHs(sv_2mortal(newSViv(sStatBuf2.st_mode)));
+  char mode[2];
+  mode[0] = ' ';
+  mode[1] = '\0';
+  if (S_ISREG(sStatBuf2.st_mode)) mode[0] = 'f';
+  else if (S_ISDIR(sStatBuf2.st_mode)) mode[0] = 'd';
+  else if (S_ISLNK(sStatBuf2.st_mode)) mode[0] = 'l';
+  else if (S_ISFIFO(sStatBuf2.st_mode)) mode[0] = 'p';
+  else if (S_ISSOCK(sStatBuf2.st_mode)) mode[0] = 'S';
+  else if (S_ISBLK(sStatBuf2.st_mode)) mode[0] = 'b';
+  else if (S_ISCHR(sStatBuf2.st_mode)) mode[0] = 'c';
+  PUSHs(sv_2mortal(newSVpv(mode, 0)));
   argvi++;
   EXTEND(SP, 1);
-  PUSHs(sv_2mortal(newSViv(sStatBuf2.st_size)));
+  PUSHs(sv_2mortal(newSVuv(sStatBuf2.st_size)));
   argvi++;
 }
