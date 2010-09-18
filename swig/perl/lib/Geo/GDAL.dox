@@ -213,6 +213,8 @@
 # @param callback [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
+#
+# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
 ## @fn DitherRGB2PCT($red, $green, $blue, $target, $colors, $callback, $callback_data)
 # \brief Dither a three band image into one band using a color table.
@@ -224,6 +226,8 @@
 # @param callback [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
+#
+# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
 ## @fn ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $WarpMemoryLimit=0, $maxerror=0.0, $callback, $callback_data)
 # @param src_ds Source dataset.
@@ -239,6 +243,8 @@
 # be called with parameters (number progress, string msg, callback_data).
 # Reprojection is terminated if the progress function returns 0.
 # @param callback_data [optional]
+#
+# <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
 
 ## @fn Geo::GDAL::Dataset AutoCreateWarpedVRT(Geo::GDAL::Dataset src, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
 # @param src
@@ -247,6 +253,8 @@
 # @param ResampleAlg one of 'NearestNeighbour', 'Bilinear', 'Cubic', or 'CubicSpline'.
 # @param maxerror
 # @return a new Geo::GDAL::Dataset object
+#
+# <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
 
 ## @fn ComputeProximity(Geo::GDAL::Band src, Geo::GDAL::Band proximity, \%options, $callback, $callback_data)
 # @param src The raster from which the proximities are computed from.
@@ -272,6 +280,8 @@
 # @param callback [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
+#
+# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
 ## @fn RasterizeLayer(Geo::GDAL::Dataset ds, \@bands, Geo::OGR::Layer layer, $transformer, $arg, \@burn_values, \%options, $callback, $callback_data)
 # @param ds
@@ -284,6 +294,8 @@
 # @param callback [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
+#
+# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
 ## @fn Polygonize(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::OGR::Layer out, $PixValField, \%options, $callback, $callback_data)
 # @param src
@@ -297,6 +309,8 @@
 # @param callback [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
+#
+# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
 ## @fn SieveFilter(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::GDAL::Band dst, $threshold, $connectedness, \%options, $callback, $callback_data)
 # Removes small raster polygons.
@@ -309,6 +323,8 @@
 # @param callback [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
+#
+# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
 ## @fn RegenerateOverviews(Geo::GDAL::Band src, \@overviews, $resampling, $callback, $callback_data)
 # @todo This is not yet available
@@ -800,6 +816,11 @@
 # @param yoff
 
 ## @method \@ReadTile($xoff = 0, $yoff = 0, $xsize = <width>, $ysize = <height>)
+#
+# Usage example:
+# \code
+# print "@$_\n" for ( @{ $band->ReadTile() } );
+# \endcode
 # @param xoff
 # @param yoff
 # @param xsize
@@ -903,6 +924,18 @@
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
 # @return
+
+## @method FillNodata($mask, $max_search_dist = 10, $smoothing_iterations = 0, $options = {}, $callback, $callback_data)
+# @param mask a mask band indicating pixels to be interpolated (zero valued)
+# @param max_search_dist [optional] the maximum number of pixels to
+# search in all directions to find values to interpolate from.
+# @param smoothing_iterations [optional] the number of 3x3 smoothing filter passes to run (0 or more).
+# @param options [optional] A reference to an anonymous hash. No options have been defined so far.
+# @param callback [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, callback_data)
+# @param callback_data [optional]
+#
+# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
 ## @method $GetRasterColorInterpretation()
 # @deprecated use Geo::GDAL::Band::ColorInterpretation, which understands strings

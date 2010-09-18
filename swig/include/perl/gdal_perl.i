@@ -621,6 +621,15 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 			$params{callback}, $params{callback_data});
 	return $layer;
     }
+    sub FillNodata {
+      croak 'usage: FillNodata($mask)' unless isa($_[1], 'Geo::GDAL::Band');
+      $_[2] = 10 unless defined $_[2];
+      $_[3] = 0 unless defined $_[3];
+      $_[4] = undef unless defined $_[4];
+      $_[5] = undef unless defined $_[5];
+      $_[6] = undef unless defined $_[6];
+      Geo::GDAL::FillNodata(@_);
+    }
 
     package Geo::GDAL::ColorTable;
     use strict;
