@@ -1271,16 +1271,23 @@ OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
     return OGRERR_FAILURE;
 #else
     double      *xyz;
-    int         i;
+    int         *pabSuccess;
+    int         i, j;
 
 /* -------------------------------------------------------------------- */
-/*      Because we don't want to partially transform this geometry      */
-/*      (if some points fail after some have succeeded) we will         */
-/*      instead make a copy of the points to operate on.                */
+/*   Make a copy of the points to operate on, so as to be able to       */
+/*   keep only valid reprojected points if partial reprojection enabled */
+/*   or keeping intact the original geometry if only full reprojection  */
+/*   allowed.                                                           */
 /* -------------------------------------------------------------------- */
-    xyz = (double *) CPLMalloc(sizeof(double) * nPointCount * 3);
-    if( xyz == NULL )
+    xyz = (double *) VSIMalloc(sizeof(double) * nPointCount * 3);
+    pabSuccess = (int *) VSICalloc(sizeof(int), nPointCount);
+    if( xyz == NULL || pabSuccess == NULL )
+    {
+        VSIFree(xyz);
+        VSIFree(pabSuccess);
         return OGRERR_NOT_ENOUGH_MEMORY;
+    }
 
     for( i = 0; i < nPointCount; i++ )
     {
@@ -1295,22 +1302,75 @@ OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
 /* -------------------------------------------------------------------- */
 /*      Transform and reapply.                                          */
 /* -------------------------------------------------------------------- */
-    if( !poCT->Transform( nPointCount, xyz, xyz + nPointCount, 
-                          xyz+nPointCount*2 ) )
+    poCT->TransformEx( nPointCount, xyz, xyz + nPointCount,
+                       xyz+nPointCount*2, pabSuccess );
+
+    const char* pszEnablePartialReprojection = NULL;
+
+    for( i = 0, j = 0; i < nPointCount; i++ )
+    {
+        if (pabSuccess[i])
+        {
+            xyz[j] = xyz[i];
+            xyz[j+nPointCount] = xyz[i+nPointCount];
+            xyz[j+2*nPointCount] = xyz[i+2*nPointCount];
+            j ++;
+        }
+        else
+        {
+            if (pszEnablePartialReprojection == NULL)
+                pszEnablePartialReprojection =
+                    CPLGetConfigOption("OGR_ENABLE_PARTIAL_REPROJECTION", NULL);
+            if (pszEnablePartialReprojection == NULL)
+            {
+                static int bHasWarned = FALSE;
+                if (!bHasWarned)
+                {
+                    /* Check that there is at least one valid reprojected point */
+                    /* and issue an error giving an hint to use OGR_ENABLE_PARTIAL_REPROJECTION */
+                    int bHasOneValidPoint = (j != 0);
+                    for( ; i < nPointCount && !bHasOneValidPoint; i++ )
+                    {
+                        if (pabSuccess[i])
+                            bHasOneValidPoint = TRUE;
+                    }
+                    if (bHasOneValidPoint)
+                    {
+                        bHasWarned = TRUE;
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                "Full reprojection failed, but partial is possible if you define "
+                                "OGR_ENABLE_PARTIAL_REPROJECTION configuration option to TRUE");
+                    }
+                }
+
+                CPLFree( xyz );
+                CPLFree( pabSuccess );
+                return OGRERR_FAILURE;
+            }
+            else if (!CSLTestBoolean(pszEnablePartialReprojection))
+            {
+                CPLFree( xyz );
+                CPLFree( pabSuccess );
+                return OGRERR_FAILURE;
+            }
+        }
+    }
+
+    if (j == 0 && nPointCount != 0)
     {
         CPLFree( xyz );
+        CPLFree( pabSuccess );
         return OGRERR_FAILURE;
     }
-    else
-    {
-        setPoints( nPointCount, xyz, xyz+nPointCount,
-                   ( padfZ ) ? xyz+nPointCount*2 : NULL);
-        CPLFree( xyz );
 
-        assignSpatialReference( poCT->GetTargetCS() );
+    setPoints( j, xyz, xyz+nPointCount,
+            ( padfZ ) ? xyz+nPointCount*2 : NULL);
+    CPLFree( xyz );
+    CPLFree( pabSuccess );
 
-        return OGRERR_NONE;
-    }
+    assignSpatialReference( poCT->GetTargetCS() );
+
+    return OGRERR_NONE;
 #endif
 }
 
