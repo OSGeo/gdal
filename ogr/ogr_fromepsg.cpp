@@ -1685,6 +1685,21 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
                          atoi(CSLGetField( papszRecord,
                                            CSVGetFileFieldId(pszFilename,
                                                              "DATUM_CODE"))) );
+
+/* -------------------------------------------------------------------- */
+/*      Should we add a geoidgrids extension node?                      */
+/* -------------------------------------------------------------------- */
+    const char *pszMethod = 
+        CSLGetField( papszRecord, 
+                     CSVGetFileFieldId(pszFilename,"COORD_OP_METHOD_CODE_1"));
+    if( pszMethod && EQUAL(pszMethod,"9665") )
+    {
+        const char *pszParm11 = 
+            CSLGetField( papszRecord, 
+                         CSVGetFileFieldId(pszFilename,"PARM_1_1"));
+
+        poSRS->SetExtension( "VERT_CS|VERT_DATUM", "PROJ4_GRIDS", pszParm11 );
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Set linear units.                                               */

@@ -1731,11 +1731,45 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return err;
     }
 
-    if( EQUALN(pszDefinition,"EPSG:",5) )
-        return importFromEPSG( atoi(pszDefinition+5) );
+    if( EQUALN(pszDefinition,"EPSG:",5) 
+        || EQUALN(pszDefinition,"EPSGA:",6) )
+    {
+        OGRErr eStatus; 
 
-    if( EQUALN(pszDefinition,"EPSGA:",6) )
-        return importFromEPSGA( atoi(pszDefinition+6) );
+        if( EQUALN(pszDefinition,"EPSG:",5) )
+            eStatus = importFromEPSG( atoi(pszDefinition+5) );
+        
+        else if( EQUALN(pszDefinition,"EPSGA:",6) )
+            eStatus = importFromEPSGA( atoi(pszDefinition+6) );
+        
+        // Do we want to turn this into a compound definition
+        // with a vertical datum?
+        if( strchr( pszDefinition, '+' ) != NULL )
+        {
+            OGRSpatialReference oVertSRS;
+
+            eStatus = oVertSRS.importFromEPSG( 
+                atoi(strchr(pszDefinition,'+')+1) );
+            if( eStatus == OGRERR_NONE )
+            {
+                OGR_SRSNode *poHorizSRS = GetRoot()->Clone();
+
+                Clear();
+
+                CPLString osName = poHorizSRS->GetChild(0)->GetValue();
+                osName += " + ";
+                osName += oVertSRS.GetRoot()->GetValue();
+
+                SetNode( "COMPD_CS", osName );
+                GetRoot()->AddChild( poHorizSRS );
+                GetRoot()->AddChild( oVertSRS.GetRoot()->Clone() );
+            }
+            
+            return eStatus;
+        }
+        else
+            return eStatus;
+    }
 
     if( EQUALN(pszDefinition,"urn:ogc:def:crs:",16) 
         || EQUALN(pszDefinition,"urn:x-ogc:def:crs:",18) )
