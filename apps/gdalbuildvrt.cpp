@@ -86,7 +86,7 @@ static void Usage()
             "                    [-tr xres yres] [-separate] [-allow_projection_difference] [-q]\n"
             "                    [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata] \n"
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
-            "                    [-input_file_list my_liste.txt] output.vrt [gdalfile]*\n"
+            "                    [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*\n"
             "\n"
             "eg.\n"
             "  % gdalbuildvrt doq_index.vrt doq/*.tif\n"
