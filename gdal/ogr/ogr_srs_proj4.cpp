@@ -1083,6 +1083,44 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }        
     }
 
+/* -------------------------------------------------------------------- */
+/*      Handle geoidgrids via an extension node and COMPD_CS.           */
+/* -------------------------------------------------------------------- */
+    pszValue = CSLFetchNameValue(papszNV, "geoidgrids");
+    if( pszValue != NULL )
+    {
+        OGR_SRSNode *poHorizSRS = GetRoot()->Clone();
+        
+        Clear();
+        
+        CPLString osName = poHorizSRS->GetChild(0)->GetValue();
+        osName += " + ";
+        osName += "Unnamed Vertical Datum";
+        
+        SetNode( "COMPD_CS", osName );
+        GetRoot()->AddChild( poHorizSRS );
+
+        OGR_SRSNode *poVertSRS;
+        
+        poVertSRS = new OGR_SRSNode( "VERT_CS" );
+        GetRoot()->AddChild( poVertSRS );
+        poVertSRS->AddChild( new OGR_SRSNode( "Unnamed" ) );
+
+        CPLString osTarget = GetRoot()->GetValue();
+        osTarget += "|VERT_CS|VERT_DATUM";
+
+        SetNode( osTarget, "Unnamed" );
+        
+        poVertSRS->GetChild(1)->AddChild( new OGR_SRSNode( "2005" ) );
+        SetExtension( osTarget, "PROJ4_GRIDS", pszValue );
+
+        OGR_SRSNode *poAxis = new OGR_SRSNode( "AXIS" );
+
+        poAxis->AddChild( new OGR_SRSNode( "Up" ) );
+        poAxis->AddChild( new OGR_SRSNode( "UP" ) );
+        
+        poVertSRS->AddChild( poAxis );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      do we want to insert a PROJ.4 EXTENSION item?                   */
@@ -2121,6 +2159,18 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         SAFE_PROJ4_STRCAT( pszPROJ4Units );
         SAFE_PROJ4_STRCAT( " " );
     }
+
+/* -------------------------------------------------------------------- */
+/*      If we have vertical datum grids, attach them to the proj.4 string.*/
+/* -------------------------------------------------------------------- */
+    const char *pszProj4Geoids = GetExtension( "VERT_DATUM", "PROJ4_GRIDS" );
+    
+    if( pszProj4Geoids != NULL )
+    {
+        SAFE_PROJ4_STRCAT( "+geoidgrids=" );
+        SAFE_PROJ4_STRCAT( pszProj4Geoids );
+        SAFE_PROJ4_STRCAT(  " " );
+    }    
 
 /* -------------------------------------------------------------------- */
 /*      Add the no_defs flag to ensure that no values from              */
