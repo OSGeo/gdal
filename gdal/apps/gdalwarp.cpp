@@ -76,7 +76,7 @@ gdalwarp [--help-general] [--formats]
     [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
     [-cutline datasource] [-cl layer] [-cwhere expression]
     [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
-    [-of format] [-co "NAME=VALUE"]*
+    [-of format] [-co "NAME=VALUE"]* [-overwrite]
     srcfile* dstfile
 \endverbatim
 
@@ -166,6 +166,7 @@ cutline datasource.</dd>
 <dt> <b>-csql</b> <em>query</em>:</dt><dd>Select cutline features using an SQL query instead of from a layer with -cl.</dd>
 <dt> <b>-cblend</b> <em>distance</em>:</dt><dd>Set a blend distance to use to blend over cutlines (in pixels).</dd>
 <dt> <b>-crop_to_cutline</b>:</dt><dd>Crop the extent of the target dataset to the extent of the cutline.</dd>
+<dt> <b>-overwrite</b>:</dt><dd>(GDAL >= 1.8.0) Overwrite the target dataset if it already exists.</dd>
 
 <dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
 <dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
@@ -222,8 +223,7 @@ static void Usage()
         "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-cutline datasource] [-cl layer] [-cwhere expression]\n"
         "    [-csql statement] [-cblend dist_in_pixels]\n"
-
-        "    [-of format] [-co \"NAME=VALUE\"]*\n"
+        "    [-of format] [-co \"NAME=VALUE\"]* [-overwrite]\n"
         "    srcfile* dstfile\n"
         "\n"
         "Available resampling methods:\n"
@@ -288,6 +288,7 @@ int main( int argc, char ** argv )
     void                *hCutline = NULL;
     int                  bHasGotErr = FALSE;
     int                  bCropToCutline = FALSE;
+    int                  bOverwrite = FALSE;
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -544,6 +545,9 @@ int main( int argc, char ** argv )
             bCropToCutline = TRUE;
             bCreateOutput = TRUE;
         }
+        else if( EQUAL(argv[i],"-overwrite") )
+            bOverwrite = TRUE;
+
         else if( argv[i][0] == '-' )
             Usage();
 
@@ -591,6 +595,12 @@ int main( int argc, char ** argv )
     hDstDS = GDALOpen( pszDstFilename, GA_Update );
     CPLPopErrorHandler();
 
+    if( hDstDS != NULL && bOverwrite )
+    {
+        GDALClose(hDstDS);
+        hDstDS = NULL;
+    }
+
     if( hDstDS != NULL && bCreateOutput )
     {
         fprintf( stderr, 
@@ -603,7 +613,7 @@ int main( int argc, char ** argv )
 
     /* Avoid overwriting an existing destination file that cannot be opened in */
     /* update mode with a new GTiff file */
-    if ( hDstDS == NULL )
+    if ( hDstDS == NULL && !bOverwrite )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
         hDstDS = GDALOpen( pszDstFilename, GA_ReadOnly );
