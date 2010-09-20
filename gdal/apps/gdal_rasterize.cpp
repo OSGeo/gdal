@@ -197,7 +197,7 @@ static void ProcessLayer(
                     "Warning : the output raster dataset has a SRS, but the input vector layer SRS is unknown.\n"
                     "Ensure input vector has the same SRS, otherwise results might be incorrect.\n");
         }
-        else if( hDstSRS == NULL && hSrcLayer != NULL )
+        else if( hDstSRS == NULL && hSrcSRS != NULL )
         {
             fprintf(stderr,
                     "Warning : the input vector layer has a SRS, but the output raster dataset SRS is unknown.\n"
