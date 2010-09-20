@@ -548,7 +548,7 @@ gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]
              [-tr xres yres] [-separate] [-allow_projection_difference] [-q]
              [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata]
              [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
-             [-input_file_list my_liste.txt] output.vrt [gdalfile]*
+             [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*
 \endverbatim
 
 \section gdalbuildvrt_description DESCRIPTION
@@ -652,6 +652,8 @@ To specify a text file with an input filename on each line
 <dt> <b>-q</b>:</dt><dd> (starting with GDAL 1.7.0)
 To disable the progress bar on the console
 </dd>
+
+<dt> <b>-overwrite</b>:</dt><dd>Overwrite the VRT if it already exists.</dd>
 
 </dl>
 
