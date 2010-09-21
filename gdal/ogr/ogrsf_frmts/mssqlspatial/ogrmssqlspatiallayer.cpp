@@ -102,6 +102,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
 
     poFeatureDefn->Reference();
 
+    CPLFree(panFieldOrdinals);
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
