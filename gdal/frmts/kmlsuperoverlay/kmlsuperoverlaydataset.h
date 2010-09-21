@@ -26,9 +26,6 @@ class CPL_DLL KmlSuperOverlayDataset : public GDALDataset
 
     static GDALDataset *Open(GDALOpenInfo *);    
 
-    static GDALDataset *Create(const char* pszFilename, int nXSize, int nYSize, int nBands,
-      GDALDataType eType, char **papszOptions);
-
     static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
       int bStrict, char ** papszOptions, GDALProgressFunc pfnProgress, void * pProgressData );
 
