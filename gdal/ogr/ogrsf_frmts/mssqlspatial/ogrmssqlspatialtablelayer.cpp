@@ -404,18 +404,27 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
         ++nColumn;
     }
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    if (poFeatureDefn->GetFieldCount() > 0)
     {
-        const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        /* need to reconstruct the field ordinals list */
+        CPLFree(panFieldOrdinals);
+        panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * poFeatureDefn->GetFieldCount() );
 
-        if( nColumn > 0 )
-            osFieldList += ", ";
-    
-        osFieldList += "[";
-        osFieldList += pszName;
-        osFieldList += "]";
+        for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        {
+            const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-        ++nColumn;
+            if( nColumn > 0 )
+                osFieldList += ", ";
+        
+            osFieldList += "[";
+            osFieldList += pszName;
+            osFieldList += "]";
+
+            panFieldOrdinals[i] = nColumn;
+
+            ++nColumn;
+        }
     }
 
     return osFieldList;
