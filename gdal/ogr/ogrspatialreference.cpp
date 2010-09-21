@@ -1095,6 +1095,8 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
 
     poCS = GetAttrNode( "PROJCS" );
     if( poCS == NULL )
+        poCS = GetAttrNode( "VERT_CS" );
+    if( poCS == NULL )
         poCS = GetAttrNode( "LOCAL_CS" );
 
     if( poCS == NULL )
