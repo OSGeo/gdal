@@ -703,11 +703,11 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
             else if( EQUAL(poNode->GetValue(),"PROJECTION") )
             {
-                if( poNode->GetChildCount() != 1 )
+                if( poNode->GetChildCount() != 1 && poNode->GetChildCount() != 2 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
                               "PROJECTION has wrong number of children (%d),"
-                              "not 1 as expected.\n",
+                              "not 1 or 2 as expected.\n",
                               poNode->GetChildCount() );
                     
                     return OGRERR_CORRUPT_DATA;
@@ -731,6 +731,25 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                               poNode->GetChild(0)->GetValue() );
                     
                     return OGRERR_UNSUPPORTED_SRS;
+                }
+
+                if (poNode->GetChildCount() == 2)
+                {
+                    poNode = poNode->GetChild(1);
+                    if( EQUAL(poNode->GetValue(),"AUTHORITY") )
+                    {
+                        OGRErr eErr = ValidateAuthority(poNode);
+                        if (eErr != OGRERR_NONE)
+                            return eErr;
+                    }
+                    else
+                    {
+                        CPLDebug( "OGRSpatialReference::Validate",
+                                "Unexpected child for PROJECTION `%s'.\n",
+                                poNode->GetValue() );
+
+                        return OGRERR_CORRUPT_DATA;
+                    }
                 }
             }
             else if( EQUAL(poNode->GetValue(),"AUTHORITY") )
