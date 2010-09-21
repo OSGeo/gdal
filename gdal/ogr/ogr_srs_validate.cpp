@@ -123,6 +123,8 @@ static const char *papszProjectionSupported[] =
     SRS_PT_WAGNER_VI,
     SRS_PT_WAGNER_VII,
     SRS_PT_GAUSSSCHREIBERTMERCATOR,
+    SRS_PT_KROVAK,
+    SRS_PT_CYLINDRICAL_EQUAL_AREA,
     NULL
 };
 
