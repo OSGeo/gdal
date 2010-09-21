@@ -650,6 +650,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     const char *pszFilename = NULL;
     const char *pszValue;
     char szSearchKey[128];
+    bool bNeedManualVertCS = false;
+    char citation[2048];
 
     // Don't do anything if there is no apparent vertical information.
     GTIFKeyGet( hGTIF, VerticalCSTypeGeoKey, &verticalCSType, 0, 1 );
@@ -659,8 +661,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     if( (verticalCSType != -1 || verticalDatum != -1 || verticalUnits != -1)
         && (oSRS.IsGeographic() || oSRS.IsProjected() || oSRS.IsLocal()) )
     {
-        char citation[2048];
-        
         if( !GTIFKeyGet( hGTIF, VerticalCitationGeoKey, &citation, 
                          0, sizeof(citation) ) )
             strcpy( citation, "unknown" );
@@ -703,11 +703,30 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         oSRS.Clear();
         oSRS.SetNode( "COMPD_CS", "unknown" );
         oSRS.GetRoot()->AddChild( poOldRoot );
-        
+
+/* -------------------------------------------------------------------- */
+/*      If we have the vertical cs, try to look it up using the         */
+/*      vertcs.csv file, and use the definition provided by that.       */
+/* -------------------------------------------------------------------- */
+        bNeedManualVertCS = true;
+
+        if( verticalCSType != KvUserDefined && verticalCSType > 0 )
+        {
+            OGRSpatialReference oVertSRS;
+            if( oVertSRS.importFromEPSG( verticalCSType ) == OGRERR_NONE )
+            {
+                oSRS.GetRoot()->AddChild( oVertSRS.GetRoot()->Clone() );
+                bNeedManualVertCS = false;
+            }
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Collect some information from the VerticalCS if not provided    */
 /*      via geokeys.                                                    */
 /* -------------------------------------------------------------------- */
+    if( bNeedManualVertCS )
+    {
         if( verticalCSType > 0 && verticalCSType != KvUserDefined )
         {
             pszFilename = CSVFilename( "coordinate_reference_system.csv" );
