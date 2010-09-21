@@ -486,19 +486,8 @@ const char *KmlSuperOverlayDataset::GetProjectionRef()
 }
 
 /************************************************************************/
-/*                               Create()                               */
+/*                           CreateCopy()                               */
 /************************************************************************/
-
-GDALDataset *KmlSuperOverlayDataset::Create(const char* pszFilename, int nXSize, int nYSize, int nBands,
-                                            GDALDataType eType, char **papszOptions)
-{
-   KmlSuperOverlayDataset *poDS;
-   
-   poDS = new KmlSuperOverlayDataset();
-   poDS->eAccess = GA_Update;
-
-   return poDS;
-}
 
 GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                                                  int bStrict, char ** papszOptions, GDALProgressFunc pfnProgress, void * pProgressData)
@@ -853,7 +842,6 @@ void GDALRegister_KMLSUPEROVERLAY()
                                  "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
       
       poDriver->pfnOpen = KmlSuperOverlayDataset::Open;
-      poDriver->pfnCreate = KmlSuperOverlayDataset::Create;
       poDriver->pfnCreateCopy = KmlSuperOverlayDataset::CreateCopy;
       poDriver->pfnDelete = KmlSuperOverlayDatasetDelete;
       
