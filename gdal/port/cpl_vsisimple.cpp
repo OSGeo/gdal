@@ -38,6 +38,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 
 /* Uncomment to check consistent usage of VSIMalloc(), VSIRealloc(), */
 /* VSICalloc(), VSIFree(), VSIStrdup() */
@@ -84,12 +85,31 @@ CPL_CVSID("$Id$");
 FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 
 {
-    FILE    *fp = fopen( (char *) pszFilename, (char *) pszAccess );
-    int     nError = errno;
+    FILE *fp = NULL;
+    int     nError;
 
+#if defined(WIN32) && !defined(WIN32CE)
+    if( CSLTestBoolean(
+            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        wchar_t *pwszFilename = 
+            CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+        wchar_t *pwszAccess = 
+            CPLRecodeToWChar( pszAccess, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+
+        fp = _wfopen( pwszFilename, pwszAccess );
+
+        CPLFree( pwszFilename );
+        CPLFree( pwszAccess );
+    }
+    else
+#endif
+    fp = fopen( (char *) pszFilename, (char *) pszAccess );
+
+    nError = errno;
     VSIDebug3( "VSIFOpen(%s,%s) = %p", pszFilename, pszAccess, fp );
-
     errno = nError;
+
     return( fp );
 }
 
@@ -674,11 +694,23 @@ void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 )
 int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 
 {
-#if defined(macos_pre10)
-    return -1;
-#else
-    return( stat( pszFilename, pStatBuf ) );
-#endif
+#if defined(WIN32) && !defined(WIN32CE)
+    if( CSLTestBoolean(
+            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        int nResult;
+        wchar_t *pwszFilename = 
+            CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+
+        nResult = _wstat( pwszFilename, (struct _stat *) pStatBuf );
+
+        CPLFree( pwszFilename );
+
+        return nResult;
+    }
+    else
+#endif 
+        return( stat( pszFilename, pStatBuf ) );
 }
 
 /************************************************************************/
