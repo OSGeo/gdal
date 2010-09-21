@@ -135,8 +135,13 @@ class CPL_DLL OGRSpatialReference
     int         nRefCount;
     int         bNormInfoSet;
 
-    OGRErr      ValidateProjection();
-    int         IsAliasFor( const char *, const char * );
+    static OGRErr Validate(OGR_SRSNode *poRoot);
+    static OGRErr ValidateAuthority(OGR_SRSNode *poRoot);
+    static OGRErr ValidateAxis(OGR_SRSNode *poRoot);
+    static OGRErr ValidateUnit(OGR_SRSNode *poRoot);
+    static OGRErr ValidateVertDatum(OGR_SRSNode *poRoot);
+    static OGRErr ValidateProjection( OGR_SRSNode* poRoot );
+    static int  IsAliasFor( const char *, const char * );
     void        GetNormInfo() const;
 
   public:
