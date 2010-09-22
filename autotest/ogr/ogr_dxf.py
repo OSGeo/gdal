@@ -36,7 +36,7 @@ sys.path.append( '../pymod' )
 
 import ogrtest
 import gdaltest
-import ogr
+from osgeo import gdal, ogr
 
 ###############################################################################
 # Check some general things to see if they meet expectations.
@@ -64,7 +64,7 @@ def ogr_dxf_1():
         return 'fail'
 
     fc = gdaltest.dxf_layer.GetFeatureCount()
-    if fc != 13:
+    if fc != 14:
         gdaltest.post_reason( 'did not get expected feature count, got %d' % fc)
         return 'fail'
 
@@ -274,9 +274,34 @@ def ogr_dxf_8():
     return 'success'
 
 ###############################################################################
-# LWPOLYLINE in an Object Coordinate System.
+# BLOCK (inlined)
 
 def ogr_dxf_9():
+
+    # Skip two dimensions each with a line and text.
+    for x in range(4):
+        feat = gdaltest.dxf_layer.GetNextFeature()
+        feat.Destroy()
+
+    # block 
+    feat = gdaltest.dxf_layer.GetNextFeature()
+    geom = feat.GetGeometryRef()
+
+    if geom.GetGeometryType() != ogr.wkbGeometryCollection25D:
+        gdaltest.post_reason( 'did not get expected geometry type.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (79.069506278985116 121.003652476272777 0,79.716898725419625 118.892590150942851 0),LINESTRING (79.716898725419625 118.892590150942851 0,78.140638855839953 120.440702522851453 0),LINESTRING (78.140638855839953 120.440702522851453 0,80.139111190485622 120.328112532167196 0),LINESTRING (80.139111190485622 120.328112532167196 0,78.619146316248077 118.920737648613908 0),LINESTRING (78.619146316248077 118.920737648613908 0,79.041358781314059 120.975504978601705 0))' ):
+        return 'fail'
+
+    feat.Destroy()
+
+    return 'success'
+
+###############################################################################
+# LWPOLYLINE in an Object Coordinate System.
+
+def ogr_dxf_10():
 
     ocs_ds = ogr.Open('data/LWPOLYLINE-OCS.dxf')
     ocs_lyr = ocs_ds.GetLayer(0)
@@ -308,7 +333,7 @@ def ogr_dxf_9():
 ###############################################################################
 # Test reading from an entities-only dxf file (#3412)
 
-def ogr_dxf_10():
+def ogr_dxf_11():
 
     eo_ds = ogr.Open('data/entities_only.dxf')
     eo_lyr = eo_ds.GetLayer(0)
@@ -340,7 +365,7 @@ def ogr_dxf_10():
 ###############################################################################
 # Write a simple file with a polygon and a line, and read back.
 
-def ogr_dxf_11():
+def ogr_dxf_12():
 
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_11.dxf' )
 
@@ -403,7 +428,7 @@ def ogr_dxf_11():
 ###############################################################################
 # Check smoothed polyline.
 
-def ogr_dxf_12():
+def ogr_dxf_13():
 
     ds = ogr.Open( 'data/polyline_smooth.dxf' )
     
@@ -466,7 +491,7 @@ def ogr_dxf_12():
 ###############################################################################
 # Check smooth LWPOLYLINE entity.
 
-def ogr_dxf_13():
+def ogr_dxf_14():
 
     # This test is identical to the previous one except the
     # newer lwpolyline entity is used. See the comments in the 
@@ -517,7 +542,7 @@ def ogr_dxf_13():
 # dynamically created layer 'abc' matches the definition of the default
 # layer '0'.
 
-def ogr_dxf_14():
+def ogr_dxf_15():
 
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_14.dxf' )
 
@@ -606,6 +631,77 @@ def ogr_dxf_14():
     
 
 ###############################################################################
+# Test reading without DXF blocks inlined.
+
+def ogr_dxf_16():
+
+    gdal.SetConfigOption( 'DXF_INLINE_BLOCKS', 'FALSE' )
+    
+    dxf_ds = ogr.Open( 'data/assorted.dxf' )
+
+    if dxf_ds is None:
+        return 'fail'
+
+    if dxf_ds.GetLayerCount() != 2:
+        gdaltest.post_reason( 'expected exactly two layers!' )
+        return 'fail'
+
+    dxf_layer = dxf_ds.GetLayer(1)
+
+    if dxf_layer.GetName() != 'entities':
+        gdaltest.post_reason( 'did not get expected layer name.' )
+        return 'fail'
+
+    # read through till we encounter the block reference.
+    feat = dxf_layer.GetNextFeature()
+    while feat.GetField('EntityHandle') != '55':
+        feat = dxf_layer.GetNextFeature()
+
+    # check contents.
+    if feat.GetField('BlockName') != 'STAR':
+        gdaltest.post_reason( 'Did not get blockname!' )
+        return 'fail'
+
+    if feat.GetField('BlockAngle') != 0.0:
+        gdaltest.post_reason( 'Did not get expected angle.' )
+        return 'fail'
+
+    if feat.GetField('BlockScale') != '(3:1,1,1)':
+        print feat.GetField('BlockScale')
+        gdaltest.post_reason( 'Did not get expected BlockScale' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'POINT (79.097653776656188 119.962195062443342 0)' ):
+        return 'fail'
+
+    feat = None
+
+    # Now we need to check the blocks layer and ensure it is as expected.
+
+    dxf_layer = dxf_ds.GetLayer(0)
+    
+    if dxf_layer.GetName() != 'blocks':
+        gdaltest.post_reason( 'did not get expected layer name.' )
+        return 'fail'
+
+    feat = dxf_layer.GetNextFeature()
+
+    if feat.GetField('BlockName') != 'STAR':
+        gdaltest.post_reason( 'Did not get expected block name.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (-0.028147497671066 1.041457413829428 0,0.619244948763444 -1.069604911500494 0),LINESTRING (0.619244948763444 -1.069604911500494 0,-0.957014920816232 0.478507460408116 0),LINESTRING (-0.957014920816232 0.478507460408116 0,1.041457413829428 0.365917469723853 0),LINESTRING (1.041457413829428 0.365917469723853 0,-0.478507460408116 -1.041457413829428 0),LINESTRING (-0.478507460408116 -1.041457413829428 0,-0.056294995342131 1.013309916158363 0))' ):
+        return 'fail'
+
+    feat = None
+
+    # cleanup
+    
+    gdal.SetConfigOption( 'DXF_INLINE_BLOCKS', 'TRUE' )
+    
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -633,6 +729,8 @@ gdaltest_list = [
     ogr_dxf_12,
     ogr_dxf_13,
     ogr_dxf_14,
+    ogr_dxf_15,
+    ogr_dxf_16,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
