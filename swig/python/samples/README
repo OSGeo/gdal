@@ -75,7 +75,10 @@ magphase.py             Example script computing magnitude and phase images
                         from a complex image.
 
 hsv_merge.py            Merge greyscale image into rgb image as intensity
-                        in HSV space. 
+                        in HSV space.
+
+val_at_coord.py         Outputs the value of the raster bands at a given
+                        (longitude, latitude) or (X, Y) location.
 
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
