@@ -513,6 +513,99 @@ def ogr_dxf_13():
     return 'success'
 
 ###############################################################################
+# Write a file with dynamic layer creation and confirm that the
+# dynamically created layer 'abc' matches the definition of the default
+# layer '0'.
+
+def ogr_dxf_14():
+
+    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_14.dxf' )
+
+    lyr = ds.CreateLayer( 'entities' )
+
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'LINESTRING(10 12, 60 65)' ) )
+    dst_feat.SetField( 'Layer', 'abc' )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+                                  
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POLYGON((0 0,100 0,100 100,0 0))' ) )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    lyr = None
+    ds = None
+
+    # Read back.
+    ds = ogr.Open('tmp/dxf_14.dxf')
+    lyr = ds.GetLayer(0)
+    
+    # Check first feature
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat,
+                                       'LINESTRING(10 12, 60 65)' ):
+        print(feat.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbLineString25D:
+        gdaltest.post_reason( 'not linestring 2D' )
+        return 'fail'
+
+    if feat.GetField('Layer') != 'abc':
+        gdaltest.post_reason( 'Did not get expected layer, abc.' )
+        return 'fail'
+        
+    feat.Destroy()
+
+    # Check second point.
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat,
+                                       'POLYGON((0 0,100 0,100 100,0 0))' ):
+        print(feat.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon25D:
+        gdaltest.post_reason( 'not keeping polygon 2D' )
+        return 'fail'
+        
+    if feat.GetField('Layer') != '0':
+        print feat.GetField('Layer')
+        gdaltest.post_reason( 'Did not get expected layer, 0.' )
+        return 'fail'
+        
+    feat.Destroy()
+
+    lyr = None
+    ds.Destroy()
+    ds = None
+
+    # Check the DXF file itself to try and ensure that the layer
+    # is defined essentially as we expect.  We assume the only thing
+    # that will be different is the layer name is 'abc' instead of '0'.
+
+    outdxf = open('tmp/dxf_14.dxf').read()
+    start_1 = outdxf.find('  0\nLAYER')
+    start_2 = outdxf.find('  0\nLAYER',start_1+10)
+
+    txt_1 = outdxf[start_1:start_2]
+    txt_2 = outdxf[start_2:start_2+len(txt_1)+2]
+
+    abc_off = txt_2.find('abc\n')
+
+    if txt_2[:abc_off] + '0' + txt_2[abc_off+3:] != txt_1:
+        print txt_2[:abc_off] + '0' + txt_2[abc_off+3:]
+        gdaltest.post_reason( 'Layer abc does not seem to match layer 0.' )
+        return 'fail'
+    
+    os.unlink( 'tmp/dxf_14.dxf' )
+        
+    return 'success'
+    
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -539,6 +632,7 @@ gdaltest_list = [
     ogr_dxf_11,
     ogr_dxf_12,
     ogr_dxf_13,
+    ogr_dxf_14,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
