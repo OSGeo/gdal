@@ -45,6 +45,8 @@ def names_to_fileinfos( names ):
         fi = file_info()
         if fi.init_from_name(name):
             file_infos.append(fi)
+        else:
+            print ('Can not open dataset "%s", skipped' % name)
 
     return file_infos
 
@@ -222,6 +224,9 @@ if __name__ == '__main__':
 
     # Collect information on all the source files.
     file_infos = names_to_fileinfos( names )
+    if len(file_infos) == 0:
+        print ('Nothing to process, exiting.')
+        sys.exit(1)
 
     if ulx is None:
         ulx = file_infos[0].ulx
