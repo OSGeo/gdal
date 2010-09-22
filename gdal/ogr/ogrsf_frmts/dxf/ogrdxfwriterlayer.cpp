@@ -196,10 +196,10 @@ OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
 
 /* -------------------------------------------------------------------- */
 /*      For now we assign everything to the default layer - layer       */
-/*      "0".                                                            */
+/*      "0" - if there is no layer property on the source features.     */
 /* -------------------------------------------------------------------- */
     const char *pszLayer = poFeature->GetFieldAsString( "Layer" );
-    if( pszLayer == NULL )
+    if( pszLayer == NULL || strlen(pszLayer) == 0 )
     {
         WriteValue( 8, "0" );
     }
