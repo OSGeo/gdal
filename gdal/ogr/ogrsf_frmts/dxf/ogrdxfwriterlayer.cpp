@@ -627,7 +627,8 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
     {
         const char *pszBlockName = NULL;
 
-        if( poDS->poBlocksLayer != NULL )
+        if( poDS->poBlocksLayer != NULL 
+            && poFeature->GetDefnRef() != poDS->poBlocksLayer->GetLayerDefn())
         {
             pszBlockName = poFeature->GetFieldAsString("BlockName");
             if( pszBlockName != NULL
