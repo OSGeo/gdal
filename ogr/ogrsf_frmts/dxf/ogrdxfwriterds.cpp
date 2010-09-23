@@ -46,7 +46,7 @@ OGRDXFWriterDS::OGRDXFWriterDS()
     poLayer = NULL;
     poBlocksLayer = NULL;
     papszLayersToCreate = NULL;
-    nNextFID = 1;
+    nNextFID = 80;
 }
 
 /************************************************************************/
@@ -332,7 +332,7 @@ int OGRDXFWriterDS::TransferUpdateHeader( FILE *fpOut )
 
             // If at the end of the BLOCK_RECORD TABLE consider inserting 
             // missing definitions.
-            if( osTable == "BLOCK_RECORD" )
+            if( osTable == "BLOCK_RECORD" && poBlocksLayer )
             {
                 if( !WriteNewBlockRecords( fp ) )
                     return FALSE;
@@ -514,7 +514,10 @@ int OGRDXFWriterDS::WriteNewBlockDefinitions( FILE * fp )
         WriteValue( fp, 0, "BLOCK" );
         WriteEntityID( fp );
         WriteValue( fp, 100, "AcDbEntity" );
-        WriteValue( fp, 8, poThisBlockFeat->GetFieldAsString("Layer") );
+        if( strlen(poThisBlockFeat->GetFieldAsString("Layer")) > 0 )
+            WriteValue( fp, 8, poThisBlockFeat->GetFieldAsString("Layer") );
+        else
+            WriteValue( fp, 8, "0" );
         WriteValue( fp, 100, "AcDbBlockBegin" );
         WriteValue( fp, 2, poThisBlockFeat->GetFieldAsString("BlockName") );
         WriteValue( fp, 70, "0" );
@@ -561,7 +564,10 @@ int OGRDXFWriterDS::WriteNewBlockDefinitions( FILE * fp )
         WriteValue( fp, 0, "ENDBLK" );
         WriteEntityID( fp );
         WriteValue( fp, 100, "AcDbEntity" );
-        WriteValue( fp, 8, poThisBlockFeat->GetFieldAsString("Layer") );
+        if( strlen(poThisBlockFeat->GetFieldAsString("Layer")) > 0 )
+            WriteValue( fp, 8, poThisBlockFeat->GetFieldAsString("Layer") );
+        else
+            WriteValue( fp, 8, "0" );
         WriteValue( fp, 100, "AcDbBlockEnd" );
     }
 
@@ -600,7 +606,7 @@ void OGRDXFWriterDS::ScanForEntities( const char *pszFilename )
 
     while( (nCode = oReader.ReadValue( szLineBuf )) != -1 )
     {
-        if( nCode == 5 )
+        if( nCode == 5 || nCode == 105 )
         {
             CPLString osEntity( szLineBuf );
 
@@ -660,6 +666,7 @@ long OGRDXFWriterDS::WriteEntityID( FILE *fp, long nPreferredFID )
     }
     while( CheckEntityID( osEntityID ) );
     
+    aosUsedEntities.insert( osEntityID );
     WriteValue( fp, 5, osEntityID );
 
     return nNextFID - 1;
