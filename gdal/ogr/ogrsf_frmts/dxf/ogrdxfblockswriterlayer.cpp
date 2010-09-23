@@ -76,6 +76,9 @@ OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer( OGRDXFWriterDS *poDS )
 OGRDXFBlocksWriterLayer::~OGRDXFBlocksWriterLayer()
 
 {
+    for( size_t i=0; i < apoBlocks.size(); i++ )
+        delete apoBlocks[i];
+
     if( poFeatureDefn )
         poFeatureDefn->Release();
 }
