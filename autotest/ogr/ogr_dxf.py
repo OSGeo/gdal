@@ -702,6 +702,111 @@ def ogr_dxf_16():
     return 'success'
 
 ###############################################################################
+# Write a file with blocks defined from a source blocks layer.
+
+def ogr_dxf_17():
+
+    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_17.dxf',
+                                                     ['HEADER=data/header_extended.dxf'])
+
+    blyr = ds.CreateLayer( 'blocks' )
+    lyr = ds.CreateLayer( 'entities' )
+
+    dst_feat = ogr.Feature( feature_def = blyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION( LINESTRING(0 0,1 1),LINESTRING(1 0,0 1))' ) )
+    dst_feat.SetField( 'BlockName', 'XMark' )
+    blyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+    
+
+    # Write a block reference feature.
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POINT(200 100)' ))
+    dst_feat.SetField( 'Layer', 'abc' )
+    dst_feat.SetField( 'BlockName', 'XMark' )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+                                  
+    # Write a block reference feature for a non-existant block.
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POINT(300 50)' ))
+    dst_feat.SetField( 'Layer', 'abc' )
+    dst_feat.SetField( 'BlockName', 'DoesNotExist' )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+                                  
+    # Write a block reference feature for a template defined block
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POINT(250 200)' ))
+    dst_feat.SetField( 'Layer', 'abc' )
+    dst_feat.SetField( 'BlockName', 'STAR' )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+                                  
+    # Write a block reference feature with scaling and rotation
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POINT(300 100)' ))
+    dst_feat.SetField( 'BlockName', 'XMark' )
+    dst_feat.SetField( 'BlockAngle', '30' )
+    dst_feat.SetFieldDoubleList(lyr.GetLayerDefn().GetFieldIndex('BlockScale'), 
+                                [4.0,5.0,6.0] )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    ds = None
+
+    # Reopen and check contents.
+
+    ds = ogr.Open('tmp/dxf_17.dxf')
+
+    lyr = ds.GetLayer(0)
+
+    # Check first feature.
+    feat = lyr.GetNextFeature()
+    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbBlockReference':
+        gdaltest.post_reason( 'Got wrong subclasses for feature 1.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (200 100,201 101),LINESTRING (201 100,200 101))' ):
+        return 'fail'
+
+    # Check second feature.
+    feat = lyr.GetNextFeature()
+    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbPoint':
+        gdaltest.post_reason( 'Got wrong subclasses for feature 2.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'POINT (300 50)' ):
+        return 'fail'
+
+    # Check third feature.
+    feat = lyr.GetNextFeature()
+    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbBlockReference':
+        gdaltest.post_reason( 'Got wrong subclasses for feature 3.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),LINESTRING (250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),LINESTRING (249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),LINESTRING (251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),LINESTRING (249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))' ):
+        return 'fail'
+
+    # Check fourth feature (scaled and rotated)
+    feat = lyr.GetNextFeature()
+    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbBlockReference':
+        gdaltest.post_reason( 'Got wrong subclasses for feature 4.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (300 100,305.557163920014659 96.819130753066489),LINESTRING (300.617005799550327 96.047873503628551,304.940158120464332 100.771257249437937))' ):
+        return 'fail'
+
+    # Cleanup
+    
+    lyr = None
+    ds = None
+    
+    os.unlink( 'tmp/dxf_17.dxf' )
+        
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -731,6 +836,7 @@ gdaltest_list = [
     ogr_dxf_14,
     ogr_dxf_15,
     ogr_dxf_16,
+    ogr_dxf_17,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
