@@ -49,8 +49,6 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDS, FILE *fp )
     this->fp = fp;
     this->poDS = poDS;
 
-    nNextFID = 80;
-
     poFeatureDefn = new OGRFeatureDefn( "entities" );
     poFeatureDefn->Reference();
 
@@ -71,6 +69,18 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDS, FILE *fp )
 
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
+
+    if( poDS->poBlocksLayer != NULL )
+    {
+        OGRFieldDefn  oBlockField( "BlockName", OFTString );
+        poFeatureDefn->AddFieldDefn( &oBlockField );
+
+        OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oScaleField );
+
+        OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
+        poFeatureDefn->AddFieldDefn( &oBlockAngleField );
+    }
 }
 
 /************************************************************************/
@@ -82,6 +92,18 @@ OGRDXFWriterLayer::~OGRDXFWriterLayer()
 {
     if( poFeatureDefn )
         poFeatureDefn->Release();
+}
+
+/************************************************************************/
+/*                              ResetFP()                               */
+/*                                                                      */
+/*      Redirect output.  Mostly used for writing block definitions.    */
+/************************************************************************/
+
+void OGRDXFWriterLayer::ResetFP( FILE *fpNew )
+
+{
+    fp = fpNew;
 }
 
 /************************************************************************/
@@ -112,7 +134,8 @@ OGRErr OGRDXFWriterLayer::CreateField( OGRFieldDefn *poField,
         return OGRERR_NONE;
 
     CPLError( CE_Failure, CPLE_AppDefined,
-              "DXF layer does not support arbitrary field creation." );
+              "DXF layer does not support arbitrary field creation, field '%s' not created.",
+              poField->GetNameRef() );
 
     return OGRERR_FAILURE;
 }
@@ -189,10 +212,7 @@ OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
 /*      Also, for reasons I don't understand these ids seem to have     */
 /*      to start somewhere around 0x50 hex (80 decimal).                */
 /* -------------------------------------------------------------------- */
-    char szEntityID[16];
-
-    sprintf( szEntityID, "%X", nNextFID++ );
-    WriteValue( 5, szEntityID );
+    poFeature->SetFID( poDS->WriteEntityID(fp,poFeature->GetFID()) );
 
 /* -------------------------------------------------------------------- */
 /*      For now we assign everything to the default layer - layer       */
@@ -215,6 +235,61 @@ OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
         }
 
         WriteValue( 8, pszLayer );
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            WriteINSERT()                             */
+/************************************************************************/
+
+OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
+
+{
+    WriteValue( 0, "INSERT" );
+    WriteCore( poFeature );
+    WriteValue( 100, "AcDbEntity" );
+    WriteValue( 100, "AcDbBlockReference" );
+    WriteValue( 2, poFeature->GetFieldAsString("BlockName") );
+    
+/* -------------------------------------------------------------------- */
+/*      Write location.                                                 */
+/* -------------------------------------------------------------------- */
+    OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+
+    WriteValue( 10, poPoint->getX() );
+    if( !WriteValue( 20, poPoint->getY() ) ) 
+        return OGRERR_FAILURE;
+
+    if( poPoint->getGeometryType() == wkbPoint25D )
+    {
+        if( !WriteValue( 30, poPoint->getZ() ) )
+            return OGRERR_FAILURE;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Write scaling.                                                  */
+/* -------------------------------------------------------------------- */
+    int nScaleCount;
+    const double *padfScale = 
+        poFeature->GetFieldAsDoubleList( "BlockScale", &nScaleCount );
+
+    if( nScaleCount == 3 )
+    {
+        WriteValue( 41, padfScale[0] );
+        WriteValue( 42, padfScale[0] );
+        WriteValue( 43, padfScale[0] );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write rotation.                                                 */
+/* -------------------------------------------------------------------- */
+    double dfAngle = poFeature->GetFieldAsDouble( "BlockAngle" );
+
+    if( dfAngle != 0.0 )
+    {
+        WriteValue( 50, dfAngle * 180 / PI );
     }
 
     return OGRERR_NONE;
@@ -550,7 +625,20 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
 
     if( eGType == wkbPoint )
     {
-        if( poFeature->GetStyleString() != NULL
+        const char *pszBlockName = NULL;
+
+        if( poDS->poBlocksLayer != NULL )
+        {
+            pszBlockName = poFeature->GetFieldAsString("BlockName");
+            if( pszBlockName != NULL
+                && poDS->poBlocksLayer->FindBlock(pszBlockName) == NULL )
+                pszBlockName = NULL;
+        }
+                                  
+        if( pszBlockName != NULL )
+            return WriteINSERT( poFeature );
+            
+        else if( poFeature->GetStyleString() != NULL
             && EQUALN(poFeature->GetStyleString(),"LABEL",5) )
             return WriteTEXT( poFeature );
         else
