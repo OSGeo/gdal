@@ -278,8 +278,8 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
     if( nScaleCount == 3 )
     {
         WriteValue( 41, padfScale[0] );
-        WriteValue( 42, padfScale[0] );
-        WriteValue( 43, padfScale[0] );
+        WriteValue( 42, padfScale[1] );
+        WriteValue( 43, padfScale[2] );
     }
 
 /* -------------------------------------------------------------------- */
@@ -631,7 +631,8 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
         {
             pszBlockName = poFeature->GetFieldAsString("BlockName");
             if( pszBlockName != NULL
-                && poDS->poBlocksLayer->FindBlock(pszBlockName) == NULL )
+                && poDS->poBlocksLayer->FindBlock(pszBlockName) == NULL 
+                && poDS->oHeaderDS.LookupBlock(pszBlockName) == NULL )
                 pszBlockName = NULL;
         }
                                   
