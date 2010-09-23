@@ -40,13 +40,6 @@ CPL_CVSID("$Id$");
 OGRDXFDataSource::OGRDXFDataSource()
 
 {
-    fp = NULL;
-
-    iSrcBufferOffset = 0;
-    nSrcBufferBytes = 0;
-    iSrcBufferFileOffset = 0;
-
-    nLastValueSize = 0;
 }
 
 /************************************************************************/
@@ -125,6 +118,8 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
     if( fp == NULL )
         return FALSE;
 
+    oReader.Initialize( fp );
+    
 /* -------------------------------------------------------------------- */
 /*      Confirm we have a header section.                               */
 /* -------------------------------------------------------------------- */
@@ -227,7 +222,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
     if( !EQUAL(szLineBuf,"ENTITIES") )
         return FALSE;
 
-    iEntitiesSectionOffset = iSrcBufferFileOffset + iSrcBufferOffset;
+    iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
     apoLayers[0]->ResetReading();
 
     return TRUE;

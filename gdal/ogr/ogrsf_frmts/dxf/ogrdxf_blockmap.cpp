@@ -46,7 +46,7 @@ void OGRDXFDataSource::ReadBlocksSection()
     int  nCode;
     OGRDXFLayer *poReaderLayer = (OGRDXFLayer *) GetLayerByName( "Entities" );
 
-    iEntitiesSectionOffset = iSrcBufferFileOffset + iSrcBufferOffset;
+    iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
 
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1 
            && !EQUAL(szLineBuf,"ENDSEC") )
