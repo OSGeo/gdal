@@ -1973,15 +1973,6 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
         else
         {
             //  ------------------------------------------------------------
-            //  Unpack NBits
-            //  ------------------------------------------------------------
-
-            if( nCellSizeBits < 8 || nLevel == DEFAULT_BMP_MASK )
-            {
-                UnpackNBits( pabyBlockBuf );
-            }
-
-            //  ------------------------------------------------------------
             //  Uncompress
             //  ------------------------------------------------------------
 
@@ -1992,6 +1983,15 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
             else if ( EQUAL( sCompressionType.c_str(), "DEFLATE" ) )
             {
                 UncompressDeflate( nBytesRead );
+            }
+            
+            //  ------------------------------------------------------------
+            //  Unpack NBits
+            //  ------------------------------------------------------------
+
+            if( nCellSizeBits < 8 || nLevel == DEFAULT_BMP_MASK )
+            {
+                UnpackNBits( pabyBlockBuf );
             }
         }
     }
@@ -2053,6 +2053,15 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
     GByte* pabyFlushBuffer = (GByte *) pabyBlockBuf;
 
     //  --------------------------------------------------------------------
+    //  Pack bits ( inside pabyOutBuf )
+    //  --------------------------------------------------------------------
+
+    if( nCellSizeBits < 8 || nCurrentLevel == DEFAULT_BMP_MASK )
+    {
+        PackNBits( pabyFlushBuffer );
+    }
+
+    //  --------------------------------------------------------------------
     //  Compress ( from pabyBlockBuf to pabyBlockBuf2 )
     //  --------------------------------------------------------------------
 
@@ -2068,15 +2077,6 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
         }
 
         pabyFlushBuffer = pabyCompressBuf;
-    }
-
-    //  --------------------------------------------------------------------
-    //  Pack bits ( inside pabyOutBuf )
-    //  --------------------------------------------------------------------
-
-    if( nCellSizeBits < 8 || nCurrentLevel == DEFAULT_BMP_MASK )
-    {
-        PackNBits( pabyFlushBuffer );
     }
 
     //  --------------------------------------------------------------------
