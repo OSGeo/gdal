@@ -1,9 +1,9 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogrdxf_diskio.cpp 20278 2010-08-14 15:11:01Z warmerdam $
  *
  * Project:  DXF Translator
- * Purpose:  Implements Disk IO and low level parsing portions of the
- *           OGRDXFDataSource class
+ * Purpose:  Implements low level DXF reading with caching and parsing of
+ *           of the code/value pairs. 
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -33,13 +33,48 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id: ogrdxf_diskio.cpp 20278 2010-08-14 15:11:01Z warmerdam $");
+
+/************************************************************************/
+/*                            OGRDXFReader()                            */
+/************************************************************************/
+
+OGRDXFReader::OGRDXFReader()
+
+{
+    fp = NULL;
+
+    iSrcBufferOffset = 0;
+    nSrcBufferBytes = 0;
+    iSrcBufferFileOffset = 0;
+
+    nLastValueSize = 0;
+}
+
+/************************************************************************/
+/*                           ~OGRDXFReader()                            */
+/************************************************************************/
+
+OGRDXFReader::~OGRDXFReader()
+
+{
+}
+
+/************************************************************************/
+/*                             Initialize()                             */
+/************************************************************************/
+
+void OGRDXFReader::Initialize( FILE *fp )
+
+{
+    this->fp = fp;
+}
 
 /************************************************************************/
 /*                          ResetReadPointer()                          */
 /************************************************************************/
 
-void OGRDXFDataSource::ResetReadPointer( int iNewOffset )
+void OGRDXFReader::ResetReadPointer( int iNewOffset )
 
 {
     nSrcBufferBytes = 0;
@@ -57,7 +92,7 @@ void OGRDXFDataSource::ResetReadPointer( int iNewOffset )
 /*      file.                                                           */
 /************************************************************************/
 
-void OGRDXFDataSource::LoadDiskChunk()
+void OGRDXFReader::LoadDiskChunk()
 
 {
     CPLAssert( iSrcBufferOffset >= 0 );
@@ -91,7 +126,7 @@ void OGRDXFDataSource::LoadDiskChunk()
 /*      Read one type code and value line pair from the DXF file.       */
 /************************************************************************/
 
-int OGRDXFDataSource::ReadValue( char *pszValueBuf, int nValueBufSize )
+int OGRDXFReader::ReadValue( char *pszValueBuf, int nValueBufSize )
 
 {
 /* -------------------------------------------------------------------- */
@@ -193,7 +228,7 @@ int OGRDXFDataSource::ReadValue( char *pszValueBuf, int nValueBufSize )
 /*      read pointer.                                                   */
 /************************************************************************/
 
-void OGRDXFDataSource::UnreadValue()
+void OGRDXFReader::UnreadValue()
 
 {
     CPLAssert( iSrcBufferOffset >= nLastValueSize );

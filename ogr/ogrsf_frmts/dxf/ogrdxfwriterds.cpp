@@ -44,7 +44,9 @@ OGRDXFWriterDS::OGRDXFWriterDS()
     fp = NULL;
     fpTemp = NULL;
     poLayer = NULL;
+    poBlocksLayer = NULL;
     papszLayersToCreate = NULL;
+    nNextFID = 1;
 }
 
 /************************************************************************/
@@ -54,11 +56,6 @@ OGRDXFWriterDS::OGRDXFWriterDS()
 OGRDXFWriterDS::~OGRDXFWriterDS()
 
 {
-/* -------------------------------------------------------------------- */
-/*      Destroy layers.                                                 */
-/* -------------------------------------------------------------------- */
-    delete poLayer;
-
 /* -------------------------------------------------------------------- */
 /*      Transfer over the header into the destination file with any     */
 /*      adjustments or insertions needed.                               */
@@ -126,6 +123,12 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
         VSIFCloseL( fp );
         fp = NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Destroy layers.                                                 */
+/* -------------------------------------------------------------------- */
+    delete poLayer;
+    delete poBlocksLayer;
 
     CSLDestroy(papszLayersToCreate);
 }
@@ -195,6 +198,24 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Establish the name for our trailer file.                        */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue(papszOptions,"TRAILER") != NULL )
+        osTrailerFile = CSLFetchNameValue(papszOptions,"TRAILER");
+    else
+    {
+        const char *pszValue = CPLFindFile( "gdal", "trailer.dxf" );
+        if( pszValue != NULL )
+            osTrailerFile = pszValue;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prescan the header and trailer for entity codes.                */
+/* -------------------------------------------------------------------- */
+    ScanForEntities( osHeaderFile );
+    ScanForEntities( osTrailerFile );
+
+/* -------------------------------------------------------------------- */
 /*      Attempt to read the template header file so we have a list      */
 /*      of layers, linestyles and blocks.                               */
 /* -------------------------------------------------------------------- */
@@ -212,18 +233,6 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
                   "Failed to open '%s' for writing.", 
                   pszFilename );
         return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Establish the name for our trailer file.                        */
-/* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszOptions,"TRAILER") != NULL )
-        osTrailerFile = CSLFetchNameValue(papszOptions,"TRAILER");
-    else
-    {
-        const char *pszValue = CPLFindFile( "gdal", "trailer.dxf" );
-        if( pszValue != NULL )
-            osTrailerFile = pszValue;
     }
 
 /* -------------------------------------------------------------------- */
@@ -248,13 +257,18 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 /*                            CreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRDXFWriterDS::CreateLayer( const char *, 
+OGRLayer *OGRDXFWriterDS::CreateLayer( const char *pszName, 
                                        OGRSpatialReference *, 
                                        OGRwkbGeometryType, 
                                        char ** )
 
 {
-    if( poLayer == NULL )
+    if( EQUAL(pszName,"blocks") && poBlocksLayer == NULL )
+    {
+        poBlocksLayer = new OGRDXFBlocksWriterLayer( this );
+        return poBlocksLayer;
+    }
+    else if( poLayer == NULL )
     {
         poLayer = new OGRDXFWriterLayer( this, fpTemp );
         return poLayer;
@@ -262,7 +276,7 @@ OGRLayer *OGRDXFWriterDS::CreateLayer( const char *,
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to have more than one OGR layer in a DXF file." );
+                  "Unable to have more than one OGR entities layer in a DXF file, with one options blocks layer." );
         return NULL;
     }
 }
@@ -302,23 +316,47 @@ int OGRDXFWriterDS::TransferUpdateHeader( FILE *fpOut )
 /* -------------------------------------------------------------------- */
     char szLineBuf[257];
     int nCode;
-    CPLString osSection, osTable;
+    CPLString osSection, osTable, osEntity;
 
     while( (nCode = oHeaderDS.ReadValue( szLineBuf )) != -1 )
     {
         if( nCode == 0 && EQUAL(szLineBuf,"ENDTAB") )
         {
+            // If we are at the end of the LAYER TABLE consider inserting 
+            // missing definitions.
             if( osTable == "LAYER" )
             {
                 if( !WriteNewLayerDefinitions( fp ) )
                     return FALSE;
             }
 
+            // If at the end of the BLOCK_RECORD TABLE consider inserting 
+            // missing definitions.
+            if( osTable == "BLOCK_RECORD" )
+            {
+                if( !WriteNewBlockRecords( fp ) )
+                    return FALSE;
+            }
+
             osTable = "";
         }
 
+        // If we are at the end of the BLOCKS section, consider inserting
+        // suplementary blocks. 
+        if( nCode == 0 && osSection == "BLOCKS" && EQUAL(szLineBuf,"ENDSEC") 
+            && poBlocksLayer != NULL )
+        {
+            if( !WriteNewBlockDefinitions( fp ) )
+                return FALSE;
+        }
+
+        // Copy over the source line.
         if( !WriteValue( fpOut, nCode, szLineBuf ) )
             return FALSE;
+
+        // Track what entity we are in - that is the last "code 0" object.
+        if( nCode == 0  )
+            osEntity = szLineBuf;
 
         // Track what section we are in.
         if( nCode == 0 && EQUAL(szLineBuf,"SECTION") )
@@ -342,7 +380,7 @@ int OGRDXFWriterDS::TransferUpdateHeader( FILE *fpOut )
 
             osTable = szLineBuf;
         }
-
+        
         // If we are starting the first layer, then capture
         // the layer contents while copying so we can duplicate
         // it for any new layer definitions.
@@ -404,4 +442,225 @@ int  OGRDXFWriterDS::WriteNewLayerDefinitions( FILE * fpOut )
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                        WriteNewBlockRecords()                        */
+/************************************************************************/
+
+int OGRDXFWriterDS::WriteNewBlockRecords( FILE * fp )
+
+{
+/* ==================================================================== */
+/*      Loop over all block objects written via the blocks layer.       */
+/* ==================================================================== */
+    for( size_t iBlock=0; iBlock < poBlocksLayer->apoBlocks.size(); iBlock++ )
+    {
+        OGRFeature* poThisBlockFeat = poBlocksLayer->apoBlocks[iBlock];
+
+/* -------------------------------------------------------------------- */
+/*      Is this block already defined in the template header?           */
+/* -------------------------------------------------------------------- */
+        CPLString osBlockName = poThisBlockFeat->GetFieldAsString("BlockName");
+
+        if( oHeaderDS.LookupBlock( osBlockName ) != NULL )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Write the block record.                                         */
+/* -------------------------------------------------------------------- */
+        WriteValue( fp, 0, "BLOCK_RECORD" );
+        WriteEntityID( fp );
+        WriteValue( fp, 100, "AcDbSymbolTableRecord" );
+        WriteValue( fp, 100, "AcDbBlockTableRecord" );
+        WriteValue( fp, 2, poThisBlockFeat->GetFieldAsString("BlockName") );
+        if( !WriteValue( fp, 340, "0" ) )
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                      WriteNewBlockDefinitions()                      */
+/************************************************************************/
+
+int OGRDXFWriterDS::WriteNewBlockDefinitions( FILE * fp )
+
+{
+    poLayer->ResetFP( fp );
+
+/* ==================================================================== */
+/*      Loop over all block objects written via the blocks layer.       */
+/* ==================================================================== */
+    for( size_t iBlock=0; iBlock < poBlocksLayer->apoBlocks.size(); iBlock++ )
+    {
+        OGRFeature* poThisBlockFeat = poBlocksLayer->apoBlocks[iBlock];
+
+/* -------------------------------------------------------------------- */
+/*      Is this block already defined in the template header?           */
+/* -------------------------------------------------------------------- */
+        CPLString osBlockName = poThisBlockFeat->GetFieldAsString("BlockName");
+
+        if( oHeaderDS.LookupBlock( osBlockName ) != NULL )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Write the block definition preamble.                            */
+/* -------------------------------------------------------------------- */
+        CPLDebug( "DXF", "Writing BLOCK definition for '%s'.",
+                  poThisBlockFeat->GetFieldAsString("BlockName") );
+
+        WriteValue( fp, 0, "BLOCK" );
+        WriteEntityID( fp );
+        WriteValue( fp, 100, "AcDbEntity" );
+        WriteValue( fp, 8, poThisBlockFeat->GetFieldAsString("Layer") );
+        WriteValue( fp, 100, "AcDbBlockBegin" );
+        WriteValue( fp, 2, poThisBlockFeat->GetFieldAsString("BlockName") );
+        WriteValue( fp, 70, "0" );
+
+        // Origin
+        WriteValue( fp, 10, "0.0" );
+        WriteValue( fp, 20, "0.0" );
+        WriteValue( fp, 30, "0.0" );
+
+        WriteValue( fp, 3, poThisBlockFeat->GetFieldAsString("BlockName") );
+        WriteValue( fp, 1, "" );
+
+/* -------------------------------------------------------------------- */
+/*      Write out the feature entities.                                 */
+/* -------------------------------------------------------------------- */
+        OGRGeometry *poWholeGeom = poThisBlockFeat->StealGeometry();
+        int nGeomCount=1, iGeom;
+        if( wkbFlatten(poWholeGeom->getGeometryType()) == wkbGeometryCollection)
+            nGeomCount = 
+                ((OGRGeometryCollection*) poWholeGeom)->getNumGeometries();
+
+        for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+        {
+            OGRGeometry *poThisGeom;
+
+            if( wkbFlatten(poWholeGeom->getGeometryType()) 
+                == wkbGeometryCollection )
+                poThisGeom = 
+                    ((OGRGeometryCollection*) poWholeGeom)->getGeometryRef(iGeom);
+            else
+                poThisGeom = poWholeGeom;
+
+            poThisBlockFeat->SetGeometry( poThisGeom );
+
+            if( poLayer->CreateFeature( poThisBlockFeat ) != OGRERR_NONE )
+                return FALSE;
+        }
+
+        poThisBlockFeat->SetGeometryDirectly( poWholeGeom );
+
+/* -------------------------------------------------------------------- */
+/*      Write out the block definition postamble.                       */
+/* -------------------------------------------------------------------- */
+        WriteValue( fp, 0, "ENDBLK" );
+        WriteEntityID( fp );
+        WriteValue( fp, 100, "AcDbEntity" );
+        WriteValue( fp, 8, poThisBlockFeat->GetFieldAsString("Layer") );
+        WriteValue( fp, 100, "AcDbBlockEnd" );
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          ScanForEntities()                           */
+/*                                                                      */
+/*      Scan the indicated file for entity ids ("5" records) and        */
+/*      build them up as a set so we can be careful to avoid            */
+/*      creating new entities with conflicting ids.                     */
+/************************************************************************/
+
+void OGRDXFWriterDS::ScanForEntities( const char *pszFilename )
+
+{
+    OGRDXFReader oReader;
+    FILE *fp;
+
+/* -------------------------------------------------------------------- */
+/*      Open the file and setup a reader.                               */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpenL( pszFilename, "r" );
+
+    if( fp == NULL )
+        return;
+
+    oReader.Initialize( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Add every code "5" line to our entities list.                   */
+/* -------------------------------------------------------------------- */
+    char szLineBuf[257];
+    int  nCode;
+
+    while( (nCode = oReader.ReadValue( szLineBuf )) != -1 )
+    {
+        if( nCode == 5 )
+        {
+            CPLString osEntity( szLineBuf );
+
+            if( CheckEntityID( osEntity ) )
+                CPLDebug( "DXF", "Encounted entity '%s' multiple times.",
+                          osEntity.c_str() );
+            else
+                aosUsedEntities.insert( osEntity );
+        }
+    }
+
+    VSIFCloseL( fp );
+}
+
+/************************************************************************/
+/*                           CheckEntityID()                            */
+/*                                                                      */
+/*      Does the mentioned entity already exist?                        */
+/************************************************************************/
+
+int OGRDXFWriterDS::CheckEntityID( const char *pszEntityID )
+
+{
+    std::set<CPLString>::iterator it;
+
+    it = aosUsedEntities.find( pszEntityID );
+    if( it != aosUsedEntities.end() )
+        return TRUE;
+    else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                           WriteEntityID()                            */
+/************************************************************************/
+
+long OGRDXFWriterDS::WriteEntityID( FILE *fp, long nPreferredFID )
+
+{
+    CPLString osEntityID;
+
+    if( nPreferredFID != OGRNullFID )
+    {
+        
+        osEntityID.Printf( "%X", (unsigned int) nPreferredFID );
+        if( !CheckEntityID( osEntityID ) )
+        {
+            aosUsedEntities.insert( osEntityID );
+            WriteValue( fp, 5, osEntityID );
+            return nPreferredFID;
+        }
+    }
+
+    do 
+    {
+        osEntityID.Printf( "%X", nNextFID++ );
+    }
+    while( CheckEntityID( osEntityID ) );
+    
+    WriteValue( fp, 5, osEntityID );
+
+    return nNextFID - 1;
 }
