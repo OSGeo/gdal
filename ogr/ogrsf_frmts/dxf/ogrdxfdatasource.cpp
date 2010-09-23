@@ -40,6 +40,7 @@ CPL_CVSID("$Id$");
 OGRDXFDataSource::OGRDXFDataSource()
 
 {
+    fp = NULL;
 }
 
 /************************************************************************/
