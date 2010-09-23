@@ -98,9 +98,12 @@ OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 /*      Are we done reading the current blocks features?                */
 /* -------------------------------------------------------------------- */
     DXFBlockDefinition *psBlock = &(oIt->second);
+    unsigned int nSubFeatureCount = psBlock->apoFeatures.size();
 
-    if( (iNextSubFeature == psBlock->apoFeatures.size() && psBlock->poGeometry == NULL) 
-        || iNextSubFeature > 0 )
+    if( psBlock->poGeometry != NULL )
+        nSubFeatureCount++;
+
+    if( iNextSubFeature >= nSubFeatureCount )
     {
         oIt++;
 
@@ -115,7 +118,8 @@ OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Is this a geometry based block?                                 */
 /* -------------------------------------------------------------------- */
-    if( psBlock->poGeometry != NULL )
+    if( psBlock->poGeometry != NULL
+        && iNextSubFeature == psBlock->apoFeatures.size() )
     {
         poFeature = new OGRFeature( poFeatureDefn );
         poFeature->SetGeometry( psBlock->poGeometry );

@@ -451,6 +451,8 @@ int  OGRDXFWriterDS::WriteNewLayerDefinitions( FILE * fpOut )
 int OGRDXFWriterDS::WriteNewBlockRecords( FILE * fp )
 
 {
+    std::set<CPLString> aosAlreadyHandled;
+
 /* ==================================================================== */
 /*      Loop over all block objects written via the blocks layer.       */
 /* ==================================================================== */
@@ -465,6 +467,14 @@ int OGRDXFWriterDS::WriteNewBlockRecords( FILE * fp )
 
         if( oHeaderDS.LookupBlock( osBlockName ) != NULL )
             continue;
+
+/* -------------------------------------------------------------------- */
+/*      Have we already written a BLOCK_RECORD for this block?          */
+/* -------------------------------------------------------------------- */
+        if( aosAlreadyHandled.find(osBlockName) != aosAlreadyHandled.end() )
+            continue;
+
+        aosAlreadyHandled.insert( osBlockName );
 
 /* -------------------------------------------------------------------- */
 /*      Write the block record.                                         */
@@ -533,31 +543,23 @@ int OGRDXFWriterDS::WriteNewBlockDefinitions( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Write out the feature entities.                                 */
 /* -------------------------------------------------------------------- */
-        OGRGeometry *poWholeGeom = poThisBlockFeat->StealGeometry();
-        int nGeomCount=1, iGeom;
-        if( wkbFlatten(poWholeGeom->getGeometryType()) == wkbGeometryCollection)
-            nGeomCount = 
-                ((OGRGeometryCollection*) poWholeGeom)->getNumGeometries();
+        if( poLayer->CreateFeature( poThisBlockFeat ) != OGRERR_NONE )
+            return FALSE;
 
-        for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+/* -------------------------------------------------------------------- */
+/*      Write out following features if they are the same block.        */
+/* -------------------------------------------------------------------- */
+        while( iBlock < poBlocksLayer->apoBlocks.size()-1 
+            && EQUAL(poBlocksLayer->apoBlocks[iBlock+1]->GetFieldAsString("BlockName"),
+                     osBlockName) )
         {
-            OGRGeometry *poThisGeom;
-
-            if( wkbFlatten(poWholeGeom->getGeometryType()) 
-                == wkbGeometryCollection )
-                poThisGeom = 
-                    ((OGRGeometryCollection*) poWholeGeom)->getGeometryRef(iGeom);
-            else
-                poThisGeom = poWholeGeom;
-
-            poThisBlockFeat->SetGeometry( poThisGeom );
-
-            if( poLayer->CreateFeature( poThisBlockFeat ) != OGRERR_NONE )
+            iBlock++;
+            
+            if( poLayer->CreateFeature( poBlocksLayer->apoBlocks[iBlock] )
+                != OGRERR_NONE )
                 return FALSE;
         }
-
-        poThisBlockFeat->SetGeometryDirectly( poWholeGeom );
-
+        
 /* -------------------------------------------------------------------- */
 /*      Write out the block definition postamble.                       */
 /* -------------------------------------------------------------------- */
