@@ -650,6 +650,28 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
              || eGType == wkbPolygon 
              || eGType == wkbMultiPolygon )
         return WritePOLYLINE( poFeature );
+
+    // Explode geometry collections into multiple entities.
+    else if( eGType == wkbGeometryCollection )
+    {
+        OGRGeometryCollection *poGC = (OGRGeometryCollection *)
+            poFeature->StealGeometry();
+        int iGeom;
+
+        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        {
+            poFeature->SetGeometry( poGC->getGeometryRef(iGeom) );
+                                    
+            OGRErr eErr = CreateFeature( poFeature );
+            
+            if( eErr != OGRERR_NONE )
+                return eErr;
+
+        }
+        
+        poFeature->SetGeometryDirectly( poGC );
+        return OGRERR_NONE;
+    }
     else 
     {
         CPLError( CE_Failure, CPLE_AppDefined,
