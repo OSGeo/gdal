@@ -35,7 +35,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <stack>
+#include <queue>
 
 class OGRDXFDataSource;
 
@@ -94,7 +94,7 @@ class OGRDXFLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
     int                 iNextFID;
 
-    std::stack<OGRFeature*> apoPendingFeatures;
+    std::queue<OGRFeature*> apoPendingFeatures;
     void                ClearPendingFeatures();
 
     std::map<CPLString,CPLString> oStyleProperties;
@@ -116,8 +116,10 @@ class OGRDXFLayer : public OGRLayer
     OGRFeature *        TranslateMTEXT();
     OGRFeature *        TranslateTEXT();
     OGRFeature *        TranslateDIMENSION();
+    OGRFeature *        TranslateHATCH();
 
     void                FormatDimension( CPLString &osText, double dfValue );
+    OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
 
   public:
     OGRDXFLayer( OGRDXFDataSource *poDS );

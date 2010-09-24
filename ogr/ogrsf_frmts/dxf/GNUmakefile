@@ -5,7 +5,7 @@ OBJ	=	ogrdxfdriver.o ogrdxfdatasource.o ogrdxflayer.o \
 		ogrdxfreader.o ogrdxf_blockmap.o ogrdxf_dimension.o \
 		ogrdxfwriterds.o ogrdxfwriterlayer.o intronurbs.o \
 		ogrdxf_polyline_smooth.o ogrdxfblockslayer.o \
-		ogrdxfblockswriterlayer.o 
+		ogrdxfblockswriterlayer.o ogrdxf_hatch.o
 
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 

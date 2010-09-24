@@ -91,7 +91,7 @@ void OGRDXFLayer::ClearPendingFeatures()
 {
     while( !apoPendingFeatures.empty() )
     {
-        delete apoPendingFeatures.top();
+        delete apoPendingFeatures.front();
         apoPendingFeatures.pop();
     }
 }
@@ -768,7 +768,7 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     double              dfBulge = 0.0;
     DXFSmoothPolyline   smoothPolyline;
 
-	smoothPolyline.setCoordinateDimension(2);
+    smoothPolyline.setCoordinateDimension(2);
 
 /* -------------------------------------------------------------------- */
 /*      Collect information from the LWPOLYLINE object itself.          */
@@ -778,66 +778,66 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
         if(npolyarcVertexCount > nNumVertices)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-              "Too many vertices found in LWPOLYLINE." );
+                      "Too many vertices found in LWPOLYLINE." );
             delete poFeature;
             return NULL;
         }
 
         switch( nCode )
         {
-            case 38:
-                // Constant elevation.
-                dfZ = CPLAtof(szLineBuf);
-				smoothPolyline.setCoordinateDimension(3);
-                break;
+          case 38:
+            // Constant elevation.
+            dfZ = CPLAtof(szLineBuf);
+            smoothPolyline.setCoordinateDimension(3);
+            break;
 
-            case 90:
-                nNumVertices = atoi(szLineBuf);
-                break;
+          case 90:
+            nNumVertices = atoi(szLineBuf);
+            break;
 
-            case 70:
-                nPolylineFlag = atoi(szLineBuf);
-                break;
+          case 70:
+            nPolylineFlag = atoi(szLineBuf);
+            break;
 
-            case 10:
-                if( bHaveX && bHaveY )
-                {
-                    smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
-                    npolyarcVertexCount++;
-                    dfBulge = 0.0;
-                    bHaveY = FALSE;
-                }
-                dfX = CPLAtof(szLineBuf);
-                bHaveX = TRUE;
-                break;
+          case 10:
+            if( bHaveX && bHaveY )
+            {
+                smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
+                npolyarcVertexCount++;
+                dfBulge = 0.0;
+                bHaveY = FALSE;
+            }
+            dfX = CPLAtof(szLineBuf);
+            bHaveX = TRUE;
+            break;
 
-            case 20:
-                if( bHaveX && bHaveY )
-                {
-                    smoothPolyline.AddPoint( dfX, dfY, dfZ, dfBulge );
-                    npolyarcVertexCount++;
-                    dfBulge = 0.0;
-                    bHaveX = FALSE;
-                }
-                dfY = CPLAtof(szLineBuf);
-                bHaveY = TRUE;
-                break;
+          case 20:
+            if( bHaveX && bHaveY )
+            {
+                smoothPolyline.AddPoint( dfX, dfY, dfZ, dfBulge );
+                npolyarcVertexCount++;
+                dfBulge = 0.0;
+                bHaveX = FALSE;
+            }
+            dfY = CPLAtof(szLineBuf);
+            bHaveY = TRUE;
+            break;
 
-            case 42:
-                dfBulge = CPLAtof(szLineBuf);
-                break;
+          case 42:
+            dfBulge = CPLAtof(szLineBuf);
+            break;
 
 
-            default:
-                TranslateGenericProperty( poFeature, nCode, szLineBuf );
-                break;
+          default:
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
         }
     }
 
     poDS->UnreadValue();
 
     if( bHaveX && bHaveY )
-         smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
+        smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
 
     
     if(smoothPolyline.IsEmpty())
@@ -900,7 +900,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
     double              dfBulge = 0.0;
     DXFSmoothPolyline   smoothPolyline;
 
-	smoothPolyline.setCoordinateDimension(2);
+    smoothPolyline.setCoordinateDimension(2);
 
     while( nCode == 0 && !EQUAL(szLineBuf,"SEQEND") )
     {
@@ -926,7 +926,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 
               case 30:
                 dfZ = CPLAtof(szLineBuf);
-				smoothPolyline.setCoordinateDimension(3);
+                smoothPolyline.setCoordinateDimension(3);
                 break;
 
               case 42:
@@ -1516,7 +1516,7 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     if( !apoPendingFeatures.empty() )
     {
-        poFeature = apoPendingFeatures.top();
+        poFeature = apoPendingFeatures.front();
         apoPendingFeatures.pop();
 
         poFeature->SetFID( iNextFID++ );
@@ -1606,6 +1606,10 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         else if( EQUAL(szLineBuf,"DIMENSION") )
         {
             poFeature = TranslateDIMENSION();
+        }
+        else if( EQUAL(szLineBuf,"HATCH") )
+        {
+            poFeature = TranslateHATCH();
         }
         else
         {
