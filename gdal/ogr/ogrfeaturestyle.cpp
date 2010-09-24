@@ -48,7 +48,7 @@ static const OGRStyleParamId asStylePen[] =
 {
     {OGRSTPenColor,"c",FALSE,OGRSTypeString},
     {OGRSTPenWidth,"w",TRUE,OGRSTypeDouble},
-    {OGRSTPenPattern,"p",TRUE,OGRSTypeString},
+    {OGRSTPenPattern,"p",FALSE,OGRSTypeString}, // georefed,but multiple times.
     {OGRSTPenId,"id",FALSE,OGRSTypeString},
     {OGRSTPenPerOffset,"dp",TRUE,OGRSTypeDouble},
     {OGRSTPenCap,"cap",FALSE,OGRSTypeString},
