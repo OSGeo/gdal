@@ -652,21 +652,27 @@ def ogr_pg_14():
         gdaltest.post_reason( 'UTC value wrong' )
         feat.DumpReadable()
         return 'fail'
-    
-    ds.ExecuteSQL( 'set timezone to "Canada/Newfoundland"' )
 
-    lyr.ResetReading()
-    
-    feat = lyr.GetNextFeature()
 
-    if feat.GetFieldAsString('ogrdatetime') != '2005/10/12 13:11:33-0230' \
-       or feat.GetFieldAsString('tsz') != '2005/10/12 13:11:33-0230' \
-       or feat.GetFieldAsString('ts') != '2005/10/12 10:41:33' \
-       or feat.GetFieldAsString('dt') != '2005/10/12' \
-       or feat.GetFieldAsString('tm') != '10:41:33':
-        gdaltest.post_reason( 'Newfoundland value wrong' )
-        feat.DumpReadable()
-        return 'fail'
+    sql_lyr = ds.ExecuteSQL( "select * from pg_timezone_names where name = 'Canada/Newfoundland'" )
+    has_tz = sql_lyr.GetFeatureCount() != 0
+    ds.ReleaseResultSet(sql_lyr)
+
+    if has_tz:
+        ds.ExecuteSQL( 'set timezone to "Canada/Newfoundland"' )
+
+        lyr.ResetReading()
+
+        feat = lyr.GetNextFeature()
+
+        if feat.GetFieldAsString('ogrdatetime') != '2005/10/12 13:11:33-0230' \
+        or feat.GetFieldAsString('tsz') != '2005/10/12 13:11:33-0230' \
+        or feat.GetFieldAsString('ts') != '2005/10/12 10:41:33' \
+        or feat.GetFieldAsString('dt') != '2005/10/12' \
+        or feat.GetFieldAsString('tm') != '10:41:33':
+            gdaltest.post_reason( 'Newfoundland value wrong' )
+            feat.DumpReadable()
+            return 'fail'
     
     ds.ExecuteSQL( 'set timezone to "+5"' )
 
