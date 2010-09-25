@@ -590,6 +590,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 #if !defined(PG_PRE74)
         int nTypeOID = PQftype(hCursorResult, iField);
 #endif
+        const char* pszFieldName = PQfname(hCursorResult,iField);
 
 /* -------------------------------------------------------------------- */
 /*      Handle FID.                                                     */
@@ -631,8 +632,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
         if( bHasPostGISGeometry || bHasPostGISGeography )
         {
-            if ( EQUAL(PQfname(hCursorResult,iField),"ST_AsBinary") ||
-                 EQUAL(PQfname(hCursorResult,iField),"AsBinary") )
+            if ( EQUAL(pszFieldName,"ST_AsBinary") ||
+                 EQUAL(pszFieldName,"AsBinary") )
             {
                 GByte* pabyVal = (GByte*) PQgetvalue( hCursorResult,
                                              iRecord, iField);
@@ -664,9 +665,10 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
                 continue;
             }
-            else if ( poDS->bUseBinaryCursor &&
-                 (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn) ||
-                  EQUAL(PQfname(hCursorResult,iField),"AsEWKB")) )
+            else if ( (poDS->bUseBinaryCursor &&
+                       (EQUAL(pszFieldName,pszGeomColumn))) ||
+                      EQUAL(pszFieldName,"ST_AsEWKB") ||
+                      EQUAL(pszFieldName,"AsEWKB") )
             {
                 /* Handle HEX result or EWKB binary cursor result */
                 char * pabyData = PQgetvalue( hCursorResult,
@@ -679,7 +681,16 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     continue;
 
                 OGRGeometry * poGeom;
-                if( nLength >= 2 && (EQUALN(pabyData,"00",2) || EQUALN(pabyData,"01",2)) )
+
+                if( !poDS->bUseBinaryCursor &&
+                    (strncmp(pabyData, "\\x00",4) == 0 || strncmp(pabyData, "\\x01",4) == 0 ||
+                     strncmp(pabyData, "\\000",4) == 0 || strncmp(pabyData, "\\001",4) == 0) )
+                {
+                    GByte* pabyEWKB = BYTEAToGByteArray(pabyData, &nLength);
+                    poGeom = EWKBToGeometry(pabyEWKB, nLength);
+                    CPLFree(pabyEWKB);
+                }
+                else if( nLength >= 2 && (EQUALN(pabyData,"00",2) || EQUALN(pabyData,"01",2)) )
                 {
                     poGeom = HEXToGeometry(pabyData);
                 }
@@ -696,10 +707,11 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
                 continue;
             }
-            else if (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn) ||
-                     EQUAL(PQfname(hCursorResult,iField),"asEWKT") ||
-                     EQUAL(PQfname(hCursorResult,iField),"asText") ||
-                     EQUAL(PQfname(hCursorResult,iField),"ST_AsText") )
+            else if (EQUAL(pszFieldName,pszGeomColumn) ||
+                     EQUAL(pszFieldName,"asEWKT") ||
+                     EQUAL(pszFieldName,"asText") ||
+                     EQUAL(pszFieldName,"ST_AsEWKT") ||
+                     EQUAL(pszFieldName,"ST_AsText") )
             {
                 /* Handle WKT */
                 char        *pszWKT;
