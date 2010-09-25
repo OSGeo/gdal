@@ -2535,6 +2535,27 @@ def ogr_pg_53():
     return 'success'
 
 ###############################################################################
+# Test reading AsEWKB()
+
+def ogr_pg_54():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT AsEWKB(GeomFromEWKT('POINT (0 1 2)'))")
+    feat = sql_lyr.GetNextFeature()
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (0 1 2)':
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2651,6 +2672,7 @@ gdaltest_list_internal = [
     ogr_pg_51,
     ogr_pg_52,
     ogr_pg_53,
+    ogr_pg_54,
     ogr_pg_cleanup ]
 
 ###############################################################################
