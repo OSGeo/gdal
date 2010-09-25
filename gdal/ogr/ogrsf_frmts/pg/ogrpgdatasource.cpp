@@ -652,6 +652,18 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 #endif
 
+#ifdef notdef
+    /* This would be the quickest fix... instead, ogrpglayer has been updated to support */
+    /* bytea hex format */
+    if (sPostgreSQLVersion.nMajor >= 9)
+    {
+        /* Starting with PostgreSQL 9.0, the default output format for values of type bytea */
+        /* is hex, whereas we traditionnaly expect escape */
+        hResult = PQexec(hPGConn, "SET bytea_output TO escape");
+        OGRPGClearResult( hResult );
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Test to see if this database instance has support for the       */
 /*      PostGIS Geometry type.  If so, disable sequential scanning      */
