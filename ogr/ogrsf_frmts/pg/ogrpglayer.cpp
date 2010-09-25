@@ -634,8 +634,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             if ( EQUAL(PQfname(hCursorResult,iField),"ST_AsBinary") ||
                  EQUAL(PQfname(hCursorResult,iField),"AsBinary") )
             {
-                GByte * pabyWKB = (GByte*) PQgetvalue( hCursorResult,
+                GByte* pabyVal = (GByte*) PQgetvalue( hCursorResult,
                                              iRecord, iField);
+                const char* pszVal = (const char*) pabyVal;
 
                 int nLength = PQgetlength(hCursorResult, iRecord, iField);
 
@@ -645,15 +646,15 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     
                 OGRGeometry * poGeom = NULL;
                 if( !poDS->bUseBinaryCursor && nLength >= 4 &&
-                    (EQUALN((const char*)pabyWKB,"\\000",4) || EQUALN((const char*)pabyWKB,"\\001",4)) )
+                    /* escaped byea data */
+                    (strncmp(pszVal, "\\000",4) == 0 || strncmp(pszVal, "\\001",4) == 0 ||
+                    /* hex bytea data (PostgreSQL >= 9.0) */
+                     strncmp(pszVal, "\\x00",4) == 0 || strncmp(pszVal, "\\x01",4) == 0) )
                 {
-                    const char* pszBYTEA = (const char*)pabyWKB;
-                    pabyWKB = BYTEAToGByteArray(pszBYTEA, &nLength);
-                    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeom, nLength );
-                    CPLFree(pabyWKB);
+                    poGeom = BYTEAToGeometry(pszVal);
                 }
                 else
-                    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeom, nLength );
+                    OGRGeometryFactory::createFromWkb( pabyVal, NULL, &poGeom, nLength );
                 
                 if( poGeom != NULL )
                 {
@@ -743,12 +744,12 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
         else if( EQUAL(PQfname(hCursorResult,iField),"WKB_GEOMETRY") )
         {
             OGRGeometry *poGeometry = NULL;
-            char * pabyData = PQgetvalue( hCursorResult, iRecord, iField);
+            GByte* pabyData = (GByte*) PQgetvalue( hCursorResult, iRecord, iField);
 
             if( bWkbAsOid )
             {
                 poGeometry =
-                    OIDToGeometry( (Oid) atoi(pabyData) );
+                    OIDToGeometry( (Oid) atoi((const char*)pabyData) );
             }
             else
             {
@@ -759,11 +760,11 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                    )
                 {
                     int nLength = PQgetlength(hCursorResult, iRecord, iField);
-                    poGeometry = EWKBToGeometry((GByte*)pabyData, nLength);
+                    poGeometry = EWKBToGeometry(pabyData, nLength);
                 }
                 if (poGeometry == NULL)
                 {
-                    poGeometry = BYTEAToGeometry( pabyData );
+                    poGeometry = BYTEAToGeometry( (const char*)pabyData );
                 }
             }
 
@@ -1607,6 +1608,10 @@ GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
         if (pnLength) *pnLength = 0;
         return NULL;
     }
+
+    /* hex bytea data (PostgreSQL >= 9.0) */
+    if (pszBytea[0] == '\\' && pszBytea[1] == 'x')
+        return CPLHexToBinary(pszBytea + 2, pnLength);
 
     pabyData = (GByte *) CPLMalloc(strlen(pszBytea));
 
