@@ -655,8 +655,11 @@ def ogr_pg_14():
 
 
     sql_lyr = ds.ExecuteSQL( "select * from pg_timezone_names where name = 'Canada/Newfoundland'" )
-    has_tz = sql_lyr.GetFeatureCount() != 0
-    ds.ReleaseResultSet(sql_lyr)
+    if sql_lyr is None:
+        has_tz = True
+    else:
+        has_tz = sql_lyr.GetFeatureCount() != 0
+        ds.ReleaseResultSet(sql_lyr)
 
     if has_tz:
         ds.ExecuteSQL( 'set timezone to "Canada/Newfoundland"' )
