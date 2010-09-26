@@ -1969,7 +1969,8 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
  * with CSLDestroy().
  * 
  * The returned filenames will normally be relative or absolute paths 
- * depending on the path used to originally open the dataset.
+ * depending on the path used to originally open the dataset.  The strings
+ * will be UTF8 encoded.
  *
  * This method is the same as the C GDALGetFileList() function.
  *
@@ -2119,7 +2120,7 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  * This function will try to open the passed file, or virtual dataset
  * name by invoking the Open method of each registered GDALDriver in turn. 
  * The first successful open will result in a returned dataset.  If all
- * drivers fail then NULL is returned.
+ * drivers fail then NULL is returned and an error is issued.
  *
  * Several recommandations :
  * <ul>
@@ -2136,7 +2137,8 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  *
  * @param pszFilename the name of the file to access.  In the case of
  * exotic drivers this may not refer to a physical file, but instead contain
- * information for the driver on how to access a dataset.
+ * information for the driver on how to access a dataset.  It should be in UTF8
+ * encoding.
  *
  * @param eAccess the desired access, either GA_Update or GA_ReadOnly.  Many
  * drivers support only read only access.
@@ -2241,7 +2243,8 @@ GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
  *
  * @param pszFilename the name of the file to access.  In the case of
  * exotic drivers this may not refer to a physical file, but instead contain
- * information for the driver on how to access a dataset.
+ * information for the driver on how to access a dataset.  It should be in 
+ * UTF8 encoding.
  *
  * @param eAccess the desired access, either GA_Update or GA_ReadOnly.  Many
  * drivers support only read only access.
