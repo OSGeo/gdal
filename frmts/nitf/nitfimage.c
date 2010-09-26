@@ -53,6 +53,7 @@ static void NITFPossibleIGEOLOReorientation( NITFImage *psImage );
 void NITFGetGCP ( const char* pachCoord, double *pdfXYs, int iCoord );
 int NITFReadBLOCKA_GCPs ( NITFImage *psImage );
 
+#define GOTO_header_too_small() do { nFaultyLine = __LINE__; goto header_too_small; } while(0)
 
 /************************************************************************/
 /*                          NITFImageAccess()                           */
@@ -68,6 +69,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     int        nOffset, iBand, i;
     int        nNICOM;
     const char* pszIID1;
+    int        nFaultyLine = -1;
     
 /* -------------------------------------------------------------------- */
 /*      Verify segment, and return existing image accessor if there     */
@@ -183,7 +185,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         if( EQUALN(pachHeader+284,"999998",6) )
         {
             if (psSegInfo->nSegmentHeaderSize < 370 + 40 + 1)
-                goto header_too_small;
+                GOTO_header_too_small();
             GetMD( psImage, pachHeader, 290,  40, ISDEVT );
             nOffset += 40;
         }
@@ -213,7 +215,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     if( !EQUALN(psFile->szVersion,"NITF01.",7) )
     {
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 35+2)
-            goto header_too_small;
+            GOTO_header_too_small();
 
         psImage->nRows = atoi(NITFGetField(szTemp,pachHeader,nOffset,8));
         psImage->nCols = atoi(NITFGetField(szTemp,pachHeader,nOffset+8,8));
@@ -236,7 +238,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      to conform to 2.1 conventions.                                  */
 /* -------------------------------------------------------------------- */
     if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 1)
-        goto header_too_small;
+        GOTO_header_too_small();
 
     GetMD( psImage, pachHeader, nOffset, 1, ICORDS );
 
@@ -257,7 +259,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
         psImage->bHaveIGEOLO = TRUE;
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 4 * 15)
-            goto header_too_small;
+            GOTO_header_too_small();
 
         GetMD( psImage, pachHeader, nOffset, 60, IGEOLO );
 
@@ -347,11 +349,11 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     {
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 1 )
-            goto header_too_small;
+            GOTO_header_too_small();
 
         nNICOM = atoi(NITFGetField( szTemp, pachHeader, nOffset++, 1));
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 80 * nNICOM )
-            goto header_too_small;
+            GOTO_header_too_small();
 
         psImage->pszComments = (char *) CPLMalloc(nNICOM*80+1);
         NITFGetField( psImage->pszComments, pachHeader,
@@ -363,7 +365,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      Read more stuff.                                                */
 /* -------------------------------------------------------------------- */
     if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 2 )
-        goto header_too_small;
+        GOTO_header_too_small();
 
     NITFGetField( psImage->szIC, pachHeader, nOffset, 2 );
     nOffset += 2;
@@ -371,7 +373,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     if( psImage->szIC[0] != 'N' )
     {
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 4 )
-            goto header_too_small;
+            GOTO_header_too_small();
 
         NITFGetField( psImage->szCOMRAT, pachHeader, nOffset, 4 );
         nOffset += 4;
@@ -379,7 +381,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
     /* NBANDS */
     if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 1 )
-        goto header_too_small;
+        GOTO_header_too_small();
     psImage->nBands = atoi(NITFGetField(szTemp,pachHeader,nOffset,1));
     nOffset++;
 
@@ -387,7 +389,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     if( psImage->nBands == 0 )
     {
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 5 )
-            goto header_too_small;
+            GOTO_header_too_small();
         psImage->nBands = atoi(NITFGetField(szTemp,pachHeader,nOffset,5));
         nOffset += 5;
     }
@@ -417,7 +419,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         int nLUTS;
 
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 2 + 6 + 4 + 1 + 5)
-            goto header_too_small;
+            GOTO_header_too_small();
 
         NITFTrimWhite(
             NITFGetField( psBandInfo->szIREPBAND, pachHeader, nOffset, 2 ) );
@@ -454,7 +456,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         psBandInfo->pabyLUT = (unsigned char *) CPLCalloc(768,1);
         if ( (int)psSegInfo->nSegmentHeaderSize <
              nOffset + nLUTS * psBandInfo->nSignificantLUTEntries )
-            goto header_too_small;
+            GOTO_header_too_small();
 
         memcpy( psBandInfo->pabyLUT, pachHeader + nOffset, 
                 psBandInfo->nSignificantLUTEntries );
@@ -601,7 +603,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         if( nUserTREBytes > 3 )
         {
             if( (int)psSegInfo->nSegmentHeaderSize < nOffset + nUserTREBytes )
-                goto header_too_small;
+                GOTO_header_too_small();
 
             psImage->nTREBytes = nUserTREBytes - 3;
             psImage->pachTRE = (char *) CPLMalloc(psImage->nTREBytes);
@@ -614,21 +616,24 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         {
             psImage->nTREBytes = 0;
             psImage->pachTRE = NULL;
+
+            if (nUserTREBytes > 0)
+                nOffset += nUserTREBytes;
         }
 
 /* -------------------------------------------------------------------- */
 /*      Are there managed TRE bytes to recognise?                       */
 /* -------------------------------------------------------------------- */
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 5 )
-            goto header_too_small;
+            GOTO_header_too_small();
         nExtendedTREBytes = atoi(NITFGetField(szTemp,pachHeader,nOffset,5));
         nOffset += 5;
 
         if( nExtendedTREBytes > 3 )
         {
-            if( (int)psSegInfo->nSegmentHeaderSize < 
+            if( (int)psSegInfo->nSegmentHeaderSize <
                             nOffset + nExtendedTREBytes )
-                goto header_too_small;
+                GOTO_header_too_small();
 
             psImage->pachTRE = (char *) 
                 CPLRealloc( psImage->pachTRE, 
@@ -1051,7 +1056,8 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
 header_too_small:
 
-    CPLError(CE_Failure, CPLE_AppDefined, "Image header too small");
+    CPLError(CE_Failure, CPLE_AppDefined, "Image header too small (called from line %d)",
+             nFaultyLine);
     NITFImageDeaccess(psImage);
     return NULL;
 }
