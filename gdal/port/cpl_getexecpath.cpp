@@ -34,6 +34,8 @@ CPL_CVSID("$Id$");
 
 #if defined(WIN32) || defined(WIN32CE)
 
+#define HAVE_IMPLEMENTATION 1
+
 #if defined(WIN32CE)
 #  include "cpl_win32ce_api.h"
 #else
@@ -84,7 +86,35 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 #endif
 }
 
-#else /* ndef WIN32 */
+#endif
+
+/************************************************************************/
+/*                           CPLGetExecPath()                           */
+/************************************************************************/
+
+#if !defined(HAVE_IMPLEMENTATION) && defined(__linux)
+
+#include "cpl_multiproc.h"
+
+#define HAVE_IMPLEMENTATION 1
+
+int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
+{
+    long nPID = getpid();
+    CPLString osExeLink;
+    ssize_t nResultLen;
+
+    osExeLink.Printf( "/proc/%ld/exe", nPID );
+    nResultLen = readlink( osExeLink, pszPathBuf, nMaxLength );
+    if( nResultLen >= 0 )
+        pszPathBuf[nResultLen] = '\0';
+    else
+        pszPathBuf[0] = '\0';
+
+    return nResultLen > 0;
+}
+
+#endif
 
 /************************************************************************/
 /*                           CPLGetExecPath()                           */
@@ -95,7 +125,7 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
  *
  * The path to the executable currently running is returned.  This path
  * includes the name of the executable.   Currently this only works on 
- * win32 platform. 
+ * win32 platform.  The returned path is UTF-8 encoded.
  *
  * @param pszPathBuf the buffer into which the path is placed.
  * @param nMaxLength the buffer size, MAX_PATH+1 is suggested.
@@ -103,10 +133,13 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
  * @return FALSE on failure or TRUE on success.
  */
 
+#ifndef HAVE_IMPLEMENTATION
+
 int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 
 {
     return FALSE;
 }
+
 #endif
 
