@@ -49,6 +49,8 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDS, FILE *fp )
     this->fp = fp;
     this->poDS = poDS;
 
+    nNextAutoID = 1;
+
     poFeatureDefn = new OGRFeatureDefn( "entities" );
     poFeatureDefn->Reference();
 
@@ -441,6 +443,78 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                     PrepareLineTypeDefinition()                      */
+/************************************************************************/
+CPLString 
+OGRDXFWriterLayer::PrepareLineTypeDefinition( OGRFeature *poFeature, 
+                                              OGRStyleTool *poTool )
+
+{
+    CPLString osDef;
+    OGRStylePen *poPen = (OGRStylePen *) poTool;
+    GBool  bDefault;
+    const char *pszPattern;
+    
+/* -------------------------------------------------------------------- */
+/*      Fetch pattern.                                                  */
+/* -------------------------------------------------------------------- */
+    pszPattern = poPen->Pattern( bDefault );
+    if( bDefault || strlen(pszPattern) == 0 ) 
+        return "";
+
+/* -------------------------------------------------------------------- */
+/*      Split into pen up / pen down bits.                              */
+/* -------------------------------------------------------------------- */
+    char **papszTokens = CSLTokenizeString(pszPattern);
+    int i;
+    double dfTotalLength = 0;
+
+    for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
+    {
+        const char *pszToken = papszTokens[i];
+        const char *pszUnit;
+        CPLString osAmount;
+        CPLString osDXFEntry;
+
+        // Split amount and unit.
+        for( pszUnit = pszToken; 
+             strchr( "0123456789.", *pszUnit) != NULL;
+             *pszUnit++ ) {}
+
+        osAmount.assign(pszToken,(int) (pszUnit-pszToken));
+        
+        // If the unit is other than 'g' we really should be trying to 
+        // do some type of transformation - but what to do?  Pretty hard.
+        
+        // 
+
+        // Even entries are "pen down" represented as negative in DXF.
+        if( i%2 == 0 )
+            osDXFEntry.Printf( " 49\n-%s\n 74\n0\n", osAmount.c_str() );
+        else
+            osDXFEntry.Printf( " 49\n%s\n 74\n0\n", osAmount.c_str() );
+        
+        osDef += osDXFEntry;
+
+        dfTotalLength += atof(osAmount);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prefix 73 and 40 items to the definition.                       */
+/* -------------------------------------------------------------------- */
+    CPLString osPrefix;
+    
+    osPrefix.Printf( " 73\n%d\n 40\n%.6g\n", 
+                     CSLCount(papszTokens), 
+                     dfTotalLength );
+    osDef = osPrefix + osDef;
+
+    CSLDestroy( papszTokens );
+
+    return osDef;
+}
+
+/************************************************************************/
 /*                           WritePOLYLINE()                            */
 /************************************************************************/
 
@@ -550,7 +624,57 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
             WriteValue( 370, (int) floor(dfWidthInMM * 100 + 0.5) );
     }
 
-    delete poTool;
+/* -------------------------------------------------------------------- */
+/*      Do we have a Linetype for the feature?                          */
+/* -------------------------------------------------------------------- */
+    CPLString osLineType = poFeature->GetFieldAsString( "Linetype" );
+
+    if( osLineType.size() > 0 
+        && (poDS->oHeaderDS.LookupLineType( osLineType ) != NULL 
+            || oNewLineTypes.count(osLineType) > 0 ) )
+    {
+        // Already define -> just reference it.
+        WriteValue( 6, osLineType );
+    }
+    else if( poTool != NULL && poTool->GetType() == OGRSTCPen )
+    {
+        CPLString osDefinition = PrepareLineTypeDefinition( poFeature, 
+                                                            poTool );
+
+        if( osDefinition != "" && osLineType == "" )
+        {
+            // Is this definition already created and named?
+            std::map<CPLString,CPLString>::iterator it;
+
+            for( it = oNewLineTypes.begin();
+                 it != oNewLineTypes.end();
+                 it++ )
+            {
+                if( (*it).second == osDefinition )
+                {
+                    osLineType = (*it).first;
+                    break;
+                }
+            }
+
+            // create an automatic name for it.
+            if( osLineType == "" )
+            {
+                do 
+                { 
+                    osLineType.Printf( "AutoLineType-%d", nNextAutoID++ );
+                }
+                while( poDS->oHeaderDS.LookupLineType(osLineType) != NULL );
+            }
+        }
+
+        // If it isn't already defined, add it now.
+        if( osDefinition != "" && oNewLineTypes.count(osLineType) == 0 )
+        {
+            oNewLineTypes[osLineType] = osDefinition;
+            WriteValue( 6, osLineType );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write the vertices                                              */
@@ -570,6 +694,8 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         }
     }
     
+    delete poTool;
+
     return OGRERR_NONE;
 
 #ifdef notdef
