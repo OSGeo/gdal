@@ -1750,7 +1750,6 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
     GByte *pabyData = psResult->pabyData;
     int    nDataLen = psResult->nDataLen;
-    GByte *pabyDataAllocated = NULL;
 
     if( psResult->pszContentType 
         && strstr(psResult->pszContentType,"multipart") 
@@ -1764,9 +1763,7 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
             if (CSLFindString(psResult->pasMimePart[1].papszHeaders,
                               "Content-Transfer-Encoding: base64") != -1)
             {
-                pabyDataAllocated = (GByte*)CPLMalloc(nDataLen);
-                nDataLen = CPLBase64Decode(pabyDataAllocated, (const char*)pabyData, nDataLen);
-                pabyData = pabyDataAllocated;
+                nDataLen = CPLBase64DecodeInPlace(pabyData);
             }
         }
     }
@@ -1785,7 +1782,6 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
     if( fp == NULL )
     {
         CPLHTTPDestroyResult(psResult);
-        CPLFree(pabyDataAllocated);
         return NULL;
     }
 
@@ -1841,17 +1837,10 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Steal the memory buffer from HTTP result.                       */
 /* -------------------------------------------------------------------- */
-    if (pabyDataAllocated)
-    {
-        pabySavedDataBuffer = pabyDataAllocated;
-    }
-    else
-    {
-        pabySavedDataBuffer = psResult->pabyData;
+    pabySavedDataBuffer = psResult->pabyData;
 
-        psResult->pabyData = NULL;
-        psResult->nDataLen = psResult->nDataAlloc = 0;
-    }
+    psResult->pabyData = NULL;
+    psResult->nDataLen = psResult->nDataAlloc = 0;
 
     if( poDS == NULL )
         FlushMemoryResult();
