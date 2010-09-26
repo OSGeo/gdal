@@ -62,6 +62,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_base64.h"
 
 CPL_CVSID("$Id$");
 
@@ -595,7 +596,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 /* -------------------------------------------------------------------- */
 /*      Handle FID.                                                     */
 /* -------------------------------------------------------------------- */
-        if( bHasFid && EQUAL(PQfname(hCursorResult,iField),pszFIDColumn) )
+        if( bHasFid && EQUAL(pszFieldName,pszFIDColumn) )
         {
 #if !defined(PG_PRE74)
             if ( PQfformat( hCursorResult, iField ) == 1 ) // Binary data representation
@@ -632,7 +633,31 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
         if( bHasPostGISGeometry || bHasPostGISGeography )
         {
-            if ( EQUAL(pszFieldName,"ST_AsBinary") ||
+            if ( !poDS->bUseBinaryCursor &&
+                 EQUAL(pszFieldName,"BinaryBase64") )
+            {
+                GByte* pabyData = (GByte*)PQgetvalue( hCursorResult,
+                                                        iRecord, iField);
+
+                int nLength = PQgetlength(hCursorResult, iRecord, iField);
+
+                /* No geometry */
+                if (nLength == 0)
+                    continue;
+
+                nLength = CPLBase64DecodeInPlace(pabyData);
+                OGRGeometry * poGeom = NULL;
+                OGRGeometryFactory::createFromWkb( pabyData, NULL, &poGeom, nLength );
+
+                if( poGeom != NULL )
+                {
+                    poGeom->assignSpatialReference( poSRS );
+                    poFeature->SetGeometryDirectly( poGeom );
+                }
+
+                continue;
+            }
+            else if ( EQUAL(pszFieldName,"ST_AsBinary") ||
                  EQUAL(pszFieldName,"AsBinary") )
             {
                 GByte* pabyVal = (GByte*) PQgetvalue( hCursorResult,
@@ -657,6 +682,29 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 else
                     OGRGeometryFactory::createFromWkb( pabyVal, NULL, &poGeom, nLength );
                 
+                if( poGeom != NULL )
+                {
+                    poGeom->assignSpatialReference( poSRS );
+                    poFeature->SetGeometryDirectly( poGeom );
+                }
+
+                continue;
+            }
+            else if ( !poDS->bUseBinaryCursor &&
+                      EQUAL(pszFieldName,"EWKBBase64") )
+            {
+                GByte* pabyData = (GByte*)PQgetvalue( hCursorResult,
+                                                        iRecord, iField);
+
+                int nLength = PQgetlength(hCursorResult, iRecord, iField);
+
+                /* No geometry */
+                if (nLength == 0)
+                    continue;
+
+                nLength = CPLBase64DecodeInPlace(pabyData);
+                OGRGeometry * poGeom = EWKBToGeometry(pabyData, nLength);
+
                 if( poGeom != NULL )
                 {
                     poGeom->assignSpatialReference( poSRS );
@@ -733,9 +781,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
                 if( EQUALN(pszPostSRID,"00",2) || EQUALN(pszPostSRID,"01",2) )
                 {
-                    poGeometry =
-                        HEXToGeometry(
-                            PQgetvalue( hCursorResult, iRecord, iField ) );
+                    poGeometry = HEXToGeometry( pszWKT );
                 }
                 else
                     OGRGeometryFactory::createFromWkt( &pszPostSRID, NULL,
@@ -753,7 +799,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 /*      Handle raw binary geometry ... this hasn't been tested in a     */
 /*      while.                                                          */
 /* -------------------------------------------------------------------- */
-        else if( EQUAL(PQfname(hCursorResult,iField),"WKB_GEOMETRY") )
+        else if( EQUAL(pszFieldName,"WKB_GEOMETRY") )
         {
             OGRGeometry *poGeometry = NULL;
             GByte* pabyData = (GByte*) PQgetvalue( hCursorResult, iRecord, iField);
