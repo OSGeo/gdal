@@ -8,9 +8,9 @@
 <h1>AutoCAD DXF</h1>
 
 OGR supports reading most versions of AutoCAD DXF and writing AutoCAD 2000
-version files.  The entire contents of the file is represented as a single
-layer named "entities".  DXF is an ASCII format used for interchanging 
-AutoCAD drawings between different software packages.<p>
+version files.  DXF is an ASCII format used for interchanging AutoCAD drawings 
+between different software packages.  The entire contents of the file is 
+represented as a single layer named "entities".  <p>
 
 
 DXF files are considered to have no georeferencing information through OGR. 
@@ -43,7 +43,10 @@ in the insert.  Linework blocks are aggregated into a single feature with
 a geometry collection for the geometry.  Text blocks are returned as one or
 more text features. 
 <li> DIMENSION: This element is exploded into a feature with arrows and
-leaders, and a feature with the dimensio label.
+leaders, and a feature with the dimension label.
+<li> HATCH: Line and arc boundaries are collected as a polygon geometry, but 
+no effort is currently made to represent the fill style of HATCH entities.
+
 </ul>
 
 A reasonable attempt is made to preserve line color, line width, text size
@@ -51,11 +54,37 @@ and orientation via OGR feature styling information when translating elements.
 Currently no effort is made to preserve fill styles or complex line style
 attributes.<p>
 
-The approximation of arcs, ellipses, circles and rounded polylines as linestrings is done
-by splitting the arcs into subarcs of no more than a threshhold angle.  This
-angle is the OGR_ARC_STEPSIZE.  This defaults to four degrees, but may be
-overridden by setting the configuration variable OGR_ARC_STEPSIZE.<p>
+The approximation of arcs, ellipses, circles and rounded polylines as 
+linestrings is done by splitting the arcs into subarcs of no more than a 
+threshhold angle.  This angle is the OGR_ARC_STEPSIZE.  This defaults to 
+four degrees, but may be overridden by setting the configuration variable 
+OGR_ARC_STEPSIZE.<p>
 
+<h2>DXF_INLINE_BLOCKS</h2>
+
+The default behavior is for INSERT entities to be expanded with the 
+geometry of the BLOCK they reference.  However, if the DXF_INLINE_BLOCKS 
+configuration option is set to the value FALSE, then the behavior is different
+as described here.
+
+<ul>
+<li> A new layer will be available called blocks.  It will contain one or 
+more features for each BLOCK defined in the file.  In addition to the usual
+attributes, they will also have a BlockName attribute indicate what block
+they are part of.
+<li> The entities layer will have new attributes BlockName, BlockScale, 
+and BlockAngle. 
+<li> INSERT entities will populate these new fields with the corresponding
+information (they are null for all other entities). 
+<li> INSERT entities will not have block geometry inlined - instead they will 
+have a point geometry for the insertion point.
+</ul>
+
+The intention is that with DXF_INLINE_BLOCKS disabled, the block references
+will remain as references and the original block definitions will be
+available via the blocks layer.  On export this configuration 
+
+<hr>
 <h2>Creation Issues</h2>
 
 DXF files are written in AutoCAD 2000 format.  A standard header (everything
@@ -81,6 +110,62 @@ The dataset creation supports the following dataset creation options:<p>
 <li> <b>TRAILER=</b><i>filename</i>: Override the trailer file used - in place of trailer.dxf.<p>
 
 </ul>
+
+Note that in GDAL 1.8 and later, the header and trailer templates can
+be complete DXF files.  The driver will scan them and only extract the needed
+portions (portion before or after the ENTITIES section). <p>
+
+<h3>Block References</h3>
+
+It is possible to export a "blocks" layer to DXF in addition to the 
+"entities" layer in order to produce actual DXF BLOCKs in the output file, 
+and to write INSERT entities where applicable.  To make this work the follow
+conditions apply.
+
+<ul>
+<li> A "blocks" layer must be created, and it must be created before the 
+entities layer. 
+<li> The entities in the blocks layer should have the BlockName field
+populated.
+<li> Objects to be written as INSERTs in the entities layer should have a 
+POINT geometry, and the BlockName field set. 
+<li> If a block (name) is already defined in the template header, that will be
+used regardless of whether a new definition was provided in the blocks layer.
+</ul>
+
+The intention is that a simple translation from DXF to with DXF_INLINE_BLOCKS 
+set to FALSE will approximately reproduce the original blocks and keep 
+INSERT entities as INSERT entities rather than exploding them.<p>
+
+<h3>Layer Definitions</h3>
+
+When writing entities, if populated the LayerName field is used to set the 
+written entities layer.  If the layer is not already defined in the template
+header then a new layer definition will be introduced, copied from the 
+definition of the default layer ("0"). 
+
+<h3>Line Type Definitions</h2>
+
+When writing LWPOLYLINE entities the following rules apply with regard to
+Linetype definitions.<p>
+
+<ul>
+<li> If the Linetype field is set on the written features, and that Linetype
+is already defined in the template header then it will be referenced from
+the entities regardless of whether an OGR style string existed.
+<li> If the Linetype is set, but the Linetype is not predefined in the 
+header template, then a definition will be added if the feature has an 
+OGR style string with a PEN tool and a "p" pattern setting. 
+<li> If the feature has no Linetype field set, but it does have an OGR
+style string with a PEN tool with a "p" pattern set then an automatically
+named Linetype will be created in the output file. 
+<li> It is assumed that patterns are using "g" (georeferenced) units for
+defining the line pattern.  If not the scaling of the DXF patterns is likely to be wrong - potentially very wrong.
+</ul>
+
+The intention is that "dot dash" style patterns will be preserved when written
+to DXF and that specific linetypes can be predefined in the header template,
+and referenced using the Linetype field if desired.<p>
 
 </body>
 </html>
