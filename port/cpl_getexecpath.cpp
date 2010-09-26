@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -46,13 +47,41 @@ CPL_CVSID("$Id$");
 int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 {
 #ifndef WIN32CE
-    if( GetModuleFileName( NULL, pszPathBuf, nMaxLength ) == 0 )
+    if( CSLTestBoolean(
+            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        wchar_t *pwszPathBuf = (wchar_t*)
+            CPLCalloc(nMaxLength+1,sizeof(wchar_t));
+
+        if( GetModuleFileNameW( NULL, pwszPathBuf, nMaxLength ) == 0 )
+        {
+            CPLFree( pwszPathBuf );
+            return FALSE;
+        }
+        else
+        {
+            char *pszDecoded = 
+                CPLRecodeFromWChar(pwszPathBuf,CPL_ENC_UCS2,CPL_ENC_UTF8);
+
+            strncpy( pszPathBuf, pszDecoded, nMaxLength );
+            CPLFree( pszDecoded );
+            CPLFree( pwszPathBuf );
+            return TRUE;
+        }
+    }
+    else
+    {
+        if( GetModuleFileName( NULL, pszPathBuf, nMaxLength ) == 0 )
+            return FALSE;
+        else
+            return TRUE;
+    }
 #else
     if( CE_GetModuleFileNameA( NULL, pszPathBuf, nMaxLength ) == 0 )
-#endif
         return FALSE;
     else
         return TRUE;
+#endif
 }
 
 #else /* ndef WIN32 */
