@@ -355,7 +355,12 @@ retry_read_header:
     }
     nOffset += 5;
 
-    if( psFile->nTREBytes > 3 )
+    if( psFile->nTREBytes == 3 )
+    {
+        nOffset += 3; /* UDHOFL */
+        psFile->nTREBytes = 0;
+    }
+    else if( psFile->nTREBytes > 3 )
     {
         nOffset += 3; /* UDHOFL */
         psFile->nTREBytes -= 3;
