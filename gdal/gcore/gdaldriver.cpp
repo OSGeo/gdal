@@ -103,7 +103,7 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
  *
  * Equivelent of the C function GDALCreate().
  * 
- * @param pszFilename the name of the dataset to create.
+ * @param pszFilename the name of the dataset to create.  UTF-8 encoded.
  * @param nXSize width of created raster in pixels.
  * @param nYSize height of created raster in pixels.
  * @param nBands number of bands.
@@ -608,7 +608,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * also ensures that all the data and metadata has been written to the dataset
  * (GDALFlushCache() is not sufficient for that purpose).
  *
- * @param pszFilename the name for the new dataset. 
+ * @param pszFilename the name for the new dataset.  UTF-8 encoded.
  * @param poSrcDS the dataset being duplicated. 
  * @param bStrict TRUE if the copy must be strictly equivelent, or more
  * normally FALSE indicating that the copy may adapt as needed for the 

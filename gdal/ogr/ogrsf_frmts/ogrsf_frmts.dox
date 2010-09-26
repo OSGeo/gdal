@@ -48,7 +48,7 @@
 
   This method is the same as the C function OGROpen().
 
-  @param pszName the name of the file, or data source to open.
+  @param pszName the name of the file, or data source to open. UTF-8 encoded.
   @param bUpdate FALSE for read-only access (the default) or TRUE for 
          read-write access.
   @param ppoDriver if non-NULL, this argument will be updated with a 
@@ -512,13 +512,13 @@ based.
 
  This method is the same as the C function OGR_Dr_CreateDataSource().
 
- \note This method does <strong>NOT</strong> attach driver instance to the returned
- data source, so caller should expect that OGRDataSource::GetDriver() will
- return NULL pointer. In order to attach driver to the returned data soruce,
- it is required to use C function OGR_Dr_CreateDataSource.
+ \note This method does <strong>NOT</strong> attach driver instance to the 
+ returned  data source, so caller should expect that OGRDataSource::GetDriver()
+ will return NULL pointer. In order to attach driver to the returned data 
+ source, it is required to use C function OGR_Dr_CreateDataSource.
  This behavior is related to fix of issue reported in <a href="http://trac.osgeo.org/gdal/ticket/1223">Ticket #1233</a>. 
 
- @param pszName the name for the new data source.
+ @param pszName the name for the new data source. UTF-8 encoded.
  @param papszOptions a StringList of name=value options.  Options are driver
 specific, and driver information can be found at the following url:  
 http://www.gdal.org/ogr/ogr_formats.html 
@@ -546,7 +546,7 @@ success.
 
  @param hDriver handle to the driver on which data source creation is
 based.
- @param pszName the name for the new data source.
+ @param pszName the name for the new data source. UTF-8 encoded.
  @param papszOptions a StringList of name=value options.  Options are driver
 specific, and driver information can be found at the following url:  
 http://www.gdal.org/ogr/ogr_formats.html 
@@ -570,7 +570,7 @@ success.
    This method is the same as the C function OGR_Dr_CopyDataSource().
 
  @param poSrcDS source datasource
- @param pszNewName the name for the new data source.
+ @param pszNewName the name for the new data source. UTF-8 encoded.
  @param papszOptions a StringList of name=value options.  Options are driver
 specific, and driver information can be found at the following url:  
 http://www.gdal.org/ogr/ogr_formats.html 
