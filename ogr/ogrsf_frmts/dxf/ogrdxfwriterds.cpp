@@ -88,33 +88,8 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
 /*      Write trailer.                                                  */
 /* -------------------------------------------------------------------- */
     if( osTrailerFile != "" )
-    {
-        FILE *fpSrc = VSIFOpenL( osTrailerFile, "r" );
-        
-        if( fpSrc == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to open template trailer file '%s' for reading.", 
-                      osTrailerFile.c_str() );
-        }
+        TransferUpdateTrailer( fp );
 
-/* -------------------------------------------------------------------- */
-/*      Copy into our DXF file.                                         */
-/* -------------------------------------------------------------------- */
-        else
-        {
-            const char *pszLine;
-            
-            while( (pszLine = CPLReadLineL(fpSrc)) != NULL )
-            {
-                VSIFWriteL( pszLine, 1, strlen(pszLine), fp );
-                VSIFWriteL( "\n", 1, 1, fp );
-            }
-            
-            VSIFCloseL( fpSrc );
-        }
-    }
-        
 /* -------------------------------------------------------------------- */
 /*      Close file.                                                     */
 /* -------------------------------------------------------------------- */
@@ -212,8 +187,8 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Prescan the header and trailer for entity codes.                */
 /* -------------------------------------------------------------------- */
-    ScanForEntities( osHeaderFile );
-    ScanForEntities( osTrailerFile );
+    ScanForEntities( osHeaderFile, "HEADER" );
+    ScanForEntities( osTrailerFile, "TRAILER" );
 
 /* -------------------------------------------------------------------- */
 /*      Attempt to read the template header file so we have a list      */
@@ -318,7 +293,8 @@ int OGRDXFWriterDS::TransferUpdateHeader( FILE *fpOut )
     int nCode;
     CPLString osSection, osTable, osEntity;
 
-    while( (nCode = oHeaderDS.ReadValue( szLineBuf )) != -1 )
+    while( (nCode = oHeaderDS.ReadValue( szLineBuf )) != -1 
+           && osSection != "ENTITIES" )
     {
         if( nCode == 0 && EQUAL(szLineBuf,"ENDTAB") )
         {
@@ -335,6 +311,14 @@ int OGRDXFWriterDS::TransferUpdateHeader( FILE *fpOut )
             if( osTable == "BLOCK_RECORD" && poBlocksLayer )
             {
                 if( !WriteNewBlockRecords( fp ) )
+                    return FALSE;
+            }
+
+            // If at the end of the LTYPE TABLE consider inserting 
+            // missing layer type definitions.
+            if( osTable == "LTYPE" )
+            {
+                if( !WriteNewLineTypeRecords( fp ) )
                     return FALSE;
             }
 
@@ -412,6 +396,74 @@ int OGRDXFWriterDS::TransferUpdateHeader( FILE *fpOut )
 }    
 
 /************************************************************************/
+/*                       TransferUpdateTrailer()                        */
+/************************************************************************/
+
+int OGRDXFWriterDS::TransferUpdateTrailer( FILE *fpOut )
+{
+    OGRDXFReader oReader;
+    FILE *fp;
+
+/* -------------------------------------------------------------------- */
+/*      Open the file and setup a reader.                               */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpenL( osTrailerFile, "r" );
+
+    if( fp == NULL )
+        return FALSE;
+
+    oReader.Initialize( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Scan ahead to find the OBJECTS section.                         */
+/* -------------------------------------------------------------------- */
+    char szLineBuf[257];
+    int  nCode;
+
+    while( (nCode = oReader.ReadValue( szLineBuf )) != -1 )
+    {
+        if( nCode == 0 && EQUAL(szLineBuf,"SECTION") )
+        {
+            nCode = oReader.ReadValue( szLineBuf );
+            if( nCode == 2 && EQUAL(szLineBuf,"OBJECTS") )
+                break;
+        }
+    }
+
+    if( nCode == -1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to find OBJECTS section in trailer file '%s'.",
+                  osTrailerFile.c_str() );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Insert the "end of section" for ENTITIES, and the start of      */
+/*      the OBJECTS section.                                            */
+/* -------------------------------------------------------------------- */
+    WriteValue( fpOut, 0, "ENDSEC" );
+    WriteValue( fpOut, 0, "SECTION" );
+    WriteValue( fpOut, 2, "OBJECTS" );
+
+/* -------------------------------------------------------------------- */
+/*      Copy the remainder of the file.                                 */
+/* -------------------------------------------------------------------- */
+    while( (nCode = oReader.ReadValue( szLineBuf )) != -1 )
+    {
+        if( !WriteValue( fpOut, nCode, szLineBuf ) )
+        {
+            VSIFCloseL( fp );
+            return FALSE;
+        }
+    }
+
+    VSIFCloseL( fp );
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                      WriteNewLayerDefinitions()                      */
 /************************************************************************/
 
@@ -439,6 +491,37 @@ int  OGRDXFWriterDS::WriteNewLayerDefinitions( FILE * fpOut )
                     return FALSE;
             }
         }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                      WriteNewLineTypeRecords()                       */
+/************************************************************************/
+
+int OGRDXFWriterDS::WriteNewLineTypeRecords( FILE *fp )
+
+{
+    std::map<CPLString,CPLString>::iterator oIt;
+    std::map<CPLString,CPLString>& oNewLineTypes = 
+        poLayer->GetNewLineTypeMap();
+
+    for( oIt = oNewLineTypes.begin(); 
+         oIt != oNewLineTypes.end(); oIt++ )
+    {
+        WriteValue( fp, 0, "LTYPE" );
+        WriteEntityID( fp );
+        WriteValue( fp, 100, "AcDbSymbolTableRecord" );
+        WriteValue( fp, 100, "AcDbLinetypeTableRecord" );
+        WriteValue( fp, 2, (*oIt).first );
+        WriteValue( fp, 70, "0" );
+        WriteValue( fp, 3, "" );
+        WriteValue( fp, 72, "65" );
+        VSIFWriteL( (*oIt).second.c_str(), 1, (*oIt).second.size(), fp );
+
+        CPLDebug( "DXF", "Define Line type '%s'.", 
+                  (*oIt).first.c_str() );
     }
 
     return TRUE;
@@ -584,7 +667,8 @@ int OGRDXFWriterDS::WriteNewBlockDefinitions( FILE * fp )
 /*      creating new entities with conflicting ids.                     */
 /************************************************************************/
 
-void OGRDXFWriterDS::ScanForEntities( const char *pszFilename )
+void OGRDXFWriterDS::ScanForEntities( const char *pszFilename,
+                                      const char *pszTarget )
 
 {
     OGRDXFReader oReader;
@@ -605,10 +689,11 @@ void OGRDXFWriterDS::ScanForEntities( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     char szLineBuf[257];
     int  nCode;
+    const char *pszPortion = "HEADER";
 
     while( (nCode = oReader.ReadValue( szLineBuf )) != -1 )
     {
-        if( nCode == 5 || nCode == 105 )
+        if( (nCode == 5 || nCode == 105) && EQUAL(pszTarget,pszPortion) )
         {
             CPLString osEntity( szLineBuf );
 
@@ -617,6 +702,15 @@ void OGRDXFWriterDS::ScanForEntities( const char *pszFilename )
                           osEntity.c_str() );
             else
                 aosUsedEntities.insert( osEntity );
+        }
+
+        if( nCode == 0 && EQUAL(szLineBuf,"SECTION") )
+        {
+            nCode = oReader.ReadValue( szLineBuf );
+            if( nCode == 2 && EQUAL(szLineBuf,"ENTITIES") )
+                pszPortion = "BODY";
+            if( nCode == 2 && EQUAL(szLineBuf,"OBJECTS") )
+                pszPortion = "BODY";
         }
     }
 
