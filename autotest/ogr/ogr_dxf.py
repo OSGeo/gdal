@@ -64,7 +64,7 @@ def ogr_dxf_1():
         return 'fail'
 
     fc = gdaltest.dxf_layer.GetFeatureCount()
-    if fc != 14:
+    if fc != 16:
         gdaltest.post_reason( 'did not get expected feature count, got %d' % fc)
         return 'fail'
 
@@ -283,7 +283,7 @@ def ogr_dxf_9():
         feat = gdaltest.dxf_layer.GetNextFeature()
         feat.Destroy()
 
-    # block 
+    # block (merged geometries)
     feat = gdaltest.dxf_layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
@@ -292,6 +292,35 @@ def ogr_dxf_9():
         return 'fail'
 
     if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (79.069506278985116 121.003652476272777 0,79.716898725419625 118.892590150942851 0),LINESTRING (79.716898725419625 118.892590150942851 0,78.140638855839953 120.440702522851453 0),LINESTRING (78.140638855839953 120.440702522851453 0,80.139111190485622 120.328112532167196 0),LINESTRING (80.139111190485622 120.328112532167196 0,78.619146316248077 118.920737648613908 0),LINESTRING (78.619146316248077 118.920737648613908 0,79.041358781314059 120.975504978601705 0))' ):
+        return 'fail'
+
+    feat.Destroy()
+
+    # First of two MTEXTs
+    feat = gdaltest.dxf_layer.GetNextFeature()
+    if feat.GetField( 'Text' ) != 'TextSample1':
+        gdaltest.post_reason( 'Did not get expected first mtext.' )
+        return 'fail'
+
+    expected_style = 'LABEL(f:"Arial",t:"TextSample1",a:45,s:0.5g,p:5,c:#000000)'
+    if feat.GetStyleString() != expected_style:
+        gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'POINT (77.602201427662891 120.775897075866169 0)' ):
+        return 'fail'
+
+    # Second of two MTEXTs
+    feat = gdaltest.dxf_layer.GetNextFeature()
+    if feat.GetField( 'Text' ) != 'Second':
+        gdaltest.post_reason( 'Did not get expected second mtext.' )
+        return 'fail'
+    
+    if feat.GetField( 'SubClasses' ) != 'AcDbEntity:AcDbMText':
+        gdaltest.post_reason( 'Did not get expected subclasses.' )
+        return 'fail'
+    
+    if ogrtest.check_feature_geometry( feat, 'POINT (79.977331629005178 119.698291706738644 0)' ):
         return 'fail'
 
     feat.Destroy()
@@ -684,6 +713,34 @@ def ogr_dxf_16():
         gdaltest.post_reason( 'did not get expected layer name.' )
         return 'fail'
 
+    # First MTEXT 
+    feat = dxf_layer.GetNextFeature()
+    if feat.GetField( 'Text' ) != 'TextSample1':
+        gdaltest.post_reason( 'Did not get expected first mtext.' )
+        return 'fail'
+
+    expected_style = 'LABEL(f:"Arial",t:"TextSample1",a:45,s:0.5g,p:5,c:#000000)'
+    if feat.GetStyleString() != expected_style:
+        gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'POINT (-1.495452348993292 0.813702013422821 0)' ):
+        return 'fail'
+    
+    # Second MTEXT 
+    feat = dxf_layer.GetNextFeature()
+    if feat.GetField( 'Text' ) != 'Second':
+        gdaltest.post_reason( 'Did not get expected second mtext.' )
+        return 'fail'
+    
+    if feat.GetField( 'SubClasses' ) != 'AcDbEntity:AcDbMText':
+        gdaltest.post_reason( 'Did not get expected subclasses.' )
+        return 'fail'
+    
+    if ogrtest.check_feature_geometry( feat, 'POINT (0.879677852348995 -0.263903355704699 0)' ):
+        return 'fail'
+
+    # STAR geometry
     feat = dxf_layer.GetNextFeature()
 
     if feat.GetField('BlockName') != 'STAR':
@@ -807,6 +864,96 @@ def ogr_dxf_17():
     return 'success'
 
 ###############################################################################
+# Write a file with line patterns, and make sure corresponding Linetypes are
+# created.
+
+def ogr_dxf_18():
+
+    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_18.dxf',
+                                                     ['HEADER=data/header_extended.dxf'])
+
+    lyr = ds.CreateLayer( 'entities' )
+
+    # Write a feature with a predefined LTYPE in the header.
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('LINESTRING(0 0,25 25)') )
+    dst_feat.SetField( 'Linetype', 'DASHED' )
+    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:1mm,p:"12.0g 6.0g")' )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+    
+    # Write a feature with a named linetype but that isn't predefined in the header.
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('LINESTRING(5 5,30 30)') )
+    dst_feat.SetField( 'Linetype', 'DOTTED' )
+    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:1mm,p:"0.0g 4.0g")' )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+    
+    # Write a feature without a linetype name - it will be created.
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('LINESTRING(5 5,40 30)') )
+    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:1mm,p:"3.0g 4.0g")' )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+    
+    ds = None
+
+    # Reopen and check contents.
+
+    ds = ogr.Open('tmp/dxf_18.dxf')
+
+    lyr = ds.GetLayer(0)
+
+    # Check first feature.
+    feat = lyr.GetNextFeature()
+    if feat.GetField('Linetype') != 'DASHED':
+        gdaltest.post_reason( 'Got wrong linetype. (1)' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:1mm,p:"12.6999999999999993g 6.3499999999999996g")':
+        gdaltest.post_reason( "got wrong style string (1)" )
+        return 'fail'
+        
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING (0 0,25 25)' ):
+        return 'fail'
+
+    # Check second feature.
+    feat = lyr.GetNextFeature()
+    if feat.GetField('Linetype') != 'DOTTED':
+        gdaltest.post_reason( 'Got wrong linetype. (2)' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:1mm,p:"0.0g 4.0g")':
+        gdaltest.post_reason( "got wrong style string (2)" )
+        return 'fail'
+        
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING (5 5,30 30)' ):
+        return 'fail'
+
+    # Check third feature.
+    feat = lyr.GetNextFeature()
+    if feat.GetField('Linetype') != 'AutoLineType-1':
+        gdaltest.post_reason( 'Got wrong linetype. (3)' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:1mm,p:"3.0g 4.0g")':
+        gdaltest.post_reason( "got wrong style string (3)" )
+        return 'fail'
+        
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING (5 5,40 30)' ):
+        return 'fail'
+
+    # Cleanup
+    
+    lyr = None
+    ds = None
+    
+    os.unlink( 'tmp/dxf_18.dxf' )
+        
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -837,6 +984,7 @@ gdaltest_list = [
     ogr_dxf_15,
     ogr_dxf_16,
     ogr_dxf_17,
+    ogr_dxf_18,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
