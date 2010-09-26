@@ -25,8 +25,12 @@ with additional parameters as necessary<br>
 It's also possible to omit the database name and connect
 to a <em>default</em> database, with the same name as the user name.<br>
 <b>Note</b>: We use PQconnectdb() to make the connection, so any other options and defaults
-that would apply to it, apply to the name here (refer to the documentation of the PostgreSQL server. Here for <a href="http://www.postgresql.org/docs/8.4/interactive/libpq-connect.html">PostgreSQL 8.4</a>).
+that would apply to it, apply to the name here (refer to the documentation of the PostgreSQL server.
+Here for <a href="http://www.postgresql.org/docs/8.4/interactive/libpq-connect.html">PostgreSQL 8.4</a>).
 The PG: prefix is used to mark the name as a postgres connection string.<p>
+
+Starting with GDAL 1.8.0, the database opening should be significantly faster than in previous versions, so using tables= or
+schemas= options will not bring further noticeable speed-ups.<p>
 
 Starting with GDAL 1.6.0, the set of tables to be scanned can be overridden by specifying
 <i>tables=[schema.]table[(geom_column_name)][,[schema2.]table2[(geom_column_name2)],...]</i> within the connection string.
@@ -34,7 +38,11 @@ If the parameter is found, the driver skips enumeration of the tables as
 described in the next paragraph.<p>
 
 Starting with GDAL 1.7.0, it is possible to restrict the schemas that will be scanned while establishing
-the list of tables. This can be done by specifying <i>schemas=schema_name[,schema_name2]</i> within the connection string. This can also be a way of speeding up the connection to a PostgreSQL database if there are a lot of schemas. Note that if only one schema is listed, it will also be made automatically the active schema (and the schema name will not prefix the layer name). Otherwise, the active schema is still 'public', unless otherwise specified by the <i>active_schema=</i> option.<p>
+the list of tables. This can be done by specifying <i>schemas=schema_name[,schema_name2]</i> within the connection string.
+This can also be a way of speeding up the connection to a PostgreSQL database if there are a lot of schemas.
+Note that if only one schema is listed, it will also be made automatically the active schema
+(and the schema name will not prefix the layer name). Otherwise, the active schema is still 'public',
+unless otherwise specified by the <i>active_schema=</i> option.<p>
 
 Starting with GDAL 1.7.0, the active schema ('public' being the default) can be overridden by specifying
 <i>active_schema=schema_name</i> within the connection string. The active schema is the schema where tables
@@ -198,7 +206,8 @@ omitted it defaults to <i>wkb_geometry</i> for GEOM_TYPE=geometry, or <i>the_geo
 <li> <b>SCHEMA</b>: Set name of schema for new table.
 Using the same layer name in different schemas is supported, but not in the public schema and others. Note that
 using the -overwrite option of ogr2ogr and -lco SCHEMA= option at the same time will not work, as the ogr2ogr utility
-will not understand that the existing layer must be destroyed in the specified schema. Use the -nln option of ogr2ogr instead, or better the active_schema connection string. See below example.<p>
+will not understand that the existing layer must be destroyed in the specified schema. Use the -nln option of ogr2ogr instead,
+or better the active_schema connection string. See below example.<p>
 <li> <b>SPATIAL_INDEX</b>: (From GDAL 1.6.0) Set to ON by default. Creates a spatial index on the geometry column
 to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is available).<p>
 <li> <b>TEMPORARY</b>: (From GDAL 1.8.0) Set to OFF by default. Creates a temporary table instead of a permanent one.<p>
@@ -209,7 +218,12 @@ to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is ava
 <ul>
 <li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
 COPY is less robust than INSERT, but significantly faster.</li><p>
-<li><b>PGSQL_OGR_FID</b>: Set name of primary key instead of 'ogc_fid'.</li><p>
+<li><b>PGSQL_OGR_FID</b>: Set name of primary key instead of 'ogc_fid' (read-only, ignored by CreateLayer()).</li><p>
+<!-- Little interest to advertize PG_USE_TEXT... Just to keep it mind it exists for example for debugging -->
+<!-- <li><b>PG_USE_TEXT</b>: (GDAL >= 1.8.0) If set to "YES", geometries will be fetched as text instead of their default HEXEWKB form.</li></p> -->
+<li><b>PG_USE_BASE64</b>: (GDAL >= 1.8.0) If set to "YES", geometries will be fetched as BASE64 encoded EWKB instead of canonical HEX encoded EWKB.
+This reduces the amount of data to be transfered from 2 N to 1.333 N, where N is the size of EWKB data. However, it might be a
+bit slower than fetching in canonical form when the client and the server are on the same machine, so the default is NO.</li><p>
 </ul>
 
 <h3>Example</h3>
@@ -293,7 +307,8 @@ ogrinfo -ro -al PG:dbname=warmerda 'foo(geom2)'
 
 <li>
 <p>
-This example show how to list only the layers inside the schema apt200810 and apt200812. The layer names will be prefixed by the name of the schema they belong to. (Starting with GDAL 1.7.0)<p>
+This example show how to list only the layers inside the schema apt200810 and apt200812.
+The layer names will be prefixed by the name of the schema they belong to. (Starting with GDAL 1.7.0)<p>
 
 <pre>
 ogrinfo -ro PG:'dbname=warmerda schemas=apt200810,apt200812'
@@ -302,7 +317,8 @@ ogrinfo -ro PG:'dbname=warmerda schemas=apt200810,apt200812'
 
 <li>
 <p>
-This example shows using ogrinfo to list only the layers inside the schema named apt200810. Note that the layer names will not be prefixed by apt200810 as only one schema is listed. (Starting with GDAL 1.7.0)<p>
+This example shows using ogrinfo to list only the layers inside the schema named apt200810.
+Note that the layer names will not be prefixed by apt200810 as only one schema is listed. (Starting with GDAL 1.7.0)<p>
 
 <pre>
 ogrinfo -ro PG:'dbname=warmerda schemas=apt200810'
@@ -321,7 +337,8 @@ ogr2ogr -f PostgreSQL "PG:dbname=warmerda active_schema=apt200810" apt200810
 
 <li>
 <p>
-This example shows how to convert all the tables inside the schema apt200810 as a set of shapefiles inside the apt200810 directory.  Note that the layer names will not be prefixed by apt200810 as only one schema is listed (Starting with GDAL 1.7.0)<p>
+This example shows how to convert all the tables inside the schema apt200810 as a set of shapefiles inside the apt200810 directory.
+Note that the layer names will not be prefixed by apt200810 as only one schema is listed (Starting with GDAL 1.7.0)<p>
 
 <pre>
 ogr2ogr apt200810 PG:'dbname=warmerda schemas=apt200810'
@@ -336,7 +353,8 @@ This example shows how to overwrite an existing table in an existing schema. Not
 ogr2ogr -overwrite -f PostgreSQL "PG:dbname=warmerda" mytable.shp mytable -nln myschema.mytable
 </pre>
 
-Note that using -lco SCHEMA=mytable instead of -nln wouldn't have worked in that case (see <a href="http://trac.osgeo.org/gdal/ticket/2821">#2821</a> for more details).<p>
+Note that using -lco SCHEMA=mytable instead of -nln wouldn't have worked in that case
+(see <a href="http://trac.osgeo.org/gdal/ticket/2821">#2821</a> for more details).<p>
 
 If you need to overwrite many tables located in a schema at once, the -nln option is not
 the more appropriate, so it might be more convenient to use the active_schema connection
