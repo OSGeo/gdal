@@ -264,6 +264,10 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRErr              WriteINSERT( OGRFeature* );
 
     int                 ColorStringToDXFColor( const char * );
+    CPLString           PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
+
+    std::map<CPLString,CPLString> oNewLineTypes;
+    int                 nNextAutoID;
 
   public:
     OGRDXFWriterLayer( OGRDXFWriterDS *poDS, FILE *fp );
@@ -280,6 +284,8 @@ class OGRDXFWriterLayer : public OGRLayer
                                      int bApproxOK = TRUE );
 
     void                ResetFP( FILE * );
+
+    std::map<CPLString,CPLString>& GetNewLineTypeMap() { return oNewLineTypes;}
 };
 
 /************************************************************************/
@@ -335,12 +341,15 @@ class OGRDXFWriterDS : public OGRDataSource
     std::vector<CPLString> aosDefaultLayerText;
 
     std::set<CPLString> aosUsedEntities;
-    void                ScanForEntities( const char *pszFilename );
+    void                ScanForEntities( const char *pszFilename,
+                                         const char *pszTarget );
 
+    int                 WriteNewLineTypeRecords( FILE *fp );
     int                 WriteNewBlockRecords( FILE * );
     int                 WriteNewBlockDefinitions( FILE * );
     int                 WriteNewLayerDefinitions( FILE * );
     int                 TransferUpdateHeader( FILE * );
+    int                 TransferUpdateTrailer( FILE * );
 
   public:
                         OGRDXFWriterDS();
