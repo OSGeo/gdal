@@ -2068,10 +2068,10 @@ def ogr_pg_44():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'select', options = [ 'OVERWRITE=YES', 'GEOMETRY_NAME=where' ]  )
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'select', options = [ 'OVERWRITE=YES', 'GEOMETRY_NAME=where', 'DIM=3' ]  )
     ogrtest.quick_create_layer_def( gdaltest.pg_lyr, [ ('from', ogr.OFTReal)] )
     feat = ogr.Feature(gdaltest.pg_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0.5 0.5)'))
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0.5 0.5 1)'))
     gdaltest.pg_lyr.CreateFeature(feat)
     feat.Destroy()
 
@@ -2085,11 +2085,11 @@ def ogr_pg_44():
     if layer.GetFeatureCount() != 1:
         return 'fail'
     feat = layer.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0.5 0.5)':
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0.5 0.5 1)':
         return 'fail'
 
     feat = layer.GetFeature(1)
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0.5 0.5)':
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0.5 0.5 1)':
         return 'fail'
 
     sql_lyr = ds.ExecuteSQL('SELECT * FROM "select"')
@@ -2099,7 +2099,7 @@ def ogr_pg_44():
     if sql_lyr.GetFeatureCount() != 1:
         return 'fail'
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0.5 0.5)':
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0.5 0.5 1)':
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
