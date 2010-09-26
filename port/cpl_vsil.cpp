@@ -52,9 +52,10 @@ CPL_CVSID("$Id$");
  * This function used to be known as CPLReadDir(), but the old name is now 
  * deprecated. 
  *
- * @param pszPath the relative, or absolute path of a directory to read.
+ * @param pszPath the relative, or absolute path of a directory to read.  
+ * UTF-8 encoded.
  * @return The list of entries in the directory, or NULL if the directory
- * doesn't exist.
+ * doesn't exist.  Filenames are returned in UTF-8 encoding.
  */
 
 char **VSIReadDir(const char *pszPath)
@@ -96,7 +97,7 @@ char **CPLReadDir( const char *pszPath )
  *
  * Analog of the POSIX mkdir() function.
  *
- * @param pszPathname the path to the directory to create. 
+ * @param pszPathname the path to the directory to create. UTF-8 encoded.
  * @param mode the permissions mode.
  *
  * @return 0 on success or -1 on an error.
@@ -125,7 +126,7 @@ int VSIMkdir( const char *pszPathname, long mode )
  *
  * Analog of the POSIX unlink() function.
  *
- * @param pszFilename the path of the file to be deleted.
+ * @param pszFilename the path of the file to be deleted. UTF-8 encoded.
  *
  * @return 0 on success or -1 on an error.
  */
@@ -155,8 +156,8 @@ int VSIUnlink( const char * pszFilename )
  *
  * Analog of the POSIX rename() function.
  *
- * @param oldpath the name of the file to be renamed.
- * @param newpath the name the file should be given. 
+ * @param oldpath the name of the file to be renamed.  UTF-8 encoded.
+ * @param newpath the name the file should be given.  UTF-8 encoded.
  *
  * @return 0 on success or -1 on an error.
  */
@@ -185,7 +186,7 @@ int VSIRename( const char * oldpath, const char * newpath )
  *
  * Analog of the POSIX rmdir() function.
  *
- * @param pszDirname the path of the directory to be deleted.
+ * @param pszDirname the path of the directory to be deleted.  UTF-8 encoded.
  *
  * @return 0 on success or -1 on an error.
  */
@@ -217,7 +218,7 @@ int VSIRmdir( const char * pszDirname )
  *
  * Analog of the POSIX stat() function.
  *
- * @param pszFilename the path of the filesystem object to be queried.
+ * @param pszFilename the path of the filesystem object to be queried.  UTF-8 encoded.
  * @param psStatBuf the structure to load with information. 
  *
  * @return 0 on success or -1 on an error.
@@ -264,7 +265,7 @@ int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
  *
  * Analog of the POSIX fopen() function.
  *
- * @param pszFilename the file to open.
+ * @param pszFilename the file to open.  UTF-8 encoded.
  * @param pszAccess access requested (ie. "r", "r+", "w".  
  *
  * @return NULL on failure, or the file handle.
