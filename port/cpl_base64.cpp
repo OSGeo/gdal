@@ -32,7 +32,7 @@
 #include "cpl_base64.h"
 #include "cpl_string.h"
 
-/* From MapServer's mappostgis.c */
+/* Derived from MapServer's mappostgis.c */
 
 /*
 ** Decode a base64 character.
@@ -72,44 +72,51 @@ static const unsigned char CPLBase64DecodeChar[256] = {
     };
 
 /*
-** Decode base64 string "src" (null terminated)
-** into "dest" (not null terminated).
+** Decode base64 string "pszBase64" (null terminated) in place
 ** Returns length of decoded array or 0 on failure.
 */
-int CPLBase64Decode(unsigned char *dest, const char *src, int srclen) {
+int CPLBase64DecodeInPlace(GByte* pszBase64)
+{
+    if (pszBase64 && *pszBase64) {
 
-    if (src && *src) {
-
-        unsigned char *p = dest;
+        unsigned char *p = pszBase64;
         int i, j, k;
-        unsigned char *buf = (unsigned char*) CPLCalloc(srclen + 1, sizeof(unsigned char));
 
         /* Drop illegal chars first */
-        for (i=0, j=0; src[i]; i++) {
-            unsigned char c = src[i];
+        for (i=0, j=0; pszBase64[i]; i++) {
+            unsigned char c = pszBase64[i];
             if ( (CPLBase64DecodeChar[c] != 64) || (c == '=') ) {
-                buf[j++] = c;
+                pszBase64[j++] = c;
             }
         }
 
         for (k=0; k<j; k+=4) {
-            register unsigned char c1='A', c2='A', c3='A', c4='A';
-            register unsigned char b1=0, b2=0, b3=0, b4=0;
+            register unsigned char b1, b2, b3, b4, c3, c4;
 
-            c1 = buf[k];
+            b1 = CPLBase64DecodeChar[pszBase64[k]];
 
-            if (k+1<j) {
-                c2 = buf[k+1];
-            }
-            if (k+2<j) {
-                c3 = buf[k+2];
-            }
             if (k+3<j) {
-                c4 = buf[k+3];
+                b2 = CPLBase64DecodeChar[pszBase64[k+1]];
+                c3 = pszBase64[k+2];
+                c4 = pszBase64[k+3];
+            }
+            else if (k+2<j) {
+                b2 = CPLBase64DecodeChar[pszBase64[k+1]];
+                c3 = pszBase64[k+2];
+                c4 = 'A';
+            }
+            else if (k+1<j) {
+                b2 = CPLBase64DecodeChar[pszBase64[k+1]];
+                c3 = 'A';
+                c4 = 'A';
+            }
+            else
+            {
+                b2 = 0;
+                c3 = 'A';
+                c4 = 'A';
             }
 
-            b1 = CPLBase64DecodeChar[c1];
-            b2 = CPLBase64DecodeChar[c2];
             b3 = CPLBase64DecodeChar[c3];
             b4 = CPLBase64DecodeChar[c4];
 
@@ -121,8 +128,7 @@ int CPLBase64Decode(unsigned char *dest, const char *src, int srclen) {
                 *p++=(((b3&0x3)<<6)|b4 );
             }
         }
-        CPLFree(buf);
-        return(p-dest);
+        return(p-pszBase64);
     }
     return 0;
 }

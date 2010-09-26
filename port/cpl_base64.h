@@ -36,7 +36,7 @@
 
 CPL_C_START
 
-int CPLBase64Decode(unsigned char *dest, const char *src, int srclen);
+int CPL_DLL CPLBase64DecodeInPlace(GByte* pszBase64);
 
 CPL_C_END
 
