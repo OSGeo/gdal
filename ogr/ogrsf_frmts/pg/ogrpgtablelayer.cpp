@@ -719,9 +719,20 @@ CPLString OGRPGTableLayer::BuildFields()
         {
             if ( poDS->bUseBinaryCursor )
             {
-                osFieldList += "AsEWKB(\"";
+                osFieldList += "\"";
                 osFieldList += pszGeomColumn;
-                osFieldList += "\")";
+                osFieldList += "\"";
+            }
+            else if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) &&
+                     nCoordDimension != 4 && /* we don't know how to decode 4-dim EWKB for now */
+                      /* perhaps works also for older version, but I didn't check */
+                      (poDS->sPostGISVersion.nMajor > 1 ||
+                      (poDS->sPostGISVersion.nMajor == 1 && poDS->sPostGISVersion.nMinor >= 1)) )
+            {
+                /* This will return EWKB in an hex encoded form */
+                osFieldList += "\"";
+                osFieldList += pszGeomColumn;
+                osFieldList += "\"";
             }
             else if ( poDS->sPostGISVersion.nMajor >= 1 )
             {
@@ -743,6 +754,12 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += "ST_AsBinary(\"";
                 osFieldList += pszGeomColumn;
                 osFieldList += "\")";
+            }
+            else if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
+            {
+                osFieldList += "\"";
+                osFieldList += pszGeomColumn;
+                osFieldList += "\"";
             }
             else
             {
