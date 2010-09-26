@@ -1350,13 +1350,8 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
-    if( poFDefn == NULL )
-        return NULL;
-    
-    if( !IsFieldSet(iField) )
-        return NULL;
-    
-    if( poFDefn->GetType() == OFTIntegerList )
+    if( poFDefn != NULL && IsFieldSet(iField) &&
+        poFDefn->GetType() == OFTIntegerList )
     {
         if( pnCount != NULL )
             *pnCount = pauFields[iField].IntegerList.nCount;
@@ -1427,13 +1422,8 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
-    if( poFDefn == NULL )
-        return NULL;
-    
-    if( !IsFieldSet(iField) )
-        return NULL;
-    
-    if( poFDefn->GetType() == OFTRealList )
+    if( poFDefn != NULL && IsFieldSet(iField) &&
+        poFDefn->GetType() == OFTRealList )
     {
         if( pnCount != NULL )
             *pnCount = pauFields[iField].RealList.nCount;
@@ -1618,6 +1608,7 @@ GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
 
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsBinary", NULL );
+    VALIDATE_POINTER1( pnBytes, "OGR_F_GetFieldAsBinary", NULL );
 
     return ((OGRFeature *)hFeat)->GetFieldAsBinary(iField,pnBytes);
 }
