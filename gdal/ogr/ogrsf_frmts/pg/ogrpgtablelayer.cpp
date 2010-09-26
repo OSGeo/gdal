@@ -723,6 +723,13 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += pszGeomColumn;
                 osFieldList += "\"";
             }
+            else if (CSLTestBoolean(CPLGetConfigOption("PG_USE_BASE64", "NO")) &&
+                     nCoordDimension != 4 /* we don't know how to decode 4-dim EWKB for now */)
+            {
+                osFieldList += "encode(AsEWKB(\"";
+                osFieldList += pszGeomColumn;
+                osFieldList += "\"), 'base64') AS EWKBBase64";
+            }
             else if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) &&
                      nCoordDimension != 4 && /* we don't know how to decode 4-dim EWKB for now */
                       /* perhaps works also for older version, but I didn't check */
@@ -754,6 +761,12 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += "ST_AsBinary(\"";
                 osFieldList += pszGeomColumn;
                 osFieldList += "\")";
+            }
+            else if (CSLTestBoolean(CPLGetConfigOption("PG_USE_BASE64", "NO")))
+            {
+                osFieldList += "encode(ST_AsBinary(\"";
+                osFieldList += pszGeomColumn;
+                osFieldList += "\"), 'base64') AS BinaryBase64";
             }
             else if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
             {
