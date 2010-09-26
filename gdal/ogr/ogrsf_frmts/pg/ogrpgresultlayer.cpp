@@ -145,8 +145,10 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition(PGresult *hInitialResultI
         else if( nTypeOID == poDS->GetGeometryOID()  ||
                  nTypeOID == poDS->GetGeographyOID()  ||
                  EQUAL(oField.GetNameRef(),"ST_AsBinary") ||
+                 EQUAL(oField.GetNameRef(),"BinaryBase64") ||
                  EQUAL(oField.GetNameRef(),"ST_AsEWKT") ||
                  EQUAL(oField.GetNameRef(),"ST_AsEWKB") ||
+                 EQUAL(oField.GetNameRef(),"EWKBBase64") ||
                  EQUAL(oField.GetNameRef(),"ST_AsText") ||
                  EQUAL(oField.GetNameRef(),"AsBinary") ||
                  EQUAL(oField.GetNameRef(),"asEWKT") ||
