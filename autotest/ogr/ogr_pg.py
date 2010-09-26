@@ -2559,6 +2559,35 @@ def ogr_pg_54():
     return 'success'
 
 ###############################################################################
+# Test reading geoms as Base64 encoded strings
+
+def ogr_pg_55():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    layer = gdaltest.pg_ds.CreateLayer( 'ogr_pg_55', options = [ 'DIM=3' ]  )
+    feat = ogr.Feature(layer.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2 3)'))
+    layer.CreateFeature(feat)
+    feat = None
+
+    old_val = gdal.GetConfigOption('PG_USE_BASE64')
+    gdal.SetConfigOption('PG_USE_BASE64', 'YES')
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    layer = ds.GetLayerByName('ogr_pg_55')
+    feat = layer.GetNextFeature()
+    gdal.SetConfigOption('PG_USE_BASE64', old_val)
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (1 2 3)':
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2591,6 +2620,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_geog' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:no_pk_table' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:no_geometry_table' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_55' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -2676,6 +2706,7 @@ gdaltest_list_internal = [
     ogr_pg_52,
     ogr_pg_53,
     ogr_pg_54,
+    ogr_pg_55,
     ogr_pg_cleanup ]
 
 ###############################################################################
