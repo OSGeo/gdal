@@ -891,6 +891,7 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
 
 CHECK_NOT_UNDEF(char, method, method)
 CHECK_NOT_UNDEF(const char, name, name)
+CHECK_NOT_UNDEF(const char, utf8_path, path)
 CHECK_NOT_UNDEF(const char, request, request)
 CHECK_NOT_UNDEF(const char, cap, capability)
 CHECK_NOT_UNDEF(const char, statement, statement)
