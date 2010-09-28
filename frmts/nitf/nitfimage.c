@@ -2666,7 +2666,7 @@ static int NITFReadGEOLOB( NITFImage *psImage )
         psImage->dfLRY = psImage->dfLLY;
 
         psImage->bIsBoxCenterOfPixel = FALSE; // GEOLOB is edge of pixel.
-        psImage->chICORDS = 'D';
+        psImage->chICORDS = 'G';
         
         CPLDebug( "NITF", "IGEOLO bounds overridden by GEOLOB TRE." );
     }

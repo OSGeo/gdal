@@ -28,7 +28,8 @@ to the low precision IGEOLO information.  In case a BLOCKA instance is found,
 the higher precision coordinates of BLOCKA are used if the block data covers 
 the complete image - that is the L_LINES field with the row count for that 
 block is equal to the row count of the image. Additionally, all BLOCKA 
-instances are returned as metadata.
+instances are returned as metadata. If GeoSDE TRE are available, they will be
+used to provide higher precision coordinates.
 <P>
 
 Most file header and image header fields are returned as dataset level
@@ -125,6 +126,12 @@ tre-name should be at most six characters, and the tre-contents should be
 "backslash escaped" if it contains blackslashes or zero bytes.  The argument
 is the same format as returned in the TRE metadata domain when reading.<p>
 
+<li> <b>FILE_TRE=tre-name=tre-contents</b>: (GDAL >= 1.8.0) Similar to above options,
+except that the TREs are written in the file header, instead of the image header.<p>
+
+<li> <b>SDE_TRE=YES/NO</b>: (GDAL >= 1.8.0) Write GEOLOB and GEOPSB TREs to get
+more precise georeferencing. This is limited to geographic SRS, and to CreateCopy() for now.<p>
+
 </ul>
 
 
@@ -139,6 +146,7 @@ See Also: <p>
 <ul>
 <li><a href="frmt_nitf_advanced.html">Advanced GDAL NITF Driver Information</a>
 <li> <a href="http://164.214.2.51/ntb/">NITFS Technical Board Public Page</a>
+<li> <a href="http://www.gwg.nga.mil/ntb/baseline/docs/digest/part2_annex_d.pdf">DIGEST Part 2 Annex D (describe encoding of NITF Spatial Data Extensions)</a>
 <li> The <a href="frmt_ogdi.html">OGDI</a> driver supports many NITF based RPF
 products including CIB and CADRG.<p>
 <li> The <a href="frmt_various.html#RPFTOC">RPFTOC</a> driver is an alternative to the OGDI driver for CIB and CADRG products.<p>
