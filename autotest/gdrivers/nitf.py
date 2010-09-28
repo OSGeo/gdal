@@ -31,6 +31,7 @@
 import os
 import sys
 import gdal
+import osr
 import array
 import string
 import struct
@@ -1720,6 +1721,69 @@ def nitf_63():
     return 'success'
 
 ###############################################################################
+# Test SDE_TRE creation option
+
+def nitf_64():
+
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/nitf_64.tif', 256, 256, 1)
+    src_ds.SetGeoTransform([2.123456789, 0.123456789, 0, 49.123456789, 0, -0.123456789])
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS84')
+    src_ds.SetProjection(sr.ExportToWkt())
+
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['ICORDS=D'])
+    ds = None
+
+
+    ds = gdal.Open('/vsimem/nitf_64.ntf')
+    # One can notice that the topleft location is only precise to the 3th decimal !
+    expected_gt = (2.123270588235294, 0.12345882352941177, 0.0, 49.123729411764707, 0.0, -0.12345882352941176)
+    got_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(expected_gt[i] - got_gt[i]) > 1e-10:
+            gdaltest.post_reason('did not get expected GT in ICORDS=D mode')
+            print(got_gt)
+            return 'fail'
+    ds = None
+
+
+
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['ICORDS=G'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_64.ntf')
+    # One can notice that the topleft location is only precise to the 3th decimal !
+    expected_gt = (2.1235495642701521, 0.12345642701525053, 0.0, 49.123394880174288, 0.0, -0.12345642701525052)
+    got_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(expected_gt[i] - got_gt[i]) > 1e-10:
+            gdaltest.post_reason('did not get expected GT in ICORDS=G mode')
+            print(got_gt)
+            return 'fail'
+    ds = None
+    
+
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['SDE_TRE=YES'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_64.ntf')
+    # One can notice that the topleft location is precise up to the 9th decimal
+    expected_gt = (2.123456789, 0.1234567901234568, 0.0, 49.123456789000002, 0.0, -0.12345679012345678)
+    got_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(expected_gt[i] - got_gt[i]) > 1e-10:
+            gdaltest.post_reason('did not get expected GT in SDE_TRE mode')
+            print(got_gt)
+            return 'fail'
+    ds = None
+
+    src_ds = None
+    gdal.Unlink('/vsimem/nitf_64.tif')
+    gdal.Unlink('/vsimem/nitf_64.ntf')
+
+    return 'success'
+    
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -2655,6 +2719,7 @@ gdaltest_list = [
     nitf_61,
     nitf_62,
     nitf_63,
+    nitf_64,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
