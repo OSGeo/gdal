@@ -3698,6 +3698,14 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
         return NULL;
     }
 
+    const char* pszSDE_TRE = CSLFetchNameValue(papszOptions, "SDE_TRE");
+    if (pszSDE_TRE != NULL)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "SDE_TRE creation option ignored by Create() method (only valid in CreateCopy())" );
+    }
+    
+
 /* -------------------------------------------------------------------- */
 /*      Prepare for text and CGM segments.                              */
 /* -------------------------------------------------------------------- */
@@ -3991,6 +3999,108 @@ NITFDataset::NITFCreateCopy(
         }
 
         const char* pszICORDS = CSLFetchNameValue(papszFullOptions, "ICORDS");
+
+/* -------------------------------------------------------------------- */
+/*      Should we write DIGEST Spatial Data Extension TRE ?             */
+/* -------------------------------------------------------------------- */
+        const char* pszSDE_TRE = CSLFetchNameValue(papszFullOptions, "SDE_TRE");
+        int bSDE_TRE = pszSDE_TRE && CSLTestBoolean(pszSDE_TRE);
+        if (bSDE_TRE)
+        {
+            if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0
+                && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None &&
+                adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 &&
+                adfGeoTransform[5] < 0.0)
+            {
+                /* Override ICORDS to G if necessary */
+                if (pszICORDS != NULL && EQUAL(pszICORDS, "D"))
+                {
+                    papszFullOptions =
+                        CSLSetNameValue( papszFullOptions, "ICORDS", "G" );
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Forcing ICORDS=G when writing GEOLOB");
+                }
+                else
+                {
+                    /* Code a bit below will complain with other ICORDS value */
+                }
+
+                if (CSLPartialFindString(papszFullOptions, "TRE=GEOLOB=") != - 1)
+                {
+                    CPLDebug("NITF", "GEOLOB TRE was explicitely defined before. "
+                             "Overriding it with current georefencing info.");
+                }
+
+                /* Structure of SDE TRE documented here */
+                /*http://www.gwg.nga.mil/ntb/baseline/docs/digest/part2_annex_d.pdf */
+
+/* -------------------------------------------------------------------- */
+/*      Write GEOLOB TRE                                                */
+/* -------------------------------------------------------------------- */
+                char szGEOLOB[48+1];
+                char* pszGEOLOB = szGEOLOB;
+                double dfARV = 360.0 / adfGeoTransform[1];
+                double dfBRV = 360.0 / -adfGeoTransform[5];
+                double dfLSO = adfGeoTransform[0];
+                double dfPSO = adfGeoTransform[3];
+                sprintf(pszGEOLOB, "%09d", (int)(dfARV + 0.5)); pszGEOLOB += 9;
+                sprintf(pszGEOLOB, "%09d", (int)(dfBRV + 0.5)); pszGEOLOB += 9;
+                sprintf(pszGEOLOB, "%#+015.10f", dfLSO); pszGEOLOB += 15;
+                sprintf(pszGEOLOB, "%#+015.10f", dfPSO); pszGEOLOB += 15;
+                CPLAssert(pszGEOLOB == szGEOLOB + 48);
+
+                CPLString osGEOLOB("TRE=GEOLOB=");
+                osGEOLOB += szGEOLOB;
+                papszFullOptions = CSLAddString( papszFullOptions, osGEOLOB ) ;
+
+/* -------------------------------------------------------------------- */
+/*      Write GEOPSB TRE if not already explicitely provided            */
+/* -------------------------------------------------------------------- */
+                if (CSLPartialFindString(papszFullOptions, "FILE_TRE=GEOPSB=") == -1 &&
+                    CSLPartialFindString(papszFullOptions, "TRE=GEOPSB=") == -1)
+                {
+                    char szGEOPSB[443+1];
+                    memset(szGEOPSB, ' ', 443);
+                    szGEOPSB[443] = 0;
+    #define WRITE_STR_NOSZ(dst, src) memcpy(dst, src, strlen(src))
+                    char* pszGEOPSB = szGEOPSB;
+                    WRITE_STR_NOSZ(pszGEOPSB, "GEO"); pszGEOPSB += 3;
+                    WRITE_STR_NOSZ(pszGEOPSB, "DEG"); pszGEOPSB += 3;
+                    WRITE_STR_NOSZ(pszGEOPSB, "World Geodetic System 1984"); pszGEOPSB += 80;
+                    WRITE_STR_NOSZ(pszGEOPSB, "WGE"); pszGEOPSB += 4;
+                    WRITE_STR_NOSZ(pszGEOPSB, "World Geodetic System 1984"); pszGEOPSB += 80;
+                    WRITE_STR_NOSZ(pszGEOPSB, "WE"); pszGEOPSB += 3;
+                    WRITE_STR_NOSZ(pszGEOPSB, "Geodetic"); pszGEOPSB += 80; /* DVR */
+                    WRITE_STR_NOSZ(pszGEOPSB, "GEOD"); pszGEOPSB += 4; /* VDCDVR */
+                    WRITE_STR_NOSZ(pszGEOPSB, "Mean Sea"); pszGEOPSB += 80; /* SDA */
+                    WRITE_STR_NOSZ(pszGEOPSB, "MSL"); pszGEOPSB += 4; /* VDCSDA */
+                    WRITE_STR_NOSZ(pszGEOPSB, "000000000000000"); pszGEOPSB += 15; /* ZOR */
+                    pszGEOPSB += 3; /* GRD */
+                    pszGEOPSB += 80; /* GRN */
+                    WRITE_STR_NOSZ(pszGEOPSB, "0000"); pszGEOPSB += 4; /* ZNA */
+                    CPLAssert(pszGEOPSB == szGEOPSB + 443);
+
+                    CPLString osGEOPSB("FILE_TRE=GEOPSB=");
+                    osGEOPSB += szGEOPSB;
+                    papszFullOptions = CSLAddString( papszFullOptions, osGEOPSB ) ;
+                }
+                else
+                {
+                    CPLDebug("NITF", "GEOPSB TRE was explicitely defined before. Keeping it.");
+                }
+
+            }
+            else
+            {
+                CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+                    "Georeferencing info isn't compatible with writing a GEOLOB TRE (only geographic SRS handled for now)");
+                if (bStrict)
+                {
+                    CSLDestroy(papszFullOptions);
+                    return NULL;
+                }
+            }
+        }
 
         if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 
             && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
@@ -5360,7 +5470,8 @@ void GDALRegister_NITF()
                     apszFieldsBLOCKA[i], atoi(apszFieldsBLOCKA[i+2]));
             osCreationOptions += szFieldDescription;
         }
-
+        osCreationOptions +=
+"   <Option name='SDE_TRE' type='boolean' description='Write GEOLOB and GEOPSB TREs (only geographic SRS for now)' default='NO'/>";
         osCreationOptions += "</CreationOptionList>";
 
         poDriver = new GDALDriver();
