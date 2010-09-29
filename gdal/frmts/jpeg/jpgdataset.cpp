@@ -1490,6 +1490,49 @@ CPLErr JPGDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                    JPEGDatasetIsJPEGLS()                             */
+/************************************************************************/
+
+static int JPEGDatasetIsJPEGLS( GDALOpenInfo * poOpenInfo )
+
+{
+    GByte  *pabyHeader = poOpenInfo->pabyHeader;
+    int    nHeaderBytes = poOpenInfo->nHeaderBytes;
+
+    if( nHeaderBytes < 10 )
+        return FALSE;
+
+    if( pabyHeader[0] != 0xff
+        || pabyHeader[1] != 0xd8 )
+        return FALSE;
+
+    int nOffset = 2;
+    for (;nOffset + 4 < nHeaderBytes;)
+    {
+        if (pabyHeader[nOffset] != 0xFF)
+            return FALSE;
+
+        int nMarker = pabyHeader[nOffset + 1];
+        if (nMarker == 0xF7 /* JPEG Extension 7, JPEG-LS */)
+            return TRUE;
+        if (nMarker == 0xF8 /* JPEG Extension 8, JPEG-LS Extension */)
+            return TRUE;
+        if (nMarker == 0xC3 /* Start of Frame 3 */)
+            return TRUE;
+        if (nMarker == 0xC7 /* Start of Frame 7 */)
+            return TRUE;
+        if (nMarker == 0xCB /* Start of Frame 11 */)
+            return TRUE;
+        if (nMarker == 0xCF /* Start of Frame 15 */)
+            return TRUE;
+
+        nOffset += 2 + pabyHeader[nOffset + 2] * 256 + pabyHeader[nOffset + 3];
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -1518,6 +1561,11 @@ int JPGDataset::Identify( GDALOpenInfo * poOpenInfo )
         || pabyHeader[1] != 0xd8
         || pabyHeader[2] != 0xff )
         return FALSE;
+
+    if (JPEGDatasetIsJPEGLS(poOpenInfo))
+    {
+        return FALSE;
+    }
 
     return TRUE;
 }
@@ -1977,20 +2025,25 @@ static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
     int nBitBufSize = nYSize * ((nXSize+7)/8);
     int iX, iY;
     GByte *pabyBitBuf, *pabyMaskLine;
+    CPLErr eErr = CE_None;
 
 /* -------------------------------------------------------------------- */
 /*      Allocate uncompressed bit buffer.                               */
 /* -------------------------------------------------------------------- */
-    pabyBitBuf = (GByte *) CPLCalloc(1,nBitBufSize);
+    pabyBitBuf = (GByte *) VSICalloc(1,nBitBufSize);
 
-    pabyMaskLine = (GByte *) CPLMalloc(nXSize);
+    pabyMaskLine = (GByte *) VSIMalloc(nXSize);
+    if (pabyBitBuf == NULL || pabyMaskLine == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        eErr = CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set bit buffer from mask band, scanline by scanline.            */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = CE_None;
     int iBit = 0;
-    for( iY = 0; iY < nYSize; iY++ )
+    for( iY = 0; eErr == CE_None && iY < nYSize; iY++ )
     {
         eErr = poMask->RasterIO( GF_Read, 0, iY, nXSize, 1,
                                  pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
@@ -2016,8 +2069,16 @@ static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
 
     if( eErr == CE_None )
     {
-        pabyCMask = (GByte *) CPLMalloc(nBitBufSize + 30);
+        pabyCMask = (GByte *) VSIMalloc(nBitBufSize + 30);
+        if (pabyCMask == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            eErr = CE_Failure;
+        }
+    }
 
+    if ( eErr == CE_None )
+    {
         memset( &sStream, 0, sizeof(z_stream) );
         
         deflateInit( &sStream, 9 );
