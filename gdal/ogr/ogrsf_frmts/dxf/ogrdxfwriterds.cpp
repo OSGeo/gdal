@@ -56,45 +56,49 @@ OGRDXFWriterDS::OGRDXFWriterDS()
 OGRDXFWriterDS::~OGRDXFWriterDS()
 
 {
+    if (fp != NULL)
+    {
 /* -------------------------------------------------------------------- */
 /*      Transfer over the header into the destination file with any     */
 /*      adjustments or insertions needed.                               */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "DXF", "Compose final DXF file from components." );
+        CPLDebug( "DXF", "Compose final DXF file from components." );
 
-    TransferUpdateHeader( fp );
+        TransferUpdateHeader( fp );
 
+        if (fpTemp != NULL)
+        {
 /* -------------------------------------------------------------------- */
 /*      Copy in the temporary file contents.                            */
 /* -------------------------------------------------------------------- */
-    const char *pszLine;
+            const char *pszLine;
 
-    VSIFCloseL(fpTemp);
-    fpTemp = VSIFOpenL( osTempFilename, "r" );
+            VSIFCloseL(fpTemp);
+            fpTemp = VSIFOpenL( osTempFilename, "r" );
 
-    while( (pszLine = CPLReadLineL(fpTemp)) != NULL )
-    {
-        VSIFWriteL( pszLine, 1, strlen(pszLine), fp );
-        VSIFWriteL( "\n", 1, 1, fp );
-    }
-            
+            while( (pszLine = CPLReadLineL(fpTemp)) != NULL )
+            {
+                VSIFWriteL( pszLine, 1, strlen(pszLine), fp );
+                VSIFWriteL( "\n", 1, 1, fp );
+            }
+                    
 /* -------------------------------------------------------------------- */
 /*      Cleanup temporary file.                                         */
 /* -------------------------------------------------------------------- */
-    VSIFCloseL( fpTemp );
-    VSIUnlink( osTempFilename );
+            VSIFCloseL( fpTemp );
+            VSIUnlink( osTempFilename );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Write trailer.                                                  */
 /* -------------------------------------------------------------------- */
-    if( osTrailerFile != "" )
-        TransferUpdateTrailer( fp );
+        if( osTrailerFile != "" )
+            TransferUpdateTrailer( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Close file.                                                     */
 /* -------------------------------------------------------------------- */
-    if( fp != NULL )
-    {
+
         VSIFCloseL( fp );
         fp = NULL;
     }
