@@ -1502,3 +1502,7 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
     VSIFree($4);
     VSIFree($5);
 }
+
+%typemap(in) (const char *utf8_path) {
+    $1 = GDALPythonObjectToCStr( $input );
+}
