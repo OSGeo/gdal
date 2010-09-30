@@ -51,12 +51,21 @@ def rfc30_1():
 
     ds = gdal.Open( filename )
 
-    if ds is not None:
-        return 'success'
+    file_list = ds.GetFileList()
 
-    else:
+    if ds is None:
         gdaltest.post_reason( 'failed to open utf filename.' )
         return 'failure'
+
+    ds = None
+
+    ds = gdal.Open( file_list[0] )
+
+    if ds is None:
+        gdaltest.post_reason( 'failed to open utf filename (2).' )
+        return 'failure'
+
+    return 'success'
 
 ###############################################################################
 # Try creating, then renaming a utf-8 named file.
