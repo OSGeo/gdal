@@ -180,7 +180,7 @@ class Driver(_object):
 
     def CopyDataSource(self, *args, **kwargs):
         """
-        CopyDataSource(self, DataSource copy_ds, char name, char options = None) -> DataSource
+        CopyDataSource(self, DataSource copy_ds, char utf8_path, char options = None) -> DataSource
 
         OGRDataSourceH
         OGR_Dr_CopyDataSource(OGRSFDriverH hDriver, OGRDataSourceH hSrcDS,
@@ -215,7 +215,7 @@ class Driver(_object):
 
     def Open(self, *args, **kwargs):
         """
-        Open(self, char name, int update = 0) -> DataSource
+        Open(self, char utf8_path, int update = 0) -> DataSource
 
         OGRDataSourceH OGR_Dr_Open(OGRSFDriverH
         hDriver, const char *pszName, int bUpdate)
@@ -4160,7 +4160,7 @@ def Open(*args, **kwargs):
   return _ogr.Open(*args, **kwargs)
 
 def OpenShared(*args, **kwargs):
-  """OpenShared(char filename, int update = 0) -> DataSource"""
+  """OpenShared(char utf8_path, int update = 0) -> DataSource"""
   return _ogr.OpenShared(*args, **kwargs)
 
 def GetDriverByName(*args):
