@@ -332,9 +332,9 @@ public:
 %feature( "kwargs" ) CopyDataSource;
 #endif
   OGRDataSourceShadow *CopyDataSource( OGRDataSourceShadow* copy_ds, 
-                                  const char* name, 
+                                  const char* utf8_path, 
                                   char **options = 0 ) {
-    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, name, options);
+    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, utf8_path, options);
     return ds;
   }
   
@@ -342,9 +342,9 @@ public:
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Open;
 #endif
-  OGRDataSourceShadow *Open( const char* name, 
+  OGRDataSourceShadow *Open( const char* utf8_path, 
                         int update=0 ) {
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, name, update);
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_path, update);
     return ds;
   }
 
@@ -1874,9 +1874,9 @@ const char * OGR_GetFieldTypeName(OGRFieldType type);
 %feature( "kwargs" ) OpenShared;
 #endif
 %inline %{
-  OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
+  OGRDataSourceShadow* OpenShared( const char *utf8_path, int update =0 ) {
     CPLErrorReset();
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(utf8_path,update,NULL);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
         OGRReleaseDataSource(ds);

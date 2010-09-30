@@ -62,6 +62,11 @@ in (tostring argin ) - Required - Converts any argument in the script types to a
 In python this functionality directly calls AsString (ie str()) on the object.  This functionality
 could be reduced in other languages as long as it's documented.
 
+int (const char *utf_path) - Optional - 
+  Any inputs marked this way should be treated as utf-8, and if the language supports it
+  a conversion should be applied.  For many languages the default (the fallback const char *
+  handler) will be sufficient. 
+
 -------------------
 
 out (char **dict) - Required - The return value is a collection of name/value pairs.  This can be
