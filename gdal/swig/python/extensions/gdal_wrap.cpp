@@ -3358,13 +3358,13 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
 }
 
 
-void wrapper_VSIFileFromMemBuffer( const char* pszFilename, int nBytes, const GByte *pabyData)
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByte *pabyData)
 {
     GByte* pabyDataDup = (GByte*)VSIMalloc(nBytes);
     if (pabyDataDup == NULL)
             return;
     memcpy(pabyDataDup, pabyData, nBytes);
-    VSIFCloseL(VSIFileFromMemBuffer(pszFilename, (GByte*) pabyDataDup, nBytes, TRUE));
+    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nBytes, TRUE));
 }
 
 
@@ -3401,10 +3401,10 @@ SWIGINTERN char const *GDALMajorObjectShadow_GetMetadataItem(GDALMajorObjectShad
 SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadataItem(GDALMajorObjectShadow *self,char const *pszName,char const *pszValue,char const *pszDomain=""){
     return GDALSetMetadataItem( self, pszName, pszValue, pszDomain);
   }
-SWIGINTERN GDALDatasetShadow *GDALDriverShadow_Create(GDALDriverShadow *self,char const *name,int xsize,int ysize,int bands=1,GDALDataType eType=GDT_Byte,char **options=0){
+SWIGINTERN GDALDatasetShadow *GDALDriverShadow_Create(GDALDriverShadow *self,char const *utf8_path,int xsize,int ysize,int bands=1,GDALDataType eType=GDT_Byte,char **options=0){
 
     GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(    self, 
-                                                                name, 
+                                                                utf8_path, 
                                                                 xsize, 
                                                                 ysize, 
                                                                 bands, 
@@ -3412,10 +3412,10 @@ SWIGINTERN GDALDatasetShadow *GDALDriverShadow_Create(GDALDriverShadow *self,cha
                                                                 options );
     return ds;
   }
-SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self,char const *name,GDALDatasetShadow *src,int strict=1,char **options=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self,char const *utf8_path,GDALDatasetShadow *src,int strict=1,char **options=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
 
     GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self, 
-                                                                    name, 
+                                                                    utf8_path, 
                                                                     src, 
                                                                     strict, 
                                                                     options, 
@@ -3423,8 +3423,8 @@ SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self
                                                                     callback_data );
     return ds;
   }
-SWIGINTERN int GDALDriverShadow_Delete(GDALDriverShadow *self,char const *name){
-    return GDALDeleteDataset( self, name );
+SWIGINTERN int GDALDriverShadow_Delete(GDALDriverShadow *self,char const *utf8_path){
+    return GDALDeleteDataset( self, utf8_path );
   }
 SWIGINTERN int GDALDriverShadow_Rename(GDALDriverShadow *self,char const *newName,char const *oldName){
     return GDALRenameDataset( self, newName, oldName );
@@ -4925,9 +4925,9 @@ GDALDriverShadow* GetDriver( int i ) {
 }
 
 
-GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
   CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpen( name, eAccess );
+  GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
       if ( GDALDereferenceDataset( ds ) <= 0 )
@@ -4938,9 +4938,9 @@ GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
 }
 
 
-GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
   CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpenShared( name, eAccess );
+  GDALDatasetShadow *ds = GDALOpenShared( utf8_path, eAccess );
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
       if ( GDALDereferenceDataset( ds ) <= 0 )
@@ -4951,9 +4951,9 @@ GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnl
 }
 
 
-GDALDriverShadow *IdentifyDriver( const char *pszDatasource, 
+GDALDriverShadow *IdentifyDriver( const char *utf8_path, 
                                   char **papszSiblings = NULL ) {
-    return (GDALDriverShadow *) GDALIdentifyDriver( pszDatasource, 
+    return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path, 
 	                                            papszSiblings );
 }
 
@@ -5505,17 +5505,12 @@ fail:
 SWIGINTERN PyObject *_wrap_PushFinderLocation(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   PyObject * obj0 = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O:PushFinderLocation",&obj0)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PushFinderLocation" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
@@ -5529,10 +5524,8 @@ SWIGINTERN PyObject *_wrap_PushFinderLocation(PyObject *SWIGUNUSEDPARM(self), Py
     }
   }
   resultobj = SWIG_Py_Void();
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -5590,9 +5583,6 @@ SWIGINTERN PyObject *_wrap_FindFile(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
   int res1 ;
   char *buf1 = 0 ;
   int alloc1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   char *result = 0 ;
@@ -5603,11 +5593,9 @@ SWIGINTERN PyObject *_wrap_FindFile(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FindFile" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = reinterpret_cast< char * >(buf1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "FindFile" "', argument " "2"" of type '" "char const *""'");
+  {
+    arg2 = GDALPythonObjectToCStr( obj1 );
   }
-  arg2 = reinterpret_cast< char * >(buf2);
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
@@ -5622,11 +5610,9 @@ SWIGINTERN PyObject *_wrap_FindFile(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
   }
   resultobj = SWIG_FromCharPtr((const char *)result);
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return NULL;
 }
 
@@ -5634,18 +5620,13 @@ fail:
 SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   PyObject * obj0 = 0 ;
   char **result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O:ReadDir",&obj0)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ReadDir" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
@@ -5675,10 +5656,8 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     }
     CSLDestroy(result);
   }
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -5882,19 +5861,14 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   char *arg1 = (char *) 0 ;
   int arg2 ;
   GByte *arg3 = (GByte *) 0 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   int alloc2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"OO:FileFromMemBuffer",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FileFromMemBuffer" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
 #if PY_VERSION_HEX>=0x03000000
@@ -5935,11 +5909,6 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
 #endif
   }
   {
-    if (!arg1) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
@@ -5952,7 +5921,6 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
     }
   }
   resultobj = SWIG_Py_Void();
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
     if( alloc2 == SWIG_NEWOBJ ) {
@@ -5961,7 +5929,6 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
     if( alloc2 == SWIG_NEWOBJ ) {
@@ -6041,9 +6008,6 @@ SWIGINTERN PyObject *_wrap_Mkdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   int arg2 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
@@ -6051,11 +6015,9 @@ SWIGINTERN PyObject *_wrap_Mkdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"OO:Mkdir",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Mkdir" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   ecode2 = SWIG_AsVal_int(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Mkdir" "', argument " "2"" of type '" "int""'");
@@ -6074,10 +6036,8 @@ SWIGINTERN PyObject *_wrap_Mkdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -6085,18 +6045,13 @@ fail:
 SWIGINTERN PyObject *_wrap_Rmdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   PyObject * obj0 = 0 ;
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:Rmdir",&obj0)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Rmdir" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
@@ -6110,10 +6065,8 @@ SWIGINTERN PyObject *_wrap_Rmdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -6170,9 +6123,6 @@ SWIGINTERN PyObject *_wrap_VSIFOpenL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   char *arg2 = (char *) 0 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
@@ -6181,21 +6131,14 @@ SWIGINTERN PyObject *_wrap_VSIFOpenL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   FILE *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"OO:VSIFOpenL",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFOpenL" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "VSIFOpenL" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  {
-    if (!arg1) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
@@ -6209,11 +6152,9 @@ SWIGINTERN PyObject *_wrap_VSIFOpenL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_void, 0 |  0 );
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return NULL;
 }
@@ -7112,9 +7053,6 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
   char **arg7 = (char **) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
   int val3 ;
   int ecode3 = 0 ;
   int val4 ;
@@ -7131,7 +7069,7 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
   PyObject * obj5 = 0 ;
   PyObject * obj6 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "name",(char *) "xsize",(char *) "ysize",(char *) "bands",(char *) "eType",(char *) "options", NULL 
+    (char *) "self",(char *) "utf8_path",(char *) "xsize",(char *) "ysize",(char *) "bands",(char *) "eType",(char *) "options", NULL 
   };
   GDALDatasetShadow *result = 0 ;
   
@@ -7141,11 +7079,9 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_Create" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_Create" "', argument " "2"" of type '" "char const *""'");
+  {
+    arg2 = GDALPythonObjectToCStr( obj1 );
   }
-  arg2 = reinterpret_cast< char * >(buf2);
   ecode3 = SWIG_AsVal_int(obj2, &val3);
   if (!SWIG_IsOK(ecode3)) {
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Driver_Create" "', argument " "3"" of type '" "int""'");
@@ -7194,11 +7130,6 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
     }
   }
   {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
@@ -7211,14 +7142,12 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg7 );
   }
   return resultobj;
 fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg7 );
@@ -7238,9 +7167,6 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   void *arg7 = (void *) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
   void *argp3 = 0 ;
   int res3 = 0 ;
   int val4 ;
@@ -7253,7 +7179,7 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   PyObject * obj5 = 0 ;
   PyObject * obj6 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "name",(char *) "src",(char *) "strict",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
+    (char *) "self",(char *) "utf8_path",(char *) "src",(char *) "strict",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
   };
   GDALDatasetShadow *result = 0 ;
   
@@ -7270,11 +7196,9 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_CreateCopy" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_CreateCopy" "', argument " "2"" of type '" "char const *""'");
+  {
+    arg2 = GDALPythonObjectToCStr( obj1 );
   }
-  arg2 = reinterpret_cast< char * >(buf2);
   res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res3)) {
     SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Driver_CreateCopy" "', argument " "3"" of type '" "GDALDatasetShadow *""'"); 
@@ -7344,11 +7268,6 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
     }
   }
   {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
     if (!arg3) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
     }
@@ -7366,7 +7285,6 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg5 );
@@ -7379,7 +7297,6 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   return resultobj;
 fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg5 );
@@ -7400,9 +7317,6 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   int result;
@@ -7413,15 +7327,8 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_Delete" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_Delete" "', argument " "2"" of type '" "char const *""'");
-  }
-  arg2 = reinterpret_cast< char * >(buf2);
   {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
+    arg2 = GDALPythonObjectToCStr( obj1 );
   }
   {
     if ( bUseExceptions ) {
@@ -7436,10 +7343,8 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
 fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return NULL;
 }
 
@@ -19628,9 +19533,6 @@ SWIGINTERN PyObject *_wrap_Open(PyObject *SWIGUNUSEDPARM(self), PyObject *args) 
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   GDALAccess arg2 = (GDALAccess) GA_ReadOnly ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
@@ -19638,22 +19540,15 @@ SWIGINTERN PyObject *_wrap_Open(PyObject *SWIGUNUSEDPARM(self), PyObject *args) 
   GDALDatasetShadow *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O|O:Open",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Open" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   if (obj1) {
     ecode2 = SWIG_AsVal_int(obj1, &val2);
     if (!SWIG_IsOK(ecode2)) {
       SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Open" "', argument " "2"" of type '" "GDALAccess""'");
     } 
     arg2 = static_cast< GDALAccess >(val2);
-  }
-  {
-    if (!arg1) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
   }
   {
     if ( bUseExceptions ) {
@@ -19668,10 +19563,8 @@ SWIGINTERN PyObject *_wrap_Open(PyObject *SWIGUNUSEDPARM(self), PyObject *args) 
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -19680,9 +19573,6 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   GDALAccess arg2 = (GDALAccess) GA_ReadOnly ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
@@ -19690,22 +19580,15 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
   GDALDatasetShadow *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O|O:OpenShared",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OpenShared" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   if (obj1) {
     ecode2 = SWIG_AsVal_int(obj1, &val2);
     if (!SWIG_IsOK(ecode2)) {
       SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "OpenShared" "', argument " "2"" of type '" "GDALAccess""'");
     } 
     arg2 = static_cast< GDALAccess >(val2);
-  }
-  {
-    if (!arg1) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
   }
   {
     if ( bUseExceptions ) {
@@ -19720,10 +19603,8 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -19732,19 +19613,14 @@ SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   char **arg2 = (char **) NULL ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   GDALDriverShadow *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O|O:IdentifyDriver",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "IdentifyDriver" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   if (obj1) {
     {
       /* %typemap(in) char **options */
@@ -19781,14 +19657,12 @@ SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObje
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg2 );
   }
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg2 );
@@ -19897,22 +19771,22 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetLastErrorNo", _wrap_GetLastErrorNo, METH_VARARGS, (char *)"GetLastErrorNo() -> int"},
 	 { (char *)"GetLastErrorType", _wrap_GetLastErrorType, METH_VARARGS, (char *)"GetLastErrorType() -> int"},
 	 { (char *)"GetLastErrorMsg", _wrap_GetLastErrorMsg, METH_VARARGS, (char *)"GetLastErrorMsg() -> char"},
-	 { (char *)"PushFinderLocation", _wrap_PushFinderLocation, METH_VARARGS, (char *)"PushFinderLocation(char pszLocation)"},
+	 { (char *)"PushFinderLocation", _wrap_PushFinderLocation, METH_VARARGS, (char *)"PushFinderLocation(char utf8_path)"},
 	 { (char *)"PopFinderLocation", _wrap_PopFinderLocation, METH_VARARGS, (char *)"PopFinderLocation()"},
 	 { (char *)"FinderClean", _wrap_FinderClean, METH_VARARGS, (char *)"FinderClean()"},
-	 { (char *)"FindFile", _wrap_FindFile, METH_VARARGS, (char *)"FindFile(char pszClass, char pszBasename) -> char"},
-	 { (char *)"ReadDir", _wrap_ReadDir, METH_VARARGS, (char *)"ReadDir(char pszDirName) -> char"},
+	 { (char *)"FindFile", _wrap_FindFile, METH_VARARGS, (char *)"FindFile(char pszClass, char utf8_path) -> char"},
+	 { (char *)"ReadDir", _wrap_ReadDir, METH_VARARGS, (char *)"ReadDir(char utf8_path) -> char"},
 	 { (char *)"SetConfigOption", _wrap_SetConfigOption, METH_VARARGS, (char *)"SetConfigOption(char pszKey, char pszValue)"},
 	 { (char *)"GetConfigOption", _wrap_GetConfigOption, METH_VARARGS, (char *)"GetConfigOption(char pszKey, char pszDefault = None) -> char"},
 	 { (char *)"CPLBinaryToHex", _wrap_CPLBinaryToHex, METH_VARARGS, (char *)"CPLBinaryToHex(int nBytes, GByte pabyData) -> char"},
 	 { (char *)"CPLHexToBinary", _wrap_CPLHexToBinary, METH_VARARGS, (char *)"CPLHexToBinary(char pszHex, int pnBytes) -> GByte"},
-	 { (char *)"FileFromMemBuffer", _wrap_FileFromMemBuffer, METH_VARARGS, (char *)"FileFromMemBuffer(char pszFilename, int nBytes)"},
+	 { (char *)"FileFromMemBuffer", _wrap_FileFromMemBuffer, METH_VARARGS, (char *)"FileFromMemBuffer(char utf8_path, int nBytes)"},
 	 { (char *)"Unlink", _wrap_Unlink, METH_VARARGS, (char *)"Unlink(char pszFilename) -> int"},
 	 { (char *)"HasThreadSupport", _wrap_HasThreadSupport, METH_VARARGS, (char *)"HasThreadSupport() -> int"},
-	 { (char *)"Mkdir", _wrap_Mkdir, METH_VARARGS, (char *)"Mkdir(char pszPath, int mode) -> int"},
-	 { (char *)"Rmdir", _wrap_Rmdir, METH_VARARGS, (char *)"Rmdir(char pszPath) -> int"},
+	 { (char *)"Mkdir", _wrap_Mkdir, METH_VARARGS, (char *)"Mkdir(char utf8_path, int mode) -> int"},
+	 { (char *)"Rmdir", _wrap_Rmdir, METH_VARARGS, (char *)"Rmdir(char utf8_path) -> int"},
 	 { (char *)"Rename", _wrap_Rename, METH_VARARGS, (char *)"Rename(char pszOld, char pszNew) -> int"},
-	 { (char *)"VSIFOpenL", _wrap_VSIFOpenL, METH_VARARGS, (char *)"VSIFOpenL(char pszFilename, char pszMode) -> FILE"},
+	 { (char *)"VSIFOpenL", _wrap_VSIFOpenL, METH_VARARGS, (char *)"VSIFOpenL(char utf8_path, char pszMode) -> FILE"},
 	 { (char *)"VSIFCloseL", _wrap_VSIFCloseL, METH_VARARGS, (char *)"VSIFCloseL(FILE arg0)"},
 	 { (char *)"VSIFSeekL", _wrap_VSIFSeekL, METH_VARARGS, (char *)"VSIFSeekL(FILE arg0, long arg1, int arg2) -> int"},
 	 { (char *)"VSIFTellL", _wrap_VSIFTellL, METH_VARARGS, (char *)"VSIFTellL(FILE arg0) -> long"},
@@ -19932,15 +19806,16 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Driver_LongName_get", _wrap_Driver_LongName_get, METH_VARARGS, (char *)"Driver_LongName_get(Driver self) -> char"},
 	 { (char *)"Driver_HelpTopic_get", _wrap_Driver_HelpTopic_get, METH_VARARGS, (char *)"Driver_HelpTopic_get(Driver self) -> char"},
 	 { (char *)"Driver_Create", (PyCFunction) _wrap_Driver_Create, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
-		"Driver_Create(Driver self, char name, int xsize, int ysize, int bands = 1, \n"
-		"    GDALDataType eType = GDT_Byte, char options = None) -> Dataset\n"
+		"Driver_Create(Driver self, char utf8_path, int xsize, int ysize, \n"
+		"    int bands = 1, GDALDataType eType = GDT_Byte, \n"
+		"    char options = None) -> Dataset\n"
 		""},
 	 { (char *)"Driver_CreateCopy", (PyCFunction) _wrap_Driver_CreateCopy, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
-		"Driver_CreateCopy(Driver self, char name, Dataset src, int strict = 1, \n"
+		"Driver_CreateCopy(Driver self, char utf8_path, Dataset src, int strict = 1, \n"
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> Dataset\n"
 		""},
-	 { (char *)"Driver_Delete", _wrap_Driver_Delete, METH_VARARGS, (char *)"Driver_Delete(Driver self, char name) -> int"},
+	 { (char *)"Driver_Delete", _wrap_Driver_Delete, METH_VARARGS, (char *)"Driver_Delete(Driver self, char utf8_path) -> int"},
 	 { (char *)"Driver_Rename", _wrap_Driver_Rename, METH_VARARGS, (char *)"Driver_Rename(Driver self, char newName, char oldName) -> int"},
 	 { (char *)"Driver_Register", _wrap_Driver_Register, METH_VARARGS, (char *)"Driver_Register(Driver self) -> int"},
 	 { (char *)"Driver_Deregister", _wrap_Driver_Deregister, METH_VARARGS, (char *)"Driver_Deregister(Driver self)"},
@@ -20265,9 +20140,9 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetDriverCount", _wrap_GetDriverCount, METH_VARARGS, (char *)"GetDriverCount() -> int"},
 	 { (char *)"GetDriverByName", _wrap_GetDriverByName, METH_VARARGS, (char *)"GetDriverByName(char name) -> Driver"},
 	 { (char *)"GetDriver", _wrap_GetDriver, METH_VARARGS, (char *)"GetDriver(int i) -> Driver"},
-	 { (char *)"Open", _wrap_Open, METH_VARARGS, (char *)"Open(char name, GDALAccess eAccess = GA_ReadOnly) -> Dataset"},
-	 { (char *)"OpenShared", _wrap_OpenShared, METH_VARARGS, (char *)"OpenShared(char name, GDALAccess eAccess = GA_ReadOnly) -> Dataset"},
-	 { (char *)"IdentifyDriver", _wrap_IdentifyDriver, METH_VARARGS, (char *)"IdentifyDriver(char pszDatasource, char papszSiblings = None) -> Driver"},
+	 { (char *)"Open", _wrap_Open, METH_VARARGS, (char *)"Open(char utf8_path, GDALAccess eAccess = GA_ReadOnly) -> Dataset"},
+	 { (char *)"OpenShared", _wrap_OpenShared, METH_VARARGS, (char *)"OpenShared(char utf8_path, GDALAccess eAccess = GA_ReadOnly) -> Dataset"},
+	 { (char *)"IdentifyDriver", _wrap_IdentifyDriver, METH_VARARGS, (char *)"IdentifyDriver(char utf8_path, char papszSiblings = None) -> Driver"},
 	 { (char *)"GeneralCmdLineProcessor", _wrap_GeneralCmdLineProcessor, METH_VARARGS, (char *)"GeneralCmdLineProcessor(char papszArgv, int nOptions = 0) -> char"},
 	 { NULL, NULL, 0, NULL }
 };

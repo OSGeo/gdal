@@ -179,7 +179,7 @@ def GetLastErrorMsg(*args):
   return _gdal.GetLastErrorMsg(*args)
 
 def PushFinderLocation(*args):
-  """PushFinderLocation(char pszLocation)"""
+  """PushFinderLocation(char utf8_path)"""
   return _gdal.PushFinderLocation(*args)
 
 def PopFinderLocation(*args):
@@ -191,11 +191,11 @@ def FinderClean(*args):
   return _gdal.FinderClean(*args)
 
 def FindFile(*args):
-  """FindFile(char pszClass, char pszBasename) -> char"""
+  """FindFile(char pszClass, char utf8_path) -> char"""
   return _gdal.FindFile(*args)
 
 def ReadDir(*args):
-  """ReadDir(char pszDirName) -> char"""
+  """ReadDir(char utf8_path) -> char"""
   return _gdal.ReadDir(*args)
 
 def SetConfigOption(*args):
@@ -215,7 +215,7 @@ def CPLHexToBinary(*args):
   return _gdal.CPLHexToBinary(*args)
 
 def FileFromMemBuffer(*args):
-  """FileFromMemBuffer(char pszFilename, int nBytes)"""
+  """FileFromMemBuffer(char utf8_path, int nBytes)"""
   return _gdal.FileFromMemBuffer(*args)
 
 def Unlink(*args):
@@ -227,11 +227,11 @@ def HasThreadSupport(*args):
   return _gdal.HasThreadSupport(*args)
 
 def Mkdir(*args):
-  """Mkdir(char pszPath, int mode) -> int"""
+  """Mkdir(char utf8_path, int mode) -> int"""
   return _gdal.Mkdir(*args)
 
 def Rmdir(*args):
-  """Rmdir(char pszPath) -> int"""
+  """Rmdir(char utf8_path) -> int"""
   return _gdal.Rmdir(*args)
 
 def Rename(*args):
@@ -239,7 +239,7 @@ def Rename(*args):
   return _gdal.Rename(*args)
 
 def VSIFOpenL(*args):
-  """VSIFOpenL(char pszFilename, char pszMode) -> FILE"""
+  """VSIFOpenL(char utf8_path, char pszMode) -> FILE"""
   return _gdal.VSIFOpenL(*args)
 
 def VSIFCloseL(*args):
@@ -329,20 +329,21 @@ class Driver(MajorObject):
     if _newclass:HelpTopic = _swig_property(_gdal.Driver_HelpTopic_get)
     def Create(self, *args, **kwargs):
         """
-        Create(self, char name, int xsize, int ysize, int bands = 1, GDALDataType eType = GDT_Byte, 
-            char options = None) -> Dataset
+        Create(self, char utf8_path, int xsize, int ysize, int bands = 1, 
+            GDALDataType eType = GDT_Byte, char options = None) -> Dataset
         """
         return _gdal.Driver_Create(self, *args, **kwargs)
 
     def CreateCopy(self, *args, **kwargs):
         """
-        CreateCopy(self, char name, Dataset src, int strict = 1, char options = None, 
-            GDALProgressFunc callback = None, void callback_data = None) -> Dataset
+        CreateCopy(self, char utf8_path, Dataset src, int strict = 1, char options = None, 
+            GDALProgressFunc callback = None, 
+            void callback_data = None) -> Dataset
         """
         return _gdal.Driver_CreateCopy(self, *args, **kwargs)
 
     def Delete(self, *args):
-        """Delete(self, char name) -> int"""
+        """Delete(self, char utf8_path) -> int"""
         return _gdal.Driver_Delete(self, *args)
 
     def Rename(self, *args):
@@ -1431,17 +1432,17 @@ def GetDriver(*args):
 GetDriver = _gdal.GetDriver
 
 def Open(*args):
-  """Open(char name, GDALAccess eAccess = GA_ReadOnly) -> Dataset"""
+  """Open(char utf8_path, GDALAccess eAccess = GA_ReadOnly) -> Dataset"""
   return _gdal.Open(*args)
 Open = _gdal.Open
 
 def OpenShared(*args):
-  """OpenShared(char name, GDALAccess eAccess = GA_ReadOnly) -> Dataset"""
+  """OpenShared(char utf8_path, GDALAccess eAccess = GA_ReadOnly) -> Dataset"""
   return _gdal.OpenShared(*args)
 OpenShared = _gdal.OpenShared
 
 def IdentifyDriver(*args):
-  """IdentifyDriver(char pszDatasource, char papszSiblings = None) -> Driver"""
+  """IdentifyDriver(char utf8_path, char papszSiblings = None) -> Driver"""
   return _gdal.IdentifyDriver(*args)
 IdentifyDriver = _gdal.IdentifyDriver
 
