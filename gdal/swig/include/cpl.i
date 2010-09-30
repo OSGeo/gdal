@@ -213,16 +213,16 @@ CPLErr CPLGetLastErrorType();
 #endif
 const char *CPLGetLastErrorMsg();
 
-void CPLPushFinderLocation( const char * pszLocation );
+void CPLPushFinderLocation( const char * utf8_path );
 
 void CPLPopFinderLocation();
 
 void CPLFinderClean();
 
-const char * CPLFindFile( const char *pszClass, const char *pszBasename );
+const char * CPLFindFile( const char *pszClass, const char *utf8_path );
 
 %apply (char **CSL) {char **};
-char **VSIReadDir( const char * pszDirName );
+char **VSIReadDir( const char * utf8_path );
 %clear char **;
 
 %apply Pointer NONNULL {const char * pszKey};
@@ -267,13 +267,13 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 %apply (int nLen, char *pBuf) {( int nBytes, const GByte *pabyData )};
 #endif
 %inline {
-void wrapper_VSIFileFromMemBuffer( const char* pszFilename, int nBytes, const GByte *pabyData)
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByte *pabyData)
 {
     GByte* pabyDataDup = (GByte*)VSIMalloc(nBytes);
     if (pabyDataDup == NULL)
             return;
     memcpy(pabyDataDup, pabyData, nBytes);
-    VSIFCloseL(VSIFileFromMemBuffer(pszFilename, (GByte*) pabyDataDup, nBytes, TRUE));
+    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nBytes, TRUE));
 }
 
 }
@@ -295,8 +295,8 @@ int wrapper_HasThreadSupport()
 }
 
 /* Added for GDAL 1.8 */
-int VSIMkdir(const char * pszPath, int mode );
-int VSIRmdir(const char * pszPath );
+int VSIMkdir(const char *utf8_path, int mode );
+int VSIRmdir(const char *utf8_path );
 int VSIRename(const char * pszOld, const char *pszNew );
 
 /* Added for GDAL 1.8 
@@ -310,11 +310,11 @@ typedef void FILE;
 
 #if defined(SWIGPERL)
 %apply RETURN_NONE_TRUE_IS_ERROR {RETURN_NONE};
-RETURN_NONE VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf );
+RETURN_NONE VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
 %clear RETURN_NONE;
 #endif
 
-FILE   *VSIFOpenL( const char *pszFilename, const char *pszMode );
+FILE   *VSIFOpenL( const char *utf8_path, const char *pszMode );
 void    VSIFCloseL( FILE * );
 int     VSIFSeekL( FILE *, long, int );
 long    VSIFTellL( FILE * );
