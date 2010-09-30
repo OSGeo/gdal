@@ -3081,8 +3081,8 @@ SWIGINTERN OGRDataSourceShadow *OGRDriverShadow_CreateDataSource(OGRDriverShadow
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, name, options);
     return ds;
   }
-SWIGINTERN OGRDataSourceShadow *OGRDriverShadow_CopyDataSource(OGRDriverShadow *self,OGRDataSourceShadow *copy_ds,char const *name,char **options=0){
-    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, name, options);
+SWIGINTERN OGRDataSourceShadow *OGRDriverShadow_CopyDataSource(OGRDriverShadow *self,OGRDataSourceShadow *copy_ds,char const *utf8_path,char **options=0){
+    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, utf8_path, options);
     return ds;
   }
 
@@ -3230,8 +3230,8 @@ SWIG_AsVal_int (PyObject * obj, int *val)
   return res;
 }
 
-SWIGINTERN OGRDataSourceShadow *OGRDriverShadow_Open(OGRDriverShadow *self,char const *name,int update=0){
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, name, update);
+SWIGINTERN OGRDataSourceShadow *OGRDriverShadow_Open(OGRDriverShadow *self,char const *utf8_path,int update=0){
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_path, update);
     return ds;
   }
 SWIGINTERN int OGRDriverShadow_DeleteDataSource(OGRDriverShadow *self,char const *name){
@@ -4119,9 +4119,9 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
   }
 
 
-  OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
+  OGRDataSourceShadow* OpenShared( const char *utf8_path, int update =0 ) {
     CPLErrorReset();
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(utf8_path,update,NULL);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
         OGRReleaseDataSource(ds);
@@ -4322,15 +4322,12 @@ SWIGINTERN PyObject *_wrap_Driver_CopyDataSource(PyObject *SWIGUNUSEDPARM(self),
   int res1 = 0 ;
   void *argp2 = 0 ;
   int res2 = 0 ;
-  int res3 ;
-  char *buf3 = 0 ;
-  int alloc3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "copy_ds",(char *) "name",(char *) "options", NULL 
+    (char *) "self",(char *) "copy_ds",(char *) "utf8_path",(char *) "options", NULL 
   };
   OGRDataSourceShadow *result = 0 ;
   
@@ -4345,11 +4342,9 @@ SWIGINTERN PyObject *_wrap_Driver_CopyDataSource(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_CopyDataSource" "', argument " "2"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRDataSourceShadow * >(argp2);
-  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Driver_CopyDataSource" "', argument " "3"" of type '" "char const *""'");
+  {
+    arg3 = GDALPythonObjectToCStr( obj2 );
   }
-  arg3 = reinterpret_cast< char * >(buf3);
   if (obj3) {
     {
       /* %typemap(in) char **options */
@@ -4374,11 +4369,6 @@ SWIGINTERN PyObject *_wrap_Driver_CopyDataSource(PyObject *SWIGUNUSEDPARM(self),
     }
   }
   {
-    if (!arg3) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
@@ -4391,14 +4381,12 @@ SWIGINTERN PyObject *_wrap_Driver_CopyDataSource(PyObject *SWIGUNUSEDPARM(self),
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_POINTER_OWN |  0 );
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg4 );
   }
   return resultobj;
 fail:
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg4 );
@@ -4414,16 +4402,13 @@ SWIGINTERN PyObject *_wrap_Driver_Open(PyObject *SWIGUNUSEDPARM(self), PyObject 
   int arg3 = (int) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
   int val3 ;
   int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "name",(char *) "update", NULL 
+    (char *) "self",(char *) "utf8_path",(char *) "update", NULL 
   };
   OGRDataSourceShadow *result = 0 ;
   
@@ -4433,22 +4418,15 @@ SWIGINTERN PyObject *_wrap_Driver_Open(PyObject *SWIGUNUSEDPARM(self), PyObject 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_Open" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDriverShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_Open" "', argument " "2"" of type '" "char const *""'");
+  {
+    arg2 = GDALPythonObjectToCStr( obj1 );
   }
-  arg2 = reinterpret_cast< char * >(buf2);
   if (obj2) {
     ecode3 = SWIG_AsVal_int(obj2, &val3);
     if (!SWIG_IsOK(ecode3)) {
       SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Driver_Open" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast< int >(val3);
-  }
-  {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
   }
   {
     if ( bUseExceptions ) {
@@ -4463,10 +4441,8 @@ SWIGINTERN PyObject *_wrap_Driver_Open(PyObject *SWIGUNUSEDPARM(self), PyObject 
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_POINTER_OWN |  0 );
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
 fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return NULL;
 }
 
@@ -14552,24 +14528,19 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   int arg2 = (int) 0 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   char *  kwnames[] = {
-    (char *) "filename",(char *) "update", NULL 
+    (char *) "utf8_path",(char *) "update", NULL 
   };
   OGRDataSourceShadow *result = 0 ;
   
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:OpenShared",kwnames,&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OpenShared" "', argument " "1"" of type '" "char const *""'");
+  {
+    arg1 = GDALPythonObjectToCStr( obj0 );
   }
-  arg1 = reinterpret_cast< char * >(buf1);
   if (obj1) {
     ecode2 = SWIG_AsVal_int(obj1, &val2);
     if (!SWIG_IsOK(ecode2)) {
@@ -14590,10 +14561,8 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_POINTER_OWN |  0 );
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -14795,7 +14764,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		""},
 	 { (char *)"Driver_CopyDataSource", (PyCFunction) _wrap_Driver_CopyDataSource, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
-		"Driver_CopyDataSource(Driver self, DataSource copy_ds, char name, char options = None) -> DataSource\n"
+		"Driver_CopyDataSource(Driver self, DataSource copy_ds, char utf8_path, char options = None) -> DataSource\n"
 		"\n"
 		"OGRDataSourceH\n"
 		"OGR_Dr_CopyDataSource(OGRSFDriverH hDriver, OGRDataSourceH hSrcDS,\n"
@@ -14827,7 +14796,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		""},
 	 { (char *)"Driver_Open", (PyCFunction) _wrap_Driver_Open, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
-		"Driver_Open(Driver self, char name, int update = 0) -> DataSource\n"
+		"Driver_Open(Driver self, char utf8_path, int update = 0) -> DataSource\n"
 		"\n"
 		"OGRDataSourceH OGR_Dr_Open(OGRSFDriverH\n"
 		"hDriver, const char *pszName, int bUpdate)\n"
@@ -17893,7 +17862,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetFieldTypeName", _wrap_GetFieldTypeName, METH_VARARGS, (char *)"GetFieldTypeName(OGRFieldType type) -> char"},
 	 { (char *)"GetOpenDS", _wrap_GetOpenDS, METH_VARARGS, (char *)"GetOpenDS(int ds_number) -> DataSource"},
 	 { (char *)"Open", (PyCFunction) _wrap_Open, METH_VARARGS | METH_KEYWORDS, (char *)"Open(char filename, int update = 0) -> DataSource"},
-	 { (char *)"OpenShared", (PyCFunction) _wrap_OpenShared, METH_VARARGS | METH_KEYWORDS, (char *)"OpenShared(char filename, int update = 0) -> DataSource"},
+	 { (char *)"OpenShared", (PyCFunction) _wrap_OpenShared, METH_VARARGS | METH_KEYWORDS, (char *)"OpenShared(char utf8_path, int update = 0) -> DataSource"},
 	 { (char *)"GetDriverByName", _wrap_GetDriverByName, METH_VARARGS, (char *)"GetDriverByName(char name) -> Driver"},
 	 { (char *)"GetDriver", _wrap_GetDriver, METH_VARARGS, (char *)"GetDriver(int driver_number) -> Driver"},
 	 { (char *)"GeneralCmdLineProcessor", _wrap_GeneralCmdLineProcessor, METH_VARARGS, (char *)"GeneralCmdLineProcessor(char papszArgv, int nOptions = 0) -> char"},
