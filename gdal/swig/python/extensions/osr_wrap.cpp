@@ -2918,14 +2918,23 @@ SWIG_From_int  (int value)
 /* Return a PyObject* from a NULL terminated C String */
 static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
 {
-#if PY_VERSION_HEX >= 0x03000000
   const unsigned char* pszIter = (const unsigned char*) pszStr;
   while(*pszIter != 0)
   {
     if (*pszIter > 127)
-        return PyBytes_FromString( pszStr );
+    {
+        PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "ignore");
+        if (pyObj != NULL)
+            return pyObj;
+#if PY_VERSION_HEX >= 0x03000000
+        return PyBytes_FromString(pszStr);
+#else
+        return PyString_FromString(pszStr);
+#endif
+    }
     pszIter ++;
   }
+#if PY_VERSION_HEX >= 0x03000000
   return PyUnicode_FromString(pszStr); 
 #else
   return PyString_FromString(pszStr);
@@ -2934,47 +2943,41 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
 
 /* Return a NULL terminated c String from a PyObject */
 /* Result must be freed with GDALPythonFreeCStr */
-static char* GDALPythonObjectToCStr(PyObject* pyObject)
+static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
 {
-#if PY_VERSION_HEX >= 0x03000000
+  *pbToFree = 0;
   if (PyUnicode_Check(pyObject))
   {
       char *pszStr;
       char *pszNewStr;
       Py_ssize_t nLen;
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
+#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
       pszNewStr = (char *) malloc(nLen+1);
       memcpy(pszNewStr, pszStr, nLen+1);
       Py_XDECREF(pyUTF8Str);
+      *pbToFree = 1;
       return pszNewStr;
   }
-  else if (PyBytes_Check(pyObject))
+  else 
   {
-      char *pszStr;
-      char *pszNewStr;
-      Py_ssize_t nLen;
-      PyBytes_AsStringAndSize(pyObject, &pszStr, &nLen);
-      pszNewStr = (char *) malloc(nLen+1);
-      memcpy(pszNewStr, pszStr, nLen+1);
-      return pszNewStr;
-  }
-  else
-  {
-      char *pszStr = (char *) malloc(1);
-      pszStr[0] = '\0';
-      return pszStr;
-  }
+#if PY_VERSION_HEX >= 0x03000000
+      return PyBytes_AsString(pyObject);
 #else
-  return PyString_AsString(pyObject);
+      return PyString_AsString(pyObject);
 #endif
+  }
 }
 
-#if PY_VERSION_HEX >= 0x03000000
-#define GDALPythonFreeCStr(x) free( (void*) (x) )
-#else
-#define GDALPythonFreeCStr(x) 
-#endif
+static void GDALPythonFreeCStr(void* ptr, int bToFree)
+{
+   if (bToFree)
+       free(ptr);
+}
 
 
 
@@ -10030,14 +10033,33 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
     
     int size = PySequence_Size(obj1);
     for (int i = 0; i < size; i++) {
-      char *pszItem = NULL;
       PyObject* pyObj = PySequence_GetItem(obj1,i);
-      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg2 = CSLAddString( arg2, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
+#endif
+      else
+      {
         Py_DECREF(pyObj);
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
       }
-      arg2 = CSLAddString( arg2, pszItem );
       Py_DECREF(pyObj);
     }
   }
