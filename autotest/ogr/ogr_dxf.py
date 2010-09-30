@@ -626,7 +626,7 @@ def ogr_dxf_15():
         return 'fail'
         
     if feat.GetField('Layer') != '0':
-        print feat.GetField('Layer')
+        print(feat.GetField('Layer'))
         gdaltest.post_reason( 'Did not get expected layer, 0.' )
         return 'fail'
         
@@ -650,7 +650,7 @@ def ogr_dxf_15():
     abc_off = txt_2.find('abc\n')
 
     if txt_2[:abc_off] + '0' + txt_2[abc_off+3:] != txt_1:
-        print txt_2[:abc_off] + '0' + txt_2[abc_off+3:]
+        print(txt_2[:abc_off] + '0' + txt_2[abc_off+3:])
         gdaltest.post_reason( 'Layer abc does not seem to match layer 0.' )
         return 'fail'
     
@@ -696,7 +696,7 @@ def ogr_dxf_16():
         return 'fail'
 
     if feat.GetField('BlockScale') != '(3:1,1,1)':
-        print feat.GetField('BlockScale')
+        print(feat.GetField('BlockScale'))
         gdaltest.post_reason( 'Did not get expected BlockScale' )
         return 'fail'
 
