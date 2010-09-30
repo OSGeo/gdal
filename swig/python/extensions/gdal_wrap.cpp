@@ -2897,14 +2897,23 @@ SWIG_From_int  (int value)
 /* Return a PyObject* from a NULL terminated C String */
 static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
 {
-#if PY_VERSION_HEX >= 0x03000000
   const unsigned char* pszIter = (const unsigned char*) pszStr;
   while(*pszIter != 0)
   {
     if (*pszIter > 127)
-        return PyBytes_FromString( pszStr );
+    {
+        PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "ignore");
+        if (pyObj != NULL)
+            return pyObj;
+#if PY_VERSION_HEX >= 0x03000000
+        return PyBytes_FromString(pszStr);
+#else
+        return PyString_FromString(pszStr);
+#endif
+    }
     pszIter ++;
   }
+#if PY_VERSION_HEX >= 0x03000000
   return PyUnicode_FromString(pszStr); 
 #else
   return PyString_FromString(pszStr);
@@ -2913,47 +2922,41 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
 
 /* Return a NULL terminated c String from a PyObject */
 /* Result must be freed with GDALPythonFreeCStr */
-static char* GDALPythonObjectToCStr(PyObject* pyObject)
+static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
 {
-#if PY_VERSION_HEX >= 0x03000000
+  *pbToFree = 0;
   if (PyUnicode_Check(pyObject))
   {
       char *pszStr;
       char *pszNewStr;
       Py_ssize_t nLen;
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
+#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
       pszNewStr = (char *) malloc(nLen+1);
       memcpy(pszNewStr, pszStr, nLen+1);
       Py_XDECREF(pyUTF8Str);
+      *pbToFree = 1;
       return pszNewStr;
   }
-  else if (PyBytes_Check(pyObject))
+  else 
   {
-      char *pszStr;
-      char *pszNewStr;
-      Py_ssize_t nLen;
-      PyBytes_AsStringAndSize(pyObject, &pszStr, &nLen);
-      pszNewStr = (char *) malloc(nLen+1);
-      memcpy(pszNewStr, pszStr, nLen+1);
-      return pszNewStr;
-  }
-  else
-  {
-      char *pszStr = (char *) malloc(1);
-      pszStr[0] = '\0';
-      return pszStr;
-  }
+#if PY_VERSION_HEX >= 0x03000000
+      return PyBytes_AsString(pyObject);
 #else
-  return PyString_AsString(pyObject);
+      return PyString_AsString(pyObject);
 #endif
+  }
 }
 
-#if PY_VERSION_HEX >= 0x03000000
-#define GDALPythonFreeCStr(x) free( (void*) (x) )
-#else
-#define GDALPythonFreeCStr(x) 
-#endif
+static void GDALPythonFreeCStr(void* ptr, int bToFree)
+{
+   if (bToFree)
+       free(ptr);
+}
 
 
 
@@ -5505,11 +5508,18 @@ fail:
 SWIGINTERN PyObject *_wrap_PushFinderLocation(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
+  int bToFree1 = 0 ;
   PyObject * obj0 = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O:PushFinderLocation",&obj0)) SWIG_fail;
   {
-    arg1 = GDALPythonObjectToCStr( obj0 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   {
     if ( bUseExceptions ) {
@@ -5524,8 +5534,16 @@ SWIGINTERN PyObject *_wrap_PushFinderLocation(PyObject *SWIGUNUSEDPARM(self), Py
     }
   }
   resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return NULL;
 }
 
@@ -5583,6 +5601,7 @@ SWIGINTERN PyObject *_wrap_FindFile(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
   int res1 ;
   char *buf1 = 0 ;
   int alloc1 = 0 ;
+  int bToFree2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   char *result = 0 ;
@@ -5594,7 +5613,13 @@ SWIGINTERN PyObject *_wrap_FindFile(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
   }
   arg1 = reinterpret_cast< char * >(buf1);
   {
-    arg2 = GDALPythonObjectToCStr( obj1 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg2 = GDALPythonObjectToCStr( obj1, &bToFree2 );
+    if (arg2 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   {
     if ( bUseExceptions ) {
@@ -5610,9 +5635,17 @@ SWIGINTERN PyObject *_wrap_FindFile(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
   }
   resultobj = SWIG_FromCharPtr((const char *)result);
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
   return resultobj;
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
   return NULL;
 }
 
@@ -5620,12 +5653,19 @@ fail:
 SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
+  int bToFree1 = 0 ;
   PyObject * obj0 = 0 ;
   char **result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O:ReadDir",&obj0)) SWIG_fail;
   {
-    arg1 = GDALPythonObjectToCStr( obj0 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   {
     if ( bUseExceptions ) {
@@ -5656,8 +5696,16 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     }
     CSLDestroy(result);
   }
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return NULL;
 }
 
@@ -5861,13 +5909,20 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   char *arg1 = (char *) 0 ;
   int arg2 ;
   GByte *arg3 = (GByte *) 0 ;
+  int bToFree1 = 0 ;
   int alloc2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"OO:FileFromMemBuffer",&obj0,&obj1)) SWIG_fail;
   {
-    arg1 = GDALPythonObjectToCStr( obj0 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
@@ -5922,6 +5977,10 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   resultobj = SWIG_Py_Void();
   {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
     if( alloc2 == SWIG_NEWOBJ ) {
       delete[] arg3;
@@ -5929,6 +5988,10 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
     if( alloc2 == SWIG_NEWOBJ ) {
@@ -6008,6 +6071,7 @@ SWIGINTERN PyObject *_wrap_Mkdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   int arg2 ;
+  int bToFree1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
@@ -6016,7 +6080,13 @@ SWIGINTERN PyObject *_wrap_Mkdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
   
   if (!PyArg_ParseTuple(args,(char *)"OO:Mkdir",&obj0,&obj1)) SWIG_fail;
   {
-    arg1 = GDALPythonObjectToCStr( obj0 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   ecode2 = SWIG_AsVal_int(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
@@ -6036,8 +6106,16 @@ SWIGINTERN PyObject *_wrap_Mkdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return NULL;
 }
 
@@ -6045,12 +6123,19 @@ fail:
 SWIGINTERN PyObject *_wrap_Rmdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
+  int bToFree1 = 0 ;
   PyObject * obj0 = 0 ;
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:Rmdir",&obj0)) SWIG_fail;
   {
-    arg1 = GDALPythonObjectToCStr( obj0 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   {
     if ( bUseExceptions ) {
@@ -6065,8 +6150,16 @@ SWIGINTERN PyObject *_wrap_Rmdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return NULL;
 }
 
@@ -6123,6 +6216,7 @@ SWIGINTERN PyObject *_wrap_VSIFOpenL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   char *arg2 = (char *) 0 ;
+  int bToFree1 = 0 ;
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
@@ -6132,7 +6226,13 @@ SWIGINTERN PyObject *_wrap_VSIFOpenL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   
   if (!PyArg_ParseTuple(args,(char *)"OO:VSIFOpenL",&obj0,&obj1)) SWIG_fail;
   {
-    arg1 = GDALPythonObjectToCStr( obj0 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
@@ -6152,9 +6252,17 @@ SWIGINTERN PyObject *_wrap_VSIFOpenL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_void, 0 |  0 );
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return NULL;
 }
@@ -7053,6 +7161,7 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
   char **arg7 = (char **) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
+  int bToFree2 = 0 ;
   int val3 ;
   int ecode3 = 0 ;
   int val4 ;
@@ -7080,7 +7189,13 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
   }
   arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
   {
-    arg2 = GDALPythonObjectToCStr( obj1 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg2 = GDALPythonObjectToCStr( obj1, &bToFree2 );
+    if (arg2 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   ecode3 = SWIG_AsVal_int(obj2, &val3);
   if (!SWIG_IsOK(ecode3)) {
@@ -7117,14 +7232,33 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
       
       int size = PySequence_Size(obj6);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj6,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg7 = CSLAddString( arg7, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg7 = CSLAddString( arg7, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg7 = CSLAddString( arg7, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg7 = CSLAddString( arg7, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -7143,11 +7277,19 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
   {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg7 );
   }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg7 );
@@ -7167,6 +7309,7 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   void *arg7 = (void *) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
+  int bToFree2 = 0 ;
   void *argp3 = 0 ;
   int res3 = 0 ;
   int val4 ;
@@ -7197,7 +7340,13 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
   {
-    arg2 = GDALPythonObjectToCStr( obj1 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg2 = GDALPythonObjectToCStr( obj1, &bToFree2 );
+    if (arg2 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res3)) {
@@ -7222,14 +7371,33 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
       
       int size = PySequence_Size(obj4);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj4,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg5 = CSLAddString( arg5, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg5 = CSLAddString( arg5, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -7286,6 +7454,10 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
   {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg5 );
   }
@@ -7297,6 +7469,10 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg5 );
@@ -7317,6 +7493,7 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
+  int bToFree2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   int result;
@@ -7328,7 +7505,13 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
   }
   arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
   {
-    arg2 = GDALPythonObjectToCStr( obj1 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg2 = GDALPythonObjectToCStr( obj1, &bToFree2 );
+    if (arg2 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   {
     if ( bUseExceptions ) {
@@ -7343,8 +7526,16 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
   return NULL;
 }
 
@@ -11026,14 +11217,33 @@ SWIGINTERN PyObject *_wrap_Dataset_AddBand(PyObject *SWIGUNUSEDPARM(self), PyObj
       
       int size = PySequence_Size(obj2);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg3 = CSLAddString( arg3, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg3 = CSLAddString( arg3, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -11643,14 +11853,33 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
       
       int size = PySequence_Size(obj13);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj13,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg17 = CSLAddString( arg17, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg17 = CSLAddString( arg17, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg17 = CSLAddString( arg17, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg17 = CSLAddString( arg17, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -12609,14 +12838,33 @@ SWIGINTERN PyObject *_wrap_Band_SetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(
     
     int size = PySequence_Size(obj1);
     for (int i = 0; i < size; i++) {
-      char *pszItem = NULL;
       PyObject* pyObj = PySequence_GetItem(obj1,i);
-      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg2 = CSLAddString( arg2, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
+#endif
+      else
+      {
         Py_DECREF(pyObj);
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
       }
-      arg2 = CSLAddString( arg2, pszItem );
       Py_DECREF(pyObj);
     }
   }
@@ -15823,6 +16071,7 @@ SWIGINTERN PyObject *_wrap_RasterAttributeTable_SetValueAsString(PyObject *SWIGU
   int val3 ;
   int ecode3 = 0 ;
   PyObject *str4 = 0 ;
+  int bToFree4 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -15852,7 +16101,7 @@ SWIGINTERN PyObject *_wrap_RasterAttributeTable_SetValueAsString(PyObject *SWIGU
       SWIG_fail;
     }
     
-    arg4 = GDALPythonObjectToCStr(str4); 
+    arg4 = GDALPythonObjectToCStr(str4, &bToFree4); 
   }
   {
     if ( bUseExceptions ) {
@@ -15873,7 +16122,7 @@ SWIGINTERN PyObject *_wrap_RasterAttributeTable_SetValueAsString(PyObject *SWIGU
     {
       Py_DECREF(str4);
     }
-    GDALPythonFreeCStr(arg4);
+    GDALPythonFreeCStr(arg4, bToFree4);
   }
   return resultobj;
 fail:
@@ -15883,7 +16132,7 @@ fail:
     {
       Py_DECREF(str4);
     }
-    GDALPythonFreeCStr(arg4);
+    GDALPythonFreeCStr(arg4, bToFree4);
   }
   return NULL;
 }
@@ -16843,14 +17092,33 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
       
       int size = PySequence_Size(obj2);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg3 = CSLAddString( arg3, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg3 = CSLAddString( arg3, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -17051,14 +17319,33 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
       
       int size = PySequence_Size(obj6);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj6,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg9 = CSLAddString( arg9, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg9 = CSLAddString( arg9, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg9 = CSLAddString( arg9, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg9 = CSLAddString( arg9, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -17237,14 +17524,33 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
       
       int size = PySequence_Size(obj4);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj4,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg5 = CSLAddString( arg5, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg5 = CSLAddString( arg5, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -17399,14 +17705,33 @@ SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *
       
       int size = PySequence_Size(obj4);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj4,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg5 = CSLAddString( arg5, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg5 = CSLAddString( arg5, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -17567,14 +17892,33 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
       
       int size = PySequence_Size(obj5);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj5,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg6 = CSLAddString( arg6, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg6 = CSLAddString( arg6, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg6 = CSLAddString( arg6, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg6 = CSLAddString( arg6, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -18257,14 +18601,33 @@ SWIGINTERN PyObject *_wrap_new_Transformer(PyObject *SWIGUNUSEDPARM(self), PyObj
     
     int size = PySequence_Size(obj2);
     for (int i = 0; i < size; i++) {
-      char *pszItem = NULL;
       PyObject* pyObj = PySequence_GetItem(obj2,i);
-      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg3 = CSLAddString( arg3, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
+#endif
+      else
+      {
         Py_DECREF(pyObj);
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
       }
-      arg3 = CSLAddString( arg3, pszItem );
       Py_DECREF(pyObj);
     }
   }
@@ -19533,6 +19896,7 @@ SWIGINTERN PyObject *_wrap_Open(PyObject *SWIGUNUSEDPARM(self), PyObject *args) 
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   GDALAccess arg2 = (GDALAccess) GA_ReadOnly ;
+  int bToFree1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
@@ -19541,7 +19905,13 @@ SWIGINTERN PyObject *_wrap_Open(PyObject *SWIGUNUSEDPARM(self), PyObject *args) 
   
   if (!PyArg_ParseTuple(args,(char *)"O|O:Open",&obj0,&obj1)) SWIG_fail;
   {
-    arg1 = GDALPythonObjectToCStr( obj0 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   if (obj1) {
     ecode2 = SWIG_AsVal_int(obj1, &val2);
@@ -19563,8 +19933,16 @@ SWIGINTERN PyObject *_wrap_Open(PyObject *SWIGUNUSEDPARM(self), PyObject *args) 
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return NULL;
 }
 
@@ -19573,6 +19951,7 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   GDALAccess arg2 = (GDALAccess) GA_ReadOnly ;
+  int bToFree1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
@@ -19581,7 +19960,13 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
   
   if (!PyArg_ParseTuple(args,(char *)"O|O:OpenShared",&obj0,&obj1)) SWIG_fail;
   {
-    arg1 = GDALPythonObjectToCStr( obj0 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   if (obj1) {
     ecode2 = SWIG_AsVal_int(obj1, &val2);
@@ -19603,8 +19988,16 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   return NULL;
 }
 
@@ -19613,13 +20006,20 @@ SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   char **arg2 = (char **) NULL ;
+  int bToFree1 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   GDALDriverShadow *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O|O:IdentifyDriver",&obj0,&obj1)) SWIG_fail;
   {
-    arg1 = GDALPythonObjectToCStr( obj0 );
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
   }
   if (obj1) {
     {
@@ -19632,14 +20032,33 @@ SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObje
       
       int size = PySequence_Size(obj1);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj1,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg2 = CSLAddString( arg2, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
+#endif
+        else
+        {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg2 = CSLAddString( arg2, pszItem );
         Py_DECREF(pyObj);
       }
     }
@@ -19658,11 +20077,19 @@ SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
   {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg2 );
   }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg2 );
@@ -19692,14 +20119,33 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
     
     int size = PySequence_Size(obj0);
     for (int i = 0; i < size; i++) {
-      char *pszItem = NULL;
       PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg1 = CSLAddString( arg1, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
+#endif
+      else
+      {
         Py_DECREF(pyObj);
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
       }
-      arg1 = CSLAddString( arg1, pszItem );
       Py_DECREF(pyObj);
     }
   }

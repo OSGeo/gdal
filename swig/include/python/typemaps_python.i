@@ -726,14 +726,33 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 
   int size = PySequence_Size($input);
   for (int i = 0; i < size; i++) {
-    char *pszItem = NULL;
     PyObject* pyObj = PySequence_GetItem($input,i);
-    if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+    if (PyUnicode_Check(pyObj))
+    {
+      char *pszStr;
+      Py_ssize_t nLen;
+      PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+%#if PY_VERSION_HEX >= 0x03000000
+      PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+%#else
+      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+%#endif
+      $1 = CSLAddString( $1, pszStr );
+      Py_XDECREF(pyUTF8Str);
+    }
+%#if PY_VERSION_HEX >= 0x03000000
+    else if (PyBytes_Check(pyObj))
+      $1 = CSLAddString( $1, PyBytes_AsString(pyObj) );
+%#else
+    else if (PyString_Check(pyObj))
+      $1 = CSLAddString( $1, PyString_AsString(pyObj) );
+%#endif
+    else
+    {
         Py_DECREF(pyObj);
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
     }
-    $1 = CSLAddString( $1, pszItem );
     Py_DECREF(pyObj);
   }
 }
@@ -865,7 +884,7 @@ OPTIONAL_POD(int,i);
  */
 
 
-%typemap(in) (tostring argin) (PyObject * str=0)
+%typemap(in) (tostring argin) (PyObject * str=0, int bToFree = 0)
 {
   /* %typemap(in) (tostring argin) */
   str = PyObject_Str( $input );
@@ -874,7 +893,7 @@ OPTIONAL_POD(int,i);
     SWIG_fail;
   }
  
-  $1 = GDALPythonObjectToCStr(str); 
+  $1 = GDALPythonObjectToCStr(str, &bToFree); 
 }
 %typemap(freearg)(tostring argin)
 {
@@ -883,16 +902,7 @@ OPTIONAL_POD(int,i);
   {
     Py_DECREF(str$argnum);
   }
-  GDALPythonFreeCStr($1);
-}
-%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
-{
-  /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
-%#if PY_VERSION_HEX>=0x03000000
-  $1 = (PyUnicode_Check($input) || PyBytes_Check($input)) ? 1 : 0;
-%#else
-  $1 = (PyString_Check($input)) ? 1 : 0;
-%#endif
+  GDALPythonFreeCStr($1, bToFree$argnum);
 }
 
 /*
@@ -1503,6 +1513,19 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
     VSIFree($5);
 }
 
-%typemap(in) (const char *utf8_path) {
-    $1 = GDALPythonObjectToCStr( $input );
+%typemap(in) (const char *utf8_path) (int bToFree = 0)
+{
+    /* %typemap(in) (const char *utf8_path) */
+    $1 = GDALPythonObjectToCStr( $input, &bToFree );
+    if ($1 == NULL)
+    {
+        PyErr_SetString( PyExc_RuntimeError, "not a string" );
+        SWIG_fail;
+    }
+}
+
+%typemap(freearg)(const char *utf8_path)
+{
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr($1, bToFree$argnum);
 }
