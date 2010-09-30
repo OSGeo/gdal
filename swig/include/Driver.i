@@ -51,13 +51,13 @@ public:
   char const *HelpTopic;
 %mutable;
 
-%apply Pointer NONNULL { const char *name, const char* newName, const char* oldName, GDALDatasetShadow* src };
+%apply Pointer NONNULL { const char* newName, const char* oldName, GDALDatasetShadow* src };
 
 %newobject Create;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Create;
 #endif
-  GDALDatasetShadow *Create(    const char *name, 
+  GDALDatasetShadow *Create(    const char *utf8_path, 
                                 int xsize, 
                                 int ysize, 
                                 int bands = 1,
@@ -65,7 +65,7 @@ public:
                                 char **options = 0 ) {
 
     GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(    self, 
-                                                                name, 
+                                                                utf8_path, 
                                                                 xsize, 
                                                                 ysize, 
                                                                 bands, 
@@ -80,7 +80,7 @@ public:
 %feature( "kwargs" ) CreateCopy;
 #endif
 #endif
-  GDALDatasetShadow *CreateCopy(    const char *name, 
+  GDALDatasetShadow *CreateCopy(    const char *utf8_path, 
                                     GDALDatasetShadow* src, 
                                     int strict = 1, 
                                     char **options = 0, 
@@ -88,7 +88,7 @@ public:
                                     void* callback_data=NULL) {
 
     GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self, 
-                                                                    name, 
+                                                                    utf8_path, 
                                                                     src, 
                                                                     strict, 
                                                                     options, 
@@ -97,8 +97,8 @@ public:
     return ds;
   }
 
-  int Delete( const char *name ) {
-    return GDALDeleteDataset( self, name );
+  int Delete( const char *utf8_path ) {
+    return GDALDeleteDataset( self, utf8_path );
   }
 
   int Rename( const char *newName, const char *oldName ) {

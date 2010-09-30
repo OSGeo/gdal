@@ -202,6 +202,9 @@ $1;
 $1;
 %}
 
+//************************************************************************
+// Apply NONNULL to all utf8_path's. 
+%apply Pointer NONNULL { const char* utf8_path };
 
 //************************************************************************
 //
@@ -662,9 +665,9 @@ GDALDriverShadow* GetDriver( int i ) {
 #ifdef SWIGJAVA
 %newobject Open;
 %inline %{
-GDALDatasetShadow* Open( char const* name, GDALAccess eAccess) {
+GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess) {
   CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpen( name, eAccess );
+  GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
       if ( GDALDereferenceDataset( ds ) <= 0 )
@@ -684,9 +687,9 @@ GDALDatasetShadow* Open( char const* name ) {
 #else
 %newobject Open;
 %inline %{
-GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
   CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpen( name, eAccess );
+  GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
       if ( GDALDereferenceDataset( ds ) <= 0 )
@@ -700,9 +703,9 @@ GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
 
 %newobject OpenShared;
 %inline %{
-GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
   CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpenShared( name, eAccess );
+  GDALDatasetShadow *ds = GDALOpenShared( utf8_path, eAccess );
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
       if ( GDALDereferenceDataset( ds ) <= 0 )
@@ -715,9 +718,9 @@ GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnl
 
 %apply (char **options) {char **papszSiblings};
 %inline %{
-GDALDriverShadow *IdentifyDriver( const char *pszDatasource, 
+GDALDriverShadow *IdentifyDriver( const char *utf8_path, 
                                   char **papszSiblings = NULL ) {
-    return (GDALDriverShadow *) GDALIdentifyDriver( pszDatasource, 
+    return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path, 
 	                                            papszSiblings );
 }
 %}
