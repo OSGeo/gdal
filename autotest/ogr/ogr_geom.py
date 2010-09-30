@@ -107,7 +107,7 @@ def ogr_geom_area_geometrycollection():
 def ogr_geom_area_linearring_big_offset():
 
     geom = ogr.Geometry( type = ogr.wkbLinearRing )
-    BIGOFFSET = 100000000000;
+    BIGOFFSET = 100000000000.;
     geom.AddPoint_2D( BIGOFFSET + 0, BIGOFFSET + 0)
     geom.AddPoint_2D( BIGOFFSET + 10, BIGOFFSET + 0)
     geom.AddPoint_2D( BIGOFFSET + 10, BIGOFFSET + 10)
