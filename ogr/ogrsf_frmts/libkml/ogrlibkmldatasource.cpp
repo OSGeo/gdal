@@ -641,7 +641,8 @@ int OGRLIBKMLDataSource::ParseLayers (
             else {
                 std::stringstream oOut;
                 oOut << iKmlFeature;
-                oKmlFeatName = oOut.str (  );
+                oKmlFeatName = "Layer";
+                oKmlFeatName.append(oOut.str (  ));
             }
 
             /***** create the layer *****/
