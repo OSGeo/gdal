@@ -258,7 +258,7 @@ void kml2featurestyle (
 
             int nPathLen = strlen ( poOgrDS->GetStylePath (  ) );
              
-            if ( !strncmp ( pszTmp, poOgrDS->GetStylePath (  ), nPathLen )) {
+            if ( nPathLen > 0 && EQUALN ( pszTmp, poOgrDS->GetStylePath (  ), nPathLen )) {
                 
 
                 /***** should we resolve the style *****/
