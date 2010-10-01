@@ -863,7 +863,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub create { # alternative constructor since swig created new cannot be overridden(?)
 	    my $pkg = shift;
-	  my($type, $wkt, $wkb, $gml, $json, $srs, $points, $arc);
+	    my($type, $wkt, $wkb, $gml, $json, $srs, $points, $arc);
 	    if (@_ == 1) {
 		$type = shift;
 	    } else {
@@ -872,7 +872,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$srs = ($param{srs} or $param{SRS});
 		$wkt = ($param{wkt} or $param{WKT});
 		$wkb = ($param{wkb} or $param{WKB});
-		my $hex = ($param{hexwkb} or $param{HEXWKB});
+		my $hex = ($param{hexewkb} or $param{HEXEWKB}); # PostGIS HEX EWKB
+		substr($hex, 10, 8) = '' if $hex; # remove SRID
+		$hex = ($param{hexwkb} or $param{HEXWKB}) unless $hex;
 		if ($hex) {
 		    $wkb = '';
 		    for (my $i = 0; $i < length($hex); $i+=2) {
@@ -906,6 +908,44 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    bless $self, $pkg if defined $self;
 	    $self->Points($points) if $points;
 	    return $self;
+	}
+	sub AsHEXWKB {
+	    my($self) = @_;
+	    my $wkb = _ExportToWkb($self, 1);
+	    my $hex = '';
+	    for (my $i = 0; $i < length($wkb); $i++) {
+		my $x = sprintf("%x", ord(substr($wkb,$i,1)));
+		$x = '0' . $x if length($x) == 1;
+		$hex .= uc($x);
+	    }
+	    return $hex;
+	}
+	sub AsHEXEWKB {
+	    my($self, $srid) = @_;
+	    my $hex = AsHEXWKB($self);
+	    if ($srid) {
+		my $s = sprintf("%x", $srid);
+		$srid = '';
+		do {
+		    if (length($s) > 2) {
+			$srid .= substr($s,-2,2);
+			substr($s,-2,2) = '';
+		    } elsif (length($s) > 1) {
+			$srid .= $s;
+			$s = '';
+		    } else {
+			$srid .= '0'.$s;
+			$s = '';
+		    }
+		} until $s eq '';
+	    } else {
+		$srid = '00000000';
+	    }
+	    while (length($srid) < 8) {
+		$srid .= '00';
+	    }
+	    substr($hex, 10, 0) = uc($srid);
+	    return $hex;
 	}
 	sub GeometryType {
 	    my $self = shift;
