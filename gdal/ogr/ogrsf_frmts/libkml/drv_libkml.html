@@ -125,6 +125,14 @@
      tables.
   </p>
   
+  <p>
+     When reading a kml feature and the enviroment variable LIBKML_EXTERNAL_STYLE
+     is set to yes, a styleurl that is external to the datasource is read from 
+     disk or fetched from the server and parsed into the datasource style table.
+     If the style kml can not be read or LIBKML_EXTERNAL_STYLE is set to no then
+     the styleurl is copyed to the style string.
+  </p>
+    
   <h2>Fields</h2>
   
   <p> OGR fields (feature atributes) are mapped to kml with
