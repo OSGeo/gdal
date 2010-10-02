@@ -85,7 +85,7 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource ( KmlFactory * poKmlFactory )
 
     m_isKmz = FALSE;
     m_poKmlDocKml = NULL;
-    pszStylePath = "";
+    pszStylePath = (char *) "";
 
     m_isDir = FALSE;
     
@@ -422,7 +422,9 @@ OGRLIBKMLDataSource::~OGRLIBKMLDataSource (  )
 
     CPLFree ( pszName );
 
-
+    if (! EQUAL(pszStylePath, ""))
+        CPLFree ( pszStylePath );
+    
     for ( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
@@ -1086,7 +1088,7 @@ int OGRLIBKMLDataSource::OpenDir (
 
         if ( EQUAL ( papszDirList[iFile], "style.kml" ) ) {
             ParseStyles ( AsDocument ( poKmlContainer ), &m_poStyleTable );
-            pszStylePath = "style.kml";
+            pszStylePath = CPLStrdup((char *) "style.kml");
             continue;
         }
 
@@ -1202,7 +1204,7 @@ int OGRLIBKMLDataSource::CreateKmz (
         m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
     }
 
-    pszStylePath = "style/style.kml";
+    pszStylePath = CPLStrdup((char *) "style/style.kml");
 
     m_isKmz = TRUE;
     bUpdated = TRUE;
@@ -1241,7 +1243,7 @@ int OGRLIBKMLDataSource::CreateDir (
         m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
     }
 
-    pszStylePath = "style.kml";
+    pszStylePath = CPLStrdup((char *) "style.kml");
 
     return TRUE;
 }

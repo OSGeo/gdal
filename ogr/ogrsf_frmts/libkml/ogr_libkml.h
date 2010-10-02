@@ -149,7 +149,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
     ContainerPtr              m_poKmlDocKml;
     ElementPtr                m_poKmlDocKmlRoot;
     ContainerPtr              m_poKmlStyleKml;
-    const char               *pszStylePath;
+    char               *pszStylePath;
 
     /***** for dir *****/
 
