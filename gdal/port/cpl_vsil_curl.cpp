@@ -458,6 +458,7 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
         cachedFileProp->bHastComputedFileSize = TRUE;
         cachedFileProp->fileSize = 0;
         cachedFileProp->eExists = EXIST_NO;
+        CPLFree(sWriteFuncData.pBuffer);
         return FALSE;
     }
 
@@ -465,13 +466,22 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
 
     char* pBuffer = sWriteFuncData.pBuffer;
     int nSize = sWriteFuncData.nSize;
-    while(nBlocks > 0 && nSize >= 0)
+
+    if (nSize > nBlocks * DOWNLOAD_CHUNCK_SIZE)
     {
+        if (ENABLE_DEBUG)
+            CPLDebug("VSICURL", "Got more data than expected : %d instead of %d",
+                     nSize, nBlocks * DOWNLOAD_CHUNCK_SIZE);
+    }
+    
+    while(nSize > 0)
+    {
+        //if (ENABLE_DEBUG)
+        //    CPLDebug("VSICURL", "Add region %d - %d", startOffset, MIN(DOWNLOAD_CHUNCK_SIZE, nSize));
         poFS->AddRegion(pszURL, startOffset, MIN(DOWNLOAD_CHUNCK_SIZE, nSize), pBuffer);
         startOffset += DOWNLOAD_CHUNCK_SIZE;
         pBuffer += DOWNLOAD_CHUNCK_SIZE;
         nSize -= DOWNLOAD_CHUNCK_SIZE;
-        nBlocks --;
     }
 
     CPLFree(sWriteFuncData.pBuffer);
@@ -1105,14 +1115,5 @@ void VSIInstallCurlFileHandler(void)
     VSIFileManager::InstallHandler( "/vsicurl/", new VSICurlFilesystemHandler );
 }
 
-extern "C" void GDALRegister_VSICURL()
-{
-    VSIInstallCurlFileHandler();
-}
-
-extern "C" void RegisterOGRVSICURL()
-{
-    VSIInstallCurlFileHandler();
-}
 
 #endif /* HAVE_CURL */
