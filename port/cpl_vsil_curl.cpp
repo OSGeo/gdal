@@ -27,12 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* g++ -g -Wall -fPIC port/cpl_vsil_curl.cpp -shared -o gdal_VSICURL.so -Iport -L. -lgdal */
-
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include "cpl_hash_set.h"
+
+CPL_CVSID("$Id$");
 
 #ifndef HAVE_CURL
 
