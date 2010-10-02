@@ -874,6 +874,9 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
 
         curl_easy_cleanup(hCurlHandle);
 
+        if (sWriteFuncData.pBuffer == NULL)
+            return NULL;
+
         char** papszFileList = NULL;
         char* iter = sWriteFuncData.pBuffer;
         char* c;
@@ -887,10 +890,11 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
             iter = c + 1;
             nCount ++;
         }
-        CPLFree(sWriteFuncData.pBuffer);
-        return papszFileList;
 
         *pbGotFileList = TRUE;
+
+        CPLFree(sWriteFuncData.pBuffer);
+        return papszFileList;
     }
 
     /* Try to recognize HTML pages that list the content of a directory */
@@ -914,6 +918,9 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
         curl_easy_perform(hCurlHandle);
 
         curl_easy_cleanup(hCurlHandle);
+
+        if (sWriteFuncData.pBuffer == NULL)
+            return NULL;
 
         char** papszFileList = NULL;
         char* iter = sWriteFuncData.pBuffer;
