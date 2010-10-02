@@ -252,6 +252,12 @@ static void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
     curl_easy_setopt(hCurlHandle, CURLOPT_FTP_FILEMETHOD, option);
 #endif
 
+/* 7.12.3 */
+#if LIBCURL_VERSION_NUM > 0x070C03
+    /* ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/ doesn't like EPSV command */
+    curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
+#endif
+
     /* NOSIGNAL should be set to true for timeout to work in multithread
     environments on Unix, requires libcurl 7.10 or more recent.
     (this force avoiding the use of sgnal handlers) */
