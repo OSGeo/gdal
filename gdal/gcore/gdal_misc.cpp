@@ -2645,8 +2645,8 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 
     if( fp != NULL )
     {
-        VSIFReadL( abyHeader, 1, 32, fp );
-        if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
+        if( VSIFReadL( abyHeader, 1, 32, fp ) == 32 &&
+            EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
         {
             /* Avoid causing failure in opening of main file from SWIG bindings */
             /* when auxiliary file cannot be opened (#3269) */
@@ -2741,8 +2741,8 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 
         if( fp != NULL )
         {
-            VSIFReadL( abyHeader, 1, 32, fp );
-            if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
+            if( VSIFReadL( abyHeader, 1, 32, fp ) == 32 &&
+                EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
             {
                 /* Avoid causing failure in opening of main file from SWIG bindings */
                 /* when auxiliary file cannot be opened (#3269) */
