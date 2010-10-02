@@ -1,4 +1,4 @@
-/* $Id: tif_tile.c,v 1.21 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tif_tile.c,v 1.22 2010-07-01 15:33:28 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -30,32 +30,6 @@
  * Tiled Image Support Routines.
  */
 #include "tiffiop.h"
-
-static uint32
-multiply_32(TIFF* tif, uint32 nmemb, uint32 elem_size, const char* where)
-{
-	uint32 bytes = nmemb * elem_size;
-
-	if (elem_size && bytes / elem_size != nmemb) {
-		TIFFErrorExt(tif->tif_clientdata, where, "Integer overflow in %s", where);
-		bytes = 0;
-	}
-
-	return (bytes);
-}
-
-static uint64
-multiply_64(TIFF* tif, uint64 nmemb, uint64 elem_size, const char* where)
-{
-	uint64 bytes = nmemb * elem_size;
-
-	if (elem_size && bytes / elem_size != nmemb) {
-		TIFFErrorExt(tif->tif_clientdata, where, "Integer overflow in %s", where);
-		bytes = 0;
-	}
-
-	return (bytes);
-}
 
 /*
  * Compute which tile an (x,y,z,s) value is in.
@@ -153,12 +127,12 @@ TIFFNumberOfTiles(TIFF* tif)
 	if (dz == (uint32) -1)
 		dz = td->td_imagedepth;
 	ntiles = (dx == 0 || dy == 0 || dz == 0) ? 0 :
-	    multiply_32(tif, multiply_32(tif, TIFFhowmany_32(td->td_imagewidth, dx),
+	    _TIFFMultiply32(tif, _TIFFMultiply32(tif, TIFFhowmany_32(td->td_imagewidth, dx),
 	    TIFFhowmany_32(td->td_imagelength, dy),
 	    "TIFFNumberOfTiles"),
 	    TIFFhowmany_32(td->td_imagedepth, dz), "TIFFNumberOfTiles");
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
-		ntiles = multiply_32(tif, ntiles, td->td_samplesperpixel,
+		ntiles = _TIFFMultiply32(tif, ntiles, td->td_samplesperpixel,
 		    "TIFFNumberOfTiles");
 	return (ntiles);
 }
@@ -174,10 +148,10 @@ TIFFTileRowSize64(TIFF* tif)
 
 	if (td->td_tilelength == 0 || td->td_tilewidth == 0)
 		return (0);
-	rowsize = multiply_64(tif, td->td_bitspersample, td->td_tilewidth,
+	rowsize = _TIFFMultiply64(tif, td->td_bitspersample, td->td_tilewidth,
 	    "TIFFTileRowSize");
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG)
-		rowsize = multiply_64(tif, rowsize, td->td_samplesperpixel,
+		rowsize = _TIFFMultiply64(tif, rowsize, td->td_samplesperpixel,
 		    "TIFFTileRowSize");
 	return (TIFFhowmany8_64(rowsize));
 }
@@ -240,12 +214,12 @@ TIFFVTileSize64(TIFF* tif, uint32 nrows)
 		samplingblock_samples=ycbcrsubsampling[0]*ycbcrsubsampling[1]+2;
 		samplingblocks_hor=TIFFhowmany_32(td->td_tilewidth,ycbcrsubsampling[0]);
 		samplingblocks_ver=TIFFhowmany_32(nrows,ycbcrsubsampling[1]);
-		samplingrow_samples=multiply_64(tif,samplingblocks_hor,samplingblock_samples,module);
-		samplingrow_size=TIFFhowmany8_64(multiply_64(tif,samplingrow_samples,td->td_bitspersample,module));
-		return(multiply_64(tif,samplingrow_size,samplingblocks_ver,module));
+		samplingrow_samples=_TIFFMultiply64(tif,samplingblocks_hor,samplingblock_samples,module);
+		samplingrow_size=TIFFhowmany8_64(_TIFFMultiply64(tif,samplingrow_samples,td->td_bitspersample,module));
+		return(_TIFFMultiply64(tif,samplingrow_size,samplingblocks_ver,module));
 	}
 	else
-		return(multiply_64(tif,nrows,TIFFTileRowSize64(tif),module));
+		return(_TIFFMultiply64(tif,nrows,TIFFTileRowSize64(tif),module));
 }
 tmsize_t
 TIFFVTileSize(TIFF* tif, uint32 nrows)
