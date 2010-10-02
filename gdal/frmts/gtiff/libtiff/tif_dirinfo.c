@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.109 2010-05-08 18:33:51 olivier Exp $ */
+/* $Id: tif_dirinfo.c,v 1.111 2010-07-06 14:16:05 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -271,7 +271,7 @@ td_lfind(const void *key, const void *base, size_t *nmemb, size_t size,
 
     end = (char *)base + *nmemb * size;
     for (element = (char *)base; element < end; element += size)
-        if (!compar(element, key))		/* key found */
+        if (!compar(key, element))		/* key found */
             return element;
 
     return NULL;
@@ -538,8 +538,6 @@ TIFFFieldWithTag(TIFF* tif, uint32 tag)
 		TIFFErrorExt(tif->tif_clientdata, "TIFFFieldWithTag",
 			     "Internal error, unknown tag 0x%x",
 			     (unsigned int) tag);
-		assert(fip != NULL);
-		/*NOTREACHED*/
 	}
 	return (fip);
 }
@@ -552,8 +550,6 @@ TIFFFieldWithName(TIFF* tif, const char *field_name)
 	if (!fip) {
 		TIFFErrorExt(tif->tif_clientdata, "TIFFFieldWithName",
 			     "Internal error, unknown tag %s", field_name);
-		assert(fip != NULL);
-		/*NOTREACHED*/
 	}
 	return (fip);
 }
