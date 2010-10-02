@@ -193,7 +193,11 @@ class OGRLIBKMLDataSource:public OGRDataSource
     int                       TestCapability (const char * );
     
     KmlFactory               *GetKmlFactory() { return m_poKmlFactory; };
+        
     const char               *GetStylePath() {return pszStylePath; };
+    int                       ParseIntoStyleTable ( std::string * oKmlStyleKml,
+                                                    const char *pszStylePath);
+        
     //KmzFile                  *GetKmz() { return m_poKmlKmzfile; };
         
     int                       IsKml() {return m_isKml;};

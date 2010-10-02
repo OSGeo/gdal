@@ -700,6 +700,40 @@ ContainerPtr GetContainerFromRoot (
 }
 
 /******************************************************************************
+ method to parse a kml string into the style table
+******************************************************************************/
+
+int OGRLIBKMLDataSource::ParseIntoStyleTable (
+    std::string *poKmlStyleKml,
+    const char *pszMyStylePath)
+{
+    
+    /***** parse the kml into the dom *****/
+
+    std::string oKmlErrors;
+    ElementPtr poKmlRoot = kmldom::Parse ( *poKmlStyleKml, &oKmlErrors );
+
+    if ( !poKmlRoot ) {
+        CPLError ( CE_Failure, CPLE_OpenFailed,
+                   "ERROR Parseing style kml %s :%s",
+                   pszStylePath, oKmlErrors.c_str (  ) );
+        return false;
+    }
+    
+    ContainerPtr poKmlContainer;
+
+    if ( !( poKmlContainer = GetContainerFromRoot ( poKmlRoot ) ) ) {
+        return false;
+    }
+    
+    ParseStyles ( AsDocument ( poKmlContainer ), &m_poStyleTable );
+    pszStylePath = CPLStrdup(pszMyStylePath);
+    
+        
+    return true;
+}
+
+/******************************************************************************
  method to open a kml file
  
  Args:          pszFilename file to open
@@ -961,23 +995,8 @@ int OGRLIBKMLDataSource::OpenKmz (
     /***** read the style table if it has one *****/
 
     std::string oKmlStyleKml;
-    if ( poKmlKmzfile->ReadFile ( "style/style.kml", &oKmlStyleKml ) ) {
-
-        /***** parse the kml into the dom *****/
-
-        std::string oKmlErrors;
-        ElementPtr poKmlRoot = kmldom::Parse ( oKmlStyleKml, &oKmlErrors );
-
-        if ( poKmlRoot ) {
-
-            ContainerPtr poKmlContainer;
-
-            if ( ( poKmlContainer = GetContainerFromRoot ( poKmlRoot ) ) ) {
-                ParseStyles ( AsDocument ( poKmlContainer ), &m_poStyleTable );
-                pszStylePath = "style/style.kml";
-            }
-        }
-    }
+    if ( poKmlKmzfile->ReadFile ( "style/style.kml", &oKmlStyleKml ) )
+        ParseIntoStyleTable ( &oKmlStyleKml, "style/style.kml");
 
     /***** cleanup *****/
 
@@ -1070,6 +1089,7 @@ int OGRLIBKMLDataSource::OpenDir (
             pszStylePath = "style.kml";
             continue;
         }
+
 
         /***** create the layer *****/
 
