@@ -1843,13 +1843,15 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( !bIsSubfile )
     {
+        int bEndsWithWld = strlen(poOpenInfo->pszFilename) > 4 &&
+                           EQUAL( poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 4, ".wld");
         poDS->bGeoTransformValid = 
             GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
                                poDS->adfGeoTransform )
             || GDALReadWorldFile( poOpenInfo->pszFilename, ".jpw", 
                                   poDS->adfGeoTransform )
-            || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                                  poDS->adfGeoTransform );
+            || ( !bEndsWithWld && GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
+                                  poDS->adfGeoTransform ));
 
         if( !poDS->bGeoTransformValid )
         {
