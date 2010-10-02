@@ -29,6 +29,7 @@
 #include <ogrsf_frmts.h>
 #include <ogr_featurestyle.h>
 #include <string>
+#include <iostream>
 using namespace std;
 
 #include <kml/dom.h>
@@ -221,14 +222,16 @@ void kml2featurestyle (
 
         /***** is the name in the layer style table *****/
 
-        char *pszTmp = CPLStrdup ( poKmlStyleUrl.c_str (  ) );
+        char *pszUrl = CPLStrdup ( poKmlStyleUrl.c_str (  ) );
 
         OGRStyleTable *poOgrSTBLLayer;
         const char *pszTest = NULL;
 
-        if ( *pszTmp == '#'
-             && ( poOgrSTBLLayer = poOgrLayer->GetStyleTable (  ) ) )
-            pszTest = poOgrSTBLLayer->Find ( pszTmp + 1 );
+        if ( *pszUrl == '#'
+             && ( poOgrSTBLLayer = poOgrLayer->GetStyleTable (  ) ) ) {
+
+            pszTest = poOgrSTBLLayer->Find ( pszUrl + 1 );
+        }
         
         if ( pszTest ) {
 
@@ -237,13 +240,15 @@ void kml2featurestyle (
             const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
 
             if (EQUAL(pszResolve, "yes")) {
+
                 poOgrFeat->SetStyleString ( pszTest );
             }
 
             else {
-                *pszTmp = '@';
 
-                poOgrFeat->SetStyleStringDirectly ( pszTmp );
+                *pszUrl = '@';
+
+                poOgrFeat->SetStyleStringDirectly ( pszUrl );
 
             }
 
@@ -255,11 +260,11 @@ void kml2featurestyle (
         else {
 
             /***** is it a dataset style? *****/
-
+            const char *testy=poOgrDS->GetStylePath (  );
             int nPathLen = strlen ( poOgrDS->GetStylePath (  ) );
-             
-            if ( nPathLen > 0 && EQUALN ( pszTmp, poOgrDS->GetStylePath (  ), nPathLen )) {
-                
+
+            if ( nPathLen > 0 && EQUALN ( pszUrl, poOgrDS->GetStylePath (  ), nPathLen )) {
+
 
                 /***** should we resolve the style *****/
             
@@ -267,28 +272,101 @@ void kml2featurestyle (
 
                 if ( EQUAL(pszResolve, "yes") &&
                      ( poOgrSTBLLayer = poOgrDS->GetStyleTable (  ) ) &&
-                     ( pszTest = poOgrSTBLLayer->Find ( pszTmp + nPathLen + 1) )
+                     ( pszTest = poOgrSTBLLayer->Find ( pszUrl + nPathLen + 1) )
                     ) {
-                    
+
                     poOgrFeat->SetStyleString ( pszTest );
                 }
 
                 else {
 
-                    pszTmp[nPathLen] = '@';
-                    poOgrFeat->SetStyleString ( pszTmp + nPathLen );
+                    pszUrl[nPathLen] = '@';
+                    poOgrFeat->SetStyleString ( pszUrl + nPathLen );
                 }
 
-                CPLFree ( pszTmp );
+                
             }
         
             /**** its someplace else *****/
 
             else {
 
-//todo Handle out of DS style tables 
+                const char *pszFetch = CPLGetConfigOption ( "LIBKML_EXTERNAL_STYLE", "no" );
 
+                if ( EQUAL(pszFetch, "yes") ) {
+
+                    /***** load up the style table *****/
+
+                    char *pszUrlTmp = CPLStrdup(pszUrl);
+                    char *pszPound;
+                    if ((pszPound = strchr(pszUrlTmp, '#'))) {
+
+                        *pszPound = '\0';
+                    }
+
+                    /***** try it as a url then a file *****/
+
+                    FILE *fp = NULL;
+
+                    if ((fp = VSIFOpenL( CPLFormFilename("/vsicurl/",
+                                                        pszUrlTmp,
+                                                        NULL),
+                                        "r" )) ||
+                        (fp = VSIFOpenL( pszUrlTmp,
+                                        "r" )))
+                    {
+
+                        char szbuf[1025];
+                        std::string oStyle = "";
+
+                        /***** loop, read and copy to a string *****/
+
+                        size_t nRead;
+                        
+                        do {
+
+                            nRead = VSIFReadL(szbuf, 1, sizeof(szbuf) - 1, fp);
+                            
+                            if (nRead == 0)
+                                break;
+                            
+                            /***** copy buf to the string *****/
+                            
+                            szbuf[nRead] = '\0';
+                            oStyle.append( szbuf );
+    
+                        } while (!VSIFEofL(fp));
+
+                        VSIFCloseL(fp);
+
+                        /***** parse the kml into the ds style table *****/
+
+                        if ( poOgrDS->ParseIntoStyleTable (&oStyle, pszUrlTmp)) {
+
+                            kml2featurestyle (poKmlPlacemark,
+                                              poOgrDS,
+                                              poOgrLayer,
+                                              poOgrFeat );
+                        }
+                        
+                        else {
+
+                            /***** if failed just store the url *****/
+                            
+                            poOgrFeat->SetStyleString ( pszUrl );
+                        }
+
+                    }
+                    CPLFree(pszUrlTmp);
+                }
+
+                else {
+
+                    poOgrFeat->SetStyleString ( pszUrl );
+                }
             }
+
+            CPLFree ( pszUrl );
         }
 
     }
