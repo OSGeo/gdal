@@ -260,7 +260,7 @@ void kml2featurestyle (
         else {
 
             /***** is it a dataset style? *****/
-            const char *testy=poOgrDS->GetStylePath (  );
+
             int nPathLen = strlen ( poOgrDS->GetStylePath (  ) );
 
             if ( nPathLen > 0 && EQUALN ( pszUrl, poOgrDS->GetStylePath (  ), nPathLen )) {
