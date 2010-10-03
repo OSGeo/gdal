@@ -190,5 +190,8 @@ void OGRRegisterAll()
 #endif
 #ifdef SOSI_ENABLED 
 	RegisterOGRSOSI(); 
+#endif
+#ifdef HTF_ENABLED
+    RegisterOGRHTF();
 #endif 
 } /* OGRRegisterAll */
