@@ -347,7 +347,8 @@ void CPL_DLL RegisterOGRSUA();
 void CPL_DLL RegisterOGROpenAir();
 void CPL_DLL RegisterOGRPDS();
 void CPL_DLL RegisterOGRWFS();
-void CPL_DLL RegisterOGRSOSI(); 
+void CPL_DLL RegisterOGRSOSI();
+void CPL_DLL RegisterOGRHTF();
 CPL_C_END
 
 
