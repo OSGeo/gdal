@@ -1,0 +1,72 @@
+<html>
+<head>
+<title>HTF - Hydrographic Transfer Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>HTF - Hydrographic Transfer Format</h1>
+
+(GDAL/OGR >= 1.8.0)<p>
+
+This driver reads files containg sounding data following the Hydrographic Transfer Format (HTF),
+which is used by the Australian Hydrographic Office (AHO).<p>
+
+The driver has been developed based on HTF 2.02 specification.<p>
+
+The file must be georeferenced in UTM WGS84 to be considered valid by the driver.<p>
+
+The driver returns 2 spatial layers : a layer named "polygon" and a layer name "sounding".
+There is also a "hidden" layer, called "metadata", that can be fetched with GetLayerByName(), and
+which contains a single feature, made of the header lines of the file.<p>
+
+Polygons are used to distinguish between differing survey categories, such that any
+significant changes in position/depth accuracy and/or a change in the seafloor coverage
+will dictate a separate bounding polygon contains polygons.<p>
+
+The "polygon" layer contains the following fields :
+<ul>
+<li><i>DESCRIPTION</i> : Defines the polygons of each region of similar survey criteria or theme.</li>
+<li><i>IDENTIFIER</i> : Unique polygon identifier for this transmittal.</li>
+<li><i>SEAFLOOR_COVERAGE</i> : All significant seafloor features detected (full ensonification/sweep) or full coverage not achieved and uncharted features may exist.</li>
+<li><i>POSITION_ACCURACY</i> : +/- NNN.n metres at 95% CI (2.45) with respect to the given datum.</li>
+<li><i>DEPTH_ACCURACY</i> : +/- NN.n metres at 95% CI (2.00) at critical depths.</li>
+</ul>
+
+The "sounding" layer should contain - at minimum - the following 20 fields :
+<ul>
+<li><i>REJECTED_SOUNDING</i> : if 0 sounding is valid or if 1 the sounding has been rejected (flagged).</li>
+<li><i>LINE_NAME</i> : Survey line name/number as a unique identifer within the survey.</li>
+<li><i>FIX_NUMBER</i> : Sequential sounding fix number, unique within the survey.</li>
+<li><i>UTC_DATE</i> : UTC date for the sounding CCYYMMDD.</li>
+<li><i>UTC_TIME</i> : UTC time for the sounding HHMMSS.ss.</li>
+<li><i>LATITUDE</i> : Latitude position of the sounding +/-NN.nnnnnn (degrees of arc, south is negative).</li>
+<li><i>LONGITUDE</i> : Longitude position of the sounding +/-NNN.nnnnnn (degrees of arc, west is negative).</li>
+<li><i>EASTING</i> : Grid coordinate position of the sounding in metres NNNNNNN.n.</li>
+<li><i>NORTHING</i> : Grid coordinate position of the sounding in metres NNNNNNN.n.</li>
+<li><i>DEPTH</i> : Reduced sounding value in metres with corrections applied as indicated in the relevant fields, soundings are positive and drying heights are negative +/-NNNN.nn metres.</li>
+<li><i>POSITIONING_SENSOR</i> : Indicate position system number populated in the HTF header record.</li>
+<li><i>DEPTH_SENSOR</i> : Indicate depth sounder system number populated in the HTF header record.</li>
+<li><i>TPE_POSITION</i> : Total propagated error of the horizontal component for the sounding.</li>
+<li><i>TPE_DEPTH</i> : Total propagated error of the vertical component for the sounding.</li>
+<li><i>NBA FLAG</i> : No Bottom at Flag, if 0 not NBA depth or if 1 Depth is NBA, deeper water probably exists.</li>
+<li><i>TIDE</i> : Value of the tidal correction applied +/- NN.nn metres.</li>
+<li><i>DEEP_WATER_CORRECTION</i> : Value of the deep water sounding velocity applied +/- NN.nn metres.</li>
+<li><i>VERTICAL BIAS_CORRECTION</i> : Value of the vertical bias applied +/- NN.nn metres. eg transducer depth correction</li>
+<li><i>SOUND_VELOCITY</i> : Measured sound velocity used to process sounding in metres per second IIII.</li>
+<li><i>PLOTTED_SOUNDING</i> : if 0 then the reduced depth did not appear on the original fairsheet or id 1 then the reduced depth appeared on the original fairsheet.</li>
+</ul>
+
+Some fields may be never set, depending on the value of the Field Population Key. Extra fields may also be added.<p>
+
+
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.hydro.gov.au/tools/htf/htf.htm">HTF - Hydrographic Transfer Format home page</a><p>
+<li> <a href="http://www.hydro.gov.au/tools/htf/htf.pdf">HTF Technical Specification</a><p>
+</ul>
+
+</body>
+</html>
