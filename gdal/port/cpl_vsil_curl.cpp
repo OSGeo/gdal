@@ -431,6 +431,7 @@ vsi_l_offset VSICurlHandle::Tell()
 int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
 {
     WriteFuncStruct sWriteFuncData;
+    WriteFuncStruct sWriteFuncHeaderData;
 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     if (cachedFileProp->eExists == EXIST_NO)
@@ -446,6 +447,10 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
 
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
+
     char rangeStr[512];
     sprintf(rangeStr, CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, startOffset, startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE - 1);
 
@@ -455,6 +460,11 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
 
     curl_easy_perform(hCurlHandle);
+
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_RESPONSE_CODE, &response_code);
@@ -470,7 +480,42 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
         cachedFileProp->fileSize = 0;
         cachedFileProp->eExists = EXIST_NO;
         CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
         return FALSE;
+    }
+
+    if (eExists == EXIST_UNKNOWN && sWriteFuncHeaderData.pBuffer)
+    {
+        /* Try to retrieve the filesize from the HTTP headers */
+        /* if in the form : "Content-Range: bytes x-y/filesize" */
+        char* pszContentRange = strstr(sWriteFuncHeaderData.pBuffer, "Content-Range: bytes ");
+        if (pszContentRange)
+        {
+            char* pszEOL = strchr(pszContentRange, '\n');
+            if (pszEOL)
+            {
+                *pszEOL = 0;
+                pszEOL = strchr(pszContentRange, '\r');
+                if (pszEOL)
+                    *pszEOL = 0;
+                char* pszSlash = strchr(pszContentRange, '/');
+                if (pszSlash)
+                {
+                    pszSlash ++;
+                    fileSize = CPLScanUIntBig(pszSlash, strlen(pszSlash));
+                    eExists = EXIST_YES;
+
+                    if (ENABLE_DEBUG)
+                        CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
+                                pszURL, fileSize, (int)response_code);
+
+                    CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+                    cachedFileProp->bHastComputedFileSize = TRUE;
+                    cachedFileProp->fileSize = fileSize;
+                    cachedFileProp->eExists = eExists;
+                }
+            }
+        }
     }
 
     lastDownloadedOffset = startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE;
@@ -496,6 +541,7 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     }
 
     CPLFree(sWriteFuncData.pBuffer);
+    CPLFree(sWriteFuncHeaderData.pBuffer);
 
     return TRUE;
 }
