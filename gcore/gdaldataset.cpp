@@ -1987,7 +1987,7 @@ char **GDALDataset::GetFileList()
 /* -------------------------------------------------------------------- */
 /*      Is the main filename even a real filesystem object?             */
 /* -------------------------------------------------------------------- */
-    bMainFileReal = VSIStatL( osMainFilename, &sStat ) == 0;
+    bMainFileReal = VSIStatExL( osMainFilename, &sStat, VSI_STAT_EXISTS_FLAG ) == 0;
 
 /* -------------------------------------------------------------------- */
 /*      Form new list.                                                  */
@@ -2033,7 +2033,7 @@ char **GDALDataset::GetFileList()
             szDerivedExtension[3] = '\0';
             CPLString osWorldFilename = CPLResetExtension( osMainFilename, szDerivedExtension );
             
-            if( VSIStatL( osWorldFilename, &sStat ) == 0 )
+            if( VSIStatExL( osWorldFilename, &sStat, VSI_STAT_EXISTS_FLAG ) == 0 )
                 papszList = CSLAddString( papszList, osWorldFilename );
         }
     }

@@ -1649,13 +1649,13 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
 
     pszTFW = CPLResetExtension( pszBaseFilename, szExtLower );
 
-    bGotTFW = VSIStatL( pszTFW, &sStatBuf ) == 0;
+    bGotTFW = VSIStatExL( pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0;
 
 #ifndef WIN32
     if( !bGotTFW )
     {
         pszTFW = CPLResetExtension( pszBaseFilename, szExtUpper );
-        bGotTFW = VSIStatL( pszTFW, &sStatBuf ) == 0;
+        bGotTFW = VSIStatExL( pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0;
     }
 #endif
     
@@ -2676,7 +2676,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         {
             VSIStatBufL sStatBuf;
 
-            if( VSIStatL( pszDep, &sStatBuf ) == 0 )
+            if( VSIStatExL( pszDep, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
             {
                 CPLDebug( "AUX", "%s is for file %s, not %s, ignoring.",
                           osAuxFilename.c_str(), 
@@ -2769,7 +2769,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             {
                 VSIStatBufL sStatBuf;
 
-                if( VSIStatL( pszDep, &sStatBuf ) == 0 )
+                if( VSIStatExL( pszDep, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
                 {
                     CPLDebug( "AUX", "%s is for file %s, not %s, ignoring.",
                               osAuxFilename.c_str(), 

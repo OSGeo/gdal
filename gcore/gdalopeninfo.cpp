@@ -79,7 +79,8 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
 /* -------------------------------------------------------------------- */
     VSIStatBufL  sStat;
 
-    if( VSIStatL( pszFilename, &sStat ) == 0 )
+    if( VSIStatExL( pszFilename, &sStat,
+                    VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 )
     {
         bStatOK = TRUE;
 
