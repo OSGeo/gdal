@@ -39,7 +39,6 @@ import ogrtest
 import ogr
 import osr
 import gdal
-import socket
 import webserver
 
 ###############################################################################
@@ -85,8 +84,6 @@ def ogr_wfs_2():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    timeout =  10
-    socket.setdefaulttimeout(timeout)
     if gdaltest.gdalurlopen('http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap') is None:
         print('cannot open URL')
         return 'skip'
@@ -141,8 +138,6 @@ def ogr_wfs_3():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    timeout =  10
-    socket.setdefaulttimeout(timeout)
     if gdaltest.gdalurlopen('http://sigma.openplans.org/geoserver/ows') is None:
         print('cannot open URL')
         return 'skip'
@@ -243,8 +238,6 @@ def ogr_wfs_4():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    timeout =  10
-    socket.setdefaulttimeout(timeout)
     if gdaltest.gdalurlopen('http://sigma.openplans.org/geoserver/ows') is None:
         print('cannot open URL')
         return 'skip'
@@ -299,8 +292,6 @@ def ogr_wfs_5():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    timeout =  10
-    socket.setdefaulttimeout(timeout)
     if gdaltest.gdalurlopen('http://demo.deegree.org/deegree-wfs/services') is None:
         print('cannot open URL')
         return 'skip'
@@ -362,8 +353,6 @@ def ogr_wfs_6():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    timeout =  10
-    socket.setdefaulttimeout(timeout)
     if gdaltest.gdalurlopen('http://demo.deegree.org/deegree-wfs/services') is None:
         print('cannot open URL')
         return 'skip'
@@ -437,8 +426,6 @@ def ogr_wfs_8():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    timeout =  10
-    socket.setdefaulttimeout(timeout)
     if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
         print('cannot open URL')
         return 'skip'
@@ -532,8 +519,6 @@ def ogr_wfs_9():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    timeout =  10
-    socket.setdefaulttimeout(timeout)
     if gdaltest.gdalurlopen('http://testing.deegree.org/deegree-wfs/services') is None:
         print('cannot open URL')
         return 'skip'
