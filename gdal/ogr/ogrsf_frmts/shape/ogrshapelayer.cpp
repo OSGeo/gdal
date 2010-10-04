@@ -35,14 +35,6 @@
 #  include <wce_errno.h>
 #endif
 
-#if defined(WIN32) || defined(WIN32CE)
-#define SEP_CHAR '\\'
-#else
-#define SEP_CHAR '/'
-#endif
-
-
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1166,9 +1158,7 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
     DBFHandle hNewDBF = NULL;
     
-    CPLString oTempFile(osDirname);
-    oTempFile += SEP_CHAR;
-    oTempFile += osBasename;
+    CPLString oTempFile(CPLFormFilename(osDirname, osBasename, NULL));
     oTempFile += "_packed.dbf";
 
     hNewDBF = DBFCloneEmpty( hDBF, oTempFile );
@@ -1241,9 +1231,7 @@ OGRErr OGRShapeLayer::Repack()
             return OGRERR_FAILURE;
         }
 
-        oTempFile = osDirname;
-        oTempFile += SEP_CHAR;
-        oTempFile += osBasename;
+        oTempFile = CPLFormFilename(osDirname, osBasename, NULL);
         oTempFile += "_packed.shp";
 
         hNewSHP = SHPCreate( oTempFile, hSHP->nShapeType );
