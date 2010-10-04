@@ -85,7 +85,7 @@ public:
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess);
     virtual int               Stat( const char *pszFilename,
-                                    VSIStatBufL *pStatBuf );
+                                    VSIStatBufL *pStatBuf, int nFlags );
 };
 
 /************************************************************************/
@@ -340,7 +340,8 @@ VSIStdinFilesystemHandler::Open( const char *pszFilename,
 /************************************************************************/
 
 int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
-                                      VSIStatBufL * pStatBuf )
+                                     VSIStatBufL * pStatBuf,
+                                     int nFlags )
 
 {
     memset( pStatBuf, 0, sizeof(VSIStatBufL) );

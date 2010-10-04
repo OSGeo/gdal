@@ -227,6 +227,43 @@ int VSIRmdir( const char * pszDirname )
 int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
 
 {
+    return VSIStatExL(pszFilename, psStatBuf, 0);
+}
+
+
+/************************************************************************/
+/*                            VSIStatExL()                              */
+/************************************************************************/
+
+/**
+ * \brief Get filesystem object info.
+ *
+ * Fetches status information about a filesystem object (file, directory, etc).
+ * The returned information is placed in the VSIStatBufL structure.   For
+ * portability only the st_size (size in bytes), and st_mode (file type).
+ * This method is similar to VSIStat(), but will work on large files on
+ * systems where this requires special calls.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX stat() function, with an extra parameter to specify
+ * which information is needed, which offers a potential for speed optimizations
+ * on specialized and potentially slow virtual filesystem objects (/vsigzip/, /vsicurl/)
+ *
+ * @param pszFilename the path of the filesystem object to be queried.  UTF-8 encoded.
+ * @param psStatBuf the structure to load with information.
+ * @param nFlags 0 to get all information, or VSI_STAT_EXISTS_FLAG, VSI_STAT_NATURE_FLAG or
+ *                  VSI_STAT_SIZE_FLAG, or a combination of those to get partial info.
+ *
+ * @return 0 on success or -1 on an error.
+ *
+ * @since GDAL 1.8.0
+ */
+
+int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
+
+{
     char    szAltPath[4];
     /* enable to work on "C:" as if it were "C:\" */
     if( strlen(pszFilename) == 2 && pszFilename[1] == ':' )
@@ -239,10 +276,13 @@ int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
         pszFilename = szAltPath;
     }
 
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename );
 
-    return poFSHandler->Stat( pszFilename, psStatBuf );
+    if (nFlags == 0)
+        nFlags = VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG | VSI_STAT_SIZE_FLAG;
+
+    return poFSHandler->Stat( pszFilename, psStatBuf, nFlags );
 }
 
 /************************************************************************/

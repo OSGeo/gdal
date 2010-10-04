@@ -144,6 +144,12 @@ typedef struct VSI_STAT64_T VSIStatBufL;
 
 int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
 
+#define VSI_STAT_EXISTS_FLAG    0x1
+#define VSI_STAT_NATURE_FLAG    0x2
+#define VSI_STAT_SIZE_FLAG      0x4
+
+int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, int nFlags );
+
 /* ==================================================================== */
 /*      Memory allocation                                               */
 /* ==================================================================== */

@@ -110,7 +110,7 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess);
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
@@ -1067,7 +1067,8 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
 /*                                Stat()                                */
 /************************************************************************/
 
-int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf )
+int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                                    int nFlags )
 {
     CPLString osFilename(pszFilename);
 
@@ -1097,12 +1098,18 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
         {
             return -1;
         }
+        if (bGotFileList && bFound && (nFlags & VSI_STAT_SIZE_FLAG) == 0)
+        {
+            pStatBuf->st_mode = S_IFREG;
+            pStatBuf->st_size = 0;
+            return 0;
+        }
     }
 
     VSICurlHandle oHandle( this, osFilename + strlen("/vsicurl/"));
 
     pStatBuf->st_mode = S_IFREG;
-    pStatBuf->st_size = oHandle.GetFileSize();
+    pStatBuf->st_size = (nFlags & VSI_STAT_SIZE_FLAG) ? oHandle.GetFileSize() : 0;
 
     return (oHandle.Exists()) ? 0 : -1;
 }

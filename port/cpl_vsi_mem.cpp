@@ -134,7 +134,7 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess);
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
@@ -472,7 +472,8 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
 /************************************************************************/
 
 int VSIMemFilesystemHandler::Stat( const char * pszFilename, 
-                                   VSIStatBufL * pStatBuf )
+                                   VSIStatBufL * pStatBuf,
+                                   int nFlags )
     
 {
     CPLMutexHolder oHolder( &hMutex );

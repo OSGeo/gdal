@@ -79,7 +79,7 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess);
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
@@ -333,7 +333,8 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 /************************************************************************/
 
 int VSISubFileFilesystemHandler::Stat( const char * pszFilename, 
-                                       VSIStatBufL * psStatBuf )
+                                       VSIStatBufL * psStatBuf,
+                                       int nFlags )
     
 {
     CPLString osSubFilePath;
@@ -347,7 +348,7 @@ int VSISubFileFilesystemHandler::Stat( const char * pszFilename,
         return -1;
     }
 
-    int nResult = VSIStatL( osSubFilePath, psStatBuf );
+    int nResult = VSIStatExL( osSubFilePath, psStatBuf, nFlags );
     
     if( nResult == 0 )
     {
