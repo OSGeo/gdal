@@ -969,13 +969,35 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
         while( (c = strchr(iter, '\n')) != NULL)
         {
             *c = 0;
-            if (strstr(iter, osExpectedString.c_str()) || strstr(iter, osExpectedString2.c_str()))
+            /* Subversion HTTP listing */
+            if (strstr(iter, "<title>") && strstr(iter, "Revision"))
+            {
+                /* Detect something like : <html><head><title>gdal - Revision 20739: /trunk/autotest/gcore/data</title></head> */
+                /* The annoying thing is that what is after ': ' is a subpart of what is after http://server/ */
+                char* pszSubDir = strstr(iter, ": ");
+                if (pszSubDir)
+                {
+                    pszSubDir += 2;
+                    if (strstr(pszSubDir, "</title>"))
+                    {
+                        *strstr(pszSubDir, "</title>") = 0;
+                        if (strstr(pszDir, pszSubDir))
+                        {
+                            bIsHTMLDirList = TRUE;
+                            *pbGotFileList = TRUE;
+                        }
+                    }
+                }
+            }
+            else if (strstr(iter, osExpectedString.c_str()) ||
+                     strstr(iter, osExpectedString2.c_str()))
             {
                 bIsHTMLDirList = TRUE;
                 *pbGotFileList = TRUE;
             }
             else if (bIsHTMLDirList &&
                      strstr(iter, "<a href=\"") != NULL &&
+                     strstr(iter, "<a href=\"http://") == NULL && /* exclude absolute links, like to subversion home */
                      strstr(iter, "Parent Directory") == NULL /* exclude parent directory */)
             {
                 char *beginFilename = strstr(iter, "<a href=\"") + strlen("<a href=\"");
