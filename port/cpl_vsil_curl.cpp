@@ -65,6 +65,7 @@ typedef struct
     ExistStatus     eExists;
     int             bHastComputedFileSize;
     vsi_l_offset    fileSize;
+    int             bIsDirectory;
 } CachedFileProp;
 
 typedef struct
@@ -150,6 +151,7 @@ class VSICurlHandle : public VSIVirtualHandle
     vsi_l_offset    fileSize;
     int             bHastComputedFileSize;
     ExistStatus     eExists;
+    int             bIsDirectory;
     vsi_l_offset    lastCurlOffset;
     CURL*           hCurlHandle;
 
@@ -174,6 +176,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     vsi_l_offset         GetFileSize();
     int                  Exists();
+    int                  IsDirectory() { return bIsDirectory; }
 };
 
 /************************************************************************/
@@ -189,6 +192,7 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL)
     fileSize = 0;
     bHastComputedFileSize = FALSE;
     eExists = EXIST_UNKNOWN;
+    bIsDirectory = FALSE;
     hCurlHandle = NULL;
 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
@@ -197,6 +201,7 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL)
         eExists = cachedFileProp->eExists;
         fileSize = cachedFileProp->fileSize;
         bHastComputedFileSize = cachedFileProp->bHastComputedFileSize;
+        bIsDirectory = cachedFileProp->bIsDirectory;
     }
 
     lastDownloadedOffset = -1;
@@ -387,6 +392,15 @@ vsi_l_offset VSICurlHandle::GetFileSize()
             fileSize = 0;
         }
 
+        /* Try to guess if this is a directory. Generally if this is a directory, */
+        /* curl will retry with an URL with slash added */
+        char *pszEffectiveURL = NULL;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL, &pszEffectiveURL);
+        if (fileSize == 0 &&
+            pszEffectiveURL != NULL && strncmp(pszURL, pszEffectiveURL, strlen(pszURL)) == 0 &&
+            pszEffectiveURL[strlen(pszURL)] == '/')
+            bIsDirectory = TRUE;
+
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
                     pszURL, fileSize, (int)response_code);
@@ -398,6 +412,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     cachedFileProp->bHastComputedFileSize = TRUE;
     cachedFileProp->fileSize = fileSize;
     cachedFileProp->eExists = eExists;
+    cachedFileProp->bIsDirectory = bIsDirectory;
 
     curl_easy_cleanup(hCurlHandle );
 
@@ -475,7 +490,6 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     if (response_code != 200 && response_code != 206 &&
         response_code != 226 && response_code != 426)
     {
-        CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
         bHastComputedFileSize = cachedFileProp->bHastComputedFileSize = TRUE;
         cachedFileProp->fileSize = 0;
         cachedFileProp->eExists = EXIST_NO;
@@ -503,18 +517,40 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
                 {
                     pszSlash ++;
                     fileSize = CPLScanUIntBig(pszSlash, strlen(pszSlash));
-                    eExists = EXIST_YES;
-
-                    if (ENABLE_DEBUG)
-                        CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
-                                pszURL, fileSize, (int)response_code);
-
-                    CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-                    bHastComputedFileSize = cachedFileProp->bHastComputedFileSize = TRUE;
-                    cachedFileProp->fileSize = fileSize;
-                    cachedFileProp->eExists = eExists;
                 }
             }
+        }
+        else if (strncmp(pszURL, "ftp", 3) == 0)
+        {
+            /* Parse 213 answer for FTP protocol */
+            char* pszSize = strstr(sWriteFuncHeaderData.pBuffer, "213 ");
+            if (pszSize)
+            {
+                pszSize += 4;
+                char* pszEOL = strchr(pszSize, '\n');
+                if (pszEOL)
+                {
+                    *pszEOL = 0;
+                    pszEOL = strchr(pszSize, '\r');
+                    if (pszEOL)
+                        *pszEOL = 0;
+
+                    fileSize = CPLScanUIntBig(pszSize, strlen(pszSize));
+                }
+            }
+        }
+
+        if (fileSize != 0)
+        {
+            eExists = EXIST_YES;
+
+            if (ENABLE_DEBUG)
+                CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
+                        pszURL, fileSize, (int)response_code);
+
+            bHastComputedFileSize = cachedFileProp->bHastComputedFileSize = TRUE;
+            cachedFileProp->fileSize = fileSize;
+            cachedFileProp->eExists = eExists;
         }
     }
 
@@ -871,6 +907,7 @@ CachedFileProp*  VSICurlFilesystemHandler::GetCachedFileProp(const char* pszURL)
         cachedFileProp->eExists = EXIST_UNKNOWN;
         cachedFileProp->bHastComputedFileSize = FALSE;
         cachedFileProp->fileSize = 0;
+        cachedFileProp->bIsDirectory = FALSE;
         cacheFileSize[pszURLHash] = cachedFileProp;
     }
 
@@ -1157,7 +1194,12 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
     pStatBuf->st_mode = S_IFREG;
     pStatBuf->st_size = (nFlags & VSI_STAT_SIZE_FLAG) ? oHandle.GetFileSize() : 0;
 
-    return (oHandle.Exists()) ? 0 : -1;
+    int nRet = (oHandle.Exists()) ? 0 : -1;
+    if (nRet == 0 && oHandle.IsDirectory())
+    {
+        pStatBuf->st_mode = S_IFDIR;
+    }
+    return nRet;
 }
 
 /************************************************************************/
