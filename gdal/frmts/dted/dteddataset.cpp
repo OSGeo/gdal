@@ -538,7 +538,7 @@ const char *DTEDDataset::GetProjectionRef()
             CPLError( CE_Warning, CPLE_AppDefined,
                       "The DTED file %s indicates %s as horizontal datum, which is not recognized by the DTED driver. \n"
                       "The DTED driver is going to consider it as WGS84.\n"
-                      "No more warnings will be issued in this session about this operation.", GetFileName(), pszProjection );
+                      "No more warnings will be issued in this session about this operation.", GetFileName(), pszPrj );
         }
         return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4326\"]]" );
     }
