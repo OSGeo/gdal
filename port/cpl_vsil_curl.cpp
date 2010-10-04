@@ -1013,6 +1013,8 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
             while( (c = strchr(iter, '\n')) != NULL)
             {
                 *c = 0;
+                if (c - iter > 0 && c[-1] == '\r')
+                    c[-1] = 0;
                 papszFileList = CSLAddString(papszFileList, iter);
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "File[%d] = %s", nCount, iter);
