@@ -354,18 +354,13 @@ vsi_l_offset VSICurlHandle::GetFileSize()
             const char* pszBuffer = sWriteFuncData.pBuffer + strlen("Content-Length: ");
             eExists = EXIST_YES;
             fileSize = CPLScanUIntBig(pszBuffer, sWriteFuncData.nSize - strlen("Content-Length: "));
+            if (ENABLE_DEBUG)
+                CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB,
+                        pszURL, fileSize);
         }
-        else
-        {
-            eExists = EXIST_NO;
-            fileSize = 0;
-        }
-
-        if (ENABLE_DEBUG)
-            CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB,
-                    pszURL, fileSize);
     }
-    else
+    
+    if (eExists != EXIST_YES)
     {
         CURLcode code = curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dfSize );
         if (code == 0)
@@ -866,6 +861,103 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     return new VSICurlHandle( this, osFilename + strlen("/vsicurl/"));
 }
 
+static char** VSICurlParseHTMLFileList(const char* pszFilename,
+                                       char* pszData,
+                                       int* pbGotFileList)
+{
+    char** papszFileList = NULL;
+    char* iter = pszData;
+    char* c;
+    int nCount = 0;
+    int bIsHTMLDirList = FALSE;
+    CPLString osExpectedString;
+    CPLString osExpectedString2;
+    CPLString osExpectedString3;
+    
+    *pbGotFileList = FALSE;
+
+    const char* pszDir;
+    if (EQUALN(pszFilename, "/vsicurl/http://", strlen("/vsicurl/http://")))
+        pszDir = strchr(pszFilename + strlen("/vsicurl/http://"), '/');
+    else
+        pszDir = strchr(pszFilename + strlen("/vsicurl/ftp://"), '/');
+    if (pszDir == NULL)
+        pszDir = "";
+    /* Apache */
+    osExpectedString = "<title>Index of ";
+    osExpectedString += pszDir;
+    osExpectedString += "</title>";
+    /* shttpd */
+    osExpectedString2 = "<title>Index of ";
+    osExpectedString2 += pszDir;
+    osExpectedString2 += "/</title>";
+    /* FTP */
+    osExpectedString3 = "FTP Listing of ";
+    osExpectedString3 += pszDir;
+    osExpectedString3 += "/";
+    while( (c = strchr(iter, '\n')) != NULL)
+    {
+        *c = 0;
+        /* Subversion HTTP listing */
+        if (strstr(iter, "<title>") && strstr(iter, "Revision"))
+        {
+            /* Detect something like : <html><head><title>gdal - Revision 20739: /trunk/autotest/gcore/data</title></head> */
+            /* The annoying thing is that what is after ': ' is a subpart of what is after http://server/ */
+            char* pszSubDir = strstr(iter, ": ");
+            if (pszSubDir)
+            {
+                pszSubDir += 2;
+                if (strstr(pszSubDir, "</title>"))
+                {
+                    *strstr(pszSubDir, "</title>") = 0;
+                    if (strstr(pszDir, pszSubDir))
+                    {
+                        bIsHTMLDirList = TRUE;
+                        *pbGotFileList = TRUE;
+                    }
+                }
+            }
+        }
+        else if (strstr(iter, osExpectedString.c_str()) ||
+                 strstr(iter, osExpectedString2.c_str()) ||
+                 strstr(iter, osExpectedString3.c_str()))
+        {
+            bIsHTMLDirList = TRUE;
+            *pbGotFileList = TRUE;
+        }
+        else if (bIsHTMLDirList &&
+                 (strstr(iter, "<a href=\"") != NULL || strstr(iter, "<A HREF=\"") != NULL) &&
+                 strstr(iter, "<a href=\"http://") == NULL && /* exclude absolute links, like to subversion home */
+                 strstr(iter, "Parent Directory") == NULL /* exclude parent directory */)
+        {
+            char *beginFilename = strstr(iter, "<a href=\"");
+            if (beginFilename == NULL)
+                beginFilename = strstr(iter, "<A HREF=\"");
+            beginFilename += strlen("<a href=\"");
+            char *endQuote = strchr(beginFilename, '"');
+            if (endQuote && strncmp(beginFilename, "?C=", 3) != 0)
+            {
+                *endQuote = '\0';
+                
+                /* Remove trailing slash, that are returned for directories by */
+                /* Apache */
+                if (endQuote[-1] == '/')
+                    endQuote[-1] = 0;
+                
+                /* shttpd links include slashes from the root directory. Skip them */
+                while(strchr(beginFilename, '/'))
+                    beginFilename = strchr(beginFilename, '/') + 1;
+                papszFileList = CSLAddString(papszFileList, beginFilename);
+                if (ENABLE_DEBUG)
+                    CPLDebug("VSICURL", "File[%d] = %s", nCount, beginFilename);
+                nCount ++;
+            }
+        }
+        iter = c + 1;
+    }
+    
+    return papszFileList;
+}
 
 static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
 {
@@ -906,17 +998,28 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
         char* iter = sWriteFuncData.pBuffer;
         char* c;
         int nCount = 0;
-        while( (c = strchr(iter, '\n')) != NULL)
+        
+        if (EQUALN(iter, "<!DOCTYPE HTML", strlen("<!DOCTYPE HTML")) ||
+            EQUALN(iter, "<HTML>", 6))
         {
-            *c = 0;
-            papszFileList = CSLAddString(papszFileList, iter);
-            if (ENABLE_DEBUG)
-                CPLDebug("VSICURL", "File[%d] = %s", nCount, iter);
-            iter = c + 1;
-            nCount ++;
+            papszFileList = VSICurlParseHTMLFileList(pszFilename,
+                                             sWriteFuncData.pBuffer,
+                                             pbGotFileList);
         }
-
-        *pbGotFileList = TRUE;
+        else
+        {
+            *pbGotFileList = TRUE;
+            
+            while( (c = strchr(iter, '\n')) != NULL)
+            {
+                *c = 0;
+                papszFileList = CSLAddString(papszFileList, iter);
+                if (ENABLE_DEBUG)
+                    CPLDebug("VSICURL", "File[%d] = %s", nCount, iter);
+                iter = c + 1;
+                nCount ++;
+            }
+        }
 
         CPLFree(sWriteFuncData.pBuffer);
         return papszFileList;
@@ -945,83 +1048,11 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
 
         if (sWriteFuncData.pBuffer == NULL)
             return NULL;
+            
+        char** papszFileList = VSICurlParseHTMLFileList(pszFilename,
+                                                        sWriteFuncData.pBuffer,
+                                                        pbGotFileList);
 
-        char** papszFileList = NULL;
-        char* iter = sWriteFuncData.pBuffer;
-        char* c;
-        int nCount = 0;
-        int bIsHTMLDirList = FALSE;
-        CPLString osExpectedString;
-        CPLString osExpectedString2;
-        
-        const char* pszDir = strchr(pszFilename + strlen("/vsicurl/http://"), '/');
-        if (pszDir == NULL)
-            pszDir = "";
-        /* Apache */
-        osExpectedString = "<title>Index of ";
-        osExpectedString += pszDir;
-        osExpectedString += "</title>";
-        /* shttpd */
-        osExpectedString2 = "<title>Index of ";
-        osExpectedString2 += pszDir;
-        osExpectedString2 += "/</title>";
- 
-        while( (c = strchr(iter, '\n')) != NULL)
-        {
-            *c = 0;
-            /* Subversion HTTP listing */
-            if (strstr(iter, "<title>") && strstr(iter, "Revision"))
-            {
-                /* Detect something like : <html><head><title>gdal - Revision 20739: /trunk/autotest/gcore/data</title></head> */
-                /* The annoying thing is that what is after ': ' is a subpart of what is after http://server/ */
-                char* pszSubDir = strstr(iter, ": ");
-                if (pszSubDir)
-                {
-                    pszSubDir += 2;
-                    if (strstr(pszSubDir, "</title>"))
-                    {
-                        *strstr(pszSubDir, "</title>") = 0;
-                        if (strstr(pszDir, pszSubDir))
-                        {
-                            bIsHTMLDirList = TRUE;
-                            *pbGotFileList = TRUE;
-                        }
-                    }
-                }
-            }
-            else if (strstr(iter, osExpectedString.c_str()) ||
-                     strstr(iter, osExpectedString2.c_str()))
-            {
-                bIsHTMLDirList = TRUE;
-                *pbGotFileList = TRUE;
-            }
-            else if (bIsHTMLDirList &&
-                     strstr(iter, "<a href=\"") != NULL &&
-                     strstr(iter, "<a href=\"http://") == NULL && /* exclude absolute links, like to subversion home */
-                     strstr(iter, "Parent Directory") == NULL /* exclude parent directory */)
-            {
-                char *beginFilename = strstr(iter, "<a href=\"") + strlen("<a href=\"");
-                char *endQuote = strchr(beginFilename, '"');
-                if (endQuote && strncmp(beginFilename, "?C=", 3) != 0)
-                {
-                    *endQuote = '\0';
-                    
-                    /* Remove trailing slash, that are returned for directories by */
-                    /* Apache */
-                    if (endQuote[-1] == '/')
-                        endQuote[-1] = 0;
-                    
-                    /* shttpd links include slashes from the root directory. Skip them */
-                    while(strchr(beginFilename, '/'))
-                        beginFilename = strchr(beginFilename, '/') + 1;
-                    papszFileList = CSLAddString(papszFileList, beginFilename);
-                    if (ENABLE_DEBUG)
-                        CPLDebug("VSICURL", "File[%d] = %s", nCount, beginFilename);
-                    nCount ++;
-                }
-            }
-            iter = c + 1;
-        }
         CPLFree(sWriteFuncData.pBuffer);
         return papszFileList;
     }
