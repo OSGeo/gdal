@@ -337,6 +337,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
     VSICurlSetOptions(hCurlHandle, pszURL);
     curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 1);
 
     /* Bug with older curl versions (<=7.16.4) and FTP. See http://curl.haxx.se/mail/lib-2007-08/0312.html */
     VSICURLInitWriteFuncStruct(&sWriteFuncData);
