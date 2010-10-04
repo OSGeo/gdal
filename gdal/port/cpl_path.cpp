@@ -528,6 +528,7 @@ const char *CPLFormCIFilename( const char * pszPath,
 
     const char  *pszAddedExtSep = "";
     char        *pszFilename;
+    CPLString    osFullPath;
     const char  *pszFullPath;
     int         nLen = strlen(pszBasename)+2, i;
     VSIStatBufL sStatBuf;
@@ -546,8 +547,12 @@ const char *CPLFormCIFilename( const char * pszPath,
     sprintf( pszFilename, "%s%s%s", 
              pszBasename, pszAddedExtSep, pszExtension );
 
-    pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
+    /* Save into temporary value as VSIStatL() might call CPL path methods */
+    /* itself and override the content of the static buffer. We should perhaps */
+    /* implement a ring buffer for cpl_path.cpp, like in cpl_string.cpp */
+    osFullPath = pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
     nStatRet = VSIStatL( pszFullPath, &sStatBuf );
+    strcpy((char*)pszFullPath, osFullPath.c_str());
     if( nStatRet != 0 )
     {
         for( i = 0; pszFilename[i] != '\0'; i++ )
@@ -556,8 +561,9 @@ const char *CPLFormCIFilename( const char * pszPath,
                 pszFilename[i] = toupper(pszFilename[i]);
         }
 
-        pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
+        osFullPath = pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
         nStatRet = VSIStatL( pszFullPath, &sStatBuf );
+        strcpy((char*)pszFullPath, osFullPath.c_str());
     }
 
     if( nStatRet != 0 )
@@ -568,8 +574,9 @@ const char *CPLFormCIFilename( const char * pszPath,
                 pszFilename[i] = tolower(pszFilename[i]);
         }
 
-        pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
+        osFullPath = pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
         nStatRet = VSIStatL( pszFullPath, &sStatBuf );
+        strcpy((char*)pszFullPath, osFullPath.c_str());
     }
 
     if( nStatRet != 0 )
