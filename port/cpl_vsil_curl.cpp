@@ -88,6 +88,23 @@ static const char* VSICurlGetCacheFileName()
     return "gdal_vsicurl_cache.bin";
 }
 
+static int CSLFindStringSensitive( char ** papszList, const char * pszTarget )
+
+{
+    int         i;
+
+    if( papszList == NULL )
+        return -1;
+
+    for( i = 0; papszList[i] != NULL; i++ )
+    {
+        if( strcmp(papszList[i],pszTarget) == 0 )
+            return i;
+    }
+
+    return -1;
+}
+
 /************************************************************************/
 /*                     VSICurlFilesystemHandler                         */
 /************************************************************************/
@@ -934,7 +951,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     {
         int bGotFileList;
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
-        int bFound = (CSLFindString(papszFileList, CPLGetFilename(osFilename)) != -1);
+        int bFound = (CSLFindStringSensitive(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
         {
@@ -1175,7 +1192,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
     {
         int bGotFileList;
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
-        int bFound = (CSLFindString(papszFileList, CPLGetFilename(osFilename)) != -1);
+        int bFound = (CSLFindStringSensitive(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
         {
