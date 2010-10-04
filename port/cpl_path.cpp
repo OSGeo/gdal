@@ -63,7 +63,7 @@ static char *CPLGetStaticResult()
     char *pachBufRingInfo = (char *) CPLGetTLS( CTLS_PATHBUF );
     if( pachBufRingInfo == NULL )
     {
-        pachBufRingInfo = (char *) CPLMalloc(sizeof(int) + CPL_PATH_BUF_SIZE * CPL_PATH_BUF_COUNT);
+        pachBufRingInfo = (char *) CPLCalloc(1, sizeof(int) + CPL_PATH_BUF_SIZE * CPL_PATH_BUF_COUNT);
         CPLSetTLS( CTLS_PATHBUF, pachBufRingInfo, TRUE );
     }
 
