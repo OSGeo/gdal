@@ -486,7 +486,7 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     VSIStatBufL  sStatBuf;
 
-    if( VSIStatL( pszFilename, &sStatBuf ) != 0 )
+    if( VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
     {
     /* -------------------------------------------------------------------- */
     /*      Compute the uncompressed size.                                  */
