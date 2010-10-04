@@ -626,7 +626,8 @@ CPLErr GDALPamDataset::TryLoadXML()
 
     VSIStatBufL sStatBuf;
 
-    if( VSIStatL( psPam->pszPamFilename, &sStatBuf ) == 0 
+    if( VSIStatExL( psPam->pszPamFilename, &sStatBuf,
+                    VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0
         && VSI_ISREG( sStatBuf.st_mode ) )
     {
         CPLErrorReset();
@@ -976,7 +977,7 @@ char **GDALPamDataset::GetFileList()
 
     if( psPam && psPam->pszPamFilename 
         && (nPamFlags & GPF_DIRTY 
-            || VSIStatL( psPam->pszPamFilename, &sStatBuf ) == 0) )
+            || VSIStatExL( psPam->pszPamFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0) )
     {
         papszFileList = CSLAddString( papszFileList, psPam->pszPamFilename );
     }

@@ -418,7 +418,7 @@ GDALDefaultOverviews::BuildOverviewsSubDataset(
         for( iSequence = 0; iSequence < 100; iSequence++ )
         {
             osOvrFilename.Printf( "%s_%d.ovr", pszPhysicalFile, iSequence );
-            if( VSIStatL( osOvrFilename, &sStatBuf ) != 0 )
+            if( VSIStatExL( osOvrFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
             {
                 CPLString osAdjustedOvrFilename;
 
@@ -482,7 +482,7 @@ GDALDefaultOverviews::BuildOverviews(
 
             osOvrFilename = CPLResetExtension(poDS->GetDescription(),"aux");
 
-            if( VSIStatL( osOvrFilename, &sStatBuf ) == 0 )
+            if( VSIStatExL( osOvrFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
                 osOvrFilename.Printf( "%s.aux", poDS->GetDescription() );
         }
     }
