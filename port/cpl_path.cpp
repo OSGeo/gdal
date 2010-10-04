@@ -462,7 +462,14 @@ const char *CPLFormFilename( const char * pszPath,
     else if( strlen(pszPath) > 0
              && pszPath[strlen(pszPath)-1] != '/'
              && pszPath[strlen(pszPath)-1] != '\\' )
-        pszAddedPathSep = SEP_STRING;
+    {
+        /* FIXME? would be better to ask the filesystems what they */
+        /* prefer as directory separator */
+        if (strncmp(pszPath, "/vsicurl/", 9) == 0)
+            pszAddedPathSep = "/";
+        else
+            pszAddedPathSep = SEP_STRING;
+    }
 
     if( pszExtension == NULL )
         pszExtension = "";
@@ -625,7 +632,14 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
     if( pszProjectDir[strlen(pszProjectDir)-1] != '/' 
         && pszProjectDir[strlen(pszProjectDir)-1] != '\\' )
     {
-        if (CPLStrlcat( pszStaticResult, SEP_STRING, CPL_PATH_BUF_SIZE ) >= CPL_PATH_BUF_SIZE)
+        /* FIXME? would be better to ask the filesystems what they */
+        /* prefer as directory separator */
+        const char* pszAddedPathSep;
+        if (strncmp(pszStaticResult, "/vsicurl/", 9) == 0)
+            pszAddedPathSep = "/";
+        else
+            pszAddedPathSep = SEP_STRING;
+        if (CPLStrlcat( pszStaticResult, pszAddedPathSep, CPL_PATH_BUF_SIZE ) >= CPL_PATH_BUF_SIZE)
             goto error;
     }
 
