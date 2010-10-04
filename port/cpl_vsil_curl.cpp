@@ -924,8 +924,7 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
 
     /* Try to recognize HTML pages that list the content of a directory */
     /* Currently this supports what Apache and shttpd can return */
-    else if (strncmp(pszFilename, "/vsicurl/http://", strlen("/vsicurl/http://")) == 0 &&
-             strchr(pszFilename + strlen("/vsicurl/http://"), '/') != NULL)
+    else if (strncmp(pszFilename, "/vsicurl/http://", strlen("/vsicurl/http://")) == 0)
     {
         WriteFuncStruct sWriteFuncData;
 
@@ -954,14 +953,19 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
         int bIsHTMLDirList = FALSE;
         CPLString osExpectedString;
         CPLString osExpectedString2;
+        
+        const char* pszDir = strchr(pszFilename + strlen("/vsicurl/http://"), '/');
+        if (pszDir == NULL)
+            pszDir = "";
         /* Apache */
         osExpectedString = "<title>Index of ";
-        osExpectedString += strchr(pszFilename + strlen("/vsicurl/http://"), '/');
+        osExpectedString += pszDir;
         osExpectedString += "</title>";
         /* shttpd */
         osExpectedString2 = "<title>Index of ";
-        osExpectedString2 += strchr(pszFilename + strlen("/vsicurl/http://"), '/');
+        osExpectedString2 += pszDir;
         osExpectedString2 += "/</title>";
+ 
         while( (c = strchr(iter, '\n')) != NULL)
         {
             *c = 0;
@@ -970,13 +974,21 @@ static char** VSICurlGetFileList(const char *pszFilename, int* pbGotFileList)
                 bIsHTMLDirList = TRUE;
                 *pbGotFileList = TRUE;
             }
-            else if (bIsHTMLDirList && strstr(iter, "<a href=\""))
+            else if (bIsHTMLDirList &&
+                     strstr(iter, "<a href=\"") != NULL &&
+                     strstr(iter, "Parent Directory") == NULL /* exclude parent directory */)
             {
                 char *beginFilename = strstr(iter, "<a href=\"") + strlen("<a href=\"");
                 char *endQuote = strchr(beginFilename, '"');
                 if (endQuote && strncmp(beginFilename, "?C=", 3) != 0)
                 {
                     *endQuote = '\0';
+                    
+                    /* Remove trailing slash, that are returned for directories by */
+                    /* Apache */
+                    if (endQuote[-1] == '/')
+                        endQuote[-1] = 0;
+                    
                     /* shttpd links include slashes from the root directory. Skip them */
                     while(strchr(beginFilename, '/'))
                         beginFilename = strchr(beginFilename, '/') + 1;
