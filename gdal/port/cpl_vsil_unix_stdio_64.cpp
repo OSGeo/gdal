@@ -99,7 +99,7 @@ class VSIUnixStdioFilesystemHandler : public VSIFilesystemHandler
 public:
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess);
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
@@ -380,7 +380,8 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
 /************************************************************************/
 
 int VSIUnixStdioFilesystemHandler::Stat( const char * pszFilename, 
-                                         VSIStatBufL * pStatBuf )
+                                         VSIStatBufL * pStatBuf,
+                                         int nFlags)
 
 {
     return( VSI_STAT64( pszFilename, pStatBuf ) );

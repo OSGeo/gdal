@@ -63,7 +63,7 @@ class VSIWin32FilesystemHandler : public VSIFilesystemHandler
 public:
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess);
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
@@ -417,7 +417,8 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 /************************************************************************/
 
 int VSIWin32FilesystemHandler::Stat( const char * pszFilename, 
-                                     VSIStatBufL * pStatBuf )
+                                     VSIStatBufL * pStatBuf,
+                                     int nFlags )
 
 {
 #if defined(WIN32) && _MSC_VER >= 1310

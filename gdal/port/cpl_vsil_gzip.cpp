@@ -195,7 +195,7 @@ public:
                                     const char *pszAccess);
     VSIGZipHandle *OpenGZipReadOnly( const char *pszFilename, 
                                      const char *pszAccess);
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
@@ -1352,7 +1352,9 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly( const char *pszFilena
 /*                                Stat()                                */
 /************************************************************************/
 
-int VSIGZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf )
+int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
+                                    VSIStatBufL *pStatBuf,
+                                    int nFlags )
 {
     CPLMutexHolder oHolder(&hMutex);
 
@@ -1370,9 +1372,9 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
     }
 
     /* Begin by doing a stat on the real file */
-    int ret = VSIStatL(pszFilename+strlen("/vsigzip/"), pStatBuf);
+    int ret = VSIStatExL(pszFilename+strlen("/vsigzip/"), pStatBuf, nFlags);
 
-    if (ret == 0)
+    if (ret == 0 && (nFlags & VSI_STAT_SIZE_FLAG))
     {
         CPLString osCacheFilename(pszFilename+strlen("/vsigzip/"));
         osCacheFilename += ".properties";

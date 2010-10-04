@@ -241,7 +241,8 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
             {
                 VSIFilesystemHandler *poFSHandler = 
                     VSIFileManager::GetHandler( archiveFilename );
-                if (poFSHandler->Stat(archiveFilename, &statBuf) == 0 &&
+                if (poFSHandler->Stat(archiveFilename, &statBuf,
+                                      VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
                     !VSI_ISDIR(statBuf.st_mode))
                 {
                     bArchiveFileExists = TRUE;
@@ -373,7 +374,7 @@ VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archi
 /*                                 Stat()                               */
 /************************************************************************/
 
-int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf )
+int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags )
 {
     int ret = -1;
     CPLString osFileInArchive;

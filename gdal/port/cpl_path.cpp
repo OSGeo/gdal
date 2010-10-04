@@ -551,7 +551,7 @@ const char *CPLFormCIFilename( const char * pszPath,
     /* itself and override the content of the static buffer. We should perhaps */
     /* implement a ring buffer for cpl_path.cpp, like in cpl_string.cpp */
     osFullPath = pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
-    nStatRet = VSIStatL( pszFullPath, &sStatBuf );
+    nStatRet = VSIStatExL( pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG );
     strcpy((char*)pszFullPath, osFullPath.c_str());
     if( nStatRet != 0 )
     {
@@ -562,7 +562,7 @@ const char *CPLFormCIFilename( const char * pszPath,
         }
 
         osFullPath = pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
-        nStatRet = VSIStatL( pszFullPath, &sStatBuf );
+        nStatRet = VSIStatExL( pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG );
         strcpy((char*)pszFullPath, osFullPath.c_str());
     }
 
@@ -575,7 +575,7 @@ const char *CPLFormCIFilename( const char * pszPath,
         }
 
         osFullPath = pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
-        nStatRet = VSIStatL( pszFullPath, &sStatBuf );
+        nStatRet = VSIStatExL( pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG );
         strcpy((char*)pszFullPath, osFullPath.c_str());
     }
 
