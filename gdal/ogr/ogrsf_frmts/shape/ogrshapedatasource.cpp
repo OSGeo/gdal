@@ -96,7 +96,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( VSIStatL( pszNewName, &stat ) != 0 
+    if( VSIStatExL( pszNewName, &stat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0 
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
