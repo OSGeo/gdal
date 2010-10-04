@@ -7649,11 +7649,11 @@ int GTiffDataset::FindRPBFile(char** papszSiblingFiles)
     {
         VSIStatBufL sStatBuf;
 
-        if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+        if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
         {
             osTarget = CPLResetExtension( osFilename, "rpb" );
 
-            if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+            if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
                 return FALSE;
         }
     }
@@ -7691,19 +7691,19 @@ int GTiffDataset::FindRPCFile(char** papszSiblingFiles)
     {
         VSIStatBufL sStatBuf;
 
-        if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+        if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
         {
             osSrcPath = osFilename;
             osSrcPath.replace (found, osSrcPath.size() - found, "_RPC.TXT");
             osTarget = osSrcPath; 
 
-            if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+            if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
             {
                 osSrcPath = osFilename;
                 osSrcPath.replace (found, osSrcPath.size() - found, "_rpc.TXT");
                 osTarget = osSrcPath; 
 
-                if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+                if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
                 {
                     return FALSE;
                 }
@@ -7737,11 +7737,11 @@ int GTiffDataset::FindIMDFile(char** papszSiblingFiles)
     {
         VSIStatBufL sStatBuf;
 
-        if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+        if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
         {
             osTarget = CPLResetExtension( osFilename, "imd" );
 
-            if( VSIStatL( osTarget, &sStatBuf ) != 0 )
+            if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
                 return FALSE;
         }
     }
