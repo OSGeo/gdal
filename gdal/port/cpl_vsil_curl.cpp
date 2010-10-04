@@ -476,7 +476,7 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
         response_code != 226 && response_code != 426)
     {
         CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-        cachedFileProp->bHastComputedFileSize = TRUE;
+        bHastComputedFileSize = cachedFileProp->bHastComputedFileSize = TRUE;
         cachedFileProp->fileSize = 0;
         cachedFileProp->eExists = EXIST_NO;
         CPLFree(sWriteFuncData.pBuffer);
@@ -484,7 +484,7 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
         return FALSE;
     }
 
-    if (eExists == EXIST_UNKNOWN && sWriteFuncHeaderData.pBuffer)
+    if (!bHastComputedFileSize && sWriteFuncHeaderData.pBuffer)
     {
         /* Try to retrieve the filesize from the HTTP headers */
         /* if in the form : "Content-Range: bytes x-y/filesize" */
@@ -510,7 +510,7 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
                                 pszURL, fileSize, (int)response_code);
 
                     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-                    cachedFileProp->bHastComputedFileSize = TRUE;
+                    bHastComputedFileSize = cachedFileProp->bHastComputedFileSize = TRUE;
                     cachedFileProp->fileSize = fileSize;
                     cachedFileProp->eExists = eExists;
                 }
