@@ -1795,6 +1795,39 @@ def ogr_shape_43():
     return 'success'
 
 ###############################################################################
+# Test /vsicurl/ on a directory
+
+def ogr_shape_44():
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    conn = gdaltest.gdalurlopen('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip')
+    if conn is None:
+        print('cannot open URL')
+        return 'skip'
+    conn.close()
+
+    ds = ogr.Open('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/testshp')
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+
+    srs = lyr.GetSpatialRef()
+    wkt = srs.ExportToWkt()
+    if wkt.find('OSGB') == -1:
+        gdaltest.post_reason('did not get expected SRS')
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1858,6 +1891,7 @@ gdaltest_list = [
     ogr_shape_41,
     ogr_shape_42,
     ogr_shape_43,
+    ogr_shape_44,
     ogr_shape_cleanup ]
  
 if __name__ == '__main__':
