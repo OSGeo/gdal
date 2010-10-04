@@ -96,7 +96,7 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess);
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
@@ -428,7 +428,8 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 /************************************************************************/
 
 int VSISparseFileFilesystemHandler::Stat( const char * pszFilename, 
-                                       VSIStatBufL * psStatBuf )
+                                          VSIStatBufL * psStatBuf,
+                                          int nFlags )
     
 {
     VSIVirtualHandle *poFile = Open( pszFilename, "r" );
@@ -442,8 +443,8 @@ int VSISparseFileFilesystemHandler::Stat( const char * pszFilename,
     size_t nLength = (size_t) poFile->Tell();
     delete poFile;
 
-    int nResult = VSIStatL( pszFilename + strlen("/vsisparse/"), 
-                            psStatBuf );
+    int nResult = VSIStatExL( pszFilename + strlen("/vsisparse/"), 
+                            psStatBuf, nFlags );
 
     psStatBuf->st_size = nLength;
 
