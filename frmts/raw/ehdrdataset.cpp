@@ -857,14 +857,14 @@ CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
     CPLString osName = CPLGetBasename( pszFilename );
     CPLString osREPFilename =
         CPLFormCIFilename( osPath, osName, "rep" );
-    if( VSIStatL( osREPFilename.c_str(), &sStatBuf ) == 0 )
+    if( VSIStatExL( osREPFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
         return osREPFilename;
 
     if (EQUAL(CPLGetFilename(pszFilename), "imspatio.bil") ||
         EQUAL(CPLGetFilename(pszFilename), "haspatio.bil"))
     {
         CPLString osImageRepFilename(CPLFormCIFilename( osPath, "image", "rep" ));
-        if( VSIStatL( osImageRepFilename.c_str(), &sStatBuf ) == 0 )
+        if( VSIStatExL( osImageRepFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
             return osImageRepFilename;
 
         /* Try in the upper directories if not found in the BIL image directory */
@@ -881,7 +881,7 @@ CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
         while (dirName[0] != 0 && EQUAL(dirName, ".") == FALSE && EQUAL(dirName, "/") == FALSE)
         {
             osImageRepFilename = CPLFormCIFilename( dirName.c_str(), "image", "rep" );
-            if( VSIStatL( osImageRepFilename.c_str(), &sStatBuf ) == 0 )
+            if( VSIStatExL( osImageRepFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
                 return osImageRepFilename;
 
             /* Don't try to recurse above the 'image' subdirectory */
@@ -916,17 +916,17 @@ char **EHdrDataset::GetFileList()
 
     // Statistics file
     osFilename = CPLFormCIFilename( osPath, osName, "stx" );
-    if( VSIStatL( osFilename, &sStatBuf ) == 0 )
+    if( VSIStatExL( osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
         papszFileList = CSLAddString( papszFileList, osFilename );
     
     // color table file.
     osFilename = CPLFormCIFilename( osPath, osName, "clr" );
-    if( VSIStatL( osFilename, &sStatBuf ) == 0 )
+    if( VSIStatExL( osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
         papszFileList = CSLAddString( papszFileList, osFilename );
     
     // projections file.
     osFilename = CPLFormCIFilename( osPath, osName, "prj" );
-    if( VSIStatL( osFilename, &sStatBuf ) == 0 )
+    if( VSIStatExL( osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
         papszFileList = CSLAddString( papszFileList, osFilename );
     
     CPLString imageRepFilename = GetImageRepFilename( GetDescription() );
