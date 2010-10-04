@@ -242,6 +242,15 @@ static void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
     if (CSLTestBoolean(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")))
         curl_easy_setopt(hCurlHandle, CURLOPT_VERBOSE, 1);
 
+    /* Set Proxy parameters */
+    const char* pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", NULL);
+    if (pszProxy)
+        curl_easy_setopt(hCurlHandle,CURLOPT_PROXY,pszProxy);
+
+    const char* pszProxyUserPwd = CPLGetConfigOption("GDAL_HTTP_PROXYUSERPWD", NULL);
+    if (pszProxyUserPwd)
+        curl_easy_setopt(hCurlHandle,CURLOPT_PROXYUSERPWD,pszProxyUserPwd);
+        
     /* Enable following redirections.  Requires libcurl 7.10.1 at least */
     curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(hCurlHandle, CURLOPT_MAXREDIRS, 10);
