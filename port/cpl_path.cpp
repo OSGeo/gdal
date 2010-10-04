@@ -36,6 +36,7 @@ CPL_CVSID("$Id$");
 
 /* should be size of larged possible filename */
 #define CPL_PATH_BUF_SIZE 2048
+#define CPL_PATH_BUF_COUNT  10
 
 #if defined(WIN32) || defined(WIN32CE)
 #define SEP_CHAR '\\'
@@ -59,14 +60,24 @@ static const char* CPLStaticBufferTooSmall(char *pszStaticResult)
 static char *CPLGetStaticResult()
 
 {
-    char *pszStaticResult = (char *) CPLGetTLS( CTLS_PATHBUF );
-    if( pszStaticResult == NULL )
+    char *pachBufRingInfo = (char *) CPLGetTLS( CTLS_PATHBUF );
+    if( pachBufRingInfo == NULL )
     {
-        pszStaticResult = (char *) CPLMalloc(CPL_PATH_BUF_SIZE);
-        CPLSetTLS( CTLS_PATHBUF, pszStaticResult, TRUE );
+        pachBufRingInfo = (char *) CPLMalloc(sizeof(int) + CPL_PATH_BUF_SIZE * CPL_PATH_BUF_COUNT);
+        CPLSetTLS( CTLS_PATHBUF, pachBufRingInfo, TRUE );
     }
 
-    return pszStaticResult;
+/* -------------------------------------------------------------------- */
+/*      Work out which string in the "ring" we want to use this         */
+/*      time.                                                           */
+/* -------------------------------------------------------------------- */
+    int *pnBufIndex = (int *) pachBufRingInfo;
+    int nOffset = sizeof(int) + *pnBufIndex * CPL_PATH_BUF_SIZE;
+    char *pachBuffer = pachBufRingInfo + nOffset;
+
+    *pnBufIndex = (*pnBufIndex + 1) % CPL_PATH_BUF_COUNT;
+
+    return pachBuffer;
 }
 
 
@@ -528,7 +539,6 @@ const char *CPLFormCIFilename( const char * pszPath,
 
     const char  *pszAddedExtSep = "";
     char        *pszFilename;
-    CPLString    osFullPath;
     const char  *pszFullPath;
     int         nLen = strlen(pszBasename)+2, i;
     VSIStatBufL sStatBuf;
@@ -547,12 +557,8 @@ const char *CPLFormCIFilename( const char * pszPath,
     sprintf( pszFilename, "%s%s%s", 
              pszBasename, pszAddedExtSep, pszExtension );
 
-    /* Save into temporary value as VSIStatL() might call CPL path methods */
-    /* itself and override the content of the static buffer. We should perhaps */
-    /* implement a ring buffer for cpl_path.cpp, like in cpl_string.cpp */
-    osFullPath = pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
+    pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
     nStatRet = VSIStatExL( pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG );
-    strcpy((char*)pszFullPath, osFullPath.c_str());
     if( nStatRet != 0 )
     {
         for( i = 0; pszFilename[i] != '\0'; i++ )
@@ -561,9 +567,8 @@ const char *CPLFormCIFilename( const char * pszPath,
                 pszFilename[i] = toupper(pszFilename[i]);
         }
 
-        osFullPath = pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
+        pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
         nStatRet = VSIStatExL( pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG );
-        strcpy((char*)pszFullPath, osFullPath.c_str());
     }
 
     if( nStatRet != 0 )
@@ -574,9 +579,8 @@ const char *CPLFormCIFilename( const char * pszPath,
                 pszFilename[i] = tolower(pszFilename[i]);
         }
 
-        osFullPath = pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
+        pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
         nStatRet = VSIStatExL( pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG );
-        strcpy((char*)pszFullPath, osFullPath.c_str());
     }
 
     if( nStatRet != 0 )
