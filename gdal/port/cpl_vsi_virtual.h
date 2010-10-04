@@ -74,7 +74,7 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess) = 0;
-    virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf) = 0;
+    virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags) = 0;
     virtual int Unlink( const char *pszFilename )
                       { errno=ENOENT; return -1; }
     virtual int Mkdir( const char *pszDirname, long nMode ) 
@@ -169,7 +169,7 @@ public:
     VSIArchiveFilesystemHandler();
     virtual ~VSIArchiveFilesystemHandler();
 
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
