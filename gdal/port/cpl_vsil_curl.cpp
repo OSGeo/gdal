@@ -998,7 +998,8 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     }
 
     CPLString osFilename(pszFilename);
-    if (strchr(CPLGetFilename(osFilename), '.') != NULL)
+    if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
+        strncmp(CPLGetExtension(osFilename), "zip", 3) != 0)
     {
         int bGotFileList;
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
@@ -1250,7 +1251,8 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
         }
         return -1;
     }
-    else if (strchr(CPLGetFilename(osFilename), '.') != NULL)
+    else if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
+             strncmp(CPLGetExtension(osFilename), "zip", 3) != 0)
     {
         int bGotFileList;
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
