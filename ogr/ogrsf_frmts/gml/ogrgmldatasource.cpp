@@ -370,7 +370,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     if( !bHaveSchema && !poReader->HasStoppedParsing() &&
         !EQUALN(pszNewName, "/vsitar/", strlen("/vsitar/")) &&
         !EQUALN(pszNewName, "/vsigzip/", strlen("/vsigzip/")) &&
-        !EQUALN(pszNewName, "/vsizip/", strlen("/vsizip/")))
+        !EQUALN(pszNewName, "/vsizip/", strlen("/vsizip/")) &&
+        !EQUALN(pszNewName, "/vsicurl/", strlen("/vsicurl/")))
     {
         FILE    *fp = NULL;
 
