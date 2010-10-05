@@ -79,6 +79,94 @@ TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
 
 /************************************************************************/
+/* ==================================================================== */
+/*                                GDALOverviewDS                        */
+/* ==================================================================== */
+/************************************************************************/
+
+#include "gdal_proxy.h"
+
+class GDALOverviewBand;
+
+class GDALOverviewDS : public GDALDataset
+{
+    private:
+
+        friend class GDALOverviewBand;
+
+        GDALDataset* poDS;
+        int          nOvrLevel;
+
+    public:
+                        GDALOverviewDS(GDALDataset* poDS, int nOvrLevel);
+        virtual        ~GDALOverviewDS();
+
+        virtual char  **GetMetadata( const char * pszDomain = "" );
+        virtual const char *GetMetadataItem( const char * pszName,
+                                             const char * pszDomain = "" );
+};
+
+class GDALOverviewBand : public GDALProxyRasterBand
+{
+    protected:
+        GDALRasterBand*         poUnderlyingBand;
+        virtual GDALRasterBand* RefUnderlyingRasterBand();
+
+    public:
+                    GDALOverviewBand(GDALOverviewDS* poDS, int nBand);
+        virtual    ~GDALOverviewBand();
+};
+
+GDALOverviewDS::GDALOverviewDS(GDALDataset* poDS, int nOvrLevel)
+{
+    this->poDS = poDS;
+    this->nOvrLevel = nOvrLevel;
+    eAccess = poDS->GetAccess();
+    nRasterXSize = poDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetXSize();
+    nRasterYSize = poDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetYSize();
+    nBands = poDS->GetRasterCount();
+    int i;
+    for(i=0;i<nBands;i++)
+        SetBand(i+1, new GDALOverviewBand(this, i+1));
+}
+
+GDALOverviewDS::~GDALOverviewDS()
+{
+    FlushCache();
+}
+
+char  **GDALOverviewDS::GetMetadata( const char * pszDomain )
+{
+    return poDS->GetMetadata(pszDomain);
+}
+
+const char *GDALOverviewDS::GetMetadataItem( const char * pszName, const char * pszDomain )
+{
+    return poDS->GetMetadataItem(pszName, pszDomain);
+}
+
+GDALOverviewBand::GDALOverviewBand(GDALOverviewDS* poDS, int nBand)
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+    poUnderlyingBand = poDS->poDS->GetRasterBand(nBand)->GetOverview(poDS->nOvrLevel);
+    nRasterXSize = poDS->nRasterXSize;
+    nRasterYSize = poDS->nRasterYSize;
+    eDataType = poUnderlyingBand->GetRasterDataType();
+    poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+}
+
+GDALOverviewBand::~GDALOverviewBand()
+{
+    FlushCache();
+}
+
+GDALRasterBand* GDALOverviewBand::RefUnderlyingRasterBand()
+{
+    return poUnderlyingBand;
+}
+
+/************************************************************************/
 /*                            IsPowerOfTwo()                            */
 /************************************************************************/
 
@@ -7270,6 +7358,53 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create and then copy existing overviews if requested            */
+/*  We do it such that all the IFDs are at the beginning of the file,   */
+/*  and that the imagery data for the smallest overview is written      */
+/*  first, that way the file is more usable when embedded in a          */
+/*  compressed stream.                                                  */
+/* -------------------------------------------------------------------- */
+
+    int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+    if (nSrcOverviews != 0 &&
+        CSLFetchBoolean(papszOptions, "COPY_SRC_OVERVIEWS", FALSE))
+    {
+        int* panOverviewList = (int*)CPLMalloc(sizeof(int) * nSrcOverviews);
+        int* panBandList =  (int*)CPLMalloc(sizeof(int) * poDS->nBands);
+        int i;
+        for(i=0;i<nSrcOverviews;i++)
+        {
+            panOverviewList[i] = (int)( 0.5 + nXSize / (double)poSrcDS->GetRasterBand(1)->GetOverview(i)->GetXSize());
+        }
+        for(i=0;i<poDS->nBands;i++)
+        {
+            panBandList[i] = i + 1;
+        }
+        poDS->IBuildOverviews("NONE",
+                              nSrcOverviews, panOverviewList,
+                              poDS->nBands, panBandList,
+                              GDALDummyProgress, NULL);
+
+
+        char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
+        if (nCompression != COMPRESSION_NONE)
+            papszCopyWholeRasterOptions[0] = (char*) "COMPRESSED=YES";
+        for(i=0;i<nSrcOverviews;i++)
+        {
+            GDALDataset* poSrcOvrDS = new GDALOverviewDS(poSrcDS, nSrcOverviews-1-i);
+            eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcOvrDS,
+                                                (GDALDatasetH) poDS->papoOverviewDS[nSrcOverviews-1-i],
+                                                papszCopyWholeRasterOptions,
+                                                NULL, NULL/*pfnProgress, pProgressData*/ );
+            delete poSrcOvrDS;
+            poDS->papoOverviewDS[nSrcOverviews-1-i]->FlushCache();
+        }
+
+        CPLFree(panOverviewList);
+        CPLFree(panBandList);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Copy actual imagery.                                            */
 /* -------------------------------------------------------------------- */
 
@@ -8188,6 +8323,7 @@ void GDALRegister_GTiff()
 "       <Value>LITTLE</Value>"
 "       <Value>BIG</Value>"
 "   </Option>"
+"   <Option name='COPY_SRC_OVERVIEWS' type='boolean' default='NO' description='Force copy of overviews of source dataset (CreateCopy())'/>"
 "</CreationOptionList>" );
                  
 /* -------------------------------------------------------------------- */
