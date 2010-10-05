@@ -646,13 +646,11 @@ void LANDataset::CheckForStatistics()
 
     FILE *fpSTA = VSIFOpenL( osSTAFilename, "r" );
 
-#ifndef WIN32
-    if( fpSTA == NULL )
+    if( fpSTA == NULL && VSIIsCaseSensitiveFS(osSTAFilename) )
     {
         osSTAFilename = CPLResetExtension(GetDescription(),"STA");
         fpSTA = VSIFOpenL( osSTAFilename, "r" );
     }
-#endif
 
     if( fpSTA == NULL )
     {
