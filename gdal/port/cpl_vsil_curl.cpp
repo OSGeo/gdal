@@ -245,12 +245,19 @@ VSICurlHandle::~VSICurlHandle()
 int VSICurlHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
     if (nWhence == SEEK_SET)
+    {
         curOffset = nOffset;
+        bEOF = FALSE;
+    }
     else if (nWhence == SEEK_CUR)
+    {
         curOffset = curOffset + nOffset;
+        bEOF = FALSE;
+    }
     else
     {
         curOffset = GetFileSize() + nOffset;
+        bEOF = TRUE;
     }
     return 0;
 }
@@ -1183,6 +1190,8 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
                                     int nFlags )
 {
     CPLString osFilename(pszFilename);
+    
+    memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     /* Does it look like a FTP directory ? */
     if (strncmp(osFilename, "/vsicurl/ftp", strlen("/vsicurl/ftp")) == 0 &&
