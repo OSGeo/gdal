@@ -1486,13 +1486,11 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
         
         fpHDR = VSIFOpenL( pszHDR, "rt" );
 
-#ifndef WIN32
-        if( fpHDR == NULL )
+        if( fpHDR == NULL && VSIIsCaseSensitiveFS(pszHDR) )
         {
             pszHDR = CPLResetExtension( pszFilename, "HDR" );
             fpHDR = VSIFOpenL( pszHDR, "rt" );
         }
-#endif
     
         if( fpHDR != NULL )
         {
