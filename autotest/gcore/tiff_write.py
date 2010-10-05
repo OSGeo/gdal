@@ -3240,6 +3240,52 @@ def tiff_write_86():
 
     return 'success'
 
+
+###############################################################################
+# Test COPY_SRC_OVERVIEWS creation option
+
+def tiff_write_87():
+
+    shutil.copy('data/utmsmall.tif', 'tmp/tiff_write_87_src.tif')
+
+    src_ds = gdal.Open('tmp/tiff_write_87_src.tif', gdal.GA_Update)
+    src_ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/tiff_write_87_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open('tmp/tiff_write_87_dst.tif')
+    cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    ds = None
+
+    # We should also check that the IFDs are at the beginning of the file,
+    # that the smallest overview data is before the larger one which is
+    # before the full res data... but not possible to do that with GDAL API
+    # We'll just check the first IFD (whose position is at offset 4) is at offset 8
+    f = open('tmp/tiff_write_87_dst.tif', 'rb')
+    data = f.read(8)
+    f.close()
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_87_src.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_87_dst.tif' )
+
+    import struct
+    ar = struct.unpack('B' * 8, data)
+    if ar[4] != 8 or ar[5] != 0 or ar[6] != 0 or ar[7] != 0:
+        gdaltest.post_reason('first IFD is not at offset 8')
+        print(ar)
+        return 'fail'
+
+    # Check checksums
+    if cs1 != 28926 or cs2 != 7332:
+        gdaltest.post_reason('did not get expected checksums')
+        print(cs1)
+        print(cs2)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -3337,6 +3383,7 @@ gdaltest_list = [
     tiff_write_84,
     tiff_write_85,
     tiff_write_86,
+    tiff_write_87,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
