@@ -530,12 +530,10 @@ const char *CPLFormCIFilename( const char * pszPath,
                                const char * pszExtension )
 
 {
-#if defined(WIN32) || defined(WIN32CE)
-    // On normal windows filesystems we do not worry about
-    // case sensitivity - what about macosx? 
-    if( !EQUALN(pszPath,"/vsi",4) )
+    // On case insensitive filesystems, just default to
+    // CPLFormFilename()
+    if( !VSIIsCaseSensitiveFS(pszPath) )
         return CPLFormFilename( pszPath, pszBasename, pszExtension );
-#endif
 
     const char  *pszAddedExtSep = "";
     char        *pszFilename;
