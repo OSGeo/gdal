@@ -286,6 +286,36 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
 }
 
 /************************************************************************/
+/*                       VSIIsCaseSensitiveFS()                         */
+/************************************************************************/
+
+/**
+ * \brief Returns if the filenames of the filesystem are case sensitive.
+ *
+ * This method retrieves to which filesystem belongs the passed filename
+ * and return TRUE if the filenames of that filesystem are case sensitive.
+ *
+ * Currently, this will return FALSE only for Windows real filenames. Other
+ * VSI virtual filesystems are case sensitive.
+ *
+ * This methods avoid ugly #ifndef WIN32 / #endif code, that is wrong when
+ * dealing with virtual filenames.
+ *
+ * @param pszFilename the path of the filesystem object to be tested.  UTF-8 encoded.
+ *
+ * @return TRUE if the filenames of the filesystem are case sensitive.
+ *
+ * @since GDAL 1.8.0
+ */
+int VSIIsCaseSensitiveFS( const char * pszFilename )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszFilename );
+        
+    return poFSHandler->IsCaseSensitive( pszFilename );
+}
+
+/************************************************************************/
 /*                             VSIFOpenL()                              */
 /************************************************************************/
 

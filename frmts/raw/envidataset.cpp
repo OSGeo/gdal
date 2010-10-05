@@ -1616,27 +1616,26 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         osHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
         fpHeader = VSIFOpenL( osHdrFilename, pszMode );
     
-    #ifndef WIN32
-        if( fpHeader == NULL )
+        if( fpHeader == NULL && VSIIsCaseSensitiveFS(osHdrFilename) )
         {
             osHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
             fpHeader = VSIFOpenL( osHdrFilename, pszMode );
         }
-    #endif
-        if( fpHeader == NULL )
+
+        if( fpHeader == NULL && VSIIsCaseSensitiveFS(osHdrFilename) )
         {
             osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
                                             "hdr" );
             fpHeader = VSIFOpenL( osHdrFilename, pszMode );
         }
-    #ifndef WIN32
-        if( fpHeader == NULL )
+
+        if( fpHeader == NULL && VSIIsCaseSensitiveFS(osHdrFilename) )
         {
             osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
                                             "HDR" );
             fpHeader = VSIFOpenL( osHdrFilename, pszMode );
         }
-    #endif
+
     }
     else
     {

@@ -85,6 +85,8 @@ public:
                           { return NULL; }
     virtual int Rename( const char *oldpath, const char *newpath )
                       { errno=ENOENT; return -1; }
+    virtual int IsCaseSensitive( const char* pszFilename )
+                      { return TRUE; }
 };
 
 /************************************************************************/
