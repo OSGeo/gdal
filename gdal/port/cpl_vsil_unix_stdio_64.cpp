@@ -165,22 +165,22 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
     if( nWhence == SEEK_SET )
     {
-        VSIDebug3( "VSIUnixStdioHandle::Seek(%p,%d,SEEK_SET) = %d",
+        VSIDebug3( "VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB ",SEEK_SET) = %d",
                    fp, nOffset, nResult );
     }
     else if( nWhence == SEEK_END )
     {
-        VSIDebug3( "VSIUnixStdioHandle::Seek(%p,%d,SEEK_END) = %d",
+        VSIDebug3( "VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB ",SEEK_END) = %d",
                    fp, nOffset, nResult );
     }
     else if( nWhence == SEEK_CUR )
     {
-        VSIDebug3( "VSIUnixStdioHandle::Seek(%p,%d,SEEK_CUR) = %d",
+        VSIDebug3( "VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB ",SEEK_CUR) = %d",
                    fp, nOffset, nResult );
     }
     else
     {
-        VSIDebug4( "VSIUnixStdioHandle::Seek(%p,%d,%d-Unknown) = %d",
+        VSIDebug4( "VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB ",%d-Unknown) = %d",
                    fp, nOffset, nWhence, nResult );
     }
 
