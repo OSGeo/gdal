@@ -619,6 +619,8 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     size_t nBufferRequestSize = nSize * nMemb;
     if (nBufferRequestSize == 0)
         return 0;
+        
+    //CPLDebug("VSICURL", "offset=%d, size=%d", (int)curOffset, (int)nBufferRequestSize);
 
     vsi_l_offset iterOffset = curOffset;
     while (nBufferRequestSize)
@@ -626,14 +628,44 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         const CachedRegion* psRegion = poFS->GetRegion(pszURL, iterOffset);
         if (psRegion == NULL)
         {
-            vsi_l_offset nOffsetToDownload = (iterOffset / DOWNLOAD_CHUNCK_SIZE) * DOWNLOAD_CHUNCK_SIZE;
+            vsi_l_offset nOffsetToDownload =
+                (iterOffset / DOWNLOAD_CHUNCK_SIZE) * DOWNLOAD_CHUNCK_SIZE;
+            
             if (nOffsetToDownload == lastDownloadedOffset)
             {
+                /* In case of consecutive reads (of small size), we use a */
+                /* heuristic that we will read the file sequentially, so */
+                /* we double the requested size to decrease the number of */
+                /* client/server roundtrips. */
                 if (nBlocksToDownload < 100)
                     nBlocksToDownload *= 2;
             }
             else
+            {
+                /* Random reads. Cancel the above heuristics */
                 nBlocksToDownload = 1;
+            }
+
+            /* Ensure that we will request at least the number of blocks */
+            /* to satisfy the remaining buffer size to read */
+            vsi_l_offset nEndOffsetToDownload =
+                ((iterOffset + nBufferRequestSize) / DOWNLOAD_CHUNCK_SIZE) * DOWNLOAD_CHUNCK_SIZE;
+            int nMinBlocksToDownload = 1 + (int)
+                ((nEndOffsetToDownload - nOffsetToDownload) / DOWNLOAD_CHUNCK_SIZE);
+            if (nBlocksToDownload < nMinBlocksToDownload)
+                nBlocksToDownload = nMinBlocksToDownload;
+                
+            int i;
+            /* Avoid reading already cached data */
+            for(i=1;i<nBlocksToDownload;i++)
+            {
+                if (poFS->GetRegion(pszURL, nOffsetToDownload + i * DOWNLOAD_CHUNCK_SIZE) != NULL)
+                {
+                    nBlocksToDownload = i;
+                    break;
+                }
+            }
+
             if (DownloadRegion(nOffsetToDownload, nBlocksToDownload) == FALSE)
             {
                 bEOF = TRUE;
@@ -656,7 +688,7 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         {
             break;
         }
-     }
+    }
 
     size_t ret = (iterOffset - curOffset) / nSize;
     if (ret != nMemb)
