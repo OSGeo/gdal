@@ -169,12 +169,12 @@ class VSICurlHandle : public VSIVirtualHandle
     int             bHastComputedFileSize;
     ExistStatus     eExists;
     int             bIsDirectory;
-    vsi_l_offset    lastCurlOffset;
+    
     CURL*           hCurlHandle;
-
 
     vsi_l_offset    lastDownloadedOffset;
     int             nBlocksToDownload;
+    int             bEOF;
 
     int             DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
@@ -223,6 +223,7 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL)
 
     lastDownloadedOffset = -1;
     nBlocksToDownload = 1;
+    bEOF = FALSE;
 }
 
 /************************************************************************/
@@ -413,10 +414,13 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         /* curl will retry with an URL with slash added */
         char *pszEffectiveURL = NULL;
         curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL, &pszEffectiveURL);
-        if (fileSize == 0 &&
-            pszEffectiveURL != NULL && strncmp(pszURL, pszEffectiveURL, strlen(pszURL)) == 0 &&
+        if (pszEffectiveURL != NULL && strncmp(pszURL, pszEffectiveURL, strlen(pszURL)) == 0 &&
             pszEffectiveURL[strlen(pszURL)] == '/')
+        {
+            eExists = EXIST_YES;
+            fileSize = 0;
             bIsDirectory = TRUE;
+        }
 
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
@@ -624,11 +628,17 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
             else
                 nBlocksToDownload = 1;
             if (DownloadRegion(nOffsetToDownload, nBlocksToDownload) == FALSE)
+            {
+                bEOF = TRUE;
                 return 0;
+            }
             psRegion = poFS->GetRegion(pszURL, iterOffset);
         }
         if (psRegion == NULL || psRegion->pData == NULL)
+        {
+            bEOF = TRUE;
             return 0;
+        }
         int nToCopy = MIN(nBufferRequestSize, psRegion->nSize - (iterOffset - psRegion->nFileOffsetStart));
         memcpy(pBuffer, psRegion->pData + iterOffset - psRegion->nFileOffsetStart,
                 nToCopy);
@@ -642,6 +652,8 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
      }
 
     size_t ret = (iterOffset - curOffset) / nSize;
+    if (ret != nMemb)
+        bEOF = TRUE;
 
     curOffset = iterOffset;
 
@@ -664,7 +676,7 @@ size_t VSICurlHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
 
 int       VSICurlHandle::Eof()
 {
-    return curOffset == GetFileSize();
+    return bEOF;
 }
 
 /************************************************************************/
