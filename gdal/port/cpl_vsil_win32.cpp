@@ -69,6 +69,8 @@ public:
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
+    virtual int      IsCaseSensitive( const char* pszFilename )
+                      { return FALSE; }
 };
 
 /************************************************************************/
