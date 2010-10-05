@@ -1047,21 +1047,37 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
     osExpectedString3 = "FTP Listing of ";
     osExpectedString3 += pszDir;
     osExpectedString3 += "/";
-    while( (c = strchr(iter, '\n')) != NULL)
+    while( (c = strstr(iter, "<br>")) != NULL ||
+           (c = strchr(iter, '\n')) != NULL )
     {
         *c = 0;
+        if (strstr(iter, osExpectedString.c_str()) ||
+            strstr(iter, osExpectedString2.c_str()) ||
+            strstr(iter, osExpectedString3.c_str()))
+        {
+            bIsHTMLDirList = TRUE;
+            *pbGotFileList = TRUE;
+        }
         /* Subversion HTTP listing */
-        if (strstr(iter, "<title>") && strstr(iter, "Revision"))
+        /* or Microsoft-IIS/6.0 listing (e.g. http://ortho.linz.govt.nz/tifs/2005_06/) */
+        else if (strstr(iter, "<title>"))
         {
             /* Detect something like : <html><head><title>gdal - Revision 20739: /trunk/autotest/gcore/data</title></head> */
             /* The annoying thing is that what is after ': ' is a subpart of what is after http://server/ */
             char* pszSubDir = strstr(iter, ": ");
+            if (pszSubDir == NULL)
+                /* or <title>ortho.linz.govt.nz - /tifs/2005_06/</title> */
+                pszSubDir = strstr(iter, "- ");
             if (pszSubDir)
             {
                 pszSubDir += 2;
-                if (strstr(pszSubDir, "</title>"))
+                char* pszTmp = strstr(pszSubDir, "</title>");
+                if (pszTmp)
                 {
-                    *strstr(pszSubDir, "</title>") = 0;
+                    if (pszTmp[-1] == '/')
+                        pszTmp[-1] = 0;
+                    else
+                        *pszTmp = 0;
                     if (strstr(pszDir, pszSubDir))
                     {
                         bIsHTMLDirList = TRUE;
@@ -1069,13 +1085,6 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
                     }
                 }
             }
-        }
-        else if (strstr(iter, osExpectedString.c_str()) ||
-                 strstr(iter, osExpectedString2.c_str()) ||
-                 strstr(iter, osExpectedString3.c_str()))
-        {
-            bIsHTMLDirList = TRUE;
-            *pbGotFileList = TRUE;
         }
         else if (bIsHTMLDirList &&
                  (strstr(iter, "<a href=\"") != NULL || strstr(iter, "<A HREF=\"") != NULL) &&
