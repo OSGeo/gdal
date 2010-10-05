@@ -410,7 +410,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         }
 
         long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_RESPONSE_CODE, &response_code);
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if (response_code != 200)
         {
             eExists = EXIST_NO;
@@ -510,7 +510,7 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
 
     long response_code = 0;
-    curl_easy_getinfo(hCurlHandle, CURLINFO_RESPONSE_CODE, &response_code);
+    curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
     char *content_type = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
