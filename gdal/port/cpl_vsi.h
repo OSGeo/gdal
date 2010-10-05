@@ -150,6 +150,8 @@ int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
 
 int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, int nFlags );
 
+int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
+
 /* ==================================================================== */
 /*      Memory allocation                                               */
 /* ==================================================================== */

@@ -1243,13 +1243,11 @@ int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
 
     fpOzi = VSIFOpen( pszOzi, "rt" );
 
-#ifndef WIN32
-    if ( fpOzi == NULL )
+    if ( fpOzi == NULL && VSIIsCaseSensitiveFS(pszOzi) )
     {
         pszOzi = CPLResetExtension( pszBaseFilename, "MAP" );
         fpOzi = VSIFOpen( pszOzi, "rt" );
     }
-#endif
     
     if ( fpOzi == NULL )
         return FALSE;
@@ -1436,13 +1434,11 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
 
     fpTAB = VSIFOpenL( pszTAB, "rt" );
 
-#ifndef WIN32
-    if( fpTAB == NULL )
+    if( fpTAB == NULL && VSIIsCaseSensitiveFS(pszTAB) )
     {
         pszTAB = CPLResetExtension( pszBaseFilename, "TAB" );
         fpTAB = VSIFOpenL( pszTAB, "rt" );
     }
-#endif
     
     if( fpTAB == NULL )
         return FALSE;
@@ -1651,13 +1647,11 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
 
     bGotTFW = VSIStatExL( pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0;
 
-#ifndef WIN32
-    if( !bGotTFW )
+    if( !bGotTFW  && VSIIsCaseSensitiveFS(pszTFW) )
     {
         pszTFW = CPLResetExtension( pszBaseFilename, szExtUpper );
         bGotTFW = VSIStatExL( pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0;
     }
-#endif
     
     if( !bGotTFW )
         return FALSE;
@@ -2603,9 +2597,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 
 {
     const char *pszAuxSuffixLC = "aux";
-#ifndef WIN32
     const char *pszAuxSuffixUC = "AUX";
-#endif
 
     if( EQUAL(CPLGetExtension(pszBasename), pszAuxSuffixLC) )
         return NULL;
@@ -2633,14 +2625,11 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     fp = VSIFOpenL( osAuxFilename, "rb" );
 
 
-    if ( fp == NULL ) 
+    if ( fp == NULL && VSIIsCaseSensitiveFS(osAuxFilename)) 
     {
         // Can't found file with lower case suffix. Try the upper case one.
-        // no point in doing this on Win32 with case insensitive filenames.
-#ifndef WIN32
         osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixUC);
         fp = VSIFOpenL( osAuxFilename, "rb" );
-#endif
     }
 
     if( fp != NULL )
@@ -2728,8 +2717,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         osAuxFilename += ".";
         osAuxFilename += pszAuxSuffixLC;
         fp = VSIFOpenL( osAuxFilename, "rb" );
-#ifndef WIN32
-        if ( fp == NULL )
+        if ( fp == NULL && VSIIsCaseSensitiveFS(osAuxFilename) )
         {
             // Can't found file with lower case suffix. Try the upper case one.
             osAuxFilename = pszBasename;
@@ -2737,7 +2725,6 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             osAuxFilename += pszAuxSuffixUC;
             fp = VSIFOpenL( osAuxFilename, "rb" );
         }
-#endif
 
         if( fp != NULL )
         {
