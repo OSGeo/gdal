@@ -117,6 +117,9 @@ CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     XYZDataset *poGDS = (XYZDataset *) poDS;
+    
+    if (poGDS->fp == NULL)
+        return CE_Failure;
 
     int nLineInFile = nBlockYOff * nBlockXSize;
     if (poGDS->nDataLineNum > nLineInFile)
@@ -830,9 +833,10 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     void* pLineBuffer = (void*) CPLMalloc(nXSize * sizeof(int));
     int i, j;
+    CPLErr eErr = CE_None;
     for(j=0;j<nYSize;j++)
     {
-        CPLErr eErr = poSrcDS->GetRasterBand(1)->RasterIO(
+        eErr = poSrcDS->GetRasterBand(1)->RasterIO(
                                             GF_Read, 0, j, nXSize, 1,
                                             pLineBuffer, nXSize, 1,
                                             eReqDT, 0, 0);
@@ -853,8 +857,26 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
     }
     CPLFree(pLineBuffer);
     VSIFCloseL(fp);
+    
+    if (eErr != CE_None)
+        return NULL;
 
-    return (GDALDataset*) GDALOpen(pszFilename, GA_ReadOnly);
+    /* If outputing to stdout, we can't reopen it, so we'll return */
+    /* a fake dataset to make the caller happy */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    GDALDataset* poDS = (GDALDataset*) GDALOpen(pszFilename, GA_ReadOnly);
+    CPLPopErrorHandler();
+    if (poDS)
+        return poDS;
+
+    CPLErrorReset();
+
+    XYZDataset* poXYZ_DS = new XYZDataset();
+    poXYZ_DS->nRasterXSize = nXSize;
+    poXYZ_DS->nRasterYSize = nYSize;
+    poXYZ_DS->nBands = 1;
+    poXYZ_DS->SetBand( 1, new XYZRasterBand( poXYZ_DS, 1, eReqDT ) );
+    return poXYZ_DS;
 }
 
 /************************************************************************/
