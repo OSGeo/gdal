@@ -686,7 +686,7 @@ OGRHTFMetadataLayer::OGRHTFMetadataLayer(std::vector<CPLString> aosMD)
 OGRHTFMetadataLayer::~OGRHTFMetadataLayer()
 {
     delete poFeature;
-    delete poFeatureDefn;
+    poFeatureDefn->Release();
 }
 
 /************************************************************************/
