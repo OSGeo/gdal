@@ -696,13 +696,11 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
     int nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
 
-#ifndef WIN32
-    if( nRet != 0 )
+    if( nRet != 0 && VSIIsCaseSensitiveFS(poDS->osPrjFilename))
     {
         poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "PRJ" );
         nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
     }
-#endif
 
     if( nRet == 0 )
     {
