@@ -73,7 +73,7 @@ static void Usage()
         "       [-l layername]* [-where expression] [-sql select_statement]\n"
         "       [-of format] [-a_srs srs_def] [-co \"NAME=VALUE\"]*\n"
         "       [-a_nodata value] [-init value]*\n"
-        "       [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
+        "       [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]\n"
         "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
         "             CInt16/CInt32/CFloat32/CFloat64}] [-q]\n"
         "       <src_datasource> <dst_filename>\n" );
@@ -315,6 +315,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
                                  int bGotBounds, OGREnvelope sEnvelop,
                                  GDALDriverH hDriver, const char* pszDstFilename,
                                  int nXSize, int nYSize, double dfXRes, double dfYRes,
+                                 int bTargetAlignedPixels,
                                  int nBandCount, GDALDataType eOutputType,
                                  char** papszCreateOptions, std::vector<double> adfInitVals,
                                  int bNoDataSet, double dfNoData)
@@ -375,6 +376,13 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
     {
         dfXRes = (sEnvelop.MaxX - sEnvelop.MinX) / nXSize;
         dfYRes = (sEnvelop.MaxY - sEnvelop.MinY) / nYSize;
+    }
+    else if (bTargetAlignedPixels && dfXRes != 0 && dfYRes != 0)
+    {
+        sEnvelop.MinX = floor(sEnvelop.MinX / dfXRes) * dfXRes;
+        sEnvelop.MaxX = ceil(sEnvelop.MaxX / dfXRes) * dfXRes;
+        sEnvelop.MinY = floor(sEnvelop.MinY / dfYRes) * dfYRes;
+        sEnvelop.MaxY = ceil(sEnvelop.MaxY / dfYRes) * dfYRes;
     }
 
     adfProjection[0] = sEnvelop.MinX;
@@ -470,6 +478,7 @@ int main( int argc, char ** argv )
     int bQuiet = FALSE;
     GDALProgressFunc pfnProgress = GDALTermProgress;
     OGRSpatialReferenceH hSRS = NULL;
+    int bTargetAlignedPixels = FALSE;
     
 
     /* Check that we are running against at least GDAL 1.4 */
@@ -703,7 +712,11 @@ int main( int argc, char ** argv )
             }
             bCreateOutput = TRUE;
         }
-
+        else if( EQUAL(argv[i],"-tap") )
+        {
+            bTargetAlignedPixels = TRUE;
+            bCreateOutput = TRUE;
+        }
         else if( pszSrcFilename == NULL )
         {
             pszSrcFilename = argv[i];
@@ -739,6 +752,12 @@ int main( int argc, char ** argv )
         if( dfXRes == 0 && dfYRes == 0 && nXSize == 0 && nYSize == 0 )
         {
             fprintf( stderr, "'-tr xres yes' or '-ts xsize ysize' is required.\n\n" );
+            Usage();
+        }
+    
+        if (bTargetAlignedPixels && dfXRes == 0 && dfYRes == 0)
+        {
+            fprintf( stderr, "-tap option cannot be used without using -tr\n");
             Usage();
         }
 
@@ -848,6 +867,7 @@ int main( int argc, char ** argv )
                                  bGotBounds, sEnvelop,
                                  hDriver, pszDstFilename,
                                  nXSize, nYSize, dfXRes, dfYRes,
+                                 bTargetAlignedPixels,
                                  anBandList.size(), eOutputType,
                                  papszCreateOptions, adfInitVals,
                                  bNoDataSet, dfNoData);
@@ -884,6 +904,7 @@ int main( int argc, char ** argv )
                                 bGotBounds, sEnvelop,
                                 hDriver, pszDstFilename,
                                 nXSize, nYSize, dfXRes, dfYRes,
+                                bTargetAlignedPixels,
                                 anBandList.size(), eOutputType,
                                 papszCreateOptions, adfInitVals,
                                 bNoDataSet, dfNoData);

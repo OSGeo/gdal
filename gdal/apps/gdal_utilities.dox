@@ -549,7 +549,7 @@ Builds a VRT from a list of datasets. (compiled by default since GDAL 1.6.1)
 
 \verbatim
 gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]
-             [-tr xres yres] [-separate] [-allow_projection_difference] [-q]
+             [-tr xres yres] [-tap] [-separate] [-allow_projection_difference] [-q]
              [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata]
              [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
              [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*
@@ -601,6 +601,10 @@ set target resolution. The values must be expressed in georeferenced units.
 Both must be positive values. Specifying those values is of course incompatible with
 highest|lowest|average values for -resolution option.
 </dd>
+
+<dt> <b>-tap</b>:</dt><dd> (GDAL >= 1.8.0) (target aligned pixels) align
+the coordinates of the extent of the output file to the values of the -tr,
+such that the aligned extent includes the minimum extent.</dd>
 
 <dt> <b>-te</b> xmin ymin xmax ymax :</dt><dd>  (starting with GDAL 1.7.0)
 set georeferenced extents of VRT file. The values must be expressed in georeferenced units.
@@ -762,7 +766,7 @@ Usage: gdal_rasterize [-b band]* [-i] [-at]
        [-l layername]* [-where expression] [-sql select_statement]
        [-of format] [-a_srs srs_def] [-co "NAME=VALUE"]*
        [-a_nodata value] [-init value]*
-       [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
+       [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-q]
        <src_datasource> <dst_filename>
@@ -852,6 +856,10 @@ If not specified, the extent of the output file will be the extent of the vector
 set target resolution. The values must be expressed in georeferenced units.
 Both must be positive values.
 </dd>
+
+<dt> <b>-tap</b>:</dt><dd> (GDAL >= 1.8.0) (target aligned pixels) align
+the coordinates of the extent of the output file to the values of the -tr,
+such that the aligned extent includes the minimum extent.</dd>
 
 <dt> <b>-ts</b> <em>width height</em>:</dt><dd>  (GDAL >= 1.8.0) set output file size in
 pixels and lines. Note that -ts cannot be used with -tr</dd>
@@ -1175,9 +1183,9 @@ mosaics a set of images
 
 \verbatim
 gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
-                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]
-                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init "value [value...]"]
-                     [-ot datatype] [-createonly] input_files
+              [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-v] [-pct]
+              [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init "value [value...]"]
+              [-ot datatype] [-createonly] input_files
 \endverbatim
 
 \section gdescription DESCRIPTION
@@ -1202,6 +1210,11 @@ Force the output image bands to have a specific type. Use type names (ie. Byte, 
 <dt> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>:</dt><dd> Pixel size to be used for the
 output file.  If not specified the resolution of the first input file will
 be used.</dd>
+
+<dt> <b>-tap</b>:</dt><dd> (GDAL >= 1.8.0) (target aligned pixels) align
+the coordinates of the extent of the output file to the values of the -tr,
+such that the aligned extent includes the minimum extent.</dd>
+
 <dt> <b>-ul_lr</b> <i>ulx uly lrx lry</i>:</dt><dd> The extents of the output file. 
 If not specified the aggregate extents of all input files will be
 used.</dd>

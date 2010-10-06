@@ -38,6 +38,7 @@ except:
 
 import sys
 import glob
+import math
 
 __version__ = '$id$'[5:-1]
 verbose = 0
@@ -239,7 +240,7 @@ class file_info:
 # =============================================================================
 def Usage():
     print('Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*')
-    print('                     [-ps pixelsize_x pixelsize_y] [-separate] [-q] [-v] [-pct]')
+    print('                     [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]')
     print('                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init "value [value...]"]')
     print('                     [-ot datatype] [-createonly] input_files')
     print('                     [--help-general]')
@@ -268,6 +269,7 @@ def main( argv=None ):
     pre_init = []
     band_type = None
     createonly = 0
+    bTargetAlignedPixels = False
     
     gdal.AllRegister()
     if argv is None:
@@ -338,6 +340,9 @@ def main( argv=None ):
             psize_y = -1 * abs(float(argv[i+2]))
             i = i + 2
 
+        elif arg == '-tap':
+            bTargetAlignedPixels = True
+
         elif arg == '-ul_lr':
             ulx = float(argv[i+1])
             uly = float(argv[i+2])
@@ -402,6 +407,13 @@ def main( argv=None ):
     
     # Create output file if it does not already exist.
     if t_fh is None:
+    
+        if bTargetAlignedPixels:
+            ulx = math.floor(ulx / psize_x) * psize_x
+            lrx = math.ceil(lrx / psize_x) * psize_x
+            lry = math.floor(lry / -psize_y) * -psize_y
+            uly = math.ceil(uly / -psize_y) * -psize_y
+    
         geotransform = [ulx, psize_x, 0, uly, 0, psize_y]
 
         xsize = int((lrx - ulx) / geotransform[1] + 0.5)

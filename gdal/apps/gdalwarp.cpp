@@ -50,6 +50,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
 static double	       dfXRes=0.0, dfYRes=0.0;
+static int             bTargetAlignedPixels = FALSE;
 static int             nForcePixels=0, nForceLines=0, bQuiet = FALSE;
 static int             bEnableDstAlpha = FALSE, bEnableSrcAlpha = FALSE;
 
@@ -70,7 +71,7 @@ Usage:
 gdalwarp [--help-general] [--formats]
     [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
     [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]
-    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
+    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
     [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
     [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha
     [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
@@ -115,6 +116,9 @@ transformation approximation (in pixel units - defaults to 0.125).</dd>
 extents of output file to be created (in target SRS).</dd>
 <dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in
 target georeferenced units)</dd>
+<dt> <b>-tap</b>:</dt><dd> (GDAL >= 1.8.0) (target aligned pixels) align
+the coordinates of the extent of the output file to the values of the -tr,
+such that the aligned extent includes the minimum extent.</dd>
 <dt> <b>-ts</b> <em>width height</em>:</dt><dd> set output file size in
 pixels and lines. If width or height is set to 0, the other dimension will be
 guessed from the computed resolution. Note that -ts cannot be used with -tr</dd>
@@ -217,7 +221,7 @@ static void Usage()
         "Usage: gdalwarp [--help-general] [--formats]\n"
         "    [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
         "    [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]\n"
-        "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
+        "    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n" 
         "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
@@ -428,6 +432,10 @@ int main( int argc, char ** argv )
             }
             bCreateOutput = TRUE;
         }
+        else if( EQUAL(argv[i],"-tap") )
+        {
+            bTargetAlignedPixels = TRUE;
+        }
         else if( EQUAL(argv[i],"-ot") && i < argc-1 )
         {
             int	iType;
@@ -562,6 +570,13 @@ int main( int argc, char ** argv )
         (dfXRes != 0 && dfYRes != 0))
     {
         printf( "-tr and -ts options cannot be used at the same time\n");
+        Usage();
+        exit( 2 );
+    }
+    
+    if (bTargetAlignedPixels && dfXRes == 0 && dfYRes == 0)
+    {
+        printf( "-tap option cannot be used without using -tr\n");
         Usage();
         exit( 2 );
     }
@@ -1483,6 +1498,14 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
             dfMaxX = adfDstGeoTransform[0] + adfDstGeoTransform[1] * nPixels;
             dfMaxY = adfDstGeoTransform[3];
             dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
+        }
+        
+        if ( bTargetAlignedPixels )
+        {
+            dfMinX = floor(dfMinX / dfXRes) * dfXRes;
+            dfMaxX = ceil(dfMaxX / dfXRes) * dfXRes;
+            dfMinY = floor(dfMinY / dfYRes) * dfYRes;
+            dfMaxY = ceil(dfMaxY / dfYRes) * dfYRes;
         }
 
         nPixels = (int) ((dfMaxX - dfMinX + (dfXRes/2.0)) / dfXRes);

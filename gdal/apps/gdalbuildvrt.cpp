@@ -83,7 +83,7 @@ static void Usage()
 {
     fprintf(stdout, "%s", 
             "Usage: gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]\n"
-            "                    [-tr xres yres] [-separate] [-allow_projection_difference] [-q]\n"
+            "                    [-tr xres yres] [-tap] [-separate] [-allow_projection_difference] [-q]\n"
             "                    [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata] \n"
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
             "                    [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*\n"
@@ -181,6 +181,7 @@ class VRTBuilder
     ResolutionStrategy  resolutionStrategy;
     double              we_res;
     double              ns_res;
+    int                 bTargetAlignedPixels;
     double              minX;
     double              minY;
     double              maxX;
@@ -221,6 +222,7 @@ class VRTBuilder
                            int nInputFiles, const char* const * ppszInputFilenames,
                            ResolutionStrategy resolutionStrategy,
                            double we_res, double ns_res,
+                           int bTargetAlignedPixels,
                            double minX, double minY, double maxX, double maxY,
                            int bSeparate, int bAllowProjectionDifference,
                            int bAddAlpha, int bHideNoData,
@@ -240,6 +242,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
                        int nInputFiles, const char* const * ppszInputFilenames,
                        ResolutionStrategy resolutionStrategy,
                        double we_res, double ns_res,
+                       int bTargetAlignedPixels,
                        double minX, double minY, double maxX, double maxY,
                        int bSeparate, int bAllowProjectionDifference,
                        int bAddAlpha, int bHideNoData,
@@ -258,6 +261,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
     this->resolutionStrategy = resolutionStrategy;
     this->we_res = we_res;
     this->ns_res = ns_res;
+    this->bTargetAlignedPixels = bTargetAlignedPixels;
     this->minX = minX;
     this->minY = minY;
     this->maxX = maxX;
@@ -949,6 +953,14 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
             we_res /= nCountValid;
             ns_res /= nCountValid;
         }
+        
+        if ( bTargetAlignedPixels )
+        {
+            minX = floor(minX / we_res) * we_res;
+            maxX = ceil(maxX / we_res) * we_res;
+            minY = floor(minY / -ns_res) * -ns_res;
+            maxY = ceil(maxY / -ns_res) * -ns_res;
+        }
 
         nRasterXSize = (int)(0.5 + (maxX - minX) / we_res);
         nRasterYSize = (int)(0.5 + (maxY - minY) / -ns_res);
@@ -1104,6 +1116,7 @@ int main( int nArgc, char ** papszArgv )
     int bQuiet = FALSE;
     GDALProgressFunc pfnProgress = NULL;
     double we_res = 0, ns_res = 0;
+    int bTargetAlignedPixels = FALSE;
     double xmin = 0, ymin = 0, xmax = 0, ymax = 0;
     int bAddAlpha = FALSE;
     int bForceOverwrite = FALSE;
@@ -1178,6 +1191,10 @@ int main( int nArgc, char ** papszArgv )
         {
             we_res = CPLAtofM(papszArgv[++iArg]);
             ns_res = CPLAtofM(papszArgv[++iArg]);
+        }
+        else if( EQUAL(papszArgv[iArg],"-tap") )
+        {
+            bTargetAlignedPixels = TRUE;
         }
         else if ( EQUAL(papszArgv[iArg],"-te") && iArg + 4 < nArgc)
         {
@@ -1256,6 +1273,12 @@ int main( int nArgc, char ** papszArgv )
         Usage();
     }
     
+    if (bTargetAlignedPixels && we_res == 0 && ns_res == 0)
+    {
+        fprintf( stderr, "-tap option cannot be used without using -tr\n");
+        Usage();
+    }
+    
     if (bAddAlpha && bSeparate)
     {
         fprintf(stderr, "-addalpha option is not compatible with -separate\n");
@@ -1291,7 +1314,7 @@ int main( int nArgc, char ** papszArgv )
         pszVRTNoData = pszSrcNoData;
 
     VRTBuilder oBuilder(pszOutputFilename, nInputFiles, ppszInputFilenames,
-                        eStrategy, we_res, ns_res, xmin, ymin, xmax, ymax,
+                        eStrategy, we_res, ns_res, bTargetAlignedPixels, xmin, ymin, xmax, ymax,
                         bSeparate, bAllowProjectionDifference, bAddAlpha, bHideNoData,
                         pszSrcNoData, pszVRTNoData);
 
