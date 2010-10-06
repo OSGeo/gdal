@@ -549,7 +549,7 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
 /* -------------------------------------------------------------------- */
 /*      color table.                                                    */
 /* -------------------------------------------------------------------- */
-    if( nCloneFlags && GCIF_COLORTABLE )
+    if( nCloneFlags & GCIF_COLORTABLE )
     {
         if( poSrcBand->GetColorTable() != NULL )
         {
@@ -564,7 +564,7 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Raster Attribute Table.                                         */
 /* -------------------------------------------------------------------- */
-    if( nCloneFlags && GCIF_RAT )
+    if( nCloneFlags & GCIF_RAT )
     {
         const GDALRasterAttributeTable *poRAT = poSrcBand->GetDefaultRAT();
 
