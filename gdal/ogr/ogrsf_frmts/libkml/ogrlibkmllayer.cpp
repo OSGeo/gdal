@@ -496,8 +496,8 @@ OGRErr OGRLIBKMLLayer::CreateField (
 
     SimpleFieldPtr poKmlSimpleField = NULL;
 
-    if ( poKmlSimpleField =
-         FieldDef2kml ( poField, m_poOgrDS->GetKmlFactory (  ) ) )
+    if ( (poKmlSimpleField =
+         FieldDef2kml ( poField, m_poOgrDS->GetKmlFactory (  ) )) != NULL )
         m_poKmlSchema->add_simplefield ( poKmlSimpleField );
 
     m_poOgrFeatureDefn->AddFieldDefn ( poField );

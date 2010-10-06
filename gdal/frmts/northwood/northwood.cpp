@@ -125,13 +125,13 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
     pGrd->iZUnits = nwtHeader[512];
 
-    if( nwtHeader[513] && 0x80 )
+    if( nwtHeader[513] & 0x80 )
         pGrd->bShowGradient = true;
 
-    if( nwtHeader[513] && 0x40 )
+    if( nwtHeader[513] & 0x40 )
         pGrd->bShowHillShade = true;
 
-    if( nwtHeader[513] && 0x20 )
+    if( nwtHeader[513] & 0x20 )
         pGrd->bHillShadeExists = true;
 
     memcpy( (void *) &pGrd->iNumColorInflections, (void *) &nwtHeader[516],
