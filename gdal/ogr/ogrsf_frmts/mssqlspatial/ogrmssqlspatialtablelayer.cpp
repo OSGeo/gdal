@@ -489,7 +489,7 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
             else
                 poStatement->Append( " and" );
 
-            poStatement->Appendf("[%s].STIntersects(", pszGeomColumn );
+            poStatement->Appendf(" [%s].STIntersects(", pszGeomColumn );
 
             if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
                 poStatement->Append( "geography::" );
