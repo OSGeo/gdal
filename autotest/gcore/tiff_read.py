@@ -142,7 +142,12 @@ def tiff_read_gzip():
             return 'fail'
     ds = None
 
-    return 'success'
+    try:
+        os.stat('data/byte.tif.gz.properties')
+        gdaltest.post_reason('did not expect data/byte.tif.gz.properties')
+        return 'fail'
+    except:
+        return 'success'
 
 ###############################################################################
 # Read a .tif.zip file (with explicit filename)
