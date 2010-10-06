@@ -3341,7 +3341,7 @@ void GTiffDataset::FlushDirectory()
     // there are some circumstances in which we can reach this point
     // without having made this our directory (SetDirectory()) in which
     // case we should not risk a flush. 
-    if( TIFFCurrentDirOffset(hTIFF) == nDirOffset )
+    if( GetAccess() == GA_Update && TIFFCurrentDirOffset(hTIFF) == nDirOffset )
     {
 #if defined(BIGTIFF_SUPPORT)
         TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
