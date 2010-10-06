@@ -135,16 +135,12 @@ def tiff_read_cmyk_raw():
 # Read a .tif.gz file
 
 def tiff_read_gzip():
-    import shutil
-    shutil.copy ('data/byte.tif.gz', 'tmp/byte.tif.gz')
-    ds = gdal.Open('/vsigzip/./tmp/byte.tif.gz')
+
+    ds = gdal.Open('/vsigzip/./data/byte.tif.gz')
     if ds.GetRasterBand(1).Checksum() != 4672:
             print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
-
-    os.remove('tmp/byte.tif.gz')
-    os.remove('tmp/byte.tif.gz.properties')
 
     return 'success'
 
