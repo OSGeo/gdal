@@ -308,7 +308,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
             "AND f_table_name = '%s'\n", pszSchemaName, pszTableName );
         
         oStmt.Appendf("INSERT INTO [geometry_columns] ([f_table_catalog], [f_table_schema] ,[f_table_name], "
-            "[f_geometry_column],[coord_dimension],[srid],[type]) VALUES ('%s', '%s', '%s', '%s', %d, %d, '%s')\n", 
+            "[f_geometry_column],[coord_dimension],[srid],[geometry_type]) VALUES ('%s', '%s', '%s', '%s', %d, %d, '%s')\n", 
             pszCatalog, pszSchemaName, pszTableName, pszGeomColumn, nCoordDimension, nSRSId, pszGeometryType );
 
         oStmt.Appendf("CREATE TABLE [%s].[%s] ([ogr_fid] [int] IDENTITY(1,1) NOT NULL, "
@@ -603,7 +603,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     {
         CPLODBCStatement oStmt( &oSession );
             
-        oStmt.Append( "SELECT f_table_schema, f_table_name, f_geometry_column, coord_dimension, srid, type FROM dbo.geometry_columns");
+        oStmt.Append( "SELECT f_table_schema, f_table_name, f_geometry_column, coord_dimension, srid, geometry_type FROM dbo.geometry_columns");
 
         if( oStmt.ExecuteSQL() )
         {
@@ -830,7 +830,7 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
         "CREATE TABLE geometry_columns (f_table_catalog varchar(128) not null, "
         "f_table_schema varchar(128) not null, f_table_name varchar(256) not null, "
         "f_geometry_column varchar(256) not null, coord_dimension integer not null, "
-        "srid integer not null, type varchar(30) not null, "
+        "srid integer not null, geometry_type varchar(30) not null, "
         "CONSTRAINT geometry_columns_pk PRIMARY KEY (f_table_catalog, "
         "f_table_schema, f_table_name, f_geometry_column));\n" );
 
