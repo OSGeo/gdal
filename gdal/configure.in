@@ -2415,7 +2415,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
     echo '#include <poppler/Page.h>' >> testpoppler.cpp
     echo '#include <poppler/splash/SplashBitmap.h>' >> testpoppler.cpp
     echo 'int main(int argc, char** argv) { return &(((Page*)0x8000)->pageObj) == 0; } ' >> testpoppler.cpp
-    if test -z "`${CXX} testpoppler.cpp -c ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
+    if test -z "`${CXX} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
         HAVE_POPPLER=yes
         LIBS="${TEST_POPPLER_LIB} ${LIBS}"
         OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
@@ -2430,7 +2430,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
         echo '#include <poppler/Object.h>' >> testpoppler.cpp
         echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
         echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
+        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
             POPPLER_HAS_OPTCONTENT=yes
             AC_MSG_RESULT([yes])
         else
@@ -2440,6 +2440,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
         AC_MSG_RESULT([no])
     fi
     rm -f testpoppler.*
+    rm -f testpoppler
 else
     AC_MSG_RESULT([disabled])
 fi
