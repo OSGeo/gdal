@@ -848,6 +848,40 @@ def test_gdalwarp_31():
     return 'success'
 
 ###############################################################################
+# Test -tap
+
+def test_gdalwarp_32():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif',
+                                                  check_memleak = False)
+    if out.find('-tap option cannot be used without using -tr') == -1:
+        gdaltest.post_reason('expected error')
+        return 'fail'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -tr 100 50 -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif')
+
+    ds = gdal.Open('tmp/testgdalwarp32.tif')
+    if ds is None:
+        return 'fail'
+
+    expected_gt = (440700.0, 100.0, 0.0, 3751350.0, 0.0, -50.0)
+    got_gt = ds.GetGeoTransform()
+    if not gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9) :
+        gdaltest.post_reason('Bad geotransform')
+        print(got_gt)
+        return 'fail'
+
+    if ds.RasterXSize != 13 or ds.RasterYSize != 25:
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -893,6 +927,10 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/testgdalwarp31.tif')
     except:
         pass
+    try:
+        os.remove('tmp/testgdalwarp32.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -928,6 +966,7 @@ gdaltest_list = [
     test_gdalwarp_29,
     test_gdalwarp_30,
     test_gdalwarp_31,
+    test_gdalwarp_32,
     test_gdalwarp_cleanup
     ]
 

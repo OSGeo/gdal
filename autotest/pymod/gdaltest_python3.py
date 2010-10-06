@@ -100,7 +100,7 @@ def spawn_async(cmd):
 def wait_process(process):
     process.wait()
 
-def runexternal(cmd, strin = None):
+def runexternal(cmd, strin = None, check_memleak = True):
     command = shlex.split(cmd)
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
@@ -119,7 +119,7 @@ def runexternal(cmd, strin = None):
 
     return ret
 
-def runexternal_out_and_err(cmd):
+def runexternal_out_and_err(cmd, check_memleak = True):
     command = shlex.split(cmd)
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
