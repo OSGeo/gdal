@@ -3291,6 +3291,9 @@ def tiff_write_87():
 # on BIGTIFF creation
 
 def tiff_write_88():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
 
     # The file would be > 4.2 GB without SPARSE_OK
     src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_88_src.tif', 60000, 60000, 1,
