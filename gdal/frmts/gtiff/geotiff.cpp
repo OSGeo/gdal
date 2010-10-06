@@ -84,6 +84,11 @@ TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 /* ==================================================================== */
 /************************************************************************/
 
+/* GDALOverviewDS is not specific to GTiff and could probably be moved */
+/* in gcore. It is currently used to generate a fake */
+/* dataset from the overview levels of the source dataset that is taken */
+/* by CreateCopy() */
+
 #include "gdal_proxy.h"
 
 class GDALOverviewBand;
@@ -400,7 +405,9 @@ class GTiffDataset : public GDALPamDataset
 
     static TIFF *   CreateLL( const char * pszFilename,
                               int nXSize, int nYSize, int nBands,
-                              GDALDataType eType, char **papszParmList );
+                              GDALDataType eType,
+                              double dfExtraSpaceForOverviews,
+                              char **papszParmList );
 
     CPLErr   WriteEncodedTileOrStrip(uint32 tile_or_strip, void* data, int bPreserveDataBuffer);
 };
@@ -6088,6 +6095,7 @@ static int GTiffGetJpegQuality(char** papszOptions)
 TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType,
+                              double dfExtraSpaceForOverviews,
                               char **papszParmList )
 
 {
@@ -6218,6 +6226,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     dfUncompressedImageSize = 
         nXSize * ((double)nYSize) * nBands * (GDALGetDataTypeSize(eType)/8);
+    dfUncompressedImageSize += dfExtraSpaceForOverviews;
 
     if( nCompression == COMPRESSION_NONE 
         && dfUncompressedImageSize > 4200000000.0 )
@@ -6676,7 +6685,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /*      Create the underlying TIFF file.                                */
 /* -------------------------------------------------------------------- */
     hTIFF = CreateLL( pszFilename, nXSize, nYSize, nBands, 
-                      eType, papszParmList );
+                      eType, 0, papszParmList );
 
     if( hTIFF == NULL )
         return NULL;
@@ -6919,12 +6928,26 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                              poPBand->GetMetadataItem( 
                                  "PIXELTYPE", "IMAGE_STRUCTURE" ) );
     }
-
+    
+    int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+    double dfExtraSpaceForOverviews = 0;
+    if (nSrcOverviews != 0 &&
+        CSLFetchBoolean(papszOptions, "COPY_SRC_OVERVIEWS", FALSE))
+    {
+        int i;
+        for(i=0;i<nSrcOverviews;i++)
+        {
+            dfExtraSpaceForOverviews += ((double)poSrcDS->GetRasterBand(1)->GetOverview(i)->GetXSize()) *
+                                        poSrcDS->GetRasterBand(1)->GetOverview(i)->GetYSize();
+        }
+        dfExtraSpaceForOverviews *= nBands * (GDALGetDataTypeSize(eType) / 8);
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
     hTIFF = CreateLL( pszFilename, nXSize, nYSize, nBands, 
-                      eType, papszCreateOptions );
+                      eType, dfExtraSpaceForOverviews, papszCreateOptions );
 
     CSLDestroy( papszCreateOptions );
 
@@ -7365,7 +7388,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*  compressed stream.                                                  */
 /* -------------------------------------------------------------------- */
 
-    int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+    /* For scaled progress due to overview copying */
+    double dfTotalPixels = ((double)nXSize) * nYSize;
+    double dfCurPixels = 0;
+
     if (nSrcOverviews != 0 &&
         CSLFetchBoolean(papszOptions, "COPY_SRC_OVERVIEWS", FALSE))
     {
@@ -7374,30 +7400,57 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         int i;
         for(i=0;i<nSrcOverviews;i++)
         {
-            panOverviewList[i] = (int)( 0.5 + nXSize / (double)poSrcDS->GetRasterBand(1)->GetOverview(i)->GetXSize());
+            GDALRasterBand* poOvrBand = poSrcDS->GetRasterBand(1)->GetOverview(i);
+            panOverviewList[i] = (int)( 0.5 + nXSize / (double)poOvrBand->GetXSize());
+            dfTotalPixels += ((double)poOvrBand->GetXSize()) *
+                                      poOvrBand->GetYSize();
         }
         for(i=0;i<poDS->nBands;i++)
         {
             panBandList[i] = i + 1;
         }
+        
+        /* Create the IFDs for the overviews */
         poDS->IBuildOverviews("NONE",
                               nSrcOverviews, panOverviewList,
                               poDS->nBands, panBandList,
                               GDALDummyProgress, NULL);
 
-
         char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
         if (nCompression != COMPRESSION_NONE)
             papszCopyWholeRasterOptions[0] = (char*) "COMPRESSED=YES";
+        /* Now copy the imagery */
         for(i=0;i<nSrcOverviews;i++)
         {
-            GDALDataset* poSrcOvrDS = new GDALOverviewDS(poSrcDS, nSrcOverviews-1-i);
+            /* Begin with the smallest overview */
+            int iOvrLevel = nSrcOverviews-1-i;
+            
+            /* Create a fake dataset with the source overview level so that */
+            /* GDALDatasetCopyWholeRaster can cope with it */
+            GDALDataset* poSrcOvrDS = new GDALOverviewDS(poSrcDS, iOvrLevel);
+            
+            GDALRasterBand* poOvrBand =
+                    poSrcDS->GetRasterBand(1)->GetOverview(iOvrLevel);
+            double dfNextCurPixels = dfCurPixels +
+                    ((double)poOvrBand->GetXSize()) * poOvrBand->GetYSize();
+
+            void* pScaledData = GDALCreateScaledProgress( dfCurPixels / dfTotalPixels,
+                                      dfNextCurPixels / dfTotalPixels,
+                                      pfnProgress, pProgressData);
+                                
             eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcOvrDS,
-                                                (GDALDatasetH) poDS->papoOverviewDS[nSrcOverviews-1-i],
+                                                (GDALDatasetH) poDS->papoOverviewDS[iOvrLevel],
                                                 papszCopyWholeRasterOptions,
-                                                NULL, NULL/*pfnProgress, pProgressData*/ );
+                                                GDALScaledProgress, pScaledData );
+                                                
+            dfCurPixels = dfNextCurPixels;
+            GDALDestroyScaledProgress(pScaledData);
+
             delete poSrcOvrDS;
-            poDS->papoOverviewDS[nSrcOverviews-1-i]->FlushCache();
+            poDS->papoOverviewDS[iOvrLevel]->FlushCache();
+            
+            if (eErr != CE_None)
+               break;
         }
 
         CPLFree(panOverviewList);
@@ -7407,6 +7460,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Copy actual imagery.                                            */
 /* -------------------------------------------------------------------- */
+    void* pScaledData = GDALCreateScaledProgress( dfCurPixels / dfTotalPixels,
+                                                  1.0,
+                                                  pfnProgress, pProgressData);
 
     if (poDS->bTreatAsSplit || poDS->bTreatAsSplitBitmap)
     {
@@ -7417,7 +7473,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             int j;
             GByte* pabyScanline = (GByte *) CPLMalloc(TIFFScanlineSize(hTIFF));
-            eErr = CE_None;
             for(j=0;j<nYSize && eErr == CE_None;j++)
             {
                 eErr = poSrcDS->RasterIO(GF_Read, 0, j, nXSize, 1,
@@ -7430,7 +7485,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                               "TIFFWriteScanline() failed." );
                     eErr = CE_Failure;
                 }
-                if( !pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData ) )
+                if( !GDALScaledProgress( (j+1) * 1.0 / nYSize, NULL, pScaledData ) )
                     eErr = CE_Failure;
             }
             CPLFree(pabyScanline);
@@ -7466,8 +7521,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                   "TIFFWriteScanline() failed." );
                         eErr = CE_Failure;
                     }
-                    if( !pfnProgress( (j+1 + (iBand - 1) * nYSize) * 1.0 /
-                                      (nBands * nYSize), NULL, pProgressData ) )
+                    if( !GDALScaledProgress( (j+1 + (iBand - 1) * nYSize) * 1.0 /
+                                      (nBands * nYSize), NULL, pScaledData ) )
                         eErr = CE_Failure;
                 }
             }
@@ -7495,7 +7550,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 #endif
     }
-    else
+    else if (eErr == CE_None)
     {
         char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
         if (nCompression != COMPRESSION_NONE)
@@ -7503,15 +7558,18 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
                                             (GDALDatasetH) poDS,
                                             papszCopyWholeRasterOptions,
-                                            pfnProgress, pProgressData );
+                                            GDALScaledProgress, pScaledData );
     }
+    
+    GDALDestroyScaledProgress(pScaledData);
 
     if( eErr == CE_Failure )
     {
         delete poDS;
         poDS = NULL;
 
-        VSIUnlink( pszFilename ); // should really delete more carefully.
+        if (CSLTestBoolean(CPLGetConfigOption("GTIFF_DELETE_ON_ERROR", "YES")))
+            VSIUnlink( pszFilename ); // should really delete more carefully.
     }
 
     return poDS;
