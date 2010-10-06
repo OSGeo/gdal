@@ -421,6 +421,36 @@ def test_gdalbuildvrt_11():
     return 'success'
 
 ###############################################################################
+# Test -tap option
+
+def test_gdalbuildvrt_12():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif',
+                                                  check_memleak = False)
+    if err.find('-tap option cannot be used without using -tr') == -1:
+        gdaltest.post_reason('expected error')
+        return 'fail'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 100 50 -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif')
+
+    ds = gdal.Open('tmp/gdalbuildvrt12.vrt')
+
+    gt = ds.GetGeoTransform()
+    expected_gt = [ 440700.0, 100.0, 0.0, 3751350.0, 0.0, -50.0 ]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i] > 1e-5):
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
+            return 'fail'
+
+    if ds.RasterXSize != 13 or ds.RasterYSize != 25:
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalbuildvrt_cleanup():
@@ -436,6 +466,7 @@ def test_gdalbuildvrt_cleanup():
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt7.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt10.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt11.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt12.vrt')
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -470,6 +501,7 @@ gdaltest_list = [
     test_gdalbuildvrt_9,
     test_gdalbuildvrt_10,
     test_gdalbuildvrt_11,
+    test_gdalbuildvrt_12,
     test_gdalbuildvrt_cleanup
     ]
 

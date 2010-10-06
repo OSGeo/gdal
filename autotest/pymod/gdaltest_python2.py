@@ -125,7 +125,7 @@ def spawn_async(cmd):
 def wait_process(process):
     process.wait()
 
-def runexternal(cmd, strin = None):
+def runexternal(cmd, strin = None, check_memleak = True):
     if strin is None:
         out_str = os.popen(cmd).read()
     else:
@@ -134,16 +134,18 @@ def runexternal(cmd, strin = None):
         ret_stdin.close()
         out_str = ret_stdout.read()
 
-    warn_if_memleak(cmd, out_str)
+    if check_memleak:
+        warn_if_memleak(cmd, out_str)
 
     return out_str
 
-def runexternal_out_and_err(cmd):
+def runexternal_out_and_err(cmd, check_memleak = True):
     (ret_stdin, ret_stdout, ret_stderr) = os.popen3(cmd)
     ret_stdin.close()
     out_str = ret_stdout.read()
     err_str = ret_stderr.read()
 
-    warn_if_memleak(cmd, out_str)
+    if check_memleak:
+        warn_if_memleak(cmd, out_str)
 
     return (out_str, err_str)
