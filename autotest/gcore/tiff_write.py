@@ -3250,7 +3250,7 @@ def tiff_write_87():
 
     src_ds = gdal.Open('tmp/tiff_write_87_src.tif', gdal.GA_Update)
     src_ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
-    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/tiff_write_87_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_87_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
     ds = None
     src_ds = None
 
@@ -3284,6 +3284,64 @@ def tiff_write_87():
         print(cs2)
         return 'fail'
 
+    return 'success'
+
+###############################################################################
+# Test that COPY_SRC_OVERVIEWS creation option has an influence
+# on BIGTIFF creation
+
+def tiff_write_88():
+
+    # The file would be > 4.2 GB without SPARSE_OK
+    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_88_src.tif', 60000, 60000, 1,
+            options = ['TILED=YES', 'SPARSE_OK=YES'])
+    src_ds.BuildOverviews( 'NONE', overviewlist = [2, 4] )
+    # Just write one data block so that we can truncate it
+    data = src_ds.GetRasterBand(1).GetOverview(1).ReadRaster(0, 0, 128, 128)
+    src_ds.GetRasterBand(1).GetOverview(1).WriteRaster(0, 0, 128, 128, data)
+    src_ds = None
+    
+    # Truncate the file to cause an I/O error on reading
+    # so that the CreateCopy() aborts quickly
+    f = open('tmp/tiff_write_88_src.tif', 'rb')
+    f.seek(0, 2)
+    len = f.tell()
+    f.seek(0, 0)
+    data = f.read(len-1)
+    f.close()
+    f = open('tmp/tiff_write_88_src.tif', 'wb')
+    f.write(data)
+    f.close()
+    
+    src_ds = gdal.Open('tmp/tiff_write_88_src.tif')
+    # for testing only. We need to keep the file to check it was a bigtiff
+    gdal.SetConfigOption('GTIFF_DELETE_ON_ERROR', 'NO') 
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_88_dst.tif', src_ds,
+            options = ['TILED=YES', 'COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('GTIFF_DELETE_ON_ERROR', None)
+    ds = None
+    src_ds = None
+    
+    f = open('tmp/tiff_write_88_dst.tif', 'rb')
+    data = f.read(8)
+    f.close()
+
+    os.remove( 'tmp/tiff_write_88_src.tif' )
+    os.remove( 'tmp/tiff_write_88_dst.tif' )
+
+    import struct
+    ar = struct.unpack('B' * 8, data)
+    if ar[2] != 43:
+        gdaltest.post_reason('not a BIGTIFF file')
+        print(ar)
+        return 'fail'
+    if ar[4] != 8 or ar[5] != 0 or ar[6] != 0 or ar[7] != 0:
+        gdaltest.post_reason('first IFD is not at offset 8')
+        print(ar)
+        return 'fail'
+        
     return 'success'
 
 ###############################################################################
@@ -3384,6 +3442,7 @@ gdaltest_list = [
     tiff_write_85,
     tiff_write_86,
     tiff_write_87,
+    tiff_write_88,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
