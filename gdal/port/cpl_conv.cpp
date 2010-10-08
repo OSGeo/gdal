@@ -2301,3 +2301,44 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
 
     return FALSE;
 }
+
+/************************************************************************/
+/*      Stub implementation of zip services if we don't have libz.      */
+/************************************************************************/
+
+#if !defined(HAVE_LIBZ)
+
+void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "This GDAL/OGR build does not include zlib and zip services." );
+    return NULL;
+}
+
+CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename, 
+                           char **papszOptions )
+
+{
+    return CE_Failure;
+}
+
+CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
+
+{
+    return CE_Failure;
+}
+
+CPLErr CPLCloseFileInZip( void *hZip )
+
+{
+    return CE_Failure;
+}
+
+CPLErr CPLCloseZip( void *hZip )
+
+{
+    return CE_Failure;
+}
+
+#endif /* !defined(HAVE_LIBZ) */

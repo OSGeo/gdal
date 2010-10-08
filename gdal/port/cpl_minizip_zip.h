@@ -1,3 +1,20 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  CPL - Common Portability Library
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Purpose:  Adjusted minizip "zip.h" include file for zip services.
+ *
+ * Modified version by Even Rouault. :
+ *   - Decoration of symbol names unz* -> cpl_unz*
+ *   - Undef EXPORT so that we are sure the symbols are not exported
+ *   - Remove old C style function prototypes
+ *   - Added CPL* simplified API at bottom.
+ *
+ *   Original licence available in port/LICENCE_minizip
+ *
+ *****************************************************************************/
+
 /* zip.h -- IO for compress .zip files using zlib
    Version 1.01e, February 12th, 2005
 

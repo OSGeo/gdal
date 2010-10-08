@@ -217,7 +217,7 @@ int CPL_DLL CPLMoveFile( const char *pszNewPath, const char *pszOldPath );
 void CPL_DLL  *CPLCreateZip( const char *pszZipFilename, char **papszOptions );
 CPLErr CPL_DLL CPLCreateFileInZip( void *hZip, const char *pszFilename, 
                                    char **papszOptions );
-CPLErr CPL_DLL CPLWriteFileInZip( void *hZip, void *pBuffer, int nBufferSize );
+CPLErr CPL_DLL CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize );
 CPLErr CPL_DLL CPLCloseFileInZip( void *hZip );
 CPLErr CPL_DLL CPLCloseZip( void *hZip );
                             
