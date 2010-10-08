@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_indfile.cpp,v 1.13 2008/01/29 20:46:32 dmorissette Exp $
+ * $Id: mitab_indfile.cpp,v 1.14 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_indfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,7 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_indfile.cpp,v $
- * Revision 1.13  2008/01/29 20:46:32  dmorissette
+ * Revision 1.14  2010-07-07 19:00:15  aboudreault
+ * Cleanup Win32 Compile Warnings (GDAL bug #2930)
+ *
+ * Revision 1.13  2008-01-29 20:46:32  dmorissette
  * Added support for v9 Time and DateTime fields (byg 1754)
  *
  * Revision 1.12  2007/12/11 03:43:03  dmorissette
@@ -436,7 +439,7 @@ int TABINDFile::WriteHeader()
     poHeaderBlock->WriteInt16( 512 );   // ???
     poHeaderBlock->WriteInt32( 0 );     // ???
 
-    poHeaderBlock->WriteInt16( m_numIndexes );
+    poHeaderBlock->WriteInt16( (GInt16)m_numIndexes );
 
     poHeaderBlock->WriteInt16( 0x15e7); // ???
 
@@ -458,9 +461,9 @@ int TABINDFile::WriteHeader()
              * Write next index definition
              *--------------------------------------------------------*/
             poHeaderBlock->WriteInt32(poRootNode->GetNodeBlockPtr());
-            poHeaderBlock->WriteInt16(poRootNode->GetMaxNumEntries());
-            poHeaderBlock->WriteByte( poRootNode->GetSubTreeDepth());
-            poHeaderBlock->WriteByte( poRootNode->GetKeyLength());
+            poHeaderBlock->WriteInt16((GInt16)poRootNode->GetMaxNumEntries());
+            poHeaderBlock->WriteByte( (GByte)poRootNode->GetSubTreeDepth());
+            poHeaderBlock->WriteByte( (GByte)poRootNode->GetKeyLength());
 
             poHeaderBlock->WriteZeros( 8 );
 

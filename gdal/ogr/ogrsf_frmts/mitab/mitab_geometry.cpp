@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_geometry.cpp,v 1.5 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_geometry.cpp,v 1.5 2004-06-30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_geometry.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,7 +31,7 @@
  **********************************************************************
  *
  * $Log: mitab_geometry.cpp,v $
- * Revision 1.5  2004/06/30 20:29:04  dmorissette
+ * Revision 1.5  2004-06-30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
  * Revision 1.4  2001/12/18 23:42:28  daniel

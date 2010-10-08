@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapcoordblock.cpp,v 1.17 2008/02/01 19:36:31 dmorissette Exp $
+ * $Id: mitab_mapcoordblock.cpp,v 1.18 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_mapcoordblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,7 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_mapcoordblock.cpp,v $
- * Revision 1.17  2008/02/01 19:36:31  dmorissette
+ * Revision 1.18  2010-07-07 19:00:15  aboudreault
+ * Cleanup Win32 Compile Warnings (GDAL bug #2930)
+ *
+ * Revision 1.17  2008-02-01 19:36:31  dmorissette
  * Initial support for V800 REGION and MULTIPLINE (bug 1496)
  *
  * Revision 1.16  2007/02/23 18:56:44  dmorissette
@@ -221,7 +224,7 @@ int     TABMAPCoordBlock::CommitToFile()
     GotoByteInBlock(0x000);
 
     WriteInt16(TABMAP_COORD_BLOCK);    // Block type code
-    WriteInt16(m_nSizeUsed - MAP_COORD_HEADER_SIZE); // num. bytes used
+    WriteInt16((GInt16)(m_nSizeUsed - MAP_COORD_HEADER_SIZE)); // num. bytes used
     WriteInt32(m_nNextCoordBlock);
 
     if( CPLGetLastErrorType() == CE_Failure )
@@ -569,11 +572,11 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion,
         if (nVersion >= 450)
             WriteInt32(pasHdrs[i].numVertices);
         else
-            WriteInt16(pasHdrs[i].numVertices);
+            WriteInt16((GInt16)pasHdrs[i].numVertices);
         if (nVersion >= 800)
             WriteInt32(pasHdrs[i].numHoles);
         else
-            WriteInt16(pasHdrs[i].numHoles);
+            WriteInt16((GInt16)pasHdrs[i].numHoles);
         WriteIntCoord(pasHdrs[i].nXMin, pasHdrs[i].nYMin, bCompressed);
         WriteIntCoord(pasHdrs[i].nXMax, pasHdrs[i].nYMax, bCompressed);
         WriteInt32(pasHdrs[i].nDataOffset);
@@ -601,8 +604,8 @@ int     TABMAPCoordBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
 {
 
     if ((!bCompressed && (WriteInt32(nX) != 0 || WriteInt32(nY) != 0 ) ) ||
-        (bCompressed && (WriteInt16(nX - m_nComprOrgX) != 0 ||
-                         WriteInt16(nY - m_nComprOrgY) != 0) ) )
+        (bCompressed && (WriteInt16((GInt16)(nX - m_nComprOrgX)) != 0 ||
+                         WriteInt16((GInt16)(nY - m_nComprOrgY)) != 0) ) )
     {
         return -1;
     }

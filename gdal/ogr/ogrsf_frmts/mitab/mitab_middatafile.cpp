@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.14 2006/01/27 13:54:06 fwarmerdam Exp $
+ * $Id: mitab_middatafile.cpp,v 1.14 2006-01-27 13:54:06 fwarmerdam Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,7 +31,7 @@
  **********************************************************************
  *
  * $Log: mitab_middatafile.cpp,v $
- * Revision 1.14  2006/01/27 13:54:06  fwarmerdam
+ * Revision 1.14  2006-01-27 13:54:06  fwarmerdam
  * fixed memory leak
  *
  * Revision 1.13  2005/10/04 19:36:10  dmorissette

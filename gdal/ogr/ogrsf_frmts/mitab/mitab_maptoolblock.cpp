@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_maptoolblock.cpp,v 1.7 2006/11/28 18:49:08 dmorissette Exp $
+ * $Id: mitab_maptoolblock.cpp,v 1.8 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_maptoollock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,7 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_maptoolblock.cpp,v $
- * Revision 1.7  2006/11/28 18:49:08  dmorissette
+ * Revision 1.8  2010-07-07 19:00:15  aboudreault
+ * Cleanup Win32 Compile Warnings (GDAL bug #2930)
+ *
+ * Revision 1.7  2006-11-28 18:49:08  dmorissette
  * Completed changes to split TABMAPObjectBlocks properly and produce an
  * optimal spatial index (bug 1585)
  *
@@ -192,7 +195,7 @@ int     TABMAPToolBlock::CommitToFile()
     GotoByteInBlock(0x000);
 
     WriteInt16(TABMAP_TOOL_BLOCK);    // Block type code
-    WriteInt16(m_nSizeUsed - MAP_TOOL_HEADER_SIZE); // num. bytes used
+    WriteInt16((GInt16)(m_nSizeUsed - MAP_TOOL_HEADER_SIZE)); // num. bytes used
     WriteInt32(m_nNextToolBlock);
 
     nStatus = CPLGetLastErrorNo();

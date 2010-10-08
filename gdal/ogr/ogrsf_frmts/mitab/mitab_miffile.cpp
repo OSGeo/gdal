@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.49 2008/11/17 22:06:21 aboudreault Exp $
+ * $Id: mitab_miffile.cpp,v 1.54 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,22 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.54  2010-07-07 19:00:15  aboudreault
+ * Cleanup Win32 Compile Warnings (GDAL bug #2930)
+ *
+ * Revision 1.53  2010-05-07 19:39:19  aboudreault
+ * Fixed MIF driver: doesn't create a layer defn at layer creation (bug 2180)
+ *
+ * Revision 1.52  2010-01-07 20:39:12  aboudreault
+ * Added support to handle duplicate field names, Added validation to check if a field name start with a number (bug 2141)
+ *
+ * Revision 1.51  2009-07-27 14:08:41  dmorissette
+ * Fixed dataset version check in AddFieldNative for type TABFDateTime
+ *
+ * Revision 1.50  2008-12-17 14:55:20  aboudreault
+ * Fixed mitab mif/mid importer fails when a Text geometry have an empty
+ * text value (bug 1978)
+ *
  * Revision 1.49  2008/11/17 22:06:21  aboudreault
  * Added support to use OFTDateTime/OFTDate/OFTTime type when compiled with
  * OGR and fixed reading/writing support for these types.
@@ -451,7 +467,7 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
  **********************************************************************/
 int MIFFile::ParseMIFHeader()
 {  
-    GBool  bColumns = FALSE, bDataFound = FALSE;
+    GBool  bColumns = FALSE;
     int    nColumns = 0;
     GBool  bCoordSys = FALSE;
     char  *pszTmp;
@@ -478,20 +494,20 @@ int MIFFile::ParseMIFHeader()
     /*-----------------------------------------------------------------
      * Parse header until we find the "Data" line
      *----------------------------------------------------------------*/
-    while (((pszLine = m_poMIFFile->GetLine()) != NULL))
+    while (((pszLine = m_poMIFFile->GetLine()) != NULL) && 
+           !(EQUALN(pszLine,"Data",4)))
     {
         while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
             pszLine++;  // skip leading spaces
 
-        if( EQUALN(pszLine,"Data",4) && !bColumns )
-        {
-            bDataFound = TRUE;
-            break;
-        }
-
         if (bColumns == TRUE && nColumns >0)
         {
-            if (AddFields(pszLine) == 0)
+            if (nColumns == 0)
+            {
+                // Permit to 0 columns
+                bColumns = FALSE;
+            }
+            else if (AddFields(pszLine) == 0)
             {
                 nColumns--;
                 if (nColumns == 0)
@@ -618,7 +634,8 @@ int MIFFile::ParseMIFHeader()
 
     }
     
-    if ( !bDataFound )
+    if ((pszLine = m_poMIFFile->GetLastLine()) == NULL || 
+        EQUALN(m_poMIFFile->GetLastLine(),"DATA",4) == FALSE)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "DATA keyword not found in %s.  File may be corrupt.",
@@ -1181,8 +1198,6 @@ int MIFFile::GetNextFeatureId(int nPrevId)
         return nPrevId + 1;
     else
         return -1;
-
-    return 0;
 }
 
 /**********************************************************************
@@ -1432,6 +1447,24 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
         return NULL;
     }
 
+    /* If the feature geometry is Text, and the value is empty(""), transform 
+       it to a geometry none */
+    if (m_poCurFeature->GetFeatureClass() == TABFCText)
+    {
+       TABFeature *poTmpFeature;
+       TABText *poTextFeature = (TABText*)m_poCurFeature;
+       if (strlen(poTextFeature->GetTextString()) == 0)
+       {
+          poTmpFeature = new TABFeature(m_poDefn);
+          for( int i = 0; i < m_poDefn->GetFieldCount(); i++ )
+          {
+             poTmpFeature->SetField( i, m_poCurFeature->GetRawFieldRef( i ) );
+          }
+          delete m_poCurFeature;
+          m_poCurFeature = poTmpFeature;
+       }
+    }
+
     /*---------------------------------------------------------------------
      * The act of reading the geometry causes the first line of the    
      * next object to be preloaded.  Set the preloaded id appropriately.
@@ -1646,11 +1679,13 @@ int MIFFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
  **********************************************************************/
 int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
-                            GBool bIndexed /*=FALSE*/, GBool bUnique/*=FALSE*/)
+                            GBool bIndexed /*=FALSE*/, GBool bUnique/*=FALSE*/, int bApproxOK )
 {
     OGRFieldDefn *poFieldDefn;
     char *pszCleanName = NULL;
     int nStatus = 0;
+    char szNewFieldName[31+1]; /* 31 is the max characters for a field name*/
+    int nRenameNum = 1;
 
     /*-----------------------------------------------------------------
      * Check that call happens at the right time in dataset's life.
@@ -1700,6 +1735,40 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
      *----------------------------------------------------------------*/
     pszCleanName = TABCleanFieldName(pszName);
 
+    if( !bApproxOK &&
+        ( m_poDefn->GetFieldIndex(pszCleanName) >= 0 ||
+          !EQUAL(pszName, pszCleanName) ) )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Failed to add field named '%s'",
+                  pszName );
+    }
+
+    strncpy(szNewFieldName, pszCleanName, 31);
+    szNewFieldName[31] = '\0';
+
+    while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 10) 
+      sprintf( szNewFieldName, "%.29s_%.1d", pszCleanName, nRenameNum++ );
+
+    while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 100) 
+      sprintf( szNewFieldName, "%.29s%.2d", pszCleanName, nRenameNum++ );
+
+    if (m_poDefn->GetFieldIndex(szNewFieldName) >= 0)
+    {
+      CPLError( CE_Failure, CPLE_NotSupported, 
+                "Too many field names like '%s' when truncated to 31 letters " 
+                "for MapInfo format.", pszCleanName );
+    }
+
+    if( !EQUAL(pszCleanName,szNewFieldName) ) 
+    {
+      CPLError( CE_Warning, CPLE_NotSupported,
+                "Normalized/laundered field name: '%s' to '%s'",
+                pszCleanName,
+                szNewFieldName );
+    }
+
+
     /*-----------------------------------------------------------------
      * Map MapInfo native types to OGR types
      *----------------------------------------------------------------*/
@@ -1711,26 +1780,26 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * CHAR type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, OFTString);
+        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTString);
         poFieldDefn->SetWidth(nWidth);
         break;
       case TABFInteger:
         /*-------------------------------------------------
          * INTEGER type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, OFTInteger);
+        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTInteger);
         break;
       case TABFSmallInt:
         /*-------------------------------------------------
          * SMALLINT type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, OFTInteger);
+        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTInteger);
         break;
       case TABFDecimal:
         /*-------------------------------------------------
          * DECIMAL type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, OFTReal);
+        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTReal);
         poFieldDefn->SetWidth(nWidth);
         poFieldDefn->SetPrecision(nPrecision);
         break;
@@ -1738,13 +1807,13 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * FLOAT type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, OFTReal);
+        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTReal);
         break;
       case TABFDate:
         /*-------------------------------------------------
          * DATE type (V450, returned as a string: "DD/MM/YYYY" or "YYYYMMDD")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, 
+        poFieldDefn = new OGRFieldDefn(szNewFieldName, 
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDate);
 #else
@@ -1757,7 +1826,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * TIME type (v900, returned as a string: "HH:MM:SS" or "HHMMSSmmm")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, 
+        poFieldDefn = new OGRFieldDefn(szNewFieldName, 
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTTime);
 #else
@@ -1771,7 +1840,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
          * DATETIME type (v900, returned as a string: "DD/MM/YYYY HH:MM:SS",
          * "YYYY/MM/DD HH:MM:SS" or "YYYYMMDDHHMMSSmmm")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, 
+        poFieldDefn = new OGRFieldDefn(szNewFieldName, 
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDateTime);
 #else
@@ -1784,7 +1853,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * LOGICAL type (value "T" or "F")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, OFTString);
+        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTString);
         poFieldDefn->SetWidth(1);
         break;
       default:

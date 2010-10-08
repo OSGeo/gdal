@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.12 2007/03/22 20:01:36 dmorissette Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.12 2007-03-22 20:01:36 dmorissette Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,7 +31,7 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_datasource.cpp,v $
- * Revision 1.12  2007/03/22 20:01:36  dmorissette
+ * Revision 1.12  2007-03-22 20:01:36  dmorissette
  * Added SPATIAL_INDEX_MODE=QUICK creation option (MITAB bug 1669)
  *
  * Revision 1.11  2006/01/27 14:27:35  fwarmerdam

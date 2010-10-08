@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.33 2008/02/01 19:36:31 dmorissette Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.33 2008-02-01 19:36:31 dmorissette Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,7 +31,7 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
- * Revision 1.33  2008/02/01 19:36:31  dmorissette
+ * Revision 1.33  2008-02-01 19:36:31  dmorissette
  * Initial support for V800 REGION and MULTIPLINE (bug 1496)
  *
  * Revision 1.32  2006/11/28 18:49:08  dmorissette

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.94 2008/11/18 16:47:44 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.98 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,20 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.98  2010-07-07 19:00:15  aboudreault
+ * Cleanup Win32 Compile Warnings (GDAL bug #2930)
+ *
+ * Revision 1.97  2010-07-06 13:56:26  aboudreault
+ * Fixed TABText::GetLabelStyleString() doesn't escape the double quote character (bug 2236)
+ *
+ * Revision 1.96  2009-07-30 13:13:43  dmorissette
+ * Fixed incorrect text justification returned by GetLabelStyleString()
+ * for TABTJRight (bug 2085)
+ *
+ * Revision 1.95  2008-11-27 20:50:22  aboudreault
+ * Improved support for OGR date/time types. New Read/Write methods (bug 1948)
+ * Added support of OGR date/time types for MIF features.
+ *
  * Revision 1.94  2008/11/18 16:47:44  dmorissette
  * Fixed compile warning when MITAB_USE_OFTDATETIME is set
  *
@@ -435,7 +449,7 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
     double      dValue;
     const char *pszValue;
 #ifdef MITAB_USE_OFTDATETIME
-    int nYear, nMonth, nDay, nHour, nMin, nSec, nMS;
+    int nYear, nMonth, nDay, nHour, nMin, nSec, nMS, status;
     nYear = nMonth = nDay = nHour = nMin = nSec = nMS = 0;
 #endif
 
@@ -478,36 +492,42 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             SetField(iField, pszValue);
             break;
           case TABFDate:
-            pszValue = poDATFile->ReadDateField(poDATFile->
-                                                 GetFieldWidth(iField));
 #ifdef MITAB_USE_OFTDATETIME
-            sscanf(pszValue, "%4d%2d%2d",
-                    &nYear, &nMonth, &nDay);
-            SetField(iField, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+             if ((status = poDATFile->ReadDateField(poDATFile->GetFieldWidth(iField),
+                                                    &nYear, &nMonth, &nDay)) == 0)
+             {
+                SetField(iField, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+             }
 #else
+            pszValue = poDATFile->ReadDateField(poDATFile->
+                                            GetFieldWidth(iField));
             SetField(iField, pszValue);
 #endif
             break;
           case TABFTime:
+#ifdef MITAB_USE_OFTDATETIME
+             if ((status = poDATFile->ReadTimeField(poDATFile->GetFieldWidth(iField),
+                                                    &nHour, &nMin, &nSec, &nMS)) == 0)
+             {
+                SetField(iField, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+             }
+#else
              pszValue = poDATFile->ReadTimeField(poDATFile->
                                                      GetFieldWidth(iField));
-#ifdef MITAB_USE_OFTDATETIME
-             sscanf(pszValue,"%2d%2d%2d%3d",
-                    &nHour, &nMin, &nSec, &nMS);
-             
-            SetField(iField, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
-#else
-            SetField(iField, pszValue);
+             SetField(iField, pszValue);
 #endif
             break;
           case TABFDateTime:
+#ifdef MITAB_USE_OFTDATETIME
+            if ((status = poDATFile->ReadDateTimeField(poDATFile->GetFieldWidth(iField),
+                                                       &nYear, &nMonth, &nDay,
+                                                       &nHour, &nMin, &nSec, &nMS)) == 0)
+            {
+               SetField(iField, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+            }
+#else
             pszValue = poDATFile->ReadDateTimeField(poDATFile->
                                                     GetFieldWidth(iField));
-#ifdef MITAB_USE_OFTDATETIME
-            sscanf(pszValue, "%4d%2d%2d%2d%2d%2d%3d",
-                   &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec, &nMS);
-            SetField(iField, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
-#else
             SetField(iField, pszValue);
 #endif
             break;
@@ -538,9 +558,8 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
 {
     int         iField, numFields, nStatus=0;
 #ifdef MITAB_USE_OFTDATETIME
-    int         nYear, nMon, nDay, nHour, nMin, nSec;
-    const char  *pszValue;
-    char        *pszBuffer;
+    int         nYear, nMon, nDay, nHour, nMin, nSec, nTZFlag;
+    nYear = nMon = nDay = nHour = nMin = nSec = nTZFlag = 0;
 #endif
 
     CPLAssert(poDATFile);
@@ -577,7 +596,7 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
                                                 poINDFile, panIndexNo[iField]);
             break;
           case TABFSmallInt:
-            nStatus = poDATFile->WriteSmallIntField(GetFieldAsInteger(iField),
+            nStatus = poDATFile->WriteSmallIntField((GInt16)GetFieldAsInteger(iField),
                                                 poINDFile, panIndexNo[iField]);
             break;
           case TABFFloat:
@@ -589,19 +608,33 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
                                                 poINDFile, panIndexNo[iField]);
             break;
           case TABFDate:
-            nStatus = poDATFile->WriteDateField(GetFieldAsString(iField),
-                                                poINDFile, panIndexNo[iField]);
+#ifdef MITAB_USE_OFTDATETIME
+             if (IsFieldSet(iField))
+             {
+                GetFieldAsDateTime(iField, &nYear, &nMon, &nDay,
+                                   &nHour, &nMin, &nSec, &nTZFlag);
+             }
+             nStatus = poDATFile->WriteDateField(nYear, nMon, nDay,
+                                                 poINDFile, panIndexNo[iField]);
+#else
+             nStatus = poDATFile->WriteDateField(GetFieldAsString(iField),
+                                                 poINDFile, panIndexNo[iField]);
+#endif
             break;
           case TABFTime:
 #ifdef MITAB_USE_OFTDATETIME
-             /* Fix Time string returned by OGR: the hour must be 2 char */
-             pszValue = GetFieldAsString(iField);
-             pszBuffer = (char*)CPLMalloc((8+1)*sizeof(char));
-             sscanf(pszValue, "%d:%d:%d", &nHour, &nMin, &nSec);
-             sprintf(pszBuffer, "%02d:%02d:%02d", nHour, nMin, nSec); 
-             nStatus = poDATFile->WriteTimeField(pszBuffer,
-                                                 poINDFile, panIndexNo[iField]);
-             CPLFree(pszBuffer);
+             if (IsFieldSet(iField))
+             {
+                GetFieldAsDateTime(iField, &nYear, &nMon, &nDay,
+                                   &nHour, &nMin, &nSec, &nTZFlag);
+             }
+             else
+             {
+                nHour = nMin = nSec = -1;
+             }
+             nStatus = poDATFile->WriteTimeField(nHour, nMin, nSec, 0,
+                                                    poINDFile, panIndexNo[iField]);
+             
 #else
              nStatus = poDATFile->WriteTimeField(GetFieldAsString(iField),
                                                  poINDFile, panIndexNo[iField]);
@@ -609,16 +642,14 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
             break;
           case TABFDateTime:
 #ifdef MITAB_USE_OFTDATETIME
-             /* Fix DateTime string returned by OGR: the hour must be 2 char */
-             pszValue = GetFieldAsString(iField);
-             pszBuffer = (char*)CPLMalloc((19+1)*sizeof(char));
-             sscanf(pszValue, "%4d/%2d/%2d %2d:%2d:%2d", 
-                    &nYear,&nMon, &nDay, &nHour, &nMin, &nSec);
-             sprintf(pszBuffer, "%04d/%02d/%02d %02d:%02d:%02d", 
-                     nYear, nMon, nDay, nHour, nMin, nSec); 
-             nStatus = poDATFile->WriteDateTimeField(pszBuffer,
+             if (IsFieldSet(iField))
+             {
+                GetFieldAsDateTime(iField, &nYear, &nMon, &nDay,
+                                   &nHour, &nMin, &nSec, &nTZFlag);
+             }
+             nStatus = poDATFile->WriteDateTimeField(nYear, nMon, nDay, 
+                                                     nHour, nMin, nSec, 0,
                                                      poINDFile, panIndexNo[iField]);
-             CPLFree(pszBuffer);
 #else
              nStatus = poDATFile->WriteDateTimeField(GetFieldAsString(iField),
                                                      poINDFile, panIndexNo[iField]);
@@ -1091,7 +1122,7 @@ int TABPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poPointHdr->SetMBR(nX, nY, nX, nY);
 
     m_nSymbolDefIndex = poMapFile->WriteSymbolDef(&m_sSymbolDef);
-    poPointHdr->m_nSymbolId = m_nSymbolDefIndex;      // Symbol index
+    poPointHdr->m_nSymbolId = (GByte)m_nSymbolDefIndex;      // Symbol index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -1438,20 +1469,20 @@ int TABFontPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poPointHdr->m_nPointSize = (GByte)m_sSymbolDef.nPointSize;  // point size
     poPointHdr->m_nFontStyle = m_nFontStyle;                    // font style
 
-    poPointHdr->m_nR = COLOR_R(m_sSymbolDef.rgbColor);
-    poPointHdr->m_nG = COLOR_G(m_sSymbolDef.rgbColor);
-    poPointHdr->m_nB = COLOR_B(m_sSymbolDef.rgbColor);
+    poPointHdr->m_nR = (GByte)COLOR_R(m_sSymbolDef.rgbColor);
+    poPointHdr->m_nG = (GByte)COLOR_G(m_sSymbolDef.rgbColor);
+    poPointHdr->m_nB = (GByte)COLOR_B(m_sSymbolDef.rgbColor);
 
     /*-------------------------------------------------------------
      * Symbol Angle, in thenths of degree.
      * Contrary to arc start/end angles, no conversion based on 
      * origin quadrant is required here
      *------------------------------------------------------------*/
-    poPointHdr->m_nAngle = ROUND_INT(m_dAngle * 10.0);
+    poPointHdr->m_nAngle = (GInt16)ROUND_INT(m_dAngle * 10.0);
 
     // Write Font Def
     m_nFontDefIndex = poMapFile->WriteFontDef(&m_sFontDef);
-    poPointHdr->m_nFontId = m_nFontDefIndex;      // Font name index
+    poPointHdr->m_nFontId = (GByte)m_nFontDefIndex;      // Font name index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -1505,7 +1536,7 @@ int TABFontPoint::GetFontStyleMIFValue()
 
 void TABFontPoint:: SetFontStyleMIFValue(int nStyle)
 {
-    m_nFontStyle = (nStyle & 0xff) + (nStyle & 0x7f00)*2;
+    m_nFontStyle = (GByte)((nStyle & 0xff) + (nStyle & 0x7f00)*2);
 }
 
 /**********************************************************************
@@ -1741,10 +1772,10 @@ int TABCustomPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                                // 0x02=Apply Color
 
     m_nSymbolDefIndex = poMapFile->WriteSymbolDef(&m_sSymbolDef);
-    poPointHdr->m_nSymbolId = m_nSymbolDefIndex;      // Symbol index
+    poPointHdr->m_nSymbolId = (GByte)m_nSymbolDefIndex;      // Symbol index
 
     m_nFontDefIndex = poMapFile->WriteFontDef(&m_sFontDef);
-    poPointHdr->m_nFontId = m_nFontDefIndex;      // Font index
+    poPointHdr->m_nFontId = (GByte)m_nFontDefIndex;      // Font index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -2353,7 +2384,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         if (!bCoordBlockDataOnly)
         {
             m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-            poLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
+            poLineHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
         }
 
     }
@@ -2432,7 +2463,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         if (!bCoordBlockDataOnly)
         {
             m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-            poPLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
+            poPLineHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
         }
 
     }
@@ -2620,7 +2651,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         if (!bCoordBlockDataOnly)
         {
             m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-            poPLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
+            poPLineHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
         }
 
     }
@@ -3320,10 +3351,10 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         if (!bCoordBlockDataOnly)
         {
             m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-            poPLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
+            poPLineHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
 
             m_nBrushDefIndex = poMapFile->WriteBrushDef(&m_sBrushDef);
-            poPLineHdr->m_nBrushId = m_nBrushDefIndex;  // Brush index
+            poPLineHdr->m_nBrushId = (GByte)m_nBrushDefIndex;  // Brush index
         }
     }
     else
@@ -4158,10 +4189,10 @@ int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poRectHdr->m_nMaxY = m_nYMax;
 
     m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-    poRectHdr->m_nPenId = m_nPenDefIndex;      // Pen index
+    poRectHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
 
     m_nBrushDefIndex = poMapFile->WriteBrushDef(&m_sBrushDef);
-    poRectHdr->m_nBrushId = m_nBrushDefIndex;      // Brush index
+    poRectHdr->m_nBrushId = (GByte)m_nBrushDefIndex;      // Brush index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -4574,10 +4605,10 @@ int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poRectHdr->m_nMaxY = m_nYMax;
 
     m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-    poRectHdr->m_nPenId = m_nPenDefIndex;      // Pen index
+    poRectHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
 
     m_nBrushDefIndex = poMapFile->WriteBrushDef(&m_sBrushDef);
-    poRectHdr->m_nBrushId = m_nBrushDefIndex;      // Brush index
+    poRectHdr->m_nBrushId = (GByte)m_nBrushDefIndex;      // Brush index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -5097,7 +5128,7 @@ int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poArcHdr->m_nMaxY = m_nYMax;
 
     m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-    poArcHdr->m_nPenId = m_nPenDefIndex;      // Pen index
+    poArcHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -5623,13 +5654,13 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
     poTextHdr->m_nFontStyle = m_nFontStyle;          // Font style/effect
 
-    poTextHdr->m_nFGColorR = COLOR_R(m_rgbForeground);
-    poTextHdr->m_nFGColorG = COLOR_G(m_rgbForeground);
-    poTextHdr->m_nFGColorB = COLOR_B(m_rgbForeground);
+    poTextHdr->m_nFGColorR = (GByte)COLOR_R(m_rgbForeground);
+    poTextHdr->m_nFGColorG = (GByte)COLOR_G(m_rgbForeground);
+    poTextHdr->m_nFGColorB = (GByte)COLOR_B(m_rgbForeground);
 
-    poTextHdr->m_nBGColorR = COLOR_R(m_rgbBackground);
-    poTextHdr->m_nBGColorG = COLOR_G(m_rgbBackground);
-    poTextHdr->m_nBGColorB = COLOR_B(m_rgbBackground);
+    poTextHdr->m_nBGColorR = (GByte)COLOR_R(m_rgbBackground);
+    poTextHdr->m_nBGColorG = (GByte)COLOR_G(m_rgbBackground);
+    poTextHdr->m_nBGColorB = (GByte)COLOR_B(m_rgbBackground);
 
     /*-----------------------------------------------------------------
      * The OGRPoint's X,Y values were the coords of the lower-left corner
@@ -5661,7 +5692,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     {
         // Font name
         m_nFontDefIndex = poMapFile->WriteFontDef(&m_sFontDef);
-        poTextHdr->m_nFontId = m_nFontDefIndex;      // Font name index
+        poTextHdr->m_nFontId = (GByte)m_nFontDefIndex;      // Font name index
     }
 
     // MBR after rotation
@@ -5670,7 +5701,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     if (!bCoordBlockDataOnly)
     {
         m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-        poTextHdr->m_nPenId = m_nPenDefIndex;      // Pen index for line/arrow
+        poTextHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index for line/arrow
     }
 
     if (CPLGetLastErrorNo() != 0)
@@ -6061,7 +6092,7 @@ int TABText::GetFontStyleMIFValue()
 
 void TABText:: SetFontStyleMIFValue(int nStyle, GBool bBGColorSet)
 {
-    m_nFontStyle = (nStyle & 0xff) + (nStyle & 0x7f00)*2;
+    m_nFontStyle = (GInt16)((nStyle & 0xff) + (nStyle & 0x7f00)*2);
     // When BG color is set, then either BOX or HALO should be set.
     if (bBGColorSet && !QueryFontStyle(TABFSHalo))
         ToggleFontStyle(TABFSBox, TRUE);
@@ -6129,11 +6160,11 @@ const char *TABText::GetLabelStyleString()
         nJustification = 2;
         break;
       case TABTJRight:
-        nJustification = 1;
+        nJustification = 3;
         break;
       case TABTJLeft:
       default:
-        nJustification =1;
+        nJustification = 1;
         break;
     }
     
@@ -6172,25 +6203,39 @@ const char *TABText::GetLabelStyleString()
             if (isalpha(pszTextString[i])) 
                 pszTextString[i] = (char)toupper(pszTextString[i]);
     
+    /* Escape the double quote chars and expand the text */
+    char *pszTmpTextString;
+    int j = 0;
+
     if  (QueryFontStyle(TABFSExpanded))
-    {
-        char *pszTmpTextString = (char*)CPLMalloc(((nStringLen*2)+1)*sizeof(char));
-        int j = 0;
-
-        for (int i =0; i < nStringLen; ++i)
-        { 
-            pszTmpTextString[j] = pszTextString[i];
-            pszTmpTextString[j+1] = ' ';
-            j += 2;
-        }
-
-        pszTmpTextString[j-1] = '\0';
-        CPLFree(pszTextString);
-        pszTextString = (char*)CPLMalloc((strlen(pszTmpTextString)+1)*sizeof(char));
-        strcpy(pszTextString, pszTmpTextString);
-        CPLFree(pszTmpTextString);
-    }
+        pszTmpTextString = (char*)CPLMalloc(((nStringLen*4)+1)*sizeof(char));
+    else
+        pszTmpTextString = (char*)CPLMalloc(((nStringLen*2)+1)*sizeof(char));
     
+    for (int i =0; i < nStringLen; ++i,++j)
+    { 
+        if (pszTextString[i] == '"') 
+        {
+            pszTmpTextString[j] = '\\';
+            pszTmpTextString[j+1] = pszTextString[i];
+            ++j;
+        }
+        else
+            pszTmpTextString[j] = pszTextString[i];
+
+        if  (QueryFontStyle(TABFSExpanded))
+        {
+            pszTmpTextString[j+1] = ' ';
+            ++j;
+        }
+    }  
+      
+    pszTmpTextString[j] = '\0';
+    CPLFree(pszTextString);
+    pszTextString = (char*)CPLMalloc((strlen(pszTmpTextString)+1)*sizeof(char));
+    strcpy(pszTextString, pszTmpTextString);
+    CPLFree(pszTmpTextString);
+
     const char *pszBGColor = IsFontBGColorUsed() ? CPLSPrintf(",b:#%6.6x",
                                                               GetFontBGColor()) :"";
     const char *pszOColor =  IsFontOColorUsed() ? CPLSPrintf(",o:#%6.6x",
@@ -6614,7 +6659,7 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     if (!bCoordBlockDataOnly)
     {
         m_nSymbolDefIndex = poMapFile->WriteSymbolDef(&m_sSymbolDef);
-        poMPointHdr->m_nSymbolId = m_nSymbolDefIndex;      // Symbol index
+        poMPointHdr->m_nSymbolId = (GByte)m_nSymbolDefIndex;      // Symbol index
     }
 
     if (CPLGetLastErrorNo() != 0)
@@ -7446,11 +7491,11 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                   m_poRegion->GetMapInfoType() == TAB_GEOM_V800_REGION_C );
 
         TABMAPObjPLine *poRegionHdr = (TABMAPObjPLine *)
-            TABMAPObjHdr::NewObj(m_poRegion->GetMapInfoType(), -1);
+            TABMAPObjHdr::NewObj((GByte)m_poRegion->GetMapInfoType(), -1);
 
         // Update count of objects by type in header
         if (!bCoordBlockDataOnly)
-            poMapFile->UpdateMapHeaderInfo(m_poRegion->GetMapInfoType());
+            poMapFile->UpdateMapHeaderInfo((GByte)m_poRegion->GetMapInfoType());
 
         // Write a placeholder for centroid/label point and MBR mini-header
         // and we'll come back later to write the real values.
@@ -7546,11 +7591,11 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                   m_poPline->GetMapInfoType() == TAB_GEOM_V800_MULTIPLINE_C );
 
         TABMAPObjPLine *poPlineHdr = (TABMAPObjPLine *)
-            TABMAPObjHdr::NewObj(m_poPline->GetMapInfoType(), -1);
+            TABMAPObjHdr::NewObj((GByte)m_poPline->GetMapInfoType(), -1);
 
         // Update count of objects by type in header
         if (!bCoordBlockDataOnly)
-            poMapFile->UpdateMapHeaderInfo(m_poPline->GetMapInfoType());
+            poMapFile->UpdateMapHeaderInfo((GByte)m_poPline->GetMapInfoType());
 
         // Write a placeholder for centroid/label point and MBR mini-header
         // and we'll come back later to write the real values.
@@ -7644,11 +7689,11 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                   m_poMpoint->GetMapInfoType() == TAB_GEOM_V800_MULTIPOINT_C );
 
         TABMAPObjMultiPoint *poMpointHdr = (TABMAPObjMultiPoint *)
-            TABMAPObjHdr::NewObj(m_poMpoint->GetMapInfoType(), -1);
+            TABMAPObjHdr::NewObj((GByte)m_poMpoint->GetMapInfoType(), -1);
 
         // Update count of objects by type in header
         if (!bCoordBlockDataOnly)
-            poMapFile->UpdateMapHeaderInfo(m_poMpoint->GetMapInfoType());
+            poMapFile->UpdateMapHeaderInfo((GByte)m_poMpoint->GetMapInfoType());
 
         // Write a placeholder for centroid/label point and MBR mini-header
         // and we'll come back later to write the real values.
@@ -8290,13 +8335,13 @@ const char *ITABFeaturePen::GetPenStyleString()
     if (strlen(szPattern) != 0)
     {
       if(m_sPenDef.nPointWidth > 0)
-        pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\"mapinfo-pen-%d,"
+        pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\"mapinfo-pen-%d."
                              "ogr-pen-%d\",p:\"%spx\")",
                              ((int)GetPenWidthPoint()),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
                              szPattern);
       else
-        pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d,"
+        pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d."
                              "ogr-pen-%d\",p:\"%spx\")",
                              GetPenWidthPixel(),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
@@ -8306,12 +8351,12 @@ const char *ITABFeaturePen::GetPenStyleString()
     {
       if(m_sPenDef.nPointWidth > 0)
         pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\""
-                             "mapinfo-pen-%d,ogr-pen-%d\")",
+                             "mapinfo-pen-%d.ogr-pen-%d\")",
                              ((int)GetPenWidthPoint()),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
       else
         pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\""
-                             "mapinfo-pen-%d,ogr-pen-%d\")",
+                             "mapinfo-pen-%d.ogr-pen-%d\")",
                              GetPenWidthPixel(),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
     }
@@ -8356,20 +8401,11 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
         {
             break;
         }
-        else
-        {
-            delete poStylePart;
-            poStylePart = NULL;
-        }
     }
 
     // If the no Pen found, do nothing.
     if(i >= numParts)
-    {
-        delete poStylePart;
-        delete poStyleMgr;
         return;
-    }
 
     OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
 
@@ -8416,14 +8452,14 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
         if((pszPenId = (char *) strstr(pszPenName, "mapinfo-pen-")))
         {
             nPenId = atoi(pszPenId+12);
-            SetPenPattern(nPenId);
+            SetPenPattern((GByte)nPenId);
         }
         else if((pszPenId = (char *) strstr(pszPenName, "ogr-pen-")))
         {
             nPenId = atoi(pszPenId+8);
             if(nPenId == 0)
                 nPenId = 2;
-            SetPenPattern(nPenId);
+            SetPenPattern((GByte)nPenId);
         }
     }
     else
@@ -8561,13 +8597,13 @@ const char *ITABFeatureBrush::GetBrushStyleString()
     if (GetBrushTransparent())
     {
         /* Omit BG Color for transparent brushes */
-        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,id:\"mapinfo-brush-%d,ogr-brush-%d\")",
+        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,id:\"mapinfo-brush-%d.ogr-brush-%d\")",
                              m_sBrushDef.rgbFGColor,
                              m_sBrushDef.nFillPattern,nOGRStyle);
     }
     else
     {
-        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,bc:#%6.6x,id:\"mapinfo-brush-%d,ogr-brush-%d\")",
+        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,bc:#%6.6x,id:\"mapinfo-brush-%d.ogr-brush-%d\")",
                              m_sBrushDef.rgbFGColor,
                              m_sBrushDef.rgbBGColor,
                              m_sBrushDef.nFillPattern,nOGRStyle);
@@ -8612,20 +8648,11 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
         {
             break;
         }
-        else
-        {
-            delete poStylePart;
-            poStylePart = NULL;
-        }
     }
 
     // If the no Brush found, do nothing.
     if(i >= numParts)
-    {
-        delete poStylePart;
-        delete poStyleMgr;
         return;
-    }
 
     OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
 
@@ -8837,7 +8864,7 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
 
     nAngle += (int)dfAngle;
     
-    pszStyle=CPLSPrintf("SYMBOL(a:%d,c:#%6.6x,s:%dpt,id:\"mapinfo-sym-%d,ogr-sym-%d\")",
+    pszStyle=CPLSPrintf("SYMBOL(a:%d,c:#%6.6x,s:%dpt,id:\"mapinfo-sym-%d.ogr-sym-%d\")",
                         nAngle,
                         m_sSymbolDef.rgbColor,
                         m_sSymbolDef.nPointSize,
@@ -8883,20 +8910,11 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
         {
             break;
         }
-        else
-        {
-            delete poStylePart;
-            poStylePart = NULL;
-        }
     }
 
     // If the no Symbol found, do nothing.
     if(i >= numParts)
-    {
-        delete poStylePart;
-        delete poStyleMgr;
         return;
-    }
 
     OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
 
@@ -8971,7 +8989,7 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     dSymbolSize = poSymbolStyle->Size(bIsNull);
     if(dSymbolSize)
     {
-        SetSymbolSize((GInt32)dSymbolSize);
+        SetSymbolSize((GInt16)dSymbolSize);
     }
 
     // Set Symbol Color

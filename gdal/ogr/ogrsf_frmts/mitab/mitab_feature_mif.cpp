@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.35 2008/09/23 14:56:03 aboudreault Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.39 2010-09-07 16:07:53 aboudreault Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,20 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.39  2010-09-07 16:07:53  aboudreault
+ * Added the use of OGRGeometryFactory::organizePolygons for mif features
+ *
+ * Revision 1.38  2010-07-07 19:00:15  aboudreault
+ * Cleanup Win32 Compile Warnings (GDAL bug #2930)
+ *
+ * Revision 1.37  2008-12-17 14:55:20  aboudreault
+ * Fixed mitab mif/mid importer fails when a Text geometry have an empty
+ * text value (bug 1978)
+ *
+ * Revision 1.36  2008-11-27 20:50:22  aboudreault
+ * Improved support for OGR date/time types. New Read/Write methods (bug 1948)
+ * Added support of OGR date/time types for MIF features.
+ *
  * Revision 1.35  2008/09/23 14:56:03  aboudreault
  * Fixed an error related to the " character when converting mif to tab file.
  *
@@ -223,6 +237,11 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
     const char       *pszLine;
     char            **papszToken;
     int               nFields,i;
+    OGRFieldDefn        *poFDefn = NULL;
+#ifdef MITAB_USE_OFTDATETIME
+    int nYear, nMonth, nDay, nHour, nMin, nSec, nMS, nTZFlag;
+    nYear = nMonth = nDay = nHour = nMin = nSec = nMS = nTZFlag = 0;
+#endif
 
     nFields = GetFieldCount();
     
@@ -254,7 +273,43 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 
     for (i=0;i<nFields;i++)
     {
-        SetField(i,papszToken[i]);
+        poFDefn = GetFieldDefnRef(i);
+        switch(poFDefn->GetType())
+        {
+#ifdef MITAB_USE_OFTDATETIME
+            case OFTTime:
+            {
+                if (strlen(papszToken[i]) == 9)
+                {
+                    sscanf(papszToken[i],"%2d%2d%2d%3d",&nHour, &nMin, &nSec, &nMS);
+                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+                }
+                break;
+            }
+            case OFTDate:
+            {
+                if (strlen(papszToken[i]) == 8)
+                {
+                    sscanf(papszToken[i], "%4d%2d%2d", &nYear, &nMonth, &nDay);
+                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+                }
+                break;
+            }
+            case OFTDateTime:
+            {
+                if (strlen(papszToken[i]) == 17)
+                {
+                    sscanf(papszToken[i], "%4d%2d%2d%2d%2d%2d%3d",
+                           &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec, &nMS);
+                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+                }
+                break;
+            }
+#endif
+  
+          default:
+             SetField(i,papszToken[i]);
+       }
     }
     
     fp->GetLine();
@@ -276,6 +331,11 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 {
     int                  iField, numFields;
     OGRFieldDefn        *poFDefn = NULL;
+#ifdef MITAB_USE_OFTDATETIME
+    char szBuffer[20];
+    int nYear, nMonth, nDay, nHour, nMin, nSec, nMS, nTZFlag;
+    nYear = nMonth = nDay = nHour = nMin = nSec = nMS = nTZFlag = 0;
+#endif
 
     CPLAssert(fp);
     
@@ -326,6 +386,54 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
             CPLFree(pszString);
             break;
           }
+#ifdef MITAB_USE_OFTDATETIME
+          case OFTTime:
+          {
+              if (!IsFieldSet(iField)) 
+              {
+                 szBuffer[0] = '\0';
+              }
+              else
+              {
+                  GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
+                                     &nHour, &nMin, &nSec, &nTZFlag);
+                  sprintf(szBuffer, "%2.2d%2.2d%2.2d%3.3d", nHour, nMin, nSec, nMS);
+              }
+              fp->WriteLine("%s",szBuffer);
+              break;
+          }
+          case OFTDate:
+          {
+              if (!IsFieldSet(iField)) 
+              {
+                 szBuffer[0] = '\0';
+              }
+              else
+              {
+                  GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
+                                     &nHour, &nMin, &nSec, &nTZFlag);
+                  sprintf(szBuffer, "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
+              }
+              fp->WriteLine("%s",szBuffer);
+              break;
+          }
+          case OFTDateTime:
+          {
+              if (!IsFieldSet(iField)) 
+              {
+                 szBuffer[0] = '\0';
+              }
+              else
+              {
+                  GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
+                                     &nHour, &nMin, &nSec, &nTZFlag);
+                  sprintf(szBuffer, "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d", 
+                          nYear, nMonth, nDay, nHour, nMin, nSec, nMS);
+              }
+              fp->WriteLine("%s",szBuffer);
+              break;
+          }
+#endif
           default:
             fp->WriteLine("%s",GetFieldAsString(iField));
         }
@@ -420,9 +528,9 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                                               TRUE,FALSE);
     if (CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
     {
-        SetSymbolNo(atoi(papszToken[1]));
-        SetSymbolColor(atoi(papszToken[2]));
-        SetSymbolSize(atoi(papszToken[3]));
+        SetSymbolNo((GInt16)atoi(papszToken[1]));
+        SetSymbolColor((GInt32)atoi(papszToken[2]));
+        SetSymbolSize((GInt16)atoi(papszToken[3]));
     }
 
     CSLDestroy(papszToken); 
@@ -507,9 +615,9 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
     
-    SetSymbolNo(atoi(papszToken[1]));
-    SetSymbolColor(atoi(papszToken[2]));
-    SetSymbolSize(atoi(papszToken[3]));
+    SetSymbolNo((GInt16)atoi(papszToken[1]));
+    SetSymbolColor((GInt32)atoi(papszToken[2]));
+    SetSymbolSize((GInt16)atoi(papszToken[3]));
     SetFontName(papszToken[4]);
     SetFontStyleMIFValue(atoi(papszToken[5]));
     SetSymbolAngle(atof(papszToken[6]));
@@ -596,9 +704,9 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     }
     
     SetFontName(papszToken[1]);
-    SetSymbolColor(atoi(papszToken[2]));
-    SetSymbolSize(atoi(papszToken[3]));
-    m_nCustomStyle = atoi(papszToken[4]);
+    SetSymbolColor((GInt32)atoi(papszToken[2]));
+    SetSymbolSize((GInt16)atoi(papszToken[3]));
+    m_nCustomStyle = (GByte)atoi(papszToken[4]);
     
     CSLDestroy(papszToken);
     
@@ -809,8 +917,8 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 if (CSLCount(papszToken) == 4)
                 {                   
                     SetPenWidthMIF(atoi(papszToken[1]));
-                    SetPenPattern(atoi(papszToken[2]));
-                    SetPenColor(atoi(papszToken[3]));
+                    SetPenPattern((GByte)atoi(papszToken[2]));
+                    SetPenColor((GInt32)atoi(papszToken[3]));
                 }
                 
             }
@@ -923,8 +1031,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     double               dX, dY;
     OGRLinearRing       *poRing;
     OGRGeometry         *poGeometry = NULL;
-    OGRPolygon          *poPolygon = NULL;
-    OGRMultiPolygon     *poMultiPolygon = NULL;
+    OGRPolygon          **tabPolygons = NULL;
     int                  i,iSection, numLineSections=0;
     char               **papszToken;
     const char          *pszLine;
@@ -942,25 +1049,14 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     CSLDestroy(papszToken);
     papszToken = NULL;
 
-    /*-------------------------------------------------------------
-     * For 1-ring regions, we return an OGRPolygon with one single
-     * OGRLinearRing geometry. 
-     *
-     * REGIONs with multiple rings are returned as OGRMultiPolygon
-     * instead of as OGRPolygons since OGRPolygons require that the
-     * first ring be the outer ring, and the other all be inner 
-     * rings, but this is not guaranteed inside MapInfo files.  
-     *------------------------------------------------------------*/
-    if (numLineSections > 1)
-        poGeometry = poMultiPolygon = new OGRMultiPolygon;
-    else
-        poGeometry = NULL;  // Will be set later
+    if (numLineSections > 0) 
+        tabPolygons = new OGRPolygon*[numLineSections];
 
     for(iSection=0; iSection<numLineSections; iSection++)
     {
         int     numSectionVertices = 0;
 
-        poPolygon = new OGRPolygon();
+        tabPolygons[iSection] = new OGRPolygon();
 
         if ((pszLine = fp->GetLine()) != NULL)
         {
@@ -969,7 +1065,6 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
         poRing = new OGRLinearRing();
         poRing->setNumPoints(numSectionVertices);
-
 
         for(i=0; i<numSectionVertices; i++)
         {
@@ -988,18 +1083,33 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 papszToken = NULL;
             }   
         }
-        poPolygon->addRingDirectly(poRing);
+
+        tabPolygons[iSection]->addRingDirectly(poRing);
+
+        if (numLineSections == 1)
+            poGeometry = tabPolygons[iSection];
+        
         poRing = NULL;
-
-        if (numLineSections > 1)
-            poMultiPolygon->addGeometryDirectly(poPolygon);
-        else
-            poGeometry = poPolygon;
-
-        poPolygon = NULL;
     }
   
-  
+    if (numLineSections > 1)
+    {
+        int isValidGeometry;
+        const char* papszOptions[] = { "METHOD=DEFAULT", NULL };
+        poGeometry = OGRGeometryFactory::organizePolygons( 
+            (OGRGeometry**)tabPolygons, numLineSections, &isValidGeometry, papszOptions );
+
+        if (!isValidGeometry)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Geometry of polygon cannot be translated to Simple Geometry. "
+                     "All polygons will be contained in a multipolygon.\n");
+        }
+    }
+
+    if (tabPolygons)
+        delete[] tabPolygons;
+
     SetGeometryDirectly(poGeometry);
     poGeometry->getEnvelope(&sEnvelope);
     
@@ -1019,8 +1129,8 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 if (CSLCount(papszToken) == 4)
                 {           
                     SetPenWidthMIF(atoi(papszToken[1]));
-                    SetPenPattern(atoi(papszToken[2]));
-                    SetPenColor(atoi(papszToken[3]));
+                    SetPenPattern((GByte)atoi(papszToken[2]));
+                    SetPenColor((GInt32)atoi(papszToken[3]));
                 }
                 
             }
@@ -1028,8 +1138,8 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             {
                 if (CSLCount(papszToken) >= 3)
                 {
-                    SetBrushFGColor(atoi(papszToken[2]));
-                    SetBrushPattern(atoi(papszToken[1]));
+                    SetBrushFGColor((GInt32)atoi(papszToken[2]));
+                    SetBrushPattern((GByte)atoi(papszToken[1]));
                     
                     if (CSLCount(papszToken) == 4)
                        SetBrushBGColor(atoi(papszToken[3]));
@@ -1253,8 +1363,8 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                if (CSLCount(papszToken) == 4)
                {   
                    SetPenWidthMIF(atoi(papszToken[1]));
-                   SetPenPattern(atoi(papszToken[2]));
-                   SetPenColor(atoi(papszToken[3]));
+                   SetPenPattern((GByte)atoi(papszToken[2]));
+                   SetPenColor((GInt32)atoi(papszToken[3]));
                }
               
            }
@@ -1262,8 +1372,8 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
            {
                if (CSLCount(papszToken) >=3)
                {
-                   SetBrushFGColor(atoi(papszToken[2]));
-                   SetBrushPattern(atoi(papszToken[1]));
+                   SetBrushFGColor((GInt32)atoi(papszToken[2]));
+                   SetBrushPattern((GByte)atoi(papszToken[1]));
 
                    if (CSLCount(papszToken) == 4)
                        SetBrushBGColor(atoi(papszToken[3]));
@@ -1409,8 +1519,8 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 if (CSLCount(papszToken) == 4)
                 {   
                     SetPenWidthMIF(atoi(papszToken[1]));
-                    SetPenPattern(atoi(papszToken[2]));
-                   SetPenColor(atoi(papszToken[3]));
+                    SetPenPattern((GByte)atoi(papszToken[2]));
+                    SetPenColor((GInt32)atoi(papszToken[3]));
                 }
                 
             }
@@ -1418,8 +1528,8 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             {
                 if (CSLCount(papszToken) >= 3)
                 {
-                    SetBrushFGColor(atoi(papszToken[2]));
-                    SetBrushPattern(atoi(papszToken[1]));
+                    SetBrushFGColor((GInt32)atoi(papszToken[2]));
+                    SetBrushPattern((GByte)atoi(papszToken[1]));
                     
                     if (CSLCount(papszToken) == 4)
                       SetBrushBGColor(atoi(papszToken[3]));
@@ -1582,8 +1692,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 if (CSLCount(papszToken) == 4)
                 {    
                     SetPenWidthMIF(atoi(papszToken[1]));
-                    SetPenPattern(atoi(papszToken[2]));
-                    SetPenColor(atoi(papszToken[3]));
+                    SetPenPattern((GByte)atoi(papszToken[2]));
+                    SetPenColor((GInt32)atoi(papszToken[3]));
                 }
                 
             }
@@ -1633,29 +1743,42 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     char               **papszToken;
     const char          *pszString;
     char                *pszTmpString;
-  
+    int                  bXYBoxRead = 0;
+    int                  tokenLen;
+
     papszToken = CSLTokenizeString2(fp->GetLastLine(), 
                                     " \t", CSLT_HONOURSTRINGS);
-
     if (CSLCount(papszToken) == 1)
     {
         CSLDestroy(papszToken);
         papszToken = CSLTokenizeString2(fp->GetLine(), 
                                         " \t", CSLT_HONOURSTRINGS);
-        if (CSLCount(papszToken) != 1)
+        tokenLen = CSLCount(papszToken);
+        if (tokenLen == 4)
+        {
+           pszString = NULL;
+           bXYBoxRead = 1;
+        }
+        else if (tokenLen == 0)
+        {
+            pszString = NULL;
+        }
+        else if (tokenLen != 1)
         {
             CSLDestroy(papszToken);
             return -1;
         }
         else
+        {
           pszString = papszToken[0];
+        }
     }
     else if (CSLCount(papszToken) == 2)
     {
         pszString = papszToken[1];
     }
     else
-     {
+    {
         CSLDestroy(papszToken);
         return -1;
     }
@@ -1670,9 +1793,13 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if (pszTmpString != m_pszString)
         CPLFree(pszTmpString);
 
-    CSLDestroy(papszToken);
-    papszToken = CSLTokenizeString2(fp->GetLine(), 
-                                    " \t", CSLT_HONOURSTRINGS);
+    if (!bXYBoxRead)
+    {
+        CSLDestroy(papszToken);
+        papszToken = CSLTokenizeString2(fp->GetLine(), 
+                                        " \t", CSLT_HONOURSTRINGS);
+    }
+
     if (CSLCount(papszToken) != 4)
     {
         CSLDestroy(papszToken);
@@ -2037,9 +2164,9 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                                               TRUE,FALSE);
         if (CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
         {
-            SetSymbolNo(atoi(papszToken[1]));
-            SetSymbolColor(atoi(papszToken[2]));
-            SetSymbolSize(atoi(papszToken[3]));
+            SetSymbolNo((GInt16)atoi(papszToken[1]));
+            SetSymbolColor((GInt32)atoi(papszToken[2]));
+            SetSymbolSize((GInt16)atoi(papszToken[3]));
         }
         CSLDestroy(papszToken);
     }
