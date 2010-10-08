@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.98 2010-07-07 19:00:15 aboudreault Exp $
+ * $Id: mitab_feature.cpp,v 1.99 2010-10-08 19:36:44 aboudreault Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.99  2010-10-08 19:36:44  aboudreault
+ * Fixed memory leak (GDAL bug #3045)
+ *
  * Revision 1.98  2010-07-07 19:00:15  aboudreault
  * Cleanup Win32 Compile Warnings (GDAL bug #2930)
  *
@@ -8335,13 +8338,13 @@ const char *ITABFeaturePen::GetPenStyleString()
     if (strlen(szPattern) != 0)
     {
       if(m_sPenDef.nPointWidth > 0)
-        pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\"mapinfo-pen-%d."
+        pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\"mapinfo-pen-%d,"
                              "ogr-pen-%d\",p:\"%spx\")",
                              ((int)GetPenWidthPoint()),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
                              szPattern);
       else
-        pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d."
+        pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d,"
                              "ogr-pen-%d\",p:\"%spx\")",
                              GetPenWidthPixel(),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
@@ -8351,12 +8354,12 @@ const char *ITABFeaturePen::GetPenStyleString()
     {
       if(m_sPenDef.nPointWidth > 0)
         pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\""
-                             "mapinfo-pen-%d.ogr-pen-%d\")",
+                             "mapinfo-pen-%d,ogr-pen-%d\")",
                              ((int)GetPenWidthPoint()),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
       else
         pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\""
-                             "mapinfo-pen-%d.ogr-pen-%d\")",
+                             "mapinfo-pen-%d,ogr-pen-%d\")",
                              GetPenWidthPixel(),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
     }
@@ -8401,11 +8404,19 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
         {
             break;
         }
+        else
+        {
+            delete poStylePart;
+            poStylePart = NULL;
+        }
     }
 
     // If the no Pen found, do nothing.
     if(i >= numParts)
+    {
+        delete poStyleMgr;
         return;
+    }
 
     OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
 
@@ -8597,13 +8608,13 @@ const char *ITABFeatureBrush::GetBrushStyleString()
     if (GetBrushTransparent())
     {
         /* Omit BG Color for transparent brushes */
-        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,id:\"mapinfo-brush-%d.ogr-brush-%d\")",
+        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,id:\"mapinfo-brush-%d,ogr-brush-%d\")",
                              m_sBrushDef.rgbFGColor,
                              m_sBrushDef.nFillPattern,nOGRStyle);
     }
     else
     {
-        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,bc:#%6.6x,id:\"mapinfo-brush-%d.ogr-brush-%d\")",
+        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,bc:#%6.6x,id:\"mapinfo-brush-%d,ogr-brush-%d\")",
                              m_sBrushDef.rgbFGColor,
                              m_sBrushDef.rgbBGColor,
                              m_sBrushDef.nFillPattern,nOGRStyle);
@@ -8648,11 +8659,19 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
         {
             break;
         }
+        else
+        {
+            delete poStylePart;
+            poStylePart = NULL;
+        }
     }
 
     // If the no Brush found, do nothing.
     if(i >= numParts)
+    {
+        delete poStyleMgr;
         return;
+    }
 
     OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
 
@@ -8864,7 +8883,7 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
 
     nAngle += (int)dfAngle;
     
-    pszStyle=CPLSPrintf("SYMBOL(a:%d,c:#%6.6x,s:%dpt,id:\"mapinfo-sym-%d.ogr-sym-%d\")",
+    pszStyle=CPLSPrintf("SYMBOL(a:%d,c:#%6.6x,s:%dpt,id:\"mapinfo-sym-%d,ogr-sym-%d\")",
                         nAngle,
                         m_sSymbolDef.rgbColor,
                         m_sSymbolDef.nPointSize,
@@ -8910,11 +8929,19 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
         {
             break;
         }
+        else
+        {
+            delete poStylePart;
+            poStylePart = NULL;
+        }
     }
 
     // If the no Symbol found, do nothing.
     if(i >= numParts)
+    {
+        delete poStyleMgr;
         return;
+    }
 
     OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
 
