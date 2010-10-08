@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.22 2008/02/20 21:35:30 dmorissette Exp $
+ * $Id: mitab_mapobjectblock.cpp,v 1.23 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,7 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_mapobjectblock.cpp,v $
- * Revision 1.22  2008/02/20 21:35:30  dmorissette
+ * Revision 1.23  2010-07-07 19:00:15  aboudreault
+ * Cleanup Win32 Compile Warnings (GDAL bug #2930)
+ *
+ * Revision 1.22  2008-02-20 21:35:30  dmorissette
  * Added support for V800 COLLECTION of large objects (bug 1496)
  *
  * Revision 1.21  2008/02/05 22:22:48  dmorissette
@@ -297,7 +300,7 @@ int     TABMAPObjectBlock::CommitToFile()
 
     WriteInt16(TABMAP_OBJECT_BLOCK);    // Block type code
     m_numDataBytes = m_nSizeUsed - MAP_OBJECT_HEADER_SIZE;
-    WriteInt16(m_numDataBytes);         // num. bytes used
+    WriteInt16((GInt16)m_numDataBytes);         // num. bytes used
     
     WriteInt32(m_nCenterX);
     WriteInt32(m_nCenterY);
@@ -437,8 +440,8 @@ int     TABMAPObjectBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
      * Write coords to the file.
      *----------------------------------------------------------------*/
     if ((!bCompressed && (WriteInt32(nX) != 0 || WriteInt32(nY) != 0 ) ) ||
-        (bCompressed && (WriteInt16(nX - m_nCenterX) != 0 ||
-                         WriteInt16(nY - m_nCenterY) != 0) ) )
+        (bCompressed && (WriteInt16((GInt16)(nX - m_nCenterX)) != 0 ||
+                         WriteInt16((GInt16)(nY - m_nCenterY)) != 0) ) )
     {
         return -1;
     }
@@ -813,7 +816,7 @@ TABMAPObjHdr *TABMAPObjHdr::ReadNextObj(TABMAPObjectBlock *poObjBlock,
 
     if (poObjBlock->AdvanceToNextObject(poHeader) != -1)
     {
-        poObjHdr=TABMAPObjHdr::NewObj(poObjBlock->GetCurObjectType());
+        poObjHdr=TABMAPObjHdr::NewObj((GByte)poObjBlock->GetCurObjectType());
         if (poObjHdr &&
             ((poObjHdr->m_nId = poObjBlock->GetCurObjectId()) == -1 ||
              poObjHdr->ReadObj(poObjBlock) != 0 ) )
@@ -1090,15 +1093,15 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
              m_nType != TAB_GEOM_PLINE )
     {
         /* V300 and V450 REGIONS/MULTIPLINES use an int16 */
-        poObjBlock->WriteInt16(m_numLineSections);
+        poObjBlock->WriteInt16((GInt16)m_numLineSections);
     }
 
     if (IsCompressedType())
     {
         // Region center/label point, relative to compr. coord. origin
         // No it's not relative to the Object block center
-        poObjBlock->WriteInt16(m_nLabelX - m_nComprOrgX);
-        poObjBlock->WriteInt16(m_nLabelY - m_nComprOrgY);
+        poObjBlock->WriteInt16((GInt16)(m_nLabelX - m_nComprOrgX));
+        poObjBlock->WriteInt16((GInt16)(m_nLabelY - m_nComprOrgY));
 
         // Compressed coordinate origin (present only in compressed case!)
         poObjBlock->WriteInt32(m_nComprOrgX);
@@ -1115,10 +1118,10 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // MBR relative to PLINE origin (and not object block center)
-        poObjBlock->WriteInt16(m_nMinX - m_nComprOrgX);
-        poObjBlock->WriteInt16(m_nMinY - m_nComprOrgY);
-        poObjBlock->WriteInt16(m_nMaxX - m_nComprOrgX);
-        poObjBlock->WriteInt16(m_nMaxY - m_nComprOrgY);
+        poObjBlock->WriteInt16((GInt16)(m_nMinX - m_nComprOrgX));
+        poObjBlock->WriteInt16((GInt16)(m_nMinY - m_nComprOrgY));
+        poObjBlock->WriteInt16((GInt16)(m_nMaxX - m_nComprOrgX));
+        poObjBlock->WriteInt16((GInt16)(m_nMaxY - m_nComprOrgY));
     }
     else
     {
@@ -1378,8 +1381,8 @@ int TABMAPObjRectEllipse::WriteObj(TABMAPObjectBlock *poObjBlock)
     {
         if (IsCompressedType())
         {
-            poObjBlock->WriteInt16(m_nCornerWidth);
-            poObjBlock->WriteInt16(m_nCornerHeight);
+            poObjBlock->WriteInt16((GInt16)m_nCornerWidth);
+            poObjBlock->WriteInt16((GInt16)m_nCornerHeight);
         }
         else
         {
@@ -1446,8 +1449,8 @@ int TABMAPObjArc::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
-    poObjBlock->WriteInt16(m_nStartAngle);
-    poObjBlock->WriteInt16(m_nEndAngle);
+    poObjBlock->WriteInt16((GInt16)m_nStartAngle);
+    poObjBlock->WriteInt16((GInt16)m_nEndAngle);
     
     // An arc is defined by its defining ellipse's MBR:
     poObjBlock->WriteIntMBRCoord(m_nArcEllipseMinX, m_nArcEllipseMinY, 
@@ -1533,10 +1536,10 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
     poObjBlock->WriteInt32(m_nCoordBlockPtr);     // String position
-    poObjBlock->WriteInt16(m_nCoordDataSize);     // String length
-    poObjBlock->WriteInt16(m_nTextAlignment);     // just./spacing/arrow
+    poObjBlock->WriteInt16((GInt16)m_nCoordDataSize);     // String length
+    poObjBlock->WriteInt16((GInt16)m_nTextAlignment);     // just./spacing/arrow
 
-    poObjBlock->WriteInt16(m_nAngle);             // Tenths of degree
+    poObjBlock->WriteInt16((GInt16)m_nAngle);             // Tenths of degree
 
     poObjBlock->WriteInt16(m_nFontStyle);         // Font style/effect
 
@@ -1553,7 +1556,7 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     // Text Height
     if (IsCompressedType())
-        poObjBlock->WriteInt16(m_nHeight);
+        poObjBlock->WriteInt16((GInt16)m_nHeight);
     else
         poObjBlock->WriteInt32(m_nHeight);
 
@@ -1716,17 +1719,17 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     {
         // Region center/label point, relative to compr. coord. origin
         // No it's not relative to the Object block center
-        poObjBlock->WriteInt16(m_nLabelX - m_nComprOrgX);
-        poObjBlock->WriteInt16(m_nLabelY - m_nComprOrgY);
+        poObjBlock->WriteInt16((GInt16)(m_nLabelX - m_nComprOrgX));
+        poObjBlock->WriteInt16((GInt16)(m_nLabelY - m_nComprOrgY));
 
         poObjBlock->WriteInt32(m_nComprOrgX);
         poObjBlock->WriteInt32(m_nComprOrgY);
 
         // MBR relative to object origin (and not object block center)
-        poObjBlock->WriteInt16(m_nMinX - m_nComprOrgX);
-        poObjBlock->WriteInt16(m_nMinY - m_nComprOrgY);
-        poObjBlock->WriteInt16(m_nMaxX - m_nComprOrgX);
-        poObjBlock->WriteInt16(m_nMaxY - m_nComprOrgY);
+        poObjBlock->WriteInt16((GInt16)(m_nMinX - m_nComprOrgX));
+        poObjBlock->WriteInt16((GInt16)(m_nMinY - m_nComprOrgY));
+        poObjBlock->WriteInt16((GInt16)(m_nMaxX - m_nComprOrgX));
+        poObjBlock->WriteInt16((GInt16)(m_nMaxY - m_nComprOrgY));
     }
     else
     {
@@ -1958,8 +1961,8 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (nVersion < 800)
     {
         // Num Region/Pline section headers (int16 in V650)
-        poObjBlock->WriteInt16(m_nNumRegSections);
-        poObjBlock->WriteInt16(m_nNumPLineSections);
+        poObjBlock->WriteInt16((GInt16)m_nNumRegSections);
+        poObjBlock->WriteInt16((GInt16)m_nNumPLineSections);
     }
     else
     {
@@ -1999,10 +2002,10 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
         poObjBlock->WriteInt32(m_nComprOrgX);
         poObjBlock->WriteInt32(m_nComprOrgY);
 
-        poObjBlock->WriteInt16(m_nMinX - m_nComprOrgX);  // MBR
-        poObjBlock->WriteInt16(m_nMinY - m_nComprOrgY);
-        poObjBlock->WriteInt16(m_nMaxX - m_nComprOrgX);
-        poObjBlock->WriteInt16(m_nMaxY - m_nComprOrgY);
+        poObjBlock->WriteInt16((GInt16)(m_nMinX - m_nComprOrgX));  // MBR
+        poObjBlock->WriteInt16((GInt16)(m_nMinY - m_nComprOrgY));
+        poObjBlock->WriteInt16((GInt16)(m_nMaxX - m_nComprOrgX));
+        poObjBlock->WriteInt16((GInt16)(m_nMaxY - m_nComprOrgY));
     }
     else
     {

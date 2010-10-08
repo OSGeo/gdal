@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.28 2008/11/17 22:06:21 aboudreault Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.31 2010-01-07 20:39:12 aboudreault Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -31,6 +31,16 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.31  2010-01-07 20:39:12  aboudreault
+ * Added support to handle duplicate field names, Added validation to check if a field name start with a number (bug 2141)
+ *
+ * Revision 1.30  2009-01-23 16:50:27  aboudreault
+ * Fixed wrong return value of IMapInfoFile::SetCharset() method (bug 1987)
+ *
+ * Revision 1.29  2008/11/27 20:50:22  aboudreault
+ * Improved support for OGR date/time types. New Read/Write methods (bug 1948)
+ * Added support of OGR date/time types for MIF features.
+ *
  * Revision 1.28  2008/11/17 22:06:21  aboudreault
  * Added support to use OFTDateTime/OFTDate/OFTTime type when compiled with
  * OGR and fixed reading/writing support for these types.
@@ -453,7 +463,7 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
     {
         eTABType = TABFTime;
         if( nWidth == 0 )
-            nWidth = 8;
+            nWidth = 9;
     }
     else if( poField->GetType() == OFTDateTime )
     {
@@ -481,7 +491,7 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
     }
 
     if( AddFieldNative( poField->GetNameRef(), eTABType,
-                        nWidth, poField->GetPrecision() ) > -1 )
+                        nWidth, poField->GetPrecision(), FALSE, FALSE, bApproxOK ) > -1 )
         return OGRERR_NONE;
     else
         return OGRERR_FAILURE;
@@ -502,7 +512,8 @@ int IMapInfoFile::SetCharset(const char* pszCharset)
     {
         CPLFree(m_pszCharset);
         m_pszCharset = CPLStrdup(pszCharset);
+        return 0;
     }
-    return 0;
+    return -1;
 }
 

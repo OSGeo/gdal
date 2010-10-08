@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.43 2008/02/20 21:35:30 dmorissette Exp $
+ * $Id: mitab_mapfile.cpp,v 1.46 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,15 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.46  2010-07-07 19:00:15  aboudreault
+ * Cleanup Win32 Compile Warnings (GDAL bug #2930)
+ *
+ * Revision 1.45  2010-01-08 22:02:51  aboudreault
+ * Fixed error issued when reading empty TAB with spatial index active (bug 2136)
+ *
+ * Revision 1.44  2009-03-03 20:44:23  dmorissette
+ * Use transparent brush in DumpSpatialIndexToMIF()
+ *
  * Revision 1.43  2008/02/20 21:35:30  dmorissette
  * Added support for V800 COLLECTION of large objects (bug 1496)
  *
@@ -660,6 +669,10 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
     if( bFirstObject )
     {
         CPLAssert( m_poSpIndex == NULL && m_poSpIndexLeaf == NULL );
+
+        /* m_nFirstIndexBlock set to 0 means that there is no feature */
+        if ( m_poHeader->m_nFirstIndexBlock == 0 )
+            return FALSE;
 
         if( PushBlock( m_poHeader->m_nFirstIndexBlock ) == NULL )
             return FALSE;
@@ -1298,7 +1311,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
             return -1;
 
         m_poHeader->m_nMaxSpIndexDepth = MAX(m_poHeader->m_nMaxSpIndexDepth,
-                                             m_poSpIndex->GetCurMaxDepth()+1);
+                                      (GByte)m_poSpIndex->GetCurMaxDepth()+1);
     }
     else
     {
@@ -1394,7 +1407,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
                                   poNewObjBlock->GetStartAddress()) != 0)
             return -1;
         m_poHeader->m_nMaxSpIndexDepth = MAX(m_poHeader->m_nMaxSpIndexDepth,
-                                             m_poSpIndex->GetCurMaxDepth()+1);
+                                      (GByte)m_poSpIndex->GetCurMaxDepth()+1);
 
         /*-------------------------------------------------------------
          * Delete second object block, no need to commit to file first since
@@ -1583,7 +1596,7 @@ int TABMAPFile::CommitObjAndCoordBlocks(GBool bDeleteObjects /*=FALSE*/)
                                         m_poCurObjBlock->GetStartAddress());
 
         m_poHeader->m_nMaxSpIndexDepth = MAX(m_poHeader->m_nMaxSpIndexDepth,
-                                             m_poSpIndex->GetCurMaxDepth()+1);
+                                      (GByte)m_poSpIndex->GetCurMaxDepth()+1);
     }
 
     /*-----------------------------------------------------------------
@@ -2321,10 +2334,10 @@ int TABMAPFile::CommitDrawingTools()
 
     m_poHeader->m_nFirstToolBlock = poBlock->GetStartAddress();
 
-    m_poHeader->m_numPenDefs = m_poToolDefTable->GetNumPen();
-    m_poHeader->m_numBrushDefs = m_poToolDefTable->GetNumBrushes();
-    m_poHeader->m_numFontDefs = m_poToolDefTable->GetNumFonts();
-    m_poHeader->m_numSymbolDefs = m_poToolDefTable->GetNumSymbols();
+    m_poHeader->m_numPenDefs = (GByte)m_poToolDefTable->GetNumPen();
+    m_poHeader->m_numBrushDefs = (GByte)m_poToolDefTable->GetNumBrushes();
+    m_poHeader->m_numFontDefs = (GByte)m_poToolDefTable->GetNumFonts();
+    m_poHeader->m_numSymbolDefs = (GByte)m_poToolDefTable->GetNumSymbols();
 
     /*-------------------------------------------------------------
      * Do the actual work and delete poBlock
@@ -2333,7 +2346,7 @@ int TABMAPFile::CommitDrawingTools()
      *------------------------------------------------------------*/
     nStatus = m_poToolDefTable->WriteAllToolDefs(poBlock);
     
-    m_poHeader->m_numMapToolBlocks = poBlock->GetNumBlocksInChain();
+    m_poHeader->m_numMapToolBlocks = (GInt16)poBlock->GetNumBlocksInChain();
 
     delete poBlock;
 
@@ -2663,7 +2676,7 @@ int TABMAPFile::CommitSpatialIndex()
      *------------------------------------------------------------*/
     // Add 1 to Spatial Index Depth to account to the MapObjectBlocks
     m_poHeader->m_nMaxSpIndexDepth = MAX(m_poHeader->m_nMaxSpIndexDepth,
-                                         m_poSpIndex->GetCurMaxDepth()+1);
+                                  (GByte)m_poSpIndex->GetCurMaxDepth()+1);
 
     m_poSpIndex->GetMBR(m_poHeader->m_nXMin, m_poHeader->m_nYMin,
                         m_poHeader->m_nXMax, m_poHeader->m_nYMax);
@@ -2774,6 +2787,7 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
     Int2Coordsys(nXMax, nYMax, dXMax, dYMax);
 
     VSIFPrintf(fpMIF, "RECT %g %g %g %g\n", dXMin, dYMin, dXMax, dYMax);
+    VSIFPrintf(fpMIF, "  Brush(1, 0)\n");  /* No fill */
                
     VSIFPrintf(fpMID, "%d,%d,%d,%d,%g,%d,%d,%d,%d\n", 
                poNode->GetStartAddress(),
@@ -2814,6 +2828,7 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
                 Int2Coordsys(psEntry->XMax, psEntry->YMax, dXMax, dYMax);
 
                 VSIFPrintf(fpMIF, "RECT %g %g %g %g\n", dXMin, dYMin, dXMax, dYMax);
+                VSIFPrintf(fpMIF, "  Brush(1, 0)\n");  /* No fill */
 
                 VSIFPrintf(fpMID, "%d,%d,%d,%d,%g,%d,%d,%d,%d\n", 
                            psEntry->nBlockPtr,

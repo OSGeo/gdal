@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.h,v 1.14 2007/03/22 20:01:36 dmorissette Exp $
+ * $Id: mitab_ogr_driver.h,v 1.14 2007-03-22 20:01:36 dmorissette Exp $
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support
@@ -30,7 +30,7 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.h,v $
- * Revision 1.14  2007/03/22 20:01:36  dmorissette
+ * Revision 1.14  2007-03-22 20:01:36  dmorissette
  * Added SPATIAL_INDEX_MODE=QUICK creation option (MITAB bug 1669)
  *
  * Revision 1.13  2004/07/07 16:11:39  fwarmerdam
