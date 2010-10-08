@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.53 2008/03/05 20:35:39 dmorissette Exp $
+ * $Id: mitab_priv.h,v 1.55 2010-01-07 20:39:12 aboudreault Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,13 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.55  2010-01-07 20:39:12  aboudreault
+ * Added support to handle duplicate field names, Added validation to check if a field name start with a number (bug 2141)
+ *
+ * Revision 1.54  2008-11-27 20:50:23  aboudreault
+ * Improved support for OGR date/time types. New Read/Write methods (bug 1948)
+ * Added support of OGR date/time types for MIF features.
+ *
  * Revision 1.53  2008/03/05 20:35:39  dmorissette
  * Replace MITAB 1.x SetFeature() with a CreateFeature() for V2.x (bug 1859)
  *
@@ -1643,8 +1650,13 @@ class TABDATFile
     double      ReadDecimalField(int nWidth);
     const char  *ReadLogicalField(int nWidth);
     const char  *ReadDateField(int nWidth);
+    int         ReadDateField(int nWidth, int *nYear, int *nMonth, int *nDay);
     const char  *ReadTimeField(int nWidth);
+    int         ReadTimeField(int nWidth, int *nHour, int *nMinute, 
+                              int *nSecond, int *nMS);
     const char  *ReadDateTimeField(int nWidth);
+    int         ReadDateTimeField(int nWidth, int *nYear, int *nMonth, int *nDay,
+                                 int *nHour, int *nMinute, int *nSecond, int *nMS);
 
     int         WriteCharField(const char *pszValue, int nWidth,
                                TABINDFile *poINDFile, int nIndexNo);
@@ -1660,10 +1672,17 @@ class TABDATFile
                                   TABINDFile *poINDFile, int nIndexNo);
     int         WriteDateField(const char *pszValue,
                                TABINDFile *poINDFile, int nIndexNo);
+    int         WriteDateField(int nYear, int nMonth, int nDay,
+                               TABINDFile *poINDFile, int nIndexNo);
     int         WriteTimeField(const char *pszValue,
+                               TABINDFile *poINDFile, int nIndexNo);
+    int         WriteTimeField(int nHour, int nMinute, int nSecond, int nMS,
                                TABINDFile *poINDFile, int nIndexNo);
     int         WriteDateTimeField(const char *pszValue,
                                TABINDFile *poINDFile, int nIndexNo);
+    int         WriteDateTimeField(int nYear, int nMonth, int nDay, 
+                                   int nHour, int nMinute, int nSecond, int nMS,
+                                   TABINDFile *poINDFile, int nIndexNo);
 
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
@@ -1739,7 +1758,7 @@ class TABRelation
                            TABFieldType *paeMapInfoNativeFieldTypes=NULL);
     int         AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                int nWidth=0, int nPrecision=0,
-                               GBool bIndexed=FALSE, GBool bUnique=FALSE);
+                               GBool bIndexed=FALSE, GBool bUnique=FALSE, int bApproxOK=TRUE);
 
     int         SetFieldIndexed(int nFieldId);
     GBool       IsFieldIndexed(int nFieldId);

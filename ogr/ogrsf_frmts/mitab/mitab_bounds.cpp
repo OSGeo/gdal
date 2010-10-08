@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_bounds.cpp,v 1.8 2008/01/29 20:53:10 dmorissette Exp $
+ * $Id: mitab_bounds.cpp,v 1.8 2008-01-29 20:53:10 dmorissette Exp $
  *
  * Name:     mitab_bounds.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,7 +30,7 @@
  **********************************************************************
  *
  * $Log: mitab_bounds.cpp,v $
- * Revision 1.8  2008/01/29 20:53:10  dmorissette
+ * Revision 1.8  2008-01-29 20:53:10  dmorissette
  * Added bounds for PSAD56 (Patch from AJD sent for bug #1754)
  *
  * Revision 1.7  2005/09/29 18:31:28  dmorissette
