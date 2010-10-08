@@ -36,7 +36,8 @@ CPPFLAGS	:=	$(CPPFLAGS) -DHAVE_CURL
 endif
 
 ifneq ($(LIBZ_SETTING),no)
-OBJ	:= 	$(OBJ)  cpl_vsil_gzip.o cpl_minizip_ioapi.o cpl_minizip_unzip.o 
+OBJ	:= 	$(OBJ)  cpl_vsil_gzip.o cpl_minizip_ioapi.o \
+		cpl_minizip_unzip.o cpl_minizip_zip.o
 CPPFLAGS	:=	$(CPPFLAGS) -DHAVE_LIBZ
 endif
 
