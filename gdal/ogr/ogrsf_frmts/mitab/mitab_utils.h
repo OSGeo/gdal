@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.h,v 1.10 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_utils.h,v 1.10 2004-06-30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_utils.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,7 +30,7 @@
  **********************************************************************
  *
  * $Log: mitab_utils.h,v $
- * Revision 1.10  2004/06/30 20:29:04  dmorissette
+ * Revision 1.10  2004-06-30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
  * Revision 1.9  2001/01/23 21:23:42  daniel

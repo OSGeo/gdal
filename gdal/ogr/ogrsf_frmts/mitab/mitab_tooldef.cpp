@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tooldef.cpp,v 1.6 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_tooldef.cpp,v 1.7 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_tooldef.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,7 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_tooldef.cpp,v $
- * Revision 1.6  2004/06/30 20:29:04  dmorissette
+ * Revision 1.7  2010-07-07 19:00:15  aboudreault
+ * Cleanup Win32 Compile Warnings (GDAL bug #2930)
+ *
+ * Revision 1.6  2004-06-30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
  * Revision 1.5  2000/11/15 04:13:50  daniel
@@ -281,9 +284,9 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
         poBlock->WriteByte(byPixelWidth);
         poBlock->WriteByte(m_papsPen[i]->nLinePattern);
         poBlock->WriteByte(byPointWidth);
-        poBlock->WriteByte(COLOR_R(m_papsPen[i]->rgbColor));
-        poBlock->WriteByte(COLOR_G(m_papsPen[i]->rgbColor));
-        poBlock->WriteByte(COLOR_B(m_papsPen[i]->rgbColor));
+        poBlock->WriteByte((GByte)COLOR_R(m_papsPen[i]->rgbColor));
+        poBlock->WriteByte((GByte)COLOR_G(m_papsPen[i]->rgbColor));
+        poBlock->WriteByte((GByte)COLOR_B(m_papsPen[i]->rgbColor));
 
         if (CPLGetLastErrorNo() != 0)
         {
@@ -304,12 +307,12 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
 
         poBlock->WriteByte(m_papsBrush[i]->nFillPattern);
         poBlock->WriteByte(m_papsBrush[i]->bTransparentFill);
-        poBlock->WriteByte(COLOR_R(m_papsBrush[i]->rgbFGColor));
-        poBlock->WriteByte(COLOR_G(m_papsBrush[i]->rgbFGColor));
-        poBlock->WriteByte(COLOR_B(m_papsBrush[i]->rgbFGColor));
-        poBlock->WriteByte(COLOR_R(m_papsBrush[i]->rgbBGColor));
-        poBlock->WriteByte(COLOR_G(m_papsBrush[i]->rgbBGColor));
-        poBlock->WriteByte(COLOR_B(m_papsBrush[i]->rgbBGColor));
+        poBlock->WriteByte((GByte)COLOR_R(m_papsBrush[i]->rgbFGColor));
+        poBlock->WriteByte((GByte)COLOR_G(m_papsBrush[i]->rgbFGColor));
+        poBlock->WriteByte((GByte)COLOR_B(m_papsBrush[i]->rgbFGColor));
+        poBlock->WriteByte((GByte)COLOR_R(m_papsBrush[i]->rgbBGColor));
+        poBlock->WriteByte((GByte)COLOR_G(m_papsBrush[i]->rgbBGColor));
+        poBlock->WriteByte((GByte)COLOR_B(m_papsBrush[i]->rgbBGColor));
 
         if (CPLGetLastErrorNo() != 0)
         {
@@ -350,9 +353,9 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
         poBlock->WriteInt16(m_papsSymbol[i]->nSymbolNo);
         poBlock->WriteInt16(m_papsSymbol[i]->nPointSize);
         poBlock->WriteByte(m_papsSymbol[i]->_nUnknownValue_);
-        poBlock->WriteByte(COLOR_R(m_papsSymbol[i]->rgbColor));
-        poBlock->WriteByte(COLOR_G(m_papsSymbol[i]->rgbColor));
-        poBlock->WriteByte(COLOR_B(m_papsSymbol[i]->rgbColor));
+        poBlock->WriteByte((GByte)COLOR_R(m_papsSymbol[i]->rgbColor));
+        poBlock->WriteByte((GByte)COLOR_G(m_papsSymbol[i]->rgbColor));
+        poBlock->WriteByte((GByte)COLOR_B(m_papsSymbol[i]->rgbColor));
 
         if (CPLGetLastErrorNo() != 0)
         {

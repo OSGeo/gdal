@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_rawbinblock.cpp,v 1.11 2007/06/11 14:40:03 dmorissette Exp $
+ * $Id: mitab_rawbinblock.cpp,v 1.11 2007-06-11 14:40:03 dmorissette Exp $
  *
  * Name:     mitab_rawbinblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,7 +31,7 @@
  **********************************************************************
  *
  * $Log: mitab_rawbinblock.cpp,v $
- * Revision 1.11  2007/06/11 14:40:03  dmorissette
+ * Revision 1.11  2007-06-11 14:40:03  dmorissette
  * Fixed another issue related to attempting to read past EOF while writing
  * collections (bug 1657)
  *
