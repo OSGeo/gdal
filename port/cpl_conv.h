@@ -210,6 +210,17 @@ int CPL_DLL CPLUnlinkTree( const char * );
 int CPL_DLL CPLCopyFile( const char *pszNewPath, const char *pszOldPath );
 int CPL_DLL CPLMoveFile( const char *pszNewPath, const char *pszOldPath );
 
+/* -------------------------------------------------------------------- */
+/*      ZIP Creation.                                                   */
+/* -------------------------------------------------------------------- */
+#define CPL_ZIP_API_OFFERED
+void CPL_DLL  *CPLCreateZip( const char *pszZipFilename, char **papszOptions );
+CPLErr CPL_DLL CPLCreateFileInZip( void *hZip, const char *pszFilename, 
+                                   char **papszOptions );
+CPLErr CPL_DLL CPLWriteFileInZip( void *hZip, void *pBuffer, int nBufferSize );
+CPLErr CPL_DLL CPLCloseFileInZip( void *hZip );
+CPLErr CPL_DLL CPLCloseZip( void *hZip );
+                            
 CPL_C_END
 
 /* -------------------------------------------------------------------- */
