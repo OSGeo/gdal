@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.120 2010-01-07 20:39:11 aboudreault Exp $
+ * $Id: mitab.h,v 1.121 2010-10-08 18:38:13 aboudreault Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.121  2010-10-08 18:38:13  aboudreault
+ * Added attribute index support for the sql queries in mapinfo tab format (GDAL bug #3687)
+ *
  * Revision 1.120  2010-01-07 20:39:11  aboudreault
  * Added support to handle duplicate field names, Added validation to check if a field name start with a number (bug 2141)
  *
@@ -281,6 +284,8 @@ class TABFile: public IMapInfoFile
 
     int         m_nLastFeatureId;
 
+    long        *m_panMatchingFIDs;
+    int         m_iMatchingFID;
 
     ///////////////
     // Private Read access specific stuff

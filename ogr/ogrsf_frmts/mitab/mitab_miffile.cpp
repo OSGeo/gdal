@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.54 2010-07-07 19:00:15 aboudreault Exp $
+ * $Id: mitab_miffile.cpp,v 1.55 2010-10-08 18:50:52 aboudreault Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.55  2010-10-08 18:50:52  aboudreault
+ * Fixed handle differently indented lines in mif files. (GDAL bug #3694)
+ *
  * Revision 1.54  2010-07-07 19:00:15  aboudreault
  * Cleanup Win32 Compile Warnings (GDAL bug #2930)
  *
@@ -467,7 +470,7 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
  **********************************************************************/
 int MIFFile::ParseMIFHeader()
 {  
-    GBool  bColumns = FALSE;
+    GBool  bColumns = FALSE, bDataFound = FALSE;
     int    nColumns = 0;
     GBool  bCoordSys = FALSE;
     char  *pszTmp;
@@ -494,20 +497,20 @@ int MIFFile::ParseMIFHeader()
     /*-----------------------------------------------------------------
      * Parse header until we find the "Data" line
      *----------------------------------------------------------------*/
-    while (((pszLine = m_poMIFFile->GetLine()) != NULL) && 
-           !(EQUALN(pszLine,"Data",4)))
+    while (((pszLine = m_poMIFFile->GetLine()) != NULL))
     {
         while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
             pszLine++;  // skip leading spaces
 
+        if( EQUALN(pszLine,"Data",4) && !bColumns )
+        {
+            bDataFound = TRUE;
+            break;
+        }
+
         if (bColumns == TRUE && nColumns >0)
         {
-            if (nColumns == 0)
-            {
-                // Permit to 0 columns
-                bColumns = FALSE;
-            }
-            else if (AddFields(pszLine) == 0)
+            if (AddFields(pszLine) == 0)
             {
                 nColumns--;
                 if (nColumns == 0)
@@ -634,8 +637,7 @@ int MIFFile::ParseMIFHeader()
 
     }
     
-    if ((pszLine = m_poMIFFile->GetLastLine()) == NULL || 
-        EQUALN(m_poMIFFile->GetLastLine(),"DATA",4) == FALSE)
+    if ( !bDataFound )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "DATA keyword not found in %s.  File may be corrupt.",

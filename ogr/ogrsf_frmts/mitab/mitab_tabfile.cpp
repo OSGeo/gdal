@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.76 2010-07-07 19:00:15 aboudreault Exp $
+ * $Id: mitab_tabfile.cpp,v 1.78 2010-10-08 18:40:12 aboudreault Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,12 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.78  2010-10-08 18:40:12  aboudreault
+ * Fixed missing initializations that cause crashes
+ *
+ * Revision 1.77  2010-10-08 18:38:13  aboudreault
+ * Added attribute index support for the sql queries in mapinfo tab format (GDAL bug #3687)
+ *
  * Revision 1.76  2010-07-07 19:00:15  aboudreault
  * Cleanup Win32 Compile Warnings (GDAL bug #2930)
  *
@@ -95,6 +101,7 @@
 
 #include "mitab.h"
 #include "mitab_utils.h"
+#include "cpl_minixml.h"
 
 #include <ctype.h>      /* isspace() */
 
@@ -127,6 +134,9 @@ TABFile::TABFile()
     m_panIndexNo = NULL;
 
     bUseSpatialTraversal = FALSE;
+
+    m_panMatchingFIDs = NULL; 
+    m_iMatchingFID = 0; 
 }
 
 /**********************************************************************
@@ -157,6 +167,10 @@ int TABFile::GetFeatureCount (int bForce)
 /************************************************************************/
 void TABFile::ResetReading()
 {
+    CPLFree(m_panMatchingFIDs);
+    m_panMatchingFIDs = NULL;
+    m_iMatchingFID = 0;
+    
     m_nCurFeatureId = 0;
     if( m_poMAPFile != NULL )
         m_poMAPFile->ResetReading();
@@ -483,6 +497,36 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
         return -1;
     }
 
+    /*-----------------------------------------------------------------
+     * Initializing the attribute index (.IND) support
+     *----------------------------------------------------------------*/
+
+    CPLXMLNode *psRoot = CPLCreateXMLNode( NULL, CXT_Element, "OGRMILayerAttrIndex" );
+    CPLCreateXMLElementAndValue( psRoot, "MIIDFilename", CPLResetExtension( pszFname, "IND" ) );
+    OGRFeatureDefn *poLayerDefn = GetLayerDefn();
+    int iField, iIndexIndex, bHasIndex = 0;
+    for( iField = 0; iField < poLayerDefn->GetFieldCount(); iField++ )
+    {
+        iIndexIndex = GetFieldIndexNumber(iField);
+        if (iIndexIndex > 0)
+        {
+            CPLXMLNode *psIndex = CPLCreateXMLNode( psRoot, CXT_Element, "OGRMIAttrIndex" );
+            CPLCreateXMLElementAndValue( psIndex, "FieldIndex", CPLSPrintf( "%d", iField ) );
+            CPLCreateXMLElementAndValue( psIndex, "FieldName", 
+                                     poLayerDefn->GetFieldDefn(iField)->GetNameRef() );
+            CPLCreateXMLElementAndValue( psIndex, "IndexIndex", CPLSPrintf( "%d", iIndexIndex ) );
+            bHasIndex = 1;
+        }     
+    }
+
+    if (bHasIndex)
+    {
+        char *pszRawXML = CPLSerializeXMLTree( psRoot );
+        InitializeIndexSupport( pszRawXML );
+        CPLFree( pszRawXML );
+    }
+
+    CPLDestroyXMLNode( psRoot );
 
     CPLFree(pszTmpFname);
     pszTmpFname = NULL;
@@ -1098,6 +1142,9 @@ int TABFile::Close()
     CPLFree(m_panIndexNo);
     m_panIndexNo = NULL;
 
+    CPLFree(m_panMatchingFIDs);
+    m_panMatchingFIDs = NULL;
+
     return 0;
 }
 
@@ -1153,6 +1200,26 @@ int TABFile::GetNextFeatureId(int nPrevId)
      *----------------------------------------------------------------*/
     if( bUseSpatialTraversal )
         return m_poMAPFile->GetNextFeatureId( nPrevId );
+
+    /*-----------------------------------------------------------------
+     * Should we use an attribute index traversal?
+     *----------------------------------------------------------------*/
+    if( m_poAttrQuery != NULL)
+    {
+        if( m_panMatchingFIDs == NULL )
+        {
+            m_iMatchingFID = 0;
+            m_panMatchingFIDs = m_poAttrQuery->EvaluateAgainstIndices( this,
+                                                                 NULL );
+        }
+        if( m_panMatchingFIDs != NULL )
+        {
+            if( m_panMatchingFIDs[m_iMatchingFID] == OGRNullFID )
+                return OGRNullFID;
+
+            return m_panMatchingFIDs[m_iMatchingFID++] + 1;
+        }
+    }
 
     /*-----------------------------------------------------------------
      * Establish what the next logical feature ID should be
