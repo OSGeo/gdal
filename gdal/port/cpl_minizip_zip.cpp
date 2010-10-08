@@ -1,3 +1,20 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  CPL - Common Portability Library
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Purpose:  Adjusted minizip "zip.c" source code for zip services.
+ *
+ * Modified version by Even Rouault. :
+ *   - Decoration of symbol names unz* -> cpl_unz*
+ *   - Undef EXPORT so that we are sure the symbols are not exported
+ *   - Remove old C style function prototypes
+ *   - Added CPL* simplified API at bottom.
+ *
+ *   Original licence available in port/LICENCE_minizip
+ *
+ *****************************************************************************/
+
 /* zip.c -- IO on .zip files using zlib
    Version 1.01e, February 12th, 2005
 
@@ -1206,7 +1223,7 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 /************************************************************************/
 
 CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename, 
-                          char **papszOptions )
+                           char **papszOptions )
 
 {
     int  nErr;
@@ -1230,7 +1247,7 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
 /*                         CPLWriteFileInZip()                          */
 /************************************************************************/
 
-CPLErr CPLWriteFileInZip( void *hZip, void *pBuffer, int nBufferSize )
+CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 
 {
     int nErr;
