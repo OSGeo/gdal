@@ -27,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
  
- #ifndef KMLSUPEROVERLAYDATASET_H_INCLUDED
+#ifndef KMLSUPEROVERLAYDATASET_H_INCLUDED
 #define KMLSUPEROVERLAYDATASET_H_INCLUDED
 
 #include "gdal_pam.h"
@@ -38,7 +38,7 @@ void CPL_DLL GDALRegister_KMLSUPEROVERLAY(void);
 CPL_C_END
 
 /************************************************************************/
-/*				KmlSuperOverlayDataset				*/
+/*                        KmlSuperOverlayDataset                        */
 /************************************************************************/
 class OGRCoordinateTransformation;
 
@@ -50,13 +50,13 @@ class CPL_DLL KmlSuperOverlayDataset : public GDALDataset
     char        *pszProjection;
 
   public:
-                 KmlSuperOverlayDataset();
+                  KmlSuperOverlayDataset();
     virtual      ~KmlSuperOverlayDataset();
 
     static GDALDataset *Open(GDALOpenInfo *);    
 
     static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-      int bStrict, char ** papszOptions, GDALProgressFunc pfnProgress, void * pProgressData );
+                                    int bStrict, char ** papszOptions, GDALProgressFunc pfnProgress, void * pProgressData );
 
     const char *GetProjectionRef();
 };
