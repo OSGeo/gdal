@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: kmlsuperoverlaydataset.cpp 
+ * $Id$
  *
  * Project:  KmlSuperOverlay
  * Purpose:  Implements write support for KML superoverlay - KMZ.
@@ -36,10 +36,10 @@
 #include <math.h>
 #include <algorithm>
 #include <fstream>
-#include <zip.h>
 
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_conv.h"
 #include "cpl_vsi.h"
 #include "ogr_spatialref.h"
 
@@ -396,7 +396,7 @@ void GenerateChildKml(std::string filename,
 /************************************************************************/
 bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory, std::string targetFile)
 {
-    zipFile zipfile = zipOpen(targetFile.c_str(), 0);
+    void  *zipfile = CPLCreateZip(targetFile.c_str(), NULL);
     if (!zipfile)
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -434,7 +434,7 @@ bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory,
                 break;
             }
         }
-        if (zipOpenNewFileInZip(zipfile, relativeFileReadPath.c_str(), 0, 0, 0, 0, 0, 0, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK)
+        if (CPLCreateFileInZip(zipfile, relativeFileReadPath.c_str(), NULL) != CE_None)
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Unable to create file within the zip file.." );
@@ -466,7 +466,7 @@ bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory,
             fileData.append(buf, inFile.gcount());
         } while (!inFile.eof() && inFile.good());
 
-        if ( zipWriteInFileInZip(zipfile, static_cast<const void*>(fileData.data()), static_cast<unsigned int>(fileData.size())) != ZIP_OK )
+        if ( CPLWriteFileInZip(zipfile, static_cast<const void*>(fileData.data()), static_cast<unsigned int>(fileData.size())) != CE_None )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Could not write to file within zip file.." );
@@ -474,7 +474,7 @@ bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory,
         }
 
         // Close one src file zipped completely
-        if ( zipCloseFileInZip(zipfile) != ZIP_OK )
+        if ( CPLCloseFileInZip(zipfile) != CE_None )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Could not close file written within zip file.." );
@@ -482,7 +482,8 @@ bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory,
         }
     }
 
-    zipClose(zipfile, 0);
+    CPLCloseZip(zipfile);
+
     return true;
 }
 
