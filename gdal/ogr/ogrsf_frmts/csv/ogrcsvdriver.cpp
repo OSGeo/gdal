@@ -74,7 +74,7 @@ OGRDataSource *OGRCSVDriver::Open( const char * pszFilename, int bUpdate )
 /************************************************************************/
 
 OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
-                                               char ** /* papszOptions */ )
+                                               char **papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -92,14 +92,27 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Create a directory.                                             */
+/*      If the target is not a simple .csv then create it as a          */
+/*      directory.                                                      */
 /* -------------------------------------------------------------------- */
-    if( VSIMkdir( pszName, 0755 ) != 0 )
+    CPLString osDirName;
+
+    if( EQUAL(CPLGetExtension(pszName),"csv") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Failed to create directory %s:\n%s", 
-                  pszName, VSIStrerror( errno ) );
-        return NULL;
+        osDirName = CPLGetPath(pszName);
+        if( osDirName == "" )
+            osDirName = ".";
+    }
+    else
+    {
+        if( VSIMkdir( pszName, 0755 ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to create directory %s:\n%s", 
+                      pszName, VSIStrerror( errno ) );
+            return NULL;
+        }
+        osDirName = pszName;
     }
 
 /* -------------------------------------------------------------------- */
@@ -107,11 +120,14 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
     OGRCSVDataSource   *poDS = new OGRCSVDataSource();
 
-    if( !poDS->Open( pszName, TRUE, TRUE ) )
+    if( !poDS->Open( osDirName, TRUE, TRUE ) )
     {
         delete poDS;
         return NULL;
     }
+
+    if( osDirName != pszName )
+        poDS->SetDefaultCSVName( CPLGetFilename(pszName) );
 
     return poDS;
 }
