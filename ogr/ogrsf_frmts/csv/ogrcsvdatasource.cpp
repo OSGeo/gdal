@@ -255,9 +255,9 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Verify that the datasource is a directory.                      */
 /* -------------------------------------------------------------------- */
-    VSIStatBuf sStatBuf;
+    VSIStatBufL sStatBuf;
 
-    if( VSIStat( pszName, &sStatBuf ) != 0 
+    if( VSIStatL( pszName, &sStatBuf ) != 0 
         || !VSI_ISDIR( sStatBuf.st_mode ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -268,19 +268,26 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      What filename would we use?                                     */
 /* -------------------------------------------------------------------- */
-    const char *pszFilename;
+    CPLString osFilename;
 
-    pszFilename = CPLFormFilename( pszName, pszLayerName, "csv" );
+    if( osDefaultCSVName != "" )
+    {
+        osFilename = CPLFormFilename( pszName, osDefaultCSVName, NULL );
+        osDefaultCSVName = "";
+    }
+    else
+    {
+        osFilename = CPLFormFilename( pszName, pszLayerName, "csv" );
+    }
 
 /* -------------------------------------------------------------------- */
-/*      does this file already exist?                                   */
+/*      Does this directory/file already exist?                         */
 /* -------------------------------------------------------------------- */
-    
-    if( VSIStat( pszName, &sStatBuf ) != 0 )
+    if( VSIStatL( osFilename, &sStatBuf ) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to create layer %s, but file %s already exists.",
-                  pszLayerName, pszFilename );
+                  "Attempt to create layer %s, but %s already exists.",
+                  pszLayerName, osFilename.c_str() );
         return NULL;
     }
 
@@ -289,13 +296,13 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     FILE *fp;
 
-    fp = VSIFOpen( pszFilename, "w+b" );
+    fp = VSIFOpen( osFilename, "w+b" );
 
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to create %s:\n%s", 
-                  pszFilename, VSIStrerror( errno ) );
+                  osFilename.c_str(), VSIStrerror( errno ) );
                   
                   
         return NULL;
@@ -327,7 +334,7 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
     
-    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, pszFilename, TRUE, TRUE, chDelimiter );
+    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, osFilename, TRUE, TRUE, chDelimiter );
 
 /* -------------------------------------------------------------------- */
 /*      Was a partiuclar CRLF order requested?                          */

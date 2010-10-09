@@ -106,7 +106,9 @@ class OGRCSVDataSource : public OGRDataSource
     int                 nLayers;
 
     int                 bUpdate;
-    
+
+    CPLString           osDefaultCSVName;
+
   public:
                         OGRCSVDataSource();
                         ~OGRCSVDataSource();
@@ -128,6 +130,9 @@ class OGRCSVDataSource : public OGRDataSource
     virtual OGRErr      DeleteLayer(int);
 
     int                 TestCapability( const char * );
+
+    void                SetDefaultCSVName( const char *pszName ) 
+        { osDefaultCSVName = pszName; }
 };
 
 /************************************************************************/
