@@ -48,8 +48,8 @@
 	if ($1) {
 	    int i;
 	    for (i = 0; $1[i]; i++) {
-		EXTEND(SP, 1);
-		PUSHs(sv_2mortal(newSVpv($1[i], 0)));
+		if (i>items-1) EXTEND(SP, 1);
+		ST(argvi) = sv_2mortal(newSVpv($1[i], 0));
 		argvi++;
 	    }
 	    CSLDestroy($1);
