@@ -703,14 +703,16 @@ static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
         }
         return FALSE;
     }
-
     if( nLineMarker != nScanline 
         && nLineMarker != nScanline + 1 )
     {
-        if (bVerboseIfError)
+        int bIgnoreLineNumbers = 
+            CSLTestBoolean(CPLGetConfigOption("BSB_IGNORE_LINENUMBERS", "NO"));
+
+        if (bVerboseIfError && !bIgnoreLineNumbers )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                     "Got scanline id %d when looking for %d @ offset %d.", 
+                     "Got scanline id %d when looking for %d @ offset %d.\nSet BSB_IGNORE_LINENUMBERS=TRUE configuration option to try file anyways.", 
                      nLineMarker, nScanline+1, psInfo->panLineOffset[nScanline]);
         }
         else
@@ -718,7 +720,9 @@ static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
             CPLDebug("BSB", "Got scanline id %d when looking for %d @ offset %d.", 
                      nLineMarker, nScanline+1, psInfo->panLineOffset[nScanline]);
         }
-        return FALSE;
+
+        if( !bIgnoreLineNumbers )
+            return FALSE;
     }
 
     return TRUE;
