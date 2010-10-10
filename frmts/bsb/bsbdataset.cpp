@@ -393,6 +393,15 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         if( EQUALN(psInfo->papszHeader[i],"KNP/",4) )
         {
             const char *pszPR = strstr(psInfo->papszHeader[i],"PR=");
+            const char *pszValue, *pszEnd;
+            CPLString osPP;
+
+            // Capture the PP string.
+            pszValue = strstr(psInfo->papszHeader[i],"PP=");
+            if( pszValue )
+                pszEnd = strstr(pszValue,",");
+            if( pszValue && pszEnd )
+                osPP.assign(pszValue+3,pszEnd-pszValue-3);
 
             // Capture whole line as metadata so some apps can do more
             // specific processing.
@@ -409,6 +418,14 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                 // that regions crossing the dateline will be contiguous 
                 // in mercator.
                 osUnderlyingSRS.Printf( "PROJCS[\"Global Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.01745329251994328]],PROJECTION[\"Mercator_2SP\"],PARAMETER[\"standard_parallel_1\",0],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%d],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1]]", (int) pasGCPList[0].dfGCPX );
+            }
+            else if( EQUALN(pszPR,"PR=TRANSVERSE MERCATOR", 22)
+                     && osPP.size() > 0 )
+            {
+                
+                osUnderlyingSRS.Printf( 
+                    "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]", 
+                    osPP.c_str() );
             }
             
             break;
