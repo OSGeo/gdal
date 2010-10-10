@@ -272,6 +272,21 @@ BSBInfo *BSBOpen( const char *pszFilename )
                                                     FALSE,FALSE);
             nCount = CSLCount(papszTokens);
         }
+        else if( EQUALN(szLine,"    ",4) && szLine[4] != ' ' )
+        {
+            /* add extension lines to the last header line. */
+            int iTargetHeader = CSLCount(psInfo->papszHeader);
+
+            if( iTargetHeader != -1 )
+            {
+                psInfo->papszHeader[iTargetHeader] = (char *) 
+                    CPLRealloc(psInfo->papszHeader[iTargetHeader],
+                               strlen(psInfo->papszHeader[iTargetHeader])
+                               + strlen(szLine) + 5 );
+                strcat( psInfo->papszHeader[iTargetHeader], "," );
+                strcat( psInfo->papszHeader[iTargetHeader], szLine+4 );
+            }
+        }
 
         if( EQUALN(szLine,"BSB/",4) )
         {
