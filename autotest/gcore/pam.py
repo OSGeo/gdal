@@ -217,7 +217,30 @@ def pam_7():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test that Band.SetDescription() goes through PAM (#3780)
+#
+def pam_8():
+
+    gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'YES' )
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pam_8.tif', 1, 1, 1)
+    ds.GetRasterBand(1).SetDescription('foo')
+    ds = None
+
+    ds = gdal.Open('/vsimem/pam_8.tif')
+    desc = ds.GetRasterBand(1).GetDescription()
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/pam_8.tif')
+
+    if desc != 'foo':
+        print(desc)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup.
 
@@ -237,6 +260,7 @@ gdaltest_list = [
     pam_5,
     pam_6,
     pam_7,
+    pam_8,
     pam_cleanup ]
 
 if __name__ == '__main__':
