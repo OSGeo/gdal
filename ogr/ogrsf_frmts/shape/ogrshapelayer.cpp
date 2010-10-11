@@ -756,7 +756,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     {
         if( oModFieldDefn.GetWidth() == 0 )
             iNewField =
-                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTInteger, 11, 0 );
+                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTInteger, 10,0);
         else
             iNewField = DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTInteger,
                                      oModFieldDefn.GetWidth(), 0 );
