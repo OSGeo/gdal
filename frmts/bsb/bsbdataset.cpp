@@ -140,7 +140,13 @@ CPLErr BSBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( BSBReadScanline( poGDS->psInfo, nBlockYOff, pabyScanline ) )
     {
         for( int i = 0; i < nBlockXSize; i++ )
-            pabyScanline[i] -= 1;
+        {
+            /* The indices start at 1, except in case of some charts */
+            /* where there are missing values, which are filled to 0 */
+            /* by BSBReadScanline */
+            if (pabyScanline[i] > 0)
+                pabyScanline[i] -= 1;
+        }
 
         return CE_None;
     }
