@@ -479,7 +479,7 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition( OGRFeature *poFeature,
         // Split amount and unit.
         for( pszUnit = pszToken; 
              strchr( "0123456789.", *pszUnit) != NULL;
-             *pszUnit++ ) {}
+             pszUnit++ ) {}
 
         osAmount.assign(pszToken,(int) (pszUnit-pszToken));
         
