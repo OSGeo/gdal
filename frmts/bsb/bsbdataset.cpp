@@ -396,7 +396,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         if( EQUALN(psInfo->papszHeader[i],"KNQ/",4) )
         {
             pszKNQ = psInfo->papszHeader[i]; 
-            SetMetadataItem( "BSB_KNQ", pszKNP + 4 );
+            SetMetadataItem( "BSB_KNQ", pszKNQ + 4 );
         }
     }
 
