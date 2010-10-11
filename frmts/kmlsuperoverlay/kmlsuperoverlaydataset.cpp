@@ -188,7 +188,8 @@ void GenerateTiles(std::string filename,
 /*                          GenerateRootKml()                           */
 /************************************************************************/
 
-void GenerateRootKml(const char* filename, 
+static
+int  GenerateRootKml(const char* filename, 
                      const char* kmlfilename,
                      double north, 
                      double south, 
@@ -197,7 +198,12 @@ void GenerateRootKml(const char* filename,
                      int tilesize)
 {
     FILE* fp = VSIFOpen(filename, "wb");
-    CPLAssert( NULL != fp );
+    if (fp == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s",
+                 filename);
+        return FALSE;
+    }
     int minlodpixels = tilesize/2;
 
     const char* tmpfilename = CPLGetBasename(kmlfilename);
@@ -241,12 +247,15 @@ void GenerateRootKml(const char* filename,
     VSIFPrintf(fp, "</kml>\n");
 
     VSIFClose(fp);
+    return TRUE;
 }
 
 /************************************************************************/
 /*                          GenerateChildKml()                          */
 /************************************************************************/
-void GenerateChildKml(std::string filename, 
+
+static
+int  GenerateChildKml(std::string filename, 
                       int zoom, int ix, int iy, 
                       double zoomxpixel, double zoomypixel, int dxsize, int dysize, 
                       double south, double west, int xsize, 
@@ -308,7 +317,12 @@ void GenerateChildKml(std::string filename,
     }
 
     FILE* fp = VSIFOpen(filename.c_str(), "wb");
-    CPLAssert( NULL != fp );
+    if (fp == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s",
+                 filename.c_str());
+        return FALSE;
+    }
 
     VSIFPrintf(fp, "<kml xmlns=\"http://earth.google.com/kml/2.1\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n");
     VSIFPrintf(fp, "\t<Document>\n");
@@ -389,6 +403,8 @@ void GenerateChildKml(std::string filename,
     VSIFPrintf(fp, "\t</Document>\n");
     VSIFPrintf(fp, "</kml>\n");
     VSIFClose(fp);
+    
+    return TRUE;
 }
 
 /************************************************************************/
@@ -494,7 +510,6 @@ bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory,
 KmlSuperOverlayDataset::KmlSuperOverlayDataset()
 
 {
-    pszProjection = NULL;
     bGeoTransformSet = FALSE;
 }
 
@@ -506,7 +521,6 @@ KmlSuperOverlayDataset::~KmlSuperOverlayDataset()
    
 {
     FlushCache();
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -516,13 +530,7 @@ KmlSuperOverlayDataset::~KmlSuperOverlayDataset()
 const char *KmlSuperOverlayDataset::GetProjectionRef()
    
 {
-    OGRSpatialReference poLatLong;
-    poLatLong.SetWellKnownGeogCS( "WGS84" );
-    poLatLong.exportToProj4(&pszProjection);
-    if( pszProjection == NULL )
-        return "";
-    else
-        return pszProjection;
+    return SRS_WKT_WGS84;
 }
 
 /************************************************************************/
@@ -532,17 +540,10 @@ const char *KmlSuperOverlayDataset::GetProjectionRef()
 GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                                                  int bStrict, char ** papszOptions, GDALProgressFunc pfnProgress, void * pProgressData)
 {
-    if (poSrcDS == NULL)
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to create dataset.." );
-        return NULL;
-    }
-   
     bool isKmz = false;
    
     //correct the file and get the directory
-    const char* output_dir = NULL;
+    char* output_dir = NULL;
     if (pszFilename == NULL)
     {
         output_dir = CPLGetCurrentDir();
@@ -562,43 +563,28 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
             isKmz = true;
         }
     
-        output_dir = CPLGetPath(pszFilename);
+        output_dir = CPLStrdup(CPLGetPath(pszFilename));
         if (strcmp(output_dir, "") == 0)
         {
+            CPLFree(output_dir);
             output_dir = CPLGetCurrentDir();
         }
     }
     std::string outDir = output_dir;
+    CPLFree(output_dir);
+    output_dir = NULL;
 
     GDALDriver* poOutputTileDriver = NULL;
-    const char* poOutputTileDriverName = "JPEG";
     bool isJpegDriver = true;
 
-    if (papszOptions != NULL)
+    const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT", "JPEG");
+    if (EQUAL(pszFormat, "PNG"))
     {
-        for(int i = 0; papszOptions[i] != NULL; i++)
-        {
-            std::string tmpFormatName = papszOptions[i];
-            size_t charIndex = tmpFormatName.find("=");
-            if (charIndex != std::string::npos)
-            {
-                std::string tmpFormat = tmpFormatName.substr(charIndex+1);
-                std::string keyString = tmpFormatName.substr(0, charIndex);
-                if (strcmp(keyString.c_str(), "format") == 0 || strcmp(keyString.c_str(), "FORMAT") == 0)
-                {
-                    poOutputTileDriverName = CPLStrdup(tmpFormat.c_str());
-                    if (strcmp(poOutputTileDriverName, "png") == 0 || strcmp(poOutputTileDriverName, "PNG") == 0)
-                    {
-                        isJpegDriver = false;
-                    }
-                    break;
-                }
-            }
-        }
+        isJpegDriver = false;
     }
 
     GDALDriver* poMemDriver = GetGDALDriverManager()->GetDriverByName("MEM");
-    poOutputTileDriver = GetGDALDriverManager()->GetDriverByName(poOutputTileDriverName);
+    poOutputTileDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
 
     if( poMemDriver == NULL || poOutputTileDriver == NULL)
     {
@@ -631,7 +617,7 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
     {
         OGRSpatialReference poDsUTM;
      
-        char* projStr = strdup(poSrcDS->GetProjectionRef());
+        char* projStr = (char*)poSrcDS->GetProjectionRef();
      
         if (poDsUTM.importFromWkt(&projStr) == OGRERR_NONE)
         {
@@ -648,7 +634,6 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
                 }
             }
         }
-        // Note freeing projStr causes core dump.  CPLFree( projStr ); 
     }
 
     //Zoom levels of the pyramid.
@@ -693,15 +678,22 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
     std::string tmpFileName; 
     std::vector<std::string> dirVector;
     std::vector<std::string> fileVector;
+    int nRet;
     if (isKmz)
     {
         tmpFileName = outDir + "/" + "tmp.kml";
-        GenerateRootKml(tmpFileName.c_str(), pszFilename, north, south, east, west, (int)tilexsize);
+        nRet = GenerateRootKml(tmpFileName.c_str(), pszFilename, north, south, east, west, (int)tilexsize);
         fileVector.push_back(tmpFileName);
     }
     else
     {
-        GenerateRootKml(pszFilename, pszFilename, north, south, east, west, (int)tilexsize);
+        nRet = GenerateRootKml(pszFilename, pszFilename, north, south, east, west, (int)tilexsize);
+    }
+    
+    if (nRet == FALSE)
+    {
+        OGRCoordinateTransformation::DestroyCT( poTransform );
+        return NULL;
     }
 
     for (int zoom = maxzoom; zoom >= 0; --zoom)
@@ -785,6 +777,9 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
         }
     }
 
+    OGRCoordinateTransformation::DestroyCT( poTransform );
+    poTransform = NULL;
+    
     if (isKmz)
     {
         std::string outputfile = pszFilename;
@@ -834,12 +829,6 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
         {
             return NULL;
         }
-    }
-
-    if (output_dir != NULL)
-    {
-        delete[] output_dir;
-        output_dir = NULL;
     }
 
     KmlSuperOverlayDataset *poDsDummy = new KmlSuperOverlayDataset();

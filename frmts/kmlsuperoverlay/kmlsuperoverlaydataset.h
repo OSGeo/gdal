@@ -47,7 +47,6 @@ class CPL_DLL KmlSuperOverlayDataset : public GDALDataset
   private:
 
     int         bGeoTransformSet;
-    char        *pszProjection;
 
   public:
                   KmlSuperOverlayDataset();
