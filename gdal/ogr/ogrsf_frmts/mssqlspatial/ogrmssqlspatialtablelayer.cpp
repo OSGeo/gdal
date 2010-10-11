@@ -704,7 +704,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     }
     else if( oField.GetType() == OFTDate )
     {
-        strcpy( szFieldType, "datetime" );
+        strcpy( szFieldType, "date" );
     }
     else if( oField.GetType() == OFTTime )
     {
@@ -712,7 +712,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     }
     else if( oField.GetType() == OFTDateTime )
     {
-        strcpy( szFieldType, "timestamp with time zone" );
+        strcpy( szFieldType, "datetime" );
     }
     else if( oField.GetType() == OFTBinary )
     {
