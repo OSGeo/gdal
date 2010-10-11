@@ -479,6 +479,18 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Band description.                                               */
+/* -------------------------------------------------------------------- */
+    if( nCloneFlags & GCIF_BAND_DESCRIPTION )
+    {
+        if( strlen(poSrcBand->GetDescription()) > 0 )
+        {
+            if( !bOnlyIfMissing || strlen(GetDescription()) == 0 )
+                GDALPamRasterBand::SetDescription( poSrcBand->GetDescription());
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      NODATA                                                          */
 /* -------------------------------------------------------------------- */
     if( nCloneFlags & GCIF_NODATA )
@@ -900,6 +912,24 @@ GDALColorInterp GDALPamRasterBand::GetColorInterpretation()
         return psPam->eColorInterp;
     else
         return GDALRasterBand::GetColorInterpretation();
+}
+
+/************************************************************************/
+/*                           SetDescription()                           */
+/*                                                                      */
+/*      We let the GDALMajorObject hold the description, but we keep    */
+/*      track of whether it has been changed so we know to save it.     */
+/************************************************************************/
+
+void GDALPamRasterBand::SetDescription( const char *pszDescription )
+
+{
+    PamInitialize();
+
+    if( psPam && strcmp(pszDescription,GetDescription()) != 0 )
+        psPam->poParentDS->MarkPamDirty();
+    
+    GDALRasterBand::SetDescription( pszDescription );
 }
 
 /************************************************************************/
