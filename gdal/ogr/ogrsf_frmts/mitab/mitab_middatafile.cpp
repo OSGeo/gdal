@@ -211,6 +211,10 @@ const char *MIDDATAFile::GetLine()
         }
         else
         {
+            // skip leading spaces
+            while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
+                pszLine++;
+
             strncpy(m_szLastRead,pszLine,MIDMAXCHAR);
         }
         //if (pszLine)
