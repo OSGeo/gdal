@@ -423,7 +423,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
                                      int nFlags )
 
 {
-#if defined(WIN32) && _MSC_VER >= 1310
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -451,7 +451,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
 int VSIWin32FilesystemHandler::Unlink( const char * pszFilename )
 
 {
-#if defined(WIN32) && _MSC_VER >= 1310
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -478,7 +478,7 @@ int VSIWin32FilesystemHandler::Rename( const char *oldpath,
                                            const char *newpath )
 
 {
-#if defined(WIN32) && _MSC_VER >= 1310
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -509,7 +509,7 @@ int VSIWin32FilesystemHandler::Mkdir( const char * pszPathname,
 
 {
     (void) nMode;
-#if defined(WIN32) && _MSC_VER >= 1310
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -535,7 +535,7 @@ int VSIWin32FilesystemHandler::Mkdir( const char * pszPathname,
 int VSIWin32FilesystemHandler::Rmdir( const char * pszPathname )
 
 {
-#if defined(WIN32) && _MSC_VER >= 1310
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -561,7 +561,7 @@ int VSIWin32FilesystemHandler::Rmdir( const char * pszPathname )
 char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
 
 {
-#if defined(WIN32) && _MSC_VER >= 1310
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
