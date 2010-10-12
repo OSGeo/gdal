@@ -470,7 +470,7 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
  **********************************************************************/
 int MIFFile::ParseMIFHeader()
 {  
-    GBool  bColumns = FALSE, bDataFound = FALSE;
+    GBool  bColumns = FALSE, bAllColumnsRead =  FALSE;
     int    nColumns = 0;
     GBool  bCoordSys = FALSE;
     char  *pszTmp;
@@ -497,24 +497,19 @@ int MIFFile::ParseMIFHeader()
     /*-----------------------------------------------------------------
      * Parse header until we find the "Data" line
      *----------------------------------------------------------------*/
-    while (((pszLine = m_poMIFFile->GetLine()) != NULL))
-    {
-        while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
-            pszLine++;  // skip leading spaces
-
-        if( EQUALN(pszLine,"Data",4) && !bColumns )
-        {
-            bDataFound = TRUE;
-            break;
-        }
-
+    while (((pszLine = m_poMIFFile->GetLine()) != NULL) &&
+           ((bAllColumnsRead == FALSE) || !EQUALN(pszLine,"Data",4)))
+    {       
         if (bColumns == TRUE && nColumns >0)
         {
             if (AddFields(pszLine) == 0)
             {
                 nColumns--;
-                if (nColumns == 0)
+                if (nColumns == 0) 
+                {
+                  bAllColumnsRead = TRUE;
                   bColumns = FALSE;
+                }
             }
             else
             {
@@ -617,6 +612,12 @@ int MIFFile::ParseMIFHeader()
             {
                 nColumns = atoi(papszToken[1]);
                 m_nAttribut = nColumns;
+                if (nColumns == 0)
+                {
+                    // Permit to 0 columns
+                    bAllColumnsRead = TRUE;
+                    bColumns = FALSE;
+                }            
             }
             else
             {
@@ -637,7 +638,16 @@ int MIFFile::ParseMIFHeader()
 
     }
     
-    if ( !bDataFound )
+    if (!bAllColumnsRead) 
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "COLUMNS keyword not found or invalid number of columns read in %s.  File may be corrupt.",
+                 m_pszFname);
+        return -1;
+    }
+
+    if ((pszLine = m_poMIFFile->GetLastLine()) == NULL || 
+        EQUALN(m_poMIFFile->GetLastLine(),"DATA",4) == FALSE)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "DATA keyword not found in %s.  File may be corrupt.",
