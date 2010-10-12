@@ -2317,6 +2317,7 @@ else
     else
         AC_MSG_RESULT([disabled, broken C++ compiler])
     fi
+    rm -f testrlist.*
 fi
 
 AC_SUBST(HAVE_VFK)
