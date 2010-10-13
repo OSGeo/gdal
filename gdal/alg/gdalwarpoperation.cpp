@@ -1540,7 +1540,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                                         oWK.papabySrcImage,
                                         TRUE, oWK.pafUnifiedSrcDensity );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Generate a source density mask if we have a source cutline.     */
 /* -------------------------------------------------------------------- */
@@ -1648,6 +1648,34 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Generate a source validity mask if we have a source mask for     */
+/*      the whole input dataset (and didn't already treat it as         */
+/*      alpha band).                                                    */
+/* -------------------------------------------------------------------- */
+    GDALRasterBandH hSrcBand = NULL;
+    if( psOptions->nBandCount > 0 )
+        hSrcBand = GDALGetRasterBand(psOptions->hSrcDS,
+                                     psOptions->panSrcBands[0]);
+    
+    if( eErr == CE_None 
+        && oWK.pafUnifiedSrcDensity == NULL 
+        && (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET) )
+
+    {
+        eErr = CreateKernelMask( &oWK, 0, "UnifiedSrcValid" );
+        
+        if( eErr == CE_None )
+            eErr = 
+                GDALWarpSrcMaskMasker( psOptions, 
+                                       psOptions->nBandCount, 
+                                       psOptions->eWorkingDataType,
+                                       oWK.nSrcXOff, oWK.nSrcYOff, 
+                                       oWK.nSrcXSize, oWK.nSrcYSize,
+                                       oWK.papabySrcImage,
+                                       FALSE, oWK.panUnifiedSrcValid );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      If we have destination nodata values create, or update the      */
 /*      validity mask.  We clear the DstValid for any pixel that we     */
