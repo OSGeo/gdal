@@ -1303,9 +1303,9 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
         return poSrcLayer->TestCapability(pszCap);
 
     else if (EQUAL(pszCap,OLCFastGetExtent) &&
-             (eGeometryType == VGS_Direct ||
-              (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
-             m_poAttrQuery == NULL )
+             eGeometryType == VGS_Direct &&
+             m_poAttrQuery == NULL &&
+             poSrcRegion == NULL)
         return poSrcLayer->TestCapability(pszCap);
 
     else if( EQUAL(pszCap,OLCRandomRead) && iFIDField == -1 )
@@ -1338,9 +1338,9 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 
 OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
-    if ( (eGeometryType == VGS_Direct ||
-          (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
-         m_poAttrQuery == NULL )
+    if ( eGeometryType == VGS_Direct &&
+         m_poAttrQuery == NULL &&
+         poSrcRegion == NULL )
     {
         if( bNeedReset )
             ResetSourceReading();
