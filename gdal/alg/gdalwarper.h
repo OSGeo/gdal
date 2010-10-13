@@ -78,6 +78,12 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                         int bMaskIsFloat, void *pValidityMask );
 
 CPLErr CPL_DLL 
+GDALWarpSrcMaskMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
+                       int nXOff, int nYOff, int nXSize, int nYSize,
+                       GByte ** /*ppImageData */,
+                       int bMaskIsFloat, void *pValidityMask );
+
+CPLErr CPL_DLL 
 GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                        int nXOff, int nYOff, int nXSize, int nYSize,
                        GByte ** /* ppImageData */,

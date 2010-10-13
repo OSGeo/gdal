@@ -550,6 +550,92 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 }
 
 /************************************************************************/
+/*                       GDALWarpSrcMaskMasker()                        */
+/*                                                                      */
+/*      GDALMaskFunc for reading source simple 8bit validity mask       */
+/*      information and building a one bit validity mask.               */
+/************************************************************************/
+
+CPLErr 
+GDALWarpSrcMaskMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType, 
+                       int nXOff, int nYOff, int nXSize, int nYSize,
+                       GByte ** /*ppImageData */,
+                       int bMaskIsFloat, void *pValidityMask )
+
+{
+    GDALWarpOptions *psWO = (GDALWarpOptions *) pMaskFuncArg;
+    GUInt32  *panMask = (GUInt32 *) pValidityMask;
+
+/* -------------------------------------------------------------------- */
+/*      Do some minimal checking.                                       */
+/* -------------------------------------------------------------------- */
+    if( bMaskIsFloat )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    if( psWO == NULL )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate a temporary buffer to read mask byte data into.        */
+/* -------------------------------------------------------------------- */
+    GByte *pabySrcMask;
+
+    pabySrcMask = (GByte *) VSIMalloc2(nXSize,nYSize);
+    if( pabySrcMask == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Failed to allocate pabySrcMask (%dx%d) in GDALWarpSrcMaskMasker()", 
+                  nXSize, nYSize );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch our mask band.                                            */
+/* -------------------------------------------------------------------- */
+    GDALRasterBandH hSrcBand, hMaskBand = NULL;
+
+    hSrcBand = GDALGetRasterBand( psWO->hSrcDS, psWO->panSrcBands[0] );
+    if( hSrcBand != NULL )
+        hMaskBand = GDALGetMaskBand( hSrcBand );
+
+    if( hMaskBand == NULL )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the mask band.                                             */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr;
+
+    eErr = GDALRasterIO( hMaskBand, GF_Read, nXOff, nYOff, nXSize, nYSize, 
+                         pabySrcMask, nXSize, nYSize, GDT_Byte, 0, 0 );
+
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Pack into 1 bit per pixel for validity.                         */
+/* -------------------------------------------------------------------- */
+    for( int iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
+    {                                    
+        if( pabySrcMask[iPixel] == 0 )
+            panMask[iPixel>>5] &= ~(0x01 << (iPixel & 0x1f));
+    }
+
+    CPLFree( pabySrcMask );
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                       GDALWarpDstAlphaMasker()                       */
 /*                                                                      */
 /*      GDALMaskFunc for reading or writing the destination simple      */
