@@ -7990,6 +7990,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
         int     bIsTiled;
         int     bIsOverview = FALSE;
         uint32	nSubType;
+        int     nCompression;
 
         if (nFlags != GMF_PER_DATASET)
         {
@@ -7997,6 +7998,13 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
                      "The only flag value supported for internal mask is GMF_PER_DATASET");
             return CE_Failure;
         }
+
+        if( strstr(GDALGetMetadataItem(GDALGetDriverByName( "GTiff" ),
+                                       GDAL_DMD_CREATIONOPTIONLIST, NULL ),
+                   "<Value>DEFLATE</Value>") != NULL )
+            nCompression = COMPRESSION_DEFLATE;
+        else
+            nCompression = COMPRESSION_PACKBITS;
 
     /* -------------------------------------------------------------------- */
     /*      If we don't have read access, then create the mask externally.  */
@@ -8036,11 +8044,12 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
 
         nOffset = GTIFFWriteDirectory(hTIFF,
                                       (bIsOverview) ? FILETYPE_REDUCEDIMAGE | FILETYPE_MASK : FILETYPE_MASK,
-                                       nRasterXSize, nRasterYSize,
-                                       1, PLANARCONFIG_CONTIG, 1,
-                                       nBlockXSize, nBlockYSize,
-                                       bIsTiled, COMPRESSION_NONE, PHOTOMETRIC_MASK, PREDICTOR_NONE,
-                                       SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "");
+                                      nRasterXSize, nRasterYSize,
+                                      1, PLANARCONFIG_CONTIG, 1,
+                                      nBlockXSize, nBlockYSize,
+                                      bIsTiled, nCompression, 
+                                      PHOTOMETRIC_MASK, PREDICTOR_NONE,
+                                      SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "");
         if (nOffset == 0)
             return CE_Failure;
 
