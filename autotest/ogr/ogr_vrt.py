@@ -59,6 +59,12 @@ def ogr_vrt_2():
 
     lyr = gdaltest.vrt_ds.GetLayerByName( 'test2' )
 
+    extent = lyr.GetExtent()
+    if extent != (12.5, 100.0, 17.0, 200.0):
+        gdaltest.post_reason('wrong extent')
+        print(extent)
+        return 'fail'
+
     expect = ['First', 'Second']
     
     tr = ogrtest.check_features_against_list( lyr, 'other', expect )
@@ -609,6 +615,12 @@ def ogr_vrt_14():
         gdaltest.post_reason( 'Fast filter not set.' )
         return 'fail'
 
+    extent = vrt_lyr.GetExtent()
+    if extent != (2.0, 2.0, 49.0, 49.0):
+        gdaltest.post_reason('wrong extent')
+        print(extent)
+        return 'fail'
+
     if vrt_lyr.GetFeatureCount() != 1:
         gdaltest.post_reason( 'Feature count not one as expected.' )
         return 'fail'
@@ -907,6 +919,127 @@ def ogr_vrt_19():
 
     return 'success'
 
+
+###############################################################################
+# Test VGS_Direct
+
+def ogr_vrt_20():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    try:
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
+    except:
+        pass
+    gdal.PopErrorHandler()
+
+    shp_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test.shp')
+    shp_lyr = shp_ds.CreateLayer('test')
+
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (-10 45)')
+    feat.SetGeometryDirectly(geom)
+    shp_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (-10 49)')
+    feat.SetGeometryDirectly(geom)
+    shp_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
+    feat.SetGeometryDirectly(geom)
+    shp_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (-10 49)')
+    feat.SetGeometryDirectly(geom)
+    shp_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    shp_ds.ExecuteSQL('CREATE SPATIAL INDEX on test');
+
+    shp_ds.Destroy()
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">tmp/test.shp</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    vrt_ds = ogr.Open( vrt_xml )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+
+    if vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
+        gdaltest.post_reason( 'Fast feature count not set.' )
+        return 'fail'
+
+    if vrt_lyr.TestCapability(ogr.OLCFastSpatialFilter) != 1:
+        gdaltest.post_reason( 'Fast filter not set.' )
+        return 'fail'
+
+    if vrt_lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
+        gdaltest.post_reason( 'Fast extent not set.' )
+        return 'fail'
+
+    extent = vrt_lyr.GetExtent()
+    if extent != (-10.0, 2.0, 45.0, 49.0):
+        gdaltest.post_reason('wrong extent')
+        print(extent)
+        return 'fail'
+
+    if vrt_lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason( 'Feature count not 4 as expected.' )
+        return 'fail'
+
+    vrt_lyr.SetSpatialFilterRect(1, 48.5, 3, 49.5)
+    if vrt_lyr.GetFeatureCount() != 1:
+        if gdal.GetLastErrorMsg().find('GEOS support not enabled') != -1:
+            ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
+            return 'skip'
+
+        print(vrt_lyr.GetFeatureCount())
+        gdaltest.post_reason( 'did not get one feature on rect spatial filter.' )
+        return 'fail'
+
+    if vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
+        gdaltest.post_reason( 'Fast feature count not set.' )
+        return 'fail'
+
+    if vrt_lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
+        gdaltest.post_reason( 'Fast extent not set.' )
+        return 'fail'
+
+    extent = vrt_lyr.GetExtent()
+    # the shapefile driver currently doesn't change the extent even in the
+    # presence of a spatial filter, so that could change in the future
+    if extent != (-10.0, 2.0, 45.0, 49.0):
+        gdaltest.post_reason('wrong extent')
+        print(extent)
+        return 'fail'
+
+    vrt_lyr.SetSpatialFilterRect(1, 48, 3, 48.5)
+    if vrt_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason( 'Did not get expected zero feature count.')
+        return 'fail'
+
+    vrt_lyr.SetSpatialFilter(None)
+    if vrt_lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason( 'Feature count not 4 as expected with no filter.')
+        return 'fail'
+
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -940,6 +1073,7 @@ gdaltest_list = [
     ogr_vrt_17,
     ogr_vrt_18,
     ogr_vrt_19,
+    ogr_vrt_20,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
