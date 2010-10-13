@@ -1296,29 +1296,29 @@ OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
 int OGRVRTLayer::TestCapability( const char * pszCap )
 
 {
-    if ((EQUAL(pszCap,OLCFastFeatureCount) ||
-         EQUAL(pszCap,OLCFastSetNextByIndex)) &&
-        (eGeometryType == VGS_Direct ||
-         (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
-        m_poAttrQuery == NULL )
-        return poSrcLayer->TestCapability(pszCap);
+    if ( EQUAL(pszCap,OLCFastFeatureCount) ||
+         EQUAL(pszCap,OLCFastSetNextByIndex) )
+        return (eGeometryType == VGS_Direct ||
+               (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
+               m_poAttrQuery == NULL &&
+               poSrcLayer->TestCapability(pszCap);
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) &&
-             eGeometryType == VGS_Direct && m_poAttrQuery == NULL )
-        return poSrcLayer->TestCapability(pszCap);
+    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+        return eGeometryType == VGS_Direct && m_poAttrQuery == NULL &&
+               poSrcLayer->TestCapability(pszCap);
 
-    else if (EQUAL(pszCap,OLCFastGetExtent) &&
-             eGeometryType == VGS_Direct &&
-             m_poAttrQuery == NULL &&
-             poSrcRegion == NULL)
-        return poSrcLayer->TestCapability(pszCap);
+    else if ( EQUAL(pszCap,OLCFastGetExtent) )
+        return eGeometryType == VGS_Direct &&
+               m_poAttrQuery == NULL &&
+               poSrcRegion == NULL &&
+               poSrcLayer->TestCapability(pszCap);
 
-    else if( EQUAL(pszCap,OLCRandomRead) && iFIDField == -1 )
-        return poSrcLayer->TestCapability(pszCap);
+    else if( EQUAL(pszCap,OLCRandomRead) )
+        return iFIDField == -1 && poSrcLayer->TestCapability(pszCap);
 
     else if( EQUAL(pszCap,OLCSequentialWrite) 
              || EQUAL(pszCap,OLCRandomWrite)
-             || EQUAL(pszCap,OLCDeleteFeature))
+             || EQUAL(pszCap,OLCDeleteFeature) )
         return bUpdate && iFIDField == -1 && poSrcLayer->TestCapability(pszCap);
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
