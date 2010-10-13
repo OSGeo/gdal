@@ -280,10 +280,19 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Read the CSV record.                                            */
 /* -------------------------------------------------------------------- */
-    char **papszTokens = CSVReadParseLine2( fpCSV, chDelimiter );
+    char **papszTokens;
 
-    if( papszTokens == NULL )
-        return NULL;
+    while(TRUE)
+    {
+        papszTokens = CSVReadParseLine2( fpCSV, chDelimiter );
+        if( papszTokens == NULL )
+            return NULL;
+
+        if( papszTokens[0] != NULL )
+            break;
+
+        CSLDestroy(papszTokens);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the OGR feature.                                         */
