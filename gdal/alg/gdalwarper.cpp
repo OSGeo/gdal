@@ -619,7 +619,10 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                          pabySrcMask, nXSize, nYSize, GDT_Byte, 0, 0 );
 
     if( eErr != CE_None )
+    {
+        CPLFree( pabySrcMask );
         return eErr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Pack into 1 bit per pixel for validity.                         */
