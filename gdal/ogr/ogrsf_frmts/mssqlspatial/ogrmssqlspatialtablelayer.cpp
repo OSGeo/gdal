@@ -1107,8 +1107,11 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
     // Binary formatting
     if( nOGRFieldType == OFTBinary )
     {
-        //TODO
-        poStatement->Append( "null" );
+        int nLen = 0;
+        GByte* pabyData = poFeature->GetFieldAsBinary( i, &nLen );
+        char* pszBytes = GByteArrayToHexString( pabyData, nLen);
+        poStatement->Append( pszBytes );
+        CPLFree(pszBytes);
         return;
     }
 
