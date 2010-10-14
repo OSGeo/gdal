@@ -187,14 +187,6 @@ JPEG12_SUPPORTED = 1
 #		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/minizip.lib \
 #		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/zlib.lib
 							
-# Uncomment out the following to enable KML Super-Overlay support.
-#KMLSUPEROVERLAY_SUPPORTED = YES
-#MINIZIP_INCLUDE = -I$(OSSIM_HOME)\minizip\src
-#MINIZIP_LIBRARY = $(OSSIM_HOME)\minizip\release\minizip.lib
-
-# Enable the following if you want to build the KML Super-Overlay plugin.
-#KMLSUPEROVERLAY_PLUGIN = YES
-
 # Uncomment the following and update to enable ECW support.
 #ECW_PLUGIN = NO
 #ECWDIR  = 	C:\warmerda\libecwj2-3.3
