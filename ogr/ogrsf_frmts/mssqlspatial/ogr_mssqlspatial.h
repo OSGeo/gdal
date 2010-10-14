@@ -173,6 +173,7 @@ class OGRMSSQLSpatialLayer : public OGRLayer
     virtual const char *GetGeometryColumn();
 
     virtual int         TestCapability( const char * );
+    char*               GByteArrayToHexString( const GByte* pabyData, int nLen);
 };
 
 /************************************************************************/
