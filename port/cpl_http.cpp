@@ -509,8 +509,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 
             if( pszEOL == NULL )
             {
-                CPLAssert( FALSE );
-                break;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Error while parsing multipart content (at line %d)", __LINE__);
+                return FALSE;
             }
 
             *pszEOL = '\0';
@@ -552,8 +553,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         
         if( nBytesAvail == 0 )
         {
-            CPLAssert( FALSE );
-            break;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error while parsing multipart content (at line %d)", __LINE__);
+            return FALSE;
         }
 
         psPart->nDataLen = pszNext - (const char *) psPart->pabyData;
@@ -570,8 +572,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
             pszNext++;
         else
         {
-            CPLAssert( FALSE );
-            break;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error while parsing multipart content (at line %d)", __LINE__);
+            return FALSE;
         }
     }
 
