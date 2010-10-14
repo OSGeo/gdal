@@ -430,7 +430,8 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     }
 
     int bJSON = FALSE;
-    if (strstr(psResult->pszContentType, "application/json") != NULL &&
+    if (psResult->pszContentType != NULL &&
+        strstr(psResult->pszContentType, "application/json") != NULL &&
         strcmp(WFS_FetchValueFromURL(osURL, "OUTPUTFORMAT"), "json") == 0)
     {
         bJSON = TRUE;
