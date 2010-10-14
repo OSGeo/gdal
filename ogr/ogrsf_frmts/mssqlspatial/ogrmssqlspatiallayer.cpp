@@ -487,3 +487,33 @@ const char *OGRMSSQLSpatialLayer::GetGeometryColumn()
         return "";
 }
 
+/************************************************************************/
+/*                        GByteArrayToHexString()                       */
+/************************************************************************/
+
+char* OGRMSSQLSpatialLayer::GByteArrayToHexString( const GByte* pabyData, int nLen)
+{
+    char* pszTextBuf;
+
+    pszTextBuf = (char *) CPLMalloc(nLen*2+3);
+
+    int  iSrc, iDst=0;
+
+    for( iSrc = 0; iSrc < nLen; iSrc++ )
+    {
+        if( iSrc == 0 )
+        {
+            sprintf( pszTextBuf+iDst, "0x%02x", pabyData[iSrc] );
+            iDst += 4;
+        }
+        else
+        {
+            sprintf( pszTextBuf+iDst, "%02x", pabyData[iSrc] );
+            iDst += 2;
+        }
+    }
+    pszTextBuf[iDst] = 0;
+
+    return pszTextBuf;
+}
+
