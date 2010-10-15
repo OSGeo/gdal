@@ -80,9 +80,9 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      First, ensure there isn't any such file yet.                    */
 /* -------------------------------------------------------------------- */
-    VSIStatBuf sStatBuf;
+    VSIStatBufL sStatBuf;
 
-    if( VSIStat( pszName, &sStatBuf ) == 0 )
+    if( VSIStatL( pszName, &sStatBuf ) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "It seems a file system object called '%s' already exists.",
@@ -105,7 +105,8 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
     }
     else
     {
-        if( VSIMkdir( pszName, 0755 ) != 0 )
+        if( !EQUAL(pszName, "/vsistdout/") &&
+            VSIMkdir( pszName, 0755 ) != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed to create directory %s:\n%s", 
