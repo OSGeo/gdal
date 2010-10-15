@@ -839,8 +839,9 @@ void OGR_SRSNode::StripNodes( const char * pszName )
  * wrong.  
  */
 
+/* EXTENSION ... being a OSR extension... is arbitrary placed before the AUTHORITY */
 static const char * const apszPROJCSRule[] = 
-{ "PROJCS", "GEOGCS", "PROJECTION", "PARAMETER", "UNIT", "AXIS", "AUTHORITY", 
+{ "PROJCS", "GEOGCS", "PROJECTION", "PARAMETER", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", 
   NULL };
 
 static const char * const apszDATUMRule[] = 
