@@ -310,6 +310,51 @@ def test_gdaldem_color_relief():
     
 
 ###############################################################################
+# Test gdaldem color relief on a GMT .cpt file
+
+def test_gdaldem_color_relief_cpt():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief ../gdrivers/data/n43.dt0 data/color_file.cpt tmp/n43_colorrelief_cpt.tif')
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.Open('tmp/n43_colorrelief_cpt.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 55009:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 37543:
+        print(ds.GetRasterBand(2).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 47711:
+        print(ds.GetRasterBand(3).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    src_gt = src_ds.GetGeoTransform()
+    dst_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
+            gdaltest.post_reason('Bad geotransform')
+            return 'fail'
+
+    dst_wkt = ds.GetProjectionRef()
+    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
+        gdaltest.post_reason('Bad projection')
+        return 'fail'
+
+    src_ds = None
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Test gdaldem color relief to VRT
 
 def test_gdaldem_color_relief_vrt():
@@ -545,6 +590,10 @@ def test_gdaldem_cleanup():
     except:
         pass
     try:
+        os.remove('tmp/n43_colorrelief_cpt.tif')
+    except:
+        pass
+    try:
         os.remove('tmp/n43_colorrelief.vrt')
     except:
         pass
@@ -582,6 +631,7 @@ gdaltest_list = [
     test_gdaldem_slope,
     test_gdaldem_aspect,
     test_gdaldem_color_relief,
+    test_gdaldem_color_relief_cpt,
     test_gdaldem_color_relief_vrt,
     test_gdaldem_color_relief_from_float32,
     test_gdaldem_color_relief_png,
