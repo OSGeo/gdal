@@ -1948,6 +1948,8 @@ Various field separators are accepted : comma, tabulation, spaces, ':'.
 Common colors used by GRASS can also be specified by using their name, instead of the RGB triplet. The supported list is :
 white, black, red, green, blue, yellow, magenta, cyan, aqua, grey/gray, orange, brown, purple/violet and indigo.
 
+Since GDAL 1.8.0, GMT .cpt palette files are also supported (COLOR_MODEL = RGB only).
+
 Note: the syntax of the color configuration file is derived from the one supported by GRASS r.colors utility.
 ESRI HDR color table files (.clr) also match that syntax.
 The alpha component and the support of tablulations and commma as separators are GDAL specific extensions.
