@@ -43,6 +43,8 @@ typedef enum
 
 class OGRCSVDataSource;
 
+char **OGRCSVReadParseLineL( FILE * fp, char chDelimiter );
+
 /************************************************************************/
 /*                             OGRCSVLayer                              */
 /************************************************************************/
