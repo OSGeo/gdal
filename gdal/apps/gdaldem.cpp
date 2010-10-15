@@ -941,15 +941,71 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
     double dfSrcNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
 
     const char* pszLine;
+    int bIsGMT_CPT = FALSE;
     while ((pszLine = CPLReadLineL(fpColorFile)) != NULL)
     {
+        if (pszLine[0] == '#' && strstr(pszLine, "COLOR_MODEL"))
+        {
+            if (strstr(pszLine, "COLOR_MODEL = RGB") == NULL)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Only COLOR_MODEL = RGB is supported");
+                CPLFree(pasColorAssociation);
+                *pnColors = 0;
+                return NULL;
+            }
+            bIsGMT_CPT = TRUE;
+        }
+
         char** papszFields = CSLTokenizeStringComplex(pszLine, " ,\t:", 
                                                       FALSE, FALSE );
         /* Skip comment lines */
         int nTokens = CSLCount(papszFields);
-        if (nTokens >= 2 &&
-            papszFields[0][0] != '#' &&
-            papszFields[0][0] != '/')
+        if (nTokens >= 1 && (papszFields[0][0] == '#' ||
+                             papszFields[0][0] == '/'))
+        {
+            CSLDestroy(papszFields);
+            continue;
+        }
+
+        if (bIsGMT_CPT && nTokens == 8)
+        {
+            pasColorAssociation =
+                    (ColorAssociation*)CPLRealloc(pasColorAssociation,
+                           (nColorAssociation + 2) * sizeof(ColorAssociation));
+
+            pasColorAssociation[nColorAssociation].dfVal = atof(papszFields[0]);
+            pasColorAssociation[nColorAssociation].nR = atoi(papszFields[1]);
+            pasColorAssociation[nColorAssociation].nG = atoi(papszFields[2]);
+            pasColorAssociation[nColorAssociation].nB = atoi(papszFields[3]);
+            pasColorAssociation[nColorAssociation].nA = 255;
+            nColorAssociation++;
+
+            pasColorAssociation[nColorAssociation].dfVal = atof(papszFields[4]);
+            pasColorAssociation[nColorAssociation].nR = atoi(papszFields[5]);
+            pasColorAssociation[nColorAssociation].nG = atoi(papszFields[6]);
+            pasColorAssociation[nColorAssociation].nB = atoi(papszFields[7]);
+            pasColorAssociation[nColorAssociation].nA = 255;
+            nColorAssociation++;
+        }
+        else if (bIsGMT_CPT && nTokens == 4)
+        {
+            /* The first token might be B (background), F (foreground) or N (nodata) */
+            /* Just interested in N */
+            if (EQUAL(papszFields[0], "N") && bSrcHasNoData)
+            {
+                 pasColorAssociation =
+                    (ColorAssociation*)CPLRealloc(pasColorAssociation,
+                           (nColorAssociation + 1) * sizeof(ColorAssociation));
+
+                pasColorAssociation[nColorAssociation].dfVal = dfSrcNoDataValue;
+                pasColorAssociation[nColorAssociation].nR = atoi(papszFields[1]);
+                pasColorAssociation[nColorAssociation].nG = atoi(papszFields[2]);
+                pasColorAssociation[nColorAssociation].nB = atoi(papszFields[3]);
+                pasColorAssociation[nColorAssociation].nA = 255;
+                nColorAssociation++;
+            }
+        }
+        else if (!bIsGMT_CPT && nTokens >= 2)
         {
             pasColorAssociation =
                     (ColorAssociation*)CPLRealloc(pasColorAssociation,
