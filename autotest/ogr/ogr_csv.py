@@ -751,6 +751,25 @@ def ogr_csv_17():
 
     return 'success'
 
+
+###############################################################################
+# Write to /vsistdout/
+
+def ogr_csv_18():
+
+    ds = ogr.GetDriverByName('CSV').CreateDataSource( '/vsistdout/' )
+    lyr = ds.CreateLayer('foo', options = ['GEOMETRY=AS_WKT'])
+    lyr.CreateField( ogr.FieldDefn('foo') )
+    lyr.CreateField( ogr.FieldDefn('bar') )
+    feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    feat.SetField( 'foo', 'bar' )
+    feat.SetField( 'bar', 'baz' )
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
+    feat.SetGeometry(geom)
+    lyr.CreateFeature( feat )
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -798,6 +817,7 @@ gdaltest_list = [
     ogr_csv_15,
     ogr_csv_16,
     ogr_csv_17,
+    ogr_csv_18,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
