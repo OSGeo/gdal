@@ -1232,7 +1232,7 @@ int MIFFile::GotoFeature(int nFeatureId)
     }
     else
     {
-        if (nFeatureId < m_nCurFeatureId || m_nCurFeatureId == 0)
+        if (nFeatureId < m_nPreloadedId || m_nCurFeatureId == 0)
             ResetReading();
 
         while(m_nPreloadedId < nFeatureId)
