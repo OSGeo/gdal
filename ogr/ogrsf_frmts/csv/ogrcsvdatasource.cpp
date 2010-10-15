@@ -102,6 +102,13 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
     pszName = CPLStrdup( pszFilename );
     bUpdate = bUpdateIn;
 
+    if (bUpdateIn && bForceOpen && EQUAL(pszFilename, "/vsistdout/"))
+        return TRUE;
+
+    int bIgnoreExtension = EQUALN(pszFilename, "CSV:", 4);
+    if (bIgnoreExtension)
+        pszFilename += 4;
+
 /* -------------------------------------------------------------------- */
 /*      Determine what sort of object this is.                          */
 /* -------------------------------------------------------------------- */
@@ -115,7 +122,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(sStatBuf.st_mode)
         && strlen(pszFilename) > 4
-        && EQUAL(pszFilename+strlen(pszFilename)-4,".csv") )
+        && (bIgnoreExtension || EQUAL(pszFilename+strlen(pszFilename)-4,".csv")) )
         return OpenTable( pszFilename );
 
 /* -------------------------------------------------------------------- */
@@ -179,9 +186,9 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
     FILE       * fp;
 
     if( bUpdate )
-        fp = VSIFOpen( pszFilename, "rb+" );
+        fp = VSIFOpenL( pszFilename, "rb+" );
     else
-        fp = VSIFOpen( pszFilename, "rb" );
+        fp = VSIFOpenL( pszFilename, "rb" );
     if( fp == NULL )
     {
         CPLError( CE_Warning, CPLE_OpenFailed, 
@@ -194,25 +201,25 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
 /*      Read and parse a line.  Did we get multiple fields?             */
 /* -------------------------------------------------------------------- */
 
-    const char* pszLine = CPLReadLine( fp );
+    const char* pszLine = CPLReadLineL( fp );
     if (pszLine == NULL)
     {
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return FALSE;
     }
     char chDelimiter = CSVDetectSeperator(pszLine);
-    VSIRewind( fp );
+    VSIRewindL( fp );
 
-    char **papszFields = CSVReadParseLine2( fp, chDelimiter );
+    char **papszFields = OGRCSVReadParseLineL( fp, chDelimiter );
 						
     if( CSLCount(papszFields) < 2 )
     {
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         CSLDestroy( papszFields );
         return FALSE;
     }
 
-    VSIRewind( fp );
+    VSIRewindL( fp );
     CSLDestroy( papszFields );
 
 /* -------------------------------------------------------------------- */
@@ -221,9 +228,12 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
     nLayers++;
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
-    
+
+    const char* pszLayerName = CPLGetBasename(pszFilename);
+    if (EQUAL(pszFilename, "/vsistdin/"))
+        pszLayerName = "layer";
     papoLayers[nLayers-1] = 
-        new OGRCSVLayer( CPLGetBasename(pszFilename), fp, pszFilename, FALSE, bUpdate, chDelimiter );
+        new OGRCSVLayer( pszLayerName, fp, pszFilename, FALSE, bUpdate, chDelimiter );
 
     return TRUE;
 }
@@ -257,8 +267,9 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    if( VSIStatL( pszName, &sStatBuf ) != 0 
-        || !VSI_ISDIR( sStatBuf.st_mode ) )
+    if( !EQUAL(pszName, "/vsistdout/") &&
+        (VSIStatL( pszName, &sStatBuf ) != 0
+        || !VSI_ISDIR( sStatBuf.st_mode )) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to create csv layer (file) against a non-directory datasource." );
@@ -296,7 +307,10 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     FILE *fp;
 
-    fp = VSIFOpen( osFilename, "w+b" );
+    if( EQUAL(pszName, "/vsistdout/") )
+        fp = VSIFOpenL( osFilename, "wb" );
+    else 
+        fp = VSIFOpenL( osFilename, "w+b" );
 
     if( fp == NULL )
     {
