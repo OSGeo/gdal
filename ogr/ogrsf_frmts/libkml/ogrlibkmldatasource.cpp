@@ -135,22 +135,26 @@ void OGRLIBKMLDataSource::WriteKml (
         }
     }
 
-
-
+    std::string oKmlOut;
     if ( m_poKmlDSKml ) {
-        std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDSKml );
-
-        if ( !kmlbase::File::WriteStringToFile ( oKmlOut, oKmlFilename ) )
-            CPLError ( CE_Failure, CPLE_FileIO,
-                       "ERROR writing %s", oKmlFilename.c_str (  ) );
+        oKmlOut = kmldom::SerializePretty ( m_poKmlDSKml );
     }
     else if ( m_poKmlDSContainer ) {
-        std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDSContainer );
+        oKmlOut = kmldom::SerializePretty ( m_poKmlDSContainer );
+    }
 
-        if ( !kmlbase::File::WriteStringToFile ( oKmlOut, oKmlFilename ) )
+    if (oKmlOut.size() != 0)
+    {
+        FILE* fp = VSIFOpenL( oKmlFilename.c_str(), "wb" );
+        if (fp == NULL)
+        {
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR writing %s", oKmlFilename.c_str (  ) );
+            return;
+        }
 
+        VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp);
+        VSIFCloseL(fp);
     }
 
     return;
@@ -169,9 +173,9 @@ void OGRLIBKMLDataSource::WriteKmz (
      )
 {
 
-    KmzFile *poKmlKmzfile = kmlengine::KmzFile::Create ( pszName );
+    void* hZIP = CPLCreateZip( pszName, NULL );
 
-    if ( !poKmlKmzfile ) {
+    if ( !hZIP ) {
         CPLError ( CE_Failure, CPLE_NoWriteAccess, "ERROR creating %s",
                    pszName );
         return;
@@ -195,9 +199,12 @@ void OGRLIBKMLDataSource::WriteKmz (
         
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
 
-        if ( !poKmlKmzfile->AddFile ( oKmlOut, "doc.kml" ) )
+
+        if ( CPLCreateFileInZip( hZIP, "doc.kml", NULL ) != CE_None ||
+             CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR adding %s to %s", "doc.kml", pszName );
+        CPLCloseFileInZip(hZIP);
 
     }
 
@@ -234,10 +241,11 @@ void OGRLIBKMLDataSource::WriteKmz (
 
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
 
-        if ( !poKmlKmzfile->
-             AddFile ( oKmlOut, papoLayers[iLayer]->GetFileName (  ) ) )
-            CPLError ( CE_Failure, CPLE_FileIO, "ERROR adding %s to %s",
-                       papoLayers[iLayer]->GetFileName (  ), pszName );
+        if ( CPLCreateFileInZip( hZIP, papoLayers[iLayer]->GetFileName (  ), NULL ) != CE_None ||
+             CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
+            CPLError ( CE_Failure, CPLE_FileIO,
+                       "ERROR adding %s to %s", papoLayers[iLayer]->GetFileName (  ), pszName );
+        CPLCloseFileInZip(hZIP);
 
     }
 
@@ -248,14 +256,16 @@ void OGRLIBKMLDataSource::WriteKmz (
         KmlPtr poKmlKml = m_poKmlFactory->CreateKml (  );
 
         poKmlKml->set_feature ( m_poKmlStyleKml );
-        std::string strKmlOut = kmldom::SerializePretty ( poKmlKml );
+        std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
 
-        if ( !poKmlKmzfile->AddFile ( strKmlOut, "style/style.kml" ) )
+        if ( CPLCreateFileInZip( hZIP, "style/style.kml", NULL ) != CE_None ||
+             CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR adding %s to %s", "style/style.kml", pszName );
+        CPLCloseFileInZip(hZIP);
     }
 
-    delete poKmlKmzfile;
+    CPLCloseZip(hZIP);
 
     return;
 }
@@ -293,10 +303,16 @@ void OGRLIBKMLDataSource::WriteDir (
 
         const char *pszOutfile = CPLFormFilename ( pszName, "doc.kml", NULL );
 
-        if ( !kmlbase::File::WriteStringToFile ( oKmlOut, pszOutfile ) ) {
+        FILE* fp = VSIFOpenL( pszOutfile, "wb" );
+        if (fp == NULL)
+        {
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR Writing %s to %s", "doc.kml", pszName );
+            return;
         }
+
+        VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp);
+        VSIFCloseL(fp);
     }
 
     /***** loop though the layers and write them *****/
@@ -337,12 +353,17 @@ void OGRLIBKMLDataSource::WriteDir (
                                                    GetFileName (  ),
                                                    NULL );
 
-        if ( !kmlbase::File::WriteStringToFile ( oKmlOut, pszOutfile ) ) {
+        FILE* fp = VSIFOpenL( pszOutfile, "wb" );
+        if (fp == NULL)
+        {
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR Writing %s to %s",
                        papoLayers[iLayer]->GetFileName (  ), pszName );
+            return;
         }
 
+        VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp);
+        VSIFCloseL(fp);
     }
 
    /***** write the style table *****/
@@ -358,10 +379,16 @@ void OGRLIBKMLDataSource::WriteDir (
                                                    "style.kml",
                                                    NULL );
 
-        if ( !kmlbase::File::WriteStringToFile ( oKmlOut, pszOutfile ) ) {
+        FILE* fp = VSIFOpenL( pszOutfile, "wb" );
+        if (fp == NULL)
+        {
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR Writing %s to %s", "style.kml", pszName );
+            return;
         }
+
+        VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp);
+        VSIFCloseL(fp);
     }
 
     return;
@@ -750,12 +777,29 @@ int OGRLIBKMLDataSource::OpenKml (
     int bUpdate )
 {
     std::string oKmlKml;
+    char szBuffer[1024+1];
 
-    if ( !kmlbase::File::ReadFileToString ( pszFilename, &oKmlKml ) ) {
+    FILE* fp = VSIFOpenL(pszFilename, "rb");
+    if (fp == NULL)
+    {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "%s is not a valid kml file", pszFilename );
+                   "Cannot open %s", pszFilename );
         return FALSE;
     }
+    int nRead;
+    while ((nRead = VSIFReadL(szBuffer, 1, 1024, fp)) != 0)
+    {
+        try
+        {
+            oKmlKml.append(szBuffer, nRead);
+        }
+        catch(std::bad_alloc& e)
+        {
+            VSIFCloseL(fp);
+            return NULL;
+        }
+    }
+    VSIFCloseL(fp);
 
     CPLLocaleC  oLocaleForcer;
 
@@ -829,8 +873,32 @@ int OGRLIBKMLDataSource::OpenKmz (
     const char *pszFilename,
     int bUpdate )
 {
+    std::string oKmlKmz;
+    char szBuffer[1024+1];
 
-    KmzFile *poKmlKmzfile = KmzFile::OpenFromFile ( pszFilename );
+    FILE* fp = VSIFOpenL(pszFilename, "rb");
+    if (fp == NULL)
+    {
+        CPLError ( CE_Failure, CPLE_OpenFailed,
+                   "Cannot open %s", pszFilename );
+        return FALSE;
+    }
+    int nRead;
+    while ((nRead = VSIFReadL(szBuffer, 1, 1024, fp)) != 0)
+    {
+        try
+        {
+            oKmlKmz.append(szBuffer, nRead);
+        }
+        catch(std::bad_alloc& e)
+        {
+            VSIFCloseL(fp);
+            return NULL;
+        }
+    }
+    VSIFCloseL(fp);
+
+    KmzFile *poKmlKmzfile = KmzFile::OpenFromString ( oKmlKmz );
 
     if ( !poKmlKmzfile ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
@@ -945,6 +1013,17 @@ int OGRLIBKMLDataSource::OpenKmz (
                 ContainerPtr poKmlLyrContainer =
                     GetContainerFromRoot ( poKmlLyrRoot );
 
+                if ( !poKmlLyrContainer )
+                {
+                    CPLError ( CE_Failure, CPLE_OpenFailed,
+                               "ERROR Parseing kml layer %s from %s :%s",
+                               poKmlHref->get_path (  ).c_str (  ),
+                               pszFilename, oKmlErrors.c_str (  ) );
+                    delete poKmlHref;
+
+                    continue;
+                }
+
                 /***** create the layer *****/
 
                 AddLayer ( CPLGetBasename
@@ -1047,14 +1126,34 @@ int OGRLIBKMLDataSource::OpenDir (
 
         /***** read the file *****/
         std::string oKmlKml;
+        char szBuffer[1024+1];
+
         CPLString osFilePath =
             CPLFormFilename ( pszFilename, papszDirList[iFile], NULL );
 
-        if ( !kmlbase::File::ReadFileToString ( osFilePath.c_str(), &oKmlKml ) ) {
-            CPLError ( CE_Failure, CPLE_OpenFailed,
-                       "%s is not a valid kml file", pszFilename );
-            continue;
+        FILE* fp = VSIFOpenL(osFilePath, "rb");
+        if (fp == NULL)
+        {
+             CPLError ( CE_Failure, CPLE_OpenFailed,
+                       "Cannot open %s", osFilePath.c_str() );
+             continue;
         }
+
+        int nRead;
+        while ((nRead = VSIFReadL(szBuffer, 1, 1024, fp)) != 0)
+        {
+            try
+            {
+                oKmlKml.append(szBuffer, nRead);
+            }
+            catch(std::bad_alloc& e)
+            {
+                VSIFCloseL(fp);
+                CSLDestroy ( papszDirList );
+                return FALSE;
+            }
+        }
+        VSIFCloseL(fp);
 
         CPLLocaleC  oLocaleForcer;
 
