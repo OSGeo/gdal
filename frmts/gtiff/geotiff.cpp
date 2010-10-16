@@ -56,6 +56,7 @@ GUInt32 HalfToFloat( GUInt16 );
 GUInt32 TripleToFloat( GUInt32 );
 int    GTiffOneTimeInit();
 void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
+void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality);
 CPL_C_END
 
 #define TIFFTAG_GDAL_METADATA  42112
@@ -239,6 +240,8 @@ class GTiffDataset : public GDALPamDataset
     friend class GTiffBitmapBand;
     friend class GTiffSplitBitmapBand;
     friend class GTiffOddBitsBand;
+
+    friend void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality);
     
     TIFF	*hTIFF;
     GTiffDataset **ppoActiveDSRef;
@@ -351,6 +354,9 @@ class GTiffDataset : public GDALPamDataset
 
     int           bDontReloadFirstBlock; /* Hack for libtiff 3.X and #3633 */
 
+    int           nZLevel;
+    int           nJpegQuality;
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -411,6 +417,12 @@ class GTiffDataset : public GDALPamDataset
 
     CPLErr   WriteEncodedTileOrStrip(uint32 tile_or_strip, void* data, int bPreserveDataBuffer);
 };
+
+void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality)
+{
+    CPLAssert(EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hGTIFFDS)), "GTIFF"));
+    ((GTiffDataset*)hGTIFFDS)->nJpegQuality = nJpegQuality;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -2749,6 +2761,9 @@ GTiffDataset::GTiffDataset()
     bClipWarn = FALSE;
     bHasWarnedDisableAggressiveBandCaching = FALSE;
     bDontReloadFirstBlock = FALSE;
+
+    nZLevel = -1;
+    nJpegQuality = -1;
 }
 
 /************************************************************************/
@@ -3209,7 +3224,7 @@ void GTiffDataset::Crystalize()
 
         TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTiffDataset::Crystalize");
 
- 	// Keep zip and tiff quality, and jpegcolormode which get reset when we call 
+        // Keep zip and tiff quality, and jpegcolormode which get reset when we call 
         // TIFFWriteDirectory 
         int jquality = -1, zquality = -1, nColorMode = -1; 
         TIFFGetField(hTIFF, TIFFTAG_JPEGQUALITY, &jquality); 
@@ -3692,7 +3707,20 @@ CPLErr GTiffDataset::IBuildOverviews(
             }
 
             poODS = new GTiffDataset();
-            if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nOverviewOffset, FALSE, 
+            poODS->nJpegQuality = nJpegQuality;
+            poODS->nZLevel = nZLevel;
+
+            if( nCompression == COMPRESSION_JPEG )
+            {
+                if ( CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ) != NULL )
+                {
+                    poODS->nJpegQuality =  atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
+                }
+                TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY,
+                               poODS->nJpegQuality );
+            }
+    
+            if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nOverviewOffset, FALSE,
                                    GA_Update ) != CE_None )
             {
                 delete poODS;
@@ -4673,13 +4701,8 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
         return TRUE;
     }
 
-    int jquality = -1, zquality = -1; 
-
     if( GetAccess() == GA_Update )
     {
-        TIFFGetField(hTIFF, TIFFTAG_JPEGQUALITY, &jquality); 
-        TIFFGetField(hTIFF, TIFFTAG_ZIPQUALITY, &zquality); 
-
         if( *ppoActiveDSRef != NULL )
             (*ppoActiveDSRef)->FlushDirectory();
     }
@@ -4721,15 +4744,15 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
 /* -------------------------------------------------------------------- */
     if( GetAccess() == GA_Update )
     {
-        // Now, reset zip and jpeg quality. 
-        if(jquality > 0) 
+        // Now, reset zip and jpeg quality.
+        if(nJpegQuality > 0 && nCompression == COMPRESSION_JPEG)
         {
             CPLDebug( "GTiff", "Propgate JPEG_QUALITY(%d) in SetDirectory()",
-                      jquality );
-            TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, jquality); 
+                      nJpegQuality );
+            TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality); 
         }
-        if(zquality > 0) 
-            TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, zquality);
+        if(nZLevel > 0 && nCompression == COMPRESSION_ADOBE_DEFLATE)
+            TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, nZLevel);
     }
 
     return nSetDirResult;
@@ -6794,7 +6817,10 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /*      to decide if a TFW file should be written).                     */
 /* -------------------------------------------------------------------- */
     poDS->papszCreationOptions = CSLDuplicate( papszParmList );
-    
+
+    poDS->nZLevel = GTiffGetZLevel(papszParmList);
+    poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -7363,20 +7389,22 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* been lost a few lines above when closing the newly create TIFF file */
     /* The TIFFTAG_ZIPQUALITY & TIFFTAG_JPEGQUALITY are not store in the TIFF file. */
     /* They are just TIFF session parameters */
+
+    poDS->nZLevel = GTiffGetZLevel(papszOptions);
+    poDS->nJpegQuality = GTiffGetJpegQuality(papszOptions);
+
     if (nCompression == COMPRESSION_ADOBE_DEFLATE)
     {
-        int nZLevel = GTiffGetZLevel(papszOptions);
-        if (nZLevel != -1)
+        if (poDS->nZLevel != -1)
         {
-            TIFFSetField( hTIFF, TIFFTAG_ZIPQUALITY, nZLevel );
+            TIFFSetField( hTIFF, TIFFTAG_ZIPQUALITY, poDS->nZLevel );
         }
     }
     else if( nCompression == COMPRESSION_JPEG)
     {
-        int nJpegQuality = GTiffGetJpegQuality(papszOptions);
-        if (nJpegQuality != -1)
+        if (poDS->nJpegQuality != -1)
         {
-            TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality );
+            TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, poDS->nJpegQuality );
         }
     }
 
