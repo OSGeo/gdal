@@ -3348,6 +3348,216 @@ def tiff_write_88():
     return 'success'
 
 ###############################################################################
+# Test JPEG_QUALITY propagation while creating a (defalte compressed) mask band
+
+def tiff_write_89():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+
+    last_size = 0
+    for quality in [90, 75, 30]:
+        src_ds = gdal.Open('../gdrivers/data/utm.tif')
+
+        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_89.tif', 1024, 1024, 3, \
+            options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality ])
+
+        gdal.SetConfigOption( 'GDAL_TIFF_INTERNAL_MASK', 'YES' )
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        gdal.SetConfigOption( 'GDAL_TIFF_INTERNAL_MASK', None )
+
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(1).GetMaskBand().Fill(255)
+
+        src_ds = None
+        ds = None
+
+        f = open('tmp/tiff_write_89.tif', 'rb')
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.close()
+
+        print('quality = %d, size = %d' % (quality, size))
+
+        if quality != 90:
+            if size >= last_size:
+                gdaltest.post_reason('did not get decreasing file sizes')
+                print(size)
+                print(last_size)
+                return 'fail'
+
+        last_size = size
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_89.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test JPEG_QUALITY propagation while creating (internal) overviews
+
+def tiff_write_90():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+
+    last_size = 0
+    for quality in [90, 75, 30]:
+        src_ds = gdal.Open('../gdrivers/data/utm.tif')
+
+        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_90.tif', 1024, 1024, 3, \
+            options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality ])
+
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
+        ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+
+        src_ds = None
+        ds = None
+
+        f = open('tmp/tiff_write_90.tif', 'rb')
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.close()
+
+        print('quality = %d, size = %d' % (quality, size))
+
+        if quality != 90:
+            if size >= last_size:
+                gdaltest.post_reason('did not get decreasing file sizes')
+                print(size)
+                print(last_size)
+                return 'fail'
+
+        last_size = size
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_90.tif' )
+
+    return 'success'
+
+
+###############################################################################
+# Test JPEG_QUALITY propagation while creating (internal) overviews after re-opening
+
+def tiff_write_91():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+
+    last_size = 0
+    for quality in [90, 75, 30]:
+        src_ds = gdal.Open('../gdrivers/data/utm.tif')
+
+        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_91.tif', 1024, 1024, 3, \
+            options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality ])
+
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
+        ds = None
+
+        ds = gdal.Open('tmp/tiff_write_91.tif', gdal.GA_Update)
+        gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', '%d' % quality)
+        ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+        gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', None)
+
+        src_ds = None
+        ds = None
+
+        f = open('tmp/tiff_write_91.tif', 'rb')
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.close()
+
+        print('quality = %d, size = %d' % (quality, size))
+
+        if quality != 90:
+            if size >= last_size:
+                gdaltest.post_reason('did not get decreasing file sizes')
+                print(size)
+                print(last_size)
+                return 'fail'
+
+        last_size = size
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_91.tif' )
+
+    return 'success'
+
+
+###############################################################################
+# Test the effect of JPEG_QUALITY_OVERVIEW while creating (internal) overviews after re-opening
+
+def tiff_write_92():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+
+    last_size = 0
+    quality = 30
+    for use_jpeg_quality_overview in [False, True]:
+        src_ds = gdal.Open('../gdrivers/data/utm.tif')
+
+        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_92.tif', 1024, 1024, 3, \
+            options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality ])
+
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
+        ds = None
+
+        ds = gdal.Open('tmp/tiff_write_92.tif', gdal.GA_Update)
+        if use_jpeg_quality_overview:
+            gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', '%d' % quality)
+        ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+        gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', None)
+
+        src_ds = None
+        ds = None
+
+        f = open('tmp/tiff_write_92.tif', 'rb')
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.close()
+
+        print('quality = %d, size = %d' % (quality, size))
+
+        if use_jpeg_quality_overview:
+            if size >= last_size:
+                gdaltest.post_reason('did not get decreasing file sizes')
+                print(size)
+                print(last_size)
+                return 'fail'
+
+        last_size = size
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_92.tif' )
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3446,6 +3656,10 @@ gdaltest_list = [
     tiff_write_86,
     tiff_write_87,
     tiff_write_88,
+    tiff_write_89,
+    tiff_write_90,
+    tiff_write_91,
+    tiff_write_92,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
