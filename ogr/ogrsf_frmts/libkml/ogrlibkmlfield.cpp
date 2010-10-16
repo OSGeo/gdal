@@ -1184,9 +1184,24 @@ void kml2field (
                 /***** if it has trxt set the field *****/
 
                 if ( iField > -1 && poKmlSimpleData->has_text (  ) ) {
-                    const string oText = poKmlSimpleData->get_text (  );
+                    string oText = poKmlSimpleData->get_text (  );
 
-                    poOgrFeat->SetField ( iField, oText.c_str (  ) );
+                    /* SerializePretty() adds a new line before the data */
+                    /* ands trailing spaces. I believe this is wrong */
+                    /* as it breaks round-tripping */
+
+                    /* Trim trailing spaces */
+                    while (oText.size() != 0 && oText[oText.size()-1] == ' ')
+                        oText.resize(oText.size()-1);
+
+                    /* Skip leading newline and spaces */
+                    const char* pszText = oText.c_str (  );
+                    if (pszText[0] == '\n')
+                        pszText ++;
+                    while (pszText[0] == ' ')
+                        pszText ++;
+
+                    poOgrFeat->SetField ( iField, pszText );
                 }
             }
         }
