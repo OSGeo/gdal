@@ -573,21 +573,6 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         bZIP = TRUE;
     }
 
-    if (strstr((const char*)pabyData, "<ServiceExceptionReport") != NULL ||
-        strstr((const char*)pabyData, "<ows:ExceptionReport") != NULL)
-    {
-        if (poDS->IsOldDeegree((const char*)pabyData))
-        {
-            CPLHTTPDestroyResult(psResult);
-            return FetchGetFeature(nMaxFeatures);
-        }
-
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                 pabyData);
-        CPLHTTPDestroyResult(psResult);
-        return NULL;
-    }
-
     int bRetry = FALSE;
 
     /* Deegree server does not support PropertyIsNotEqualTo */
@@ -624,6 +609,21 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
 
         CPLHTTPDestroyResult(psResult);
         return FetchGetFeature(nMaxFeatures);
+    }
+
+    if (strstr((const char*)pabyData, "<ServiceExceptionReport") != NULL ||
+        strstr((const char*)pabyData, "<ows:ExceptionReport") != NULL)
+    {
+        if (poDS->IsOldDeegree((const char*)pabyData))
+        {
+            CPLHTTPDestroyResult(psResult);
+            return FetchGetFeature(nMaxFeatures);
+        }
+
+        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                 pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
     }
 
     CPLString osTmpFileName;
