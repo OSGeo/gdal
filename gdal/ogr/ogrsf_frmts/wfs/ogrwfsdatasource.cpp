@@ -240,8 +240,8 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
 /*                    FindSubStringInsensitive()                        */
 /************************************************************************/
 
-static const char* FindSubStringInsensitive(const char* pszStr,
-                                            const char* pszSubStr)
+const char* FindSubStringInsensitive(const char* pszStr,
+                                     const char* pszSubStr)
 {
     while(*pszStr)
     {

@@ -47,6 +47,9 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
                                     int bGmlObjectIdNeedsGMLPrefix,
                                     int* pbOutNeedsNullCheck );
 
+const char* FindSubStringInsensitive(const char* pszStr,
+                                     const char* pszSubStr);
+
 /************************************************************************/
 /*                             OGRWFSLayer                              */
 /************************************************************************/
