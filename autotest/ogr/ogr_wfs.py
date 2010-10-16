@@ -45,7 +45,7 @@ import webserver
 # Test underlying OGR drivers
 #
 
-def ogr_wfs_1():
+def ogr_wfs_init():
 
     gdaltest.wfs_drv = None
 
@@ -78,7 +78,7 @@ def ogr_wfs_1():
 ###############################################################################
 # Test reading a MapServer WFS server
 
-def ogr_wfs_2():
+def ogr_wfs_mapserver():
     if gdaltest.wfs_drv is None:
         return 'skip'
     if not gdaltest.have_gml_reader:
@@ -132,7 +132,7 @@ def ogr_wfs_2():
 ###############################################################################
 # Test reading a GeoServer WFS server
 
-def ogr_wfs_3():
+def ogr_wfs_geoserver():
     if gdaltest.wfs_drv is None:
         return 'skip'
     if not gdaltest.have_gml_reader:
@@ -234,7 +234,7 @@ def ogr_wfs_3():
 ###############################################################################
 # Test reading a GeoServer WFS server with OUTPUTFORMAT=json
 
-def ogr_wfs_4():
+def ogr_wfs_geoserver_json():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -268,8 +268,6 @@ def ogr_wfs_4():
         gdaltest.post_reason('did not get OLCFastFeatureCount')
         return 'fail'
 
-    ds = ogr.Open('WFS:http://sigma.openplans.org/geoserver/ows?TYPENAME=za:za_points&MAXFEATURES=10&OUTPUTFORMAT=json')
-    lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
@@ -284,9 +282,58 @@ def ogr_wfs_4():
 
 
 ###############################################################################
+# Test reading a GeoServer WFS server with OUTPUTFORMAT=SHAPE-ZIP
+
+def ogr_wfs_geoserver_shapezip():
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    if gdaltest.gdalurlopen('http://sigma.openplans.org/geoserver/ows') is None:
+        print('cannot open URL')
+        return 'skip'
+
+    ds = ogr.Open('WFS:http://sigma.openplans.org/geoserver/ows?TYPENAME=za:za_points&MAXFEATURES=10&OUTPUTFORMAT=SHAPE-ZIP')
+    if ds is None:
+        gdaltest.post_reason('did not managed to open WFS datastore')
+        return 'fail'
+
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('did not get expected layer count')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'za:za_points':
+        gdaltest.post_reason('did not get expected layer name')
+        print(lyr.GetName())
+        return 'fail'
+
+    feat_count = lyr.GetFeatureCount()
+    if feat_count != 10:
+        gdaltest.post_reason('did not get expected feature count')
+        print(feat_count)
+        return 'fail'
+
+    if not lyr.TestCapability(ogr.OLCFastFeatureCount):
+        gdaltest.post_reason('did not get OLCFastFeatureCount')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    geom_wkt = geom.ExportToWkt()
+    if feat.GetField('name') != 'Alexander Bay' or \
+       ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
+                                      max_error = 0.000000001 ) != 0:
+        gdaltest.post_reason('did not get expected feature')
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test reading a Deegree WFS server
 
-def ogr_wfs_5():
+def ogr_wfs_deegree():
     if gdaltest.wfs_drv is None:
         return 'skip'
     if not gdaltest.have_gml_reader:
@@ -347,7 +394,7 @@ def ogr_wfs_5():
 ###############################################################################
 # Run test_ogrsf
 
-def ogr_wfs_6():
+def ogr_wfs_test_ogrsf():
     if gdaltest.wfs_drv is None:
         return 'skip'
     if not gdaltest.have_gml_reader:
@@ -372,7 +419,7 @@ def ogr_wfs_6():
 ###############################################################################
 # Test reading a local fake WFS server
 
-def ogr_wfs_7():
+def ogr_wfs_fake_wfs_server():
     if gdaltest.wfs_drv is None:
         return 'skip'
     if not gdaltest.have_gml_reader:
@@ -420,7 +467,7 @@ def ogr_wfs_7():
 ###############################################################################
 # Test CreateFeature() / UpdateFeature() / DeleteFeature() (WFS-T)
 
-def ogr_wfs_8():
+def ogr_wfs_geoserver_wfst():
     if gdaltest.wfs_drv is None:
         return 'skip'
     if not gdaltest.have_gml_reader:
@@ -512,7 +559,7 @@ def ogr_wfs_8():
 # Test CreateFeature() / UpdateFeature() / DeleteFeature() with expected
 # failure due to server not allowing insert & delete
 
-def ogr_wfs_9():
+def ogr_wfs_deegree_wfst():
 
     if gdaltest.wfs_drv is None:
         return 'skip'
@@ -557,7 +604,7 @@ def ogr_wfs_9():
 # Test opening a datasource from a XML description file
 # The following test should issue 0 WFS http request
 
-def ogr_wfs_10():
+def ogr_wfs_xmldescriptionfile():
 
     if gdaltest.wfs_drv is None:
         return 'skip'
@@ -583,16 +630,17 @@ def ogr_wfs_10():
     return 'success'
 
 gdaltest_list = [ 
-    ogr_wfs_1,
-    ogr_wfs_2,
-    ogr_wfs_3,
-    ogr_wfs_4,
-    ogr_wfs_5,
-    ogr_wfs_6,
-    ogr_wfs_7,
-    #ogr_wfs_8,
-    ogr_wfs_9,
-    ogr_wfs_10
+    ogr_wfs_init,
+    ogr_wfs_mapserver,
+    ogr_wfs_geoserver,
+    ogr_wfs_geoserver_json,
+    ogr_wfs_geoserver_shapezip,
+    ogr_wfs_deegree,
+    ogr_wfs_test_ogrsf,
+    ogr_wfs_fake_wfs_server,
+    #ogr_wfs_geoserver_wfst,
+    ogr_wfs_deegree_wfst,
+    ogr_wfs_xmldescriptionfile
     ]
 
 if __name__ == '__main__':
