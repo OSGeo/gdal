@@ -47,6 +47,7 @@ CPL_CVSID("$Id$");
 CPL_C_START
 int    GTiffOneTimeInit();
 void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
+void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality);
 CPL_C_END
 
 /************************************************************************/
@@ -697,8 +698,10 @@ GTIFFBuildOverviews( const char * pszFilename,
     if( nCompression == COMPRESSION_JPEG 
         && CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ) != NULL )
     {
+        int nJpegQuality = atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
         TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, 
-                      atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75")) );
+                      nJpegQuality );
+        GTIFFSetJpegQuality((GDALDatasetH)hODS, nJpegQuality);
     }
 
 /* -------------------------------------------------------------------- */
