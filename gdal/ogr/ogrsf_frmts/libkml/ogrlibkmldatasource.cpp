@@ -1248,7 +1248,28 @@ int OGRLIBKMLDataSource::Open (
         return OpenKmz ( pszFilename, bUpdate );
 
     else
+    {
+        char szBuffer[1024+1];
+        FILE* fp = VSIFOpenL(pszFilename, "rb");
+        if (fp == NULL)
+            return FALSE;
+
+        int nRead = VSIFReadL(szBuffer, 1, 1024, fp);
+        szBuffer[nRead] = 0;
+
+        VSIFCloseL(fp);
+
+        /* Does it look like a zip file ? */
+        if (nRead == 1024 &&
+            szBuffer[0] == 0x50 && szBuffer[1] == 0x4B &&
+            szBuffer[2] == 0x03  && szBuffer[3] == 0x04)
+            return OpenKmz ( pszFilename, bUpdate );
+
+        if (strstr(szBuffer, "<kml>") || strstr(szBuffer, "<kml xmlns="))
+            return OpenKml ( pszFilename, bUpdate );
+        
         return FALSE;
+    }
 
     return TRUE;
 }
