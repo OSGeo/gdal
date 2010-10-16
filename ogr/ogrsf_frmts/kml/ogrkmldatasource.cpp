@@ -66,10 +66,9 @@ OGRKMLDataSource::~OGRKMLDataSource()
 {
     if( fpOutput_ != NULL )
     {
-        VSIFPrintf( fpOutput_, "%s", "</Folder></Document></kml>\n" );
+        VSIFPrintfL( fpOutput_, "%s", "</Folder></Document></kml>\n" );
 
-        if( fpOutput_ != stdout )
-            VSIFClose( fpOutput_ );
+        VSIFCloseL( fpOutput_ );
     }
 
     CSLDestroy( papszCreateOptions_ );
@@ -282,11 +281,10 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 /* -------------------------------------------------------------------- */
     pszName_ = CPLStrdup( pszName );
 
-    if( EQUAL(pszName, "stdout") )
-        fpOutput_ = stdout;
-    else
-        fpOutput_ = VSIFOpen( pszName, "wt+" );
+    if( EQUAL(pszName, "stdout") || EQUAL(pszName, "/vsistdout/") )
+        pszName = "/vsistdout/";
 
+    fpOutput_ = VSIFOpenL( pszName, "wb" );
     if( fpOutput_ == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -297,11 +295,11 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Write out "standard" header.                                    */
 /* -------------------------------------------------------------------- */
-    VSIFPrintf( fpOutput_, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
+    VSIFPrintfL( fpOutput_, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
 
-    nSchemaInsertLocation_ = VSIFTell( fpOutput_ );
+    nSchemaInsertLocation_ = VSIFTellL( fpOutput_ );
     
-    VSIFPrintf( fpOutput_, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n<Document>" );
+    VSIFPrintfL( fpOutput_, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n<Document>" );
 
     return TRUE;
 }
@@ -336,7 +334,7 @@ OGRKMLDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     if (GetLayerCount() > 0)
     {
-        VSIFPrintf( fpOutput_, "</Folder>\n");
+        VSIFPrintfL( fpOutput_, "</Folder>\n");
     }
     
 /* -------------------------------------------------------------------- */
@@ -351,7 +349,7 @@ OGRKMLDataSource::CreateLayer( const char * pszLayerName,
                   "Layer name '%s' adjusted to '%s' for XML validity.",
                   pszLayerName, pszCleanLayerName );
     }
-    VSIFPrintf( fpOutput_, "<Folder><name>%s</name>\n", pszCleanLayerName);
+    VSIFPrintfL( fpOutput_, "<Folder><name>%s</name>\n", pszCleanLayerName);
     
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
