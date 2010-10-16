@@ -1270,8 +1270,6 @@ int OGRLIBKMLDataSource::Open (
         
         return FALSE;
     }
-
-    return TRUE;
 }
 
 /******************************************************************************
