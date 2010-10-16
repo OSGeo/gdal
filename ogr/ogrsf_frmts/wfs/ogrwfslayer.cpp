@@ -38,6 +38,46 @@
 
 CPL_CVSID("$Id$");
 
+
+/************************************************************************/
+/*                      OGRWFSRecursiveUnlink()                         */
+/************************************************************************/
+
+static void OGRWFSRecursiveUnlink( const char *pszName )
+
+{
+    char **papszFileList;
+    int i;
+
+    papszFileList = CPLReadDir( pszName );
+
+    for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
+    {
+        VSIStatBufL  sStatBuf;
+
+        if( EQUAL(papszFileList[i],".") || EQUAL(papszFileList[i],"..") )
+            continue;
+
+        CPLString osFullFilename =
+                 CPLFormFilename( pszName, papszFileList[i], NULL );
+
+        VSIStatL( osFullFilename, &sStatBuf );
+
+        if( VSI_ISREG( sStatBuf.st_mode ) )
+        {
+            VSIUnlink( osFullFilename );
+        }
+        else if( VSI_ISDIR( sStatBuf.st_mode ) )
+        {
+            OGRWFSRecursiveUnlink( osFullFilename );
+        }
+    }
+
+    CSLDestroy( papszFileList );
+
+    VSIRmdir( pszName );
+}
+
 /************************************************************************/
 /*                            OGRWFSLayer()                             */
 /************************************************************************/
@@ -105,15 +145,8 @@ OGRWFSLayer::~OGRWFSLayer()
 
     delete poFetchedFilterGeom;
 
-    CPLString osTmpFileName;
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.gfs", this);
-    VSIUnlink(osTmpFileName.c_str());
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.gml", this);
-    VSIUnlink(osTmpFileName.c_str());
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.xsd", this);
-    VSIUnlink(osTmpFileName.c_str());
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.geojson", this);
-    VSIUnlink(osTmpFileName.c_str());
+    CPLString osTmpDirName = CPLSPrintf("/vsimem/tempwfs_%p", this);
+    OGRWFSRecursiveUnlink(osTmpDirName);
 }
 
 /************************************************************************/
@@ -213,7 +246,7 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
 
     CPLString osTmpFileName;
 
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.xsd", this);
+    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
     CPLSerializeXMLTreeToFile(psSchema, osTmpFileName);
 
     std::vector<GMLFeatureClass*> aosClasses;
@@ -413,6 +446,36 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
     return osURL;
 }
 
+
+/************************************************************************/
+/*               OGRWFSFetchContentDispositionFilename()                */
+/************************************************************************/
+
+const char* OGRWFSFetchContentDispositionFilename(char** papszHeaders)
+{
+    char** papszIter = papszHeaders;
+    while(papszIter && *papszIter)
+    {
+        /* For multipart, we have in raw format, but without end-of-line characters */
+        if (strncmp(*papszIter, "Content-Disposition: attachment; filename=", 42) == 0)
+        {
+            return *papszIter + 42;
+        }
+        /* For single part, the headers are in KEY=VAL format, but with e-o-l ... */
+        else if (strncmp(*papszIter, "Content-Disposition=attachment; filename=", 41) == 0)
+        {
+            char* pszVal = (char*)(*papszIter + 41);
+            char* pszEOL = strchr(pszVal, '\r');
+            if (pszEOL) *pszEOL = 0;
+            pszEOL = strchr(pszVal, '\n');
+            if (pszEOL) *pszEOL = 0;
+            return pszVal;
+        }
+        papszIter ++;
+    }
+    return NULL;
+}
+
 /************************************************************************/
 /*                         FetchGetFeature()                            */
 /************************************************************************/
@@ -429,24 +492,98 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         return NULL;
     }
 
+    const char* pszContentType = "";
+    if (psResult->pszContentType)
+        pszContentType = psResult->pszContentType;
+
+    CPLString osTmpDirName = CPLSPrintf("/vsimem/tempwfs_%p", this);
+    VSIMkdir(osTmpDirName, 0);
+
+    GByte *pabyData = psResult->pabyData;
+    int    nDataLen = psResult->nDataLen;
+    int bIsMultiPart = FALSE;
+    const char* pszAttachementFilename = NULL;
+
+    if(strstr(pszContentType,"multipart")
+        && CPLHTTPParseMultipartMime(psResult) )
+    {
+        int i;
+        bIsMultiPart = TRUE;
+        OGRWFSRecursiveUnlink(osTmpDirName);
+        VSIMkdir(osTmpDirName, 0);
+        for(i=0;i<psResult->nMimePartCount;i++)
+        {
+            CPLString osTmpFileName = osTmpDirName + "/";
+            pszAttachementFilename =
+                OGRWFSFetchContentDispositionFilename(
+                    psResult->pasMimePart[i].papszHeaders);
+
+            if (pszAttachementFilename)
+                osTmpFileName += pszAttachementFilename;
+            else
+                osTmpFileName += CPLSPrintf("file_%d", i);
+
+            GByte* pData = (GByte*)VSIMalloc(psResult->pasMimePart[i].nDataLen);
+            if (pData)
+            {
+                memcpy(pData, psResult->pasMimePart[i].pabyData, psResult->pasMimePart[i].nDataLen);
+                FILE *fp = VSIFileFromMemBuffer( osTmpFileName,
+                                                pData,
+                                                psResult->pasMimePart[i].nDataLen, TRUE);
+                VSIFCloseL(fp);
+            }
+        }
+    }
+    else
+        pszAttachementFilename =
+                OGRWFSFetchContentDispositionFilename(
+                    psResult->papszHeaders);
+
     int bJSON = FALSE;
-    if (psResult->pszContentType != NULL &&
-        strstr(psResult->pszContentType, "application/json") != NULL &&
-        strcmp(WFS_FetchValueFromURL(osURL, "OUTPUTFORMAT"), "json") == 0)
+    int bCSV = FALSE;
+    int bKML = FALSE;
+    int bKMZ = FALSE;
+    int bZIP = FALSE;
+
+    CPLString osOutputFormat = WFS_FetchValueFromURL(osURL, "OUTPUTFORMAT");
+    const char* pszOutputFormat = osOutputFormat.c_str();
+
+    if (FindSubStringInsensitive(pszContentType, "json") ||
+        FindSubStringInsensitive(pszOutputFormat, "json"))
     {
         bJSON = TRUE;
     }
-
-    if (strstr((const char*)psResult->pabyData, "<ServiceExceptionReport") != NULL)
+    else if (FindSubStringInsensitive(pszContentType, "csv") ||
+             FindSubStringInsensitive(pszOutputFormat, "csv"))
     {
-        if (poDS->IsOldDeegree((const char*)psResult->pabyData))
+        bCSV = TRUE;
+    }
+    else if (FindSubStringInsensitive(pszContentType, "kml") ||
+             FindSubStringInsensitive(pszOutputFormat, "kml"))
+    {
+        bKML = TRUE;
+    }
+    else if (FindSubStringInsensitive(pszContentType, "kmz") ||
+             FindSubStringInsensitive(pszOutputFormat, "kmz"))
+    {
+        bKMZ = TRUE;
+    }
+    else if (strstr(pszContentType, "application/zip") != NULL)
+    {
+        bZIP = TRUE;
+    }
+
+    if (strstr((const char*)pabyData, "<ServiceExceptionReport") != NULL ||
+        strstr((const char*)pabyData, "<ows:ExceptionReport") != NULL)
+    {
+        if (poDS->IsOldDeegree((const char*)pabyData))
         {
             CPLHTTPDestroyResult(psResult);
             return FetchGetFeature(nMaxFeatures);
         }
 
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                 psResult->pabyData);
+                 pabyData);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
@@ -456,7 +593,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     /* Deegree server does not support PropertyIsNotEqualTo */
     /* We have to turn it into <Not><PropertyIsEqualTo> */
     if (osWFSWhere.size() != 0 && poDS->PropertyIsNotEqualToSupported() &&
-        strstr((const char*)psResult->pabyData, "Unknown comparison operation: 'PropertyIsNotEqualTo'") != NULL)
+        strstr((const char*)pabyData, "Unknown comparison operation: 'PropertyIsNotEqualTo'") != NULL)
     {
         poDS->SetPropertyIsNotEqualToUnSupported();
         bRetry = TRUE;
@@ -465,7 +602,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     /* Deegree server requires the gml: prefix in GmlObjectId element, but ESRI */
     /* doesn't like it at all ! Other servers don't care... */
     if (osWFSWhere.size() != 0 && !poDS->DoesGmlObjectIdNeedGMLPrefix() &&
-        strstr((const char*)psResult->pabyData, "&lt;GmlObjectId&gt; requires 'gml:id'-attribute!") != NULL)
+        strstr((const char*)pabyData, "&lt;GmlObjectId&gt; requires 'gml:id'-attribute!") != NULL)
     {
         poDS->SetGmlObjectIdNeedsGMLPrefix();
         bRetry = TRUE;
@@ -473,7 +610,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
 
     /* GeoServer can return the error 'Only FeatureIds are supported when encoding id filters to SDE' */
     if (osWFSWhere.size() != 0 && !bUseFeatureIdAtLayerLevel &&
-        strstr((const char*)psResult->pabyData, "Only FeatureIds are supported") != NULL)
+        strstr((const char*)pabyData, "Only FeatureIds are supported") != NULL)
     {
         bUseFeatureIdAtLayerLevel = TRUE;
         bRetry = TRUE;
@@ -491,28 +628,81 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
 
     CPLString osTmpFileName;
 
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.gfs", this);
-    VSIUnlink(osTmpFileName.c_str());
+    if (!bIsMultiPart)
+    {
+        if (bJSON)
+            osTmpFileName = osTmpDirName + "/file.geojson";
+        else if (bZIP)
+            osTmpFileName = osTmpDirName + "/file.zip";
+        else if (bCSV)
+            osTmpFileName = osTmpDirName + "/file.csv";
+        else if (bKML)
+            osTmpFileName = osTmpDirName + "/file.kml";
+        else if (bKMZ)
+            osTmpFileName = osTmpDirName + "/file.kmz";
+        /* GML is a special case. It needs the .xsd file that has been saved */
+        /* as file.xsd, so we cannot used the attachement filename */
+        else if (pszAttachementFilename &&
+                 !EQUAL(CPLGetExtension(pszAttachementFilename), "GML"))
+        {
+            osTmpFileName = osTmpDirName + "/";
+            osTmpFileName += pszAttachementFilename;
+        }
+        else
+        {
+            osTmpFileName = osTmpDirName + "/file.gfs";
+            VSIUnlink(osTmpFileName);
 
-    if (bJSON)
-        osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.geojson", this);
+            osTmpFileName = osTmpDirName + "/file.gml";
+        }
+
+        FILE *fp = VSIFileFromMemBuffer( osTmpFileName, pabyData,
+                                        nDataLen, TRUE);
+        VSIFCloseL(fp);
+        psResult->pabyData = NULL;
+
+        if (bZIP)
+        {
+            osTmpFileName = "/vsizip/" + osTmpFileName;
+        }
+    }
     else
-        osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p.gml", this);
+    {
+        pabyData = NULL;
+        nDataLen = 0;
+        osTmpFileName = osTmpDirName;
+    }
 
-    GByte* pData = psResult->pabyData;
-    FILE *fp = VSIFileFromMemBuffer( osTmpFileName, psResult->pabyData,
-                                     psResult->nDataLen, TRUE);
-    VSIFCloseL(fp);
-    psResult->pabyData = NULL;
     CPLHTTPDestroyResult(psResult);
 
-    OGRDataSource* poDS = (OGRDataSource*) OGROpen(osTmpFileName, FALSE, NULL);
+    OGRDataSource* poDS;
+
+    poDS = (OGRDataSource*) OGROpen(osTmpFileName, FALSE, NULL);
+    if (poDS == NULL && (bZIP || bIsMultiPart))
+    {
+        char** papszFileList = VSIReadDir(osTmpFileName);
+        int i;
+        for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
+        {
+            CPLString osFullFilename =
+                    CPLFormFilename( osTmpFileName, papszFileList[i], NULL );
+            poDS = (OGRDataSource*) OGROpen(osFullFilename, FALSE, NULL);
+            if (poDS != NULL)
+                break;
+        }
+
+        CSLDestroy( papszFileList );
+    }
+
     if (poDS == NULL)
     {
-        if (!bJSON && strstr((const char*)pData, "<wfs:FeatureCollection") == NULL)
+        if (pabyData != NULL && !bJSON && !bZIP &&
+            strstr((const char*)pabyData, "<wfs:FeatureCollection") == NULL)
         {
+            if (nDataLen > 1000)
+                pabyData[1000] = 0;
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "Error: %s", pData);
+                    "Error: cannot parse %s", pabyData);
         }
         return NULL;
     }
@@ -553,7 +743,7 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(CPLXMLNode* psSchema)
     OGRFeatureDefn* poSrcFDefn = NULL;
     if (psSchema)
         poSrcFDefn = ParseSchema(psSchema);
-    else if (strcmp(WFS_FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
+    else
         poSrcFDefn = DescribeFeatureType();
     if (poSrcFDefn == NULL)
     {
@@ -707,6 +897,10 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         poNewFeature->SetFID(poSrcFeature->GetFID());
         poGeom = poNewFeature->GetGeometryRef();
 
+        /* FIXME? I don't really know what we should do with WFS 1.1.0 */
+        /* and non-GML format !!! I guess 50% WFS servers must do it wrong anyway */
+        /* GeoServer does currently axis inversion for non GML output, but */
+        /* apparently this is not correct : http://jira.codehaus.org/browse/GEOS-3657 */
         if (bAxisOrderAlreadyInverted &&
             strcmp(poBaseDS->GetDriver()->GetName(), "GML") != 0)
         {
@@ -914,9 +1108,15 @@ int OGRWFSLayer::GetFeatureCount( int bForce )
     if (TestCapability(OLCFastFeatureCount))
         return poBaseLayer->GetFeatureCount(bForce);
 
+    CPLString osOutputFormat = WFS_FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT");
+    const char* pszOutputFormat = osOutputFormat.c_str();
     if ((m_poAttrQuery == NULL || osWFSWhere.size() != 0) &&
          poDS->GetFeatureSupportHits() &&
-         strcmp(WFS_FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT"), "json") != 0)
+         !FindSubStringInsensitive(pszOutputFormat, "shape") &&
+         !FindSubStringInsensitive(pszOutputFormat, "json") &&
+         !FindSubStringInsensitive(pszOutputFormat, "csv") &&
+         !FindSubStringInsensitive(pszOutputFormat, "kml") &&
+         !FindSubStringInsensitive(pszOutputFormat, "kmz"))
     {
         nFeatures = ExecuteGetFeatureResultTypeHits();
         if (nFeatures >= 0)
