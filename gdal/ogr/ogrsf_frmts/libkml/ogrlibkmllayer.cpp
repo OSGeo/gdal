@@ -193,6 +193,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
         /***** get the schema if the layer is a Document *****/
 
+        m_poKmlSchema = NULL;
+
         if ( m_poKmlLayer->IsA ( kmldom::Type_Document ) ) {
             DocumentPtr poKmlDocument = AsDocument ( m_poKmlLayer );
 
@@ -204,7 +206,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
         /***** the schema is somewhere else *****/
 
-        else {
+        if (m_poKmlSchema == NULL) {
 
             /***** try to find the correct schema *****/
 
