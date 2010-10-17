@@ -47,6 +47,8 @@ OGRCSVDataSource::OGRCSVDataSource()
     pszName = NULL;
 
     bUpdate = FALSE;
+
+    fpZipMain = NULL;
 }
 
 /************************************************************************/
@@ -61,6 +63,9 @@ OGRCSVDataSource::~OGRCSVDataSource()
     CPLFree( papoLayers );
 
     CPLFree( pszName );
+
+    if (fpZipMain)
+        VSIFCloseL(fpZipMain);
 }
 
 /************************************************************************/
@@ -105,6 +110,10 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
     if (bUpdateIn && bForceOpen && EQUAL(pszFilename, "/vsistdout/"))
         return TRUE;
 
+    /* For writable /vsizip/, do nothing more */
+    if (bUpdateIn && bForceOpen && strncmp(pszFilename, "/vsizip/", 8) == 0)
+        return TRUE;
+    
     int bIgnoreExtension = EQUALN(pszFilename, "CSV:", 4);
     if (bIgnoreExtension)
         pszFilename += 4;
@@ -121,9 +130,27 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /*      Is this a single CSV file?                                      */
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(sStatBuf.st_mode)
-        && strlen(pszFilename) > 4
-        && (bIgnoreExtension || EQUAL(pszFilename+strlen(pszFilename)-4,".csv")) )
+        && (bIgnoreExtension || EQUAL(CPLGetExtension(pszFilename),"csv")) )
         return OpenTable( pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Is this a single a ZIP file with only a CSV file inside ?       */
+/* -------------------------------------------------------------------- */
+    if( strncmp(pszFilename, "/vsizip/", 8) == 0 &&
+        EQUAL(CPLGetExtension(pszFilename), "zip") &&
+        VSI_ISREG(sStatBuf.st_mode) )
+    {
+        char** papszFiles = VSIReadDir(pszFilename);
+        if (CSLCount(papszFiles) != 1 ||
+            !EQUAL(CPLGetExtension(papszFiles[0]), "CSV"))
+        {
+            CSLDestroy(papszFiles);
+            return FALSE;
+        }
+        CPLString osFilename = CPLFormFilename(pszFilename, papszFiles[0], NULL);
+        CSLDestroy(papszFiles);
+        return OpenTable( osFilename );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise it has to be a directory.                             */
@@ -267,7 +294,11 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    if( !EQUAL(pszName, "/vsistdout/") &&
+    if( strncmp(pszName, "/vsizip/", 8) == 0)
+    {
+        /* Do nothing */
+    }
+    else if( !EQUAL(pszName, "/vsistdout/") &&
         (VSIStatL( pszName, &sStatBuf ) != 0
         || !VSI_ISDIR( sStatBuf.st_mode )) )
     {
@@ -305,23 +336,6 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the empty file.                                          */
 /* -------------------------------------------------------------------- */
-    FILE *fp;
-
-    if( EQUAL(pszName, "/vsistdout/") )
-        fp = VSIFOpenL( osFilename, "wb" );
-    else 
-        fp = VSIFOpenL( osFilename, "w+b" );
-
-    if( fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create %s:\n%s", 
-                  osFilename.c_str(), VSIStrerror( errno ) );
-                  
-                  
-        return NULL;
-    }
-
 
     const char *pszDelimiter = CSLFetchNameValue( papszOptions, "SEPARATOR");
     char chDelimiter = ',';
@@ -348,7 +362,7 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
     
-    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, osFilename, TRUE, TRUE, chDelimiter );
+    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, NULL, osFilename, TRUE, TRUE, chDelimiter );
 
 /* -------------------------------------------------------------------- */
 /*      Was a partiuclar CRLF order requested?                          */
