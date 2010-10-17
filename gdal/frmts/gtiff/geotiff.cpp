@@ -7347,7 +7347,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     poDS->osProfile = pszProfile;
-    poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+    poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT & ~GCIF_MASK );
     poDS->papszCreationOptions = CSLDuplicate( papszOptions );
     poDS->bDontReloadFirstBlock = bDontReloadFirstBlock;
 
@@ -7610,6 +7610,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     
     GDALDestroyScaledProgress(pScaledData);
+
+    if (eErr == CE_None)
+    {
+        eErr = GDALDriver::DefaultCopyMasks( poSrcDS, poDS, bStrict );
+    }
 
     if( eErr == CE_Failure )
     {
