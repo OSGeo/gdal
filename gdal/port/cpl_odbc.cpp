@@ -368,7 +368,7 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
         return FALSE;
     }
 
-    SQLSetConnectOption( m_hDBC,SQL_LOGIN_TIMEOUT,5 );
+    SQLSetConnectOption( m_hDBC,SQL_LOGIN_TIMEOUT,30 );
 
     if( pszUserid == NULL )
         pszUserid = "";
