@@ -197,7 +197,7 @@ int  GenerateRootKml(const char* filename,
                      double west, 
                      int tilesize)
 {
-    FILE* fp = VSIFOpen(filename, "wb");
+    FILE* fp = VSIFOpenL(filename, "wb");
     if (fp == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s",
@@ -208,45 +208,45 @@ int  GenerateRootKml(const char* filename,
 
     const char* tmpfilename = CPLGetBasename(kmlfilename);
     // If we haven't writen any features yet, output the layer's schema
-    VSIFPrintf(fp, "<kml xmlns=\"http://earth.google.com/kml/2.1\">\n");
-    VSIFPrintf(fp, "\t<Document>\n");
-    VSIFPrintf(fp, "\t\t<name>%s</name>\n", tmpfilename);
-    VSIFPrintf(fp, "\t\t<description></description>\n");
-    VSIFPrintf(fp, "\t\t<Style>\n");
-    VSIFPrintf(fp, "\t\t\t<ListStyle id=\"hideChildren\">\n");
-    VSIFPrintf(fp, "\t\t\t\t<listItemType>checkHideChildren</listItemType>\n");
-    VSIFPrintf(fp, "\t\t\t</ListStyle>\n");
-    VSIFPrintf(fp, "\t\t</Style>\n");
-    VSIFPrintf(fp, "\t\t<Region>\n \t\t<LatLonAltBox>\n");
-    VSIFPrintf(fp, "\t\t\t\t<north>%f</north>\n", north);
-    VSIFPrintf(fp, "\t\t\t\t<south>%f</south>\n", south);
-    VSIFPrintf(fp, "\t\t\t\t<east>%f</east>\n", east);
-    VSIFPrintf(fp, "\t\t\t\t<west>%f</west>\n", west);
-    VSIFPrintf(fp, "\t\t\t</LatLonAltBox>\n");
-    VSIFPrintf(fp, "\t\t</Region>\n");
-    VSIFPrintf(fp, "\t\t<NetworkLink>\n");
-    VSIFPrintf(fp, "\t\t\t<open>1</open>\n");
-    VSIFPrintf(fp, "\t\t\t<Region>\n");
-    VSIFPrintf(fp, "\t\t\t\t<Lod>\n");
-    VSIFPrintf(fp, "\t\t\t\t\t<minLodPixels>%d</minLodPixels>\n", minlodpixels);
-    VSIFPrintf(fp, "\t\t\t\t\t<maxLodPixels>-1</maxLodPixels>\n");
-    VSIFPrintf(fp, "\t\t\t\t</Lod>\n");
-    VSIFPrintf(fp, "\t\t\t\t<LatLonAltBox>\n");
-    VSIFPrintf(fp, "\t\t\t\t\t<north>%f</north>\n", north);
-    VSIFPrintf(fp, "\t\t\t\t\t<south>%f</south>\n", south);
-    VSIFPrintf(fp, "\t\t\t\t\t<east>%f</east>\n", east);
-    VSIFPrintf(fp, "\t\t\t\t\t<west>%f</west>\n", west);
-    VSIFPrintf(fp, "\t\t\t\t</LatLonAltBox>\n");
-    VSIFPrintf(fp, "\t\t\t</Region>\n");
-    VSIFPrintf(fp, "\t\t\t<Link>\n");
-    VSIFPrintf(fp, "\t\t\t\t<href>0/0/0.kml</href>\n");
-    VSIFPrintf(fp, "\t\t\t\t<viewRefreshMode>onRegion</viewRefreshMode>\n");
-    VSIFPrintf(fp, "\t\t\t</Link>\n");
-    VSIFPrintf(fp, "\t\t</NetworkLink>\n");
-    VSIFPrintf(fp, "\t</Document>\n");
-    VSIFPrintf(fp, "</kml>\n");
+    VSIFPrintfL(fp, "<kml xmlns=\"http://earth.google.com/kml/2.1\">\n");
+    VSIFPrintfL(fp, "\t<Document>\n");
+    VSIFPrintfL(fp, "\t\t<name>%s</name>\n", tmpfilename);
+    VSIFPrintfL(fp, "\t\t<description></description>\n");
+    VSIFPrintfL(fp, "\t\t<Style>\n");
+    VSIFPrintfL(fp, "\t\t\t<ListStyle id=\"hideChildren\">\n");
+    VSIFPrintfL(fp, "\t\t\t\t<listItemType>checkHideChildren</listItemType>\n");
+    VSIFPrintfL(fp, "\t\t\t</ListStyle>\n");
+    VSIFPrintfL(fp, "\t\t</Style>\n");
+    VSIFPrintfL(fp, "\t\t<Region>\n \t\t<LatLonAltBox>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<north>%f</north>\n", north);
+    VSIFPrintfL(fp, "\t\t\t\t<south>%f</south>\n", south);
+    VSIFPrintfL(fp, "\t\t\t\t<east>%f</east>\n", east);
+    VSIFPrintfL(fp, "\t\t\t\t<west>%f</west>\n", west);
+    VSIFPrintfL(fp, "\t\t\t</LatLonAltBox>\n");
+    VSIFPrintfL(fp, "\t\t</Region>\n");
+    VSIFPrintfL(fp, "\t\t<NetworkLink>\n");
+    VSIFPrintfL(fp, "\t\t\t<open>1</open>\n");
+    VSIFPrintfL(fp, "\t\t\t<Region>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<Lod>\n");
+    VSIFPrintfL(fp, "\t\t\t\t\t<minLodPixels>%d</minLodPixels>\n", minlodpixels);
+    VSIFPrintfL(fp, "\t\t\t\t\t<maxLodPixels>-1</maxLodPixels>\n");
+    VSIFPrintfL(fp, "\t\t\t\t</Lod>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<LatLonAltBox>\n");
+    VSIFPrintfL(fp, "\t\t\t\t\t<north>%f</north>\n", north);
+    VSIFPrintfL(fp, "\t\t\t\t\t<south>%f</south>\n", south);
+    VSIFPrintfL(fp, "\t\t\t\t\t<east>%f</east>\n", east);
+    VSIFPrintfL(fp, "\t\t\t\t\t<west>%f</west>\n", west);
+    VSIFPrintfL(fp, "\t\t\t\t</LatLonAltBox>\n");
+    VSIFPrintfL(fp, "\t\t\t</Region>\n");
+    VSIFPrintfL(fp, "\t\t\t<Link>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<href>0/0/0.kml</href>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<viewRefreshMode>onRegion</viewRefreshMode>\n");
+    VSIFPrintfL(fp, "\t\t\t</Link>\n");
+    VSIFPrintfL(fp, "\t\t</NetworkLink>\n");
+    VSIFPrintfL(fp, "\t</Document>\n");
+    VSIFPrintfL(fp, "</kml>\n");
 
-    VSIFClose(fp);
+    VSIFCloseL(fp);
     return TRUE;
 }
 
@@ -316,7 +316,7 @@ int  GenerateChildKml(std::string filename,
         maxLodPix = 2048;
     }
 
-    FILE* fp = VSIFOpen(filename.c_str(), "wb");
+    FILE* fp = VSIFOpenL(filename.c_str(), "wb");
     if (fp == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s",
@@ -324,40 +324,40 @@ int  GenerateChildKml(std::string filename,
         return FALSE;
     }
 
-    VSIFPrintf(fp, "<kml xmlns=\"http://earth.google.com/kml/2.1\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n");
-    VSIFPrintf(fp, "\t<Document>\n");
-    VSIFPrintf(fp, "\t\t<name>%d/%d/%d.kml</name>\n", zoom, ix, iy);
-    VSIFPrintf(fp, "\t\t<Style>\n");
-    VSIFPrintf(fp, "\t\t\t<ListStyle id=\"hideChildren\">\n");
-    VSIFPrintf(fp, "\t\t\t\t<listItemType>checkHideChildren</listItemType>\n");
-    VSIFPrintf(fp, "\t\t\t</ListStyle>\n");
-    VSIFPrintf(fp, "\t\t</Style>\n");
-    VSIFPrintf(fp, "\t\t<Region>\n");
-    VSIFPrintf(fp, "\t\t\t<Lod>\n");
-    VSIFPrintf(fp, "\t\t\t\t<minLodPixels>%d</minLodPixels>\n", 128);
-    VSIFPrintf(fp, "\t\t\t\t<maxLodPixels>%d</maxLodPixels>\n", maxLodPix);
-    VSIFPrintf(fp, "\t\t\t</Lod>\n");
-    VSIFPrintf(fp, "\t\t\t<LatLonAltBox>\n");
-    VSIFPrintf(fp, "\t\t\t\t<north>%f</north>\n", tnorth);
-    VSIFPrintf(fp, "\t\t\t\t<south>%f</south>\n", tsouth);
-    VSIFPrintf(fp, "\t\t\t\t<east>%f</east>\n", teast);
-    VSIFPrintf(fp, "\t\t\t\t<west>%f</west>\n", twest);
-    VSIFPrintf(fp, "\t\t\t</LatLonAltBox>\n");
-    VSIFPrintf(fp, "\t\t</Region>\n");
-    VSIFPrintf(fp, "\t\t<GroundOverlay>\n");
-    VSIFPrintf(fp, "\t\t\t<drawOrder>%d</drawOrder>\n", zoom);
-    VSIFPrintf(fp, "\t\t\t<Icon>\n");
-    VSIFPrintf(fp, "\t\t\t\t<href>%d%s</href>\n", iy, fileExt.c_str());
-    VSIFPrintf(fp, "\t\t\t</Icon>\n");
-    VSIFPrintf(fp, "\t\t\t<gx:LatLonQuad>\n");
-    VSIFPrintf(fp, "\t\t\t\t<coordinates>\n");
-    VSIFPrintf(fp, "\t\t\t\t\t%f, %f, 0\n", lowerleftT, leftbottomT);
-    VSIFPrintf(fp, "\t\t\t\t\t%f, %f, 0\n", lowerrightT, rightbottomT);
-    VSIFPrintf(fp, "\t\t\t\t\t%f, %f, 0\n", upperrightT, righttopT);
-    VSIFPrintf(fp, "\t\t\t\t\t%f, %f, 0\n", upperleftT, lefttopT);
-    VSIFPrintf(fp, "\t\t\t\t</coordinates>\n");
-    VSIFPrintf(fp, "\t\t\t</gx:LatLonQuad>\n");
-    VSIFPrintf(fp, "\t\t</GroundOverlay>\n");
+    VSIFPrintfL(fp, "<kml xmlns=\"http://earth.google.com/kml/2.1\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n");
+    VSIFPrintfL(fp, "\t<Document>\n");
+    VSIFPrintfL(fp, "\t\t<name>%d/%d/%d.kml</name>\n", zoom, ix, iy);
+    VSIFPrintfL(fp, "\t\t<Style>\n");
+    VSIFPrintfL(fp, "\t\t\t<ListStyle id=\"hideChildren\">\n");
+    VSIFPrintfL(fp, "\t\t\t\t<listItemType>checkHideChildren</listItemType>\n");
+    VSIFPrintfL(fp, "\t\t\t</ListStyle>\n");
+    VSIFPrintfL(fp, "\t\t</Style>\n");
+    VSIFPrintfL(fp, "\t\t<Region>\n");
+    VSIFPrintfL(fp, "\t\t\t<Lod>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<minLodPixels>%d</minLodPixels>\n", 128);
+    VSIFPrintfL(fp, "\t\t\t\t<maxLodPixels>%d</maxLodPixels>\n", maxLodPix);
+    VSIFPrintfL(fp, "\t\t\t</Lod>\n");
+    VSIFPrintfL(fp, "\t\t\t<LatLonAltBox>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<north>%f</north>\n", tnorth);
+    VSIFPrintfL(fp, "\t\t\t\t<south>%f</south>\n", tsouth);
+    VSIFPrintfL(fp, "\t\t\t\t<east>%f</east>\n", teast);
+    VSIFPrintfL(fp, "\t\t\t\t<west>%f</west>\n", twest);
+    VSIFPrintfL(fp, "\t\t\t</LatLonAltBox>\n");
+    VSIFPrintfL(fp, "\t\t</Region>\n");
+    VSIFPrintfL(fp, "\t\t<GroundOverlay>\n");
+    VSIFPrintfL(fp, "\t\t\t<drawOrder>%d</drawOrder>\n", zoom);
+    VSIFPrintfL(fp, "\t\t\t<Icon>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<href>%d%s</href>\n", iy, fileExt.c_str());
+    VSIFPrintfL(fp, "\t\t\t</Icon>\n");
+    VSIFPrintfL(fp, "\t\t\t<gx:LatLonQuad>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<coordinates>\n");
+    VSIFPrintfL(fp, "\t\t\t\t\t%f, %f, 0\n", lowerleftT, leftbottomT);
+    VSIFPrintfL(fp, "\t\t\t\t\t%f, %f, 0\n", lowerrightT, rightbottomT);
+    VSIFPrintfL(fp, "\t\t\t\t\t%f, %f, 0\n", upperrightT, righttopT);
+    VSIFPrintfL(fp, "\t\t\t\t\t%f, %f, 0\n", upperleftT, lefttopT);
+    VSIFPrintfL(fp, "\t\t\t\t</coordinates>\n");
+    VSIFPrintfL(fp, "\t\t\t</gx:LatLonQuad>\n");
+    VSIFPrintfL(fp, "\t\t</GroundOverlay>\n");
 
     for (unsigned int i = 0; i < xchildren.size(); i++)
     {
@@ -377,32 +377,32 @@ int  GenerateChildKml(std::string filename,
                 poTransform->Transform(1, &ceast, &cnorth);
             }
 
-            VSIFPrintf(fp, "\t\t<NetworkLink>\n");
-            VSIFPrintf(fp, "\t\t\t<name>%d/%d/%d%s</name>\n", zoom+1, cx, cy, fileExt.c_str());
-            VSIFPrintf(fp, "\t\t\t<Region>\n");
-            VSIFPrintf(fp, "\t\t\t\t<Lod>\n");
-            VSIFPrintf(fp, "\t\t\t\t\t<minLodPixels>128</minLodPixels>\n");
-            VSIFPrintf(fp, "\t\t\t\t\t<maxLodPixels>-1</maxLodPixels>\n");
-            VSIFPrintf(fp, "\t\t\t\t</Lod>\n");
-            VSIFPrintf(fp, "\t\t\t\t<LatLonAltBox>\n");
-            VSIFPrintf(fp, "\t\t\t\t\t<north>%f</north>\n", cnorth);
-            VSIFPrintf(fp, "\t\t\t\t\t<south>%f</south>\n", csouth);
-            VSIFPrintf(fp, "\t\t\t\t\t<east>%f</east>\n", ceast);
-            VSIFPrintf(fp, "\t\t\t\t\t<west>%f</west>\n", cwest);
-            VSIFPrintf(fp, "\t\t\t\t</LatLonAltBox>\n");
-            VSIFPrintf(fp, "\t\t\t</Region>\n");
-            VSIFPrintf(fp, "\t\t\t<Link>\n");
-            VSIFPrintf(fp, "\t\t\t\t<href>../../%d/%d/%d.kml</href>\n", zoom+1, cx, cy);
-            VSIFPrintf(fp, "\t\t\t\t<viewRefreshMode>onRegion</viewRefreshMode>\n");
-            VSIFPrintf(fp, "\t\t\t\t<viewFormat/>\n");
-            VSIFPrintf(fp, "\t\t\t</Link>\n");
-            VSIFPrintf(fp, "\t\t</NetworkLink>\n");
+            VSIFPrintfL(fp, "\t\t<NetworkLink>\n");
+            VSIFPrintfL(fp, "\t\t\t<name>%d/%d/%d%s</name>\n", zoom+1, cx, cy, fileExt.c_str());
+            VSIFPrintfL(fp, "\t\t\t<Region>\n");
+            VSIFPrintfL(fp, "\t\t\t\t<Lod>\n");
+            VSIFPrintfL(fp, "\t\t\t\t\t<minLodPixels>128</minLodPixels>\n");
+            VSIFPrintfL(fp, "\t\t\t\t\t<maxLodPixels>-1</maxLodPixels>\n");
+            VSIFPrintfL(fp, "\t\t\t\t</Lod>\n");
+            VSIFPrintfL(fp, "\t\t\t\t<LatLonAltBox>\n");
+            VSIFPrintfL(fp, "\t\t\t\t\t<north>%f</north>\n", cnorth);
+            VSIFPrintfL(fp, "\t\t\t\t\t<south>%f</south>\n", csouth);
+            VSIFPrintfL(fp, "\t\t\t\t\t<east>%f</east>\n", ceast);
+            VSIFPrintfL(fp, "\t\t\t\t\t<west>%f</west>\n", cwest);
+            VSIFPrintfL(fp, "\t\t\t\t</LatLonAltBox>\n");
+            VSIFPrintfL(fp, "\t\t\t</Region>\n");
+            VSIFPrintfL(fp, "\t\t\t<Link>\n");
+            VSIFPrintfL(fp, "\t\t\t\t<href>../../%d/%d/%d.kml</href>\n", zoom+1, cx, cy);
+            VSIFPrintfL(fp, "\t\t\t\t<viewRefreshMode>onRegion</viewRefreshMode>\n");
+            VSIFPrintfL(fp, "\t\t\t\t<viewFormat/>\n");
+            VSIFPrintfL(fp, "\t\t\t</Link>\n");
+            VSIFPrintfL(fp, "\t\t</NetworkLink>\n");
         }
     }
 
-    VSIFPrintf(fp, "\t</Document>\n");
-    VSIFPrintf(fp, "</kml>\n");
-    VSIFClose(fp);
+    VSIFPrintfL(fp, "\t</Document>\n");
+    VSIFPrintfL(fp, "</kml>\n");
+    VSIFCloseL(fp);
     
     return TRUE;
 }
@@ -458,17 +458,11 @@ bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory,
         }
 
         // Read source file and write to zip file
-        std::ifstream inFile (fileRead.c_str(), std::ios_base::binary | std::ios_base::in);
-        if (!inFile.is_open())
+        FILE* fp = VSIFOpenL(fileRead.c_str(), "rb");
+        if (fp == NULL)
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Could not open source file.." );
-            return false;
-        }
-        if (!inFile.good())
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Error reading source file.." );
             return false;
         }
 
@@ -476,24 +470,28 @@ bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory,
         std::string fileData;
         const unsigned int bufSize = 1024;
         char buf[bufSize];
-        do 
+        int nRead;
+        while((nRead = VSIFReadL(buf, 1, bufSize, fp)) != 0)
         {
-            inFile.read(buf, bufSize);
-            fileData.append(buf, inFile.gcount());
-        } while (!inFile.eof() && inFile.good());
-
-        if ( CPLWriteFileInZip(zipfile, static_cast<const void*>(fileData.data()), static_cast<unsigned int>(fileData.size())) != CE_None )
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Could not write to file within zip file.." );
-            return false;
+            if ( CPLWriteFileInZip(zipfile, buf, nRead) != CE_None )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                        "Could not write to file within zip file.." );
+                CPLCloseFileInZip(zipfile);
+                CPLCloseZip(zipfile);
+                VSIFCloseL(fp);
+                return false;
+            }
         }
+
+        VSIFCloseL(fp);
 
         // Close one src file zipped completely
         if ( CPLCloseFileInZip(zipfile) != CE_None )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Could not close file written within zip file.." );
+            CPLCloseZip(zipfile);
             return false;
         }
     }
@@ -534,6 +532,45 @@ const char *KmlSuperOverlayDataset::GetProjectionRef()
 }
 
 /************************************************************************/
+/*                   KMLSuperOverlayRecursiveUnlink()                   */
+/************************************************************************/
+
+static void KMLSuperOverlayRecursiveUnlink( const char *pszName )
+
+{
+    char **papszFileList;
+    int i;
+
+    papszFileList = CPLReadDir( pszName );
+
+    for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
+    {
+        VSIStatBufL  sStatBuf;
+
+        if( EQUAL(papszFileList[i],".") || EQUAL(papszFileList[i],"..") )
+            continue;
+
+        CPLString osFullFilename =
+                 CPLFormFilename( pszName, papszFileList[i], NULL );
+
+        VSIStatL( osFullFilename, &sStatBuf );
+
+        if( VSI_ISREG( sStatBuf.st_mode ) )
+        {
+            VSIUnlink( osFullFilename );
+        }
+        else if( VSI_ISDIR( sStatBuf.st_mode ) )
+        {
+            KMLSuperOverlayRecursiveUnlink( osFullFilename );
+        }
+    }
+
+    CSLDestroy( papszFileList );
+
+    VSIRmdir( pszName );
+}
+
+/************************************************************************/
 /*                           CreateCopy()                               */
 /************************************************************************/
 
@@ -570,9 +607,23 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
             output_dir = CPLGetCurrentDir();
         }
     }
-    std::string outDir = output_dir;
+    CPLString outDir = output_dir;
     CPLFree(output_dir);
     output_dir = NULL;
+
+    KmlSuperOverlayDataset *poDsDummy = new KmlSuperOverlayDataset();
+
+    if (isKmz)
+    {
+        outDir = CPLFormFilename(outDir, CPLSPrintf("kmlsuperoverlaytmp_%p", poDsDummy) , NULL);
+        if (VSIMkdir(outDir, 0755) != 0)
+        {
+            CPLError( CE_Failure, CPLE_None,
+                    "Cannot create %s", outDir.c_str() );
+            delete poDsDummy;
+            return NULL;
+        }
+    }
 
     GDALDriver* poOutputTileDriver = NULL;
     bool isJpegDriver = true;
@@ -590,6 +641,9 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
     {
         CPLError( CE_Failure, CPLE_None,
                   "Image export driver was not found.." );
+        delete poDsDummy;
+        if (isKmz)
+            KMLSuperOverlayRecursiveUnlink(outDir);
         return NULL;
     }
 
@@ -681,7 +735,7 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
     int nRet;
     if (isKmz)
     {
-        tmpFileName = outDir + "/" + "tmp.kml";
+        tmpFileName = CPLFormFilename(outDir, "tmp.kml", NULL);
         nRet = GenerateRootKml(tmpFileName.c_str(), pszFilename, north, south, east, west, (int)tilexsize);
         fileVector.push_back(tmpFileName);
     }
@@ -693,6 +747,9 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
     if (nRet == FALSE)
     {
         OGRCoordinateTransformation::DestroyCT( poTransform );
+        delete poDsDummy;
+        if (isKmz)
+            KMLSuperOverlayRecursiveUnlink(outDir);
         return NULL;
     }
 
@@ -791,47 +848,15 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
             zipDone = false;
         }
 
-        //remove sub-directories and the files under those directories
-        for (int i = 0; i < static_cast<int>(dirVector.size()); i++)
-        {
-            std::string zoomDir = dirVector[i];
-
-            char** fileList = VSIReadDir(zoomDir.c_str());
-
-            for( int j = 0; fileList && fileList[j]; ++j )
-            {
-                char* fi = fileList[j];
-                std::string fn = zoomDir;
-                if (fi)
-                {
-                    std::string s1 = (const char*)fi;
-                    fn += "/";
-                    fn += s1;
-                }
-                VSIUnlink(fn.c_str());
-            }
-            CSLDestroy(fileList);
-      
-            VSIRmdir(zoomDir.c_str());
-        }
-
-        //remove the top directories
-        for (int zoom = maxzoom; zoom >= 0; --zoom)
-        {
-            std::stringstream zoomStr;
-            zoomStr << zoom;
-            std::string zoomDir = outDir + "/" + zoomStr.str();
-            VSIRmdir(zoomDir.c_str());
-        }
-        // VSIUnlink(tmpFileName.c_str());
+        KMLSuperOverlayRecursiveUnlink(outDir);
 
         if (zipDone == false)
         {
+            delete poDsDummy;
             return NULL;
         }
     }
 
-    KmlSuperOverlayDataset *poDsDummy = new KmlSuperOverlayDataset();
     return poDsDummy;
 }
 
@@ -873,7 +898,17 @@ void GDALRegister_KMLSUPEROVERLAY()
                                    "Kml Super Overlay" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
-      
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"   <Option name='FORMAT' type='string-select' default='JPEG' description='Force of the tiles'>"
+"       <Value>PNG</Value>"
+"       <Value>JPEG</Value>"
+"   </Option>"
+"</CreationOptionList>" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = KmlSuperOverlayDataset::Open;
         poDriver->pfnCreateCopy = KmlSuperOverlayDataset::CreateCopy;
         poDriver->pfnDelete = KmlSuperOverlayDatasetDelete;
