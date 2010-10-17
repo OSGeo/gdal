@@ -233,7 +233,8 @@ int VSIArchiveFilesystemHandler::FindFileInArchive(const char* archiveFilename,
 /************************************************************************/
 
 char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
-                                             CPLString &osFileInArchive)
+                                                 CPLString &osFileInArchive,
+                                                 int bCheckMainFileExists)
 {
     int i = 0;
 
@@ -275,6 +276,11 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                 archiveFilename[i + nToSkip] = 0;
             }
 
+            if (!bCheckMainFileExists)
+            {
+                bArchiveFileExists = TRUE;
+            }
+            else
             {
                 CPLMutexHolder oHolder( &hMutex );
 
@@ -428,7 +434,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pSt
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
-    char* archiveFilename = SplitFilename(pszFilename, osFileInArchive);
+    char* archiveFilename = SplitFilename(pszFilename, osFileInArchive, TRUE);
     if (archiveFilename == NULL)
         return -1;
 
@@ -537,7 +543,7 @@ int VSIArchiveFilesystemHandler::Rmdir( const char *pszDirname )
 char** VSIArchiveFilesystemHandler::ReadDir( const char *pszDirname )
 {
     CPLString osInArchiveSubDir;
-    char* archiveFilename = SplitFilename(pszDirname, osInArchiveSubDir);
+    char* archiveFilename = SplitFilename(pszDirname, osInArchiveSubDir, TRUE);
     if (archiveFilename == NULL)
         return NULL;
     int lenInArchiveSubDir = strlen(osInArchiveSubDir);
