@@ -70,7 +70,8 @@
    a .gz.properties file, so that we don't need to seek at the end of the file
    each time a Stat() is done.
 
-   For .zip, only reading is supported, for .gz read and write is supported.
+   For .zip and .gz, both reading and writing are supported, but just one mode at a time
+   (read-only or write-only)
 */
 
 
@@ -1680,6 +1681,8 @@ public:
                                             const char *pszAccess );
 
     virtual int      Mkdir( const char *pszDirname, long nMode );
+    virtual char   **ReadDir( const char *pszDirname );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
 
     void RemoveFromMap(VSIZipWriteHandle* poHandle);
 };
@@ -1797,6 +1800,17 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
     if (zipFilename == NULL)
         return NULL;
 
+    {
+        CPLMutexHolder oHolder(&hMutex);
+        if (oMapZipWriteHandles.find(zipFilename) != oMapZipWriteHandles.end() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot read a zip file being written");
+            CPLFree(zipFilename);
+            return NULL;
+        }
+    }
+
     VSIArchiveReader* poReader = OpenArchiveFile(zipFilename, osZipInFileName);
     if (poReader == NULL)
     {
@@ -1858,6 +1872,65 @@ int VSIZipFilesystemHandler::Mkdir( const char *pszDirname, long nMode )
 }
 
 /************************************************************************/
+/*                                ReadDir()                             */
+/************************************************************************/
+
+char **VSIZipFilesystemHandler::ReadDir( const char *pszDirname )
+{
+    CPLString osInArchiveSubDir;
+    char* zipFilename = SplitFilename(pszDirname, osInArchiveSubDir, TRUE);
+    if (zipFilename == NULL)
+        return NULL;
+
+    {
+        CPLMutexHolder oHolder(&hMutex);
+
+        if (oMapZipWriteHandles.find(zipFilename) != oMapZipWriteHandles.end() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot read a zip file being written");
+            CPLFree(zipFilename);
+            return NULL;
+        }
+    }
+    CPLFree(zipFilename);
+
+    return VSIArchiveFilesystemHandler::ReadDir(pszDirname);
+}
+
+
+/************************************************************************/
+/*                                 Stat()                               */
+/************************************************************************/
+
+int VSIZipFilesystemHandler::Stat( const char *pszFilename,
+                                   VSIStatBufL *pStatBuf, int nFlags )
+{
+    CPLString osInArchiveSubDir;
+
+    memset(pStatBuf, 0, sizeof(VSIStatBufL));
+
+    char* zipFilename = SplitFilename(pszFilename, osInArchiveSubDir, TRUE);
+    if (zipFilename == NULL)
+        return -1;
+
+    {
+        CPLMutexHolder oHolder(&hMutex);
+
+        if (oMapZipWriteHandles.find(zipFilename) != oMapZipWriteHandles.end() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot read a zip file being written");
+            CPLFree(zipFilename);
+            return -1;
+        }
+    }
+    CPLFree(zipFilename);
+
+    return VSIArchiveFilesystemHandler::Stat(pszFilename, pStatBuf, nFlags);
+}
+
+/************************************************************************/
 /*                             RemoveFromMap()                           */
 /************************************************************************/
 
@@ -1887,6 +1960,8 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
     char* zipFilename;
     CPLString osZipInFileName;
 
+    CPLMutexHolder oHolder( &hMutex );
+
     zipFilename = SplitFilename(pszFilename, osZipInFileName, FALSE);
     if (zipFilename == NULL)
         return NULL;
@@ -1894,9 +1969,24 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
     CPLFree(zipFilename);
     zipFilename = NULL;
 
-    VSIZipWriteHandle* poZIPHandle;
+    /* Invalidate cached file list */
+    std::map<CPLString,VSIArchiveContent*>::iterator iter = oFileList.find(osZipFilename);
+    if (iter != oFileList.end())
+    {
+        oFileList.erase(iter);
 
-    CPLMutexHolder oHolder( &hMutex );
+        VSIArchiveContent* content = iter->second;
+        int i;
+        for(i=0;i<content->nEntries;i++)
+        {
+            delete content->entries[i].file_pos;
+            CPLFree(content->entries[i].fileName);
+        }
+        CPLFree(content->entries);
+        delete content;
+    }
+
+    VSIZipWriteHandle* poZIPHandle;
 
     if (oMapZipWriteHandles.find(osZipFilename) != oMapZipWriteHandles.end() )
     {
@@ -2001,7 +2091,7 @@ VSIZipWriteHandle::~VSIZipWriteHandle()
 int VSIZipWriteHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
     CPLError(CE_Failure, CPLE_NotSupported,
-             "VSISeekL is not supported on writable Zip files");
+             "VSIFSeekL() is not supported on writable Zip files");
     return -1;
 }
 
@@ -2012,7 +2102,7 @@ int VSIZipWriteHandle::Seek( vsi_l_offset nOffset, int nWhence )
 vsi_l_offset VSIZipWriteHandle::Tell()
 {
     CPLError(CE_Failure, CPLE_NotSupported,
-             "VSITellL is not supported on writable Zip files");
+             "VSIFTellL() is not supported on writable Zip files");
     return 0;
 }
 
@@ -2023,7 +2113,7 @@ vsi_l_offset VSIZipWriteHandle::Tell()
 size_t    VSIZipWriteHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 {
     CPLError(CE_Failure, CPLE_NotSupported,
-             "VSIReadL is not supported on writable Zip files");
+             "VSIFReadL() is not supported on writable Zip files");
     return 0;
 }
 
@@ -2036,7 +2126,7 @@ size_t    VSIZipWriteHandle::Write( const void *pBuffer, size_t nSize, size_t nM
     if (poParent == NULL)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "VSIWriteL is not supported on main Zip file or closed subfiles");
+                 "VSIFWriteL() is not supported on main Zip file or closed subfiles");
         return 0;
     }
 
