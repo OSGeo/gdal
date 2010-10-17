@@ -47,8 +47,6 @@ OGRCSVDataSource::OGRCSVDataSource()
     pszName = NULL;
 
     bUpdate = FALSE;
-
-    fpZipMain = NULL;
 }
 
 /************************************************************************/
@@ -63,9 +61,6 @@ OGRCSVDataSource::~OGRCSVDataSource()
     CPLFree( papoLayers );
 
     CPLFree( pszName );
-
-    if (fpZipMain)
-        VSIFCloseL(fpZipMain);
 }
 
 /************************************************************************/
