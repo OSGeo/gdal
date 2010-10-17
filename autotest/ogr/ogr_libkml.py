@@ -382,14 +382,14 @@ def ogr_libkml_polygon_read():
 ###############################################################################
 # Write test
 
-def ogr_libkml_write_1():
+def ogr_libkml_write(filename):
 
     if ogrtest.kml_drv is None:
         return 'skip'
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS72')
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource('tmp/libkml.kml')
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename)
     lyr = ds.CreateLayer('test_wgs72', srs = srs)
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
@@ -409,10 +409,13 @@ def ogr_libkml_write_1():
     lyr.CreateField(fieldefn)
     fieldefn = ogr.FieldDefn ( 'description', ogr.OFTString)
     lyr.CreateField(fieldefn)
+    fieldefn = ogr.FieldDefn ( 'foo', ogr.OFTString)
+    lyr.CreateField(fieldefn)
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetField('name', 'my_name')
     dst_feat.SetField('description', 'my_description')
+    dst_feat.SetField('foo', 'bar')
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
@@ -472,16 +475,15 @@ def ogr_libkml_write_1():
 
     return 'success'
 
-
 ###############################################################################
 # Check previous test
 
-def ogr_libkml_check_write_1():
+def ogr_libkml_check_write(filename):
 
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    ds = ogr.Open('tmp/libkml.kml')
+    ds = ogr.Open(filename)
     lyr = ds.GetLayerByName('test_wgs84')
     if lyr.GetFeatureCount() != 8:
         gdaltest.post_reason('Bad feature count.')
@@ -495,6 +497,10 @@ def ogr_libkml_check_write_1():
     if feat.GetField('description') != 'my_description':
         print(feat.GetField('description'))
         gdaltest.post_reason('Unexpected description.')
+        return 'fail'
+    if feat.GetField('foo') != 'bar':
+        print(feat.GetField('foo'))
+        gdaltest.post_reason('Unexpected foo.')
         return 'fail'
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49 0)':
         print(feat.GetGeometryRef().ExportToWkt())
@@ -555,6 +561,29 @@ def ogr_libkml_check_write_1():
 
     return 'success'
 
+###############################################################################
+def ogr_libkml_write_kml():
+    return ogr_libkml_write('/vsimem/libkml.kml')
+
+def ogr_libkml_check_write_kml():
+    return ogr_libkml_check_write('/vsimem/libkml.kml')
+
+def ogr_libkml_write_kmz():
+    return ogr_libkml_write('/vsimem/libkml.kmz')
+
+def ogr_libkml_check_write_kmz():
+    return ogr_libkml_check_write('/vsimem/libkml.kmz')
+
+def ogr_libkml_write_dir():
+    return ogr_libkml_write('/vsimem/libkmldir')
+
+def ogr_libkml_check_write_dir():
+    ret = ogr_libkml_check_write('/vsimem/libkmldir')
+    files = gdal.ReadDir('/vsimem/libkmldir')
+    for filename in files:
+        gdal.Unlink('/vsimem/libkmldir/' + filename)
+    gdal.Rmdir('/vsimem/libkmldir')
+    return ret
 
 ###############################################################################
 # Test reading attributes with XML content in them
@@ -632,7 +661,9 @@ def ogr_libkml_cleanup():
 
     if ogrtest.kml_ds is not None:
         ogrtest.kml_ds.Destroy()
-    os.remove('tmp/libkml.kml')
+
+    gdal.Unlink('/vsimem/libkml.kml')
+    gdal.Unlink('/vsimem/libkml.kmz')
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -653,8 +684,12 @@ gdaltest_list = [
     ogr_libkml_point_read,
     ogr_libkml_linestring_read,
     ogr_libkml_polygon_read,
-    ogr_libkml_write_1,
-    ogr_libkml_check_write_1,
+    ogr_libkml_write_kml,
+    ogr_libkml_check_write_kml,
+    ogr_libkml_write_kmz,
+    ogr_libkml_check_write_kmz,
+    ogr_libkml_write_dir,
+    ogr_libkml_check_write_dir,
     ogr_libkml_xml_attributes,
     ogr_libkml_read_geometries,
     ogr_libkml_test_ogrsf,
