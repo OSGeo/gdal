@@ -156,7 +156,7 @@ class VSIArchiveReader
 
 class VSIArchiveFilesystemHandler : public VSIFilesystemHandler 
 {
-private:
+protected:
     void* hMutex;
     /* We use a cache that contains the list of files containes in a VSIArchive file as */
     /* unarchive.c is quite inefficient in listing them. This speeds up access to VSIArchive files */
@@ -179,7 +179,7 @@ public:
     virtual char   **ReadDir( const char *pszDirname );
 
     virtual const VSIArchiveContent* GetContentOfArchive(const char* archiveFilename, VSIArchiveReader* poReader = NULL);
-    virtual char* SplitFilename(const char *pszFilename, CPLString &osFileInArchive);
+    virtual char* SplitFilename(const char *pszFilename, CPLString &osFileInArchive, int bCheckMainFileExists);
     virtual VSIArchiveReader* OpenArchiveFile(const char* archiveFilename, const char* fileInArchiveName);
     virtual int FindFileInArchive(const char* archiveFilename, const char* fileInArchiveName, const VSIArchiveEntry** archiveEntry);
 };
