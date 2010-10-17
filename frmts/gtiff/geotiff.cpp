@@ -418,10 +418,21 @@ class GTiffDataset : public GDALPamDataset
     CPLErr   WriteEncodedTileOrStrip(uint32 tile_or_strip, void* data, int bPreserveDataBuffer);
 };
 
+/************************************************************************/
+/*                        GTIFFSetJpegQuality()                         */
+/* Called by GTIFFBuildOverviews() to set the jpeg quality on the IFD   */
+/* of the .ovr file                                                     */
+/************************************************************************/
+
 void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality)
 {
     CPLAssert(EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hGTIFFDS)), "GTIFF"));
-    ((GTiffDataset*)hGTIFFDS)->nJpegQuality = nJpegQuality;
+
+    GTiffDataset* poDS = (GTiffDataset*)hGTIFFDS;
+    poDS->nJpegQuality = nJpegQuality;
+    int i;
+    for(i=0;i<poDS->nOverviewCount;i++)
+        poDS->papoOverviewDS[i]->nJpegQuality = nJpegQuality;
 }
 
 /************************************************************************/
@@ -5976,7 +5987,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             
             /* Embedded mask of an overview */
             /* The TIFF6 specification allows the combination of the FILETYPE_xxxx masks */
-            else if (nSubType & (FILETYPE_REDUCEDIMAGE | FILETYPE_MASK))
+            else if ((nSubType & FILETYPE_REDUCEDIMAGE) != 0 &&
+                     (nSubType & FILETYPE_MASK) != 0)
             {
                 GTiffDataset* poDS = new GTiffDataset();
                 if( poDS->OpenOffset( hTIFF, ppoActiveDSRef, nThisDir, FALSE, 
