@@ -34,6 +34,7 @@
 #include "zlib.h"
 #include "cpl_minizip_zip.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 #ifdef STDC
 #  include <stddef.h>
@@ -1215,7 +1216,9 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 {
     (void) papszOptions;
 
-    return cpl_zipOpen( pszZipFilename, FALSE );
+    int bAppend = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE"));
+
+    return cpl_zipOpen( pszZipFilename, bAppend ? APPEND_STATUS_ADDINZIP : APPEND_STATUS_CREATE);
 }
 
 /************************************************************************/
