@@ -43,9 +43,15 @@ def vsizip_1():
 
     # We must keep the handle open during all the ZIP writing
     hZIP = gdal.VSIFOpenL("/vsizip/vsimem/test.zip", "wb")
+    if hZIP is None:
+        gdaltest.post_reason('fail 1')
+        return 'fail'
 
     # One way to create a directory
     f = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/subdir2/", "wb")
+    if f is None:
+        gdaltest.post_reason('fail 2')
+        return 'fail'
     gdal.VSIFCloseL(f)
 
     # A more natural one
@@ -53,11 +59,17 @@ def vsizip_1():
 
     # Create 1st file
     f2 = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/subdir3/abcd", "wb")
+    if f2 is None:
+        gdaltest.post_reason('fail 3')
+        return 'fail'
     gdal.VSIFWriteL("abcd", 1, 4, f2)
     gdal.VSIFCloseL(f2)
 
     # Create 2nd file
     f3 = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/subdir3/efghi", "wb")
+    if f3 is None:
+        gdaltest.post_reason('fail 4')
+        return 'fail'
     gdal.VSIFWriteL("efghi", 1, 5, f3)
 
     # Try creating a 3d file
@@ -74,6 +86,9 @@ def vsizip_1():
     gdal.VSIFCloseL(hZIP)
 
     f = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/subdir3/abcd", "rb")
+    if f is None:
+        gdaltest.post_reason('fail 5')
+        return 'fail'
     data = gdal.VSIFReadL(1, 4, f)
     gdal.VSIFCloseL(f)
 
@@ -86,23 +101,48 @@ def vsizip_1():
     return 'success'
 
 ###############################################################################
-# Test writing a single file in the ZIP
+# Test writing 2 files in the ZIP by closing it completely between the 2
 
 def vsizip_2():
 
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/foo.bar", "wb")
+    if fmain is None:
+        gdaltest.post_reason('fail 1')
+        return 'fail'
     gdal.VSIFWriteL("12345", 1, 5, fmain)
     gdal.VSIFCloseL(fmain)
 
-    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/foo.bar", "rb")
-    data = gdal.VSIFReadL(1, 5, fmain)
+    # Now append a second file
+    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/bar.baz", "wb")
+    if fmain is None:
+        gdaltest.post_reason('fail 2')
+        return 'fail'
+    gdal.VSIFWriteL("67890", 1, 5, fmain)
     gdal.VSIFCloseL(fmain)
 
-    gdal.Unlink("/vsimem/test2.zip")
+    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/foo.bar", "rb")
+    if fmain is None:
+        gdaltest.post_reason('fail 3')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 5, fmain)
+    gdal.VSIFCloseL(fmain)
 
     if data.decode('ASCII') != '12345':
         print(data)
         return 'fail'
+
+    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/bar.baz", "rb")
+    if fmain is None:
+        gdaltest.post_reason('fail 4')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 5, fmain)
+    gdal.VSIFCloseL(fmain)
+
+    if data.decode('ASCII') != '67890':
+        print(data)
+        return 'fail'
+
+    gdal.Unlink("/vsimem/test2.zip")
 
     return 'success'
 
