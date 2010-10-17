@@ -3625,6 +3625,45 @@ def tiff_write_93():
 
 
 ###############################################################################
+# Test CreateCopy() of a dataset with a mask into a JPEG compressed dataset
+# and check JPEG_QUALITY propagation without warning
+
+def tiff_write_94():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_94_src.tif', 1024, 1024, 3)
+    gdal.SetConfigOption( 'GDAL_TIFF_INTERNAL_MASK', 'YES' )
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    gdal.SetConfigOption( 'GDAL_TIFF_INTERNAL_MASK', None )
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0,0,1,1,'\001')
+
+    gdal.SetConfigOption( 'GDAL_TIFF_INTERNAL_MASK', 'YES' )
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/tiff_write_94_dst.tif', src_ds,
+        options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=30' ])
+    gdal.SetConfigOption( 'GDAL_TIFF_INTERNAL_MASK', None )
+
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_94_dst.tif')
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_94_src.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_94_dst.tif' )
+
+    if cs != 1:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3728,6 +3767,7 @@ gdaltest_list = [
     tiff_write_91,
     tiff_write_92,
     tiff_write_93,
+    tiff_write_94,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
