@@ -1781,16 +1781,16 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
     char* zipFilename;
     CPLString osZipInFileName;
 
+    if (strchr(pszAccess, 'w') != NULL)
+    {
+        return OpenForWrite(pszFilename, pszAccess);
+    }
+
     if (strchr(pszAccess, '+') != NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Random access not supported for /vsizip");
         return NULL;
-    }
-
-    if (strchr(pszAccess, 'w') != NULL)
-    {
-        return OpenForWrite(pszFilename, pszAccess);
     }
 
     zipFilename = SplitFilename(pszFilename, osZipInFileName, TRUE);
@@ -1887,13 +1887,6 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
     char* zipFilename;
     CPLString osZipInFileName;
 
-    if (strchr(pszAccess, '+') != NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Random access not supported for /vsizip");
-        return NULL;
-    }
-
     zipFilename = SplitFilename(pszFilename, osZipInFileName, FALSE);
     if (zipFilename == NULL)
         return NULL;
@@ -1907,6 +1900,13 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
 
     if (oMapZipWriteHandles.find(osZipFilename) != oMapZipWriteHandles.end() )
     {
+        if (strchr(pszAccess, '+') != NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Random access not supported for writable file in /vsizip");
+            return NULL;
+        }
+
         poZIPHandle = oMapZipWriteHandles[osZipFilename];
 
         if (poZIPHandle->GetChildInWriting() != NULL)
@@ -1932,7 +1932,17 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
     }
     else
     {
-        void* hZIP = CPLCreateZip(osZipFilename, NULL);
+        char** papszOptions = NULL;
+        if ((strchr(pszAccess, '+') && osZipInFileName.size() == 0) ||
+             osZipInFileName.size() != 0)
+        {
+            VSIStatBufL sBuf;
+            if (VSIStatExL(osZipFilename, &sBuf, VSI_STAT_EXISTS_FLAG) == 0)
+                papszOptions = CSLAddNameValue(papszOptions, "APPEND", "TRUE");
+        }
+
+        void* hZIP = CPLCreateZip(osZipFilename, papszOptions);
+        CSLDestroy(papszOptions);
 
         if (hZIP == NULL)
             return NULL;
