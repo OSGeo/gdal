@@ -922,7 +922,7 @@ uLong VSIGZipHandle::getLong ()
 
 size_t VSIGZipHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
 {
-    CPLError(CE_Failure, CPLE_NotSupported, "VSIFWriteL is not supported on GZip streams\n");
+    CPLError(CE_Failure, CPLE_NotSupported, "VSIFWriteL is not supported on GZip streams");
     return 0;
 }
 
@@ -1660,16 +1660,81 @@ int VSIZipReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 /* ==================================================================== */
 /************************************************************************/
 
+class VSIZipWriteHandle;
+
 class VSIZipFilesystemHandler : public VSIArchiveFilesystemHandler 
 {
+    std::map<CPLString, VSIZipWriteHandle*> oMapZipWriteHandles;
+
 public:
+    virtual ~VSIZipFilesystemHandler();
+    
     virtual const char* GetPrefix() { return "/vsizip"; }
     virtual std::vector<CPLString> GetExtensions();
     virtual VSIArchiveReader* CreateReader(const char* pszZipFileName);
 
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess);
+
+    virtual VSIVirtualHandle *OpenForWrite( const char *pszFilename,
+                                            const char *pszAccess );
+
+    virtual int      Mkdir( const char *pszDirname, long nMode );
+
+    void RemoveFromMap(VSIZipWriteHandle* poHandle);
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                       VSIZipWriteHandle                              */
+/* ==================================================================== */
+/************************************************************************/
+
+class VSIZipWriteHandle : public VSIVirtualHandle
+{
+   VSIZipFilesystemHandler *poFS;
+   void                    *hZIP;
+   VSIZipWriteHandle       *poChildInWriting;
+   VSIZipWriteHandle       *poParent;
+   int                      bAutoCloseParent;
+
+  public:
+
+    VSIZipWriteHandle(VSIZipFilesystemHandler* poFS,
+                      void *hZIP,
+                      VSIZipWriteHandle* poParent);
+
+    ~VSIZipWriteHandle();
+
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
+    virtual vsi_l_offset Tell();
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
+    virtual int       Eof();
+    virtual int       Flush();
+    virtual int       Close();
+
+    void  StartNewFile(VSIZipWriteHandle* poSubFile);
+    void  StopCurrentFile();
+    void* GetHandle() { return hZIP; }
+    VSIZipWriteHandle* GetChildInWriting() { return poChildInWriting; };
+    void SetAutoCloseParent() { bAutoCloseParent = TRUE; }
+};
+
+/************************************************************************/
+/*                      ~VSIZipFilesystemHandler()                      */
+/************************************************************************/
+
+VSIZipFilesystemHandler::~VSIZipFilesystemHandler()
+{
+    std::map<CPLString,VSIZipWriteHandle*>::const_iterator iter;
+
+    for( iter = oMapZipWriteHandles.begin(); iter != oMapZipWriteHandles.end(); ++iter )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s has not been closed",
+                 iter->first.c_str());
+    }
+}
 
 /************************************************************************/
 /*                          GetExtensions()                             */
@@ -1716,15 +1781,19 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
     char* zipFilename;
     CPLString osZipInFileName;
 
-    if (strchr(pszAccess, 'w') != NULL ||
-        strchr(pszAccess, '+') != NULL)
+    if (strchr(pszAccess, '+') != NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Only read-only mode is supported for /vsizip");
+                 "Random access not supported for /vsizip");
         return NULL;
     }
 
-    zipFilename = SplitFilename(pszFilename, osZipInFileName);
+    if (strchr(pszAccess, 'w') != NULL)
+    {
+        return OpenForWrite(pszFilename, pszAccess);
+    }
+
+    zipFilename = SplitFilename(pszFilename, osZipInFileName, TRUE);
     if (zipFilename == NULL)
         return NULL;
 
@@ -1770,6 +1839,273 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
                              file_info.uncompressed_size,
                              file_info.crc,
                              file_info.compression_method == 0);
+}
+
+/************************************************************************/
+/*                                Mkdir()                               */
+/************************************************************************/
+
+int VSIZipFilesystemHandler::Mkdir( const char *pszDirname, long nMode )
+{
+    CPLString osDirname = pszDirname;
+    if (osDirname.size() != 0 && osDirname[osDirname.size() - 1] != '/')
+        osDirname += "/";
+    VSIVirtualHandle* poZIPHandle = OpenForWrite(osDirname, "wb");
+    if (poZIPHandle == NULL)
+        return -1;
+    delete poZIPHandle;
+    return 0;
+}
+
+/************************************************************************/
+/*                             RemoveFromMap()                           */
+/************************************************************************/
+
+void VSIZipFilesystemHandler::RemoveFromMap(VSIZipWriteHandle* poHandle)
+{
+    CPLMutexHolder oHolder( &hMutex );
+    std::map<CPLString,VSIZipWriteHandle*>::iterator iter;
+
+    for( iter = oMapZipWriteHandles.begin();
+         iter != oMapZipWriteHandles.end(); ++iter )
+    {
+        if (iter->second == poHandle)
+        {
+            oMapZipWriteHandles.erase(iter);
+            break;
+        }
+    }
+}
+
+/************************************************************************/
+/*                             OpenForWrite()                           */
+/************************************************************************/
+
+VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename,
+                                                         const char *pszAccess)
+{
+    char* zipFilename;
+    CPLString osZipInFileName;
+
+    if (strchr(pszAccess, '+') != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Random access not supported for /vsizip");
+        return NULL;
+    }
+
+    zipFilename = SplitFilename(pszFilename, osZipInFileName, FALSE);
+    if (zipFilename == NULL)
+        return NULL;
+    CPLString osZipFilename = zipFilename;
+    CPLFree(zipFilename);
+    zipFilename = NULL;
+
+    VSIZipWriteHandle* poZIPHandle;
+
+    CPLMutexHolder oHolder( &hMutex );
+
+    if (oMapZipWriteHandles.find(osZipFilename) != oMapZipWriteHandles.end() )
+    {
+        poZIPHandle = oMapZipWriteHandles[osZipFilename];
+
+        if (poZIPHandle->GetChildInWriting() != NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create %s while another file is being written in the .zip",
+                     osZipInFileName.c_str());
+            return NULL;
+        }
+
+        poZIPHandle->StopCurrentFile();
+
+        if (CPLCreateFileInZip(poZIPHandle->GetHandle(),
+                               osZipInFileName, NULL) != CE_None)
+            return NULL;
+
+        VSIZipWriteHandle* poChildHandle =
+            new VSIZipWriteHandle(this, NULL, poZIPHandle);
+
+        poZIPHandle->StartNewFile(poChildHandle);
+
+        return poChildHandle;
+    }
+    else
+    {
+        void* hZIP = CPLCreateZip(osZipFilename, NULL);
+
+        if (hZIP == NULL)
+            return NULL;
+
+        oMapZipWriteHandles[osZipFilename] =
+            new VSIZipWriteHandle(this, hZIP, NULL);
+
+        if (osZipInFileName.size() != 0)
+        {
+            VSIZipWriteHandle* poRes =
+                (VSIZipWriteHandle*)OpenForWrite(pszFilename, pszAccess);
+            if (poRes == NULL)
+            {
+                delete oMapZipWriteHandles[osZipFilename];
+                return NULL;
+            }
+
+            poRes->SetAutoCloseParent();
+
+            return poRes;
+        }
+
+        return oMapZipWriteHandles[osZipFilename];
+    }
+}
+
+
+/************************************************************************/
+/*                          VSIZipWriteHandle()                         */
+/************************************************************************/
+
+VSIZipWriteHandle::VSIZipWriteHandle(VSIZipFilesystemHandler* poFS,
+                                     void* hZIP,
+                                     VSIZipWriteHandle* poParent)
+{
+    this->poFS = poFS;
+    this->hZIP = hZIP;
+    this->poParent = poParent;
+    poChildInWriting = NULL;
+    bAutoCloseParent = FALSE;
+}
+
+/************************************************************************/
+/*                         ~VSIZipWriteHandle()                         */
+/************************************************************************/
+
+VSIZipWriteHandle::~VSIZipWriteHandle()
+{
+    Close();
+}
+
+/************************************************************************/
+/*                               Seek()                                 */
+/************************************************************************/
+
+int VSIZipWriteHandle::Seek( vsi_l_offset nOffset, int nWhence )
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "VSISeekL is not supported on writable Zip files");
+    return -1;
+}
+
+/************************************************************************/
+/*                               Tell()                                 */
+/************************************************************************/
+
+vsi_l_offset VSIZipWriteHandle::Tell()
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "VSITellL is not supported on writable Zip files");
+    return 0;
+}
+
+/************************************************************************/
+/*                               Read()                                 */
+/************************************************************************/
+
+size_t    VSIZipWriteHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "VSIReadL is not supported on writable Zip files");
+    return 0;
+}
+
+/************************************************************************/
+/*                               Write()                                 */
+/************************************************************************/
+
+size_t    VSIZipWriteHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
+{
+    if (poParent == NULL)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "VSIWriteL is not supported on main Zip file or closed subfiles");
+        return 0;
+    }
+
+    if (CPLWriteFileInZip( poParent->hZIP, pBuffer, (int)(nSize * nMemb) ) != CE_None)
+        return 0;
+
+    return nMemb;
+}
+
+/************************************************************************/
+/*                                Eof()                                 */
+/************************************************************************/
+
+int VSIZipWriteHandle::Eof()
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "VSIFEofL() is not supported on writable Zip files");
+    return FALSE;
+}
+
+/************************************************************************/
+/*                               Flush()                                */
+/************************************************************************/
+
+int VSIZipWriteHandle::Flush()
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "VSIFFlushL() is not supported on writable Zip files");
+    return 0;
+}
+
+/************************************************************************/
+/*                               Close()                                */
+/************************************************************************/
+
+int VSIZipWriteHandle::Close()
+{
+    if (poParent)
+    {
+        CPLCloseFileInZip(poParent->hZIP);
+        poParent->poChildInWriting = NULL;
+        if (bAutoCloseParent)
+            poParent->Close();
+        poParent = NULL;
+    }
+    if (poChildInWriting)
+    {
+        poChildInWriting->Close();
+        poChildInWriting = NULL;
+    }
+    if (hZIP)
+    {
+        CPLCloseZip(hZIP);
+        hZIP = NULL;
+
+        poFS->RemoveFromMap(this);
+    }
+
+    return 0;
+}
+
+/************************************************************************/
+/*                           StopCurrentFile()                          */
+/************************************************************************/
+
+void  VSIZipWriteHandle::StopCurrentFile()
+{
+    if (poChildInWriting)
+        poChildInWriting->Close();
+    poChildInWriting = NULL;
+}
+
+/************************************************************************/
+/*                           StartNewFile()                             */
+/************************************************************************/
+
+void  VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle* poSubFile)
+{
+    poChildInWriting = poSubFile;
 }
 
 /************************************************************************/
