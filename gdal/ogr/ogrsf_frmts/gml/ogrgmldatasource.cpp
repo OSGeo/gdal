@@ -49,12 +49,15 @@ OGRGMLDataSource::OGRGMLDataSource()
 
     poReader = NULL;
     fpOutput = NULL;
-    bFpOutputIsStdout = FALSE;
+    bFpOutputIsNonSeekable = FALSE;
+    bFpOutputSingleFile = FALSE;
 
     papszCreateOptions = NULL;
     bOutIsTempFile = FALSE;
 
     bExposeGMLId = FALSE;
+    nSchemaInsertLocation = -1;
+    nBoundedByLocation = -1;
 }
 
 /************************************************************************/
@@ -70,9 +73,15 @@ OGRGMLDataSource::~OGRGMLDataSource()
         PrintLine( fpOutput, "%s", 
                     "</ogr:FeatureCollection>" );
 
+        if( bFpOutputIsNonSeekable)
+        {
+            VSIFCloseL( fpOutput );
+            fpOutput = NULL;
+        }
+
         InsertHeader();
 
-        if( !bFpOutputIsStdout
+        if( !bFpOutputIsNonSeekable
             && nBoundedByLocation != -1
             && sBoundingRect.IsInit() 
             && VSIFSeekL( fpOutput, nBoundedByLocation, SEEK_SET ) == 0 )
@@ -91,7 +100,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
             PrintLine( fpOutput, "  </gml:boundedBy>" );
         }
 
-        VSIFCloseL( fpOutput );
+        if (fpOutput)
+            VSIFCloseL( fpOutput );
     }
 
     CSLDestroy( papszCreateOptions );
@@ -523,7 +533,25 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     if( EQUAL(pszFilename,"stdout") || EQUAL(pszFilename,"/vsistdout/"))
     {
         fpOutput = VSIFOpenL("/vsistdout/", "wb");
-        bFpOutputIsStdout = TRUE;
+        bFpOutputIsNonSeekable = TRUE;
+        bFpOutputSingleFile = TRUE;
+    }
+    else if ( EQUALN(pszFilename,"/vsigzip/", 9) )
+    {
+        fpOutput = VSIFOpenL(pszFilename, "wb");
+        bFpOutputIsNonSeekable = TRUE;
+        bFpOutputSingleFile = TRUE;
+    }
+    else if ( EQUALN(pszFilename,"/vsizip/", 8) )
+    {
+        if (EQUAL(CPLGetExtension(pszFilename), "zip"))
+        {
+            CPLFree(pszName);
+            pszName = CPLStrdup(CPLFormFilename(pszFilename, "out.gml", NULL));
+        }
+
+        fpOutput = VSIFOpenL(pszName, "wb");
+        bFpOutputIsNonSeekable = TRUE;
     }
     else
         fpOutput = VSIFOpenL( pszFilename, "wb+" );
@@ -541,7 +569,8 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     PrintLine( fpOutput, "%s", 
                 "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" );
 
-    nSchemaInsertLocation = VSIFTellL( fpOutput );
+    if (!bFpOutputIsNonSeekable)
+        nSchemaInsertLocation = VSIFTellL( fpOutput );
 
     PrintLine( fpOutput, "%s", 
                 "<ogr:FeatureCollection" );
@@ -584,7 +613,8 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 /*      Should we initialize an area to place the boundedBy element?    */
 /*      We will need to seek back to fill it in.                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "BOUNDEDBY", TRUE ) )
+    if( CSLFetchBoolean( papszOptions, "BOUNDEDBY", TRUE ) &&
+        !bFpOutputIsNonSeekable )
     {
         nBoundedByLocation = VSIFTellL( fpOutput );
 
@@ -704,7 +734,7 @@ void OGRGMLDataSource::InsertHeader()
     FILE        *fpSchema;
     int         nSchemaStart = 0;
 
-    if( fpOutput == NULL || bFpOutputIsStdout )
+    if( bFpOutputSingleFile )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -735,6 +765,8 @@ void OGRGMLDataSource::InsertHeader()
     }
     else if( EQUAL(pszSchemaOpt,"INTERNAL") )
     {
+        if (fpOutput == NULL)
+            return;
         nSchemaStart = VSIFTellL( fpOutput );
         fpSchema = fpOutput;
     }

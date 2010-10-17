@@ -104,7 +104,8 @@ class OGRGMLDataSource : public OGRDataSource
 
     // output related parameters 
     FILE                *fpOutput;
-    int                 bFpOutputIsStdout;
+    int                 bFpOutputIsNonSeekable;
+    int                 bFpOutputSingleFile;
     OGREnvelope         sBoundingRect;
     int                 nBoundedByLocation;
     
