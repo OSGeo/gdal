@@ -99,6 +99,9 @@ int OGRMSSQLGeometryValidator::ValidateLineString(OGRLineString * poGeom)
 
     if (!bResult)
     {
+        if (poValidGeometry)
+            delete poValidGeometry;
+
         poValidGeometry = NULL;
 
         // create a compatible geometry
@@ -157,6 +160,9 @@ int OGRMSSQLGeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
 
     if (!bResult)
     {
+        if (poValidGeometry)
+            delete poValidGeometry;
+        
         poValidGeometry = NULL;
 
         // create a compatible geometry
@@ -234,7 +240,12 @@ int OGRMSSQLGeometryValidator::ValidateMultiLineString(OGRMultiLineString * poGe
     }
 
     if (poGeometries)
+    {
+         if (poValidGeometry)
+            delete poValidGeometry;
+
         poValidGeometry = poGeometries;
+    }
 
     return (poValidGeometry == NULL);
 }
@@ -285,7 +296,12 @@ int OGRMSSQLGeometryValidator::ValidatePolygon(OGRPolygon* poGeom)
     }
 
     if (poGeometries)
+    {
+        if (poValidGeometry)
+            delete poValidGeometry;
+
         poValidGeometry = poGeometries;
+    }
 
     return (poValidGeometry == NULL);
 }
@@ -339,7 +355,12 @@ int OGRMSSQLGeometryValidator::ValidateMultiPolygon(OGRMultiPolygon* poGeom)
     }
 
     if (poGeometries)
+    {
+        if (poValidGeometry)
+            delete poValidGeometry;
+
         poValidGeometry = poGeometries;
+    }
 
     return poValidGeometry == NULL;
 }
@@ -378,7 +399,12 @@ int OGRMSSQLGeometryValidator::ValidateGeometryCollection(OGRGeometryCollection*
     }
 
     if (poGeometries)
+    {
+        if (poValidGeometry)
+            delete poValidGeometry;
+
         poValidGeometry = poGeometries;
+    }
 
     return (poValidGeometry == NULL);
 }
