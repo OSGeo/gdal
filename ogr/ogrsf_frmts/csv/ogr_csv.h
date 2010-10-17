@@ -111,6 +111,8 @@ class OGRCSVDataSource : public OGRDataSource
 
     CPLString           osDefaultCSVName;
 
+    FILE*               fpZipMain;
+
   public:
                         OGRCSVDataSource();
                         ~OGRCSVDataSource();
@@ -135,6 +137,8 @@ class OGRCSVDataSource : public OGRDataSource
 
     void                SetDefaultCSVName( const char *pszName ) 
         { osDefaultCSVName = pszName; }
+
+    void                SetZipMain( FILE* fpZipMain ) { this->fpZipMain = fpZipMain; }
 };
 
 /************************************************************************/
