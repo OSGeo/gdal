@@ -1699,7 +1699,7 @@ class VSIZipWriteHandle : public VSIVirtualHandle
    void                    *hZIP;
    VSIZipWriteHandle       *poChildInWriting;
    VSIZipWriteHandle       *poParent;
-   int                      bAutoCloseParent;
+   int                      bAutoDeleteParent;
 
   public:
 
@@ -1721,7 +1721,7 @@ class VSIZipWriteHandle : public VSIVirtualHandle
     void  StopCurrentFile();
     void* GetHandle() { return hZIP; }
     VSIZipWriteHandle* GetChildInWriting() { return poChildInWriting; };
-    void SetAutoCloseParent() { bAutoCloseParent = TRUE; }
+    void SetAutoDeleteParent() { bAutoDeleteParent = TRUE; }
 };
 
 /************************************************************************/
@@ -2050,7 +2050,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
                 return NULL;
             }
 
-            poRes->SetAutoCloseParent();
+            poRes->SetAutoDeleteParent();
 
             return poRes;
         }
@@ -2072,7 +2072,7 @@ VSIZipWriteHandle::VSIZipWriteHandle(VSIZipFilesystemHandler* poFS,
     this->hZIP = hZIP;
     this->poParent = poParent;
     poChildInWriting = NULL;
-    bAutoCloseParent = FALSE;
+    bAutoDeleteParent = FALSE;
 }
 
 /************************************************************************/
@@ -2168,8 +2168,8 @@ int VSIZipWriteHandle::Close()
     {
         CPLCloseFileInZip(poParent->hZIP);
         poParent->poChildInWriting = NULL;
-        if (bAutoCloseParent)
-            poParent->Close();
+        if (bAutoDeleteParent)
+            delete poParent;
         poParent = NULL;
     }
     if (poChildInWriting)
