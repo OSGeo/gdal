@@ -410,7 +410,6 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     }
                     else
                     {
-                        CPLAssert( nCount > 0 );
                         if( nCount == 0 )
                             pafDstScanline[iDstPixel - nDstXOff] = 0.0;
                         else
@@ -600,7 +599,6 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     }
                     else
                     {
-                        CPLAssert( nTotalWeight > 0 );
                         if( nTotalWeight == 0 )
                             pafDstScanline[iDstPixel - nDstXOff] = 0.0;
                         else
