@@ -216,58 +216,6 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
 }
 
 /************************************************************************/
-/*                         CopyBandImageData()                          */
-/*                                                                      */
-/*      Local helper function to copy image data from source to         */
-/*      destination band.                                               */
-/************************************************************************/
-
-static CPLErr CopyBandImageData( GDALRasterBand *poSrcBand,
-                                 GDALRasterBand *poDstBand,
-                                 GDALProgressFunc pfnProgress, 
-                                 void *pProgressData, 
-                                 double dfProgBase, double dfProgRatio )
-
-{
-    void           *pData;
-    GDALDataType   eType = poDstBand->GetRasterDataType();
-    int            nXSize = poSrcBand->GetXSize();
-    int            nYSize = poSrcBand->GetYSize();
-    int            iLine;
-    CPLErr         eErr = CE_None;
-
-    pData = VSIMalloc2(nXSize, GDALGetDataTypeSize(eType) / 8);
-    if( pData == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "CopyBandImageData(): Out of memory.\n");
-        eErr = CE_Failure;
-    }
-
-    for( iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
-    {
-        eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                    pData, nXSize, 1, eType, 0, 0 );
-        if( eErr != CE_None )
-            break;
-            
-        eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
-                                    pData, nXSize, 1, eType, 0, 0 );
-
-        if( !pfnProgress( ((iLine+1) / (double) nYSize) * dfProgRatio
-                          + dfProgBase, NULL, pProgressData ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
-    }
-
-    CPLFree( pData );
-
-    return eErr;
-}
-
-/************************************************************************/
 /*                          DefaultCopyMasks()                          */
 /************************************************************************/
 
@@ -281,6 +229,8 @@ CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
         return CE_None;
+
+    const char* papszOptions[2] = { "COMPRESSED=YES", NULL };
 
 /* -------------------------------------------------------------------- */
 /*      Try to copy mask if it seems appropriate.                       */
@@ -299,10 +249,11 @@ CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
             eErr = poDstBand->CreateMaskBand( nMaskFlags );
             if( eErr == CE_None )
             {
-                eErr = CopyBandImageData( 
+                eErr = GDALRasterBandCopyWholeRaster(
                     poSrcBand->GetMaskBand(),
                     poDstBand->GetMaskBand(),
-                    GDALDummyProgress, NULL, 0.0, 0.0 );
+                    (char**)papszOptions,
+                    GDALDummyProgress, NULL);
             }
             else if( !bStrict )
                 eErr = CE_None;
@@ -320,10 +271,11 @@ CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
         eErr = poDstDS->CreateMaskBand( nMaskFlags );
         if( eErr == CE_None )
         {
-            eErr = CopyBandImageData( 
+            eErr = GDALRasterBandCopyWholeRaster(
                 poSrcDS->GetRasterBand(1)->GetMaskBand(),
                 poDstDS->GetRasterBand(1)->GetMaskBand(),
-                GDALDummyProgress, NULL, 0.0, 0.0 );
+                (char**)papszOptions,
+                GDALDummyProgress, NULL);
         }
         else if( !bStrict )
             eErr = CE_None;
