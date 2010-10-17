@@ -96,6 +96,7 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
 /*      directory.                                                      */
 /* -------------------------------------------------------------------- */
     CPLString osDirName;
+    FILE* fpZipMain = NULL;
 
     if( EQUAL(CPLGetExtension(pszName),"csv") )
     {
@@ -105,7 +106,18 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
     }
     else
     {
-        if( !EQUAL(pszName, "/vsistdout/") &&
+        if( strncmp(pszName, "/vsizip/", 8) == 0)
+        {
+            fpZipMain = VSIFOpenL(pszName, "wb");
+            if (fpZipMain == NULL)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to create zip %s:\n%s",
+                      pszName, VSIStrerror( errno ) );
+                return NULL;
+            }
+        }
+        else if( !EQUAL(pszName, "/vsistdout/") &&
             VSIMkdir( pszName, 0755 ) != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
@@ -129,6 +141,8 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
 
     if( osDirName != pszName )
         poDS->SetDefaultCSVName( CPLGetFilename(pszName) );
+
+    poDS->SetZipMain(fpZipMain);
 
     return poDS;
 }
