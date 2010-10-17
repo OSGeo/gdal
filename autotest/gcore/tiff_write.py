@@ -3558,6 +3558,73 @@ def tiff_write_92():
     return 'success'
 
 ###############################################################################
+# Test JPEG_QUALITY_OVERVIEW propagation while creating external overviews
+
+def tiff_write_93():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    src_ds = gdal.Open('../gdrivers/data/utm.tif')
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_93.tif', 1024, 1024, 3, \
+        options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR' ])
+
+    data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+    ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
+    ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
+    ds = None
+
+    src_ds = None
+
+    last_size = 0
+    for quality in [90, 75, 30]:
+
+        try:
+            os.remove('tmp/tiff_write_93.tif.ovr')
+        except:
+            pass
+        
+        ds = gdal.Open('tmp/tiff_write_93.tif')
+        gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
+        gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', '%d' % quality)
+        gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', 'YCBCR')
+        ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+        gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+        gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', None)
+        gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', None)
+        ds = None
+
+        f = open('tmp/tiff_write_93.tif.ovr', 'rb')
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.close()
+
+        print('quality = %d, size = %d' % (quality, size))
+
+        if quality != 90:
+            if size >= last_size:
+                gdaltest.post_reason('did not get decreasing file sizes')
+                print(size)
+                print(last_size)
+                return 'fail'
+
+            if quality == 30 and size >= 83000:
+                gdaltest.post_reason('file larger than expected. should be about 69100. perhaps jpeg quality is not well propagated')
+                print(size)
+                return 'fail'
+
+        last_size = size
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_93.tif' )
+
+    return 'success'
+
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3660,6 +3727,7 @@ gdaltest_list = [
     tiff_write_90,
     tiff_write_91,
     tiff_write_92,
+    tiff_write_93,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
