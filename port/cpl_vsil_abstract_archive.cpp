@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include <map>
+#include <set>
 
 #define ENABLE_DEBUG 0
 
@@ -122,29 +123,75 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
     content->entries = NULL;
     oFileList[archiveFilename] = content;
 
+    std::set<CPLString> oSet;
+
     do
     {
         CPLString osFileName = poReader->GetFileName();
         const char* fileName = osFileName.c_str();
-        content->entries = (VSIArchiveEntry*)CPLRealloc(content->entries,
-                            sizeof(VSIArchiveEntry) * (content->nEntries + 1));
-        content->entries[content->nEntries].fileName = CPLStrdup(fileName);
-        content->entries[content->nEntries].nModifiedTime = poReader->GetModifiedTime();
-        content->entries[content->nEntries].uncompressed_size = poReader->GetFileSize();
-        content->entries[content->nEntries].bIsDir =
-                strlen(fileName) > 0 &&
-                (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\');
-        if (content->entries[content->nEntries].bIsDir)
+
+        char* pszStrippedFileName = CPLStrdup(fileName);
+        int bIsDir = strlen(fileName) > 0 &&
+                      (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\');
+        if (bIsDir)
         {
             /* Remove trailing slash */
-            content->entries[content->nEntries].fileName[strlen(fileName)-1] = 0;
+            pszStrippedFileName[strlen(fileName)-1] = 0;
         }
-        content->entries[content->nEntries].file_pos = poReader->GetFileOffset();
-        if (ENABLE_DEBUG)
-            CPLDebug("VSIArchive", "[%d] %s : " CPL_FRMT_GUIB " bytes", content->nEntries+1,
-                 content->entries[content->nEntries].fileName,
-                 content->entries[content->nEntries].uncompressed_size);
-        content->nEntries++;
+
+        if (oSet.find(pszStrippedFileName) == oSet.end())
+        {
+            oSet.insert(pszStrippedFileName);
+
+            /* Add intermediate directory structure */
+            char* pszIter;
+            for(pszIter = pszStrippedFileName;*pszIter;pszIter++)
+            {
+                if (*pszIter == '/' || *pszIter == '\\')
+                {
+                    char* pszStrippedFileName2 = CPLStrdup(pszStrippedFileName);
+                    pszStrippedFileName2[pszIter - pszStrippedFileName] = 0;
+                    if (oSet.find(pszStrippedFileName2) == oSet.end())
+                    {
+                        oSet.insert(pszStrippedFileName2);
+
+                        content->entries = (VSIArchiveEntry*)CPLRealloc(content->entries,
+                                sizeof(VSIArchiveEntry) * (content->nEntries + 1));
+                        content->entries[content->nEntries].fileName = pszStrippedFileName2;
+                        content->entries[content->nEntries].nModifiedTime = poReader->GetModifiedTime();
+                        content->entries[content->nEntries].uncompressed_size = 0;
+                        content->entries[content->nEntries].bIsDir = TRUE;
+                        content->entries[content->nEntries].file_pos = NULL;
+                        if (ENABLE_DEBUG)
+                            CPLDebug("VSIArchive", "[%d] %s : " CPL_FRMT_GUIB " bytes", content->nEntries+1,
+                                content->entries[content->nEntries].fileName,
+                                content->entries[content->nEntries].uncompressed_size);
+                        content->nEntries++;
+                    }
+                    else
+                    {
+                        CPLFree(pszStrippedFileName2);
+                    }
+                }
+            }
+
+            content->entries = (VSIArchiveEntry*)CPLRealloc(content->entries,
+                                sizeof(VSIArchiveEntry) * (content->nEntries + 1));
+            content->entries[content->nEntries].fileName = pszStrippedFileName;
+            content->entries[content->nEntries].nModifiedTime = poReader->GetModifiedTime();
+            content->entries[content->nEntries].uncompressed_size = poReader->GetFileSize();
+            content->entries[content->nEntries].bIsDir = bIsDir;
+            content->entries[content->nEntries].file_pos = poReader->GetFileOffset();
+            if (ENABLE_DEBUG)
+                CPLDebug("VSIArchive", "[%d] %s : " CPL_FRMT_GUIB " bytes", content->nEntries+1,
+                    content->entries[content->nEntries].fileName,
+                    content->entries[content->nEntries].uncompressed_size);
+            content->nEntries++;
+        }
+        else
+        {
+            CPLFree(pszStrippedFileName);
+        }
     } while(poReader->GotoNextFile());
 
     if (bMustClose)
