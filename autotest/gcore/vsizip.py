@@ -41,7 +41,7 @@ import gdal
 
 def vsizip_1():
 
-    # We must keep the handle open during all the ZIP writing
+    # We can keep the handle open during all the ZIP writing
     hZIP = gdal.VSIFOpenL("/vsizip/vsimem/test.zip", "wb")
     if hZIP is None:
         gdaltest.post_reason('fail 1')
@@ -65,6 +65,19 @@ def vsizip_1():
     gdal.VSIFWriteL("abcd", 1, 4, f2)
     gdal.VSIFCloseL(f2)
 
+    # Test that we cannot read a zip file being written
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    f = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/subdir3/abcd", "rb")
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() != 'Cannot read a zip file being written':
+        gdaltest.post_reason('expected error')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    if f is not None:
+        gdaltest.post_reason('should not have been successful 1')
+        return 'fail'
+
     # Create 2nd file
     f3 = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/subdir3/efghi", "wb")
     if f3 is None:
@@ -73,11 +86,16 @@ def vsizip_1():
     gdal.VSIFWriteL("efghi", 1, 5, f3)
 
     # Try creating a 3d file
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     f4 = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/that_wont_work", "wb")
     gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() != 'Cannot create that_wont_work while another file is being written in the .zip':
+        gdaltest.post_reason('expected error')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
     if f4 is not None:
-        gdaltest.post_reason('should not have been successful')
+        gdaltest.post_reason('should not have been successful 2')
         return 'fail'
     
     gdal.VSIFCloseL(f3)
@@ -112,13 +130,39 @@ def vsizip_2():
     gdal.VSIFWriteL("12345", 1, 5, fmain)
     gdal.VSIFCloseL(fmain)
 
+    content = gdal.ReadDir("/vsizip/vsimem/test2.zip")
+    if content != ['foo.bar']:
+        gdaltest.post_reason('bad content 1')
+        print(content)
+        return 'fail'
+
     # Now append a second file
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/bar.baz", "wb")
     if fmain is None:
         gdaltest.post_reason('fail 2')
         return 'fail'
     gdal.VSIFWriteL("67890", 1, 5, fmain)
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    content = gdal.ReadDir("/vsizip/vsimem/test2.zip")
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() != 'Cannot read a zip file being written':
+        gdaltest.post_reason('expected error')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    if content != None:
+        gdaltest.post_reason('bad content 2')
+        print(content)
+        return 'fail'
+
     gdal.VSIFCloseL(fmain)
+
+    content = gdal.ReadDir("/vsizip/vsimem/test2.zip")
+    if content != ['foo.bar', 'bar.baz']:
+        gdaltest.post_reason('bad content 3')
+        print(content)
+        return 'fail'
 
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/foo.bar", "rb")
     if fmain is None:
