@@ -160,6 +160,11 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         FILE    *fp;
         char    pachLeader[10];
 
+        VSIStatBufL sStatBuf;
+        if (VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0 ||
+            VSI_ISDIR(sStatBuf.st_mode))
+            return FALSE;
+
         fp = VSIFOpenL( pszFilename, "rb" );
         if( fp == NULL )
             return FALSE;
