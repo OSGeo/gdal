@@ -111,6 +111,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 			]
 	       );
     my $f = Geo::OGR::Feature->new($d);
+    ok($f->Schema->{Fields}->[1]->{Index} == 1, "Index in field in schema");
     
     $f->Row( ilist => [1,2,3],
 	     rlist => [1.1,2.2,3.3],

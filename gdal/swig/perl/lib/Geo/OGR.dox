@@ -701,7 +701,9 @@
 # Geo::OGR::FieldDefn objects or hashrefs from which such can be
 # created (see Geo::OGR::FieldDefn::create)]. The Name cannot be set
 # and the Fields are added to the schema. Fields is an array of
-# hashrefs that contain schemas of FieldDefns.
+# hashrefs that contain schemas of FieldDefns. In addition, in the
+# 'get' form of the function, each field hash contains key 'Index',
+# whose value is the index of the field.
 # @param schema [optional]
 # @return
 

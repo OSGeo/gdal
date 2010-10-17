@@ -468,7 +468,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $schema{GeometryType} = $self->GeomType();
 	    $schema{Fields} = [];
 	    for my $i (0..$self->GetFieldCount-1) {
-		push @{$schema{Fields}}, $self->GetFieldDefn($i)->Schema;
+		my $s = $self->GetFieldDefn($i)->Schema;
+		$s->{Index} = $i;
+		push @{$schema{Fields}}, $s;
 	    }
 	    return \%schema;
 	}
