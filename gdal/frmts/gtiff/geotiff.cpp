@@ -3762,6 +3762,14 @@ CPLErr GTiffDataset::IBuildOverviews(
         poMaskDS->GetRasterCount() == 1 &&
         CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
     {
+        int nMaskOvrCompression;
+        if( strstr(GDALGetMetadataItem(GDALGetDriverByName( "GTiff" ),
+                                       GDAL_DMD_CREATIONOPTIONLIST, NULL ),
+                   "<Value>DEFLATE</Value>") != NULL )
+            nMaskOvrCompression = COMPRESSION_DEFLATE;
+        else
+            nMaskOvrCompression = COMPRESSION_PACKBITS;
+
         for( i = 0; i < nOverviewCount; i++ )
         {
             if (papoOverviewDS[i]->poMaskDS == NULL)
@@ -3773,7 +3781,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                         papoOverviewDS[i]->nRasterXSize, papoOverviewDS[i]->nRasterYSize, 
                                         1, PLANARCONFIG_CONTIG,
                                         1, nOvrBlockXSize, nOvrBlockYSize, TRUE,
-                                        COMPRESSION_NONE, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, PREDICTOR_NONE,
+                                        nMaskOvrCompression, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, PREDICTOR_NONE,
                                         NULL, NULL, NULL, 0, NULL,
                                         "" );
 
