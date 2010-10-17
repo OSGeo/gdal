@@ -501,7 +501,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pSt
 }
 
 /************************************************************************/
-/*                             ReadDir()                                */
+/*                              Unlink()                                */
 /************************************************************************/
 
 int VSIArchiveFilesystemHandler::Unlink( const char *pszFilename )
