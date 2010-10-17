@@ -256,7 +256,7 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
         return NULL;
     }
 
-    tarFilename = SplitFilename(pszFilename, osTarInFileName);
+    tarFilename = SplitFilename(pszFilename, osTarInFileName, TRUE);
     if (tarFilename == NULL)
         return NULL;
 
