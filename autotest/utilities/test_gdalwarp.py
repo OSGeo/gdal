@@ -882,6 +882,48 @@ def test_gdalwarp_32():
     return 'success'
 
 ###############################################################################
+# Test warping a JPEG compressed image with a mask into a RGBA image
+
+def test_gdalwarp_33():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -dstalpha ../gcore/data/ycbcr_with_mask.tif tmp/testgdalwarp33.tif')
+
+    src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
+    ds = gdal.Open('tmp/testgdalwarp33.tif')
+    if ds is None:
+        return 'fail'
+
+    # There are expected diffs because of the artifacts due to JPEG compression in 8x8 blocks
+    # that are partially masked. gdalwarp will remove those artifacts
+    max_diff = gdaltest.compare_ds(src_ds, ds)
+    if max_diff > 37:
+        return 'fail'
+
+    src_ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand gray GTIFF_DIR:2:../gcore/data/ycbcr_with_mask.tif tmp/testgdalwarp33_mask.tif')
+
+    mask_ds = gdal.Open('tmp/testgdalwarp33_mask.tif')
+    expected_cs = mask_ds.GetRasterBand(1).Checksum()
+    mask_ds = None
+
+    cs = ds.GetRasterBand(4).Checksum()
+
+    ds = None
+
+    if cs != expected_cs:
+        gdaltest.post_reason('did not get expected checksum on alpha band')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -931,6 +973,11 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/testgdalwarp32.tif')
     except:
         pass
+    try:
+        os.remove('tmp/testgdalwarp33.tif')
+        os.remove('tmp/testgdalwarp33_mask.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -967,6 +1014,7 @@ gdaltest_list = [
     test_gdalwarp_30,
     test_gdalwarp_31,
     test_gdalwarp_32,
+    test_gdalwarp_33,
     test_gdalwarp_cleanup
     ]
 
