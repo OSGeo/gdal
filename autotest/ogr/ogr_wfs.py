@@ -601,6 +601,47 @@ def ogr_wfs_deegree_wfst():
     return 'success'
 
 ###############################################################################
+# Test CreateFeature() / UpdateFeature() / DeleteFeature() on a WFS 1.0.0 server
+
+def ogr_wfs_ionic_wfst():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if gdaltest.gdalurlopen('http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA') is None:
+        print('cannot open URL')
+        return 'skip'
+
+    ds = ogr.Open('WFS:http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA', update = 1)
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayerByName('wfs:BUSINESS')
+    geom = ogr.CreateGeometryFromWkt('POINT(234000 890000)')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(geom)
+    feat.SetField('NAME', 'nameSetByOGR')
+    feat.SetField('TOTAL_EMPLOYEES', '10')
+
+    ret = lyr.CreateFeature(feat)
+    if ret != 0:
+        print('fail on CreateFeature')
+        return 'fail'
+
+    gmlid = feat.GetField('gml_id')
+
+    ret = lyr.SetFeature(feat)
+    if ret != 0:
+        print('fail on SetFeature')
+        return 'fail'
+
+    ds.ExecuteSQL("DELETE FROM wfs:BUSINESS WHERE gml_id = '%s'" % gmlid)
+
+    return 'success'
+
+###############################################################################
 # Test opening a datasource from a XML description file
 # The following test should issue 0 WFS http request
 
@@ -640,6 +681,7 @@ gdaltest_list = [
     ogr_wfs_fake_wfs_server,
     #ogr_wfs_geoserver_wfst,
     ogr_wfs_deegree_wfst,
+    ogr_wfs_ionic_wfst,
     ogr_wfs_xmldescriptionfile
     ]
 
