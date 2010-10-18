@@ -578,6 +578,9 @@ def ogr_libkml_write_dir():
     return ogr_libkml_write('/vsimem/libkmldir')
 
 def ogr_libkml_check_write_dir():
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+        
     ret = ogr_libkml_check_write('/vsimem/libkmldir')
     files = gdal.ReadDir('/vsimem/libkmldir')
     for filename in files:
