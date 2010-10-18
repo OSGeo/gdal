@@ -816,8 +816,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         osVersion = CPLGetXMLValue(psWFSCapabilities, "version", "1.0.0");
     if (strcmp(osVersion.c_str(), "1.0.0") == 0)
         bUseFeatureId = TRUE;
-
-    bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
+    else
+        /* Some servers happen to support RESULTTYPE=hits in 1.0.0, but there */
+        /* is no way to advertisze this */
+        bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
 
     DetectTransactionSupport(psWFSCapabilities);
 
