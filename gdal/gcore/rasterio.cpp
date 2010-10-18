@@ -3009,7 +3009,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
  *
  * This function copies the complete raster contents of one band to
  * another similarly configured band.  The source and destination
- * bands must have the the same width and height.  The bands do not have
+ * bands must have the same width and height.  The bands do not have
  * to have the same data type.
  *
  * It implements efficient copying, in particular "chunking" the copy in
