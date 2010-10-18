@@ -1424,7 +1424,14 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     /* num as the OGR FID */
     if (strncmp(pszFID, pszShortName, strlen(pszShortName)) == 0 &&
         pszFID[strlen(pszShortName)] == '.')
-        poFeature->SetFID(atoi(pszFID + strlen(pszShortName) + 1));
+    {
+        int nFID = atoi(pszFID + strlen(pszShortName) + 1);
+        char szTemp[12];
+        sprintf(szTemp, "%d", nFID);
+        /* Check that it fits on a int32 */
+        if (strcmp(szTemp, pszFID + strlen(pszShortName) + 1) == 0)
+            poFeature->SetFID(nFID);
+    }
 
     CPLDebug("WFS", "Got FID = %ld", poFeature->GetFID());
 
