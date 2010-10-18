@@ -1027,7 +1027,6 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
         return( KvUserDefined );
 
       case 9820:
-      case 1027: /* used by EPSG:2163, 3408, 3409, 3973 and 3974 */
         return( CT_LambertAzimEqualArea );
 
       case 9822:
