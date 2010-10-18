@@ -174,11 +174,17 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             FILE *fpVRT = NULL;
 
-            fpVRT = VSIFOpen( pszFilename, "w" );
-            CPLAssert( NULL != fpVRT );
+            fpVRT = VSIFOpenL( pszFilename, "wb" );
+            if (fpVRT == NULL)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot create %s", pszFilename);
+                CPLFree( pszXML );
+                return NULL;
+            }
 
-            VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
-            VSIFClose( fpVRT );
+            VSIFWriteL( pszXML, 1, strlen(pszXML), fpVRT );
+            VSIFCloseL( fpVRT );
 
             pCopyDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
         }
@@ -303,6 +309,8 @@ void GDALRegister_VRT()
         poDriver->pfnCreate = VRTDataset::Create;
         poDriver->pfnIdentify = VRTDataset::Identify;
         poDriver->pfnDelete = VRTDataset::Delete;
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->AddSourceParser( "SimpleSource", 
                                    VRTParseCoreSources );
