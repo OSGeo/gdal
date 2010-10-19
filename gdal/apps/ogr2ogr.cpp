@@ -1709,6 +1709,34 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 }
             }
         }
+        
+        /* -------------------------------------------------------------------- */
+        /* Use SetIgnoredFields() on source layer if available                  */
+        /* -------------------------------------------------------------------- */
+        if (poSrcLayer->TestCapability(OLCIgnoreFields))
+        {
+            int iSrcField;
+            char** papszIgnoredFields = NULL;
+            for(iSrcField=0;iSrcField<poSrcFDefn->GetFieldCount();iSrcField++)
+            {
+                const char* pszFieldName =
+                    poSrcFDefn->GetFieldDefn(iSrcField)->GetNameRef();
+                int bFieldRequested = FALSE;
+                for( iField=0; papszSelFields[iField] != NULL; iField++)
+                {
+                    if (strcmp(pszFieldName, papszSelFields[iField]) == 0)
+                    {
+                        bFieldRequested = TRUE;
+                        break;
+                    }
+                }
+                /* If source field not requested, add it to ignored files list */
+                if (!bFieldRequested)
+                    papszIgnoredFields = CSLAddString(papszIgnoredFields, pszFieldName);
+            }
+            poSrcLayer->SetIgnoredFields((const char**)papszIgnoredFields);
+            CSLDestroy(papszIgnoredFields);
+        }
     }
     else if( !bAppend )
     {
