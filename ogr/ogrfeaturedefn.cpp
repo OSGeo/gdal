@@ -58,6 +58,8 @@ OGRFeatureDefn::OGRFeatureDefn( const char * pszName )
     nFieldCount = 0;
     papoFieldDefn = NULL;
     eGeomType = wkbUnknown;
+    bIgnoreGeometry = FALSE;
+    bIgnoreStyle = FALSE;
 }
 
 /************************************************************************/
@@ -612,6 +614,142 @@ int OGR_FD_GetFieldIndex( OGRFeatureDefnH hDefn, const char *pszFieldName )
 
 {
     return ((OGRFeatureDefn *)hDefn)->GetFieldIndex( pszFieldName );
+}
+
+/************************************************************************/
+/*                         IsGeometryIgnored()                          */
+/************************************************************************/
+
+/**
+ * \fn int OGRFeatureDefn::IsGeometryIgnored();
+ *
+ * \brief Determine whether the geometry can be omitted when fetching features
+ *
+ * This method is the same as the C function OGR_FD_IsGeometryIgnored().
+ *
+ * @return ignore state
+ */
+
+/************************************************************************/
+/*                      OGR_FD_IsGeometryIgnored()                      */
+/************************************************************************/
+
+/**
+ * \brief Determine whether the geometry can be omitted when fetching features
+ *
+ * This function is the same as the C++ method 
+ * OGRFeatureDefn::IsGeometryIgnored().
+ *
+ * @param hDefn hanlde to the feature definition on witch OGRFeature are
+ * based on. 
+ * @return ignore state
+ */
+
+int OGR_FD_IsGeometryIgnored( OGRFeatureDefnH hDefn )
+{
+    return ((OGRFeatureDefn *) hDefn)->IsGeometryIgnored();
+}
+
+/************************************************************************/
+/*                         SetGeometryIgnored()                         */
+/************************************************************************/
+
+/**
+ * \fn void OGRFeatureDefn::SetGeometryIgnored( int bIgnore );
+ *
+ * \brief Set whether the geometry can be omitted when fetching features
+ *
+ * This method is the same as the C function OGR_FD_SetGeometryIgnored().
+ *
+ * @param bIgnore ignore state
+ */
+
+/************************************************************************/
+/*                      OGR_FD_SetGeometryIgnored()                     */
+/************************************************************************/
+
+/**
+ * \brief Set whether the geometry can be omitted when fetching features
+ *
+ * This function is the same as the C++ method 
+ * OGRFeatureDefn::SetGeometryIgnored().
+ *
+ * @param hDefn hanlde to the feature definition on witch OGRFeature are
+ * based on. 
+ * @param bIgnore ignore state
+ */
+
+void OGR_FD_SetGeometryIgnored( OGRFeatureDefnH hDefn, int bIgnore )
+{
+    ((OGRFeatureDefn *) hDefn)->SetGeometryIgnored( bIgnore );
+}
+
+/************************************************************************/
+/*                           IsStyleIgnored()                           */
+/************************************************************************/
+
+/**
+ * \fn int OGRFeatureDefn::IsStyleIgnored();
+ *
+ * \brief Determine whether the style can be omitted when fetching features
+ *
+ * This method is the same as the C function OGR_FD_IsStyleIgnored().
+ *
+ * @return ignore state
+ */
+
+/************************************************************************/
+/*                       OGR_FD_IsStyleIgnored()                        */
+/************************************************************************/
+
+/**
+ * \brief Determine whether the style can be omitted when fetching features
+ *
+ * This function is the same as the C++ method 
+ * OGRFeatureDefn::IsStyleIgnored().
+ *
+ * @param hDefn handle to the feature definition on which OGRFeature are
+ * based on. 
+ * @return ignore state
+ */
+
+int OGR_FD_IsStyleIgnored( OGRFeatureDefnH hDefn )
+{
+    return ((OGRFeatureDefn *) hDefn)->IsStyleIgnored();
+}
+
+/************************************************************************/
+/*                          SetStyleIgnored()                           */
+/************************************************************************/
+
+/**
+ * \fn void OGRFeatureDefn::SetStyleIgnored( bool bIgnore );
+ *
+ * \brief Set whether the style can be omitted when fetching features
+ *
+ * This method is the same as the C function OGR_FD_SetStyleIgnored().
+ *
+ * @param bIgnore ignore state
+ */
+
+/************************************************************************/
+/*                       OGR_FD_SetStyleIgnored()                       */
+/************************************************************************/
+
+/**
+ * \brief Set whether the style can be omitted when fetching features
+ *
+ * This function is the same as the C++ method 
+ * OGRFeatureDefn::SetStyleIgnored().
+ *
+ * @param hDefn hanlde to the feature definition on witch OGRFeature are
+ * based on. 
+ * @param bIgnore ignore state
+ */
+
+void OGR_FD_SetStyleIgnored( OGRFeatureDefnH hDefn, int bIgnore )
+{
+    ((OGRFeatureDefn *) hDefn)->SetStyleIgnored( bIgnore );
 }
 
 /************************************************************************/

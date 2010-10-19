@@ -1073,3 +1073,58 @@ OGRwkbGeometryType OGR_L_GetGeomType( OGRLayerH hLayer )
 
     return ((OGRLayer *) hLayer)->GetGeomType();
 }
+
+/************************************************************************/
+/*                          SetIgnoredFields()                          */
+/************************************************************************/
+
+OGRErr OGRLayer::SetIgnoredFields( const char **papszFields )
+{
+    OGRFeatureDefn *poDefn = GetLayerDefn();
+
+    // first set everything as *not* ignored
+    for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
+    {
+        poDefn->GetFieldDefn(iField)->SetIgnored( FALSE );
+    }
+    poDefn->SetGeometryIgnored( FALSE );
+    poDefn->SetStyleIgnored( FALSE );
+    
+    if ( papszFields == NULL )
+        return OGRERR_NONE;
+
+    // ignore some fields
+    while ( *papszFields )
+    {
+        const char* pszFieldName = *papszFields;
+        // check special fields
+        if ( EQUAL(pszFieldName, "OGR_GEOMETRY") )
+            poDefn->SetGeometryIgnored( TRUE );
+        else if ( EQUAL(pszFieldName, "OGR_STYLE") )
+            poDefn->SetStyleIgnored( TRUE );
+        else
+        {
+            // check ordinary fields
+            int iField = poDefn->GetFieldIndex(pszFieldName);
+            if ( iField == -1 )
+                return OGRERR_FAILURE;
+            else
+                poDefn->GetFieldDefn(iField)->SetIgnored( TRUE );
+        }
+        papszFields++;
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                       OGR_L_SetIgnoredFields()                       */
+/************************************************************************/
+
+OGRErr OGR_L_SetIgnoredFields( OGRLayerH hLayer, const char **papszFields )
+
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_SetIgnoredFields", NULL );
+
+    return ((OGRLayer *) hLayer)->SetIgnoredFields( papszFields );
+}

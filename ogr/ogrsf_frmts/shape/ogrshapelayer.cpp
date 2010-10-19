@@ -672,6 +672,9 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return bUpdateAccess;
+    
+    else if( EQUAL(pszCap,OLCIgnoreFields) )
+        return TRUE;
 
     else 
         return FALSE;
