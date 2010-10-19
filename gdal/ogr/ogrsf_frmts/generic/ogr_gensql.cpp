@@ -260,6 +260,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         CreateOrderByIndex();
 
     ResetReading();
+
+    SetIgnoredFields();
 }
 
 /************************************************************************/
@@ -1339,4 +1341,107 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
     }
 
     return nResult;
+}
+
+
+/************************************************************************/
+/*                         AddFieldDefnToSet()                          */
+/************************************************************************/
+
+void OGRGenSQLResultsLayer::AddFieldDefnToSet(int iTable, int iColumn,
+                                              CPLHashSet* hSet)
+{
+    if (iTable != -1 && iColumn != -1)
+    {
+        OGRLayer* poLayer = papoTableLayers[iTable];
+        if (iColumn < poLayer->GetLayerDefn()->GetFieldCount())
+        {
+            OGRFieldDefn* poFDefn =
+                poLayer->GetLayerDefn()->GetFieldDefn(iColumn);
+            CPLHashSetInsert(hSet, poFDefn);
+        }
+    }
+}
+
+/************************************************************************/
+/*                   ExploreExprForIgnoredFields()                      */
+/************************************************************************/
+
+void OGRGenSQLResultsLayer::ExploreExprForIgnoredFields(swq_expr_node* expr,
+                                                        CPLHashSet* hSet)
+{
+    if (expr->eNodeType == SNT_COLUMN)
+    {
+        AddFieldDefnToSet(expr->table_index, expr->field_index, hSet);
+    }
+    else if (expr->eNodeType == SNT_OPERATION)
+    {
+        for( int i = 0; i < expr->nSubExprCount; i++ )
+            ExploreExprForIgnoredFields(expr->papoSubExpr[i], hSet);
+    }
+}
+
+/************************************************************************/
+/*                       SetIgnoredFields()                             */
+/************************************************************************/
+
+void OGRGenSQLResultsLayer::SetIgnoredFields()
+{
+    swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+    CPLHashSet* hSet = CPLHashSetNew(CPLHashSetHashPointer,
+                                     CPLHashSetEqualPointer,
+                                     NULL);
+
+/* -------------------------------------------------------------------- */
+/*      1st phase : explore the whole select infos to determine which   */
+/*      source fields are used                                          */
+/* -------------------------------------------------------------------- */
+    for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
+    {
+        swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+        AddFieldDefnToSet(psColDef->table_index, psColDef->field_index, hSet);
+        if (psColDef->expr)
+            ExploreExprForIgnoredFields(psColDef->expr, hSet);
+    }
+
+    if (psSelectInfo->where_expr)
+        ExploreExprForIgnoredFields(psSelectInfo->where_expr, hSet);
+
+    for( int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
+    {
+        swq_join_def *psJoinDef = psSelectInfo->join_defs + iJoin;
+        AddFieldDefnToSet(psJoinDef->primary_field, 0, hSet);
+        AddFieldDefnToSet(psJoinDef->secondary_field, psJoinDef->secondary_table, hSet);
+    }
+
+    for( int iOrder = 0; iOrder < psSelectInfo->order_specs; iOrder++ )
+    {
+        swq_order_def *psOrderDef = psSelectInfo->order_defs + iOrder;
+        AddFieldDefnToSet(psOrderDef->table_index, psOrderDef->field_index, hSet);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      2nd phase : now, we can exclude the unused fields               */
+/* -------------------------------------------------------------------- */
+    for( int iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
+    {
+        OGRLayer* poLayer = papoTableLayers[iTable];
+        OGRFeatureDefn *poSrcFDefn = poLayer->GetLayerDefn();
+        int iSrcField;
+        char** papszIgnoredFields = NULL;
+        for(iSrcField=0;iSrcField<poSrcFDefn->GetFieldCount();iSrcField++)
+        {
+            OGRFieldDefn* poFDefn = poSrcFDefn->GetFieldDefn(iSrcField);
+            if (CPLHashSetLookup(hSet,poFDefn) == NULL)
+            {
+                papszIgnoredFields = CSLAddString(papszIgnoredFields, poFDefn->GetNameRef());
+                //CPLDebug("OGR", "Adding %s to the list of ignored fields of layer %s",
+                //         poFDefn->GetNameRef(), poLayer->GetName());
+            }
+        }
+        poLayer->SetIgnoredFields((const char**)papszIgnoredFields);
+        CSLDestroy(papszIgnoredFields);
+    }
+
+    CPLHashSetDestroy(hSet);
 }
