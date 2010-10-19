@@ -71,6 +71,7 @@ OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype )
     SetWidth( poPrototype->GetWidth() );
     SetPrecision( poPrototype->GetPrecision() );
 //    SetDefault( poPrototype->GetDefaultRef() );
+    bIgnore = FALSE;
 }
 
 /************************************************************************/
@@ -639,4 +640,68 @@ void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
 {
     ((OGRFieldDefn *) hDefn)->Set( pszNameIn, eTypeIn, nWidthIn, 
                                    nPrecisionIn, eJustifyIn );
+}
+
+/************************************************************************/
+/*                             IsIgnored()                              */
+/************************************************************************/
+
+/**
+ * \fn bool OGRFieldDefn::IsIgnored();
+ *
+ * \brief Return whether this field should be omitted when fetching features
+ *
+ * This method is the same as the C function OGR_Fld_IsIgnored().
+ *
+ * @return ignore state
+ */
+
+/************************************************************************/
+/*                         OGR_Fld_IsIgnored()                          */
+/************************************************************************/
+
+/**
+ * \brief Return whether this field should be omitted when fetching features
+ *
+ * This method is the same as the C++ method OGRFieldDefn::IsIgnored().
+ *
+ * @param hDefn handle to the field definition
+ * @return ignore state
+ */
+
+int OGR_Fld_IsIgnored( OGRFieldDefnH hDefn )
+{
+    return ((OGRFieldDefn *) hDefn)->IsIgnored();
+}
+
+/************************************************************************/
+/*                            SetIgnored()                              */
+/************************************************************************/
+
+/**
+ * \fn void OGRFieldDefn::SetIgnored( bool ignore );
+ *
+ * \brief Set whether this field should be omitted when fetching features
+ *
+ * This method is the same as the C function OGR_Fld_SetIgnored().
+ *
+ * @param ignore ignore state
+ */
+
+/************************************************************************/
+/*                        OGR_Fld_SetIgnored()                          */
+/************************************************************************/
+
+/**
+ * \brief Set whether this field should be omitted when fetching features
+ *
+ * This method is the same as the C function OGRFieldDefn::SetIgnored().
+ *
+ * @param hDefn handle to the field definition
+ * @param ignore ignore state
+ */
+
+void OGR_Fld_SetIgnored( OGRFieldDefnH hDefn, int ignore )
+{
+    ((OGRFieldDefn *) hDefn)->SetIgnored( ignore );
 }

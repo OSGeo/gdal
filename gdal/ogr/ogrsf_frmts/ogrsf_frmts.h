@@ -110,6 +110,8 @@ class CPL_DLL OGRLayer
     virtual const char *GetFIDColumn();
     virtual const char *GetGeometryColumn();
 
+    virtual OGRErr      SetIgnoredFields( const char **papszFields );
+
     int                 Reference();
     int                 Dereference();
     int                 GetRefCount() const;
