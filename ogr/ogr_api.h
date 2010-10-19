@@ -237,6 +237,8 @@ int    CPL_DLL OGR_Fld_GetPrecision( OGRFieldDefnH );
 void   CPL_DLL OGR_Fld_SetPrecision( OGRFieldDefnH, int );
 void   CPL_DLL OGR_Fld_Set( OGRFieldDefnH, const char *, OGRFieldType, 
                             int, int, OGRJustification );
+int    CPL_DLL OGR_Fld_IsIgnored( OGRFieldDefnH hDefn );
+void   CPL_DLL OGR_Fld_SetIgnored( OGRFieldDefnH hDefn, int );
 
 const char CPL_DLL *OGR_GetFieldTypeName( OGRFieldType );
 
@@ -252,6 +254,10 @@ int    CPL_DLL OGR_FD_GetFieldIndex( OGRFeatureDefnH, const char * );
 void   CPL_DLL OGR_FD_AddFieldDefn( OGRFeatureDefnH, OGRFieldDefnH );
 OGRwkbGeometryType CPL_DLL OGR_FD_GetGeomType( OGRFeatureDefnH );
 void   CPL_DLL OGR_FD_SetGeomType( OGRFeatureDefnH, OGRwkbGeometryType );
+int    CPL_DLL OGR_FD_IsGeometryIgnored( OGRFeatureDefnH );
+void   CPL_DLL OGR_FD_SetGeometryIgnored( OGRFeatureDefnH, int );
+int    CPL_DLL OGR_FD_IsStyleIgnored( OGRFeatureDefnH );
+void   CPL_DLL OGR_FD_SetStyleIgnored( OGRFeatureDefnH, int );
 int    CPL_DLL OGR_FD_Reference( OGRFeatureDefnH );
 int    CPL_DLL OGR_FD_Dereference( OGRFeatureDefnH );
 int    CPL_DLL OGR_FD_GetReferenceCount( OGRFeatureDefnH );
@@ -359,6 +365,7 @@ const char CPL_DLL *OGR_L_GetGeometryColumn( OGRLayerH );
 OGRStyleTableH CPL_DLL OGR_L_GetStyleTable( OGRLayerH );
 void   CPL_DLL OGR_L_SetStyleTableDirectly( OGRLayerH, OGRStyleTableH );
 void   CPL_DLL OGR_L_SetStyleTable( OGRLayerH, OGRStyleTableH );
+OGRErr CPL_DLL OGR_L_SetIgnoredFields( OGRLayerH, const char** );
 
 /* OGRDataSource */
 

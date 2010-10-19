@@ -980,7 +980,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
 /*      Fetch geometry from Shapefile to OGRFeature.                    */
 /* -------------------------------------------------------------------- */
-    if( hSHP != NULL )
+    if( hSHP != NULL && !poDefn->IsGeometryIgnored() )
     {
         OGRGeometry* poGeometry = NULL;
         poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
@@ -1003,6 +1003,9 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
     for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {
+        if ( poDefn->GetFieldDefn(iField)->IsIgnored() )
+            continue;
+        
         // Skip null fields.
         if( DBFIsAttributeNULL( hDBF, iShape, iField ) )
             continue;

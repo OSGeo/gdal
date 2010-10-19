@@ -57,6 +57,8 @@ class CPL_DLL OGRFieldDefn
     int                 nWidth;                 /* zero is variable */
     int                 nPrecision;
     OGRField            uDefault;
+    
+    int                 bIgnore;
 
     void                Initialize( const char *, OGRFieldType );
     
@@ -88,6 +90,9 @@ class CPL_DLL OGRFieldDefn
 
     void                SetDefault( const OGRField * );
     const OGRField     *GetDefaultRef() { return &uDefault; }
+    
+    int                 IsIgnored() { return bIgnore; }
+    void                SetIgnored( int bIgnore ) { this->bIgnore = bIgnore; }
 };
 
 /************************************************************************/
@@ -122,6 +127,9 @@ class CPL_DLL OGRFeatureDefn
 
     char        *pszFeatureClassName;
     
+    int         bIgnoreGeometry;
+    int         bIgnoreStyle;
+    
   public:
                 OGRFeatureDefn( const char * pszName = NULL );
     virtual    ~OGRFeatureDefn();
@@ -143,6 +151,11 @@ class CPL_DLL OGRFeatureDefn
     int         Dereference() { return CPLAtomicDec(&nRefCount); }
     int         GetReferenceCount() { return nRefCount; }
     void        Release();
+
+    int         IsGeometryIgnored() { return bIgnoreGeometry; }
+    void        SetGeometryIgnored( int bIgnore ) { bIgnoreGeometry = bIgnore; }
+    int        IsStyleIgnored() { return bIgnoreStyle; }
+    void        SetStyleIgnored( int bIgnore ) { bIgnoreStyle = bIgnore; }
 
     static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = NULL );
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
