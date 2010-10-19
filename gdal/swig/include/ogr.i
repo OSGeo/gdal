@@ -213,6 +213,7 @@ typedef void OGRFieldDefnShadow;
 %constant char *OLCDeleteFeature       = "DeleteFeature";
 %constant char *OLCFastSetNextByIndex  = "FastSetNextByIndex";
 %constant char *OLCStringsAsUTF8       = "StringsAsUTF8";
+%constant char *OLCIgnoreFields        = "IgnoreFields";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
@@ -647,6 +648,10 @@ public:
     return OGR_L_GetFeaturesRead(self);
   }
 
+  OGRErr SetIgnoredFields( const char **options ) {
+    return OGR_L_SetIgnoredFields( self, options );
+  }
+
 } /* %extend */
 
 
@@ -1078,6 +1083,22 @@ public:
   int GetReferenceCount(){
     return OGR_FD_GetReferenceCount(self);
   }
+
+  int IsGeometryIgnored() {
+    return OGR_FD_IsGeometryIgnored(self);
+  }
+  
+  void SetGeometryIgnored( int bIgnored ) {
+    return OGR_FD_SetGeometryIgnored(self,bIgnored);
+  }
+  
+  int IsStyleIgnored() {
+    return OGR_FD_IsStyleIgnored(self);
+  }
+  
+  void SetStyleIgnored( int bIgnored ) {
+    return OGR_FD_SetStyleIgnored(self,bIgnored);
+  }
   
 } /* %extend */
 
@@ -1188,6 +1209,14 @@ public:
   /* Should be static */
   const char * GetFieldTypeName(OGRFieldType type) {
     return OGR_GetFieldTypeName(type);
+  }
+
+  int IsIgnored() {
+    return OGR_Fld_IsIgnored( self );
+  }
+
+  void SetIgnored(int bIgnored ) {
+    return OGR_Fld_SetIgnored( self, bIgnored );
   }
 
 } /* %extend */
