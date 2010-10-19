@@ -166,7 +166,12 @@ typedef unsigned int    GUInt32;
 typedef short           GInt16;
 typedef unsigned short  GUInt16;
 typedef unsigned char   GByte;
+/* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
+/* in include/poppler/goo/gtypes.h */
+#ifndef CPL_GBOOL_DEFINED
+#define CPL_GBOOL_DEFINED
 typedef int             GBool;
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      64bit support                                                   */
