@@ -33,11 +33,32 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                         OSRImportFromERM()                           */
+/************************************************************************/
+
+/**
+ * \brief Create OGR WKT from ERMapper projection definitions.
+ *
+ * This function is the same as OGRSpatialReference::importFromERM().
+ */
+
+OGRErr OSRImportFromERM( OGRSpatialReferenceH hSRS, const char *pszProj,
+                         const char *pszDatum, const char *pszUnits )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRImportFromERM", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->importFromERM( pszProj,
+                                                          pszDatum,
+                                                          pszUnits );
+}
+
+/************************************************************************/
 /*                           importFromERM()                            */
 /************************************************************************/
 
 /**
- * OGR WKT from ERMapper projection definitions.
+ * Create OGR WKT from ERMapper projection definitions.
  *
  * Generates an OGRSpatialReference definition from an ERMapper datum
  * and projection name.  Based on the ecw_cs.wkt dictionary file from 
@@ -99,6 +120,24 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
         CopyGeogCSFrom( &oGeogCS );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OSRExportToERM()                            */
+/************************************************************************/
+/** 
+ * \brief Convert coordinate system to ERMapper format.
+ *
+ * This function is the same as OGRSpatialReference::exportToERM().
+ */
+OGRErr OSRExportToERM( OGRSpatialReferenceH hSRS,
+                       char *pszProj, char *pszDatum, char *pszUnits )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRExportToERM", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->exportToERM( pszProj, pszDatum,
+                                                        pszUnits );
 }
 
 /************************************************************************/
