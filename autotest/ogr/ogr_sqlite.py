@@ -1014,6 +1014,70 @@ def ogr_sqlite_22():
     return 'success'
 
 ###############################################################################
+# Test ignored fields works ok
+
+def ogr_sqlite_23():
+
+    shp_layer = gdaltest.sl_ds.GetLayerByName('tpoly')
+    shp_layer.SetIgnoredFields( ['AREA'] )
+
+    feat = shp_layer.GetNextFeature()
+
+    if feat.IsFieldSet( 'AREA' ):
+        gdaltest.post_reason( 'got area despite request to ignore it.' )
+        return 'fail'
+
+    if feat.GetFieldAsInteger('EAS_ID') != 168:
+        gdaltest.post_reason( 'missing or wrong eas_id' )
+        return 'fail'
+
+    wkt = 'POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))'
+    if ogrtest.check_feature_geometry(feat, wkt,
+                                      max_error = 0.00000001 ) != 0:
+        return 'fail'
+
+    fd = shp_layer.GetLayerDefn()
+    fld = fd.GetFieldDefn(0) # area
+    if not fld.IsIgnored():
+        gdaltest.post_reason( 'AREA unexpectedly not marked as ignored.' )
+        return 'fail'
+
+    fld = fd.GetFieldDefn(1) # eas_id
+    if fld.IsIgnored():
+        gdaltest.post_reason( 'EASI unexpectedly marked as ignored.' )
+        return 'fail'
+
+    if fd.IsGeometryIgnored():
+        gdaltest.post_reason( 'geometry unexpectedly ignored.' )
+        return 'fail'
+
+    if fd.IsStyleIgnored():
+        gdaltest.post_reason( 'style unexpectedly ignored.' )
+        return 'fail'
+
+    fd.SetGeometryIgnored( 1 )
+
+    if not fd.IsGeometryIgnored():
+        gdaltest.post_reason( 'geometry unexpectedly not ignored.' )
+        return 'fail'
+
+    feat = shp_layer.GetNextFeature()
+
+    if feat.GetGeometryRef() != None:
+        gdaltest.post_reason( 'Unexpectedly got a geometry on feature 2.' )
+        return 'fail'
+
+    if feat.IsFieldSet( 'AREA' ):
+        gdaltest.post_reason( 'got area despite request to ignore it.' )
+        return 'fail'
+
+    if feat.GetFieldAsInteger('EAS_ID') != 179:
+        gdaltest.post_reason( 'missing or wrong eas_id' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test if SpatiaLite is available
 
 def ogr_spatialite_1():
@@ -1023,11 +1087,13 @@ def ogr_spatialite_1():
 
     ds = ogr.Open( 'tmp/spatialite_test.db'  )
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
+    sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
     gdal.PopErrorHandler()
     if sql_lyr is None:
         res = 'skip'
     else:
+        feat = sql_lyr.GetNextFeature()
+        print('Spatialite : %s' % feat.GetFieldAsString(0))
         gdaltest.has_spatialite = True
         ds.ReleaseResultSet(sql_lyr)
         res = 'success'
@@ -1270,6 +1336,7 @@ gdaltest_list = [
     ogr_sqlite_20,
     ogr_sqlite_21,
     ogr_sqlite_22,
+    ogr_sqlite_23,
     ogr_spatialite_1,
     ogr_spatialite_2,
     ogr_spatialite_3,
