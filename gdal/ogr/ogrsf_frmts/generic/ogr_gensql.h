@@ -31,6 +31,8 @@
 #define _OGR_GENSQL_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include "swq.h"
+#include "cpl_hash_set.h"
 
 /************************************************************************/
 /*                        OGRGenSQLResultsLayer                         */
@@ -71,6 +73,10 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         Compare( OGRField *pasFirst, OGRField *pasSecond );
 
     void        ClearFilters();
+
+    void        SetIgnoredFields();
+    void        ExploreExprForIgnoredFields(swq_expr_node* expr, CPLHashSet* hSet);
+    void        AddFieldDefnToSet(int iTable, int iColumn, CPLHashSet* hSet);
     
   public:
                 OGRGenSQLResultsLayer( OGRDataSource *poSrcDS, 
