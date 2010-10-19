@@ -242,7 +242,7 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
 %clear const char * pszKey;
 
 /* Provide hooks to hex encoding methods */
-#ifdef (SWIGJAVA) || (SWIGPERL)
+#if defined(SWIGJAVA) || defined(SWIGPERL)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
 retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
 %clear ( int nBytes, const GByte *pabyData );
