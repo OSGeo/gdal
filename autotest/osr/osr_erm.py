@@ -49,7 +49,7 @@ def osr_erm_1():
 
         if srs.GetInvFlattening() != 0.0 \
            or abs(srs.GetSemiMajor() - srs.GetSemiMinor() > 0.0000005):
-            gdaltest.post_reason('Wrong ERMapper spherical datum parameters (bug #3787). Be sure your "ecw_cs.wkt" is from xxx revision or newer.')
+            gdaltest.post_reason('Wrong ERMapper spherical datum parameters (bug #3787). Be sure your "ecw_cs.wkt" is from 20890 revision or newer.')
             return 'fail'
 
     return 'success'
