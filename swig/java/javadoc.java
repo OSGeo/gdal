@@ -6508,6 +6508,25 @@ public class Layer:public String GetFIDColumn()
 */
 public class Layer:public String GetGeometryColumn()
 
+
+/**
+ Set which fields can be omitted when retrieving features from the layer.
+
+ If the driver supports this functionality (testable using OLCIgnoreFields capability), it will not fetch the specified fields
+ in subsequent calls to GetFeature() / GetNextFeature() and thus save some processing time and/or bandwidth.
+
+ Besides field names of the layers, the following special fields can be passed: "OGR_GEOMETRY" to ignore geometry and
+ "OGR_STYLE" to ignore layer style.
+
+ By default, no fields are ignored.
+
+ @param fields a vector of field names. If null is passed, the ignored list is cleared.
+ @return ogr.OGRERR_NONE if all field names have been resolved (even if the driver does not support this method)
+
+ @since OGR 1.8.0
+*/
+public class Layer:public int SetIgnoredFields(java.util.Vector fieldNames)
+
 /** 
  Fetch the schema information for this layer.
 
@@ -6808,6 +6827,8 @@ fields are assured to be in UTF-8 format.  If false the encoding of fields
 is uncertain, though it might still be UTF-8.<p>
 
 <li> <b>OLCTransactions</b> / "Transactions": true if the StartTransaction(), CommitTransaction() and RollbackTransaction() methods work in a meaningful way, otherwise false.<p>
+
+<li> <b>OLCIgnoreFields</b> / "IgnoreFields": true if fields, geometry and style will be omitted when fetching features as set by SetIgnoredFields() method.<p>
 
 <p>
 
@@ -8544,6 +8565,42 @@ public class FeatureDefn:public FieldDefn GetFieldDefn(int ifield)
 public class FeatureDefn:public int GetFieldIndex(String name)
 
 /**
+ * Determine whether the geometry can be omitted when fetching features.
+ *
+ * @return ignore state (1 if ignored, 0 otherwise)
+ *
+ * @since OGR 1.8.0
+ */
+public class FeatureDefn:public int IsGeometryIgnored()
+
+/**
+ * Set whether the geometry can be omitted when fetching features.
+ *
+ * @param bIgnore ignore state (1 to ignore, 0 otherwise)
+ *
+ * @since OGR 1.8.0
+ */
+public class FeatureDefn:public void SetGeometryIgnored(int bIgnore)
+
+/**
+ * Determine whether the style can be omitted when fetching features.
+ *
+ * @return ignore state (1 if ignored, 0 otherwise)
+ *
+ * @since OGR 1.8.0
+ */
+public class FeatureDefn:public int IsStyleIgnored()
+
+/**
+ * Set whether the style can be omitted when fetching features.
+ *
+ * @param bIgnore ignore state (1 to ignore, 0 otherwise)
+ *
+ * @since OGR 1.8.0
+ */
+public class FeatureDefn:public void SetStyleIgnored(int bIgnore)
+
+/**
  * Fetch the geometry base type.
  *
  * Note that some drivers are unable to determine a specific geometry
@@ -8711,6 +8768,23 @@ public class FieldDefn:public void SetType(int type)
  */
 public class FieldDefn:public void SetWidth(int width) 
 
+/**
+ * Return whether this field should be omitted when fetching features.
+ *
+ * @return ignore state (1 if ignored, 0 otherwise)
+ *
+ * @since OGR 1.8.0
+ */
+public class FieldDefn:public int IsIgnored()
+
+/**
+ * Set whether this field should be omitted when fetching features.
+ *
+ * @param bIgnored ignore state (1 to ignore, 0 otherwise)
+ *
+ * @since OGR 1.8.0
+ */
+public class FieldDefn:public void SetIgnored(int bIgnored) 
 
 /* Class ogr */
 
