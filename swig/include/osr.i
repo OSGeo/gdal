@@ -358,6 +358,21 @@ public:
     return OSRGetNormProjParm( self, name, default_val, 0 );
   }
 
+  double GetSemiMajor( ) {
+    // Return code ignored.
+    return OSRGetSemiMajor( self, 0 );
+  }
+
+  double GetSemiMinor( ) {
+    // Return code ignored.
+    return OSRGetSemiMinor( self, 0 );
+  }
+
+  double GetInvFlattening( ) {
+    // Return code ignored.
+    return OSRGetInvFlattening( self, 0 );
+  }
+
 %feature( "kwargs" ) SetACEA;
   OGRErr SetACEA( double stdp1, double stdp2,
  		double clat, double clong,
@@ -734,6 +749,11 @@ public:
     return OSRImportFromXML( self, xmlString );
   }
   
+  OGRErr ImportFromERM( char const *proj, char const *datum,
+                        char const *units ) {
+    return OSRImportFromERM( self, proj, datum, units );
+  }
+
   OGRErr ImportFromMICoordSys( char const *pszCoordSys ) {
     return OSRImportFromMICoordSys( self, pszCoordSys );
   }
