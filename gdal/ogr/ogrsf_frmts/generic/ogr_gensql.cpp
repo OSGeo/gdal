@@ -345,6 +345,18 @@ void OGRGenSQLResultsLayer::ClearFilters()
             poJoinLayer->SetAttributeFilter( "" );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Clear any ignored field lists installed on source layers        */
+/* -------------------------------------------------------------------- */
+    if( psSelectInfo != NULL )
+    {
+        for( int iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
+        {
+            OGRLayer* poLayer = papoTableLayers[iTable];
+            poLayer->SetIgnoredFields(NULL);
+        }
+    }
 }
 
 /************************************************************************/
