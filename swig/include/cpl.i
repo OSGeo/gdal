@@ -311,6 +311,8 @@ int VSIRename(const char * pszOld, const char *pszNew );
    It is just for some testing stuff. 
 */
 
+#if !defined(SWIGJAVA)
+
 typedef void FILE;
 
 #if defined(SWIGPERL)
@@ -326,5 +328,7 @@ long    VSIFTellL( FILE * );
 int     VSIFWriteL( const char *, int, int, FILE * );
 
 /* VSIFReadL() handled specially in python/gdal_python.i */
+
+#endif
 
 #endif
