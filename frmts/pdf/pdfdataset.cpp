@@ -47,7 +47,10 @@
 #include <poppler/Catalog.h>
 #undef private
 
+#define private public  /* Ugly! PDFDoc::str is private but we need it... */
 #include <poppler/PDFDoc.h>
+#undef private
+
 #include <poppler/splash/SplashBitmap.h>
 #include <poppler/splash/Splash.h>
 #include <poppler/SplashOutputDev.h>
@@ -432,6 +435,23 @@ PDFDataset::PDFDataset()
 }
 
 /************************************************************************/
+/*                           PDFFreeDoc()                               */
+/************************************************************************/
+
+static void PDFFreeDoc(PDFDoc* poDoc)
+{
+    if (poDoc)
+    {
+        /* hack to avoid potential cross heap issues on Win32 */
+        /* str is the VSIPDFFileStream object passed in the constructor of PDFDoc */
+        delete poDoc->str;
+        poDoc->str = NULL;
+
+        delete poDoc;
+    }
+}
+
+/************************************************************************/
 /*                            ~PDFDataset()                            */
 /************************************************************************/
 
@@ -439,8 +459,10 @@ PDFDataset::~PDFDataset()
 {
     CPLFree(pszWKT);
     CPLFree(pabyData);
-    delete poDoc;
+
     delete poNeatLine;
+
+    PDFFreeDoc(poDoc);
 }
 
 /************************************************************************/
@@ -541,7 +563,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     if (sz10)
                         *sz10 = 0;
                     pszUserPwd = szPassword;
-                    delete poDoc;
+                    PDFFreeDoc(poDoc);
                     continue;
                 }
                 else if (pszUserPwd == NULL)
@@ -559,7 +581,9 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
             }
-            delete poDoc;
+
+            PDFFreeDoc(poDoc);
+
             return NULL;
         }
         else
@@ -570,7 +594,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poCatalog == NULL || !poCatalog->isOk() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid catalog");
-        delete poDoc;
+        PDFFreeDoc(poDoc);
         return NULL;
     }
 
@@ -579,7 +603,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid page number (%d/%d)",
                  iPage, nPages);
-        delete poDoc;
+        PDFFreeDoc(poDoc);
         return NULL;
     }
 
@@ -587,7 +611,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poPage == NULL || !poPage->isOk() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page");
-        delete poDoc;
+        PDFFreeDoc(poDoc);
         return NULL;
     }
 
@@ -597,7 +621,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( !oPageObj.isDict() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : !oPageObj.isDict()");
-        delete poDoc;
+        PDFFreeDoc(poDoc);
         return NULL;
     }
 
@@ -605,7 +629,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poPageDict == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : poPageDict == NULL");
-        delete poDoc;
+        PDFFreeDoc(poDoc);
         return NULL;
     }
 
