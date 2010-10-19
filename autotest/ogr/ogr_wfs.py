@@ -177,6 +177,9 @@ def ogr_wfs_geoserver():
         return 'fail'
 
     ds = ogr.Open('WFS:http://sigma.openplans.org/geoserver/ows?TYPENAME=za:za_points&MAXFEATURES=10')
+    if ds is None:
+        print('server perhaps overloaded')
+        return 'skip'
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -189,6 +192,9 @@ def ogr_wfs_geoserver():
 
     # Same with VERSION=1.0.0
     ds = ogr.Open('WFS:http://sigma.openplans.org/geoserver/ows?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.0.0')
+    if ds is None:
+        print('server perhaps overloaded')
+        return 'skip'
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -202,6 +208,9 @@ def ogr_wfs_geoserver():
 
     # Test attribute filter
     ds = ogr.Open("WFS:http://sigma.openplans.org/geoserver/ows?TYPENAME=za:za_points")
+    if ds is None:
+        print('server perhaps overloaded')
+        return 'skip'
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("type is not null and name >= 'W' and type LIKE 'att%%ion'")
     feat_count = lyr.GetFeatureCount()
