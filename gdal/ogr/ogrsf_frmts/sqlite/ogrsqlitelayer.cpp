@@ -359,7 +359,7 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Process Geometry if we have a column.                           */
 /* -------------------------------------------------------------------- */
-    if( osGeomColumn.size() )
+    if( osGeomColumn.size() && !poFeatureDefn->IsGeometryIgnored() )
     {
         int iGeomCol;
 
@@ -440,6 +440,9 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( iField );
+        if ( poFieldDefn->IsIgnored() )
+            continue;
+
         int iRawField = panFieldOrdinals[iField] - 1;
 
         if( sqlite3_column_type( hStmt, iRawField ) == SQLITE_NULL )
@@ -1070,6 +1073,9 @@ int OGRSQLiteLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
+
+    else if( EQUAL(pszCap,OLCIgnoreFields) )
+        return TRUE; 
 
     else if( EQUAL(pszCap,OLCTransactions) )
         return TRUE;
