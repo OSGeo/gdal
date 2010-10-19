@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some PCI specific translation issues.
-# Author:   drey Kiselev, dron@remotesensing.org
+# Author:   Andrey Kiselev, dron@ak4719.spb.edu
 # 
 ###############################################################################
-# Copyright (c) 2004, Andrey Kiselev <dron@remotesensing.org>
+# Copyright (c) 2004, Andrey Kiselev <dron@ak4719.spb.edu>
 # 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
