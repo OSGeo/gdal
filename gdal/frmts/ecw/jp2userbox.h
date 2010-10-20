@@ -32,7 +32,8 @@
 #define JP2USERBOX_H_INCLUDED
 
 #include "vsiiostream.h"
-//#include "NCSJP2Box.h"
+
+#if defined(HAVE_COMPRESS)
 
 class NCSJPC_EXPORT_ALL JP2UserBox : public CNCSJP2Box {
 
@@ -56,6 +57,7 @@ public:
     int     GetDataLength() { return nDataLength; }
     unsigned char *GetData() { return pabyData; }
 };
-
+#endif /* HAVE_COMPRES */
+         
 #endif /* ndef JP2USERBOX_H_INCLUDED */
 
