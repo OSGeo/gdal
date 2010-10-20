@@ -45,16 +45,17 @@
 #include <NCSErrors.h>
 #include <NCSFile.h>
 #include <NCSJP2FileView.h>
-#include <ECWJP2BuildNumber.h>
 
-/* the 3.3 sdk and earlier didn't declare an easy to use version */
-#if !defined(NCS_ECWJP2_VER)
-#  define NCS_ECWJP2_VER 3
+/* By default, assume 3.3 SDK Version. */
+
+#if !defined(ECWSDK_VERSION)
+#  define ECWSDK_VERSION 33
 #endif
 
-#if NCS_ECWJP2_VER < 4
+#if ECW_SDK_VERSION < 40
 #  include <NCSJP2File.h>
 #else
+#  include <ECWJP2BuildNumber.h>
 #  define NCS_FASTCALL
 #endif
 
@@ -113,9 +114,9 @@ class VSIIOStream : public CNCSJPCIOStream
             fpVSIL = NULL;
         }
     }
-#if NCS_ECWJP2_VER >= 4
+#if ECWSDK_VERSION >= 40
     virtual NCS::CIOStream *Clone() { return NULL; }
-#endif /* NCS_ECWJP2_VER >= 4 */
+#endif /* ECWSDK_VERSION >= 4 */
 
     virtual CNCSError Access( FILE *fpVSILIn, BOOLEAN bWrite,
                               const char *pszFilename, 
