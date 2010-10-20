@@ -4,14 +4,14 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	wktrasterdataset.o wktrasterrasterband.o wktrasterwrapper.o
+OBJ	=	postgisrasterdriver.o postgisrasterdataset.o postgisrasterrasterband.o
 
 
 CPPFLAGS	:= $(XTRA_OPT) $(PG_INC) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
-$(O_OBJ):       wktraster.h
+$(O_OBJ):       postgisraster.h
  
 clean:
 	rm -f *.o $(O_OBJ)
