@@ -369,8 +369,8 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                        0,
                                        TRUE, gFalse, gFalse,
                                        0, 0,
-                                       poPage->getMediaWidth() * dfDPI / 72,
-                                       poPage->getMediaHeight() * dfDPI / 72);
+                                       nRasterXSize,
+                                       nRasterYSize);
 
         /* Restore back */
 #ifdef POPPLER_HAS_OPTCONTENT
