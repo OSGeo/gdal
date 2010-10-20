@@ -1,0 +1,12 @@
+This driver is under development. Only regular-blocking rasters reading is
+supported just now. In "todo" file you'll can find a list of todo tasks.
+
+Author information:
+	website: http://gis4free.wordpress.com
+	email: jorge.arevalo@deimos-space.com
+
+Important links:
+	PostGIS Raster extension information: http://trac.osgeo.org/postgis/wiki/WKTRaster
+	GDAL PostGIS Raster driver page: http://trac.osgeo.org/gdal/wiki/frmts_wtkraster.html
+   
+Last update on October 2010

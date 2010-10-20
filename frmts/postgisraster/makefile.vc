@@ -1,5 +1,5 @@
 
-OBJ	=	wktrasterdataset.obj wktrasterrasterband.obj wktrasterwrapper.obj
+OBJ	=	postgisrasterdataset.obj postgisrasterrasterband.obj postgisrasterdriver.obj
 
 EXTRAFLAGS =  -I$(PG_INC_DIR)
 
