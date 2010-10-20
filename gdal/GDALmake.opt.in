@@ -114,7 +114,7 @@ MACOSX_FRAMEWORK = @MACOSX_FRAMEWORK@
 # GDAL/OGR PostgreSQL support.
 #
 HAVE_OGR_PG     = @HAVE_PG@
-HAVE_WKTRASTER  = @HAVE_PG@
+HAVE_POSTGISRASTER  = @HAVE_PG@
 PG_INC	=	@PG_INC@
 
 #
@@ -397,8 +397,8 @@ GDAL_FORMATS := $(GDAL_FORMATS) rasterlite
 endif
 endif
 
-ifeq ($(HAVE_WKTRASTER),yes)
-GDAL_FORMATS := $(GDAL_FORMATS) wktraster
+ifeq ($(HAVE_POSTGISRASTER),yes)
+GDAL_FORMATS := $(GDAL_FORMATS) postgisraster
 endif
 
 ifeq ($(HAVE_CHARLS),yes)
