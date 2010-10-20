@@ -181,8 +181,8 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
         nOverviewCount = 0;
         papoOverviews = NULL;
 
-        nRasterXSize = (int) floor(poDS->GetRasterXSize() / nOverviewFactor);
-        nRasterYSize = (int) floor(poDS->GetRasterYSize() / nOverviewFactor);        
+        nRasterXSize = (int) floor((double)poDS->GetRasterXSize() / nOverviewFactor);
+        nRasterYSize = (int) floor((double)poDS->GetRasterYSize() / nOverviewFactor);        
     }
 
 }
