@@ -362,9 +362,14 @@ GBool PostGISRasterDataset::SetRasterProperties(const char* pszValidConnectionSt
         nRasterXSize = atoi(PQgetvalue(poResult, 0, 2));
         nRasterYSize = atoi(PQgetvalue(poResult, 0, 3));
 
-        /* Not tiled dataset: one scanline each time */
+        /**
+         * Not tiled dataset: The whole raster.
+         * TODO: This is a bad idea, but there're some problems getting one
+         * scanline per round (nBlockYSize = 1). Probably, the problem is in
+         * IReadBlock method. Review it and fix it.
+         */
         nBlockXSize = nRasterXSize;
-        nBlockYSize = 1;
+        nBlockYSize = nRasterYSize;
 
         bRetValue = true;
     }
