@@ -449,8 +449,8 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_EPSILON();
 #endif
 
-#ifdef FRMT_wktraster
-    GDALRegister_WKTRaster();
+#ifdef FRMT_postgisraster
+    GDALRegister_PostGISRaster();
 #endif
 
 #ifdef FRMT_saga
