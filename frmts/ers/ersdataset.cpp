@@ -841,6 +841,14 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->GetRasterBand( iBand )->SetDescription( pszValue );
                 CPLPopErrorHandler();
             }
+
+            pszValue = poRI->papoItemChild[iChild]->Find( "Units", NULL );
+            if ( pszValue )
+            {
+                CPLPushErrorHandler( CPLQuietErrorHandler );
+                poDS->GetRasterBand( iBand )->SetUnitType( pszValue );
+                CPLPopErrorHandler();
+            }
         }
     }
 
