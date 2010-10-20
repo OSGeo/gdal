@@ -376,8 +376,6 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #POPPLER_LIBS = e:/kde/lib/poppler.lib e:/kde/lib/freetype.lib e:/kde/lib/liblcms-1.lib advapi32.lib gdi32.lib
 
 # Any extra libraries needed on this platform?
-# Uncomment first line and comment second line for KMLSUPEROVERLAY plugin
-#ADD_LIBS	= $(MINIZIP_LIBRARY)
 ADD_LIBS	= 
 
 # Comment out the following if you want to build with Python support, but
