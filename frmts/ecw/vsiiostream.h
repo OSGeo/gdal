@@ -52,7 +52,7 @@
 #  define ECWSDK_VERSION 33
 #endif
 
-#if ECW_SDK_VERSION < 40
+#if ECWSDK_VERSION < 40
 #  include <NCSJP2File.h>
 #else
 #  include <ECWJP2BuildNumber.h>
