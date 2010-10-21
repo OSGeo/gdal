@@ -1801,7 +1801,15 @@ static OGRErr SetEPSGCompdCS( OGRSpatialReference * poSRS, int nCCSCode )
 
     eErr = SetEPSGProjCS( &oPCS, nPCSCode );
     if( eErr != OGRERR_NONE )
+    {
+        // perhaps it is a GCS?
+        eErr = SetEPSGGeogCS( &oPCS, nPCSCode );
+    }
+
+    if( eErr != OGRERR_NONE )
+    {
         return eErr;
+    }
 
     poSRS->GetRoot()->AddChild( 
         oPCS.GetRoot()->Clone() );
