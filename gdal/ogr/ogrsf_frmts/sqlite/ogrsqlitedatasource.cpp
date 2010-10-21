@@ -398,6 +398,8 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
+        return TRUE;
     else
         return FALSE;
 }
@@ -862,11 +864,30 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
         return;
     }
 
+    DeleteLayer(iLayer);
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
+{
+    if( iLayer < 0 || iLayer >= nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Layer %d not in legal range of 0 to %d.",
+                  iLayer, nLayers-1 );
+        return OGRERR_FAILURE;
+    }
+
+    CPLString osLayerName = GetLayer(iLayer)->GetName();
+
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "OGR_SQLITE", "DeleteLayer(%s)", pszLayerName );
+    CPLDebug( "OGR_SQLITE", "DeleteLayer(%s)", osLayerName.c_str() );
 
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
@@ -879,15 +900,15 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
     int rc;
     char *pszErrMsg;
 
-    rc = sqlite3_exec( hDB, CPLSPrintf( "DROP TABLE '%s'", pszLayerName ),
+    rc = sqlite3_exec( hDB, CPLSPrintf( "DROP TABLE '%s'", osLayerName.c_str() ),
                        NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to drop table %s: %s",
-                  pszLayerName, pszErrMsg );
+                  osLayerName.c_str(), pszErrMsg );
         sqlite3_free( pszErrMsg );
-        return;
+        return OGRERR_FAILURE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -899,7 +920,7 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
 
         osCommand.Printf( 
             "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
-            pszLayerName );
+            osLayerName.c_str() );
         
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
@@ -908,8 +929,10 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
                       "Removal from geometry_columns failed.\n%s: %s", 
                       osCommand.c_str(), pszErrMsg );
             sqlite3_free( pszErrMsg );
+            return OGRERR_FAILURE;
         }
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
