@@ -257,7 +257,7 @@ class PDFDataset : public GDALPamDataset
     int          ParseLGIDictDictFirstPass(Dict* poLGIDict, int* pbIsLargestArea = NULL);
     int          ParseLGIDictDictSecondPass(Dict* poLGIDict);
     int          ParseProjDict(Dict* poProjDict);
-    int          ParseVP(Object& oVP);
+    int          ParseVP(Object& oVP, double dfMediaBoxWidth, double dfMediaBoxHeight);
 
     int          bTried;
     GByte       *pabyData;
@@ -348,7 +348,6 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         poSplashOut = new SplashOutputDev(splashModeRGB8, 4, gFalse, sColor);
         PDFDoc* poDoc = poGDS->poDoc;
         poSplashOut->startDoc(poDoc->getXRef());
-        Page* poPage = poDoc->getCatalog()->getPage(poGDS->iPage);
         double dfDPI = poGDS->dfDPI;
 
         /* EVIL: we modify a private member... */
@@ -698,6 +697,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     ObjectAutoFree oLGIDict;
     ObjectAutoFree oVP;
+    int bIsOGCBP = FALSE;
     if ( poPageDict->lookup((char*)"LGIDict",&oLGIDict) != NULL && !oLGIDict.isNull())
     {
         /* Cf 08-139r2_GeoPDF_Encoding_Best_Practice_Version_2.2.pdf */
@@ -710,13 +710,18 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[1] * dfX1 + poDS->adfCTM[3] * dfY2;
             poDS->adfGeoTransform[4] = - poDS->adfCTM[2] / dfPixelPerPt;
             poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfPixelPerPt;
+            bIsOGCBP = TRUE;
         }
     }
     else if ( poPageDict->lookup((char*)"VP",&oVP) != NULL && !oVP.isNull())
     {
         /* Cf adobe_supplement_iso32000.pdf */
         CPLDebug("PDF", "Adobe ISO32000 style Geospatial PDF perhaps ?");
-        poDS->ParseVP(oVP);
+        if (dfX1 != 0 || dfY1 != 0)
+        {
+            CPLDebug("PDF", "non null dfX1 or dfY1 values. untested case...");
+        }
+        poDS->ParseVP(oVP, dfX2 - dfX1, dfY2 - dfY1);
     }
     else
     {
@@ -727,18 +732,22 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         char* pszNeatLineWkt = NULL;
         OGRLinearRing* poRing = poDS->poNeatLine->getExteriorRing();
-        int nPoints = poRing->getNumPoints();
-        int i;
-
-        for(i=0;i<nPoints;i++)
+        /* Adobe style is already in target SRS units */
+        if (bIsOGCBP)
         {
-            double x = poRing->getX(i) * dfPixelPerPt;
-            double y = poDS->nRasterYSize - poRing->getY(i) * dfPixelPerPt;
-            double X = poDS->adfGeoTransform[0] + x * poDS->adfGeoTransform[1] +
-                                                  y * poDS->adfGeoTransform[2];
-            double Y = poDS->adfGeoTransform[3] + x * poDS->adfGeoTransform[4] +
-                                                  y * poDS->adfGeoTransform[5];
-            poRing->setPoint(i, X, Y);
+            int nPoints = poRing->getNumPoints();
+            int i;
+
+            for(i=0;i<nPoints;i++)
+            {
+                double x = poRing->getX(i) * dfPixelPerPt;
+                double y = poDS->nRasterYSize - poRing->getY(i) * dfPixelPerPt;
+                double X = poDS->adfGeoTransform[0] + x * poDS->adfGeoTransform[1] +
+                                                    y * poDS->adfGeoTransform[2];
+                double Y = poDS->adfGeoTransform[3] + x * poDS->adfGeoTransform[4] +
+                                                    y * poDS->adfGeoTransform[5];
+                poRing->setPoint(i, X, Y);
+            }
         }
         poRing->closeRings();
 
@@ -1532,7 +1541,7 @@ int PDFDataset::ParseProjDict(Dict* poProjDict)
 /*                              ParseVP()                               */
 /************************************************************************/
 
-int PDFDataset::ParseVP(Object& oVP)
+int PDFDataset::ParseVP(Object& oVP, double dfMediaBoxWidth, double dfMediaBoxHeight)
 {
     int i;
 
@@ -1544,11 +1553,83 @@ int PDFDataset::ParseVP(Object& oVP)
     if (nLength < 1)
         return FALSE;
 
+/* -------------------------------------------------------------------- */
+/*      Find the largest BBox                                           */
+/* -------------------------------------------------------------------- */
+    int iLargest = 0;
+    double dfLargestArea = 0;
+
+    for(i=0;i<nLength;i++)
+    {
+        ObjectAutoFree oVPElt;
+        if ( !oVP.arrayGet(i,&oVPElt) || !oVPElt.isDict() )
+        {
+            return FALSE;
+        }
+
+        ObjectAutoFree oBBox;
+        if( !oVPElt.dictLookup((char*)"BBox",&oBBox) ||
+            !oBBox.isArray() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot find Bbox object");
+            return FALSE;
+        }
+
+        int nBboxLength = oBBox.arrayGetLength();
+        if (nBboxLength != 4)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Invalid length for Bbox object");
+            return FALSE;
+        }
+
+        double adfBBox[4];
+        adfBBox[0] = GetValue(oBBox, 0);
+        adfBBox[1] = GetValue(oBBox, 1);
+        adfBBox[2] = GetValue(oBBox, 2);
+        adfBBox[3] = GetValue(oBBox, 3);
+        double dfArea = fabs(adfBBox[2] - adfBBox[0]) * fabs(adfBBox[3] - adfBBox[1]);
+        if (dfArea > dfLargestArea)
+        {
+            iLargest = i;
+            dfLargestArea = dfArea;
+        }
+    }
+
+    if (nLength > 1)
+    {
+        CPLDebug("PDF", "Largest BBox in VP array is element %d", iLargest);
+    }
+
+
     ObjectAutoFree oVPElt;
-    if ( !oVP.arrayGet(0,&oVPElt) || !oVPElt.isDict() )
+    if ( !oVP.arrayGet(iLargest,&oVPElt) || !oVPElt.isDict() )
     {
         return FALSE;
     }
+
+    ObjectAutoFree oBBox;
+    if( !oVPElt.dictLookup((char*)"BBox",&oBBox) ||
+        !oBBox.isArray() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Cannot find Bbox object");
+        return FALSE;
+    }
+
+    int nBboxLength = oBBox.arrayGetLength();
+    if (nBboxLength != 4)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Invalid length for Bbox object");
+        return FALSE;
+    }
+
+    double dfULX = GetValue(oBBox, 0);
+    double dfULY = dfMediaBoxHeight - GetValue(oBBox, 1);
+    double dfLRX = GetValue(oBBox, 2);
+    double dfLRY = dfMediaBoxHeight - GetValue(oBBox, 3);
 
 /* -------------------------------------------------------------------- */
 /*      Extract Measure attribute                                       */
@@ -1744,11 +1825,17 @@ int PDFDataset::ParseVP(Object& oVP)
 
     GDAL_GCP asGCPS[4];
 
+    /* Create NEATLINE */
+    poNeatLine = new OGRPolygon();
+    OGRLinearRing* poRing = new OGRLinearRing();
+    poNeatLine->addRingDirectly(poRing);
+
     for(i=0;i<4;i++)
     {
         /* We probably assume LPTS is 0 or 1 */
-        asGCPS[i].dfGCPPixel = adfLPTS[2*i] * nRasterXSize;
-        asGCPS[i].dfGCPLine  = adfLPTS[2*i+1] * nRasterYSize;
+        asGCPS[i].dfGCPPixel = (dfULX * (1 - adfLPTS[2*i+0]) + dfLRX * adfLPTS[2*i+0]) / dfMediaBoxWidth * nRasterXSize;
+        asGCPS[i].dfGCPLine  = (dfULY * (1 - adfLPTS[2*i+1]) + dfLRY * adfLPTS[2*i+1]) / dfMediaBoxHeight * nRasterYSize;
+
         double lat = adfGPTS[2*i], lon = adfGPTS[2*i+1];
         double x = lon, y = lat;
         if (!poCT->Transform(1, &x, &y, NULL))
@@ -1763,6 +1850,8 @@ int PDFDataset::ParseVP(Object& oVP)
         }
         asGCPS[i].dfGCPX     = x;
         asGCPS[i].dfGCPY     = y;
+
+        poRing->addPoint(x, y);
     }
 
     delete poSRSGeog;
