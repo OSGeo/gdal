@@ -266,6 +266,7 @@ class OGRSQLiteDataSource : public OGRDataSource
                                       OGRSpatialReference *poSRS, 
                                       OGRwkbGeometryType eType, 
                                       char **papszOptions );
+    virtual OGRErr      DeleteLayer(int);
 
     int                 TestCapability( const char * );
 
