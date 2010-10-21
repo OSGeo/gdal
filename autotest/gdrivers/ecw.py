@@ -53,6 +53,11 @@ def ecw_1():
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
+    if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') != None:
+        gdaltest.ecw_write = 1
+    else:
+        gdaltest.ecw_write = 0
+
     return 'success'
 
 ###############################################################################
@@ -89,7 +94,7 @@ def ecw_2():
 # Verify that an write the imagery out to a new file.
 
 def ecw_3():
-    if gdaltest.ecw_drv is None:
+    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'data/jrc.ecw' )
@@ -103,7 +108,7 @@ def ecw_3():
 
 def ecw_4():
 
-    if gdaltest.ecw_drv is None:
+    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'tmp/jrc_out.ecw' )
@@ -134,7 +139,7 @@ def ecw_4():
 # Now try writing a JPEG2000 compressed version of the same with the ECW driver
 
 def ecw_5():
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'data/small.vrt' )
@@ -150,7 +155,7 @@ def ecw_5():
 
 def ecw_6():
 
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'tmp/ecw_5.jp2' )
@@ -199,7 +204,7 @@ def ecw_6():
 # Write the same image to NITF.
 
 def ecw_7():
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'data/small.vrt' )
@@ -214,7 +219,7 @@ def ecw_7():
 
 def ecw_8():
 
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'tmp/ecw_7.ntf' )
@@ -257,7 +262,7 @@ def ecw_8():
 # Try writing 16bit JP2 file directly using Create().
 
 def ecw_9():
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdaltest.jp2ecw_drv.Create( 'tmp/ecw9.jp2', 200, 100, 1,
@@ -279,7 +284,7 @@ def ecw_9():
 # Verify previous 16bit file.
 
 def ecw_10():
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'tmp/ecw9.jp2' )
@@ -310,7 +315,7 @@ def ecw_10():
 # Test direct creation of an NITF/JPEG2000 file.
 
 def ecw_11():
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     drv = gdal.GetDriverByName( 'NITF' )
@@ -338,7 +343,7 @@ def ecw_11():
 # Verify previous file
 
 def ecw_12():
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'tmp/test_11.ntf' )
@@ -407,7 +412,7 @@ def ecw_13():
 # Write out image with GCPs.
 
 def ecw_14():
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'data/rgb_gcp.vrt' )
@@ -421,7 +426,7 @@ def ecw_14():
 
 def ecw_15():
 
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
     ds = gdal.Open( 'tmp/rgb_gcp.jp2' )
