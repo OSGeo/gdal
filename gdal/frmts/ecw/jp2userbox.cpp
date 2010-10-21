@@ -31,6 +31,8 @@
 
 CPL_CVSID("$Id$");
 
+#if defined(HAVE_COMPRESS)
+
 /************************************************************************/
 /*                             JP2UserBox()                             */
 /************************************************************************/
@@ -128,3 +130,5 @@ CNCSError JP2UserBox::UnParse( class CNCSJP2File &JP2File,
 
     return Error;
 }
+
+#endif /* defined(HAVE_COMPRESS) */
