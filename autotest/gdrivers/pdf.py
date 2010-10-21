@@ -145,7 +145,7 @@ def pdf_1():
     gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
 
-    expected_gt = (333274.61654367246, 31.764539748237425, 0.00020283659591846149, 4940391.7593506984, 0.00013608840591414068, -31.79485066093066)
+    expected_gt = (333274.61654367246, 31.764802242655662, 0.0, 4940391.7593506984, 0.0, -31.794745501708238)
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
             gdaltest.post_reason('bad geotransform')
