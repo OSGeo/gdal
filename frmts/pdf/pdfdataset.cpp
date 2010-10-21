@@ -1660,8 +1660,18 @@ int PDFDataset::ParseVP(Object& oVP, double dfMediaBoxWidth, double dfMediaBoxHe
 /* -------------------------------------------------------------------- */
 /*      Extract Bounds attribute                                       */
 /* -------------------------------------------------------------------- */
+
+    /* http://acrobatusers.com/sites/default/files/gallery_pictures/SEVERODVINSK.pdf */
+    /* has lgit:LPTS, lgit:GPTS and lgit:Bounds that have more precision than */
+    /* LPTS, GPTS and Bounds. Use those ones */
+
     ObjectAutoFree oBounds;
-    if( !oMeasure.dictLookup((char*)"Bounds",&oBounds) ||
+    if( oMeasure.dictLookup((char*)"lgit:Bounds",&oBounds) &&
+        oBounds.isArray() )
+    {
+        CPLDebug("PDF", "Using lgit:Bounds");
+    }
+    else if( !oMeasure.dictLookup((char*)"Bounds",&oBounds) ||
         !oBounds.isArray() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1688,7 +1698,12 @@ int PDFDataset::ParseVP(Object& oVP, double dfMediaBoxWidth, double dfMediaBoxHe
 /*      Extract GPTS attribute                                          */
 /* -------------------------------------------------------------------- */
     ObjectAutoFree oGPTS;
-    if( !oMeasure.dictLookup((char*)"GPTS",&oGPTS) ||
+    if( oMeasure.dictLookup((char*)"lgit:GPTS",&oGPTS) &&
+        oGPTS.isArray() )
+    {
+        CPLDebug("PDF", "Using lgit:GPTS");
+    }
+    else if( !oMeasure.dictLookup((char*)"GPTS",&oGPTS) ||
         !oGPTS.isArray() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1708,14 +1723,20 @@ int PDFDataset::ParseVP(Object& oVP, double dfMediaBoxWidth, double dfMediaBoxHe
     for(i=0;i<8;i++)
     {
         adfGPTS[i] = GetValue(oGPTS, i);
-        CPLDebug("PDF", "GPTS[%d] = %f", i, adfGPTS[i]);
+        CPLDebug("PDF", "GPTS[%d] = %.18f", i, adfGPTS[i]);
     }
 
 /* -------------------------------------------------------------------- */
 /*      Extract LPTS attribute                                          */
 /* -------------------------------------------------------------------- */
     ObjectAutoFree oLPTS;
-    if( !oMeasure.dictLookup((char*)"LPTS",&oLPTS) ||
+
+    if( oMeasure.dictLookup((char*)"lgit:LPTS",&oLPTS) &&
+        oLPTS.isArray() )
+    {
+        CPLDebug("PDF", "Using lgit:LPTS");
+    }
+    else if( !oMeasure.dictLookup((char*)"LPTS",&oLPTS) ||
         !oLPTS.isArray() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1868,6 +1889,20 @@ int PDFDataset::ParseVP(Object& oVP, double dfMediaBoxWidth, double dfMediaBoxHe
                      "Could not compute GT with approximate match.");
             return FALSE;
         }
+    }
+
+    /* If the non scaling terms of the geotransform are significantly smaller than */
+    /* the pixel size, then nullify them as being just artifacts of reprojection and */
+    /* GDALGCPsToGeoTransform() numerical imprecisions */
+    double dfPixelSize = MIN(fabs(adfGeoTransform[1]), fabs(adfGeoTransform[5]));
+    double dfRotationShearTerm = MAX(fabs(adfGeoTransform[2]), fabs(adfGeoTransform[4]));
+    if (dfRotationShearTerm < 1e-5 * dfPixelSize)
+    {
+        double dfLRX = adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1] + nRasterYSize * adfGeoTransform[2];
+        double dfLRY = adfGeoTransform[3] + nRasterXSize * adfGeoTransform[4] + nRasterYSize * adfGeoTransform[5];
+        adfGeoTransform[1] = (dfLRX - adfGeoTransform[0]) / nRasterXSize;
+        adfGeoTransform[5] = (dfLRY - adfGeoTransform[3]) / nRasterYSize;
+        adfGeoTransform[2] = adfGeoTransform[4] = 0;
     }
 
 /* -------------------------------------------------------------------- */
