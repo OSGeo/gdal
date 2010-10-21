@@ -2169,6 +2169,12 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
 /*                          OSRSetStatePlane()                          */
 /************************************************************************/
 
+/**
+ * \brief Set State Plane projection definition.
+ *
+ * This function is the same as OGRSpatialReference::SetStatePlane().
+ */ 
+ 
 OGRErr OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
 
 {
@@ -2181,6 +2187,12 @@ OGRErr OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
 /*                     OSRSetStatePlaneWithUnits()                      */
 /************************************************************************/
 
+/**
+ * \brief Set State Plane projection definition.
+ *
+ * This function is the same as OGRSpatialReference::SetStatePlane().
+ */ 
+ 
 OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS, 
                                   int nZone, int bNAD83,
                                   const char *pszOverrideUnitName,
@@ -2368,6 +2380,12 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
 /*                        OSRAutoIdentifyEPSG()                         */
 /************************************************************************/
 
+/**
+ * \brief Set EPSG authority info if possible.
+ *
+ * This function is the same as OGRSpatialReference::AutoIdentifyEPSG().
+ */ 
+ 
 OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
 
 {
@@ -2391,6 +2409,8 @@ OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
  *
  * FALSE will be returned for all coordinate systems that are not geographic,
  * or that do not have an EPSG code set. 
+ *
+ * This method is the same as the C function OSREPSGTreatsAsLatLong().
  *
  * @return TRUE or FALSE. 
  */ 
@@ -2422,6 +2442,13 @@ int OGRSpatialReference::EPSGTreatsAsLatLong()
 /*                       OSREPSGTreatsAsLatLong()                       */
 /************************************************************************/
 
+/**
+ * \brief This function returns TRUE if EPSG feels this geographic coordinate
+ * system should be treated as having lat/long coordinate ordering.
+ *
+ * This function is the same as OGRSpatialReference::OSREPSGTreatsAsLatLong().
+ */ 
+ 
 int OSREPSGTreatsAsLatLong( OGRSpatialReferenceH hSRS )
 
 {
