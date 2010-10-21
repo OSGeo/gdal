@@ -44,11 +44,25 @@
 #include <NCSECWCompressClient.h>
 #include <NCSErrors.h>
 #include <NCSFile.h>
-#include <NCSJP2File.h>
 #include <NCSJP2FileView.h>
 
+/* By default, assume 3.3 SDK Version. */
+
+#if !defined(ECWSDK_VERSION)
+#  define ECWSDK_VERSION 33
+#endif
+
+#if ECWSDK_VERSION < 40
+#  include <NCSJP2File.h>
+#else
+#  include <ECWJP2BuildNumber.h>
+#  define NCS_FASTCALL
+#endif
+
 /* As of July 2002 only uncompress support is available on Unix */
-#define HAVE_COMPRESS
+#if !defined(NO_COMPRESS)
+#  define HAVE_COMPRESS
+#endif
 
 #ifdef HAVE_COMPRESS
 GDALDataset *
@@ -100,6 +114,9 @@ class VSIIOStream : public CNCSJPCIOStream
             fpVSIL = NULL;
         }
     }
+#if ECWSDK_VERSION >= 40
+    virtual NCS::CIOStream *Clone() { return NULL; }
+#endif /* ECWSDK_VERSION >= 4 */
 
     virtual CNCSError Access( FILE *fpVSILIn, BOOLEAN bWrite,
                               const char *pszFilename, 
