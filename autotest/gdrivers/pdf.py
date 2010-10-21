@@ -31,12 +31,15 @@
 import os
 import sys
 import gdal
+import ogr
 
 sys.path.append( '../pymod' )
 
 import gdaltest
+import ogrtest
 
 ###############################################################################
+# Test OGC best practice geospatial PDF
 
 def pdf_online_1():
 
@@ -121,10 +124,62 @@ def pdf_online_2():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test Adobe style geospatial pdf
+
+def pdf_1():
+
+    try:
+        if gdal.GetDriverByName('PDF') is None:
+            return 'skip'
+    except:
+        return 'skip'
+
+    gdal.SetConfigOption('GDAL_PDF_DPI', '200')
+    ds = gdal.Open('data/adobe_style_geospatial.pdf')
+    gdal.SetConfigOption('GDAL_PDF_DPI', None)
+    if ds is None:
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    wkt = ds.GetProjectionRef()
+
+    expected_gt = (333274.61654367246, 31.764539748237425, 0.00020283659591846149, 4940391.7593506984, 0.00013608840591414068, -31.79485066093066)
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-15:
+            gdaltest.post_reason('bad geotransform')
+            print(gt)
+            print(expected_gt)
+            return 'fail'
+
+    expected_wkt = 'PROJCS["WGS_1984_UTM_Zone_20N",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-63.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
+    if wkt != expected_wkt:
+        gdaltest.post_reason('bad WKT')
+        print(wkt)
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 17740:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+
+    neatline = ds.GetMetadataItem('NEATLINE')
+    got_geom = ogr.CreateGeometryFromWkt(neatline)
+    expected_geom = ogr.CreateGeometryFromWkt('POLYGON ((338304.150125828920864 4896673.639421294443309,338304.177293475600891 4933414.799376524984837,382774.271384406310972 4933414.546264361590147,382774.767329963855445 4896674.273581005632877,338304.150125828920864 4896673.639421294443309))')
+
+    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
+        gdaltest.post_reason('bad neatline')
+        print(neatline)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     pdf_online_1,
-    pdf_online_2 ]
+    pdf_online_2,
+    pdf_1 ]
 
 
 if __name__ == '__main__':
