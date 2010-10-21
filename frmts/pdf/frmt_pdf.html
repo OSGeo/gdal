@@ -25,8 +25,8 @@ The dimensions of the raster can be controlled by specifying the DPI of the rast
 <p>
 Multipage documents are exposed as subdatasets, one subdataset par page of the document.
 <p>
-The neatline will be reported as a NEATLINE metadata item, so that it can be later used as a cutline
-for the warping algorithm.
+The neatline (for OGC best practice) or the bounding box (Adobe style) will be reported as a NEATLINE metadata item,
+so that it can be later used as a cutline for the warping algorithm.
 <p>
 
 <h2>Restrictions</h2>
@@ -37,7 +37,7 @@ the whole page will be rasterized, which can be a slow operation.
 Only a few of the possible Datums available in the OGC best practice spec have been currently mapped
 in the driver. Unrecognized datums will be considered as being based on the WGS84 ellipsoid.
 <p>
-For OGC best practice documents that contain several NeatLines in a page (insets), the georeferencing will be
+For documents that contain several neatlines in a page (insets), the georeferencing will be
 extracted from the inset that has the largest area (in term of screen points).
 <p>
 There is currently no support for selective layer rendering.
