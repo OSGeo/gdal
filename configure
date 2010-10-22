@@ -19436,7 +19436,15 @@ else
 
   HAVE_OPENJPEG=yes
   LIBS="-L$with_openjpeg -L$with_openjpeg/lib -lopenjpeg $LIBS"
-  EXTRA_INCLUDES="-I$with_openjpeg -I$with_openjpeg/include $EXTRA_INCLUDES"
+  if test -r $with_openjpeg/include/openjpeg-2.0/openjpeg.h ; then
+    EXTRA_INCLUDES="-I$with_openjpeg/include/openjpeg-2.0 $EXTRA_INCLUDES"
+  elif test -r $with_openjpeg/include/openjpeg.h ; then
+    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
+  elif test -r $with_openjpeg/openjpeg.h ; then
+    EXTRA_INCLUDES="-I$with_openjpeg $EXTRA_INCLUDES"
+  else
+    as_fn_error "openjpeg.h not found in $with_openjpeg/include or $with_openjpeg/include/openjpeg-2.0" "$LINENO" 5
+  fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_decode_tile_data in -lopenjpeg" >&5
 $as_echo_n "checking for opj_decode_tile_data in -lopenjpeg... " >&6; }
