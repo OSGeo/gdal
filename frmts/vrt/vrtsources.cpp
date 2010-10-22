@@ -168,9 +168,23 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 
     psSrc = CPLCreateXMLNode( NULL, CXT_Element, "SimpleSource" );
 
-    pszRelativePath = 
-        CPLExtractRelativePath( pszVRTPath, poDS->GetDescription(), 
-                                &bRelativeToVRT );
+    VSIStatBufL sStat;
+    /* If this isn't actually a file, don't even try to know if it is */
+    /* a relative path. It can't be !, and unfortunately */
+    /* CPLIsFilenameRelative() can only work with strings that are filenames */
+    /* To be clear NITF_TOC_ENTRY:CADRG_JOG-A_250K_1_0:some_path isn't a relative */
+    /* file path */
+    if( VSIStatExL( poDS->GetDescription(), &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
+    {
+        pszRelativePath = poDS->GetDescription();
+        bRelativeToVRT = FALSE;
+    }
+    else
+    {
+        pszRelativePath =
+            CPLExtractRelativePath( pszVRTPath, poDS->GetDescription(),
+                                    &bRelativeToVRT );
+    }
     
     CPLSetXMLValue( psSrc, "SourceFilename", pszRelativePath );
     
@@ -375,7 +389,7 @@ void VRTSimpleSource::GetFileList(char*** ppapszFileList, int *pnSize,
 /*      Is the filename even a real filesystem object?                  */
 /* -------------------------------------------------------------------- */
         VSIStatBufL  sStat;
-        if( VSIStatL( pszFilename, &sStat ) != 0 )
+        if( VSIStatExL( pszFilename, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
             return;
             
 /* -------------------------------------------------------------------- */
