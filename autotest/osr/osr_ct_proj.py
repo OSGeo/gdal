@@ -30,13 +30,12 @@
 
 import os
 import sys
+import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import osr
-import gdal
-import string
+from osgeo import osr, gdal
 
 bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["bonne"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",60.0],UNIT["Meter",1.0]]'
 
@@ -45,7 +44,7 @@ bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1
 
 class ProjTest:
     def __init__( self, src_srs, src_xyz, src_error,
-                  dst_srs, dst_xyz, dst_error, options, min_proj_version ):
+                  dst_srs, dst_xyz, dst_error, options, requirements ):
         self.src_srs = src_srs
         self.src_xyz = src_xyz
         self.src_error = src_error
@@ -53,9 +52,23 @@ class ProjTest:
         self.dst_xyz = dst_xyz
         self.dst_error = dst_error
         self.options = options
-        self.min_proj_version = min_proj_version
+        self.requirements = requirements
 
     def testProj(self):
+
+        if self.requirements is not None and self.requirements[:5] == 'GRID:':
+            try:
+                proj_lib = os.environ['PROJ_LIB']
+            except:
+                #print( 'PROJ_LIB unset, skipping test.' )
+                return 'skip'
+
+            try:
+                open( proj_lib + '/' + self.requirements[5:] )
+            except:
+                #print( 'Did not find GRID:%s' % self.requirements[5:] )
+                return 'skip'
+        
         src = osr.SpatialReference()
         if src.SetFromUserInput( self.src_srs ) != 0:
             gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.src_srs)
@@ -66,8 +79,8 @@ class ProjTest:
             gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.dst_srs)
             return 'fail'
 
-        if self.min_proj_version is not None:
-            additionnal_error_str = ' Check that proj version is >= %s ' % self.min_proj_version
+        if self.requirements is not None and self.requirements[0] != 'G':
+            additionnal_error_str = ' Check that proj version is >= %s ' % self.requirements
         else:
             additionnal_error_str = ''
 
@@ -98,7 +111,8 @@ class ProjTest:
                 + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
-            gdaltest.post_reason( 'Dest error is %g.%s' % (error, additionnal_error_str) )
+            gdaltest.post_reason( 'Dest error is %g, got (%.15g,%.15g,%.15g)%s' \
+                                  % (error, result[0], result[1], result[2], additionnal_error_str) )
             return 'fail'
 
         ######################################################################
@@ -133,7 +147,8 @@ class ProjTest:
 # - unit_name: the display name for this unit test.
 # - options: eventually we will allow a list of special options here (like one
 #   way transformation).  For now just put None. 
-# - min_proj_version: string with minimum proj version required or null if unknown
+# - requirements: string with minimum proj version required, GRID:<gridname>
+#                 or None depend on requirements for the test.
 
 transform_list = [ \
 
@@ -142,10 +157,12 @@ transform_list = [ \
      'WGS84', (-118.0, 24.0, 0.0), 0.00001,
      'UTM_WGS84', None, None ),
 
-    # Ensure that prime meridian changes are applied.
-    ('EPSG:27391', (20000, 40000, 0.0), 0.02, 
-     'EPSG:4273', (6.397933,58.358709,0.000000), 0.00001,
-     'NGO_Oslo_zone1_NGO', None, None ),
+    # Ensure that prime meridian *and* axis orientation changes are applied.
+    # Note that this test will fail with PROJ.4 4.7 or earlier, it requires
+    # axis support in PROJ 4.8.0. 
+#    ('EPSG:27391', (40000, 20000, 0.0), 0.02, 
+#     'EPSG:4273', (6.397933,58.358709,0.000000), 0.00001,
+#     'NGO_Oslo_zone1_NGO', None, '4.8.0' ),
 
     # Verify that 26592 "pcs.override" is working well. 
     ('EPSG:26591', (1550000, 10000, 0.0), 0.02, 
@@ -175,7 +192,12 @@ transform_list = [ \
     # Test Equirectangular with all parameters
     ('+proj=eqc +ellps=sphere  +lat_0=-2 +lat_ts=1 +lon_0=-10', (-14453132.04, 4670184.72,0.0), 0.1,
      '+proj=latlong +ellps=sphere', (-140.0, 40.0, 0.0), 0.000001,
-     'Equirectangular(#2706)', None, "4.6.1")
+     'Equirectangular(#2706)', None, "4.6.1"),
+
+    # Test Vertical Datum Shift
+    ('+proj=utm +zone=11 +datum=WGS84', (100000.0,3500000.0,0.0), 0.1,
+     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx', (100000.0,3500000.0,41.41686), 0.01,
+     'EGM 96 Conversion', None, "GRID:egm96_15.gtx" )
 
     ]
     
