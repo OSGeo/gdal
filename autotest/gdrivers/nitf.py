@@ -2186,10 +2186,8 @@ def nitf_online_15_jp2kak():
 def nitf_online_15_jasper():
     return nitf_online_15('JPEG2000')
 
-# For some reason OpenJPEG doesn't preserve the checksum,
-# but the image looks good visually
 def nitf_online_15_openjpeg():
-    return nitf_online_15('JP2OpenJPEG', expected_cs = 877)
+    return nitf_online_15('JP2OpenJPEG')
 
 ###############################################################################
 # Test opening a IC=C8 NITF file which has 256-entry palette/LUT in both JP2 Header and image Subheader
