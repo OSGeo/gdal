@@ -82,8 +82,7 @@ def jp2openjpeg_2():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    # Other JPEG2000 drivers return 50054
-    tst = gdaltest.GDALTest( 'JP2OpenJPEG', 'byte.jp2', 1, 51188 )
+    tst = gdaltest.GDALTest( 'JP2OpenJPEG', 'byte.jp2', 1, 50054 )
     return tst.testOpen( check_prj = srs, check_gt = gt )
 
 ###############################################################################
@@ -119,8 +118,7 @@ def jp2openjpeg_4():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
-    # Other JPEG2000 drivers return 50054
-    tst = gdaltest.GDALTest( 'JP2OpenJPEG', 'byte.jp2', 1, 51770, options = ['REVERSIBLE=YES', 'QUALITY=100'] )
+    tst = gdaltest.GDALTest( 'JP2OpenJPEG', 'byte.jp2', 1, 50054, options = ['REVERSIBLE=YES', 'QUALITY=100'] )
     if tst.testCreateCopy(  ) != 'success':
         return 'fail'
 
@@ -164,8 +162,7 @@ def jp2openjpeg_7():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
     
-    # Other JPEG2000 drivers return 50054
-    tst = gdaltest.GDALTest( 'JP2OpenJPEG', '/vsigzip/data/byte.jp2.gz', 1, 51188, filename_absolute = 1 )
+    tst = gdaltest.GDALTest( 'JP2OpenJPEG', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1 )
     return tst.testOpen()
     
 ###############################################################################
@@ -279,7 +276,7 @@ def jp2openjpeg_online_3():
     ds_ref = None
 
     # Difference between the image before and after compression
-    if maxdiff > 15:
+    if maxdiff > 17:
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
@@ -356,8 +353,7 @@ def jp2openjpeg_online_6():
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()
-    #if cs1 != 25337 or cs2 != 28262 or cs3 != 59580:
-    if cs1 != 23012 or cs2 != 29019 or cs3 != 63471:
+    if cs1 != 26140 or cs2 != 32689 or cs3 != 48247:
         print(cs1, cs2, cs3)
         gdaltest.post_reason('Did not get expected checksums')
         return 'fail'
