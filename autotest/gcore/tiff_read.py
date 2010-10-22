@@ -136,6 +136,11 @@ def tiff_read_cmyk_raw():
 
 def tiff_read_gzip():
 
+    try:
+        os.remove('data/byte.tif.gz.properties')
+    except:
+        pass
+
     ds = gdal.Open('/vsigzip/./data/byte.tif.gz')
     if ds.GetRasterBand(1).Checksum() != 4672:
             print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
