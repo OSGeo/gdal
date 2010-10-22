@@ -852,7 +852,13 @@ GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand()
     if (poUnderlyingDataset == NULL)
         return NULL;
 
-    return poUnderlyingDataset->GetRasterBand(nBand);
+    GDALRasterBand* poBand = poUnderlyingDataset->GetRasterBand(nBand);
+    if (poBand == NULL)
+    {
+        ((GDALProxyPoolDataset*)poDS)->UnrefUnderlyingDataset(poUnderlyingDataset);
+    }
+
+    return poBand;
 }
 
 /************************************************************************/
