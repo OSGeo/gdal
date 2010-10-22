@@ -382,7 +382,7 @@ void HFAClose( HFAHandle hHFA )
 {
     int		i;
 
-    if( hHFA->bTreeDirty || hHFA->poDictionary->bDictionaryTextDirty )
+    if( hHFA->eAccess == HFA_Update && (hHFA->bTreeDirty || hHFA->poDictionary->bDictionaryTextDirty) )
         HFAFlush( hHFA );
 
     if( hHFA->psDependent != NULL )
