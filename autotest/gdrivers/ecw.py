@@ -53,7 +53,7 @@ def ecw_1():
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
-    if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') != None:
+    if gdaltest.ecw_drv is not None and gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') != None:
         gdaltest.ecw_write = 1
     else:
         gdaltest.ecw_write = 0
