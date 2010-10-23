@@ -29,9 +29,16 @@
 
 /* Necessary for opj_setup_decoder() */
 #define USE_OPJ_DEPRECATED
+
+/* A bit of explanation for this ugly "#define bool int"... */
+/* openjpeg.h contains itself a "#define bool int" when it is included from a C file */
+/* The openjpeg library is written in C, so every reference to bool within the library */
+/* assumes that bool is a int. So we have also to reinforce this when including the library */
+/* and when calling openjpeg API from the driver, we have to replace bool by int also */
 #define bool int
+#define GDAL_OPENJPEG_BOOL int
 #include <openjpeg.h>
-#undef bool
+#undef bool /* undef now, so that later includes are happy */
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
@@ -100,7 +107,7 @@ static OPJ_UINT32 JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_UINT32 nBytes,
 /*                       JP2OpenJPEGDataset_Seek()                      */
 /************************************************************************/
 
-static int JP2OpenJPEGDataset_Seek(OPJ_SIZE_T nBytes, void * pUserData)
+static GDAL_OPENJPEG_BOOL JP2OpenJPEGDataset_Seek(OPJ_SIZE_T nBytes, void * pUserData)
 {
 #ifdef DEBUG
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Seek(%d)", nBytes);
@@ -339,7 +346,7 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    int bDataToUncompress;
+    GDAL_OPENJPEG_BOOL bDataToUncompress;
     OPJ_UINT32 nTileIndex,nCompCount;
     OPJ_INT32 nTileX0,nTileY0,nTileX1,nTileY1;
     OPJ_UINT32 nRequiredSize;
