@@ -1037,6 +1037,7 @@ int OGRWFSLayer::TestCapability( const char * pszCap )
 int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 {
     CPLString osURL = MakeGetFeatureURL(0, TRUE);
+    osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", NULL);
     CPLDebug("WFS", "%s", osURL.c_str());
 
     CPLHTTPResult* psResult = poDS->HTTPFetch( osURL, NULL);
@@ -1108,15 +1109,8 @@ int OGRWFSLayer::GetFeatureCount( int bForce )
     if (TestCapability(OLCFastFeatureCount))
         return poBaseLayer->GetFeatureCount(bForce);
 
-    CPLString osOutputFormat = WFS_FetchValueFromURL(pszBaseURL, "OUTPUTFORMAT");
-    const char* pszOutputFormat = osOutputFormat.c_str();
     if ((m_poAttrQuery == NULL || osWFSWhere.size() != 0) &&
-         poDS->GetFeatureSupportHits() &&
-         !FindSubStringInsensitive(pszOutputFormat, "shape") &&
-         !FindSubStringInsensitive(pszOutputFormat, "json") &&
-         !FindSubStringInsensitive(pszOutputFormat, "csv") &&
-         !FindSubStringInsensitive(pszOutputFormat, "kml") &&
-         !FindSubStringInsensitive(pszOutputFormat, "kmz"))
+         poDS->GetFeatureSupportHits())
     {
         nFeatures = ExecuteGetFeatureResultTypeHits();
         if (nFeatures >= 0)
