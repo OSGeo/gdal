@@ -29,7 +29,9 @@
 
 /* Necessary for opj_setup_decoder() */
 #define USE_OPJ_DEPRECATED
+#define bool int
 #include <openjpeg.h>
+#undef bool
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
@@ -98,7 +100,7 @@ static OPJ_UINT32 JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_UINT32 nBytes,
 /*                       JP2OpenJPEGDataset_Seek()                      */
 /************************************************************************/
 
-static bool JP2OpenJPEGDataset_Seek(OPJ_SIZE_T nBytes, void * pUserData)
+static int JP2OpenJPEGDataset_Seek(OPJ_SIZE_T nBytes, void * pUserData)
 {
 #ifdef DEBUG
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Seek(%d)", nBytes);
@@ -337,7 +339,7 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    bool bDataToUncompress;
+    int bDataToUncompress;
     OPJ_UINT32 nTileIndex,nCompCount;
     OPJ_INT32 nTileX0,nTileY0,nTileX1,nTileY1;
     OPJ_UINT32 nRequiredSize;
