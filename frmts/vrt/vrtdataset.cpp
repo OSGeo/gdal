@@ -597,11 +597,11 @@ CPLErr VRTDataset::SetMetadataItem( const char *pszName,
 int VRTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    if( (poOpenInfo->nHeaderBytes > 20 
-         && EQUALN((const char *)poOpenInfo->pabyHeader,"<VRTDataset",11)) )
+    if( poOpenInfo->nHeaderBytes > 20
+         && strstr((const char *)poOpenInfo->pabyHeader,"<VRTDataset") != NULL )
         return TRUE;
 
-    if( EQUALN(poOpenInfo->pszFilename,"<VRTDataset",11) )
+    if( strstr(poOpenInfo->pszFilename,"<VRTDataset") != NULL )
         return TRUE;
 
     return FALSE;
@@ -713,9 +713,18 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
     if( psTree == NULL )
         return NULL;
 
-    if( CPLGetXMLNode( psTree, "rasterXSize" ) == NULL
-        || CPLGetXMLNode( psTree, "rasterYSize" ) == NULL
-        || CPLGetXMLNode( psTree, "VRTRasterBand" ) == NULL )
+    CPLXMLNode *psRoot = CPLGetXMLNode( psTree, "=VRTDataset" );
+    if (psRoot == NULL)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Missing VRTDataset element." );
+        CPLDestroyXMLNode( psTree );
+        return NULL;
+    }
+
+    if( CPLGetXMLNode( psRoot, "rasterXSize" ) == NULL
+        || CPLGetXMLNode( psRoot, "rasterYSize" ) == NULL
+        || CPLGetXMLNode( psRoot, "VRTRasterBand" ) == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Missing one of rasterXSize, rasterYSize or bands on"
@@ -728,8 +737,8 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
 /*      Create the new virtual dataset object.                          */
 /* -------------------------------------------------------------------- */
     VRTDataset *poDS;
-    int nXSize = atoi(CPLGetXMLValue(psTree,"rasterXSize","0"));
-    int nYSize = atoi(CPLGetXMLValue(psTree,"rasterYSize","0"));
+    int nXSize = atoi(CPLGetXMLValue(psRoot,"rasterXSize","0"));
+    int nYSize = atoi(CPLGetXMLValue(psRoot,"rasterYSize","0"));
     
     if ( !GDALCheckDatasetDimensions(nXSize, nYSize) )
     {
@@ -745,7 +754,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
         poDS->eAccess = eAccess;
     }
 
-    if( poDS->XMLInit( psTree, pszVRTPath ) != CE_None )
+    if( poDS->XMLInit( psRoot, pszVRTPath ) != CE_None )
     {
         delete poDS;
         poDS = NULL;
