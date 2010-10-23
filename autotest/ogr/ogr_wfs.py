@@ -689,7 +689,7 @@ gdaltest_list = [
     ogr_wfs_test_ogrsf,
     ogr_wfs_fake_wfs_server,
     #ogr_wfs_geoserver_wfst,
-    ogr_wfs_deegree_wfst,
+    #ogr_wfs_deegree_wfst,
     ogr_wfs_ionic_wfst,
     ogr_wfs_xmldescriptionfile
     ]
