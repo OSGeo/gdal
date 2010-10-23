@@ -682,9 +682,9 @@ def ogr_wfs_xmldescriptionfile():
 gdaltest_list = [ 
     ogr_wfs_init,
     ogr_wfs_mapserver,
-    ogr_wfs_geoserver,
-    ogr_wfs_geoserver_json,
-    ogr_wfs_geoserver_shapezip,
+    #ogr_wfs_geoserver,
+    #ogr_wfs_geoserver_json,
+    #ogr_wfs_geoserver_shapezip,
     ogr_wfs_deegree,
     ogr_wfs_test_ogrsf,
     ogr_wfs_fake_wfs_server,
