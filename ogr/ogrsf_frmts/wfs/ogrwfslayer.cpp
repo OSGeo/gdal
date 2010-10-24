@@ -117,6 +117,11 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDS,
     nExpectedInserts = 0;
     bInTransaction = FALSE;
     bUseFeatureIdAtLayerLevel = FALSE;
+
+    bPagingActive = FALSE;
+    nPagingStartIndex = 0;
+    nFeatureRead = 0;
+    nFeatureCountRequested = 0;
 }
 
 /************************************************************************/
@@ -359,6 +364,29 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
     osURL = WFS_AddKVToURL(osURL, "VERSION", poDS->GetVersion());
     osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetFeature");
     osURL = WFS_AddKVToURL(osURL, "TYPENAME", pszName);
+
+    if (poDS->IsPagingAllowed() && !bRequestHits)
+    {
+        if (nFeatures < 0)
+        {
+            if ((m_poAttrQuery == NULL || osWFSWhere.size() != 0) &&
+                poDS->GetFeatureSupportHits())
+            {
+                nFeatures = ExecuteGetFeatureResultTypeHits();
+            }
+        }
+        if (nFeatures >= poDS->GetPageSize())
+        {
+            osURL = WFS_AddKVToURL(osURL, "STARTINDEX", CPLSPrintf("%d", nPagingStartIndex + 1));
+            nMaxFeatures = poDS->GetPageSize();
+            nFeatureCountRequested = nMaxFeatures;
+            bPagingActive = TRUE;
+        }
+        else
+        {
+            osURL = WFS_AddKVToURL(osURL, "STARTINDEX", NULL);
+        }
+    }
 
     if (nMaxFeatures)
     {
@@ -802,6 +830,11 @@ void OGRWFSLayer::ResetReading()
 
 {
     GetLayerDefn();
+    if (bPagingActive)
+        bReloadNeeded = TRUE;
+    nPagingStartIndex = 0;
+    nFeatureRead = 0;
+    nFeatureCountRequested = 0;
     if (bReloadNeeded)
     {
         OGRDataSource::DestroyDataSource(poBaseDS);
@@ -822,6 +855,11 @@ void OGRWFSLayer::ResetReading()
 OGRFeature *OGRWFSLayer::GetNextFeature()
 {
     GetLayerDefn();
+    if (bPagingActive && nFeatureRead == nPagingStartIndex + nFeatureCountRequested)
+    {
+        bReloadNeeded = TRUE;
+        nPagingStartIndex = nFeatureRead;
+    }
     if (bReloadNeeded)
     {
         OGRDataSource::DestroyDataSource(poBaseDS);
@@ -868,6 +906,8 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         OGRFeature* poSrcFeature = poBaseLayer->GetNextFeature();
         if (poSrcFeature == NULL)
             return NULL;
+        nFeatureRead ++;
+
         OGRGeometry* poGeom = poSrcFeature->GetGeometryRef();
         if( m_poFilterGeom != NULL && poGeom != NULL &&
             !FilterGeometry( poGeom ) )

@@ -137,6 +137,15 @@ OGRWFSDataSource::OGRWFSDataSource()
 
     bUseHttp10 = FALSE;
     papszHttpOptions = NULL;
+
+    bPagingAllowed = CSLTestBoolean(CPLGetConfigOption("OGR_WFS_PAGING_ALLOWED", "OFF"));
+    nPageSize = 0;
+    if (bPagingAllowed)
+    {
+        nPageSize = atoi(CPLGetConfigOption("OGR_WFS_PAGE_SIZE", "100"));
+        if (nPageSize <= 0)
+            nPageSize = 100;
+    }
 }
 
 /************************************************************************/
@@ -729,6 +738,18 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         pszParm = CPLGetXMLValue( psRoot, "Version", NULL );
         if( pszParm )
             osVersion = pszParm;
+
+        pszParm = CPLGetXMLValue( psRoot, "PagingAllowed", NULL );
+        if( pszParm )
+            bPagingAllowed = CSLTestBoolean(pszParm);
+
+        pszParm = CPLGetXMLValue( psRoot, "PageSize", NULL );
+        if( pszParm )
+        {
+            nPageSize = atoi(pszParm);
+            if (nPageSize <= 0)
+                nPageSize = 100;
+        }
 
         osTypeName = WFS_FetchValueFromURL(pszBaseURL, "TYPENAME");
 
