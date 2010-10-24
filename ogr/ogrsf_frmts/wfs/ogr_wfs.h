@@ -110,6 +110,11 @@ class OGRWFSLayer : public OGRLayer
 
     int                 bUseFeatureIdAtLayerLevel;
 
+    int                 bPagingActive;
+    int                 nPagingStartIndex;
+    int                 nFeatureRead;
+    int                 nFeatureCountRequested;
+
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
                                     OGRSpatialReference* poSRS,
@@ -195,6 +200,9 @@ class OGRWFSDataSource : public OGRDataSource
 
     char**              papszHttpOptions;
 
+    int                 bPagingAllowed;
+    int                 nPageSize;
+
   public:
                         OGRWFSDataSource();
                         ~OGRWFSDataSource();
@@ -237,6 +245,9 @@ class OGRWFSDataSource : public OGRDataSource
     void                        SaveLayerSchema(const char* pszLayerName, CPLXMLNode* psSchema);
 
     CPLHTTPResult*              HTTPFetch( const char* pszURL, char** papszOptions );
+
+    int                         IsPagingAllowed() { return bPagingAllowed; }
+    int                         GetPageSize() { return nPageSize; }
 };
 
 /************************************************************************/
