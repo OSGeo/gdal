@@ -174,23 +174,28 @@ Usage:
 \endhtmlonly
 
 \verbatim
-Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]
+Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-select field_list] [-where restricted_where] 
                [-progress] [-sql <sql statement>] [-dialect dialect]
                [-preserve_fid] [-fid FID]
-               [-spat xmin ymin xmax ymax] [-wrapdateline]
-               [-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent] 
-               [-clipsrcsql sql_statement] [-clipsrclayer layer] 
-               [-clipsrcwhere expression]
-               [-clipdst [xmin ymin xmax ymax]|WKT|datasource]
-               [-clipdstsql sql_statement] [-clipdstlayer layer] 
-               [-clipdstwhere expression]
+               [-spat xmin ymin xmax ymax]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
-               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]
-               [-splitlistfields] [-maxsubfields val]
                dst_datasource_name src_datasource_name
                [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]
+
+Advanced options :
+               [-gt n]
+               [-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent]
+               [-clipsrcsql sql_statement] [-clipsrclayer layer]
+               [-clipsrcwhere expression]
+               [-clipdst [xmin ymin xmax ymax]|WKT|datasource]
+               [-clipdstsql sql_statement] [-clipdstlayer layer]
+               [-clipdstwhere expression]
+               [-wrapdateline]
+               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]
+               [-splitlistfields] [-maxsubfields val]
+
 \endverbatim
 
 \if man
