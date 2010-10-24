@@ -65,6 +65,10 @@ CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT,
 CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList );
+
+#undef CSVReadParseLine
+char CPL_DLL  **CSVReadParseLine( FILE *fp);
+
 CPL_C_END
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
@@ -894,6 +898,7 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
     FILE	*fp;
     char	**papszTokens;
     int		nReturn = KvUserDefined;
+
 
 /* -------------------------------------------------------------------- */
 /*      Do we know it as a built in?                                    */
