@@ -8078,7 +8078,6 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
         }
         if (!SetDirectory())
             return CE_Failure;
-        FlushDirectory();
 
         if( TIFFGetField(hTIFF, TIFFTAG_SUBFILETYPE, &nSubType))
         {
@@ -8093,7 +8092,9 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
         }
 
         bIsTiled = TIFFIsTiled(hTIFF);
-
+        
+        FlushDirectory();
+        
         nOffset = GTIFFWriteDirectory(hTIFF,
                                       (bIsOverview) ? FILETYPE_REDUCEDIMAGE | FILETYPE_MASK : FILETYPE_MASK,
                                       nRasterXSize, nRasterYSize,
