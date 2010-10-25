@@ -30,6 +30,7 @@
 #include "gdal_proxy.h"
 #include "cpl_string.h"
 #include "vrt/gdal_vrt.h"
+#include "vrt/vrtdataset.h"
 
 #ifdef OGR_ENABLED
 #include "ogr_api.h"
@@ -63,6 +64,9 @@ typedef struct
     GDALDataType firstBandType;
     int*         panHasNoData;
     double*      padfNoDataValues;
+    int    bHasDatasetMask;
+    int    nMaskBlockXSize;
+    int    nMaskBlockYSize;
 } DatasetProperty;
 
 typedef struct
@@ -210,6 +214,7 @@ class VRTBuilder
     double             *padfVRTNoData;
     int                 nVRTNoDataCount;
     int                 bHasRunBuild;
+    int                 bHasDatasetMask;
 
     int         AnalyseRaster(GDALDatasetH hDS, const char* dsFileName,
                               DatasetProperty* psDatasetProperties);
@@ -289,6 +294,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
     padfVRTNoData = NULL;
     nVRTNoDataCount = 0;
     bHasRunBuild = FALSE;
+    bHasDatasetMask = FALSE;
 }
 
 /************************************************************************/
@@ -478,6 +484,14 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
 
     psDatasetProperties->padfNoDataValues = (double*)CPLCalloc(sizeof(double), _nBands);
     psDatasetProperties->panHasNoData = (int*)CPLCalloc(sizeof(int), _nBands);
+
+    psDatasetProperties->bHasDatasetMask = GDALGetMaskFlags(GDALGetRasterBand(hDS, 1)) == GMF_PER_DATASET;
+    if (psDatasetProperties->bHasDatasetMask)
+        bHasDatasetMask = TRUE;
+    GDALGetBlockSize(GDALGetMaskBand(GDALGetRasterBand( hDS, 1 )),
+                        &psDatasetProperties->nMaskBlockXSize,
+                        &psDatasetProperties->nMaskBlockYSize);
+
     int j;
     for(j=0;j<_nBands;j++)
     {
@@ -761,6 +775,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             GDALSetMetadataItem(hBand,"HideNoDataValue","1",NULL);
     }
 
+    VRTSourcedRasterBand* hMaskVRTBand = NULL;
     if (bAddAlpha)
     {
         GDALRasterBandH hBand;
@@ -768,6 +783,12 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         hBand = GDALGetRasterBand(hVRTDS, nBands + 1);
         GDALSetRasterColorInterpretation(hBand, GCI_AlphaBand);
     }
+    else if (bHasDatasetMask)
+    {
+        GDALCreateDatasetMaskBand(hVRTDS, GMF_PER_DATASET);
+        hMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand(hVRTDS, 1));
+    }
+
 
     for(i=0;i<nInputFiles;i++)
     {
@@ -800,6 +821,13 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                                             psDatasetProperties->nBlockXSize,
                                             psDatasetProperties->nBlockYSize);
         }
+        if (bHasDatasetMask && !bAddAlpha)
+        {
+            ((GDALProxyPoolRasterBand*)((GDALProxyPoolDataset*)hProxyDS)->GetRasterBand(1))->
+                    AddSrcMaskBandDescription  (GDT_Byte,
+                                                psDatasetProperties->nMaskBlockXSize,
+                                                psDatasetProperties->nMaskBlockYSize);
+        }
 
         for(j=0;j<nBands;j++)
         {
@@ -829,6 +857,12 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                                 nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
                                 nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                 255, 0, VRT_NODATA_UNSET);
+        }
+        else if (bHasDatasetMask)
+        {
+            hMaskVRTBand->AddMaskBandSource((GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+                                            nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
+                                            nDstXOff, nDstYOff, nDstXSize, nDstYSize);
         }
 
         GDALDereferenceDataset(hProxyDS);
@@ -1123,6 +1157,10 @@ int main( int nArgc, char ** papszArgv )
     int bHideNoData = FALSE;
     const char* pszSrcNoData = NULL;
     const char* pszVRTNoData = NULL;
+
+    /* Check strict compilation and runtime library version as we use C++ API */
+    if (! GDAL_CHECK_VERSION(papszArgv[0]))
+        exit(1);
 
     GDALAllRegister();
 
