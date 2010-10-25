@@ -843,6 +843,20 @@ GDALProxyPoolRasterBand::~GDALProxyPoolRasterBand()
 
 
 /************************************************************************/
+/*                 AddSrcMaskBandDescription()                          */
+/************************************************************************/
+
+void GDALProxyPoolRasterBand::AddSrcMaskBandDescription( GDALDataType eDataType,
+                                                         int nBlockXSize,
+                                                         int nBlockYSize)
+{
+    CPLAssert(poProxyMaskBand == NULL);
+    poProxyMaskBand = new GDALProxyPoolMaskBand((GDALProxyPoolDataset*)poDS,
+                                                this, eDataType,
+                                                nBlockXSize, nBlockYSize);
+}
+
+/************************************************************************/
 /*                  RefUnderlyingRasterBand()                           */
 /************************************************************************/
 
@@ -1134,6 +1148,22 @@ GDALProxyPoolMaskBand::GDALProxyPoolMaskBand(GDALProxyPoolDataset* poDS,
                                              GDALRasterBand* poUnderlyingMaskBand,
                                              GDALProxyPoolRasterBand* poMainBand) :
         GDALProxyPoolRasterBand(poDS, poUnderlyingMaskBand)
+{
+    this->poMainBand = poMainBand;
+
+    poUnderlyingMainRasterBand = NULL;
+    nRefCountUnderlyingMainRasterBand = 0;
+}
+
+/* ******************************************************************** */
+/*                     GDALProxyPoolMaskBand()                          */
+/* ******************************************************************** */
+
+GDALProxyPoolMaskBand::GDALProxyPoolMaskBand(GDALProxyPoolDataset* poDS,
+                                             GDALProxyPoolRasterBand* poMainBand,
+                                             GDALDataType eDataType,
+                                             int nBlockXSize, int nBlockYSize) :
+        GDALProxyPoolRasterBand(poDS, 1, eDataType, nBlockXSize, nBlockYSize)
 {
     this->poMainBand = poMainBand;
 
