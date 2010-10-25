@@ -925,6 +925,43 @@ def mask_22():
     return 'success' 
 
 ###############################################################################
+# Test CreateCopy() of a dataset with a mask into a JPEG-compressed TIFF with
+# internal mask (#3800)
+
+def mask_23():
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    drv = gdal.GetDriverByName('GTiff')
+    md = drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    src_ds = drv.Create( 'tmp/mask_23_src.tif', 3000, 2000, 3, options = ['TILED=YES','SPARSE_OK=YES'] )
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+    old_val = gdal.GetCacheMax()
+    gdal.SetCacheMax(15000000)
+    gdal.ErrorReset()
+    ds = drv.CreateCopy( 'tmp/mask_23_dst.tif', src_ds, options = ['TILED=YES','COMPRESS=JPEG'])
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+    gdal.SetCacheMax(old_val)
+    
+    ds = None
+    error_msg = gdal.GetLastErrorMsg()
+    src_ds = None
+
+    drv.Delete( 'tmp/mask_23_src.tif' )
+    drv.Delete( 'tmp/mask_23_dst.tif' )    
+    
+    # 'ERROR 1: TIFFRewriteDirectory:Error fetching directory count' was triggered before
+    if error_msg != '':
+        return 'fail'
+
+    return 'success' 
+###############################################################################
 # Cleanup.
 
 
@@ -950,7 +987,8 @@ gdaltest_list = [
     mask_19,
     mask_20,
     mask_21,
-    mask_22]
+    mask_22,
+    mask_23 ]
 
 if __name__ == '__main__':
 
