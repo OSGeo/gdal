@@ -8078,6 +8078,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
         }
         if (!SetDirectory())
             return CE_Failure;
+        FlushDirectory();
 
         if( TIFFGetField(hTIFF, TIFFTAG_SUBFILETYPE, &nSubType))
         {
@@ -8090,8 +8091,6 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
                 return CE_Failure;
             }
         }
-
-        TIFFFlush( hTIFF );
 
         bIsTiled = TIFFIsTiled(hTIFF);
 
