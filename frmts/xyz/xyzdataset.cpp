@@ -834,7 +834,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
     void* pLineBuffer = (void*) CPLMalloc(nXSize * sizeof(int));
     int i, j;
     CPLErr eErr = CE_None;
-    for(j=0;j<nYSize;j++)
+    for(j=0;j<nYSize && eErr == CE_None;j++)
     {
         eErr = poSrcDS->GetRasterBand(1)->RasterIO(
                                             GF_Read, 0, j, nXSize, 1,
@@ -843,14 +843,27 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
         if (eErr != CE_None)
             break;
         double dfY = adfGeoTransform[3] + (j + 0.5) * adfGeoTransform[5];
+        CPLString osBuf;
         for(i=0;i<nXSize;i++)
         {
+            char szBuf[256];
             double dfX = adfGeoTransform[0] + (i + 0.5) * adfGeoTransform[1];
-            VSIFPrintfL(fp, "%.18g%s%.18g%s", dfX, pszColSep, dfY, pszColSep);
             if (eReqDT == GDT_Int32)
-                VSIFPrintfL(fp, "%d\n", ((int*)pLineBuffer)[i]);
+                sprintf(szBuf, "%.18g%c%.18g%c%d\n", dfX, pszColSep[0], dfY, pszColSep[0], ((int*)pLineBuffer)[i]);
             else
-                VSIFPrintfL(fp, "%.18g\n", ((float*)pLineBuffer)[i]);
+                sprintf(szBuf, "%.18g%c%.18g%c%.18g\n", dfX, pszColSep[0], dfY, pszColSep[0], ((float*)pLineBuffer)[i]);
+            osBuf += szBuf;
+            if( (i & 1023) == 0 || i == nXSize - 1 )
+            {
+                if ( VSIFWriteL( osBuf, (int)osBuf.size(), 1, fp ) != 1 )
+                {
+                    eErr = CE_Failure;
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Write failed, disk full?\n" );
+                    break;
+                }
+                osBuf = "";
+            }
         }
         if (!pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData))
             break;
