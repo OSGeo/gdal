@@ -860,6 +860,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {
+        CPLString osBuf;
         eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                  (bReadAsInt) ? (void*)panScanline : (void*)padfScanline,
                                  nXSize, 1, (bReadAsInt) ? GDT_Int32 : GDT_Float64,
@@ -870,12 +871,17 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
             {
                 sprintf( szHeader, " %d", panScanline[iPixel] );
-                if( VSIFWriteL( szHeader, strlen(szHeader), 1, fpImage ) != 1 )
+                osBuf += szHeader;
+                if( (iPixel & 1023) == 0 || iPixel == nXSize - 1 )
                 {
-                    eErr = CE_Failure;
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Write failed, disk full?\n" );
-                    break;
+                    if ( VSIFWriteL( osBuf, (int)osBuf.size(), 1, fpImage ) != 1 )
+                    {
+                        eErr = CE_Failure;
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                                  "Write failed, disk full?\n" );
+                        break;
+                    }
+                    osBuf = "";
                 }
             }
         }
@@ -884,12 +890,17 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
             {
                 sprintf( szHeader, szFormatFloat, padfScanline[iPixel] );
-                if( VSIFWriteL( szHeader, strlen(szHeader), 1, fpImage ) != 1 )
+                osBuf += szHeader;
+                if( (iPixel & 1023) == 0 || iPixel == nXSize - 1 )
                 {
-                    eErr = CE_Failure;
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Write failed, disk full?\n" );
-                    break;
+                    if ( VSIFWriteL( osBuf, (int)osBuf.size(), 1, fpImage ) != 1 )
+                    {
+                        eErr = CE_Failure;
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                                  "Write failed, disk full?\n" );
+                        break;
+                    }
+                    osBuf = "";
                 }
             }
         }
