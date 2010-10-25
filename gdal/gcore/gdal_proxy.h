@@ -278,6 +278,8 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
                                 GDALRasterBand* poUnderlyingRasterBand);
         ~GDALProxyPoolRasterBand();
 
+        void AddSrcMaskBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
+
         /* Special behaviour for the following methods : they return a pointer */
         /* data type, that must be cached by the proxy, so it doesn't become invalid */
         /* when the underlying object get closed */
@@ -338,6 +340,10 @@ class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
         GDALProxyPoolMaskBand(GDALProxyPoolDataset* poDS,
                               GDALRasterBand* poUnderlyingMaskBand,
                               GDALProxyPoolRasterBand* poMainBand);
+        GDALProxyPoolMaskBand(GDALProxyPoolDataset* poDS,
+                              GDALProxyPoolRasterBand* poMainBand,
+                              GDALDataType eDataType,
+                              int nBlockXSize, int nBlockYSize);
         ~GDALProxyPoolMaskBand();
 };
 
