@@ -70,6 +70,7 @@ VRTSimpleSource::VRTSimpleSource()
 
 {
     poRasterBand = NULL;
+    poMaskBandMainBand = NULL;
     bNoDataSet = FALSE;
 }
 
@@ -80,7 +81,17 @@ VRTSimpleSource::VRTSimpleSource()
 VRTSimpleSource::~VRTSimpleSource()
 
 {
-    if( poRasterBand != NULL && poRasterBand->GetDataset() != NULL )
+    if( poMaskBandMainBand != NULL )
+    {
+        if (poMaskBandMainBand->GetDataset() != NULL )
+        {
+            if( poMaskBandMainBand->GetDataset()->GetShared() )
+                GDALClose( (GDALDatasetH) poMaskBandMainBand->GetDataset() );
+            else
+                poMaskBandMainBand->GetDataset()->Dereference();
+        }
+    }
+    else if( poRasterBand != NULL && poRasterBand->GetDataset() != NULL )
     {
         if( poRasterBand->GetDataset()->GetShared() )
             GDALClose( (GDALDatasetH) poRasterBand->GetDataset() );
@@ -97,6 +108,19 @@ void VRTSimpleSource::SetSrcBand( GDALRasterBand *poNewSrcBand )
 
 {
     poRasterBand = poNewSrcBand;
+}
+
+
+/************************************************************************/
+/*                          SetSrcMaskBand()                            */
+/************************************************************************/
+
+/* poSrcBand is not the mask band, but the band from which the mask band is taken */
+void VRTSimpleSource::SetSrcMaskBand( GDALRasterBand *poNewSrcBand )
+
+{
+    poRasterBand = poNewSrcBand->GetMaskBand();
+    poMaskBandMainBand = poNewSrcBand;
 }
 
 /************************************************************************/
@@ -161,10 +185,20 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     if( poRasterBand == NULL )
         return NULL;
 
-    GDALDataset     *poDS = poRasterBand->GetDataset();
+    GDALDataset     *poDS;
 
-    if( poDS == NULL || poRasterBand->GetBand() < 1 )
-        return NULL;
+    if (poMaskBandMainBand)
+    {
+        poDS = poMaskBandMainBand->GetDataset();
+        if( poDS == NULL || poMaskBandMainBand->GetBand() < 1 )
+            return NULL;
+    }
+    else
+    {
+        poDS = poRasterBand->GetDataset();
+        if( poDS == NULL || poRasterBand->GetBand() < 1 )
+            return NULL;
+    }
 
     psSrc = CPLCreateXMLNode( NULL, CXT_Element, "SimpleSource" );
 
@@ -193,8 +227,12 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
                           CXT_Attribute, "relativeToVRT" ), 
         CXT_Text, bRelativeToVRT ? "1" : "0" );
 
-    CPLSetXMLValue( psSrc, "SourceBand", 
-                    CPLSPrintf("%d",poRasterBand->GetBand()) );
+    if (poMaskBandMainBand)
+        CPLSetXMLValue( psSrc, "SourceBand",
+                        CPLSPrintf("mask,%d",poMaskBandMainBand->GetBand()) );
+    else
+        CPLSetXMLValue( psSrc, "SourceBand",
+                        CPLSPrintf("%d",poRasterBand->GetBand()) );
 
     /* Write a few additional useful properties of the dataset */
     /* so that we can use a proxy dataset when re-opening. See XMLInit() */
@@ -271,8 +309,19 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     else
         pszSrcDSName = CPLStrdup( pszFilename );
 
-
-    int nSrcBand = atoi(CPLGetXMLValue(psSrc,"SourceBand","1"));
+    const char* pszSourceBand = CPLGetXMLValue(psSrc,"SourceBand","1");
+    int nSrcBand = 0;
+    int bGetMaskBand = FALSE;
+    if (EQUALN(pszSourceBand, "mask",4))
+    {
+        bGetMaskBand = TRUE;
+        if (pszSourceBand[4] == ',')
+            nSrcBand = atoi(pszSourceBand + 5);
+        else
+            nSrcBand = 1;
+    }
+    else
+        nSrcBand = atoi(pszSourceBand);
 
     /* Newly generated VRT will have RasterXSize, RasterYSize, DataType, */
     /* BlockXSize, BlockYSize tags, so that we don't have actually to */
@@ -327,6 +376,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         /* but that's OK since we only use that band afterwards */
         for(i=1;i<=nSrcBand;i++)
             proxyDS->AddSrcBandDescription(eDataType, nBlockXSize, nBlockYSize);
+        if (bGetMaskBand)
+            ((GDALProxyPoolRasterBand*)proxyDS->GetRasterBand(nSrcBand))->AddSrcMaskBandDescription(eDataType, nBlockXSize, nBlockYSize);
     }
 
     CPLFree( pszSrcDSName );
@@ -341,7 +392,14 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     poRasterBand = poSrcDS->GetRasterBand(nSrcBand);
     if( poRasterBand == NULL )
         return CE_Failure;
-    
+    if (bGetMaskBand)
+    {
+        poMaskBandMainBand = poRasterBand;
+        poRasterBand = poRasterBand->GetMaskBand();
+        if( poRasterBand == NULL )
+            return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Set characteristics.                                            */
 /* -------------------------------------------------------------------- */

@@ -61,6 +61,8 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
     pszGCPProjection = CPLStrdup("");
 
     pszVRTPath = NULL;
+
+    poMaskBand = NULL;
     
     GDALRegister_VRT();
     poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
@@ -97,6 +99,8 @@ VRTDataset::~VRTDataset()
         CPLFree( pasGCPList );
     }
     CPLFree( pszVRTPath );
+
+    delete poMaskBand;
 }
 
 /************************************************************************/
@@ -272,6 +276,15 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
             CPLAddXMLChild( psDSTree, psBandTree );
     }
 
+    if (poMaskBand)
+    {
+        CPLXMLNode *psBandTree =
+            poMaskBand->SerializeToXML(pszVRTPath);
+
+        if( psBandTree != NULL )
+            CPLAddXMLChild( psDSTree, psBandTree );
+    }
+
     return psDSTree;
 }
 
@@ -407,11 +420,56 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     int		nBands = 0;
     CPLXMLNode *psChild;
 
+    /* Parse dataset mask band first */
     for( psChild=psTree->psChild; psChild != NULL; psChild=psChild->psNext )
     {
         if( psChild->eType == CXT_Element
             && EQUAL(psChild->pszValue,"VRTRasterBand") )
         {
+            const char *pszBand = CPLGetXMLValue( psChild, "band", NULL );
+            if (pszBand == NULL || !EQUAL(pszBand, "mask"))
+                continue;
+
+            VRTRasterBand  *poBand = NULL;
+            const char *pszSubclass = CPLGetXMLValue( psChild, "subclass",
+                                                      "VRTSourcedRasterBand" );
+
+            if( EQUAL(pszSubclass,"VRTSourcedRasterBand") )
+                poBand = new VRTSourcedRasterBand( this, 0 );
+            else if( EQUAL(pszSubclass, "VRTDerivedRasterBand") )
+                poBand = new VRTDerivedRasterBand( this, 0 );
+            else if( EQUAL(pszSubclass, "VRTRawRasterBand") )
+                poBand = new VRTRawRasterBand( this, 0 );
+            else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") )
+                poBand = new VRTWarpedRasterBand( this, 0 );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "VRTRasterBand of unrecognised subclass '%s'.",
+                          pszSubclass );
+
+            if( poBand != NULL
+                && poBand->XMLInit( psChild, pszVRTPath ) == CE_None )
+            {
+                SetMaskBand(poBand);
+            }
+            else
+            {
+                if( poBand )
+                    delete poBand;
+                return CE_Failure;
+            }
+        }
+    }
+
+    for( psChild=psTree->psChild; psChild != NULL; psChild=psChild->psNext )
+    {
+        if( psChild->eType == CXT_Element
+            && EQUAL(psChild->pszValue,"VRTRasterBand") )
+        {
+            const char *pszBand = CPLGetXMLValue( psChild, "band", NULL );
+            if (pszBand != NULL && EQUAL(pszBand, "mask"))
+                continue;
+
             VRTRasterBand  *poBand = NULL;
             const char *pszSubclass = CPLGetXMLValue( psChild, "subclass", 
                                                       "VRTSourcedRasterBand" );
@@ -1022,4 +1080,40 @@ CPLErr VRTDataset::Delete( const char * pszFilename )
     }
     else
         return CE_Failure;
+}
+
+/************************************************************************/
+/*                          CreateMaskBand()                            */
+/************************************************************************/
+
+CPLErr VRTDataset::CreateMaskBand( int nFlags )
+{
+    if (poMaskBand != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This VRT dataset has already a mask band");
+        return CE_Failure;
+    }
+
+    if (nFlags != GMF_PER_DATASET)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                     "The only flag value supported for VRT mask is GMF_PER_DATASET");
+        return CE_Failure;
+    }
+
+    SetMaskBand(new VRTSourcedRasterBand( this, 0 ));
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           SetMaskBand()                              */
+/************************************************************************/
+
+void VRTDataset::SetMaskBand(VRTRasterBand* poMaskBand)
+{
+    delete this->poMaskBand;
+    this->poMaskBand = poMaskBand;
+    poMaskBand->SetIsMaskBand();
 }
