@@ -3766,7 +3766,7 @@ CPLErr GTiffDataset::IBuildOverviews(
         if( strstr(GDALGetMetadataItem(GDALGetDriverByName( "GTiff" ),
                                        GDAL_DMD_CREATIONOPTIONLIST, NULL ),
                    "<Value>DEFLATE</Value>") != NULL )
-            nMaskOvrCompression = COMPRESSION_DEFLATE;
+            nMaskOvrCompression = COMPRESSION_ADOBE_DEFLATE;
         else
             nMaskOvrCompression = COMPRESSION_PACKBITS;
 
@@ -8055,7 +8055,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
         if( strstr(GDALGetMetadataItem(GDALGetDriverByName( "GTiff" ),
                                        GDAL_DMD_CREATIONOPTIONLIST, NULL ),
                    "<Value>DEFLATE</Value>") != NULL )
-            nCompression = COMPRESSION_DEFLATE;
+            nCompression = COMPRESSION_ADOBE_DEFLATE;
         else
             nCompression = COMPRESSION_PACKBITS;
 
