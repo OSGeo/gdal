@@ -238,12 +238,15 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 {
     int i = 0;
 
+    if (strcmp(pszFilename, GetPrefix()) == 0)
+        return NULL;
+
     /* Allow natural chaining of VSI drivers without requiring double slash */
     
     CPLString osDoubleVsi(GetPrefix());
     osDoubleVsi += "/vsi";
     
-    if (strncmp(pszFilename, osDoubleVsi.c_str(), strlen(osDoubleVsi.c_str())) == 0)
+    if (strncmp(pszFilename, osDoubleVsi.c_str(), osDoubleVsi.size()) == 0)
         pszFilename += strlen(GetPrefix());
     else
         pszFilename += strlen(GetPrefix()) + 1;
