@@ -285,6 +285,33 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Emit various band level metadata.                               */
 /* -------------------------------------------------------------------- */
         poVRTBand->CopyCommonInfoFrom( poSrcBand );
+
+/* -------------------------------------------------------------------- */
+/*      Add specific mask band.                                         */
+/* -------------------------------------------------------------------- */
+        if ( (poSrcBand->GetMaskFlags() & (GMF_PER_DATASET | GMF_ALL_VALID | GMF_NODATA)) == 0)
+        {
+            VRTSourcedRasterBand* poVRTMaskBand = new VRTSourcedRasterBand(poVRTDS, 0,
+                poSrcBand->GetMaskBand()->GetRasterDataType(),
+                poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize());
+            poVRTMaskBand->AddMaskBandSource( poSrcBand );
+            poVRTBand->SetMaskBand( poVRTMaskBand );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add dataset mask band                                           */
+/* -------------------------------------------------------------------- */
+    if (poSrcDS->GetRasterCount() != 0 &&
+        poSrcDS->GetRasterBand(1) != NULL &&
+        poSrcDS->GetRasterBand(1)->GetMaskFlags() == GMF_PER_DATASET)
+    {
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
+        VRTSourcedRasterBand* poVRTMaskBand = new VRTSourcedRasterBand(poVRTDS, 0,
+            poSrcBand->GetMaskBand()->GetRasterDataType(),
+            poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize());
+        poVRTMaskBand->AddMaskBandSource( poSrcBand );
+        poVRTDS->SetMaskBand( poVRTMaskBand );
     }
 
     poVRTDS->FlushCache();

@@ -97,8 +97,12 @@ VRTSource *VRTParseFilterSources( CPLXMLNode *psTree, const char * );
 /*                              VRTDataset                              */
 /************************************************************************/
 
+class VRTRasterBand;
+
 class CPL_DLL VRTDataset : public GDALDataset
 {
+    friend class VRTRasterBand;
+
     char           *pszProjection;
 
     int            bGeoTransformSet;
@@ -113,6 +117,8 @@ class CPL_DLL VRTDataset : public GDALDataset
     
     char          *pszVRTPath;
 
+    VRTRasterBand *poMaskBand;
+
   public:
                  VRTDataset(int nXSize, int nYSize);
                 ~VRTDataset();
@@ -121,6 +127,9 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual void  FlushCache();
     
     void SetWritable(int bWritable) { this->bWritable = bWritable; }
+
+    virtual CPLErr          CreateMaskBand( int nFlags );
+    void SetMaskBand(VRTRasterBand* poMaskBand);
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
@@ -205,6 +214,8 @@ public:
 class CPL_DLL VRTRasterBand : public GDALRasterBand
 {
   protected:
+    int            bIsMaskBand;
+
     int            bNoDataValueSet;
     int            bHideNoDataValue; // If set to true, will not report the existance of nodata
     double         dfNoDataValue;
@@ -224,6 +235,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     void           Initialize( int nXSize, int nYSize );
 
     std::vector<VRTOverviewInfo> apoOverviews;
+
+    VRTRasterBand *poMaskBand;
 
   public:
 
@@ -279,6 +292,13 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
                                int *pnMaxSize, CPLHashSet* hSetFiles);
     
     virtual void   SetDescription( const char * );
+
+    virtual GDALRasterBand *GetMaskBand();
+    virtual int             GetMaskFlags();
+
+    void SetMaskBand(VRTRasterBand* poMaskBand);
+
+    void SetIsMaskBand() { bIsMaskBand = TRUE; }
 };
 
 /************************************************************************/
@@ -335,6 +355,12 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                                      double dfScaleRatio=1.0,
                                      double dfNoDataValue = VRT_NODATA_UNSET,
                                      int nColorTableComponent = 0);
+
+    CPLErr         AddMaskBandSource( GDALRasterBand *poSrcBand,
+                                      int nSrcXOff=-1, int nSrcYOff=-1,
+                                      int nSrcXSize=-1, int nSrcYSize=-1,
+                                      int nDstXOff=-1, int nDstYOff=-1,
+                                      int nDstXSize=-1, int nDstYSize=-1 );
 
     CPLErr         AddFuncSource( VRTImageReadFunc pfnReadFunc, void *hCBData,
                                   double dfNoDataValue = VRT_NODATA_UNSET );
@@ -472,6 +498,10 @@ class VRTSimpleSource : public VRTSource
 protected:
     GDALRasterBand      *poRasterBand;
 
+    /* when poRasterBand is a mask band, poMaskBandMainBand is the band */
+    /* from which the mask band is taken */
+    GDALRasterBand      *poMaskBandMainBand; 
+
     int                 nSrcXOff;
     int                 nSrcYOff;
     int                 nSrcXSize;
@@ -493,6 +523,7 @@ public:
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
 
     void           SetSrcBand( GDALRasterBand * );
+    void           SetSrcMaskBand( GDALRasterBand * );
     void           SetSrcWindow( int, int, int, int );
     void           SetDstWindow( int, int, int, int );
     void           SetNoDataValue( double dfNoDataValue );
