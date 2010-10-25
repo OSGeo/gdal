@@ -1017,6 +1017,14 @@ static int ProxyMain( int argc, char ** argv )
         }
     }
 
+    if (nSrcBandCount > 0 && GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) == GMF_PER_DATASET)
+    {
+        GDALCreateDatasetMaskBand((GDALDatasetH) poVDS, GMF_PER_DATASET);
+        VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
+
+        hMaskVRTBand->AddMaskBandSource((GDALRasterBand*)GDALGetRasterBand(hDataset, 1));
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Write to the output file using CopyCreate().                    */
 /* -------------------------------------------------------------------- */
