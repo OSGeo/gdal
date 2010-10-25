@@ -68,6 +68,8 @@ CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 
 #undef CSVReadParseLine
 char CPL_DLL  **CSVReadParseLine( FILE *fp);
+#undef CSLDestroy
+void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);
 
 CPL_C_END
 
@@ -106,6 +108,24 @@ void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
                           char	**ppszAngularUnits);
 
 /************************************************************************/
+/*                       GTIFToCPLRecyleString()                        */
+/*                                                                      */
+/*      This changes a string from the libgeotiff heap to the GDAL      */
+/*      heap.                                                           */
+/************************************************************************/
+
+static void GTIFToCPLRecycleString( char **ppszTarget )
+
+{
+    if( *ppszTarget == NULL )
+        return;
+
+    char *pszTempString = CPLStrdup(*ppszTarget);
+    GTIFFreeMemory( *ppszTarget );
+    *ppszTarget = pszTempString;
+}
+
+/************************************************************************/
 /*                          WKTMassageDatum()                           */
 /*                                                                      */
 /*      Massage an EPSG datum name into WMT format.  Also transform     */
@@ -118,14 +138,7 @@ static void WKTMassageDatum( char ** ppszDatum )
     int		i, j;
     char	*pszDatum;
 
-/* -------------------------------------------------------------------- */
-/*      First copy string and allocate with our CPLStrdup() to so we    */
-/*      know when we are done this function we will have a CPL          */
-/*      string, not a GTIF one.                                         */
-/* -------------------------------------------------------------------- */
-    pszDatum = CPLStrdup(*ppszDatum);
-    GTIFFreeMemory( *ppszDatum );
-    *ppszDatum = pszDatum;
+    pszDatum = *ppszDatum;
     if (pszDatum[0] == '\0')
         return;
 
@@ -358,23 +371,36 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         && hGTIF != NULL 
         && GTIFKeyGet( hGTIF, GeogCitationGeoKey, szGCSName, 0, 
                        sizeof(szGCSName)) )
-      GetGeogCSFromCitation(szGCSName, sizeof(szGCSName),
-                            GeogCitationGeoKey, 
-                          &pszGeogName, &pszDatumName,
-                          &pszPMName, &pszSpheroidName,
-                          &pszAngularUnits);
-
+    {
+        GetGeogCSFromCitation(szGCSName, sizeof(szGCSName),
+                              GeogCitationGeoKey, 
+                              &pszGeogName, &pszDatumName,
+                              &pszPMName, &pszSpheroidName,
+                              &pszAngularUnits);
+    }
+    else
+        GTIFToCPLRecycleString( &pszGeogName );
+        
     if( !pszDatumName )
+    {
       GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
+      GTIFToCPLRecycleString( &pszDatumName );
+    }
     if( !pszSpheroidName )
+    {
       GTIFGetEllipsoidInfo( psDefn->Ellipsoid, &pszSpheroidName, NULL, NULL );
+      GTIFToCPLRecycleString( &pszSpheroidName );
+    }
     else
     {
       GTIFKeyGet(hGTIF, GeogSemiMajorAxisGeoKey, &(psDefn->SemiMajor), 0, 1 );
       GTIFKeyGet(hGTIF, GeogInvFlatteningGeoKey, &dfInvFlattening, 0, 1 );
     }
     if( !pszPMName )
-      GTIFGetPMInfo( psDefn->PM, &pszPMName, NULL );
+    {
+        GTIFGetPMInfo( psDefn->PM, &pszPMName, NULL );
+        GTIFToCPLRecycleString( &pszPMName );
+    }
     else
       GTIFKeyGet(hGTIF, GeogPrimeMeridianLongGeoKey, &(psDefn->PMLongToGreenwich), 0, 1 );
     
@@ -383,6 +409,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
       GTIFGetUOMAngleInfo( psDefn->UOMAngle, &pszAngularUnits, NULL );
       if( pszAngularUnits == NULL )
           pszAngularUnits = CPLStrdup("unknown");
+      else
+          GTIFToCPLRecycleString( &pszAngularUnits );
     }
     else
     {
@@ -390,8 +418,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
       aUnitGot = TRUE;
     }
 
-    if( pszDatumName != NULL )            /* was a GTIFFreeMemory'able string */
-        WKTMassageDatum( &pszDatumName ); /* now a CPLFree'able string */
+    if( pszDatumName != NULL )
+        WKTMassageDatum( &pszDatumName );
 
     dfSemiMajor = psDefn->SemiMajor;
     if( dfSemiMajor == 0.0 )
@@ -412,9 +440,10 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     }
     if(!pszGeogName || strlen(pszGeogName) == 0)
     {
-      GTIFFreeMemory(pszGeogName);             /* was a GTIFFreeMemory'able string */
-      pszGeogName = CPLStrdup( pszDatumName ); /* now a CPLFree'able string */
+        CPLFree(pszGeogName);
+        pszGeogName = CPLStrdup( pszDatumName );
     }
+
     if(aUnitGot)
       oSRS.SetGeogCS( pszGeogName, pszDatumName, 
                       pszSpheroidName, dfSemiMajor, dfInvFlattening,
@@ -441,9 +470,9 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
     CPLFree( pszGeogName );
     CPLFree( pszDatumName );
-    GTIFFreeMemory( pszPMName );
-    GTIFFreeMemory( pszSpheroidName );
-    GTIFFreeMemory( pszAngularUnits );
+    CPLFree( pszSpheroidName );
+    CPLFree( pszPMName );
+    CPLFree( pszAngularUnits );
         
 /* ==================================================================== */
 /*      Handle projection parameters.                                   */
@@ -914,7 +943,7 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
         return Datum_WGS84;
     else if( EQUAL(pszOGCName,"WGS72") || EQUAL(pszOGCName,"WGS_1972") )
         return Datum_WGS72;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the table if possible.                                     */
 /* -------------------------------------------------------------------- */
