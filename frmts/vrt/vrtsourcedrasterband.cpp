@@ -450,6 +450,63 @@ CPLErr VRTSourcedRasterBand::AddSimpleSource( GDALRasterBand *poSrcBand,
 }
 
 /************************************************************************/
+/*                         AddMaskBandSource()                          */
+/************************************************************************/
+
+/* poSrcBand is not the mask band, but the band from which the mask band is taken */
+CPLErr VRTSourcedRasterBand::AddMaskBandSource( GDALRasterBand *poSrcBand,
+                                                int nSrcXOff, int nSrcYOff,
+                                                int nSrcXSize, int nSrcYSize,
+                                                int nDstXOff, int nDstYOff,
+                                                int nDstXSize, int nDstYSize )
+{
+/* -------------------------------------------------------------------- */
+/*      Default source and dest rectangles.                             */
+/* -------------------------------------------------------------------- */
+    if( nSrcYSize == -1 )
+    {
+        nSrcXOff = 0;
+        nSrcYOff = 0;
+        nSrcXSize = poSrcBand->GetXSize();
+        nSrcYSize = poSrcBand->GetYSize();
+    }
+
+    if( nDstYSize == -1 )
+    {
+        nDstXOff = 0;
+        nDstYOff = 0;
+        nDstXSize = nRasterXSize;
+        nDstYSize = nRasterYSize;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create source.                                                  */
+/* -------------------------------------------------------------------- */
+    VRTSimpleSource* poSimpleSource = new VRTSimpleSource();
+    poSimpleSource->SetSrcMaskBand( poSrcBand );
+    poSimpleSource->SetSrcWindow( 0, 0, poSrcBand->GetXSize(), poSrcBand->GetYSize() );
+    poSimpleSource->SetDstWindow( 0, 0, nRasterXSize, nRasterYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Default source and dest rectangles.                             */
+/* -------------------------------------------------------------------- */
+    if ( nSrcXOff == nDstXOff && nSrcYOff == nDstYOff &&
+         nSrcXSize == nDstXSize && nSrcYSize == nRasterYSize )
+        bEqualAreas = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      If we can get the associated GDALDataset, add a reference to it.*/
+/* -------------------------------------------------------------------- */
+    if( poSrcBand->GetDataset() != NULL )
+        poSrcBand->GetDataset()->Reference();
+
+/* -------------------------------------------------------------------- */
+/*      add to list.                                                    */
+/* -------------------------------------------------------------------- */
+    return AddSource( poSimpleSource );
+}
+
+/************************************************************************/
 /*                         VRTAddSimpleSource()                         */
 /************************************************************************/
 
