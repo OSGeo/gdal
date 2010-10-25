@@ -322,6 +322,13 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     }
     else
         nSrcBand = atoi(pszSourceBand);
+    if (nSrcBand <= 0)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Invalid <SourceBand> element in VRTRasterBand." );
+        CPLFree( pszSrcDSName );
+        return CE_Failure;
+    }
 
     /* Newly generated VRT will have RasterXSize, RasterYSize, DataType, */
     /* BlockXSize, BlockYSize tags, so that we don't have actually to */
@@ -391,7 +398,11 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     
     poRasterBand = poSrcDS->GetRasterBand(nSrcBand);
     if( poRasterBand == NULL )
+    {
+        if( poSrcDS->GetShared() )
+            GDALClose( (GDALDatasetH) poSrcDS );
         return CE_Failure;
+    }
     if (bGetMaskBand)
     {
         poMaskBandMainBand = poRasterBand;
