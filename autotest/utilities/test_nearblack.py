@@ -230,7 +230,6 @@ def test_nearblack_cleanup():
     except:
         pass
     try:
-    try:
         os.remove('tmp/nearblack5.tif.msk')
     except:
         pass
