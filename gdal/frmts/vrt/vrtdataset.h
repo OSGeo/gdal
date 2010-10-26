@@ -296,9 +296,11 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     virtual GDALRasterBand *GetMaskBand();
     virtual int             GetMaskFlags();
 
+    virtual CPLErr          CreateMaskBand( int nFlags );
+    
     void SetMaskBand(VRTRasterBand* poMaskBand);
 
-    void SetIsMaskBand() { bIsMaskBand = TRUE; }
+    void SetIsMaskBand();
 };
 
 /************************************************************************/
