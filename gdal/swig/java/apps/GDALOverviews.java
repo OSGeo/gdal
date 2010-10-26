@@ -125,6 +125,10 @@ class GDALOverviews {
                     System.out.println("         PaletteInterp: " + gdal.GetColorInterpretationName(over.GetRasterColorInterpretation()));
                 }
             }
+
+            /* explicit closing of dataset */
+            ds.delete();
+
             System.out.println("Completed.");
             System.out.println("Use:  gdalread " + args[0] + " outfile.png [overview] to extract a particular overview!" );
         }
