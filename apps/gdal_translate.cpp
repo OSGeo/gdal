@@ -52,7 +52,7 @@ static void Usage()
     printf( "Usage: gdal_translate [--help-general]\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
-            "       [-of format] [-b band] [-expand {gray|rgb|rgba}]\n"
+            "       [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]\n"
             "       [-outsize xsize[%%] ysize[%%]]\n"
             "       [-unscale] [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]\n"
@@ -83,6 +83,13 @@ static void Usage()
 /*                             ProxyMain()                              */
 /************************************************************************/
 
+enum
+{
+    MASK_DISABLED,
+    MASK_AUTO,
+    MASK_USER
+};
+
 static int ProxyMain( int argc, char ** argv )
 
 {
@@ -91,7 +98,8 @@ static int ProxyMain( int argc, char ** argv )
     int			nRasterXSize, nRasterYSize;
     const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
     GDALDriverH		hDriver;
-    int			*panBandList = NULL, nBandCount = 0, bDefBands = TRUE;
+    int			*panBandList = NULL; /* negative value of panBandList[i] means mask band of ABS(panBandList[i]) */
+    int         nBandCount = 0, bDefBands = TRUE;
     double		adfGeoTransform[6];
     GDALDataType	eOutputType = GDT_Unknown;
     int			nOXSize = 0, nOYSize = 0;
@@ -115,6 +123,9 @@ static int ProxyMain( int argc, char ** argv )
     int                 bSetNoData = FALSE;
     double		dfNoDataReal = 0.0;
     int                 nRGBExpand = 0;
+    int                 bParsedMaskArgument = FALSE;
+    int                 eMaskMode = MASK_AUTO;
+    int                 nMaskBand = 0; /* negative value means mask band of ABS(nMaskBand) */
 
 
     anSrcWin[0] = 0;
@@ -195,21 +206,75 @@ static int ProxyMain( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
         {
-            if( atoi(argv[i+1]) < 1 )
+            const char* pszBand = argv[i+1];
+            int bMask = FALSE;
+            if (EQUAL(pszBand, "mask"))
+                pszBand = "mask,1";
+            if (EQUALN(pszBand, "mask,", 5))
+            {
+                bMask = TRUE;
+                pszBand += 5;
+            }
+            int nBand = atoi(pszBand);
+            if( nBand < 1 )
             {
                 printf( "Unrecognizable band number (%s).\n", argv[i+1] );
                 Usage();
                 GDALDestroyDriverManager();
                 exit( 2 );
             }
+            i++;
 
             nBandCount++;
             panBandList = (int *) 
                 CPLRealloc(panBandList, sizeof(int) * nBandCount);
-            panBandList[nBandCount-1] = atoi(argv[++i]);
+            panBandList[nBandCount-1] = nBand;
+            if (bMask)
+                panBandList[nBandCount-1] *= -1;
 
             if( panBandList[nBandCount-1] != nBandCount )
                 bDefBands = FALSE;
+                
+            if( !bParsedMaskArgument )
+                eMaskMode = MASK_DISABLED;
+        }
+        else if( EQUAL(argv[i],"-mask") && i < argc-1 )
+        {
+            bParsedMaskArgument = TRUE;
+            const char* pszBand = argv[i+1];
+            if (EQUAL(pszBand, "none"))
+            {
+                eMaskMode = MASK_DISABLED;
+            }
+            else if (EQUAL(pszBand, "auto"))
+            {
+                eMaskMode = MASK_AUTO;
+            }
+            else
+            {
+                int bMask = FALSE;
+                if (EQUAL(pszBand, "mask"))
+                    pszBand = "mask,1";
+                if (EQUALN(pszBand, "mask,", 5))
+                {
+                    bMask = TRUE;
+                    pszBand += 5;
+                }
+                int nBand = atoi(pszBand);
+                if( nBand < 1 )
+                {
+                    printf( "Unrecognizable band number (%s).\n", argv[i+1] );
+                    Usage();
+                    GDALDestroyDriverManager();
+                    exit( 2 );
+                }
+                
+                eMaskMode = MASK_USER;
+                nMaskBand = nBand;
+                if (bMask)
+                    nMaskBand *= -1;
+            }
+            i ++;
         }
         else if( EQUAL(argv[i],"-not_strict")  )
             bStrict = FALSE;
@@ -505,11 +570,11 @@ static int ProxyMain( int argc, char ** argv )
     {
         for( i = 0; i < nBandCount; i++ )
         {
-            if( panBandList[i] < 1 || panBandList[i] > GDALGetRasterCount(hDataset) )
+            if( ABS(panBandList[i]) > GDALGetRasterCount(hDataset) )
             {
                 fprintf( stderr, 
                          "Band %d requested, but only bands 1 to %d available.\n",
-                         panBandList[i], GDALGetRasterCount(hDataset) );
+                         ABS(panBandList[i]), GDALGetRasterCount(hDataset) );
                 GDALDestroyDriverManager();
                 exit( 2 );
             }
@@ -804,11 +869,13 @@ static int ProxyMain( int argc, char ** argv )
     {
         GDALRasterBand  *poSrcBand;
         poSrcBand = ((GDALDataset *) 
-                     hDataset)->GetRasterBand(panBandList[0]);
+                     hDataset)->GetRasterBand(ABS(panBandList[0]));
+        if (panBandList[0] < 0)
+            poSrcBand = poSrcBand->GetMaskBand();
         GDALColorTable* poColorTable = poSrcBand->GetColorTable();
         if (poColorTable == NULL)
         {
-            fprintf(stderr, "Error : band %d has no color table\n", panBandList[0]);
+            fprintf(stderr, "Error : band %d has no color table\n", ABS(panBandList[0]));
             GDALClose( hDataset );
             CPLFree( panBandList );
             GDALDestroyDriverManager();
@@ -855,21 +922,21 @@ static int ProxyMain( int argc, char ** argv )
         GDALDataType    eBandType;
         int             nComponent = 0;
 
+        int nSrcBand;
         if (nRGBExpand != 0)
         {
             if (nSrcBandCount == 2 && nRGBExpand == 4 && i == 3)
-                poSrcBand = ((GDALDataset *) 
-                        hDataset)->GetRasterBand(panBandList[1]);
+                nSrcBand = panBandList[1];
             else
             {
-                poSrcBand = ((GDALDataset *) 
-                        hDataset)->GetRasterBand(panBandList[0]);
+                nSrcBand = panBandList[0];
                 nComponent = i + 1;
             }
         }
         else
-            poSrcBand = ((GDALDataset *) 
-                        hDataset)->GetRasterBand(panBandList[i]);
+            nSrcBand = panBandList[i];
+
+        poSrcBand = ((GDALDataset *) hDataset)->GetRasterBand(ABS(nSrcBand));
 
 /* -------------------------------------------------------------------- */
 /*      Select output data type to match source.                        */
@@ -884,7 +951,12 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
         poVDS->AddBand( eBandType, NULL );
         poVRTBand = (VRTSourcedRasterBand *) poVDS->GetRasterBand( i+1 );
-            
+        if (nSrcBand < 0)
+        {
+            poVRTBand->AddMaskBandSource(poSrcBand);
+            continue;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to collect scaling information?                      */
 /* -------------------------------------------------------------------- */
@@ -1016,7 +1088,8 @@ static int ProxyMain( int argc, char ** argv )
             poVRTBand->SetNoDataValue( dfVal );
         }
         
-        if (GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) != GMF_PER_DATASET &&
+        if (eMaskMode == MASK_AUTO &&
+            GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) != GMF_PER_DATASET &&
             (poSrcBand->GetMaskFlags() & (GMF_ALL_VALID | GMF_NODATA)) == 0)
         {
             if (poVRTBand->CreateMaskBand(poSrcBand->GetMaskFlags()) == CE_None)
@@ -1028,7 +1101,22 @@ static int ProxyMain( int argc, char ** argv )
         }
     }
 
-    if (nSrcBandCount > 0 &&
+    if (eMaskMode == MASK_USER)
+    {
+        GDALRasterBand *poSrcBand =
+            (GDALRasterBand*)GDALGetRasterBand(hDataset, ABS(nMaskBand));
+        if (poSrcBand && poVDS->CreateMaskBand(GMF_PER_DATASET) == CE_None)
+        {
+            VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)
+                GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
+            if (nMaskBand > 0)
+                hMaskVRTBand->AddSimpleSource(poSrcBand);
+            else
+                hMaskVRTBand->AddMaskBandSource(poSrcBand);
+        }
+    }
+    else
+    if (eMaskMode == MASK_AUTO && nSrcBandCount > 0 &&
         GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) == GMF_PER_DATASET)
     {
         if (poVDS->CreateMaskBand(GMF_PER_DATASET) == CE_None)

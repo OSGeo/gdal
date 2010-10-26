@@ -273,7 +273,7 @@ converts raster data between different formats
 gdal_translate [--help-general]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-       [-of format] [-b band] [-expand {gray|rgb|rgba}]
+       [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]
        [-outsize xsize[%] ysize[%]]
        [-unscale] [-scale [src_min src_max [dst_min dst_max]]]
        [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]
@@ -298,9 +298,15 @@ when translating to the output format.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
 is GeoTIFF (GTiff).  Use the short format name.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input band <i>band</i> for
-output. Bands are numbered from 1 Multiple <b>-b</b> switches may be used
+output. Bands are numbered from 1. Multiple <b>-b</b> switches may be used
 to select a set of input bands to write to the output file, or to reorder
-bands.</dd>
+bands. Starting with GDAL 1.8.0, <i>band</i> can also be set to "mask,1"
+(or just "mask") to mean the mask band of the 1st band of the input dataset.</dd>
+<dt> <b>-mask</b> <i>band</i>:</dt><dd> (GDAL >= 1.8.0) Select an input band
+<i>band</i> to create output dataset mask band. Bands are numbered from 1. 
+<i>band</i> can be set to "none" to avoid copying the band of the input dataset if
+it exists. Otherwise it is copied by default ("auto"). <i>band</i> can also be set to "mask,1"
+(or just "mask") to mean the mask band of the 1st band of the input dataset.</dd>
 <dt> <b>-expand</b> <i>gray|rgb|rgba</i>:</dt><dd> (From GDAL 1.6.0) To expose a dataset with 1 band
 with a color table as a dataset with 3 (RGB) or 4 (RGBA) bands. Usefull for
 output drivers such as JPEG, JPEG2000, MrSID, ECW that don't support color
@@ -354,6 +360,16 @@ file name, URL of data source or subdataset name for multi-dataset files.</dd>
 
 \verbatim
 gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
+\endverbatim
+
+Starting with GDAL 1.8.0, to create a JPEG-compressed TIFF with internal mask from a RGBA dataset :
+\verbatim
+gdal_translate rgba.tif withmask.tif -b 1 -b 2 -b 3 -mask 4 -co COMPRESS=JPEG -co PHOTOMETRIC=YCBCR --config GDAL_TIFF_INTERNAL_MASK YES
+\endverbatim
+
+Starting with GDAL 1.8.0, to create a RGBA dataset from a RGB dataset with a mask :
+\verbatim
+gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
 \endverbatim
 
 \if man
