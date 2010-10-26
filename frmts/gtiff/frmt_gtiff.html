@@ -74,9 +74,11 @@ that is to say the creation of a .msk file, as per
 <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15</a></p>
 
 <p>Starting with GDAL 1.8.0, 1-bit internal mask band are deflate compressed.
-When reading them back, they are also promoted to 8 bits (i.e.
-the value of opaque pixels are 255) unless the GDAL_TIFF_INTERNAL_MASK_TO_8BIT
-configuration option is set to NO.</p>
+When reading them back, to make conversion between mask band and alpha band easier,
+mask bands are exposed to the user as being promoted to full 8 bits (i.e. the
+value for unmasked pixels is 255) unless the GDAL_TIFF_INTERNAL_MASK_TO_8BIT
+configuration option is set to NO. This does not affect the way the mask band is
+written (it is always 1-bit).</p>
 
 <h2>Overviews</h2>
 
