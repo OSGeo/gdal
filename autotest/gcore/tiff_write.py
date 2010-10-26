@@ -3640,7 +3640,7 @@ def tiff_write_94():
     gdal.SetConfigOption( 'GDAL_TIFF_INTERNAL_MASK', 'YES' )
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     gdal.SetConfigOption( 'GDAL_TIFF_INTERNAL_MASK', None )
-    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0,0,1,1,'\001')
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0,0,1,1,'\xff',1,1)
 
     gdal.SetConfigOption( 'GDAL_TIFF_INTERNAL_MASK', 'YES' )
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/tiff_write_94_dst.tif', src_ds,
@@ -3657,7 +3657,7 @@ def tiff_write_94():
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_94_src.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_94_dst.tif' )
 
-    if cs != 1:
+    if cs != 3:
         print(cs)
         return 'fail'
 

@@ -66,12 +66,17 @@ driver only supports internal transparency masks of the same dimensions
 as the main image. Transparency masks of internal overviews are also
 supported.</p>
 
-<p>When the GDAL_TIFF_INTERNAL_MASK environment variable is set to YES and
+<p>When the GDAL_TIFF_INTERNAL_MASK configuration option is set to YES and
 the GeoTIFF file is opened in update mode, the CreateMaskBand() method
 on a TIFF dataset or rasterband will create an internal transparency mask.
 Otherwise, the default behaviour of nodata mask creation will be used,
 that is to say the creation of a .msk file, as per
 <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15</a></p>
+
+<p>Starting with GDAL 1.8.0, 1-bit internal mask band are deflate compressed.
+When reading them back, they are also promoted to 8 bits (i.e.
+the value of opaque pixels are 255) unless the GDAL_TIFF_INTERNAL_MASK_TO_8BIT
+configuration option is set to NO.</p>
 
 <h2>Overviews</h2>
 

@@ -356,6 +356,8 @@ class GTiffDataset : public GDALPamDataset
 
     int           nZLevel;
     int           nJpegQuality;
+    
+    int           bPromoteTo8Bits;
 
   public:
                  GTiffDataset();
@@ -1583,25 +1585,13 @@ int GTiffRasterBand::GetMaskFlags()
 {
     if( poGDS->poMaskDS != NULL )
     {
-        int iBand;
-        int nMaskFlag = 0;
         if( poGDS->poMaskDS->GetRasterCount() == 1)
         {
-            iBand = 1;
-            nMaskFlag = GMF_PER_DATASET;
+            return GMF_PER_DATASET;
         }
         else
         {
-            iBand = nBand;
-        }
-        if( poGDS->poMaskDS->GetRasterBand(iBand)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) != NULL 
-            && atoi(poGDS->poMaskDS->GetRasterBand(iBand)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" )) == 1)
-        {
-            return nMaskFlag;
-        }
-        else
-        {
-            return nMaskFlag | GMF_ALPHA;
+            return 0;
         }
     }
     else
@@ -2290,11 +2280,13 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             int iSrcOffset, iPixel;
 
             iSrcOffset = ((nBlockXSize+7) >> 3) * 8 * iLine;
+            
+            GByte bSetVal = (poGDS->bPromoteTo8Bits) ? 255 : 1;
 
             for( iPixel = 0; iPixel < nBlockXSize; iPixel++, iSrcOffset++ )
             {
                 if( pabyBlockBuf[iSrcOffset >>3] & (0x80 >> (iSrcOffset & 0x7)) )
-                    ((GByte *) pImage)[iDstOffset++] = 1;
+                    ((GByte *) pImage)[iDstOffset++] = bSetVal;
                 else
                     ((GByte *) pImage)[iDstOffset++] = 0;
             }
@@ -2775,6 +2767,8 @@ GTiffDataset::GTiffDataset()
 
     nZLevel = -1;
     nJpegQuality = -1;
+    
+    bPromoteTo8Bits = FALSE;
 }
 
 /************************************************************************/
@@ -5990,6 +5984,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                 {
                     CPLDebug( "GTiff", "Opened band mask.\n");
                     poMaskDS->poBaseDS = this;
+                    
+                    poMaskDS->bPromoteTo8Bits = CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
                 }
             }
             
@@ -6019,6 +6015,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                             CPLDebug( "GTiff", "Opened band mask for %dx%d overview.\n",
                                       poDS->GetRasterXSize(), poDS->GetRasterYSize());
                             ((GTiffDataset*)papoOverviewDS[i])->poMaskDS = poDS;
+                            poDS->bPromoteTo8Bits = CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
                             poDS->poBaseDS = this;
                             break;
                         }
@@ -8107,6 +8104,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
             return CE_Failure;
 
         poMaskDS = new GTiffDataset();
+        poMaskDS->bPromoteTo8Bits = CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
         if( poMaskDS->OpenOffset( hTIFF, ppoActiveDSRef, nOffset, 
                                   FALSE, GA_Update ) != CE_None)
         {
