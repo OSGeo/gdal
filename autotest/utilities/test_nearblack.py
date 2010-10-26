@@ -184,6 +184,8 @@ def test_nearblack_6():
         return 'skip'
 
     shutil.copy('tmp/nearblack5.tif','tmp/nearblack6.tif')
+    shutil.copy('tmp/nearblack5.tif.msk','tmp/nearblack6.tif.msk')
+    
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -setmask -nb 0 -of GTiff tmp/nearblack6.tif')
 
     ds = gdal.Open('tmp/nearblack6.tif')
@@ -228,7 +230,16 @@ def test_nearblack_cleanup():
     except:
         pass
     try:
+    try:
+        os.remove('tmp/nearblack5.tif.msk')
+    except:
+        pass
+    try:
         os.remove('tmp/nearblack6.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/nearblack6.tif.msk')
     except:
         pass
     return 'success'
