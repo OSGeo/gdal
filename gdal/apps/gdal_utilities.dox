@@ -1130,7 +1130,7 @@ convert nearly black/white borders to black
 
 \verbatim
 nearblack [-of format] [-white] [-near dist] [-nb non_black_pixels]
-          [-setalpha] [-o outfile] [-q]  [-co "NAME=VALUE"]* infile
+          [-setalpha] [-setmask] [-o outfile] [-q]  [-co "NAME=VALUE"]* infile
 \endverbatim
 
 \section mdescription DESCRIPTION
@@ -1163,6 +1163,11 @@ Adds an alpha band if the output file is specified and the input file has 3 band
 or sets the alpha band of the output file if it is specified and the input file has 4 bands,
 or sets the alpha band of the input file if it has 4 bands and no output file is specified.
 The alpha band is set to 0 in the image collar and to 255 elsewhere.
+</dd>
+<dt> <b>-setmask</b>:</dt><dd> (GDAL 1.8.0 or later) 
+Adds a mask band to the output file,
+or adds a mask band to the input file if it does not already have one and no output file is specified.
+The mask band is set to 0 in the image collar and to 255 elsewhere.
 </dd>
 <dt> <b>-q</b>:</dt><dd> (GDAL 1.8.0 or later) Suppress progress monitor and other non-error
 output.</dd>
