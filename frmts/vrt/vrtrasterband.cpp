@@ -613,6 +613,42 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
     }
 
 /* ==================================================================== */
+/*      Overviews                                                       */
+/* ==================================================================== */
+
+    for( int iOvr = 0; iOvr < (int)apoOverviews.size(); iOvr ++ )
+    {
+        CPLXMLNode *psOVR_XML = CPLCreateXMLNode( psTree, CXT_Element,
+                                                 "Overview" );
+
+        int              bRelativeToVRT;
+        const char      *pszRelativePath;
+        VSIStatBufL sStat;
+
+        if( VSIStatExL( apoOverviews[iOvr].osFilename, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
+        {
+            pszRelativePath = apoOverviews[iOvr].osFilename;
+            bRelativeToVRT = FALSE;
+        }
+        else
+        {
+            pszRelativePath =
+                CPLExtractRelativePath( pszVRTPath, apoOverviews[iOvr].osFilename,
+                                        &bRelativeToVRT );
+        }
+
+        CPLSetXMLValue( psOVR_XML, "SourceFilename", pszRelativePath );
+
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( CPLGetXMLNode( psOVR_XML, "SourceFilename" ),
+                            CXT_Attribute, "relativeToVRT" ),
+            CXT_Text, bRelativeToVRT ? "1" : "0" );
+
+        CPLSetXMLValue( psOVR_XML, "SourceBand",
+                        CPLSPrintf("%d",apoOverviews[iOvr].nBand) );
+    }
+    
+/* ==================================================================== */
 /*      Mask band (specific to that raster band)                        */
 /* ==================================================================== */
 
