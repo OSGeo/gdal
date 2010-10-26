@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$");
 
-static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nSrcBands, int nDstBands,
+static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd, int nSrcBands, int nDstBands,
                          int nNearDist, int nMaxNonBlack, int bNearWhite,
                          int *panLastLineCounts, 
                          int bDoHorizontalCheck, 
@@ -46,7 +46,7 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nSrcBands, i
 void Usage()
 {
     printf( "nearblack [-of format] [-white] [-near dist] [-nb non_black_pixels]\n"
-            "          [-setalpha] [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n" );
+            "          [-setalpha] [-setmask] [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n" );
     exit( 1 );
 }
 
@@ -85,6 +85,7 @@ int main( int argc, char ** argv )
     int nNearDist = 15;
     int bNearWhite = FALSE;
     int bSetAlpha = FALSE;
+    int bSetMask = FALSE;
     const char* pszDriverName = "HFA";
     char** papszCreationOptions = NULL;
     int bQuiet = FALSE;
@@ -109,6 +110,8 @@ int main( int argc, char ** argv )
             nNearDist = atoi(argv[++i]);
         else if( EQUAL(argv[i], "-setalpha") )
             bSetAlpha = TRUE;
+        else if( EQUAL(argv[i], "-setmask") )
+            bSetMask = TRUE;
         else if( EQUAL(argv[i], "-q") || EQUAL(argv[i], "-quiet") )
             bQuiet = TRUE;
         else if( EQUAL(argv[i], "-co") && i < argc-1 )
@@ -176,6 +179,7 @@ int main( int argc, char ** argv )
             }
         }
 
+ 
         hOutDS = GDALCreate( hDriver, pszOutFile, 
                              nXSize, nYSize, nDstBands, GDT_Byte, 
                              papszCreationOptions );
@@ -233,14 +237,40 @@ int main( int argc, char ** argv )
         }
     }
 
+    GDALRasterBandH hMaskBand = NULL;
+    
+    if (bSetMask) {
+
+        /***** if there isn't already a mask band on the output file create one *****/
+        
+        if ( GMF_PER_DATASET != GDALGetMaskFlags( GDALGetRasterBand(hOutDS, 1) ) )
+        {
+
+            if ( CE_None != GDALCreateDatasetMaskBand(hOutDS, GMF_PER_DATASET) ) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "CE_Warning Failed to create mask band on output DS");
+                bSetMask = FALSE;
+            }
+        }
+
+        if (bSetMask) {
+            hMaskBand = GDALGetMaskBand(GDALGetRasterBand(hOutDS, 1));
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Allocate a line buffer.                                         */
 /* -------------------------------------------------------------------- */
     GByte *pabyLine;
+    GByte *pabyMask=NULL;
+    
     int   *panLastLineCounts;
 
     pabyLine = (GByte *) CPLMalloc(nXSize * nDstBands);
-
+    
+    if (bSetMask)
+        pabyMask = (GByte *) CPLMalloc(nXSize);
+    
     panLastLineCounts = (int *) CPLCalloc(sizeof(int),nXSize);
 
 /* -------------------------------------------------------------------- */
@@ -267,16 +297,41 @@ int main( int argc, char ** argv )
             }
         }
         
-        ProcessLine( pabyLine, 0, nXSize-1, nBands, nDstBands, nNearDist, nMaxNonBlack,
+        if (bSetMask)
+        {
+            int iCol;
+            for(iCol = 0; iCol < nXSize; iCol ++)
+            {
+                pabyMask[iCol] = 255;
+            }
+        }
+        
+        ProcessLine( pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands, nNearDist, nMaxNonBlack,
                      bNearWhite, panLastLineCounts, TRUE, TRUE );
-        ProcessLine( pabyLine, nXSize-1, 0, nBands, nDstBands, nNearDist, nMaxNonBlack,
+        ProcessLine( pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands, nNearDist, nMaxNonBlack,
                      bNearWhite, NULL, TRUE, FALSE );
         
         eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
                                     nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
+
         if( eErr != CE_None )
             break;
+    
+        /***** write out the mask band line *****/
+
+        if (bSetMask) {
+
+            eErr = GDALRasterIO ( hMaskBand, GF_Write, 0, iLine, nXSize, 1,
+                                  pabyMask, nXSize, 1, GDT_Byte,
+                                  0, 0 );
+                             
+            if( eErr != CE_None ) {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "ERROR writeing out line to mask band.");
+               break;
+            }
+        }
         
         if (!bQuiet)
             GDALTermProgress( 0.5 * ((iLine+1) / (double) nYSize), NULL, NULL );
@@ -296,8 +351,22 @@ int main( int argc, char ** argv )
                                     nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
             break;
+
+        /***** read the mask band line back in *****/
+
+        if (bSetMask) {
+
+            eErr = GDALRasterIO ( hMaskBand, GF_Read, 0, iLine, nXSize, 1,
+                                  pabyMask, nXSize, 1, GDT_Byte,
+                                  0, 0 );
+                             
+                                
+            if( eErr != CE_None )
+                break;
+        }
+
         
-        ProcessLine( pabyLine, 0, nXSize-1, nBands, nDstBands, nNearDist, nMaxNonBlack,
+        ProcessLine( pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands, nNearDist, nMaxNonBlack,
                      bNearWhite, panLastLineCounts, FALSE, TRUE );
         
         eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
@@ -305,6 +374,20 @@ int main( int argc, char ** argv )
                                     nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
             break;
+
+        /***** write out the mask band line *****/
+
+        if (bSetMask) {
+
+            eErr = GDALRasterIO ( hMaskBand, GF_Write, 0, iLine, nXSize, 1,
+                                  pabyMask, nXSize, 1, GDT_Byte,
+                                  0, 0 );
+                             
+                                
+            if( eErr != CE_None )
+                break;
+        }
+
         
         if (!bQuiet)
             GDALTermProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, 
@@ -312,6 +395,9 @@ int main( int argc, char ** argv )
     }
 
     CPLFree(pabyLine);
+    if (bSetMask)
+        CPLFree(pabyMask);
+    
     CPLFree( panLastLineCounts );
 
     GDALClose( hOutDS );
@@ -331,7 +417,7 @@ int main( int argc, char ** argv )
 /*      Process a single scanline of image data.                        */
 /************************************************************************/
 
-static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nSrcBands,
+static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd, int nSrcBands,
                          int nDstBands,
                          int nNearDist, int nMaxNonBlack, int bNearWhite,
                          int *panLastLineCounts, 
@@ -395,8 +481,16 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nSrcBands,
                 else
                     pabyLine[i * nDstBands + iBand] = 0;
             }
+
+            /***** alpha *****/
+            
             if( nSrcBands != nDstBands )
                 pabyLine[i * nDstBands + nDstBands - 1] = 0;
+
+            /***** mask *****/
+
+            if (pabyMask != NULL)
+                pabyMask[i] = 0;
         }
     }
 
@@ -454,8 +548,17 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nSrcBands,
                 else
                     pabyLine[i * nDstBands + iBand] = 0;
             }
+
+            /***** alpha *****/
+            
             if( nSrcBands != nDstBands )
                 pabyLine[i * nDstBands + nDstBands - 1] = 0;
+
+            /***** mask *****/
+
+            if (pabyMask != NULL)
+                pabyMask[i] = 0;
+            
         }
     }
 
