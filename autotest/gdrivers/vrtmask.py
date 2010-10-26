@@ -43,8 +43,6 @@ def vrtmask_1():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
-    <Metadata />
-    <Description>foo</Description>
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -54,17 +52,17 @@ def vrtmask_1():
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
     </SimpleSource>
   </VRTRasterBand>
-  <VRTRasterBand dataType="Byte" band="mask"> <!-- note the band="mask" -->
-    <Metadata />
-    <ColorInterp>Gray</ColorInterp>
-    <SimpleSource>
-      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
-      <SourceBand>1</SourceBand> <!-- here we use band 1 of the sourcefilename as a mask band -->
-      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
-      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
-      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
-    </SimpleSource>
-  </VRTRasterBand>
+  <MaskBand>
+      <VRTRasterBand dataType="Byte">
+        <SimpleSource>
+          <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+          <SourceBand>1</SourceBand> <!-- here we use band 1 of the sourcefilename as a mask band -->
+          <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+          <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+          <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        </SimpleSource>
+      </VRTRasterBand>
+  </MaskBand>
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
@@ -91,8 +89,6 @@ def vrtmask_2():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
-    <Metadata />
-    <Description>foo</Description>
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -101,15 +97,17 @@ def vrtmask_2():
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
     </SimpleSource>
-    <VRTRasterBand dataType="Byte" band="mask"> <!-- note the band="mask" -->
-        <SimpleSource>
-            <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
-            <SourceBand>mask,1</SourceBand> <!-- note the mask,1 meaning the mask band of the band 1 of the sourcefilename -->
-            <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
-            <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
-            <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
-         </SimpleSource>
-    </VRTRasterBand>
+    <MaskBand>
+        <VRTRasterBand dataType="Byte">
+            <SimpleSource>
+                <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+                <SourceBand>mask,1</SourceBand> <!-- note the mask,1 meaning the mask band of the band 1 of the sourcefilename -->
+                <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+                <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+                <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+             </SimpleSource>
+        </VRTRasterBand>
+    </MaskBand>
   </VRTRasterBand>
 </VRTDataset>"""
 

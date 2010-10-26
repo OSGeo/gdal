@@ -276,13 +276,20 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
             CPLAddXMLChild( psDSTree, psBandTree );
     }
 
+    /* -------------------------------------------------------------------- */
+    /*      Serialize dataset mask band.                                    */
+    /* -------------------------------------------------------------------- */
     if (poMaskBand)
     {
         CPLXMLNode *psBandTree =
             poMaskBand->SerializeToXML(pszVRTPath);
 
         if( psBandTree != NULL )
-            CPLAddXMLChild( psDSTree, psBandTree );
+        {
+            CPLXMLNode *psMaskBandElement = CPLCreateXMLNode( psDSTree, CXT_Element, 
+                                                              "MaskBand" );
+            CPLAddXMLChild( psMaskBandElement, psBandTree );
+        }
     }
 
     return psDSTree;
@@ -415,21 +422,21 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     oMDMD.XMLInit( psTree, TRUE );
 
 /* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
+/*      Create dataset mask band.                                       */
 /* -------------------------------------------------------------------- */
-    int		nBands = 0;
     CPLXMLNode *psChild;
 
     /* Parse dataset mask band first */
-    for( psChild=psTree->psChild; psChild != NULL; psChild=psChild->psNext )
+    CPLXMLNode* psMaskBandNode = CPLGetXMLNode(psTree, "MaskBand");
+    if (psMaskBandNode)
+        psChild = psMaskBandNode->psChild;
+    else
+        psChild = NULL;
+    for( ; psChild != NULL; psChild=psChild->psNext )
     {
         if( psChild->eType == CXT_Element
             && EQUAL(psChild->pszValue,"VRTRasterBand") )
         {
-            const char *pszBand = CPLGetXMLValue( psChild, "band", NULL );
-            if (pszBand == NULL || !EQUAL(pszBand, "mask"))
-                continue;
-
             VRTRasterBand  *poBand = NULL;
             const char *pszSubclass = CPLGetXMLValue( psChild, "subclass",
                                                       "VRTSourcedRasterBand" );
@@ -451,6 +458,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
                 && poBand->XMLInit( psChild, pszVRTPath ) == CE_None )
             {
                 SetMaskBand(poBand);
+                break;
             }
             else
             {
@@ -461,15 +469,15 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    int		nBands = 0;
     for( psChild=psTree->psChild; psChild != NULL; psChild=psChild->psNext )
     {
         if( psChild->eType == CXT_Element
             && EQUAL(psChild->pszValue,"VRTRasterBand") )
         {
-            const char *pszBand = CPLGetXMLValue( psChild, "band", NULL );
-            if (pszBand != NULL && EQUAL(pszBand, "mask"))
-                continue;
-
             VRTRasterBand  *poBand = NULL;
             const char *pszSubclass = CPLGetXMLValue( psChild, "subclass", 
                                                       "VRTSourcedRasterBand" );
@@ -1092,13 +1100,6 @@ CPLErr VRTDataset::CreateMaskBand( int nFlags )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "This VRT dataset has already a mask band");
-        return CE_Failure;
-    }
-
-    if (nFlags != GMF_PER_DATASET)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                     "The only flag value supported for VRT mask is GMF_PER_DATASET");
         return CE_Failure;
     }
 

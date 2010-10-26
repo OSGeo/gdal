@@ -1015,14 +1015,28 @@ static int ProxyMain( int argc, char ** argv )
             
             poVRTBand->SetNoDataValue( dfVal );
         }
+        
+        if (GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) != GMF_PER_DATASET &&
+            (poSrcBand->GetMaskFlags() & (GMF_ALL_VALID | GMF_NODATA)) == 0)
+        {
+            if (poVRTBand->CreateMaskBand(poSrcBand->GetMaskFlags()) == CE_None)
+            {
+                VRTSourcedRasterBand* hMaskVRTBand =
+                    (VRTSourcedRasterBand*)poVRTBand->GetMaskBand();
+                hMaskVRTBand->AddMaskBandSource(poSrcBand);
+            }
+        }
     }
 
-    if (nSrcBandCount > 0 && GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) == GMF_PER_DATASET)
+    if (nSrcBandCount > 0 &&
+        GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) == GMF_PER_DATASET)
     {
-        GDALCreateDatasetMaskBand((GDALDatasetH) poVDS, GMF_PER_DATASET);
-        VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
-
-        hMaskVRTBand->AddMaskBandSource((GDALRasterBand*)GDALGetRasterBand(hDataset, 1));
+        if (poVDS->CreateMaskBand(GMF_PER_DATASET) == CE_None)
+        {
+            VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)
+                GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
+            hMaskVRTBand->AddMaskBandSource((GDALRasterBand*)GDALGetRasterBand(hDataset, 1));
+        }
     }
 
 /* -------------------------------------------------------------------- */
