@@ -8,6 +8,8 @@ GDALLIB	=    $(GDAL_ROOT)\gdal_i.lib
 GDALLIB	=    $(GDAL_ROOT)\gdal.lib
 !ENDIF
 
+JAVA_RUN = $(JAVA_HOME)\jre\bin\java -Djava.library.path=. -cp gdal.jar;build\apps
+
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
 all:  ogr_dir gdal_dir const_dir osr_dir
@@ -42,8 +44,20 @@ osr_dir:
 	cd ..
 	link osr_wrap.obj $(GDALLIB) /out:osrjni.dll /DLL
 	if exist osrjni.dll.manifest mt -manifest osrjni.dll.manifest -outputresource:osrjni.dll;2
-	
-	
+
+test:
+	if exist tmp_test rmdir /s /q tmp_test
+	mkdir tmp_test
+	copy  test_data\byte.tif tmp_test
+	$(JAVA_RUN) GDALOverviews tmp_test/byte.tif "NEAREST" 2 4
+	$(JAVA_RUN) gdalinfo -checksum tmp_test/byte.tif
+	$(JAVA_RUN) ogr2ogr tmp_test/out.shp test_data/poly.shp -progress -overwrite
+	$(JAVA_RUN) ogrinfo -ro -al tmp_test/out.shp
+	$(JAVA_RUN) OSRTransform
+	$(JAVA_RUN) gdalmajorobject
+	$(JAVA_RUN) GDALTestIO
+	$(JAVA_RUN) GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
+
 clean:
   if exist org\nul rmdir /s /q org
 	cd gdal
