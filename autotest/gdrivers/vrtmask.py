@@ -272,8 +272,12 @@ def vrtmask_7():
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
+    try:
+        os.remove('tmp/vrtmask_7_rgba.tif.msk')
+    except:
+        pass
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/ycbcr_with_mask.tif tmp/vrtmask_7_rgba.tif -b 1 -b 2 -b 3 -b mask,1')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/ycbcr_with_mask.tif tmp/vrtmask_7_rgba.tif -b 1 -b 2 -b 3 -b mask')
 
     src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
     expected_msk_cs = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
@@ -290,6 +294,12 @@ def vrtmask_7():
     ds = None
 
     os.remove('tmp/vrtmask_7_rgba.tif')
+    try:
+        os.remove('tmp/vrtmask_7_rgba.tif.msk')
+        gdaltest.post_reason('did not expect tmp/vrtmask_7_rgba.tif.msk')
+        return 'fail'
+    except:
+        pass
     os.remove('tmp/vrtmask_7_rgbmask.vrt')
 
     if alpha_cs != expected_msk_cs:
@@ -307,6 +317,32 @@ def vrtmask_7():
     return 'success'
 
 ###############################################################################
+# gdal_translate with RGBmask -> RGB
+
+def vrtmask_8():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gtiff_drv = gdal.GetDriverByName('GTiff')
+    md = gtiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/ycbcr_with_mask.tif tmp/vrtmask_8.vrt -mask none')
+
+    ds = gdal.Open('tmp/vrtmask_8.vrt')
+    flags = ds.GetRasterBand(1).GetMaskFlags()
+    ds = None
+
+    os.remove('tmp/vrtmask_8.vrt')
+    
+    if flags != gdal.GMF_ALL_VALID:
+        print(flags)
+        return 'fail'
+        
+    return 'success'
+###############################################################################
 # Cleanup.
 
 def vrtmask_cleanup():
@@ -320,6 +356,7 @@ gdaltest_list = [
     vrtmask_5,
     vrtmask_6,
     vrtmask_7,
+    vrtmask_8,
     vrtmask_cleanup ]
 
 if __name__ == '__main__':
