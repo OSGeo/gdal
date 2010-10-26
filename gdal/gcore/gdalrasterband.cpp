@@ -4682,6 +4682,10 @@ int CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand )
  * The mask images will be deflate compressed tiled images with the same
  * block size as the original image if possible.
  *
+ * Note that if you got a mask band with a previous call to GetMaskBand(),
+ * it might be invalidated by CreateMaskBand(). So you have to call GetMaskBand()
+ * again.
+ *
  * @since GDAL 1.5.0
  *
  * @return CE_None on success or CE_Failure on an error.
@@ -4694,7 +4698,19 @@ CPLErr GDALRasterBand::CreateMaskBand( int nFlags )
 
 {
     if( poDS != NULL && poDS->oOvManager.IsInitialized() )
-        return poDS->oOvManager.CreateMaskBand( nFlags, nBand );
+    {
+        CPLErr eErr = poDS->oOvManager.CreateMaskBand( nFlags, nBand );
+        if (eErr != CE_None)
+            return eErr;
+
+        /* Invalidate existing raster band mask */
+        if (bOwnMask)
+            delete poMask;
+        bOwnMask = false;
+        poMask = NULL;
+
+        return CE_None;
+    }
 
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateMaskBand() not supported for this band." );
