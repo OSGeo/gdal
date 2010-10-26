@@ -52,7 +52,7 @@ elements.<p>
 <b>VRTDataset</b>: This is the root element for the whole GDAL dataset. 
 It must have the attributes rasterXSize and rasterYSize describing the width 
 and height of the dataset in pixels.  It may have SRS, GeoTransform, 
-GCPList, Metadata, and VRTRasterBand subelements.
+GCPList, Metadata, MaskBand and VRTRasterBand subelements.
 
 \code
 <VRTDataset rasterXSize="512" rasterYSize="512">
@@ -94,13 +94,33 @@ as the data of the element.
 \endcode
 </li>
 
+<li> <b>MaskBand</b>: (GDAL >= 1.8.0) This element represents a mask band that is
+shared between all bands on the dataset (see GMF_PER_DATASET in RFC 15).
+It must contain a single VRTRasterBand child element, that is the description of
+the mask band itself.
+
+\code
+  <MaskBand>
+    <VRTRasterBand dataType="Byte">
+      <SimpleSource>
+        <SourceFilename relativeToVRT="1">utm.tif</SourceFilename>
+        <SourceBand>mask,1</SourceBand>
+        <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+        <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+      </SimpleSource>
+    </VRTRasterBand>
+  </MaskBand>
+\endcode
+
+</li>
+
 <li> <b>VRTRasterBand</b>: This represents one band of a dataset.  It will
-have a ataType attribute with the type of the pixel data associated with
+have a dataType attribute with the type of the pixel data associated with
 this band (use names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
 CInt16, CInt32, CFloat32 or CFloat64) and the band this element represents
 (1 based).  This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue,
-ColorTable, and Description subelements as well as the various kinds of 
-source elements such as SimpleSource.  A raster band may have many "sources"
+ColorTable, Description and MaskBand subelements as well as the various kinds of 
+source elements such as SimpleSource, ComplexSource, etc.  A raster band may have many "sources"
 indicating where the actual raster data should be fetched from, and how it
 should be mapped into the raster bands pixel space.<p>
 
@@ -234,6 +254,9 @@ when building VRTs with a big number of source datasets. The needed parameters a
 raster dimensions, the size of the blocks and the data type. If the SourceProperties
 tag is not present, the source dataset will be opened at the same time as the VRT itself.
 
+Starting with GDAL 1.8.0, the content of the SourceBand subelement can refer to
+a mask band. For example mask,1 means the the mask band of the first band of the source.
+
 \code
     <SimpleSource>
       <SourceFilename relativeToVRT="1">utm.tif</SourceFilename>
@@ -317,6 +340,11 @@ and the Coefs must have Size * Size entries separated by spaces.
       </Kernel>
     </KernelFilteredSource>
 \endcode
+</li>
+
+<li> <b>MaskBand</b>: (GDAL >= 1.8.0) This element represents a mask band that is
+specific to the VRTRasterBand it contains. It must contain a single VRTRasterBand
+child element, that is the description of the mask band itself.
 </li>
 
 </ul>
