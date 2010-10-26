@@ -214,6 +214,10 @@ static int ProxyMain( int argc, char ** argv )
             {
                 bMask = TRUE;
                 pszBand += 5;
+                /* If we use tha source mask band as a regular band */
+                /* don't create a target mask band by default */
+                if( !bParsedMaskArgument )
+                    eMaskMode = MASK_DISABLED;
             }
             int nBand = atoi(pszBand);
             if( nBand < 1 )
@@ -234,9 +238,6 @@ static int ProxyMain( int argc, char ** argv )
 
             if( panBandList[nBandCount-1] != nBandCount )
                 bDefBands = FALSE;
-                
-            if( !bParsedMaskArgument )
-                eMaskMode = MASK_DISABLED;
         }
         else if( EQUAL(argv[i],"-mask") && i < argc-1 )
         {
@@ -700,6 +701,7 @@ static int ProxyMain( int argc, char ** argv )
     if( eOutputType == GDT_Unknown 
         && !bScale && !bUnscale
         && CSLCount(papszMetadataOptions) == 0 && bDefBands 
+        && eMaskMode == MASK_AUTO
         && anSrcWin[0] == 0 && anSrcWin[1] == 0 
         && anSrcWin[2] == GDALGetRasterXSize(hDataset)
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
