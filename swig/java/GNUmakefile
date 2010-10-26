@@ -53,6 +53,21 @@ endif
 install: generate
 	@echo "No installation to be done"
 
+JAVA_RUN = java -Djava.library.path=. -cp gdal.jar:build/apps
+
+test:
+	-rm -rf tmp_test
+	mkdir tmp_test
+	cp  test_data/byte.tif tmp_test
+	${JAVA_RUN} GDALOverviews tmp_test/byte.tif "NEAREST" 2 4
+	${JAVA_RUN} gdalinfo -checksum tmp_test/byte.tif
+	${JAVA_RUN} ogr2ogr tmp_test/out.shp test_data/poly.shp -progress -overwrite
+	${JAVA_RUN} ogrinfo -ro -al tmp_test/out.shp
+	${JAVA_RUN} OSRTransform
+	${JAVA_RUN} gdalmajorobject
+	${JAVA_RUN} GDALTestIO
+	${JAVA_RUN} GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
+
 
 $(JAVA_MODULES): lib%jni.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(LINK_EXTRAFLAGS)
