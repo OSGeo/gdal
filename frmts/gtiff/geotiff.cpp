@@ -7460,12 +7460,20 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                               nSrcOverviews, panOverviewList,
                               poDS->nBands, panBandList,
                               GDALDummyProgress, NULL);
+                              
+        if (poDS->nOverviewCount != nSrcOverviews)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Did only manage to instanciate %d overview levels, whereas source contains %d",
+                     poDS->nOverviewCount, nSrcOverviews);
+            eErr = CE_Failure;
+        }
 
         char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
         if (nCompression != COMPRESSION_NONE)
             papszCopyWholeRasterOptions[0] = (char*) "COMPRESSED=YES";
         /* Now copy the imagery */
-        for(i=0;i<nSrcOverviews;i++)
+        for(i=0;eErr == CE_None && i<nSrcOverviews;i++)
         {
             /* Begin with the smallest overview */
             int iOvrLevel = nSrcOverviews-1-i;
@@ -7493,9 +7501,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
             delete poSrcOvrDS;
             poDS->papoOverviewDS[iOvrLevel]->FlushCache();
-            
-            if (eErr != CE_None)
-               break;
         }
 
         CPLFree(panOverviewList);
