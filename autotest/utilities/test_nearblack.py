@@ -44,7 +44,7 @@ import test_cli_utilities
 def test_nearblack_1():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
-
+    
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -nb 0 -of GTiff -o tmp/nearblack1.tif')
 
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
@@ -155,6 +155,51 @@ def test_nearblack_4():
     return 'success'
 
 ###############################################################################
+# Add mask band
+
+def test_nearblack_5():
+    if test_cli_utilities.get_nearblack_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -setmask -nb 0 -of GTiff -o tmp/nearblack5.tif -co TILED=YES')
+
+    ds = gdal.Open('tmp/nearblack5.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 22002:
+        print(ds.GetRasterBand(1).GetMaskBand().Checksum())
+        gdaltest.post_reason('Bad checksum mask band')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Set existing mask band
+
+def test_nearblack_6():
+    if test_cli_utilities.get_nearblack_path() is None:
+        return 'skip'
+
+    shutil.copy('tmp/nearblack5.tif','tmp/nearblack6.tif')
+    gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -setmask -nb 0 -of GTiff tmp/nearblack6.tif')
+
+    ds = gdal.Open('tmp/nearblack6.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 22002:
+        print(ds.GetRasterBand(1).GetMaskBand().Checksum())
+        gdaltest.post_reason('Bad checksum mask band')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_nearblack_cleanup():
@@ -178,6 +223,14 @@ def test_nearblack_cleanup():
         os.remove('tmp/nearblack4.tif')
     except:
         pass
+    try:
+        os.remove('tmp/nearblack5.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/nearblack6.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -185,6 +238,8 @@ gdaltest_list = [
     test_nearblack_2,
     test_nearblack_3,
     test_nearblack_4,
+    test_nearblack_5,
+    test_nearblack_6,
     test_nearblack_cleanup
     ]
 
