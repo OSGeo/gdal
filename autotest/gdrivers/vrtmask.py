@@ -195,6 +195,118 @@ def vrtmask_4():
     return 'success'
 
 ###############################################################################
+# Same with gdal_translate
+
+def vrtmask_5():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gtiff_drv = gdal.GetDriverByName('GTiff')
+    md = gtiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/ycbcr_with_mask.tif tmp/vrtmask_5.vrt -outsize 100% 100%')
+
+    src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
+    expected_msk_cs = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
+    src_ds = None
+
+    ds = gdal.Open('tmp/vrtmask_5.vrt')
+    msk_cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmask_5.vrt')
+
+    if msk_cs != expected_msk_cs:
+        gdaltest.post_reason('did not get expected mask band checksum')
+        print(msk_cs)
+        print(expected_msk_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Same with gdal_translate with explicit -b and -mask arguments
+
+def vrtmask_6():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gtiff_drv = gdal.GetDriverByName('GTiff')
+    md = gtiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/ycbcr_with_mask.tif tmp/vrtmask_6.vrt -b 1 -b 2 -b 3 -mask mask,1')
+
+    src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
+    expected_msk_cs = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
+    src_ds = None
+
+    ds = gdal.Open('tmp/vrtmask_6.vrt')
+    msk_cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmask_6.vrt')
+
+    if msk_cs != expected_msk_cs:
+        gdaltest.post_reason('did not get expected mask band checksum')
+        print(msk_cs)
+        print(expected_msk_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# gdal_translate with RGBmask -> RGBA and then RGBA->RGBmask
+
+def vrtmask_7():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gtiff_drv = gdal.GetDriverByName('GTiff')
+    md = gtiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/ycbcr_with_mask.tif tmp/vrtmask_7_rgba.tif -b 1 -b 2 -b 3 -b mask,1')
+
+    src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
+    expected_msk_cs = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
+    src_ds = None
+
+    ds = gdal.Open('tmp/vrtmask_7_rgba.tif')
+    alpha_cs = ds.GetRasterBand(4).Checksum()
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT tmp/vrtmask_7_rgba.tif tmp/vrtmask_7_rgbmask.vrt -b 1 -b 2 -b 3 -mask 4')
+    
+    ds = gdal.Open('tmp/vrtmask_7_rgbmask.vrt')
+    msk_cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmask_7_rgba.tif')
+    os.remove('tmp/vrtmask_7_rgbmask.vrt')
+
+    if alpha_cs != expected_msk_cs:
+        gdaltest.post_reason('did not get expected alpha band checksum')
+        print(alpha_cs)
+        print(expected_msk_cs)
+        return 'fail'
+
+    if msk_cs!= expected_msk_cs:
+        gdaltest.post_reason('did not get expected mask band checksum')
+        print(msk_cs)
+        print(expected_msk_cs)
+        return 'fail'
+        
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def vrtmask_cleanup():
@@ -205,6 +317,9 @@ gdaltest_list = [
     vrtmask_2,
     vrtmask_3,
     vrtmask_4,
+    vrtmask_5,
+    vrtmask_6,
+    vrtmask_7,
     vrtmask_cleanup ]
 
 if __name__ == '__main__':
