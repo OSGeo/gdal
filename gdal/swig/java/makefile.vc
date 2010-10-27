@@ -8,7 +8,7 @@ GDALLIB	=    $(GDAL_ROOT)\gdal_i.lib
 GDALLIB	=    $(GDAL_ROOT)\gdal.lib
 !ENDIF
 
-JAVA_RUN = $(JAVA_HOME)\jre\bin\java -Djava.library.path=. -cp gdal.jar;build\apps
+JAVA_RUN = $(JAVA) -Djava.library.path=. -cp gdal.jar;build\apps
 
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
