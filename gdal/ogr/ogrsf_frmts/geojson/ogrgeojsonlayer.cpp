@@ -152,97 +152,33 @@ void OGRGeoJSONLayer::ResetReading()
     iterCurrent_ = seqFeatures_.begin();
 }
 
-/*======================================================================*/
-/*                           Features Filter Utilities                  */
-/*======================================================================*/
-
-/*******************************************/
-/*          EvaluateSpatialFilter          */
-/*******************************************/
-
-bool OGRGeoJSONLayer::EvaluateSpatialFilter( OGRGeometry* poGeometry )
-{
-    return ( FilterGeometry( poGeometry ) == 0 ? false : true );
-}
-
-/*******************************************/
-/*          SpatialFilterPredicate         */
-/*******************************************/
-
-struct SpatialFilterPredicate
-{
-    explicit SpatialFilterPredicate(OGRGeoJSONLayer& layer)
-        : layer_(layer)
-    {}
-    bool operator()( OGRFeature* p )
-    {
-        return layer_.EvaluateSpatialFilter( p->GetGeometryRef() );
-    }
-
-private:
-
-    OGRGeoJSONLayer& layer_;
-};
-
-/*******************************************/
-/*          AttributeFilterPredicate       */
-/*******************************************/
-
-struct AttributeFilterPredicate
-{
-    explicit AttributeFilterPredicate(OGRFeatureQuery& query)
-        : query_(query)
-    {}
-
-    bool operator()( OGRFeature* p )
-    {
-        return ( query_.Evaluate( p ) == 0 ? false : true );
-    }
-
-private:
-
-    OGRFeatureQuery& query_;
-};
-
 /************************************************************************/
 /*                           GetNextFeature                             */
 /************************************************************************/
 
 OGRFeature* OGRGeoJSONLayer::GetNextFeature()
 {
-    bool bSingle = false;
-
-    if( NULL != m_poFilterGeom )
-    {
-        iterCurrent_ = std::find_if( iterCurrent_, seqFeatures_.end(),
-                       SpatialFilterPredicate(*this) );
-        bSingle = (iterCurrent_ != seqFeatures_.end());
-    }
-
-    if( NULL != m_poAttrQuery )
-    {
-        FeaturesSeq::iterator seqEnd = 
-            ( bSingle ? iterCurrent_ : seqFeatures_.end() );
-
-        iterCurrent_ = std::find_if( iterCurrent_, seqEnd,
-                       AttributeFilterPredicate(*m_poAttrQuery) );
-    }
-
-    if( iterCurrent_ != seqFeatures_.end() )
+    while ( iterCurrent_ != seqFeatures_.end() )
     {
         OGRFeature* poFeature = (*iterCurrent_);
         CPLAssert( NULL != poFeature );
-
-        OGRFeature* poFeatureCopy = poFeature->Clone();
-        CPLAssert( NULL != poFeatureCopy );
-
-        if (poFeatureCopy->GetGeometryRef() != NULL && poSRS_ != NULL)
-        {
-            poFeatureCopy->GetGeometryRef()->assignSpatialReference( poSRS_ );
-        }
-
         ++iterCurrent_;
-        return poFeatureCopy;
+        
+        if((m_poFilterGeom == NULL
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
+        && (m_poAttrQuery == NULL
+            || m_poAttrQuery->Evaluate( poFeature )) )
+        {
+            OGRFeature* poFeatureCopy = poFeature->Clone();
+            CPLAssert( NULL != poFeatureCopy );
+
+            if (poFeatureCopy->GetGeometryRef() != NULL && poSRS_ != NULL)
+            {
+                poFeatureCopy->GetGeometryRef()->assignSpatialReference( poSRS_ );
+            }
+
+            return poFeatureCopy;
+        }
     }
 
     return NULL;
