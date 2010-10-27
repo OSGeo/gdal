@@ -59,7 +59,8 @@ test:
 	$(JAVA_RUN) GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
 
 clean:
-  if exist org\nul rmdir /s /q org
+	if exist org\nul rmdir /s /q org
+	if exist build rmdir /s /q build
 	cd gdal
 	$(MAKE) /f makefile.vc clean
 	cd ..
@@ -72,7 +73,7 @@ clean:
 	cd osr
 	$(MAKE) /f makefile.vc clean
 	cd ..	
-	-del gdal.lib
+	-del gdal.jar
 	-del *.dll
 	-del *.obj
 	-del *.exp
@@ -83,3 +84,4 @@ clean:
 	-del *.cs
 	-del *.cpp
 	-del *.lib
+	-del *.dll.manifest
