@@ -665,7 +665,7 @@ def mask_14():
 ###############################################################################
 # Test creation of internal TIFF overview, mask band and mask band of overview
 
-def mask_and_ovr(order):
+def mask_and_ovr(order, method):
 
     if gdaltest.have_ng == 0:
         return 'skip'
@@ -684,21 +684,21 @@ def mask_and_ovr(order):
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
-        ds.BuildOverviews( overviewlist = [2, 4] )
+        ds.BuildOverviews( method, overviewlist = [2, 4] )
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
         ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     elif order == 2:
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-        ds.BuildOverviews( overviewlist = [2, 4] )
+        ds.BuildOverviews( method, overviewlist = [2, 4] )
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     elif order == 3:
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-        ds.BuildOverviews( overviewlist = [2, 4] )
+        ds.BuildOverviews( method, overviewlist = [2, 4] )
         ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -708,7 +708,7 @@ def mask_and_ovr(order):
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetMaskBand().Fill(1)
         # The overview for the mask will be implicitely created and computed
-        ds.BuildOverviews( overviewlist = [2, 4] )
+        ds.BuildOverviews( method, overviewlist = [2, 4] )
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
 
     if order < 4:
@@ -716,7 +716,7 @@ def mask_and_ovr(order):
         ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif', gdal.GA_Update)
         ds.GetRasterBand(1).GetMaskBand().Fill(1)
         # The overview of the mask will be implictely recomputed
-        ds.BuildOverviews( overviewlist = [2, 4] )
+        ds.BuildOverviews( method, overviewlist = [2, 4] )
 
     ds = None
 
@@ -761,17 +761,29 @@ def mask_and_ovr(order):
 
 
 def mask_15():
-    return mask_and_ovr(1)
+    return mask_and_ovr(1, 'NEAREST')
 
 def mask_16():
-    return mask_and_ovr(2)
+    return mask_and_ovr(2, 'NEAREST')
 
 def mask_17():
-    return mask_and_ovr(3)
+    return mask_and_ovr(3, 'NEAREST')
 
 def mask_18():
-    return mask_and_ovr(4)
+    return mask_and_ovr(4, 'NEAREST')
 
+def mask_15_avg():
+    return mask_and_ovr(1, 'AVERAGE')
+
+def mask_16_avg():
+    return mask_and_ovr(2, 'AVERAGE')
+
+def mask_17_avg():
+    return mask_and_ovr(3, 'AVERAGE')
+
+def mask_18_avg():
+    return mask_and_ovr(4, 'AVERAGE')
+    
 ###############################################################################
 # Test NODATA_VALUES mask
 
@@ -998,6 +1010,10 @@ gdaltest_list = [
     mask_16,
     mask_17,
     mask_18,
+    mask_15_avg,
+    mask_16_avg,
+    mask_17_avg,
+    mask_18_avg,
     mask_19,
     mask_20,
     mask_21,
