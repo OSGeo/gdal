@@ -7438,6 +7438,16 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
+    /* Precreate (internal) mask, so that the IBuildOverviews() below */
+    /* has a chance to create also the overviews of the mask */
+    int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
+    if( eErr == CE_None
+        && !(nMaskFlags & (GMF_ALL_VALID|GMF_ALPHA|GMF_NODATA) )
+        && (nMaskFlags & GMF_PER_DATASET) )
+    {
+        eErr = poDS->CreateMaskBand( nMaskFlags );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create and then copy existing overviews if requested            */
 /*  We do it such that all the IFDs are at the beginning of the file,   */
@@ -7450,7 +7460,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     double dfTotalPixels = ((double)nXSize) * nYSize;
     double dfCurPixels = 0;
 
-    if (nSrcOverviews != 0 &&
+    if (eErr == CE_None &&
+        nSrcOverviews != 0 &&
         CSLFetchBoolean(papszOptions, "COPY_SRC_OVERVIEWS", FALSE))
     {
         int* panOverviewList = (int*)CPLMalloc(sizeof(int) * nSrcOverviews);
@@ -7486,7 +7497,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             panBandList[i] = i + 1;
         }
         
-        /* Create the IFDs for the overviews */
+        /* Create the IFDs for the overviews (and potentially the overviews */
+        /* of the mask too) */
         poDS->IBuildOverviews("NONE",
                               nSrcOverviews, panOverviewList,
                               poDS->nBands, panBandList,
@@ -7532,6 +7544,16 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
             delete poSrcOvrDS;
             poDS->papoOverviewDS[iOvrLevel]->FlushCache();
+
+            /* Copy mask of the overview */
+            if (eErr == CE_None && poDS->poMaskDS != NULL)
+            {
+                eErr = GDALRasterBandCopyWholeRaster( poOvrBand->GetMaskBand(),
+                                                    poDS->papoOverviewDS[iOvrLevel]->poMaskDS->GetRasterBand(1),
+                                                    papszCopyWholeRasterOptions,
+                                                    GDALDummyProgress, NULL);
+                poDS->papoOverviewDS[iOvrLevel]->poMaskDS->FlushCache();
+            }
         }
 
         CPLFree(panOverviewList);
@@ -7646,7 +7668,17 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if (eErr == CE_None)
     {
-        eErr = GDALDriver::DefaultCopyMasks( poSrcDS, poDS, bStrict );
+        if (poDS->poMaskDS)
+        {
+            const char* papszOptions[2] = { "COMPRESSED=YES", NULL };
+            eErr = GDALRasterBandCopyWholeRaster(
+                                    poSrcDS->GetRasterBand(1)->GetMaskBand(),
+                                    poDS->GetRasterBand(1)->GetMaskBand(),
+                                    (char**)papszOptions,
+                                    GDALDummyProgress, NULL);
+        }
+        else
+            eErr = GDALDriver::DefaultCopyMasks( poSrcDS, poDS, bStrict );
     }
 
     if( eErr == CE_Failure )
