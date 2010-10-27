@@ -76,7 +76,6 @@ public:
     void AddFeature( OGRFeature* poFeature );
     void SetSpatialRef( OGRSpatialReference* poSRS );
     void DetectGeometryType();
-    bool EvaluateSpatialFilter( OGRGeometry* poGeometry );
 
 private:
 
