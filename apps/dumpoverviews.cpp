@@ -145,6 +145,15 @@ int main( int argc, char ** argv )
                                CPLGetBasename(pszSrcFilename),
                                iBand+1, iOverview );
             DumpBand( hSrcDS, hSrcOver, osFilename );
+
+            if( bMasks )
+            {
+                CPLString osFilename;
+                osFilename.Printf( "%s_%d_%d_mask.tif",
+                                CPLGetBasename(pszSrcFilename),
+                                iBand+1, iOverview );
+                DumpBand( hSrcDS, GDALGetMaskBand(hSrcOver), osFilename );
+            }
         }
 
 /* -------------------------------------------------------------------- */
