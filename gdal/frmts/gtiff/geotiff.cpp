@@ -2577,7 +2577,10 @@ GTiffBitmapBand::~GTiffBitmapBand()
 GDALColorInterp GTiffBitmapBand::GetColorInterpretation()
 
 {
-    return GCI_PaletteIndex;
+    if (poGDS->bPromoteTo8Bits)
+        return GCI_Undefined;
+    else
+        return GCI_PaletteIndex;
 }
 
 /************************************************************************/
@@ -2587,7 +2590,10 @@ GDALColorInterp GTiffBitmapBand::GetColorInterpretation()
 GDALColorTable *GTiffBitmapBand::GetColorTable()
 
 {
-    return poColorTable;
+    if (poGDS->bPromoteTo8Bits)
+        return NULL;
+    else
+        return poColorTable;
 }
 
 /************************************************************************/
