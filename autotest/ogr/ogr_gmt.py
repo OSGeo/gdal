@@ -143,12 +143,122 @@ def ogr_gmt_3():
         return 'fail'
 
 ###############################################################################
+# Verify reading of multilinestring file. (#3802)
+
+def ogr_gmt_4():
+
+    ds = ogr.Open( 'data/test_multi.gmt' )
+    lyr = ds.GetLayer(0)
+
+    if lyr.GetLayerDefn().GetGeomType() != ogr.wkbMultiLineString:
+        gdaltest.post_reason( 'did not get expected multilinestring type.')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((175 -45,176 -45),(180.0 -45.3,179.0 -45.4))' ):
+        return 'fail'
+
+    if feat.GetField('name') != 'feature 1':
+        gdaltest.post_reason( 'got wrong name, feature 1' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((175.1 -45.0,175.2 -45.1),(180.1 -45.3,180.0 -45.2))' ):
+        return 'fail'
+
+    if feat.GetField('name') != 'feature 2':
+        gdaltest.post_reason( 'got wrong name, feature 2' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    if feat is not None:
+        gdaltest.post_reason( 'did not get null feature when expected.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Write a multipolygon file and verify it.
+
+def ogr_gmt_5():
+
+    #######################################################
+    # Create gmtory Layer
+    gmt_drv = ogr.GetDriverByName('GMT')
+    gdaltest.gmt_ds = gmt_drv.CreateDataSource( 'tmp/mpoly.gmt' )
+    gdaltest.gmt_lyr = gdaltest.gmt_ds.CreateLayer( 'mpoly' )
+
+    #######################################################
+    # Setup Schema
+    ogrtest.quick_create_layer_def( gdaltest.gmt_lyr,
+                                    [ ('ID', ogr.OFTInteger) ] )
+    
+    #######################################################
+    # Write a first multipolygon
+
+    dst_feat = ogr.Feature( feature_def = gdaltest.gmt_lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 10,10 10,0 10,0 0),(3 3,4 4, 3 4,3 3)),((12 0,14 0,12 3,12 0)))'))
+    dst_feat.SetField( 'ID', 15 )
+    gdaltest.gmt_lyr.CreateFeature( dst_feat )
+
+    dst_feat = ogr.Feature( feature_def = gdaltest.gmt_lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt('MULTIPOLYGON(((30 20,40 20,30 30,30 20)))'))
+    dst_feat.SetField( 'ID', 16 )
+    gdaltest.gmt_lyr.CreateFeature( dst_feat )
+
+    gdaltest.gmt_lyr = None
+
+    gdaltest.gmt_ds.Destroy()
+    gdaltest.gmt_ds = None
+
+    # Reopen.
+
+    ds = ogr.Open( 'tmp/mpoly.gmt' )
+    lyr = ds.GetLayer(0)
+
+    if lyr.GetLayerDefn().GetGeomType() != ogr.wkbMultiPolygon:
+        gdaltest.post_reason( 'did not get expected multipolygon type.')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON(((0 0,0 10,10 10,0 10,0 0),(3 3,4 4, 3 4,3 3)),((12 0,14 0,12 3,12 0)))' ):
+        return 'fail'
+
+    if feat.GetField('ID') != 15:
+        gdaltest.post_reason( 'got wrong id, first feature' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    
+    if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON(((30 20,40 20,30 30,30 20)))' ):
+        return 'fail'
+
+    if feat.GetField('ID') != 16:
+        gdaltest.post_reason( 'got wrong ID, second feature' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    if feat is not None:
+        gdaltest.post_reason( 'did not get null feature when expected.' )
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # 
 
 def ogr_gmt_cleanup():
 
     if gdaltest.gmt_ds is not None:
-        gdaltest.gmt_ds.Destroy()
+        gdaltest.gmt_lyr = None
         gdaltest.gmt_ds = None
 
     gdaltest.clean_tmp()
@@ -159,6 +269,8 @@ gdaltest_list = [
     ogr_gmt_1,
     ogr_gmt_2,
     ogr_gmt_3,
+    ogr_gmt_4,
+    ogr_gmt_5,
     ogr_gmt_cleanup ]
 
 if __name__ == '__main__':
