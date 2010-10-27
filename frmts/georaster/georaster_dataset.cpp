@@ -571,21 +571,6 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
             return NULL;
         }
 
-        /* To compress interleaved blocks all the bands in the same block.
-         */
-        if( poGRW->nBandBlockSize != 1 && 
-            EQUAL( poGRW->sInterleaving.c_str(), "BIP" ) == false )
-        {
-            CPLError( CE_Failure, CPLE_IllegalArg, 
-                "Option (COMPRESS=%s) and (INTERLEAVE=%s) requires BLOCKBSIZE "
-                "equal be 1 (BLOCKBSIZE=%d)",
-                poGRW->sCompressionType.c_str(),
-                poGRW->sInterleaving.c_str(),
-                poGRW->nBandBlockSize );
-            delete poGRD;
-            return NULL;
-        }
-
         /* There is a limite on how big a compressed block can be.
          */
         if( ( poGRW->nColumnBlockSize * 
