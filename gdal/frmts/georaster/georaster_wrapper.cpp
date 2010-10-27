@@ -1219,19 +1219,22 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  -------------------------------------------------------------------
 
     nRowBlockSize       = atoi( CPLGetXMLValue( phMetadata,
-                            "rasterInfo.blocking.rowBlockSize", "0" ) );
+                            "rasterInfo.blocking.rowBlockSize",
+							CPLSPrintf( "%d", nRasterRows ) ) );
 
     nColumnBlockSize    = atoi( CPLGetXMLValue( phMetadata,
-                            "rasterInfo.blocking.columnBlockSize", "0" ) );
+                            "rasterInfo.blocking.columnBlockSize",
+							CPLSPrintf( "%d", nRasterColumns ) ) );
 
     nBandBlockSize      = atoi( CPLGetXMLValue( phMetadata,
-                            "rasterInfo.blocking.bandBlockSize", "1" ) );
+                            "rasterInfo.blocking.bandBlockSize",
+							CPLSPrintf( "%d", nRasterBands ) ) );
 
     nTotalColumnBlocks  = atoi( CPLGetXMLValue( phMetadata,
-                            "rasterInfo.blocking.totalColumnBlocks","0") );
+                            "rasterInfo.blocking.totalColumnBlocks","1") );
 
     nTotalRowBlocks     = atoi( CPLGetXMLValue( phMetadata,
-                            "rasterInfo.blocking.totalRowBlocks", "0" ) );
+                            "rasterInfo.blocking.totalRowBlocks", "1" ) );
 
     nTotalBandBlocks    = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.totalBandBlocks", "1" ) );
@@ -1264,8 +1267,6 @@ void GeoRasterWrapper::GetRasterInfo( void )
     {
         nCompressQuality = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.compression.quality", "75" ) );
-
-        sInterleaving = "BIP";
     }
 
     //  -------------------------------------------------------------------
