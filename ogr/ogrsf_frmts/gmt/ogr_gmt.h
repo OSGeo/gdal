@@ -61,6 +61,7 @@ class OGRGmtLayer : public OGRLayer
     char              **papszKeyedValues;
 
     int                 ScanAheadForHole();
+    int                 NextIsFeature();
 
     OGRFeature         *GetNextRawFeature();
 
