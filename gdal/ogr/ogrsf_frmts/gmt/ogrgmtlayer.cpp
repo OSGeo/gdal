@@ -403,6 +403,36 @@ int OGRGmtLayer::ScanAheadForHole()
 }
 
 /************************************************************************/
+/*                           NextIsFeature()                            */
+/*                                                                      */
+/*      Returns TRUE if the next line is a feature attribute line.      */
+/*      This generally indicates the end of a multilinestring or        */
+/*      multipolygon feature.                                           */
+/************************************************************************/
+
+int OGRGmtLayer::NextIsFeature()
+
+{
+    CPLString osSavedLine = osLine;
+    vsi_l_offset nSavedLocation = VSIFTellL( fp );
+    int bReturn = FALSE;
+
+    ReadLine();
+
+    if( osLine[0] == '#' )
+        bReturn = TRUE;
+
+    VSIFSeekL( fp, nSavedLocation, SEEK_SET );
+    osLine = osSavedLine;
+
+    // We don't actually restore papszKeyedValues, but we 
+    // assume it doesn't matter since this method is only called
+    // when processing the '>' line.
+
+    return bReturn;
+}
+
+/************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
 
@@ -430,6 +460,13 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
             if( poGeom != NULL 
                 && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon
                 && ScanAheadForHole() )
+            {
+                iChild++;
+            }
+            else if( poGeom != NULL 
+                     && (wkbFlatten(poGeom->getGeometryType()) 
+                         == wkbMultiLineString)
+                     && !NextIsFeature() )
             {
                 iChild++;
             }
@@ -480,6 +517,10 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                         poGeom = new OGRMultiPoint();
                         break;
 
+                      case wkbMultiLineString:
+                        poGeom = new OGRMultiLineString();
+                        break;
+
                       case wkbPoint:
                       case wkbUnknown:
                       default:
@@ -524,6 +565,25 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                         poRing->addPoint(dfX,dfY,dfZ);
                       else
                         poRing->addPoint(dfX,dfY);
+                  }
+                  break;
+
+                  case wkbMultiLineString:
+                  {
+                      OGRMultiLineString *poML = (OGRMultiLineString *) poGeom;
+                      OGRLineString *poLine;
+
+                      poLine = (OGRLineString *) poML->getGeometryRef( iChild );
+                      if( poLine == NULL )
+                      {
+                          poLine = new OGRLineString();
+                          poML->addGeometryDirectly( poLine );
+                      }
+                      
+                      if( nDim == 3 )
+                        poLine->addPoint(dfX,dfY,dfZ);
+                      else
+                        poLine->addPoint(dfX,dfY);
                   }
                   break;
 
