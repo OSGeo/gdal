@@ -3664,6 +3664,29 @@ def tiff_write_94():
     return 'success'
 
 ###############################################################################
+# Test that COPY_SRC_OVERVIEWS deal well with rounding issues when computing
+# overview levels from the overview size
+
+def tiff_write_95():
+
+    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_95_src.tif', 7171, 6083, options = ['SPARSE_OK=YES'])
+    src_ds.BuildOverviews( 'NONE', overviewlist = [ 2, 4, 8, 16, 32, 64 ])
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_95_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+    ok = ds != None
+    ds = None
+    src_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_95_src.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_95_dst.tif' )
+
+    if not ok:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3768,6 +3791,7 @@ gdaltest_list = [
     tiff_write_92,
     tiff_write_93,
     tiff_write_94,
+    tiff_write_95,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
