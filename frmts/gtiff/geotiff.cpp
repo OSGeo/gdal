@@ -359,6 +359,8 @@ class GTiffDataset : public GDALPamDataset
     
     int           bPromoteTo8Bits;
 
+    int           bDebugDontWriteBlocks;
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -995,6 +997,9 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 {
     int		nBlockId;
     CPLErr      eErr = CE_None;
+
+    if (poGDS->bDebugDontWriteBlocks)
+        return CE_None;
 
     if (poGDS->bWriteErrorInFlushBlockBuf)
     {
@@ -2775,6 +2780,8 @@ GTiffDataset::GTiffDataset()
     nJpegQuality = -1;
     
     bPromoteTo8Bits = FALSE;
+
+    bDebugDontWriteBlocks = CSLTestBoolean(CPLGetConfigOption("GTIFF_DONT_WRITE_BLOCKS", "NO"));
 }
 
 /************************************************************************/
@@ -7453,6 +7460,24 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             GDALRasterBand* poOvrBand = poSrcDS->GetRasterBand(1)->GetOverview(i);
             panOverviewList[i] = (int)( 0.5 + nXSize / (double)poOvrBand->GetXSize());
+            int k;
+            /* Adjust the overview level so that it can produce the expected overview */
+            /* size */
+            for(k=-1;k<=1;k++)
+            {
+                int nOvrLevel = panOverviewList[i] + k;
+                if (nOvrLevel <= 0)
+                    continue;
+                int nOXSize = (nXSize + nOvrLevel - 1) / nOvrLevel;
+                int nOYSize = (nYSize + nOvrLevel - 1) / nOvrLevel;
+                if (nOXSize == poOvrBand->GetXSize() &&
+                    nOYSize == poOvrBand->GetYSize())
+                {
+                    panOverviewList[i] += k;
+                    break;
+                }
+            }
+                
             dfTotalPixels += ((double)poOvrBand->GetXSize()) *
                                       poOvrBand->GetYSize();
         }
