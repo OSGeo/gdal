@@ -50,6 +50,8 @@ class netCDFRasterBand : public GDALPamRasterBand
     int         *panBandZLev;
     int         bNoDataSet;
     double      dfNoDataValue;
+    double      dfScale;
+    double      dfOffset;
     CPLErr	    CreateBandMetadata( ); 
     
   public:
@@ -64,10 +66,52 @@ class netCDFRasterBand : public GDALPamRasterBand
     ~netCDFRasterBand( );
     virtual double          GetNoDataValue( int * );
     virtual CPLErr          SetNoDataValue( double );
+    virtual double          GetOffset( int * );
+    virtual CPLErr          SetOffset( double );
+    virtual double          GetScale( int * );
+    virtual CPLErr          SetScale( double );
     virtual CPLErr IReadBlock( int, int, void * );
 
-
 };
+
+/************************************************************************/ 
+/*                             GetOffset()                              */ 
+/************************************************************************/ 
+double netCDFRasterBand::GetOffset( int *pbSuccess ) 
+{ 
+    if( pbSuccess != NULL ) 
+        *pbSuccess = TRUE; 
+	 
+    return dfOffset; 
+}
+
+/************************************************************************/ 
+/*                             SetOffset()                              */ 
+/************************************************************************/ 
+CPLErr netCDFRasterBand::SetOffset( double dfNewOffset ) 
+{ 
+    dfOffset = dfNewOffset; 
+    return CE_None; 
+}
+
+/************************************************************************/ 
+/*                              GetScale()                              */ 
+/************************************************************************/ 
+double netCDFRasterBand::GetScale( int *pbSuccess ) 
+{ 
+    if( pbSuccess != NULL ) 
+        *pbSuccess = TRUE; 
+    return dfScale; 
+}
+
+/************************************************************************/ 
+/*                              SetScale()                              */ 
+/************************************************************************/ 
+CPLErr netCDFRasterBand::SetScale( double dfNewScale )  
+{ 
+    dfScale = dfNewScale; 
+    return CE_None; 
+} 
 
 /************************************************************************/
 /*                            GetMetadata()                             */
@@ -79,7 +123,6 @@ char **netCDFDataset::GetMetadata( const char *pszDomain )
     else
         return GDALDataset::GetMetadata( pszDomain );
 }
-
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
@@ -466,7 +509,22 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     }
     SetNoDataValue( dfNoData );
 
-    
+    /* -------------------------------------------------------------------- */
+    /* Attempt to fetch the scale_factor and add_offset attributes for the  */
+    /* variable and set them.  If these values are not available, set       */
+    /* offset to 0 and scale to 1                                           */
+    /* -------------------------------------------------------------------- */
+    double dfOff = 0.0; 
+    double dfScale = 1.0; 
+    if ( nc_inq_attid ( poDS->cdfid, nZId, "add_offset", NULL) == NC_NOERR ) { 
+        nc_get_att_double( poDS->cdfid, nZId, "add_offset", &dfOff );
+    }
+    if ( nc_inq_attid ( poDS->cdfid, nZId, 
+			"scale_factor", NULL) == NC_NOERR ) { 
+	nc_get_att_double( poDS->cdfid, nZId, "scale_factor", &dfScale ); 
+    }
+    SetOffset( dfOff ); 
+    SetScale( dfScale ); 
 }
 
 /************************************************************************/
