@@ -166,7 +166,7 @@ class TerragenDataset : public GDALPamDataset
 				m_span_m[2], 
 				m_span_px[2];
 
-    FILE*			m_fp;
+    VSILFILE*			m_fp;
     vsi_l_offset	m_nDataOffset;
 
     GInt16		m_nHeightScale;

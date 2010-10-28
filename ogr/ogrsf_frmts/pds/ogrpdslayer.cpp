@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRPDSLayer::OGRPDSLayer(   CPLString osTableID,
-                            const char* pszLayerName, FILE* fp,
+                            const char* pszLayerName, VSILFILE* fp,
                             CPLString osLabelFilename,
                             CPLString osStructureFilename,
                             int nRecords,
@@ -143,7 +143,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
 
 {
     int nFields = 0;
-    FILE* fpStructure = VSIFOpenL(osStructureFilename, "rb");
+    VSILFILE* fpStructure = VSIFOpenL(osStructureFilename, "rb");
     if (fpStructure == NULL)
         return;
 

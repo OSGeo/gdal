@@ -59,7 +59,7 @@ class BIGGIFDataset : public GDALPamDataset
 {
     friend class BIGGifRasterBand;
 
-    FILE *fp;
+    VSILFILE *fp;
 
     GifFileType *hGifFile;
     int         nLastLineRead;
@@ -471,7 +471,7 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE                *fp;
+    VSILFILE                *fp;
 
     fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     if( fp == NULL )
@@ -540,7 +540,7 @@ static int VSIGIFReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer,
 
 {
     return VSIFReadL( pabyBuffer, 1, nBytesToRead, 
-                      (FILE *) psGFile->UserData );
+                      (VSILFILE *) psGFile->UserData );
 }
 
 /************************************************************************/

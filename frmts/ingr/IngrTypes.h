@@ -420,7 +420,7 @@ uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFileName,
                                           uint32 nBandOffset,
                                           uint32 nDataOffset );
 
-uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
+uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
                                           uint32 nOffset,
                                           int nBandXSize,
                                           int nBandYSize,
@@ -449,14 +449,14 @@ void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix,
 //    Color Table conversion
 //  ------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
+void CPL_STDCALL INGR_GetIGDSColors( VSILFILE *fp,
                                      uint32 nOffset,
                                      uint32 nEntries,
                                      GDALColorTable *poColorTable );
 uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
                                        INGR_ColorTable256 *pColorTableIGDS );
 
-void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
+void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
                                          uint32 nOffset,
                                          uint32 nEntries,
                                          GDALColorTable *poColorTable );
@@ -518,7 +518,7 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
 
 void CPL_STDCALL INGR_ReleaseVirtual( INGR_VirtualFile *poTiffMen );
 
-int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, 
+int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp,
                           uint32 nAppDataOfseet,
                           uint32 nSeekLimit );
 

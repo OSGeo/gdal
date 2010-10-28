@@ -324,7 +324,7 @@ CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32
     return NULL;
 }
 
-void SerializeCeosRecordsToFile(Link_t *record_list, FILE *fp)
+void SerializeCeosRecordsToFile(Link_t *record_list, VSILFILE *fp)
 {
     Link_t *list;
     CeosRecord_t crec;
@@ -342,12 +342,12 @@ void SerializeCeosRecordsToFile(Link_t *record_list, FILE *fp)
     }
 }
 
-void SerializeCeosRecordsFromFile(Link_t *record_list, FILE *fp)
+void SerializeCeosRecordsFromFile(Link_t *record_list, VSILFILE *fp)
 {
     CeosRecord_t *crec;
     Link_t *Link;
 
-    while(!feof(fp))
+    while(!VSIFEofL(fp))
     {
 	crec = HMalloc(sizeof(CeosRecord_t));
 	VSIFReadL(crec,sizeof(CeosRecord_t),1,fp);

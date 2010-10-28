@@ -50,7 +50,7 @@ class OGROpenAirLayer : public OGRLayer
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
 
-    FILE*              fpOpenAir;
+    VSILFILE*          fpOpenAir;
     int                bEOF;
     int                bHasLastLine;
     CPLString          osLastLine;
@@ -62,7 +62,7 @@ class OGROpenAirLayer : public OGRLayer
     OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGROpenAirLayer(FILE* fp);
+                        OGROpenAirLayer(VSILFILE* fp);
                         ~OGROpenAirLayer();
 
 
@@ -86,7 +86,7 @@ class OGROpenAirLabelLayer : public OGRLayer
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
 
-    FILE*              fpOpenAir;
+    VSILFILE*          fpOpenAir;
     int                bEOF;
     int                bHasLastLine;
     CPLString          osLastLine;
@@ -98,7 +98,7 @@ class OGROpenAirLabelLayer : public OGRLayer
     CPLString          osCLASS, osNAME, osFLOOR, osCEILING;
 
   public:
-                        OGROpenAirLabelLayer(FILE* fp);
+                        OGROpenAirLabelLayer(VSILFILE* fp);
                         ~OGROpenAirLabelLayer();
 
 

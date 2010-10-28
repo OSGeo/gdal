@@ -86,7 +86,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
                      int bTestOpen )
 
 {
-    FILE        *fp;
+    VSILFILE   *fp;
     char        achRecord[DTED_UHL_SIZE];
     DTEDInfo    *psDInfo = NULL;
     double      dfLLOriginX, dfLLOriginY;

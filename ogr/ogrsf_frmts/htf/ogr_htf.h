@@ -44,7 +44,7 @@ protected:
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
 
-    FILE*              fpHTF;
+    VSILFILE*          fpHTF;
     int                bEOF;
 
     int                nNextFID;

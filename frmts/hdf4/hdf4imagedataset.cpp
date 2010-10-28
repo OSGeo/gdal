@@ -1167,7 +1167,7 @@ void HDF4ImageDataset::CaptureL1GMTLInfo()
 /* -------------------------------------------------------------------- */
     NASAKeywordHandler oMTL;
 
-    FILE *fp = VSIFOpenL( osMTLFilename, "r" );
+    VSILFILE *fp = VSIFOpenL( osMTLFilename, "r" );
     if( fp == NULL )
         return;
 

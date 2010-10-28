@@ -32,6 +32,7 @@
 
 #include "cpl_port.h"
 #include "cpl_error.h"
+#include "cpl_vsi.h"
 
 CPL_C_START
 
@@ -55,7 +56,7 @@ typedef struct {
 } NITFSegmentInfo;
 
 typedef struct {
-    FILE    *fp;
+    VSILFILE  *fp;
 
     char    szVersion[10];
 
@@ -231,7 +232,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
                            GByte *pabyInputData, int nInputBytes,
                            GByte *pabyOutputImage );
 
-NITFLocation* NITFReadRPFLocationTable(FILE* fp, int* pnLocCount);
+NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount);
 
 /* -------------------------------------------------------------------- */
 /*      DE segment access.                                              */

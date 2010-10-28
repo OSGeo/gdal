@@ -757,7 +757,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
     // create in memory file using vsimem
     CPLString osFileBoxName;
     osFileBoxName.Printf("/vsimem/jpip/%s.dat", pszCid);
-    FILE *fpLL = VSIFOpenL(osFileBoxName.c_str(), "w+");
+    VSILFILE *fpLL = VSIFOpenL(osFileBoxName.c_str(), "w+");
     poCache->set_read_scope(KDU_META_DATABIN, nCodestream, 0);
     kdu_byte* pabyBuffer = (kdu_byte *)CPLMalloc(nLen);
     poCache->read(pabyBuffer, nLen);

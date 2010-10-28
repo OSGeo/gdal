@@ -80,7 +80,7 @@ class GS7BGDataset : public GDALPamDataset
     static double dfNoData_Value;
     static size_t nData_Position;
 
-    FILE	*fp;
+    VSILFILE	*fp;
 
   public:
     ~GS7BGDataset();

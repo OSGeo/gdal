@@ -61,7 +61,7 @@ class OGRPDSLayer : public OGRLayer
     OGRFeatureDefn*    poFeatureDefn;
 
     CPLString          osTableID;
-    FILE*              fpPDS;
+    VSILFILE*          fpPDS;
     int                nRecords;
     int                nStartBytes;
     int                nRecordSize;
@@ -77,7 +77,7 @@ class OGRPDSLayer : public OGRLayer
 
   public:
                         OGRPDSLayer(CPLString osTableID,
-                                         const char* pszLayerName, FILE* fp,
+                                         const char* pszLayerName, VSILFILE* fp,
                                          CPLString osLabelFilename,
                                          CPLString osStructureFilename,
                                          int nRecords,

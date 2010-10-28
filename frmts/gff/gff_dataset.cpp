@@ -46,7 +46,7 @@ class GFFRasterBand;
 class GFFDataset : public GDALPamDataset 
 {
     friend class GFFRasterBand;
-    FILE *fp;
+    VSILFILE *fp;
     GDALDataType eDataType;
     unsigned int nEndianess;
     /* Some relevant headers */

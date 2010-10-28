@@ -282,9 +282,9 @@ void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length, int32
 
 CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavour, int32 subsequence);
 
-void SerializeCeosRecordsToFile(Link_t *record_list, FILE *fp);
+void SerializeCeosRecordsToFile(Link_t *record_list, VSILFILE *fp);
 
-void SerializeCeosRecordsFromFile( Link_t *record_list, FILE *fp );
+void SerializeCeosRecordsFromFile( Link_t *record_list, VSILFILE *fp );
 
 void InitCeosSARVolume( CeosSARVolume_t *volume, int32 file_name_convention );
 

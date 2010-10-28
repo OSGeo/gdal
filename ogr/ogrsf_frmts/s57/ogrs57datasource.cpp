@@ -157,7 +157,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        FILE    *fp;
+        VSILFILE    *fp;
         char    pachLeader[10];
 
         VSIStatBufL sStatBuf;

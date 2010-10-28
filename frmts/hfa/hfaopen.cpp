@@ -113,7 +113,7 @@ static char * HFAGetDictionary( HFAHandle hHFA )
 HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 
 {
-    FILE	*fp;
+    VSILFILE *fp;
     char	szHeader[16];
     HFAInfo_t	*psInfo;
     GUInt32	nHeaderPos;
@@ -245,7 +245,7 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
 /* -------------------------------------------------------------------- */
 /*      Does this file already exist?  If so, re-use it.                */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpenL( oRRDFilename, "rb" );
+    VSILFILE *fp = VSIFOpenL( oRRDFilename, "rb" );
     if( fp != NULL )
     {
         VSIFCloseL( fp );
@@ -302,7 +302,7 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
 /*      Try to open the dependent file.                                 */
 /* -------------------------------------------------------------------- */
     char	*pszDependent;
-    FILE	*fp;
+    VSILFILE *fp;
     const char* pszMode = psBase->eAccess == HFA_Update ? "r+b" : "rb";
 
     pszDependent = CPLStrdup(
@@ -1777,7 +1777,7 @@ NULL
 HFAHandle HFACreateLL( const char * pszFilename )
 
 {
-    FILE	*fp;
+    VSILFILE *fp;
     HFAInfo_t   *psInfo;
 
 /* -------------------------------------------------------------------- */
@@ -2893,7 +2893,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /*      header.                                                         */
 /* -------------------------------------------------------------------- */
     static const char *pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
-    FILE *fpVSIL;
+    VSILFILE *fpVSIL;
 
     fpVSIL = VSIFOpenL( pszFullFilename, "r+b" );
     if( fpVSIL == NULL )

@@ -839,7 +839,7 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
 /*      Handle special case of a JPEG2000 data stream in another file.  */
 /* -------------------------------------------------------------------- */
-    FILE *fpVSIL = NULL;
+    VSILFILE *fpVSIL = NULL;
 
     if( EQUALN(pszFilename,"J2K_SUBFILE:",12) )
     {

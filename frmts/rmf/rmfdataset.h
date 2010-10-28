@@ -143,7 +143,7 @@ class RMFDataset : public GDALDataset
     int             bHeaderDirty;
 
     const char      *pszFilename;
-    FILE            *fp;
+    VSILFILE        *fp;
 
     CPLErr          WriteHeader();
     static int      LZWDecompress( const GByte*, GUInt32, GByte*, GUInt32 );

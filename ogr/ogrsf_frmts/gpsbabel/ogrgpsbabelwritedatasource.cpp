@@ -79,7 +79,7 @@ int OGRGPSBabelWriteDataSource::Convert()
             /* Special file : don't try to open it */
             const char* const argv[] = { "gpsbabel", "-i", "gpx", "-f", "-",
                                           "-o", pszGPSBabelDriverName, "-F", pszFilename, NULL };
-            FILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "rb");
+            VSILFILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "rb");
             if (tmpfp)
             {
                 bRet = ForkAndPipe(argv, tmpfp, NULL);
@@ -90,7 +90,7 @@ int OGRGPSBabelWriteDataSource::Convert()
         }
         else
         {
-            FILE* fp = VSIFOpenL(pszFilename, "wb");
+            VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
             if (fp == NULL)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -100,7 +100,7 @@ int OGRGPSBabelWriteDataSource::Convert()
             {
                 const char* const argv[] = { "gpsbabel", "-i", "gpx", "-f", "-",
                                             "-o", pszGPSBabelDriverName, "-F", "-", NULL };
-                FILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "rb");
+                VSILFILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "rb");
                 if (tmpfp)
                 {
                     bRet = ForkAndPipe(argv, tmpfp, fp);

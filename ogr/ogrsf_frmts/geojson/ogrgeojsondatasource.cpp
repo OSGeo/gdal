@@ -333,7 +333,7 @@ int OGRGeoJSONDataSource::ReadFromFile( const char* pszSource )
         return FALSE;
     }
 
-    FILE* fp = NULL;
+    VSILFILE* fp = NULL;
     fp = VSIFOpenL( pszSource, "rb" );
     if( NULL == fp )
     {

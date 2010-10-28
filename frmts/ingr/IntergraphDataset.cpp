@@ -167,7 +167,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // We need to scan around the file, so we open it now. 
     // -------------------------------------------------------------------- 
 
-    FILE   *fp;
+    VSILFILE   *fp;
 
     if( poOpenInfo->eAccess == GA_ReadOnly  )
     {
@@ -591,7 +591,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     //  Create output file with minimum header info
     // -------------------------------------------------------------------- 
 
-    FILE *fp = VSIFOpenL( pszFilename, "wb+" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "wb+" );
 
     if( fp == NULL )
     {

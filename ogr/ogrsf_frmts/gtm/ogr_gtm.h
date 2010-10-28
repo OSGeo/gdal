@@ -188,9 +188,9 @@ public:
     int TestCapability( const char * );
 
     // OGRGTMDataSource Methods
-    FILE* getOutputFP() { return fpOutput; }
-    FILE* getTmpTrackpointsFP() { return fpTmpTrackpoints; }
-    FILE* getTmpTracksFP() { return fpTmpTracks; }
+    VSILFILE* getOutputFP() { return fpOutput; }
+    VSILFILE* getTmpTrackpointsFP() { return fpTmpTrackpoints; }
+    VSILFILE* getTmpTracksFP() { return fpTmpTracks; }
     bool isFirstCTError() { return !bIssuedCTError; }
     void issuedFirstCTError() { bIssuedCTError = true; }
 
@@ -223,7 +223,7 @@ public:
     int incNumTrackpoints() { return ++numTrackpoints; }
     int incNumTracks() { return ++numTracks; };
 private:
-    FILE* fpOutput;
+    VSILFILE* fpOutput;
   
     /* GTM is not a contiguous file. We need two temporary files because
        trackpoints and tracks are stored separated and we don't know in
@@ -231,10 +231,10 @@ private:
        have. So, we create temporary file and append the at the end of
        the gtm file whe everything is done, that is, in the
        destructor. */
-    FILE* fpTmpTrackpoints;
+    VSILFILE* fpTmpTrackpoints;
     char* pszTmpTrackpoints;
 
-    FILE* fpTmpTracks;
+    VSILFILE* fpTmpTracks;
     char* pszTmpTracks;
 
     GTM* poGTMFile;

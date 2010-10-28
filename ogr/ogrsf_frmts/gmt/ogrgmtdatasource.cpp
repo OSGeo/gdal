@@ -162,7 +162,7 @@ OGRGmtDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpenL( osFilename, "w" );
+    VSILFILE *fp = VSIFOpenL( osFilename, "w" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 

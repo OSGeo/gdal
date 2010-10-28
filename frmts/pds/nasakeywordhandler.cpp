@@ -83,7 +83,7 @@ NASAKeywordHandler::~NASAKeywordHandler()
 /*                               Ingest()                               */
 /************************************************************************/
 
-int NASAKeywordHandler::Ingest( FILE *fp, int nOffset )
+int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
 
 {
 /* -------------------------------------------------------------------- */

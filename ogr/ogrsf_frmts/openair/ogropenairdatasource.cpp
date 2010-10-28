@@ -110,7 +110,7 @@ int OGROpenAirDataSource::Open( const char * pszFilename, int bUpdateIn)
 //      Does this appear to be an openair file?
 // --------------------------------------------------------------------
 
-    FILE* fp = VSIFOpenL(pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)
         return FALSE;
 
@@ -127,7 +127,7 @@ int OGROpenAirDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         VSIFSeekL( fp, 0, SEEK_SET );
 
-        FILE* fp2 = VSIFOpenL(pszFilename, "rb");
+        VSILFILE* fp2 = VSIFOpenL(pszFilename, "rb");
         if (fp2)
         {
             nLayers = 2;

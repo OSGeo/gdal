@@ -56,7 +56,7 @@ struct ImageRec
     char name[80];
     GUInt32 colorMap;
 
-    FILE* file;
+    VSILFILE* file;
     std::string fileName;
     unsigned char* tmp;
     GUInt32 rleEnd;
@@ -200,7 +200,7 @@ class SGIDataset : public GDALPamDataset
 {
     friend class SGIRasterBand;
 
-    FILE*  fpImage;
+    VSILFILE*  fpImage;
 
     int	   bGeoTransformValid;
     double adfGeoTransform[6];
@@ -701,7 +701,7 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Open the file for output.                                       */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpenL( pszFilename, "w" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "w" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 

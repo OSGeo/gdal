@@ -795,7 +795,7 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
                                                  vsi_l_offset nFileOffsetStart)
 {
     nFileOffsetStart = (nFileOffsetStart / DOWNLOAD_CHUNCK_SIZE) * DOWNLOAD_CHUNCK_SIZE;
-    FILE* fp = VSIFOpenL(VSICurlGetCacheFileName(), "rb");
+    VSILFILE* fp = VSIFOpenL(VSICurlGetCacheFileName(), "rb");
     if (fp)
     {
         unsigned long   pszURLHash = CPLHashSetHashStr(pszURL);
@@ -844,7 +844,7 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
 
 void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
 {
-    FILE* fp = VSIFOpenL(VSICurlGetCacheFileName(), "r+b");
+    VSILFILE* fp = VSIFOpenL(VSICurlGetCacheFileName(), "r+b");
     if (fp)
     {
         unsigned long   pszURLHashCached;

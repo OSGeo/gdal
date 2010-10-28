@@ -17,8 +17,8 @@ public:
     ERSHdrNode();
     ~ERSHdrNode();
 
-    int    ParseChildren( FILE *fp );
-    int    WriteSelf( FILE *fp, int nIndent );
+    int    ParseChildren( VSILFILE *fp );
+    int    WriteSelf( VSILFILE *fp, int nIndent );
 
     const char *Find( const char *pszPath, const char *pszDefault = NULL );
     const char *FindElem( const char *pszPath, int iElem, 
@@ -28,5 +28,5 @@ public:
     void   Set( const char *pszPath, const char *pszValue );
 
 private:
-    int    ReadLine( FILE *, CPLString & );
+    int    ReadLine( VSILFILE *, CPLString & );
 };

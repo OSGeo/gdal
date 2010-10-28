@@ -785,7 +785,7 @@ void VSIInstallMemFileHandler()
  * @return open file handle on created file (see VSIFOpenL()). 
  */
 
-FILE *VSIFileFromMemBuffer( const char *pszFilename, 
+VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
                           GByte *pabyData, 
                           vsi_l_offset nDataLength,
                           int bTakeOwnership )
@@ -819,7 +819,7 @@ FILE *VSIFileFromMemBuffer( const char *pszFilename,
         poFile->nRefCount++;
     }
 
-    return (FILE *) poHandler->Open( osFilename, "r+" );
+    return (VSILFILE *) poHandler->Open( osFilename, "r+" );
 }
 
 /************************************************************************/

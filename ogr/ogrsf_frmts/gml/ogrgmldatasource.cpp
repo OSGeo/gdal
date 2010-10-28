@@ -127,7 +127,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
 int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 
 {
-    FILE        *fp;
+    VSILFILE   *fp;
     char        szHeader[2048];
     int         nNumberOfFeatures = 0;
 
@@ -383,7 +383,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         !EQUALN(pszNewName, "/vsizip/", strlen("/vsizip/")) &&
         !EQUALN(pszNewName, "/vsicurl/", strlen("/vsicurl/")))
     {
-        FILE    *fp = NULL;
+        VSILFILE    *fp = NULL;
 
         pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
         if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) != 0 
@@ -731,7 +731,7 @@ void OGRGMLDataSource::GrowExtents( OGREnvelope *psGeomBounds )
 void OGRGMLDataSource::InsertHeader()
 
 {
-    FILE        *fpSchema;
+    VSILFILE        *fpSchema;
     int         nSchemaStart = 0;
 
     if( bFpOutputSingleFile )
@@ -1011,7 +1011,7 @@ void OGRGMLDataSource::InsertHeader()
 /*                            PrintLine()                               */
 /************************************************************************/
 
-void OGRGMLDataSource::PrintLine(FILE* fp, const char *fmt, ...)
+void OGRGMLDataSource::PrintLine(VSILFILE* fp, const char *fmt, ...)
 {
     CPLString osWork;
     va_list args;

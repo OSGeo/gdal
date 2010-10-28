@@ -41,7 +41,7 @@ class SRPDataset : public GDALPamDataset
 
     static CPLString ResetTo01( const char* str );
 
-    FILE*        fdIMG;
+    VSILFILE*        fdIMG;
     int*         TILEINDEX;
     int          offsetInIMG;
     CPLString    osProduct;

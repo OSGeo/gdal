@@ -63,7 +63,7 @@ typedef enum {
 /*      dataset within hfaopen.cpp                                      */
 /************************************************************************/
 typedef struct hfainfo {
-    FILE	*fp;
+    VSILFILE	*fp;
 
     char	*pszPath;
     char        *pszFilename; /* sans path */
@@ -154,7 +154,7 @@ class HFABand
                 
     HFAInfo_t	*psInfo;
 
-    FILE	*fpExternal;
+    VSILFILE	*fpExternal;
                          
     int		nDataType;
     HFAEntry	*poNode;

@@ -550,7 +550,7 @@ static int FindComparisonOperator(CPLXMLNode* psNode, const char* pszVal)
 
 CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
 {
-    FILE *fp;
+    VSILFILE *fp;
     char achHeader[18];
 
     VSIStatBufL sStatBuf;

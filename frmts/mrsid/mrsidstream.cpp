@@ -57,7 +57,7 @@ LTIVSIStream::~LTIVSIStream()
         (*pnRefCount)--;
         if (*pnRefCount == 0)
         {
-            VSIFCloseL( (FILE *)poFileHandle );
+            VSIFCloseL( (VSILFILE *)poFileHandle );
             nError = errno;
             delete pnRefCount;
         }

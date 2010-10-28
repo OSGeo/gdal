@@ -76,7 +76,7 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     osResultFilename.Printf( "/vsimem/http/%p.dat", 
                              psResult->pabyData );
 
-    FILE *fp = VSIFileFromMemBuffer( osResultFilename, 
+    VSILFILE *fp = VSIFileFromMemBuffer( osResultFilename,
                                      psResult->pabyData, 
                                      psResult->nDataLen, 
                                      TRUE );

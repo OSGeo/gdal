@@ -86,7 +86,7 @@ CPLString BufferToVSIFile(GByte *buffer, size_t size) {
     CPLString file_name;
 
     file_name.Printf("/vsimem/wms/%p/wmsresult.dat", buffer);
-    FILE *f = VSIFileFromMemBuffer(file_name.c_str(), buffer, size, false);
+    VSILFILE *f = VSIFileFromMemBuffer(file_name.c_str(), buffer, size, false);
     if (f == NULL) return CPLString();
     VSIFCloseL(f);
     return file_name;

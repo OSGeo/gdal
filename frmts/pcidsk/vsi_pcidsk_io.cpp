@@ -74,7 +74,7 @@ void *
 VSI_IOInterface::Open( std::string filename, std::string access ) const
 
 {
-    FILE *fp = VSIFOpenL( filename.c_str(), access.c_str() );
+    VSILFILE *fp = VSIFOpenL( filename.c_str(), access.c_str() );
 
     if( fp == NULL )
         ThrowPCIDSKException( "Failed to open %s: %s", 
@@ -91,7 +91,7 @@ uint64
 VSI_IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 
 {
-    FILE *fp = (FILE *) io_handle;
+    VSILFILE *fp = (VSILFILE *) io_handle;
 
     uint64 result = VSIFSeekL( fp, offset, whence );
 
@@ -110,7 +110,7 @@ VSI_IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 uint64 VSI_IOInterface::Tell( void *io_handle ) const
 
 {
-    FILE *fp = (FILE *) io_handle;
+    VSILFILE *fp = (VSILFILE *) io_handle;
 
     return VSIFTellL( fp );
 }
@@ -123,7 +123,7 @@ uint64 VSI_IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
                                void *io_handle ) const
 
 {
-    FILE *fp = (FILE *) io_handle;
+    VSILFILE *fp = (VSILFILE *) io_handle;
 
     errno = 0;
 
@@ -145,7 +145,7 @@ uint64 VSI_IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
                                 void *io_handle ) const
 
 {
-    FILE *fp = (FILE *) io_handle;
+    VSILFILE *fp = (VSILFILE *) io_handle;
 
     errno = 0;
 
@@ -166,7 +166,7 @@ uint64 VSI_IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
 int VSI_IOInterface::Eof( void *io_handle ) const
 
 {
-    return VSIFEofL( (FILE *) io_handle );
+    return VSIFEofL( (VSILFILE *) io_handle );
 }
 
 /************************************************************************/
@@ -176,7 +176,7 @@ int VSI_IOInterface::Eof( void *io_handle ) const
 int VSI_IOInterface::Flush( void *io_handle ) const
 
 {
-    return VSIFFlushL( (FILE *) io_handle );
+    return VSIFFlushL( (VSILFILE *) io_handle );
 }
 
 /************************************************************************/
@@ -186,7 +186,7 @@ int VSI_IOInterface::Flush( void *io_handle ) const
 int VSI_IOInterface::Close( void *io_handle ) const
 
 {
-    return VSIFCloseL( (FILE *) io_handle );
+    return VSIFCloseL( (VSILFILE *) io_handle );
 }
 
 /************************************************************************/

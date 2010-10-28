@@ -243,7 +243,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
     if( !bWriter_ )
         return OGRERR_FAILURE;
 
-    FILE *fp = poDS_->GetOutputFP();
+    VSILFILE *fp = poDS_->GetOutputFP();
     CPLAssert( NULL != fp );
 
     // If we haven't writen any features yet, output the layer's schema

@@ -31,7 +31,7 @@
 #ifndef _OGR_BNA_PARSER_INCLUDED
 #define _OGR_BNA_PARSER_INCLUDED
 
-#include <stdio.h>
+#include "cpl_vsi.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -75,7 +75,7 @@ typedef struct
                               the record will be parsed as fast as possible (tabCoords not allocated)
    @return the parsed BNA record or NULL if EOF or error
 */
-BNARecord* BNA_GetNextRecord(FILE* f, int* ok, int* curLine, int verbose, BNAFeatureType interestFeatureType);
+BNARecord* BNA_GetNextRecord(VSILFILE* f, int* ok, int* curLine, int verbose, BNAFeatureType interestFeatureType);
 
 /** Free a record obtained by BNA_GetNextRecord */
 void BNA_FreeRecord(BNARecord* record);

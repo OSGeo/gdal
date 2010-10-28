@@ -109,7 +109,7 @@ RPFToc* RPFTOCRead(const char* pszFilename, NITFFile* psFile)
 
 /* This function is directly inspired by function parse_toc coming from ogdi/driver/rpf/utils.c */
 
-RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocHeader)
+RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* tocHeader)
 {
     int i, j;
     unsigned int locationSectionPhysicalLocation;

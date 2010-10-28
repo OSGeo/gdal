@@ -1846,7 +1846,7 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
 CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 
 {
-    FILE            *fp;
+    VSILFILE       *fp;
     vsi_l_offset    nLen;
     char            *pszDoc;
     CPLXMLNode      *psTree;
@@ -1917,7 +1917,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 
 {
     char    *pszDoc;
-    FILE    *fp;
+    VSILFILE    *fp;
     vsi_l_offset nLength;
 
 /* -------------------------------------------------------------------- */

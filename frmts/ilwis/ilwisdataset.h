@@ -113,7 +113,7 @@ class ILWISRasterBand : public GDALPamRasterBand
 {
     friend class ILWISDataset;
 public:
-    FILE *fpRaw;
+    VSILFILE *fpRaw;
     ILWISInfo psInfo;
     int nSizePerPixel;
 

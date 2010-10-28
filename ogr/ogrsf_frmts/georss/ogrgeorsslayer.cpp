@@ -1115,7 +1115,7 @@ static void OGRGeoRSSLayerSplitComposedField(const char* pszName,
 /*                 OGRGeoRSSLayerWriteSimpleElement()                   */
 /************************************************************************/
 
-static void OGRGeoRSSLayerWriteSimpleElement(FILE* fp,
+static void OGRGeoRSSLayerWriteSimpleElement(VSILFILE* fp,
                                              const char* pszElementName,
                                              const char* pszNumber,
                                              const char** papszNames,
@@ -1183,7 +1183,7 @@ static void OGRGeoRSSLayerWriteSimpleElement(FILE* fp,
 OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    FILE* fp = poDS->GetOutputFP();
+    VSILFILE* fp = poDS->GetOutputFP();
     if (fp == NULL)
         return CE_Failure;
 

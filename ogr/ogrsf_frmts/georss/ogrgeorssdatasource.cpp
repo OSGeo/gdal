@@ -239,7 +239,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     if( VSI_ISDIR(sStatBuf.st_mode) )
         return FALSE;
 
-    FILE* fp = VSIFOpenL(pszFilename, "r");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp == NULL)
         return FALSE;
     
@@ -316,7 +316,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     return (validity == GEORSS_VALIDITY_VALID);
 #else
     char aBuf[256];
-    FILE* fp = VSIFOpenL(pszFilename, "r");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp)
     {
         unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, 255, fp );

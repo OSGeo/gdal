@@ -222,7 +222,7 @@ class BMPDataset : public GDALPamDataset
     int                 bGeoTransformValid;
 
     char                *pszFilename;
-    FILE                *fp;
+    VSILFILE            *fp;
 
   protected:
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,

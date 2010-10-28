@@ -47,7 +47,7 @@ class EIRDataset : public RawDataset
 {
     friend class RawRasterBand;
 
-    FILE  *fpImage; // image data file
+    VSILFILE  *fpImage; // image data file
     int    bGotTransform;
     double adfGeoTransform[6];
     int    bHDRDirty;
@@ -249,7 +249,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int     i;
-    FILE    *fp;
+    VSILFILE    *fp;
     const char *    pszLine;
     
     

@@ -47,7 +47,7 @@ CPL_C_END
 
 class LCPDataset : public RawDataset
 {
-    FILE    *fpImage;       // image data file.
+    VSILFILE    *fpImage;       // image data file.
     char	pachHeader[LCP_HEADER_SIZE];
 
     CPLString   osPrjFilename;
@@ -192,7 +192,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     LCPDataset  *poDS;
-    FILE        *fpImage;
+    VSILFILE        *fpImage;
 
     fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
     if (fpImage == NULL)

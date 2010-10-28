@@ -98,7 +98,7 @@ CPL_C_START
 #define DTED_NODATA_VALUE -32767
 
 typedef struct {
-  FILE          *fp;
+  VSILFILE     *fp;
   int           bUpdate;
 
   int           nXSize;

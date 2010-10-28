@@ -110,7 +110,7 @@ int OGRSUADataSource::Open( const char * pszFilename, int bUpdateIn)
 //      Does this appear to be a .sua file?
 // --------------------------------------------------------------------
 
-    FILE* fp = VSIFOpenL(pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)
         return FALSE;
 

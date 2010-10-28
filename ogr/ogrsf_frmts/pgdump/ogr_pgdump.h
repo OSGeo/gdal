@@ -109,7 +109,7 @@ class OGRPGDumpDataSource : public OGRDataSource
     OGRPGDumpLayer**    papoLayers;
     char*               pszName;
     int                 bTriedOpen;
-    FILE*               fp;
+    VSILFILE*           fp;
     int                 bInTransaction;
     OGRPGDumpLayer*     poLayerInCopyMode;
     const char*         pszEOL;

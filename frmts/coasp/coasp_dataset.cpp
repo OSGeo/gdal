@@ -65,7 +65,7 @@ class COASPMetadataItem;
 
 class COASPMetadataReader
 {
-	FILE *fp; 
+	VSILFILE *fp;
 	char **papszMetadata;
 	int nMetadataCount;
 	int nCurrentItem;
@@ -249,10 +249,10 @@ class COASPDataset : public GDALDataset
 {
 	friend class COASPRasterBand;
 	FILE *fpHdr; /* File pointer for the header file */
-	FILE *fpBinHH; /* File pointer for the binary matrix */
-	FILE *fpBinHV;
-	FILE *fpBinVH;
-	FILE *fpBinVV;
+	VSILFILE *fpBinHH; /* File pointer for the binary matrix */
+	VSILFILE *fpBinHV;
+	VSILFILE *fpBinVH;
+	VSILFILE *fpBinVV;
 
 	char *pszFileName; /* line and mission ID, mostly, i.e. l27p7 */
 	char *pszPrefix; /* file name prefix */
@@ -273,16 +273,16 @@ public:
  ********************************************************************/
 
 class COASPRasterBand : public GDALRasterBand {
-	FILE *fp;
+	VSILFILE *fp;
 	int ePol;
 public:
-	COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType, int ePol, FILE *fp );
+	COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType, int ePol, VSILFILE *fp );
 	virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, 
 		void *pImage);
 };
 
 COASPRasterBand::COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
-	int ePol, FILE *fp)
+	int ePol, VSILFILE *fp)
 {
 	this->fp = fp;
 	this->ePol = ePol;

@@ -326,7 +326,7 @@ int VSIIsCaseSensitiveFS( const char * pszFilename )
  * than 2GB) should be supported.  Binary access is always implied and
  * the "b" does not need to be included in the pszAccess string.
  *
- * Note that the "FILE *" returned by this function is not really a 
+ * Note that the "VSILFILE *" returned since GDAL 1.8.0 by this function is *NOT* a
  * standard C library FILE *, and cannot be used with any functions other
  * than the "VSI*L" family of functions.  They aren't "real" FILE objects.
  *
@@ -341,13 +341,13 @@ int VSIIsCaseSensitiveFS( const char * pszFilename )
  * @return NULL on failure, or the file handle.
  */
 
-FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
+VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 
 {
     VSIFilesystemHandler *poFSHandler = 
         VSIFileManager::GetHandler( pszFilename );
         
-    FILE* fp = (FILE *) poFSHandler->Open( pszFilename, pszAccess );
+    VSILFILE* fp = (VSILFILE *) poFSHandler->Open( pszFilename, pszAccess );
 
     VSIDebug3( "VSIFOpenL(%s,%s) = %p", pszFilename, pszAccess, fp );
         
@@ -373,7 +373,7 @@ FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
  * @return 0 on success or -1 on failure.
  */
 
-int VSIFCloseL( FILE * fp )
+int VSIFCloseL( VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
@@ -408,7 +408,7 @@ int VSIFCloseL( FILE * fp )
  * @return 0 on success or -1 one failure.
  */
 
-int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
+int VSIFSeekL( VSILFILE * fp, vsi_l_offset nOffset, int nWhence )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
@@ -436,7 +436,7 @@ int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
  * @return file offset in bytes.
  */
 
-vsi_l_offset VSIFTellL( FILE * fp )
+vsi_l_offset VSIFTellL( VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
@@ -448,7 +448,7 @@ vsi_l_offset VSIFTellL( FILE * fp )
 /*                             VSIRewindL()                             */
 /************************************************************************/
 
-void VSIRewindL( FILE * fp )
+void VSIRewindL( VSILFILE * fp )
 
 {
     VSIFSeekL( fp, 0, SEEK_SET );
@@ -474,7 +474,7 @@ void VSIRewindL( FILE * fp )
  * @return 0 on success or -1 on error.
  */
 
-int VSIFFlushL( FILE * fp )
+int VSIFFlushL( VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
@@ -506,7 +506,7 @@ int VSIFFlushL( FILE * fp )
  * @return number of objects successfully read. 
  */
 
-size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
+size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
@@ -538,7 +538,7 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
  * @return number of objects successfully written.
  */
 
-size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, FILE *fp )
+size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
@@ -566,7 +566,7 @@ size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, FILE *fp )
  * @return TRUE if at EOF else FALSE.
  */
 
-int VSIFEofL( FILE * fp )
+int VSIFEofL( VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
@@ -592,7 +592,7 @@ int VSIFEofL( FILE * fp )
  * @return the number of bytes written or -1 on an error.
  */
 
-int VSIFPrintfL( FILE *fp, const char *pszFormat, ... )
+int VSIFPrintfL( VSILFILE *fp, const char *pszFormat, ... )
 
 {
     va_list args;
@@ -609,7 +609,7 @@ int VSIFPrintfL( FILE *fp, const char *pszFormat, ... )
 /*                              VSIFPutcL()                              */
 /************************************************************************/
 
-int VSIFPutcL( int nChar, FILE * fp )
+int VSIFPutcL( int nChar, VSILFILE * fp )
 
 {
     unsigned char cChar = (unsigned char)nChar;

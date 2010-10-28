@@ -113,7 +113,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
 int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
 
 {
-    FILE *fpLL;
+    VSILFILE *fpLL;
         
     fpLL = VSIFOpenL( pszFilename, "rb" );
         
@@ -204,7 +204,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
 /*                             ReadBoxes()                              */
 /************************************************************************/
 
-int GDALJP2Metadata::ReadBoxes( FILE *fpVSIL )
+int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
 
 {
     GDALJP2Box oBox( fpVSIL );
@@ -810,7 +810,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption( "GMLJP2OVERRIDE", NULL ) != NULL )
     {
-        FILE *fp = VSIFOpenL( CPLGetConfigOption( "GMLJP2OVERRIDE",""), "r" );
+        VSILFILE *fp = VSIFOpenL( CPLGetConfigOption( "GMLJP2OVERRIDE",""), "r" );
         char *pszGML = NULL;
 
         if( fp == NULL )

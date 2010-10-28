@@ -126,7 +126,7 @@ void VRTDataset::FlushCache()
     /* -------------------------------------------------------------------- */
     /*      Create the output file.                                         */
     /* -------------------------------------------------------------------- */
-    FILE *fpVRT;
+    VSILFILE *fpVRT;
 
     fpVRT = VSIFOpenL( GetDescription(), "w" );
     if( fpVRT == NULL )
@@ -694,7 +694,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char        *pszXML;
 
-    FILE        *fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    VSILFILE        *fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
     if( fp != NULL )
     {
         unsigned int nLength;

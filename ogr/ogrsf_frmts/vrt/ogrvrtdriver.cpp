@@ -80,7 +80,7 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     else
     {
-        FILE *fp;
+        VSILFILE *fp;
         char achHeader[18];
 
         VSIStatBufL sStatBuf;
