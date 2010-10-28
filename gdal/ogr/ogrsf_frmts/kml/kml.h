@@ -30,6 +30,8 @@
 #define OGR_KML_KML_H_INCLUDED
 
 #include "ogr_expat.h"
+#include "cpl_vsi.h"
+
 // std
 #include <iostream>
 #include <string>
@@ -107,7 +109,7 @@ private:
 	// set to KML_VALIDITY_VALID if the beginning of the file is detected as KML
 	OGRKMLValidity validity;
 	// file descriptor
-	FILE *pKMLFile_;
+	VSILFILE *pKMLFile_;
 	// error text ("" when everything is OK")
 	std::string sError_;
 	// current KMLNode

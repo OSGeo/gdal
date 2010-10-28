@@ -219,11 +219,11 @@ inline void GTMTrackLayer::WriteTrackpoint( double lat, double lon, float altitu
 /************************************************************************/
 OGRErr GTMTrackLayer::CreateFeature (OGRFeature *poFeature)
 {
-    FILE* fpTmpTrackpoints = poDS->getTmpTrackpointsFP();
+    VSILFILE* fpTmpTrackpoints = poDS->getTmpTrackpointsFP();
     if (fpTmpTrackpoints == NULL)
         return CE_Failure;
 
-    FILE* fpTmpTracks = poDS->getTmpTracksFP();
+    VSILFILE* fpTmpTracks = poDS->getTmpTracksFP();
     if (fpTmpTracks == NULL)
         return CE_Failure;
 

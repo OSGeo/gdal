@@ -292,7 +292,7 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
 
 char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszOptions)
 {
-    FILE        *fp;
+    VSILFILE    *fp;
     const char  *pszLine;
     char        **papszStrList=NULL;
     int          nLines = 0;
@@ -383,7 +383,7 @@ char **CSLLoad(const char *pszFname)
  **********************************************************************/
 int  CSLSave(char **papszStrList, const char *pszFname)
 {
-    FILE    *fp;
+    VSILFILE *fp;
     int     nLines = 0;
 
     if (papszStrList)

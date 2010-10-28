@@ -108,7 +108,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
                         int nLLOriginLat, int nLLOriginLong )
 
 {
-    FILE        *fp;
+    VSILFILE     *fp;
     unsigned char achRecord[3601*2 + 12];
     int         nXSize, nYSize, iProfile;
     static char szError[512];

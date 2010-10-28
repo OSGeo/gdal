@@ -1425,7 +1425,7 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
 
 {
     const char	*pszTAB;
-    FILE	*fpTAB;
+    VSILFILE	*fpTAB;
 
 /* -------------------------------------------------------------------- */
 /*      Try lower case, then upper case.                                */
@@ -1724,7 +1724,7 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
 /*      Update extention, and write to disk.                            */
 /* -------------------------------------------------------------------- */
     const char  *pszTFW;
-    FILE    *fpTFW;
+    VSILFILE    *fpTFW;
 
     pszTFW = CPLResetExtension( pszBaseFilename, pszExtension );
     fpTFW = VSIFOpenL( pszTFW, "wt" );
@@ -1778,7 +1778,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
         }
 
         const char *pszFilename = CPLFindFile( "etc", "LICENSE.TXT" );
-        FILE *fp = NULL;
+        VSILFILE *fp = NULL;
         int  nLength;
 
         if( pszFilename != NULL )
@@ -2620,7 +2620,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     CPLString osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
     GDALDataset *poODS = NULL;
     GByte abyHeader[32];
-    FILE *fp;
+    VSILFILE *fp;
 
     fp = VSIFOpenL( osAuxFilename, "rb" );
 

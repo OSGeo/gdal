@@ -41,7 +41,7 @@ class IntergraphDataset : public GDALPamDataset
     friend class IntergraphRLEBand;
 
 private:
-    FILE           *fp;
+    VSILFILE       *fp;
     char           *pszFilename;
     double          adfGeoTransform[6];
 

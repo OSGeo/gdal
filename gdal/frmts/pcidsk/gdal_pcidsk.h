@@ -49,7 +49,7 @@ class PCIDSKDataset : public RawDataset
     friend class PCIDSKTiledRasterBand;
 
     const char          *pszFilename;
-    FILE                *fp;
+    VSILFILE            *fp;
 
     vsi_l_offset        nFileSize;
 
@@ -87,7 +87,7 @@ class PCIDSKDataset : public RawDataset
     vsi_l_offset *panSegSize;
 
     int         nBandFileCount;
-    FILE        **pafpBandFiles;
+    VSILFILE  **pafpBandFiles;
 
   public:
                 PCIDSKDataset();
@@ -188,7 +188,7 @@ class PCIDSKRawRasterBand : public RawRasterBand
     }
     
   public:
-    PCIDSKRawRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
+    PCIDSKRawRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
                          vsi_l_offset nImgOffset, int nPixelOffset,
                          int nLineOffset,
                          GDALDataType eDataType, int bNativeOrder )

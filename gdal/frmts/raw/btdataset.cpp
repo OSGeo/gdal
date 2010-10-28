@@ -47,7 +47,7 @@ class BTDataset : public GDALPamDataset
 {
     friend class BTRasterBand;
 
-    FILE        *fpImage;       // image data file.
+    VSILFILE        *fpImage;       // image data file.
 
     int         bGeoTransformValid;
     double      adfGeoTransform[6];
@@ -89,11 +89,11 @@ class BTDataset : public GDALPamDataset
 
 class BTRasterBand : public GDALRasterBand
 {
-    FILE          *fpImage;
+    VSILFILE          *fpImage;
 
   public:
 
-                   BTRasterBand( GDALDataset * poDS, FILE * fp,
+                   BTRasterBand( GDALDataset * poDS, VSILFILE * fp,
                                  GDALDataType eType );
 
     virtual CPLErr IReadBlock( int, int, void * );
@@ -109,7 +109,7 @@ class BTRasterBand : public GDALRasterBand
 /*                           BTRasterBand()                             */
 /************************************************************************/
 
-BTRasterBand::BTRasterBand( GDALDataset *poDS, FILE *fp, GDALDataType eType )
+BTRasterBand::BTRasterBand( GDALDataset *poDS, VSILFILE *fp, GDALDataType eType )
 
 {
     this->poDS = poDS;
@@ -512,7 +512,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
 /*      Write out the projection to a .prj file.                        */
 /* -------------------------------------------------------------------- */
     const char  *pszPrjFile = CPLResetExtension( GetDescription(), "prj" );
-    FILE * fp;
+    VSILFILE * fp;
 
     fp = VSIFOpenL( pszPrjFile, "wt" );
     if( fp != NULL )
@@ -623,7 +623,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         const char  *pszPrjFile = CPLResetExtension( poOpenInfo->pszFilename, 
                                                      "prj" );
-        FILE *fp;
+        VSILFILE *fp;
 
         fp = VSIFOpenL( pszPrjFile, "rt" );
         if( fp != NULL )
@@ -835,7 +835,7 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    FILE        *fp;
+    VSILFILE        *fp;
 
     fp = VSIFOpenL( pszFilename, "wb" );
 

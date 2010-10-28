@@ -926,7 +926,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
                                                 const char* pszColorFilename,
                                                 int* pnColors)
 {
-    FILE* fpColorFile = VSIFOpenL(pszColorFilename, "rt");
+    VSILFILE* fpColorFile = VSIFOpenL(pszColorFilename, "rt");
     if (fpColorFile == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s", pszColorFilename);
@@ -1508,7 +1508,7 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
     int nXSize = GDALGetRasterBandXSize(hSrcBand);
     int nYSize = GDALGetRasterBandYSize(hSrcBand);
 
-    FILE* fp = VSIFOpenL(pszDstFilename, "wt");
+    VSILFILE* fp = VSIFOpenL(pszDstFilename, "wt");
     if (fp == NULL)
     {
         CPLFree(pasColorAssociation);

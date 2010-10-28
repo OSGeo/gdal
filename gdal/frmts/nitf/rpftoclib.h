@@ -96,7 +96,7 @@ typedef struct
 RPFToc     CPL_DLL *RPFTOCRead(const char* pszFilename, NITFFile* psFile);
 
 /** Get the TOC information from a NITF TOC file or a non NITF TOC file */
-RPFToc     CPL_DLL *RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocHeader);
+RPFToc     CPL_DLL *RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* tocHeader);
 
 void       CPL_DLL  RPFTOCFree(RPFToc*  nitfToc);
 

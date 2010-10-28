@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 /*                         VSIPDFFileStream()                           */
 /************************************************************************/
 
-VSIPDFFileStream::VSIPDFFileStream(FILE* f, const char* pszFilename,
+VSIPDFFileStream::VSIPDFFileStream(VSILFILE* f, const char* pszFilename,
                                    Guint startA, GBool limitedA,
                                    Guint lengthA, Object *dictA):
                                                         BaseStream(dictA)

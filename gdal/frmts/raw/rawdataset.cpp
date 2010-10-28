@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
-                              FILE * fpRaw, vsi_l_offset nImgOffset,
+                              void * fpRaw, vsi_l_offset nImgOffset,
                               int nPixelOffset, int nLineOffset,
                               GDALDataType eDataType, int bNativeOrder,
                               int bIsVSIL, int bOwnsFP )
@@ -50,7 +50,16 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
     this->bIsVSIL = bIsVSIL;
     this->bOwnsFP =bOwnsFP;
 
-    this->fpRaw = fpRaw;
+    if (bIsVSIL)
+    {
+        this->fpRaw = NULL;
+        this->fpRawL = (VSILFILE*) fpRaw;
+    }
+    else
+    {
+        this->fpRaw = (FILE*) fpRaw;
+        this->fpRawL = NULL;
+    }
     this->nImgOffset = nImgOffset;
     this->nPixelOffset = nPixelOffset;
     this->nLineOffset = nLineOffset;
@@ -79,7 +88,7 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 /*                           RawRasterBand()                            */
 /************************************************************************/
 
-RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
+RawRasterBand::RawRasterBand( void * fpRaw, vsi_l_offset nImgOffset,
                               int nPixelOffset, int nLineOffset,
                               GDALDataType eDataType, int bNativeOrder,
                               int nXSize, int nYSize, int bIsVSIL, int bOwnsFP )
@@ -91,7 +100,16 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
     this->bIsVSIL = bIsVSIL;
     this->bOwnsFP =bOwnsFP;
 
-    this->fpRaw = fpRaw;
+    if (bIsVSIL)
+    {
+        this->fpRaw = NULL;
+        this->fpRawL = (VSILFILE*) fpRaw;
+    }
+    else
+    {
+        this->fpRaw = (FILE*) fpRaw;
+        this->fpRawL = NULL;
+    }
     this->nImgOffset = nImgOffset;
     this->nPixelOffset = nPixelOffset;
     this->nLineOffset = nLineOffset;
@@ -180,7 +198,7 @@ RawRasterBand::~RawRasterBand()
     if (bOwnsFP)
     {
         if ( bIsVSIL )
-            VSIFCloseL( fpRaw );
+            VSIFCloseL( fpRawL );
         else
             VSIFClose( fpRaw );
     }
@@ -219,7 +237,7 @@ CPLErr RawRasterBand::FlushCache()
     if ( bDirty )
     {
         if( bIsVSIL )
-            VSIFFlushL( fpRaw );
+            VSIFFlushL( fpRawL );
         else
             VSIFFlush( fpRaw );
 
@@ -922,7 +940,7 @@ int RawRasterBand::Seek( vsi_l_offset nOffset, int nSeekMode )
 
 {
     if( bIsVSIL )
-        return VSIFSeekL( fpRaw, nOffset, nSeekMode );
+        return VSIFSeekL( fpRawL, nOffset, nSeekMode );
     else
         return VSIFSeek( fpRaw, (long) nOffset, nSeekMode );
 }
@@ -935,7 +953,7 @@ size_t RawRasterBand::Read( void *pBuffer, size_t nSize, size_t nCount )
 
 {
     if( bIsVSIL )
-        return VSIFReadL( pBuffer, nSize, nCount, fpRaw );
+        return VSIFReadL( pBuffer, nSize, nCount, fpRawL );
     else
         return VSIFRead( pBuffer, nSize, nCount, fpRaw );
 }
@@ -948,7 +966,7 @@ size_t RawRasterBand::Write( void *pBuffer, size_t nSize, size_t nCount )
 
 {
     if( bIsVSIL )
-        return VSIFWriteL( pBuffer, nSize, nCount, fpRaw );
+        return VSIFWriteL( pBuffer, nSize, nCount, fpRawL );
     else
         return VSIFWrite( pBuffer, nSize, nCount, fpRaw );
 }

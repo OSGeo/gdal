@@ -83,7 +83,7 @@ these both in the more conventional orientation.
 class NTv2Dataset : public RawDataset
 {
   public:
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
 
     int         nRecordLength;
     int         nGridOffset;
@@ -671,7 +671,7 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Are we extending an existing file?                              */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
     GUInt32   nNumFile = 1;
 
     int bAppend = CSLFetchBoolean(papszOptions,"APPEND_SUBDATASET",FALSE);

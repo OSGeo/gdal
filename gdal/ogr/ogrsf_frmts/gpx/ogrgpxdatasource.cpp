@@ -290,7 +290,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     if( VSI_ISDIR(sStatBuf.st_mode) )
         return FALSE;
 
-    FILE* fp = VSIFOpenL(pszFilename, "r");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp == NULL)
         return FALSE;
     
@@ -401,7 +401,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     return (validity == GPX_VALIDITY_VALID);
 #else
     char aBuf[256];
-    FILE* fp = VSIFOpenL(pszFilename, "r");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp)
     {
         unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, 255, fp );
@@ -528,7 +528,7 @@ int OGRGPXDataSource::Create( const char *pszFilename,
         VSIFPrintfL(fpOutput, "xmlns:%s=\"%s\" ", pszExtensionsNS, pszExtensionsNSURL);
     VSIFPrintfL(fpOutput, "xmlns=\"http://www.topografix.com/GPX/1/1\" ");
     PrintLine("xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">");
-    if (fpOutput != stdout)
+    if (bIsBackSeekable)
     {
       /* Reserve space for <metadata><bounds/></metadata> */
       char szMetadata[SPACE_FOR_METADATA+1];

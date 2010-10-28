@@ -49,7 +49,7 @@ class HF2Dataset : public GDALPamDataset
 {
     friend class HF2RasterBand;
     
-    FILE       *fp;
+    VSILFILE   *fp;
     double      adfGeoTransform[6];
     char       *pszWKT;
     vsi_l_offset    *panBlockOffset;
@@ -433,7 +433,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Parse extended blocks                                           */
 /* -------------------------------------------------------------------- */
 
-    FILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
+    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
     if (fp == NULL)
         return NULL;
 
@@ -637,25 +637,25 @@ CPLErr HF2Dataset::GetGeoTransform( double * padfTransform )
 }
 
 
-static void WriteShort(FILE* fp, GInt16 val)
+static void WriteShort(VSILFILE* fp, GInt16 val)
 {
     CPL_LSBPTR16(&val);
     VSIFWriteL(&val, 2, 1, fp);
 }
 
-static void WriteInt(FILE* fp, GInt32 val)
+static void WriteInt(VSILFILE* fp, GInt32 val)
 {
     CPL_LSBPTR32(&val);
     VSIFWriteL(&val, 4, 1, fp);
 }
 
-static void WriteFloat(FILE* fp, float val)
+static void WriteFloat(VSILFILE* fp, float val)
 {
     CPL_LSBPTR32(&val);
     VSIFWriteL(&val, 4, 1, fp);
 }
 
-static void WriteDouble(FILE* fp, double val)
+static void WriteDouble(VSILFILE* fp, double val)
 {
     CPL_LSBPTR64(&val);
     VSIFWriteL(&val, 8, 1, fp);
@@ -830,7 +830,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     }
     else
         osFilename = pszFilename;
-    FILE* fp = VSIFOpenL(osFilename.c_str(), "wb");
+    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "wb");
     if (fp == NULL)
     {
         CPLError( CE_Failure, CPLE_AppDefined, 

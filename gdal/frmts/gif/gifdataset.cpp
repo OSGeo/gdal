@@ -61,7 +61,7 @@ class GIFDataset : public GDALPamDataset
 {
     friend class GIFRasterBand;
 
-    FILE        *fp;
+    VSILFILE        *fp;
 
     GifFileType *hGifFile;
 
@@ -441,7 +441,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open the file and ingest.                                       */
 /* -------------------------------------------------------------------- */
     GifFileType 	*hGifFile;
-    FILE                *fp;
+    VSILFILE                *fp;
     int                  nGifErr;
 
     fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
@@ -655,7 +655,7 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Open the output file.                                           */
 /* -------------------------------------------------------------------- */
     GifFileType *hGifFile;
-    FILE *fp;
+    VSILFILE *fp;
 
     fp = VSIFOpenL( pszFilename, "w" );
     if( fp == NULL )
@@ -911,7 +911,7 @@ static int VSIGIFReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer,
 
 {
     return VSIFReadL( pabyBuffer, 1, nBytesToRead, 
-                      (FILE *) psGFile->UserData );
+                      (VSILFILE *) psGFile->UserData );
 }
 
 /************************************************************************/
@@ -925,7 +925,7 @@ static int VSIGIFWriteFunc( GifFileType *psGFile,
 
 {
     return VSIFWriteL( (void *) pabyBuffer, 1, nBytesToWrite, 
-                       (FILE *) psGFile->UserData );
+                       (VSILFILE *) psGFile->UserData );
 }
 
 /************************************************************************/

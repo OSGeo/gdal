@@ -52,7 +52,7 @@ class HKVRasterBand : public RawRasterBand
     friend class HKVDataset;
 
   public:
-    		HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw, 
+    		HKVRasterBand( HKVDataset *poDS, int nBand, VSILFILE * fpRaw, 
                                unsigned int nImgOffset, int nPixelOffset,
                                int nLineOffset,
                                GDALDataType eDataType, int bNativeOrder );
@@ -164,7 +164,7 @@ class HKVDataset : public RawDataset
     friend class HKVRasterBand;
 
     char	*pszPath;
-    FILE	*fpBlob;
+    VSILFILE	*fpBlob;
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -237,7 +237,7 @@ class HKVDataset : public RawDataset
 /*                           HKVRasterBand()                            */
 /************************************************************************/
 
-HKVRasterBand::HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw, 
+HKVRasterBand::HKVRasterBand( HKVDataset *poDS, int nBand, VSILFILE * fpRaw,
                               unsigned int nImgOffset, int nPixelOffset,
                               int nLineOffset,
                               GDALDataType eDataType, int bNativeOrder )

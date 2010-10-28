@@ -181,7 +181,7 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( 0 != strlen( pszFilename ) )
         {
-            FILE *fpVRT = NULL;
+            VSILFILE *fpVRT = NULL;
 
             fpVRT = VSIFOpenL( pszFilename, "wb" );
             if (fpVRT == NULL)

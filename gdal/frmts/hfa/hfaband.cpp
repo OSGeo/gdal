@@ -1066,7 +1066,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
 
 {
     int		iBlock;
-    FILE	*fpData;
+    VSILFILE	*fpData;
 
     if( LoadBlockInfo() != CE_None )
         return CE_Failure;
@@ -1282,7 +1282,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
 {
     int		iBlock;
-    FILE	*fpData;
+    VSILFILE	*fpData;
 
     if( psInfo->eAccess == HFA_ReadOnly )
     {

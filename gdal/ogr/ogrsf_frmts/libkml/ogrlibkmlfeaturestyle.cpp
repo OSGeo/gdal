@@ -306,7 +306,7 @@ void kml2featurestyle (
 
                     /***** try it as a url then a file *****/
 
-                    FILE *fp = NULL;
+                    VSILFILE *fp = NULL;
 
                     if ((fp = VSIFOpenL( CPLFormFilename("/vsicurl/",
                                                         pszUrlTmp,

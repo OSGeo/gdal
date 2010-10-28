@@ -540,11 +540,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     ObjectAutoFree oObj;
     while(TRUE)
     {
-        FILE* fp = VSIFOpenL(pszFilename, "rb");
+        VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
         if (fp == NULL)
             return NULL;
 
-        fp = (FILE*)VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
+        fp = (VSILFILE*)VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
 
         if (pszUserPwd)
             poUserPwd = new GooString(pszUserPwd);

@@ -57,7 +57,7 @@ class FITDataset : public GDALPamDataset
 {
     friend class FITRasterBand;
     
-    FILE	*fp;
+    VSILFILE	*fp;
     FITinfo	*info;
     double      adfGeoTransform[6];
     
@@ -1092,7 +1092,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    FILE	*fpImage;
+    VSILFILE	*fpImage;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {

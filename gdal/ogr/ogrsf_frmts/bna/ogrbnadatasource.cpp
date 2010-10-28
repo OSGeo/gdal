@@ -174,7 +174,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
                (strstr( pszFilename, ".bna") || strstr( pszFilename, ".BNA")))) )
         return FALSE;
     
-    FILE* fp = VSIFOpenL(pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp)
     {
         BNARecord* record;

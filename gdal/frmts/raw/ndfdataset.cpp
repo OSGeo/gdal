@@ -49,7 +49,7 @@ class NDFDataset : public RawDataset
     char        **papszHeader;
     const char  *Get( const char *pszKey, const char *pszDefault);
 
-    int         ReadHeader( FILE * );
+    int         ReadHeader( VSILFILE * );
 
   public:
     		NDFDataset();
@@ -95,7 +95,7 @@ NDFDataset::~NDFDataset()
 
     for( int i = 0; i < GetRasterCount(); i++ )
     {
-        VSIFCloseL( ((RawRasterBand *) GetRasterBand(i+1))->GetFP() );
+        VSIFCloseL( ((RawRasterBand *) GetRasterBand(i+1))->GetFPL() );
     }
 }
 
@@ -292,7 +292,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
             osFilename = CPLFormFilename( osBasePath, osFilename, NULL);
         }
 
-        FILE *fpRaw = VSIFOpenL( osFilename, "rb" );
+        VSILFILE *fpRaw = VSIFOpenL( osFilename, "rb" );
         if( fpRaw == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 

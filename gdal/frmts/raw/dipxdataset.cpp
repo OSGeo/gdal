@@ -73,7 +73,7 @@ class DIPExDataset : public GDALPamDataset
 {
     friend class DIPExRasterBand;
 
-    FILE	*fp;
+    VSILFILE	*fp;
     CPLString    osSRS;
 
     DIPExHeader  sHeader;

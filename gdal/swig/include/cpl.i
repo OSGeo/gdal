@@ -313,7 +313,7 @@ int VSIRename(const char * pszOld, const char *pszNew );
 
 #if !defined(SWIGJAVA)
 
-typedef void FILE;
+typedef void VSILFILE;
 
 #if defined(SWIGPERL)
 %apply RETURN_NONE_TRUE_IS_ERROR {RETURN_NONE};
@@ -321,11 +321,11 @@ RETURN_NONE VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
 %clear RETURN_NONE;
 #endif
 
-FILE   *VSIFOpenL( const char *utf8_path, const char *pszMode );
-void    VSIFCloseL( FILE * );
-int     VSIFSeekL( FILE *, long, int );
-long    VSIFTellL( FILE * );
-int     VSIFWriteL( const char *, int, int, FILE * );
+VSILFILE   *VSIFOpenL( const char *utf8_path, const char *pszMode );
+void    VSIFCloseL( VSILFILE * );
+int     VSIFSeekL( VSILFILE *, long, int );
+long    VSIFTellL( VSILFILE * );
+int     VSIFWriteL( const char *, int, int, VSILFILE * );
 
 /* VSIFReadL() handled specially in python/gdal_python.i */
 

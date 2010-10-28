@@ -81,12 +81,12 @@ class GSBGDataset : public GDALPamDataset
     static const float fNODATA_VALUE;
     static const size_t nHEADER_SIZE;
 
-    static CPLErr WriteHeader( FILE *fp, GInt16 nXSize, GInt16 nYSize,
+    static CPLErr WriteHeader( VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
 			       double dfMinX, double dfMaxX,
 			       double dfMinY, double dfMaxY,
 			       double dfMinZ, double dfMaxZ );
 
-    FILE	*fp;
+    VSILFILE	*fp;
 
   public:
 		~GSBGDataset();
@@ -758,7 +758,7 @@ CPLErr GSBGDataset::SetGeoTransform( double *padfGeoTransform )
 /*                             WriteHeader()                            */
 /************************************************************************/
 
-CPLErr GSBGDataset::WriteHeader( FILE *fp, GInt16 nXSize, GInt16 nYSize,
+CPLErr GSBGDataset::WriteHeader( VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
 				 double dfMinX, double dfMaxX,
 				 double dfMinY, double dfMaxY,
 				 double dfMinZ, double dfMaxZ )
@@ -891,7 +891,7 @@ GDALDataset *GSBGDataset::Create( const char * pszFilename,
         return NULL;
     }
 
-    FILE *fp = VSIFOpenL( pszFilename, "w+b" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "w+b" );
 
     if( fp == NULL )
     {
@@ -984,7 +984,7 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
         return NULL;
     }
 
-    FILE    *fp = VSIFOpenL( pszFilename, "w+b" );
+    VSILFILE    *fp = VSIFOpenL( pszFilename, "w+b" );
 
     if( fp == NULL )
     {

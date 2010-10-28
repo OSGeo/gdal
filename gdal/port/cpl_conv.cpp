@@ -536,7 +536,7 @@ const char *CPLReadLine( FILE * fp )
  * from the file or NULL if the end of file was encountered.
  */
 
-const char *CPLReadLineL( FILE * fp )
+const char *CPLReadLineL( VSILFILE * fp )
 {
     return CPLReadLine2L( fp, -1, NULL );
 }
@@ -561,7 +561,7 @@ const char *CPLReadLineL( FILE * fp )
  * @since GDAL 1.7.0
  */
 
-const char *CPLReadLine2L( FILE * fp, int nMaxCars, char** papszOptions )
+const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars, char** papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1883,7 +1883,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
     FILE *fp;
 
     if( bLarge )
-        fp = VSIFOpenL( pszFilename, pszAccess );
+        fp = (FILE*) VSIFOpenL( pszFilename, pszAccess );
     else
         fp = VSIFOpen( pszFilename, pszAccess );
 
@@ -1951,7 +1951,7 @@ void CPLCloseShared( FILE * fp )
 /*      Close the file, and remove the information.                     */
 /* -------------------------------------------------------------------- */
     if( pasSharedFileList[i].bLarge )
-        VSIFCloseL( pasSharedFileList[i].fp );
+        VSIFCloseL( (VSILFILE*) pasSharedFileList[i].fp );
     else
         VSIFClose( pasSharedFileList[i].fp );
 
@@ -2138,7 +2138,7 @@ int CPLUnlinkTree( const char *pszPath )
 int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 
 {
-    FILE *fpOld, *fpNew;
+    VSILFILE *fpOld, *fpNew;
     GByte *pabyBuffer;
     size_t nBufferSize;
     size_t nBytesRead;

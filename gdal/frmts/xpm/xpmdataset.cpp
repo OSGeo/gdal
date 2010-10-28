@@ -105,7 +105,7 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     unsigned int nFileSize;
     char *pszFileContents;
-    FILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
     if( fp == NULL )
         return NULL;
 
@@ -334,7 +334,7 @@ XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* ==================================================================== */
 /*      Write the output image.                                         */
 /* ==================================================================== */
-    FILE	*fpPBM;
+    VSILFILE	*fpPBM;
 
     fpPBM = VSIFOpenL( pszFilename, "wb+" );
     if( fpPBM == NULL )

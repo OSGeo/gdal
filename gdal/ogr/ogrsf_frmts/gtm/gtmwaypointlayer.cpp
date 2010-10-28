@@ -229,7 +229,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
 /************************************************************************/
 OGRErr GTMWaypointLayer::CreateFeature (OGRFeature *poFeature)
 {
-    FILE* fp = poDS->getOutputFP();
+    VSILFILE* fp = poDS->getOutputFP();
     if (fp == NULL)
         return CE_Failure;
 

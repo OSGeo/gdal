@@ -74,7 +74,8 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
 protected:
     friend class RawDataset;
 
-    FILE	*fpRaw;
+    FILE       *fpRaw;
+    VSILFILE   *fpRawL;
     int         bIsVSIL;
 
     vsi_l_offset nImgOffset;
@@ -110,13 +111,13 @@ protected:
 
 public:
 
-                 RawRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
+                 RawRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
                                 vsi_l_offset nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder,
                                 int bIsVSIL = FALSE, int bOwnsFP = FALSE );
 
-                 RawRasterBand( FILE * fpRaw, 
+                 RawRasterBand( void * fpRaw,
                                 vsi_l_offset nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder,
@@ -152,7 +153,8 @@ public:
     int          GetLineOffset() { return nLineOffset; }
     int          GetNativeOrder() { return bNativeOrder; }
     int          GetIsVSIL() { return bIsVSIL; }
-    FILE        *GetFP() { return fpRaw; }
+    FILE        *GetFP() { return (bIsVSIL) ? (FILE*)fpRawL : fpRaw; }
+    VSILFILE    *GetFPL() { CPLAssert(bIsVSIL); return fpRawL; }
     int          GetOwnsFP() { return bOwnsFP; }
 };
 

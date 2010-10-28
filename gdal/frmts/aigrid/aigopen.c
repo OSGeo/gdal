@@ -449,10 +449,10 @@ void AIGClose( AIGInfo_t * psInfo )
 /*      upper cased versions of file names.                             */
 /************************************************************************/
 
-FILE *AIGLLOpen( const char *pszFilename, const char *pszAccess )
+VSILFILE *AIGLLOpen( const char *pszFilename, const char *pszAccess )
 
 {
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( pszFilename, pszAccess );
     if( fp == NULL )

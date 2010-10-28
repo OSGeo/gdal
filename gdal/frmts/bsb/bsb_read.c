@@ -173,7 +173,7 @@ int BSBGetc( BSBInfo *psInfo, int bNO1, int* pbErrorFlag )
 BSBInfo *BSBOpen( const char *pszFilename )
 
 {
-    FILE	*fp;
+    VSILFILE	*fp;
     char	achTestBlock[1000];
     char        szLine[1000];
     int         i, bNO1 = FALSE;
@@ -653,7 +653,7 @@ static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
 {
     int		nLineMarker = 0;
     int         byNext;
-    FILE	*fp = psInfo->fp;
+    VSILFILE	*fp = psInfo->fp;
     int         bErrorFlag = FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -739,7 +739,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 {
     int		nValueShift, iPixel = 0;
     unsigned char byValueMask, byCountMask;
-    FILE	*fp = psInfo->fp;
+    VSILFILE	*fp = psInfo->fp;
     int         byNext, i;
 
 /* -------------------------------------------------------------------- */
@@ -931,7 +931,7 @@ BSBInfo *BSBCreate( const char *pszFilename, int nCreationFlags, int nVersion,
                     int nXSize, int nYSize )
 
 {
-    FILE	*fp;
+    VSILFILE	*fp;
     BSBInfo     *psInfo;
 
 /* -------------------------------------------------------------------- */

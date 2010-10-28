@@ -262,18 +262,18 @@ class LevellerDataset : public GDALPamDataset
 	//double		m_dMeasurePerPixel;
 	double		m_dLogSpan[2];
 
-    FILE*			m_fp;
+    VSILFILE*			m_fp;
     vsi_l_offset	m_nDataOffset;
 
-    bool load_from_file(FILE*, const char*);
+    bool load_from_file(VSILFILE*, const char*);
 
 
-    bool locate_data(vsi_l_offset&, size_t&, FILE*, const char*);
-    bool get(int&, FILE*, const char*);
-    bool get(size_t& n, FILE* fp, const char* psz)
+    bool locate_data(vsi_l_offset&, size_t&, VSILFILE*, const char*);
+    bool get(int&, VSILFILE*, const char*);
+    bool get(size_t& n, VSILFILE* fp, const char* psz)
 		{ return this->get((int&)n, fp, psz); }
-    bool get(double&, FILE*, const char*);
-    bool get(char*, size_t, FILE*, const char*);
+    bool get(double&, VSILFILE*, const char*);
+    bool get(char*, size_t, VSILFILE*, const char*);
 
 	bool write_header();
 	bool write_tag(const char*, int);
@@ -322,7 +322,7 @@ class digital_axis
 	public:
 		digital_axis() : m_eStyle(LEV_DA_PIXEL_SIZED) {}
 
-		bool get(LevellerDataset& ds, FILE* fp, int n)
+		bool get(LevellerDataset& ds, VSILFILE* fp, int n)
 		{
 			char szTag[32];
 			sprintf(szTag, "coordsys_da%d_style", n);
@@ -1030,7 +1030,7 @@ bool LevellerDataset::write_tag(const char* pszTag, const char* psz)
 }
 
 
-bool LevellerDataset::locate_data(vsi_l_offset& offset, size_t& len, FILE* fp, const char* pszTag)
+bool LevellerDataset::locate_data(vsi_l_offset& offset, size_t& len, VSILFILE* fp, const char* pszTag)
 {
     // Locate the file offset of the desired tag's data.
     // If it is not available, return false.
@@ -1081,7 +1081,7 @@ bool LevellerDataset::locate_data(vsi_l_offset& offset, size_t& len, FILE* fp, c
 /*                                get()                                 */
 /************************************************************************/
 
-bool LevellerDataset::get(int& n, FILE* fp, const char* psz)
+bool LevellerDataset::get(int& n, VSILFILE* fp, const char* psz)
 {
     vsi_l_offset offset;
     size_t		 len;
@@ -1103,7 +1103,7 @@ bool LevellerDataset::get(int& n, FILE* fp, const char* psz)
 /*                                get()                                 */
 /************************************************************************/
 
-bool LevellerDataset::get(double& d, FILE* fp, const char* pszTag)
+bool LevellerDataset::get(double& d, VSILFILE* fp, const char* pszTag)
 {
     vsi_l_offset offset;
     size_t		 len;
@@ -1123,7 +1123,7 @@ bool LevellerDataset::get(double& d, FILE* fp, const char* pszTag)
 /************************************************************************/
 /*                                get()                                 */
 /************************************************************************/
-bool LevellerDataset::get(char* pszValue, size_t maxchars, FILE* fp, const char* pszTag)
+bool LevellerDataset::get(char* pszValue, size_t maxchars, VSILFILE* fp, const char* pszTag)
 {
     char szTag[65];
 
@@ -1276,7 +1276,7 @@ bool LevellerDataset::make_local_coordsys(const char* pszName, UNITLABEL code)
 /*                            load_from_file()                            */
 /************************************************************************/
 
-bool LevellerDataset::load_from_file(FILE* file, const char* pszFilename)
+bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 {
     // get hf dimensions
     if(!this->get(nRasterXSize, file, "hf_w"))

@@ -50,20 +50,20 @@ CPL_C_END
 static tsize_t
 _tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
 {
-    return VSIFReadL( buf, 1, size, (FILE *) fd );
+    return VSIFReadL( buf, 1, size, (VSILFILE *) fd );
 }
 
 static tsize_t
 _tiffWriteProc(thandle_t fd, tdata_t buf, tsize_t size)
 {
-    return VSIFWriteL( buf, 1, size, (FILE *) fd );
+    return VSIFWriteL( buf, 1, size, (VSILFILE *) fd );
 }
 
 static toff_t
 _tiffSeekProc(thandle_t fd, toff_t off, int whence)
 {
-    if( VSIFSeekL( (FILE *) fd, off, whence ) == 0 )
-        return (toff_t) VSIFTellL( (FILE *) fd );
+    if( VSIFSeekL( (VSILFILE *) fd, off, whence ) == 0 )
+        return (toff_t) VSIFTellL( (VSILFILE *) fd );
     else
         return (toff_t) -1;
 }
@@ -71,7 +71,7 @@ _tiffSeekProc(thandle_t fd, toff_t off, int whence)
 static int
 _tiffCloseProc(thandle_t fd)
 {
-    return VSIFCloseL( (FILE *) fd );
+    return VSIFCloseL( (VSILFILE *) fd );
 }
 
 static toff_t
@@ -80,11 +80,11 @@ _tiffSizeProc(thandle_t fd)
     vsi_l_offset  old_off;
     toff_t        file_size;
 
-    old_off = VSIFTellL( (FILE *) fd );
-    VSIFSeekL( (FILE *) fd, 0, SEEK_END );
+    old_off = VSIFTellL( (VSILFILE *) fd );
+    VSIFSeekL( (VSILFILE *) fd, 0, SEEK_END );
     
-    file_size = (toff_t) VSIFTellL( (FILE *) fd );
-    VSIFSeekL( (FILE *) fd, old_off, SEEK_SET );
+    file_size = (toff_t) VSIFTellL( (VSILFILE *) fd );
+    VSIFSeekL( (VSILFILE *) fd, old_off, SEEK_SET );
 
     return file_size;
 }
@@ -110,7 +110,7 @@ TIFF* VSI_TIFFOpen(const char* name, const char* mode)
     static const char module[] = "TIFFOpen";
     int           i, a_out;
     char          access[32];
-    FILE          *fp;
+    VSILFILE      *fp;
     TIFF          *tif;
 
     a_out = 0;

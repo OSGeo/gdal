@@ -100,7 +100,7 @@ void ERSHdrNode::MakeSpace()
 /*      will be appended for objects enclosed in {}.                    */
 /************************************************************************/
 
-int ERSHdrNode::ReadLine( FILE * fp, CPLString &osLine )
+int ERSHdrNode::ReadLine( VSILFILE * fp, CPLString &osLine )
 
 {
     int  nBracketLevel;
@@ -153,7 +153,7 @@ int ERSHdrNode::ReadLine( FILE * fp, CPLString &osLine )
 /*      This function is used recursively to read sub-objects.          */
 /************************************************************************/
 
-int ERSHdrNode::ParseChildren( FILE * fp )
+int ERSHdrNode::ParseChildren( VSILFILE * fp )
 
 {
     while( TRUE )
@@ -233,7 +233,7 @@ int ERSHdrNode::ParseChildren( FILE * fp )
 /*      Recursively write self and children to file.                    */
 /************************************************************************/
 
-int ERSHdrNode::WriteSelf( FILE * fp, int nIndent )
+int ERSHdrNode::WriteSelf( VSILFILE * fp, int nIndent )
 
 {
     CPLString oIndent;

@@ -147,9 +147,9 @@ public:
     OGRDXFReader();
     ~OGRDXFReader();
     
-    void                Initialize( FILE * fp );
+    void                Initialize( VSILFILE * fp );
     
-    FILE               *fp;
+    VSILFILE           *fp;
 
     int                 iSrcBufferOffset;
     int                 nSrcBufferBytes;
@@ -172,7 +172,7 @@ public:
 
 class OGRDXFDataSource : public OGRDataSource
 {
-    FILE               *fp;
+    VSILFILE           *fp;
 
     CPLString           osName;
     std::vector<OGRLayer*> apoLayers;
@@ -248,7 +248,7 @@ class OGRDXFWriterDS;
 
 class OGRDXFWriterLayer : public OGRLayer
 {
-    FILE               *fp;
+    VSILFILE           *fp;
     OGRFeatureDefn     *poFeatureDefn;
 
     OGRDXFWriterDS     *poDS;
@@ -270,7 +270,7 @@ class OGRDXFWriterLayer : public OGRLayer
     int                 nNextAutoID;
 
   public:
-    OGRDXFWriterLayer( OGRDXFWriterDS *poDS, FILE *fp );
+    OGRDXFWriterLayer( OGRDXFWriterDS *poDS, VSILFILE *fp );
     ~OGRDXFWriterLayer();
 
     void                ResetReading() {}
@@ -283,7 +283,7 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRErr              CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
-    void                ResetFP( FILE * );
+    void                ResetFP( VSILFILE * );
 
     std::map<CPLString,CPLString>& GetNewLineTypeMap() { return oNewLineTypes;}
 };
@@ -327,11 +327,11 @@ class OGRDXFWriterDS : public OGRDataSource
     CPLString           osName;
     OGRDXFWriterLayer  *poLayer;
     OGRDXFBlocksWriterLayer *poBlocksLayer;
-    FILE               *fp;
+    VSILFILE           *fp;
     CPLString           osTrailerFile;
 
     CPLString           osTempFilename;
-    FILE               *fpTemp;
+    VSILFILE           *fpTemp;
 
     CPLString           osHeaderFile;
     OGRDXFDataSource    oHeaderDS;
@@ -344,12 +344,12 @@ class OGRDXFWriterDS : public OGRDataSource
     void                ScanForEntities( const char *pszFilename,
                                          const char *pszTarget );
 
-    int                 WriteNewLineTypeRecords( FILE *fp );
-    int                 WriteNewBlockRecords( FILE * );
-    int                 WriteNewBlockDefinitions( FILE * );
-    int                 WriteNewLayerDefinitions( FILE * );
-    int                 TransferUpdateHeader( FILE * );
-    int                 TransferUpdateTrailer( FILE * );
+    int                 WriteNewLineTypeRecords( VSILFILE *fp );
+    int                 WriteNewBlockRecords( VSILFILE * );
+    int                 WriteNewBlockDefinitions( VSILFILE * );
+    int                 WriteNewLayerDefinitions( VSILFILE * );
+    int                 TransferUpdateHeader( VSILFILE * );
+    int                 TransferUpdateTrailer( VSILFILE * );
 
   public:
                         OGRDXFWriterDS();
@@ -371,7 +371,7 @@ class OGRDXFWriterDS : public OGRDataSource
                                      char ** papszOptions = NULL );
 
     int                 CheckEntityID( const char *pszEntityID );
-    long                WriteEntityID( FILE * fp, 
+    long                WriteEntityID( VSILFILE * fp,
                                        long nPreferredFID = OGRNullFID );
 };
 
