@@ -555,7 +555,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
             if (pData)
             {
                 memcpy(pData, psResult->pasMimePart[i].pabyData, psResult->pasMimePart[i].nDataLen);
-                FILE *fp = VSIFileFromMemBuffer( osTmpFileName,
+                VSILFILE *fp = VSIFileFromMemBuffer( osTmpFileName,
                                                 pData,
                                                 psResult->pasMimePart[i].nDataLen, TRUE);
                 VSIFCloseL(fp);
@@ -684,7 +684,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
             osTmpFileName = osTmpDirName + "/file.gml";
         }
 
-        FILE *fp = VSIFileFromMemBuffer( osTmpFileName, pabyData,
+        VSILFILE *fp = VSIFileFromMemBuffer( osTmpFileName, pabyData,
                                         nDataLen, TRUE);
         VSIFCloseL(fp);
         psResult->pabyData = NULL;

@@ -45,9 +45,9 @@
 CPL_CVSID("$Id$")
 
 CPL_C_START
-int CPL_DLL VSIFCloseL( FILE * );
+int CPL_DLL VSIFCloseL( VSILFILE * );
 int CPL_DLL VSIUnlink( const char * );
-FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename, 
+VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
                                     GByte *pabyData, 
                                     GUIntBig nDataLength,
                                     int bTakeOwnership );
@@ -2047,7 +2047,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
 /*      Create a memory file from the buffer.                           */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFileFromMemBuffer( szFilename, pabyBuffer, nSize, FALSE );
+    VSILFILE *fp = VSIFileFromMemBuffer( szFilename, pabyBuffer, nSize, FALSE );
     if( fp == NULL )
         return CE_Failure;
     VSIFCloseL( fp );

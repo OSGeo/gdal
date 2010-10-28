@@ -31,11 +31,12 @@
 #define _BSBREAD_H_INCLUDED
 
 #include "cpl_port.h"
+#include "cpl_vsi.h"
 
 CPL_C_START
 
 typedef struct {
-    FILE        *fp;
+    VSILFILE   *fp;
 
 
     GByte       *pabyBuffer;

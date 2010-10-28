@@ -2,13 +2,13 @@
 #define FILEDATASOURCE_H
 
 #include "datasource.h"
-#include <stdio.h>
+#include "cpl_vsi.h"
 
 class FileDataSource : public DataSource
 {
 public:
 	FileDataSource(const char * fileName);
-	FileDataSource(FILE* fp);
+	FileDataSource(VSILFILE* fp);
 	virtual ~FileDataSource();
 	virtual size_t DataSourceFread(void* lpBuf, size_t size, size_t count);
 	virtual int DataSourceFgetc();
@@ -17,7 +17,7 @@ public:
 	virtual int DataSourceFeof();
 	virtual long DataSourceFtell();
 private:
-	FILE * fp;
+	VSILFILE * fp;
 	bool closeFile;
 };
 

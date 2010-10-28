@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 /*                      OGROpenAirLabelLayer()                          */
 /************************************************************************/
 
-OGROpenAirLabelLayer::OGROpenAirLabelLayer( FILE* fp )
+OGROpenAirLabelLayer::OGROpenAirLabelLayer( VSILFILE* fp )
 
 {
     fpOpenAir = fp;

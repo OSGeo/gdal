@@ -205,7 +205,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE       * fp;
+    VSILFILE       * fp;
 
     if( bUpdate )
         fp = VSIFOpenL( pszFilename, "rb+" );

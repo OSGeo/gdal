@@ -69,7 +69,7 @@ class GRIBDataset : public GDALPamDataset
     const char *GetProjectionRef();
 	private:
 		void SetGribMetaData(grib_MetaData* meta);
-    FILE	*fp;
+    VSILFILE	*fp;
     char  *pszProjection;
 		char  *pszDescription;
     OGRCoordinateTransformation *poTransform;

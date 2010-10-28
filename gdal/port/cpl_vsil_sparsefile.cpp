@@ -45,7 +45,7 @@ public:
                  byValue(0), bTriedOpen(FALSE) {}
 
     CPLString     osFilename;
-    FILE          *fp;
+    VSILFILE     *fp;
     GUIntBig      nDstOffset;
     GUIntBig      nSrcOffset;
     GUIntBig      nLength;
@@ -341,7 +341,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Does this file even exist?                                      */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpenL( osSparseFilePath, "r" );
+    VSILFILE *fp = VSIFOpenL( osSparseFilePath, "r" );
     if( fp == NULL )
         return NULL;
     VSIFCloseL( fp );

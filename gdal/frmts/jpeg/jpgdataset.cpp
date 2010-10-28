@@ -60,8 +60,8 @@ CPL_C_START
 void	GDALRegister_JPEG(void);
 CPL_C_END
 
-void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
-void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
+void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile);
+void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 
 /*  
 * Do we want to do special processing suitable for when JSAMPLE is a 
@@ -97,7 +97,7 @@ class JPGDataset : public GDALPamDataset
     int	   nGCPCount;
     GDAL_GCP *pasGCPList;
 
-    FILE   *fpImage;
+    VSILFILE   *fpImage;
     GUIntBig nSubfileOffset;
 
     int    nLoadedScanline;
@@ -118,8 +118,8 @@ class JPGDataset : public GDALPamDataset
     CPLErr LoadScanline(int);
     void   Restart();
     
-    CPLErr EXIFExtractMetadata(FILE *, int);
-    int    EXIFInit(FILE *);
+    CPLErr EXIFExtractMetadata(VSILFILE *, int);
+    int    EXIFInit(VSILFILE *);
     void   EXIFPrintData(char *, GUInt16, GUInt32, unsigned char* );
 
     int    nQLevel;
@@ -427,7 +427,7 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
 /*                                                                      */
 /*           Create Metadata from Information file directory APP1       */
 /************************************************************************/
-int JPGDataset::EXIFInit(FILE *fp)
+int JPGDataset::EXIFInit(VSILFILE *fp)
 {
     int           one = 1;
     TIFFHeader    hdr;
@@ -505,7 +505,7 @@ int JPGDataset::EXIFInit(FILE *fp)
 /*                                                                      */
 /*      Extract all entry from a IFD                                    */
 /************************************************************************/
-CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
+CPLErr JPGDataset::EXIFExtractMetadata(VSILFILE *fp, int nOffset)
 {
     GUInt16        nEntryCount;
     int space;
@@ -2108,7 +2108,7 @@ static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
     {
-        FILE *fpOut;
+        VSILFILE *fpOut;
         GUInt32 nImageSize;
 
         fpOut = VSIFOpenL( pszJPGFilename, "r+" );
@@ -2251,7 +2251,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    FILE	*fpImage;
+    VSILFILE	*fpImage;
 
     fpImage = VSIFOpenL( pszFilename, "wb" );
     if( fpImage == NULL )

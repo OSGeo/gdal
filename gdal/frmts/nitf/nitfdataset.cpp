@@ -49,7 +49,7 @@ static CPLErr NITFSetColorInterpretation( NITFImage *psImage,
                                           int nBand,
                                           GDALColorInterp eInterp );
 #ifdef JPEG_SUPPORTED
-static int NITFWriteJPEGImage( GDALDataset *, FILE *, vsi_l_offset, char **,
+static int NITFWriteJPEGImage( GDALDataset *, VSILFILE *, vsi_l_offset, char **,
                                GDALProgressFunc pfnProgress, 
                                void * pProgressData );
 #endif
@@ -1473,7 +1473,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
                               poDS->adfGeoTransform ) )
     {
         const char *pszHDR;
-        FILE *fpHDR;
+        VSILFILE *fpHDR;
         char **papszLines;
         int isNorth;
         int zone;
@@ -4427,7 +4427,7 @@ static void NITFPatchImageLength( const char *pszFilename,
                                   const char *pszIC )
 
 {
-    FILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
+    VSILFILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
     if( fpVSIL == NULL )
         return;
     
@@ -4563,7 +4563,7 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     /* -------------------------------------------------------------------- */
     /*      Open the target file.                                           */
     /* -------------------------------------------------------------------- */
-    FILE *fpVSIL = VSIFOpenL(pszFilename, "r+b");
+    VSILFILE *fpVSIL = VSIFOpenL(pszFilename, "r+b");
 
     if (fpVSIL == NULL)
         return FALSE;
@@ -4786,7 +4786,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Open the target file.                                           */
 /* -------------------------------------------------------------------- */
-    FILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
+    VSILFILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
 
     if( fpVSIL == NULL )
         return;
@@ -5027,7 +5027,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 #ifdef JPEG_SUPPORTED
 
 int 
-NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
+NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
                     int nBlockXOff, int nBlockYOff,
                     int nBlockXSize, int nBlockYSize,
                     int bProgressive, int nQuality,
@@ -5035,7 +5035,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
                     GDALProgressFunc pfnProgress, void * pProgressData );
 
 static int 
-NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, vsi_l_offset nStartOffset, 
+NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffset,
                     char **papszOptions,
                     GDALProgressFunc pfnProgress, void * pProgressData )
 {

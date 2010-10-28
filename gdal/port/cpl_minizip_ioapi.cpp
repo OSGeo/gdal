@@ -73,7 +73,7 @@ int ZCALLBACK ferror_file_func OF((
 static
 voidpf ZCALLBACK fopen_file_func (voidpf opaque, const char* filename, int mode)
 {
-    FILE* file = NULL;
+    VSILFILE* file = NULL;
     const char* mode_fopen = NULL;
     if ((mode & ZLIB_FILEFUNC_MODE_READWRITEFILTER)==ZLIB_FILEFUNC_MODE_READ)
         mode_fopen = "rb";
@@ -93,7 +93,7 @@ static
 uLong ZCALLBACK fread_file_func (voidpf opaque, voidpf stream, void* buf, uLong size)
 {
     uLong ret;
-    ret = (uLong)VSIFReadL(buf, 1, (size_t)size, (FILE *)stream);
+    ret = (uLong)VSIFReadL(buf, 1, (size_t)size, (VSILFILE *)stream);
     return ret;
 }
 
@@ -101,7 +101,7 @@ static
 uLong ZCALLBACK fwrite_file_func (voidpf opaque, voidpf stream, const void* buf, uLong size)
 {
     uLong ret;
-    ret = (uLong)VSIFWriteL(buf, 1, (size_t)size, (FILE *)stream);
+    ret = (uLong)VSIFWriteL(buf, 1, (size_t)size, (VSILFILE *)stream);
     return ret;
 }
 
@@ -109,7 +109,7 @@ static
 uLong64 ZCALLBACK ftell_file_func (voidpf opaque, voidpf stream)
 {
     uLong64 ret;
-    ret = VSIFTellL((FILE *)stream);
+    ret = VSIFTellL((VSILFILE *)stream);
     return ret;
 }
 
@@ -132,7 +132,7 @@ long ZCALLBACK fseek_file_func (voidpf  opaque, voidpf stream, uLong64 offset, i
     default: return -1;
     }
     ret = 0;
-    VSIFSeekL((FILE *)stream, offset, fseek_origin);
+    VSIFSeekL((VSILFILE *)stream, offset, fseek_origin);
     return ret;
 }
 
@@ -140,7 +140,7 @@ static
 int ZCALLBACK fclose_file_func (voidpf opaque, voidpf stream)
 {
     int ret;
-    ret = VSIFCloseL((FILE *)stream);
+    ret = VSIFCloseL((VSILFILE *)stream);
     return ret;
 }
 

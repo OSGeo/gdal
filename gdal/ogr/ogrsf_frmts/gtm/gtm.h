@@ -73,11 +73,11 @@ void appendInt(void* pBuffer, int val);
 void appendUChar(void* pBuffer, unsigned char val);
 void appendUShort(void* pBuffer, unsigned short val);
 
-void writeDouble(FILE* fp, double val);
-void writeFloat(FILE* fp, float val);
-void writeInt(FILE* fp, int val);
-void writeUChar(FILE* fp, unsigned char val);
-void writeUShort(FILE* fp, unsigned short);
+void writeDouble(VSILFILE* fp, double val);
+void writeFloat(VSILFILE* fp, float val);
+void writeInt(VSILFILE* fp, int val);
+void writeUChar(VSILFILE* fp, unsigned char val);
+void writeUShort(VSILFILE* fp, unsigned short);
 
 
 class Waypoint
@@ -168,7 +168,7 @@ public:
 
 private:
     // File descriptor
-    FILE* pGTMFile;
+    VSILFILE* pGTMFile;
     char* pszFilename;
 
     // GTM Header Parameters

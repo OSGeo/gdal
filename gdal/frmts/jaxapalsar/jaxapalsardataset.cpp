@@ -171,7 +171,7 @@ public:
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static int Identify( GDALOpenInfo *poOpenInfo );
-    static void ReadMetadata( PALSARJaxaDataset *poDS, FILE *fp );
+    static void ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp );
 };
 
 PALSARJaxaDataset::PALSARJaxaDataset()
@@ -196,7 +196,7 @@ PALSARJaxaDataset::~PALSARJaxaDataset()
 /************************************************************************/
 
 class PALSARJaxaRasterBand : public GDALRasterBand {
-    FILE *fp;
+    VSILFILE *fp;
     int nRasterXSize;
     int nRasterYSize;
     ePolarization nPolarization;
@@ -205,7 +205,7 @@ class PALSARJaxaRasterBand : public GDALRasterBand {
     int nSamplesPerGroup;
     int nRecordSize;
 public:
-    PALSARJaxaRasterBand( PALSARJaxaDataset *poDS, int nBand, FILE *fp );
+    PALSARJaxaRasterBand( PALSARJaxaDataset *poDS, int nBand, VSILFILE *fp );
     ~PALSARJaxaRasterBand();
 
     CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
@@ -216,7 +216,7 @@ public:
 /************************************************************************/
 
 PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS, 
-	int nBand, FILE *fp ) 
+	int nBand, VSILFILE *fp )
 {
     this->fp = fp;
 
@@ -348,7 +348,7 @@ const GDAL_GCP *PALSARJaxaDataset::GetGCPs() {
 /*                            ReadMetadata()                            */
 /************************************************************************/
 
-void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, FILE *fp ) {
+void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
     /* seek to the end fo the leader file descriptor */
     VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH, SEEK_SET );
     if (poDS->nFileType == level_11) {
@@ -470,7 +470,7 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
         return 0;
     }
 
-    FILE *fpL = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+    VSILFILE *fpL = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     if( fpL == NULL )
         return FALSE;
 
@@ -536,7 +536,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     int nBandNum = 1;
 
     /* HH */
-    FILE *fpHH;
+    VSILFILE *fpHH;
     sprintf( pszImgFile, "%s%sIMG-HH%s", 
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpHH = VSIFOpenL( pszImgFile, "rb" );
@@ -546,7 +546,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     }
 
     /* HV */
-    FILE *fpHV;
+    VSILFILE *fpHV;
     sprintf( pszImgFile, "%s%sIMG-HV%s", 
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpHV = VSIFOpenL( pszImgFile, "rb" );
@@ -556,7 +556,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     }
 
     /* VH */
-    FILE *fpVH;
+    VSILFILE *fpVH;
     sprintf( pszImgFile, "%s%sIMG-VH%s", 
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpVH = VSIFOpenL( pszImgFile, "rb" );
@@ -566,7 +566,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     }
 
     /* VV */
-    FILE *fpVV;
+    VSILFILE *fpVV;
     sprintf( pszImgFile, "%s%sIMG-VV%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpVV = VSIFOpenL( pszImgFile, "rb" );
@@ -592,7 +592,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     sprintf( pszLeaderFilename, "%s%sLED%s", 
              CPLGetDirname( poOpenInfo->pszFilename ) , SEP_STRING, pszSuffix );
 
-    FILE *fpLeader = VSIFOpenL( pszLeaderFilename, "rb" );
+    VSILFILE *fpLeader = VSIFOpenL( pszLeaderFilename, "rb" );
     /* check if the leader is actually present */
     if (fpLeader != NULL) {
         ReadMetadata(poDS, fpLeader);

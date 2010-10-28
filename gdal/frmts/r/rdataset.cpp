@@ -58,7 +58,7 @@ RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 class RDataset : public GDALPamDataset
 {
     friend class RRasterBand;
-    FILE       *fp;
+    VSILFILE       *fp;
     int         bASCII;
     CPLString   osLastStringRead;
 

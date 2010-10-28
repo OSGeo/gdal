@@ -123,7 +123,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
 /*      result is a stringlist, in the sense of the CSL functions.      */
 /************************************************************************/
 
-char **OGRCSVReadParseLineL( FILE * fp, char chDelimiter )
+char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter )
 
 {
     const char  *pszLine;
@@ -195,7 +195,7 @@ char **OGRCSVReadParseLineL( FILE * fp, char chDelimiter )
 /************************************************************************/
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn, 
-                          FILE * fp, const char *pszFilename, int bNew, int bInWriteMode,
+                          VSILFILE * fp, const char *pszFilename, int bNew, int bInWriteMode,
                           char chDelimiter)
 
 {
@@ -288,7 +288,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     if (!bNew) {
         char* dname = strdup(CPLGetDirname(pszFilename));
         char* fname = strdup(CPLGetBasename(pszFilename));
-        FILE* fpCSVT = VSIFOpenL(CPLFormFilename(dname, fname, ".csvt"), "r");
+        VSILFILE* fpCSVT = VSIFOpenL(CPLFormFilename(dname, fname, ".csvt"), "r");
         free(dname);
         free(fname);
         if (fpCSVT!=NULL) {
@@ -656,7 +656,7 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 
       for(int iFile=0;iFile<((bCreateCSVT) ? 2 : 1);iFile++)
       {
-        FILE* fpCSVT = NULL;
+        VSILFILE* fpCSVT = NULL;
         if (bCreateCSVT && iFile == 0)
         {
             char* pszDirName = CPLStrdup(CPLGetDirname(pszFilename));

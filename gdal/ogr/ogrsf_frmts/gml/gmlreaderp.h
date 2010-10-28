@@ -32,6 +32,7 @@
 
 #include "gmlreader.h"
 #include "ogr_api.h"
+#include "cpl_vsi.h"
 
 class GMLReader;
 
@@ -107,12 +108,12 @@ XERCES_CPP_NAMESPACE_USE
 /************************************************************************/
 class GMLBinInputStream : public BinInputStream
 {
-    FILE* fp;
+    VSILFILE* fp;
     XMLCh emptyString;
 
 public :
 
-             GMLBinInputStream(FILE* fp);
+             GMLBinInputStream(VSILFILE* fp);
     virtual ~GMLBinInputStream();
 
 #if XERCES_VERSION_MAJOR >= 3
@@ -134,7 +135,7 @@ class GMLInputSource : public InputSource
     GMLBinInputStream* binInputStream;
 
 public:
-             GMLInputSource(FILE* fp, 
+             GMLInputSource(VSILFILE* fp,
                             MemoryManager* const manager = XMLPlatformUtils::fgMemoryManager);
     virtual ~GMLInputSource();
 
@@ -278,7 +279,7 @@ private:
     int           nFeatureTabLength;
     int           nFeatureTabIndex;
 #endif
-    FILE*         fpGML;
+    VSILFILE*     fpGML;
     int           m_bReadStarted;
 
     GMLReadState *m_poState;

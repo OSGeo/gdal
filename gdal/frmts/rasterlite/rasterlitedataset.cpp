@@ -192,7 +192,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             int nDataSize = 0;
             GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
 
-            FILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
+            VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
                                               nDataSize, FALSE);
             VSIFCloseL(fp);
             
@@ -749,7 +749,7 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
     
     CPLString osMemFileName;
     osMemFileName.Printf("/vsimem/%p", this);
-    FILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
+    VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
                                       nDataSize, FALSE);
     VSIFCloseL(fp);
     

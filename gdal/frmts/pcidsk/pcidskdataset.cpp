@@ -640,7 +640,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         vsi_l_offset    nPixelOffset = 0, nLineOffset = 0, nLineSize = 0;
         int             bNativeOrder;
         int             i;
-        FILE            *fp = poDS->fp;
+        VSILFILE       *fp = poDS->fp;
 
         VSIFSeekL( poDS->fp, nImgHdrOffset, SEEK_SET );
         if ( VSIFReadL( szTemp, 1, 1024, poDS->fp ) != 1024 )
@@ -732,9 +732,9 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                   }
 
                   poDS->nBandFileCount++;
-                  poDS->pafpBandFiles = (FILE **)
+                  poDS->pafpBandFiles = (VSILFILE **)
                       CPLRealloc( poDS->pafpBandFiles,
-                                  poDS->nBandFileCount * sizeof(FILE*) );
+                                  poDS->nBandFileCount * sizeof(VSILFILE*) );
                   poDS->pafpBandFiles[poDS->nBandFileCount-1] = fp;
               }
 
@@ -1247,7 +1247,7 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    FILE        *fp = VSIFOpenL( pszFilename, "wb" );
+    VSILFILE        *fp = VSIFOpenL( pszFilename, "wb" );
 
     if( fp == NULL )
     {

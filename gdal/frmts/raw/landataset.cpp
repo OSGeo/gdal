@@ -132,7 +132,7 @@ class LAN4BitRasterBand : public GDALPamRasterBand
 class LANDataset : public RawDataset
 {
   public:
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
     
     char	pachHeader[ERD_HEADER_SIZE];
 
@@ -540,7 +540,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     char *pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
     const char *pszTRLFilename = 
         CPLFormCIFilename( pszPath, pszBasename, "trl" );
-    FILE *fpTRL;
+    VSILFILE *fpTRL;
 
     fpTRL = VSIFOpenL( pszTRLFilename, "rb" );
     if( fpTRL != NULL )
@@ -644,7 +644,7 @@ void LANDataset::CheckForStatistics()
 /* -------------------------------------------------------------------- */
     osSTAFilename = CPLResetExtension(GetDescription(),"sta");
 
-    FILE *fpSTA = VSIFOpenL( osSTAFilename, "r" );
+    VSILFILE *fpSTA = VSIFOpenL( osSTAFilename, "r" );
 
     if( fpSTA == NULL && VSIIsCaseSensitiveFS(osSTAFilename) )
     {

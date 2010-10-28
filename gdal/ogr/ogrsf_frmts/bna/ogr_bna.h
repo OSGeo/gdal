@@ -58,7 +58,7 @@ class OGRBNALayer : public OGRLayer
     int                failed;
     int                curLine;
     int                nNextFID;
-    FILE*              fpBNA;
+    VSILFILE*              fpBNA;
     int                nFeatures;
     int                partialIndexTable;
     OffsetAndLine*     offsetAndLineFeaturesTable;
@@ -67,8 +67,8 @@ class OGRBNALayer : public OGRLayer
 
     OGRFeature *       BuildFeatureFromBNARecord (BNARecord* record, long fid);
     void               FastParseUntil ( int interestFID);
-    void               WriteFeatureAttributes(FILE* fp, OGRFeature *poFeature);
-    void               WriteCoord(FILE* fp, double dfX, double dfY);
+    void               WriteFeatureAttributes(VSILFILE* fp, OGRFeature *poFeature);
+    void               WriteCoord(VSILFILE* fp, double dfX, double dfY);
     
   public:
                         OGRBNALayer(const char *pszFilename,
@@ -112,7 +112,7 @@ class OGRBNADataSource : public OGRDataSource
     int                 bUpdate;
     
     /*  Export related */
-    FILE                *fpOutput; /* Virtual file API */
+    VSILFILE                *fpOutput; /* Virtual file API */
     int                 bUseCRLF;
     int                 bMultiLine;
     int                 nbOutID;
@@ -125,7 +125,7 @@ class OGRBNADataSource : public OGRDataSource
                         OGRBNADataSource();
                         ~OGRBNADataSource();
 
-    FILE                *GetOutputFP() { return fpOutput; }
+    VSILFILE                *GetOutputFP() { return fpOutput; }
     int                 GetUseCRLF() { return bUseCRLF; }
     int                 GetMultiLine() { return bMultiLine; }
     int                 GetNbOutId() { return nbOutID; }

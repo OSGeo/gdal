@@ -95,7 +95,7 @@ char **CPL_STDCALL GDALLoadRPBFile( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     CPLKeywordParser oParser;
 
-    FILE *fp = VSIFOpenL( osTarget, "r" );
+    VSILFILE *fp = VSIFOpenL( osTarget, "r" );
 
     if( fp == NULL )
         return NULL;
@@ -296,7 +296,7 @@ CPLErr CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Read file and parse.                                            */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpenL( osRPBFilename, "w" );
+    VSILFILE *fp = VSIFOpenL( osRPBFilename, "w" );
 
     if( fp == NULL )
     {
@@ -539,7 +539,7 @@ char ** CPL_STDCALL GDALLoadIMDFile( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     CPLKeywordParser oParser;
 
-    FILE *fp = VSIFOpenL( osTarget, "r" );
+    VSILFILE *fp = VSIFOpenL( osTarget, "r" );
 
     if( fp == NULL )
         return NULL;
@@ -576,7 +576,7 @@ char ** CPL_STDCALL GDALLoadIMDFile( const char *pszFilename,
 /*      Write a value that is split over multiple lines.                */
 /************************************************************************/
  
-static void GDALWriteIMDMultiLine( FILE *fp, const char *pszValue )
+static void GDALWriteIMDMultiLine( VSILFILE *fp, const char *pszValue )
 
 {
     char **papszItems = CSLTokenizeStringComplex( pszValue, "(,) ", 
@@ -609,7 +609,7 @@ CPLErr CPL_STDCALL GDALWriteIMDFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Read file and parse.                                            */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpenL( osRPBFilename, "w" );
+    VSILFILE *fp = VSIFOpenL( osRPBFilename, "w" );
 
     if( fp == NULL )
     {

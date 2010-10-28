@@ -47,7 +47,7 @@ CPL_CVSID("$Id$");
 class VSISubFileHandle : public VSIVirtualHandle
 { 
   public:
-    FILE          *fp;
+    VSILFILE     *fp;
     vsi_l_offset  nSubregionOffset;
     vsi_l_offset  nSubregionSize;
     int           bUpdate;
@@ -309,7 +309,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Open the underlying file.                                       */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpenL( osSubFilePath, pszAccess );
+    VSILFILE *fp = VSIFOpenL( osSubFilePath, pszAccess );
     
     if( fp == NULL )
         return NULL;

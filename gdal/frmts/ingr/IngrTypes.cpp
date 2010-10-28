@@ -401,7 +401,7 @@ uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
 //                                                       INGR_GetTileDirectory()
 // -----------------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
+uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
                                           uint32 nOffset,
                                           int nBandXSize,
                                           int nBandYSize,
@@ -493,7 +493,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
 //                                                          INGR_GetIGDSColors()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
+void CPL_STDCALL INGR_GetIGDSColors( VSILFILE *fp,
                                      uint32 nOffset,
                                      uint32 nEntries,
                                      GDALColorTable *poColorTable )
@@ -580,7 +580,7 @@ uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
 //                                                      INGR_GetEnvironVColors()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
+void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
                              uint32 nOffset,
                              uint32 nEntries,
                              GDALColorTable *poColorTable )
@@ -806,7 +806,7 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
                                                     nJPGComponents,
                                                     0,
                                                     nQuality );
-            FILE *fp = VSIFOpenL( hVirtual.pszFileName, "w+" );
+            VSILFILE *fp = VSIFOpenL( hVirtual.pszFileName, "w+" );
             VSIFWriteL( pabyHeader, 1, nHeaderSize, fp );
             VSIFWriteL( pabyBuffer, 1, nBufferSize, fp );
             VSIFCloseL( fp );
@@ -860,7 +860,7 @@ void CPL_STDCALL INGR_ReleaseVirtual( INGR_VirtualFile *poTiffMem )
 //                                                            INGR_ReleaseVirtual()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
+int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
                                       uint32 nSeekLimit )
 {
     if( nAppDataOfseet == 0  )

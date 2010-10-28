@@ -264,7 +264,7 @@ OGRLayer *OGRDXFWriterDS::CreateLayer( const char *pszName,
 /*                             WriteValue()                             */
 /************************************************************************/
 
-static int WriteValue( FILE *fp, int nCode, const char *pszLine )
+static int WriteValue( VSILFILE *fp, int nCode, const char *pszLine )
 
 {
     char szLinePair[300];
@@ -285,7 +285,7 @@ static int WriteValue( FILE *fp, int nCode, const char *pszLine )
 /*                        TransferUpdateHeader()                        */
 /************************************************************************/
 
-int OGRDXFWriterDS::TransferUpdateHeader( FILE *fpOut )
+int OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
 
 {
     oHeaderDS.ResetReadPointer( 0 );
@@ -403,10 +403,10 @@ int OGRDXFWriterDS::TransferUpdateHeader( FILE *fpOut )
 /*                       TransferUpdateTrailer()                        */
 /************************************************************************/
 
-int OGRDXFWriterDS::TransferUpdateTrailer( FILE *fpOut )
+int OGRDXFWriterDS::TransferUpdateTrailer( VSILFILE *fpOut )
 {
     OGRDXFReader oReader;
-    FILE *fp;
+    VSILFILE *fp;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file and setup a reader.                               */
@@ -471,7 +471,7 @@ int OGRDXFWriterDS::TransferUpdateTrailer( FILE *fpOut )
 /*                      WriteNewLayerDefinitions()                      */
 /************************************************************************/
 
-int  OGRDXFWriterDS::WriteNewLayerDefinitions( FILE * fpOut )
+int  OGRDXFWriterDS::WriteNewLayerDefinitions( VSILFILE * fpOut )
 
 {                                               
     int iLayer, nNewLayers = CSLCount(papszLayersToCreate);
@@ -504,7 +504,7 @@ int  OGRDXFWriterDS::WriteNewLayerDefinitions( FILE * fpOut )
 /*                      WriteNewLineTypeRecords()                       */
 /************************************************************************/
 
-int OGRDXFWriterDS::WriteNewLineTypeRecords( FILE *fp )
+int OGRDXFWriterDS::WriteNewLineTypeRecords( VSILFILE *fp )
 
 {
     std::map<CPLString,CPLString>::iterator oIt;
@@ -535,7 +535,7 @@ int OGRDXFWriterDS::WriteNewLineTypeRecords( FILE *fp )
 /*                        WriteNewBlockRecords()                        */
 /************************************************************************/
 
-int OGRDXFWriterDS::WriteNewBlockRecords( FILE * fp )
+int OGRDXFWriterDS::WriteNewBlockRecords( VSILFILE * fp )
 
 {
     std::set<CPLString> aosAlreadyHandled;
@@ -582,7 +582,7 @@ int OGRDXFWriterDS::WriteNewBlockRecords( FILE * fp )
 /*                      WriteNewBlockDefinitions()                      */
 /************************************************************************/
 
-int OGRDXFWriterDS::WriteNewBlockDefinitions( FILE * fp )
+int OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fp )
 
 {
     poLayer->ResetFP( fp );
@@ -676,7 +676,7 @@ void OGRDXFWriterDS::ScanForEntities( const char *pszFilename,
 
 {
     OGRDXFReader oReader;
-    FILE *fp;
+    VSILFILE *fp;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file and setup a reader.                               */
@@ -743,7 +743,7 @@ int OGRDXFWriterDS::CheckEntityID( const char *pszEntityID )
 /*                           WriteEntityID()                            */
 /************************************************************************/
 
-long OGRDXFWriterDS::WriteEntityID( FILE *fp, long nPreferredFID )
+long OGRDXFWriterDS::WriteEntityID( VSILFILE *fp, long nPreferredFID )
 
 {
     CPLString osEntityID;

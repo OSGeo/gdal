@@ -47,7 +47,7 @@
 class VSIPDFFileStream: public BaseStream
 {
     public:
-        VSIPDFFileStream(FILE* f, const char* pszFilename,
+        VSIPDFFileStream(VSILFILE* f, const char* pszFilename,
                          Guint startA, GBool limitedA,
                          Guint lengthA, Object *dictA);
         VSIPDFFileStream(VSIPDFFileStream* poParent,
@@ -75,7 +75,7 @@ class VSIPDFFileStream: public BaseStream
     private:
         VSIPDFFileStream  *poParent;
         GooString         *poFilename;
-        FILE              *f;
+        VSILFILE          *f;
         int                nStart;
         int                bLimited;
         int                nLength;

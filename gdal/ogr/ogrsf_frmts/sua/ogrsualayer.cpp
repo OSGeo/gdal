@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 /*                            OGRSUALayer()                             */
 /************************************************************************/
 
-OGRSUALayer::OGRSUALayer( FILE* fp )
+OGRSUALayer::OGRSUALayer( VSILFILE* fp )
 
 {
     fpSUA = fp;

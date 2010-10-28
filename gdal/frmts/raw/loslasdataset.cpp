@@ -74,7 +74,7 @@ even the header record is this length though it means some waste.
 class LOSLASDataset : public RawDataset
 {
   public:
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
 
     int         nRecordLength;
     

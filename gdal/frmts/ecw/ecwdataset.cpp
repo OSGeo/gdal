@@ -1045,7 +1045,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     NCSError         eErr;
     CNCSError        oErr;
     int              i;
-    FILE            *fpVSIL = NULL;
+    VSILFILE        *fpVSIL = NULL;
     VSIIOStream *poIOStream = NULL;
     int              bUsingCustomStream = FALSE;
 

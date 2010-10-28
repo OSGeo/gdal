@@ -43,7 +43,7 @@ CPL_CVSID("$Id$");
 /*                         OGRDXFWriterLayer()                          */
 /************************************************************************/
 
-OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDS, FILE *fp )
+OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDS, VSILFILE *fp )
 
 {
     this->fp = fp;
@@ -102,7 +102,7 @@ OGRDXFWriterLayer::~OGRDXFWriterLayer()
 /*      Redirect output.  Mostly used for writing block definitions.    */
 /************************************************************************/
 
-void OGRDXFWriterLayer::ResetFP( FILE *fpNew )
+void OGRDXFWriterLayer::ResetFP( VSILFILE *fpNew )
 
 {
     fp = fpNew;

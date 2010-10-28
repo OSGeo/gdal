@@ -54,7 +54,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
 {
     friend class AAIGRasterBand;
     
-    FILE        *fp;
+    VSILFILE   *fp;
 
     double      adfGeoTransform[6];
     char        **papszPrj;
@@ -750,7 +750,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    FILE        *fpImage;
+    VSILFILE        *fpImage;
 
     fpImage = VSIFOpenL( pszFilename, "wt" );
     if( fpImage == NULL )
@@ -930,7 +930,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         char                    *pszDirname, *pszBasename;
         char                    *pszPrjFilename;
         char                    *pszESRIProjection = NULL;
-        FILE                    *fp;
+        VSILFILE                *fp;
         OGRSpatialReference     oSRS;
 
         pszDirname = CPLStrdup( CPLGetPath(pszFilename) );

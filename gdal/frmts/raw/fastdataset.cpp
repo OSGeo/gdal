@@ -112,7 +112,7 @@ class FASTDataset : public GDALPamDataset
 
     FILE	*fpHeader;
     CPLString apoChannelFilenames[7];
-    FILE	*fpChannels[7];
+    VSILFILE	*fpChannels[7];
     const char	*pszFilename;
     char	*pszDirname;
     GDALDataType eDataType;
@@ -128,7 +128,7 @@ class FASTDataset : public GDALPamDataset
 
     CPLErr 	GetGeoTransform( double * );
     const char	*GetProjectionRef();
-    FILE	*FOpenChannel( const char *, int iBand, int iFASTBand );
+    VSILFILE	*FOpenChannel( const char *, int iBand, int iFASTBand );
     void        TryEuromap_IRS_1C_1D_ChannelNameConvention();
     
     virtual  char** GetFileList();
@@ -146,7 +146,7 @@ class FASTRasterBand : public RawRasterBand
 
   public:
 
-    		FASTRasterBand( FASTDataset *, int, FILE *, vsi_l_offset,
+    		FASTRasterBand( FASTDataset *, int, VSILFILE *, vsi_l_offset,
 				int, int, GDALDataType, int );
 };
 
@@ -155,7 +155,7 @@ class FASTRasterBand : public RawRasterBand
 /*                           FASTRasterBand()                           */
 /************************************************************************/
 
-FASTRasterBand::FASTRasterBand( FASTDataset *poDS, int nBand, FILE * fpRaw,
+FASTRasterBand::FASTRasterBand( FASTDataset *poDS, int nBand, VSILFILE * fpRaw,
                                 vsi_l_offset nImgOffset, int nPixelOffset,
                                 int nLineOffset, GDALDataType eDataType,
 				int bNativeOrder) :
@@ -271,7 +271,7 @@ int FASTDataset::OpenChannel( const char *pszFilename, int iBand )
 /************************************************************************/
 
 
-FILE *FASTDataset::FOpenChannel( const char *pszBandname, int iBand, int iFASTBand )
+VSILFILE *FASTDataset::FOpenChannel( const char *pszBandname, int iBand, int iFASTBand )
 {
     const char	*pszChannelFilename = NULL;
     char	*pszPrefix = CPLStrdup( CPLGetBasename( pszFilename ) );

@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
 /*                             GDALJP2Box()                             */
 /************************************************************************/
 
-GDALJP2Box::GDALJP2Box( FILE *fpIn )
+GDALJP2Box::GDALJP2Box( VSILFILE *fpIn )
 
 {
     fpVSIL = fpIn;

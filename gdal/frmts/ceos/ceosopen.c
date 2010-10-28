@@ -184,7 +184,7 @@ void CEOSDestroyRecord( CEOSRecord * psRecord )
 CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
 
 {
-    FILE	*fp;
+    VSILFILE	*fp;
     CEOSRecord  *psRecord;
     CEOSImage   *psImage;
     int		nSeqNum, i;

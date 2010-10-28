@@ -71,9 +71,9 @@ class GSAGDataset : public GDALPamDataset
     static const int nFIELD_PRECISION;
     static const size_t nMAX_HEADER_SIZE;
 
-    static CPLErr ShiftFileContents( FILE *, vsi_l_offset, int, const char * );
+    static CPLErr ShiftFileContents( VSILFILE *, vsi_l_offset, int, const char * );
 
-    FILE	*fp;
+    VSILFILE	*fp;
     size_t	 nMinMaxZOffset;
     char	 szEOL[3];
 
@@ -1163,7 +1163,7 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
 /************************************************************************/
 /*                         ShiftFileContents()                          */
 /************************************************************************/
-CPLErr GSAGDataset::ShiftFileContents( FILE *fp, vsi_l_offset nShiftStart,
+CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
 				       int nShiftSize, const char *pszEOL )
 {
     /* nothing to do for zero-shift */
@@ -1515,7 +1515,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
         return NULL;
     }
 
-    FILE *fp = VSIFOpenL( pszFilename, "w+b" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "w+b" );
 
     if( fp == NULL )
     {

@@ -111,12 +111,11 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
 #endif
                      )
             {
-                fp = VSIFOpenL( pszFilename, "rb" );
-                if( fp != NULL )
+                VSILFILE* fpL = VSIFOpenL( pszFilename, "rb" );
+                if( fpL != NULL )
                 {
-                    nHeaderBytes = (int) VSIFReadL( pabyHeader, 1, 1024, fp );
-                    VSIFCloseL( fp );
-                    fp = NULL;
+                    nHeaderBytes = (int) VSIFReadL( pabyHeader, 1, 1024, fpL );
+                    VSIFCloseL( fpL );
                 }
             }
         }

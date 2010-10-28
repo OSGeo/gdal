@@ -258,7 +258,7 @@ CPLErr JPEGLSDataset::Uncompress()
 
     bHasUncompressed = TRUE;
 
-    FILE* fp = VSIFOpenL(osFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(osFilename, "rb");
     if (!fp)
         return CE_Failure;
 
@@ -401,7 +401,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        FILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+        VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
         if (fp == NULL)
             return NULL;
         GByte abyBuffer[1028];
@@ -631,7 +631,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    FILE* fp = VSIFOpenL(pszFilename, "wb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
     if (fp == NULL)
     {
         VSIFree(pabyDataCompressed);

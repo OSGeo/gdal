@@ -1,5 +1,4 @@
 #include "filedatasource.h"
-#include "cpl_vsi.h"
 #include "cpl_error.h"
 
 FileDataSource::FileDataSource(const char * fileName)
@@ -8,7 +7,7 @@ FileDataSource::FileDataSource(const char * fileName)
     fp = VSIFOpenL(fileName, "rb");
 }
 
-FileDataSource::FileDataSource(FILE * fp)
+FileDataSource::FileDataSource(VSILFILE* fp)
 : closeFile(false)
 {
     this->fp = fp;
@@ -22,7 +21,7 @@ FileDataSource::~FileDataSource()
 
 size_t FileDataSource::DataSourceFread(void* lpBuf, size_t size, size_t count)
 {
-    return VSIFReadL(lpBuf, size, count, fp);
+    return VSIFReadL(lpBuf, size, count, (VSILFILE*)fp);
 }
 
 int FileDataSource::DataSourceFgetc()

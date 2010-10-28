@@ -64,7 +64,7 @@ class ISIS3Dataset;
 
 class ISISTiledBand : public GDALPamRasterBand
 {
-    FILE      *fpVSIL;
+    VSILFILE      *fpVSIL;
     GIntBig   nFirstTileOffset;
     GIntBig   nXTileOffset;
     GIntBig   nYTileOffset;
@@ -72,7 +72,7 @@ class ISISTiledBand : public GDALPamRasterBand
 
   public:
 
-                ISISTiledBand( GDALDataset *poDS, FILE *fpVSIL, 
+                ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
                                int nBand, GDALDataType eDT,
                                int nTileXSize, int nTileYSize, 
                                GIntBig nFirstTileOffset, 
@@ -88,7 +88,7 @@ class ISISTiledBand : public GDALPamRasterBand
 /*                           ISISTiledBand()                            */
 /************************************************************************/
 
-ISISTiledBand::ISISTiledBand( GDALDataset *poDS, FILE *fpVSIL, 
+ISISTiledBand::ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
                               int nBand, GDALDataType eDT,
                               int nTileXSize, int nTileYSize, 
                               GIntBig nFirstTileOffset, 
@@ -167,7 +167,7 @@ CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
 
 class ISIS3Dataset : public RawDataset
 {
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
 
     CPLString   osExternalCube;
     
@@ -311,7 +311,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file using the large file API.                         */
 /* -------------------------------------------------------------------- */
-    FILE *fpQube = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    VSILFILE *fpQube = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
 
     if( fpQube == NULL )
         return NULL;
@@ -406,7 +406,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     float first_std_parallel = 0.0;
     float second_std_parallel = 0.0;
     double radLat, localRadius;
-    FILE	*fp;
+    VSILFILE	*fp;
 
     /*************   Skipbytes     *****************************/
     nSkipBytes = atoi(poDS->GetKeyword("IsisCube.Core.StartByte","")) - 1;
@@ -794,13 +794,13 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     osName = CPLGetBasename(poOpenInfo->pszFilename);
     const char  *pszPrjFile = CPLFormCIFilename( osPath, osName, "prj" );
 
-    fp = VSIFOpen( pszPrjFile, "r" );
+    fp = VSIFOpenL( pszPrjFile, "r" );
     if( fp != NULL )
     {
         char	**papszLines;
         OGRSpatialReference oSRS;
 
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         
         papszLines = CSLLoad( pszPrjFile );
 

@@ -146,7 +146,7 @@ enum
     BNA_LINE_TOO_LONG
 };
 
-static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], FILE* f)
+static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
 {
     char* ptrCurLine = szLineBuffer;
     int nRead = VSIFReadL(szLineBuffer, 1, LINE_BUFFER_SIZE, f);
@@ -212,7 +212,7 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], FILE* f)
 }
 
 
-BNARecord* BNA_GetNextRecord(FILE* f,
+BNARecord* BNA_GetNextRecord(VSILFILE* f,
                              int* ok,
                              int* curLine,
                              int verbose,
