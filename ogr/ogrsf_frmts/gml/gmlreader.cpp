@@ -353,7 +353,7 @@ void GMLReader::CleanupParser()
 
 #if HAVE_XERCES == 1
 
-GMLBinInputStream::GMLBinInputStream(FILE* fp)
+GMLBinInputStream::GMLBinInputStream(VSILFILE* fp)
 {
     this->fp = fp;
     emptyString = 0;
@@ -390,7 +390,7 @@ unsigned int GMLBinInputStream::readBytes(XMLByte* const toFill, const unsigned 
 }
 #endif
 
-GMLInputSource::GMLInputSource(FILE* fp, MemoryManager* const manager) : InputSource(manager)
+GMLInputSource::GMLInputSource(VSILFILE* fp, MemoryManager* const manager) : InputSource(manager)
 {
     binInputStream = new GMLBinInputStream(fp);
 }
@@ -897,7 +897,7 @@ int GMLReader::LoadClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Load the raw XML file.                                          */
 /* -------------------------------------------------------------------- */
-    FILE       *fp;
+    VSILFILE       *fp;
     int         nLength;
     char        *pszWholeText;
 
@@ -1030,7 +1030,7 @@ int GMLReader::SaveClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Serialize to disk.                                              */
 /* -------------------------------------------------------------------- */
-    FILE        *fp;
+    VSILFILE        *fp;
     int         bSuccess = TRUE;
     char        *pszWholeText = CPLSerializeXMLTree( psRoot );
     

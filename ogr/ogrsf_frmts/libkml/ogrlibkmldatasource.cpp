@@ -145,7 +145,7 @@ void OGRLIBKMLDataSource::WriteKml (
 
     if (oKmlOut.size() != 0)
     {
-        FILE* fp = VSIFOpenL( oKmlFilename.c_str(), "wb" );
+        VSILFILE* fp = VSIFOpenL( oKmlFilename.c_str(), "wb" );
         if (fp == NULL)
         {
             CPLError ( CE_Failure, CPLE_FileIO,
@@ -303,7 +303,7 @@ void OGRLIBKMLDataSource::WriteDir (
 
         const char *pszOutfile = CPLFormFilename ( pszName, "doc.kml", NULL );
 
-        FILE* fp = VSIFOpenL( pszOutfile, "wb" );
+        VSILFILE* fp = VSIFOpenL( pszOutfile, "wb" );
         if (fp == NULL)
         {
             CPLError ( CE_Failure, CPLE_FileIO,
@@ -353,7 +353,7 @@ void OGRLIBKMLDataSource::WriteDir (
                                                    GetFileName (  ),
                                                    NULL );
 
-        FILE* fp = VSIFOpenL( pszOutfile, "wb" );
+        VSILFILE* fp = VSIFOpenL( pszOutfile, "wb" );
         if (fp == NULL)
         {
             CPLError ( CE_Failure, CPLE_FileIO,
@@ -379,7 +379,7 @@ void OGRLIBKMLDataSource::WriteDir (
                                                    "style.kml",
                                                    NULL );
 
-        FILE* fp = VSIFOpenL( pszOutfile, "wb" );
+        VSILFILE* fp = VSIFOpenL( pszOutfile, "wb" );
         if (fp == NULL)
         {
             CPLError ( CE_Failure, CPLE_FileIO,
@@ -779,7 +779,7 @@ int OGRLIBKMLDataSource::OpenKml (
     std::string oKmlKml;
     char szBuffer[1024+1];
 
-    FILE* fp = VSIFOpenL(pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)
     {
         CPLError ( CE_Failure, CPLE_OpenFailed,
@@ -876,7 +876,7 @@ int OGRLIBKMLDataSource::OpenKmz (
     std::string oKmlKmz;
     char szBuffer[1024+1];
 
-    FILE* fp = VSIFOpenL(pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)
     {
         CPLError ( CE_Failure, CPLE_OpenFailed,
@@ -1131,7 +1131,7 @@ int OGRLIBKMLDataSource::OpenDir (
         CPLString osFilePath =
             CPLFormFilename ( pszFilename, papszDirList[iFile], NULL );
 
-        FILE* fp = VSIFOpenL(osFilePath, "rb");
+        VSILFILE* fp = VSIFOpenL(osFilePath, "rb");
         if (fp == NULL)
         {
              CPLError ( CE_Failure, CPLE_OpenFailed,
@@ -1250,7 +1250,7 @@ int OGRLIBKMLDataSource::Open (
     else
     {
         char szBuffer[1024+1];
-        FILE* fp = VSIFOpenL(pszFilename, "rb");
+        VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
         if (fp == NULL)
             return FALSE;
 

@@ -52,7 +52,7 @@
 #include <errno.h>
 #include <signal.h>
 
-static void WriteToPipe(FILE* fin, int pipe_fd)
+static void WriteToPipe(VSILFILE* fin, int pipe_fd)
 {
     char buf[PIPE_BUFFER_SIZE];
     while(TRUE)
@@ -64,7 +64,7 @@ static void WriteToPipe(FILE* fin, int pipe_fd)
     }
 }
 
-static void ReadFromPipe(int pipe_fd, FILE* fout)
+static void ReadFromPipe(int pipe_fd, VSILFILE* fout)
 {
     char buf[PIPE_BUFFER_SIZE];
     while(TRUE)
@@ -78,7 +78,7 @@ static void ReadFromPipe(int pipe_fd, FILE* fout)
     }
 }
 
-int ForkAndPipe(const char * const argv[], FILE* fin, FILE* fout)
+int ForkAndPipe(const char * const argv[], VSILFILE* fin, VSILFILE* fout)
 {
     pid_t pid;
     int pipe_in[2] = { -1, -1 };
@@ -138,7 +138,7 @@ int ForkAndPipe(const char * const argv[], FILE* fin, FILE* fout)
 
         CPLString osName;
         osName.Printf("/vsimem/child_stderr_" CPL_FRMT_GIB, CPLGetPID());
-        FILE* ferr = VSIFOpenL(osName.c_str(), "w");
+        VSILFILE* ferr = VSIFOpenL(osName.c_str(), "w");
         ReadFromPipe(pipe_err[IN_FOR_PARENT], ferr);
         close(pipe_err[IN_FOR_PARENT]);
         VSIFCloseL(ferr);
@@ -184,7 +184,7 @@ err:
 
 #include <windows.h>
 
-static void WriteToPipe(FILE* fin, HANDLE pipe_fd)
+static void WriteToPipe(VSILFILE* fin, HANDLE pipe_fd)
 {
     char buf[PIPE_BUFFER_SIZE];
     while(TRUE)
@@ -198,7 +198,7 @@ static void WriteToPipe(FILE* fin, HANDLE pipe_fd)
     }
 }
 
-static void ReadFromPipe(HANDLE pipe_fd, FILE* fout)
+static void ReadFromPipe(HANDLE pipe_fd, VSILFILE* fout)
 {
     char buf[PIPE_BUFFER_SIZE];
     while(TRUE)
@@ -214,7 +214,7 @@ static void ReadFromPipe(HANDLE pipe_fd, FILE* fout)
     }
 }
 
-int ForkAndPipe(const char * const argv[], FILE* fin, FILE* fout)
+int ForkAndPipe(const char * const argv[], VSILFILE* fin, VSILFILE* fout)
 {
     HANDLE pipe_in[2] = {NULL, NULL};
     HANDLE pipe_out[2] = {NULL, NULL};
@@ -225,7 +225,7 @@ int ForkAndPipe(const char * const argv[], FILE* fin, FILE* fout)
     CPLString osCommandLine;
     int i;
     CPLString osName;
-    FILE* ferr;
+    VSILFILE* ferr;
     vsi_l_offset nDataLength = 0;
     GByte* pData;
 

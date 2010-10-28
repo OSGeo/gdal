@@ -31,6 +31,7 @@
 #define _ISO8211_H_INCLUDED
 
 #include "cpl_port.h"
+#include "cpl_vsi.h"
 
 /**
   General data type
@@ -115,10 +116,10 @@ class CPL_ODLL DDFModule
     void        RemoveCloneRecord( DDFRecord * );
     
     // This is just for DDFRecord.
-    FILE        *GetFP() { return fpDDF; }
+    VSILFILE   *GetFP() { return fpDDF; }
     
   private:
-    FILE        *fpDDF;
+    VSILFILE    *fpDDF;
     int         bReadOnly;
     long        nFirstRecordOffset;
 

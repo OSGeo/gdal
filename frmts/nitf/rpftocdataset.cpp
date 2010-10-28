@@ -914,7 +914,7 @@ int RPFTOCDataset::IsNonNITFFileTOC(GDALOpenInfo * poOpenInfo, const char* pszFi
     else
     {
         char buffer[48];
-        FILE* fp = NULL;
+        VSILFILE* fp = NULL;
         fp = VSIFOpenL( pszFilename, "rb" );
         if( fp == NULL )
         {
@@ -960,7 +960,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
                                         const char* openInformationName)
 {
     char buffer[48];
-    FILE* fp = NULL;
+    VSILFILE* fp = NULL;
     if (psFile == NULL)
     {
         fp = VSIFOpenL( pszFilename, "rb" );

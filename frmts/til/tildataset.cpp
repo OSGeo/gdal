@@ -200,7 +200,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try to load and parse the .TIL file.                            */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     
     if( fp == NULL )
     {

@@ -49,7 +49,7 @@ class XYZDataset : public GDALPamDataset
 {
     friend class XYZRasterBand;
     
-    FILE       *fp;
+    VSILFILE   *fp;
     int         bHasHeaderLine;
     int         nXIndex;
     int         nYIndex;
@@ -421,14 +421,14 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Find dataset characteristics                                    */
 /* -------------------------------------------------------------------- */
-    FILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
+    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
     if (fp == NULL)
         return NULL;
 
     /* For better performance of CPLReadLine2L() we create a buffered reader */
     /* (except for /vsigzip/ since it has one internally) */
     if (!EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
-        fp = (FILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
+        fp = (VSILFILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
     
     const char* pszLine;
     int nXIndex = -1, nYIndex = -1, nZIndex = -1;
@@ -797,7 +797,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
 /*      Create target file                                              */
 /* -------------------------------------------------------------------- */
 
-    FILE* fp = VSIFOpenL(pszFilename, "wb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
     if (fp == NULL)
     {
         CPLError( CE_Failure, CPLE_AppDefined, 

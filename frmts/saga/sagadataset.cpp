@@ -74,7 +74,7 @@ class SAGADataset : public GDALPamDataset
 									double dfMinX, double dfMinY,
 									double dfCellsize, double dfNoData,
 									double dfZFactor, bool bTopToBottom );
-    FILE				*fp;
+    VSILFILE				*fp;
 
   public:
 		~SAGADataset();
@@ -357,7 +357,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
 
 
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( osHDRFilename, "r" );
     
@@ -672,7 +672,7 @@ CPLErr SAGADataset::WriteHeader( CPLString osHDRFilename, GDALDataType eType,
                                  double dfZFactor, bool bTopToBottom )
 
 {
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( osHDRFilename, "wt" );
 
@@ -766,7 +766,7 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
         return NULL;
     }
 
-    FILE *fp = VSIFOpenL( pszFilename, "w+b" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "w+b" );
 
     if( fp == NULL )
     {

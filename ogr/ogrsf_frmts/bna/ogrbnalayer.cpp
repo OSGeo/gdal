@@ -230,7 +230,7 @@ OGRFeature *OGRBNALayer::GetNextFeature()
 /*                      WriteFeatureAttributes()                        */
 /************************************************************************/
 
-void OGRBNALayer::WriteFeatureAttributes(FILE* fp, OGRFeature *poFeature )
+void OGRBNALayer::WriteFeatureAttributes(VSILFILE* fp, OGRFeature *poFeature )
 {
     int i;
     OGRFieldDefn *poFieldDefn;
@@ -273,7 +273,7 @@ void OGRBNALayer::WriteFeatureAttributes(FILE* fp, OGRFeature *poFeature )
 /*                             WriteCoord()                             */
 /************************************************************************/
 
-void OGRBNALayer::WriteCoord(FILE* fp, double dfX, double dfY)
+void OGRBNALayer::WriteCoord(VSILFILE* fp, double dfX, double dfY)
 {
     char szBuffer[64];
     OGRFormatDouble(szBuffer, sizeof(szBuffer), dfX, '.', poDS->GetCoordinatePrecision());
@@ -322,7 +322,7 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( nFeatures++ );
     
-    FILE* fp = poDS->GetOutputFP();
+    VSILFILE* fp = poDS->GetOutputFP();
     int nbPairPerLine = poDS->GetNbPairPerLine();
 
     switch( poGeom->getGeometryType() )

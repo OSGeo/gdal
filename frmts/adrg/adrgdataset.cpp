@@ -42,7 +42,7 @@ class ADRGDataset : public GDALPamDataset
     CPLString    osGENFileName;
     CPLString    osIMGFileName;
 
-    FILE*        fdIMG;
+    VSILFILE*        fdIMG;
     int*         TILEINDEX;
     int          offsetInIMG;
     int          NFC;
@@ -58,8 +58,8 @@ class ADRGDataset : public GDALPamDataset
     
     /* For creation */
     int          bCreation;
-    FILE*        fdGEN;
-    FILE*        fdTHF;
+    VSILFILE*        fdGEN;
+    VSILFILE*        fdTHF;
     int          bGeoTransformValid;
     double       adfGeoTransform[6];
     int          nNextAvailableBlock;
@@ -306,7 +306,7 @@ CPLErr ADRGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     return CE_None;
 }
 
-static unsigned int WriteSubFieldStr(FILE* fd, const char* pszStr, unsigned int size)
+static unsigned int WriteSubFieldStr(VSILFILE* fd, const char* pszStr, unsigned int size)
 {
     char* str = (char*)CPLMalloc(size+1);
     memset(str, ' ', size);
@@ -323,7 +323,7 @@ static unsigned int WriteSubFieldStr(FILE* fd, const char* pszStr, unsigned int 
     return size;
 }
 
-static unsigned int WriteSubFieldInt(FILE* fd, int val, unsigned int size)
+static unsigned int WriteSubFieldInt(VSILFILE* fd, int val, unsigned int size)
 {
     char* str = (char*)CPLMalloc(size+1);
     char formatStr[32];
@@ -334,21 +334,21 @@ static unsigned int WriteSubFieldInt(FILE* fd, int val, unsigned int size)
     return size;
 }
 
-static unsigned int WriteFieldTerminator(FILE* fd)
+static unsigned int WriteFieldTerminator(VSILFILE* fd)
 {
     char fieldTerminator = 30;
     VSIFWriteL(&fieldTerminator, 1, 1, fd);
     return 1;
 }
 
-static unsigned int WriteUnitTerminator(FILE* fd)
+static unsigned int WriteUnitTerminator(VSILFILE* fd)
 {
     char fieldTerminator = 31;
     VSIFWriteL(&fieldTerminator, 1, 1, fd);
     return 1;
 }
 
-static unsigned int WriteLongitude(FILE* fd, double val)
+static unsigned int WriteLongitude(VSILFILE* fd, double val)
 {
     char str[11+1];
     char sign = (val >= 0) ? '+' : '-';
@@ -361,7 +361,7 @@ static unsigned int WriteLongitude(FILE* fd, double val)
     return 11;
 }
 
-static unsigned int WriteLatitude(FILE* fd, double val)
+static unsigned int WriteLatitude(VSILFILE* fd, double val)
 {
     char str[10+1];
     char sign = (val >= 0) ? '+' : '-';
@@ -374,7 +374,7 @@ static unsigned int WriteLatitude(FILE* fd, double val)
     return 10;
 }
 
-static int BeginLeader(FILE* fd, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
+static int BeginLeader(VSILFILE* fd, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
                        int nFields)
 {
     int pos = (int)VSIFTellL(fd);
@@ -382,7 +382,7 @@ static int BeginLeader(FILE* fd, int sizeFieldLength, int sizeFieldPos, int size
     return pos;
 }
 
-static void FinishWriteLeader(FILE* fd, int beginPos, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
+static void FinishWriteLeader(VSILFILE* fd, int beginPos, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
                              int nFields, int* sizeOfFields, const char** nameOfFields)
 {
     int endPos = (int)VSIFTellL(fd);
@@ -428,7 +428,7 @@ static void FinishWriteLeader(FILE* fd, int beginPos, int sizeFieldLength, int s
 }
 
 
-static int BeginHeader(FILE* fd, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
+static int BeginHeader(VSILFILE* fd, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
                        int nFields)
 {
     int pos = (int)VSIFTellL(fd);
@@ -436,7 +436,7 @@ static int BeginHeader(FILE* fd, int sizeFieldLength, int sizeFieldPos, int size
     return pos;
 }
 
-static void FinishWriteHeader(FILE* fd, int beginPos, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
+static void FinishWriteHeader(VSILFILE* fd, int beginPos, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
                              int nFields, int* sizeOfFields, const char** nameOfFields)
 {
     int endPos = (int)VSIFTellL(fd);
@@ -483,7 +483,7 @@ static void FinishWriteHeader(FILE* fd, int beginPos, int sizeFieldLength, int s
     VSIFSeekL(fd, endPos, SEEK_SET);
 }
 
-static int WriteFieldDecl(FILE* fd, char _data_struct_code , char _data_type_code, const char* _fieldName,
+static int WriteFieldDecl(VSILFILE* fd, char _data_struct_code , char _data_type_code, const char* _fieldName,
                            const char* _arrayDescr, const char* _formatControls)
 {
     VSIFWriteL(&_data_struct_code, 1, 1, fd);
@@ -549,7 +549,7 @@ ADRGDataset::~ADRGDataset()
         /* Write header and padding of image */
         VSIFSeekL(fdIMG, 0, SEEK_SET);
         {
-            FILE* fd = fdIMG;
+            VSILFILE* fd = fdIMG;
             int nFields = 0;
             int sizeOfFields[] = { 0, 0, 0, 0 };
             const char* nameOfFields[] = { "000", "001", "PAD", "SCN" };
@@ -1179,7 +1179,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         }
     }
 
-    FILE* fdIMG = VSIFOpenL(pszIMGFileName, "rb");
+    VSILFILE* fdIMG = VSIFOpenL(pszIMGFileName, "rb");
     if (fdIMG == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s\n", pszIMGFileName);
@@ -1742,7 +1742,7 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
         }
     }
 
-    FILE* fdGEN = VSIFOpenL(pszFilename, "wb");
+    VSILFILE* fdGEN = VSIFOpenL(pszFilename, "wb");
     if (fdGEN == NULL)
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -1752,7 +1752,7 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     
     CPLString osDirname(CPLGetDirname(pszFilename));
     CPLString osTransh01THF(CPLFormFilename(osDirname.c_str(), "TRANSH01.THF", NULL));
-    FILE* fdTHF = VSIFOpenL(osTransh01THF.c_str(), "wb");
+    VSILFILE* fdTHF = VSIFOpenL(osTransh01THF.c_str(), "wb");
     if (fdTHF == NULL)
     {
         VSIFCloseL(fdGEN);
@@ -1762,7 +1762,7 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     }
     
     CPLString osImgFilename = CPLResetExtension(pszFilename, "IMG");
-    FILE* fdIMG = VSIFOpenL(osImgFilename.c_str(), "w+b");
+    VSILFILE* fdIMG = VSIFOpenL(osImgFilename.c_str(), "w+b");
     if (fdIMG == NULL)
     {
         VSIFCloseL(fdGEN);
@@ -1804,7 +1804,7 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
 /*                  WriteGENFile_Header()                               */
 /************************************************************************/
 
-static void WriteGENFile_Header(FILE* fd)
+static void WriteGENFile_Header(VSILFILE* fd)
 {
     int nFields = 0;
     int sizeOfFields[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, };
@@ -1845,7 +1845,7 @@ static void WriteGENFile_Header(FILE* fd)
 /************************************************************************/
 
 /* Write DATA_SET_DESCRIPTION_RECORD */
-static void WriteGENFile_DataSetDescriptionRecord(FILE* fd)
+static void WriteGENFile_DataSetDescriptionRecord(VSILFILE* fd)
 {
     int nFields = 0;
     int sizeOfFields[] = {0, 0};
@@ -1874,7 +1874,7 @@ static void WriteGENFile_DataSetDescriptionRecord(FILE* fd)
 /************************************************************************/
 
 /* Write OVERVIEW_RECORD */
-static void WriteGENFile_OverviewRecord(FILE* fd, CPLString& osBaseFileName, int ARV, int BRV, double LSO, double PSO,
+static void WriteGENFile_OverviewRecord(VSILFILE* fd, CPLString& osBaseFileName, int ARV, int BRV, double LSO, double PSO,
                                         int nOvSizeX, int nOvSizeY, int NFL, int NFC, int* TILEINDEX)
 {
     int nFields = 0;
@@ -1954,7 +1954,7 @@ static void WriteGENFile_OverviewRecord(FILE* fd, CPLString& osBaseFileName, int
 /************************************************************************/
 
 /* Write GENERAL_INFORMATION_RECORD */
-static void WriteGENFile_GeneralInformationRecord(FILE* fd, CPLString& osNAM, CPLString& osBAD,
+static void WriteGENFile_GeneralInformationRecord(VSILFILE* fd, CPLString& osNAM, CPLString& osBAD,
                                                   int ARV, int BRV, double LSO, double PSO,
                                                   double* adfGeoTransform, int SCA,
                                                   int nRasterXSize, int nRasterYSize,
@@ -2112,7 +2112,7 @@ void ADRGDataset::WriteGENFile()
 
 void ADRGDataset::WriteTHFFile()
 {
-    FILE* fd = fdTHF;
+    VSILFILE* fd = fdTHF;
 
     /* Write header */
     {

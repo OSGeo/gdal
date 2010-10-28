@@ -234,7 +234,7 @@ int OGRPDSDataSource::LoadTable(const char* pszFilename,
         return FALSE;
     }
 
-    FILE* fp = VSIFOpenL(osTableFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(osTableFilename, "rb");
     if (fp == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s",
@@ -297,7 +297,7 @@ int OGRPDSDataSource::Open( const char * pszFilename, int bUpdateIn)
 //      Does this appear to be a .PDS table file?
 // --------------------------------------------------------------------
 
-    FILE* fp = VSIFOpenL(pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)
         return FALSE;
 
@@ -345,7 +345,7 @@ int OGRPDSDataSource::Open( const char * pszFilename, int bUpdateIn)
         LoadTable(pszFilename, nRecordSize, "TABLE");
     else
     {
-        FILE* fp = VSIFOpenL(pszFilename, "rb");
+        VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
         if (fp == NULL)
             return FALSE;
 

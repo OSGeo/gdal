@@ -43,7 +43,7 @@ typedef enum
 
 class OGRCSVDataSource;
 
-char **OGRCSVReadParseLineL( FILE * fp, char chDelimiter );
+char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter );
 
 /************************************************************************/
 /*                             OGRCSVLayer                              */
@@ -53,7 +53,7 @@ class OGRCSVLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
-    FILE               *fpCSV;
+    VSILFILE           *fpCSV;
 
     int                 nNextFID;
 
@@ -75,7 +75,7 @@ class OGRCSVLayer : public OGRLayer
     int                 bFirstFeatureAppendedDuringSession;
 
   public:
-    OGRCSVLayer( const char *pszName, FILE *fp, const char *pszFilename,
+    OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
                  int bNew, int bInWriteMode, char chDelimiter );
   ~OGRCSVLayer();
 

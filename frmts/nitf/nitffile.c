@@ -35,12 +35,12 @@
 
 CPL_CVSID("$Id$");
 
-static int NITFWriteBLOCKA( FILE* fp, vsi_l_offset nOffsetUDIDL, 
+static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
                             vsi_l_offset nOffsetTRE, 
                             int *pnOffset,
                             char **papszOptions );
 static int NITFWriteTREsFromOptions(
-    FILE* fp,
+    VSILFILE* fp,
     vsi_l_offset nOffsetUDIDL, vsi_l_offset nOffsetTRE,
     int *pnOffset,
     char **papszOptions,
@@ -59,7 +59,7 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLenSize, int nOffset,
 NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
 {
-    FILE	*fp;
+    VSILFILE	*fp;
     char        *pachHeader;
     NITFFile    *psFile;
     int         nHeaderLen, nOffset, nHeaderLenOffset;
@@ -469,7 +469,7 @@ void NITFClose( NITFFile *psFile )
     CPLFree( psFile );
 }
 
-static void NITFGotoOffset(FILE* fp, GUIntBig nLocation)
+static void NITFGotoOffset(VSILFILE* fp, GUIntBig nLocation)
 {
     GUIntBig nCurrentLocation = VSIFTellL(fp);
     if (nLocation > nCurrentLocation)
@@ -507,7 +507,7 @@ int NITFCreate( const char *pszFilename,
                       char **papszOptions )
 
 {
-    FILE	*fp;
+    VSILFILE	*fp;
     GUIntBig    nCur = 0;
     int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
     GIntBig     nImageSize;
@@ -1105,7 +1105,7 @@ int NITFCreate( const char *pszFilename,
 /*                            NITFWriteTRE()                            */
 /************************************************************************/
 
-static int NITFWriteTRE( FILE* fp,
+static int NITFWriteTRE( VSILFILE* fp,
                          vsi_l_offset nOffsetUDIDL, 
                          vsi_l_offset nOffsetTREInHeader, 
                          int  *pnOffset,
@@ -1161,7 +1161,7 @@ static int NITFWriteTRE( FILE* fp,
 /************************************************************************/
 
 static int NITFWriteTREsFromOptions(
-    FILE* fp,
+    VSILFILE* fp,
     vsi_l_offset nOffsetUDIDL, vsi_l_offset nOffsetTRE,
     int *pnOffset,
     char **papszOptions, const char* pszTREPrefix )    
@@ -1231,7 +1231,7 @@ static int NITFWriteTREsFromOptions(
 /*                          NITFWriteBLOCKA()                           */
 /************************************************************************/
 
-static int NITFWriteBLOCKA( FILE* fp, vsi_l_offset nOffsetUDIDL, 
+static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
                             vsi_l_offset nOffsetTRE, 
                             int *pnOffset,
                             char **papszOptions )

@@ -75,7 +75,7 @@ class MFFDataset : public RawDataset
     
     char	**papszHdrLines;
     
-    FILE        **pafpBandFiles;
+    VSILFILE        **pafpBandFiles;
     
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -106,12 +106,12 @@ class MFFTiledBand : public GDALRasterBand
 {
     friend class MFFDataset;
 
-    FILE        *fpRaw;
+    VSILFILE        *fpRaw;
     int         bNative;
 
   public:
 
-                   MFFTiledBand( MFFDataset *, int, FILE *, int, int, 
+                   MFFTiledBand( MFFDataset *, int, VSILFILE *, int, int,
                                  GDALDataType, int );
                    ~MFFTiledBand();
 
@@ -123,7 +123,7 @@ class MFFTiledBand : public GDALRasterBand
 /*                            MFFTiledBand()                            */
 /************************************************************************/
 
-MFFTiledBand::MFFTiledBand( MFFDataset *poDS, int nBand, FILE *fp, 
+MFFTiledBand::MFFTiledBand( MFFDataset *poDS, int nBand, VSILFILE *fp, 
                             int nTileXSize, int nTileYSize, 
                             GDALDataType eDataType, int bNative )
 
@@ -855,7 +855,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             break;
 
         /* open the file for required level of access */
-        FILE     *fpRaw;
+        VSILFILE     *fpRaw;
         const char *pszRawFilename = CPLFormFilename(pszTargetPath, 
                                                      papszDirFiles[i], NULL );
 

@@ -61,18 +61,18 @@ void appendUShort(void* pBuffer, unsigned short val)
     memcpy(pBuffer, &val, 2);
 }
 
-void writeUChar(FILE* fp, unsigned char val)
+void writeUChar(VSILFILE* fp, unsigned char val)
 {
     VSIFWriteL(&val, 1, 1, fp);
 }
 
-void writeDouble(FILE* fp, double val)
+void writeDouble(VSILFILE* fp, double val)
 {
     CPL_LSBPTR64(&val)
     VSIFWriteL(&val, 1, 8, fp);
 }
 
-static double readDouble(FILE* fp)
+static double readDouble(VSILFILE* fp)
 {
     double val;
     VSIFReadL( &val, 1, 8, fp );
@@ -80,7 +80,7 @@ static double readDouble(FILE* fp)
     return val;
 }
 
-static float readFloat(FILE* fp)
+static float readFloat(VSILFILE* fp)
 {
     float val;
     VSIFReadL( &val, 1, 4, fp );
@@ -88,7 +88,7 @@ static float readFloat(FILE* fp)
     return val;
 }
 
-static int readInt(FILE* fp)
+static int readInt(VSILFILE* fp)
 {
     int val;
     VSIFReadL( &val, 1, 4, fp );
@@ -96,14 +96,14 @@ static int readInt(FILE* fp)
     return val;
 }
 
-static unsigned char readUChar(FILE* fp)
+static unsigned char readUChar(VSILFILE* fp)
 {
     unsigned char val;
     VSIFReadL( &val, 1, 1, fp );
     return val;
 }
 
-static unsigned short readUShort(FILE* fp, int *pbSuccess = NULL)
+static unsigned short readUShort(VSILFILE* fp, int *pbSuccess = NULL)
 {
     unsigned short val;
     if (VSIFReadL( &val, 1, 2, fp ) != 2)
@@ -116,19 +116,19 @@ static unsigned short readUShort(FILE* fp, int *pbSuccess = NULL)
     return val;
 }
 
-void writeFloat(FILE* fp, float val)
+void writeFloat(VSILFILE* fp, float val)
 {
     CPL_LSBPTR32(&val)
     VSIFWriteL(&val, 1, 4, fp);
 }
 
-void writeInt(FILE* fp, int val)
+void writeInt(VSILFILE* fp, int val)
 {
     CPL_LSBPTR32(&val)
     VSIFWriteL(&val, 1, 4, fp);
 }
 
-void writeUShort(FILE* fp, unsigned short val)
+void writeUShort(VSILFILE* fp, unsigned short val)
 {
     CPL_LSBPTR16(&val)
     VSIFWriteL(&val, 1, 2, fp);
@@ -345,10 +345,10 @@ bool GTM::isValid()
         char* pszGZIPFileName = (char*)CPLMalloc(
                            strlen("/vsigzip/") + strlen(pszFilename) + 1);
         sprintf(pszGZIPFileName, "/vsigzip/%s", pszFilename);
-        FILE* fp = VSIFOpenL(pszGZIPFileName, "rb");
+        VSILFILE* fp = VSIFOpenL(pszGZIPFileName, "rb");
         if (fp)
         {
-            FILE* pGTMFileOri = pGTMFile;
+            VSILFILE* pGTMFileOri = pGTMFile;
             pGTMFile = fp;
             if (isValid())
             {

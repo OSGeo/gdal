@@ -89,7 +89,7 @@ static const char *CeosExtension[][6] = {
 };
 
 static int 
-ProcessData( FILE *fp, int fileid, CeosSARVolume_t *sar, int max_records, 
+ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
              vsi_l_offset max_bytes );
 
 
@@ -142,7 +142,7 @@ class SAR_CEOSDataset : public GDALPamDataset
 
     CeosSARVolume_t sVolume;
 
-    FILE	*fpImage;
+    VSILFILE	*fpImage;
 
     char        **papszTempMD;
     
@@ -1594,7 +1594,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
     if( fp == NULL )
         return NULL;
 
@@ -1649,7 +1649,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         e = 0;
         while( CeosExtension[e][iFile] != NULL )
         {
-            FILE	*process_fp;
+            VSILFILE	*process_fp;
             char *pszFilename = NULL;
             
             /* build filename */
@@ -1979,7 +1979,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                            ProcessData()                             */
 /************************************************************************/
 static int 
-ProcessData( FILE *fp, int fileid, CeosSARVolume_t *sar, int max_records, 
+ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
              vsi_l_offset max_bytes )
 
 {

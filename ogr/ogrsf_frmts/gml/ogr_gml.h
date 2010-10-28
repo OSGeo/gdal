@@ -103,7 +103,7 @@ class OGRGMLDataSource : public OGRDataSource
     char               **papszCreateOptions;
 
     // output related parameters 
-    FILE                *fpOutput;
+    VSILFILE           *fpOutput;
     int                 bFpOutputIsNonSeekable;
     int                 bFpOutputSingleFile;
     OGREnvelope         sBoundingRect;
@@ -137,14 +137,14 @@ class OGRGMLDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-    FILE                *GetOutputFP() { return fpOutput; }
+    VSILFILE            *GetOutputFP() { return fpOutput; }
     IGMLReader          *GetReader() { return poReader; }
 
     void                GrowExtents( OGREnvelope *psGeomBounds );
 
     int                 ExposeGMLId() { return bExposeGMLId; }
 
-    static void         PrintLine(FILE* fp, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
+    static void         PrintLine(VSILFILE* fp, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
 };
 
 /************************************************************************/

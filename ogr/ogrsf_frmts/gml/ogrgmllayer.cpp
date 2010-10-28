@@ -395,7 +395,7 @@ OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    FILE        *fp = poDS->GetOutputFP();
+    VSILFILE *fp = poDS->GetOutputFP();
 
     if( !bWriter )
         return OGRERR_FAILURE;

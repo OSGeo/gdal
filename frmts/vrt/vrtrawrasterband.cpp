@@ -260,14 +260,14 @@ void VRTRawRasterBand::ClearRawLink()
 {
     if( poRawRaster != NULL )
     {
-        FILE* fp = poRawRaster->GetFP();
+        VSILFILE* fp = poRawRaster->GetFPL();
         delete poRawRaster;
         poRawRaster = NULL;
         /* We close the file after deleting the raster band */
         /* since data can be flushed in the destructor */
         if( fp != NULL )
         {
-            CPLCloseShared( fp );
+            CPLCloseShared( (FILE*) fp );
         }
     }
     CPLFree( pszSourceFilename );

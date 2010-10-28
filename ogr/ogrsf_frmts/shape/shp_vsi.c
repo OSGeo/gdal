@@ -52,7 +52,7 @@ SAOffset VSI_SHP_Read( void *p, SAOffset size, SAOffset nmemb, SAFile file )
 
 {
     return (SAOffset) VSIFReadL( p, (size_t) size, (size_t) nmemb, 
-                                 (FILE *) file );
+                                 (VSILFILE *) file );
 }
 
 /************************************************************************/
@@ -63,7 +63,7 @@ SAOffset VSI_SHP_Write( void *p, SAOffset size, SAOffset nmemb, SAFile file )
 
 {
     return (SAOffset) VSIFWriteL( p, (size_t) size, (size_t) nmemb, 
-                                  (FILE *) file );
+                                  (VSILFILE *) file );
 }
 
 /************************************************************************/
@@ -73,7 +73,7 @@ SAOffset VSI_SHP_Write( void *p, SAOffset size, SAOffset nmemb, SAFile file )
 SAOffset VSI_SHP_Seek( SAFile file, SAOffset offset, int whence )
 
 {
-    return (SAOffset) VSIFSeekL( (FILE *) file, (vsi_l_offset) offset, whence );
+    return (SAOffset) VSIFSeekL( (VSILFILE *) file, (vsi_l_offset) offset, whence );
 }
 
 /************************************************************************/
@@ -83,7 +83,7 @@ SAOffset VSI_SHP_Seek( SAFile file, SAOffset offset, int whence )
 SAOffset VSI_SHP_Tell( SAFile file )
 
 {
-    return (SAOffset) VSIFTellL( (FILE *) file );
+    return (SAOffset) VSIFTellL( (VSILFILE *) file );
 }
 
 /************************************************************************/
@@ -93,7 +93,7 @@ SAOffset VSI_SHP_Tell( SAFile file )
 int VSI_SHP_Flush( SAFile file )
 
 {
-    return VSIFFlushL( (FILE *) file );
+    return VSIFFlushL( (VSILFILE *) file );
 }
 
 /************************************************************************/
@@ -103,7 +103,7 @@ int VSI_SHP_Flush( SAFile file )
 int VSI_SHP_Close( SAFile file )
 
 {
-    return VSIFCloseL( (FILE *) file );
+    return VSIFCloseL( (VSILFILE *) file );
 }
 
 /************************************************************************/

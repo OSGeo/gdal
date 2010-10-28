@@ -41,7 +41,7 @@ class OGRSUALayer : public OGRLayer
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
 
-    FILE*              fpSUA;
+    VSILFILE*          fpSUA;
     int                bEOF;
     int                bHasLastLine;
     CPLString          osLastLine;
@@ -51,7 +51,7 @@ class OGRSUALayer : public OGRLayer
     OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGRSUALayer(FILE* fp);
+                        OGRSUALayer(VSILFILE* fp);
                         ~OGRSUALayer();
 
 

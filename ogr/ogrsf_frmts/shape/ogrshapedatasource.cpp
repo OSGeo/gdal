@@ -304,7 +304,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGRSpatialReference *poSRS = NULL;
     const char  *pszPrjFile = CPLResetExtension( pszNewName, "prj" );
-    FILE        *fp = NULL;
+    VSILFILE        *fp = NULL;
 
     fp = VSIFOpenL( pszPrjFile, "r" );
 
@@ -577,7 +577,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     {
         char    *pszWKT = NULL;
         CPLString osPrjFile = CPLFormFilename( NULL, pszBasename, "prj");
-        FILE    *fp;
+        VSILFILE    *fp;
 
         /* the shape layer needs it's own copy */
         poSRS = poSRS->Clone();

@@ -82,7 +82,7 @@ CPL_CVSID("$Id$");
  * File descriptor file object.
  */
 typedef struct {
-	FILE* fp;
+	VSILFILE* fp;
 } jas_stream_VSIFL_t;
 
 /******************************************************************************\

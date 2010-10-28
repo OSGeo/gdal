@@ -93,7 +93,7 @@ void GDALPamProxyDB::LoadDB()
 /* -------------------------------------------------------------------- */
     CPLString osDBName = 
         CPLFormFilename( osProxyDBDir, "gdal_pam_proxy", "dat" );
-    FILE *fpDB = VSIFOpenL( osDBName, "r" );
+    VSILFILE *fpDB = VSIFOpenL( osDBName, "r" );
 
     nUpdateCounter = 0;
     if( fpDB == NULL )
@@ -186,7 +186,7 @@ void GDALPamProxyDB::SaveDB()
                   osDBName.c_str() );
     }
 
-    FILE *fpDB = VSIFOpenL( osDBName, "w" );
+    VSILFILE *fpDB = VSIFOpenL( osDBName, "w" );
     if( fpDB == NULL )
     {
         if( hLock )

@@ -59,7 +59,7 @@ class EpsilonDataset : public GDALPamDataset
 {
     friend class EpsilonRasterBand;
 
-    FILE*    fp;
+    VSILFILE*    fp;
     vsi_l_offset nFileOff;
     
     GByte*   pabyFileBuf;
@@ -627,7 +627,7 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
         return NULL;
     }
 
-    FILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
     if (fp == NULL)
         return NULL;
     
@@ -780,7 +780,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Open file                                                       */
 /* -------------------------------------------------------------------- */
 
-    FILE* fp = VSIFOpenL(pszFilename, "wb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
     if (fp == NULL)
         return NULL;
 

@@ -64,7 +64,7 @@ OGRDXFReader::~OGRDXFReader()
 /*                             Initialize()                             */
 /************************************************************************/
 
-void OGRDXFReader::Initialize( FILE *fp )
+void OGRDXFReader::Initialize( VSILFILE *fp )
 
 {
     this->fp = fp;

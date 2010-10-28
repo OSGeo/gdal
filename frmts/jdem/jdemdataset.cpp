@@ -85,7 +85,7 @@ class JDEMDataset : public GDALPamDataset
 {
     friend class JDEMRasterBand;
 
-    FILE	*fp;
+    VSILFILE	*fp;
     GByte	abyHeader[1012];
 
   public:

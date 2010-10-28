@@ -1174,7 +1174,7 @@ int OGRGPXLayer::OGRGPX_WriteXMLExtension(const char* pszTagName,
 /*                      WriteFeatureAttributes()                        */
 /************************************************************************/
 
-static void AddIdent(FILE* fp, int nIdentLevel)
+static void AddIdent(VSILFILE* fp, int nIdentLevel)
 {
     int i;
     for(i=0;i<nIdentLevel;i++)
@@ -1183,7 +1183,7 @@ static void AddIdent(FILE* fp, int nIdentLevel)
 
 void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel )
 {
-    FILE* fp = poDS->GetOutputFP();
+    VSILFILE* fp = poDS->GetOutputFP();
     int i;
     
     /* Begin with standard GPX fields */
@@ -1362,7 +1362,7 @@ OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity( double* pdfLatitude, double*
 OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    FILE* fp = poDS->GetOutputFP();
+    VSILFILE* fp = poDS->GetOutputFP();
     if (fp == NULL)
         return CE_Failure;
     

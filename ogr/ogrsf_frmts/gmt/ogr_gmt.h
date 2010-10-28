@@ -54,7 +54,7 @@ class OGRGmtLayer : public OGRLayer
     OGREnvelope         sRegion;
     vsi_l_offset        nRegionOffset;
 
-    FILE               *fp;
+    VSILFILE           *fp;
 
     int                 ReadLine();
     CPLString           osLine;

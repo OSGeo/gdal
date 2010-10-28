@@ -1776,7 +1776,7 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
     osResultFilename.Printf( "/vsimem/wcs/%p/wcsresult.dat", 
                              this );
 
-    FILE *fp = VSIFileFromMemBuffer( osResultFilename, pabyData, nDataLen, 
+    VSILFILE *fp = VSIFileFromMemBuffer( osResultFilename, pabyData, nDataLen,
                                      FALSE );
 
     if( fp == NULL )
@@ -1800,7 +1800,7 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
     if( poDS == NULL )
     {
         CPLString osTempFilename;
-        FILE *fpTemp;
+        VSILFILE *fpTemp;
         
         osTempFilename.Printf( "/tmp/%p_wcs.dat", this );
                                

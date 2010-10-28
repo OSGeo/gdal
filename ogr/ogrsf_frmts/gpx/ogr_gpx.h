@@ -67,7 +67,7 @@ class OGRGPXLayer : public OGRLayer
     int                nFeatures;
     int                eof;
     int                nNextFID;
-    FILE*              fpGPX; /* Large file API */
+    VSILFILE*          fpGPX; /* Large file API */
     const char*        pszElementToScan;
 #ifdef HAVE_EXPAT
     XML_Parser         oParser;
@@ -179,7 +179,7 @@ class OGRGPXDataSource : public OGRDataSource
     int                 nLayers;
 
     /*  Export related */
-    FILE               *fpOutput; /* Large file API */
+    VSILFILE           *fpOutput; /* Large file API */
     int                 bIsBackSeekable;
     const char         *pszEOL;
     int                 nOffsetBounds;
@@ -224,7 +224,7 @@ class OGRGPXDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
     
-    FILE *              GetOutputFP() { return fpOutput; }
+    VSILFILE *              GetOutputFP() { return fpOutput; }
     void                SetLastGPXGeomTypeWritten(GPXGeometryType gpxGeomType)
                             { lastGPXGeomTypeWritten = gpxGeomType; }
     GPXGeometryType     GetLastGPXGeomTypeWritten() { return lastGPXGeomTypeWritten; }

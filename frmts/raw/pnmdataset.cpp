@@ -45,7 +45,7 @@ CPL_C_END
 
 class PNMDataset : public RawDataset
 {
-    FILE        *fpImage;       // image data file.
+    VSILFILE        *fpImage;       // image data file.
 
     int         bGeoTransformValid;
     double      adfGeoTransform[6];
@@ -351,7 +351,7 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    FILE        *fp;
+    VSILFILE        *fp;
 
     fp = VSIFOpenL( pszFilename, "wb" );
 

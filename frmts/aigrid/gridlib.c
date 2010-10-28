@@ -549,7 +549,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 /*      Read a single block of integer grid data.                       */
 /************************************************************************/
 
-CPLErr AIGReadBlock( FILE * fp, GUInt32 nBlockOffset, int nBlockSize,
+CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
                      int nBlockXSize, int nBlockYSize,
                      GInt32 *panData, int nCellType )
 
@@ -783,7 +783,7 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
 
 {
     char	*pszHDRFilename;
-    FILE	*fp;
+    VSILFILE	*fp;
     GByte	abyData[308];
 
 /* -------------------------------------------------------------------- */
@@ -850,7 +850,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 
 {
     char	*pszHDRFilename;
-    FILE	*fp;
+    VSILFILE	*fp;
     int		nLength, i;
     GInt32	nValue;
     GUInt32	*panIndex;
@@ -976,7 +976,7 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
 
 {
     char	*pszHDRFilename;
-    FILE	*fp;
+    VSILFILE	*fp;
     double	adfBound[4];
 
 /* -------------------------------------------------------------------- */
@@ -1031,7 +1031,7 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
 
 {
     char	*pszHDRFilename;
-    FILE	*fp;
+    VSILFILE	*fp;
     double	adfStats[4];
 
     psInfo->dfMin = 0.0;

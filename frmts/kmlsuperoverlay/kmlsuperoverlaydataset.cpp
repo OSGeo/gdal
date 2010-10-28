@@ -197,7 +197,7 @@ int  GenerateRootKml(const char* filename,
                      double west, 
                      int tilesize)
 {
-    FILE* fp = VSIFOpenL(filename, "wb");
+    VSILFILE* fp = VSIFOpenL(filename, "wb");
     if (fp == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s",
@@ -316,7 +316,7 @@ int  GenerateChildKml(std::string filename,
         maxLodPix = 2048;
     }
 
-    FILE* fp = VSIFOpenL(filename.c_str(), "wb");
+    VSILFILE* fp = VSIFOpenL(filename.c_str(), "wb");
     if (fp == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s",
@@ -458,7 +458,7 @@ bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory,
         }
 
         // Read source file and write to zip file
-        FILE* fp = VSIFOpenL(fileRead.c_str(), "rb");
+        VSILFILE* fp = VSIFOpenL(fileRead.c_str(), "rb");
         if (fp == NULL)
         {
             CPLError( CE_Failure, CPLE_FileIO,

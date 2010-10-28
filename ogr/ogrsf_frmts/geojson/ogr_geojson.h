@@ -118,7 +118,7 @@ public:
     // OGRGeoJSONDataSource Interface
     //
     int Create( const char* pszName, char** papszOptions );
-    FILE* GetOutputFile() const { return fpOut_; }
+    VSILFILE* GetOutputFile() const { return fpOut_; }
 
     enum GeometryTranslation
     {
@@ -145,7 +145,7 @@ private:
     char* pszGeoData_;
     OGRGeoJSONLayer** papoLayers_;
     int nLayers_;
-    FILE* fpOut_;
+    VSILFILE* fpOut_;
     
     //
     // Translation/Creation control flags

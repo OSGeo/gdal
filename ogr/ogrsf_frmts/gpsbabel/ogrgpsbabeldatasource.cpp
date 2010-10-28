@@ -151,7 +151,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName, int bUpdateIn)
             ||!VSI_ISREG(sStatBuf.st_mode) )
             return FALSE;
 
-        FILE* fp = VSIFOpenL(pszDatasourceName, "rb");
+        VSILFILE* fp = VSIFOpenL(pszDatasourceName, "rb");
         if (fp == NULL)
             return FALSE;
 
@@ -268,7 +268,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName, int bUpdateIn)
         /* Special file : don't try to open it */
         char** argv = GetArgv(bExplicitFeatures, bWaypoints, bRoutes,
                               bTracks, pszGPSBabelDriverName, pszFilename);
-        FILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "wb");
+        VSILFILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "wb");
         nRet = ForkAndPipe(argv, NULL, tmpfp);
         VSIFCloseL(tmpfp);
         tmpfp = NULL;
@@ -277,7 +277,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName, int bUpdateIn)
     }
     else
     {
-        FILE* fp = VSIFOpenL(pszFilename, "rb");
+        VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
         if (fp == NULL)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -288,7 +288,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName, int bUpdateIn)
         char** argv = GetArgv(bExplicitFeatures, bWaypoints, bRoutes,
                               bTracks, pszGPSBabelDriverName, "-");
 
-        FILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "wb");
+        VSILFILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "wb");
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
         nRet = ForkAndPipe(argv, fp, tmpfp);

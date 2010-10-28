@@ -3084,7 +3084,7 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
 
     const char* pszMemFile = CPLSPrintf( "/vsimem/geor_%p.jpg", pabyBlockBuf );
 
-    FILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
+    VSILFILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
     VSIFWriteL( pabyBlockBuf, nInSize, 1, fpImage );
     VSIFCloseL( fpImage );
 
@@ -3162,7 +3162,7 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
 
     const char* pszMemFile = CPLSPrintf( "/vsimem/geor_%p.jpg", pabyBlockBuf );
 
-    FILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
+    VSILFILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
 
     bool write_all_tables = TRUE;
 

@@ -70,7 +70,7 @@ typedef struct {
     int		nBitsPerPixel;
 
     /* private information */
-    FILE	*fpImage;
+    VSILFILE	*fpImage;
 
     int         bLittleEndian;
 

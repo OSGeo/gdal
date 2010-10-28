@@ -44,7 +44,7 @@ class ERSRasterBand;
 
 class ERSDataset : public RawDataset
 {
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
     GDALDataset *poDepFile;
 
     int         bGotTransform;
@@ -162,7 +162,7 @@ void ERSDataset::FlushCache()
 {
     if( bHDRDirty )
     {
-        FILE * fpERS = VSIFOpenL( GetDescription(), "w" );
+        VSILFILE * fpERS = VSIFOpenL( GetDescription(), "w" );
         if( fpERS == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -623,7 +623,7 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the .ers file, and read the first line.                    */
 /* -------------------------------------------------------------------- */
-    FILE *fpERS = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    VSILFILE *fpERS = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
     
     if( fpERS == NULL )
         return NULL;
@@ -1111,7 +1111,7 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
     GUIntBig nSize;
     GByte byZero = 0;
 
-    FILE *fpBin = VSIFOpenL( osBinFile, "w" );
+    VSILFILE *fpBin = VSIFOpenL( osBinFile, "w" );
 
     if( fpBin == NULL )
     {
@@ -1138,7 +1138,7 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try writing header file.                                        */
 /* -------------------------------------------------------------------- */
-    FILE *fpERS = VSIFOpenL( osErsFile, "w" );
+    VSILFILE *fpERS = VSIFOpenL( osErsFile, "w" );
     
     if( fpERS == NULL )
     {

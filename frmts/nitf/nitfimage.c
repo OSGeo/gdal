@@ -3070,7 +3070,7 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage )
 }
 
 
-static GUInt16 NITFReadMSBGUInt16(FILE* fp, int* pbSuccess)
+static GUInt16 NITFReadMSBGUInt16(VSILFILE* fp, int* pbSuccess)
 {
     GUInt16 nVal;
     if (VSIFReadL(&nVal, 1, sizeof(nVal), fp) != sizeof(nVal))
@@ -3082,7 +3082,7 @@ static GUInt16 NITFReadMSBGUInt16(FILE* fp, int* pbSuccess)
     return nVal;
 }
 
-static GUInt32 NITFReadMSBGUInt32(FILE* fp, int* pbSuccess)
+static GUInt32 NITFReadMSBGUInt32(VSILFILE* fp, int* pbSuccess)
 {
     GUInt32 nVal;
     if (VSIFReadL(&nVal, 1, sizeof(nVal), fp) != sizeof(nVal))
@@ -3098,7 +3098,7 @@ static GUInt32 NITFReadMSBGUInt32(FILE* fp, int* pbSuccess)
 /*                     NITFReadRPFLocationTable()                       */
 /************************************************************************/
 
-NITFLocation* NITFReadRPFLocationTable(FILE* fp, int* pnLocCount)
+NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
 {
     GUInt16 nLocSectionLength;
     GUInt32 nLocSectionOffset;
@@ -3187,7 +3187,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
     int i;
     int nTRESize;
     char szTempFileName[32];
-    FILE* fpTemp;
+    VSILFILE* fpTemp;
 
     pszTRE = NITFFindTRE(psImage->pachTRE, psImage->nTREBytes, "RPFIMG", &nTRESize);
     if( pszTRE == NULL )

@@ -60,7 +60,7 @@ CPL_C_END
 
 class PDSDataset : public RawDataset
 {
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
     GDALDataset *poCompressedDS;
 
     NASAKeywordHandler  oKeywords;
@@ -512,19 +512,19 @@ void PDSDataset::ParseSRS()
 /* ==================================================================== */
     {
         CPLString osPath, osName;
-        FILE *fp;
+        VSILFILE *fp;
 
         osPath = CPLGetPath( pszFilename );
         osName = CPLGetBasename(pszFilename);
         const char  *pszPrjFile = CPLFormCIFilename( osPath, osName, "prj" );
 
-        fp = VSIFOpen( pszPrjFile, "r" );
+        fp = VSIFOpenL( pszPrjFile, "r" );
         if( fp != NULL )
         {
             char	**papszLines;
             OGRSpatialReference oSRS;
 
-            VSIFClose( fp );
+            VSIFCloseL( fp );
         
             papszLines = CSLLoad( pszPrjFile );
 
@@ -981,7 +981,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open and parse the keyword header.  Sometimes there is stuff    */
 /*      before the PDS_VERSION_ID, which we want to ignore.             */
 /* -------------------------------------------------------------------- */
-    FILE *fpQube = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    VSILFILE *fpQube = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
 
     if( fpQube == NULL )
         return NULL;

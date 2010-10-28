@@ -55,7 +55,7 @@ class SRTMHGTDataset : public GDALPamDataset
 {
     friend class SRTMHGTRasterBand;
 
-    FILE*  fpImage;
+    VSILFILE*  fpImage;
     double adfGeoTransform[6];
     GInt16* panBuffer;
 
@@ -485,7 +485,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename, GDALDataset 
 /* -------------------------------------------------------------------- */
 /*      Write output file.                                              */
 /* -------------------------------------------------------------------- */
-    FILE* fp = VSIFOpenL(pszFilename, "wb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
 
     GInt16* panData = (GInt16*) CPLMalloc(sizeof(GInt16) * nXSize);
     GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand(1);

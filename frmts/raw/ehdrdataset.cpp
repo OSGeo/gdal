@@ -49,7 +49,7 @@ class EHdrDataset : public RawDataset
 {
     friend class EHdrRasterBand;
 
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
 
     int         bGotTransform;
     double      adfGeoTransform[6];
@@ -117,7 +117,7 @@ class EHdrRasterBand : public RawRasterBand
                               int, int );
 
   public:
-    EHdrRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
+    EHdrRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
                     vsi_l_offset nImgOffset, int nPixelOffset,
                     int nLineOffset,
                     GDALDataType eDataType, int bNativeOrder,
@@ -142,7 +142,7 @@ class EHdrRasterBand : public RawRasterBand
 /************************************************************************/
 
 EHdrRasterBand::EHdrRasterBand( GDALDataset *poDS,
-                                int nBand, FILE * fpRaw, 
+                                int nBand, VSILFILE * fpRaw,
                                 vsi_l_offset nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder,
@@ -216,8 +216,8 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     pabyBuffer = (GByte *) CPLCalloc(nLineBytes,1);
 
-    if( VSIFSeekL( GetFP(), nLineStart, SEEK_SET ) != 0 
-        || VSIFReadL( pabyBuffer, 1, nLineBytes, GetFP() ) != nLineBytes )
+    if( VSIFSeekL( GetFPL(), nLineStart, SEEK_SET ) != 0
+        || VSIFReadL( pabyBuffer, 1, nLineBytes, GetFPL() ) != nLineBytes )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %u bytes at offset %lu.\n%s",
@@ -281,7 +281,7 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     pabyBuffer = (GByte *) CPLCalloc(nLineBytes,1);
 
-    if( VSIFSeekL( GetFP(), nLineStart, SEEK_SET ) != 0 )
+    if( VSIFSeekL( GetFPL(), nLineStart, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %u bytes at offset %lu.\n%s",
@@ -290,7 +290,7 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    VSIFReadL( pabyBuffer, 1, nLineBytes, GetFP() );
+    VSIFReadL( pabyBuffer, 1, nLineBytes, GetFPL() );
 
 /* -------------------------------------------------------------------- */
 /*      Copy data, promoting to 8bit.                                   */
@@ -318,8 +318,8 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Write the data back out.                                        */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeekL( GetFP(), nLineStart, SEEK_SET ) != 0 
-        || VSIFWriteL( pabyBuffer, 1, nLineBytes, GetFP() ) != nLineBytes )
+    if( VSIFSeekL( GetFPL(), nLineStart, SEEK_SET ) != 0
+        || VSIFWriteL( pabyBuffer, 1, nLineBytes, GetFPL() ) != nLineBytes )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to write %u bytes at offset %lu.\n%s",
@@ -535,7 +535,7 @@ void EHdrDataset::RewriteColorTable( GDALColorTable *poTable )
     CPLString osCLRFilename = CPLResetExtension( GetDescription(), "clr" );
     if( poTable )
     {
-        FILE *fp = VSIFOpenL( osCLRFilename, "wt" );
+        VSILFILE *fp = VSIFOpenL( osCLRFilename, "wt" );
         if( fp != NULL )
         {
             for( int iColor = 0; iColor < poTable->GetColorEntryCount(); iColor++ )
@@ -605,7 +605,7 @@ CPLErr EHdrDataset::SetProjection( const char *pszSRS )
 /*      Write to .prj file.                                             */
 /* -------------------------------------------------------------------- */
     CPLString osPrjFilename = CPLResetExtension( GetDescription(), "prj" );
-    FILE *fp;
+    VSILFILE *fp;
 
     fp = VSIFOpenL( osPrjFilename.c_str(), "wt" );
     if( fp != NULL )
@@ -709,7 +709,7 @@ CPLErr EHdrDataset::RewriteHDR()
 /* -------------------------------------------------------------------- */
 /*      Write .hdr file.                                                */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
     int i;
 
     fp = VSIFOpenL( osHDRFilename, "wt" );
@@ -748,7 +748,7 @@ CPLErr EHdrDataset::RewriteSTX()
 /* -------------------------------------------------------------------- */
 /*      Write .stx file.                                                */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
     fp = VSIFOpenL( osSTXFilename, "wt" );
     if( fp == NULL )
     {
@@ -790,7 +790,7 @@ CPLErr EHdrDataset::ReadSTX()
 /* -------------------------------------------------------------------- */
 /*      Read .stx file.                                                 */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
     if ((fp = VSIFOpenL( osSTXFilename, "rt" )))
     {
       const char *	pszLine;
@@ -980,7 +980,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Do we have a .hdr file?                                         */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( osHDRFilename, "r" );
     
@@ -1625,7 +1625,7 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( pszFilename, "wb" );
 

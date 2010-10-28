@@ -70,7 +70,7 @@ class OGRGeoRSSLayer : public OGRLayer
 
     int                eof;
     int                nNextFID;
-    FILE*              fpGeoRSS; /* Large file API */
+    VSILFILE*          fpGeoRSS; /* Large file API */
     int                bHasReadSchema;
 #ifdef HAVE_EXPAT
     XML_Parser         oParser;
@@ -170,7 +170,7 @@ class OGRGeoRSSDataSource : public OGRDataSource
     int                 nLayers;
 
     /*  Export related */
-    FILE                *fpOutput; /* Virtual file API */
+    VSILFILE           *fpOutput; /* Virtual file API */
     
     OGRGeoRSSValidity   validity;
     OGRGeoRSSFormat     eFormat;
@@ -204,7 +204,7 @@ class OGRGeoRSSDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
     
-    FILE *              GetOutputFP() { return fpOutput; }
+    VSILFILE *          GetOutputFP() { return fpOutput; }
     OGRGeoRSSFormat     GetFormat() { return eFormat; }
     OGRGeoRSSGeomDialect GetGeomDialect() { return eGeomDialect; }
     int                 GetUseExtensions() { return bUseExtensions; }

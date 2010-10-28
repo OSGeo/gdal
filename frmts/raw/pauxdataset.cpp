@@ -49,7 +49,7 @@ class PAuxDataset : public RawDataset
 {
     friend class PAuxRasterBand;
 
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -94,7 +94,7 @@ class PAuxRasterBand : public RawRasterBand
 
   public:
 
-                 PAuxRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
+                 PAuxRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
                                  vsi_l_offset nImgOffset, int nPixelOffset,
                                  int nLineOffset,
                                  GDALDataType eDataType, int bNativeOrder );
@@ -115,7 +115,7 @@ class PAuxRasterBand : public RawRasterBand
 /************************************************************************/
 
 PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
-                                FILE * fpRaw, vsi_l_offset nImgOffset,
+                                VSILFILE * fpRaw, vsi_l_offset nImgOffset,
                                 int nPixelOffset, int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder )
         : RawRasterBand( poDS, nBand, fpRaw, 
@@ -662,7 +662,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
     
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( osAuxFilename, "r" );
     if( fp == NULL )
@@ -904,7 +904,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( pszFilename, "w" );
 
@@ -1028,7 +1028,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 CPLErr PAuxDelete( const char * pszBasename )
 
 {
-    FILE	*fp;
+    VSILFILE	*fp;
     const char *pszLine;
 
     fp = VSIFOpenL( CPLResetExtension( pszBasename, "aux" ), "r" );

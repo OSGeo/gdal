@@ -288,7 +288,7 @@ int   NITFDESGetTRE( NITFDES* psDES,
     char szTREHeader[12];
     char szTRETempName[7];
     NITFSegmentInfo* psSegInfo;
-    FILE* fp;
+    VSILFILE* fp;
     int nTRESize;
 
     memset(szTREName, '\0', 7);
@@ -433,7 +433,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
 
     for(iShpFile = 0; iShpFile < 3; iShpFile ++)
     {
-        FILE* fp;
+        VSILFILE* fp;
         GByte* pabyBuffer;
         int nSize = anOffset[iShpFile+1] - anOffset[iShpFile];
 

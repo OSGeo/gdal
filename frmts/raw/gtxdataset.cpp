@@ -67,7 +67,7 @@ Values are an offset in meters between two vertical datums.
 class GTXDataset : public RawDataset
 {
   public:
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
     
     double      adfGeoTransform[6];
 
@@ -320,7 +320,7 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( pszFilename, "wb" );
 

@@ -194,7 +194,7 @@ class GenBinDataset : public RawDataset
 {
     friend class GenBinBitRasterBand;
 
-    FILE	*fpImage;	// image data file.
+    VSILFILE	*fpImage;	// image data file.
 
     int         bGotTransform;
     double      adfGeoTransform[6];
@@ -580,7 +580,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Do we have a .hdr file?                                         */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( osHDRFilename, "r" );
     

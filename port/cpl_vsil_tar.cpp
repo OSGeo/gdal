@@ -58,7 +58,7 @@ public:
 class VSITarReader : public VSIArchiveReader
 {
     private:
-        FILE* fp;
+        VSILFILE* fp;
         GUIntBig nCurOffset;
         GUIntBig nNextFileSize;
         CPLString osNextFileName;

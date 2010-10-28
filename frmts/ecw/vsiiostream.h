@@ -95,7 +95,7 @@ class VSIIOStream : public CNCSJPCIOStream
     
     INT64    startOfJPData;
     INT64    lengthOfJPData;
-    FILE    *fpVSIL;
+    VSILFILE    *fpVSIL;
     int      bWritable;
 	int      nFileViewCount;
     char     *pszFilename;
@@ -118,7 +118,7 @@ class VSIIOStream : public CNCSJPCIOStream
     virtual NCS::CIOStream *Clone() { return NULL; }
 #endif /* ECWSDK_VERSION >= 4 */
 
-    virtual CNCSError Access( FILE *fpVSILIn, BOOLEAN bWrite,
+    virtual CNCSError Access( VSILFILE *fpVSILIn, BOOLEAN bWrite,
                               const char *pszFilename, 
                               INT64 start, INT64 size = -1) {
 

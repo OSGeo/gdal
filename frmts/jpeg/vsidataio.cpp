@@ -43,7 +43,7 @@ CPL_C_END
 typedef struct {
   struct jpeg_source_mgr pub;	/* public fields */
 
-  FILE * infile;		/* source stream */
+  VSILFILE * infile;		/* source stream */
   JOCTET * buffer;		/* start of buffer */
   boolean start_of_file;	/* have we gotten any data yet? */
 } my_source_mgr;
@@ -253,7 +253,7 @@ term_source (j_decompress_ptr cinfo)
  * for closing it after finishing decompression.
  */
 
-void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile)
+void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile)
 {
   my_src_ptr src;
 
@@ -299,7 +299,7 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile)
 typedef struct {
   struct jpeg_destination_mgr pub; /* public fields */
 
-  FILE * outfile;		/* target stream */
+  VSILFILE * outfile;		/* target stream */
   JOCTET * buffer;		/* start of buffer */
 } my_destination_mgr;
 
@@ -409,7 +409,7 @@ term_destination (j_compress_ptr cinfo)
  */
 
 void
-jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile)
+jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile)
 {
   my_dest_ptr dest;
 

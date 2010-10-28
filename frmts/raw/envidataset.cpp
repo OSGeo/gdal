@@ -224,8 +224,8 @@ static int ITTVISToUSGSZone( int nITTVISZone )
 
 class ENVIDataset : public RawDataset
 {
-    FILE	*fpImage;	// image data file.
-    FILE	*fp;		// header file
+    VSILFILE	*fpImage;	// image data file.
+    VSILFILE	*fp;		// header file
     char	*pszHDRFilename;
 
     int		bFoundMapinfo;
@@ -238,7 +238,7 @@ class ENVIDataset : public RawDataset
 
     char        **papszHeader;
 
-    int         ReadHeader( FILE * );
+    int         ReadHeader( VSILFILE * );
     int         ProcessMapinfo( const char * );
     void        ProcessRPCinfo( const char * ,int ,int);
     void        ProcessStatsFile();
@@ -1383,7 +1383,7 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
 void ENVIDataset::ProcessStatsFile()
 {
     CPLString   osStaFilename;
-    FILE	*fpStaFile;
+    VSILFILE	*fpStaFile;
 
     osStaFilename = CPLResetExtension( pszHDRFilename, "sta" );
     fpStaFile = VSIFOpenL( osStaFilename, "rb" );
@@ -1504,7 +1504,7 @@ double ENVIDataset::byteSwapDouble(double swapMe)
 /*                             ReadHeader()                             */
 /************************************************************************/
 
-int ENVIDataset::ReadHeader( FILE * fpHdr )
+int ENVIDataset::ReadHeader( VSILFILE * fpHdr )
 
 {
 
@@ -1604,7 +1604,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char	*pszMode;
     CPLString   osHdrFilename;
-    FILE	*fpHeader = NULL;
+    VSILFILE	*fpHeader = NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
 	pszMode = "r+";
@@ -2191,7 +2191,7 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
+    VSILFILE	*fp;
 
     fp = VSIFOpenL( pszFilename, "wb" );
 

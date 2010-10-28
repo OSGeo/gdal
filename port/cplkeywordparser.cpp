@@ -66,7 +66,7 @@ CPLKeywordParser::~CPLKeywordParser()
 /*                               Ingest()                               */
 /************************************************************************/
 
-int CPLKeywordParser::Ingest( FILE *fp )
+int CPLKeywordParser::Ingest( VSILFILE *fp )
 
 {
 /* -------------------------------------------------------------------- */

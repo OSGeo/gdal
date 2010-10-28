@@ -57,7 +57,7 @@ public:
     CPLKeywordParser();
     ~CPLKeywordParser();
 
-    int     Ingest( FILE *fp );
+    int     Ingest( VSILFILE *fp );
 
     const char *GetKeyword( const char *pszPath, const char *pszDefault=NULL );
     char  **GetAllKeywords() { return papszKeywordList; }

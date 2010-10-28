@@ -80,7 +80,7 @@ static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, void *unused)
 static OPJ_UINT32 JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_UINT32 nBytes,
                                        void *pUserData)
 {
-    int nRet = VSIFReadL(pBuffer, 1, nBytes, (FILE*)pUserData);
+    int nRet = VSIFReadL(pBuffer, 1, nBytes, (VSILFILE*)pUserData);
 #ifdef DEBUG
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Read(%d) = %d", nBytes, nRet);
 #endif
@@ -96,7 +96,7 @@ static OPJ_UINT32 JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_UINT32 nBytes,
 static OPJ_UINT32 JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_UINT32 nBytes,
                                        void *pUserData)
 {
-    int nRet = VSIFWriteL(pBuffer, 1, nBytes, (FILE*)pUserData);
+    int nRet = VSIFWriteL(pBuffer, 1, nBytes, (VSILFILE*)pUserData);
 #ifdef DEBUG
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Write(%d) = %d", nBytes, nRet);
 #endif
@@ -112,7 +112,7 @@ static GDAL_OPENJPEG_BOOL JP2OpenJPEGDataset_Seek(OPJ_SIZE_T nBytes, void * pUse
 #ifdef DEBUG
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Seek(%d)", nBytes);
 #endif
-    return VSIFSeekL((FILE*)pUserData, nBytes, SEEK_SET) == 0;
+    return VSIFSeekL((VSILFILE*)pUserData, nBytes, SEEK_SET) == 0;
 }
 
 /************************************************************************/
@@ -121,13 +121,13 @@ static GDAL_OPENJPEG_BOOL JP2OpenJPEGDataset_Seek(OPJ_SIZE_T nBytes, void * pUse
 
 static OPJ_SIZE_T JP2OpenJPEGDataset_Skip(OPJ_SIZE_T nBytes, void * pUserData)
 {
-    int nOffset = VSIFTellL((FILE*)pUserData) + nBytes;
+    int nOffset = VSIFTellL((VSILFILE*)pUserData) + nBytes;
 #ifdef DEBUG
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Skip(%d -> %d)", nBytes, nOffset);
 #endif
     if (nOffset < 0)
         return -1;
-    VSIFSeekL((FILE*)pUserData, nOffset, SEEK_SET);
+    VSIFSeekL((VSILFILE*)pUserData, nOffset, SEEK_SET);
     return nBytes;
 }
 
@@ -141,7 +141,7 @@ class JP2OpenJPEGDataset : public GDALPamDataset
 {
     friend class JP2OpenJPEGRasterBand;
 
-    FILE        *fp; /* Large FILE API */
+    VSILFILE   *fp; /* Large FILE API */
 
     char        *pszProjection;
     int         bGeoTransformValid;
@@ -636,7 +636,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo))
         return NULL;
 
-    FILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
     if (!fp)
         return NULL;
 
@@ -1094,7 +1094,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 
     const char* pszAccess = EQUALN(pszFilename, "/vsisubfile/", 12) ? "r+b" : "w+b";
-    FILE* fp = VSIFOpenL(pszFilename, pszAccess);
+    VSILFILE* fp = VSIFOpenL(pszFilename, pszAccess);
     if (fp == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create file");

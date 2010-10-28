@@ -235,7 +235,7 @@ class L1BDataset : public GDALPamDataset
 
     char        *pszGCPProjection;
 
-    FILE        *fp;
+    VSILFILE   *fp;
 
     int         bFetchGeolocation;
     int         bGuessDataFormat;
