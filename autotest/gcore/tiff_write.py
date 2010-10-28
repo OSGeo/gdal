@@ -3687,6 +3687,55 @@ def tiff_write_95():
     return 'success'
 
 ###############################################################################
+# Test that COPY_SRC_OVERVIEWS combined with GDAL_TIFF_INTERNAL_MASK=YES work well
+
+def tiff_write_96():
+
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_96_src.tif', 100, 100)
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    from sys import version_info
+    if version_info >= (3,0,0):
+        exec("src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25,25,50,50,b'\\xff',1,1)")
+    else:
+        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25,25,50,50,'\xff',1,1)
+    src_ds.BuildOverviews( 'NEAR', overviewlist = [ 2, 4 ])
+    expected_cs = src_ds.GetRasterBand(1).Checksum()
+    expected_cs_mask = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
+    expected_cs_ovr_1 = src_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs_ovr_mask_1 = src_ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+    expected_cs_ovr_2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
+    expected_cs_ovr_mask_2 = src_ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
+
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_96_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    ds = None
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
+
+    ds = gdal.Open('tmp/tiff_write_96_dst.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    cs_mask = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    cs_ovr_1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs_ovr_mask_1 = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+    cs_ovr_2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    cs_ovr_mask_2 = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
+
+    ds = None
+    src_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_96_src.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_96_dst.tif' )
+
+    if [expected_cs,expected_cs_mask,expected_cs_ovr_1,expected_cs_ovr_mask_1,expected_cs_ovr_2,expected_cs_ovr_mask_2] != \
+       [cs,cs_mask,cs_ovr_1,cs_ovr_mask_1,cs_ovr_2,cs_ovr_mask_2]:
+        gdaltest.post_reason('did not get expected checksums')
+        print(expected_cs,expected_cs_mask,expected_cs_ovr_1,expected_cs_ovr_mask_1,expected_cs_ovr_2,expected_cs_ovr_mask_2)
+        print(cs,cs_mask,cs_ovr_1,cs_ovr_mask_1,cs_ovr_2,cs_ovr_mask_2)
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3792,6 +3841,7 @@ gdaltest_list = [
     tiff_write_93,
     tiff_write_94,
     tiff_write_95,
+    tiff_write_96,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
