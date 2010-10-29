@@ -2849,6 +2849,54 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 }
 
 /************************************************************************/
+/*                         HFAGetIGEFilename()                          */
+/*                                                                      */
+/*      Returns the .ige filename if one is associated with this        */
+/*      object.  For files not newly created we need to scan the        */
+/*      bands for spill files.  Presumably there will only be one.      */
+/*                                                                      */
+/*      NOTE: Returns full path, not just the filename portion.         */
+/************************************************************************/
+
+const char *HFAGetIGEFilename( HFAHandle hHFA )
+
+{
+    HFAEntry    *poDMS = NULL;
+    HFAEntry    *poLayer = NULL;
+    HFAEntry    *poNode = NULL;
+
+    if( hHFA->pszIGEFilename == NULL )
+    {
+        poNode = hHFA->poRoot->GetChild();
+        while( ( poNode != NULL ) && ( poLayer == NULL ) )
+        {
+            if( EQUAL(poNode->GetType(),"Eimg_Layer") )
+            {
+                poLayer = poNode;
+            }
+            poNode = poNode->GetNext();
+        }
+        
+        if( poLayer != NULL )
+            poDMS = poLayer->GetNamedChild( "ExternalRasterDMS" );
+        
+        if ( poDMS )
+        {
+            const char *pszRawFilename =
+                poDMS->GetStringField( "fileName.string" );
+            
+            if( pszRawFilename != NULL )
+                hHFA->pszIGEFilename = CPLStrdup( pszRawFilename );
+        }
+    }
+
+    if( hHFA->pszIGEFilename )
+        return CPLFormFilename( hHFA->pszPath, hHFA->pszIGEFilename, NULL );
+    else
+        return NULL;
+}
+
+/************************************************************************/
 /*                        HFACreateSpillStack()                         */
 /*                                                                      */
 /*      Create a new stack of raster layers in the spill (.ige)         */
