@@ -1091,7 +1091,7 @@ static int ProxyMain( int argc, char ** argv )
         }
         
         if (eMaskMode == MASK_AUTO &&
-            GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) != GMF_PER_DATASET &&
+            (GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) & GMF_PER_DATASET) == 0 &&
             (poSrcBand->GetMaskFlags() & (GMF_ALL_VALID | GMF_NODATA)) == 0)
         {
             if (poVRTBand->CreateMaskBand(poSrcBand->GetMaskFlags()) == CE_None)

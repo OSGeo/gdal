@@ -304,9 +304,11 @@ bands. Starting with GDAL 1.8.0, <i>band</i> can also be set to "mask,1"
 (or just "mask") to mean the mask band of the 1st band of the input dataset.</dd>
 <dt> <b>-mask</b> <i>band</i>:</dt><dd> (GDAL >= 1.8.0) Select an input band
 <i>band</i> to create output dataset mask band. Bands are numbered from 1. 
-<i>band</i> can be set to "none" to avoid copying the band of the input dataset if
-it exists. Otherwise it is copied by default ("auto"). <i>band</i> can also be set to "mask,1"
-(or just "mask") to mean the mask band of the 1st band of the input dataset.</dd>
+<i>band</i> can be set to "none" to avoid copying the global mask of the input dataset if
+it exists. Otherwise it is copied by default ("auto"), unless the mask is an alpha channel,
+or if it is explicitely used to ben a regular band of the output dataset ("-b mask").
+<i>band</i> can also be set to "mask,1" (or just "mask") to mean the mask band of
+the 1st band of the input dataset.</dd>
 <dt> <b>-expand</b> <i>gray|rgb|rgba</i>:</dt><dd> (From GDAL 1.6.0) To expose a dataset with 1 band
 with a color table as a dataset with 3 (RGB) or 4 (RGBA) bands. Usefull for
 output drivers such as JPEG, JPEG2000, MrSID, ECW that don't support color
