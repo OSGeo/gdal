@@ -1018,6 +1018,9 @@ def ogr_sqlite_22():
 
 def ogr_sqlite_23():
 
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
     shp_layer = gdaltest.sl_ds.GetLayerByName('tpoly')
     shp_layer.SetIgnoredFields( ['AREA'] )
 
