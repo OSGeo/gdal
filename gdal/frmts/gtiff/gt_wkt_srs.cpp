@@ -31,8 +31,10 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "cpl_serv.h"
-#include "geo_tiffp.h"
+#include "cpl_vsi.h"
+#include "cpl_string.h"
+#include "cpl_csv.h"
+
 #define CPL_ERROR_H_INCLUDED
 
 #include "geo_normalize.h"
@@ -45,16 +47,6 @@
 CPL_CVSID("$Id$")
 
 CPL_C_START
-int CPL_DLL VSIFCloseL( VSILFILE * );
-int CPL_DLL VSIUnlink( const char * );
-VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
-                                    GByte *pabyData, 
-                                    GUIntBig nDataLength,
-                                    int bTakeOwnership );
-GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
-                                    GUIntBig *pnDataLength, 
-                                    int bUnlinkAndSeize );
-
 char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
 int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
 
