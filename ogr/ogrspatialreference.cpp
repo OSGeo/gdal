@@ -5286,6 +5286,49 @@ int OSRIsLocal( OGRSpatialReferenceH hSRS )
 }
 
 /************************************************************************/
+/*                            IsVertical()                              */
+/************************************************************************/
+
+/**
+ * \brief Check if vertical coordinate system.
+ *
+ * This method is the same as the C function OSRIsVertical().
+ *
+ * @return TRUE if this contains a VERT_CS node indicating a it is a 
+ * vertical coordinate system. 
+ */
+
+int OGRSpatialReference::IsVertical() const
+
+{
+    if( poRoot == NULL )
+        return FALSE;
+
+    if( EQUAL(poRoot->GetValue(),"VERT_CS") )
+        return TRUE;
+    else if( EQUAL(poRoot->GetValue(),"COMPD_CS") )
+        return GetAttrNode( "VERT_CS" ) != NULL;
+    else 
+        return FALSE;
+}
+
+/************************************************************************/
+/*                           OSRIsVertical()                            */
+/************************************************************************/
+/** 
+ * \brief Check if vertical coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::IsVertical().
+ */
+int OSRIsVertical( OGRSpatialReferenceH hSRS ) 
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRIsVertical", 0 );
+
+    return ((OGRSpatialReference *) hSRS)->IsVertical();
+}
+
+/************************************************************************/
 /*                            CloneGeogCS()                             */
 /************************************************************************/
 
@@ -5424,6 +5467,71 @@ int OSRIsSameGeogCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 }
 
 /************************************************************************/
+/*                            IsSameVertCS()                            */
+/************************************************************************/
+
+/**
+ * \brief Do the VertCS'es match?
+ *
+ * This method is the same as the C function OSRIsSameVertCS().
+ *
+ * @param poOther the SRS being compared against. 
+ *
+ * @return TRUE if they are the same or FALSE otherwise. 
+ */
+
+int OGRSpatialReference::IsSameVertCS( const OGRSpatialReference *poOther ) const
+
+{
+    const char *pszThisValue, *pszOtherValue;
+
+/* -------------------------------------------------------------------- */
+/*      Does the datum name match?                                      */
+/* -------------------------------------------------------------------- */
+    pszThisValue = this->GetAttrValue( "VERT_DATUM" );
+    pszOtherValue = poOther->GetAttrValue( "VERT_DATUM" );
+
+    if( pszThisValue == NULL || pszOtherValue == NULL 
+        || !EQUAL(pszThisValue, pszOtherValue) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Do the units match?                                             */
+/* -------------------------------------------------------------------- */
+    pszThisValue = this->GetAttrValue( "VERT_CS|UNIT", 1 );
+    if( pszThisValue == NULL )
+        pszThisValue = "1.0";
+
+    pszOtherValue = poOther->GetAttrValue( "VERT_CS|UNIT", 1 );
+    if( pszOtherValue == NULL )
+        pszOtherValue = "1.0";
+
+    if( ABS(CPLAtof(pszOtherValue) - CPLAtof(pszThisValue)) > 0.00000001 )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          OSRIsSameVertCS()                           */
+/************************************************************************/
+
+/** 
+ * \brief Do the VertCS'es match?
+ *
+ * This function is the same as OGRSpatialReference::IsSameVertCS().
+ */
+int OSRIsSameVertCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
+
+{
+    VALIDATE_POINTER1( hSRS1, "OSRIsSameVertCS", 0 );
+    VALIDATE_POINTER1( hSRS2, "OSRIsSameVertCS", 0 );
+
+    return ((OGRSpatialReference *) hSRS1)->IsSameVertCS( 
+        (OGRSpatialReference *) hSRS2 );
+}
+
+/************************************************************************/
 /*                               IsSame()                               */
 /************************************************************************/
 
@@ -5500,6 +5608,12 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
                 return FALSE;
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Compare vertical coordinate system.                             */
+/* -------------------------------------------------------------------- */
+    if( IsVertical() && !IsSameVertCS( poOtherSRS ) )
+        return FALSE;
 
     return TRUE;
 }
