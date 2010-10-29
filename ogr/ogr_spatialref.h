@@ -223,7 +223,7 @@ class CPL_DLL OGRSpatialReference
 
     OGRErr      SetNode( const char *, const char * );
     OGRErr      SetNode( const char *, double );
-    
+
     OGRErr      SetLinearUnitsAndUpdateParameters( const char *pszName, 
                                                    double dfInMeters );
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
@@ -237,7 +237,9 @@ class CPL_DLL OGRSpatialReference
     int         IsGeographic() const;
     int         IsProjected() const;
     int         IsLocal() const;
+    int         IsVertical() const;
     int         IsSameGeogCS( const OGRSpatialReference * ) const;
+    int         IsSameVertCS( const OGRSpatialReference * ) const;
     int         IsSame( const OGRSpatialReference * ) const;
 
     void        Clear();
