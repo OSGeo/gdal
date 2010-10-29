@@ -1126,7 +1126,13 @@ def ogr_spatialite_2():
             dst_feat.SetGeometry( geom )
             lyr.CreateFeature( dst_feat )
             dst_feat.Destroy()
-            
+
+    geom = ogr.CreateGeometryFromWkt( 'POLYGON((0 0,0 3,3 3,3 0,0 0))' )
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometry( geom )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
     lyr.CommitTransaction()
 
     ds.Destroy()
@@ -1145,7 +1151,7 @@ def ogr_spatialite_2():
     if lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
         return 'fail'
 
-    if lyr.GetFeatureCount() != 49:
+    if lyr.GetFeatureCount() != 50:
         print(lyr.GetFeatureCount())
         return 'fail'
 
@@ -1178,7 +1184,7 @@ def ogr_spatialite_2():
     if lyr.TestCapability(ogr.OLCFastSpatialFilter) != False:
         return 'fail'
 
-    if lyr.GetFeatureCount() != 49:
+    if lyr.GetFeatureCount() != 50:
         print(lyr.GetFeatureCount())
         return 'fail'
 
