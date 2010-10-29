@@ -3558,12 +3558,10 @@ char **HFADataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( hHFA->pszIGEFilename != NULL )
+    if( HFAGetIGEFilename( hHFA ) != NULL )
     {
         papszFileList = CSLAddString( papszFileList, 
-                                      CPLFormFilename( hHFA->pszPath, 
-                                                       hHFA->pszIGEFilename,
-                                                       NULL ));
+                                      HFAGetIGEFilename( hHFA ) );
     }
 
     if( hHFA->psDependent != NULL )
@@ -3574,13 +3572,10 @@ char **HFADataset::GetFileList()
             CSLAddString( papszFileList, 
                           CPLFormFilename( psDep->pszPath, 
                                            psDep->pszFilename, NULL ));
-        if( psDep->pszIGEFilename != NULL )
-        {
-            papszFileList = 
-                CSLAddString( papszFileList, 
-                              CPLFormFilename( psDep->pszPath, 
-                                               psDep->pszIGEFilename, NULL ));
-        }
+        
+        if( HFAGetIGEFilename( psDep ) != NULL )
+            papszFileList = CSLAddString( papszFileList, 
+                                          HFAGetIGEFilename( psDep ) );
     }
     
     return papszFileList;
