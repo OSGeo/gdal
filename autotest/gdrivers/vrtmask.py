@@ -342,6 +342,36 @@ def vrtmask_8():
         return 'fail'
         
     return 'success'
+    
+###############################################################################
+# gdal_translate with RGBA -> RGB
+
+def vrtmask_9():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+        
+    src_ds = gdal.GetDriverByName('GTiff').Create('tmp/vrtmask_9_src.tif', 10, 10, 4)
+    src_ds = None
+    
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/vrtmask_9_src.tif tmp/vrtmask_9_dst.tif -b 1 -b 2 -b 3')
+
+    ds = gdal.Open('tmp/vrtmask_9_dst.tif')
+    flags = ds.GetRasterBand(1).GetMaskFlags()
+    ds = None
+
+    os.remove('tmp/vrtmask_9_src.tif')
+    os.remove('tmp/vrtmask_9_dst.tif')
+    if err != '':
+        gdaltest.post_reason('unexpected output on standard err')
+        print(err)
+        return 'fail'
+
+    if flags != gdal.GMF_ALL_VALID:
+        print(flags)
+        return 'fail'
+        
+    return 'success'
 ###############################################################################
 # Cleanup.
 
@@ -357,6 +387,7 @@ gdaltest_list = [
     vrtmask_6,
     vrtmask_7,
     vrtmask_8,
+    vrtmask_9,
     vrtmask_cleanup ]
 
 if __name__ == '__main__':
