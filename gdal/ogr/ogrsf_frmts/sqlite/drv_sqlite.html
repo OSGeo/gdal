@@ -72,7 +72,7 @@ ogrinfo testspatialite.sqlite -sql "SELECT CreateSpatialIndex('Towns', 'geometry
 
 # Make a request with a spatial filter (needs explicit linking with SpatiaLite)
 ogrinfo testspatialite.sqlite \
-     -sql "SELECT Name, asText(geometry) FROM Towns WHERE MBRWithin(geometry, BuildMBR(754000, 4692000, 770000, 4924000))"
+     -sql "SELECT Name, asText(geometry) FROM Towns WHERE MBRIntersects(geometry, BuildMBR(754000, 4692000, 770000, 4924000))"
 
 or
 
