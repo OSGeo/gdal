@@ -449,6 +449,21 @@ def hfa_clean_ige():
         gdaltest.post_reason( 'ige file not created with USE_SPILL=YES' )
         return 'fail'
 
+    # confirm ige shows up in file list.
+    ds = gdal.Open('tmp/igetest.img')
+    filelist = ds.GetFileList()
+    ds = None
+
+    found = 0
+    for item in filelist:
+        if item[-11:] == 'igetest.ige':
+            found = 1
+            
+    if not found:
+        print filelist
+        gdaltest.post_reason( 'no igetest.ige in file list!' )
+        return 'fail'
+
     # Create a file without a spill file, and verify old ige cleaned up.
     
     drv.CreateCopy( 'tmp/igetest.img', src_ds )
