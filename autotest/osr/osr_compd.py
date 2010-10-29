@@ -132,8 +132,7 @@ def osr_compd_3():
         AUTHORITY["EPSG","5719"]],
     AUTHORITY["EPSG","7401"]]"""
     wkt = srs.ExportToPrettyWkt() 
-    if exp_wkt != wkt:
-        print wkt
+    if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason( 'did not get expected compound cs for EPSG:7401')
         return 'fail'
     
@@ -170,6 +169,7 @@ def osr_compd_4():
     wkt = srs.ExportToPrettyWkt() 
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
+        gdaltest.post_reason( 'did not get expected compound cs for EPSG:7400')
         return 'fail'
     
     return 'success'
