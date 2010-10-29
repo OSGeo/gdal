@@ -304,10 +304,10 @@ void OGRSQLiteTableLayer::BuildWhere()
         OGREnvelope  sEnvelope;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
-        osWHERE.Printf("WHERE MBRWithin(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d)) ",
+        osWHERE.Printf("WHERE MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d)) ",
                        osGeomColumn.c_str(),
-                       sEnvelope.MinX, sEnvelope.MinY,
-                       sEnvelope.MaxX, sEnvelope.MaxY,
+                       sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
+                       sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11,
                        nSRSId);
     }
 
