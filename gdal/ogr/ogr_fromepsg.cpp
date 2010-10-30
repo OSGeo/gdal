@@ -2437,7 +2437,7 @@ int OGRSpatialReference::EPSGTreatsAsLatLong()
     OGR_SRSNode *poFirstAxis = GetAttrNode( "GEOGCS|AXIS" );
 
     if( poFirstAxis == NULL )
-        return TRUE;
+        return FALSE;
 
     if( poFirstAxis->GetChildCount() >= 2 
         && EQUAL(poFirstAxis->GetChild(1)->GetValue(),"NORTH") )
