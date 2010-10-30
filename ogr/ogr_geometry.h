@@ -109,7 +109,7 @@ class CPL_DLL OGRGeometry
     virtual const char *getGeometryName() const = 0;
     virtual void   dumpReadable( FILE *, const char * = NULL, char** papszOptions = NULL ) const;
     virtual void   flattenTo2D() = 0;
-    virtual char * exportToGML() const;
+    virtual char * exportToGML( const char* const * papszOptions = NULL ) const;
 	virtual char * exportToKML() const;
     virtual char * exportToJson() const;
     virtual GEOSGeom exportToGEOS() const;
