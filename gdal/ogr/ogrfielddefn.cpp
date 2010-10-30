@@ -647,7 +647,7 @@ void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
 /************************************************************************/
 
 /**
- * \fn bool OGRFieldDefn::IsIgnored();
+ * \fn int OGRFieldDefn::IsIgnored();
  *
  * \brief Return whether this field should be omitted when fetching features
  *
@@ -679,7 +679,7 @@ int OGR_Fld_IsIgnored( OGRFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn void OGRFieldDefn::SetIgnored( bool ignore );
+ * \fn void OGRFieldDefn::SetIgnored( int ignore );
  *
  * \brief Set whether this field should be omitted when fetching features
  *
