@@ -2556,7 +2556,7 @@ form depending on the limitations of the format driver.
  */
 
 /**
- \fn OGRErr OGR_L_SetIgnoredFields( OGRLayerH, const char** );
+ \fn OGRErr OGR_L_SetIgnoredFields( OGRLayerH, const char** papszFields);
 
  \brief Set which fields can be omitted when retrieving features from the layer.
 
