@@ -412,6 +412,17 @@ json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine )
 /*                           OGR_G_ExportToJson                         */
 /************************************************************************/
 
+/**
+ * \brief Convert a geometry into GeoJSON format.
+ *
+ * The returned string should be freed with CPLFree() when no longer required.
+ *
+ * This method is the same as the C++ method OGRGeometry::exportToJson().
+ *
+ * @param hGeometry handle to the geometry.
+ * @return A GeoJSON fragment or NULL in case of error.
+ */
+
 char* OGR_G_ExportToJson( OGRGeometryH hGeometry )
 {
     VALIDATE_POINTER1( hGeometry, "OGR_G_ExportToJson", NULL );

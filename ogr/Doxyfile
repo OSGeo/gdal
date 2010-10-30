@@ -453,6 +453,8 @@ WARN_LOGFILE           =
 INPUT                  = . \
                          ogrsf_frmts \
                          ogrsf_frmts/generic \
+                         ogrsf_frmts/geojson/ogrgeojsonwriter.cpp \
+                         ogrsf_frmts/kml/ogr2kmlgeometry.cpp \
                          ../port
 
 # If the value of the INPUT tag contains directories, you can use the 
