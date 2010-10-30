@@ -92,11 +92,49 @@ def osr_epsg_3():
     return 'success'
 
 ###############################################################################
+#   Check that EPSG:4326 is *not* considered as lat/long (#3813)
+
+def osr_epsg_4():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4326 )
+
+    if srs.EPSGTreatsAsLatLong() :
+        gdaltest.post_reason('not supposed to be treated as lat/long')
+        return 'fail'
+
+    if srs.ExportToWkt().find('AXIS') != -1:
+        gdaltest.post_reason('should not have AXIS node')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#   Check that EPSGA:4326 is considered as lat/long
+
+def osr_epsg_5():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSGA( 4326 )
+
+    if not srs.EPSGTreatsAsLatLong() :
+        gdaltest.post_reason('supposed to be treated as lat/long')
+        return 'fail'
+
+    if srs.ExportToWkt().find('AXIS') == -1:
+        gdaltest.post_reason('should  have AXIS node')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_epsg_1,
     osr_epsg_2,
     osr_epsg_3,
+    osr_epsg_4,
+    osr_epsg_5,
     None ]
 
 if __name__ == '__main__':
