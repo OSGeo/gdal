@@ -119,6 +119,8 @@ class OGRGMLDataSource : public OGRDataSource
 
     int                 bExposeGMLId;
 
+    OGRSpatialReference* poGlobalSRS;
+
   public:
                         OGRGMLDataSource();
                         ~OGRGMLDataSource();
@@ -145,6 +147,9 @@ class OGRGMLDataSource : public OGRDataSource
     int                 ExposeGMLId() { return bExposeGMLId; }
 
     static void         PrintLine(VSILFILE* fp, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
+
+    int                 IsGML3Output();
+    int                 IsLongSRSRequired();
 };
 
 /************************************************************************/
