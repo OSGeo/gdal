@@ -455,6 +455,18 @@ CPLXMLNode* OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
 /*                         OGR_G_ExportToKML()                          */
 /************************************************************************/
 
+/**
+ * \brief Convert a geometry into KML format.
+ *
+ * The returned string should be freed with CPLFree() when no longer required.
+ *
+ * This method is the same as the C++ method OGRGeometry::exportToKML().
+ *
+ * @param hGeometry handle to the geometry.
+ * @param pszAltitudeMode value to write in altitudeMode element, or NULL.
+ * @return A KML fragment or NULL in case of error.
+ */
+
 char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
 {
     char* pszText = NULL;
