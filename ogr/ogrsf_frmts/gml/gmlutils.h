@@ -40,4 +40,6 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                                           int bTryToMakeMultipolygons,
                                           int bInvertAxisOrderIfLatLong);
 
+char* GML_GetSRSName(const OGRSpatialReference* poSRS, int bLongSRS, int *pbCoordSwap);
+
 #endif /* _CPL_GMLREADERP_H_INCLUDED */

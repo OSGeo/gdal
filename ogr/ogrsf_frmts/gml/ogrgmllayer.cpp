@@ -395,35 +395,73 @@ OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
 
 {
+    int bIsGML3Output = poDS->IsGML3Output();
     VSILFILE *fp = poDS->GetOutputFP();
 
     if( !bWriter )
         return OGRERR_FAILURE;
 
-    poDS->PrintLine( fp, "  <gml:featureMember>" );
+    if (bIsGML3Output)
+        poDS->PrintLine( fp, "  <ogr:featureMember>" );
+    else
+        poDS->PrintLine( fp, "  <gml:featureMember>" );
 
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( iNextGMLId++ );
 
-    poDS->PrintLine( fp, "    <ogr:%s fid=\"F%ld\">", 
+    if (bIsGML3Output)
+        poDS->PrintLine( fp, "    <ogr:%s gml:id=\"%s.%ld\">",
+                poFeatureDefn->GetName(),
+                poFeatureDefn->GetName(),
+                poFeature->GetFID() );
+    else
+        poDS->PrintLine( fp, "    <ogr:%s fid=\"F%ld\">", 
                 poFeatureDefn->GetName(),
                 poFeature->GetFID() );
 
     // Write out Geometry - for now it isn't indented properly.
     /* GML geometries don't like very much the concept of empty geometry */
-    if( poFeature->GetGeometryRef() != NULL &&
-        !poFeature->GetGeometryRef()->IsEmpty())
+    OGRGeometry* poGeom = poFeature->GetGeometryRef();
+    if( poGeom != NULL && !poGeom->IsEmpty())
     {
         char    *pszGeometry;
         OGREnvelope sGeomBounds;
 
-        pszGeometry = poFeature->GetGeometryRef()->exportToGML();
+        poGeom->getEnvelope( &sGeomBounds );
+        poDS->GrowExtents( &sGeomBounds );
+
+        if (bIsGML3Output)
+        {
+            int bCoordSwap;
+
+            if (poGeom->getSpatialReference() == NULL && poSRS != NULL)
+                poGeom->assignSpatialReference(poSRS);
+
+            char* pszSRSName = GML_GetSRSName(poGeom->getSpatialReference(), poDS->IsLongSRSRequired(), &bCoordSwap);
+            char szLowerCorner[75], szUpperCorner[75];
+            if (bCoordSwap)
+            {
+                OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinY, sGeomBounds.MinX, 0, 2);
+                OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxY, sGeomBounds.MaxX, 0, 2);
+            }
+            else
+            {
+                OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinX, sGeomBounds.MinY, 0, 2);
+                OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxX, sGeomBounds.MaxY, 0, 2);
+            }
+            poDS->PrintLine( fp, "      <gml:boundedBy><gml:Envelope%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
+                             pszSRSName, szLowerCorner, szUpperCorner);
+            CPLFree(pszSRSName);
+        }
+
+        char** papszOptions = (bIsGML3Output) ? CSLAddString(NULL, "FORMAT=GML3") : NULL;
+        if (bIsGML3Output && !poDS->IsLongSRSRequired())
+            papszOptions = CSLAddString(papszOptions, "GML3_LONGSRS=NO");
+        pszGeometry = poGeom->exportToGML(papszOptions);
+        CSLDestroy(papszOptions);
         poDS->PrintLine( fp, "      <ogr:geometryProperty>%s</ogr:geometryProperty>",
                     pszGeometry );
         CPLFree( pszGeometry );
-
-        poFeature->GetGeometryRef()->getEnvelope( &sGeomBounds );
-        poDS->GrowExtents( &sGeomBounds );
     }
 
     // Write all "set" fields. 
@@ -457,7 +495,10 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     poDS->PrintLine( fp, "    </ogr:%s>", poFeatureDefn->GetName() );
-    poDS->PrintLine( fp, "  </gml:featureMember>" );
+    if (bIsGML3Output)
+        poDS->PrintLine( fp, "  </ogr:featureMember>" );
+    else
+        poDS->PrintLine( fp, "  </gml:featureMember>" );
 
     return OGRERR_NONE;
 }

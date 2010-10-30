@@ -185,3 +185,61 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
     
     return poGeom;
 }
+
+
+/************************************************************************/
+/*                           GML_GetSRSName()                           */
+/************************************************************************/
+
+char* GML_GetSRSName(const OGRSpatialReference* poSRS, int bLongSRS, int *pbCoordSwap)
+{
+    *pbCoordSwap = FALSE;
+    if (poSRS == NULL)
+        return CPLStrdup("");
+
+    const char* pszAuthName = NULL;
+    const char* pszAuthCode = NULL;
+    const char* pszTarget = NULL;
+
+    if (poSRS->IsProjected())
+        pszTarget = "PROJCS";
+    else
+        pszTarget = "GEOGCS";
+
+    char szSrsName[50];
+    szSrsName[0] = 0;
+
+    pszAuthName = poSRS->GetAuthorityName( pszTarget );
+    if( NULL != pszAuthName )
+    {
+        if( EQUAL( pszAuthName, "EPSG" ) )
+        {
+            pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
+            if( NULL != pszAuthCode && strlen(pszAuthCode) < 10 )
+            {
+                if (bLongSRS && !((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong())
+                {
+                    OGRSpatialReference oSRS;
+                    if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
+                    {
+                        if (oSRS.EPSGTreatsAsLatLong())
+                            *pbCoordSwap = TRUE;
+                    }
+                }
+
+                if (bLongSRS)
+                {
+                    sprintf( szSrsName, " srsName=\"urn:ogc:def:crs:%s::%s\"",
+                        pszAuthName, pszAuthCode );
+                }
+                else
+                {
+                    sprintf( szSrsName, " srsName=\"%s:%s\"",
+                            pszAuthName, pszAuthCode );
+                }
+            }
+        }
+    }
+
+    return CPLStrdup(szSrsName);
+}
