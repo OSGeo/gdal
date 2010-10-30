@@ -107,6 +107,7 @@ void   CPL_DLL OGR_G_CloseRings( OGRGeometryH );
 
 OGRGeometryH CPL_DLL OGR_G_CreateFromGML( const char * );
 char   CPL_DLL *OGR_G_ExportToGML( OGRGeometryH );
+char   CPL_DLL *OGR_G_ExportToGMLEx( OGRGeometryH, char** papszOptions );
 
 #if defined(_CPL_MINIXML_H_INCLUDED)
 OGRGeometryH CPL_DLL OGR_G_CreateFromGMLTree( const CPLXMLNode * );

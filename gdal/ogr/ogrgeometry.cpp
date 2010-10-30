@@ -1729,7 +1729,7 @@ void OGR_G_FlattenTo2D( OGRGeometryH hGeom )
 /************************************************************************/
 
 /**
- * \fn char *OGRGeometry::exportToGML() const;
+ * \fn char *OGRGeometry::exportToGML( char** papszOptions = NULL ) const;
  *
  * \brief Convert a geometry into GML format.
  *
@@ -1737,14 +1737,27 @@ void OGR_G_FlattenTo2D( OGRGeometryH hGeom )
  * types assuming the this is available in the gml namespace.  The returned
  * string should be freed with CPLFree() when no longer required.
  *
- * This method is the same as the C function OGR_G_ExportToGML().
+ * The supported options in OGR 1.8.0 are :
+ * <ul>
+ * <li> FORMAT=GML3. Otherwise it will default to GML 2.1.2 output.
+ * <li> GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3) To use gml:Curve element for linestrings.
+ *     Otherwise gml:LineString will be used .
+ * <li> GML3_LONGSRS=YES/NO. (Only valid for FORMAT=GML3) Default to YES. If YES, SRS with EPSG authority will
+ *      be written with the "urn:ogc:def:crs:EPSG::" prefix.
+ *      In the case, if the SRS is a geographic SRS without explicit AXIS order, but that the same SRS authority code
+ *      imported with ImportFromEPSGA() should be treated as lat/long, then the function will take care of coordinate order swapping.
+ *      If set to NO, SRS with EPSG authority will be written with the "EPSG:" prefix, even if they are in lat/long order.
+ * </ul>
  *
+ * This method is the same as the C function OGR_G_ExportToGMLEx().
+ *
+ * @param papszOptions NULL-terminated list of options.
  * @return A GML fragment or NULL in case of error.
  */
 
-char *OGRGeometry::exportToGML() const
+char *OGRGeometry::exportToGML( const char* const * papszOptions ) const
 {
-    return OGR_G_ExportToGML( (OGRGeometryH) this );
+    return OGR_G_ExportToGMLEx( (OGRGeometryH) this, (char**)papszOptions );
 }
 
 /************************************************************************/

@@ -3053,9 +3053,9 @@ class Geometry(_object):
         """
         return _ogr.Geometry_ExportToWkb(self, *args, **kwargs)
 
-    def ExportToGML(self, *args):
-        """ExportToGML(self) -> retStringAndCPLFree"""
-        return _ogr.Geometry_ExportToGML(self, *args)
+    def ExportToGML(self, *args, **kwargs):
+        """ExportToGML(self, char options = None) -> retStringAndCPLFree"""
+        return _ogr.Geometry_ExportToGML(self, *args, **kwargs)
 
     def ExportToKML(self, *args):
         """ExportToKML(self, char altitude_mode = None) -> retStringAndCPLFree"""
