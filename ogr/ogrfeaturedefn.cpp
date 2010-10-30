@@ -723,7 +723,7 @@ int OGR_FD_IsStyleIgnored( OGRFeatureDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn void OGRFeatureDefn::SetStyleIgnored( bool bIgnore );
+ * \fn void OGRFeatureDefn::SetStyleIgnored( int bIgnore );
  *
  * \brief Set whether the style can be omitted when fetching features
  *
