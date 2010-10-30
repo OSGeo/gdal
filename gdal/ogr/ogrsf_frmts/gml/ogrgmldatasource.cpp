@@ -31,6 +31,8 @@
 #include "parsexsd.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "gmlutils.h"
+#include "ogr_p.h"
 
 #include <vector>
 
@@ -58,6 +60,8 @@ OGRGMLDataSource::OGRGMLDataSource()
     bExposeGMLId = FALSE;
     nSchemaInsertLocation = -1;
     nBoundedByLocation = -1;
+
+    poGlobalSRS = NULL;
 }
 
 /************************************************************************/
@@ -86,18 +90,44 @@ OGRGMLDataSource::~OGRGMLDataSource()
             && sBoundingRect.IsInit() 
             && VSIFSeekL( fpOutput, nBoundedByLocation, SEEK_SET ) == 0 )
         {
-            PrintLine( fpOutput, "  <gml:boundedBy>" );
-            PrintLine( fpOutput, "    <gml:Box>" );
-            PrintLine( fpOutput, 
-                        "      <gml:coord><gml:X>%.16g</gml:X>"
-                        "<gml:Y>%.16g</gml:Y></gml:coord>",
-                        sBoundingRect.MinX, sBoundingRect.MinY );
-            PrintLine( fpOutput, 
-                        "      <gml:coord><gml:X>%.16g</gml:X>"
-                        "<gml:Y>%.16g</gml:Y></gml:coord>",
-                        sBoundingRect.MaxX, sBoundingRect.MaxY );
-            PrintLine( fpOutput, "    </gml:Box>" );
-            PrintLine( fpOutput, "  </gml:boundedBy>" );
+            if (IsGML3Output())
+            {
+                int bCoordSwap;
+                char* pszSRSName;
+                if (poGlobalSRS)
+                    pszSRSName = GML_GetSRSName(poGlobalSRS, IsLongSRSRequired(), &bCoordSwap);
+                else
+                    pszSRSName = CPLStrdup("");
+                char szLowerCorner[75], szUpperCorner[75];
+                if (bCoordSwap)
+                {
+                    OGRMakeWktCoordinate(szLowerCorner, sBoundingRect.MinY, sBoundingRect.MinX, 0, 2);
+                    OGRMakeWktCoordinate(szUpperCorner, sBoundingRect.MaxY, sBoundingRect.MaxX, 0, 2);
+                }
+                else
+                {
+                    OGRMakeWktCoordinate(szLowerCorner, sBoundingRect.MinX, sBoundingRect.MinY, 0, 2);
+                    OGRMakeWktCoordinate(szUpperCorner, sBoundingRect.MaxX, sBoundingRect.MaxY, 0, 2);
+                }
+                PrintLine( fpOutput, "   <gml:boundedBy><gml:Envelope%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
+                                pszSRSName, szLowerCorner, szUpperCorner);
+                CPLFree(pszSRSName);
+            }
+            else
+            {
+                PrintLine( fpOutput, "  <gml:boundedBy>" );
+                PrintLine( fpOutput, "    <gml:Box>" );
+                PrintLine( fpOutput,
+                            "      <gml:coord><gml:X>%.16g</gml:X>"
+                            "<gml:Y>%.16g</gml:Y></gml:coord>",
+                            sBoundingRect.MinX, sBoundingRect.MinY );
+                PrintLine( fpOutput,
+                            "      <gml:coord><gml:X>%.16g</gml:X>"
+                            "<gml:Y>%.16g</gml:Y></gml:coord>",
+                            sBoundingRect.MaxX, sBoundingRect.MaxY );
+                PrintLine( fpOutput, "    </gml:Box>" );
+                PrintLine( fpOutput, "  </gml:boundedBy>" );
+            }
         }
 
         if (fpOutput)
@@ -118,6 +148,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
             VSIUnlink(poReader->GetSourceFileName());
         delete poReader;
     }
+
+    delete poGlobalSRS;
 }
 
 /************************************************************************/
@@ -665,6 +697,24 @@ OGRGMLDataSource::CreateLayer( const char * pszLayerName,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Set or check validity of global SRS.                            */
+/* -------------------------------------------------------------------- */
+    if (nLayers == 0)
+    {
+        if (poSRS)
+            poGlobalSRS = poSRS->Clone();
+    }
+    else
+    {
+        if (poSRS == NULL ||
+            (poGlobalSRS != NULL && poSRS->IsSame(poGlobalSRS)))
+        {
+            delete poGlobalSRS;
+            poGlobalSRS = NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRGMLLayer *poLayer;
@@ -785,28 +835,94 @@ void OGRGMLDataSource::InsertHeader()
     const char *pszTargetNameSpace = "http://ogr.maptools.org/";
     const char *pszPrefix = "ogr";
 
-    PrintLine( fpSchema, 
-                "<xs:schema targetNamespace=\"%s\" xmlns:%s=\"%s\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:gml=\"http://www.opengis.net/gml\" elementFormDefault=\"qualified\" version=\"1.0\">", 
-                pszTargetNameSpace, pszPrefix, pszTargetNameSpace );
-    
-    PrintLine( fpSchema, 
-                "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengis.net/gml/2.1.2/feature.xsd\"/>" );
+    if (IsGML3Output())
+    {
+        PrintLine( fpSchema,
+                    "<xs:schema ");
+        PrintLine( fpSchema,
+                   "    targetNamespace=\"%s\"", pszTargetNameSpace );
+        PrintLine( fpSchema,
+                   "    xmlns:%s=\"%s\"",
+                    pszPrefix, pszTargetNameSpace );
+        PrintLine( fpSchema,
+                   "    xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"");
+        PrintLine( fpSchema,
+                   "    xmlns:gml=\"http://www.opengis.net/gml\"");
+        PrintLine( fpSchema,
+                   "    xmlns:gmlsf=\"http://www.opengis.net/gmlsf\"");
+        PrintLine( fpSchema,
+                   "    elementFormDefault=\"qualified\"");
+        PrintLine( fpSchema,
+                   "    version=\"1.0\">");
+
+        PrintLine( fpSchema,
+                   "<xs:annotation>");
+        PrintLine( fpSchema,
+                   "  <xs:appinfo source=\"http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsfLevels.xsd\">");
+        PrintLine( fpSchema,
+                   "    <gmlsf:ComplianceLevel>0</gmlsf:ComplianceLevel>");
+        PrintLine( fpSchema,
+                   "    <gmlsf:GMLProfileSchema>http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsf.xsd</gmlsf:GMLProfileSchema>");
+        PrintLine( fpSchema,
+                   "  </xs:appinfo>");
+        PrintLine( fpSchema,
+                   "</xs:annotation>");
+
+        PrintLine( fpSchema,
+                    "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/base/gml.xsd\"/>" );
+        PrintLine( fpSchema,
+                    "<xs:import namespace=\"http://www.opengis.net/gmlsf\" schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsfLevels.xsd\"/>" );
+    }
+    else
+    {
+        PrintLine( fpSchema,
+                    "<xs:schema targetNamespace=\"%s\" xmlns:%s=\"%s\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:gml=\"http://www.opengis.net/gml\" elementFormDefault=\"qualified\" version=\"1.0\">",
+                    pszTargetNameSpace, pszPrefix, pszTargetNameSpace );
+
+        PrintLine( fpSchema,
+                    "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengis.net/gml/2.1.2/feature.xsd\"/>" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Define the FeatureCollection                                    */
 /* -------------------------------------------------------------------- */
-    PrintLine( fpSchema, 
-                "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"/>", 
-                pszPrefix );
+    if (IsGML3Output())
+    {
+        PrintLine( fpSchema,
+                    "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_GML\"/>",
+                    pszPrefix );
 
-    PrintLine( fpSchema, "<xs:complexType name=\"FeatureCollectionType\">");
-    PrintLine( fpSchema, "  <xs:complexContent>" );
-    PrintLine( fpSchema, "    <xs:extension base=\"gml:AbstractFeatureCollectionType\">" );
-    PrintLine( fpSchema, "      <xs:attribute name=\"lockId\" type=\"xs:string\" use=\"optional\"/>" );
-    PrintLine( fpSchema, "      <xs:attribute name=\"scope\" type=\"xs:string\" use=\"optional\"/>" );
-    PrintLine( fpSchema, "    </xs:extension>" );
-    PrintLine( fpSchema, "  </xs:complexContent>" );
-    PrintLine( fpSchema, "</xs:complexType>" );
+        PrintLine( fpSchema, "<xs:complexType name=\"FeatureCollectionType\">");
+        PrintLine( fpSchema, "  <xs:complexContent>" );
+        PrintLine( fpSchema, "    <xs:extension base=\"gml:AbstractFeatureType\">" );
+        PrintLine( fpSchema, "      <xs:sequence minOccurs=\"0\" maxOccurs=\"unbounded\">" );
+        PrintLine( fpSchema, "        <xs:element name=\"featureMember\">" );
+        PrintLine( fpSchema, "          <xs:complexType>" );
+        PrintLine( fpSchema, "            <xs:sequence>" );
+        PrintLine( fpSchema, "              <xs:element ref=\"gml:_Feature\"/>" );
+        PrintLine( fpSchema, "            </xs:sequence>" );
+        PrintLine( fpSchema, "          </xs:complexType>" );
+        PrintLine( fpSchema, "        </xs:element>" );
+        PrintLine( fpSchema, "      </xs:sequence>" );
+        PrintLine( fpSchema, "    </xs:extension>" );
+        PrintLine( fpSchema, "  </xs:complexContent>" );
+        PrintLine( fpSchema, "</xs:complexType>" );
+    }
+    else
+    {
+        PrintLine( fpSchema,
+                    "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"/>",
+                    pszPrefix );
+
+        PrintLine( fpSchema, "<xs:complexType name=\"FeatureCollectionType\">");
+        PrintLine( fpSchema, "  <xs:complexContent>" );
+        PrintLine( fpSchema, "    <xs:extension base=\"gml:AbstractFeatureCollectionType\">" );
+        PrintLine( fpSchema, "      <xs:attribute name=\"lockId\" type=\"xs:string\" use=\"optional\"/>" );
+        PrintLine( fpSchema, "      <xs:attribute name=\"scope\" type=\"xs:string\" use=\"optional\"/>" );
+        PrintLine( fpSchema, "    </xs:extension>" );
+        PrintLine( fpSchema, "  </xs:complexContent>" );
+        PrintLine( fpSchema, "</xs:complexType>" );
+    }
 
 /* ==================================================================== */
 /*      Define the schema for each layer.                               */
@@ -840,19 +956,31 @@ void OGRGMLDataSource::InsertHeader()
                 pszGeometryTypeName = "PointPropertyType";
                 break;
             case wkbLineString:
-                pszGeometryTypeName = "LineStringPropertyType";
+                if (IsGML3Output())
+                    pszGeometryTypeName = "CurvePropertyType";
+                else
+                    pszGeometryTypeName = "LineStringPropertyType";
                 break;
             case wkbPolygon:
-                pszGeometryTypeName = "PolygonPropertyType";
+                if (IsGML3Output())
+                    pszGeometryTypeName = "SurfacePropertyType";
+                else
+                    pszGeometryTypeName = "PolygonPropertyType";
                 break;
             case wkbMultiPoint:
                 pszGeometryTypeName = "MultiPointPropertyType";
                 break;
             case wkbMultiLineString:
-                pszGeometryTypeName = "MultiLineStringPropertyType";
+                if (IsGML3Output())
+                    pszGeometryTypeName = "MutliCurvePropertyType";
+                else
+                    pszGeometryTypeName = "MultiLineStringPropertyType";
                 break;
             case wkbMultiPolygon:
-                pszGeometryTypeName = "MultiPolygonPropertyType";
+                if (IsGML3Output())
+                    pszGeometryTypeName = "MultiSurfacePropertyType";
+                else
+                    pszGeometryTypeName = "MultiPolygonPropertyType";
                 break;
             case wkbGeometryCollection:
                 pszGeometryTypeName = "MultiGeometryPropertyType";
@@ -1027,4 +1155,23 @@ void OGRGMLDataSource::PrintLine(VSILFILE* fp, const char *fmt, ...)
 #endif
 
     VSIFPrintfL(fp, "%s%s", osWork.c_str(), pszEOL);
+}
+
+/************************************************************************/
+/*                          IsGML3Output()                              */
+/************************************************************************/
+
+int OGRGMLDataSource::IsGML3Output()
+{
+    const char* pszFormat = CSLFetchNameValue(papszCreateOptions, "FORMAT");
+    return pszFormat && EQUAL(pszFormat, "GML3");
+}
+
+/************************************************************************/
+/*                        IsLongSRSRequired()                           */
+/************************************************************************/
+
+int OGRGMLDataSource::IsLongSRSRequired()
+{
+    return CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "GML3_LONGSRS", "YES"));
 }
