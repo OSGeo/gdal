@@ -8,9 +8,20 @@
 <h1>GML - Geography Markup Language</h1>
 
 OGR has limited support for GML reading and writing. Update of existing
-files is not currently supported. OGR is based on GML 2.0 : it will only write
-GML 2 geometries, but can read GML 2 and part of GML 3 geometries that can be
-translated into the simple feature model. The reading part of the driver only
+files is not currently supported.<p>
+
+Supported GML flavors :
+<table border>
+<tr><th>OGR version</th><th>Read</th><th>Write</th></tr>
+<tr><td>OGR &gt;= 1.8.0</td>
+    <td>GML2 and GML3 that can<br>be translated into simple feature model</td>
+    <td>GML 2.1.2 or GML 3 SF-0<br>(GML 3.1.1 Compliance level SF-0)</td>
+</tr>
+<tr><td>OGR &lt; 1.8.0</td><td>GML2 and limited GML3</td><td>GML 2.1.2</td></tr>
+</table>
+<p>
+
+The reading part of the driver only
 works if OGR is built with Xerces linked in. Starting with GDAL 1.7.0, when
 Xerces is unavailable, read support also works if OGR is built with Expat linked in.
 XML validation is disabled by default.
@@ -150,7 +161,7 @@ When writing a GML file, the driver expects UTF-8 content to be passed in.<p>
 On export all layers are written to a single GML file all in a single
 feature collection.  Each layer's name is used as the element name for
 objects from that layer.  Geometries are always written as the 
-ogr:geometryProperty property on the feature.<p>
+ogr:geometryProperty element on the feature.<p>
 
 The GML writer supports the following creation options:
 
@@ -161,11 +172,19 @@ it is up to the user to ensure it will match the schema of the OGR produced
 GML data file.<p>
 
 <li> <B>XSISCHEMA</B>: This can be EXTERNAL, INTERNAL or OFF and defaults to
-EXTERNAL.  This (attempts) to write a BXML compatible GML schema file to
-a corresponding .xsd file (with the same basename).  The generated schema is
-still experimental. If INTERNAL is used the schema is written within the GML
-file, but this is even more experimental and almost certainly not valid XML.
-OFF disables schema generation (and is implicit if XSISCHEMAURI is used). 
+EXTERNAL.  This writes a GML application schema file to a corresponding .xsd file
+(with the same basename). If INTERNAL is used the schema is written within the GML
+file, but this is experimental and almost certainly not valid XML.
+OFF disables schema generation (and is implicit if XSISCHEMAURI is used).<p>
+
+<li> <b>FORMAT</b>: (OGR >= 1.8.0) This can be set to GML3 in order
+to write GML files that follow GML3 SF-0 profile. Otherwise GML2 will be used.<p>
+
+<li> <b>GML3_LONGSRS</b>=YES/NO. (OGR >= 1.8.0, only valid when FORMAT=GML3) Default to YES. If YES, SRS with EPSG authority will
+be written with the "urn:ogc:def:crs:EPSG::" prefix.
+In the case, if the SRS is a geographic SRS without explicit AXIS order, but that the same SRS authority code
+imported with ImportFromEPSGA() should be treated as lat/long, then the function will take care of coordinate order swapping.
+If set to NO, SRS with EPSG authority will be written with the "EPSG:" prefix, even if they are in lat/long order.
 <p>
 
 </ul>
@@ -264,7 +283,8 @@ ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_19
 <h2>See Also</h2>
 
 <ul>
-<li> <a href="http://www.opengis.net/gml/">GML Specifications</a><p>
+<li> <a href="http://www.opengeospatial.org/standards/gml">GML Specifications</a><p>
+<li> <a href="http://portal.opengeospatial.org/files/?artifact_id=15201">GML 3.1.1 simple features profile</a><p>
 <li> <a href="http://xml.apache.org/xerces2-j/index.html">Xerces</a><p>
 <li> <a href="drv_nas.html">NAS/ALKIS : specialized GML driver for cadastral data in Germany</a><p>
 </ul>
