@@ -1746,7 +1746,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         
         // Do we want to turn this into a compound definition
         // with a vertical datum?
-        if( strchr( pszDefinition, '+' ) != NULL )
+        if( eStatus == OGRERR_NONE && strchr( pszDefinition, '+' ) != NULL )
         {
             OGRSpatialReference oVertSRS;
 
