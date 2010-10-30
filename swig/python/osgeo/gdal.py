@@ -143,7 +143,7 @@ def DontUseExceptions(*args):
   return _gdal.DontUseExceptions(*args)
 
 def VSIFReadL(*args):
-  """VSIFReadL(int nMembSize, int nMembCount, FILE fp) -> int"""
+  """VSIFReadL(int nMembSize, int nMembCount, VSILFILE fp) -> int"""
   return _gdal.VSIFReadL(*args)
 
 def Debug(*args):
@@ -239,23 +239,23 @@ def Rename(*args):
   return _gdal.Rename(*args)
 
 def VSIFOpenL(*args):
-  """VSIFOpenL(char utf8_path, char pszMode) -> FILE"""
+  """VSIFOpenL(char utf8_path, char pszMode) -> VSILFILE"""
   return _gdal.VSIFOpenL(*args)
 
 def VSIFCloseL(*args):
-  """VSIFCloseL(FILE arg0)"""
+  """VSIFCloseL(VSILFILE arg0)"""
   return _gdal.VSIFCloseL(*args)
 
 def VSIFSeekL(*args):
-  """VSIFSeekL(FILE arg0, long arg1, int arg2) -> int"""
+  """VSIFSeekL(VSILFILE arg0, long arg1, int arg2) -> int"""
   return _gdal.VSIFSeekL(*args)
 
 def VSIFTellL(*args):
-  """VSIFTellL(FILE arg0) -> long"""
+  """VSIFTellL(VSILFILE arg0) -> long"""
   return _gdal.VSIFTellL(*args)
 
 def VSIFWriteL(*args):
-  """VSIFWriteL(char arg0, int arg1, int arg2, FILE arg3) -> int"""
+  """VSIFWriteL(char arg0, int arg1, int arg2, VSILFILE arg3) -> int"""
   return _gdal.VSIFWriteL(*args)
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class"""
