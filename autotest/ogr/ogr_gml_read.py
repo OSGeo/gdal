@@ -794,7 +794,76 @@ def ogr_gml_20():
         return 'fail'
     except:
         return 'success'
-    
+
+###############################################################################
+# Test writing GML3
+
+def ogr_gml_21():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    # Create GML3 file
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+
+    ds = ogr.GetDriverByName('GML').CreateDataSource('tmp/gml_21.gml', options = ['FORMAT=GML3'] )
+    lyr = ds.CreateLayer('firstlayer', srs = sr)
+    lyr.CreateField(ogr.FieldDefn('string_field', ogr.OFTString))
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'foo')
+    geom = ogr.CreateGeometryFromWkt('POINT (3 48)')
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    ds = None
+
+    # Reopen the file
+    ds = ogr.Open('tmp/gml_21.gml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('did not get expected geometry')
+        return 'fail'
+    ds = None
+
+    # Test that .gml and .xsd are identical to what is expected
+    f1 = open('tmp/gml_21.gml', 'rt')
+    f2 = open('data/expected_gml_21.gml', 'rt')
+    line1 = f1.readline()
+    line2 = f2.readline()
+    while line1 != '':
+        if line1 != line2:
+            gdaltest.post_reason('.gml file not identical to expected')
+            print(open('tmp/gml_21.gml', 'rt').read())
+            return 'fail'
+        line1 = f1.readline()
+        line2 = f2.readline()
+    f1.close()
+    f2.close()
+
+    f1 = open('tmp/gml_21.xsd', 'rt')
+    f2 = open('data/expected_gml_21.xsd', 'rt')
+    line1 = f1.readline()
+    line2 = f2.readline()
+    while line1 != '':
+        if line1 != line2:
+            gdaltest.post_reason('.xsd file not identical to expected')
+            print(open('tmp/gml_21.xsd', 'rt').read())
+            return 'fail'
+        line1 = f1.readline()
+        line2 = f2.readline()
+    f1.close()
+    f2.close()
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -862,6 +931,7 @@ gdaltest_list = [
     ogr_gml_18,
     ogr_gml_19,
     ogr_gml_20,
+    ogr_gml_21,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
