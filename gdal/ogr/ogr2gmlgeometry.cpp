@@ -519,6 +519,19 @@ CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
 /*                         OGR_G_ExportToGML()                          */
 /************************************************************************/
 
+/**
+ * \brief Convert a geometry into GML format.
+ *
+ * The GML geometry is expressed directly in terms of GML basic data
+ * types assuming the this is available in the gml namespace.  The returned
+ * string should be freed with CPLFree() when no longer required.
+ *
+ * This method is the same as the C++ method OGRGeometry::exportToGML().
+ *
+ * @param hGeometry handle to the geometry.
+ * @return A GML fragment or NULL in case of error.
+ */
+
 char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
 
 {
