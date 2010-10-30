@@ -1476,9 +1476,20 @@ public:
 #endif
 #endif
 
-#if defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP) || defined(SWIGPERL)
+#if defined(SWIGCSHARP)
   retStringAndCPLFree* ExportToGML() {
-    return (retStringAndCPLFree*) OGR_G_ExportToGML(self);
+    return (retStringAndCPLFree*) OGR_G_ExportToGMLEx(self, NULL);
+  }
+
+  retStringAndCPLFree* ExportToGML(char** options) {
+    return (retStringAndCPLFree*) OGR_G_ExportToGMLEx(self, options);
+  }
+#elif defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGPERL)
+#ifndef SWIGJAVA
+  %feature("kwargs") ExportToGML;
+#endif
+  retStringAndCPLFree* ExportToGML(char** options=0) {
+    return (retStringAndCPLFree*) OGR_G_ExportToGMLEx(self, options);
   }
 #else
   /* FIXME : wrong typemap. The string should be freed */
