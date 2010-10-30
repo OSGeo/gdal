@@ -815,6 +815,88 @@ def gml_invalid_geoms():
     return 'success'
 
 ###############################################################################
+# Test write support for GML3
+
+def gml_write_gml3_geometries():
+
+    gml_list = [ '<gml:Point><gml:pos>2 3</gml:pos></gml:Point>',
+             '<gml:Point><gml:pos>2 3 4</gml:pos></gml:Point>',
+             '<gml:LineString><gml:posList>2 3 4 5</gml:posList></gml:LineString>',
+             '<gml:Curve><gml:segments><gml:LineStringSegment><gml:posList>2 3 4 5</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve>',
+             '<gml:LineString><gml:posList srsDimension="3">2 3 10 4 5 20</gml:posList></gml:LineString>',
+             '<gml:Curve><gml:segments><gml:LineStringSegment><gml:posList srsDimension="3">2 3 10 4 5 20</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve>',
+             '<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>',
+             '<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior><gml:interior><gml:LinearRing><gml:posList>10 10 10 11 11 11 10 10</gml:posList></gml:LinearRing></gml:interior></gml:Polygon>',
+             '<gml:MultiPoint><gml:pointMember><gml:Point><gml:pos>2 3</gml:pos></gml:Point></gml:pointMember><gml:pointMember><gml:Point><gml:pos>4 5</gml:pos></gml:Point></gml:pointMember></gml:MultiPoint>',
+             '<gml:MultiCurve><gml:curveMember><gml:LineString><gml:posList>0 1 2 3 4 5</gml:posList></gml:LineString></gml:curveMember><gml:curveMember><gml:LineString><gml:posList>6 7 8 9 10 11</gml:posList></gml:LineString></gml:curveMember></gml:MultiCurve>',
+             '<gml:MultiCurve><gml:curveMember><gml:Curve><gml:segments><gml:LineStringSegment><gml:posList>0 1 2 3 4 5</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve></gml:curveMember><gml:curveMember><gml:Curve><gml:segments><gml:LineStringSegment><gml:posList>6 7 8 9 10 11</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve></gml:curveMember></gml:MultiCurve>',
+             '<gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>6 7 8 9 10 11 6 7</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface>',
+             '<gml:MultiGeometry><gml:geometryMember><gml:Point><gml:pos>0 1</gml:pos></gml:Point></gml:geometryMember><gml:geometryMember><gml:LineString><gml:posList>2 3 4 5</gml:posList></gml:LineString></gml:geometryMember></gml:MultiGeometry>' ]
+
+    for gml_in in gml_list:
+        geom = ogr.CreateGeometryFromGML(gml_in)
+        if gml_in.find('<gml:Curve') != -1:
+            gml_out = geom.ExportToGML( ['FORMAT=GML3', 'GML3_LINESTRING_ELEMENT=curve'] )
+        else:
+            gml_out = geom.ExportToGML( ['FORMAT=GML3'] )
+        if gml_out != gml_in:
+            gdaltest.post_reason('got %s, instead of %s' % (gml_out, gml_in))
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test write support for GML3 SRS
+
+def gml_write_gml3_srs():
+
+    sr32631 = osr.SpatialReference()
+    sr32631.SetFromUserInput("EPSG:32631")
+
+    srlonglat = osr.SpatialReference()
+    srlonglat.SetFromUserInput("EPSG:4326")
+
+    srlatlong = osr.SpatialReference()
+    srlatlong.SetFromUserInput("EPSGA:4326")
+
+    geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
+    geom.AssignSpatialReference(sr32631)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3'] )
+    expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000 4500000</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
+    # Should perform the needed coordinate order swapping
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    geom.AssignSpatialReference(srlonglat)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3'] )
+    expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
+    # Shouldn't change the coordinate order
+    geom = ogr.CreateGeometryFromWkt('POINT(49 2)')
+    geom.AssignSpatialReference(srlatlong)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3'] )
+    expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
+    # Legacy SRS format
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    geom.AssignSpatialReference(srlonglat)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3', 'GML3_LONGSRS=NO'] )
+    expected_gml = '<gml:Point srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -853,6 +935,8 @@ gdaltest_list.append( gml_Solid )
 gdaltest_list.append( gml_OrientableSurface )
 #gdaltest_list.append( gml_out_precision )
 gdaltest_list.append( gml_invalid_geoms )
+gdaltest_list.append( gml_write_gml3_geometries )
+gdaltest_list.append( gml_write_gml3_srs )
 
 
 if __name__ == '__main__':
