@@ -839,6 +839,8 @@ def ogr_gml_21():
     line1 = f1.readline()
     line2 = f2.readline()
     while line1 != '':
+        line1 = line1.strip()
+        line2 = line2.strip()
         if line1 != line2:
             gdaltest.post_reason('.gml file not identical to expected')
             print(open('tmp/gml_21.gml', 'rt').read())
@@ -853,6 +855,8 @@ def ogr_gml_21():
     line1 = f1.readline()
     line2 = f2.readline()
     while line1 != '':
+        line1 = line1.strip()
+        line2 = line2.strip()
         if line1 != line2:
             gdaltest.post_reason('.xsd file not identical to expected')
             print(open('tmp/gml_21.xsd', 'rt').read())
