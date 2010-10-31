@@ -410,10 +410,18 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         poFeature->SetFID( iNextGMLId++ );
 
     if (bIsGML3Output)
-        poDS->PrintLine( fp, "    <ogr:%s gml:id=\"%s.%ld\">",
+    {
+        int nGMLIdIndex = poFeatureDefn->GetFieldIndex("gml_id");
+        if (nGMLIdIndex >= 0 && poFeature->IsFieldSet( nGMLIdIndex ) )
+            poDS->PrintLine( fp, "    <ogr:%s gml:id=\"%s\">",
                 poFeatureDefn->GetName(),
-                poFeatureDefn->GetName(),
-                poFeature->GetFID() );
+                poFeature->GetFieldAsString(nGMLIdIndex) );
+        else
+            poDS->PrintLine( fp, "    <ogr:%s gml:id=\"%s.%ld\">",
+                    poFeatureDefn->GetName(),
+                    poFeatureDefn->GetName(),
+                    poFeature->GetFID() );
+    }
     else
         poDS->PrintLine( fp, "    <ogr:%s fid=\"F%ld\">", 
                 poFeatureDefn->GetName(),
