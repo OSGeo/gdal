@@ -433,7 +433,7 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
 
     int bWriteAsHex = !CSLFetchBoolean(papszOptions,"WRITE_EWKT_GEOM",FALSE);
 
-    poLayer = new OGRPGDumpLayer( this, pszSchemaName, pszLayerNameIn, pszGFldName,
+    poLayer = new OGRPGDumpLayer( this, pszSchemaName, pszLayerName, pszGFldName,
                                   pszFIDColumn, nDimension, nSRSId, bWriteAsHex, bCreateTable );
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
