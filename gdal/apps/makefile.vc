@@ -48,6 +48,11 @@ gdaltransform.exe:	gdaltransform.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
+gdallocationinfo.exe:	gdallocationinfo.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdallocationinfo.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
 gdalwarp.exe:	gdalwarp.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalwarp.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
