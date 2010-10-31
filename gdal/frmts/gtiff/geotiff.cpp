@@ -684,7 +684,9 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 {
     CPLErr eErr;
 
-    if (poGDS->nBands != 1 && eRWFlag == GF_Read &&
+    if (poGDS->nBands != 1 &&
+        poGDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
+        eRWFlag == GF_Read &&
         nXSize == nBufXSize && nYSize == nBufYSize)
     {
         int nBlockX1 = nXOff / nBlockXSize;
