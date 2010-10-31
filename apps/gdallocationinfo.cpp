@@ -47,7 +47,7 @@ Usage:
 \endhtmlonly
 
 \verbatim
-Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonlyl]
+Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]
                         [-b band]* [-s_srs srs_def] [-geoloc] [-wgs84]
                         srcfile x y
 \endverbatim
@@ -161,7 +161,7 @@ Frank Warmerdam <warmerdam@pobox.com>
 static void Usage()
 
 {
-    printf( "Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonlyl]\n"
+    printf( "Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]\n"
             "                        [-b band]* [-s_srs srs_def] [-geoloc] [-wgs84]\n"
             "                        srcfile x y\n" 
             "\n" );
@@ -206,7 +206,6 @@ int main( int argc, char ** argv )
     const char         *pszLocX = NULL, *pszLocY = NULL;
     const char         *pszSrcFilename = NULL;
     const char         *pszSourceSRS = NULL;
-    const char         *pszTargetSRS = NULL;
     std::vector<int>   anBandList;
     bool               bAsXML = false, bLIFOnly = false;
     bool               bQuiet = false, bValOnly = false;
@@ -232,10 +231,6 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
         {
             anBandList.push_back( atoi(argv[++i]) );
-        }
-        else if( EQUAL(argv[i],"-t_srs") && i < argc-1 )
-        {
-            pszTargetSRS = SanitizeSRS(argv[++i]);
         }
         else if( EQUAL(argv[i],"-s_srs") && i < argc-1 )
         {
@@ -382,6 +377,8 @@ int main( int argc, char ** argv )
     for( i = 0; i < (int) anBandList.size(); i++ )
     {
         GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, anBandList[i] );
+        if (hBand == NULL)
+            continue;
 
         if( bAsXML )
         {
