@@ -1079,6 +1079,25 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE );
 
 /* -------------------------------------------------------------------- */
+/*      Do we want to control the compression level?                    */
+/* -------------------------------------------------------------------- */
+    const char *pszLevel = CSLFetchNameValue( papszOptions, "ZLEVEL" );
+
+    if( pszLevel )
+    {
+        int nLevel = atoi(pszLevel);
+        if( nLevel < 1 || nLevel > 9 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Illegal ZLEVEL value '%s', should be 1-9.",
+                      pszLevel );
+            return NULL;
+        }
+
+        png_set_compression_level( hPNG, nLevel );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Try to handle nodata values as a tRNS block (note for           */
 /*      paletted images, we save the effect to apply as part of         */
 /*      palette).                                                       */
@@ -1381,6 +1400,7 @@ void GDALRegister_PNG()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
 "   <Option name='WORLDFILE' type='boolean' description='Create world file'/>\n"
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>"
 "</CreationOptionList>\n" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
