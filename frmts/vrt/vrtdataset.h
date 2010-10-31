@@ -309,8 +309,10 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
 class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 {
+  private:
     int            bAlreadyInIRasterIO;
-    
+    CPLString      osLastLocationInfo;
+
     void           Initialize( int nXSize, int nYSize );
 
   public:
@@ -330,6 +332,8 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                               void *, int, int, GDALDataType,
                               int, int );
 
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );
