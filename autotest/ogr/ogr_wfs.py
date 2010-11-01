@@ -651,6 +651,34 @@ def ogr_wfs_ionic_wfst():
     return 'success'
 
 ###############################################################################
+# Test ExecuteSQL() where SQL should be turned into PROPERTYNAME and FILTER parameters
+
+def ogr_wfs_ionic_sql():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if gdaltest.gdalurlopen('http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA') is None:
+        print('cannot open URL')
+        return 'skip'
+
+    ds = ogr.Open('WFS:http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA')
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.ExecuteSQL("SELECT name FROM 'wfs:BUSINESS' WHERE total_employees = 105")
+    count = lyr.GetFeatureCount()
+
+    ds.ReleaseResultSet(lyr)
+
+    if count != 1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test opening a datasource from a XML description file
 # The following test should issue 0 WFS http request
 
@@ -691,6 +719,7 @@ gdaltest_list = [
     #ogr_wfs_geoserver_wfst,
     #ogr_wfs_deegree_wfst,
     ogr_wfs_ionic_wfst,
+    ogr_wfs_ionic_sql,
     ogr_wfs_xmldescriptionfile
     ]
 
