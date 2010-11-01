@@ -471,6 +471,46 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         osURL = WFS_AddKVToURL(osURL, "RESULTTYPE", "hits");
     }
 
+    /* If no PROPERTYNAME is specified, build one if there are ignored fields */
+    const char* pszPropertyName = WFS_FetchValueFromURL(osURL, "PROPERTYNAME");
+    if (pszPropertyName[0] == 0 && poFeatureDefn != NULL)
+    {
+        int bHasIgnoredField = FALSE;
+        CPLString osPropertyName;
+        for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+        {
+            if (poFeatureDefn->GetFieldDefn(iField)->IsIgnored())
+            {
+                bHasIgnoredField = TRUE;
+            }
+            else
+            {
+                if (osPropertyName.size() != 0)
+                    osPropertyName += ",";
+                osPropertyName += poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+            }
+        }
+        if (osGeometryColumnName.size() != 0)
+        {
+            if (poFeatureDefn->IsGeometryIgnored())
+            {
+                bHasIgnoredField = TRUE;
+            }
+            else
+            {
+                if (osPropertyName.size() != 0)
+                    osPropertyName += ",";
+                osPropertyName += osGeometryColumnName;
+            }
+        }
+
+        if (bHasIgnoredField)
+        {
+            osPropertyName = "(" + osPropertyName + ")";
+            osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", osPropertyName);
+        }
+    }
+
     return osURL;
 }
 
@@ -990,6 +1030,9 @@ void OGRWFSLayer::SetSpatialFilter( OGRGeometry * poGeom )
 
 OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
 {
+    if (pszFilter != NULL && pszFilter[0] == 0)
+        pszFilter = NULL;
+
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
     if (eErr != CE_None)
         return eErr;
@@ -1065,6 +1108,10 @@ int OGRWFSLayer::TestCapability( const char * pszCap )
     else if ( EQUAL(pszCap, OLCTransactions) )
     {
         return poDS->SupportTransactions() && poDS->UpdateMode();
+    }
+    else if( EQUAL(pszCap,OLCIgnoreFields) )
+    {
+        return TRUE;
     }
 
     return FALSE;
