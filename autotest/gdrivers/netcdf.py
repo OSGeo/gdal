@@ -305,7 +305,79 @@ def netcdf_11():
     ds = None
 
     return 'success'
+
+###############################################################################
+#check for scale/offset set/get.
+def netcdf_12():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/scale_offset.nc' )
+
+    scale = ds.GetRasterBand( 1 ).GetScale();
+    offset = ds.GetRasterBand( 1 ).GetOffset()
+
+    if scale != 0.01 or offset != 1.5:
+        gdaltest.post_reason( 'Incorrect scale(%f) or offset(%f)' % ( scale, offset ) )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+#check for scale/offset = 1.0/0.0 if no scale or offset is available
+def netcdf_13():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/no_scale_offset.nc' )
+
+    scale = ds.GetRasterBand( 1 ).GetScale();
+    offset = ds.GetRasterBand( 1 ).GetOffset()
+
+    if scale != 1.0 or offset != 0.0:
+        gdaltest.post_reason( 'Incorrect scale or offset' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+#check for scale/offset for two variables
+def netcdf_14():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'NETCDF:data/two_vars_scale_offset.nc:z' )
+
+    scale = ds.GetRasterBand( 1 ).GetScale();
+    offset = ds.GetRasterBand( 1 ).GetOffset()
+
+    if scale != 0.01 or offset != 1.5:
+        gdaltest.post_reason( 'Incorrect scale(%f) or offset(%f)' % ( scale, offset ) )
+        return 'fail'
     
+    ds = None
+
+    ds = gdal.Open( 'NETCDF:data/two_vars_scale_offset.nc:q' )
+
+    scale = ds.GetRasterBand( 1 ).GetScale();
+    offset = ds.GetRasterBand( 1 ).GetOffset()
+
+    scale = ds.GetRasterBand( 1 ).GetScale();
+    offset = ds.GetRasterBand( 1 ).GetOffset()
+
+    if scale != 0.1 or offset != 2.5:
+        gdaltest.post_reason( 'Incorrect scale(%f) or offset(%f)' % ( scale, offset ) )
+        return 'fail'
+
+    return 'success'
+        
 ###############################################################################
 
 gdaltest_list = [
@@ -319,7 +391,10 @@ gdaltest_list = [
     netcdf_8,
     netcdf_9,
     netcdf_10, 
-    netcdf_11 ]
+    netcdf_11,
+    netcdf_12,
+    netcdf_13,
+    netcdf_14 ]
 
 
 if __name__ == '__main__':
