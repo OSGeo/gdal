@@ -1729,7 +1729,7 @@ void OGR_G_FlattenTo2D( OGRGeometryH hGeom )
 /************************************************************************/
 
 /**
- * \fn char *OGRGeometry::exportToGML( char** papszOptions = NULL ) const;
+ * \fn char *OGRGeometry::exportToGML( const char* const * papszOptions = NULL ) const;
  *
  * \brief Convert a geometry into GML format.
  *

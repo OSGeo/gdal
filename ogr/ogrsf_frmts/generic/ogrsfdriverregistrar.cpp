@@ -733,12 +733,12 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
  * If that is not set the following defaults are used:
  *
  * <ul>
- * <li> Linux/Unix: <prefix>/lib/gdalplugins is searched or 
+ * <li> Linux/Unix: &lt;prefix&gt;/lib/gdalplugins is searched or
  * /usr/local/lib/gdalplugins if the install prefix is not known.
- * <li> MacOSX: <prefix>/PlugIns is searched, or /usr/local/lib/gdalplugins if
+ * <li> MacOSX: &lt;prefix&gt;/PlugIns is searched, or /usr/local/lib/gdalplugins if
  * the install prefix is not known.  Also, the framework directory
  * /Library/Application Support/GDAL/PlugIns is searched.
- * <li> Win32: <prefix>/lib/gdalplugins if the prefix is known (normally it 
+ * <li> Win32: &lt;prefix&gt;/lib/gdalplugins if the prefix is known (normally it
  * is not), otherwise the gdalplugins subdirectory of the directory containing
  * the currently running executable is used. 
  * </ul>
