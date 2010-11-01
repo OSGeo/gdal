@@ -439,6 +439,7 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_bReportHref = FALSE;
     m_pszHref = NULL;
     m_pszUom = NULL;
+    m_pszValue = NULL;
 }
 
 /************************************************************************/
@@ -453,6 +454,7 @@ GMLHandler::~GMLHandler()
     CPLFree( m_pszCityGMLGenericAttrName );
     CPLFree( m_pszHref );
     CPLFree( m_pszUom );
+    CPLFree( m_pszValue );
 }
 
 
@@ -634,6 +636,8 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         }
         CPLFree(m_pszUom);
         m_pszUom = GetAttributeValue(attr, "uom");
+        CPLFree(m_pszValue);
+        m_pszValue = GetAttributeValue(attr, "value");
     }
     else if( m_bReportHref && m_poReader->IsAttributeElement( CPLSPrintf("%s_href", pszName ) ) )
     {
@@ -705,7 +709,10 @@ OGRErr GMLHandler::endElement(const char* pszName )
         }
         else
         {
-            m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszCurField );
+            if (EQUAL(m_pszCurField, "") && m_pszValue != NULL)
+                m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszValue );
+            else
+                m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszCurField );
 
             if (m_pszHref != NULL)
             {
@@ -718,12 +725,15 @@ OGRErr GMLHandler::endElement(const char* pszName )
             CPLString osPropNameUom = CPLSPrintf("%s_uom", poState->m_pszPath);
             m_poReader->SetFeatureProperty( osPropNameUom, m_pszUom );
         }
+
         CPLFree( m_pszCurField );
         m_pszCurField = NULL;
         CPLFree( m_pszHref );
         m_pszHref = NULL;
         CPLFree( m_pszUom );
         m_pszUom = NULL;
+        CPLFree( m_pszValue );
+        m_pszValue = NULL;
     }
 
 /* -------------------------------------------------------------------- */

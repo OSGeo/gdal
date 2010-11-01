@@ -593,6 +593,26 @@ int GMLReader::IsFeatureElement( const char *pszElement )
     {
          /* Polish TBD GML */
     }
+
+    /* Begin of OpenLS */
+    else if (strcmp(pszLast, "GeocodeResponseList") == 0 &&
+             strcmp(pszElement, "GeocodedAddress") == 0)
+    {
+    }
+    else if (strcmp(pszLast, "DetermineRouteResponse") == 0)
+    {
+        /* We don't want the children of RouteInstructionsList */
+        /* to be a single feature. We want each RouteInstruction */
+        /* to be a feature */
+        if (strcmp(pszElement, "RouteInstructionsList") == 0)
+            return FALSE;
+    }
+    else if (strcmp(pszElement, "RouteInstruction") == 0 &&
+             strcmp(pszLast, "RouteInstructionsList") == 0)
+    {
+    }
+    /* End of OpenLS */
+
     else if( nLen < 6 || !(EQUAL(pszLast+nLen-6,"member") ||
                       EQUAL(pszLast+nLen-7,"members")) )
         return FALSE;

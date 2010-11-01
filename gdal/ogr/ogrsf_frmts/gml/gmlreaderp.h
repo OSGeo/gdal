@@ -64,6 +64,7 @@ class GMLHandler
     int        m_bIsAIXM;
     char      *m_pszHref;
     char      *m_pszUom;
+    char      *m_pszValue;
 protected:
     GMLReader  *m_poReader;
 
