@@ -133,6 +133,27 @@ string to the ExecuteSQL() method, as the name of the SQL dialect.</p>
 OGRDataSource::CommitTransaction() and OGRDataSource::RollbackTransaction()
 calls in the normal SQL sense.<p>
 
+<h2>Retrieving FID of newly inserted feature</h2>
+
+Starting with OGR 1.8.0, and for PostgreSQL >= 8.2 databases, the FID of a feature (i.e. usually the
+value of the OGC_FID column for the feature) inserted into a table with CreateFeature(), in non-copy
+mode, will be retrieved from the database and can be obtained with GetFID(). One side-effect of this
+new behaviour is that you must be careful if you re-use the same feature object in a loop that makes
+insertions. After the first iteration, the FID will be set to a non-null value, so at the second iteration,
+CreateFeature() will try to insert the new feature with the FID of the previous feature, which will fail as
+you cannot insert 2 features with same FID. So in that case you must explicitely reset the FID before calling CreateFeature().<p>
+
+Snippet example in Python :
+<pre>
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    for i in range(100):
+        feat.SetFID(-1)  # Reset FID to null value
+        lyr.CreateFeature(feat)
+        print('The feature has been assigned FID %d' % feat.GetFID())
+</pre>
+
+OGR &lt; 1.8.0 behaviour can be obtained by setting the configuration option OGR_PG_RETRIEVE_FID to FALSE.<p>
+
 <h2>Caveats</h2>
 
 <ul>
@@ -143,7 +164,7 @@ The types "INT*" and "NUMERIC(width,0)" are mapped to integer, the types
 timestamp and datetime are handled as date types and all other
 types are just treated as strings. <p>
 
-<li> A sequence object called <tablename>_ogc_fid_seq is created for new
+<li> A sequence object called &lt;tablename&gt;_ogc_fid_seq is created for new
 tables (layer)<p>
 
 <li> Sequential reading is done within a single transaction.  Any attempts
