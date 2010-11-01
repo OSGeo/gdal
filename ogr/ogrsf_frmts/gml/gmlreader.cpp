@@ -588,6 +588,7 @@ int GMLReader::IsFeatureElement( const char *pszElement )
 
     const char *pszLast = m_poState->GetLastComponent();
     int        nLen = strlen(pszLast);
+    int        nElementLength = strlen(pszElement);
 
     if (strcmp(pszLast, "dane") == 0)
     {
@@ -612,6 +613,12 @@ int GMLReader::IsFeatureElement( const char *pszElement )
     {
     }
     /* End of OpenLS */
+
+    else if (nLen > 6 && strcmp(pszLast + nLen - 6, "_layer") == 0 &&
+             nElementLength > 8 && strcmp(pszElement + nElementLength - 8, "_feature") == 0)
+    {
+        /* GML answer of MapServer WMS GetFeatureInfo request */
+    }
 
     else if( nLen < 6 || !(EQUAL(pszLast+nLen-6,"member") ||
                       EQUAL(pszLast+nLen-7,"members")) )
