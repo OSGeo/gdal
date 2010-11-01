@@ -230,6 +230,10 @@ TIFF file. By default, the native endianness of the host running GDAL will be
 used. Primarily intended for debugging & test purposes</p>
 -->
 
+<li><p><b>COPY_SRC_OVERVIEWS=[YES/NO]</b>: (GDAL >= 1.8.0, CreateCopy() only) By setting this to YES (default is NO), the potential existing overviews
+of the source dataset will be copied to the target dataset without being recomputed. If overviews of mask band
+also exist, provided that the GDAL_TIFF_INTERNAL_MASK configuration option is set to YES, they will also be copied.</p></li>
+
 </ul>
 
 <h3>About JPEG compression of RGB images </h3>
