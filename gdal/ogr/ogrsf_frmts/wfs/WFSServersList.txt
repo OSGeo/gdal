@@ -18,6 +18,8 @@ Deegree:
 http://www.nokis.org/deegree2/ogcwebservice
 http://demo.deegree.org/deegree-wfs/services
 http://testing.deegree.org/deegree-wfs/services (WFS-T, but permission denied)
+http://lkee-xplanung2.lat-lon.de/xplan-wfs/services (with complex schema that we cannot understand with the XSD parser)
+http://deegree3-testing.deegree.org/deegree-geosciml-demo/services
 
 TinyOWS:
 http://dev4.mapgears.com/cgi-bin/tinyows (old & buggy version)
