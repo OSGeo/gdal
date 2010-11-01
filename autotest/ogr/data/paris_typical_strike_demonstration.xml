@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xls:XLS xmlns:xls="http://www.opengis.net/xls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml" version="1.1" xsi:schemaLocation="http://www.opengis.net/xls http://schemas.opengis.net/ols/1.1.0/RouteService.xsd">
+  <xls:ResponseHeader xsi:type="xls:ResponseHeaderType"/>
+  <xls:Response xsi:type="xls:ResponseType" requestID="123456789" version="1.1" numberOfResponses="1">
+    <xls:DetermineRouteResponse xsi:type="xls:DetermineRouteResponseType">
+      <xls:RouteSummary>
+        <xls:TotalTime>PT37M46S</xls:TotalTime>
+        <xls:TotalDistance uom="KM" value="3.4"/>
+        <xls:BoundingBox srsName="EPSG:4326">
+          <gml:pos>2.3625946 48.8484780</gml:pos>
+          <gml:pos>2.3967289 48.8677839</gml:pos>
+        </xls:BoundingBox>
+      </xls:RouteSummary>
+      <xls:RouteGeometry>
+        <gml:LineString srsName="EPSG:4326">
+          <gml:pos>2.3625946 48.8677839</gml:pos>
+          <gml:pos>2.3625945889249986 48.86778388120352</gml:pos>
+          <gml:pos>2.3632955 48.8673709</gml:pos>
+          <gml:pos>2.3634617 48.8672685</gml:pos>
+          <gml:pos>2.3636857 48.8671902</gml:pos>
+          <gml:pos>2.3637854 48.8671301</gml:pos>
+          <gml:pos>2.3646819 48.8666156</gml:pos>
+          <gml:pos>2.3649109 48.8665827</gml:pos>
+          <gml:pos>2.3651848 48.8666983</gml:pos>
+          <gml:pos>2.3663243 48.8660206</gml:pos>
+          <gml:pos>2.3670735 48.8655749</gml:pos>
+          <gml:pos>2.3677434 48.8651764</gml:pos>
+          <gml:pos>2.3680899 48.8649702</gml:pos>
+          <gml:pos>2.369006 48.8644249</gml:pos>
+          <gml:pos>2.3691022 48.8643676</gml:pos>
+          <gml:pos>2.3701011 48.863773</gml:pos>
+          <gml:pos>2.3712963 48.8630498</gml:pos>
+          <gml:pos>2.3715675 48.8628975</gml:pos>
+          <gml:pos>2.3716926 48.8628206</gml:pos>
+          <gml:pos>2.3724845 48.8623541</gml:pos>
+          <gml:pos>2.3726003 48.8622864</gml:pos>
+          <gml:pos>2.3729486 48.8620736</gml:pos>
+          <gml:pos>2.3747721 48.8609865</gml:pos>
+          <gml:pos>2.3752786 48.8606752</gml:pos>
+          <gml:pos>2.3754491 48.8605734</gml:pos>
+          <gml:pos>2.3768495 48.8597508</gml:pos>
+          <gml:pos>2.3785832 48.8587163</gml:pos>
+          <gml:pos>2.3792805 48.8583074</gml:pos>
+          <gml:pos>2.3795299 48.8581612</gml:pos>
+          <gml:pos>2.3797982 48.8579988</gml:pos>
+          <gml:pos>2.3799807 48.8578795</gml:pos>
+          <gml:pos>2.3800554 48.8578469</gml:pos>
+          <gml:pos>2.3800374 48.8577898</gml:pos>
+          <gml:pos>2.3800504 48.8577321</gml:pos>
+          <gml:pos>2.3800807 48.8576914</gml:pos>
+          <gml:pos>2.3801382 48.8576513</gml:pos>
+          <gml:pos>2.380217 48.8576246</gml:pos>
+          <gml:pos>2.3803255 48.8576185</gml:pos>
+          <gml:pos>2.3803954 48.8576313</gml:pos>
+          <gml:pos>2.3805769 48.8575289</gml:pos>
+          <gml:pos>2.3807109 48.857476</gml:pos>
+          <gml:pos>2.3817008 48.85687</gml:pos>
+          <gml:pos>2.3822292 48.8565466</gml:pos>
+          <gml:pos>2.3828179 48.8561988</gml:pos>
+          <gml:pos>2.3833463 48.8558851</gml:pos>
+          <gml:pos>2.3838503 48.8555562</gml:pos>
+          <gml:pos>2.3842279 48.8553374</gml:pos>
+          <gml:pos>2.384278 48.8553115</gml:pos>
+          <gml:pos>2.3853203 48.8546798</gml:pos>
+          <gml:pos>2.3877226 48.8532477</gml:pos>
+          <gml:pos>2.3885223 48.852771</gml:pos>
+          <gml:pos>2.3886124 48.8527172</gml:pos>
+          <gml:pos>2.3890806 48.8524381</gml:pos>
+          <gml:pos>2.3891474 48.8523983</gml:pos>
+          <gml:pos>2.3896875 48.8520763</gml:pos>
+          <gml:pos>2.3898715 48.8519666</gml:pos>
+          <gml:pos>2.3905195 48.8515803</gml:pos>
+          <gml:pos>2.3921925 48.8505829</gml:pos>
+          <gml:pos>2.3925259 48.8503841</gml:pos>
+          <gml:pos>2.3947154 48.8490817</gml:pos>
+          <gml:pos>2.3952701 48.8487526</gml:pos>
+          <gml:pos>2.3954284 48.8488449</gml:pos>
+          <gml:pos>2.3955854 48.8489004</gml:pos>
+          <gml:pos>2.3958363 48.8489397</gml:pos>
+          <gml:pos>2.3960575 48.8489322</gml:pos>
+          <gml:pos>2.3963001 48.8488763</gml:pos>
+          <gml:pos>2.3964707 48.8487972</gml:pos>
+          <gml:pos>2.3965338 48.8487552</gml:pos>
+          <gml:pos>2.3966841 48.8485964</gml:pos>
+          <gml:pos>2.3967289383112758 48.848478014510334</gml:pos>
+          <gml:pos>2.3967289 48.848478</gml:pos>
+        </gml:LineString>
+      </xls:RouteGeometry>
+      <xls:RouteInstructionsList xls:lang="fr">
+        <xls:RouteInstruction duration="PT1M16S" description="Numéro instruction 1">
+          <xls:Instruction>Votre point de départ est : (Southeast) sur Place de la République</xls:Instruction>
+          <xls:distance value="0.1" uom="KM"/>
+          <xls:RouteInstructionGeometry>
+            <gml:LineString srsName="EPSG:4326">
+              <gml:pos>2.3625946 48.8677839</gml:pos>
+              <gml:pos>2.3625945889249986 48.86778388120352</gml:pos>
+              <gml:pos>2.3632955 48.8673709</gml:pos>
+              <gml:pos>2.3634617 48.8672685</gml:pos>
+            </gml:LineString>
+          </xls:RouteInstructionGeometry>
+        </xls:RouteInstruction>
+        <xls:RouteInstruction duration="PT1M28S" description="Numéro instruction 2">
+          <xls:Instruction>Suivez à pied à moitié à gauche sur Place de la République</xls:Instruction>
+          <xls:distance value="0.1" uom="KM"/>
+          <xls:RouteInstructionGeometry>
+            <gml:LineString srsName="EPSG:4326">
+              <gml:pos>2.3634617 48.8672685</gml:pos>
+              <gml:pos>2.3636857 48.8671902</gml:pos>
+              <gml:pos>2.3637854 48.8671301</gml:pos>
+              <gml:pos>2.3646819 48.8666156</gml:pos>
+              <gml:pos>2.3649109 48.8665827</gml:pos>
+            </gml:LineString>
+          </xls:RouteInstructionGeometry>
+        </xls:RouteInstruction>
+        <xls:RouteInstruction duration="PT15S" description="Numéro instruction 3">
+          <xls:Instruction>Suivez à pied à gauche sur Place de la République</xls:Instruction>
+          <xls:distance value="0.0" uom="KM"/>
+          <xls:RouteInstructionGeometry>
+            <gml:LineString srsName="EPSG:4326">
+              <gml:pos>2.3649109 48.8665827</gml:pos>
+              <gml:pos>2.3651848 48.8666983</gml:pos>
+            </gml:LineString>
+          </xls:RouteInstructionGeometry>
+        </xls:RouteInstruction>
+        <xls:RouteInstruction duration="PT16M10S" description="Numéro instruction 4">
+          <xls:Instruction>Suivez à pied à droite sur Boulevard Voltaire</xls:Instruction>
+          <xls:distance value="1.5" uom="KM"/>
+          <xls:RouteInstructionGeometry>
+            <gml:LineString srsName="EPSG:4326">
+              <gml:pos>2.3651848 48.8666983</gml:pos>
+              <gml:pos>2.3663243 48.8660206</gml:pos>
+              <gml:pos>2.3670735 48.8655749</gml:pos>
+              <gml:pos>2.3677434 48.8651764</gml:pos>
+              <gml:pos>2.3680899 48.8649702</gml:pos>
+              <gml:pos>2.369006 48.8644249</gml:pos>
+              <gml:pos>2.3691022 48.8643676</gml:pos>
+              <gml:pos>2.3701011 48.863773</gml:pos>
+              <gml:pos>2.3712963 48.8630498</gml:pos>
+              <gml:pos>2.3715675 48.8628975</gml:pos>
+              <gml:pos>2.3716926 48.8628206</gml:pos>
+              <gml:pos>2.3724845 48.8623541</gml:pos>
+              <gml:pos>2.3726003 48.8622864</gml:pos>
+              <gml:pos>2.3729486 48.8620736</gml:pos>
+              <gml:pos>2.3747721 48.8609865</gml:pos>
+              <gml:pos>2.3752786 48.8606752</gml:pos>
+              <gml:pos>2.3754491 48.8605734</gml:pos>
+              <gml:pos>2.3768495 48.8597508</gml:pos>
+              <gml:pos>2.3785832 48.8587163</gml:pos>
+              <gml:pos>2.3792805 48.8583074</gml:pos>
+              <gml:pos>2.3795299 48.8581612</gml:pos>
+              <gml:pos>2.3797982 48.8579988</gml:pos>
+              <gml:pos>2.3799807 48.8578795</gml:pos>
+              <gml:pos>2.3800554 48.8578469</gml:pos>
+            </gml:LineString>
+          </xls:RouteInstructionGeometry>
+        </xls:RouteInstruction>
+        <xls:RouteInstruction duration="PT28S" description="Numéro instruction 5">
+          <xls:Instruction>Suivez à pied à droite sur Place Voltaire</xls:Instruction>
+          <xls:distance value="0.0" uom="KM"/>
+          <xls:RouteInstructionGeometry>
+            <gml:LineString srsName="EPSG:4326">
+              <gml:pos>2.3800554 48.8578469</gml:pos>
+              <gml:pos>2.3800374 48.8577898</gml:pos>
+              <gml:pos>2.3800504 48.8577321</gml:pos>
+              <gml:pos>2.3800807 48.8576914</gml:pos>
+              <gml:pos>2.3801382 48.8576513</gml:pos>
+              <gml:pos>2.380217 48.8576246</gml:pos>
+              <gml:pos>2.3803255 48.8576185</gml:pos>
+              <gml:pos>2.3803954 48.8576313</gml:pos>
+            </gml:LineString>
+          </xls:RouteInstructionGeometry>
+        </xls:RouteInstruction>
+        <xls:RouteInstruction duration="PT16M11S" description="Numéro instruction 6">
+          <xls:Instruction>Suivez à pied à droite sur Boulevard Voltaire</xls:Instruction>
+          <xls:distance value="1.5" uom="KM"/>
+          <xls:RouteInstructionGeometry>
+            <gml:LineString srsName="EPSG:4326">
+              <gml:pos>2.3803954 48.8576313</gml:pos>
+              <gml:pos>2.3805769 48.8575289</gml:pos>
+              <gml:pos>2.3807109 48.857476</gml:pos>
+              <gml:pos>2.3817008 48.85687</gml:pos>
+              <gml:pos>2.3822292 48.8565466</gml:pos>
+              <gml:pos>2.3828179 48.8561988</gml:pos>
+              <gml:pos>2.3833463 48.8558851</gml:pos>
+              <gml:pos>2.3838503 48.8555562</gml:pos>
+              <gml:pos>2.3842279 48.8553374</gml:pos>
+              <gml:pos>2.384278 48.8553115</gml:pos>
+              <gml:pos>2.3853203 48.8546798</gml:pos>
+              <gml:pos>2.3877226 48.8532477</gml:pos>
+              <gml:pos>2.3885223 48.852771</gml:pos>
+              <gml:pos>2.3886124 48.8527172</gml:pos>
+              <gml:pos>2.3890806 48.8524381</gml:pos>
+              <gml:pos>2.3891474 48.8523983</gml:pos>
+              <gml:pos>2.3896875 48.8520763</gml:pos>
+              <gml:pos>2.3898715 48.8519666</gml:pos>
+              <gml:pos>2.3905195 48.8515803</gml:pos>
+              <gml:pos>2.3921925 48.8505829</gml:pos>
+              <gml:pos>2.3925259 48.8503841</gml:pos>
+              <gml:pos>2.3947154 48.8490817</gml:pos>
+              <gml:pos>2.3952701 48.8487526</gml:pos>
+            </gml:LineString>
+          </xls:RouteInstructionGeometry>
+        </xls:RouteInstruction>
+        <xls:RouteInstruction duration="PT42S" description="Numéro instruction 7">
+          <xls:Instruction>Suivez à pied à gauche sur Place de la Nation</xls:Instruction>
+          <xls:distance value="0.1" uom="KM"/>
+          <xls:RouteInstructionGeometry>
+            <gml:LineString srsName="EPSG:4326">
+              <gml:pos>2.3952701 48.8487526</gml:pos>
+              <gml:pos>2.3954284 48.8488449</gml:pos>
+              <gml:pos>2.3955854 48.8489004</gml:pos>
+              <gml:pos>2.3958363 48.8489397</gml:pos>
+              <gml:pos>2.3960575 48.8489322</gml:pos>
+            </gml:LineString>
+          </xls:RouteInstructionGeometry>
+        </xls:RouteInstruction>
+        <xls:RouteInstruction duration="PT27S" description="Numéro instruction 8">
+          <xls:Instruction>Suivez à pied à moitié à droite sur Place de la Nation</xls:Instruction>
+          <xls:distance value="0.0" uom="KM"/>
+          <xls:RouteInstructionGeometry>
+            <gml:LineString srsName="EPSG:4326">
+              <gml:pos>2.3960575 48.8489322</gml:pos>
+              <gml:pos>2.3963001 48.8488763</gml:pos>
+              <gml:pos>2.3964707 48.8487972</gml:pos>
+              <gml:pos>2.3965338 48.8487552</gml:pos>
+            </gml:LineString>
+          </xls:RouteInstructionGeometry>
+        </xls:RouteInstruction>
+        <xls:RouteInstruction duration="PT25S" description="Numéro instruction 9">
+          <xls:Instruction>Suivez à pied à moitié à droite - Vous êtes arrivé à votre but !</xls:Instruction>
+          <xls:distance value="0.0" uom="KM"/>
+          <xls:RouteInstructionGeometry>
+            <gml:LineString srsName="EPSG:4326">
+              <gml:pos>2.3965338 48.8487552</gml:pos>
+              <gml:pos>2.3966841 48.8485964</gml:pos>
+              <gml:pos>2.3967289383112758 48.848478014510334</gml:pos>
+              <gml:pos>2.3967289 48.848478</gml:pos>
+            </gml:LineString>
+          </xls:RouteInstructionGeometry>
+        </xls:RouteInstruction>
+      </xls:RouteInstructionsList>
+    </xls:DetermineRouteResponse>
+  </xls:Response>
+</xls:XLS> 

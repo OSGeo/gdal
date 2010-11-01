@@ -869,6 +869,32 @@ def ogr_gml_21():
     return 'success'
 
 ###############################################################################
+# Read a OpenLS DetermineRouteResponse document
+
+def ogr_gml_22():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/paris_typical_strike_demonstration.xml')
+    lyr = ds.GetLayerByName('RouteGeometry')
+    if lyr is None:
+        gdaltest.post_reason('cannot find RouteGeometry')
+        return 'fail'
+    lyr = ds.GetLayerByName('RouteInstruction')
+    if lyr is None:
+        gdaltest.post_reason('cannot find RouteInstruction')
+        return 'fail'
+    count = lyr.GetFeatureCount()
+    if count != 9:
+        gdaltest.post_reason('did not get expected feature count')
+        print(count)
+        return 'fail'
+
+    ds = None
+    return 'sucess'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -905,6 +931,10 @@ def ogr_gml_clean_files():
         os.remove( 'data/gnis_pop_110.gfs' )
     except:
         pass
+    try:
+        os.remove( 'data/paris_typical_strike_demonstration.gfs' )
+    except:
+        pass
 
     files = os.listdir('data')
     for filename in files:
@@ -936,6 +966,7 @@ gdaltest_list = [
     ogr_gml_19,
     ogr_gml_20,
     ogr_gml_21,
+    ogr_gml_22,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
