@@ -30,11 +30,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_port.h"
-#include "cpl_vsi.h"
-#include "cpl_string.h"
-#include "cpl_csv.h"
-
+#include "cpl_serv.h"
+#include "geo_tiffp.h"
 #define CPL_ERROR_H_INCLUDED
 
 #include "geo_normalize.h"
@@ -47,6 +44,33 @@
 CPL_CVSID("$Id$")
 
 CPL_C_START
+#ifndef CPL_SERV_H_INTERNAL
+/* Make VSIL_STRICT_ENFORCE active in DEBUG builds */
+#ifdef DEBUG
+#define VSIL_STRICT_ENFORCE
+#endif
+
+#ifdef VSIL_STRICT_ENFORCE
+typedef struct _VSILFILE VSILFILE;
+#else
+typedef FILE VSILFILE;
+#endif
+
+int CPL_DLL VSIFCloseL( VSILFILE * );
+int CPL_DLL VSIUnlink( const char * );
+VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
+                                    GByte *pabyData, 
+                                    GUIntBig nDataLength,
+                                    int bTakeOwnership );
+GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
+                                    GUIntBig *pnDataLength, 
+                                    int bUnlinkAndSeize );
+#undef CSVReadParseLine
+char CPL_DLL  **CSVReadParseLine( FILE *fp);
+#undef CSLDestroy
+void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);
+#endif /* CPL_SERV_H_INTERNAL */
+
 char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
 int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
 
@@ -57,12 +81,6 @@ CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT,
 CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList );
-
-#undef CSVReadParseLine
-char CPL_DLL  **CSVReadParseLine( FILE *fp);
-#undef CSLDestroy
-void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);
-
 CPL_C_END
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
