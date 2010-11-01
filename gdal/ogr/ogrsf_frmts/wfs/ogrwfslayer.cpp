@@ -959,16 +959,32 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
             delete poSrcFeature;
             continue;
         }
-        if( m_poAttrQuery != NULL
-            && !m_poAttrQuery->Evaluate( poSrcFeature ) )
+
+        /* Client-side attribue filtering with underlying layer defn */
+        /* identical to exposed layer defn */
+        if( !bGotApproximateLayerDefn &&
+            osWFSWhere.size() == 0 &&
+            m_poAttrQuery != NULL &&
+            !m_poAttrQuery->Evaluate( poSrcFeature ) )
         {
             delete poSrcFeature;
             continue;
         }
+
         OGRFeature* poNewFeature = new OGRFeature(poFeatureDefn);
         if (bGotApproximateLayerDefn)
         {
             poNewFeature->SetFrom(poSrcFeature);
+
+            /* Client-side attribue filtering */
+            if( m_poAttrQuery != NULL &&
+                osWFSWhere.size() == 0 &&
+                !m_poAttrQuery->Evaluate( poNewFeature ) )
+            {
+                delete poSrcFeature;
+                delete poNewFeature;
+                continue;
+            }
         }
         else
         {
