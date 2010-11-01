@@ -48,7 +48,7 @@ Usage:
 
 \verbatim
 Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]
-                        [-b band]* [-s_srs srs_def] [-geoloc] [-wgs84]
+                        [-b band]* [-l_srs srs_def] [-geoloc] [-wgs84]
                         srcfile x y
 \endverbatim
 
@@ -76,7 +76,7 @@ the selected bands.</dd>
 <dd>Selects a band to query.  Multiple bands can be listed.  By default all
 bands are queried.</dd>
 
-<dt> <b>-s_srs</b> <em>srs def</em>:</dt>
+<dt> <b>-l_srs</b> <em>srs def</em>:</dt>
 <dd> The coordinate system of the input x, y location.</dd>
 
 <dt> <b>-geoloc</b>:</dt>
@@ -88,10 +88,10 @@ bands are queried.</dd>
 <dt> <em>srcfile</em>:</dt><dd> The source GDAL raster datasource name.</dd>
 
 <dt> <em>x</em>:</dt><dd> X location of target pixel.  By default the 
-coordinate system is pixel/line unless -s_srs, -wgs84 or -geoloc supplied. </dd>
+coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied. </dd>
 
 <dt> <em>y</em>:</dt><dd> Y location of target pixel.  By default the 
-coordinate system is pixel/line unless -s_srs, -wgs84 or -geoloc supplied. </dd>
+coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied. </dd>
 
 </dl>
 
@@ -104,11 +104,12 @@ pixel.  Currently it reports three things:
 currently this is only implemented for VRT files which will report the
 file(s) used to satisfy requests for that pixel.
 <li> The raster pixel value of that pixel for all or a subset of the bands.
+<li> The unscaled pixel value if a Scale and/or Offset apply to the band.
 </ul>
 
 The pixel selected is requested by x/y coordinate on the commandline.  
 By default pixel/line coordinates are expected.  However with use of the
--geoloc, -wgs84, or -s_srs switches it is possible to specify the location
+-geoloc, -wgs84, or -l_srs switches it is possible to specify the location
 in other coordinate systems. 
 
 The default report is in a human readable text format.  It is possible to 
@@ -162,7 +163,7 @@ static void Usage()
 
 {
     printf( "Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]\n"
-            "                        [-b band]* [-s_srs srs_def] [-geoloc] [-wgs84]\n"
+            "                        [-b band]* [-l_srs srs_def] [-geoloc] [-wgs84]\n"
             "                        srcfile x y\n" 
             "\n" );
     exit( 1 );
@@ -232,7 +233,7 @@ int main( int argc, char ** argv )
         {
             anBandList.push_back( atoi(argv[++i]) );
         }
-        else if( EQUAL(argv[i],"-s_srs") && i < argc-1 )
+        else if( EQUAL(argv[i],"-l_srs") && i < argc-1 )
         {
             pszSourceSRS = SanitizeSRS(argv[++i]);
         }
@@ -458,6 +459,32 @@ int main( int argc, char ** argv )
                 printf( "    Value: %s\n", osValue.c_str() );
             else if( bValOnly )
                 printf( "%s\n", osValue.c_str() );
+
+            // Report unscaled if we have scale/offset values.
+            int bSuccess;
+            
+            double dfOffset = GDALGetRasterOffset( hBand, &bSuccess );
+            double dfScale  = GDALGetRasterScale( hBand, &bSuccess );
+
+            if( dfOffset != 0.0 || dfScale != 1.0 )
+            {
+                adfPixel[0] = adfPixel[0] * dfScale + dfOffset;
+                adfPixel[1] = adfPixel[1] * dfScale + dfOffset;
+
+                if( GDALDataTypeIsComplex( GDALGetRasterDataType( hBand ) ) )
+                    osValue.Printf( "%.15g+%.15gi", adfPixel[0], adfPixel[1] );
+                else
+                    osValue.Printf( "%.15g", adfPixel[0] );
+
+                if( bAsXML )
+                {
+                    osXML += "<DescaledValue>";
+                    osXML += osValue;
+                    osXML += "</DescaledValue>";
+                }
+                else if( !bQuiet )
+                    printf( "    Descaled Value: %s\n", osValue.c_str() );
+            }
         }
 
         if( bAsXML )
