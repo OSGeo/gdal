@@ -293,11 +293,11 @@ def netcdf_11():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'NETCDF:data/cf_geog.nc:tos' )
+    ds = gdal.Open( 'data/cf_geog.nc' )
 
     gt = ds.GetGeoTransform( )
 
-    if gt != (0.0, 2.0, 0.0, 90.0, 0.0, -1.0):
+    if gt != (-0.5, 1.0, 0.0, 10.5, 0.0, -1.0):
 
         gdaltest.post_reason( 'Incorrect geotransform' )
         return 'fail'
