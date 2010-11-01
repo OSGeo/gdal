@@ -84,6 +84,16 @@ def ogr_pg_1():
     if gdaltest.pg_ds is None:
         return 'skip'
 
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT version()')
+    feat = sql_lyr.GetNextFeature()
+    version_str = feat.GetFieldAsString('version')
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    gdaltest.pg_retrieve_fid = False
+    if version_str[0:11] == "PostgreSQL ":
+        if float(version_str[11:14]) >= 8.2:
+            gdaltest.pg_retrieve_fid = True
+
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT postgis_version()')
     gdaltest.pg_has_postgis = sql_lyr is not None
@@ -173,6 +183,8 @@ def ogr_pg_2():
     
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
+
+    expected_fid = 1
     
     while feat is not None:
 
@@ -180,6 +192,13 @@ def ogr_pg_2():
 
         dst_feat.SetFrom( feat )
         gdaltest.pg_lyr.CreateFeature( dst_feat )
+        if gdaltest.pg_retrieve_fid:
+            got_fid = dst_feat.GetFID()
+            if got_fid != expected_fid:
+                gdaltest.post_reason("didn't get expected fid : %d instead of %d" % (got_fid, expected_fid))
+                return 'fail'
+
+        expected_fid = expected_fid + 1
 
         feat = shp_lyr.GetNextFeature()
 
@@ -255,6 +274,7 @@ def ogr_pg_4():
     
         dst_feat.SetGeometryDirectly( geom )
         dst_feat.SetField( 'PRFEDEA', item )
+        dst_feat.SetFID(-1)
         gdaltest.pg_lyr.CreateFeature( dst_feat )
         
         ######################################################################
@@ -2443,6 +2463,7 @@ def ogr_pg_50():
             dst_feat.SetField( 'SHORTNAME', option )
             if bHasSetFieldDoubleList:
                 dst_feat.SetFieldDoubleList( feature_def.GetFieldIndex('REALLIST'), [float(value), float(value)])
+            dst_feat.SetFID(-1)
             gdaltest.pg_lyr.CreateFeature( dst_feat )
 
     gdal.SetConfigOption( 'PG_USE_COPY', 'NO' )
