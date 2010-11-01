@@ -279,7 +279,14 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                 return FALSE;
 
             osFilter += "<PropertyName>";
-            osFilter += expr->pszVal;
+            if (expr->pszVal[0] == '\'' || expr->pszVal[0] == '"')
+            {
+                CPLString osVal(expr->pszVal + 1);
+                osVal.resize(osVal.size() - 1);
+                osFilter += osVal;
+            }
+            else
+                osFilter += expr->pszVal;
             osFilter += "</PropertyName>";
             break;
 
@@ -445,8 +452,17 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
 /*                      WFS_ExprBuildInternal()                         */
 /************************************************************************/
 
+typedef struct
+{
+    int bExpectVarName;
+    int bExpectComparisonOperator;
+    int bExpectLogicalOperator;
+    int bExpectValue;
+    int nParenthesisLevel;
+} ExprBuildContext;
+
 static Expr* WFS_ExprBuildInternal(char*** ppapszTokens,
-                                   int bExpectClosingParenthesis)
+                                   ExprBuildContext* psBuildContext)
 {
     Expr* expr = NULL;
     Expr* op = NULL;
@@ -474,12 +490,6 @@ static Expr* WFS_ExprBuildInternal(char*** ppapszTokens,
                                 psValExprList = psNext; \
                            } \
                       } while(0)
-
-    int bExpectVarName = TRUE;
-    int bExpectComparisonOperator = FALSE;
-    int bExpectLogicalOperator = FALSE;
-    int bExpectValue = FALSE;
-
     while(TRUE)
     {
         pszToken = *papszTokens;
@@ -490,7 +500,9 @@ static Expr* WFS_ExprBuildInternal(char*** ppapszTokens,
         if (EQUAL(pszToken, "("))
         {
             char** papszSub = papszTokens;
-            Expr* expr = WFS_ExprBuildInternal(&papszSub, TRUE);
+            psBuildContext->nParenthesisLevel ++;
+            Expr* expr = WFS_ExprBuildInternal(&papszSub, psBuildContext);
+            psBuildContext->nParenthesisLevel --;
             if (expr == NULL)
                 goto invalid_expr;
             PUSH_VAL(expr);
@@ -498,36 +510,31 @@ static Expr* WFS_ExprBuildInternal(char*** ppapszTokens,
             if (*papszTokens == NULL)
                 break;
 
-            bExpectVarName = FALSE;
-            bExpectComparisonOperator = FALSE;
-            bExpectLogicalOperator = TRUE;
-            bExpectValue = FALSE;
-
             continue;
         }
         else if (EQUAL(pszToken, ")"))
         {
-            if (bExpectClosingParenthesis)
+            if (psBuildContext->nParenthesisLevel > 0)
                 break;
             else
                 goto invalid_expr;
         }
 
-        if (bExpectVarName)
+        if (psBuildContext->bExpectVarName)
         {
             if (EQUAL(pszToken, "NOT"))
                 op = WFS_ExprBuildOperator(TOKEN_NOT);
             else
             {
                 PUSH_VAL(WFS_ExprBuildVarName(pszToken));
-                bExpectVarName = FALSE;
-                bExpectComparisonOperator = TRUE;
+                psBuildContext->bExpectVarName = FALSE;
+                psBuildContext->bExpectComparisonOperator = TRUE;
             }
         }
-        else if (bExpectComparisonOperator)
+        else if (psBuildContext->bExpectComparisonOperator)
         {
-            bExpectComparisonOperator = FALSE;
-            bExpectValue = TRUE;
+            psBuildContext->bExpectComparisonOperator = FALSE;
+            psBuildContext->bExpectValue = TRUE;
             if (EQUAL(pszToken, "IS"))
             {
                 if (*papszTokens != NULL && EQUAL(*papszTokens, "NOT"))
@@ -555,10 +562,10 @@ static Expr* WFS_ExprBuildInternal(char*** ppapszTokens,
             else
                 goto invalid_expr;
         }
-        else if (bExpectLogicalOperator)
+        else if (psBuildContext->bExpectLogicalOperator)
         {
-            bExpectLogicalOperator = FALSE;
-            bExpectVarName = TRUE;
+            psBuildContext->bExpectLogicalOperator = FALSE;
+            psBuildContext->bExpectVarName = TRUE;
             if (EQUAL(pszToken, "AND"))
                 op = WFS_ExprBuildOperator(TOKEN_AND);
             else if (EQUAL(pszToken, "OR"))
@@ -568,11 +575,11 @@ static Expr* WFS_ExprBuildInternal(char*** ppapszTokens,
             else
                 goto invalid_expr;
         }
-        else if (bExpectValue)
+        else if (psBuildContext->bExpectValue)
         {
             PUSH_VAL(WFS_ExprBuildValue(pszToken));
-            bExpectValue = FALSE;
-            bExpectLogicalOperator = TRUE;
+            psBuildContext->bExpectValue = FALSE;
+            psBuildContext->bExpectLogicalOperator = TRUE;
         }
         else
             goto invalid_expr;
@@ -784,7 +791,14 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
         return "";
 
     char** papszTokens2 = papszTokens;
-    Expr* expr = WFS_ExprBuildInternal(&papszTokens2, FALSE);
+
+    ExprBuildContext sBuildContext;
+    sBuildContext.bExpectVarName = TRUE;
+    sBuildContext.bExpectComparisonOperator = FALSE;
+    sBuildContext.bExpectLogicalOperator = FALSE;
+    sBuildContext.bExpectValue = FALSE;
+    sBuildContext.nParenthesisLevel = 0;
+    Expr* expr = WFS_ExprBuildInternal(&papszTokens2, &sBuildContext);
     CSLDestroy(papszTokens);
 
     if (expr == NULL)
