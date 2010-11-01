@@ -213,6 +213,9 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bHasWarnedIncompatibleGeom;
     void                CheckGeomTypeCompatibility(OGRGeometry* poGeom);
 
+    int                 bRetrieveFID;
+    int                 bHasWarnedAlreadySetFID;
+
 public:
                         OGRPGTableLayer( OGRPGDataSource *,
                                          CPLString& osCurrentSchema,
