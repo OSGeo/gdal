@@ -479,7 +479,11 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         CPLString osPropertyName;
         for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
         {
-            if (poFeatureDefn->GetFieldDefn(iField)->IsIgnored())
+            if (EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "gml_id"))
+            {
+                /* fake field : skip it */
+            }
+            else if (poFeatureDefn->GetFieldDefn(iField)->IsIgnored())
             {
                 bHasIgnoredField = TRUE;
             }
