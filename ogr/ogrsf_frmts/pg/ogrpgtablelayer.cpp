@@ -82,6 +82,10 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     pszSqlGeomParentTableName = NULL;
 
     bHasWarnedIncompatibleGeom = FALSE;
+    bHasWarnedAlreadySetFID = FALSE;
+
+    /* Just in provision for people yelling about broken backward compatibility ... */
+    bRetrieveFID = CSLTestBoolean(CPLGetConfigOption("OGR_PG_RETRIEVE_FID", "TRUE"));
 
 /* -------------------------------------------------------------------- */
 /*      Build the layer defn name.                                      */
@@ -1398,6 +1402,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
+    /* REMOVE ME ? */
+    /* Hum, this is weird if we create a feature with an already existings */
+    /* FID ! I see this code path is never taken in the coverage analysis of */
+    /* the autotest suite, so we could probably remove it ? */
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
         if( bNeedComma )
@@ -1480,6 +1488,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             osCommand += "''";
     }
 
+    /* REMOVE ME ? */
+    /* Hum, this is weird if we create a feature with an already existings */
+    /* FID ! I see this code path is never taken in the coverage analysis of */
+    /* the autotest suite, so we could probably remove it ? */
     /* Set the FID */
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
@@ -1505,15 +1517,46 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
     osCommand += ")";
 
+    int bReturnRequested = FALSE;
+    /* RETURNING is only available since Postgres 8.2 */
+    /* We only get the FID, but we also could add the unset fields to get */
+    /* the default values */
+    if (bRetrieveFID && pszFIDColumn != NULL && poFeature->GetFID() == OGRNullFID &&
+        (poDS->sPostgreSQLVersion.nMajor >= 9 ||
+         (poDS->sPostgreSQLVersion.nMajor == 8 && poDS->sPostgreSQLVersion.nMinor >= 2)))
+    {
+        bReturnRequested = TRUE;
+        osCommand += " RETURNING ";
+        osCommand += pszFIDColumn;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, osCommand);
-    if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+    if (bReturnRequested && PQresultStatus(hResult) == PGRES_TUPLES_OK &&
+        PQntuples(hResult) == 1 && PQnfields(hResult) == 1 )
+    {
+        const char* pszFID = PQgetvalue(hResult, 0, 0 );
+        long nFID = atol(pszFID);
+        poFeature->SetFID(nFID);
+    }
+    else if( bReturnRequested || PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "INSERT command for new feature failed.\n%s\nCommand: %s",
                   PQerrorMessage(hPGConn), osCommand.c_str() );
+
+        if( !bHasWarnedAlreadySetFID && poFeature->GetFID() != OGRNullFID &&
+            pszFIDColumn != NULL )
+        {
+            bHasWarnedAlreadySetFID = TRUE;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "You've inserted feature with an already set FID and that's perhaps the reason for the failure. "
+                    "If so, this can happen if you reuse the same feature object for sequential insertions. "
+                    "Indeed, since GDAL 1.8.0, the FID of an inserted feature is got from the server, so it is not a good idea"
+                    "to reuse it afterwards... All in all, try unsetting the FID with SetFID(-1) before calling CreateFeature()");
+        }
 
         OGRPGClearResult( hResult );
 
@@ -1521,13 +1564,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
         return OGRERR_FAILURE;
     }
-
-#ifdef notdef
-    /* Should we use this oid to get back the FID and assign back to the
-       feature?  I think we are supposed to. */
-    Oid nNewOID = PQoidValue( hResult );
-    printf( "nNewOID = %d\n", (int) nNewOID );
-#endif
 
     OGRPGClearResult( hResult );
 
