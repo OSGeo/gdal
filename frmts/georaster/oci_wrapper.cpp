@@ -226,9 +226,13 @@ OWConnection::OWConnection( const char* pszUserIn,
     hNumArrayTDO    = DescribeType( (char*) SDO_NUMBER_ARRAY );
     hGeometryTDO    = DescribeType( (char*) SDO_GEOMETRY );
     hGeoRasterTDO   = DescribeType( (char*) SDO_GEORASTER );
-    hPCTDO          = DescribeType( (char*) SDO_PC );
     hElemArrayTDO   = DescribeType( (char*) SDO_ELEM_INFO_ARRAY);
-    hOrdnArrayTDO   = DescribeType( (char* ) SDO_ORDINATE_ARRAY);
+    hOrdnArrayTDO   = DescribeType( (char*) SDO_ORDINATE_ARRAY);
+
+    if( nVersion > 10 )
+    {
+        hPCTDO      = DescribeType( (char*) SDO_PC );
+    }
 }
 
 OWConnection::~OWConnection()

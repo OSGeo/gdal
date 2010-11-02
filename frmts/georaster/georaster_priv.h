@@ -87,10 +87,10 @@ struct hLevelDetails {
     int             nRowBlockSize;
     int             nTotalColumnBlocks;
     int             nTotalRowBlocks;
-    long            nBlockCount;
+    unsigned long   nBlockCount;
     unsigned long   nBlockBytes;
     unsigned long   nGDALBlockBytes;
-    long            nOffset;
+    unsigned long   nOffset;
 };
 
 //  ---------------------------------------------------------------------------
@@ -298,7 +298,7 @@ public:
 private:
 
     OCILobLocator**     pahLocator;
-    long                nBlockCount;
+    unsigned long       nBlockCount;
     unsigned long       nBlockBytes;
     unsigned long       nGDALBlockBytes;
     GByte*              pabyBlockBuf;
@@ -437,6 +437,9 @@ public:
 
     CPLString           sInterleaving;
     bool                bIsReferenced;
+
+    bool                bBlocking;
+    bool                bAutoBlocking;
 
     double              dfXCoefficient[3];
     double              dfYCoefficient[3];

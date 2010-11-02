@@ -79,17 +79,19 @@ GeoRasterWrapper::GeoRasterWrapper()
     bFlushMetadata      = false;
     nSRID               = UNKNOWN_CRS;
     nPyramidMaxLevel    = 0;
-    nBlockCount         = 0;
-    nGDALBlockBytes     = 0;
+    nBlockCount         = 0L;
+    nGDALBlockBytes     = 0L;
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
     bHasBitmapMask      = false;
-    nBlockBytes         = 0;
+    nBlockBytes         = 0L;
     bFlushBlock         = false;
     bUniqueFound        = false;
     sValueAttributeTab  = "";
     psNoDataList        = NULL;
     bWriteOnly          = false;
+    bBlocking           = true;
+    bAutoBlocking       = false;
 }
 
 //  ---------------------------------------------------------------------------
@@ -694,65 +696,123 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     nRowBlockSize    = nRowBlockSize    == 0 ? DEFAULT_BLOCK_ROWS    : nRowBlockSize;
     nBandBlockSize   = nBandBlockSize   == 0 ? 1 : nBandBlockSize;
 
-    if( poConnection->GetVersion() < 11 )
+    //  -----------------------------------------------------------
+    //  Blocking storage paramters
+    //  -----------------------------------------------------------
+
+    CPLString sBlocking;
+
+    if( bBlocking == true )
     {
+        if( bAutoBlocking == true )
+        {
+            int nBlockXSize = nColumnBlockSize;
+            int nBlockYSize = nRowBlockSize;
+            int nBlockBSize = nBandBlockSize;
+
+            OWStatement* poStmt;
+
+            poStmt = poConnection->CreateStatement(
+                "DECLARE\n"
+                "  dimensionSize    sdo_number_array;\n"
+                "  blockSize        sdo_number_array;\n"
+                "BEGIN\n"
+                "  dimensionSize := sdo_number_array(:1, :2, :3);\n"
+                "  blockSize     := sdo_number_array(:4, :5, :6);\n"
+                "  sdo_geor_utl.calcOptimizedBlockSize(dimensionSize,blockSize);\n"
+                "  :4 := blockSize(1);\n"
+                "  :5 := blockSize(2);\n"
+                "  :6 := blockSize(3);\n"
+                "END;" );
+
+            poStmt->Bind( &nRasterColumns );
+            poStmt->Bind( &nRasterRows );
+            poStmt->Bind( &nRasterBands );
+            poStmt->Bind( &nBlockXSize );
+            poStmt->Bind( &nBlockYSize );
+            poStmt->Bind( &nBlockBSize );
+
+            if( poStmt->Execute() )
+            {
+                nColumnBlockSize = nBlockXSize;
+                nRowBlockSize = nBlockYSize;
+                nBandBlockSize = nBlockBSize;
+            }
+
+            delete poStmt;
+        }
+
         if( nRasterBands == 1 )
         {
-            sFormat =  CPLSPrintf(
-                "blockSize=(%d, %d) "
-                "cellDepth=%s "
-                "interleaving=%s "
-                "pyramid=FALSE "
-                "compression=NONE ",
-                nRowBlockSize, nColumnBlockSize,
-                sCellDepth.c_str(),
-                sInterleaving.c_str() );
+            sBlocking = CPLSPrintf( 
+                "blockSize=(%d, %d)", 
+                nRowBlockSize, 
+                nColumnBlockSize );
         }
         else
         {
-            sFormat = CPLSPrintf(
-                "blockSize=(%d, %d, %d) "
-                "cellDepth=%s "
-                "interleaving=%s "
-                "pyramid=FALSE "
-                "compression=NONE ",
-                nRowBlockSize, nColumnBlockSize, nBandBlockSize,
-                sCellDepth.c_str(),
-                sInterleaving.c_str() );
+            sBlocking = CPLSPrintf( 
+                "blockSize=(%d, %d, %d)", 
+                nRowBlockSize, 
+                nColumnBlockSize, 
+                nBandBlockSize );
         }
     }
     else
     {
+        sBlocking = "blocking=FALSE";
+
+        nColumnBlockSize = nRasterColumns;
+        nRowBlockSize = nRasterRows;
+        nBandBlockSize = nRasterBands;
+    }
+
+    //  -----------------------------------------------------------
+    //  Complete format paramters
+    //  -----------------------------------------------------------
+
+    if( poConnection->GetVersion() > 10 )
+    {
         if( nRasterBands == 1 )
         {
-            sFormat = CPLSPrintf(
+            sFormat = CPLSPrintf( 
                 "20001, '"
-                "dimSize=(%d,%d) "
-                "blockSize=(%d,%d) "
-                "cellDepth=%s "
-                "interleaving=%s "
-                "compression=%s '",
-                nRasterRows, nRasterColumns,
-                nRowBlockSize, nColumnBlockSize,
-                sCellDepth.c_str(),
-                sInterleaving.c_str(),
-                sCompressionType.c_str() );
+                "dimSize=(%d,%d) ", 
+                nRasterRows, nRasterColumns );
         }
         else
         {
-            sFormat = CPLSPrintf(
+            sFormat = CPLSPrintf( 
                 "21001, '"
-                "dimSize=(%d,%d,%d) "
-                "blockSize=(%d,%d,%d) "
+                "dimSize=(%d,%d,%d) ", 
+                nRasterRows, nRasterColumns, nRasterBands );
+        }
+
+        sFormat.append( CPLSPrintf( 
+                "%s "
                 "cellDepth=%s "
                 "interleaving=%s "
-                "compression=%s '",
-                nRasterRows, nRasterColumns, nRasterBands,
-                nRowBlockSize, nColumnBlockSize, nBandBlockSize,
+                "compression=%s'",
+                sBlocking.c_str(),
                 sCellDepth.c_str(),
                 sInterleaving.c_str(),
-                sCompressionType.c_str() );
-        }
+                sCompressionType.c_str() ) );
+    }
+    else
+    {
+        //  -------------------------------------------------------
+        //  For versions 10g or older
+        //  -------------------------------------------------------
+
+        sFormat = CPLSPrintf(
+            "%s "
+            "cellDepth=%s "
+            "interleaving=%s "
+            "pyramid=FALSE "
+            "compression=NONE",
+            sBlocking.c_str(),
+            sCellDepth.c_str(),
+            sInterleaving.c_str() );
     }
 
     nTotalColumnBlocks = (int)
@@ -1088,13 +1148,15 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     bUpdate             = false;
     bInitializeIO       = false;
     bFlushMetadata      = false;
-    nSRID               = -1;
+    nSRID               = UNKNOWN_CRS;
     nPyramidMaxLevel    = 0;
-    nBlockCount         = 0;
+    nBlockCount         = 0L;
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
     bHasBitmapMask      = false;
     bWriteOnly          = false;
+    bBlocking           = true;
+    bAutoBlocking       = false;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1220,15 +1282,15 @@ void GeoRasterWrapper::GetRasterInfo( void )
 
     nRowBlockSize       = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.rowBlockSize",
-							CPLSPrintf( "%d", nRasterRows ) ) );
+                            CPLSPrintf( "%d", nRasterRows ) ) );
 
     nColumnBlockSize    = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.columnBlockSize",
-							CPLSPrintf( "%d", nRasterColumns ) ) );
+                            CPLSPrintf( "%d", nRasterColumns ) ) );
 
     nBandBlockSize      = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.bandBlockSize",
-							CPLSPrintf( "%d", nRasterBands ) ) );
+                            CPLSPrintf( "%d", nRasterBands ) ) );
 
     nTotalColumnBlocks  = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.totalColumnBlocks","1") );
@@ -1589,10 +1651,10 @@ bool GeoRasterWrapper::InitializeIO( void )
     // Calculate number and size of the blocks in level zero
     // --------------------------------------------------------------------
 
-    nBlockCount = nTotalColumnBlocks * nTotalRowBlocks * nTotalBandBlocks;
-    nBlockBytes = ( nColumnBlockSize * nRowBlockSize * nBandBlockSize *
-                  nCellSizeBits ) / 8;
-    nGDALBlockBytes = nColumnBlockSize * nRowBlockSize * nGDALCellBytes;
+    nBlockCount = (unsigned long) ( nTotalColumnBlocks * nTotalRowBlocks * nTotalBandBlocks );
+    nBlockBytes = (unsigned long) ( nColumnBlockSize * nRowBlockSize * nBandBlockSize ) *
+                  (unsigned long) ( nCellSizeBits / 8L );
+    nGDALBlockBytes = (unsigned long) ( nColumnBlockSize * nRowBlockSize * nGDALCellBytes );
 
     pahLevels[0].nColumnBlockSize   = nColumnBlockSize;
     pahLevels[0].nRowBlockSize      = nRowBlockSize;
@@ -1648,10 +1710,10 @@ bool GeoRasterWrapper::InitializeIO( void )
         pahLevels[iLevel].nRowBlockSize      = nRBS;
         pahLevels[iLevel].nTotalColumnBlocks = nTCB;
         pahLevels[iLevel].nTotalRowBlocks    = nTRB;
-        pahLevels[iLevel].nBlockCount        = nTCB * nTRB * nTotalBandBlocks;
-        pahLevels[iLevel].nBlockBytes        = ( nCBS * nRBS * nBandBlockSize *
-                                               nCellSizeBits ) / 8;
-        pahLevels[iLevel].nGDALBlockBytes    = nCBS * nRBS * nGDALCellBytes;
+        pahLevels[iLevel].nBlockCount        = (unsigned long ) ( nTCB * nTRB * nTotalBandBlocks );
+        pahLevels[iLevel].nBlockBytes        = (unsigned long ) ( nCBS * nRBS * nBandBlockSize ) *
+                                               (unsigned long ) ( nCellSizeBits / 8L );
+        pahLevels[iLevel].nGDALBlockBytes    = (unsigned long ) ( nCBS * nRBS * nGDALCellBytes );
         pahLevels[iLevel].nOffset            = 0L;
     }
     
@@ -1677,7 +1739,11 @@ bool GeoRasterWrapper::InitializeIO( void )
 
     if ( pabyBlockBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "InitializeIO - Block Buffer" );
+        CPLError( CE_Failure, CPLE_OutOfMemory, 
+            "InitializeIO - Block Buffer error\n"
+            "Cannot allocate memory buffer of (%ld) bytes "
+            "Consider the use of *smaller* block size",
+            nMaxBufferSize );
         return false;
     }
 
@@ -1692,7 +1758,10 @@ bool GeoRasterWrapper::InitializeIO( void )
         if ( pabyCompressBuf == NULL )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "InitializeIO - Compress Buffer" );
+                "InitializeIO - Compression Buffer error\n"
+                "Cannot allocate memory buffer of (%ld) bytes "
+                "Consider the use of *smaller* block size",
+                nMaxBufferSize );
             return false;
         }
     }
@@ -1706,7 +1775,10 @@ bool GeoRasterWrapper::InitializeIO( void )
     if ( pahLocator == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
-                "InitializeIO - LobLocator Array" );
+                "InitializeIO - LobLocator Array error\n"
+                "Cannot allocate memory buffer of (%ld) bytes "
+                "Consider the use of *bigger* block size",
+                (sizeof(void*) * nBlockCount) );
         return false;
     }
 
@@ -1773,7 +1845,10 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
 {
     if( ! bInitializeIO )
     {
-        InitializeIO();
+        if( InitializeIO() == false )
+        {
+            return false;
+        }
     }
 
     if( nCurrentLevel != nLevel )
@@ -1917,7 +1992,10 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
     if( ! bInitializeIO )
     {
-        InitializeIO();
+        if( InitializeIO() == false )
+        {
+            return false;
+        }
     }
 
     if( nCurrentLevel != nLevel )
@@ -3099,7 +3177,7 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
         sDInfo.err = jpeg_std_error( &sJErr );
         jpeg_create_decompress( &sDInfo );
 
-		// -----------------------------------------------------------------
+        // -----------------------------------------------------------------
         // Load table for abbreviated JPEG-B
         // -----------------------------------------------------------------
 

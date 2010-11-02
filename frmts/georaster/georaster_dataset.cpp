@@ -507,6 +507,30 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         }
     }
 
+    pszFetched = CSLFetchNameValue( papszOptions, "BLOCKING" );
+
+    if( pszFetched )
+    {
+        if( EQUAL( pszFetched, "NO" ) )
+        {
+            poGRW->bBlocking = false;
+        }
+
+        if( EQUAL( pszFetched, "OPTIMUM" ) )
+        {
+            if( poGRW->poConnection->GetVersion() < 11 )
+            {
+                CPLError( CE_Warning, CPLE_IllegalArg, 
+                    "BLOCKING=OPTIMUM not supported on Oracle older than 11g" );
+            }
+            else
+            {
+                poGRW->bAutoBlocking = true;
+                poGRW->bBlocking = true;
+            }
+        }
+    }
+
     //  -------------------------------------------------------------------
     //  Validate options
     //  -------------------------------------------------------------------
@@ -766,7 +790,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
             poDstBand->SetColorTable( poColorTable );
         }
 
-        if( poDstBand->GetStatistics( false, false, &dfMin, &dfMax,
+        if( poSrcBand->GetStatistics( false, false, &dfMin, &dfMax,
             &dfStdDev, &dfMean ) == CE_None )
         {
             poDstBand->SetStatistics( dfMin, dfMax, dfStdDev, dfMean );
@@ -1859,6 +1883,11 @@ void CPL_DLL GDALRegister_GEOR()
 "       <Value>JPEG-B</Value>"
 "       <Value>JPEG-F</Value>"
 "       <Value>DEFLATE</Value>"
+"  </Option>"
+"  <Option name='BLOCKING'    type='string-select' default='YES'>"
+"       <Value>YES</Value>"
+"       <Value>NO</Value>"
+"       <Value>OPTIMUM</Value>"
 "  </Option>"
 "  <Option name='COORDLOCATION'    type='string-select' default='CENTER'>"
 "       <Value>CENTER</Value>"
