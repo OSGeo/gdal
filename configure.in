@@ -2058,6 +2058,10 @@ AC_SUBST(DODS_INC)
 dnl ---------------------------------------------------------------------------
 dnl Check for curl (ie. for wcs).
 dnl ---------------------------------------------------------------------------
+CURL_SETTING=no
+CURL_INC=
+CURL_LIB=
+
 AC_ARG_WITH(curl,
     [  --with-curl[=ARG]       Include curl (ARG=path to curl-config.)],,,)
 
@@ -2079,15 +2083,16 @@ if test "$LIBCURL_CONFIG" != "no" ; then
 
   AC_MSG_RESULT([        found libcurl version $CURL_VER])
   
+  AC_CHECK_LIB(curl,curl_global_init,CURL_SETTING=yes,CURL_SETTING=no,)
+
+fi
+
+if test "$CURL_SETTING" = "yes" ; then
+  
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-  CURL_SETTING=yes
-
   OPT_GDAL_FORMATS="wcs wms $OPT_GDAL_FORMATS"
-else
-  CURL_SETTING=no
-  CURL_INC=
-  CURL_LIB=
+
 fi
 
 AC_SUBST(CURL_SETTING,$CURL_SETTING)
