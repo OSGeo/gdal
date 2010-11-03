@@ -105,10 +105,10 @@ typedef struct {
 
 } NITFBandInfo;
 
-typedef struct { 
-    int	nLocId;
-    int nLocOffset;
-    int nLocSize;
+typedef struct {
+    GUInt16 nLocId;
+    GUInt32 nLocOffset;
+    GUInt32 nLocSize;
 } NITFLocation;
 
 typedef struct
