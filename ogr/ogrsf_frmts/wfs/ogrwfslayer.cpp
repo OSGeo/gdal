@@ -616,6 +616,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     int bKML = FALSE;
     int bKMZ = FALSE;
     int bZIP = FALSE;
+    int bGZIP = FALSE;
 
     CPLString osOutputFormat = WFS_FetchValueFromURL(osURL, "OUTPUTFORMAT");
     const char* pszOutputFormat = osOutputFormat.c_str();
@@ -643,6 +644,10 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     else if (strstr(pszContentType, "application/zip") != NULL)
     {
         bZIP = TRUE;
+    }
+    else if (strstr(pszContentType, "application/gzip") != NULL)
+    {
+        bGZIP = TRUE;
     }
 
     int bRetry = FALSE;
@@ -736,6 +741,10 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         if (bZIP)
         {
             osTmpFileName = "/vsizip/" + osTmpFileName;
+        }
+        else if (bGZIP)
+        {
+            osTmpFileName = "/vsigzip/" + osTmpFileName;
         }
     }
     else
