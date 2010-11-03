@@ -2682,8 +2682,8 @@ static int NITFReadGEOLOB( NITFImage *psImage )
 /************************************************************************/
 
 static int NITFFetchAttribute( GByte *pabyAttributeSubsection, 
-                               int nASSSize, int nAttrCount,
-                               int nAttrID, int nParamID, int nBytesToFetch,
+                               GUInt32 nASSSize, int nAttrCount,
+                               int nAttrID, int nParamID, GUInt32 nBytesToFetch,
                                GByte *pabyBuffer )
 
 {
@@ -2731,12 +2731,12 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
 
 {
     int i;
-    int nASHOffset=0, nASHSize=0, nASSOffset=0, nASSSize=0, nNextOffset=0;
+    GUInt32 nASHOffset=0, nASHSize=0, nASSOffset=0, nASSSize=0, nNextOffset=0;
     GInt16 nAttrCount;
     GByte *pabyAttributeSubsection;
     GByte abyBuffer[128];
 
-    for( i = 0; (int)i < psImage->nLocCount; i++ )
+    for( i = 0; i < psImage->nLocCount; i++ )
     {
         if( psImage->pasLocations[i].nLocId == LID_AttributeSectionSubheader )
         {
@@ -3183,7 +3183,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
 /*      Get the location table out of the RPFIMG TRE on the image.      */
 /* -------------------------------------------------------------------- */
     const char *pszTRE;
-    int nHeaderOffset = 0;
+    GUInt32 nHeaderOffset = 0;
     int i;
     int nTRESize;
     char szTempFileName[32];
@@ -3246,7 +3246,8 @@ static void NITFLoadLocationTable( NITFImage *psImage )
 static int NITFLoadVQTables( NITFImage *psImage )
 
 {
-    int     i, nVQOffset=0, nVQSize=0;
+    int     i;
+    GUInt32 nVQOffset=0, nVQSize=0;
     GByte abyTestChunk[1000];
     GByte abySignature[6];
 
