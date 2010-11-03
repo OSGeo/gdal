@@ -1483,6 +1483,9 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
         if( poSubFeature->GetGeometryRef() != NULL )
             poSubFeature->GetGeometryRef()->transform( &oTransformer );
 
+        poSubFeature->SetField( "EntityHandle",
+                                poFeature->GetFieldAsString("EntityHandle") );
+
         apoPendingFeatures.push( poSubFeature );
     }
 
