@@ -2644,8 +2644,6 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
                  "should be at least the size of the swath (%d)", GDALGetCacheMax64(), nTargetSwathSize);
     }
 
-    void *pSwathBuf;
-
     int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
     if( bInterleave)
         nPixelSize *= nBandCount;
