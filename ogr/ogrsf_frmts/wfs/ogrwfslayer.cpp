@@ -1143,6 +1143,7 @@ int OGRWFSLayer::TestCapability( const char * pszCap )
 
 int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 {
+    char* pabyData = NULL;
     CPLString osURL = MakeGetFeatureURL(0, TRUE);
     osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", NULL);
     CPLDebug("WFS", "%s", osURL.c_str());
@@ -1153,25 +1154,80 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         return -1;
     }
 
-    if (strstr((const char*)psResult->pabyData, "<ServiceExceptionReport") != NULL)
+    /* http://demo.snowflakesoftware.com:8080/Obstacle_AIXM_ZIP/GOPublisherWFS returns */
+    /* zip content, including for RESULTTYPE=hits */
+    if (psResult->pszContentType != NULL &&
+        strstr(psResult->pszContentType, "application/zip") != NULL)
     {
-        if (poDS->IsOldDeegree((const char*)psResult->pabyData))
+        CPLString osTmpFileName;
+        osTmpFileName.Printf("/vsimem/wfstemphits_%p.zip", this);
+        VSILFILE *fp = VSIFileFromMemBuffer( osTmpFileName, psResult->pabyData,
+                                             psResult->nDataLen, FALSE);
+        VSIFCloseL(fp);
+
+        CPLString osZipTmpFileName("/vsizip/" + osTmpFileName);
+
+        char** papszDirContent = CPLReadDir(osZipTmpFileName);
+        if (CSLCount(papszDirContent) != 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot parse result of RESULTTYPE=hits request : more than one file in zip");
+            CSLDestroy(papszDirContent);
+            CPLHTTPDestroyResult(psResult);
+            VSIUnlink(osTmpFileName);
+            return -1;
+        }
+
+        CPLString osFileInZipTmpFileName = osZipTmpFileName + "/";
+        osFileInZipTmpFileName += papszDirContent[0];
+
+        fp = VSIFOpenL(osFileInZipTmpFileName.c_str(), "rb");
+        if (fp == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot parse result of RESULTTYPE=hits request : cannot open one file in zip");
+            CSLDestroy(papszDirContent);
+            CPLHTTPDestroyResult(psResult);
+            VSIUnlink(osTmpFileName);
+            return -1;
+        }
+        VSIStatBufL sBuf;
+        VSIStatL(osFileInZipTmpFileName.c_str(), &sBuf);
+        pabyData = (char*) CPLMalloc(sBuf.st_size + 1);
+        pabyData[sBuf.st_size] = 0;
+        VSIFReadL(pabyData, 1, sBuf.st_size, fp);
+        VSIFCloseL(fp);
+
+        CSLDestroy(papszDirContent);
+        VSIUnlink(osTmpFileName);
+    }
+    else
+    {
+        pabyData = (char*) psResult->pabyData;
+        psResult->pabyData = NULL;
+    }
+
+    if (strstr(pabyData, "<ServiceExceptionReport") != NULL)
+    {
+        if (poDS->IsOldDeegree(pabyData))
         {
             CPLHTTPDestroyResult(psResult);
             return ExecuteGetFeatureResultTypeHits();
         }
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                 psResult->pabyData);
+                 pabyData);
         CPLHTTPDestroyResult(psResult);
+        CPLFree(pabyData);
         return -1;
     }
 
-    CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
+    CPLXMLNode* psXML = CPLParseXMLString( pabyData );
     if (psXML == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
-                psResult->pabyData);
+                pabyData);
         CPLHTTPDestroyResult(psResult);
+        CPLFree(pabyData);
         return -1;
     }
 
@@ -1182,6 +1238,7 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find <FeatureCollection>");
         CPLDestroyXMLNode( psXML );
         CPLHTTPDestroyResult(psResult);
+        CPLFree(pabyData);
         return -1;
     }
 
@@ -1191,6 +1248,7 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find numberOfFeatures");
         CPLDestroyXMLNode( psXML );
         CPLHTTPDestroyResult(psResult);
+        CPLFree(pabyData);
         
         poDS->DisableSupportHits();
         return -1;
@@ -1200,6 +1258,7 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 
     CPLDestroyXMLNode( psXML );
     CPLHTTPDestroyResult(psResult);
+    CPLFree(pabyData);
 
     return nFeatures;
 }
