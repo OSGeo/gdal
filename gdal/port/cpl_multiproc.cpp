@@ -189,7 +189,7 @@ static void CPLCleanupTLSList( void **papTLSList )
     CPLFree( papTLSList );
 }
 
-#ifdef CPL_MULTIPROC_STUB
+#if defined(CPL_MULTIPROC_STUB)
 /************************************************************************/
 /* ==================================================================== */
 /*                        CPL_MULTIPROC_STUB                            */
@@ -436,9 +436,9 @@ void CPLCleanupTLS()
     papTLSList = NULL;
 }
 
-#endif /* def CPL_MULTIPROC_STUB */
+/* endif CPL_MULTIPROC_STUB */
 
-#if defined(CPL_MULTIPROC_WIN32)
+#elif defined(CPL_MULTIPROC_WIN32)
 
 
   /************************************************************************/
@@ -708,9 +708,10 @@ void CPLCleanupTLS()
     CPLCleanupTLSList( papTLSList );
 }
 
-#endif /* def CPL_MULTIPROC_WIN32 */
+/* endif CPL_MULTIPROC_WIN32 */
 
-#ifdef CPL_MULTIPROC_PTHREAD
+#elif defined(CPL_MULTIPROC_PTHREAD)
+
 #include <pthread.h>
 #include <time.h>
 
