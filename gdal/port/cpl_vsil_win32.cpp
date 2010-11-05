@@ -361,7 +361,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
         dwCreationDisposition = OPEN_EXISTING;
 
     dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ) ? 
-                FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL, 
+                FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL;
     
 #ifndef WIN32CE
     hFile = CreateFile( pszFilename, dwDesiredAccess, 
