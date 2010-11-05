@@ -263,7 +263,7 @@ void kml2featurestyle (
 
             int nPathLen = strlen ( poOgrDS->GetStylePath (  ) );
 
-            if ( nPathLen > 0 && EQUALN ( pszUrl, poOgrDS->GetStylePath (  ), nPathLen )) {
+            if ( nPathLen == 0 || EQUALN ( pszUrl, poOgrDS->GetStylePath (  ), nPathLen )) {
 
 
                 /***** should we resolve the style *****/
