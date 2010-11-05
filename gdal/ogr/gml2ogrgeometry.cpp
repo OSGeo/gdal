@@ -488,10 +488,12 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
             return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Polygon                                                         */
+/*      Polygon / PolygonPatch / Triangle / Rectangle                   */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"Polygon") ||
-        EQUAL(pszBaseGeometry,"PolygonPatch") )
+        EQUAL(pszBaseGeometry,"PolygonPatch") ||
+        EQUAL(pszBaseGeometry,"Triangle") ||
+        EQUAL(pszBaseGeometry,"Rectangle"))
     {
         const CPLXMLNode *psChild;
         OGRPolygon *poPolygon = new OGRPolygon();
@@ -505,7 +507,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         if( psChild == NULL || psChild->psChild == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Missing outerBoundaryIs property on Polygon." );
+                      "Missing outerBoundaryIs property on %s.", pszBaseGeometry );
             delete poPolygon;
             return NULL;
         }
@@ -523,8 +525,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         if( !EQUAL(poRing->getGeometryName(),"LINEARRING") )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Polygon: Got %.500s geometry as outerBoundaryIs instead of LINEARRING.",
-                      poRing->getGeometryName() );
+                      "%s: Got %.500s geometry as outerBoundaryIs instead of LINEARRING.",
+                      pszBaseGeometry, poRing->getGeometryName() );
             delete poPolygon;
             delete poRing;
             return NULL;
@@ -555,8 +557,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 if( !EQUAL(poRing->getGeometryName(),"LINEARRING") )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Polygon: Got %.500s geometry as innerBoundaryIs instead of LINEARRING.",
-                              poRing->getGeometryName() );
+                              "%s: Got %.500s geometry as innerBoundaryIs instead of LINEARRING.",
+                              pszBaseGeometry, poRing->getGeometryName() );
                     delete poPolygon;
                     delete poRing;
                     return NULL;
@@ -1480,6 +1482,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         psChild = FindBareXMLChild( psNode, "patches" );
         if( psChild == NULL )
             psChild = FindBareXMLChild( psNode, "polygonPatches" );
+        if( psChild == NULL )
+            psChild = FindBareXMLChild( psNode, "trianglePatches" );
 
         if( psChild == NULL || psChild->psChild == NULL )
         {
@@ -1492,7 +1496,9 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
              psChild != NULL; psChild = psChild->psNext )
         {
             if( psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"PolygonPatch") )
+                && (EQUAL(BareGMLElement(psChild->pszValue),"PolygonPatch") ||
+                    EQUAL(BareGMLElement(psChild->pszValue),"Triangle") ||
+                    EQUAL(BareGMLElement(psChild->pszValue),"Rectangle")))
             {
                 OGRPolygon *poPolygon = (OGRPolygon *) 
                     GML2OGRGeometry_XMLNode( psChild );
@@ -1515,6 +1521,57 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
             }
         }
         
+        return poResult;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      TriangulatedSurface                                             */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"TriangulatedSurface") ||
+        EQUAL(pszBaseGeometry,"Tin") )
+    {
+        const CPLXMLNode *psChild;
+        OGRGeometry *poResult = NULL;
+
+        // Find trianglePatches
+        psChild = FindBareXMLChild( psNode, "trianglePatches" );
+        if (psChild == NULL)
+            psChild = FindBareXMLChild( psNode, "patches" );
+
+        if( psChild == NULL || psChild->psChild == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Missing <trianglePatches> for %s.", pszBaseGeometry );
+            return NULL;
+        }
+
+        for( psChild = psChild->psChild;
+             psChild != NULL; psChild = psChild->psNext )
+        {
+            if( psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"Triangle") )
+            {
+                OGRPolygon *poPolygon = (OGRPolygon *)
+                    GML2OGRGeometry_XMLNode( psChild );
+                if( poPolygon == NULL )
+                    return NULL;
+
+                if( poResult == NULL )
+                    poResult = poPolygon;
+                else if( wkbFlatten(poResult->getGeometryType()) == wkbPolygon )
+                {
+                    OGRMultiPolygon *poMP = new OGRMultiPolygon();
+                    poMP->addGeometryDirectly( poResult );
+                    poMP->addGeometryDirectly( poPolygon );
+                    poResult = poMP;
+                }
+                else
+                {
+                    ((OGRMultiPolygon *) poResult)->addGeometryDirectly( poPolygon );
+                }
+            }
+        }
+
         return poResult;
     }
 
