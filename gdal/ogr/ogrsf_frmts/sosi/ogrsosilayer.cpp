@@ -55,14 +55,71 @@ OGRSOSILayer::~OGRSOSILayer() {
 OGRFeatureDefn *OGRSOSILayer::GetLayerDefn() {
     return poFeatureDefn;
 }
+
 /************************************************************************/
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 OGRSpatialReference *OGRSOSILayer::GetSpatialRef() {
+    if (poParent->poSRS == NULL) {
+        CPLDebug( "[GetSpatialRef]", "Called, but parent spatial ref is unknown yet.");
+    }
     return poParent->poSRS; /* The same for all layers */
 }
 
+/************************************************************************/
+/*                           CreateField()                              */
+/************************************************************************/
+OGRErr OGRSOSILayer::CreateField (OGRFieldDefn *poField, int bApproxOK) {
+    poFeatureDefn->AddFieldDefn( poField );
+    return OGRERR_NONE; /* We'll just gladly accept any "field" we find */
+}
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+OGRErr OGRSOSILayer::CreateFeature(OGRFeature *poFeature) {
+    short nNavn;
+    long nSerial;
+    
+    const char *pszSosi = NULL;
+    switch (poFeatureDefn->GetGeomType()) {
+        case wkbPoint: {
+            pszSosi = ".PUNKT";
+            break;
+        }
+        case wkbLineString: {
+            pszSosi = ".KURVE";
+            break;
+        }
+        case wkbPolygon: {
+            pszSosi = ".FLATE";
+            break;
+        }
+        default: {
+            CPLError( CE_Warning, CPLE_AppDefined, "Unknown geometry type in CreateFeature.");
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        }
+    }
+    nNavn = LC_NyGr(poFileadm, (char *)pszSosi, &oNextSerial, &nSerial);
+    /* === WIP - Work in progress === */
+    /* PutGI for all headers */
+    char pszGi[255];
+    for (int i=0;i<poFeature->GetFieldCount();i++) {
+		int n = snprintf (pszGi, 255, "%s", poFeature->GetFieldDefnRef(i)->GetNameRef());
+		if (n<255) {
+			/*int m = */snprintf (pszGi + (n-1), 255-n, "%s", poFeature->GetFieldAsString(i));
+			/* check overflow */
+		}
+		LC_PutGi(i+2, pszGi); /* should add headers too */
+	}
+	//LC_OppdaterEndret(0);
+    /* PutTK for all coords */
+    /* ... */
+    /* === /WIP - Work in progress === */
+    LC_WsGr(poFileadm); /* Writing the header here! */
+    return OGRERR_NONE;
+}
+    
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
@@ -121,7 +178,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             nRefCount = LC_GetRefFlate(&oGrfStat, GRF_YTRE, &nRefNr, &nRefStatus, 1);
             while (nRefCount > 0) {
                 if (poParent->papoBuiltGeometries[nRefNr] == NULL) { /* this shouldn't happen under normal operation */
-                    CPLError( CE_Fatal, CPLE_AppDefined, "\nFeature %li referenced by %li, but it was not initialized.", nRefNr, oNextSerial.lNr);
+                    CPLError( CE_Fatal, CPLE_AppDefined, "Feature %li referenced by %li, but it was not initialized.", nRefNr, oNextSerial.lNr);
                     return NULL;
                 }
                 OGRLineString *poCurve = (OGRLineString*)(poParent->papoBuiltGeometries[nRefNr]);
@@ -130,7 +187,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                 } else if (nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */
                     poOuter->addSubLineString(poCurve,poCurve->getNumPoints()-1,0);
                 } else {
-                    CPLError( CE_Failure, CPLE_OpenFailed, "\nIsland (OEY) encountered, but not yet supported.");
+                    CPLError( CE_Failure, CPLE_OpenFailed, "Island (OEY) encountered, but not yet supported.");
                     return NULL;
                 }
                 nRefCount = LC_GetRefFlate(&oGrfStat, GRF_YTRE, &nRefNr, &nRefStatus, 1);
@@ -146,7 +203,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
 
             OGRLineString *poCurve = (OGRLineString*)(poParent->papoBuiltGeometries[oNextSerial.lNr]);
             if (poCurve == NULL) {
-                CPLError( CE_Fatal, CPLE_AppDefined, "\nCurve %li was not initialized.", oNextSerial.lNr);
+                CPLError( CE_Fatal, CPLE_AppDefined, "Curve %li was not initialized.", oNextSerial.lNr);
                 return NULL;
             }
             poGeom = poCurve->clone();
@@ -157,7 +214,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
 
             OGRMultiPoint *poMP = (OGRMultiPoint*)(poParent->papoBuiltGeometries[oNextSerial.lNr]);
             if (poMP == NULL) {
-                CPLError( CE_Fatal, CPLE_AppDefined, "\nTekst %li was not initialized.", oNextSerial.lNr);
+                CPLError( CE_Fatal, CPLE_AppDefined, "Tekst %li was not initialized.", oNextSerial.lNr);
                 return NULL;
             }
             poGeom = poMP->clone();
@@ -167,7 +224,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             oGType = wkbPoint;
             OGRPoint *poPoint = (OGRPoint*)(poParent->papoBuiltGeometries[oNextSerial.lNr]);
             if (poPoint == NULL) {
-                CPLError( CE_Fatal, CPLE_AppDefined, "\nPoint %li was not initialized.", oNextSerial.lNr);
+                CPLError( CE_Fatal, CPLE_AppDefined, "Point %li was not initialized.", oNextSerial.lNr);
                 return NULL;
             }
             poGeom = poPoint->clone();
@@ -178,7 +235,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             break;
         }
         default: {     /* complain a bit about anything else that is not implemented */
-            CPLError( CE_Failure, CPLE_OpenFailed, "\nUnrecognized geometry of type %i.", nName);
+            CPLError( CE_Failure, CPLE_OpenFailed, "Unrecognized geometry of type %i.", nName);
             break;
         }
         }
@@ -195,7 +252,11 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         for (iHeaders = oHeaders.begin(); iHeaders != oHeaders.end(); iHeaders++) {
             const char *pszLine = iHeaders->second.c_str();
             int iHNr = poHeaderDefn->find(iHeaders->first)->second;
-            if (pszLine[0] == '\'') { /* If the value is single-quoted, ignore these */
+            if (iHNr == -1) {
+				CPLError( CE_Warning, CPLE_AppDefined, "Could not find field definition for %s.", iHeaders->first.c_str());
+                continue;
+			}
+            if ((pszLine[0] == '\'')||(pszLine[0] == '\"')) { /* If the value is quoted, ignore these */
                 int nLen = strlen(pszLine);
                 char *pszNline = (char*)CPLMalloc(nLen-1);
                 strncpy(pszNline, pszLine+1, nLen-2);
@@ -227,4 +288,13 @@ void OGRSOSILayer::ResetReading() {
     poNextSerial = &oNextSerial;
     LC_InitNextBgr(poNextSerial);
     nNextFID = 0;
+}
+
+/************************************************************************/
+/*                              TestCapability()                        */
+/************************************************************************/
+
+int OGRSOSILayer::TestCapability( const char * pszCap ) {
+    CPLDebug( "[TestCapability]","Capability %s not supported by SOSI layer", pszCap);
+    return FALSE;
 }

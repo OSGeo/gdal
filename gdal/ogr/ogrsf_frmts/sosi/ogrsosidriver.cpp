@@ -90,8 +90,10 @@ OGRDataSource *OGRSOSIDriver::CreateDataSource( const char *pszName, char **paps
 /************************************************************************/
 
 int OGRSOSIDriver::TestCapability( const char * pszCap ) {
-    /*if (strcmp("CreateDataSource",pszCap) == 0) {
+    if (strcmp("CreateDataSource",pszCap) == 0) {
         return TRUE; 
-    }*/
+    } else {
+        CPLDebug( "[TestCapability]","Capability %s not supported by SOSI driver", pszCap);
+    }
     return FALSE;
 }
