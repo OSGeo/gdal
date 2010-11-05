@@ -672,6 +672,76 @@ def gml_OrientableSurface():
     return 'success'
 
 ###############################################################################
+# Test GML Triangle
+
+def gml_Triangle():
+
+    gml = """<gml:Triangle>
+                <gml:exterior>
+                    <gml:LinearRing>
+                        <gml:posList>0 0 0 1 1 1 0 0</gml:posList>
+                     </gml:LinearRing>
+                </gml:exterior>
+             </gml:Triangle>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+        gdaltest.post_reason( '<gml:Triangle> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML Rectangle
+
+def gml_Rectangle():
+
+    gml = """<gml:Rectangle>
+                <gml:exterior>
+                    <gml:LinearRing>
+                        <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                     </gml:LinearRing>
+                </gml:exterior>
+             </gml:Rectangle>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        gdaltest.post_reason( '<gml:Rectangle> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML Tin
+
+def gml_Tin():
+
+    gml = """<gml:Tin>
+                <gml:patches>
+                    <gml:Triangle>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">0 0 1 0 1 1 1 1 1 1 0 1 0 0 1 </gml:posList>
+                            </gml:LinearRing>
+                        </gml:exterior>
+                     </gml:Triangle>
+                 </gml:patches>
+             </gml:Tin>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0 1,0 1 1,1 1 1,1 0 1,0 0 1))':
+        gdaltest.post_reason( '<gml:Tin> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Test OGRFormatDouble() to check for rounding errors (would also apply for KML output, or ogrinfo output)
 
 def gml_out_precision():
@@ -933,6 +1003,9 @@ gdaltest_list.append( gml_MultiCurve_curveMembers )
 gdaltest_list.append( gml_MultiCurve_pointMembers )
 gdaltest_list.append( gml_Solid )
 gdaltest_list.append( gml_OrientableSurface )
+gdaltest_list.append( gml_Triangle )
+gdaltest_list.append( gml_Rectangle )
+gdaltest_list.append( gml_Tin )
 #gdaltest_list.append( gml_out_precision )
 gdaltest_list.append( gml_invalid_geoms )
 gdaltest_list.append( gml_write_gml3_geometries )
