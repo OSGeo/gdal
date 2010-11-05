@@ -512,7 +512,7 @@ GBool OGRStyleMgr::AddPart(const char *pszPart)
 GBool OGRStyleMgr::AddPart(OGRStyleTool *poStyleTool)
 {
     char *pszTmp;
-    if (poStyleTool)
+    if (poStyleTool && poStyleTool->GetStyleString())
     {
         if (m_pszStyleString)
         {
