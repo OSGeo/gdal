@@ -424,11 +424,11 @@ int OGRDXFWriterDS::TransferUpdateTrailer( VSILFILE *fpOut )
     char szLineBuf[257];
     int  nCode;
 
-    while( (nCode = oReader.ReadValue( szLineBuf )) != -1 )
+    while( (nCode = oReader.ReadValue( szLineBuf, sizeof(szLineBuf) )) != -1 )
     {
         if( nCode == 0 && EQUAL(szLineBuf,"SECTION") )
         {
-            nCode = oReader.ReadValue( szLineBuf );
+            nCode = oReader.ReadValue( szLineBuf, sizeof(szLineBuf) );
             if( nCode == 2 && EQUAL(szLineBuf,"OBJECTS") )
                 break;
         }
@@ -453,7 +453,7 @@ int OGRDXFWriterDS::TransferUpdateTrailer( VSILFILE *fpOut )
 /* -------------------------------------------------------------------- */
 /*      Copy the remainder of the file.                                 */
 /* -------------------------------------------------------------------- */
-    while( (nCode = oReader.ReadValue( szLineBuf )) != -1 )
+    while( (nCode = oReader.ReadValue( szLineBuf, sizeof(szLineBuf) )) != -1 )
     {
         if( !WriteValue( fpOut, nCode, szLineBuf ) )
         {
@@ -487,6 +487,10 @@ int  OGRDXFWriterDS::WriteNewLayerDefinitions( VSILFILE * fpOut )
                 if( !WriteValue( fpOut, 2, papszLayersToCreate[iLayer] ) )
                     return FALSE;
             }
+            else if( anDefaultLayerCode[i] == 5 )
+            {
+                WriteEntityID( fpOut );
+            }
             else
             {
                 if( !WriteValue( fpOut,
@@ -507,6 +511,9 @@ int  OGRDXFWriterDS::WriteNewLayerDefinitions( VSILFILE * fpOut )
 int OGRDXFWriterDS::WriteNewLineTypeRecords( VSILFILE *fp )
 
 {
+    if( poLayer == NULL )
+        return TRUE;
+
     std::map<CPLString,CPLString>::iterator oIt;
     std::map<CPLString,CPLString>& oNewLineTypes = 
         poLayer->GetNewLineTypeMap();
@@ -695,7 +702,7 @@ void OGRDXFWriterDS::ScanForEntities( const char *pszFilename,
     int  nCode;
     const char *pszPortion = "HEADER";
 
-    while( (nCode = oReader.ReadValue( szLineBuf )) != -1 )
+    while( (nCode = oReader.ReadValue( szLineBuf, sizeof(szLineBuf) )) != -1 )
     {
         if( (nCode == 5 || nCode == 105) && EQUAL(pszTarget,pszPortion) )
         {
@@ -710,11 +717,11 @@ void OGRDXFWriterDS::ScanForEntities( const char *pszFilename,
 
         if( nCode == 0 && EQUAL(szLineBuf,"SECTION") )
         {
-            nCode = oReader.ReadValue( szLineBuf );
+            nCode = oReader.ReadValue( szLineBuf, sizeof(szLineBuf) );
             if( nCode == 2 && EQUAL(szLineBuf,"ENTITIES") )
                 pszPortion = "BODY";
             if( nCode == 2 && EQUAL(szLineBuf,"OBJECTS") )
-                pszPortion = "BODY";
+                pszPortion = "TRAILER";
         }
     }
 
