@@ -573,7 +573,8 @@ def ogr_dxf_14():
 
 def ogr_dxf_15():
 
-    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_14.dxf' )
+    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_14.dxf',
+                                                     ['FIRST_ENTITY=80'] )
 
     lyr = ds.CreateLayer( 'entities' )
 
@@ -638,7 +639,8 @@ def ogr_dxf_15():
 
     # Check the DXF file itself to try and ensure that the layer
     # is defined essentially as we expect.  We assume the only thing
-    # that will be different is the layer name is 'abc' instead of '0'.
+    # that will be different is the layer name is 'abc' instead of '0'
+    # and the entity id.
 
     outdxf = open('tmp/dxf_14.dxf').read()
     start_1 = outdxf.find('  0\nLAYER')
@@ -649,9 +651,17 @@ def ogr_dxf_15():
 
     abc_off = txt_2.find('abc\n')
 
-    if txt_2[:abc_off] + '0' + txt_2[abc_off+3:] != txt_1:
-        print(txt_2[:abc_off] + '0' + txt_2[abc_off+3:])
+    if txt_2[16:abc_off] + '0' + txt_2[abc_off+3:] != txt_1[16:]:
+        print(txt_2[abc_off] + '0' + txt_2[abc_off+3:])
+        print(txt_1)
         gdaltest.post_reason( 'Layer abc does not seem to match layer 0.' )
+        return 'fail'
+
+    # Check that $HANDSEED was set as expected.
+    start_seed = outdxf.find('$HANDSEED')
+    handseed = outdxf[start_seed+10+4:start_seed+10+4+8]
+    if handseed != '00000053':
+        gdaltest.post_reason( 'Did not get expected HANDSEED, got %s.' % handseed)
         return 'fail'
     
     os.unlink( 'tmp/dxf_14.dxf' )
