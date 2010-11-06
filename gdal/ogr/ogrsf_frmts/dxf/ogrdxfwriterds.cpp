@@ -47,6 +47,7 @@ OGRDXFWriterDS::OGRDXFWriterDS()
     poBlocksLayer = NULL;
     papszLayersToCreate = NULL;
     nNextFID = 80;
+    nHANDSEEDOffset = 0;
 }
 
 /************************************************************************/
@@ -94,6 +95,12 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
 /* -------------------------------------------------------------------- */
         if( osTrailerFile != "" )
             TransferUpdateTrailer( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Fixup the HANDSEED value now that we know all the entity ids    */
+/*      created.                                                        */
+/* -------------------------------------------------------------------- */
+        FixupHANDSEED( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Close file.                                                     */
@@ -189,6 +196,20 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
+/*      What entity id do we want to start with when writing?  Small    */
+/*      values run a risk of overlapping some undetected entity in      */
+/*      the header or trailer despite the prescanning we do.            */
+/* -------------------------------------------------------------------- */
+#ifdef DEBUG
+    nNextFID = 80;
+#else
+    nNextFID = 131072;
+#endif
+
+    if( CSLFetchNameValue( papszOptions, "FIRST_ENTITY" ) != NULL )
+        nNextFID = atoi(CSLFetchNameValue( papszOptions, "FIRST_ENTITY" ));
+
+/* -------------------------------------------------------------------- */
 /*      Prescan the header and trailer for entity codes.                */
 /* -------------------------------------------------------------------- */
     ScanForEntities( osHeaderFile, "HEADER" );
@@ -204,7 +225,7 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "w" );
+    fp = VSIFOpenL( pszFilename, "w+" );
 
     if( fp == NULL )
     {
@@ -297,7 +318,7 @@ int OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
     int nCode;
     CPLString osSection, osTable, osEntity;
 
-    while( (nCode = oHeaderDS.ReadValue( szLineBuf )) != -1 
+    while( (nCode = oHeaderDS.ReadValue( szLineBuf, sizeof(szLineBuf) )) != -1 
            && osSection != "ENTITIES" )
     {
         if( nCode == 0 && EQUAL(szLineBuf,"ENDTAB") )
@@ -336,6 +357,25 @@ int OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
         {
             if( !WriteNewBlockDefinitions( fp ) )
                 return FALSE;
+        }
+
+        // We need to keep track of where $HANDSEED is so that we can
+        // come back and fix it up when we have generated all entity ids. 
+        if( nCode == 9 && EQUAL(szLineBuf,"$HANDSEED") )
+        {
+            if( !WriteValue( fpOut, nCode, szLineBuf ) )
+                return FALSE;
+
+            nCode = oHeaderDS.ReadValue( szLineBuf, sizeof(szLineBuf) );
+
+            // ensure we have room to overwrite with a longer value.
+            while( strlen(szLineBuf) < 8 )
+            {
+                memmove( szLineBuf+1, szLineBuf, strlen(szLineBuf)+1 );
+                szLineBuf[0] = '0';
+            }
+
+            nHANDSEEDOffset = VSIFTellL( fpOut );
         }
 
         // Copy over the source line.
@@ -468,6 +508,62 @@ int OGRDXFWriterDS::TransferUpdateTrailer( VSILFILE *fpOut )
 }
 
 /************************************************************************/
+/*                           FixupHANDSEED()                            */
+/*                                                                      */
+/*      Fixup the next entity id information in the $HANDSEED header    */
+/*      variable.                                                       */
+/************************************************************************/
+
+int OGRDXFWriterDS::FixupHANDSEED( VSILFILE *fp )
+
+{
+/* -------------------------------------------------------------------- */
+/*      What is a good next handle seed?  Scan existing values.         */
+/* -------------------------------------------------------------------- */
+    unsigned int   nHighestHandle = 0;
+    std::set<CPLString>::iterator it;
+
+    for( it = aosUsedEntities.begin(); it != aosUsedEntities.end(); it++ ) 
+    {
+        unsigned int nHandle;
+        if( sscanf( (*it).c_str(), "%x", &nHandle ) == 1 )
+        {
+            if( nHandle > nHighestHandle )
+                nHighestHandle = nHandle;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the existing handseed value, replace it, and write back.   */
+/* -------------------------------------------------------------------- */
+    char szWorkBuf[30];
+    int  i = 0;
+
+    if( nHANDSEEDOffset == 0 )
+        return FALSE;
+
+    VSIFSeekL( fp, nHANDSEEDOffset, SEEK_SET );
+    VSIFReadL( szWorkBuf, 1, sizeof(szWorkBuf), fp );
+    
+    while( szWorkBuf[i] != '\n' )
+        i++;
+
+    i++;
+    if( szWorkBuf[i] == '\r' )
+        i++;
+    
+    CPLString osNewValue;
+
+    osNewValue.Printf( "%08X", nHighestHandle + 1 );
+    strncpy( szWorkBuf + i, osNewValue.c_str(), osNewValue.size() );
+
+    VSIFSeekL( fp, nHANDSEEDOffset, SEEK_SET );
+    VSIFWriteL( szWorkBuf, 1, sizeof(szWorkBuf), fp );
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                      WriteNewLayerDefinitions()                      */
 /************************************************************************/
 
@@ -480,8 +576,6 @@ int  OGRDXFWriterDS::WriteNewLayerDefinitions( VSILFILE * fpOut )
     {
         for( unsigned i = 0; i < aosDefaultLayerText.size(); i++ )
         {
-            CPLDebug( "DXF", "%d:%s", anDefaultLayerCode[i], aosDefaultLayerText[i].c_str() );
-
             if( anDefaultLayerCode[i] == 2 )
             {
                 if( !WriteValue( fpOut, 2, papszLayersToCreate[iLayer] ) )
