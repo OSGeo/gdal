@@ -337,6 +337,8 @@ class OGRDXFWriterDS : public OGRDataSource
     OGRDXFDataSource    oHeaderDS;
     char               **papszLayersToCreate;
 
+    vsi_l_offset        nHANDSEEDOffset;
+
     std::vector<int>    anDefaultLayerCode;
     std::vector<CPLString> aosDefaultLayerText;
 
@@ -350,6 +352,7 @@ class OGRDXFWriterDS : public OGRDataSource
     int                 WriteNewLayerDefinitions( VSILFILE * );
     int                 TransferUpdateHeader( VSILFILE * );
     int                 TransferUpdateTrailer( VSILFILE * );
+    int                 FixupHANDSEED( VSILFILE * );
 
   public:
                         OGRDXFWriterDS();
