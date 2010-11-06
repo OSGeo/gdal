@@ -740,7 +740,70 @@ def gml_Tin():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test GML Arc
+
+def gml_Arc():
+
+    poslist_list = [
+("1 0 0 1 -1 0", 'LINESTRING (1 0,0.707106781186548 0.707106781186547,0.0 1.0,-0.707106781186547 0.707106781186548,-1.0 0.0)' ),
+("1 0 0 -1 -1 0", 'LINESTRING (1 0,0.707106781186548 -0.707106781186547,0.0 -1.0,-0.707106781186547 -0.707106781186548,-1.0 -0.0)' ),
+("1 0 -1 0 0 -1 ", 'LINESTRING (1 0,0.707106781186548 0.707106781186547,0.0 1.0,-0.707106781186547 0.707106781186548,-1.0 0.0,-0.707106781186548 -0.707106781186547,-0.0 -1.0)' ),
+("1 0 -1 0 0 1 ", 'LINESTRING (1 0,0.707106781186548 -0.707106781186547,0.0 -1.0,-0.707106781186547 -0.707106781186548,-1.0 -0.0,-0.707106781186548 0.707106781186547,-0.0 1.0)' ),
+("1 0  0 0 -1 0 ", 'LINESTRING (1 0,0 0,-1 0)' ),
+("0 1 1 0 0 -1", 'LINESTRING (0.0 1.0,0.707106781186548 0.707106781186547,1 0,0.707106781186548 -0.707106781186547,0.0 -1.0)' ),
+("0 1 -1 0 0 -1", 'LINESTRING (0.0 1.0,-0.707106781186547 0.707106781186548,-1.0 0.0,-0.707106781186548 -0.707106781186547,-0.0 -1.0)' ),
+("-1 0 0 1 1 0", 'LINESTRING (-1.0 0.0,-0.707106781186547 0.707106781186548,0.0 1.0,0.707106781186548 0.707106781186547,1 0)' ),
+("-1 0 0 1 -0.707106781186547 -0.707106781186548", 'LINESTRING (-1.0 0.0,-0.707106781186547 0.707106781186548,0.0 1.0,0.707106781186548 0.707106781186547,1 0,0.707106781186548 -0.707106781186547,0.0 -1.0,-0.707106781186547 -0.707106781186548)' )
+    ]
+
+    for (poslist, expected_wkt) in poslist_list:
+
+        gml = "<gml:Arc><gml:posList>%s</gml:posList></gml:Arc>" % poslist
+        gdal.SetConfigOption('OGR_ARC_STEPSIZE','45')
+        geom = ogr.CreateGeometryFromGML( gml )
+        gdal.SetConfigOption('OGR_ARC_STEPSIZE',None)
+
+        if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
+            print(gml)
+            print(geom)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML Circle
+
+def gml_Circle():
+
+    gml = """<gml:PolygonPatch>
+                <gml:exterior>
+                    <gml:Ring>
+                        <gml:curveMember>
+                            <gml:Curve>
+                                <gml:segments>
+                                    <gml:Circle>
+                                        <gml:posList>-1 0 0 1 -0.707106781186547 -0.707106781186548</gml:posList>
+                                    </gml:Circle>
+                                </gml:segments>
+                            </gml:Curve>
+                        </gml:curveMember>
+                    </gml:Ring>
+                </gml:exterior>
+            </gml:PolygonPatch>"""
+
+    gdal.SetConfigOption('OGR_ARC_STEPSIZE','45')
+    geom = ogr.CreateGeometryFromGML( gml )
+    gdal.SetConfigOption('OGR_ARC_STEPSIZE',None)
+
+    expected_wkt = 'POLYGON ((-1.0 0.0,-0.707106781186547 0.707106781186548,0.0 1.0,0.707106781186548 0.707106781186547,1 0,0.707106781186548 -0.707106781186547,0.0 -1.0,-0.707106781186547 -0.707106781186548,-1.0 -0.0,-1.0 -0.0))'
+    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
+        print(geom)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test OGRFormatDouble() to check for rounding errors (would also apply for KML output, or ogrinfo output)
 
@@ -838,6 +901,8 @@ def gml_invalid_geoms():
         ('<gml:Curve><gml:segments/></gml:Curve>', 'LINESTRING EMPTY'),
         ('<gml:Curve><gml:segments><foo/></gml:segments></gml:Curve>', 'LINESTRING EMPTY'),
         ('<gml:Curve><gml:segments><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:segments></gml:Curve>', 'LINESTRING EMPTY'),
+        ('<gml:Arc/>', None),
+        ('<gml:Arc><gml:posList>0 0 0 1</gml:posList></gml:Arc>', None),
         ('<gml:segments/>', 'LINESTRING EMPTY'),
         ('<gml:segments><foo/></gml:segments>', 'LINESTRING EMPTY'),
         ('<gml:segments><gml:LineStringSegment/></gml:segments>', 'LINESTRING EMPTY'),
@@ -1006,6 +1071,8 @@ gdaltest_list.append( gml_OrientableSurface )
 gdaltest_list.append( gml_Triangle )
 gdaltest_list.append( gml_Rectangle )
 gdaltest_list.append( gml_Tin )
+gdaltest_list.append( gml_Arc )
+gdaltest_list.append( gml_Circle )
 #gdaltest_list.append( gml_out_precision )
 gdaltest_list.append( gml_invalid_geoms )
 gdaltest_list.append( gml_write_gml3_geometries )
