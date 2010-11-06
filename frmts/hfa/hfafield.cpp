@@ -1026,6 +1026,16 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
               dfDoubleRet = pabyData[nIndexValue];
               nIntRet = pabyData[nIndexValue];
           }
+          else if( nBaseItemType == EPT_s8 )
+          {
+              if (nIndexValue >= nDataSize)
+              {
+                  CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
+                  return FALSE;
+              }
+              dfDoubleRet = ((signed char *)pabyData)[nIndexValue];
+              nIntRet = ((signed char *)pabyData)[nIndexValue];
+          }
           else if( nBaseItemType == EPT_s16 )
           {
               GInt16  nValue;
