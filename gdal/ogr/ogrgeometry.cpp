@@ -717,6 +717,19 @@ void OGRGeometry::setCoordinateDimension( int nNewDimension )
 /*                    OGR_G_SetCoordinateDimension()                    */
 /************************************************************************/
 
+/**
+ * \brief Set the coordinate dimension.
+ *
+ * This method sets the explicit coordinate dimension.  Setting the coordinate
+ * dimension of a geometry to 2 should zero out any existing Z values.  Setting
+ * the dimension of a geometry collection will not necessarily affect the
+ * children geometries.
+ *
+ * @param hGeom handle on the geometry to set the dimension of the
+ * coordinates.
+ * @param nNewDimension New coordinate dimension value, either 2 or 3.
+ */
+
 void OGR_G_SetCoordinateDimension( OGRGeometryH hGeom, int nNewDimension)
 
 {
@@ -3309,6 +3322,16 @@ void OGRGeometry::closeRings()
 /************************************************************************/
 /*                          OGR_G_CloseRings()                          */
 /************************************************************************/
+
+/**
+ * \brief Force rings to be closed.
+ *
+ * If this geometry, or any contained geometries has polygon rings that
+ * are not closed, they will be closed by adding the starting point at
+ * the end.
+ *
+ * @param hGeom handle to the geometry.
+ */
 
 void OGR_G_CloseRings( OGRGeometryH hGeom )
 
