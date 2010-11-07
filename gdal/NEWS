@@ -68,6 +68,7 @@
  * S57: implement support for multilinestring geometries (#2147)
  * KML: fix stack buffer overflow if pszAltitudeMode is too long (#3561)
  * KML: avoid crash when reading degenerated geometries (#3558)
+ * GMT: Incorporate fixes for multipolygon and multilinestring geom (#3802)
  * attribute indexes fixes (#1620)
  * Fix memory leak with CopyLayers() using transactions (#3701)
 
