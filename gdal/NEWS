@@ -1,3 +1,76 @@
+= GDAL/OGR 1.7.3 = 
+
+== General ==
+
+ * Fix handling of ERMapper spherical coordinate systems (#3787)
+ * Fix comparison of units of coordinate systems. (#3364)
+ * C#: Fix GDAL_DMD_ and GDAL_DCAP_ constants (#3601)
+ * C#: Don't mark class BeforeFieldInit causing CLR4 crash (#3560)
+ * C#: Use the .NET Framework 2.0 transparency rules (level 1 transparency) for the VC2010 builds (#3559)
+ * Python: Fix indentation problem with GCP serialize method (#3566)
+ * Make CPL_INLINE compatible with SunPro 11 and 12 compilers. (#3256, #3650)
+ * Override EPSG:4179 (Pulkovo 1942(58)) and EPSG:4258 (ETRS89) to add towgs84 transform for Polish CRS (#3579)
+ * SWIG bindings : initialize return values of GetRasterStatistics?() (#3572)
+
+== GDAL / Raster ==
+
+ * HFA (Imagine): Support EPT_s8 BASEDATA values (#3819)
+ * HFA (Imagine): Capture .ige file in file list (#3811)
+ * HFA (Imagine): avoid using empty names for layer, if we have one generate a fake name, use for overviews (#3570)
+ * ECW: Support building against 4.1 ECW SDK (#3676)
+ * VRT: fix crash in VRT to VRT translation when target file cannot be created; port to VSIF*L API; advertize GDAL_DCAP_VIRTUALIO=YES (#3788)
+ * VRT: mark vrt as needing a flush when info changes (#3620)
+ * VRT: Override SetDescription to call SetNeedsFlush (#3589,#3620)
+ * ENVI: Make SetGeoTransform followed by GetGeoTransform work (#3751
+ * PCIDSK: fix locking state at CPLThreadMutex creation (#3755)
+ * HDF5: Fix crash processing large metadata items (#3730)
+ * GRIB: Fix crash when open fails (#3399)
+ * GRIB: fix ParseSect4() so that meta->pds2.sect4.numInterval doesn't get initialized if ParseTime() fails (#3555)
+ * GTIFF: fix problems with jpeg compression (#3633)
+ * GEORASTER: Improve handling of nodata (#3673)
+ * RIK: Fix uninitialized pixel value when reading RIK LZW datasets (#3678)
+ * ENVI: Support "ENVI" as file type (#3671)
+ * NITF: Allow setting ICORDS=D with CreateCopy() (3660)
+ * NITF: fix crash when block wider than image (#3551)
+ * PDS: Support newline continuation marks. (#3624)
+ * PDS: support file with no RECORD_BYTES, and with IMAGE in <BYTES> (#3548)
+ * IDRISI: allow color items greater than maximum value (#3605)
+ * BSB: treat run count overruns as a warning (#3577)
+ * Rasterlite: fix heap corruption (#3553)
+ * Fix problems reading OsiExplorer Map files (#3659)
+ * gdal_rasterize: Fix checking of coordinate systems (#3760)
+ * gdal_contour: Fix two bugs (#3462)
+ * gdaldem: fix interpreation of azimuth (#3586)
+ * Support creating overviews when PAM disabled (#3693)
+ * warper: make bilinear resampler safer (#3658)
+ * Avoid being overly sensitive to numeric imprecision when comparing pixel value and nodata value in GDALRasterBand::ComputeStatistics()/ComputeRasterMinMax(), especially for GeoTIFF format where nodata is stored as text (#3573)
+ 
+== OGR / Vector ==
+
+ * SQLite: use MBRIntersects operator instead of MBRWithin (#3810) 
+ * GeoJSON: fix combined spatial and attribute filtering (#3803) 
+ * GeoJSON: fix build problem on linux (#3655)
+ * VRT: Fix GetExtent on non VGS_Direct layers (#3783)
+ * CSV: Skip empty lines (#3782)
+ * Shapefile: create var. width fields as 10 wide to avoid real treatment(#2151)
+ * Shapefile: Fix conflict between spatial and attribute indexes (#3722)
+ * Shapefile: Fix crash with corrupt geometry (#3665)
+ * DXF: Fix crash with large splines (#3733)
+ * DXF: switch to FME derived DXF trailer and header templates (#3599)
+ * PGeo: Ensure SetAttributeFilter(NULL) clears filter (#3706)
+ * PGeo: Add support for multipolygons (#3600)
+ * GML: Support MultiGeometry properly (#3683)
+ * GML: avoid crash on invalid GML geometries (#3679)
+ * PG: handling of Nan & Infinity : remove special case for OFTInteger and OFTIntegerList, fix for OFTRealList in COPY mode (#3667)
+ * PG: Fix recognition of geometry type when 2 inherited tables with same name exist in 2 different schemas (#3636)
+ * SDTS: improve safety of polygon formation (#3664)
+ * S57: implement support for multilinestring geometries (#2147)
+ * KML: fix stack buffer overflow if pszAltitudeMode is too long (#3561)
+ * KML: avoid crash when reading degenerated geometries (#3558)
+ * attribute indexes fixes (#1620)
+ * Fix memory leak with CopyLayers() using transactions (#3701)
+
+
 = GDAL/OGR 1.7.2 = 
 
 The 1.7.2 release is a routine bug fix release on the stable GDAL/OGR 1.7
