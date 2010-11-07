@@ -81,6 +81,35 @@ def test_gdal_retile_1():
     return 'success'
 
 ###############################################################################
+# Test gdal_retile.py with RGBA dataset
+
+def test_gdal_retile_2():
+
+    script_path = test_py_scripts.get_py_script('gdal_retile')
+    if script_path is None:
+        return 'skip'
+
+    try:
+        os.mkdir('tmp/outretile2')
+    except:
+        pass
+
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile2 ../gcore/data/rgba.tif' )
+
+    ds = gdal.Open('tmp/outretile2/2/rgba_1_1.tif')
+    if ds.GetRasterBand(1).Checksum() != 35:
+        gdaltest.post_reason('wrong checksum for band 1')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    if ds.GetRasterBand(4).Checksum() != 35:
+        gdaltest.post_reason('wrong checksum for band 4')
+        print(ds.GetRasterBand(4).Checksum())
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_retile_cleanup():
@@ -90,7 +119,13 @@ def test_gdal_retile_cleanup():
             'tmp/outretile/byte_1_1.tif',
             'tmp/outretile/1',
             'tmp/outretile/2',
-            'tmp/outretile' ]
+            'tmp/outretile',
+            'tmp/outretile2/1/rgba_1_1.tif',
+            'tmp/outretile2/2/rgba_1_1.tif',
+            'tmp/outretile2/1',
+            'tmp/outretile2/2',
+            'tmp/outretile2/rgba_1_1.tif',
+            'tmp/outretile2' ]
     for filename in lst:
         try:
             os.remove(filename)
@@ -104,6 +139,7 @@ def test_gdal_retile_cleanup():
 
 gdaltest_list = [
     test_gdal_retile_1,
+    test_gdal_retile_2,
     test_gdal_retile_cleanup
     ]
 
