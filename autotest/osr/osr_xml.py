@@ -35,6 +35,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import osr
+import re
 
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromXML() function.
@@ -194,8 +195,12 @@ def osr_xml_2():
     srs.ImportFromWkt(gdaltest.srs_wkt)
 
     expected = gdaltest.srs_xml
-
     got = srs.ExportToXML()
+
+    # Strip the gml:id tags
+    got = re.sub(r' gml:id="[^"]*"', '', got, 0 )
+    expected = re.sub(r' gml:id="[^"]*"', '', expected, 0 )
+
     if got != expected:
         print(got)
         return 'fail'
