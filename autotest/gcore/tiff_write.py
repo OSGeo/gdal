@@ -2577,6 +2577,9 @@ def tiff_write_78():
     # Make sure the file is flushed so that we re-read from it rather from cached blocks
     new_ds.FlushCache()
     
+    new_ds = None
+    new_ds = gdal.Open('tmp/tiff_write_78.tif')
+    
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
         if blocky == 1:
