@@ -165,6 +165,9 @@ class mosaic_info:
            self.ct = ct.Clone()
         else:
            self.ct = None
+        self.ci = [0] * self.bands
+        for iband in range(self.bands):
+            self.ci[iband] = fhInputTile.GetRasterBand(iband + 1).GetColorInterpretation()
 
         extent = self.ogrTileIndexDS.GetLayer().GetExtent()
         self.ulx = extent[0];
@@ -248,6 +251,7 @@ class mosaic_info:
                 t_band = resultDS.GetRasterBand( bandNr )
                 if self.ct is not None:
                     t_band.SetRasterColorTable(self.ct)
+                t_band.SetRasterColorInterpretation(self.ci[bandNr-1])
                 data = s_band.ReadRaster( readOffsetX,readOffsetY,readX,readY, readX,readY, self.band_type )
                 t_band.WriteRaster(writeOffsetX,writeOffsetY,readX,readY,data )
 
@@ -428,10 +432,11 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
 
     t_fh.SetGeoTransform( geotransform )
     t_fh.SetProjection( levelMosaicInfo.projection)
-    if levelMosaicInfo.ct is not None:
-        for band in range(1,bands+1):
-            t_band = t_fh.GetRasterBand( band )
+    for band in range(1,bands+1):
+        t_band = t_fh.GetRasterBand( band )
+        if levelMosaicInfo.ct is not None:
             t_band.SetRasterColorTable(levelMosaicInfo.ct)
+        t_band.SetRasterColorInterpretation(levelMosaicInfo.ci[band-1])
 
     res = gdal.ReprojectImage(s_fh,t_fh,None,None,ResamplingMethod)
     if  res!=0:
