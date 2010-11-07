@@ -36,6 +36,7 @@
  * PDS: support file with no RECORD_BYTES, and with IMAGE in <BYTES> (#3548)
  * IDRISI: allow color items greater than maximum value (#3605)
  * BSB: treat run count overruns as a warning (#3577)
+ * GXF: Fix interpretation of #SENS (#3816)
  * Rasterlite: fix heap corruption (#3553)
  * Fix problems reading OsiExplorer Map files (#3659)
  * gdal_rasterize: Fix checking of coordinate systems (#3760)
