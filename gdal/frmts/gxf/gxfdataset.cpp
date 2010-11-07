@@ -132,7 +132,7 @@ CPLErr GXFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLAssert( nBlockXOff == 0 );
 
     padfBuffer = (double *) CPLMalloc(sizeof(double) * nBlockXSize);
-    eErr = GXFGetRawScanline( poGXF_DS->hGXF, nBlockYOff, padfBuffer );
+    eErr = GXFGetScanline( poGXF_DS->hGXF, nBlockYOff, padfBuffer );
     
     for( i = 0; i < nBlockXSize; i++ )
         pafBuffer[i] = (float) padfBuffer[i];
