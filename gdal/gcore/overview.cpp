@@ -299,6 +299,7 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
 /*      Precompute inner loop constants.                                */
 /* ==================================================================== */
     int iDstPixel;
+    int bSrcXSpacingIsTwo = TRUE;
     for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
     {
         int   nSrcXOff, nSrcXOff2;
@@ -315,6 +316,8 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
 
         panSrcXOff[2 * (iDstPixel - nDstXOff)] = nSrcXOff;
         panSrcXOff[2 * (iDstPixel - nDstXOff) + 1] = nSrcXOff2;
+        if (nSrcXOff2 - nSrcXOff != 2)
+            bSrcXSpacingIsTwo = FALSE;
     }
 
 /* ==================================================================== */
@@ -347,40 +350,68 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
-        for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
+        if (poColorTable == NULL)
         {
-            int  nSrcXOff = panSrcXOff[2 * iDstPixel],
-                 nSrcXOff2 = panSrcXOff[2 * iDstPixel + 1];
-
-            if (poColorTable == NULL)
+            if (bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
+                pabySrcScanlineNodataMask == NULL && eWrkDataType == GDT_Byte)
             {
-                T val;
-                Tsum dfTotal = 0;
-                int    nCount = 0, iX, iY;
-
-                for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
+                /* Optimized case : no nodata, overview by a factor of 2 and regular x and y src spacing */
+                int  nSrcXOff = panSrcXOff[0];
+                T* pSrcScanlineShifted = pSrcScanline + nSrcXOff+nSrcYOff*nChunkXSize;
+                for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
                 {
-                    for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
-                    {
-                        val = pSrcScanline[iX+iY*nChunkXSize];
-                        if (pabySrcScanlineNodataMask == NULL ||
-                            pabySrcScanlineNodataMask[iX+iY*nChunkXSize])
-                        {
-                            dfTotal += val;
-                            nCount++;
-                        }
-                    }
-                }
+                    Tsum nTotal;
 
-                if( nCount == 0 )
-                    pDstScanline[iDstPixel] = tNoDataValue;
-                else if (eWrkDataType == GDT_Byte)
-                    pDstScanline[iDstPixel] = (T) ((dfTotal + nCount / 2) / nCount);
-                else
-                    pDstScanline[iDstPixel] = (T) (dfTotal / nCount);
+                    nTotal = pSrcScanlineShifted[0];
+                    nTotal += pSrcScanlineShifted[1];
+                    nTotal += pSrcScanlineShifted[nChunkXSize];
+                    nTotal += pSrcScanlineShifted[1+nChunkXSize];
+
+                    pDstScanline[iDstPixel] = (T) ((nTotal + 2) / 4);
+                    pSrcScanlineShifted += 2;
+                }
             }
             else
             {
+                for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
+                {
+                    int  nSrcXOff = panSrcXOff[2 * iDstPixel],
+                        nSrcXOff2 = panSrcXOff[2 * iDstPixel + 1];
+
+                    T val;
+                    Tsum dfTotal = 0;
+                    int    nCount = 0, iX, iY;
+
+                    for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
+                    {
+                        for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
+                        {
+                            val = pSrcScanline[iX+iY*nChunkXSize];
+                            if (pabySrcScanlineNodataMask == NULL ||
+                                pabySrcScanlineNodataMask[iX+iY*nChunkXSize])
+                            {
+                                dfTotal += val;
+                                nCount++;
+                            }
+                        }
+                    }
+
+                    if( nCount == 0 )
+                        pDstScanline[iDstPixel] = tNoDataValue;
+                    else if (eWrkDataType == GDT_Byte)
+                        pDstScanline[iDstPixel] = (T) ((dfTotal + nCount / 2) / nCount);
+                    else
+                        pDstScanline[iDstPixel] = (T) (dfTotal / nCount);
+                }
+            }
+        }
+        else
+        {
+            for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
+            {
+                int  nSrcXOff = panSrcXOff[2 * iDstPixel],
+                     nSrcXOff2 = panSrcXOff[2 * iDstPixel + 1];
+
                 T val;
                 int    nTotalR = 0, nTotalG = 0, nTotalB = 0;
                 int    nCount = 0, iX, iY;
