@@ -66,7 +66,6 @@ GDALDownsampleChunk32R_NearT( int nSrcWidth, int nSrcHeight,
     CPLErr eErr = CE_None;
 
     int      nDstXOff, nDstXOff2, nDstYOff, nDstYOff2, nOXSize, nOYSize;
-    T    *pDstScanline;
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
@@ -82,15 +81,21 @@ GDALDownsampleChunk32R_NearT( int nSrcWidth, int nSrcHeight,
     if( nChunkXOff + nChunkXSize == nSrcWidth )
         nDstXOff2 = nOXSize;
 
+    int nDstXWidth = nDstXOff2 - nDstXOff;
+
 /* -------------------------------------------------------------------- */
 /*      Allocate scanline buffer.                                       */
 /* -------------------------------------------------------------------- */
 
-    pDstScanline = (T *) VSIMalloc((nDstXOff2 - nDstXOff) * (GDALGetDataTypeSize(eWrkDataType) / 8));
-    if( pDstScanline == NULL )
+    T* pDstScanline = (T *) VSIMalloc(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
+    int* panSrcXOff = (int*)VSIMalloc(nDstXWidth * sizeof(int));
+
+    if( pDstScanline == NULL || panSrcXOff == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "GDALDownsampleChunk32R: Out of memory for line buffer." );
+        VSIFree(pDstScanline);
+        VSIFree(panSrcXOff);
         return CE_Failure;
     }
 
@@ -108,40 +113,50 @@ GDALDownsampleChunk32R_NearT( int nSrcWidth, int nSrcHeight,
         nDstYOff2 = nOYSize;
 
 /* ==================================================================== */
+/*      Precompute inner loop constants.                                */
+/* ==================================================================== */
+    int iDstPixel;
+    for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
+    {
+        int   nSrcXOff;
+
+        nSrcXOff =
+            (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
+        if ( nSrcXOff < nChunkXOff )
+            nSrcXOff = nChunkXOff;
+
+        panSrcXOff[iDstPixel - nDstXOff] = nSrcXOff;
+    }
+
+/* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
         T *pSrcScanline;
-        int   nSrcYOff, iDstPixel;
+        int   nSrcYOff;
 
         nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
         if ( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        pSrcScanline = pChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+        pSrcScanline = pChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize) - nChunkXOff;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
-        for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
+        for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
         {
-            int   nSrcXOff;
-
-            nSrcXOff =
-                (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
-            if ( nSrcXOff < nChunkXOff )
-                nSrcXOff = nChunkXOff;
-
-            pDstScanline[iDstPixel - nDstXOff] = pSrcScanline[nSrcXOff - nChunkXOff];
+            pDstScanline[iDstPixel] = pSrcScanline[panSrcXOff[iDstPixel]];
         }
 
-        eErr = poOverview->RasterIO( GF_Write, nDstXOff, iDstLine, nDstXOff2 - nDstXOff, 1,
-                                     pDstScanline, nDstXOff2 - nDstXOff, 1, eWrkDataType,
+        eErr = poOverview->RasterIO( GF_Write, nDstXOff, iDstLine, nDstXWidth, 1,
+                                     pDstScanline, nDstXWidth, 1, eWrkDataType,
                                      0, 0 );
     }
 
     CPLFree( pDstScanline );
+    CPLFree( panSrcXOff );
 
     return eErr;
 }
@@ -210,14 +225,15 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
     CPLErr eErr = CE_None;
 
     int bBit2Grayscale = EQUALN(pszResampling,"AVERAGE_BIT2GRAYSCALE",13);
+    if (bBit2Grayscale)
+        poColorTable = NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Create the filter kernel and allocate scanline buffer.          */
-/* -------------------------------------------------------------------- */
     int      nDstXOff, nDstXOff2, nDstYOff, nDstYOff2, nOXSize, nOYSize;
     T    *pDstScanline;
 
     T      tNoDataValue = (T)fNoDataValue;
+    if (!bHasNoData)
+        tNoDataValue = 0;
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
@@ -233,12 +249,22 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
     if( nChunkXOff + nChunkXSize == nSrcWidth )
         nDstXOff2 = nOXSize;
 
+    int nChunkRightXOff = MIN(nSrcWidth, nChunkXOff + nChunkXSize);
+    int nDstXWidth = nDstXOff2 - nDstXOff;
 
-    pDstScanline = (T *) VSIMalloc((nDstXOff2 - nDstXOff) * (GDALGetDataTypeSize(eWrkDataType) / 8));
-    if( pDstScanline == NULL )
+/* -------------------------------------------------------------------- */
+/*      Allocate scanline buffer.                                       */
+/* -------------------------------------------------------------------- */
+
+    pDstScanline = (T *) VSIMalloc(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
+    int* panSrcXOff = (int*)VSIMalloc(2 * nDstXWidth * sizeof(int));
+
+    if( pDstScanline == NULL || panSrcXOff == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "GDALDownsampleChunk32R: Out of memory for line buffer." );
+        VSIFree(pDstScanline);
+        VSIFree(panSrcXOff);
         return CE_Failure;
     }
 
@@ -269,8 +295,27 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
         }
     }
 
-    float*   pafVals = NULL;
-    int*     panSums = NULL;
+/* ==================================================================== */
+/*      Precompute inner loop constants.                                */
+/* ==================================================================== */
+    int iDstPixel;
+    for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
+    {
+        int   nSrcXOff, nSrcXOff2;
+
+        nSrcXOff =
+            (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
+        if ( nSrcXOff < nChunkXOff )
+            nSrcXOff = nChunkXOff;
+        nSrcXOff2 = (int)
+            (0.5 + ((iDstPixel+1)/(double)nOXSize) * nSrcWidth);
+
+        if( nSrcXOff2 > nChunkRightXOff || iDstPixel == nOXSize-1 )
+            nSrcXOff2 = nChunkRightXOff;
+
+        panSrcXOff[2 * (iDstPixel - nDstXOff)] = nSrcXOff;
+        panSrcXOff[2 * (iDstPixel - nDstXOff) + 1] = nSrcXOff2;
+    }
 
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
@@ -279,7 +324,7 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
     {
         T *pSrcScanline;
         GByte *pabySrcScanlineNodataMask;
-        int   nSrcYOff, nSrcYOff2 = 0, iDstPixel;
+        int   nSrcYOff, nSrcYOff2 = 0;
 
         nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
         if ( nSrcYOff < nChunkYOff )
@@ -293,32 +338,21 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
         if( nSrcYOff2 > nChunkYOff + nChunkYSize)
             nSrcYOff2 = nChunkYOff + nChunkYSize;
 
-        pSrcScanline = pChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+        pSrcScanline = pChunk + ((-nChunkYOff) * nChunkXSize)-nChunkXOff;
         if (pabyChunkNodataMask != NULL)
-            pabySrcScanlineNodataMask = pabyChunkNodataMask + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+            pabySrcScanlineNodataMask = pabyChunkNodataMask + ((-nChunkYOff) * nChunkXSize)-nChunkXOff;
         else
             pabySrcScanlineNodataMask = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
-        for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
+        for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
         {
-            int   nSrcXOff, nSrcXOff2;
+            int  nSrcXOff = panSrcXOff[2 * iDstPixel],
+                 nSrcXOff2 = panSrcXOff[2 * iDstPixel + 1];
 
-            nSrcXOff =
-                (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
-            if ( nSrcXOff < nChunkXOff )
-                nSrcXOff = nChunkXOff;
-            nSrcXOff2 = (int)
-                (0.5 + ((iDstPixel+1)/(double)nOXSize) * nSrcWidth);
-
-            if( nSrcXOff2 > nSrcWidth || iDstPixel == nOXSize-1 )
-                nSrcXOff2 = nSrcWidth;
-            if( nSrcXOff2 > nChunkXOff + nChunkXSize )
-                nSrcXOff2 = nChunkXOff + nChunkXSize;
-
-            if (poColorTable == NULL || bBit2Grayscale)
+            if (poColorTable == NULL)
             {
                 T val;
                 Tsum dfTotal = 0;
@@ -328,9 +362,9 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
                 {
                     for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                     {
-                        val = pSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize];
+                        val = pSrcScanline[iX+iY*nChunkXSize];
                         if (pabySrcScanlineNodataMask == NULL ||
-                            pabySrcScanlineNodataMask[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize])
+                            pabySrcScanlineNodataMask[iX+iY*nChunkXSize])
                         {
                             dfTotal += val;
                             nCount++;
@@ -338,19 +372,12 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
                     }
                 }
 
-                if (bHasNoData && nCount == 0)
-                {
-                    pDstScanline[iDstPixel - nDstXOff] = tNoDataValue;
-                }
+                if( nCount == 0 )
+                    pDstScanline[iDstPixel] = tNoDataValue;
+                else if (eWrkDataType == GDT_Byte)
+                    pDstScanline[iDstPixel] = (T) ((dfTotal + nCount / 2) / nCount);
                 else
-                {
-                    if( nCount == 0 )
-                        pDstScanline[iDstPixel - nDstXOff] = 0;
-                    else if (eWrkDataType == GDT_Byte)
-                        pDstScanline[iDstPixel - nDstXOff] = (T) ((dfTotal + nCount / 2) / nCount);
-                    else
-                        pDstScanline[iDstPixel - nDstXOff] = (T) (dfTotal / nCount);
-                }
+                    pDstScanline[iDstPixel] = (T) (dfTotal / nCount);
             }
             else
             {
@@ -362,7 +389,7 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
                 {
                     for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                     {
-                        val = pSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize];
+                        val = pSrcScanline[iX+iY*nChunkXSize];
                         if (bHasNoData == FALSE || val != tNoDataValue)
                         {
                             int nVal = (int)val;
@@ -377,47 +404,38 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
                     }
                 }
 
-                if (bHasNoData && nCount == 0)
-                {
-                    pDstScanline[iDstPixel - nDstXOff] = tNoDataValue;
-                }
+                if( nCount == 0 )
+                    pDstScanline[iDstPixel] = tNoDataValue;
                 else
                 {
-                    if( nCount == 0 )
-                        pDstScanline[iDstPixel - nDstXOff] = 0;
-                    else
+                    int nR = nTotalR / nCount, nG = nTotalG / nCount, nB = nTotalB / nCount;
+                    int i;
+                    Tsum dfMinDist = 0;
+                    int iBestEntry = 0;
+                    for(i=0;i<nEntryCount;i++)
                     {
-                        int nR = nTotalR / nCount, nG = nTotalG / nCount, nB = nTotalB / nCount;
-                        int i;
-                        Tsum dfMinDist = 0;
-                        int iBestEntry = 0;
-                        for(i=0;i<nEntryCount;i++)
+                        Tsum dfDist = (nR - aEntries[i].c1) *  (nR - aEntries[i].c1) +
+                            (nG - aEntries[i].c2) *  (nG - aEntries[i].c2) +
+                            (nB - aEntries[i].c3) *  (nB - aEntries[i].c3);
+                        if (i == 0 || dfDist < dfMinDist)
                         {
-                            Tsum dfDist = (nR - aEntries[i].c1) *  (nR - aEntries[i].c1) +
-                                (nG - aEntries[i].c2) *  (nG - aEntries[i].c2) +
-                                (nB - aEntries[i].c3) *  (nB - aEntries[i].c3);
-                            if (i == 0 || dfDist < dfMinDist)
-                            {
-                                dfMinDist = dfDist;
-                                iBestEntry = i;
-                            }
+                            dfMinDist = dfDist;
+                            iBestEntry = i;
                         }
-                        pDstScanline[iDstPixel - nDstXOff] =
-                            (T)iBestEntry;
                     }
+                    pDstScanline[iDstPixel] = (T)iBestEntry;
                 }
             }
         }
 
-        eErr = poOverview->RasterIO( GF_Write, nDstXOff, iDstLine, nDstXOff2 - nDstXOff, 1,
-                                     pDstScanline, nDstXOff2 - nDstXOff, 1, eWrkDataType,
+        eErr = poOverview->RasterIO( GF_Write, nDstXOff, iDstLine, nDstXWidth, 1,
+                                     pDstScanline, nDstXWidth, 1, eWrkDataType,
                                      0, 0 );
     }
 
     CPLFree( pDstScanline );
     CPLFree( aEntries );
-    CPLFree( pafVals );
-    CPLFree( panSums );
+    CPLFree( panSrcXOff );
 
     return eErr;
 }
@@ -581,8 +599,7 @@ GDALDownsampleChunk32R_Gauss( int nSrcWidth, int nSrcHeight,
         }
     }
 
-    float*   pafVals = NULL;
-    int*     panSums = NULL;
+    int nChunkRightXOff = MIN(nSrcWidth, nChunkXOff + nChunkXSize);
 
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
@@ -636,10 +653,8 @@ GDALDownsampleChunk32R_Gauss( int nSrcWidth, int nSrcHeight,
             if(nSrcXOff < 0)
                 nSrcXOff = 0;
 
-            if( nSrcXOff2 > nSrcWidth || iDstPixel == nOXSize-1 )
-                nSrcXOff2 = nSrcWidth;
-            if( nSrcXOff2 > nChunkXOff + nChunkXSize )
-                nSrcXOff2 = nChunkXOff + nChunkXSize;
+            if( nSrcXOff2 > nChunkRightXOff || iDstPixel == nOXSize-1 )
+                nSrcXOff2 = nChunkRightXOff;
 
             if (poColorTable == NULL)
             {
@@ -745,8 +760,6 @@ GDALDownsampleChunk32R_Gauss( int nSrcWidth, int nSrcHeight,
 
     CPLFree( pafDstScanline );
     CPLFree( aEntries );
-    CPLFree( pafVals );
-    CPLFree( panSums );
 
     return eErr;
 }
@@ -833,6 +846,8 @@ GDALDownsampleChunk32R_Mode( int nSrcWidth, int nSrcHeight,
     float*   pafVals = NULL;
     int*     panSums = NULL;
 
+    int nChunkRightXOff = MIN(nSrcWidth, nChunkXOff + nChunkXSize);
+
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
@@ -874,10 +889,8 @@ GDALDownsampleChunk32R_Mode( int nSrcWidth, int nSrcHeight,
             nSrcXOff2 = (int)
                 (0.5 + ((iDstPixel+1)/(double)nOXSize) * nSrcWidth);
 
-            if( nSrcXOff2 > nSrcWidth || iDstPixel == nOXSize-1 )
-                nSrcXOff2 = nSrcWidth;
-            if( nSrcXOff2 > nChunkXOff + nChunkXSize )
-                nSrcXOff2 = nChunkXOff + nChunkXSize;
+            if( nSrcXOff2 > nChunkRightXOff || iDstPixel == nOXSize-1 )
+                nSrcXOff2 = nChunkRightXOff;
 
             if (eSrcDataType != GDT_Byte || nEntryCount > 256)
             {
@@ -1062,8 +1075,7 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
         }
     }
 
-    float*   pafVals = NULL;
-    int*     panSums = NULL;
+    int nChunkRightXOff = MIN(nSrcWidth, nChunkXOff + nChunkXSize);
 
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
@@ -1105,10 +1117,8 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
             if(nSrcXOff < 0)
                 nSrcXOff = 0;
 
-            if( nSrcXOff2 > nSrcWidth || iDstPixel == nOXSize-1 )
-                nSrcXOff2 = nSrcWidth;
-            if( nSrcXOff2 > nChunkXOff + nChunkXSize )
-                nSrcXOff2 = nChunkXOff + nChunkXSize;
+            if( nSrcXOff2 > nChunkRightXOff || iDstPixel == nOXSize-1 )
+                nSrcXOff2 = nChunkRightXOff;
 
             // If we do not seem to have our full 4x4 window just
             // do nearest resampling.
@@ -1175,8 +1185,6 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
 
     CPLFree( pafDstScanline );
     CPLFree( aEntries );
-    CPLFree( pafVals );
-    CPLFree( panSums );
 
     return eErr;
 }
