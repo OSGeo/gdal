@@ -48,8 +48,7 @@ CPL_CVSID("$Id$");
  * implement the reprojection, and will default a variety of other 
  * warp options. 
  *
- * By default all bands are transferred, with no masking or nodata values
- * in effect.  No metadata, projection info, or color tables are transferred 
+ * No metadata, projection info, or color tables are transferred
  * to the output file. 
  *
  * @param hSrcDS the source image file. 
@@ -159,7 +158,12 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
         GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, iBand+1 );
         int             bGotNoData = FALSE;
         double          dfNoDataValue;
-        
+
+        if (GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand)
+        {
+            psWOptions->nSrcAlphaBand = iBand + 1;
+        }
+
         dfNoDataValue = GDALGetRasterNoDataValue( hBand, &bGotNoData );
         if( bGotNoData )
         {
@@ -180,6 +184,12 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
             }
 
             psWOptions->padfSrcNoDataReal[iBand] = dfNoDataValue;
+        }
+
+        hBand = GDALGetRasterBand( hDstDS, iBand+1 );
+        if (hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand)
+        {
+            psWOptions->nDstAlphaBand = iBand + 1;
         }
     }
 
