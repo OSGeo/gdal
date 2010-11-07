@@ -43,7 +43,7 @@ import gdaltest
 
 def gxf_1():
 
-    tst = gdaltest.GDALTest( 'GXF', 'small.gxf', 1, 88 )
+    tst = gdaltest.GDALTest( 'GXF', 'small.gxf', 1, 90 )
 
     return tst.testOpen()
 
@@ -72,12 +72,12 @@ class TestGXF:
 
 gdaltest_list = [ gxf_1 ]
 
-gxf_list = [ ('http://download.osgeo.org/gdal/data/gxf', 'SAMPLE.GXF', 21959, -1),
-             ('http://download.osgeo.org/gdal/data/gxf', 'gxf_compressed.gxf', 19930, -1),
-             ('http://download.osgeo.org/gdal/data/gxf', 'gxf_text.gxf', 20083, -1),
+gxf_list = [ ('http://download.osgeo.org/gdal/data/gxf', 'SAMPLE.GXF', 24068, -1),
+             ('http://download.osgeo.org/gdal/data/gxf', 'gxf_compressed.gxf', 20120, -1),
+             ('http://download.osgeo.org/gdal/data/gxf', 'gxf_text.gxf', 20265, -1),
              ('http://download.osgeo.org/gdal/data/gxf', 'gxf_ul_r.gxf', 19930, -1),
              ('http://download.osgeo.org/gdal/data/gxf', 'latlong.gxf', 12243, -1),
-             ('http://download.osgeo.org/gdal/data/gxf', 'spif83.gxf', 31875, -1)
+             ('http://download.osgeo.org/gdal/data/gxf', 'spif83.gxf', 28752, -1)
            ]
 
 for item in gxf_list:
