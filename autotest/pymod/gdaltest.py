@@ -1137,6 +1137,7 @@ def filesystem_supports_sparse_files(path):
         ret.find('reiser') == -1 and \
         ret.find('xfs') == -1 and \
         ret.find('jfs') == -1 and \
+        ret.find('zfs') == -1 and \
         ret.find('ntfs') == -1 :
         post_reason('Filesystem %s is not believed to support sparse files' % ret)
         return False
