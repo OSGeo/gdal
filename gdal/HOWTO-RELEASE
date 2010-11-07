@@ -33,10 +33,13 @@ Process :
 
 2) Update the release date, and number information in gcore/gdal_version.h.
 
-3) Update the VERSION file. Update ./swig/python/setup.py version information. 
-   Update ./swig/include/perl/gdal_perl.i $VERSION string to current version.
+3) Update the VERSION file. 
 
-3.5) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
+3.1) Update ./swig/python/setup.py version information. 
+
+3.2) Update ./swig/include/perl/gdal_perl.i $VERSION string to current version.
+
+3.3) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
 
 4) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
    - For a release with no interface changes just bump REVISION. 
