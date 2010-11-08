@@ -96,6 +96,6 @@ public:
         }
 
 private: // Data
-    FILE *file;
+    VSILFILE *file;
 };
 
