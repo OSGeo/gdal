@@ -330,18 +330,9 @@ GTIFFBuildOverviews( const char * pszFilename,
 
     if( pszCompress != NULL && pszCompress[0] != '\0' )
     {
-        if( EQUAL( pszCompress, "JPEG" ) )
-            nCompression = COMPRESSION_JPEG;
-        else if( EQUAL( pszCompress, "LZW" ) )
-            nCompression = COMPRESSION_LZW;
-        else if( EQUAL( pszCompress, "PACKBITS" ))
-            nCompression = COMPRESSION_PACKBITS;
-        else if( EQUAL( pszCompress, "DEFLATE" ) || EQUAL( pszCompress, "ZIP" ))
-            nCompression = COMPRESSION_ADOBE_DEFLATE;
-        else
-            CPLError( CE_Warning, CPLE_IllegalArg, 
-                      "COMPRESS_OVERVIEW=%s value not recognised, ignoring.",
-                      pszCompress );
+        nCompression = GTIFFGetCompressionMethod(pszCompress, "COMPRESS_OVERVIEW");
+        if (nCompression < 0)
+            return CE_Failure;
     }
     
     if( nCompression == COMPRESSION_JPEG && nBitsPerPixel == 16 )
