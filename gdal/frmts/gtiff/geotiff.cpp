@@ -35,49 +35,20 @@
 #include "gdal_pam.h"
 #define CPL_SERV_H_INCLUDED
 
-#include "tiffio.h"
 #include "xtiffio.h"
-#include "geotiff.h"
-#include "geo_normalize.h"
 #include "geovalues.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
 #include "cpl_minixml.h"
 #include "gt_overview.h"
 #include "ogr_spatialref.h"
+#include "tif_float.h"
+#include "gtiff.h"
+#include "gdal_csv.h"
+#include "gt_wkt_srs.h"
+#include "tifvsi.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
-int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
-const char * GDALDefaultCSVFilename( const char *pszBasename );
-GUInt32 HalfToFloat( GUInt16 );
-GUInt32 TripleToFloat( GUInt32 );
-int    GTiffOneTimeInit();
-void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
-void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality);
-CPL_C_END
-
-#define TIFFTAG_GDAL_METADATA  42112
-#define TIFFTAG_GDAL_NODATA    42113
-#define TIFFTAG_RPCCOEFFICIENT 50844
-
-#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20081217 && defined(BIGTIFF_SUPPORT)
-#  define HAVE_UNSETFIELD
-#endif
-
-#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION > 20041016
-/* We need at least TIFF 3.7.0 for TIFFGetSizeProc and TIFFClientdata */
-#  define HAVE_TIFFGETSIZEPROC
-#endif
-
-#if !defined(PREDICTOR_NONE)
-#define PREDICTOR_NONE 1
-#endif
-
-TIFF* VSI_TIFFOpen(const char* name, const char* mode);
-
 
 /************************************************************************/
 /* ==================================================================== */

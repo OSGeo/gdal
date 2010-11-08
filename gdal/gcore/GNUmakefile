@@ -16,7 +16,7 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 # against static libraries becomes more complicated because of the odd
 # call out.
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(PAM_SETTING)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(PAM_SETTING) -I../frmts/gtiff
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
