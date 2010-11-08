@@ -68,16 +68,6 @@
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
-                                  const double *padfGeoTransform,
-                                  int nGCPCount, const GDAL_GCP *pasGCPList,
-                                  int *pnSize, unsigned char **ppabyBuffer );
-CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
-                          char **ppszWKT, double *padfGeoTransform,
-                          int *pnGCPCount, GDAL_GCP **ppasGCPList );
-CPL_C_END
-
 static int kakadu_initialized = FALSE;
 
 static unsigned char jp2_header[] = 
