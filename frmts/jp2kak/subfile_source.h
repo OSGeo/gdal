@@ -161,6 +161,6 @@ class subfile_source : public kdu_compressed_source {
     int subfile_offset;
     int subfile_size;
     
-    FILE *file;
+    VSILFILE *file;
   };
 
