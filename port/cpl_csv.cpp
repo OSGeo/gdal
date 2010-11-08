@@ -30,12 +30,9 @@
 #include "cpl_csv.h"
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
+#include "gdal_csv.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-const char * GDALDefaultCSVFilename( const char *pszBasename );
-CPL_C_END
 
 /* ==================================================================== */
 /*      The CSVTable is a persistant set of info about an open CSV      */
