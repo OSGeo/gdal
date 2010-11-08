@@ -17,7 +17,7 @@ GDAL_ROOT	=	..
 
 !INCLUDE ..\nmake.opt
 
-EXTRAFLAGS =	$(PAM_SETTING)
+EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff
 
 default:	$(OBJ) $(RES)
 
