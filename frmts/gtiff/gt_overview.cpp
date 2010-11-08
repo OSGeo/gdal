@@ -31,24 +31,11 @@
 #include "gdal_priv.h"
 #define CPL_SERV_H_INCLUDED
 
-#include "tiffio.h"
 #include "xtiffio.h"
-#include "geotiff.h"
 #include "gt_overview.h"
+#include "gtiff.h"
 
 CPL_CVSID("$Id$");
-
-#define TIFFTAG_GDAL_METADATA  42112
-
-#if !defined(PREDICTOR_NONE)
-#define PREDICTOR_NONE 1
-#endif
-
-CPL_C_START
-int    GTiffOneTimeInit();
-void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
-void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality);
-CPL_C_END
 
 /************************************************************************/
 /*                         GTIFFWriteDirectory()                        */

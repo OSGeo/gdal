@@ -33,6 +33,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
 #include "ogr_api.h"
+#include "gt_wkt_srs_for_gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -43,16 +44,6 @@ static const unsigned char msi_uuid2[16] =
 static const unsigned char msig_uuid[16] = 
 { 0x96,0xA9,0xF1,0xF1,0xDC,0x98,0x40,0x2D,
   0xA7,0xAE,0xD6,0x8E,0x34,0x45,0x18,0x09 };
-
-CPL_C_START
-CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
-                                  const double *padfGeoTransform,
-                                  int nGCPCount, const GDAL_GCP *pasGCPList,
-                                  int *pnSize, unsigned char **ppabyBuffer );
-CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
-                          char **ppszWKT, double *padfGeoTransform,
-                          int *pnGCPCount, GDAL_GCP **ppasGCPList );
-CPL_C_END
 
 /************************************************************************/
 /*                          GDALJP2Metadata()                           */

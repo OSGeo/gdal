@@ -34,12 +34,15 @@
 #include "geo_tiffp.h"
 #define CPL_ERROR_H_INCLUDED
 
-#include "geo_normalize.h"
 #include "geovalues.h"
 #include "ogr_spatialref.h"
 #include "gdal.h"
 #include "xtiffio.h"
 #include "cpl_multiproc.h"
+#include "tifvsi.h"
+#include "gt_wkt_srs.h"
+#include "gt_wkt_srs_for_gdal.h"
+#include "gt_citation.h"
 
 CPL_CVSID("$Id$")
 
@@ -71,19 +74,7 @@ char CPL_DLL  **CSVReadParseLine( FILE *fp);
 void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);
 #endif /* CPL_SERV_H_INTERNAL */
 
-char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
-int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
-
-CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
-                                  const double *padfGeoTransform,
-                                  int nGCPCount, const GDAL_GCP *pasGCPList,
-                                  int *pnSize, unsigned char **ppabyBuffer );
-CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
-                          char **ppszWKT, double *padfGeoTransform,
-                          int *pnGCPCount, GDAL_GCP **ppasGCPList );
 CPL_C_END
-
-TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
 static const char *papszDatumEquiv[] =
 {
@@ -104,18 +95,6 @@ static const char *papszDatumEquiv[] =
 #ifndef CT_CylindricalEqualArea
 # define CT_CylindricalEqualArea 28
 #endif
-
-void SetLinearUnitCitation(GTIF* psGTIF, char* pszLinearUOMName);
-void SetGeogCSCitation(GTIF * psGTIF, OGRSpatialReference *poSRS, char* angUnitName, int nDatum, short nSpheroid);
-OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
-                            geokey_t geoKey, OGRSpatialReference* poSRS, OGRBoolean* linearUnitIsSet);
-void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
-                           geokey_t geoKey, 
-                          char	**ppszGeogName,
-                          char	**ppszDatumName,
-                          char	**ppszPMName,
-                          char	**ppszSpheroidName,
-                          char	**ppszAngularUnits);
 
 /************************************************************************/
 /*                       GTIFToCPLRecyleString()                        */

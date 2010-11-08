@@ -31,9 +31,8 @@
 #include "cpl_port.h"
 #include "cpl_string.h"
 
-#include "geo_normalize.h"
 #include "geovalues.h"
-#include "ogr_spatialref.h"
+#include "gt_citation.h"
 
 CPL_CVSID("$Id$");
 
@@ -53,17 +52,6 @@ typedef enum
 
 char* ImagineCitationTranslation(const char* psCitation, geokey_t keyID);
 char** CitationStringParse(const char* psCitation);
-void SetLinearUnitCitation(GTIF* psGTIF, char* pszLinearUOMName);
-void SetGeogCSCitation(GTIF * psGTIF, OGRSpatialReference *poSRS, char* angUnitName, int nDatum, short nSpheroid);
-OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
-                            geokey_t geoKey,  OGRSpatialReference* poSRS, OGRBoolean* linearUnitIsSet);
-void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
-                           geokey_t geoKey, 
-                          char	**ppszGeogName,
-                          char	**ppszDatumName,
-                          char	**ppszPMName,
-                          char	**ppszSpheroidName,
-                          char	**ppszAngularUnits);
 
 /************************************************************************/
 /*                     ImagineCitationTranslation()                     */
