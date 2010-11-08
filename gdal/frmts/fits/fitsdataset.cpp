@@ -405,11 +405,14 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   // This process understands the CONTINUE standard for long strings.
   // We don't bother to capture header names that duplicate information
   // already captured elsewhere (e.g. image dimensions and type)
-  int keyNum = 1;
+  int keyNum;
   char key[100];
   char value[100];
-  bool endReached = false;
-  do {
+
+  int nKeys = 0, nMoreKeys = 0;
+  fits_get_hdrspace(hFITS, &nKeys, &nMoreKeys, &status);
+  for(keyNum = 1; keyNum <= nKeys; keyNum++)
+  {
     fits_read_keyn(hFITS, keyNum, key, value, 0, &status);
     if (status) {
       CPLError(CE_Failure, CPLE_AppDefined,
@@ -417,10 +420,11 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 	       keyNum, GetDescription(), status);
       return CE_Failure;
     }
-    // What we do next depends upon the key and the value
     if (strcmp(key, "END") == 0) {
-      endReached = true;
-    }
+        /* we shouldn't get here in principle since the END */
+        /* keyword shouldn't be counted in nKeys, but who knows... */
+        break;
+    } 
     else if (isIgnorableFITSHeader(key)) {
       // Ignore it!
     }
@@ -450,8 +454,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 	SetMetadataItem(key, newValue);
       }
     }
-    ++keyNum;
-  } while (!endReached);
+  }
   
   return CE_None;
 }
