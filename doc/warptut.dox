@@ -338,7 +338,8 @@ calculations don't have to be performed for each band.
 GDALWarpOperation::ChunkAndWarpImage().  It uses a separate thread for the
 IO and the actual image warp operation allowing more effective use of CPU
 and IO bandwidth.  For this to work GDAL needs to have been built with
-multi-threading support (default on Win32, --with-pthreads on Unix). 
+multi-threading support (default on Win32, default on Unix since GDAL 1.8.0,
+for previous versions --with-threads was required in configure).
 
 <li> The resampling kernels vary is work required from nearest neighbour
 being least, then bilinear then cubic.  Don't use a more complex resampling
