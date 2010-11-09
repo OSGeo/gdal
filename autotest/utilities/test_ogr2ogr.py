@@ -1063,6 +1063,30 @@ def test_ogr2ogr_30():
 
     return 'success'
 
+###############################################################################
+# Test that -overwrite work if the output file doesn't yet exist (#3825)
+
+def test_ogr2ogr_31():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -overwrite tmp/poly.shp ../ogr/data/poly.shp')
+
+    ds = ogr.Open('tmp/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        return 'fail'
+    ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1093,7 +1117,8 @@ gdaltest_list = [
     test_ogr2ogr_27,
     test_ogr2ogr_28,
     test_ogr2ogr_29,
-    test_ogr2ogr_30 ]
+    test_ogr2ogr_30,
+    test_ogr2ogr_31 ]
     
 if __name__ == '__main__':
 
