@@ -2,6 +2,12 @@
 #
 # nmake.opt - main configuration file for NMAKE makefiles.
 #
+# Usage examples (see details below):
+# nmake -f makefile.vc
+# nmake -f makefile.vc MSVC_VER=1400
+# nmake -f makefile.vc MSVC_VER=1500 DEBUG=1
+# nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1
+#
 ###############################################################################
 # For convenience, user may put custom settings to private mynmake.opt
 # and use EXT_NMAKE_OPT option while calling nmake.exe, as follows:
@@ -85,12 +91,21 @@ JAR=$(JAVA_HOME)\bin\jar
 JAVA_INCLUDE=-I$(JAVA_HOME)\include -I$(JAVA_HOME)\include\win32
 
 # Compilation flags
+
+# Enable code analyzis on request
+# http://msdn.microsoft.com/en-us/library/ms173498.aspx
+!IFDEF ANALYZE
+CXX_ANALYZE_FLAGS=/analyze
+!ELSE
+CXX_ANALYZE_FLAGS=
+!ENDIF
+
 !IFNDEF OPTFLAGS
 !IF $(MSVC_VER) >= 1400
 !IFNDEF DEBUG
-OPTFLAGS= /nologo /MD /EHsc /Ox /W3 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) /nologo /MD /EHsc /Ox /W3 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
 !ELSE
-OPTFLAGS= /nologo /MD /EHsc /Zi /W4 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) /nologo /MD /EHsc /Zi /W4 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb
 !ENDIF
 !ELSE
 !IFNDEF DEBUG
