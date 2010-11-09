@@ -5,6 +5,14 @@
 ,
 { "type": "Feature", "properties": { }, "geometry": { "type": "Point", "coordinates": [null] } }
 ,
+{ "type": "Feature", "properties": { }, "geometry": { "type": "Point", "coordinates": [null,1] } }
+,
+{ "type": "Feature", "properties": { }, "geometry": { "type": "Point", "coordinates": [1,null] } }
+,
+{ "type": "Feature", "properties": { }, "geometry": { "type": "Point", "coordinates": [null,null] } }
+,
+{ "type": "Feature", "properties": { }, "geometry": { "type": "Point", "coordinates": [1,1,null] } }
+,
 { "type": "Feature", "properties": { }, "geometry": { "type": "LineString", "coordinates": null } }
 ,
 { "type": "Feature", "properties": { }, "geometry": { "type": "LineString", "coordinates": [ null ] } }
