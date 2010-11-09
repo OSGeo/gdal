@@ -795,6 +795,11 @@ bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point )
 
         // Read X coordinate
         poObjCoord = json_object_array_get_idx( poObj, 0 );
+        if (poObjCoord == NULL)
+        {
+            CPLDebug( "GeoJSON", "Point: got null object." );
+            return false;
+        }
         
         iType = json_object_get_type(poObjCoord);
         if ( (json_type_double != iType) && (json_type_int != iType) )
@@ -812,6 +817,11 @@ bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point )
         
         // Read Y coordiante
         poObjCoord = json_object_array_get_idx( poObj, 1 );
+        if (poObjCoord == NULL)
+        {
+            CPLDebug( "GeoJSON", "Point: got null object." );
+            return false;
+        }
         
         iType = json_object_get_type(poObjCoord);
         if ( (json_type_double != iType) && (json_type_int != iType) )
@@ -833,6 +843,11 @@ bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point )
             // Don't *expect* mixed-dimension geometries, although the 
             // spec doesn't explicitly forbid this.
             poObjCoord = json_object_array_get_idx( poObj, 2 );
+            if (poObjCoord == NULL)
+            {
+                CPLDebug( "GeoJSON", "Point: got null object." );
+                return false;
+            }
             
             iType = json_object_get_type(poObjCoord);
             if ( (json_type_double != iType) && (json_type_int != iType) )
