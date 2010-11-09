@@ -506,7 +506,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     char *pszBasename;
 
-    if( bSingleNewFile && nLayers == 0 )
+    if( (bSingleNewFile || EQUAL(CPLGetBasename(pszName), pszLayerName)) && nLayers == 0 )
     {
         char *pszPath = CPLStrdup(CPLGetPath(pszName));
         char *pszFBasename = CPLStrdup(CPLGetBasename(pszName));
