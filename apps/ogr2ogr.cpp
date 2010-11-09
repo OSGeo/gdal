@@ -1143,6 +1143,19 @@ int main( int nArgc, char ** papszArgv )
                 }
             }
 
+/* -------------------------------------------------------------------- */
+/*      Special case to improve user experience when translating into   */
+/*      single file shapefile and source has only one layer, and that   */
+/*      the layer name isn't specified                                  */
+/* -------------------------------------------------------------------- */
+            VSIStatBufL  sStat;
+            if (EQUAL(poDriver->GetName(), "ESRI Shapefile") &&
+                pszNewLayerName == NULL &&
+                VSIStatL(pszDestDataSource, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+            {
+                pszNewLayerName = CPLStrdup(CPLGetBasename(pszDestDataSource));
+            }
+
             if( !TranslateLayer( poDS, poPassedLayer, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS, bNullifyOutputSRS,
                                  poSourceSRS, papszSelFields, bAppend, eGType,
@@ -1216,6 +1229,19 @@ int main( int nArgc, char ** papszArgv )
 
                 papoLayers[iLayer] = poLayer;
             }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Special case to improve user experience when translating into   */
+/*      single file shapefile and source has only one layer, and that   */
+/*      the layer name isn't specified                                  */
+/* -------------------------------------------------------------------- */
+        VSIStatBufL  sStat;
+        if (EQUAL(poDriver->GetName(), "ESRI Shapefile") &&
+            nLayerCount == 1 && pszNewLayerName == NULL &&
+            VSIStatL(pszDestDataSource, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+        {
+            pszNewLayerName = CPLStrdup(CPLGetBasename(pszDestDataSource));
         }
 
         long* panLayerCountFeatures = (long*) CPLMalloc(sizeof(long) * nLayerCount);
