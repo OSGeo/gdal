@@ -1087,6 +1087,40 @@ def test_ogr2ogr_31():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
     return 'success'
 
+###############################################################################
+# Test that -append/-overwrite to a single-file shapefile work without specifying -nln
+
+def test_ogr2ogr_32():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_32.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_32.shp')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_32.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
+        gdaltest.post_reason('-append failed')
+        return 'fail'
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -overwrite tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_32.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        gdaltest.post_reason('-overwrite failed')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_32.shp')
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1118,7 +1152,8 @@ gdaltest_list = [
     test_ogr2ogr_28,
     test_ogr2ogr_29,
     test_ogr2ogr_30,
-    test_ogr2ogr_31 ]
+    test_ogr2ogr_31,
+    test_ogr2ogr_32 ]
     
 if __name__ == '__main__':
 
