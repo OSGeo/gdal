@@ -984,19 +984,38 @@ int main( int nArgc, char ** papszArgv )
 /*      Try opening the output datasource as an existing, writable      */
 /* -------------------------------------------------------------------- */
     OGRDataSource       *poODS;
-    
+    OGRSFDriver          *poDriver = NULL;
+
     if( bUpdate )
     {
-        poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE );
+        poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE, &poDriver );
         if( poODS == NULL )
         {
-            fprintf( stderr, "FAILURE:\n"
-                    "Unable to open existing output datasource `%s'.\n",
-                    pszDestDataSource );
-            exit( 1 );
-        }
+            if (bOverwrite || bAppend)
+            {
+                poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, FALSE, &poDriver );
+                if (poODS == NULL)
+                {
+                    /* ok the datasource doesn't exist at all */
+                    /* so let's ignore the -overwrite or -append flag */
+                    bUpdate = bAppend = bOverwrite = FALSE;
+                }
+                else
+                {
+                    OGRDataSource::DestroyDataSource(poODS);
+                    poODS = NULL;
+                }
+            }
 
-        if( CSLCount(papszDSCO) > 0 )
+            if (bUpdate)
+            {
+                fprintf( stderr, "FAILURE:\n"
+                        "Unable to open existing output datasource `%s'.\n",
+                        pszDestDataSource );
+                exit( 1 );
+            }
+        }
+        else if( CSLCount(papszDSCO) > 0 )
         {
             fprintf( stderr, "WARNING: Datasource creation options ignored since an existing datasource\n"
                     "         being updated.\n" );
@@ -1006,10 +1025,9 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
-    else
+    if( !bUpdate )
     {
         OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
-        OGRSFDriver          *poDriver = NULL;
         int                  iDriver;
 
         for( iDriver = 0;
