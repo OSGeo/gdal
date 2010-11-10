@@ -150,7 +150,7 @@ char** ParseConnectionString(const char * pszConnectionString) {
 
     /* Tokenize */
     char** papszParams = CSLTokenizeString2(pszStartPos, " ",
-            CSLT_PRESERVEQUOTES | CSLT_HONOURSTRINGS);
+            CSLT_HONOURSTRINGS);
 
     /* Free */
     CPLFree(pszEscapedConnectionString);
@@ -431,23 +431,14 @@ GBool PostGISRasterDataset::SetRasterProperties(const char* pszValidConnectionSt
                
                 /** 
                  * Get whole raster extent
-                 * TODO: Not use raster_columns table for this. Construct whole
-                 * raster and then get its extent. But, how do you construct the
-                 * whole raster without the projection reference?
                  **/
-                osCommand2.Printf("select st_astext(extent) from raster_columns"
-                        " where r_table_name='%s' and r_column='%s' and"
-                        " r_table_schema='%s'", pszTable, pszColumn, pszSchema);
-
-
-                /*
                 if (pszWhere == NULL)
                     osCommand2.Printf("select st_astext(st_setsrid(st_extent(%s::geometry),%d)) from %s.%s",
                         pszColumn, nSrid, pszSchema, pszTable);
                 else
                     osCommand2.Printf("select st_astext(st_setsrid(st_extent(%s::geometry),%d)) from %s.%s where %s",
                         pszColumn, nSrid, pszSchema, pszTable, pszWhere);
-                */
+                
 
                 poResult2 = PQexec(poConn, osCommand2.c_str());
                 if (poResult2 == NULL ||
@@ -895,13 +886,33 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
     }
     */
 
-    poConn = PQconnectdb(pszValidConnectionString);
 
     /* Frees no longer needed memory */
     CSLDestroy(papszParams);
     CPLFree(pszConnectionString);
 
+    /**
+     * Get connection
+     * TODO: Try to get connection from poDriver
+     **/
+    poConn = PQconnectdb(pszValidConnectionString);
+    if (poConn == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Couldn't establish a database connection");        
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+        if (pszWhere)
+            CPLFree(pszWhere);
 
+        return NULL;
+        
+    }
+    
     /* Check geometry type existence */
     poResult = PQexec(poConn, "SELECT oid FROM pg_type WHERE typname = 'geometry'");
     if (
