@@ -933,6 +933,14 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
                 OGRSpatialReference* poSRS = NULL;
                 int bAxisOrderAlreadyInverted = FALSE;
+
+                /* If a SRSNAME parameter has been encoded in the URL, use it as the SRS */
+                CPLString osSRSName = WFS_FetchValueFromURL(pszBaseURL, "SRSNAME");
+                if (osSRSName.size() != 0)
+                {
+                    pszDefaultSRS = osSRSName.c_str();
+                }
+
                 if (pszDefaultSRS)
                 {
                     OGRSpatialReference oSRS;
