@@ -72,6 +72,10 @@ def gdalurlopen(url):
 
         urllib.request.install_opener(opener)
 
+    # Escape any non-ASCII characters
+    if url[0:5] == 'http:':
+        url = 'http:' + urllib.parse.quote(url[5:])
+
     try:
         handle = urllib.request.urlopen(url)
         socket.setdefaulttimeout(old_timeout)
