@@ -527,7 +527,7 @@ code in one file, though that is not required.
 <li> Add the registration entry point declaration (ie. GDALRegister_JDEM()) to
 gdal/gcore/gdal_frmts.h.
 
-<li> Add a call to the registration function to frmts/gdalallregister.c,
+<li> Add a call to the registration function to frmts/gdalallregister.cpp,
 protected by an appropriate #ifdef.  
 
 <li> Add the format short name to the GDAL_FORMATS macro in 
