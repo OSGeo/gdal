@@ -44,10 +44,15 @@ import gdaltest
 def rfc30_1():
 
     if version_info >= (3,0,0):
-        filename =  'data/xx\u4E2D\u6587.\u4E2D\u6587'
+        filename =  'xx\u4E2D\u6587.\u4E2D\u6587'
     else:
-        exec("filename =  u'data/xx\u4E2D\u6587.\u4E2D\u6587'")
+        exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
         filename = filename.encode( 'utf-8' )
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gtiff/' + filename, filename):
+        return 'skip'
+
+    filename = 'tmp/cache/' + filename
 
     ds = gdal.Open( filename )
 
