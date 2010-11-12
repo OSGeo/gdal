@@ -2387,6 +2387,13 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
     //  Write the in memory XML metada to avoid lossing other changes
     // ------------------------------------------------------------
 
+    char* pszMetadata = CPLSerializeXMLTree( phMetadata );
+
+    if( pszMetadata == NULL )
+    {
+        return false;
+    }
+
     OCILobLocator* phLocator = NULL;
     
     osStatement.Printf(
@@ -2404,12 +2411,14 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
         "    INTO :metadata USING :rdt, :rid;\n"
         "END;",
             sColumn.c_str(), sSchema.c_str(), sTable.c_str(), sWhere.c_str(),
-            CPLSerializeXMLTree( phMetadata ),
+            pszMetadata,
             sSchema.c_str(), sTable.c_str(), sColumn.c_str(), sWhere.c_str(),
             sColumn.c_str(), sSchema.c_str(), sTable.c_str(),
             sColumn.c_str(),
             sColumn.c_str() );
 
+    CPLFree( pszMetadata );
+    
     OWStatement* poStmt = poConnection->CreateStatement( osStatement );
 
     poStmt->Bind( &nLayer );
@@ -2636,7 +2645,14 @@ bool GeoRasterWrapper::FlushMetadata()
 #if defined(OW_DEFAULT_CENTER)
     nModelCoordinateLocation = 1;
 #endif
-    
+
+    char* pszMetadata = CPLSerializeXMLTree( phMetadata );
+
+    if( pszMetadata == NULL )
+    {
+        return false;
+    }
+
     CPLString osStatement;
 
     osStatement.Printf(
@@ -2677,7 +2693,7 @@ bool GeoRasterWrapper::FlushMetadata()
         sSchema.c_str(),
         sTable.c_str(),
         sWhere.c_str(),
-        CPLSerializeXMLTree( phMetadata ),
+        pszMetadata,
         UNKNOWN_CRS,
         UNKNOWN_CRS,
         sValueAttributeTab.c_str(),
@@ -2686,6 +2702,8 @@ bool GeoRasterWrapper::FlushMetadata()
         sColumn.c_str(),
         sWhere.c_str() );
 
+    CPLFree( pszMetadata );
+    
     OWStatement* poStmt = poConnection->CreateStatement( osStatement );
 
     poStmt->Bind( &nSRID );
