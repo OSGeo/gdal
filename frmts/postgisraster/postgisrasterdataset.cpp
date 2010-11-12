@@ -233,10 +233,10 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
          **********************************************************************/
     else {
         osCommand.Printf("select pg_class.relname as table, pg_attribute.attname \
-					as column from pg_class, pg_namespace,pg_attribute, pg_type where \
-					pg_class.relnamespace = pg_namespace.oid and pg_class.oid = \
-					pg_attribute.attrelid and pg_attribute.atttypid = pg_type.oid \
-					and pg_type.typname = 'raster' and pg_namespace.nspname = '%s'",
+			 as column from pg_class, pg_namespace,pg_attribute, pg_type where \
+			 pg_class.relnamespace = pg_namespace.oid and pg_class.oid = \
+			 pg_attribute.attrelid and pg_attribute.atttypid = pg_type.oid \
+			 and pg_type.typname = 'raster' and pg_namespace.nspname = '%s'",
                 pszCurrentSchema);
 
         poResult = PQexec(poConn, osCommand.c_str());
@@ -402,14 +402,19 @@ GBool PostGISRasterDataset::SetRasterProperties(const char* pszValidConnectionSt
                 bRetValue = true;
                 break;
 
-                /*****************************************
-                 * All rows form a whole raster coverage.
-                 * So, all rows must:
+                /************************************************************
+                 * All rows form a whole raster coverage. So, all rows must:
                  *  - have the same srid
                  *  - snap to the same grid
-                 * TODO: Work even if this requisites are
-                 * not complained.
-                 *****************************************/
+                 * TODO: Work even if this requisites are  not complained. For
+                 * example, by:
+                 *  - Resampling all the rows to the grid of the first one
+                 *  - Providing a new grid alignment for all the rows, with a
+                 *    maximum of 6 parameters: ulx, uly, pixelsizex, pixelsizey,
+                 *    skewx, skewy or a minimum of 3 parameters: ulx, uly,
+                 *    pixelsize (x and y pixel sizes are equal and both skew are
+                 *    0).
+                 ************************************************************/
             case ONE_RASTER_PER_TABLE:
 
                 /**
