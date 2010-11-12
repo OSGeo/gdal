@@ -71,7 +71,8 @@ enum HDF4EOSProduct
     PROD_ASTER_L2,
     PROD_ASTER_L3,
     PROD_AST14DEM,
-    PROD_MODIS_L1B
+    PROD_MODIS_L1B,
+    PROD_MODIS_L2
 };
 
 /************************************************************************/
@@ -1998,6 +1999,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         else if ( EQUALN(pszProduct, "MOD02", 5)
                   || EQUALN(pszProduct, "MYD02", 5) )
             eProduct = PROD_MODIS_L1B;
+        else if ( EQUALN(pszProduct, "MOD07_L2", 8) )
+            eProduct = PROD_MODIS_L2;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2386,7 +2389,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         }
 
         // MODIS L1B
-        else if ( eProduct == PROD_MODIS_L1B )
+        else if ( eProduct == PROD_MODIS_L1B
+                  || eProduct == PROD_MODIS_L2 )
         {
             pszGCPProjection = CPLStrdup( SRS_WKT_WGS84 );
         }
