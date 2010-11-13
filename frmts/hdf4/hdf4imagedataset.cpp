@@ -162,7 +162,7 @@ class HDF4ImageRasterBand : public GDALPamRasterBand
     int         bNoDataSet;
     double      dfNoDataValue;
 
-    int         bHaveScaleAndOffset;
+    int         bHaveScale, bHaveOffset;
     double      dfScale;
     double      dfOffset;
 
@@ -197,7 +197,7 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
     bNoDataSet = FALSE;
     dfNoDataValue = -9999.0;
 
-    bHaveScaleAndOffset = FALSE;
+    bHaveScale = bHaveOffset = FALSE;
     dfScale = 1.0;
     dfOffset = 0.0;
 
@@ -674,7 +674,7 @@ const char *HDF4ImageRasterBand::GetUnitType()
 double HDF4ImageRasterBand::GetOffset( int *pbSuccess )
 
 {
-    if( bHaveScaleAndOffset )
+    if( bHaveOffset )
     {
         if( pbSuccess != NULL )
             *pbSuccess = TRUE;
@@ -691,7 +691,7 @@ double HDF4ImageRasterBand::GetOffset( int *pbSuccess )
 double HDF4ImageRasterBand::GetScale( int *pbSuccess )
 
 {
-    if( bHaveScaleAndOffset )
+    if( bHaveScale )
     {
         if( pbSuccess != NULL )
             *pbSuccess = TRUE;
@@ -2657,8 +2657,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     int32       iAttribute, nValues, iAttrNumType;
-    double      dfNoData = 0.0;
-    int         bNoDataSet = FALSE;
+    double      dfNoData, dfScale, dfOffset;
+    int         bNoDataSet = FALSE, bHaveScale = FALSE, bHaveOffset = FALSE;
+    const char  *pszUnits = NULL, *pszDescription = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Select SDS or GR to read from.                                  */
@@ -2976,6 +2977,34 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             default:
               break;
           }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch unit type, scale, offset and description                  */
+/*      Should be similar among various HDF-EOS kinds.                  */
+/* -------------------------------------------------------------------- */
+          {
+              const char *pszTmp =
+                  CSLFetchNameValue( poDS->papszLocalMetadata,
+                                     "scale_factor" );
+              if ( pszTmp )
+              {
+                  dfScale = CPLAtof( pszTmp );
+                  bHaveScale = TRUE;
+              }
+
+              pszTmp =
+                  CSLFetchNameValue( poDS->papszLocalMetadata, "add_offset" );
+              if ( pszTmp )
+              {
+                  dfOffset = CPLAtof( pszTmp );
+                  bHaveOffset = TRUE;
+              }
+
+              pszUnits = CSLFetchNameValue( poDS->papszLocalMetadata,
+                                            "units" );
+              pszDescription = CSLFetchNameValue( poDS->papszLocalMetadata,
+                                            "long_name" );
+          }
       }
       break;
 
@@ -3253,6 +3282,20 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if ( bNoDataSet )
             poBand->SetNoDataValue( dfNoData );
+        if ( bHaveScale )
+        {
+            poBand->bHaveScale = TRUE;
+            poBand->dfScale = dfScale;
+        }
+        if ( bHaveOffset )
+        {
+            poBand->bHaveOffset = TRUE;
+            poBand->dfOffset = dfOffset;
+        }
+        if ( pszUnits )
+            poBand->osUnitType =  pszUnits;
+        if ( pszDescription )
+            poBand->SetDescription( pszDescription );
     }
 
 /* -------------------------------------------------------------------- */
@@ -3377,26 +3420,26 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               for( i = 1; i <= poDS->nBands; i++ )
               {
                   poDS->GetRasterBand(i)->SetNoDataValue(
-                      CPLAtof( CSLFetchNameValue(poDS->papszLocalMetadata, 
+                      CPLAtof( CSLFetchNameValue(poDS->papszLocalMetadata,
                                                  "missing_value") ) );
               }
           }
 
           // Coastwatch offset and scale.
-          if( CSLFetchNameValue( poDS->papszLocalMetadata, "scale_factor" ) 
+          if( CSLFetchNameValue( poDS->papszLocalMetadata, "scale_factor" )
               && CSLFetchNameValue( poDS->papszLocalMetadata, "add_offset" ) )
           {
               for( i = 1; i <= poDS->nBands; i++ )
               {
-                  HDF4ImageRasterBand *poBand = 
+                  HDF4ImageRasterBand *poBand =
                       (HDF4ImageRasterBand *) poDS->GetRasterBand(i);
 
-                  poBand->bHaveScaleAndOffset = TRUE;
-                  poBand->dfScale = 
-                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                  poBand->bHaveScale = poBand->bHaveOffset = TRUE;
+                  poBand->dfScale =
+                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata,
                                                   "scale_factor" ) );
-                  poBand->dfOffset = -1 * poBand->dfScale * 
-                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                  poBand->dfOffset = -1 * poBand->dfScale *
+                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata,
                                                   "add_offset" ) );
               }
           }
@@ -3404,32 +3447,32 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
           // this is a modis level3 convention (data from ACT)
           // Eg data/hdf/act/modis/MODAM2004280160000.L3_NOAA_GMX
 
-          if( CSLFetchNameValue( poDS->papszLocalMetadata, 
-                                 "scalingSlope" ) 
-              && CSLFetchNameValue( poDS->papszLocalMetadata, 
+          if( CSLFetchNameValue( poDS->papszLocalMetadata,
+                                 "scalingSlope" )
+              && CSLFetchNameValue( poDS->papszLocalMetadata,
                                     "scalingIntercept" ) )
           {
               int i;
               CPLString osUnits;
-              
-              if( CSLFetchNameValue( poDS->papszLocalMetadata, 
+
+              if( CSLFetchNameValue( poDS->papszLocalMetadata,
                                      "productUnits" ) )
               {
-                  osUnits = CSLFetchNameValue( poDS->papszLocalMetadata, 
+                  osUnits = CSLFetchNameValue( poDS->papszLocalMetadata,
                                                "productUnits" );
               }
 
               for( i = 1; i <= poDS->nBands; i++ )
               {
-                  HDF4ImageRasterBand *poBand = 
+                  HDF4ImageRasterBand *poBand =
                       (HDF4ImageRasterBand *) poDS->GetRasterBand(i);
 
-                  poBand->bHaveScaleAndOffset = TRUE;
-                  poBand->dfScale = 
-                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                  poBand->bHaveScale = poBand->bHaveOffset = TRUE;
+                  poBand->dfScale =
+                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata,
                                                   "scalingSlope" ) );
-                  poBand->dfOffset = 
-                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                  poBand->dfOffset =
+                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata,
                                                   "scalingIntercept" ) );
 
                   poBand->osUnitType = osUnits;
