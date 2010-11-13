@@ -1956,21 +1956,16 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     char    szYGeo[8192] = "";
     char    szPixel[8192]= "";
     char    szLine[8192] = "";
-    char    *pszGeoList = NULL;
-    char    szGeoDimList[8192] = "";
     int32   iWrkNumType;
-    int32   nDataFields, nDimMaps;
     void    *pLat = NULL, *pLong = NULL;
     void    *pLatticeX = NULL, *pLatticeY = NULL;
     int32   iLatticeType, iLatticeDataSize = 0, iRank;
     int32   nLatCount = 0, nLongCount = 0;
     int32   nXPoints=0, nYPoints=0;
     int32   nStrBufSize;
-    int32   aiDimSizes[H4_MAX_VAR_DIMS];
     int     i, j, iDataSize = 0, iPixelDim=-1,iLineDim=-1, iLongDim=-1, iLatDim=-1;
     int32   *paiRank = NULL, *paiNumType = NULL,
         *paiOffset = NULL, *paiIncrement = NULL;
-    char    **papszGeolocations = NULL;
 
 /* -------------------------------------------------------------------- */
 /*  Determine a product name.                                           */
@@ -2004,13 +1999,14 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read geolocation fields names and corresponding geolocation     */
-/*      maps.                                                           */
+/*      Read names of geolocation fields and corresponding              */
+/*      geolocation maps.                                               */
 /* -------------------------------------------------------------------- */
-    nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
-    pszGeoList = (char *)CPLMalloc( nStrBufSize + 1 );
+    int32   nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
+    char    *pszGeoList = (char *)CPLMalloc( nStrBufSize + 1 );
     paiRank = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
     paiNumType = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
+
     if ( nDataFields !=
          SWinqgeofields(hSW, pszGeoList, paiRank, paiNumType) )
     {
@@ -2037,17 +2033,18 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     }
 #endif
 
-    papszGeolocations = CSLTokenizeString2( pszGeoList, ",",
-                                            CSLT_HONOURSTRINGS );
     // Read geolocation data
-    nDimMaps = SWnentries( hSW, HDFE_NENTMAP, &nStrBufSize );
+    int32   nDimMaps = SWnentries( hSW, HDFE_NENTMAP, &nStrBufSize );
     if ( nDimMaps <= 0 )
     {
+
+#ifdef DEBUG
         CPLDebug( "HDF4Image", "No geolocation maps in swath \"%s\"",
                   pszSubdatasetName );
         CPLDebug( "HDF4Image",
                   "Suppose one-to-one mapping. X field is \"%s\", Y field is \"%s\"",
                   papszDimList[iXDim], papszDimList[iYDim] );
+#endif
 
         strncpy( szPixel, papszDimList[iXDim], 8192 );
         strncpy( szLine, papszDimList[iYDim], 8192 );
@@ -2057,7 +2054,6 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         paiIncrement = (int32 *)CPLCalloc( 2, sizeof(int32) );
         paiOffset[0] = paiOffset[1] = 0;
         paiIncrement[0] = paiIncrement[1] = 1;
-        fprintf(stderr, "%s,%s %s,%s\n", szXGeo, szYGeo, szPixel, szLine);
     }
     else
     {
@@ -2125,18 +2121,44 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     if ( *szXGeo == 0 || *szYGeo == 0 )
         return FALSE;
 
-    for ( i = 0; i < CSLCount(papszGeolocations); i++ )
+/* -------------------------------------------------------------------- */
+/*      Read geolocation fields.                                        */
+/* -------------------------------------------------------------------- */
+    char    szGeoDimList[8192] = "";
+    char    **papszGeolocations = CSLTokenizeString2( pszGeoList, ",",
+                                                      CSLT_HONOURSTRINGS );
+    int     nGeolocationsCount = CSLCount( papszGeolocations );
+    int32   aiDimSizes[H4_MAX_VAR_DIMS];
+
+    for ( i = 0; i < nGeolocationsCount; i++ )
     {
         char    **papszGeoDimList = NULL;
 
-        SWfieldinfo( hSW, papszGeolocations[i], &iRank,
-                     aiDimSizes, &iWrkNumType, szGeoDimList );
-        papszGeoDimList = CSLTokenizeString2( szGeoDimList,
-                                              ",", CSLT_HONOURSTRINGS );
+        if ( SWfieldinfo( hSW, papszGeolocations[i], &iRank,
+                          aiDimSizes, &iWrkNumType, szGeoDimList ) < 0 )
+        {
 
 #ifdef DEBUG
         CPLDebug( "HDF4Image",
-                  "List of dimensions in geolocation field %s: %s",
+                  "Can't read attributes of geolocation field \"%s\"",
+                  papszGeolocations[i] );
+#endif
+
+            return FALSE;
+        }
+
+        papszGeoDimList = CSLTokenizeString2( szGeoDimList,
+                                              ",", CSLT_HONOURSTRINGS );
+
+        if ( CSLCount(papszGeoDimList) > H4_MAX_VAR_DIMS )
+        {
+            CSLDestroy( papszGeoDimList );
+            return FALSE;
+        }
+
+#ifdef DEBUG
+        CPLDebug( "HDF4Image",
+                  "List of dimensions in geolocation field \"%s\": %s",
                   papszGeolocations[i], szGeoDimList );
 #endif
 
@@ -2239,7 +2261,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 /* -------------------------------------------------------------------- */
 /*      Determine whether to use no, partial or full GCPs.              */
 /* -------------------------------------------------------------------- */
-    const char *pszGEOL_AS_GCPS = CPLGetConfigOption( "GEOL_AS_GCPS", 
+    const char *pszGEOL_AS_GCPS = CPLGetConfigOption( "GEOL_AS_GCPS",
                                                       "PARTIAL" );
     int iGCPStepX, iGCPStepY;
 
