@@ -44,7 +44,7 @@ except ImportError:
 # =============================================================================
 def Usage():
     print('Usage: gdal2xyz.py [-skip factor] [-srcwin xoff yoff width height]')
-    print('                   [-band b] srcfile [dstfile]')
+    print('                   [-band b] [-csv] srcfile [dstfile]')
     print('')
     sys.exit( 1 )
 
@@ -60,6 +60,7 @@ if __name__ == '__main__':
     srcfile = None
     dstfile = None
     band_nums = []
+    delim = ' '
 
     gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
@@ -83,6 +84,9 @@ if __name__ == '__main__':
         elif arg == '-band':
             band_nums.append( int(argv[i+1]) )
             i = i + 1
+
+        elif arg == '-csv':
+            delim = ','
 
         elif arg[0] == '-':
             Usage()
@@ -134,9 +138,9 @@ if __name__ == '__main__':
     if abs(gt[0]) < 180 and abs(gt[3]) < 180 \
        and abs(srcds.RasterXSize * gt[1]) < 180 \
        and abs(srcds.RasterYSize * gt[5]) < 180:
-        format = '%.10g %.10g %s'
+        format = '%.10g' + delim + '%.10g' + delim + '%s'
     else:
-        format = '%.3f %.3f %s'
+        format = '%.3f' + delim + '%.3f' + delim + '%s'
 
     # Loop emitting data.
 
