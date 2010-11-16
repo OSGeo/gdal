@@ -41,6 +41,10 @@ import gdaltest
 import test_cli_utilities
 import struct
 
+# List of output TIFF files that will be created by tests and later deleted
+# in test_gdal_grid_cleanup()
+outfiles = []
+
 ###############################################################################
 # 
 
@@ -49,6 +53,7 @@ def test_gdal_grid_1():
         return 'skip'
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    outfiles.append('tmp/n43.tif')
 
     try:
         os.remove('tmp/n43.shp')
@@ -93,10 +98,10 @@ def test_gdal_grid_1():
     shape_ds.Destroy()
 
     # Create a GDAL dataset from the previous generated OGR grid
-    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 tmp/n43.shp tmp/n43.tif  -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
 
     # We should get the same values as in n43.td0
-    ds2 = gdal.Open('tmp/n43.tif')
+    ds2 = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
         print('bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum() , ds2.GetRasterBand(1).Checksum()))
         return 'fail'
@@ -107,18 +112,127 @@ def test_gdal_grid_1():
     return 'success'
 
 ###############################################################################
+#
+
+def test_gdal_grid_2():
+    if test_cli_utilities.get_gdal_grid_path() is None:
+        return 'skip'
+
+    shape_drv = ogr.GetDriverByName('VRT')
+    outfiles.append('tmp/grid_near.tif')
+
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Open reference dataset
+    ds_ref = gdal.Open('../gcore/data/byte.tif')
+    checksum_ref = ds_ref.GetRasterBand(1).Checksum()
+
+    #################
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Grid nodes are located exactly in raster nodes.
+    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "gcore/data/byte.tif"
+    ds1 = gdal.Open(outfiles[-1])
+    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+        print('bad checksum : got %d, expected %d' % \
+              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds1 = None
+
+    #################
+    outfiles.append('tmp/grid_near_shift.tif')
+
+    # Now the same, but shift grid nodes a bit in both horizontal and vertical
+    # directions.
+    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "gcore/data/byte.tif"
+    ds1 = gdal.Open(outfiles[-1])
+    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+        print('bad checksum : got %d, expected %d' % \
+              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds1 = None
+
+    #################
+    outfiles.append('tmp/grid_near_search3.tif')
+
+    # Now try the search ellipse larger than the raster cell.
+    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=180.0:radius2=180.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "gcore/data/byte.tif"
+    ds1 = gdal.Open(outfiles[-1])
+    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+        print('bad checksum : got %d, expected %d' % \
+              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds1 = None
+
+    #################
+    outfiles.append('tmp/grid_near_search1.tif')
+
+    # Search ellipse smaller than the raster cell.
+    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=20.0:radius2=20.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "gcore/data/byte.tif"
+    ds1 = gdal.Open(outfiles[-1])
+    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+        print('bad checksum : got %d, expected %d' % \
+              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds1 = None
+
+    #################
+    outfiles.append('tmp/grid_near_shift_search3.tif')
+
+    # Large search ellipse and the grid shift.
+    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=180.0:radius2=180.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "gcore/data/byte.tif"
+    ds1 = gdal.Open(outfiles[-1])
+    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+        print('bad checksum : got %d, expected %d' % \
+              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds1 = None
+
+    #################
+    outfiles.append('tmp/grid_near_shift_search1.tif')
+
+    # Small search ellipse and the grid shift.
+    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=20.0:radius2=20.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "gcore/data/byte.tif"
+    ds1 = gdal.Open(outfiles[-1])
+    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+        print('bad checksum : got %d, expected %d' % \
+              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds1 = None
+
+    ds_ref = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_grid_cleanup():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/n43.shp')
     drv = gdal.GetDriverByName('GTiff')
-    drv.Delete('tmp/n43.tif')
+    for outfile in outfiles:
+        drv.Delete(outfile)
 
     return 'success'
 
 gdaltest_list = [
     test_gdal_grid_1,
+    test_gdal_grid_2,
     test_gdal_grid_cleanup
     ]
 
