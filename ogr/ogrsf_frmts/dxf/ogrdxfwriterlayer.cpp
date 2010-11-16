@@ -409,10 +409,14 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
                  papszLines != NULL && papszLines[iLine] != NULL;
                  iLine++ )
             {
+                CPLString osText = papszLines[iLine];
+
+                osText.Recode( CPL_ENC_UTF8, CPL_ENC_ISO8859_1 );
+
                 if( iLine == 0 )
-                    WriteValue( 1, papszLines[iLine] );
+                    WriteValue( 1, osText );
                 else
-                    WriteValue( 3, papszLines[iLine] );
+                    WriteValue( 3, osText );
             }
             CSLDestroy( papszLines );
         }
