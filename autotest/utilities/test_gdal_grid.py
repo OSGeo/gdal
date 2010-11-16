@@ -31,15 +31,20 @@
 import sys
 import os
 import shutil
+import struct
 
 sys.path.append( '../pymod' )
 sys.path.append( '../gcore' )
 
-import gdal
-import ogr
+try:
+    from osgeo import gdal
+    from osgeo import ogr
+except ImportError:
+    import gdal
+    import ogr
+
 import gdaltest
 import test_cli_utilities
-import struct
 
 # List of output TIFF files that will be created by tests and later deleted
 # in test_gdal_grid_cleanup()
