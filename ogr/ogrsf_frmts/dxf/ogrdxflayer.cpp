@@ -442,12 +442,18 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     if( nCode == 0 )
         poDS->UnreadValue();
 
-    poFeature->SetField( "Text", osText );
-
     if( bHaveZ )
         poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
     else
         poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
+
+/* -------------------------------------------------------------------- */
+/*      Translate text from Win-1252 to UTF8.  We approximate this      */
+/*      by treating Win-1252 as Latin-1.                                */
+/* -------------------------------------------------------------------- */
+    osText.Recode( CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
+
+    poFeature->SetField( "Text", osText );
 
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
@@ -574,12 +580,18 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     if( nCode == 0 )
         poDS->UnreadValue();
 
-    poFeature->SetField( "Text", osText );
-
     if( bHaveZ )
         poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
     else
         poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
+
+/* -------------------------------------------------------------------- */
+/*      Translate text from Win-1252 to UTF8.  We approximate this      */
+/*      by treating Win-1252 as Latin-1.                                */
+/* -------------------------------------------------------------------- */
+    osText.Recode( CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
+
+    poFeature->SetField( "Text", osText );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare style string.                                           */
