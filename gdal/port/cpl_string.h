@@ -251,6 +251,8 @@ public:
     CPLString &vPrintf( const char *pszFormat, va_list args );
     CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
     CPLString &Trim();
+    CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
+
 };
 
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
