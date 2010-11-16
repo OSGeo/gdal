@@ -31,6 +31,7 @@
 import os
 import sys
 import string
+from sys import version_info
 
 sys.path.append( '../pymod' )
 
@@ -67,6 +68,13 @@ def ogr_dxf_1():
     if fc != 16:
         gdaltest.post_reason( 'did not get expected feature count, got %d' % fc)
         return 'fail'
+
+    # Setup the utf-8 string.
+    if version_info >= (3,0,0):
+        gdaltest.sample_text =  'TextSample1\u00BF'
+    else:
+        exec("gdaltest.sample_text =  u'TextSample1\u00BF'")
+        gdaltest.sample_text = gdaltest.sample_text.encode('utf-8')
 
     return 'success'
 
@@ -298,11 +306,11 @@ def ogr_dxf_9():
 
     # First of two MTEXTs
     feat = gdaltest.dxf_layer.GetNextFeature()
-    if feat.GetField( 'Text' ) != 'TextSample1':
+    if feat.GetField( 'Text' ) != gdaltest.sample_text:
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"TextSample1",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_text+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
@@ -725,11 +733,11 @@ def ogr_dxf_16():
 
     # First MTEXT 
     feat = dxf_layer.GetNextFeature()
-    if feat.GetField( 'Text' ) != 'TextSample1':
+    if feat.GetField( 'Text' ) != gdaltest.sample_text:
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"TextSample1",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_text+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
