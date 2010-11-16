@@ -348,7 +348,7 @@ int OGRGeoJSONDataSource::ReadFromFile( const char* pszSource )
 
     // With "large" VSI I/O API we can read data chunks larger than VSIMalloc
     // could allocate. Catch it here.
-    if ( nDataLen > ((vsi_l_offset)1 << sizeof(size_t) * 8) - 1 )
+    if ( nDataLen > (vsi_l_offset)(size_t)nDataLen )
     {
         CPLDebug( "GeoJSON", "Input file too large to be opened" );
         VSIFCloseL( fp );
