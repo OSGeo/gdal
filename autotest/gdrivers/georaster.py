@@ -63,6 +63,9 @@ def georaster_init():
     if gdaltest.georasterDriver is None:
         return 'skip'
 
+    if os.environ.get('OCI_DSNAME') is None:
+        return 'skip'
+    
     gdaltest.oci_ds = ogr.Open( os.environ.get('OCI_DSNAME') )
 
     if gdaltest.oci_ds is None:
