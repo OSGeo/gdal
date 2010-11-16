@@ -203,3 +203,32 @@ CPLString &CPLString::Trim()
 
     return *this;
 }
+
+/************************************************************************/
+/*                               Recode()                               */
+/************************************************************************/
+
+CPLString &CPLString::Recode( const char *pszSrcEncoding,
+                              const char *pszDstEncoding )
+
+{
+    if( pszSrcEncoding == NULL )
+        pszSrcEncoding = CPL_ENC_UTF8;
+    if( pszDstEncoding == NULL )
+        pszDstEncoding = CPL_ENC_UTF8;
+
+    if( strcmp(pszSrcEncoding,pszDstEncoding) == 0 )
+        return *this;
+
+    char *pszRecoded = CPLRecode( c_str(), 
+                                  pszSrcEncoding,
+                                  pszDstEncoding );
+
+    if( pszRecoded == NULL )
+        return *this;
+
+    assign( pszRecoded );
+    CPLFree( pszRecoded );
+
+    return *this;
+}
