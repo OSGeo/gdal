@@ -21,9 +21,3 @@ all:	default s57dump$(EXE) mks57$(EXE)
 
 s57dump$(EXE):	s57dump.$(OBJ_EXT)
 	$(LD) $(LDFLAGS) s57dump.$(OBJ_EXT) $(CONFIG_LIBS) -o s57dump$(EXE)
-
-mks57$(EXE):	mks57.$(OBJ_EXT)
-	$(LD) $(LDFLAGS) mks57.$(OBJ_EXT) $(CONFIG_LIBS) -o mks57$(EXE)
-
-write_soundg$(EXE):	write_soundg.$(OBJ_EXT)
-	$(LD) $(LDFLAGS) write_soundg.$(OBJ_EXT) $(CONFIG_LIBS) -o write_soundg$(EXE)
