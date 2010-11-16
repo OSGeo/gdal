@@ -72,17 +72,14 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDS, VSILFILE *fp )
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
-    if( poDS->poBlocksLayer != NULL )
-    {
-        OGRFieldDefn  oBlockField( "BlockName", OFTString );
-        poFeatureDefn->AddFieldDefn( &oBlockField );
-
-        OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
-        poFeatureDefn->AddFieldDefn( &oScaleField );
-
-        OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
-        poFeatureDefn->AddFieldDefn( &oBlockAngleField );
-    }
+    OGRFieldDefn  oBlockField( "BlockName", OFTString );
+    poFeatureDefn->AddFieldDefn( &oBlockField );
+    
+    OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
+    poFeatureDefn->AddFieldDefn( &oScaleField );
+    
+    OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
+    poFeatureDefn->AddFieldDefn( &oBlockAngleField );
 }
 
 /************************************************************************/
@@ -751,15 +748,20 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
 
     if( eGType == wkbPoint )
     {
-        const char *pszBlockName = NULL;
+        const char *pszBlockName = poFeature->GetFieldAsString("BlockName");
 
-        if( poDS->poBlocksLayer != NULL 
-            && poFeature->GetDefnRef() != poDS->poBlocksLayer->GetLayerDefn())
+        // we don't want to treat as a block ref if we are writing blocks layer
+        if( pszBlockName != NULL
+            && poDS->poBlocksLayer != NULL 
+            && poFeature->GetDefnRef() == poDS->poBlocksLayer->GetLayerDefn())
+            pszBlockName = NULL;
+
+        // We don't want to treat as a blocks ref if the block is not defined
+        if( pszBlockName 
+            && poDS->oHeaderDS.LookupBlock(pszBlockName) == NULL )
         {
-            pszBlockName = poFeature->GetFieldAsString("BlockName");
-            if( pszBlockName != NULL
-                && poDS->poBlocksLayer->FindBlock(pszBlockName) == NULL 
-                && poDS->oHeaderDS.LookupBlock(pszBlockName) == NULL )
+            if( poDS->poBlocksLayer == NULL
+                || poDS->poBlocksLayer->FindBlock(pszBlockName) == NULL )
                 pszBlockName = NULL;
         }
                                   

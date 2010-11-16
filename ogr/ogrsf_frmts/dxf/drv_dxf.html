@@ -118,12 +118,13 @@ portions (portion before or after the ENTITIES section). <p>
 <h3>Block References</h3>
 
 It is possible to export a "blocks" layer to DXF in addition to the 
-"entities" layer in order to produce actual DXF BLOCKs in the output file, 
-and to write INSERT entities where applicable.  To make this work the follow
+"entities" layer in order to produce actual DXF BLOCKs definitions 
+in the output file.  It is also possible to write INSERT entities if
+a block name is provided for an entity.  To make this work the follow
 conditions apply.
 
 <ul>
-<li> A "blocks" layer must be created, and it must be created before the 
+<li> A "blocks" layer may be created, and it must be created before the 
 entities layer. 
 <li> The entities in the blocks layer should have the BlockName field
 populated.
