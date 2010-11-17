@@ -285,8 +285,8 @@ class GDALTest:
 
             if not src_osr.IsSame(new_osr):
                 print('')
-                print('old = ', src_osr.ExportToPrettyWkt())
-                print('new = ', new_osr.ExportToPrettyWkt())
+                print('old = %s' % src_osr.ExportToPrettyWkt())
+                print('new = %s' % new_osr.ExportToPrettyWkt())
                 post_reason( 'Projections differ' )
                 return 'fail'
 
@@ -472,8 +472,8 @@ class GDALTest:
 
             if not src_osr.IsSame(new_osr):
                 print('')
-                print('old = ', src_osr.ExportToPrettyWkt())
-                print('new = ', new_osr.ExportToPrettyWkt())
+                print('old = %s' % src_osr.ExportToPrettyWkt())
+                print('new = %s' % new_osr.ExportToPrettyWkt())
                 post_reason( 'Projections differ' )
                 return 'fail'
 
