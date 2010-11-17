@@ -115,6 +115,7 @@ def envi_5():
         DATUM["OSGB_1936",
             SPHEROID["Airy 1830",6377563.396,299.3249646,
                 AUTHORITY["EPSG","7001"]],
+            TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489],
             AUTHORITY["EPSG","6277"]],
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],

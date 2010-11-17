@@ -656,11 +656,12 @@ def ogr_shape_18():
     # data/poly.shp has arbitraily assigned EPSG:27700
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 27700 )
+    srs.StripCTParms()
 
     if not srs_lyr.IsSame(srs):
         print('')
-        print('expected = ', srs.ExportToPrettyWkt())
-        print('existing = ', srs_lyr.ExportToPrettyWkt())
+        print('expected = %s' % srs.ExportToPrettyWkt())
+        print('existing = %s' % srs_lyr.ExportToPrettyWkt())
         gdaltest.post_reason( 'Projections differ' )
         return 'fail'
 
