@@ -237,7 +237,8 @@ def osr_proj4_7():
     expected = """PROJCS["unnamed",
     GEOGCS["GRS 67(IUGG 1967)",
         DATUM["unknown",
-            SPHEROID["GRS67",6378160,298.247167427]],
+            SPHEROID["GRS67",6378160,298.247167427],
+            TOWGS84[52.17,-71.82,-14.9,0,0,0,0]],
         PRIMEM["Greenwich",0],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Hotine_Oblique_Mercator"],
@@ -253,7 +254,7 @@ def osr_proj4_7():
     srs_expected = osr.SpatialReference( wkt = expected )
     if not srs.IsSame(srs_expected):
         gdaltest.post_reason( 'did not get expected wkt.' )
-        print('Got: ', srs.ExportToPrettyWkt())
+        print( 'Got: %s' % srs.ExportToPrettyWkt() )
         return 'fail'
     
     return 'success'
