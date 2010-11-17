@@ -1652,8 +1652,8 @@ bool GeoRasterWrapper::InitializeIO( void )
     // --------------------------------------------------------------------
 
     nBlockCount = (unsigned long) ( nTotalColumnBlocks * nTotalRowBlocks * nTotalBandBlocks );
-    nBlockBytes = (unsigned long) ( nColumnBlockSize * nRowBlockSize * nBandBlockSize ) *
-                  (unsigned long) ( nCellSizeBits / 8L );
+    nBlockBytes = (unsigned long) ( nColumnBlockSize * nRowBlockSize * nBandBlockSize *
+                                    nCellSizeBits / 8L );
     nGDALBlockBytes = (unsigned long) ( nColumnBlockSize * nRowBlockSize * nGDALCellBytes );
 
     pahLevels[0].nColumnBlockSize   = nColumnBlockSize;
