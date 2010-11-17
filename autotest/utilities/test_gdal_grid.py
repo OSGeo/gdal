@@ -50,11 +50,14 @@ import test_cli_utilities
 # in test_gdal_grid_cleanup()
 outfiles = []
 
+# Path to gdal_grid utility executable
+gdal_grid = test_cli_utilities.get_gdal_grid_path()
+
 ###############################################################################
 # 
 
 def test_gdal_grid_1():
-    if test_cli_utilities.get_gdal_grid_path() is None:
+    if gdal_grid is None:
         return 'skip'
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
@@ -103,7 +106,7 @@ def test_gdal_grid_1():
     shape_ds.Destroy()
 
     # Create a GDAL dataset from the previous generated OGR grid
-    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
+    gdaltest.runexternal(gdal_grid + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
 
     # We should get the same values as in n43.td0
     ds2 = gdal.Open(outfiles[-1])
@@ -117,109 +120,522 @@ def test_gdal_grid_1():
     return 'success'
 
 ###############################################################################
-#
+# Test Nearest Neighbour gridding algorithm
 
 def test_gdal_grid_2():
-    if test_cli_utilities.get_gdal_grid_path() is None:
+    if gdal_grid is None:
         return 'skip'
 
-    shape_drv = ogr.GetDriverByName('VRT')
-    outfiles.append('tmp/grid_near.tif')
+    # Open reference dataset
+    ds_ref = gdal.Open('../gcore/data/byte.tif')
+    checksum_ref = ds_ref.GetRasterBand(1).Checksum()
+    ds_ref = None
 
+    #################
+    outfiles.append('tmp/grid_near.tif')
     try:
         os.remove(outfiles[-1])
     except:
         pass
 
-    # Open reference dataset
-    ds_ref = gdal.Open('../gcore/data/byte.tif')
-    checksum_ref = ds_ref.GetRasterBand(1).Checksum()
-
-    #################
     # Create a GDAL dataset from the values of "grid.csv".
     # Grid nodes are located exactly in raster nodes.
-    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
     # We should get the same values as in "gcore/data/byte.tif"
-    ds1 = gdal.Open(outfiles[-1])
-    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+    ds = gdal.Open(outfiles[-1])
+    if ds.GetRasterBand(1).Checksum() != checksum_ref:
         print('bad checksum : got %d, expected %d' % \
-              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
-    ds1 = None
+    ds = None
 
     #################
     outfiles.append('tmp/grid_near_shift.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
 
     # Now the same, but shift grid nodes a bit in both horizontal and vertical
     # directions.
-    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    gdaltest.runexternal(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
     # We should get the same values as in "gcore/data/byte.tif"
-    ds1 = gdal.Open(outfiles[-1])
-    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+    ds = gdal.Open(outfiles[-1])
+    if ds.GetRasterBand(1).Checksum() != checksum_ref:
         print('bad checksum : got %d, expected %d' % \
-              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
-    ds1 = None
+    ds = None
 
     #################
     outfiles.append('tmp/grid_near_search3.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
 
     # Now try the search ellipse larger than the raster cell.
-    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=180.0:radius2=180.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=180.0:radius2=180.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
     # We should get the same values as in "gcore/data/byte.tif"
-    ds1 = gdal.Open(outfiles[-1])
-    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+    ds = gdal.Open(outfiles[-1])
+    if ds.GetRasterBand(1).Checksum() != checksum_ref:
         print('bad checksum : got %d, expected %d' % \
-              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
-    ds1 = None
+    ds = None
 
     #################
     outfiles.append('tmp/grid_near_search1.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
 
     # Search ellipse smaller than the raster cell.
-    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=20.0:radius2=20.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=20.0:radius2=20.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
     # We should get the same values as in "gcore/data/byte.tif"
-    ds1 = gdal.Open(outfiles[-1])
-    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+    ds = gdal.Open(outfiles[-1])
+    if ds.GetRasterBand(1).Checksum() != checksum_ref:
         print('bad checksum : got %d, expected %d' % \
-              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
-    ds1 = None
+    ds = None
 
     #################
     outfiles.append('tmp/grid_near_shift_search3.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
 
     # Large search ellipse and the grid shift.
-    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=180.0:radius2=180.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    gdaltest.runexternal(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=180.0:radius2=180.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
     # We should get the same values as in "gcore/data/byte.tif"
-    ds1 = gdal.Open(outfiles[-1])
-    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+    ds = gdal.Open(outfiles[-1])
+    if ds.GetRasterBand(1).Checksum() != checksum_ref:
         print('bad checksum : got %d, expected %d' % \
-              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
-    ds1 = None
+    ds = None
 
     #################
     outfiles.append('tmp/grid_near_shift_search1.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
 
     # Small search ellipse and the grid shift.
-    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=20.0:radius2=20.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    gdaltest.runexternal(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=20.0:radius2=20.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
     # We should get the same values as in "gcore/data/byte.tif"
-    ds1 = gdal.Open(outfiles[-1])
-    if ds1.GetRasterBand(1).Checksum() != checksum_ref:
+    ds = gdal.Open(outfiles[-1])
+    if ds.GetRasterBand(1).Checksum() != checksum_ref:
         print('bad checksum : got %d, expected %d' % \
-              (ds1.GetRasterBand(1).Checksum(), checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
-    ds1 = None
+    ds = None
 
+    return 'success'
+
+###############################################################################
+# Test Inverse distance to a Power gridding algorithm
+
+def test_gdal_grid_3():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    outfiles.append('tmp/grid_invdist.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/gdal_invdist.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_invdist.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
     ds_ref = None
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test Moving Average gridding algorithm
+
+def test_gdal_grid_4():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    outfiles.append('tmp/grid_average.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # We are using all the points from input dataset to average, so
+    # the result is a raster filled with the same value in each node.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_average.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_average.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    ds_ref = None
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_average_190_190.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # This time using a circular window.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average:radius1=190.0:radius2=190.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_average_190_190.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_average_190_190.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    ds_ref = None
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_average_300_100_40.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Elliptical window, rotated.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average:radius1=300.0:radius2=100.0:angle=40.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_average_300_100_40.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_average_300_100_40.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    ds_ref = None
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test Minimum data metric
+
+def test_gdal_grid_5():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    outfiles.append('tmp/grid_minimum.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Search the whole dataset for minimum.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a minimum:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_minimum.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_minimum.tif')
+    if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
+        print('bad checksum : got %d, expected %d' % \
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_minimum_400_100_120.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Elliptical window, rotated.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a minimum:radius1=400.0:radius2=100.0:angle=120.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_minimum_400_100_120.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_minimum_400_100_120.tif')
+    if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
+        print('bad checksum : got %d, expected %d' % \
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test Maximum data metric
+
+def test_gdal_grid_6():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    outfiles.append('tmp/grid_maximum.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Search the whole dataset for maximum.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a maximum:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_maximum.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_maximum.tif')
+    if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
+        print('bad checksum : got %d, expected %d' % \
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_maximum_100_100.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Circular window.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a maximum:radius1=100.0:radius2=100.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_maximum_100_100.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_maximum_100_100.tif')
+    if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
+        print('bad checksum : got %d, expected %d' % \
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test Range data metric
+
+def test_gdal_grid_7():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    outfiles.append('tmp/grid_range.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Search the whole dataset.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a range:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_range.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_range.tif')
+    if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
+        print('bad checksum : got %d, expected %d' % \
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_range_90_90_8p.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Circular window, fill node with NODATA value if less than required
+    # points found.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a range:radius1=90.0:radius2=90.0:angle=0.0:min_points=8:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_range_90_90_8p.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_range_90_90_8p.tif')
+    if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
+        print('bad checksum : got %d, expected %d' % \
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test Count data metric
+
+def test_gdal_grid_8():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    outfiles.append('tmp/grid_count_70_70.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a count:radius1=70.0:radius2=70.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_count_70_70.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_count_70_70.tif')
+    if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
+        print('bad checksum : got %d, expected %d' % \
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_count_300_300.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a count:radius1=300.0:radius2=300.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_count_300_300.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_count_300_300.tif')
+    if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
+        print('bad checksum : got %d, expected %d' % \
+              (ds.GetRasterBand(1).Checksum(), checksum_ref))
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test Average Distance data metric
+
+def test_gdal_grid_9():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    outfiles.append('tmp/grid_avdist.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # We are using all the points from input dataset to average, so
+    # the result is a raster filled with the same value in each node.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average_distance:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_avdist.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_avdist.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    ds_ref = None
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_avdist_150_150.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # We are using all the points from input dataset to average, so
+    # the result is a raster filled with the same value in each node.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average_distance:radius1=150.0:radius2=150.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_avdist_150_150.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_avdist_150_150.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    ds_ref = None
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test Average Distance Between Points data metric
+
+def test_gdal_grid_10():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    outfiles.append('tmp/grid_avdist_150_50_-15.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # We are using all the points from input dataset to average, so
+    # the result is a raster filled with the same value in each node.
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average_distance_pts:radius1=150.0:radius2=50.0:angle=-15.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_avdist_150_50_-15.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_avdist_150_50_-15.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    ds_ref = None
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds = None
 
     return 'success'
 
@@ -238,6 +654,14 @@ def test_gdal_grid_cleanup():
 gdaltest_list = [
     test_gdal_grid_1,
     test_gdal_grid_2,
+    test_gdal_grid_3,
+    test_gdal_grid_4,
+    test_gdal_grid_5,
+    test_gdal_grid_6,
+    test_gdal_grid_7,
+    test_gdal_grid_8,
+    test_gdal_grid_9,
+    test_gdal_grid_10,
     test_gdal_grid_cleanup
     ]
 
