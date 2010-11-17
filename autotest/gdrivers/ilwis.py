@@ -48,6 +48,7 @@ def ilwis_1():
         DATUM["Provisional_South_American_Datum_1956",
             SPHEROID["International 1924",6378388,297,
                 AUTHORITY["EPSG","7022"]],
+            TOWGS84[-288,175,-376,0,0,0,0],
             AUTHORITY["EPSG","6248"]],
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
