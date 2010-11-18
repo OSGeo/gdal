@@ -5404,6 +5404,21 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
         return FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      Do the datum TOWGS84 values match if present?                   */
+/* -------------------------------------------------------------------- */
+    double adfTOWGS84[7], adfOtherTOWGS84[7];
+    int i;
+
+    this->GetTOWGS84( adfTOWGS84, 7 );
+    poOther->GetTOWGS84( adfOtherTOWGS84, 7 );
+
+    for( i = 0; i < 7; i++ )
+    {
+        if( fabs(adfTOWGS84[i] - adfOtherTOWGS84[i]) > 0.00001 )
+            return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do the prime meridians match?  If missing assume a value of zero.*/
 /* -------------------------------------------------------------------- */
     pszThisValue = this->GetAttrValue( "PRIMEM", 1 );
