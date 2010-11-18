@@ -244,7 +244,7 @@ def test_gdal_grid_2():
     return 'success'
 
 ###############################################################################
-# Test Inverse distance to a Power gridding algorithm
+# Test Inverse Distance to a Power gridding algorithm
 
 def test_gdal_grid_3():
     if gdal_grid is None:
@@ -263,6 +263,28 @@ def test_gdal_grid_3():
     # We should get the same values as in "ref_data/gdal_invdist.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    ds_ref = None
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_invdist_90_90_8p.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Circular window, shifted, test min points and NODATA setting.
+    gdaltest.runexternal(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:radius1=90.0:radius2=90.0:angle=0.0:max_points=0:min_points=8:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_invdist_90_90_8p.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_invdist_90_90_8p.tif')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
     ds_ref = None
     if maxdiff > 1:
@@ -339,6 +361,28 @@ def test_gdal_grid_4():
     # We should get the same values as in "ref_data/grid_average_300_100_40.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_average_300_100_40.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    ds_ref = None
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_average_90_90_8p.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Circular window, shifted, test min points and NODATA setting.
+    gdaltest.runexternal(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average:radius1=90.0:radius2=90.0:angle=0.0:min_points=8:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_average_90_90_8p.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_average_90_90_8p.tif')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
     ds_ref = None
     if maxdiff > 1:
