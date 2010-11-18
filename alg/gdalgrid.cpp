@@ -146,6 +146,8 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
         // Is this point located inside the search ellipse?
         if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
         {
+            // If the test point is close to the grid node, use the point
+            // value directly as a node value to avoid singularity.
             if ( CPLIsEqual(dfR2, 0.0) )
             {
                 (*pdfValue) = padfZ[i];
@@ -211,6 +213,8 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
         const double dfR2 =
             dfRX * dfRX + dfRY * dfRY + dfSmoothing * dfSmoothing;
 
+        // If the test point is close to the grid node, use the point
+        // value directly as a node value to avoid singularity.
         if ( CPLIsEqual(dfR2, 0.0) )
         {
             (*pdfValue) = padfZ[i];
