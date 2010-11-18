@@ -39,93 +39,83 @@ typedef struct
 {
     const char  *pszPCIDatum;
     int         nEPSGCode;
-    double      dfSemiMajor;
-    double      dfSemiMinor;
 } PCIDatums;
 
-static const PCIDatums aoDatums[] =
+static const PCIDatums asDatums[] =
 {
-    { "D-01", 4267, 0, 0 },   // NAD27 (USA, NADCON)
-    { "D-03", 4267, 0, 0 },   // NAD27 (Canada, NTv1)
-    { "D-02", 4269, 0, 0 },   // NAD83 (USA, NADCON)
-    { "D-04", 4269, 0, 0 },   // NAD83 (Canada, NTv1)
-    { "D000", 4326, 0, 0 },   // WGS 1984
-    { "D001", 4322, 0, 0 },   // WGS 1972
-    { "D008", 4296, 0, 0 },   // Sudan
-    { "D013", 4601, 0, 0 },   // Antigua Island Astro 1943
-    { "D029", 4202, 0, 0 },   // Australian Geodetic 1966
-    { "D030", 4203, 0, 0 },   // Australian Geodetic 1984
-    { "D033", 4216, 0, 0 },   // Bermuda 1957
-    { "D034", 4165, 0, 0 },   // Bissau
-    { "D036", 4219, 0, 0 },   // Bukit Rimpah
-    { "D038", 4221, 0, 0 },   // Campo Inchauspe
-    { "D040", 4222, 0, 0 },   // Cape
-    { "D042", 4223, 0, 0 },   // Carthage
-    { "D044", 4224, 0, 0 },   // Chua Astro
-    { "D045", 4225, 0, 0 },   // Corrego Alegre
-    { "D046", 4155, 0, 0 },   // Dabola (Guinea)
-    { "D066", 4272, 0, 0 },   // Geodetic Datum 1949 (New Zealand)
-    { "D071", 4255, 0, 0 },   // Herat North (Afghanistan)
-    { "D077", 4239, 0, 0 },   // Indian 1954 (Thailand, Vietnam)
-    { "D078", 4240, 0, 0 },   // Indian 1975 (Thailand)
-    { "D083", 4244, 0, 0 },   // Kandawala (Sri Lanka)
-    { "D085", 4245, 0, 0 },   // Kertau 1948 (West Malaysia & Singapore)
-    { "D088", 4250, 0, 0 },   // Leigon (Ghana)
-    { "D089", 4251, 0, 0 },   // Liberia 1964 (Liberia)
-    { "D092", 4256, 0, 0 },   // Mahe 1971 (Mahe Island)
-    { "D093", 4262, 0, 0 },   // Massawa (Ethiopia (Eritrea))
-    { "D094", 4261, 0, 0 },   // Merchich (Morocco)
-    { "D098", 4604, 0, 0 },   // Montserrat Island Astro 1958 (Montserrat (Leeward Islands))
-    { "D110", 4267, 0, 0 },   // NAD27 / Alaska
-    { "D139", 4282, 0, 0 },   // Pointe Noire 1948 (Congo)
-    { "D140", 4615, 0, 0 },   // Porto Santo 1936 (Porto Santo, Madeira Islands)
-    { "D151", 4139, 0, 0 },   // Puerto Rico (Puerto Rico, Virgin Islands)
-    { "D153", 4287, 0, 0 },   // Qornoq (Greenland (South))
-    { "D158", 4292, 0, 0 },   // Sapper Hill 1943 (East Falkland Island)
-    { "D159", 4293, 0, 0 },   // Schwarzeck (Namibia)
-    { "D160", 4616, 0, 0 },   // Selvagem Grande 1938 (Salvage Islands)
-    { "D176", 4297, 0, 0 },   // Tananarive Observatory 1925 (Madagascar)
-    { "D177", 4298, 0, 0 },   // Timbalai 1948 (Brunei, East Malaysia (Sabah, Sarawak))
-    { "D187", 4309, 0, 0 },   // Yacare (Uruguay)
-    { "D188", 4311, 0, 0 },   // Zanderij (Suriname)
-    { "D401", 4124, 0, 0 },   // RT90 (Sweden)
-    { "D501", 4312, 0, 0 },   // MGI (Hermannskogel, Austria)
+    { "D-01", 4267 },   // NAD27 (USA, NADCON)
+    { "D-03", 4267 },   // NAD27 (Canada, NTv1)
+    { "D-02", 4269 },   // NAD83 (USA, NADCON)
+    { "D-04", 4269 },   // NAD83 (Canada, NTv1)
+    { "D000", 4326 },   // WGS 1984
+    { "D001", 4322 },   // WGS 1972
+    { "D008", 4296 },   // Sudan
+    { "D013", 4601 },   // Antigua Island Astro 1943
+    { "D029", 4202 },   // Australian Geodetic 1966
+    { "D030", 4203 },   // Australian Geodetic 1984
+    { "D033", 4216 },   // Bermuda 1957
+    { "D034", 4165 },   // Bissau
+    { "D036", 4219 },   // Bukit Rimpah
+    { "D038", 4221 },   // Campo Inchauspe
+    { "D040", 4222 },   // Cape
+    { "D042", 4223 },   // Carthage
+    { "D044", 4224 },   // Chua Astro
+    { "D045", 4225 },   // Corrego Alegre
+    { "D046", 4155 },   // Dabola (Guinea)
+    { "D066", 4272 },   // Geodetic Datum 1949 (New Zealand)
+    { "D071", 4255 },   // Herat North (Afghanistan)
+    { "D077", 4239 },   // Indian 1954 (Thailand, Vietnam)
+    { "D078", 4240 },   // Indian 1975 (Thailand)
+    { "D083", 4244 },   // Kandawala (Sri Lanka)
+    { "D085", 4245 },   // Kertau 1948 (West Malaysia & Singapore)
+    { "D088", 4250 },   // Leigon (Ghana)
+    { "D089", 4251 },   // Liberia 1964 (Liberia)
+    { "D092", 4256 },   // Mahe 1971 (Mahe Island)
+    { "D093", 4262 },   // Massawa (Ethiopia (Eritrea))
+    { "D094", 4261 },   // Merchich (Morocco)
+    { "D098", 4604 },   // Montserrat Island Astro 1958 (Montserrat (Leeward Islands))
+    { "D110", 4267 },   // NAD27 / Alaska
+    { "D139", 4282 },   // Pointe Noire 1948 (Congo)
+    { "D140", 4615 },   // Porto Santo 1936 (Porto Santo, Madeira Islands)
+    { "D151", 4139 },   // Puerto Rico (Puerto Rico, Virgin Islands)
+    { "D153", 4287 },   // Qornoq (Greenland (South))
+    { "D158", 4292 },   // Sapper Hill 1943 (East Falkland Island)
+    { "D159", 4293 },   // Schwarzeck (Namibia)
+    { "D160", 4616 },   // Selvagem Grande 1938 (Salvage Islands)
+    { "D176", 4297 },   // Tananarive Observatory 1925 (Madagascar)
+    { "D177", 4298 },   // Timbalai 1948 (Brunei, East Malaysia (Sabah, Sarawak))
+    { "D187", 4309 },   // Yacare (Uruguay)
+    { "D188", 4311 },   // Zanderij (Suriname)
+    { "D401", 4124 },   // RT90 (Sweden)
+    { "D501", 4312 },   // MGI (Hermannskogel, Austria)
     { NULL, 0 }
 };
 
-static const PCIDatums aoEllips[] =
+static const PCIDatums asEllips[] =
 {
-    { "E000", 7008, 0, 0 },     // Clarke, 1866 (NAD1927)
-    { "E001", 7034, 0, 0 },     // Clarke, 1880
-    { "E002", 7004, 0, 0 },     // Bessel, 1841
-    { "E003", 0, 6378157.5,6356772.2 },   // New International, 1967
-    { "E004", 7022, 0, 0 },     // International, 1924 (Hayford, 1909)
-    { "E005", 7043, 0, 0 },     // WGS, 1972
-    { "E006", 7042, 0, 0 },     // Everest, 1830
-    { "E007", 0, 6378145.,6356759.769356 }, // WGS, 1966
-    { "E008", 7019, 0, 0 },     // GRS, 1980 (NAD1983)
-    { "E009", 7001, 0, 0 },     // Airy, 1830
-    { "E010", 7018, 0, 0 },     // Modified Everest 
-    { "E011", 7002, 0, 0 },     // Modified Airy
-    { "E012", 7030, 0, 0 },     // WGS, 1984 (GPS)
-    { "E013", 0, 6378155.,6356773.3205 }, // Southeast Asia
-    { "E014", 7003, 0, 0 },     // Australian National, 1965
-    { "E015", 7024, 0, 0 },     // Krassovsky, 1940
-    { "E016", 7053, 0, 0 },     // Hough
-    { "E017", 0, 6378166.,6356784.283666 }, // Mercury, 1960
-    { "E018", 0, 6378150.,6356768.337303 }, //  Modified Mercury, 1968
-    { "E019", 7052, 0, 0},      // normal sphere
-    { "E333", 7046, 0, 0 },     // Bessel 1841 (Japan By Law)
-    { "E600", 0, 6378144.0,6356759.0 }, // D-PAF (Orbits)
-    { "E900", 7006, 0, 0 },     // Bessel, 1841 (Namibia)
-    { "E901", 7044, 0, 0 },     // Everest, 1956
-    { "E902", 7056, 0, 0 },     // Everest, 1969
-    { "E903", 7016, 0, 0 },     // Everest (Sabah & Sarawak)
-    { "E904", 7020, 0, 0 },     // Helmert, 1906
-    { "E905", 0, 6378136.,6356751.301569 }, // SGS 85
-    { "E906", 0, 6378165.,6356783.286959 }, // WGS 60
-    { "E907", 7036, 0, 0 },     // South American, 1969
-    { "E910", 7041, 0, 0 },     // ATS77
+    { "E000", 7008 },     // Clarke, 1866 (NAD1927)
+    { "E001", 7034 },     // Clarke, 1880
+    { "E002", 7004 },     // Bessel, 1841
+    { "E004", 7022 },     // International, 1924 (Hayford, 1909)
+    { "E005", 7043 },     // WGS, 1972
+    { "E006", 7042 },     // Everest, 1830
+    { "E008", 7019 },     // GRS, 1980 (NAD1983)
+    { "E009", 7001 },     // Airy, 1830
+    { "E010", 7018 },     // Modified Everest 
+    { "E011", 7002 },     // Modified Airy
+    { "E012", 7030 },     // WGS, 1984 (GPS)
+    { "E014", 7003 },     // Australian National, 1965
+    { "E015", 7024 },     // Krassovsky, 1940
+    { "E016", 7053 },     // Hough
+    { "E019", 7052 },     // normal sphere
+    { "E333", 7046 },     // Bessel 1841 (Japan By Law)
+    { "E900", 7006 },     // Bessel, 1841 (Namibia)
+    { "E901", 7044 },     // Everest, 1956
+    { "E902", 7056 },     // Everest, 1969
+    { "E903", 7016 },     // Everest (Sabah & Sarawak)
+    { "E904", 7020 },     // Helmert, 1906
+    { "E907", 7036 },     // South American, 1969
+    { "E910", 7041 },     // ATS77
     { NULL, 0 }
 };
 
@@ -207,9 +197,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     if( pszProj == NULL || CPLStrnlen(pszProj, 16) < 16 )
         return OGRERR_CORRUPT_DATA;
 
-#ifdef DEBUG
     CPLDebug( "OSR_PCI", "Trying to import projection \"%s\"", pszProj );
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Use safe defaults if projection parameters are not supplied.    */
@@ -497,98 +485,126 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     if( strlen(szEarthModel) > 0 
         && (poRoot == NULL || IsProjected() || IsGeographic()) )
     {
-        const PCIDatums   *paoDatum = aoDatums;
-
+        const PCIDatums   *pasDatum = asDatums;
+        
         // Search for matching datum
-        while ( paoDatum->pszPCIDatum )
+        while ( pasDatum->pszPCIDatum )
         {
-            if( EQUALN( szEarthModel, paoDatum->pszPCIDatum, 4 ) )
+            if( EQUALN( szEarthModel, pasDatum->pszPCIDatum, 4 ) )
             {
                 OGRSpatialReference oGCS;
-                oGCS.importFromEPSG( paoDatum->nEPSGCode );
+                oGCS.importFromEPSG( pasDatum->nEPSGCode );
                 CopyGeogCSFrom( &oGCS );
                 break;
             }
-            paoDatum++;
+            pasDatum++;
         }
+        
+/* -------------------------------------------------------------------- */
+/*      If we did not find a datum definition in our incode epsg        */
+/*      lookup table, then try fetching from the pci_datum.txt          */
+/*      file.                                                           */
+/* -------------------------------------------------------------------- */
+        char **papszDatumDefn = NULL;
 
-/* -------------------------------------------------------------------- */
-/*      If not, look in the ellipsoid list.                             */
-/* -------------------------------------------------------------------- */
-        if ( !paoDatum->pszPCIDatum )  // No matching; search for ellipsoids
+        if( !pasDatum->pszPCIDatum && szEarthModel[0] == 'D' )
         {
-            paoDatum = aoEllips;
+            const char *pszDatumCSV = CSVFilename( "pci_datum.txt" );
+            FILE *fp = NULL;
 
-#ifdef DEBUG
-            CPLDebug( "OSR_PCI",
-                      "Cannot found matching datum definition, "
-                      "search for ellipsoids." );
-#endif
-
-            while ( paoDatum->pszPCIDatum )
+            if( pszDatumCSV )
+                fp = VSIFOpen( pszDatumCSV, "r" );
+            
+            if( fp != NULL )
             {
-                if( EQUALN( szEarthModel, paoDatum->pszPCIDatum, 4 ) 
-                    && paoDatum->nEPSGCode != 0 )
+                char **papszLineItems = NULL;
+
+                while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
                 {
-                    char    *pszName = NULL;
-                    double  dfSemiMajor;
-                    double  dfInvFlattening;
-                    
-                    if ( OSRGetEllipsoidInfo( paoDatum->nEPSGCode, &pszName,
-                            &dfSemiMajor, &dfInvFlattening ) == OGRERR_NONE )
+                    if( CSLCount(papszLineItems) > 3 
+                        && EQUALN(papszLineItems[0],szEarthModel,4) )
                     {
-                        SetGeogCS( CPLString().Printf(
-                                       "Unknown datum based upon the %s ellipsoid",
-                                       pszName ),
-                                   CPLString().Printf(
-                                       "Not specified (based on %s spheroid)",
-                                       pszName ),
-                                   pszName, dfSemiMajor, dfInvFlattening,
-                                   NULL, 0.0, NULL, 0.0 );
-                        SetAuthority( "SPHEROID", "EPSG", paoDatum->nEPSGCode );
-
-                        if ( pszName )
-                            CPLFree( pszName );
+                        papszDatumDefn = papszLineItems;
+                        strncpy( szEarthModel, papszLineItems[2], 4 );
+                        break;
                     }
-
-                    break;
+                    CSLDestroy( papszLineItems );
                 }
-                else if( EQUALN( szEarthModel, paoDatum->pszPCIDatum, 4 ) )
-                {
-                    double      dfInvFlattening;
 
-                    if ( CPLIsEqual(paoDatum->dfSemiMajor, paoDatum->dfSemiMinor) )
-                        dfInvFlattening = 0.0;
-                    else
-                        dfInvFlattening = paoDatum->dfSemiMajor 
-                            / (paoDatum->dfSemiMajor-paoDatum->dfSemiMinor);
-
-                    SetGeogCS( "Unknown datum based upon the custom spheroid",
-                               "Not specified (based on custom spheroid)",
-                               CPLString().Printf( "PCI Ellipse %s", 
-                                                   szEarthModel),
-                               paoDatum->dfSemiMajor, dfInvFlattening,
-                               NULL, 0, NULL, 0 );
-                    break;
-                }
-                paoDatum++;
+                VSIFClose( fp );
             }
         }
-
+        
 /* -------------------------------------------------------------------- */
-/*      Custom spheroid.                                                */
+/*      If not, look in the ellipsoid/EPSG matching list.               */
 /* -------------------------------------------------------------------- */
-        if ( !paoDatum->pszPCIDatum )      // Didn't found matches
+        if ( !pasDatum->pszPCIDatum )  // No matching; search for ellipsoids
         {
-#ifdef DEBUG
-            CPLDebug( "OSR_PCI",
-                      "Cannot found matching ellipsoid definition." );
-#endif
+            char    *pszName = NULL;
+            double  dfSemiMajor = 0.0;
+            double  dfInvFlattening = 0.0;
+            int     nEPSGCode = 0;
+                    
+            pasDatum = asEllips;
 
-            if( EQUALN( pszProj + 12, "E999", 4 ) 
-                || padfPrjParams[0] != 0.0 )
+            while ( pasDatum->pszPCIDatum )
             {
-                double      dfInvFlattening;
+                if( EQUALN( szEarthModel, pasDatum->pszPCIDatum, 4 ) )
+                {
+                    nEPSGCode = pasDatum->nEPSGCode;
+                    OSRGetEllipsoidInfo( pasDatum->nEPSGCode, &pszName,
+                                         &dfSemiMajor, &dfInvFlattening );
+                    break;
+
+                }
+                pasDatum++;
+            }
+
+/* -------------------------------------------------------------------- */
+/*      If we don't find it in that list, do a lookup in the            */
+/*      pci_ellips.txt file.                                            */
+/* -------------------------------------------------------------------- */
+            if( !pasDatum->pszPCIDatum && szEarthModel[0] == 'E' )
+            {
+                const char *pszCSV = CSVFilename( "pci_ellips.txt" );
+                FILE *fp = NULL;
+                
+                if( pszCSV )
+                    fp = VSIFOpen( pszCSV, "r" );
+                
+                if( fp != NULL )
+                {
+                    char **papszLineItems = NULL;
+                    
+                    while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
+                    {
+                        if( CSLCount(papszLineItems) > 3 
+                            && EQUALN(papszLineItems[0],szEarthModel,4) )
+                        {
+                            dfSemiMajor = CPLAtof( papszLineItems[2] );
+                            double dfSemiMinor = CPLAtof( papszLineItems[3] );
+
+                            if( ABS(dfSemiMajor - dfSemiMinor) < 0.01 )
+                                dfInvFlattening = 0.0;
+                            else
+                                dfInvFlattening = 
+                                    dfSemiMajor / (dfSemiMajor - dfSemiMinor);
+                            break;
+                        }
+                        CSLDestroy( papszLineItems );
+                    }
+                    
+                    VSIFClose( fp );
+                }
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Custom spheroid?                                                */
+/* -------------------------------------------------------------------- */
+            if( dfSemiMajor == 0.0 && EQUALN(szEarthModel,"E999",4) 
+                && padfPrjParams[0] != 0.0 )
+            {
+                dfSemiMajor = padfPrjParams[0];
 
                 if( ABS(padfPrjParams[0] - padfPrjParams[1]) < 0.01 )
                 {
@@ -599,22 +615,70 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                     dfInvFlattening =
                         padfPrjParams[0]/(padfPrjParams[0]-padfPrjParams[1]);
                 }
-
-                SetGeogCS( "Unknown datum based upon the custom spheroid",
-                           "Not specified (based on custom spheroid)",
-                           "Custom spheroid",
-                           padfPrjParams[0], dfInvFlattening,
-                           NULL, 0, NULL, 0 );
             }
-            else
-            {
-                // If we don't know, default to WGS84
-                // so there is something there.
-                SetWellKnownGeogCS( "WGS84" );
-#ifdef DEBUG
-                CPLDebug( "OSR_PCI", "Setting WGS84 as a fallback." );
-#endif
 
+/* -------------------------------------------------------------------- */
+/*      If nothing else, fall back to WGS84 parameters.                 */
+/* -------------------------------------------------------------------- */
+            if( dfSemiMajor == 0.0 )
+            {
+                dfSemiMajor = SRS_WGS84_SEMIMAJOR;
+                dfInvFlattening = SRS_WGS84_INVFLATTENING;
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Now try to put this all together into a GEOGCS definition.      */
+/* -------------------------------------------------------------------- */
+            CPLString osGCSName, osDatumName, osEllipseName;
+
+            if( pszName )
+                osEllipseName = pszName;
+            else
+                osEllipseName.Printf( "Unknown - PCI %s", szEarthModel );
+            CPLFree( pszName );
+
+            if( papszDatumDefn )
+                osDatumName = papszDatumDefn[1];
+            else
+                osDatumName.Printf( "Unknown - PCI %s", szEarthModel );
+            osGCSName = osDatumName;
+
+            SetGeogCS( osGCSName, osDatumName, osEllipseName,
+                       dfSemiMajor, dfInvFlattening );
+
+            // Do we have an ellipsoid EPSG code?
+            if( nEPSGCode != 0 )
+                SetAuthority( "SPHEROID", "EPSG", nEPSGCode );
+
+            // Do we have 7 datum shift parameters?
+            if( CSLCount(papszDatumDefn) >= 15 
+                && CPLAtof(papszDatumDefn[14]) != 0.0 )
+            {
+                double dfScale = CPLAtof(papszDatumDefn[14]);
+
+                // we want scale in parts per million off 1.0
+                // but pci uses a mix of forms. 
+                if( dfScale >= 0.999 && dfScale <= 1.001 )
+                    dfScale = (dfScale-1.0) * 1000000.0;
+
+                SetTOWGS84( CPLAtof(papszDatumDefn[3]),
+                            CPLAtof(papszDatumDefn[4]),
+                            CPLAtof(papszDatumDefn[5]),
+                            CPLAtof(papszDatumDefn[11]),
+                            CPLAtof(papszDatumDefn[12]),
+                            CPLAtof(papszDatumDefn[13]),
+                            dfScale );
+            }
+
+            // Do we have 7 datum shift parameters?
+            else if( CSLCount(papszDatumDefn) == 11 
+                     && (CPLAtof(papszDatumDefn[3]) != 0.0 
+                         || CPLAtof(papszDatumDefn[4]) != 0.0 
+                         || CPLAtof(papszDatumDefn[5]) != 0.0 ) )
+            {
+                SetTOWGS84( CPLAtof(papszDatumDefn[3]),
+                            CPLAtof(papszDatumDefn[4]),
+                            CPLAtof(papszDatumDefn[5]) );
             }
         }
     }
@@ -725,6 +789,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* ==================================================================== */
     char        szProj[17];
 
+    memset( szProj, 0, sizeof(szProj) );
+
     if( IsLocal() )
     {
         if( GetLinearUnits() > 0.30479999 && GetLinearUnits() < 0.3048010 )
@@ -735,11 +801,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 
     else if( pszProjection == NULL )
     {
-#ifdef DEBUG
-        CPLDebug( "OSR_PCI",
-                  "Empty projection definition, considered as LONG/LAT" );
-#endif
-        CPLPrintStringFill( szProj, "LONG/LAT", 17 );
+        CPLPrintStringFill( szProj, "LONG/LAT", 16 );
     }
 
     else if( EQUAL(pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
@@ -959,61 +1021,121 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         CPLPrintStringFill( szProj, "PIXEL", 16 );
     }
     
+/* ==================================================================== */
+/*      Translate the earth model.                                      */
+/* ==================================================================== */
+
 /* -------------------------------------------------------------------- */
-/*      Translate the datum.                                            */
+/*      Is this a well known datum?                                     */
 /* -------------------------------------------------------------------- */
     const char  *pszDatum = GetAttrValue( "DATUM" );
+    char szEarthModel[5];
+
+    memset( szEarthModel, 0, sizeof(szEarthModel) );
 
     if( pszDatum == NULL || strlen(pszDatum) == 0 )
         /* do nothing */;
     else if( EQUAL( pszDatum, SRS_DN_NAD27 ) )
-        CPLPrintStringFill( szProj + 12, "D-01", 4 );
+        CPLPrintStringFill( szEarthModel, "D-01", 4 );
 
     else if( EQUAL( pszDatum, SRS_DN_NAD83 ) )
-        CPLPrintStringFill( szProj + 12, "D-02", 4 );
+        CPLPrintStringFill( szEarthModel, "D-02", 4 );
 
     else if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
-        CPLPrintStringFill( szProj + 12, "D000", 4 );
+        CPLPrintStringFill( szEarthModel, "D000", 4 );
 
-    // If not found well known datum, translate ellipsoid
-    else
+/* -------------------------------------------------------------------- */
+/*      If not a very well known datum, try for an EPSG based           */
+/*      translation.                                                    */
+/* -------------------------------------------------------------------- */
+    if( szEarthModel[0] == '\0' )
+    {
+        const char *pszAuthority = GetAuthorityName("GEOGCS");
+        
+        if( pszAuthority && EQUAL(pszAuthority,"EPSG") )
+        {
+            int nGCS_EPSG = atoi(GetAuthorityCode("GEOGCS"));
+            int i;
+            
+            for( i = 0; asDatums[i].nEPSGCode != 0; i++ )
+            {
+                if( asDatums[i].nEPSGCode == nGCS_EPSG )
+                {
+                    strncpy( szEarthModel, asDatums[i].pszPCIDatum, 5 );
+                    break;
+                }
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we haven't found something yet, try translating the          */
+/*      ellipsoid.                                                      */
+/* -------------------------------------------------------------------- */
+    if( szEarthModel[0] == '\0' )
     {
         double      dfSemiMajor = GetSemiMajor();
         double      dfInvFlattening = GetInvFlattening();
 
-        const PCIDatums   *paoDatum = aoEllips;
+        const PCIDatums   *pasDatum = asEllips;
 
-#ifdef DEBUG
-        CPLDebug( "OSR_PCI",
-                  "Datum \"%s\" unsupported by PCI. "
-                  "Try to translate ellipsoid definition.", pszDatum );
-#endif
-        
-        while ( paoDatum->pszPCIDatum )
+        while ( pasDatum->pszPCIDatum )
         {
             double  dfSM;
             double  dfIF;
 
-            if ( OSRGetEllipsoidInfo( paoDatum->nEPSGCode, NULL,
+            if ( OSRGetEllipsoidInfo( pasDatum->nEPSGCode, NULL,
                                       &dfSM, &dfIF ) == OGRERR_NONE
                  && CPLIsEqual( dfSemiMajor, dfSM )
                  && CPLIsEqual( dfInvFlattening, dfIF ) )
             {
-                CPLPrintStringFill( szProj + 12, paoDatum->pszPCIDatum, 4 );
+                CPLPrintStringFill( szEarthModel, pasDatum->pszPCIDatum, 4 );
                 break;
             }
 
-            paoDatum++;
+            pasDatum++;
         }
 
-        if ( !paoDatum->pszPCIDatum )       // Didn't found matches; set
-        {                                   // custom ellipsoid parameters
-#ifdef DEBUG
-            CPLDebug( "OSR_PCI",
-                      "Ellipsoid \"%s\" unsupported by PCI. "
-                      "Custom PCI ellipsoid will be used.", pszDatum );
-#endif
-            CPLPrintStringFill( szProj + 12, "E999", 4 );
+        // Try to find in pci_ellips.txt
+        if( szEarthModel[0] == '\0' )
+        {
+            const char *pszCSV = CSVFilename( "pci_ellips.txt" );
+            FILE *fp = NULL;
+            double dfSemiMinor;
+
+            if( dfInvFlattening == 0.0 )
+                dfSemiMinor = dfSemiMajor;
+            else
+                dfSemiMinor = dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
+
+
+            if( pszCSV )
+                fp = VSIFOpen( pszCSV, "r" );
+        
+            if( fp != NULL )
+            {
+                char **papszLineItems = NULL;
+                
+                while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
+                {
+                    if( CSLCount(papszLineItems) >= 4 
+                        && CPLIsEqual(dfSemiMajor,CPLAtof(papszLineItems[2]))
+                        && CPLIsEqual(dfSemiMinor,CPLAtof(papszLineItems[3])) )
+                    {
+                        strncpy( szEarthModel, papszLineItems[0], 5 );
+                        break;
+                    }
+                }
+
+                CSLDestroy( papszLineItems );
+                VSIFClose( fp );
+            }            
+        }
+
+        // custom ellipsoid parameters
+        if( szEarthModel[0] == '\0' )
+        {                                   
+            CPLPrintStringFill( szEarthModel, "E999", 4 );
             (*ppadfPrjParams)[0] = dfSemiMajor;
             if ( ABS( dfInvFlattening ) < 0.000000000001 )
             {
@@ -1026,6 +1148,95 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
             }
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      If we have a non-parameteric ellipsoid, scan the                */
+/*      pci_datum.txt for a match.                                      */
+/* -------------------------------------------------------------------- */
+    if( szEarthModel[0] == 'E' 
+        && !EQUAL(szEarthModel,"E999")
+        && pszDatum != NULL )
+    {
+        const char *pszDatumCSV = CSVFilename( "pci_datum.txt" );
+        FILE *fp = NULL;
+        double adfTOWGS84[7];
+        int    bHaveTOWGS84;
+
+        bHaveTOWGS84 = (GetTOWGS84( adfTOWGS84, 7 ) == OGRERR_NONE);
+        
+        if( pszDatumCSV )
+            fp = VSIFOpen( pszDatumCSV, "r" );
+        
+        if( fp != NULL )
+        {
+            char **papszLineItems = NULL;
+            
+            while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
+            {
+                // Compare based on datum name.  This is mostly for
+                // PCI round-tripping.  We won't usually get exact matches
+                // from other sources.
+                if( CSLCount(papszLineItems) > 3 
+                    && EQUAL(papszLineItems[1],pszDatum)
+                    && EQUAL(papszLineItems[2],szEarthModel) )
+                {
+                    strncpy( szEarthModel, papszLineItems[0], 5 );
+                    break;
+                }
+
+                int bTOWGS84Match = bHaveTOWGS84;
+
+                if( CSLCount(papszLineItems) < 11 )
+                    bTOWGS84Match = FALSE;
+
+                if( bTOWGS84Match 
+                    && (!CPLIsEqual(adfTOWGS84[0],CPLAtof(papszLineItems[3]))
+                        || !CPLIsEqual(adfTOWGS84[1],CPLAtof(papszLineItems[4]))
+                        || !CPLIsEqual(adfTOWGS84[2],CPLAtof(papszLineItems[5]))))
+                    bTOWGS84Match = FALSE;
+
+                if( bTOWGS84Match && CSLCount(papszLineItems) >= 15 
+                    && (!CPLIsEqual(adfTOWGS84[3],CPLAtof(papszLineItems[11]))
+                        || !CPLIsEqual(adfTOWGS84[4],CPLAtof(papszLineItems[12]))
+                        || !CPLIsEqual(adfTOWGS84[5],CPLAtof(papszLineItems[13]))))
+                    bTOWGS84Match = FALSE;
+
+                if( bTOWGS84Match && CSLCount(papszLineItems) >= 15 )
+                {
+                    double dfScale = CPLAtof(papszLineItems[14]);
+
+                    // convert to parts per million if is a 1 based scaling.
+                    if( dfScale >= 0.999 && dfScale <= 1.001 )
+                        dfScale = (dfScale-1.0) * 1000000.0;
+
+                    if( !CPLIsEqual(adfTOWGS84[6],dfScale) )
+                        bTOWGS84Match = FALSE;
+                }
+
+                if( bTOWGS84Match && CSLCount(papszLineItems) < 15
+                    && (!CPLIsEqual(adfTOWGS84[3],0.0)
+                        || !CPLIsEqual(adfTOWGS84[4],0.0)
+                        || !CPLIsEqual(adfTOWGS84[5],0.0)
+                        || !CPLIsEqual(adfTOWGS84[6],0.0)) )
+                    bTOWGS84Match = FALSE;
+
+                if( bTOWGS84Match )
+                {
+                    strncpy( szEarthModel, papszLineItems[0], 5 );
+                    break;
+                }
+
+                CSLDestroy( papszLineItems );
+            }
+        
+            CSLDestroy( papszLineItems );
+            VSIFClose( fp );
+        }
+    }
+
+    CPLPrintStringFill( szProj + 12, szEarthModel, 4 );
+
+    CPLDebug( "OSR_PCI", "Translated as '%s'", szProj  );
 
 /* -------------------------------------------------------------------- */
 /*      Translate the linear units.                                     */
