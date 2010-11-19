@@ -2373,8 +2373,6 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
     //  Add NoData for all bands (layer=0) or for a specific band
     // ------------------------------------------------------------
 
-    CPLString osStatement;
-    
     char szRDT[OWCODE];
     char szNoData[OWTEXT];
     
@@ -2396,7 +2394,7 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
 
     OCILobLocator* phLocator = NULL;
     
-    osStatement.Printf(
+    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  GR1 sdo_georaster;\n"
         "BEGIN\n"
@@ -2415,11 +2413,9 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
             sSchema.c_str(), sTable.c_str(), sColumn.c_str(), sWhere.c_str(),
             sColumn.c_str(), sSchema.c_str(), sTable.c_str(),
             sColumn.c_str(),
-            sColumn.c_str() );
+            sColumn.c_str() ) );
 
     CPLFree( pszMetadata );
-    
-    OWStatement* poStmt = poConnection->CreateStatement( osStatement );
 
     poStmt->Bind( &nLayer );
     poStmt->Bind( szNoData );
@@ -2653,9 +2649,7 @@ bool GeoRasterWrapper::FlushMetadata()
         return false;
     }
 
-    CPLString osStatement;
-
-    osStatement.Printf(
+    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  GR1  sdo_georaster;\n"
         "  SRID number;\n"
@@ -2700,12 +2694,10 @@ bool GeoRasterWrapper::FlushMetadata()
         sSchema.c_str(),
         sTable.c_str(),
         sColumn.c_str(),
-        sWhere.c_str() );
+        sWhere.c_str() ) );
 
     CPLFree( pszMetadata );
     
-    OWStatement* poStmt = poConnection->CreateStatement( osStatement );
-
     poStmt->Bind( &nSRID );
     poStmt->Bind( &nModelCoordinateLocation );
     poStmt->Bind( &dfXCoefficient[0] );
