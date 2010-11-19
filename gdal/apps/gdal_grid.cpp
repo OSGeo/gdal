@@ -215,7 +215,7 @@ static void ProcessGeometry( OGRPoint *poGeom, OGRGeometry *poClipSrc,
                              int iBurnField, double dfBurnValue,
                              std::vector<double> &adfX,
                              std::vector<double> &adfY,
-                             std::vector<double> &adfZ)
+                             std::vector<double> &adfZ )
 
 {
     if ( poClipSrc && !poGeom->Within(poClipSrc) )
@@ -309,7 +309,7 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         OGRFeature::DestroyFeature( poFeat );
     }
 
-    if (adfX.size() == 0)
+    if ( adfX.size() == 0 )
     {
         printf( "No point geometry found on layer %s, skipping.\n",
                 OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
@@ -319,19 +319,24 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
 /*      Compute grid geometry.                                          */
 /* -------------------------------------------------------------------- */
-
-    if ( !bIsXExtentSet )
+    if ( !bIsXExtentSet || !bIsYExtentSet )
     {
-        dfXMin = *std::min_element(adfX.begin(), adfX.end());
-        dfXMax = *std::max_element(adfX.begin(), adfX.end());
-        bIsXExtentSet = TRUE;
-    }
+        OGREnvelope sEnvelope;
+        OGR_L_GetExtent( hSrcLayer, &sEnvelope, TRUE );
 
-    if ( !bIsYExtentSet )
-    {
-        dfYMin = *std::min_element(adfY.begin(), adfY.end());
-        dfYMax = *std::max_element(adfY.begin(), adfY.end());
-        bIsYExtentSet = TRUE;
+        if ( !bIsXExtentSet )
+        {
+            dfXMin = sEnvelope.MinX;
+            dfXMax = sEnvelope.MaxX;
+            bIsXExtentSet = TRUE;
+        }
+
+        if ( !bIsYExtentSet )
+        {
+            dfYMin = sEnvelope.MinY;
+            dfYMax = sEnvelope.MaxY;
+            bIsYExtentSet = TRUE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -782,17 +787,37 @@ int main( int argc, char ** argv )
             Usage();
         }
     }
-    else if ( bClipSrc && poClipSrc == NULL )
+    else if ( bClipSrc && poClipSrc == NULL && !poSpatialFilter )
     {
-        if ( poSpatialFilter )
-            poClipSrc = poSpatialFilter->clone();
-        if ( poClipSrc == NULL )
+        fprintf( stderr,
+                 "FAILURE: -clipsrc must be used with -spat option or \n"
+                 "a bounding box, WKT string or datasource must be "
+                 "specified\n\n" );
+        Usage();
+    }
+
+    if ( poSpatialFilter )
+    {
+        if ( poClipSrc )
         {
-            fprintf( stderr,
-                     "FAILURE: -clipsrc must be used with -spat option or \n"
-                     "a bounding box, WKT string or datasource must be "
-                     "specified\n\n" );
-            Usage();
+            OGRGeometry *poTemp = poSpatialFilter->Intersection( poClipSrc );
+
+            if ( poTemp )
+            {
+                OGRGeometryFactory::destroyGeometry( poSpatialFilter );
+                poSpatialFilter = poTemp;
+            }
+
+            OGRGeometryFactory::destroyGeometry( poClipSrc );
+            poClipSrc = NULL;
+        }
+    }
+    else
+    {
+        if ( poClipSrc )
+        {
+            poSpatialFilter = poClipSrc;
+            poClipSrc = NULL;
         }
     }
 
@@ -883,7 +908,7 @@ int main( int argc, char ** argv )
         if( hLayer != NULL )
         {
             // Custom layer will be rasterized in the first band.
-            ProcessLayer( hLayer, hDstDS, poClipSrc, nXSize, nYSize, 1,
+            ProcessLayer( hLayer, hDstDS, poSpatialFilter, nXSize, nYSize, 1,
                           bIsXExtentSet, bIsYExtentSet,
                           dfXMin, dfXMax, dfYMin, dfYMax, pszBurnAttribute,
                           eOutputType, eAlgorithm, pOptions,
@@ -921,7 +946,7 @@ int main( int argc, char ** argv )
                 OSRExportToWkt( hSRS, &pszOutputSRS );
         }
 
-        ProcessLayer( hLayer, hDstDS, poClipSrc, nXSize, nYSize,
+        ProcessLayer( hLayer, hDstDS, poSpatialFilter, nXSize, nYSize,
                       i + 1 + nBands - nLayerCount,
                       bIsXExtentSet, bIsYExtentSet,
                       dfXMin, dfXMax, dfYMin, dfYMax, pszBurnAttribute,
@@ -956,7 +981,6 @@ int main( int argc, char ** argv )
     OGR_DS_Destroy( hSrcDS );
     GDALClose( hDstDS );
     OGRGeometryFactory::destroyGeometry( poSpatialFilter );
-    OGRGeometryFactory::destroyGeometry( poClipSrc );
 
     CPLFree( pOptions );
     CSLDestroy( papszCreateOptions );
