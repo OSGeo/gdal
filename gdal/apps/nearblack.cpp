@@ -179,7 +179,20 @@ int main( int argc, char ** argv )
             }
         }
 
- 
+        if (bSetMask)
+        {
+            if (nBands == 3){
+            }
+            else if (nBands == 4)
+                nDstBands = nBands = 3;
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Number of bands of file = %d. Expected 3 or 4.",
+                         nBands);
+                exit(1);
+            }
+        }
         hOutDS = GDALCreate( hDriver, pszOutFile, 
                              nXSize, nYSize, nDstBands, GDT_Byte, 
                              papszCreationOptions );
@@ -207,6 +220,20 @@ int main( int argc, char ** argv )
             }
 
             nBands --;
+        }
+
+        if (bSetMask)
+        {
+            if (nBands == 4)
+                nDstBands = nBands = 3;
+
+            if (nBands != 3)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Number of bands of output file = %d. Expected 3.",
+                        nBands);
+                exit(1);
+            }
         }
     }
 
