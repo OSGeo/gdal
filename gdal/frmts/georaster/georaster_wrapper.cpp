@@ -2373,8 +2373,6 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
     //  Add NoData for all bands (layer=0) or for a specific band
     // ------------------------------------------------------------
 
-    CPLString osStatement;
-    
     char szRDT[OWCODE];
     char szNoData[OWTEXT];
     
@@ -2396,14 +2394,18 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
 
     OCILobLocator* phLocator = NULL;
     
-    osStatement.Printf(
+    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  GR1 sdo_georaster;\n"
         "BEGIN\n"
         "  SELECT %s INTO GR1 FROM %s%s T WHERE %s FOR UPDATE;\n"
-        "  GR1.metadata := XMLTYPE('%s');\n"
-        "  SDO_GEOR.addNODATA( GR1, :1, :2 );\n"
+        "\n"
+        "  GR1.metadata := sys.xmltype.createxml(:1);\n"
+        "\n"
+        "  SDO_GEOR.addNODATA( GR1, :2, :3 );\n"
+        "\n"
         "  UPDATE %s%s T SET %s = GR1 WHERE %s;\n"
+        "\n"
         "  EXECUTE IMMEDIATE\n"
         "    'SELECT T.%s.METADATA.getClobVal() FROM %s%s T \n"
         "     WHERE  T.%s.RASTERDATATABLE = UPPER(:1)\n"
@@ -2411,27 +2413,29 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
         "    INTO :metadata USING :rdt, :rid;\n"
         "END;",
             sColumn.c_str(), sSchema.c_str(), sTable.c_str(), sWhere.c_str(),
-            pszMetadata,
             sSchema.c_str(), sTable.c_str(), sColumn.c_str(), sWhere.c_str(),
             sColumn.c_str(), sSchema.c_str(), sTable.c_str(),
             sColumn.c_str(),
-            sColumn.c_str() );
+            sColumn.c_str() ) );
 
-    CPLFree( pszMetadata );
-    
-    OWStatement* poStmt = poConnection->CreateStatement( osStatement );
+    poStmt->WriteCLob( &phLocator, pszMetadata );
 
+    poStmt->Bind( &phLocator );
     poStmt->Bind( &nLayer );
     poStmt->Bind( szNoData );
-    poStmt->BindName( ":metadata", &phLocator );
     poStmt->BindName( ":rdt", szRDT );
     poStmt->BindName( ":rid", &nRID );
 
+    CPLFree( pszMetadata );    
+
     if( ! poStmt->Execute() )
     {
+        OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
         delete poStmt;
         return false;
     }
+
+    OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
 
     // ------------------------------------------------------------
     //  Read the XML metadata from db to memory with nodata updates
@@ -2444,6 +2448,8 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
         CPLDestroyXMLNode( phMetadata );
         
         phMetadata = CPLParseXMLString( pszXML );
+
+        CPLFree( pszXML );
     }
 
     bFlushMetadata = true;
@@ -2653,9 +2659,9 @@ bool GeoRasterWrapper::FlushMetadata()
         return false;
     }
 
-    CPLString osStatement;
+    OCILobLocator* phLocator = NULL;
 
-    osStatement.Printf(
+    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  GR1  sdo_georaster;\n"
         "  SRID number;\n"
@@ -2664,15 +2670,15 @@ bool GeoRasterWrapper::FlushMetadata()
         "\n"
         "  SELECT %s INTO GR1 FROM %s%s T WHERE %s FOR UPDATE;\n"
         "\n"
-        "  GR1.metadata := XMLTYPE('%s');\n"
+        "  GR1.metadata := sys.xmltype.createxml(:1);\n"
         "\n"
-        "  SRID := :1;\n"
+        "  SRID := :2;\n"
         "  IF SRID = 0 THEN\n"
         "    SRID := %d;\n"
         "  END IF;\n"
         "\n"
-        "  SDO_GEOR.georeference( GR1, SRID, :2,"
-        " SDO_NUMBER_ARRAY(:3, :4, :5), SDO_NUMBER_ARRAY(:6, :7, :8));\n"
+        "  SDO_GEOR.georeference( GR1, SRID, :3,"
+        " SDO_NUMBER_ARRAY(:4, :5, :6), SDO_NUMBER_ARRAY(:7, :8, :9));\n"
         "\n"
         "  IF SRID = %d THEN\n"
         "    GR1.spatialExtent := NULL;\n"
@@ -2689,23 +2695,21 @@ bool GeoRasterWrapper::FlushMetadata()
         "\n"
         "  COMMIT;\n"
         "END;",
-        sColumn.c_str(),
-        sSchema.c_str(),
-        sTable.c_str(),
-        sWhere.c_str(),
-        pszMetadata,
-        UNKNOWN_CRS,
-        UNKNOWN_CRS,
-        sValueAttributeTab.c_str(),
-        sSchema.c_str(),
-        sTable.c_str(),
-        sColumn.c_str(),
-        sWhere.c_str() );
+            sColumn.c_str(),
+            sSchema.c_str(),
+            sTable.c_str(),
+            sWhere.c_str(),
+            UNKNOWN_CRS,
+            UNKNOWN_CRS,
+            sValueAttributeTab.c_str(),
+            sSchema.c_str(),
+            sTable.c_str(),
+            sColumn.c_str(),
+            sWhere.c_str() ) );
 
-    CPLFree( pszMetadata );
+    poStmt->WriteCLob( &phLocator, pszMetadata );
     
-    OWStatement* poStmt = poConnection->CreateStatement( osStatement );
-
+    poStmt->Bind( &phLocator );
     poStmt->Bind( &nSRID );
     poStmt->Bind( &nModelCoordinateLocation );
     poStmt->Bind( &dfXCoefficient[0] );
@@ -2715,11 +2719,16 @@ bool GeoRasterWrapper::FlushMetadata()
     poStmt->Bind( &dfYCoefficient[1] );
     poStmt->Bind( &dfYCoefficient[2] );
 
+    CPLFree( pszMetadata );
+
     if( ! poStmt->Execute() )
     {
+        OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
         delete poStmt;
         return false;
     }
+
+    OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
 
     delete poStmt;
 
