@@ -749,6 +749,29 @@ void OWStatement::Bind( sdo_geometry** pphData )
 
 }
 
+void OWStatement::Bind( OCILobLocator** pphLocator )
+{
+    OCIBind* hBind = NULL;
+
+    nNextBnd++;
+
+    CheckError( OCIBindByPos(
+        hStmt,
+        &hBind,
+        hError,
+        (ub4) nNextBnd,
+        (dvoid*) pphLocator,
+        (sb4) -1,
+        (ub2) SQLT_CLOB,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) NULL,
+        (ub4) NULL,
+        (ub4) OCI_DEFAULT ),
+        hError );
+}
+
 void OWStatement::Bind( OCIArray** pphData, OCIType* type )
 {
     OCIBind* hBind = NULL;
@@ -911,6 +934,51 @@ void OWStatement::Define( OCILobLocator** pphLocator )
         (ub2*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
+}
+
+void OWStatement::WriteCLob( OCILobLocator** pphLocator, char* pszData )
+{
+    OCIDefine*  hDefine = NULL;
+
+    nNextCol++;
+
+    CheckError( OCIDescriptorAlloc(
+        poConnection->hEnv,
+        (void**) pphLocator,
+        OCI_DTYPE_LOB,
+        (size_t) 0,
+        (dvoid **) 0),
+        hError );
+
+    CheckError( OCILobCreateTemporary( 
+        poConnection->hSvcCtx,
+        poConnection->hError,
+        (OCILobLocator*) *pphLocator,
+        (ub4) OCI_DEFAULT,
+        (ub1) OCI_DEFAULT,
+        (ub1) OCI_TEMP_CLOB,
+        false,
+        OCI_DURATION_SESSION ),
+        hError );
+
+    ub4 nAmont = (ub4) strlen(pszData);
+
+    CheckError( OCILobWrite(
+        poConnection->hSvcCtx,
+        hError,
+        *pphLocator,
+        (ub4*) &nAmont,
+        (ub4) 1,
+        (dvoid*) pszData,
+        (ub4) strlen(pszData),
+        (ub1) OCI_ONE_PIECE,
+        (dvoid*) NULL,
+        NULL,
+        (ub2) 0,
+        (ub1) SQLCS_IMPLICIT ),
+        hError );
+
+    CPLDebug("GEOR","Clob = %d = %d", nAmont, strlen(pszData));
 }
 
 void OWStatement::Define( OCIArray** pphData )
