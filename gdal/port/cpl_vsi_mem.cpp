@@ -476,6 +476,8 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
                                    int nFlags )
     
 {
+    (void) nFlags;
+
     CPLMutexHolder oHolder( &hMutex );
 
     CPLString osFilename = pszFilename;
@@ -554,6 +556,8 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
                                     long nMode )
 
 {
+    (void) nMode;
+
     CPLMutexHolder oHolder( &hMutex );
 
     CPLString osPathname = pszPathname;

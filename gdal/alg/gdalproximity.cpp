@@ -170,12 +170,12 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     float fNoDataValue;
     pszOpt = CSLFetchNameValue( papszOptions, "NODATA" );
     if( pszOpt != NULL )
-        fNoDataValue = atof(pszOpt);
+        fNoDataValue = (float) atof(pszOpt);
     else
     {
         int bSuccess;
 
-        fNoDataValue = GDALGetRasterNoDataValue( hProximityBand, &bSuccess );
+        fNoDataValue = (float) GDALGetRasterNoDataValue( hProximityBand, &bSuccess );
         if( !bSuccess )
             fNoDataValue = 65535.0;
     }
@@ -366,7 +366,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
                 if( bFixedBufVal )
                     pafProximity[i] = (float) dfFixedBufVal;
                 else 
-                    pafProximity[i] *= dfDistMult;
+                    pafProximity[i] = (float)(pafProximity[i] * dfDistMult);
             }
         }
   
@@ -464,14 +464,14 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      Are we near(er) to the closest target to the above (below)      */
 /*      pixel?                                                          */
 /* -------------------------------------------------------------------- */
-        float fNearDistSq = MAX(dfMaxDist,nXSize) * MAX(dfMaxDist,nXSize) * 2;
+        float fNearDistSq = (float) (MAX(dfMaxDist,nXSize) * MAX(dfMaxDist,nXSize) * 2);
         float fDistSq;
 
         if( panNearX[iPixel] != -1 )
         {
-            fDistSq = 
-                (panNearX[iPixel] - iPixel) * (panNearX[iPixel] - iPixel)
-                + (panNearY[iPixel] - iLine) * (panNearY[iPixel] - iLine);
+            fDistSq = (float)
+                ((panNearX[iPixel] - iPixel) * (panNearX[iPixel] - iPixel)
+                 + (panNearY[iPixel] - iLine) * (panNearY[iPixel] - iLine));
 
             if( fDistSq < fNearDistSq )
             {
@@ -492,9 +492,9 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 
         if( iPixel != iStart && panNearX[iLast] != -1 )
         {
-            fDistSq = 
-                (panNearX[iLast] - iPixel) * (panNearX[iLast] - iPixel)
-                + (panNearY[iLast] - iLine) * (panNearY[iLast] - iLine);
+            fDistSq = (float)
+                ((panNearX[iLast] - iPixel) * (panNearX[iLast] - iPixel)
+                 + (panNearY[iLast] - iLine) * (panNearY[iLast] - iLine));
 
             if( fDistSq < fNearDistSq )
             {
@@ -512,9 +512,9 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 
         if( iTR != iEnd && panNearX[iTR] != -1 )
         {
-            fDistSq = 
-                (panNearX[iTR] - iPixel) * (panNearX[iTR] - iPixel)
-                + (panNearY[iTR] - iLine) * (panNearY[iTR] - iLine);
+            fDistSq = (float)
+                ((panNearX[iTR] - iPixel) * (panNearX[iTR] - iPixel)
+                 + (panNearY[iTR] - iLine) * (panNearY[iTR] - iLine));
 
             if( fDistSq < fNearDistSq )
             {
