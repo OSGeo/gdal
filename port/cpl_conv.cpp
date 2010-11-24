@@ -1633,7 +1633,7 @@ double CPLDMSToDec( const char *is )
         ++s;
     }
     /* postfix sign */
-    if (*s && (p = (char *) strchr(sym, *s))) {
+    if (*s && ((p = (char *) strchr(sym, *s))) != NULL) {
         sign = (p - sym) >= 4 ? '-' : '+';
         ++s;
     }
