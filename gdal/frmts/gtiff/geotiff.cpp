@@ -3186,6 +3186,19 @@ CPLErr GTiffDataset::IBuildOverviews(
 void GTiffDataset::WriteGeoTIFFInfo()
 
 {
+    bool bPixelIsPoint = false;
+    int  bPointGeoIgnore = FALSE;
+
+    if( GetMetadataItem( GDALMD_AREA_OR_POINT ) 
+        && EQUAL(GetMetadataItem(GDALMD_AREA_OR_POINT),
+                 GDALMD_AOP_POINT) )
+    {
+        bPixelIsPoint = true;
+        bPointGeoIgnore = 
+            CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
+                                               "TRUE") );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If the geotransform is the default, don't bother writing it.    */
 /* -------------------------------------------------------------------- */
@@ -3217,6 +3230,12 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	    adfTiePoints[3] = adfGeoTransform[0];
 	    adfTiePoints[4] = adfGeoTransform[3];
 	    adfTiePoints[5] = 0.0;
+
+            if( bPixelIsPoint && !bPointGeoIgnore )
+            {
+                adfTiePoints[3] += adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5;
+                adfTiePoints[4] += adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5;
+            }
 	    
             if( !EQUAL(osProfile,"BASELINE") )
                 TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
@@ -3235,6 +3254,12 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	    adfMatrix[7] = adfGeoTransform[3];
 	    adfMatrix[15] = 1.0;
 	    
+            if( bPixelIsPoint && !bPointGeoIgnore )
+            {
+                adfMatrix[3] += adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5;
+                adfMatrix[7] += adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5;
+            }
+
             if( !EQUAL(osProfile,"BASELINE") )
                 TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
 	}
@@ -3263,6 +3288,12 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	    padfTiePoints[iGCP*6+3] = pasGCPList[iGCP].dfGCPX;
 	    padfTiePoints[iGCP*6+4] = pasGCPList[iGCP].dfGCPY;
 	    padfTiePoints[iGCP*6+5] = pasGCPList[iGCP].dfGCPZ;
+
+            if( bPixelIsPoint && !bPointGeoIgnore )
+            {
+                padfTiePoints[iGCP*6+0] += 0.5;
+                padfTiePoints[iGCP*6+1] += 0.5;
+            }
 	}
 
         if( !EQUAL(osProfile,"BASELINE") )
@@ -3303,9 +3334,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
         // set according to coordinate system.
         GTIFSetFromOGISDefn( psGTIF, pszProjection );
 
-        if( GetMetadataItem( GDALMD_AREA_OR_POINT ) 
-            && EQUAL(GetMetadataItem(GDALMD_AREA_OR_POINT),
-                     GDALMD_AOP_POINT) )
+        if( bPixelIsPoint )
         {
             GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
                        RasterPixelIsPoint);
@@ -4512,6 +4541,24 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         char    *pszTabWKT = NULL;
         double	*padfTiePoints, *padfScale, *padfMatrix;
         uint16	nCount;
+        bool    bPixelIsPoint = false;
+        short nRasterType;
+        GTIF	*psGTIF;
+        int     bPointGeoIgnore = FALSE;
+
+        psGTIF = GTIFNew( hTIFF ); // I wonder how expensive this is?
+
+        if( GTIFKeyGet(psGTIF, GTRasterTypeGeoKey, &nRasterType, 
+                       0, 1 ) == 1 
+            && nRasterType == (short) RasterPixelIsPoint )
+        {
+            bPixelIsPoint = true;
+            bPointGeoIgnore = 
+                CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
+                                                   "TRUE") );
+        }
+
+        GTIFFree( psGTIF );
 
         adfGeoTransform[0] = 0.0;
         adfGeoTransform[1] = 1.0;
@@ -4535,6 +4582,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                 adfGeoTransform[3] =
                     padfTiePoints[4] - padfTiePoints[1] * adfGeoTransform[5];
 
+                if( bPixelIsPoint && !bPointGeoIgnore )
+                {
+                    adfGeoTransform[0] -= (adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5);
+                    adfGeoTransform[3] -= (adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5);
+                }
+
                 bGeoTransformValid = TRUE;
             }
         }
@@ -4548,6 +4601,13 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             adfGeoTransform[3] = padfMatrix[7];
             adfGeoTransform[4] = padfMatrix[4];
             adfGeoTransform[5] = padfMatrix[5];
+
+            if( bPixelIsPoint && !bPointGeoIgnore )
+            {
+                adfGeoTransform[0] -= (adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5);
+                adfGeoTransform[3] -= (adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5);
+            }
+
             bGeoTransformValid = TRUE;
         }
 
@@ -4598,6 +4658,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                 pasGCPList[iGCP].dfGCPX = padfTiePoints[iGCP*6+3];
                 pasGCPList[iGCP].dfGCPY = padfTiePoints[iGCP*6+4];
                 pasGCPList[iGCP].dfGCPZ = padfTiePoints[iGCP*6+5];
+
+                if( bPixelIsPoint && !bPointGeoIgnore )
+                {
+                    pasGCPList[iGCP].dfGCPPixel -= 0.5;
+                    pasGCPList[iGCP].dfGCPLine -= 0.5;
+                }
             }
         }
 
@@ -6113,6 +6179,22 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Are we addressing PixelIsPoint mode?                            */
+/* -------------------------------------------------------------------- */
+    bool bPixelIsPoint = false;
+    int  bPointGeoIgnore = FALSE;
+
+    if( poSrcDS->GetMetadataItem( GDALMD_AREA_OR_POINT ) 
+        && EQUAL(poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT),
+                 GDALMD_AOP_POINT) )
+    {
+        bPixelIsPoint = true;
+        bPointGeoIgnore = 
+            CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
+                                               "TRUE") );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Write affine transform if it is meaningful.                     */
 /* -------------------------------------------------------------------- */
     const char *pszProjection = NULL;
@@ -6143,7 +6225,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 adfTiePoints[3] = adfGeoTransform[0];
                 adfTiePoints[4] = adfGeoTransform[3];
                 adfTiePoints[5] = 0.0;
-        
+                
+                if( bPixelIsPoint && !bPointGeoIgnore )
+                {
+                    adfTiePoints[3] += adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5;
+                    adfTiePoints[4] += adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5;
+                }
+	    
                 TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
             }
             else
@@ -6159,6 +6247,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 adfMatrix[5] = adfGeoTransform[5];
                 adfMatrix[7] = adfGeoTransform[3];
                 adfMatrix[15] = 1.0;
+                
+                if( bPixelIsPoint && !bPointGeoIgnore )
+                {
+                    adfMatrix[3] += adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5;
+                    adfMatrix[7] += adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5;
+                }
 
                 TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
             }
@@ -6195,6 +6289,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             padfTiePoints[iGCP*6+3] = pasGCPs[iGCP].dfGCPX;
             padfTiePoints[iGCP*6+4] = pasGCPs[iGCP].dfGCPY;
             padfTiePoints[iGCP*6+5] = pasGCPs[iGCP].dfGCPZ;
+
+            if( bPixelIsPoint && !bPointGeoIgnore )
+            {
+                padfTiePoints[iGCP*6+0] += 0.5;
+                padfTiePoints[iGCP*6+1] += 0.5;
+            }
         }
 
         TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 
