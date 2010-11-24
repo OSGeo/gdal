@@ -738,7 +738,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     nScanlineBytes = nBandCount * poDS->GetRasterXSize()
         * (GDALGetDataTypeSize(eType)/8);
 
-    if ( pszYChunkSize && (nYChunkSize = atoi(pszYChunkSize)) )
+    if ( pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0 )
         ;
     else
     {

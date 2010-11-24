@@ -1362,11 +1362,11 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
 
             pszValue = CSLFetchNameValue( papszParms, "max_points" );
             ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                nMaxPoints = (pszValue) ? CPLAtofM(pszValue) : 0;
+                nMaxPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue( papszParms, "min_points" );
             ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                nMinPoints = (pszValue) ? CPLAtofM(pszValue) : 0;
+                nMinPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
             ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
@@ -1391,7 +1391,7 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
 
             pszValue = CSLFetchNameValue( papszParms, "min_points" );
             ((GDALGridMovingAverageOptions *)*ppOptions)->
-                nMinPoints = (pszValue) ? CPLAtofM(pszValue) : 0;
+                nMinPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
             ((GDALGridMovingAverageOptions *)*ppOptions)->

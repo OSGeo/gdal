@@ -120,7 +120,7 @@ GDALFilterLine( float *pafLastLine, float *pafThisLine, float *pafNextLine,
             }
         }
 
-        pafOutLine[iX] = dfValSum / dfWeightSum;
+        pafOutLine[iX] = (float) (dfValSum / dfWeightSum);
     }
 }
 
@@ -752,7 +752,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             {
                 pabyMask[iX] = 255;
                 pabyFiltMask[iX] = 255;
-                pafScanline[iX] = dfValueSum / dfWeightSum;
+                pafScanline[iX] = (float) (dfValueSum / dfWeightSum);
             }
 
         }

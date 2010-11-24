@@ -76,17 +76,17 @@ public:
                                     const char *pszAccess) = 0;
     virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags) = 0;
     virtual int Unlink( const char *pszFilename )
-                      { errno=ENOENT; return -1; }
+                      { (void) pszFilename; errno=ENOENT; return -1; }
     virtual int Mkdir( const char *pszDirname, long nMode ) 
-                     { errno=ENOENT; return -1; }
+                      {(void)pszDirname; (void)nMode; errno=ENOENT; return -1;}
     virtual int Rmdir( const char *pszDirname ) 
-                     { errno=ENOENT; return -1; }
+                      { (void) pszDirname; errno=ENOENT; return -1; }
     virtual char **ReadDir( const char *pszDirname ) 
-                          { return NULL; }
+                      { (void) pszDirname; return NULL; }
     virtual int Rename( const char *oldpath, const char *newpath )
-                      { errno=ENOENT; return -1; }
+                      { (void) oldpath; (void)newpath; errno=ENOENT; return -1; }
     virtual int IsCaseSensitive( const char* pszFilename )
-                      { return TRUE; }
+                      { (void) pszFilename; return TRUE; }
 };
 
 /************************************************************************/

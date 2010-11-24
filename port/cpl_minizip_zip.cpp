@@ -446,7 +446,7 @@ local uLong ziplocal_SearchCentralDir(
         return 0;
 
 
-    uSizeFile = ZTELL(*pzlib_filefunc_def,filestream);
+    uSizeFile = (uLong) ZTELL(*pzlib_filefunc_def,filestream);
 
     if (uMaxBack>uSizeFile)
         uMaxBack = uSizeFile;
@@ -516,7 +516,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
 
     if (ziinit.filestream == NULL)
         return NULL;
-    ziinit.begin_pos = ZTELL(ziinit.z_filefunc,ziinit.filestream);
+    ziinit.begin_pos = (uLong) ZTELL(ziinit.z_filefunc,ziinit.filestream);
     ziinit.in_opened_file_inzip = 0;
     ziinit.ci.stream_initialised = 0;
     ziinit.number_entry = 0;
@@ -759,7 +759,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     zi->ci.stream_initialised = 0;
     zi->ci.pos_in_buffered_data = 0;
     zi->ci.raw = raw;
-    zi->ci.pos_local_header = ZTELL(zi->z_filefunc,zi->filestream) ;
+    zi->ci.pos_local_header = (uLong) ZTELL(zi->z_filefunc,zi->filestream) ;
     zi->ci.size_centralheader = SIZECENTRALHEADER + size_filename +
                                       size_extrafield_global + size_comment;
     zi->ci.central_header = (char*)ALLOC((uInt)zi->ci.size_centralheader);
@@ -1081,7 +1081,7 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (
 
     if (err==ZIP_OK)
     {
-        long cur_pos_inzip = ZTELL(zi->z_filefunc,zi->filestream);
+        long cur_pos_inzip = (uLong) ZTELL(zi->z_filefunc,zi->filestream);
         if (ZSEEK(zi->z_filefunc,zi->filestream,
                   zi->ci.pos_local_header + 14,ZLIB_FILEFUNC_SEEK_SET)!=0)
             err = ZIP_ERRNO;
@@ -1139,7 +1139,7 @@ extern int ZEXPORT cpl_zipClose (
     else
         size_global_comment = (uInt)strlen(global_comment);
 
-    centraldir_pos_inzip = ZTELL(zi->z_filefunc,zi->filestream);
+    centraldir_pos_inzip = (uLong) ZTELL(zi->z_filefunc,zi->filestream);
     if (err==ZIP_OK)
     {
         linkedlist_datablock_internal* ldi = zi->central_dir.first_block ;
