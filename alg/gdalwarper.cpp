@@ -728,7 +728,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     else
     {
         for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
-            pafMask[iPixel] = (int) ( pafMask[iPixel] * 255.1 );
+            pafMask[iPixel] = (float)(int) ( pafMask[iPixel] * 255.1 );
         
         // Write data.
 

@@ -70,7 +70,7 @@ public:
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
     virtual int      IsCaseSensitive( const char* pszFilename )
-                      { return FALSE; }
+                      { (void) pszFilename; return FALSE; }
 };
 
 /************************************************************************/
@@ -423,6 +423,8 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
                                      int nFlags )
 
 {
+    (void) nFlags;
+
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )

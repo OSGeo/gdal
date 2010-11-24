@@ -349,7 +349,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     int    nInYSize = GDALGetRasterYSize( hSrcDS );
 
 #define N_PIXELSTEP 50
-    int nSteps = double(MIN(nInYSize, nInXSize)) / N_PIXELSTEP + .5;
+    int nSteps = (int) (double(MIN(nInYSize, nInXSize)) / N_PIXELSTEP + .5);
     if (nSteps < 20)
         nSteps = 20;
 

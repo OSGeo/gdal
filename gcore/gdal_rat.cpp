@@ -1401,13 +1401,13 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
         }
         else
         {
-            sColor.c1 = GetValueAsInt( iRow, iRed );
-            sColor.c2 = GetValueAsInt( iRow, iGreen );
-            sColor.c3 = GetValueAsInt( iRow, iBlue );
+            sColor.c1 = (short) GetValueAsInt( iRow, iRed );
+            sColor.c2 = (short) GetValueAsInt( iRow, iGreen );
+            sColor.c3 = (short) GetValueAsInt( iRow, iBlue );
             if( iAlpha == -1 )
                 sColor.c4 = 255;
             else
-                sColor.c4 = GetValueAsInt( iRow, iAlpha );
+                sColor.c4 = (short) GetValueAsInt( iRow, iAlpha );
         }
         
         poCT->SetColorEntry( iEntry, &sColor );

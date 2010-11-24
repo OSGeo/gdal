@@ -395,7 +395,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
         oRegion.nLength = 
             CPLScanUIntBig( CPLGetXMLValue(psRegion,"RegionLength","0" ), 32);
 
-        oRegion.byValue = atoi(CPLGetXMLValue(psRegion,"Value","0" ));
+        oRegion.byValue = (GByte) atoi(CPLGetXMLValue(psRegion,"Value","0" ));
 
         poHandle->aoRegions.push_back( oRegion );
     }

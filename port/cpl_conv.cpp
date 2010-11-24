@@ -564,6 +564,8 @@ const char *CPLReadLineL( VSILFILE * fp )
 const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars, char** papszOptions )
 
 {
+    (void) papszOptions;
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup case.                                                   */
 /* -------------------------------------------------------------------- */
