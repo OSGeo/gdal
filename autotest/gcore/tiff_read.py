@@ -552,6 +552,79 @@ Definition Table
 
     return 'success'
 
+###############################################################################
+# Test reading PixelIsPoint file.
+
+def tiff_read_pixelispoint():
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+
+    ds = gdal.Open( 'data/byte_point.tif' )
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
+
+    if gt != gt_expected:
+        print(gt)
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        return 'fail'
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'TRUE' )
+
+    ds = gdal.Open( 'data/byte_point.tif' )
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    gt_expected = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
+
+    if gt != gt_expected:
+        print(gt)
+        gdaltest.post_reason( 'did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE' )
+        return 'fail'
+    
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+
+    return 'success'
+
+###############################################################################
+# Test reading a GeoTIFF file with a geomatrix in PixelIsPoint format.
+
+def tiff_read_geomatrix():
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+
+    ds = gdal.Open( 'data/geomatrix.tif' )
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    gt_expected = (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5)
+
+    if gt != gt_expected:
+        print(gt)
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        return 'fail'
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'TRUE' )
+
+    ds = gdal.Open( 'data/geomatrix.tif' )
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    gt_expected = (1841000.0, 1.5, -5.0, 1144000.0, -5.0, -1.5)
+
+    if gt != gt_expected:
+        print(gt)
+        gdaltest.post_reason( 'did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE' )
+        return 'fail'
+    
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+
+    return 'success'
+
+
+###############################################################################################
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -580,6 +653,8 @@ gdaltest_list.append( (tiff_ProjectedCSTypeGeoKey_only) )
 gdaltest_list.append( (tiff_12bitjpeg) )
 gdaltest_list.append( (tiff_read_stats_from_pam) )
 gdaltest_list.append( (tiff_read_from_tab) )
+gdaltest_list.append( (tiff_read_pixelispoint) )
+gdaltest_list.append( (tiff_read_geomatrix) )
 
 if __name__ == '__main__':
 
