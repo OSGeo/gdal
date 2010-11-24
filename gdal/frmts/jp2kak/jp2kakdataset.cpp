@@ -756,6 +756,8 @@ JP2KAKDataset::JP2KAKDataset()
     nGCPCount = 0;
     pasGCPList = NULL;
     family = NULL;
+    jpip_client = NULL;
+    poThreadEnv = NULL;
 
     bPreferNPReads = false;
 
