@@ -4838,7 +4838,7 @@ unsigned char* GDALRasterBand::GetIndexColorTranslationTo(GDALRasterBand* poRefe
                             entry->c2 == entryRef->c2 &&
                             entry->c3 == entryRef->c3)
                         {
-                            pTranslationTable[i] = j;
+                            pTranslationTable[i] = (unsigned char) j;
                             break;
                         }
                     }
@@ -4861,11 +4861,11 @@ unsigned char* GDALRasterBand::GetIndexColorTranslationTo(GDALRasterBand* poRefe
                                 best_distance = distance;
                             }
                         }
-                        pTranslationTable[i] = best_j;
+                        pTranslationTable[i] = (unsigned char) best_j;
                     }
                 }
                 if (bHasNoDataValueRef && bHasNoDataValueSrc)
-                    pTranslationTable[noDataValueSrc] = noDataValueRef;
+                    pTranslationTable[noDataValueSrc] = (unsigned char) noDataValueRef;
 
                 return pTranslationTable;
             }

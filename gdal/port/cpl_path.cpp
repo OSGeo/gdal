@@ -562,7 +562,7 @@ const char *CPLFormCIFilename( const char * pszPath,
         for( i = 0; pszFilename[i] != '\0'; i++ )
         {
             if( islower(pszFilename[i]) )
-                pszFilename[i] = toupper(pszFilename[i]);
+                pszFilename[i] = (char) toupper(pszFilename[i]);
         }
 
         pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
@@ -574,7 +574,7 @@ const char *CPLFormCIFilename( const char * pszPath,
         for( i = 0; pszFilename[i] != '\0'; i++ )
         {
             if( isupper(pszFilename[i]) )
-                pszFilename[i] = tolower(pszFilename[i]);
+                pszFilename[i] = (char) tolower(pszFilename[i]);
         }
 
         pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );

@@ -498,7 +498,7 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
 /*      Now iterate, trying to find a closer LL location that will      */
 /*      back transform to the indicated pixel and line.                 */
 /* -------------------------------------------------------------------- */
-    double dfPixelDeltaX, dfPixelDeltaY;
+    double dfPixelDeltaX=0.0, dfPixelDeltaY=0.0;
 
     for( iIter = 0; iIter < 10; iIter++ )
     {

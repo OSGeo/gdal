@@ -838,7 +838,7 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         poWK->padfDstNoDataReal[iBand] == (double)((type *) pabyDst)[iDstOffset]) \
     { \
         if (((type *) pabyDst)[iDstOffset] == minval)  \
-            ((type *) pabyDst)[iDstOffset] = minval + 1; \
+            ((type *) pabyDst)[iDstOffset] = (type)(minval + 1); \
         else \
             ((type *) pabyDst)[iDstOffset] --; \
     } } while(0)
