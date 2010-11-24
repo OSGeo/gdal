@@ -3736,6 +3736,134 @@ def tiff_write_96():
     return 'success'
     
 ###############################################################################
+# Create a simple file by copying from an existing one - PixelIsPoint
+
+def tiff_write_97():
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+    
+    src_ds = gdal.Open( 'data/byte_point.tif' )
+
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_97.tif', src_ds )
+
+    gt = new_ds.GetGeoTransform()
+    md = new_ds.GetMetadataItem( 'AREA_OR_POINT' )
+    new_ds = None
+    
+    gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
+
+    if gt != gt_expected:
+        print gt
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        return 'fail'
+
+    if md != 'Point':
+        gdaltest.post_reason( 'did not get expected AREA_OR_POINT value' )
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/test_97.tif' )
+
+    # Again, but ignoring PixelIsPoint
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'TRUE' )
+    
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_97_2.tif', src_ds )
+
+    gt = new_ds.GetGeoTransform()
+    md = new_ds.GetMetadataItem( 'AREA_OR_POINT' )
+    new_ds = None
+    src_ds = None
+    
+    gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
+
+    if gt != gt_expected:
+        print gt
+        gdaltest.post_reason( 'did not get expected geotransform when ignoring PixelIsPoint' )
+        return 'fail'
+
+    if md != 'Point':
+        gdaltest.post_reason( 'did not get expected AREA_OR_POINT value' )
+        return 'fail'
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+
+    # read back this file with pixelispoint behavior enabled.
+    
+    new_ds = gdal.Open( 'tmp/test_97_2.tif' )
+    
+    gt = new_ds.GetGeoTransform()
+    md = new_ds.GetMetadataItem( 'AREA_OR_POINT' )
+    new_ds = None
+    
+    gt_expected = (440660.0, 60.0, 0.0, 3751380.0, 0.0, -60.0)
+
+    if gt != gt_expected:
+        print gt
+        gdaltest.post_reason( 'did not get expected geotransform when ignoring PixelIsPoint (2)' )
+        return 'fail'
+
+    if md != 'Point':
+        gdaltest.post_reason( 'did not get expected AREA_OR_POINT value' )
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/test_97_2.tif' )
+
+    return 'success'
+
+###############################################################################
+# Create a rotated geotiff file (uses a geomatrix) with - PixelIsPoint
+
+def tiff_write_98():
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+
+    src_ds = gdal.Open( 'data/geomatrix.tif' )
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'TRUE' )
+    
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_98.tif', src_ds )
+
+    gt = new_ds.GetGeoTransform()
+    md = new_ds.GetMetadataItem( 'AREA_OR_POINT' )
+    new_ds = None
+    src_ds = None
+    
+    gt_expected = (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5)
+
+    if gt != gt_expected:
+        print gt
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        return 'fail'
+
+    if md != 'Point':
+        gdaltest.post_reason( 'did not get expected AREA_OR_POINT value' )
+        return 'fail'
+
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+
+    new_ds = gdal.Open( 'tmp/test_98.tif' )
+
+    gt = new_ds.GetGeoTransform()
+    md = new_ds.GetMetadataItem( 'AREA_OR_POINT' )
+    new_ds = None
+    src_ds = None
+    
+    gt_expected = (1841003.5, 1.5, -5.0, 1144006.5, -5.0, -1.5)
+
+    if gt != gt_expected:
+        print gt
+        gdaltest.post_reason( 'did not get expected geotransform (2)' )
+        return 'fail'
+
+    if md != 'Point':
+        gdaltest.post_reason( 'did not get expected AREA_OR_POINT value' )
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/test_98.tif' )
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3842,6 +3970,8 @@ gdaltest_list = [
     tiff_write_94,
     tiff_write_95,
     tiff_write_96,
+    tiff_write_97,
+    tiff_write_98,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
