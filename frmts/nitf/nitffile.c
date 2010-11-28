@@ -1447,10 +1447,19 @@ const char *NITFFindTRE( const char *pszTREData, int nTREBytes,
         if (nTREBytes - 11 < nThisTRESize)
         {
             NITFGetField(szTemp, pszTREData, 0, 6 );
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot read %s TRE. Not enough bytes : remaining %d, expected %d",
-                    szTemp, nTREBytes - 11, nThisTRESize);
-            return NULL;
+            if (EQUALN(szTemp, "RPFIMG",6))
+            {
+                /* See #3848 */
+                CPLDebug("NITF", "Adjusting RPFIMG TRE size from %d to %d, which is the remaining size", nThisTRESize, nTREBytes - 11);
+                nThisTRESize = nTREBytes - 11;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Cannot read %s TRE. Not enough bytes : remaining %d, expected %d",
+                        szTemp, nTREBytes - 11, nThisTRESize);
+                return NULL;
+            }
         }
 
         if( EQUALN(pszTREData,pszTag,6) )
@@ -1492,10 +1501,19 @@ const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
         if (nTREBytes - 11 < nThisTRESize)
         {
             NITFGetField(szTemp, pszTREData, 0, 6 );
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot read %s TRE. Not enough bytes : remaining %d, expected %d",
-                    szTemp, nTREBytes - 11, nThisTRESize);
-            return NULL;
+            if (EQUALN(szTemp, "RPFIMG",6))
+            {
+                /* See #3848 */
+                CPLDebug("NITF", "Adjusting RPFIMG TRE size from %d to %d, which is the remaining size", nThisTRESize, nTREBytes - 11);
+                nThisTRESize = nTREBytes - 11;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Cannot read %s TRE. Not enough bytes : remaining %d, expected %d",
+                        szTemp, nTREBytes - 11, nThisTRESize);
+                return NULL;
+            }
         }
 
         if( EQUALN(pszTREData,pszTag,6) )
