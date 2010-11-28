@@ -70,6 +70,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     int        nNICOM;
     const char* pszIID1;
     int        nFaultyLine = -1;
+    int        bGotWrongOffset = FALSE;
     
 /* -------------------------------------------------------------------- */
 /*      Verify segment, and return existing image accessor if there     */
@@ -740,9 +741,6 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
         for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
             psImage->panBlockStart[i] = nLocBase + 6144 * i;
-        
-        /* Fix bug #913 */
-        NITFLoadSubframeMaskTable ( psImage );
     }
 
 /* -------------------------------------------------------------------- */
@@ -873,6 +871,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             /* but I've not found it */
             if (isM4 && i != nBlockCount)
             {
+                bGotWrongOffset = TRUE;
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Block start for block %d is wrong. Retrying with one extra byte shift...", i);
                 VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart +
@@ -945,6 +944,14 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             }
         }
     }
+
+
+/* -------------------------------------------------------------------- */
+/*  Load subframe mask table if present (typically, for CADRG/CIB       */
+/*  images with IC=C4/M4)                                               */
+/* -------------------------------------------------------------------- */
+    if (!bGotWrongOffset)
+        NITFLoadSubframeMaskTable ( psImage );
 
 /* -------------------------------------------------------------------- */
 /*      Bug #1751: Add a transparent color if there are none. Absent    */
