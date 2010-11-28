@@ -45,7 +45,7 @@ static void NITFSwapWords( NITFImage *psImage, void *pData, int nWordCount );
 static void NITFLoadLocationTable( NITFImage *psImage );
 static void NITFLoadColormapSubSection( NITFImage *psImage );
 static void NITFLoadSubframeMaskTable( NITFImage *psImage );
-static int NITFLoadVQTables( NITFImage *psImage );
+static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset );
 static int NITFReadGEOLOB( NITFImage *psImage );
 static void NITFLoadAttributeSection( NITFImage *psImage );
 static void NITFPossibleIGEOLOReorientation( NITFImage *psImage );
@@ -1056,7 +1056,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Are the VQ tables to load up?                                   */
 /* -------------------------------------------------------------------- */
-    NITFLoadVQTables( psImage );
+    NITFLoadVQTables( psImage, TRUE );
 
     return psImage;
 
@@ -3237,11 +3237,20 @@ static void NITFLoadLocationTable( NITFImage *psImage )
 
         if( !EQUALN(achHeaderChunk,"RPFHDR",6) )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Ignoring NITF RPF Location table since it seems to be corrupt." );
-            CPLFree( psImage->pasLocations );
-            psImage->pasLocations = NULL;
-            psImage->nLocCount = 0;
+            /* Image of http://trac.osgeo.org/gdal/ticket/3848 has incorrect */
+            /* RPFHDR offset, but all other locations are correct... */
+            if (NITFLoadVQTables(psImage, FALSE))
+            {
+                CPLDebug("NITF", "RPFHDR is not correctly placed, but we could find VQ tables. Going on...");
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Ignoring NITF RPF Location table since it seems to be corrupt." );
+                CPLFree( psImage->pasLocations );
+                psImage->pasLocations = NULL;
+                psImage->nLocCount = 0;
+            }
         }
     }
 }
@@ -3250,7 +3259,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
 /*                          NITFLoadVQTables()                          */
 /************************************************************************/
 
-static int NITFLoadVQTables( NITFImage *psImage )
+static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
 
 {
     int     i;
@@ -3294,10 +3303,15 @@ static int NITFLoadVQTables( NITFImage *psImage )
 
     if( memcmp(abyTestChunk,abySignature,sizeof(abySignature)) != 0 )
     {
+        int bFoundSignature = FALSE;
+        if (!bTryGuessingOffset)
+            return FALSE;
+
         for( i = 0; i < sizeof(abyTestChunk) - sizeof(abySignature); i++ )
         {
             if( memcmp(abyTestChunk+i,abySignature,sizeof(abySignature)) == 0 )
             {
+                bFoundSignature = TRUE;
                 nVQOffset += i; 
                 CPLDebug( "NITF", 
                           "VQ CompressionLookupSubsection offsets off by %d bytes, adjusting accordingly.",
@@ -3305,6 +3319,8 @@ static int NITFLoadVQTables( NITFImage *psImage )
                 break;
             }
         }
+        if (!bFoundSignature)
+            return FALSE;
     }
     
 /* -------------------------------------------------------------------- */
