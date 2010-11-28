@@ -276,10 +276,8 @@ int main( int argc, char ** argv )
             Usage();
     }
 
-    /*
-    if( pszLocY == NULL )
+    if( pszSrcFilename == NULL || (pszLocX != NULL && pszLocY == NULL) )
         Usage();
-    */
 
 /* -------------------------------------------------------------------- */
 /*      Open source file.                                               */
@@ -323,21 +321,22 @@ int main( int argc, char ** argv )
     double dfGeoY;
     CPLString osXML;
 
-    if( pszLocX == NULL && pszLocY == NULL ) 
+    if( pszLocX == NULL && pszLocY == NULL )
     {
         if (fscanf(stdin, "%lf %lf", &dfGeoX, &dfGeoY) != 2)
         {
-	    inputAvailable = 0;
-	}
-    } 
+            inputAvailable = 0;
+        }
+    }
     else
     {
-	dfGeoX = CPLAtof(pszLocX);
-	dfGeoY = CPLAtof(pszLocY);
+        dfGeoX = CPLAtof(pszLocX);
+        dfGeoY = CPLAtof(pszLocY);
     }
 
-    while (inputAvailable) {
-	int iPixel, iLine;
+    while (inputAvailable)
+    {
+        int iPixel, iLine;
 
         if (hCT)
         {
