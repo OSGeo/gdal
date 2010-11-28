@@ -775,7 +775,9 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
         for( i = 0; i < nListSize; i++ )
         {
             osLastLocationInfo += "<File>";
-            osLastLocationInfo += papszFileList[i];
+            char* pszXMLEscaped = CPLEscapeString(papszFileList[i], -1, CPLES_XML);
+            osLastLocationInfo += pszXMLEscaped;
+            CPLFree(pszXMLEscaped);
             osLastLocationInfo += "</File>";
         }
         osLastLocationInfo += "</LocationInfo>";
