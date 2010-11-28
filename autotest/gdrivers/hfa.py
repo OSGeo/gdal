@@ -460,7 +460,7 @@ def hfa_clean_ige():
             found = 1
             
     if not found:
-        print filelist
+        print(filelist)
         gdaltest.post_reason( 'no igetest.ige in file list!' )
         return 'fail'
 
