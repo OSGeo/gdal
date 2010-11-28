@@ -3753,7 +3753,7 @@ def tiff_write_97():
     gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
 
     if gt != gt_expected:
-        print gt
+        print(gt)
         gdaltest.post_reason( 'did not get expected geotransform' )
         return 'fail'
 
@@ -3777,7 +3777,7 @@ def tiff_write_97():
     gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
 
     if gt != gt_expected:
-        print gt
+        print(gt)
         gdaltest.post_reason( 'did not get expected geotransform when ignoring PixelIsPoint' )
         return 'fail'
 
@@ -3798,7 +3798,7 @@ def tiff_write_97():
     gt_expected = (440660.0, 60.0, 0.0, 3751380.0, 0.0, -60.0)
 
     if gt != gt_expected:
-        print gt
+        print(gt)
         gdaltest.post_reason( 'did not get expected geotransform when ignoring PixelIsPoint (2)' )
         return 'fail'
 
@@ -3831,7 +3831,7 @@ def tiff_write_98():
     gt_expected = (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5)
 
     if gt != gt_expected:
-        print gt
+        print(gt)
         gdaltest.post_reason( 'did not get expected geotransform' )
         return 'fail'
 
@@ -3851,7 +3851,7 @@ def tiff_write_98():
     gt_expected = (1841003.5, 1.5, -5.0, 1144006.5, -5.0, -1.5)
 
     if gt != gt_expected:
-        print gt
+        print(gt)
         gdaltest.post_reason( 'did not get expected geotransform (2)' )
         return 'fail'
 
