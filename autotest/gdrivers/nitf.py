@@ -2496,6 +2496,18 @@ def nitf_online_22():
     return 'success'
 
 ###############################################################################
+# Test reading a M4 compressed file (fixed for #3848)
+
+def nitf_online_23():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_3058b.ntf', 'U_3058b.ntf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/U_3058b.ntf', 1, 44748, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -2752,6 +2764,7 @@ gdaltest_list = [
     nitf_online_20,
     nitf_online_21,
     nitf_online_22,
+    nitf_online_23,
     nitf_cleanup ]
 
 if __name__ == '__main__':
