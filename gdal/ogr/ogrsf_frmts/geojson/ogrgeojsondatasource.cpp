@@ -200,7 +200,12 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
 /* -------------------------------------------------------------------- */
     
     // TOOD: Waiting for multi-layer support
-    CPLAssert( 0 == nLayers_ );
+    if ( nLayers_ != 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "GeoJSON driver doesn't support creating more than one layer");
+        return NULL;
+    }
 
     papoLayers_ = (OGRGeoJSONLayer **)
         CPLRealloc( papoLayers_,  sizeof(OGRGeoJSONLayer*) * (nLayers_ + 1) );
