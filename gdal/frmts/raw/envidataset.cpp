@@ -1863,18 +1863,26 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Warn about compressed datasets.                                 */
 /* -------------------------------------------------------------------- */
+    int bIsGZipped = FALSE;
     if( CSLFetchNameValue(poDS->papszHeader,"file_compression" ) != NULL )
     {
         if( atoi(CSLFetchNameValue(poDS->papszHeader,"file_compression" )) 
             != 0 )
         {
-            delete poDS;
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "File %s is marked as compressed in the ENVI .hdr\n"
-                      "GDAL does not support auto-decompression of ENVI data\n"
-                      "files.",
-                      poOpenInfo->pszFilename );
-            return NULL;
+            if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gz") )
+            {
+                bIsGZipped = TRUE;
+            }
+            else
+            {
+                delete poDS;
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                        "File %s is marked as compressed in the ENVI .hdr, but is not a gzip file.\n"
+                        "GDAL only supports auto-decompression of gzipped ENVI data\n"
+                        "files.",
+                        poOpenInfo->pszFilename );
+                return NULL;
+            }
         }
     }
 
@@ -1888,10 +1896,13 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Reopen file in update mode if necessary.                        */
 /* -------------------------------------------------------------------- */
+    CPLString osImageFilename(poOpenInfo->pszFilename);
+    if (bIsGZipped)
+        osImageFilename = "/vsigzip/" + osImageFilename;
     if( poOpenInfo->eAccess == GA_Update )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
+        poDS->fpImage = VSIFOpenL( osImageFilename, "rb+" );
     else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        poDS->fpImage = VSIFOpenL( osImageFilename, "rb" );
 
     if( poDS->fpImage == NULL )
     {
