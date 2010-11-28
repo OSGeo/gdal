@@ -453,7 +453,12 @@ int main( int argc, char ** argv )
                             if( psNode->eType == CXT_Element
                                 && EQUAL(psNode->pszValue,"File") 
                                 && psNode->psChild != NULL )
-                                printf( "%s\n", psNode->psChild->pszValue );
+                            {
+                                char* pszUnescaped = CPLUnescapeString(
+                                    psNode->psChild->pszValue, NULL, CPLES_XML);
+                                printf( "%s\n", pszUnescaped );
+                                CPLFree(pszUnescaped);
+                            }
                         }
                     }
                     CPLDestroyXMLNode( psRoot );
