@@ -182,6 +182,14 @@ def envi_8():
 
     return 'success'
 
+###############################################################################
+# Verify reading a compressed file
+
+def envi_9():
+
+    tst = gdaltest.GDALTest( 'envi', 'aea_compressed.dat', 1, 14823 )
+    return tst.testCreateCopy( check_gt = 1 )
+
 gdaltest_list = [
     envi_1,
     envi_2,
@@ -190,7 +198,8 @@ gdaltest_list = [
     envi_5,
     envi_6,
     envi_7,
-    envi_8
+    envi_8,
+    envi_9
     ]
   
 
