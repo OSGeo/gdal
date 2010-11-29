@@ -1861,28 +1861,15 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Warn about compressed datasets.                                 */
+/*      Detect (gzipped) compressed datasets.                           */
 /* -------------------------------------------------------------------- */
-    int bIsGZipped = FALSE;
+    int bIsCompressed = FALSE;
     if( CSLFetchNameValue(poDS->papszHeader,"file_compression" ) != NULL )
     {
         if( atoi(CSLFetchNameValue(poDS->papszHeader,"file_compression" )) 
             != 0 )
         {
-            if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gz") )
-            {
-                bIsGZipped = TRUE;
-            }
-            else
-            {
-                delete poDS;
-                CPLError( CE_Failure, CPLE_OpenFailed,
-                        "File %s is marked as compressed in the ENVI .hdr, but is not a gzip file.\n"
-                        "GDAL only supports auto-decompression of gzipped ENVI data\n"
-                        "files.",
-                        poOpenInfo->pszFilename );
-                return NULL;
-            }
+            bIsCompressed = TRUE;
         }
     }
 
@@ -1897,10 +1884,19 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Reopen file in update mode if necessary.                        */
 /* -------------------------------------------------------------------- */
     CPLString osImageFilename(poOpenInfo->pszFilename);
-    if (bIsGZipped)
+    if (bIsCompressed)
         osImageFilename = "/vsigzip/" + osImageFilename;
     if( poOpenInfo->eAccess == GA_Update )
+    {
+        if (bIsCompressed)
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Cannot open compressed file in update mode.\n");
+            return NULL;
+        }
         poDS->fpImage = VSIFOpenL( osImageFilename, "rb+" );
+    }
     else
         poDS->fpImage = VSIFOpenL( osImageFilename, "rb" );
 
