@@ -3097,14 +3097,16 @@ int NITFDataset::CheckForRSets( const char *pszNITFFilename )
 
         for( i = 0; i < (int) aosRSetFilenames.size(); i++ )
         {
+            char* pszEscaped = CPLEscapeString(aosRSetFilenames[i].c_str(), -1, CPLES_XML);
             if( i == 0 )
                 osRSetVRT += osFragment.Printf(
                     "    <SimpleSource><SourceFilename>%s</SourceFilename><SourceBand>%d</SourceBand></SimpleSource>\n", 
-                    aosRSetFilenames[i].c_str(), iBand+1 );
+                    pszEscaped, iBand+1 );
             else
                 osRSetVRT += osFragment.Printf(
                     "    <Overview><SourceFilename>%s</SourceFilename><SourceBand>%d</SourceBand></Overview>\n", 
-                    aosRSetFilenames[i].c_str(), iBand+1 );
+                    pszEscaped, iBand+1 );
+            CPLFree(pszEscaped);
         }
         osRSetVRT += osFragment.
             Printf( "  </VRTRasterBand>\n" );
