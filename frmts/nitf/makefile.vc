@@ -29,7 +29,7 @@ default:	$(OBJ)
 clean:
 	-del *.obj
 
-nitfdump.exe:	nitfdump.obj $(NITFLIB_OBJ)
-	cl nitfdump.obj $(NITFLIB_OBJ) ..\gtiff\tifvsi.obj ..\..\gdal.lib $(TIFF_LIB) $(GEOTIFF_LIB)
+nitfdump.exe:	nitfdump.c $(NITFLIB_OBJ)
+	$(CC) $(CFLAGS) nitfdump.c $(GDALLIB)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	del nitfdump.obj
