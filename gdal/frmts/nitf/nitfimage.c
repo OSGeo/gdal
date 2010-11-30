@@ -3239,9 +3239,59 @@ static void NITFLoadLocationTable( NITFImage *psImage )
         {
             /* Image of http://trac.osgeo.org/gdal/ticket/3848 has incorrect */
             /* RPFHDR offset, but all other locations are correct... */
-            if (NITFLoadVQTables(psImage, FALSE))
+            /* So if we find LID_CoverageSectionSubheader and LID_CompressionLookupSubsection */
+            /* we check weither their content is valid */
+            int bFoundValidLocation = FALSE;
+            for( i = 0; i < psImage->nLocCount; i++ )
             {
-                CPLDebug("NITF", "RPFHDR is not correctly placed, but we could find VQ tables. Going on...");
+                if( psImage->pasLocations[i].nLocId == LID_CoverageSectionSubheader &&
+                    (psImage->chICORDS == 'G' || psImage->chICORDS == 'D'))
+                {
+                    /* Does that look like valid latitude/longitude values ? */
+                    /* We test that they are close enough from the values of the IGEOLO record */
+                    double adfTarget[8];
+
+                    VSIFSeekL( psImage->psFile->fp, psImage->pasLocations[i].nLocOffset,
+                              SEEK_SET );
+                    VSIFReadL( adfTarget, 8, 8, psImage->psFile->fp );
+                    for( i = 0; i < 8; i++ )
+                        CPL_MSBPTR64( (adfTarget + i) );
+                        
+                    if ( fabs(psImage->dfULX - adfTarget[1]) < 0.1 &&
+                         fabs(psImage->dfULY - adfTarget[0]) < 0.1 &&
+                         fabs(psImage->dfLLX - adfTarget[3]) < 0.1 &&
+                         fabs(psImage->dfLLY - adfTarget[2]) < 0.1 &&
+                         fabs(psImage->dfURX - adfTarget[5]) < 0.1 &&
+                         fabs(psImage->dfURY - adfTarget[4]) < 0.1 &&
+                         fabs(psImage->dfLRX - adfTarget[7]) < 0.1 &&
+                         fabs(psImage->dfLRY - adfTarget[6]) < 0.1 )
+                    {
+                        bFoundValidLocation = TRUE;
+                    }
+                    else
+                    {
+                        CPLDebug("NITF", "The CoverageSectionSubheader content isn't consistant");
+                        bFoundValidLocation = FALSE;
+                        break;
+                    }
+                }
+                else if( psImage->pasLocations[i].nLocId == LID_CompressionLookupSubsection)
+                {
+                    if (NITFLoadVQTables(psImage, FALSE))
+                    {
+                        bFoundValidLocation = TRUE;
+                    }
+                    else
+                    {
+                        CPLDebug("NITF", "The VQ tables content aren't consistant");
+                        bFoundValidLocation = FALSE;
+                        break;
+                    }
+                }
+            }
+            if (bFoundValidLocation)
+            {
+                CPLDebug("NITF", "RPFHDR is not correctly placed, but other locations seem correct. Going on...");
             }
             else
             {
