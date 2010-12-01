@@ -175,3 +175,8 @@ def get_nearblack_path():
 #
 def get_test_ogrsf_path():
     return get_cli_utility_path('test_ogrsf')
+
+###############################################################################
+#
+def get_gdallocationinfo_path():
+    return get_cli_utility_path('gdallocationinfo')
