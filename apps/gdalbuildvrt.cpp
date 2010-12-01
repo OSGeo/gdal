@@ -35,6 +35,7 @@
 #ifdef OGR_ENABLED
 #include "ogr_api.h"
 #endif
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -340,6 +341,28 @@ VRTBuilder::~VRTBuilder()
 }
 
 /************************************************************************/
+/*                           ProjAreEqual()                             */
+/************************************************************************/
+
+static int ProjAreEqual(const char* pszWKT1, const char* pszWKT2)
+{
+    int bRet;
+    OGRSpatialReferenceH hSRS1, hSRS2;
+
+    if (EQUAL(pszWKT1, pszWKT2))
+        return TRUE;
+
+    hSRS1 = OSRNewSpatialReference(pszWKT1);
+    hSRS2 = OSRNewSpatialReference(pszWKT2);
+    bRet = hSRS1 != NULL && hSRS2 != NULL && OSRIsSame(hSRS1,hSRS2);
+    if (hSRS1)
+        OSRDestroySpatialReference(hSRS1);
+    if (hSRS2)
+        OSRDestroySpatialReference(hSRS2);
+    return bRet;
+}
+
+/************************************************************************/
 /*                           AnalyseRaster()                            */
 /************************************************************************/
 
@@ -566,7 +589,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
     {
         if ((proj != NULL && pszProjectionRef == NULL) ||
             (proj == NULL && pszProjectionRef != NULL) ||
-            (proj != NULL && pszProjectionRef != NULL && EQUAL(proj, pszProjectionRef) == FALSE))
+            (proj != NULL && pszProjectionRef != NULL && ProjAreEqual(proj, pszProjectionRef) == FALSE))
         {
             if (!bAllowProjectionDifference)
             {
