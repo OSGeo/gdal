@@ -1490,11 +1490,12 @@ void HFAField::DumpInstValue( FILE *fpOut,
             
                 sprintf( szLongFieldName, "%s    ", pszPrefix );
             
-                poItemObjectType->DumpInstValue( fpOut,
-                                                 pabyData + nByteOffset,
-                                                 nDataOffset + nByteOffset,
-                                                 nDataSize - nByteOffset,
-                                                 szLongFieldName );
+                if( poItemObjectType )
+                    poItemObjectType->DumpInstValue( fpOut,
+                                                     pabyData + nByteOffset,
+                                                     nDataOffset + nByteOffset,
+                                                     nDataSize - nByteOffset,
+                                                     szLongFieldName );
             }
             break;
 

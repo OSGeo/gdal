@@ -194,7 +194,8 @@ HFAType * HFADictionary::FindType( const char * pszName )
             AddType( poNewType );
             poNewType->CompleteDefn( this );
 
-            osDictionaryText.erase( osDictionaryText.size() - 1, 1 );
+            if( osDictionaryText.size() > 0 )
+                osDictionaryText.erase( osDictionaryText.size() - 1, 1 );
             osDictionaryText += apszDefDefn[i+1];
             osDictionaryText += ",.";
 
