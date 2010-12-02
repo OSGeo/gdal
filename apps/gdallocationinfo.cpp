@@ -364,8 +364,8 @@ int main( int argc, char ** argv )
         }
         else
         {
-            iPixel = floor(dfGeoX);
-            iLine  = floor(dfGeoY);
+            iPixel = (int) floor(dfGeoX);
+            iLine  = (int) floor(dfGeoY);
         }
 
     /* -------------------------------------------------------------------- */
