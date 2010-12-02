@@ -1524,7 +1524,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /* -------------------------------------------------------------------- */
 /*      Generate a source density mask if we have a source alpha band   */
 /* -------------------------------------------------------------------- */
-    if( eErr == CE_None && psOptions->nSrcAlphaBand > 0 )
+    if( eErr == CE_None && psOptions->nSrcAlphaBand > 0 &&
+        nSrcXSize > 0 && nSrcYSize > 0 )
     {
         CPLAssert( oWK.pafDstDensity == NULL );
 
@@ -1544,7 +1545,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /* -------------------------------------------------------------------- */
 /*      Generate a source density mask if we have a source cutline.     */
 /* -------------------------------------------------------------------- */
-    if( eErr == CE_None && psOptions->hCutline != NULL )
+    if( eErr == CE_None && psOptions->hCutline != NULL  &&
+        nSrcXSize > 0 && nSrcYSize > 0 )
     {
         if( oWK.pafUnifiedSrcDensity == NULL )
         {
@@ -1595,7 +1597,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /*      If we have source nodata values create, or update the           */
 /*      validity mask.                                                  */
 /* -------------------------------------------------------------------- */
-    if( eErr == CE_None && psOptions->padfSrcNoDataReal != NULL )
+    if( eErr == CE_None && psOptions->padfSrcNoDataReal != NULL &&
+        nSrcXSize > 0 && nSrcYSize > 0 )
     {
         for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
         {
@@ -1660,7 +1663,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     
     if( eErr == CE_None 
         && oWK.pafUnifiedSrcDensity == NULL 
-        && (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET) )
+        && (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET) &&
+        nSrcXSize > 0 && nSrcYSize > 0 )
 
     {
         eErr = CreateKernelMask( &oWK, 0, "UnifiedSrcValid" );
