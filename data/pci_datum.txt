@@ -1,4 +1,13 @@
 !
+! By email on December 2nd, 2010:
+!
+! I, Louis Burry, on behalf of PCI Geomatics agree to allow the ellips.txt 
+! and datum.txt file to be distributed under the GDAL open source license.
+!
+! Louis Burry
+! VP Technology & Delivery
+! PCI Geomatics
+!
 !       NOTE: The range of "D900" to "D998" is set aside for
 !             the use of local customer development.
 !
