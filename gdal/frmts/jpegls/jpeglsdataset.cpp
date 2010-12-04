@@ -33,13 +33,6 @@
 /* CharLS header */
 #include <interface.h>
 
-/* Comment this line to work with latest dev version */
-#define CHARLS_1_0_BETA
-
-#ifdef CHARLS_1_0_BETA
-#define JlsParameters JlsParamaters
-#endif
-
 extern "C" void GDALRegister_JPEGLS();
 
 /* g++ -Wall -g fmrts/jpegls/jpeglsdataset.cpp -shared -fPIC -o gdal_JPEGLS.so -Iport -Igcore -L. -lgdal -I/home/even/charls-1.0 -L/home/even/charls-1.0/build -lCharLS */
