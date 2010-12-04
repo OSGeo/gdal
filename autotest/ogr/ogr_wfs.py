@@ -707,6 +707,38 @@ def ogr_wfs_xmldescriptionfile():
 
     return 'success'
 
+###############################################################################
+# Test opening a datastore which only support GML 3.2.1 output
+
+def ogr_wfs_deegree_gml321():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if gdaltest.gdalurlopen('http://deegree3-testing.deegree.org:80/deegree-inspire-node/services') is None:
+        print('cannot open URL')
+        return 'skip'
+
+    ds = ogr.Open('WFS:http://deegree3-testing.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10')
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayerByName("ad:Address")
+    count = lyr.GetFeatureCount()
+    if count != 10:
+        print(count)
+        return 'fail'
+
+    lyr = ds.GetLayerByName("au:AdministrativeBoundary")
+    count = lyr.GetFeatureCount()
+    if count != 0:
+        print(count)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_wfs_init,
     ogr_wfs_mapserver,
@@ -720,7 +752,8 @@ gdaltest_list = [
     #ogr_wfs_deegree_wfst,
     ogr_wfs_ionic_wfst,
     ogr_wfs_ionic_sql,
-    ogr_wfs_xmldescriptionfile
+    ogr_wfs_xmldescriptionfile,
+    ogr_wfs_deegree_gml321,
     ]
 
 if __name__ == '__main__':
