@@ -168,7 +168,7 @@ CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(int bWithNS)
     osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
     osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", NULL);
     osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
-    osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", NULL);
+    osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
 
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -327,33 +327,6 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
 }
 
 /************************************************************************/
-/*                         WFS_EscapeURL()                              */
-/************************************************************************/
-
-static CPLString WFS_EscapeURL(CPLString osURL)
-{
-    CPLString osNewURL;
-    size_t i;
-    for(i=0;i<osURL.size();i++)
-    {
-        char ch = osURL[i];
-        if (ch == '<')
-            osNewURL += "%3C";
-        else if (ch == '>')
-            osNewURL += "%3E";
-        else if (ch == ' ')
-            osNewURL += "%20";
-        else if (ch == '"')
-            osNewURL += "%22";
-        else if (ch == '%')
-            osNewURL += "%25";
-        else
-            osNewURL += ch;
-    }
-    return osNewURL;
-}
-
-/************************************************************************/
 /*                       MakeGetFeatureURL()                            */
 /************************************************************************/
 
@@ -364,6 +337,8 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
     osURL = WFS_AddKVToURL(osURL, "VERSION", poDS->GetVersion());
     osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetFeature");
     osURL = WFS_AddKVToURL(osURL, "TYPENAME", pszName);
+    if (poDS->GetRequiredOutputFormat())
+        osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
 
     if (poDS->IsPagingAllowed() && !bRequestHits)
     {
@@ -463,7 +438,6 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         osFilter += "</Filter>";
 
         osURL = WFS_AddKVToURL(osURL, "FILTER", osFilter);
-        osURL = WFS_EscapeURL(osURL);
     }
         
     if (bRequestHits)
@@ -778,7 +752,8 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     if (poDS == NULL)
     {
         if (pabyData != NULL && !bJSON && !bZIP &&
-            strstr((const char*)pabyData, "<wfs:FeatureCollection") == NULL)
+            strstr((const char*)pabyData, "<wfs:FeatureCollection") == NULL &&
+            strstr((const char*)pabyData, "<gml:FeatureCollection") == NULL)
         {
             if (nDataLen > 1000)
                 pabyData[1000] = 0;
@@ -1154,7 +1129,7 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 {
     char* pabyData = NULL;
     CPLString osURL = MakeGetFeatureURL(0, TRUE);
-    osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", NULL);
+    osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
     CPLDebug("WFS", "%s", osURL.c_str());
 
     CPLHTTPResult* psResult = poDS->HTTPFetch( osURL, NULL);
