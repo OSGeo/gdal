@@ -354,15 +354,82 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
         }
     }
 
-    OGRwkbGeometryType eGeomType = wkbFlatten(poFeatureDefn_->GetGeomType());
+    OGRwkbGeometryType eGeomType = wkbNone;
+    if (poFeature->GetGeometryRef() != NULL)
+        eGeomType = wkbFlatten(poFeature->GetGeometryRef()->getGeometryType());
     if ( wkbPolygon == eGeomType
          || wkbMultiPolygon == eGeomType
          || wkbLineString == eGeomType
          || wkbMultiLineString == eGeomType )
     {
+        OGRStylePen *poPen = NULL;
+        OGRStyleMgr oSM;
+
+        if( poFeature->GetStyleString() != NULL )
+        {
+            oSM.InitFromFeature( poFeature );
+
+            int i;
+            for(i=0; i<oSM.GetPartCount();i++)
+            {
+                OGRStyleTool *poTool = oSM.GetPart(i);
+                if (poTool && poTool->GetType() == OGRSTCPen )
+                {
+                    poPen = (OGRStylePen*) poTool;
+                    break;
+                }
+                delete poTool;
+            }
+        }
+
+        VSIFPrintfL( fp, "\t<Style>");
+        if( poPen != NULL )
+        {
+            GBool  bDefault;
+            int    bHasWidth = FALSE;
+
+            /* Require width to be returned in pixel */
+            poPen->SetUnit(OGRSTUPixel);
+            double fW = poPen->Width(bDefault);
+            if( bDefault )
+                fW = 1;
+            else
+                bHasWidth = TRUE;
+            const char* pszColor = poPen->Color(bDefault);
+            int nColorLen = CPLStrnlen(pszColor, 10);
+            if( pszColor != NULL && pszColor[0] == '#' && !bDefault && nColorLen >= 7)
+            {
+                char acColor[9] = {0};
+                /* Order of KML color is aabbggrr, whereas OGR color is #rrggbb[aa] ! */
+                if(nColorLen == 9)
+                {
+                    acColor[0] = pszColor[7]; /* A */
+                    acColor[1] = pszColor[8];
+                }
+                else
+                {
+                    acColor[0] = 'F';
+                    acColor[1] = 'F';
+                }
+                acColor[2] = pszColor[5]; /* B */
+                acColor[3] = pszColor[6];
+                acColor[4] = pszColor[3]; /* G */
+                acColor[5] = pszColor[4];
+                acColor[6] = pszColor[1]; /* R */
+                acColor[7] = pszColor[2];
+                VSIFPrintfL( fp, "<LineStyle><color>%s</color>", acColor);
+                if (bHasWidth)
+                    VSIFPrintfL( fp, "<width>%g</width>", fW);
+                VSIFPrintfL( fp, "</LineStyle>");
+            }
+            else
+                VSIFPrintfL( fp, "<LineStyle><color>ff0000ff</color></LineStyle>");
+        }
+        else
+            VSIFPrintfL( fp, "<LineStyle><color>ff0000ff</color></LineStyle>");
+        delete poPen;
         //If we're dealing with a polygon, add a line style that will stand out a bit
-        VSIFPrintfL( fp, "  <Style><LineStyle><color>ff0000ff</color></LineStyle>");
-        VSIFPrintfL( fp, "  <PolyStyle><fill>0</fill></PolyStyle></Style>\n" );
+        VSIFPrintfL( fp, "<PolyStyle><fill>0</fill></PolyStyle></Style>\n" );
     }
 
     int bHasFoundOtherField = FALSE;
