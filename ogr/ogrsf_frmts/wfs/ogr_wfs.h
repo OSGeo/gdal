@@ -191,6 +191,9 @@ class OGRWFSDataSource : public OGRDataSource
     char**              papszIdGenMethods;
     int                 DetectTransactionSupport(CPLXMLNode* psRoot);
 
+    CPLString           osRequiredOutputFormat;
+    CPLString           DetectRequiredOutputFormat(CPLXMLNode* psRoot);
+
     CPLString           osBaseURL;
     CPLString           osPostTransactionURL;
 
@@ -248,6 +251,8 @@ class OGRWFSDataSource : public OGRDataSource
 
     int                         IsPagingAllowed() { return bPagingAllowed; }
     int                         GetPageSize() { return nPageSize; }
+
+    const char*                 GetRequiredOutputFormat() { return (osRequiredOutputFormat.size() != 0) ? osRequiredOutputFormat.c_str() : NULL; }
 };
 
 /************************************************************************/
