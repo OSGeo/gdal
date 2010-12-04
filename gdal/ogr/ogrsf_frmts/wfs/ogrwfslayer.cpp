@@ -1239,6 +1239,18 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
     }
 
     int nFeatures = atoi(pszValue);
+    /* Hum, http://deegree3-testing.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=ad:Address&OUTPUTFORMAT=text/xml;%20subtype=gml/3.2.1&RESULTTYPE=hits */
+    /* returns more than MAXFEATURES features... So truncate to MAXFEATURES */
+    CPLString osMaxFeatures = WFS_FetchValueFromURL(osURL, "MAXFEATURES");
+    if (osMaxFeatures.size() != 0)
+    {
+        int nMaxFeatures = atoi(osMaxFeatures);
+        if (nFeatures > nMaxFeatures)
+        {
+            CPLDebug("WFS", "Truncating result from %d to %d", nFeatures, nMaxFeatures);
+            nFeatures = nMaxFeatures;
+        }
+    }
 
     CPLDestroyXMLNode( psXML );
     CPLHTTPDestroyResult(psResult);
