@@ -345,6 +345,85 @@ static int DetectIfGetFeatureSupportHits(CPLXMLNode* psRoot)
 }
 
 /************************************************************************/
+/*                   DetectRequiredOutputFormat()                       */
+/************************************************************************/
+
+CPLString OGRWFSDataSource::DetectRequiredOutputFormat(CPLXMLNode* psRoot)
+{
+    CPLXMLNode* psOperationsMetadata =
+        CPLGetXMLNode(psRoot, "OperationsMetadata");
+    if (!psOperationsMetadata)
+    {
+        return "";
+    }
+
+    CPLXMLNode* psChild = psOperationsMetadata->psChild;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "Operation") == 0 &&
+            strcmp(CPLGetXMLValue(psChild, "name", ""), "DescribeFeatureType") == 0)
+        {
+            break;
+        }
+        psChild = psChild->psNext;
+    }
+    if (!psChild)
+    {
+        //CPLDebug("WFS", "Could not find <Operation name=\"DescribeFeatureType\">");
+        return "";
+    }
+
+    psChild = psChild->psChild;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "Parameter") == 0 &&
+            strcmp(CPLGetXMLValue(psChild, "name", ""), "outputFormat") == 0)
+        {
+            break;
+        }
+        psChild = psChild->psNext;
+    }
+   if (!psChild)
+    {
+        //CPLDebug("WFS", "Could not find <Parameter name=\"outputFormat\">");
+        return "";
+    }
+
+    psChild = psChild->psChild;
+    int nCountValue = 0;
+    const char* pszValue = NULL;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "Value") == 0)
+        {
+            CPLXMLNode* psChild2 = psChild->psChild;
+            while(psChild2)
+            {
+                if (psChild2->eType == CXT_Text)
+                {
+                    pszValue = psChild2->pszValue;
+                    nCountValue ++;
+                }
+                psChild2 = psChild2->psNext;
+            }
+        }
+        psChild = psChild->psNext;
+    }
+
+    /* If there's only one value and it is not GML 3.1.1, then we'll need */
+    /* to specify it explicitely */
+    /* This is the case for http://deegree3-testing.deegree.org/deegree-inspire-node/services */
+    /* which only supports GML 3.2.1 */
+    if (nCountValue == 1 && strcmp(pszValue, "text/xml; subtype=gml/3.1.1") != 0)
+        return pszValue;
+
+    return "";
+}
+
+/************************************************************************/
 /*                       GetPostTransactionURL()                        */
 /************************************************************************/
 
@@ -838,9 +917,12 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     if (strcmp(osVersion.c_str(), "1.0.0") == 0)
         bUseFeatureId = TRUE;
     else
+    {
         /* Some servers happen to support RESULTTYPE=hits in 1.0.0, but there */
         /* is no way to advertisze this */
         bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
+        osRequiredOutputFormat = DetectRequiredOutputFormat(psWFSCapabilities);
+    }
 
     DetectTransactionSupport(psWFSCapabilities);
 
@@ -1139,6 +1221,48 @@ int OGRWFSDataSource::IsOldDeegree(const char* pszErrorString)
 }
 
 /************************************************************************/
+/*                         WFS_EscapeURL()                              */
+/************************************************************************/
+
+static CPLString WFS_EscapeURL(CPLString osURL)
+{
+    CPLString osNewURL;
+    size_t i;
+
+    int bNeedsEscaping = FALSE;
+    for(i=0;i<osURL.size();i++)
+    {
+        char ch = osURL[i];
+        if (ch == '<' || ch == '>' || ch == ' ' || ch == '"')
+        {
+            bNeedsEscaping = TRUE;
+            break;
+        }
+    }
+
+    if (!bNeedsEscaping)
+        return osURL;
+
+    for(i=0;i<osURL.size();i++)
+    {
+        char ch = osURL[i];
+        if (ch == '<')
+            osNewURL += "%3C";
+        else if (ch == '>')
+            osNewURL += "%3E";
+        else if (ch == ' ')
+            osNewURL += "%20";
+        else if (ch == '"')
+            osNewURL += "%22";
+        else if (ch == '%')
+            osNewURL += "%25";
+        else
+            osNewURL += ch;
+    }
+    return osNewURL;
+}
+
+/************************************************************************/
 /*                            HTTPFetch()                               */
 /************************************************************************/
 
@@ -1149,7 +1273,7 @@ CPLHTTPResult* OGRWFSDataSource::HTTPFetch( const char* pszURL, char** papszOpti
         papszNewOptions = CSLAddNameValue(papszNewOptions, "HTTP_VERSION", "1.0");
     if (papszHttpOptions)
         papszNewOptions = CSLMerge(papszNewOptions, papszHttpOptions);
-    CPLHTTPResult* psResult = CPLHTTPFetch( pszURL, papszNewOptions );
+    CPLHTTPResult* psResult = CPLHTTPFetch( WFS_EscapeURL(pszURL), papszNewOptions );
     CSLDestroy(papszNewOptions);
     
     if (psResult == NULL)

@@ -229,6 +229,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         /* that numberOfFeatures is set, we can use it to set the FeatureCount */
         /* but *ONLY* if there's just one class ! */
         const char* pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
+        if (pszFeatureCollection == NULL)
+            pszFeatureCollection = strstr(szPtr, "gml:FeatureCollection"); /* GML 3.2.1 output */
         if (pszFeatureCollection)
         {
             bExposeGMLId = TRUE;
