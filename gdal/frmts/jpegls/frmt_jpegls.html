@@ -10,7 +10,7 @@
 <p>(GDAL >= 1.8.0)</p>
 
 <p>This driver is an implementation of a JPEG-LS reader/writer based on the Open Source CharLS library (BSD style license).
-At the time of writing, the library is only released in its 1.0beta version. Consequently, the integration of the driver in the
+At the time of writing, the CharLS library in its 1.0 version has no "make install" target. Consequently, the integration of the driver in the
 GDAL build system is a big rough. On Unix, you have to edit the GDALmake.opt file and edit the lines related to CHARLS.</p>
 
 <p>The driver can read and write lossless or near-lossless images. Note that it is not aimed at dealing with too big images (unless
