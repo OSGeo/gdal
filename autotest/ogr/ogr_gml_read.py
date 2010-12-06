@@ -892,7 +892,7 @@ def ogr_gml_22():
         return 'fail'
 
     ds = None
-    return 'sucess'
+    return 'success'
 
 ###############################################################################
 #  Cleanup
