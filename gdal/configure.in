@@ -2384,6 +2384,48 @@ if test "${HAVE_GEOS}" = "yes" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if opencl library is available.
+dnl ---------------------------------------------------------------------------
+
+OPENCL_SETTING=no
+OPENCL_FLAGS=
+OPENCL_LIB=
+
+AC_ARG_WITH(opencl,
+    [  --with-opencl[=ARG]       Include OpenCL (GPU) support],,,)
+
+AC_MSG_CHECKING([for OpenCL support])
+
+if test "$with_opencl" = "yes" ; then
+
+  AC_ARG_WITH(opencl-include,
+      [  --with-opencl-include=ARG OpenCL Include directory (with a CL subdirectory)],,,)
+
+  OPENCL_SETTING=yes
+
+  if test "x$with_opencl_include" = "x" ; then
+    OPENCL_FLAGS=-DHAVE_OPENCL
+  else
+    OPENCL_FLAGS="-I$with_opencl_include -DHAVE_OPENCL"
+  fi
+    
+  AC_ARG_WITH(opencl-lib,
+      [  --with-opencl-lib=ARG   OpenCL Link Flags (ie. -L/xxx -lOpenCL)],,,)
+     
+  if test "x$with_opencl_lib" = "x" ; then
+    OPENCL_LIB=-lOpenCL
+  else
+    OPENCL_LIB="$with_opencl_lib"
+  fi
+
+fi
+
+AC_MSG_RESULT([$OPENCL_SETTING])
+
+AC_SUBST(OPENCL_FLAGS,  $OPENCL_FLAGS)
+AC_SUBST(OPENCL_LIB,    $OPENCL_LIB)
+
+dnl ---------------------------------------------------------------------------
 dnl Check if we must enable PAM
 dnl ---------------------------------------------------------------------------
 
@@ -2850,6 +2892,7 @@ LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
 LOC_MSG([  VFK support:               ${HAVE_VFK}])
 LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
+LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
   LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])
