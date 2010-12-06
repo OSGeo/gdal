@@ -114,6 +114,22 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty )
             continue;
 
         CPLValueType valueType = CPLGetValueType(pszValue);
+
+        /* This might not fit into a int32. For now, let's */
+        /* consider this as a real value then. */
+        /* FIXME once RFC31 / 64 bit support is set, we could */
+        /* choose a different behaviour */
+        if (valueType == CPL_VALUE_INTEGER && strlen(pszValue) >= 10)
+        {
+            /* Skip leading spaces */
+            while( isspace( (unsigned char)*pszValue ) )
+                pszValue ++;
+            char szVal[32];
+            sprintf(szVal, "%d", atoi(pszValue));
+            if (strcmp(pszValue, szVal) != 0)
+                valueType = CPL_VALUE_REAL;
+        }
+
         if (valueType == CPL_VALUE_STRING
             && m_eType != GMLPT_String 
             && m_eType != GMLPT_StringList )
