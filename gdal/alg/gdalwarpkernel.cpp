@@ -31,6 +31,7 @@
 
 #include "gdalwarper.h"
 #include "cpl_string.h"
+#include "gdalwarpkernel_opencl.h"
 
 CPL_CVSID("$Id$");
 
@@ -48,6 +49,10 @@ int GWKGetFilterRadius(GDALResampleAlg eResampleAlg)
 {
     return anGWKFilterRadius[eResampleAlg];
 }
+
+#ifdef HAVE_OPENCL
+static CPLErr GWKOpenCLCase( GDALWarpKernel * );
+#endif
 
 static CPLErr GWKGeneralCase( GDALWarpKernel * );
 static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK );
@@ -566,6 +571,27 @@ CPLErr GDALWarpKernel::PerformWarp()
 /* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszWarpOptions, "USE_GENERAL_CASE", FALSE ) )
         return GWKGeneralCase( this );
+
+#if defined(HAVE_OPENCL)
+    if((eWorkingDataType == GDT_Byte
+        || eWorkingDataType == GDT_CInt16
+        || eWorkingDataType == GDT_UInt16
+        || eWorkingDataType == GDT_Int16
+        || eWorkingDataType == GDT_CFloat32
+        || eWorkingDataType == GDT_Float32) &&
+       (eResample == GRA_Bilinear
+        || eResample == GRA_Cubic
+        || eResample == GRA_CubicSpline
+        || eResample == GRA_Lanczos))
+    {
+        CPLErr eResult = GWKOpenCLCase( this );
+        
+        // CE_Warning tells us a suitable OpenCL environment was not available
+        // so we fall through to other CPU based methods.
+        if( eResult != CE_Warning )
+            return eResult;
+    }
+#endif /* defined HAVE_OPENCL */
 
     if( eWorkingDataType == GDT_Byte
         && eResample == GRA_NearestNeighbour
@@ -2306,6 +2332,311 @@ static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
     
     return TRUE;
 }
+
+/************************************************************************/
+/*                           GWKOpenCLCase()                            */
+/*                                                                      */
+/*      This is identical to GWKGeneralCase(), but functions via        */
+/*      OpenCL. This means we have vector optimization (SSE) and/or     */
+/*      GPU optimization depending on our prefs. The code itsef is      */
+/*      general and not optimized, but by defining constants we can     */
+/*      make some pretty darn good code on the fly.                     */
+/************************************************************************/
+
+#if defined(HAVE_OPENCL)
+static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
+{
+    int iDstY, iBand;
+    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
+    int nDstXOff  = poWK->nDstXOff , nDstYOff  = poWK->nDstYOff;
+    int nSrcXOff  = poWK->nSrcXOff , nSrcYOff  = poWK->nSrcYOff;
+    CPLErr eErr = CE_None;
+    struct oclWarper *warper;
+    cl_channel_type imageFormat;
+    int useImag = FALSE;
+    OCLResampAlg resampAlg;
+    cl_int err;
+    
+    switch ( poWK->eWorkingDataType )
+    {
+      case GDT_Byte:
+        imageFormat = CL_UNORM_INT8;
+        break;
+      case GDT_UInt16:
+        imageFormat = CL_UNORM_INT16;
+        break;
+      case GDT_CInt16:
+        useImag = TRUE;
+      case GDT_Int16:
+        imageFormat = CL_SNORM_INT16;
+        break;
+      case GDT_CFloat32:
+        useImag = TRUE;
+      case GDT_Float32:
+        imageFormat = CL_FLOAT;
+        break;
+      default:
+        // We don't support higher precision formats
+        CPLDebug( "OpenCL",
+                  "Unsupported resampling OpenCL data type %d.", 
+                  (int) poWK->eWorkingDataType );
+        return CE_Warning;
+    }
+    
+    switch (poWK->eResample)
+    {
+      case GRA_Bilinear:
+        resampAlg = OCL_Bilinear;
+        break;
+      case GRA_Cubic:
+        resampAlg = OCL_Cubic;
+        break;
+      case GRA_CubicSpline:
+        resampAlg = OCL_CubicSpline;
+        break;
+      case GRA_Lanczos:
+        resampAlg = OCL_Lanczos;
+        break;
+      default:
+        // We don't support higher precision formats
+        CPLDebug( "OpenCL", 
+                  "Unsupported resampling OpenCL resampling alg %d.", 
+                  (int) poWK->eResample );
+        return CE_Warning;
+    }
+    
+    // Using a factor of 2 or 4 seems to have much less rounding error than 3 on the GPU.
+    // Then the rounding error can cause strange artifacting under the right conditions.
+    warper = GDALWarpKernelOpenCL_createEnv(nSrcXSize, nSrcYSize,
+                                            nDstXSize, nDstYSize,
+                                            imageFormat, poWK->nBands, 4,
+                                            useImag, poWK->papanBandSrcValid != NULL,
+                                            poWK->pafDstDensity,
+                                            poWK->padfDstNoDataReal,
+                                            resampAlg, &err );
+
+    if(err != CL_SUCCESS || warper == NULL)
+        return CE_Warning;
+    
+    CPLDebug( "GDAL", "GDALWarpKernel()::GWKOpenCLCase()\n"
+              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
+              nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
+              nDstXOff, nDstYOff, nDstXSize, nDstYSize );
+    
+    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+    
+    /* ==================================================================== */
+    /*      Loop over bands.                                                */
+    /* ==================================================================== */
+    for( iBand = 0; iBand < poWK->nBands; iBand++ ) {
+        if( poWK->papanBandSrcValid != NULL && poWK->papanBandSrcValid[iBand] != NULL) {
+            GDALWarpKernelOpenCL_setSrcValid(warper, (int *)poWK->papanBandSrcValid[iBand], iBand);
+            if(err != CL_SUCCESS)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
+                return CE_Failure;
+            }
+        }
+        
+        err = GDALWarpKernelOpenCL_setSrcImg(warper, poWK->papabySrcImage[iBand], iBand);
+        if(err != CL_SUCCESS)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
+            return CE_Failure;
+        }
+        
+        err = GDALWarpKernelOpenCL_setDstImg(warper, poWK->papabyDstImage[iBand], iBand);
+        if(err != CL_SUCCESS)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
+            return CE_Failure;
+        }
+    }
+    
+    /* -------------------------------------------------------------------- */
+    /*      Allocate x,y,z coordinate arrays for transformation ... one     */
+    /*      scanlines worth of positions.                                   */
+    /* -------------------------------------------------------------------- */
+    double *padfX, *padfY, *padfZ;
+    int    *pabSuccess;
+    
+    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
+    
+    /* ==================================================================== */
+    /*      Loop over output lines.                                         */
+    /* ==================================================================== */
+    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; ++iDstY )
+    {
+        int iDstX;
+        
+        /* ---------------------------------------------------------------- */
+        /*      Setup points to transform to source image space.            */
+        /* ---------------------------------------------------------------- */
+        for( iDstX = 0; iDstX < nDstXSize; ++iDstX )
+        {
+            padfX[iDstX] = iDstX + 0.5 + nDstXOff;
+            padfY[iDstX] = iDstY + 0.5 + nDstYOff;
+            padfZ[iDstX] = 0.0;
+        }
+        
+        /* ---------------------------------------------------------------- */
+        /*      Transform the points from destination pixel/line coordinates*/
+        /*      to source pixel/line coordinates.                           */
+        /* ---------------------------------------------------------------- */
+        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+                              padfX, padfY, padfZ, pabSuccess );
+        
+        err = GDALWarpKernelOpenCL_setCoordRow(warper, padfX, padfY,
+                                               nSrcXOff, nSrcYOff,
+                                               pabSuccess, iDstY);
+        if(err != CL_SUCCESS)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
+            return CE_Failure;
+        }
+        
+        //Update the valid & density masks because we don't do so in the kernel
+        for( iDstX = 0; iDstX < nDstXSize && eErr == CE_None; iDstX++ )
+        {
+            double dfX = padfX[iDstX];
+            double dfY = padfY[iDstX];
+            int iDstOffset = iDstX + iDstY * nDstXSize;
+            
+            //See GWKGeneralCase() for appropriate commenting
+            if( !pabSuccess[iDstX] || dfX < nSrcXOff || dfY < nSrcYOff )
+                continue;
+            
+            int iSrcX = ((int) dfX) - nSrcXOff;
+            int iSrcY = ((int) dfY) - nSrcYOff;
+            
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
+                continue;
+            
+            int iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            double  dfDensity = 1.0;
+            
+            if( poWK->pafUnifiedSrcDensity != NULL 
+                && iSrcX >= 0 && iSrcY >= 0 
+                && iSrcX < nSrcXSize && iSrcY < nSrcYSize )
+                dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
+            
+            GWKOverlayDensity( poWK, iDstOffset, dfDensity );
+            
+            //Because this is on the bit-wise level, it can't be done well in OpenCL
+            if( poWK->panDstValid != NULL )
+                poWK->panDstValid[iDstOffset>>5] |= 0x01 << (iDstOffset & 0x1f);
+        }
+    }
+    
+    CPLFree( padfX );
+    CPLFree( padfY );
+    CPLFree( padfZ );
+    CPLFree( pabSuccess );
+    
+    err = GDALWarpKernelOpenCL_runResamp(warper,
+                                         poWK->pafUnifiedSrcDensity,
+                                         poWK->panUnifiedSrcValid,
+                                         poWK->pafDstDensity,
+                                         poWK->panUnifiedSrcValid,
+                                         poWK->dfXScale, poWK->dfYScale,
+                                         poWK->dfXFilter, poWK->dfYFilter,
+                                         poWK->nXRadius, poWK->nYRadius,
+                                         poWK->nFiltInitX, poWK->nFiltInitY);
+    
+    if(err != CL_SUCCESS)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
+        return CE_Failure;
+    }
+    
+    /* ==================================================================== */
+    /*      Loop over output lines.                                         */
+    /* ==================================================================== */
+    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    {
+        for( iBand = 0; iBand < poWK->nBands; iBand++ )
+        {
+            int iDstX;
+            void *rowReal, *rowImag;
+            GByte *pabyDst = poWK->papabyDstImage[iBand];
+            
+            err = GDALWarpKernelOpenCL_getRow(warper, &rowReal, &rowImag, iDstY, iBand);
+            if(err != CL_SUCCESS)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
+                return CE_Failure;
+            }
+            
+            //Copy the data from the warper to GDAL's memory
+            switch ( poWK->eWorkingDataType )
+            {
+              case GDT_Byte:
+                memcpy((void **)&(((GByte *)pabyDst)[iDstY*nDstXSize]),
+                       rowReal, sizeof(GByte)*nDstXSize);
+                break;
+              case GDT_Int16:
+                memcpy((void **)&(((GInt16 *)pabyDst)[iDstY*nDstXSize]),
+                       rowReal, sizeof(GInt16)*nDstXSize);
+                break;
+              case GDT_UInt16:
+                memcpy((void **)&(((GUInt16 *)pabyDst)[iDstY*nDstXSize]),
+                       rowReal, sizeof(GUInt16)*nDstXSize);
+                break;
+              case GDT_Float32:
+                memcpy((void **)&(((float *)pabyDst)[iDstY*nDstXSize]),
+                       rowReal, sizeof(float)*nDstXSize);
+                break;
+              case GDT_CInt16:
+              {
+                  GInt16 *pabyDstI16 = &(((GInt16 *)pabyDst)[iDstY*nDstXSize]);
+                  for (iDstX = 0; iDstX < nDstXSize; iDstX++) {
+                      pabyDstI16[iDstX*2  ] = ((GInt16 *)rowReal)[iDstX];
+                      pabyDstI16[iDstX*2+1] = ((GInt16 *)rowImag)[iDstX];
+                  }
+              }
+              break;
+              case GDT_CFloat32:
+              {
+                  float *pabyDstF32 = &(((float *)pabyDst)[iDstY*nDstXSize]);
+                  for (iDstX = 0; iDstX < nDstXSize; iDstX++) {
+                      pabyDstF32[iDstX*2  ] = ((float *)rowReal)[iDstX];
+                      pabyDstF32[iDstX*2+1] = ((float *)rowImag)[iDstX];
+                  }
+              }
+              break;
+              default:
+                // We don't support higher precision formats
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Unsupported resampling OpenCL data type %d.", (int) poWK->eWorkingDataType );
+                return CE_Failure;
+            }
+        }
+    }
+    
+    if((err = GDALWarpKernelOpenCL_deleteEnv(warper)) != CL_SUCCESS)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
+        return CE_Failure;
+    }
+    
+    return eErr;
+}
+#endif /* defined(HAVE_OPENCL) */
 
 /************************************************************************/
 /*                           GWKGeneralCase()                           */
