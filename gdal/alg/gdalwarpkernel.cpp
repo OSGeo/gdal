@@ -2417,7 +2417,12 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
                                             resampAlg, &err );
 
     if(err != CL_SUCCESS || warper == NULL)
-        return CE_Warning;
+    {
+        eErr = CE_Warning;
+        if (warper != NULL)
+            goto free_warper;
+        return eErr;
+    }
     
     CPLDebug( "GDAL", "GDALWarpKernel()::GWKOpenCLCase()\n"
               "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
@@ -2427,7 +2432,8 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
+        eErr = CE_Failure;
+        goto free_warper;
     }
     
     /* ==================================================================== */
@@ -2439,8 +2445,9 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
             if(err != CL_SUCCESS)
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
-                          "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
-                return CE_Failure;
+                          "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
+                eErr = CE_Failure;
+                goto free_warper;
             }
         }
         
@@ -2448,16 +2455,18 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         if(err != CL_SUCCESS)
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
-            return CE_Failure;
+                      "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
+            eErr = CE_Failure;
+            goto free_warper;
         }
         
         err = GDALWarpKernelOpenCL_setDstImg(warper, poWK->papabyDstImage[iBand], iBand);
         if(err != CL_SUCCESS)
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
-            return CE_Failure;
+                      "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
+            eErr = CE_Failure;
+            goto free_warper;
         }
     }
     
@@ -2503,7 +2512,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         if(err != CL_SUCCESS)
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
+                      "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
             return CE_Failure;
         }
         
@@ -2558,8 +2567,9 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     if(err != CL_SUCCESS)
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
-        return CE_Failure;
+                  "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
+        eErr = CE_Failure;
+        goto free_warper;
     }
     
     /* ==================================================================== */
@@ -2577,8 +2587,9 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
             if(err != CL_SUCCESS)
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
-                          "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
-                return CE_Failure;
+                          "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
+                eErr = CE_Failure;
+                goto free_warper;
             }
             
             //Copy the data from the warper to GDAL's memory
@@ -2622,15 +2633,16 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
                 // We don't support higher precision formats
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Unsupported resampling OpenCL data type %d.", (int) poWK->eWorkingDataType );
-                return CE_Failure;
+                eErr = CE_Failure;
+                goto free_warper;
             }
         }
     }
-    
+free_warper:
     if((err = GDALWarpKernelOpenCL_deleteEnv(warper)) != CL_SUCCESS)
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OpenCL routines reported failure (%d) on line %d.\n", (int) err, __LINE__ );
+                  "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
         return CE_Failure;
     }
     

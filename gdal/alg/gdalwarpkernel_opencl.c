@@ -36,17 +36,20 @@
 #include "gdalwarpkernel_opencl.h"
 
 #define handleErr(err) if((err) != CL_SUCCESS) { \
-    printf("Error at file %s line %d; Err val: %d\n", __FILE__, __LINE__, err); \
-    printCLErr(err); \
-    while(1){}\
+    CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
     return err; \
 }
 
 #define handleErrRetNULL(err) if((err) != CL_SUCCESS) { \
     (*clErr) = err; \
-    printf("Error at file %s line %d; Err val: %d\n", __FILE__, __LINE__, err); \
-    printCLErr(err); \
+    CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
     return NULL; \
+}
+
+#define handleErrGoto(err, goto_label) if((err) != CL_SUCCESS) { \
+    (*clErr) = err; \
+    CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
+    goto goto_label; \
 }
 
 #define freeCLMem(clMem, fallBackMem) { \
@@ -60,152 +63,154 @@
     } \
 }
 
-void printCLErr(cl_int err)
+static const char* getCLErrorString(cl_int err)
 {
     switch (err)
     {
         case CL_SUCCESS:
-            printf("CL_SUCCESS\n");
+            return("CL_SUCCESS");
             break;
         case CL_DEVICE_NOT_FOUND:
-            printf("CL_DEVICE_NOT_FOUND\n");
+            return("CL_DEVICE_NOT_FOUND");
             break;
         case CL_DEVICE_NOT_AVAILABLE:
-            printf("CL_DEVICE_NOT_AVAILABLE\n");
+            return("CL_DEVICE_NOT_AVAILABLE");
             break;
         case CL_COMPILER_NOT_AVAILABLE:
-            printf("CL_COMPILER_NOT_AVAILABLE\n");
+            return("CL_COMPILER_NOT_AVAILABLE");
             break;
         case CL_MEM_OBJECT_ALLOCATION_FAILURE:
-            printf("CL_MEM_OBJECT_ALLOCATION_FAILURE\n");
+            return("CL_MEM_OBJECT_ALLOCATION_FAILURE");
             break;
         case CL_OUT_OF_RESOURCES:
-            printf("CL_OUT_OF_RESOURCES\n");
+            return("CL_OUT_OF_RESOURCES");
             break;
         case CL_OUT_OF_HOST_MEMORY:
-            printf("CL_OUT_OF_HOST_MEMORY\n");
+            return("CL_OUT_OF_HOST_MEMORY");
             break;
         case CL_PROFILING_INFO_NOT_AVAILABLE:
-            printf("CL_PROFILING_INFO_NOT_AVAILABLE\n");
+            return("CL_PROFILING_INFO_NOT_AVAILABLE");
             break;
         case CL_MEM_COPY_OVERLAP:
-            printf("CL_MEM_COPY_OVERLAP\n");
+            return("CL_MEM_COPY_OVERLAP");
             break;
         case CL_IMAGE_FORMAT_MISMATCH:
-            printf("CL_IMAGE_FORMAT_MISMATCH\n");
+            return("CL_IMAGE_FORMAT_MISMATCH");
             break;
         case CL_IMAGE_FORMAT_NOT_SUPPORTED:
-            printf("CL_IMAGE_FORMAT_NOT_SUPPORTED\n");
+            return("CL_IMAGE_FORMAT_NOT_SUPPORTED");
             break;
         case CL_BUILD_PROGRAM_FAILURE:
-            printf("CL_BUILD_PROGRAM_FAILURE\n");
+            return("CL_BUILD_PROGRAM_FAILURE");
             break;
         case CL_MAP_FAILURE:
-            printf("CL_MAP_FAILURE\n");
+            return("CL_MAP_FAILURE");
             break;
         case CL_INVALID_VALUE:
-            printf("CL_INVALID_VALUE\n");
+            return("CL_INVALID_VALUE");
             break;
         case CL_INVALID_DEVICE_TYPE:
-            printf("CL_INVALID_DEVICE_TYPE\n");
+            return("CL_INVALID_DEVICE_TYPE");
             break;
         case CL_INVALID_PLATFORM:
-            printf("CL_INVALID_PLATFORM\n");
+            return("CL_INVALID_PLATFORM");
             break;
         case CL_INVALID_DEVICE:
-            printf("CL_INVALID_DEVICE\n");
+            return("CL_INVALID_DEVICE");
             break;
         case CL_INVALID_CONTEXT:
-            printf("CL_INVALID_CONTEXT\n");
+            return("CL_INVALID_CONTEXT");
             break;
         case CL_INVALID_QUEUE_PROPERTIES:
-            printf("CL_INVALID_QUEUE_PROPERTIES\n");
+            return("CL_INVALID_QUEUE_PROPERTIES");
             break;
         case CL_INVALID_COMMAND_QUEUE:
-            printf("CL_INVALID_COMMAND_QUEUE\n");
+            return("CL_INVALID_COMMAND_QUEUE");
             break;
         case CL_INVALID_HOST_PTR:
-            printf("CL_INVALID_HOST_PTR\n");
+            return("CL_INVALID_HOST_PTR");
             break;
         case CL_INVALID_MEM_OBJECT:
-            printf("CL_INVALID_MEM_OBJECT\n");
+            return("CL_INVALID_MEM_OBJECT");
             break;
         case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
-            printf("CL_INVALID_IMAGE_FORMAT_DESCRIPTOR\n");
+            return("CL_INVALID_IMAGE_FORMAT_DESCRIPTOR");
             break;
         case CL_INVALID_IMAGE_SIZE:
-            printf("CL_INVALID_IMAGE_SIZE\n");
+            return("CL_INVALID_IMAGE_SIZE");
             break;
         case CL_INVALID_SAMPLER:
-            printf("CL_INVALID_SAMPLER\n");
+            return("CL_INVALID_SAMPLER");
             break;
         case CL_INVALID_BINARY:
-            printf("CL_INVALID_BINARY\n");
+            return("CL_INVALID_BINARY");
             break;
         case CL_INVALID_BUILD_OPTIONS:
-            printf("CL_INVALID_BUILD_OPTIONS\n");
+            return("CL_INVALID_BUILD_OPTIONS");
             break;
         case CL_INVALID_PROGRAM:
-            printf("CL_INVALID_PROGRAM\n");
+            return("CL_INVALID_PROGRAM");
             break;
         case CL_INVALID_PROGRAM_EXECUTABLE:
-            printf("CL_INVALID_PROGRAM_EXECUTABLE\n");
+            return("CL_INVALID_PROGRAM_EXECUTABLE");
             break;
         case CL_INVALID_KERNEL_NAME:
-            printf("CL_INVALID_KERNEL_NAME\n");
+            return("CL_INVALID_KERNEL_NAME");
             break;
         case CL_INVALID_KERNEL_DEFINITION:
-            printf("CL_INVALID_KERNEL_DEFINITION\n");
+            return("CL_INVALID_KERNEL_DEFINITION");
             break;
         case CL_INVALID_KERNEL:
-            printf("CL_INVALID_KERNEL\n");
+            return("CL_INVALID_KERNEL");
             break;
         case CL_INVALID_ARG_INDEX:
-            printf("CL_INVALID_ARG_INDEX\n");
+            return("CL_INVALID_ARG_INDEX");
             break;
         case CL_INVALID_ARG_VALUE:
-            printf("CL_INVALID_ARG_VALUE\n");
+            return("CL_INVALID_ARG_VALUE");
             break;
         case CL_INVALID_ARG_SIZE:
-            printf("CL_INVALID_ARG_SIZE\n");
+            return("CL_INVALID_ARG_SIZE");
             break;
         case CL_INVALID_KERNEL_ARGS:
-            printf("CL_INVALID_KERNEL_ARGS\n");
+            return("CL_INVALID_KERNEL_ARGS");
             break;
         case CL_INVALID_WORK_DIMENSION:
-            printf("CL_INVALID_WORK_DIMENSION\n");
+            return("CL_INVALID_WORK_DIMENSION");
             break;
         case CL_INVALID_WORK_GROUP_SIZE:
-            printf("CL_INVALID_WORK_GROUP_SIZE\n");
+            return("CL_INVALID_WORK_GROUP_SIZE");
             break;
         case CL_INVALID_WORK_ITEM_SIZE:
-            printf("CL_INVALID_WORK_ITEM_SIZE\n");
+            return("CL_INVALID_WORK_ITEM_SIZE");
             break;
         case CL_INVALID_GLOBAL_OFFSET:
-            printf("CL_INVALID_GLOBAL_OFFSET\n");
+            return("CL_INVALID_GLOBAL_OFFSET");
             break;
         case CL_INVALID_EVENT_WAIT_LIST:
-            printf("CL_INVALID_EVENT_WAIT_LIST\n");
+            return("CL_INVALID_EVENT_WAIT_LIST");
             break;
         case CL_INVALID_EVENT:
-            printf("CL_INVALID_EVENT\n");
+            return("CL_INVALID_EVENT");
             break;
         case CL_INVALID_OPERATION:
-            printf("CL_INVALID_OPERATION\n");
+            return("CL_INVALID_OPERATION");
             break;
         case CL_INVALID_GL_OBJECT:
-            printf("CL_INVALID_GL_OBJECT\n");
+            return("CL_INVALID_GL_OBJECT");
             break;
         case CL_INVALID_BUFFER_SIZE:
-            printf("CL_INVALID_BUFFER_SIZE\n");
+            return("CL_INVALID_BUFFER_SIZE");
             break;
         case CL_INVALID_MIP_LEVEL:
-            printf("CL_INVALID_MIP_LEVEL\n");
+            return("CL_INVALID_MIP_LEVEL");
             break;
         case CL_INVALID_GLOBAL_WORK_SIZE:
-            printf("CL_INVALID_GLOBAL_WORK_SIZE\n");
+            return("CL_INVALID_GLOBAL_WORK_SIZE");
             break;
     }
+
+    return "unknown_error";
 }
 
 /*
@@ -473,8 +478,8 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
 	cl_program program;
     cl_kernel kernel;
 	cl_int err = CL_SUCCESS;
-    char *buffer = (char *)calloc(128000, sizeof(char));
-    char *progBuf = (char *)calloc(128000, sizeof(char));
+    char *buffer = (char *)CPLCalloc(128000, sizeof(char));
+    char *progBuf = (char *)CPLCalloc(128000, sizeof(char));
     float dstMinVal, dstMaxVal;
     
     const char *outType;
@@ -1139,7 +1144,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     //Actually make the program from assembled source
     program = clCreateProgramWithSource(warper->context, 1, (const char**)&progBuf,
                                         NULL, &err);
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_final);
     
     //Assemble the compiler arg string for speed. All invariants should be defined here.
     sprintf(buffer, "-cl-fast-relaxed-math -Werror -D FALSE=0 -D TRUE=1 "
@@ -1165,43 +1170,47 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     //Detailed debugging info
     if (err != CL_SUCCESS)
     {
+        const char* pszStatus = "unknown_status";
         err = clGetProgramBuildInfo(program, warper->dev, CL_PROGRAM_BUILD_LOG,
                                     128000*sizeof(char), buffer, NULL);
-        handleErrRetNULL(err);
+        handleErrGoto(err, error_free_program);
         
-        printf("Build Log:\n%s\n", buffer);
-        printf("Error: Failed to build program executable!\n");
-        printCLErr(err);
-        
-        printf("%s\n", buffer);
-        
+        CPLError(CE_Failure, CPLE_AppDefined, "Error: Failed to build program executable!\nBuild Log:\n%s", buffer);
+
         err = clGetProgramBuildInfo(program, warper->dev, CL_PROGRAM_BUILD_STATUS,
                                     128000*sizeof(char), buffer, NULL);
-        handleErrRetNULL(err);
-        
-        printf("Build Status:\n");
+        handleErrGoto(err, error_free_program);
+
         if(buffer[0] == CL_BUILD_NONE)
-            printf("CL_BUILD_NONE\n");
+            pszStatus = "CL_BUILD_NONE";
         else if(buffer[0] == CL_BUILD_ERROR)
-            printf("CL_BUILD_ERROR\n");
+            pszStatus = "CL_BUILD_ERROR";
         else if(buffer[0] == CL_BUILD_SUCCESS)
-            printf("CL_BUILD_SUCCESS\n");
+            pszStatus = "CL_BUILD_SUCCESS";
         else if(buffer[0] == CL_BUILD_IN_PROGRESS)
-            printf("CL_BUILD_IN_PROGRESS\n");
-        
-        printf("Program Source:\n%s\n", progBuf);
-        return NULL;
+            pszStatus = "CL_BUILD_IN_PROGRESS";
+
+        CPLDebug("OpenCL", "Build Status: %s\nProgram Source:\n%s", pszStatus, progBuf);
+        goto error_free_program;
     }
     
     kernel = clCreateKernel(program, "resamp", &err);
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_free_program);
     
     err = clReleaseProgram(program);
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_final);
     
-    free(buffer);
-    free(progBuf);
+    CPLFree(buffer);
+    CPLFree(progBuf);
     return kernel;
+
+error_free_program:
+    err = clReleaseProgram(program);
+
+error_final:
+    CPLFree(buffer);
+    CPLFree(progBuf);
+    return NULL;
 }
 
 /*
@@ -1861,6 +1870,11 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     warper->numBands = numBands;
     warper->imageFormat = imageFormat;
     warper->resampAlg = resampAlg;
+
+    warper->useUnifiedSrcDensity = FALSE;
+    warper->useUnifiedSrcValid = FALSE;
+    warper->useDstDensity = FALSE;
+    warper->useDstValid = FALSE;
     
     warper->imagWorkCL = NULL;
     warper->dstImagWorkCL = NULL;
