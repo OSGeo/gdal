@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  OpenCL Image Reprojector
  * Purpose:  Implementation of the GDALWarpKernel reprojector in OpenCL.
