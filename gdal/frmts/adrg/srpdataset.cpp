@@ -564,7 +564,9 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 
         int nIndexValueWidth = subfieldDefn->GetWidth();
 
-        if (field->GetDataSize() != nIndexValueWidth * NFL * NFC + 1)
+        /* Should be strict comparison, but apparently a few datasets */
+        /* have GetDataSize() greater than the required minimum (#3862) */
+        if (field->GetDataSize() < nIndexValueWidth * NFL * NFC + 1)
         {
             return FALSE;
         }
