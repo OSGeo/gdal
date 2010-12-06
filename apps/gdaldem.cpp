@@ -489,7 +489,7 @@ float GDALHillshadeAlg (float* afWin, float fDstNoDataValue, void* pData)
     else
         cang = 1.0 + (254.0 * cang);
         
-    return cang;
+    return (float) cang;
 }
 
 float GDALHillshadeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* pData)
@@ -518,7 +518,7 @@ float GDALHillshadeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, vo
     else
         cang = 1.0 + (254.0 * cang);
         
-    return cang;
+    return (float) cang;
 }
 
 void*  GDALCreateHillshadeData(double* adfGeoTransform,
@@ -570,9 +570,9 @@ float GDALSlopeHornAlg (float* afWin, float fDstNoDataValue, void* pData)
     key = (dx * dx + dy * dy);
 
     if (psData->slopeFormat == 1) 
-        return atan(sqrt(key) / (8*psData->scale)) * radiansToDegrees;
+        return (float) (atan(sqrt(key) / (8*psData->scale)) * radiansToDegrees);
     else
-        return 100*(sqrt(key) / (8*psData->scale));
+        return (float) (100*(sqrt(key) / (8*psData->scale)));
 }
 
 float GDALSlopeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* pData)
@@ -588,9 +588,9 @@ float GDALSlopeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* 
     key = (dx * dx + dy * dy);
 
     if (psData->slopeFormat == 1) 
-        return atan(sqrt(key) / (2*psData->scale)) * radiansToDegrees;
+        return (float) (atan(sqrt(key) / (2*psData->scale)) * radiansToDegrees);
     else
-        return 100*(sqrt(key) / (2*psData->scale));
+        return (float) (100*(sqrt(key) / (2*psData->scale)));
 }
 
 void*  GDALCreateSlopeData(double* adfGeoTransform,
@@ -629,7 +629,7 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
     dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) - 
           (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
 
-    aspect = atan2(dy,-dx) / degreesToRadians;
+    aspect = (float) (atan2(dy,-dx) / degreesToRadians);
 
     if (dx == 0 && dy == 0)
     {
@@ -639,9 +639,9 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
     else if ( psData->bAngleAsAzimuth )
     {
         if (aspect > 90.0) 
-            aspect = 450.0 - aspect;
+            aspect = 450.0f - aspect;
         else
-            aspect = 90.0 - aspect;
+            aspect = 90.0f - aspect;
     }
     else
     {
@@ -666,7 +666,7 @@ float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void*
 
     dy = (afWin[7] - afWin[1]);
 
-    aspect = atan2(dy,-dx) / degreesToRadians;
+    aspect = (float) (atan2(dy,-dx) / degreesToRadians);
 
     if (dx == 0 && dy == 0)
     {
@@ -676,9 +676,9 @@ float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void*
     else if ( psData->bAngleAsAzimuth )
     {
         if (aspect > 90.0) 
-            aspect = 450.0 - aspect;
+            aspect = 450.0f - aspect;
         else
-            aspect = 90.0 - aspect;
+            aspect = 90.0f - aspect;
     }
     else
     {
@@ -1882,7 +1882,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
                 afWin[8] = poGDS->apafSourceBuf[2][jmax];
 
                 fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
-                                    afWin, poGDS->dfDstNoDataValue,
+                                    afWin, (float) poGDS->dfDstNoDataValue,
                                     poGDS->pfnAlg,
                                     poGDS->pAlgData,
                                     poGDS->bComputeAtEdges);
@@ -1933,7 +1933,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
                 afWin[8] = INTERPOL(poGDS->apafSourceBuf[2][jmax], poGDS->apafSourceBuf[1][jmax]);
 
                 fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
-                                    afWin, poGDS->dfDstNoDataValue,
+                                    afWin, (float) poGDS->dfDstNoDataValue,
                                     poGDS->pfnAlg,
                                     poGDS->pAlgData,
                                     poGDS->bComputeAtEdges);
@@ -2014,7 +2014,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
         afWin[8] = poGDS->apafSourceBuf[2][j+1];
 
         fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
-                                    afWin, poGDS->dfDstNoDataValue,
+                                    afWin, (float) poGDS->dfDstNoDataValue,
                                     poGDS->pfnAlg,
                                     poGDS->pAlgData,
                                     poGDS->bComputeAtEdges);
@@ -2037,7 +2037,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
         afWin[8] = INTERPOL(poGDS->apafSourceBuf[2][j], poGDS->apafSourceBuf[2][j-1]);
 
         fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
-                                    afWin, poGDS->dfDstNoDataValue,
+                                    afWin, (float) poGDS->dfDstNoDataValue,
                                     poGDS->pfnAlg,
                                     poGDS->pAlgData,
                                     poGDS->bComputeAtEdges);
@@ -2078,7 +2078,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
         afWin[8] = poGDS->apafSourceBuf[2][j+1];
 
         fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
-                                afWin, poGDS->dfDstNoDataValue,
+                                afWin, (float) poGDS->dfDstNoDataValue,
                                 poGDS->pfnAlg,
                                 poGDS->pAlgData,
                                 poGDS->bComputeAtEdges);
