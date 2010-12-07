@@ -726,13 +726,13 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     
     // Check & return when the thread group overruns the image size
     "if (nDstX >= iDstWidth || nDstY >= iDstHeight)\n"
-        "return (float2)(-99.0, -99.0);\n"
-    
-    "float4  fSrcCoords = read_imagef(srcCoords,\n"
-                                     "CLK_NORMALIZED_COORDS_TRUE |\n"
-                                        "CLK_ADDRESS_CLAMP_TO_EDGE |\n"
-                                        "CLK_FILTER_LINEAR,\n"
-                                     "fDst);\n"
+        "return (float2)(-99.0f, -99.0f);\n"
+
+    "const sampler_t samp =  CLK_NORMALIZED_COORDS_TRUE |\n"
+                            "CLK_ADDRESS_CLAMP_TO_EDGE |\n"
+                            "CLK_FILTER_LINEAR;\n"
+
+    "float4  fSrcCoords = read_imagef(srcCoords,samp,fDst);\n"
     
     "return (float2)(fSrcCoords.x, fSrcCoords.y);\n"
 "}\n";
