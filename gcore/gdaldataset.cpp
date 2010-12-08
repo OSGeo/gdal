@@ -1791,8 +1791,8 @@ static int GDALGetOpenDatasetsForeach(void* elt, void* user_data)
  *
  * This method is the same as the C function GDALGetOpenDatasets().
  *
- * NOTE: This method is not thread safe.  The returned list may changed
- * at any time.
+ * NOTE: This method is not thread safe.  The returned list may change
+ * at any time and it should not be freed.
  *
  * @param pnCount integer into which to place the count of dataset pointers
  * being returned.
