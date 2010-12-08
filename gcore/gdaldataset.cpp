@@ -1777,7 +1777,9 @@ GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
 static int GDALGetOpenDatasetsForeach(void* elt, void* user_data)
 {
     int* pnIndex = (int*) user_data;
-    ppDatasets[*pnIndex] = (GDALDataset*) elt;
+    DatasetCtxt* psStruct = (DatasetCtxt*) elt;
+
+    ppDatasets[*pnIndex] = psStruct->poDS;
 
     (*pnIndex) ++;
 
