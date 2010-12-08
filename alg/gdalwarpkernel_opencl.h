@@ -138,6 +138,8 @@ struct oclWarper {
     
     cl_mem fDstNoDataRealCL;
     float *fDstNoDataReal;
+
+    int bIsATI;
 };
 
 struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
