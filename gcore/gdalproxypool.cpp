@@ -432,6 +432,16 @@ CPL_C_END
 /*                     GDALProxyPoolDataset                             */
 /* ******************************************************************** */
 
+/* Note : the bShared parameter must be used with caution. You can */
+/* set it to TRUE  for being used as a VRT source : in that case, */
+/* VRTSimpleSource will take care of destroying it when there are no */
+/* reference to it (in VRTSimpleSource::~VRTSimpleSource()) */
+/* However this will not be registered as a genuine shared dataset, like it */
+/* would have been with MarkAsShared(). But MarkAsShared() is not usable for */
+/* GDALProxyPoolDataset objects, as they share the same description as their */
+/* underlying dataset. So *NEVER* call MarkAsShared() on a GDALProxyPoolDataset */
+/* object */
+
 GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescription,
                                    int nRasterXSize, int nRasterYSize,
                                    GDALAccess eAccess, int bShared,
@@ -490,6 +500,13 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
 
 GDALProxyPoolDataset::~GDALProxyPoolDataset()
 {
+    /* See comment in constructor */
+    /* It is not really a genuine shared dataset, so we don't */
+    /* want ~GDALDataset() to try to release it from its */
+    /* shared dataset hashset. This will save a */
+    /* "Should not happen. Cannot find %s, this=%p in phSharedDatasetSet" debug message */
+    bShared = FALSE;
+
     CPLFree(pszProjectionRef);
     CPLFree(pszGCPProjection);
     if (nGCPCount)
