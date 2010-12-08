@@ -34,6 +34,7 @@
 CPL_CVSID("$Id$");
 
 #define GP_NODATA_MARKER -51502112
+#define MY_MAX_INT 2147483647
 
 /*
  * General Plan
@@ -259,7 +260,8 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
             iPoly = panThisLineId[iX]; 
 
             CPLAssert( iPoly >= 0 );
-            anPolySizes[iPoly] += 1;
+            if( anPolySizes[iPoly] < MY_MAX_INT )
+                anPolySizes[iPoly] += 1;
         }
 
 /* -------------------------------------------------------------------- */
@@ -300,7 +302,14 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     {
         if( oFirstEnum.panPolyIdMap[iPoly] != iPoly )
         {
-            anPolySizes[oFirstEnum.panPolyIdMap[iPoly]] += anPolySizes[iPoly];
+            GIntBig nSize = anPolySizes[oFirstEnum.panPolyIdMap[iPoly]];
+
+            nSize += anPolySizes[iPoly];
+            
+            if( nSize > MY_MAX_INT )
+                nSize = MY_MAX_INT;
+
+            anPolySizes[oFirstEnum.panPolyIdMap[iPoly]] = (int)nSize;
             anPolySizes[iPoly] = 0;
         }
     }
