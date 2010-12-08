@@ -1961,9 +1961,9 @@ void CPLCloseShared( FILE * fp )
     CPLFree( pasSharedFileList[i].pszAccess );
 
 //    pasSharedFileList[i] = pasSharedFileList[--nSharedFileCount];
-    memcpy( (void *) (pasSharedFileList + i), 
-            (void *) (pasSharedFileList + --nSharedFileCount), 
-            sizeof(CPLSharedFileInfo) );
+    memmove( (void *) (pasSharedFileList + i), 
+             (void *) (pasSharedFileList + --nSharedFileCount), 
+             sizeof(CPLSharedFileInfo) );
 
     if( nSharedFileCount == 0 )
     {
