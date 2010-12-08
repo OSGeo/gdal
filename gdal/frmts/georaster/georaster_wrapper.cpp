@@ -1627,8 +1627,6 @@ void GeoRasterWrapper::SetColorMap( int nBand, GDALColorTable* poCT )
             CPLSetXMLValue( psCell, "#green", CPLSPrintf("%d", oEntry.c2) );
             CPLSetXMLValue( psCell, "#alpha", CPLSPrintf("%d", oEntry.c4) );
         }
-
-        break;
     }
 }
 
@@ -2338,6 +2336,32 @@ bool GeoRasterWrapper::GetNoData( int nLayer, double* pdfNoDataValue )
     return false;
 }
 
+/*  As soon was we can figured out how the carbage shows up at
+ *  the end of the XML when GDAL is compiled and running in China
+ *  under the Java API (?!) that function will be removed from 
+ *  the code. [Ivan Lucena]
+ */
+
+void TrimmXMLGarbage( char* pszXML, char* pszTag )
+{
+  size_t nAll = strlen( pszXML );
+  size_t nTag = strlen( pszTag );
+
+  if( ! EQUAL( pszXML + ( nAll - nTag ), pszTag ) )
+  {
+    CPLDebug("GEOR","Metadata wrong: [%s]",pszXML);
+
+    char* pszEnd = strstr( pszXML,  pszTag );
+
+    if( pszEnd )
+    {
+      pszEnd[nTag] = '\0';
+
+      CPLDebug("GEOR","Metadata fixed: [%s]",pszXML);
+    }
+  }
+}
+
 //  ---------------------------------------------------------------------------
 //                                                             SetNoDataValue()
 //  ---------------------------------------------------------------------------
@@ -2391,6 +2415,8 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
     {
         return false;
     }
+
+    TrimmXMLGarbage( pszMetadata, "</georasterMetadata>\n" );
 
     OCILobLocator* phLocator = NULL;
     
@@ -2654,10 +2680,19 @@ bool GeoRasterWrapper::FlushMetadata()
 
     char* pszMetadata = CPLSerializeXMLTree( phMetadata );
 
+#if 0 // Change to 1 to sinulate the problem
+    char* pszGarbage  = (char*) CPLMalloc( strlen(pszMetadata) + 100 );
+    sprintf( pszGarbage, "%sGarbage", pszMetadata );
+    TrimmXMLGarbage( pszGarbage, "</georasterMetadata>\n" );
+    CPLFree( pszGarbage );
+#endif
+
     if( pszMetadata == NULL )
     {
         return false;
     }
+
+    TrimmXMLGarbage( pszMetadata, "</georasterMetadata>\n" );
 
     OCILobLocator* phLocator = NULL;
 
