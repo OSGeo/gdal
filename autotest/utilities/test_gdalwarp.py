@@ -314,14 +314,15 @@ def test_gdalwarp_12():
 
     ref_ds = gdal.Open('ref_data/testgdalwarp12.tif')
     maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
-    ref_ds = None
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
+        ref_ds = None
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
     ds = None
+    ref_ds = None
 
     return 'success'
 
