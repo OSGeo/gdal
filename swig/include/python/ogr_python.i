@@ -247,8 +247,24 @@ layer[0:4] would return a list of the first four features."""
         """Exports a GeoJSON object which represents the Feature. The
            as_object parameter determines whether the returned value 
            should be a Python object instead of a string. Defaults to False."""
+
+        try:
+            import simplejson
+        except ImportError:
+            try:
+                import json as simplejson
+            except ImportError:
+                raise ImportError("Unable to import simplejson or json, needed for ExportToJson.")
+
+        geom = self.GetGeometryRef()
+        if geom is not None:
+            geom_json_string = geom.ExportToJson()
+            geom_json_object = simplejson.loads(geom_json_string)
+        else:
+            geom_json_object = None
+
         output = {'type':'Feature',
-                   'geometry': self.GetGeometryRef().ExportToJson(as_object=True),
+                   'geometry': geom_json_object,
                    'properties': {}
                   } 
         
@@ -260,12 +276,8 @@ layer[0:4] would return a list of the first four features."""
             output['properties'][key] = self.GetField(key)
         
         if not as_object:
-            try:
-                import simplejson
-            except ImportError:
-                raise ImportError("Unable to import simplejson, needed for ExportToJson.")
             output = simplejson.dumps(output)
-        
+
         return output
 
 
