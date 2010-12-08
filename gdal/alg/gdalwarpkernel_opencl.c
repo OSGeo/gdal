@@ -29,6 +29,9 @@
 
 #if defined(HAVE_OPENCL)
 
+/* The following line may be uncommented for increased debugging traces and profiling */
+/* #define DEBUG_OPENCL 1 */
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -223,7 +226,7 @@ static const char* getCLErrorString(cl_int err)
  from the kernel. If debugging is on, we can print the name and stats about the
  device we're using.
  */
-cl_device_id get_device()
+cl_device_id get_device(int *pbIsATI)
 {
     cl_int err = 0;
     cl_device_id device = NULL;
@@ -256,7 +259,9 @@ cl_device_id get_device()
                            device_name, &returned_size);
     assert(err == CL_SUCCESS);
     CPLDebug( "OpenCL", "Connected to %s %s.", vendor_name, device_name);
-    
+
+    *pbIsATI = strncmp(vendor_name, "Advanced Micro Devices", strlen("Advanced Micro Devices")) == 0;
+
     return device;
 }
 
@@ -346,8 +351,8 @@ cl_int alloc_pinned_mem(struct oclWarper *warper, int imgNum, size_t dataSz,
         handleErr(err);
     } else {
         wrkCL[imgNum] = NULL;
-#ifndef NDEBUG
-        printf("Using fallback non-pinned memory!\n");
+#ifdef DEBUG_OPENCL
+        CPLDebug("OpenCL", "Using fallback non-pinned memory!");
 #endif
         //Fallback to regular allocation
         wrkPtr[imgNum] = (void *)CPLMalloc(dataSz);
@@ -1372,7 +1377,7 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
     //Set up image vars
     imgFmt.image_channel_order = chOrder;
     imgFmt.image_channel_data_type = warper->imageFormat;
-    
+
     //Create & copy the source image
     (*srcReal) = clCreateImage2D(warper->context,
                                  CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imgFmt,
@@ -1389,8 +1394,20 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
         handleErr(err);
     } else {
         //Make a fake image so we don't have a NULL pointer
-        (*srcImag) = clCreateImage2D(warper->context, CL_MEM_READ_ONLY, &imgFmt,
-                                     1, 1, sz, NULL, &err);
+        if (warper->bIsATI)
+        {
+            /* The code in the else clause generates a CL_INVALID_IMAGE_SIZE with ATI SDK 2.2 */
+            /* while theoretically correct and working on other SDKs. The following is a */
+            /* workaround */
+            char dummyImageData[16];
+            (*srcImag) = clCreateImage2D(warper->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imgFmt,
+                                        1, 1, sz, dummyImageData, &err);
+        }
+        else
+        {
+            (*srcImag) = clCreateImage2D(warper->context, CL_MEM_READ_ONLY, &imgFmt,
+                                         1, 1, sz, NULL, &err);
+        }
         handleErr(err);
     }
 
@@ -1562,7 +1579,7 @@ cl_int execute_kern(struct oclWarper *warper, cl_kernel kern, size_t loc_size)
     cl_event ev;
     size_t ceil_runs[2];
     size_t group_size[2];
-#ifndef NDEBUG
+#ifdef DEBUG_OPENCL
     size_t start_time = 0;
     size_t end_time;
     char *vecTxt = "";
@@ -1594,7 +1611,7 @@ cl_int execute_kern(struct oclWarper *warper, cl_kernel kern, size_t loc_size)
     else
         ceil_runs[1] = warper->dstHeight;
     
-#ifndef NDEBUG
+#ifdef DEBUG_OPENCL
     handleErr(err = clSetCommandQueueProperty(warper->queue, CL_QUEUE_PROFILING_ENABLE, CL_TRUE, NULL));
 #endif
     
@@ -1604,7 +1621,7 @@ cl_int execute_kern(struct oclWarper *warper, cl_kernel kern, size_t loc_size)
                                            ceil_runs, group_size, 0, NULL, &ev));
     handleErr(err = clFinish(warper->queue));
     
-#ifndef NDEBUG
+#ifdef DEBUG_OPENCL
     handleErr(err = clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_START,
                                             sizeof(size_t), &start_time, NULL));
     handleErr(err = clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_END,
@@ -1615,7 +1632,7 @@ cl_int execute_kern(struct oclWarper *warper, cl_kernel kern, size_t loc_size)
     if (kern == warper->kern4)
         vecTxt = "(vec)";
     
-    printf("Kernel Time: %6s %10lu\n", vecTxt, (long int)((end_time-start_time)/100000));
+    CPLDebug("OpenCL", "Kernel Time: %6s %10lu", vecTxt, (long int)((end_time-start_time)/100000));
 #endif
     return CL_SUCCESS;
 }
@@ -1844,9 +1861,10 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     size_t fmtSize, sz;
     cl_device_id device;
     cl_bool bool_flag;
+    int bIsATI = FALSE;
     
     // Do we have a suitable OpenCL device? 
-    device = get_device();
+    device = get_device(&bIsATI);
     if( device == NULL )
         return NULL;
         
@@ -1862,6 +1880,8 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     warper = (struct oclWarper *)CPLMalloc(sizeof(struct oclWarper));
     if (warper == NULL)
         handleErrRetNULL(err = CL_OUT_OF_HOST_MEMORY);
+
+    warper->bIsATI = bIsATI;
     
     //Init passed vars
     warper->srcWidth = srcWidth;
