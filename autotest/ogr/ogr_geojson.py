@@ -658,6 +658,41 @@ def ogr_geojson_14():
     return 'success'
 
 ###############################################################################
+# Test Feature.ExportToJson (#3870)
+
+def ogr_geojson_15():
+
+    feature_defn = ogr.FeatureDefn()
+    feature_defn.AddFieldDefn(ogr.FieldDefn("foo"))
+
+    feature = ogr.Feature(feature_defn)
+    feature.SetField("foo", "bar")
+
+    geom = ogr.CreateGeometryFromWkt("POINT(1 2)")
+    feature.SetGeometry(geom)
+
+    try:
+        out = feature.ExportToJson()
+    except ImportError:
+        return 'skip'
+
+    expected_out = """{"geometry": {"type": "Point", "coordinates": [1.0, 2.0]}, "type": "Feature", "properties": {"foo": "bar"}, "id": -1}"""
+
+    if out != expected_out:
+        print(out)
+        return 'fail'
+
+
+    out = feature.ExportToJson(as_object = True)
+    expected_out = {'geometry': {'type': 'Point', 'coordinates': [1.0, 2.0]}, 'type': 'Feature', 'properties': {'foo': 'bar'}, 'id': -1}
+
+    if out != expected_out:
+        print(out)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -703,6 +738,7 @@ gdaltest_list = [
     ogr_geojson_12,
     ogr_geojson_13,
     ogr_geojson_14,
+    ogr_geojson_15,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
