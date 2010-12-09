@@ -535,7 +535,7 @@ int main( int nArgc, char ** papszArgv )
     OGRSpatialReference *poOutputSRS = NULL;
     int         bNullifyOutputSRS = FALSE;
     OGRSpatialReference *poSourceSRS = NULL;
-    const char  *pszNewLayerName = NULL;
+    char        *pszNewLayerName = NULL;
     const char  *pszWHERE = NULL;
     OGRGeometry *poSpatialFilter = NULL;
     const char  *pszSelect;
@@ -636,7 +636,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( EQUAL(papszArgv[iArg],"-nln") && iArg < nArgc-1 )
         {
-            pszNewLayerName = papszArgv[++iArg];
+            pszNewLayerName = CPLStrdup(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-nlt") && iArg < nArgc-1 )
         {
@@ -1384,6 +1384,7 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy( papszDSCO );
     CSLDestroy( papszLCO );
     CSLDestroy( papszFieldTypesToString );
+    CPLFree( pszNewLayerName );
 
     OGRCleanupAll();
 
