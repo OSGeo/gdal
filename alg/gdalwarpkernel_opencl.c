@@ -260,7 +260,7 @@ cl_device_id get_device(int *pbIsATI)
     assert(err == CL_SUCCESS);
     CPLDebug( "OpenCL", "Connected to %s %s.", vendor_name, device_name);
 
-    *pbIsATI = strncmp(vendor_name, "Advanced Micro Devices", strlen("Advanced Micro Devices")) == 0;
+    *pbIsATI = strncmp((const char*)vendor_name, "Advanced Micro Devices", strlen("Advanced Micro Devices")) == 0;
 
     return device;
 }
@@ -495,6 +495,16 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     const char *dVecf = "float";
     const char *kernGenFuncs =
 // ********************* General Funcs ********************
+"#ifdef USE_CLAMP_TO_DST_FLOAT\n"
+"void clampToDst(float fReal,\n"
+                "__global outType *dstPtr,\n"
+                "unsigned int iDstOffset,\n"
+                "__constant float *fDstNoDataReal,\n"
+                "int bandNum)\n"
+"{\n"
+    "dstPtr[iDstOffset] = fReal;\n"
+"}\n"
+"#else\n"
 "void clampToDst(float fReal,\n"
                 "__global outType *dstPtr,\n"
                 "unsigned int iDstOffset,\n"
@@ -519,6 +529,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
             "dstPtr[iDstOffset] --;\n"
     "}\n"
 "}\n"
+"#endif\n"
 
 "void setPixel(__global outType *dstReal,\n"
               "__global outType *dstImag,\n"
@@ -1156,6 +1167,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     
     //Assemble the compiler arg string for speed. All invariants should be defined here.
     sprintf(buffer, "-cl-fast-relaxed-math -Werror -D FALSE=0 -D TRUE=1 "
+            "%s "
             "-D iSrcWidth=%d -D iSrcHeight=%d -D iDstWidth=%d -D iDstHeight=%d "
             "-D useUnifiedSrcDensity=%d -D useUnifiedSrcValid=%d "
             "-D useDstDensity=%d -D useDstValid=%d -D useImag=%d "
@@ -1164,6 +1176,8 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
             "-D PI=%015.15lff -D outType=%s -D dstMinVal=%015.15lff -D dstMaxVal=%015.15lff "
             "-D useDstNoDataReal=%d -D vecf=%s %s -D doCubicSpline=%d "
             "-D useUseBandSrcValid=%d -D iCoordMult=%d",
+            /* FIXME: Is it really a ATI specific thing ? */
+            (warper->imageFormat == CL_FLOAT && warper->bIsATI) ? "-D USE_CLAMP_TO_DST_FLOAT=1" : "",
             warper->srcWidth, warper->srcHeight, warper->dstWidth, warper->dstHeight,
             warper->useUnifiedSrcDensity, warper->useUnifiedSrcValid,
             warper->useDstDensity, warper->useDstValid, warper->imagWorkCL != NULL,
