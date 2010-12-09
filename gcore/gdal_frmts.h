@@ -152,6 +152,7 @@ void CPL_DLL GDALRegister_SAGA(void);
 void CPL_DLL GDALRegister_KMLSUPEROVERLAY(void);
 void CPL_DLL GDALRegister_GTX(void);
 void CPL_DLL GDALRegister_LOSLAS(void);
+void CPL_DLL GDALRegister_Istar(void);
 void CPL_DLL GDALRegister_NTv2(void);
 void CPL_DLL GDALRegister_JP2OpenJPEG(void);
 void CPL_DLL GDALRegister_XYZ(void);
