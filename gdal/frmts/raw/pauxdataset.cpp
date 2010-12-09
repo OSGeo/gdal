@@ -39,7 +39,7 @@ CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
-/*				PAuxDataset				*/
+/*				PAuxDataset			                    	*/
 /* ==================================================================== */
 /************************************************************************/
 
@@ -882,10 +882,14 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *PAuxDataset::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType,
-                                  char ** /* papszParmList */ )
+                                  char **papszOptions )
 
 {
     char	*pszAuxFilename;
+
+	const char *pszInterleave = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
+	if( pszInterleave == NULL )
+		pszInterleave = "BAND";
 
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
@@ -900,6 +904,15 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 
         return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Sum the sizes of the band pixel types.                          */
+/* -------------------------------------------------------------------- */
+	int nPixelSizeSum = 0;
+	int iBand;
+
+    for( iBand = 0; iBand < nBands; iBand++ )
+        nPixelSizeSum += (GDALGetDataTypeSize(eType)/8);
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
@@ -979,15 +992,37 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     vsi_l_offset    nImgOffset = 0;
     
-    for( int iBand = 0; iBand < nBands; iBand++ )
+    for( iBand = 0; iBand < nBands; iBand++ )
     {
         const char  *pszTypeName;
-        char        szImgOffset[64];
-        int         nPixelOffset, nLineOffset, nChars;
+        int         nPixelOffset, nLineOffset;
+		vsi_l_offset nNextImgOffset;
 
-        nPixelOffset = GDALGetDataTypeSize(eType)/8;
-        nLineOffset = nXSize * nPixelOffset;
+/* -------------------------------------------------------------------- */
+/*      Establish our file layout based on supplied interleaving.       */
+/* -------------------------------------------------------------------- */
+		if( EQUAL(pszInterleave,"LINE") )
+		{
+			nPixelOffset = GDALGetDataTypeSize(eType)/8;
+			nLineOffset = nXSize * nPixelSizeSum;
+			nNextImgOffset = nImgOffset + nPixelOffset * nXSize;
+		}
+		else if( EQUAL(pszInterleave,"PIXEL") )
+		{
+			nPixelOffset = nPixelSizeSum;
+			nLineOffset = nXSize * nPixelOffset;
+			nNextImgOffset = nImgOffset + (GDALGetDataTypeSize(eType)/8);
+		}
+		else /* default to band */
+		{
+			nPixelOffset = GDALGetDataTypeSize(eType)/8;
+			nLineOffset = nXSize * nPixelOffset;
+			nNextImgOffset = nImgOffset + nYSize * (vsi_l_offset) nLineOffset;
+		}
 
+/* -------------------------------------------------------------------- */
+/*      Write out line indicating layout.                               */
+/* -------------------------------------------------------------------- */
         if( eType == GDT_Float32 )
             pszTypeName = "32R";
         else if( eType == GDT_Int16 )
@@ -997,12 +1032,10 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         else
             pszTypeName = "8U";
 
-        nChars = CPLPrintUIntBig( szImgOffset, nImgOffset, 63 );
-        szImgOffset[nChars] = '\0';
-
-        VSIFPrintfL( fp, "ChanDefinition-%d: %s %s %d %d %s\n", iBand+1,
-                    pszTypeName, strpbrk(szImgOffset, "-.0123456789"),
-                    nPixelOffset, nLineOffset,
+        VSIFPrintfL( fp, "ChanDefinition-%d: %s " CPL_FRMT_GIB " %d %d %s\n", 
+					 iBand+1,
+					 pszTypeName, (GIntBig) nImgOffset,
+					 nPixelOffset, nLineOffset,
 #ifdef CPL_LSB
                     "Swapped"
 #else
@@ -1010,7 +1043,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 #endif
                     );
 
-        nImgOffset += (vsi_l_offset)nYSize * nLineOffset;
+        nImgOffset = nNextImgOffset;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1084,6 +1117,14 @@ void GDALRegister_PAux()
                                    "frmt_various.html#PAux" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Float32" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='INTERLEAVE' type='string-select' default='BAND'>"
+"       <Value>BAND</Value>"
+"       <Value>LINE</Value>"
+"       <Value>PIXEL</Value>"
+"   </Option>"
+"</CreationOptionList>" );
 
         poDriver->pfnOpen = PAuxDataset::Open;
         poDriver->pfnCreate = PAuxDataset::Create;
