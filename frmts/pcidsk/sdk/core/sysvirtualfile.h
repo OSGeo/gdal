@@ -56,8 +56,7 @@ namespace PCIDSK
     {
     public:
         SysVirtualFile( CPCIDSKFile *file, int start_block, uint64 image_length,
-                        PCIDSKBuffer &block_map_data, SysBlockMap *sysblockmap,
-                        int image_index );
+                        SysBlockMap *sysblockmap, int image_index );
         ~SysVirtualFile();
 
         void      Synchronize();
@@ -76,8 +75,9 @@ namespace PCIDSK
 
         uint64                 file_length;
 
-        std::vector<int>       block_segment;
+        std::vector<uint16>    block_segment;
         std::vector<int>       block_index;
+        int                    next_bm_entry_to_load;
 
         int                    loaded_block;
         uint8                  block_data[SYSVIRTUALFILE_BLOCKSIZE];
@@ -87,11 +87,13 @@ namespace PCIDSK
 
         void                   LoadBlock( int requested_block );
         void                   LoadBlocks( int requested_block_start,
-            int requested_block_count, void* const buffer);
+                                           int requested_block_count,
+                                           void* const buffer);
         void                   GrowVirtualFile(std::ptrdiff_t requested_block);
         void                   FlushDirtyBlock();
         void                   WriteBlocks(int first_block, int block_count,
-            void* const buffer);
+                                           void* const buffer);
+        void                   LoadBMEntrysTo( int block_index );
     };
 }
 

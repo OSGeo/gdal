@@ -47,7 +47,7 @@ namespace PCIDSK
     {
         EDBFile        *file;
         std::string     filename;
-        int             writable;
+        bool            writable;
         Mutex          *io_mutex;
     };
 

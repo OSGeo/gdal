@@ -211,8 +211,9 @@ namespace PCIDSK
                 v.integer_list_val = (int32*)
                     malloc(sizeof(int32) * (val.size()+1) );
                 v.integer_list_val[0] = val.size();
-                memcpy( v.integer_list_val+1, &(val[0]), 
-                        sizeof(int32) * val.size() ); 
+                if( val.size() > 0 )
+                    memcpy( v.integer_list_val+1, &(val[0]), 
+                            sizeof(int32) * val.size() ); 
             }
 
         //! Set string value on field.
@@ -249,8 +250,9 @@ namespace PCIDSK
                 if( type == FieldTypeCountedInt )
                 {
                     result.resize( v.integer_list_val[0] );
-                    memcpy( &(result[0]), &(v.integer_list_val[1]), 
-                            (v.integer_list_val[0]) * sizeof(int32) );
+                    if( v.integer_list_val[0] > 0 )
+                        memcpy( &(result[0]), &(v.integer_list_val[1]), 
+                                (v.integer_list_val[0]) * sizeof(int32) );
                 }
                 return result;
             }
