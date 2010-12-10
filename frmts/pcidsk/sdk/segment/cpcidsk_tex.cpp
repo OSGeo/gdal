@@ -61,7 +61,7 @@ std::string CPCIDSK_TEX::ReadText()
 {
     PCIDSKBuffer seg_data;
 
-    seg_data.SetSize( GetContentSize() );
+    seg_data.SetSize( (int) GetContentSize() );
 
     ReadFromFile( seg_data.buffer, 0, seg_data.buffer_size );
 

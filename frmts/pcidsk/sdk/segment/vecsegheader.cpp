@@ -419,7 +419,7 @@ void VecSegHeader::GrowBlockIndex( int section, int new_blocks )
     if( new_blocks == 0 )
         return;
 
-    uint32  next_block = vs->GetContentSize() / block_page_size;
+    uint32  next_block = (uint32) (vs->GetContentSize() / block_page_size);
 
     while( new_blocks > 0 )
     {

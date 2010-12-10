@@ -57,6 +57,7 @@ CTiledChannel::CTiledChannel( PCIDSKBuffer &image_header,
 
 {
     tile_info_dirty = false;
+    tile_info_loaded = false;
 
 /* -------------------------------------------------------------------- */
 /*      Establish the virtual file we will be accessing.                */
@@ -73,7 +74,7 @@ CTiledChannel::CTiledChannel( PCIDSKBuffer &image_header,
 
 /* -------------------------------------------------------------------- */
 /*      If this is an unassociated channel (ie. an overview), we        */
-/*      will set the size and blocksize values to someone               */
+/*      will set the size and blocksize values to something             */
 /*      unreasonable and set them properly in EstablishAccess()         */
 /* -------------------------------------------------------------------- */
     if( channelnum == -1 )
@@ -140,6 +141,30 @@ void CTiledChannel::EstablishAccess() const
     }
 
 /* -------------------------------------------------------------------- */
+/*      Establish byte swapping.  Tiled data files are always big       */
+/*      endian, regardless of what the headers might imply.             */
+/* -------------------------------------------------------------------- */
+    unsigned short test_value = 1;
+    
+    if( ((uint8 *) &test_value)[0] == 1 )
+        needs_swap = pixel_type != CHN_8U;
+    else
+        needs_swap = false;
+}
+
+/************************************************************************/
+/*                        EstablishTileAccess()                         */
+/************************************************************************/
+
+void CTiledChannel::EstablishTileAccess() const
+
+{
+    if( tile_info_loaded )
+        return;
+
+    EstablishAccess();
+
+/* -------------------------------------------------------------------- */
 /*      Extract the tile map                                            */
 /* -------------------------------------------------------------------- */
     int tiles_per_row = (width + block_width - 1) / block_width;
@@ -160,18 +185,8 @@ void CTiledChannel::EstablishAccess() const
         tile_sizes[i] = tmap.GetInt( tile_count*12 + i*8, 8 );
     }
 
+    tile_info_loaded = true;
     tile_info_dirty = false;
-
-/* -------------------------------------------------------------------- */
-/*      Establish byte swapping.  Tiled data files are always big       */
-/*      endian, regardless of what the headers might imply.             */
-/* -------------------------------------------------------------------- */
-    unsigned short test_value = 1;
-    
-    if( ((uint8 *) &test_value)[0] == 1 )
-        needs_swap = pixel_type != CHN_8U;
-    else
-        needs_swap = false;
 }
 
 /************************************************************************/
@@ -215,8 +230,8 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
                               int xsize, int ysize )
 
 {
-    if( !vfile )
-        EstablishAccess();
+    if( !tile_info_loaded )
+        EstablishTileAccess();
 
     int pixel_size = DataTypeSize(GetType());
 
@@ -390,8 +405,8 @@ bool CTiledChannel::IsTileEmpty(void *buffer) const
 int CTiledChannel::WriteBlock( int block_index, void *buffer )
 
 {
-    if( !vfile )
-        EstablishAccess();
+    if( !tile_info_loaded )
+        EstablishTileAccess();
 
     if( !file->GetUpdatable() )
         throw PCIDSKException( "File not open for update in WriteBlock()" );
@@ -406,7 +421,6 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
         ThrowPCIDSKException( "Requested non-existant block (%d)", 
                               block_index );
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      The simpliest case it an uncompressed direct and complete       */

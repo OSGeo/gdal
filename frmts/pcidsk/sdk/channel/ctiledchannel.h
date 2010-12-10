@@ -81,9 +81,11 @@ namespace PCIDSK
 
         mutable std::vector<uint64>      tile_offsets;
         mutable std::vector<int>         tile_sizes;
+        mutable bool                     tile_info_loaded;
         mutable bool                     tile_info_dirty;
 
         void                     EstablishAccess() const;
+        void                     EstablishTileAccess() const;
         void                     RLEDecompressBlock( PCIDSKBuffer &oCompressed,
                                                      PCIDSKBuffer &oDecompressed );
         void                     RLECompressBlock( PCIDSKBuffer &oUncompressed,

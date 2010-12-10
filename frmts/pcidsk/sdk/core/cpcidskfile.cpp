@@ -438,7 +438,9 @@ void CPCIDSKFile::InitializeFromHeader()
         // if we didn't get channel type in header, work out from counts (old).
         // Check this only if we don't have complex channels:
         
-        if (count_c32r == 0 && count_c16u == 0 && count_c16s == 0) {
+        if (strncmp(pixel_type_string,"        ",8) == 0 ) 
+        {
+            assert( count_c32r == 0 && count_c16u == 0 && count_c16s == 0 );
             if( channelnum <= count_8u )
                 pixel_type = CHN_8U;
             else if( channelnum <= count_8u + count_16s )
@@ -477,6 +479,7 @@ void CPCIDSKFile::InitializeFromHeader()
         }
 
         else if( interleaving == "FILE" 
+                 && filename != ""
                  && strncmp(((const char*)ih.buffer)+250, "        ", 8 ) != 0 )
         {
             channel = new CExternalChannel( ih, ih_offset, fh, 
