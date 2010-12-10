@@ -92,7 +92,6 @@ install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 import:
 	cp ~/pcidsk/src/*.h sdk
-	cp ~/pcidsk/src/*.dox sdk
 	cp ~/pcidsk/src/channel/*.cpp sdk/channel
 	cp ~/pcidsk/src/channel/*.h sdk/channel
 	cp ~/pcidsk/src/segment/*.cpp sdk/segment
