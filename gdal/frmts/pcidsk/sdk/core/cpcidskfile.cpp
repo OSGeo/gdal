@@ -415,15 +415,17 @@ void CPCIDSKFile::InitializeFromHeader()
             pixel_type = CHN_UNKNOWN; // should we throw an exception?  
 
         // if we didn't get channel type in header, work out from counts (old)
-
-        if( channelnum <= count_8u )
-            pixel_type = CHN_8U;
-        else if( channelnum <= count_8u + count_16s )
-            pixel_type = CHN_16S;
-        else if( channelnum <= count_8u + count_16s + count_16u )
-            pixel_type = CHN_16U;
-        else 
-            pixel_type = CHN_32R;
+        if( pixel_type == CHN_UNKNOWN )
+        {
+            if( channelnum <= count_8u )
+                pixel_type = CHN_8U;
+            else if( channelnum <= count_8u + count_16s )
+                pixel_type = CHN_16S;
+            else if( channelnum <= count_8u + count_16s + count_16u )
+                pixel_type = CHN_16U;
+            else 
+                pixel_type = CHN_32R;
+        }
             
         if( interleaving == "BAND" )
         {

@@ -166,7 +166,8 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
         MutexHolder holder( *io_mutex_p );
         
         interfaces->io->Seek( *io_handle_p, offset, SEEK_SET );
-        interfaces->io->Read( buffer, 1, line_from_disk.buffer_size, 
+        interfaces->io->Read( line_from_disk.buffer, 
+                              1, line_from_disk.buffer_size, 
                               *io_handle_p );
 
         for( i = 0, this_pixel = line_from_disk.buffer; i < xsize; i++ )
