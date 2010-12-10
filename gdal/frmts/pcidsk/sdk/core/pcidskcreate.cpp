@@ -387,8 +387,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* ==================================================================== */
 /*      Write out the segment pointers, all spaces.                     */
 /* ==================================================================== */
-    PCIDSKBuffer segment_pointers( segment_ptr_size*512 );
-    segment_pointers.Put( " ", 0, segment_ptr_size*512 );
+    PCIDSKBuffer segment_pointers( (int) (segment_ptr_size*512) );
+    segment_pointers.Put( " ", 0, (int) (segment_ptr_size*512) );
 
     interfaces->io->Seek( io_handle, segment_ptr_start*512, SEEK_SET );
     interfaces->io->Write( segment_pointers.buffer, segment_ptr_size, 512, 

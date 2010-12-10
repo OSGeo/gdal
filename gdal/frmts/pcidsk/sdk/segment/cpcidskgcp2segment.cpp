@@ -70,7 +70,7 @@ void CPCIDSKGCP2Segment::Load()
     
     // Read the the segment in. The first block has information about
     // the structure of the GCP segment (how many, the projection, etc.)
-    pimpl_->seg_data.SetSize(data_size - 1024);
+    pimpl_->seg_data.SetSize( (int) (data_size - 1024) );
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
     
     // check for 'GCP2    ' in the first 8 bytes

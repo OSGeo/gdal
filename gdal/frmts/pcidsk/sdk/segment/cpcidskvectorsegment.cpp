@@ -261,9 +261,13 @@ uint32 CPCIDSKVectorSegment::ReadField( uint32 offset, ShapeField& field,
               SwapData( &count, 4, 1 );
 
           value.resize( count );
-          memcpy( &(value[0]), GetData(section,offset+4,NULL,4*count), 4*count );
-          if( needs_swap )
-              SwapData( &(value[0]), 4, count );
+          if( count > 0 )
+          {
+              memcpy( &(value[0]), GetData(section,offset+4,NULL,4*count), 4*count );
+              if( needs_swap )
+                  SwapData( &(value[0]), 4, count );
+          }
+
           field.SetValue( value );
           return offset + 4 + 4*count;
       }
@@ -370,9 +374,12 @@ uint32 CPCIDSKVectorSegment::WriteField( uint32 offset,
           std::vector<int32> value = field.GetValueCountedInt();
           uint32 count = value.size();
           memcpy( buffer.buffer+offset, &count, 4 );
-          memcpy( buffer.buffer+offset+4, &(value[0]), count * 4 );
-          if( needs_swap )
-              SwapData( buffer.buffer+offset, 4, count+1 );
+          if( count > 0 )
+          {
+              memcpy( buffer.buffer+offset+4, &(value[0]), count * 4 );
+              if( needs_swap )
+                  SwapData( buffer.buffer+offset, 4, count+1 );
+          }
           break;
       }
 
@@ -775,7 +782,7 @@ void CPCIDSKVectorSegment::LoadShapeIdPage( int page )
         memcpy( &(shape_index_record_off[i]), wrk_index.buffer + i*12+8, 4 );
     }
 
-    if( needs_swap )
+    if( needs_swap && entries_to_load > 0 )
     {
         SwapData( &(shape_index_ids[0]), 4, entries_to_load );
         SwapData( &(shape_index_vertex_off[0]), 4, entries_to_load );
@@ -968,11 +975,14 @@ void CPCIDSKVectorSegment::GetVertices( ShapeId shape_id,
     
     // We ought to change this to process the available data and
     // then request more. 
-    memcpy( &(vertices[0]), 
-            GetData( sec_vert, vert_off+8, NULL, vertex_count*24),
-            vertex_count * 24 );
-    if( needs_swap )
-        SwapData( &(vertices[0]), 8, vertex_count*3 );
+    if( vertex_count > 0 )
+    {
+        memcpy( &(vertices[0]), 
+                GetData( sec_vert, vert_off+8, NULL, vertex_count*24),
+                vertex_count * 24 );
+        if( needs_swap )
+            SwapData( &(vertices[0]), 8, vertex_count*3 );
+    }
 }
 
 /************************************************************************/
