@@ -59,7 +59,6 @@ const int SysVirtualFile::block_size = SYSVIRTUALFILE_BLOCKSIZE;
 
 SysVirtualFile::SysVirtualFile( CPCIDSKFile *file, int start_block, 
                                 uint64 image_length, 
-                                PCIDSKBuffer &block_map_data,
                                 SysBlockMap *sysblockmap,
                                 int image_index )
 
@@ -74,21 +73,7 @@ SysVirtualFile::SysVirtualFile( CPCIDSKFile *file, int start_block,
     
     last_bm_index = -1;
 
-    int next_block = start_block;
-
-    // perhaps we should defer all this work till the first request is made?
-    while( next_block != -1 )
-    {
-        int offset = 512 + next_block * 28;
-
-        block_segment.push_back( block_map_data.GetInt( offset+0, 4 ) );
-        block_index.push_back( block_map_data.GetInt( offset+4, 8 ) );
-
-        last_bm_index = next_block;
-        next_block = block_map_data.GetInt( offset + 20, 8 );
-    }
-
-    assert( (uint64)block_index.size() * (uint64)block_size >= file_length );
+    next_bm_entry_to_load = start_block;
 }
 
 /************************************************************************/
@@ -108,16 +93,7 @@ SysVirtualFile::~SysVirtualFile()
 void SysVirtualFile::Synchronize()
 
 {
-    if( loaded_block_dirty )
-    {
-        PCIDSKSegment *data_seg_obj =
-            file->GetSegment( block_segment[loaded_block] );
-
-        data_seg_obj->WriteToFile( block_data,
-                                   block_size * (uint64) block_index[loaded_block],
-                                   block_size );
-        loaded_block_dirty = false;
-    }
+    FlushDirtyBlock();
 }
 
 /************************************************************************/
@@ -149,7 +125,7 @@ SysVirtualFile::WriteToFile( const void *buffer, uint64 offset, uint64 size )
 
             loaded_block_dirty = true;
         } else {
-            int num_full_blocks = (size - buffer_offset) / block_size;
+            int num_full_blocks = (int) ((size - buffer_offset) / block_size);
             
             WriteBlocks(request_block, num_full_blocks, (uint8*)buffer + buffer_offset);
             
@@ -200,7 +176,7 @@ void SysVirtualFile::ReadFromFile( void *buffer, uint64 offset, uint64 size )
         } else {
             // Use the bulk loading of blocks. First, compute the range
             // of full blocks we need to load
-            int num_full_blocks = (size - buffer_offset)/block_size;
+            int num_full_blocks = (int) ((size - buffer_offset)/block_size);
             
 #if 0
             printf("Attempting a coalesced read of %d blocks (from %d) in buffer at %d\n", 
@@ -252,6 +228,7 @@ void SysVirtualFile::LoadBlock( int requested_block )
 /* -------------------------------------------------------------------- */
 /*      Load the requested block.                                       */
 /* -------------------------------------------------------------------- */
+    LoadBMEntrysTo( requested_block );
     PCIDSKSegment *data_seg_obj =
         file->GetSegment( block_segment[requested_block] );
 
@@ -282,8 +259,13 @@ void SysVirtualFile::FlushDirtyBlock(void)
     }
 }
 
+/************************************************************************/
+/*                          GrowVirtualFile()                           */
+/************************************************************************/
 void SysVirtualFile::GrowVirtualFile(std::ptrdiff_t requested_block)
 {
+    LoadBMEntrysTo( requested_block );
+
     if( requested_block == (int) block_index.size() )
     {
         int new_seg;
@@ -291,10 +273,13 @@ void SysVirtualFile::GrowVirtualFile(std::ptrdiff_t requested_block)
         block_index.push_back( 
             sysblockmap->GrowVirtualFile( image_index,
                                           last_bm_index, new_seg ) );
-        block_segment.push_back( new_seg );
+        block_segment.push_back( (uint16) new_seg );
     }
 }
 
+/************************************************************************/
+/*                            WriteBlocks()                             */
+/************************************************************************/
 /**
  * \brief Writes a group of blocks
  * Attempts to create a group of blocks (if the SysVirtualFile
@@ -318,12 +303,15 @@ void SysVirtualFile::WriteBlocks(int first_block,
     std::size_t blocks_written = 0;
     std::size_t current_first_block = first_block;
     while (blocks_written < (std::size_t) block_count) {
+        LoadBMEntrysTo( current_first_block+1 );
+
         unsigned int cur_segment = block_segment[current_first_block];
         unsigned int cur_block = current_first_block;
         while (cur_block < (unsigned int)block_count + first_block &&
             (unsigned int)block_segment[cur_block + 1] == cur_segment)
         {
             cur_block++;
+            LoadBMEntrysTo( current_first_block+1 );
         }
         
         // Find largest span of contiguous blocks we can write
@@ -353,6 +341,9 @@ void SysVirtualFile::WriteBlocks(int first_block,
     }
 }
 
+/************************************************************************/
+/*                             LoadBlocks()                             */
+/************************************************************************/
 /**
  * \brief Load a group of blocks
  * Attempts to coalesce reading of groups of blocks into a single
@@ -372,14 +363,16 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
     
     while (blocks_read < (unsigned int)requested_block_count) {
         // Coalesce blocks that are in the same segment
+        LoadBMEntrysTo( current_start+1 );
         unsigned int cur_segment = block_segment[current_start]; // segment of current
                 // first block
         unsigned int cur_block = current_start; // starting block ID
         while (cur_block < (unsigned int)requested_block_count + requested_block_start &&
-            (unsigned int)block_segment[cur_block + 1] == cur_segment) {
+            block_segment[cur_block + 1] == cur_segment) {
             // this block is in the same segment as the previous one we
             // wanted to read.
             cur_block++;
+            LoadBMEntrysTo( cur_block+1 );
         }
         
         // now attempt to determine if the region of blocks (from current_start
@@ -426,6 +419,45 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
         // Increment the current start by the number of blocks we jsut read
         current_start += count_to_read;
         blocks_read += count_to_read;
+    }
+}
+
+/************************************************************************/
+/*                           LoadBMEntryTo()                            */
+/*                                                                      */
+/*      We load the blockmap "as needed".  This method fills in         */
+/*      blockmap entries up to the target block, if not already         */
+/*      loaded.  Passing in a target block_index of -1 loads the        */
+/*      whole blockmap.  It is harmless to request more blocks than     */
+/*      are available.                                                  */
+/************************************************************************/
+
+void SysVirtualFile::LoadBMEntrysTo( int target_index )
+
+{
+    if( target_index > 0 )
+    {
+        target_index += 200 - (target_index%200);
+    }
+    
+    while( (target_index == -1 || (int) block_segment.size() <= target_index) 
+           && next_bm_entry_to_load != -1 )
+    {
+        uint16 segment;
+        int    block;
+       
+        last_bm_index = next_bm_entry_to_load;
+        next_bm_entry_to_load = 
+            sysblockmap->GetNextBlockMapEntry( 
+                next_bm_entry_to_load, segment, block );
+
+        block_segment.push_back( segment );
+        block_index.push_back( block );
+#if 0
+        printf( "<block[%d] = %d/%d/%d/%d>\n", 
+                block_index.size()-1, segment, block,
+                last_bm_index, next_bm_entry_to_load );
+#endif
     }
 }
 

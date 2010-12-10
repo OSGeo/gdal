@@ -108,7 +108,7 @@ void CPCIDSKRPCModelSegment::Load()
     
     assert(data_size - 1024 == 7 * 512);
     
-    pimpl_->seg_data.SetSize(data_size - 1024); // should be 7 * 512
+    pimpl_->seg_data.SetSize((int) (data_size - 1024)); // should be 7 * 512
     
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
     

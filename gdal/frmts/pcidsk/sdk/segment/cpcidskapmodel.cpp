@@ -486,7 +486,7 @@ void CPCIDSKAPModelSegment::UpdateFromDisk(void)
         ThrowPCIDSKException("APMODEL segment is smaller than expected. A "
             "segment of size %d was found", data_size);
     }
-    buf.SetSize(data_size - 1024);
+    buf.SetSize( (int) (data_size - 1024) );
     ReadFromFile(buf.buffer, 0, data_size - 1024);
     
     // Expand it using an analogue to a method pulled from GDB

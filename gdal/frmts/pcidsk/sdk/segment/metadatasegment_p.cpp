@@ -86,7 +86,7 @@ void MetadataSegment::Load()
 /* -------------------------------------------------------------------- */
 /*      Load the segment contents into a buffer.                        */
 /* -------------------------------------------------------------------- */
-    seg_data.SetSize( data_size - 1024 );
+    seg_data.SetSize( (int) (data_size - 1024) );
 
     ReadFromFile( seg_data.buffer, 0, data_size - 1024 );
 

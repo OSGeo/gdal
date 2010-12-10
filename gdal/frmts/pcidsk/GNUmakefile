@@ -91,8 +91,12 @@ clean:
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 import:
-	cp ~/pcidsk/src/*.{h,dox} sdk
-	cp ~/pcidsk/src/channel/*.{cpp,h} sdk/channel
-	cp ~/pcidsk/src/segment/*.{cpp,h} sdk/segment
-	cp ~/pcidsk/src/core/*.{cpp,h} sdk/core
+	cp ~/pcidsk/src/*.h sdk
+	cp ~/pcidsk/src/*.dox sdk
+	cp ~/pcidsk/src/channel/*.cpp sdk/channel
+	cp ~/pcidsk/src/channel/*.h sdk/channel
+	cp ~/pcidsk/src/segment/*.cpp sdk/segment
+	cp ~/pcidsk/src/segment/*.h sdk/segment
+	cp ~/pcidsk/src/core/*.cpp sdk/core
+	cp ~/pcidsk/src/core/*.h sdk/core
 	cp ~/pcidsk/src/port/*.cpp sdk/port
