@@ -35,6 +35,8 @@
 # It could be made much more Python'ish !
 
 import sys
+import os
+import stat
 
 try:
     from osgeo import gdal
@@ -159,6 +161,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
     pszClipDstWhere = None
     pszSrcEncoding = None
     pszDstEncoding = None
+    bExplodeCollections = False
 
     if args is None:
         args = sys.argv
@@ -196,9 +199,11 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
         elif EQUAL(args[iArg],"-append"):
             bAppend = True
+            bUpdate = True
 
         elif EQUAL(args[iArg],"-overwrite"):
             bOverwrite = True
+            bUpdate = True
 
         elif EQUAL(args[iArg],"-update"):
             bUpdate = True
@@ -428,6 +433,10 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         elif EQUAL(args[iArg],"-clipdstwhere") and iArg < nArgc-1:
             pszClipDstWhere = args[iArg+1]
             iArg = iArg + 1
+
+        elif EQUAL(args[iArg],"-explodecollections"):
+            bExplodeCollections = True
+
         elif args[iArg][0] == '-':
             return Usage()
 
@@ -441,6 +450,10 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         iArg = iArg + 1
 
     if pszDataSource is None:
+        return Usage()
+
+    if bPreserveFID and bExplodeCollections:
+        print("FAILURE: cannot use -preserve_fid and -explodecollections at the same time\n\n")
         return Usage()
 
     if bClipSrc and pszClipSrcDS is not None:
@@ -484,24 +497,38 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 #/*      Try opening the output datasource as an existing, writable      */
 #/* -------------------------------------------------------------------- */
     poODS = None
+    poDriver = None
 
     if bUpdate:
         poODS = ogr.Open( pszDestDataSource, True )
         if poODS is None:
-            print("FAILURE:\n" +
-                    "Unable to open existing output datasource `%s'." % pszDestDataSource)
-            return False
 
-        if len(papszDSCO) > 0:
+            if bOverwrite or bAppend:
+                poODS = ogr.Open( pszDestDataSource, False )
+                if poODS is None:
+                    # /* ok the datasource doesn't exist at all */
+                    # /* so let's ignore the -overwrite or -append flag */
+                    bUpdate = bAppend = bOverwrite = False
+                else:
+                    poODS.delete()
+                    poODS = None
+
+            if bUpdate:
+                print("FAILURE:\n" +
+                        "Unable to open existing output datasource `%s'." % pszDestDataSource)
+                return False
+
+        elif len(papszDSCO) > 0:
             print("WARNING: Datasource creation options ignored since an existing datasource\n" + \
                     "         being updated." )
+
+        if poODS is not None:
+            poDriver = poODS.GetDriver()
 
 #/* -------------------------------------------------------------------- */
 #/*      Find the output driver.                                         */
 #/* -------------------------------------------------------------------- */
-    else:
-        poDriver = None
-
+    if not bUpdate:
         for iDriver in range(ogr.GetDriverCount()):
             if EQUAL(ogr.GetDriver(iDriver).GetName(),pszFormat):
                 poDriver = ogr.GetDriver(iDriver)
@@ -570,11 +597,26 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                     pfnProgress = progress_func
                     pProgressData = progress_data
 
+#/* -------------------------------------------------------------------- */
+#/*      Special case to improve user experience when translating into   */
+#/*      single file shapefile and source has only one layer, and that   */
+#/*      the layer name isn't specified                                  */
+#/* -------------------------------------------------------------------- */
+            if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
+                pszNewLayerName is None:
+                try:
+                    mode = os.stat(pszDestDataSource).st_mode
+                    if (mode & stat.S_IFDIR) == 0:
+                        pszNewLayerName = os.path.splitext(os.path.basename(pszDestDataSource))[0]
+                except:
+                    pass
+
             if not TranslateLayer( poDS, poResultSet, poODS, papszLCO, \
                                 pszNewLayerName, bTransform, poOutputSRS, \
                                 poSourceSRS, papszSelFields, bAppend, eGType, \
                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString, \
-                                nCountLayerFeatures, poClipSrc, poClipDst, pfnProgress, pProgressData ):
+                                nCountLayerFeatures, poClipSrc, poClipDst, bExplodeCollections, \
+                                pfnProgress, pProgressData ):
                 print(
                         "Terminating translation prematurely after failed\n" + \
                         "translation from sql statement." )
@@ -659,11 +701,26 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
             nAccCountFeatures += panLayerCountFeatures[iLayer]
 
+#/* -------------------------------------------------------------------- */
+#/*      Special case to improve user experience when translating into   */
+#/*      single file shapefile and source has only one layer, and that   */
+#/*      the layer name isn't specified                                  */
+#/* -------------------------------------------------------------------- */
+            if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
+                nLayerCount == 1 and pszNewLayerName is None:
+                try:
+                    mode = os.stat(pszDestDataSource).st_mode
+                    if (mode & stat.S_IFDIR) == 0:
+                        pszNewLayerName = os.path.splitext(os.path.basename(pszDestDataSource))[0]
+                except:
+                    pass
+
             if not TranslateLayer( poDS, poLayer, poODS, papszLCO,  \
                                 pszNewLayerName, bTransform, poOutputSRS, \
                                 poSourceSRS, papszSelFields, bAppend, eGType, \
                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString, \
-                                panLayerCountFeatures[iLayer], poClipSrc, poClipDst, pfnProgress, pProgressData)  \
+                                panLayerCountFeatures[iLayer], poClipSrc, poClipDst, bExplodeCollections, \
+                                pfnProgress, pProgressData)  \
                 and not bSkipFailures:
                 print(
                         "Terminating translation prematurely after failed\n" + \
@@ -694,7 +751,7 @@ def Usage():
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n" + \
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n" + \
             #// "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" + \
-            "               [-fieldTypeToString All|(type1[,type2]*)]\n" + \
+            "               [-fieldTypeToString All|(type1[,type2]*)] [-explodecollections] \n" + \
             "               dst_datasource_name src_datasource_name\n" + \
             "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n" + \
             "\n" + \
@@ -782,7 +839,7 @@ def LoadGeometry( pszDS, pszSQL, pszLyr, pszWhere):
     while poFeat is not None:
         poSrcGeom = poFeat.GetGeometryRef()
         if poSrcGeom is not None:
-            eType = poSrcGeom.GetGeometryType() & (~ogr.wkb25DBit)
+            eType = wkbFlatten(poSrcGeom.GetGeometryType())
 
             if poGeom is None:
                 poGeom = ogr.Geometry( ogr.wkbMultiPolygon )
@@ -808,6 +865,10 @@ def LoadGeometry( pszDS, pszSQL, pszLyr, pszWhere):
 
     return poGeom
 
+
+def wkbFlatten(x):
+    return x & (~ogr.wkb25DBit)
+
 #/************************************************************************/
 #/*                           TranslateLayer()                           */
 #/************************************************************************/
@@ -816,18 +877,21 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     bTransform,  poOutputSRS, poSourceSRS, papszSelFields, \
                     bAppend, eGType, bOverwrite, dfMaxSegmentLength, \
                     papszFieldTypesToString, nCountLayerFeatures, \
-                    poClipSrc, poClipDst, pfnProgress, pProgressData) :
+                    poClipSrc, poClipDst, bExplodeCollections, pfnProgress, pProgressData) :
 
     bForceToPolygon = False
     bForceToMultiPolygon = False
+    bForceToMultiLineString = False
 
     if pszNewLayerName is None:
         pszNewLayerName = poSrcLayer.GetLayerDefn().GetName()
 
-    if (eGType & (~ogr.wkb25DBit)) == ogr.wkbPolygon:
+    if wkbFlatten(eGType) == ogr.wkbPolygon:
         bForceToPolygon = True
-    elif (eGType & (~ogr.wkb25DBit)) == ogr.wkbMultiPolygon:
+    elif wkbFlatten(eGType) == ogr.wkbMultiPolygon:
         bForceToMultiPolygon = True
+    elif wkbFlatten(eGType) == ogr.wkbMultiLineString:
+        bForceToMultiLineString = True
 
 #/* -------------------------------------------------------------------- */
 #/*      Setup coordinate transformation if we need it.                  */
@@ -900,6 +964,17 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
         if eGType == -2:
             eGType = poFDefn.GetGeomType()
 
+            if bExplodeCollections:
+                n25DBit = eGType & ogr.wkb25DBit
+                if wkbFlatten(eGType) == ogr.wkbMultiPoint:
+                    eGType = ogr.wkbPoint | n25DBit
+                elif wkbFlatten(eGType) == ogr.wkbMultiLineString:
+                    eGType = ogr.wkbLineString | n25DBit
+                elif wkbFlatten(eGType) == ogr.wkbMultiPolygon:
+                    eGType = ogr.wkbPolygon | n25DBit
+                elif wkbFlatten(eGType) == ogr.wkbGeometryCollection:
+                    eGType = ogr.wkbUnknown | n25DBit
+
         if poDstDS.TestCapability( ogr.ODsCCreateLayer ) == False:
             print("Layer " + pszNewLayerName + "not found, and CreateLayer not supported by driver.")
             return False
@@ -956,6 +1031,25 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                 if not bSkipFailures:
                     return False
 
+        #/* -------------------------------------------------------------------- */
+        #/* Use SetIgnoredFields() on source layer if available                  */
+        #/* -------------------------------------------------------------------- */
+        if poSrcLayer.TestCapability(ogr.OLCIgnoreFields):
+            papszIgnoredFields = []
+            for iSrcField in range(poFDefn.GetFieldCount()):
+                pszFieldName = poFDefn.GetFieldDefn(iSrcField).GetNameRef()
+                bFieldRequested = False
+                for iField in range(len(papszSelFields)):
+                    if pszFieldName == papszSelFields[iField]:
+                        bFieldRequested = True
+                        break
+
+                #/* If source field not requested, add it to ignored files list */
+                if not bFieldRequested:
+                    papszIgnoredFields.append(pszFieldName)
+
+            poSrcLayer.SetIgnoredFields(papszIgnoredFields)
+
     elif not bAppend:
 
         for iField in range(poFDefn.GetFieldCount()):
@@ -1000,101 +1094,108 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
         if poFeature is None:
             break
 
-        nFeaturesInTransaction = nFeaturesInTransaction + 1
-        if nFeaturesInTransaction == nGroupTransactions:
-            poDstLayer.CommitTransaction()
-            poDstLayer.StartTransaction()
-            nFeaturesInTransaction = 0
+        nParts = 0
+        nIters = 1
+        if bExplodeCollections:
+            print("yoh")
+            poSrcGeometry = poFeature.GetGeometryRef()
+            if poSrcGeometry is not None:
+                eSrcType = wkbFlatten(poSrcGeometry.GetGeometryType())
+                if eSrcType == ogr.wkbMultiPoint or \
+                   eSrcType == ogr.wkbMultiLineString or \
+                   eSrcType == ogr.wkbMultiPolygon or \
+                   eSrcType == ogr.wkbGeometryCollection:
+                        nParts = poSrcGeometry.GetGeometryCount()
+                        nIters = nParts
+                        if nIters == 0:
+                            nIters = 1
 
-        gdal.ErrorReset()
-        poDstFeature = ogr.Feature( poDstLayer.GetLayerDefn() )
-
-        if poDstFeature.SetFrom( poFeature, 1 ) != 0:
-
-            if nGroupTransactions > 0:
+        for iPart in range(nIters):
+            nFeaturesInTransaction = nFeaturesInTransaction + 1
+            if nFeaturesInTransaction == nGroupTransactions:
                 poDstLayer.CommitTransaction()
+                poDstLayer.StartTransaction()
+                nFeaturesInTransaction = 0
 
-            print("Unable to translate feature %d from layer %s" % (poFeature.GetFID() , poFDefn.GetName() ))
+            gdal.ErrorReset()
+            poDstFeature = ogr.Feature( poDstLayer.GetLayerDefn() )
 
-            poFeature.Destroy()
-            poFeature = None
-            poDstFeature.Destroy()
-            poDstFeature = None
-            return False
+            if poDstFeature.SetFrom( poFeature, 1 ) != 0:
 
-        if bPreserveFID:
-            poDstFeature.SetFID( poFeature.GetFID() )
+                if nGroupTransactions > 0:
+                    poDstLayer.CommitTransaction()
 
-        #/*if (poDstFeature.GetGeometryRef() is not None and dfMaxSegmentLength > 0)
-        #    poDstFeature.GetGeometryRef().segmentize(dfMaxSegmentLength);*/
+                print("Unable to translate feature %d from layer %s" % (poFeature.GetFID() , poFDefn.GetName() ))
 
-        poDstGeometry = poDstFeature.GetGeometryRef()
-        if poDstGeometry is not None:
-            if poClipSrc is not None:
-                poClipped = poDstGeometry.Intersection(poClipSrc)
-                if poClipped is None or poClipped.IsEmpty():
-                    #/* Report progress */
-                    nCount = nCount +1
-                    if pfnProgress is not None:
-                        pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressData)
-                    poFeature.Destroy()
-                    poDstFeature.Destroy()
-                    continue
+                return False
 
-                poDstFeature.SetGeometryDirectly(poClipped)
-                poDstGeometry = poClipped
+            if bPreserveFID:
+                poDstFeature.SetFID( poFeature.GetFID() )
 
-            if poCT is not None:
-                eErr = poDstGeometry.Transform( poCT )
-                if eErr != 0:
-                    if nGroupTransactions > 0:
-                        poDstLayer.CommitTransaction()
+            #/*if (poDstFeature.GetGeometryRef() is not None and dfMaxSegmentLength > 0)
+            #    poDstFeature.GetGeometryRef().segmentize(dfMaxSegmentLength);*/
 
-                    print("Failed to reproject feature %d (geometry probably out of source or destination SRS)." % poFeature.GetFID())
-                    if not bSkipFailures:
-                        poFeature.Destroy()
-                        poFeature = None
-                        poDstFeature.Destroy()
-                        poDstFeature = None
-                        return False
+            poDstGeometry = poDstFeature.GetGeometryRef()
+            if poDstGeometry is not None:
 
-            elif poOutputSRS is not None:
-                poDstGeometry.AssignSpatialReference(poOutputSRS)
+                if nParts > 0:
+                    # /* For -explodecollections, extract the iPart(th) of the geometry */
+                    poPart = poDstGeometry.GetGeometryRef(iPart).Clone()
+                    poDstFeature.SetGeometryDirectly(poPart)
+                    poDstGeometry = poPart
 
-            if poClipDst is not None:
-                poClipped = poDstGeometry.Intersection(poClipDst)
-                if poClipped is None or poClipped.IsEmpty():
-                    #/* Report progress */
-                    nCount = nCount +1
-                    if pfnProgress is not None:
-                        pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressData)
-                    poFeature.Destroy()
-                    poDstFeature.Destroy()
-                    continue
+                if poClipSrc is not None:
+                    poClipped = poDstGeometry.Intersection(poClipSrc)
+                    if poClipped is None or poClipped.IsEmpty():
+                        #/* Report progress */
+                        nCount = nCount +1
+                        if pfnProgress is not None:
+                            pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressData)
+                        continue
 
-                poDstFeature.SetGeometryDirectly(poClipped)
-                poDstGeometry = poClipped
+                    poDstFeature.SetGeometryDirectly(poClipped)
+                    poDstGeometry = poClipped
 
-            if bForceToPolygon:
-                poDstFeature.SetGeometryDirectly(ogr.ForceToPolygon(poDstGeometry))
+                if poCT is not None:
+                    eErr = poDstGeometry.Transform( poCT )
+                    if eErr != 0:
+                        if nGroupTransactions > 0:
+                            poDstLayer.CommitTransaction()
 
-            if bForceToMultiPolygon:
-                poDstFeature.SetGeometryDirectly(ogr.ForceToMultiPolygon(poDstGeometry))
+                        print("Failed to reproject feature %d (geometry probably out of source or destination SRS)." % poFeature.GetFID())
+                        if not bSkipFailures:
+                            return False
 
-        poFeature.Destroy()
-        poFeature = None
+                elif poOutputSRS is not None:
+                    poDstGeometry.AssignSpatialReference(poOutputSRS)
 
-        gdal.ErrorReset()
-        if poDstLayer.CreateFeature( poDstFeature ) != 0 and not bSkipFailures:
-            if nGroupTransactions > 0:
-                poDstLayer.RollbackTransaction()
+                if poClipDst is not None:
+                    poClipped = poDstGeometry.Intersection(poClipDst)
+                    if poClipped is None or poClipped.IsEmpty():
+                        #/* Report progress */
+                        nCount = nCount +1
+                        if pfnProgress is not None:
+                            pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressData)
+                        continue
 
-            poDstFeature.Destroy()
-            poDstFeature = None
-            return False
+                    poDstFeature.SetGeometryDirectly(poClipped)
+                    poDstGeometry = poClipped
 
-        poDstFeature.Destroy()
-        poDstFeature = None
+                if bForceToPolygon:
+                    poDstFeature.SetGeometryDirectly(ogr.ForceToPolygon(poDstGeometry))
+
+                elif bForceToMultiPolygon:
+                    poDstFeature.SetGeometryDirectly(ogr.ForceToMultiPolygon(poDstGeometry))
+
+                elif bForceToMultiLineString:
+                    poDstFeature.SetGeometryDirectly(ogr.ForceToMultiLineString(poDstGeometry))
+
+            gdal.ErrorReset()
+            if poDstLayer.CreateFeature( poDstFeature ) != 0 and not bSkipFailures:
+                if nGroupTransactions > 0:
+                    poDstLayer.RollbackTransaction()
+
+                return False
 
         #/* Report progress */
         nCount = nCount  + 1
