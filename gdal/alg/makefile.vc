@@ -11,7 +11,6 @@ EXTRAFLAGS =	-I../ogr/ogrsf_frmts $(GEOS_CFLAGS)
 
 !IFDEF INCLUDE_OGR_FRMTS
 EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED
-OBJ_OGR_RELATED =	contour.obj polygonize.obj
 !ENDIF
 
 OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
@@ -19,8 +18,8 @@ OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	thinplatespline.obj gdal_tps.obj gdalrasterize.obj llrasterize.obj \
 	gdalwarpoperation.obj gdalchecksum.obj gdal_rpc.obj gdalgeoloc.obj \
 	gdalgrid.obj gdalcutline.obj gdalproximity.obj rasterfill.obj \
-	gdalsievefilter.obj gdalrasterpolygonenumerator.obj \
-	$(OBJ_OGR_RELATED)
+	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
+	contour.obj
 
 default:	$(OBJ) 
 
