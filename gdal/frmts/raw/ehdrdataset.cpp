@@ -1012,6 +1012,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     char                chPixelType = 'N'; // not defined
     char                szLayout[10] = "BIL";
     char              **papszHDR = NULL;
+    int                 bHasInternalProjection = FALSE;
+    int                 bHasMin = FALSE;
+    int                 bHasMax = FALSE;
+    double              dfMin = 0, dfMax = 0;
     
     while( (pszLine = CPLReadLineL( fp )) )    
     {
@@ -1102,10 +1106,34 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             chByteOrder = toupper(papszTokens[1][0]);
         }
 
+        /* http://www.worldclim.org/futdown.htm have the projection extensions */
+        else if( EQUAL(papszTokens[0],"Projection") )
+        {
+            bHasInternalProjection = TRUE;
+        }
+        else if( EQUAL(papszTokens[0],"MinValue") )
+        {
+            dfMin = atof(papszTokens[1]);
+            bHasMin = TRUE;
+        }
+        else if( EQUAL(papszTokens[0],"MaxValue") )
+        {
+            dfMax = atof(papszTokens[1]);
+            bHasMax = TRUE;
+        }
+
         CSLDestroy( papszTokens );
     }
 
     VSIFCloseL( fp );
+
+    /* If we have a negative nodata value, let's assume that the */
+    /* pixel type is signed. This is necessary for datasets from */
+    /* http://www.worldclim.org/futdown.htm */
+    if( bNoDataSet && dfNoData < 0 && chPixelType == 'N' )
+    {
+        chPixelType = 'S';
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
@@ -1292,6 +1320,13 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( bNoDataSet )
             poBand->SetNoDataValue( dfNoData );
+
+        if( bHasMin && bHasMax )
+        {
+            poBand->dfMin = dfMin;
+            poBand->dfMax = dfMax;
+            poBand->minmaxmeanstddev = HAS_MIN_FLAG | HAS_MAX_FLAG;
+        }
             
         poDS->SetBand( i+1, poBand );
     }
@@ -1347,6 +1382,15 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     const char  *pszPrjFilename = CPLFormCIFilename( osPath, osName, "prj" );
 
     fp = VSIFOpenL( pszPrjFilename, "r" );
+
+    /* .hdr files from http://www.worldclim.org/futdown.htm have the projection */
+    /* info in the .hdr file itself ! */
+    if (fp == NULL && bHasInternalProjection)
+    {
+        pszPrjFilename = osHDRFilename;
+        fp = VSIFOpenL( pszPrjFilename, "r" );
+    }
+
     if( fp != NULL )
     {
         char	**papszLines;
