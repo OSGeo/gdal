@@ -7,11 +7,7 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		thinplatespline.o llrasterize.o gdalrasterize.o gdalgeoloc.o \
 		gdalgrid.o gdalcutline.o gdalproximity.o rasterfill.o \
 		gdalrasterpolygonenumerator.o gdalsievefilter.o \
-		gdalwarpkernel_opencl.o
-
-ifeq ($(OGR_ENABLED),yes)
-OBJ += contour.o polygonize.o
-endif
+		gdalwarpkernel_opencl.o polygonize.o contour.o
 
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
