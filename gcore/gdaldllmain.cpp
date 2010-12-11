@@ -32,11 +32,6 @@
 #include "cpl_multiproc.h"
 
 
-/* FIXME:
- * The Linux implementation is temporarily disabled, see Comment 3
- * http://trac.osgeo.org/gdal/ticket/3824
- */
-#if 0 
 /************************************************************************/
 /*  The library set-up/clean-up routines implemented with               */
 /*  GNU C/C++ extensions.                                               */
@@ -78,7 +73,6 @@ static void GDALDestroy(void)
 
 #endif // __GNUC__
 
-#endif // #if 0
 
 /************************************************************************/
 /*  The library set-up/clean-up routine implemented as DllMain entry    */
