@@ -195,6 +195,7 @@ Advanced options :
                [-wrapdateline]
                [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]
                [-splitlistfields] [-maxsubfields val]
+               [-explodecollections]
 
 \endverbatim
 
@@ -230,12 +231,34 @@ same name is found.)</dd>
 <dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
 The resulting table/layer will be saved to the output.</dd>
 <dt> <b>-dialect</b> <em>dialect</em>:</dt><dd> SQL dialect.  In some cases can be used to use (unoptimized) OGR SQL instead of the native SQL of an RDBMS by passing OGRSQL. </dd>
-<dt> <b>-wrapdateline</b>:</dt><dd> (starting with GDAL 1.7.0) split geometries crossing the dateline meridian (long. = +/- 180deg)</dd>
 <dt> <b>-where</b><em> restricted_where</em>:</dt><dd> Attribute query (like SQL WHERE)</dd>
 <dt> <b>-skipfailures</b>:</dt><dd>Continue after a failure, skipping the failed feature.</dd>
-<dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 200)</dd>
 <dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents. Only features
 whose geometry intersects the extents will be selected. The geometries will not be clipped unless -clipsrc is specified</dd>
+<dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
+<dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
+<dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>
+<dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for the 
+created layer.  One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, 
+GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. 
+Add "25D" to the name to get 2.5D versions.</dd>
+<dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
+<dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
+<dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
+<dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
+id will be reported.  Operates exclusive of the spatial or attribute 
+queries.  Note: if you want to select several features based on their feature id, you can
+also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-where "fid in (1,3,5)"'
+would select features 1, 3 and 5.</dd>
+</dl>
+
+Srs_def can be a full WKT definition (hard to escape properly), or a well
+known definition (ie. EPSG:4326) or a file with a WKT definition.
+
+Advanced options :
+
+<dl>
+<dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 200)</dd>
 <dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:
 </dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding
 box (expressed in source SRS), WKT geometry (POLYGON or MULTIPOLYGON), from a
@@ -252,33 +275,21 @@ you will generally want to use it in combination of the -clipdstlayer, -clipdstw
 <dt> <b>-clipdstsql</b> <em>sql_statement</em>:</dt><dd>Select desired geometries using an SQL query instead.</dd>
 <dt> <b>-clipdstlayer</b> <em>layername</em>:</dt><dd>Select the named layer from the destination clip datasource.</dd>
 <dt> <b>-clipdstwhere</b> <em>expression</em>:</dt><dd>Restrict desired geometries based on attribute query.</dd>
-<dt> <b>-splitlistfields</b> :</dt><dd>(starting with GDAL 1.8.0) split fields of type StringList, RealList or IntegerList into as many fields of type String, Real or Integer as necessary.</dd>
-<dt> <b>-maxsubfields</b> <em>val</em>:</dt><dd>To be combined with -splitlistfields to limit the number of subfields created for each split field.</dd>
-<dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
-<dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
-<dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>
-<dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for the 
-created layer.  One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, 
-GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. 
-Add "25D" to the name to get 2.5D versions.</dd>
-<dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
-<dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
-<dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
-<dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
-id will be reported.  Operates exclusive of the spatial or attribute 
-queries.  Note: if you want to select several features based on their feature id, you can
-also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-where "fid in (1,3,5)"'
-would select features 1, 3 and 5.</dd>
+<dt> <b>-wrapdateline</b>:</dt><dd> (starting with GDAL 1.7.0) split geometries crossing the dateline meridian (long. = +/- 180deg)</dd>
 <dt> <b>-segmentize</b><em> max_dist</em>:</dt><dd> (starting with GDAL 1.6.0) maximum distance between 2 nodes.
 Used to create intermediate pointsspatial query extents</dd>
 <dt> <b>-fieldTypeToString</b><em> type1, ...</em>:</dt><dd> (starting with GDAL 1.7.0) converts any field of the
 specified type to a field of type string in the destination layer. Valid types are : Integer, Real, String, Date, Time,
 DateTime, Binary, IntegerList, RealList, StringList. Special value <b>All</b> can be used to convert all fields to strings.
 This is an alternate way to using the CAST operator of OGR SQL, that may avoid typing a long SQL query.</dd>
+<dt> <b>-splitlistfields</b>:</dt><dd>(starting with GDAL 1.8.0) split fields of type StringList, RealList or IntegerList into as many fields of type String, Real or Integer as necessary.</dd>
+<dt> <b>-maxsubfields</b> <em>val</em>:</dt><dd>To be combined with -splitlistfields to limit the number of subfields created for each split field.</dd>
+<dt> <b>-explodecollections</b>:</dt><dd>(starting with GDAL 1.8.0) produce one feature for each geometry in any kind of geometry collection in the source file</dd>
 </dl>
 
-Srs_def can be a full WKT definition (hard to escape properly), or a well
-known definition (ie. EPSG:4326) or a file with a WKT definition.
+\if man
+\section example EXAMPLE
+\endif
 
 Example appending to an existing layer (both flags need to be used):
 

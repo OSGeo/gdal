@@ -61,6 +61,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            int bWrapDateline,
                            OGRGeometry* poClipSrc,
                            OGRGeometry *poClipDst,
+                           int bExplodeCollections,
                            GDALProgressFunc pfnProgress,
                            void *pProgressArg);
 
@@ -562,6 +563,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszClipDstWhere = NULL;
     int          bSplitListFields = FALSE;
     int          nMaxSplitListSubFields = -1;
+    int          bExplodeCollections = FALSE;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -908,6 +910,10 @@ int main( int nArgc, char ** papszArgv )
                 }
             }
         }
+        else if( EQUAL(papszArgv[iArg],"-explodecollections") )
+        {
+            bExplodeCollections = TRUE;
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -922,7 +928,13 @@ int main( int nArgc, char ** papszArgv )
 
     if( pszDataSource == NULL )
         Usage();
-        
+
+    if( bPreserveFID && bExplodeCollections )
+    {
+        fprintf( stderr, "FAILURE: cannot use -preserve_fid and -explodecollections at the same time\n\n" );
+        Usage();
+    }
+
     if( bClipSrc && pszClipSrcDS != NULL)
     {
         poClipSrc = LoadGeometry(pszClipSrcDS, pszClipSrcSQL, pszClipSrcLayer, pszClipSrcWhere);
@@ -1160,7 +1172,8 @@ int main( int nArgc, char ** papszArgv )
                                  pszNewLayerName, bTransform, poOutputSRS, bNullifyOutputSRS,
                                  poSourceSRS, papszSelFields, bAppend, eGType,
                                  bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
-                                 nCountLayerFeatures, bWrapDateline, poClipSrc, poClipDst, pfnProgress, pProgressArg))
+                                 nCountLayerFeatures, bWrapDateline, poClipSrc, poClipDst,
+                                 bExplodeCollections, pfnProgress, pProgressArg))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
@@ -1340,7 +1353,8 @@ int main( int nArgc, char ** papszArgv )
                                 pszNewLayerName, bTransform, poOutputSRS, bNullifyOutputSRS,
                                 poSourceSRS, papszSelFields, bAppend, eGType,
                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
-                                panLayerCountFeatures[iLayer], bWrapDateline, poClipSrc, poClipDst, pfnProgress, pProgressArg) 
+                                panLayerCountFeatures[iLayer], bWrapDateline, poClipSrc, poClipDst,
+                                bExplodeCollections, pfnProgress, pProgressArg)
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1418,7 +1432,7 @@ static void Usage()
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
             "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n"
-            "               [-splitlistfields] [-maxsubfields val]\n"
+            "               [-splitlistfields] [-maxsubfields val] [-explodecollections]\n"
             "               dst_datasource_name src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n"
             "\n"
@@ -1493,6 +1507,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            int bWrapDateline,
                            OGRGeometry* poClipSrc,
                            OGRGeometry *poClipDst,
+                           int bExplodeCollections,
                            GDALProgressFunc pfnProgress,
                            void *pProgressArg)
 
@@ -1625,7 +1640,30 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     if( poDstLayer == NULL )
     {
         if( eGType == -2 )
+        {
             eGType = poSrcFDefn->GetGeomType();
+
+            if ( bExplodeCollections )
+            {
+                int n25DBit = eGType & wkb25DBit;
+                if (wkbFlatten(eGType) == wkbMultiPoint)
+                {
+                    eGType = wkbPoint | n25DBit;
+                }
+                else if (wkbFlatten(eGType) == wkbMultiLineString)
+                {
+                    eGType = wkbLineString | n25DBit;
+                }
+                else if (wkbFlatten(eGType) == wkbMultiPolygon)
+                {
+                    eGType = wkbPolygon | n25DBit;
+                }
+                else if (wkbFlatten(eGType) == wkbGeometryCollection)
+                {
+                    eGType = wkbUnknown | n25DBit;
+                }
+            }
+        }
 
         if( !poDstDS->TestCapability( ODsCCreateLayer ) )
         {
@@ -1882,132 +1920,168 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         if( poFeature == NULL )
             break;
 
-        if( ++nFeaturesInTransaction == nGroupTransactions )
+        int nParts = 0;
+        int nIters = 1;
+        if (bExplodeCollections)
         {
-            poDstLayer->CommitTransaction();
-            poDstLayer->StartTransaction();
-            nFeaturesInTransaction = 0;
+            OGRGeometry* poSrcGeometry = poFeature->GetGeometryRef();
+            if (poSrcGeometry)
+            {
+                switch (wkbFlatten(poSrcGeometry->getGeometryType()))
+                {
+                    case wkbMultiPoint:
+                    case wkbMultiLineString:
+                    case wkbMultiPolygon:
+                    case wkbGeometryCollection:
+                        nParts = ((OGRGeometryCollection*)poSrcGeometry)->getNumGeometries();
+                        nIters = nParts;
+                        if (nIters == 0)
+                            nIters = 1;
+                    default:
+                        break;
+                }
+            }
         }
 
-        CPLErrorReset();
-        poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
-
-        if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
+        for(int iPart = 0; iPart < nIters; iPart++)
         {
-            if( nGroupTransactions )
+            if( ++nFeaturesInTransaction == nGroupTransactions )
+            {
                 poDstLayer->CommitTransaction();
-            
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to translate feature %ld from layer %s.\n",
-                      poFeature->GetFID(), poSrcFDefn->GetName() );
-            
-            OGRFeature::DestroyFeature( poFeature );
-            OGRFeature::DestroyFeature( poDstFeature );
-            VSIFree(panMap);
-            CSLDestroy(papszTransformOptions);
-            return FALSE;
-        }
-
-        if( bPreserveFID )
-            poDstFeature->SetFID( poFeature->GetFID() );
-
-        OGRGeometry* poDstGeometry = poDstFeature->GetGeometryRef();
-        if (poDstGeometry != NULL)
-        {
-            if (dfMaxSegmentLength > 0)
-                poDstGeometry->segmentize(dfMaxSegmentLength);
-                
-            if (poClipSrc)
-            {
-                OGRGeometry* poClipped = poDstGeometry->Intersection(poClipSrc);
-                if (poClipped == NULL || poClipped->IsEmpty())
-                {
-                    OGRGeometryFactory::destroyGeometry(poClipped);
-                    goto end_loop;
-                }
-                poDstFeature->SetGeometryDirectly(poClipped);
-                poDstGeometry = poClipped;
+                poDstLayer->StartTransaction();
+                nFeaturesInTransaction = 0;
             }
 
-            if( poCT != NULL || papszTransformOptions != NULL)
-            {
-                OGRGeometry* poReprojectedGeom =
-                    OGRGeometryFactory::transformWithOptions(poDstGeometry, poCT, papszTransformOptions);
-                if( poReprojectedGeom == NULL )
-                {
-                    if( nGroupTransactions )
-                        poDstLayer->CommitTransaction();
+            CPLErrorReset();
+            poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
 
-                    fprintf( stderr, "Failed to reproject feature %d (geometry probably out of source or destination SRS).\n", 
-                            (int) poFeature->GetFID() );
-                    if( !bSkipFailures )
+            if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
+            {
+                if( nGroupTransactions )
+                    poDstLayer->CommitTransaction();
+
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Unable to translate feature %ld from layer %s.\n",
+                        poFeature->GetFID(), poSrcFDefn->GetName() );
+
+                OGRFeature::DestroyFeature( poFeature );
+                OGRFeature::DestroyFeature( poDstFeature );
+                VSIFree(panMap);
+                CSLDestroy(papszTransformOptions);
+                return FALSE;
+            }
+
+            if( bPreserveFID )
+                poDstFeature->SetFID( poFeature->GetFID() );
+
+            OGRGeometry* poDstGeometry = poDstFeature->GetGeometryRef();
+            if (poDstGeometry != NULL)
+            {
+                if (nParts > 0)
+                {
+                    /* For -explodecollections, extract the iPart(th) of the geometry */
+                    OGRGeometry* poPart = ((OGRGeometryCollection*)poDstGeometry)->getGeometryRef(iPart);
+                    ((OGRGeometryCollection*)poDstGeometry)->removeGeometry(iPart, FALSE);
+                    poDstFeature->SetGeometryDirectly(poPart);
+                    poDstGeometry = poPart;
+                }
+
+                if (dfMaxSegmentLength > 0)
+                    poDstGeometry->segmentize(dfMaxSegmentLength);
+
+                if (poClipSrc)
+                {
+                    OGRGeometry* poClipped = poDstGeometry->Intersection(poClipSrc);
+                    if (poClipped == NULL || poClipped->IsEmpty())
                     {
-                        OGRFeature::DestroyFeature( poFeature );
-                        OGRFeature::DestroyFeature( poDstFeature );
-                        VSIFree(panMap);
-                        CSLDestroy(papszTransformOptions);
-                        return FALSE;
+                        OGRGeometryFactory::destroyGeometry(poClipped);
+                        goto end_loop;
                     }
+                    poDstFeature->SetGeometryDirectly(poClipped);
+                    poDstGeometry = poClipped;
                 }
-                
-                poDstFeature->SetGeometryDirectly(poReprojectedGeom);
-                poDstGeometry = poReprojectedGeom;
-            }
-            else if (poOutputSRS != NULL)
-            {
-                poDstGeometry->assignSpatialReference(poOutputSRS);
-            }
-            
-            if (poClipDst)
-            {
-                OGRGeometry* poClipped = poDstGeometry->Intersection(poClipDst);
-                if (poClipped == NULL || poClipped->IsEmpty())
+
+                if( poCT != NULL || papszTransformOptions != NULL)
                 {
-                    OGRGeometryFactory::destroyGeometry(poClipped);
-                    goto end_loop;
+                    OGRGeometry* poReprojectedGeom =
+                        OGRGeometryFactory::transformWithOptions(poDstGeometry, poCT, papszTransformOptions);
+                    if( poReprojectedGeom == NULL )
+                    {
+                        if( nGroupTransactions )
+                            poDstLayer->CommitTransaction();
+
+                        fprintf( stderr, "Failed to reproject feature %d (geometry probably out of source or destination SRS).\n",
+                                (int) poFeature->GetFID() );
+                        if( !bSkipFailures )
+                        {
+                            OGRFeature::DestroyFeature( poFeature );
+                            OGRFeature::DestroyFeature( poDstFeature );
+                            VSIFree(panMap);
+                            CSLDestroy(papszTransformOptions);
+                            return FALSE;
+                        }
+                    }
+
+                    poDstFeature->SetGeometryDirectly(poReprojectedGeom);
+                    poDstGeometry = poReprojectedGeom;
                 }
-                
-                poDstFeature->SetGeometryDirectly(poClipped);
-                poDstGeometry = poClipped;
+                else if (poOutputSRS != NULL)
+                {
+                    poDstGeometry->assignSpatialReference(poOutputSRS);
+                }
+
+                if (poClipDst)
+                {
+                    OGRGeometry* poClipped = poDstGeometry->Intersection(poClipDst);
+                    if (poClipped == NULL || poClipped->IsEmpty())
+                    {
+                        OGRGeometryFactory::destroyGeometry(poClipped);
+                        goto end_loop;
+                    }
+
+                    poDstFeature->SetGeometryDirectly(poClipped);
+                    poDstGeometry = poClipped;
+                }
+
+                if( bForceToPolygon )
+                {
+                    poDstFeature->SetGeometryDirectly(
+                        OGRGeometryFactory::forceToPolygon(
+                            poDstFeature->StealGeometry() ) );
+                }
+                else if( bForceToMultiPolygon )
+                {
+                    poDstFeature->SetGeometryDirectly(
+                        OGRGeometryFactory::forceToMultiPolygon(
+                            poDstFeature->StealGeometry() ) );
+                }
+                else if ( bForceToMultiLineString )
+                {
+                    poDstFeature->SetGeometryDirectly(
+                        OGRGeometryFactory::forceToMultiLineString(
+                            poDstFeature->StealGeometry() ) );
+                }
             }
 
-            if( bForceToPolygon )
+            CPLErrorReset();
+            if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE
+                && !bSkipFailures )
             {
-                poDstFeature->SetGeometryDirectly( 
-                    OGRGeometryFactory::forceToPolygon(
-                        poDstFeature->StealGeometry() ) );
-            }
-            else if( bForceToMultiPolygon )
-            {
-                poDstFeature->SetGeometryDirectly( 
-                    OGRGeometryFactory::forceToMultiPolygon(
-                        poDstFeature->StealGeometry() ) );
-            }
-            else if ( bForceToMultiLineString )
-            {
-                poDstFeature->SetGeometryDirectly( 
-                    OGRGeometryFactory::forceToMultiLineString(
-                        poDstFeature->StealGeometry() ) );
-            }
-        }
+                if( nGroupTransactions )
+                    poDstLayer->RollbackTransaction();
 
-        CPLErrorReset();
-        if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE 
-            && !bSkipFailures )
-        {
-            if( nGroupTransactions )
-                poDstLayer->RollbackTransaction();
-
-            OGRFeature::DestroyFeature( poFeature );
-            OGRFeature::DestroyFeature( poDstFeature );
-            VSIFree(panMap);
-            CSLDestroy(papszTransformOptions);
-            return FALSE;
-        }
+                OGRFeature::DestroyFeature( poFeature );
+                OGRFeature::DestroyFeature( poDstFeature );
+                VSIFree(panMap);
+                CSLDestroy(papszTransformOptions);
+                return FALSE;
+            }
 
 end_loop:
+            OGRFeature::DestroyFeature( poDstFeature );
+        }
+
         OGRFeature::DestroyFeature( poFeature );
-        OGRFeature::DestroyFeature( poDstFeature );
 
         /* Report progress */
         nCount ++;
