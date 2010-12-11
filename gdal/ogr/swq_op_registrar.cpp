@@ -33,8 +33,7 @@
 #include <vector>
 
 static void *hOperationsMutex = NULL;
-static int   bOperationsInitialized = FALSE;
-static std::vector<swq_operation*> apoOperations;
+static std::vector<swq_operation*>* papoOperations = NULL;
 
 /************************************************************************/
 /*                            GetOperator()                             */
@@ -45,13 +44,13 @@ const swq_operation *swq_op_registrar::GetOperator( const char *pszName )
 {
     unsigned int i;
 
-    if( !bOperationsInitialized )
+    if( !papoOperations )
         Initialize();
 
-    for( i = 0; i < apoOperations.size(); i++ )
+    for( i = 0; i < papoOperations->size(); i++ )
     {
-        if( EQUAL(pszName,apoOperations[i]->osName.c_str()) )
-            return apoOperations[i];
+        if( EQUAL(pszName,(*papoOperations)[i]->osName.c_str()) )
+            return (*papoOperations)[i];
     }
 
     return NULL;
@@ -66,13 +65,13 @@ const swq_operation *swq_op_registrar::GetOperator( swq_op eOperator )
 {
     unsigned int i;
 
-    if( !bOperationsInitialized )
+    if( !papoOperations )
         Initialize();
 
-    for( i = 0; i < apoOperations.size(); i++ )
+    for( i = 0; i < papoOperations->size(); i++ )
     {
-        if( eOperator == apoOperations[i]->eOperation )
-            return apoOperations[i];
+        if( eOperator == (*papoOperations)[i]->eOperation )
+            return (*papoOperations)[i];
     }
 
     return NULL;
@@ -103,7 +102,7 @@ void swq_op_registrar::AddOperator( const char *pszName, swq_op eOpCode,
     poOp->pfnEvaluator = pfnEvaluator;
     poOp->pfnChecker = pfnChecker;
 
-    apoOperations.push_back( poOp );
+    papoOperations->push_back( poOp );
 }
 
 
@@ -137,10 +136,10 @@ void swq_op_registrar::Initialize()
 {
     CPLMutexHolderD( &hOperationsMutex );
 
-    if( bOperationsInitialized )
+    if( papoOperations )
         return;
 
-    bOperationsInitialized = TRUE;
+    papoOperations = new std::vector<swq_operation*>;
 
     AddOperator( "OR", SWQ_OR );
     AddOperator( "AND", SWQ_AND );
@@ -181,11 +180,12 @@ void swq_op_registrar::DeInitialize()
 {
     CPLMutexHolderD( &hOperationsMutex );
 
-    bOperationsInitialized = FALSE;
+    if( papoOperations == NULL)
+        return;
 
-    for( unsigned int i=0; i < apoOperations.size(); i++ )
-        delete apoOperations[i];
+    for( unsigned int i=0; i < papoOperations->size(); i++ )
+        delete (*papoOperations)[i];
 
-    apoOperations.clear();
+    delete papoOperations;
+    papoOperations = NULL;
 }
-
