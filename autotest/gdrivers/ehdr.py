@@ -163,6 +163,35 @@ def ehdr_8():
     
     return 'success'
 
+###############################################################################
+# Test opening worldclim .hdr files that have a few extensions fields in the .hdr
+# file to specify minimum, maximum and projection. Also test that we correctly
+# guess the signedness of the datatype from the sign of the nodata value
+
+def ehdr_9():
+
+    ds = gdal.Open('data/wc_10m_CCCMA_A2a_2020_tmin_9.bil')
+
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Int16:
+        gdaltest.post_reason( 'wrong datatype' )
+        print(ds.GetRasterBand(1).DataType)
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMinimum() != -191:
+        gdaltest.post_reason( 'wrong minimum value' )
+        print(ds.GetRasterBand(1).GetMinimum())
+        return 'fail'
+
+    wkt = ds.GetProjectionRef()
+    if wkt.find("""GEOGCS["WGS 84""") != 0:
+        gdaltest.post_reason( 'wrong projection' )
+        print(wkt)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     ehdr_1,
     ehdr_2,
@@ -172,6 +201,7 @@ gdaltest_list = [
     ehdr_6,
     ehdr_7,
     ehdr_8,
+    ehdr_9
     ]
 
 if __name__ == '__main__':
