@@ -35,6 +35,8 @@ CPL_CVSID("$Id$");
 
 #define GP_NODATA_MARKER -51502112
 
+#ifdef OGR_ENABLED
+
 /************************************************************************/
 /* ==================================================================== */
 /*                               RPolygon                               */
@@ -428,7 +430,8 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine, int iY, int nXS
 
     return eErr;
 }
- 
+#endif // OGR_ENABLED
+
 /************************************************************************/
 /*                           GDALPolygonize()                           */
 /************************************************************************/
@@ -495,6 +498,10 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                 void * pProgressArg )
 
 {
+#ifndef OGR_ENABLED
+    CPLError(CE_Failure, CPLE_NotSupported, "GDALPolygonize() unimplemented in a non OGR build");
+    return CE_Failure;
+#else
     VALIDATE_POINTER1( hSrcBand, "GDALPolygonize", CE_Failure );
     VALIDATE_POINTER1( hOutLayer, "GDALPolygonize", CE_Failure );
 
@@ -755,5 +762,6 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
     CPLFree( papoPoly );
 
     return eErr;
+#endif // OGR_ENABLED
 }
 
