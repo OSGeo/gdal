@@ -679,9 +679,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * @return CE_None on success or CE_Failure on error.
  */
 
-#ifdef OGR_ENABLED
-
-CPLErr GDALRasterizeLayers( GDALDatasetH hDS, 
+CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                             int nBandCount, int *panBandList,
                             int nLayerCount, OGRLayerH *pahLayers,
                             GDALTransformerFunc pfnTransformer, 
@@ -692,6 +690,10 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                             void *pProgressArg )
 
 {
+#ifndef OGR_ENABLED
+    CPLError(CE_Failure, CPLE_NotSupported, "GDALRasterizeLayers() unimplemented in a non OGR build");
+    return CE_Failure;
+#else
     GDALDataType   eType;
     unsigned char *pabyChunkBuf;
     GDALDataset *poDS = (GDALDataset *) hDS;
@@ -967,9 +969,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     VSIFree( pabyChunkBuf );
     
     return eErr;
-}
-
 #endif /* def OGR_ENABLED */
+}
 
 /************************************************************************/
 /*                        GDALRasterizeLayersBuf()                      */
@@ -1050,8 +1051,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  * @return CE_None on success or CE_Failure on error.
  */
 
-#ifdef OGR_ENABLED
-
 CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
                                int nPixelSpace, int nLineSpace,
@@ -1065,6 +1064,10 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                                void *pProgressArg )
 
 {
+#ifndef OGR_ENABLED
+    CPLError(CE_Failure, CPLE_NotSupported, "GDALRasterizeLayersBuf() unimplemented in a non OGR build");
+    return CE_Failure;
+#else
 /* -------------------------------------------------------------------- */
 /*      If pixel and line spaceing are defaulted assign reasonable      */
 /*      value assuming a packed buffer.                                 */
@@ -1209,6 +1212,6 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
     }
     
     return eErr;
+#endif /* def OGR_ENABLED */
 }
 
-#endif /* def OGR_ENABLED */
