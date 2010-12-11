@@ -1121,6 +1121,71 @@ def test_ogr2ogr_32():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_32.shp')
     return 'success'
 
+###############################################################################
+# Test -explodecollections
+
+def test_ogr2ogr_33():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_33_src.csv')
+        ogr.GetDriverByName('CSV').DeleteDataSource('tmp/test_ogr2ogr_33_src.csv')
+    except:
+        pass
+
+    try:
+        os.stat('tmp/test_ogr2ogr_33_dst.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_33_dst.shp')
+    except:
+        pass
+
+    f = open('tmp/test_ogr2ogr_33_src.csv', 'wt')
+    f.write('foo,WKT\n')
+    f.write('bar,"MULTIPOLYGON (((10 10,10 11,11 11,11 10,10 10)),((100 100,100 200,200 200,200 100,100 100),(125 125,175 125,175 175,125 175,125 125)))"\n')
+    f.write('baz,"POLYGON ((0 0,0 1,1 1,1 0,0 0))"\n')
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -explodecollections tmp/test_ogr2ogr_33_dst.shp tmp/test_ogr2ogr_33_src.csv -select foo')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_33_dst.shp')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 3:
+        gdaltest.post_reason('-explodecollections failed')
+        print(lyr.GetFeatureCount())
+        return 'fail'
+
+    feat = lyr.GetFeature(0)
+    if feat.GetField("foo") != 'bar':
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((10 10,10 11,11 11,11 10,10 10))':
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetFeature(1)
+    if feat.GetField("foo") != 'bar':
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((100 100,100 200,200 200,200 100,100 100),(125 125,175 125,175 175,125 175,125 125))':
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetFeature(2)
+    if feat.GetField("foo") != 'baz':
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    ogr.GetDriverByName('CSV').DeleteDataSource('tmp/test_ogr2ogr_33_src.csv')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_33_dst.shp')
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1153,7 +1218,8 @@ gdaltest_list = [
     test_ogr2ogr_29,
     test_ogr2ogr_30,
     test_ogr2ogr_31,
-    test_ogr2ogr_32 ]
+    test_ogr2ogr_32,
+    test_ogr2ogr_33 ]
     
 if __name__ == '__main__':
 
