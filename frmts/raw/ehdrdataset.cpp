@@ -37,6 +37,12 @@ CPL_C_START
 void	GDALRegister_EHdr(void);
 CPL_C_END
 
+#define HAS_MIN_FLAG    0x1
+#define HAS_MAX_FLAG    0x2
+#define HAS_MEAN_FLAG   0x4
+#define HAS_STDDEV_FLAG 0x8
+#define HAS_ALL_FLAGS   (HAS_MIN_FLAG | HAS_MAX_FLAG | HAS_MEAN_FLAG | HAS_STDDEV_FLAG)
+
 /************************************************************************/
 /* ==================================================================== */
 /*				EHdrDataset				*/
@@ -761,12 +767,12 @@ CPLErr EHdrDataset::RewriteSTX()
     {
         EHdrRasterBand* poBand = (EHdrRasterBand*)papoBands[i];
         VSIFPrintfL( fp, "%d %.10f %.10f ", i+1, poBand->dfMin, poBand->dfMax );
-        if ( poBand->minmaxmeanstddev & 0x4 )
+        if ( poBand->minmaxmeanstddev & HAS_MEAN_FLAG )
             VSIFPrintfL( fp, "%.10f ", poBand->dfMean);
         else
             VSIFPrintfL( fp, "# ");
 
-        if ( poBand->minmaxmeanstddev & 0x8 )
+        if ( poBand->minmaxmeanstddev & HAS_STDDEV_FLAG )
             VSIFPrintfL( fp, "%.10f\n", poBand->dfStdDev);
         else
             VSIFPrintfL( fp, "#\n");
@@ -807,17 +813,17 @@ CPLErr EHdrDataset::ReadSTX()
               EHdrRasterBand* poBand = (EHdrRasterBand*)papoBands[i-1];
               poBand->dfMin = atof(papszTokens[1]);
               poBand->dfMax = atof(papszTokens[2]);
-              poBand->minmaxmeanstddev = 0x3;
+              poBand->minmaxmeanstddev = HAS_MIN_FLAG | HAS_MAX_FLAG;
               // reads optional mean and stddev
               if ( !EQUAL(papszTokens[3], "#") )
               {
                 poBand->dfMean   = atof(papszTokens[3]);
-                poBand->minmaxmeanstddev |= 0x4;
+                poBand->minmaxmeanstddev |= HAS_MEAN_FLAG;
               }
               if ( !EQUAL(papszTokens[4], "#") )
               {
                 poBand->dfStdDev = atof(papszTokens[4]);
-                poBand->minmaxmeanstddev |= 0x8;
+                poBand->minmaxmeanstddev |= HAS_STDDEV_FLAG;
               }
 
               if( nTokens >= 6 && !EQUAL(papszTokens[5], "#") )
@@ -1780,9 +1786,9 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
 double EHdrRasterBand::GetMinimum( int *pbSuccess )
 {
     if( pbSuccess != NULL )
-        *pbSuccess = (minmaxmeanstddev & 0x1) != 0;
+        *pbSuccess = (minmaxmeanstddev & HAS_MIN_FLAG) != 0;
 
-    if( minmaxmeanstddev & 0x1 )
+    if( minmaxmeanstddev & HAS_MIN_FLAG )
       return dfMin;
 
     return RawRasterBand::GetMinimum( pbSuccess );
@@ -1795,9 +1801,9 @@ double EHdrRasterBand::GetMinimum( int *pbSuccess )
 double EHdrRasterBand::GetMaximum( int *pbSuccess )
 {
     if( pbSuccess != NULL )
-        *pbSuccess = (minmaxmeanstddev & 0x2) != 0;
+        *pbSuccess = (minmaxmeanstddev & HAS_MAX_FLAG) != 0;
 
-    if( minmaxmeanstddev & 0x2 )
+    if( minmaxmeanstddev & HAS_MAX_FLAG )
       return dfMax;
 
     return RawRasterBand::GetMaximum( pbSuccess );
@@ -1809,7 +1815,7 @@ double EHdrRasterBand::GetMaximum( int *pbSuccess )
 
 CPLErr EHdrRasterBand::GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev )
 {
-    if( (minmaxmeanstddev & 0xf) == 0xf)
+    if( (minmaxmeanstddev & HAS_ALL_FLAGS) == HAS_ALL_FLAGS)
     {
         if ( pdfMin ) *pdfMin = dfMin;
         if ( pdfMax ) *pdfMax = dfMax;
@@ -1826,7 +1832,7 @@ CPLErr EHdrRasterBand::GetStatistics( int bApproxOK, int bForce, double *pdfMin,
     {
         EHdrDataset* poEDS = (EHdrDataset *) poDS;
 
-        minmaxmeanstddev = 0xf;
+        minmaxmeanstddev = HAS_ALL_FLAGS;
 
         if( poEDS->RewriteSTX() != CE_None )
             RawRasterBand::SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
@@ -1863,7 +1869,7 @@ CPLErr EHdrRasterBand::SetStatistics( double dfMin, double dfMax, double dfMean,
     this->dfStdDev = dfStdDev;
 
     // marks stats valid
-    minmaxmeanstddev = 0xf;
+    minmaxmeanstddev = HAS_ALL_FLAGS;
 
     EHdrDataset* poEDS = (EHdrDataset *) poDS;
 
