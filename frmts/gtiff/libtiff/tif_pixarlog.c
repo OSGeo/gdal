@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.33 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tif_pixarlog.c,v 1.34 2010-12-11 23:52:27 faxguy Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -785,8 +785,8 @@ PixarLogDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	/* hopefully, we got all the bytes we needed */
 	if (sp->stream.avail_out != 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-		    "Not enough data at scanline %lu (short %llu bytes)",
-		    (unsigned long) tif->tif_row, (unsigned long long) sp->stream.avail_out);
+		    "Not enough data at scanline %lu (short " TIFF_UINT64_FORMAT " bytes)",
+		    (unsigned long) tif->tif_row, (TIFF_UINT64_T) sp->stream.avail_out);
 		return (0);
 	}
 

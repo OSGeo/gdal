@@ -1,4 +1,4 @@
-/* $Id: tif_strip.c,v 1.32 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tif_strip.c,v 1.33 2010-07-01 15:33:28 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
