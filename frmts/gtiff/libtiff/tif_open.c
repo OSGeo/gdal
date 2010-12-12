@@ -1,4 +1,4 @@
-/* $Id: tif_open.c,v 1.45 2010-04-02 19:26:22 fwarmerdam Exp $ */
+/* $Id: tif_open.c,v 1.46 2010-12-06 16:54:54 faxguy Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -268,7 +268,7 @@ TIFFClientOpen(
 	/*
 	 * Read in TIFF header.
 	 */
-	if (tif->tif_mode & O_TRUNC ||
+	if ((m & O_TRUNC) ||
 	    !ReadOK(tif, &tif->tif_header, sizeof (TIFFHeaderClassic))) {
 		if (tif->tif_mode == O_RDONLY) {
 			TIFFErrorExt(tif->tif_clientdata, name,

@@ -1,4 +1,4 @@
-/* $Id: tif_zip.c,v 1.29 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tif_zip.c,v 1.30 2010-12-11 23:52:27 faxguy Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -184,8 +184,8 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	} while (sp->stream.avail_out > 0);
 	if (sp->stream.avail_out != 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-		    "Not enough data at scanline %lu (short %llu bytes)",
-		    (unsigned long) tif->tif_row, (unsigned long long) sp->stream.avail_out);
+		    "Not enough data at scanline %lu (short " TIFF_UINT64_FORMAT " bytes)",
+		    (unsigned long) tif->tif_row, (TIFF_UINT64_T) sp->stream.avail_out);
 		return (0);
 	}
 	return (1);

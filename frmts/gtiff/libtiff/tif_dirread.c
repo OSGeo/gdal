@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.159 2010-07-07 15:13:57 dron Exp $ */
+/* $Id: tif_dirread.c,v 1.162 2010-12-11 23:22:07 faxguy Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3410,7 +3410,7 @@ TIFFReadDirectory(TIFF* tif)
 	TIFFDirEntry* dp;
 	uint16 di;
 	const TIFFField* fip;
-	uint32 fii;
+	uint32 fii=FAILED_FII;
         toff_t nextdiroff;
 	tif->tif_diroff=tif->tif_nextdiroff;
 	if (!TIFFCheckDirOffset(tif,tif->tif_nextdiroff))
@@ -3426,6 +3426,20 @@ TIFFReadDirectory(TIFF* tif)
 		return 0;
 	}
 	TIFFReadDirectoryCheckOrder(tif,dir,dircount);
+	{
+		TIFFDirEntry* ma;
+		uint16 mb;
+		for (ma=dir, mb=0; mb<dircount; ma++, mb++)
+		{
+			TIFFDirEntry* na;
+			uint16 nb;
+			for (na=ma+1, nb=mb+1; nb<dircount; na++, nb++)
+			{
+				if (ma->tdir_tag==na->tdir_tag)
+					na->tdir_tag=IGNORE;
+			}
+		}
+	}
 	tif->tif_flags &= ~TIFF_BEENWRITING;    /* reset before new dir */
 	tif->tif_flags &= ~TIFF_BUF4WRITE;      /* reset before new dir */
 	/* free any old stuff and reinit */
@@ -3699,7 +3713,7 @@ TIFFReadDirectory(TIFF* tif)
 					uint32 countpersample;
 					uint32 countrequired;
 					uint32 incrementpersample;
-					uint16* value;
+					uint16* value=NULL;
 					countpersample=(1L<<tif->tif_dir.td_bitspersample);
 					if ((dp->tdir_tag==TIFFTAG_TRANSFERFUNCTION)&&(dp->tdir_count==(uint64)countpersample))
 					{
@@ -3789,8 +3803,7 @@ TIFFReadDirectory(TIFF* tif)
 		}
 		if (!TIFFFieldSet(tif,FIELD_SAMPLESPERPIXEL))
 		{
-			if ((tif->tif_dir.td_photometric==PHOTOMETRIC_RGB)
-			    || (tif->tif_dir.td_photometric==PHOTOMETRIC_YCBCR))
+			if (tif->tif_dir.td_photometric==PHOTOMETRIC_RGB)
 			{
 				TIFFWarningExt(tif->tif_clientdata,module,
 				    "SamplesPerPixel tag is missing, "
@@ -3798,12 +3811,21 @@ TIFFReadDirectory(TIFF* tif)
 				if (!TIFFSetField(tif,TIFFTAG_SAMPLESPERPIXEL,3))
 					goto bad;
 			}
-			else if ((tif->tif_dir.td_photometric==PHOTOMETRIC_MINISWHITE)
-				 || (tif->tif_dir.td_photometric==PHOTOMETRIC_MINISBLACK))
+			if (tif->tif_dir.td_photometric==PHOTOMETRIC_YCBCR)
 			{
 				TIFFWarningExt(tif->tif_clientdata,module,
 				    "SamplesPerPixel tag is missing, "
-				    "assuming correct SamplesPerPixel value is 1");
+				    "applying correct SamplesPerPixel value of 3");
+				if (!TIFFSetField(tif,TIFFTAG_SAMPLESPERPIXEL,3))
+					goto bad;
+			}
+			else if ((tif->tif_dir.td_photometric==PHOTOMETRIC_MINISWHITE)
+				 || (tif->tif_dir.td_photometric==PHOTOMETRIC_MINISBLACK))
+			{
+				/*
+				 * SamplesPerPixel tag is missing, but is not required
+				 * by spec.  Assume correct SamplesPerPixel value of 1.
+				 */
 				if (!TIFFSetField(tif,TIFFTAG_SAMPLESPERPIXEL,1))
 					goto bad;
 			}
@@ -5296,6 +5318,7 @@ TIFFFetchSubjectDistance(TIFF* tif, TIFFDirEntry* dir)
 	static const char module[] = "TIFFFetchSubjectDistance";
 	enum TIFFReadDirEntryErr err;
 	UInt64Aligned_t m;
+    m.l=0;
 	assert(sizeof(double)==8);
 	assert(sizeof(uint64)==8);
 	assert(sizeof(uint32)==4);
