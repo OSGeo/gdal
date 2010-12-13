@@ -164,7 +164,7 @@ colordataset = gdal.Open( src_color_filename, GA_ReadOnly )
 
 #check for 3 or 4 bands in the color file
 if (colordataset.RasterCount != 3 and colordataset.RasterCount != 4):
-    print 'Source image does not appear to have three or four bands as required.'
+    print('Source image does not appear to have three or four bands as required.')
     sys.exit(1)
 
 #define output format, name, size, type and set projection
@@ -188,7 +188,7 @@ hillbandnodatavalue = hillband.GetNoDataValue()
 
 #check for same file size
 if ((rBand.YSize != hillband.YSize) or (rBand.XSize != hillband.XSize)):
-    print 'Color and hilshade must be the same size in pixels.'
+    print('Color and hilshade must be the same size in pixels.')
     sys.exit(1)
 
 #loop over lines to apply hillshade
