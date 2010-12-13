@@ -323,25 +323,39 @@ OGRErr OGRDXFWriterLayer::WritePOINT( OGRFeature *poFeature )
 
 /************************************************************************/
 /*                             TextEscape()                             */
+/*                                                                      */
+/*      Translate UTF8 to Win1252 and escape special characters like    */
+/*      newline and space with DXF style escapes.  Note that            */
+/*      non-win1252 unicode characters are translated using the         */
+/*      unicode escape sequence.                                        */
 /************************************************************************/
 
 CPLString OGRDXFWriterLayer::TextEscape( const char *pszInput )
 
 {
     CPLString osResult;
+    wchar_t *panInput = CPLRecodeToWChar( pszInput, 
+                                          CPL_ENC_UTF8, 
+                                          CPL_ENC_UCS2 );
+    int i;
 
-    while( *pszInput != '\0' )
+
+    for( i = 0; panInput[i] != 0; i++ )
     {
-        if( pszInput[0] == '\n' )
+        if( panInput[i] == '\n' )
             osResult += "\\P";
-        else if( pszInput[0] == ' ' )
+        else if( panInput[i] == ' ' )
             osResult += "\\~";
-        else if( pszInput[0] == '\\' )
+        else if( panInput[i] == '\\' )
             osResult += "\\\\";
-        else 
-            osResult += *pszInput;
-
-        pszInput++;
+        else if( panInput[i] > 255 )
+        {
+            CPLString osUnicode;
+            osUnicode.Printf( "\\U+%04x", (int) panInput[i] );
+            osResult += osUnicode;
+        }
+        else
+            osResult += (char) panInput[i];
     }
     
     return osResult;
@@ -428,8 +442,6 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
         if( pszText != NULL && !bDefault )
         {
             CPLString osEscaped = TextEscape( pszText );
-            osEscaped.Recode( CPL_ENC_UTF8, CPL_ENC_ISO8859_1 );
-            
             WriteValue( 1, osEscaped );
         }
     }

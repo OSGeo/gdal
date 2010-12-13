@@ -376,14 +376,27 @@ void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
 /*                            TextUnescape()                            */
 /*                                                                      */
 /*      Unexcape DXF style escape sequences such as \P for newline      */
-/*      and \~ for space.                                               */
+/*      and \~ for space, and do the recoding to UTF8.                  */
 /************************************************************************/
 
 CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
 
 {
     CPLString osResult;
+    CPLString osInput = pszInput;
+    
+/* -------------------------------------------------------------------- */
+/*      Translate text from Win-1252 to UTF8.  We approximate this      */
+/*      by treating Win-1252 as Latin-1.                                */
+/* -------------------------------------------------------------------- */
+    osInput.Recode( CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
+    pszInput = osInput.c_str();
 
+/* -------------------------------------------------------------------- */
+/*      Now translate escape sequences.  They are all plain ascii       */
+/*      characters and won't have been affected by the UTF8             */
+/*      recoding.                                                       */
+/* -------------------------------------------------------------------- */
     while( *pszInput != '\0' )
     {
         if( pszInput[0] == '\\' && pszInput[1] == 'P' )
@@ -395,6 +408,28 @@ CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
         {
             osResult += ' ';
             pszInput++;
+        }
+        else if( pszInput[0] == '\\' && pszInput[1] == 'U' 
+                 && pszInput[2] == '+' )
+        {
+            CPLString osHex;
+            int iChar;
+
+            osHex.assign( pszInput+3, 4 );
+            sscanf( osHex.c_str(), "%x", &iChar );
+
+            wchar_t anWCharString[2];
+            anWCharString[0] = iChar;
+            anWCharString[1] = 0;
+            
+            char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
+                                                    CPL_ENC_UCS2, 
+                                                    CPL_ENC_UTF8 );
+
+            osResult += pszUTF8Char;
+            CPLFree( pszUTF8Char );
+            
+            pszInput += 6;
         }
         else if( pszInput[0] == '\\' && pszInput[1] == '\\' )
         {
@@ -488,15 +523,25 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
         poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
 
 /* -------------------------------------------------------------------- */
-/*      Translate text from Win-1252 to UTF8.  We approximate this      */
-/*      by treating Win-1252 as Latin-1.                                */
+/*      Apply text after stripping off any extra terminating newline.   */
 /* -------------------------------------------------------------------- */
     if( osText != "" && osText[osText.size()-1] == '\n' )
         osText.resize( osText.size() - 1 );
 
-    osText.Recode( CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
-
     poFeature->SetField( "Text", osText );
+
+    
+/* -------------------------------------------------------------------- */
+/*      We need to escape double quotes with backslashes before they    */
+/*      can be inserted in the style string.                            */
+/* -------------------------------------------------------------------- */
+    if( strchr( osText, '"') != NULL )
+    {
+        char *pszEscaped = CPLEscapeString( osText, -1, 
+                                            CPLES_BackslashQuotable );
+        osText = pszEscaped;
+        CPLFree( pszEscaped );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
