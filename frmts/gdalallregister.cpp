@@ -476,6 +476,10 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_jpegls
     GDALRegister_JPEGLS();
 #endif
+
+#ifdef FRMT_ozi
+    GDALRegister_OZI();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
