@@ -1110,7 +1110,10 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                                        | CSLT_STRIPENDSPACES );
 
         if ( CSLCount(papszTok) < 12 )
+        {
+            CSLDestroy(papszTok);
             continue;
+        }
 
         if ( CSLCount(papszTok) >= 17
              && EQUALN(papszTok[0], "Point", 5)
