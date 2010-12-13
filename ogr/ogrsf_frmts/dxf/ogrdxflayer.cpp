@@ -373,6 +373,44 @@ void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
 }
 
 /************************************************************************/
+/*                            TextUnescape()                            */
+/*                                                                      */
+/*      Unexcape DXF style escape sequences such as \P for newline      */
+/*      and \~ for space.                                               */
+/************************************************************************/
+
+CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
+
+{
+    CPLString osResult;
+
+    while( *pszInput != '\0' )
+    {
+        if( pszInput[0] == '\\' && pszInput[1] == 'P' )
+        {
+            osResult += '\n';
+            pszInput++;
+        }
+        else if( pszInput[0] == '\\' && pszInput[1] == '~' )
+        {
+            osResult += ' ';
+            pszInput++;
+        }
+        else if( pszInput[0] == '\\' && pszInput[1] == '\\' )
+        {
+            osResult += '\\';
+            pszInput++;
+        }
+        else 
+            osResult += *pszInput;
+
+        pszInput++;
+    }
+    
+    return osResult;
+}
+
+/************************************************************************/
 /*                           TranslateMTEXT()                           */
 /************************************************************************/
 
@@ -426,7 +464,9 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
           case 1:
           case 3:
-            osText += szLineBuf;
+            if( osText != "" )
+                osText += "\n";
+            osText += TextUnescape(szLineBuf);
             break;
 
           case 50:
@@ -451,6 +491,9 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 /*      Translate text from Win-1252 to UTF8.  We approximate this      */
 /*      by treating Win-1252 as Latin-1.                                */
 /* -------------------------------------------------------------------- */
+    if( osText != "" && osText[osText.size()-1] == '\n' )
+        osText.resize( osText.size() - 1 );
+
     osText.Recode( CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
 
     poFeature->SetField( "Text", osText );
