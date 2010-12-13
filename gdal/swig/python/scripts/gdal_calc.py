@@ -64,7 +64,7 @@ DefaultNDVLookup={'Byte':255, 'UInt16':65535, 'Int16':-32767, 'UInt32':429496729
 def doit(opts, args):
 
     if opts.debug:
-        print "gdal_calc.py starting calculation %s" %(opts.calc)
+        print("gdal_calc.py starting calculation %s" %(opts.calc))
 
     ################################################################
     # fetch details of input layers
@@ -97,13 +97,13 @@ def doit(opts, args):
             # check that the dimensions of each layer are the same
             if DimensionsCheck:
                 if DimensionsCheck!=[myFiles[i].RasterXSize, myFiles[i].RasterYSize]:
-                    print "Error! Dimensions of file %s (%i, %i) are different from file %s (%i, %i).  Cannot proceed"
+                    print("Error! Dimensions of file %s (%i, %i) are different from file %s (%i, %i).  Cannot proceed")
                     return
             else:
                 DimensionsCheck=[myFiles[i].RasterXSize, myFiles[i].RasterYSize]
 
             if opts.debug:
-                print "file %s: %s, dimensions: %s, %s, type: %s" %(myI,myF,DimensionsCheck[0],DimensionsCheck[1],myDataType[i])
+                print("file %s: %s, dimensions: %s, %s, type: %s" %(myI,myF,DimensionsCheck[0],DimensionsCheck[1],myDataType[i]))
 
     ################################################################
     # set up output file
@@ -112,10 +112,10 @@ def doit(opts, args):
     # open output file exists
     if os.path.isfile(opts.outF) and not opts.overwrite:
         if opts.debug:
-            print "Output file %s exists - filling in results into file" %(opts.outF)
+            print("Output file %s exists - filling in results into file" %(opts.outF))
         myOut=gdal.Open(opts.outF, gdal.GA_Update)
         if [myOut.RasterXSize,myOut.RasterYSize] != DimensionsCheck:
-            print "Error! Output exists, but is the wrong size.  Use the --overwrite option to automatically overwrite the existing file"
+            print("Error! Output exists, but is the wrong size.  Use the --overwrite option to automatically overwrite the existing file")
             return
         myOutB=myOut.GetRasterBand(1)
         myOutNDV=myOutB.GetNoDataValue()
@@ -127,7 +127,7 @@ def doit(opts, args):
             os.remove(opts.outF)
         # create a new file
         if opts.debug:
-            print "Generating output file %s" %(opts.outF)
+            print("Generating output file %s" %(opts.outF))
 
         # find data type to use
         if not opts.type:
@@ -156,7 +156,7 @@ def doit(opts, args):
         myOutB=myOut.GetRasterBand(1)
 
     if opts.debug:
-        print "output file: %s, dimensions: %s, %s, type: %s" %(opts.outF,myOut.RasterXSize,myOut.RasterYSize,gdal.GetDataTypeName(myOutB.DataType))
+        print("output file: %s, dimensions: %s, %s, type: %s" %(opts.outF,myOut.RasterXSize,myOut.RasterYSize,gdal.GetDataTypeName(myOutB.DataType)))
 
     ################################################################
     # find block size to chop grids into bite-sized chunks 
@@ -168,12 +168,12 @@ def doit(opts, args):
     nXValid = myBlockSize[0]
     nYValid = myBlockSize[1]
     # find total x and y blocks to be read
-    nXBlocks = (DimensionsCheck[0] + myBlockSize[0] - 1) / myBlockSize[0];
-    nYBlocks = (DimensionsCheck[1] + myBlockSize[1] - 1) / myBlockSize[1];
+    nXBlocks = (int)((DimensionsCheck[0] + myBlockSize[0] - 1) / myBlockSize[0]);
+    nYBlocks = (int)((DimensionsCheck[1] + myBlockSize[1] - 1) / myBlockSize[1]);
     myBufSize = myBlockSize[0]*myBlockSize[1]
 
     if opts.debug:
-        print "using blocksize %s x %s" %(myBlockSize[0], myBlockSize[1])
+        print("using blocksize %s x %s" %(myBlockSize[0], myBlockSize[1]))
 
     # variables for displaying progress
     ProgressCt=-1
@@ -205,7 +205,11 @@ def doit(opts, args):
             ProgressCt+=1
             if 10*ProgressCt/ProgressEnd%10!=ProgressMk:
                 ProgressMk=10*ProgressCt/ProgressEnd%10
-                print 10*ProgressMk, "..",
+                from sys import version_info
+                if version_info >= (3,0,0):
+                    exec('print("%d.." % (10*ProgressMk), end=" ")')
+                else:
+                    exec('print 10*ProgressMk, "..",')
 
             # change the block size of the final piece
             if Y==nYBlocks-1:
@@ -216,7 +220,7 @@ def doit(opts, args):
             myY=Y*myBlockSize[1]
 
             # create empty buffer to mark where nodata occurs
-            myNDVs=zeros(myBufSize)
+            myNDVs=numpy.zeros(myBufSize)
             myNDVs.shape=(nYValid,nXValid)
 
             # fetch data for each input layer
@@ -228,7 +232,7 @@ def doit(opts, args):
                                       win_xsize=nXValid, win_ysize=nYValid)
 
                 # fill in nodata values
-                myNDVs=1*logical_or(myNDVs==1, myval==myNDV[i])
+                myNDVs=1*numpy.logical_or(myNDVs==1, myval==myNDV[i])
 
                 # create an array of values for this block
                 exec("%s=myval" %Alpha)
@@ -239,7 +243,7 @@ def doit(opts, args):
             try:
                 myResult = eval(opts.calc)
             except:
-                print "evaluation of calculation %s failed" %(opts.calc)
+                print("evaluation of calculation %s failed" %(opts.calc))
                 raise
 
             # propogate nodata values 
@@ -249,8 +253,8 @@ def doit(opts, args):
             # write data block to the output file
             BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY)
 
-    print "100 - Done"
-    #print "Finished - Results written to %s" %opts.outF
+    print("100 - Done")
+    #print("Finished - Results written to %s" %opts.outF)
 
     return
 
@@ -280,10 +284,10 @@ gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename]  [--calc <calculation
     (opts, args) = parser.parse_args()
 
     if len(sys.argv) == 1:
-        print usage
+        print(usage)
     elif not opts.calc:
-        print "No calculation provided.  Nothing to do!"
-        print usage
+        print("No calculation provided.  Nothing to do!")
+        print(usage)
     else:
         doit(opts, args)
 
