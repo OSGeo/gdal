@@ -322,6 +322,32 @@ OGRErr OGRDXFWriterLayer::WritePOINT( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                             TextEscape()                             */
+/************************************************************************/
+
+CPLString OGRDXFWriterLayer::TextEscape( const char *pszInput )
+
+{
+    CPLString osResult;
+
+    while( *pszInput != '\0' )
+    {
+        if( pszInput[0] == '\n' )
+            osResult += "\\P";
+        else if( pszInput[0] == ' ' )
+            osResult += "\\~";
+        else if( pszInput[0] == '\\' )
+            osResult += "\\\\";
+        else 
+            osResult += *pszInput;
+
+        pszInput++;
+    }
+    
+    return osResult;
+}
+
+/************************************************************************/
 /*                             WriteTEXT()                              */
 /************************************************************************/
 
@@ -368,7 +394,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
         double dfAngle = poLabel->Angle(bDefault);
 
         if( !bDefault )
-            WriteValue( 50, dfAngle * (PI/180.0) );
+            WriteValue( 50, dfAngle );
 
 /* -------------------------------------------------------------------- */
 /*      Height - We need to fetch this in georeferenced units - I'm     */
@@ -395,30 +421,16 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
         }
 
 /* -------------------------------------------------------------------- */
-/*      Text - split into distinct lines.                               */
+/*      Escape the text, and convert to ISO8859.                        */
 /* -------------------------------------------------------------------- */
         const char *pszText = poLabel->TextString( bDefault );
 
         if( pszText != NULL && !bDefault )
         {
-            int iLine;
-            char **papszLines = CSLTokenizeStringComplex(
-                pszText, "\n", FALSE, TRUE );
-
-            for( iLine = 0; 
-                 papszLines != NULL && papszLines[iLine] != NULL;
-                 iLine++ )
-            {
-                CPLString osText = papszLines[iLine];
-
-                osText.Recode( CPL_ENC_UTF8, CPL_ENC_ISO8859_1 );
-
-                if( iLine == 0 )
-                    WriteValue( 1, osText );
-                else
-                    WriteValue( 3, osText );
-            }
-            CSLDestroy( papszLines );
+            CPLString osEscaped = TextEscape( pszText );
+            osEscaped.Recode( CPL_ENC_UTF8, CPL_ENC_ISO8859_1 );
+            
+            WriteValue( 1, osEscaped );
         }
     }
 

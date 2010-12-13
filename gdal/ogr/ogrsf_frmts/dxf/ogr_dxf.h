@@ -121,6 +121,8 @@ class OGRDXFLayer : public OGRLayer
     void                FormatDimension( CPLString &osText, double dfValue );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
 
+    static CPLString    TextUnescape( const char * );
+
   public:
     OGRDXFLayer( OGRDXFDataSource *poDS );
     ~OGRDXFLayer();
@@ -263,6 +265,7 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRErr              WritePOLYLINE( OGRFeature*, OGRGeometry* = NULL );
     OGRErr              WriteINSERT( OGRFeature* );
 
+    static CPLString    TextEscape( const char * );
     int                 ColorStringToDXFColor( const char * );
     CPLString           PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
 
@@ -396,5 +399,6 @@ class OGRDXFDriver : public OGRSFDriver
     OGRDataSource      *CreateDataSource( const char *pszName,
                                           char ** = NULL );
 };
+
 
 #endif /* ndef _OGR_DXF_H_INCLUDED */
