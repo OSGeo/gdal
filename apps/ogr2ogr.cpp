@@ -1009,8 +1009,7 @@ int main( int nArgc, char ** papszArgv )
                 if (poODS == NULL)
                 {
                     /* ok the datasource doesn't exist at all */
-                    /* so let's ignore the -overwrite or -append flag */
-                    bUpdate = bAppend = bOverwrite = FALSE;
+                    bUpdate = FALSE;
                 }
                 else
                 {
