@@ -1896,7 +1896,32 @@ def ogr_shape_45():
     shp_ds = None
     
     return 'success'
-    
+
+###############################################################################
+# This is a very weird use case : the user creates/open a datasource
+# made of a single shapefile 'foo.shp' and wants to add a new layer
+# to it, 'bar'. So we create a new shapefile 'bar.shp' in the same
+# directory as 'foo.shp'
+
+def ogr_shape_46():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource( '/vsimem/ogr_shape_46.shp' )
+    lyr = ds.CreateLayer( 'you_can_put_here_what_you_want_i_dont_care' )
+    lyr = ds.CreateLayer( 'this_one_i_care_46' )
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_46.shp')
+    if ds.GetLayerCount() != 1:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('/vsimem/this_one_i_care_46.shp')
+    if ds.GetLayerCount() != 1:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -1913,6 +1938,8 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( 'tmp/UPPERCASE' )
     shape_drv.DeleteDataSource( 'tmp/lowercase' )
     shape_drv.DeleteDataSource( '/vsimem/test35.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_46.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/this_one_i_care_46.shp' )
     
     return 'success'
 
@@ -1963,6 +1990,7 @@ gdaltest_list = [
     ogr_shape_43,
     ogr_shape_44,
     ogr_shape_45,
+    ogr_shape_46,
     ogr_shape_cleanup ]
  
 if __name__ == '__main__':
