@@ -1960,6 +1960,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                 adfValues.push_back( atoi(papszValueList[i+1]) );
             SetField( iField, nCount, &(adfValues[0]) );
         }
+
+        CSLDestroy(papszValueList);
     }
     else
         /* do nothing for other field types */;
