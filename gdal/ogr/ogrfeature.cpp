@@ -30,6 +30,7 @@
 #include "ogr_feature.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -1924,6 +1925,41 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 
         if( OGRParseDate( pszValue, &sWrkField, 0 ) )
             memcpy( pauFields+iField, &sWrkField, sizeof(sWrkField));
+    }
+    else if( poFDefn->GetType() == OFTIntegerList 
+             || poFDefn->GetType() == OFTRealList )
+    {
+        char **papszValueList = NULL;
+
+        if( pszValue[0] == '(' && strchr(pszValue,':') != NULL )
+        {
+            papszValueList = CSLTokenizeString2( 
+                pszValue, ",:()", 0 );
+        }
+
+        if( CSLCount(papszValueList) == 0
+            || atoi(papszValueList[0]) != CSLCount(papszValueList)-1 )
+        {
+            /* do nothing - the count does not match entries */
+        }
+        else if( poFDefn->GetType() == OFTIntegerList )
+        {
+            int i, nCount = atoi(papszValueList[0]);
+            std::vector<int> anValues;
+
+            for( i=0; i < nCount; i++ )
+                anValues.push_back( atoi(papszValueList[i+1]) );
+            SetField( iField, nCount, &(anValues[0]) );
+        }
+        else if( poFDefn->GetType() == OFTRealList )
+        {
+            int i, nCount = atoi(papszValueList[0]);
+            std::vector<double> adfValues;
+
+            for( i=0; i < nCount; i++ )
+                adfValues.push_back( atoi(papszValueList[i+1]) );
+            SetField( iField, nCount, &(adfValues[0]) );
+        }
     }
     else
         /* do nothing for other field types */;
