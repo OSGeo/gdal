@@ -387,7 +387,7 @@ OGRFeatureDefn *S57GenerateObjectClassDefn( S57ClassRegistrar *poCR,
 
         if( iAttrIndex == -1 )
         {
-            CPLDebug( "S57", "Can't find attribute %s from class %s:%s.\n",
+            CPLDebug( "S57", "Can't find attribute %s from class %s:%s.",
                       papszAttrList[iAttr],
                       poCR->GetAcronym(),
                       poCR->GetDescription() );
