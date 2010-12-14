@@ -46,7 +46,7 @@ typedef struct
 
 static const OZIDatums aoDatums[] =
 {
-    { "WGS 72", 4322 },             // WGS, 1984
+    { "WGS 72", 4322 },             // WGS, 1972
     { "WGS 84", 4326 },             // WGS, 1984
     { "Pulkovo 1942 (1)", 4284 },   // Pulkovo 1942
     { "Pulkovo 1942 (2)", 4284 },   // Pulkovo 1942, XXX: What is a difference
@@ -120,8 +120,10 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
     else if ( EQUALN(papszProj[1], "Mercator", 8) )
     {
         if (CSLCount(papszProjParms) < 6) goto not_enough_data;
+        double dfScale = CPLAtof(papszProjParms[3]);
+        if (papszProjParms[3][0] == 0) dfScale = 1; /* if unset, default to scale = 1 */
         SetMercator( CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
-                     CPLAtof(papszProjParms[3]),
+                     dfScale,
                      CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
     }
 
