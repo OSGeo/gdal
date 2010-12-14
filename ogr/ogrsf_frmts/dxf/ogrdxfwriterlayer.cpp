@@ -288,7 +288,7 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
 
     if( dfAngle != 0.0 )
     {
-        WriteValue( 50, dfAngle * 180 / PI );
+        WriteValue( 50, dfAngle ); // degrees
     }
 
     return OGRERR_NONE;
@@ -407,6 +407,8 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
         double dfAngle = poLabel->Angle(bDefault);
 
+        // The DXF2000 reference says this is in radians, but in files
+        // I see it seems to be in degrees. Perhaps this is version dependent?
         if( !bDefault )
             WriteValue( 50, dfAngle );
 
