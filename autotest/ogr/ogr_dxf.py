@@ -850,6 +850,7 @@ def ogr_dxf_17():
         return 'fail'
 
     if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (200 100,201 101),LINESTRING (201 100,200 101))' ):
+        print( 'Feature 1' )
         return 'fail'
 
     # Check second feature.
@@ -859,6 +860,7 @@ def ogr_dxf_17():
         return 'fail'
 
     if ogrtest.check_feature_geometry( feat, 'POINT (300 50)' ):
+        print( 'Feature 2' )
         return 'fail'
 
     # Check third feature.
@@ -868,6 +870,7 @@ def ogr_dxf_17():
         return 'fail'
 
     if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),LINESTRING (250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),LINESTRING (249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),LINESTRING (251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),LINESTRING (249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))' ):
+        print( 'Feature 3' )
         return 'fail'
 
     # Check fourth feature (scaled and rotated)
@@ -876,7 +879,8 @@ def ogr_dxf_17():
         gdaltest.post_reason( 'Got wrong subclasses for feature 4.' )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (300 100,305.557163920014659 96.819130753066489),LINESTRING (300.617005799550327 96.047873503628551,304.940158120464332 100.771257249437937))' ):
+    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (300 100,300.964101615137736 106.330127018922198),LINESTRING (303.464101615137736 102.0,297.5 104.330127018922198))' ):
+        print( 'Feature 4' )
         return 'fail'
 
     # Cleanup
