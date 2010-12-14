@@ -43,7 +43,7 @@ OGRShapeDataSource::OGRShapeDataSource()
     pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
-    bSingleNewFile = FALSE;
+    bSingleFileDataSource = FALSE;
 }
 
 /************************************************************************/
@@ -70,7 +70,7 @@ OGRShapeDataSource::~OGRShapeDataSource()
 /************************************************************************/
 
 int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
-                              int bTestOpen, int bSingleNewFileIn )
+                              int bTestOpen, int bForceSingleFileDataSource )
 
 {
     VSIStatBufL  stat;
@@ -81,16 +81,16 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
 
     bDSUpdate = bUpdate;
 
-    bSingleNewFile = bSingleNewFileIn;
+    bSingleFileDataSource = bForceSingleFileDataSource;
 
 /* -------------------------------------------------------------------- */
-/*      If bSingleNewFile is TRUE we don't try to do anything else.     */
+/*      If  bSingleFileDataSource is TRUE we don't try to do anything else.     */
 /*      This is only utilized when the OGRShapeDriver::Create()         */
 /*      method wants to create a stub OGRShapeDataSource for a          */
 /*      single shapefile.  The driver will take care of creating the    */
 /*      file by calling CreateLayer().                                  */
 /* -------------------------------------------------------------------- */
-    if( bSingleNewFile )
+    if( bSingleFileDataSource )
         return TRUE;
     
 /* -------------------------------------------------------------------- */
@@ -122,6 +122,8 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
 
             return FALSE;
         }
+
+        bSingleFileDataSource = TRUE;
 
         return TRUE;
     }
@@ -506,7 +508,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     char *pszBasename;
 
-    if( (bSingleNewFile || EQUAL(CPLGetBasename(pszName), pszLayerName)) && nLayers == 0 )
+    if(  bSingleFileDataSource && nLayers == 0 )
     {
         char *pszPath = CPLStrdup(CPLGetPath(pszName));
         char *pszFBasename = CPLStrdup(CPLGetBasename(pszName));
@@ -516,8 +518,14 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         CPLFree( pszFBasename );
         CPLFree( pszPath );
     }
-    else if( bSingleNewFile )
+    else if(  bSingleFileDataSource )
     {
+        /* This is a very weird use case : the user creates/open a datasource */
+        /* made of a single shapefile 'foo.shp' and wants to add a new layer */
+        /* to it, 'bar'. So we create a new shapefile 'bar.shp' in the same */
+        /* directory as 'foo.shp' */
+        /* So technically, we will not be any longer a single file */
+        /* datasource ... Ahem ahem */
         char *pszPath = CPLStrdup(CPLGetPath(pszName));
         pszBasename = CPLStrdup(CPLFormFilename(pszPath,pszLayerName,NULL));
         CPLFree( pszPath );
