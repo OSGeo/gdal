@@ -134,14 +134,14 @@ class OGRShapeDataSource : public OGRDataSource
 
     int                 bDSUpdate;
 
-    int                 bSingleNewFile;
+    int                 bSingleFileDataSource;
 
   public:
                         OGRShapeDataSource();
                         ~OGRShapeDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen,
-                              int bSingleNewFile = FALSE );
+                              int bForceSingleFileDataSource = FALSE );
     int                 OpenFile( const char *, int bUpdate, int bTestOpen );
 
     const char          *GetName() { return pszName; }
