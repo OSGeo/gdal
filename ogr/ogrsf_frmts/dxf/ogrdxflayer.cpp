@@ -387,7 +387,9 @@ CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
     
 /* -------------------------------------------------------------------- */
 /*      Translate text from Win-1252 to UTF8.  We approximate this      */
-/*      by treating Win-1252 as Latin-1.                                */
+/*      by treating Win-1252 as Latin-1.  Note that we likely ought     */
+/*      to be consulting the $DWGCODEPAGE header variable which         */
+/*      defaults to ANSI_1252 if not set.                               */
 /* -------------------------------------------------------------------- */
     osInput.Recode( CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
     pszInput = osInput.c_str();
@@ -1180,10 +1182,12 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
             break;
 
           case 41:
+            // These *seem* to always be in radians regardless of $AUNITS
             dfEndAngle = -1 * CPLAtof(szLineBuf) * 180.0 / PI;
             break;
 
           case 42:
+            // These *seem* to always be in radians regardless of $AUNITS
             dfStartAngle = -1 * CPLAtof(szLineBuf) * 180.0 / PI;
             break;
 
@@ -1274,10 +1278,12 @@ OGRFeature *OGRDXFLayer::TranslateARC()
             break;
 
           case 50:
+            // This is apparently always degrees regardless of AUNITS
             dfEndAngle = -1 * CPLAtof(szLineBuf);
             break;
 
           case 51:
+            // This is apparently always degrees regardless of AUNITS
             dfStartAngle = -1 * CPLAtof(szLineBuf);
             break;
 
@@ -1482,6 +1488,7 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     GeometryInsertTransformer oTransformer;
     CPLString osBlockName;
+    double dfAngle = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -1515,7 +1522,10 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
             break;
 
           case 50:
-            oTransformer.dfAngle = CPLAtof(szLineBuf) * PI / 180.0;
+            dfAngle = CPLAtof(szLineBuf);
+            // We want to transform this to radians. 
+            // It is apparently always in degrees regardless of $AUNITS
+            oTransformer.dfAngle = dfAngle * PI / 180.0;
             break;
 
           case 2: 
@@ -1544,7 +1554,7 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
 
         poFeature->SetField( "BlockName", osBlockName );
 
-        poFeature->SetField( "BlockAngle", oTransformer.dfAngle );
+        poFeature->SetField( "BlockAngle", dfAngle );
         poFeature->SetField( "BlockScale", 3, &(oTransformer.dfXScale) );
 
         return poFeature;
