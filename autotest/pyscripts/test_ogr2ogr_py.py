@@ -1062,6 +1062,92 @@ def test_ogr2ogr_py_33():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_33_dst.shp')
     return 'success'
 
+###############################################################################
+# Test 'ogr2ogr someDirThatDoesNotExist src.shp -nln someDirThatDoesNotExist'
+# This should result in creating a someDirThatDoesNotExist directory with
+# someDirThatDoesNotExist.shp/dbf/shx inside this directory
+
+def test_ogr2ogr_py_34():
+
+    script_path = test_py_scripts.get_py_script('ogr2ogr')
+    if script_path is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_34_dir')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_34_dir')
+    except:
+        pass
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_34_dir/test_ogr2ogr_34_dir.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        gdaltest.post_reason('initial shapefile creation failed')
+        return 'fail'
+    ds = None
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -append tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_34_dir/test_ogr2ogr_34_dir.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
+        gdaltest.post_reason('-append failed')
+        return 'fail'
+    ds = None
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_34_dir/test_ogr2ogr_34_dir.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        gdaltest.post_reason('-overwrite failed')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_34_dir')
+    return 'success'
+
+###############################################################################
+# Test 'ogr2ogr someDirThatDoesNotExist src.shp'
+
+def test_ogr2ogr_py_35():
+
+    script_path = test_py_scripts.get_py_script('ogr2ogr')
+    if script_path is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_35_dir')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_35_dir')
+    except:
+        pass
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp ')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_35_dir/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        gdaltest.post_reason('initial shapefile creation failed')
+        return 'fail'
+    ds = None
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -append tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_35_dir/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
+        gdaltest.post_reason('-append failed')
+        return 'fail'
+    ds = None
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_35_dir/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        gdaltest.post_reason('-overwrite failed')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_35_dir')
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_py_1,
     test_ogr2ogr_py_2,
@@ -1092,7 +1178,9 @@ gdaltest_list = [
     test_ogr2ogr_py_27,
     test_ogr2ogr_py_31,
     test_ogr2ogr_py_32,
-    test_ogr2ogr_py_33 ]
+    test_ogr2ogr_py_33,
+    test_ogr2ogr_py_34,
+    test_ogr2ogr_py_35 ]
     
 if __name__ == '__main__':
 
