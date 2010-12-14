@@ -52,7 +52,6 @@ class OZIDataset : public GDALPamDataset
 
     VSILFILE* fp;
     int       nZoomLevelCount;
-    float*    pafZoomLevels;
     int*      panZoomLevelOffsets;
     OZIRasterBand** papoBands;
     vsi_l_offset nFileSize;
@@ -111,6 +110,23 @@ class OZIRasterBand : public GDALPamRasterBand
 /*                             I/O functions                            */
 /************************************************************************/
 
+static const GByte abyKey[] =
+{
+    0x2D, 0x4A, 0x43, 0xF1, 0x27, 0x9B, 0x69, 0x4F,
+    0x36, 0x52, 0x87, 0xEC, 0x5F, 0x42, 0x53, 0x22,
+    0x9E, 0x8B, 0x2D, 0x83, 0x3D, 0xD2, 0x84, 0xBA,
+    0xD8, 0x5B
+};
+
+static void OZIDecrypt(void *pabyVal, int n, GByte nKeyInit)
+{
+    int i;
+    for(i = 0; i < n; i++)
+    {
+        ((GByte*)pabyVal)[i] ^= abyKey[i % sizeof(abyKey)] + nKeyInit;
+    }
+}
+
 static int ReadInt(GByte**pptr)
 {
     int nVal;
@@ -129,45 +145,22 @@ static int ReadShort(GByte**pptr)
     return nVal;
 }
 
-static int ReadInt(VSILFILE* fp)
+static int ReadInt(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
 {
     int nVal;
     VSIFReadL(&nVal, 1, 4, fp);
+    if (bOzi3) OZIDecrypt(&nVal, 4, nKeyInit);
     CPL_LSBPTR32(&nVal);
     return nVal;
 }
 
-static int ReadShort(VSILFILE* fp)
+static int ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
 {
     short nVal;
     VSIFReadL(&nVal, 1, 2, fp);
+    if (bOzi3) OZIDecrypt(&nVal, 2, nKeyInit);
     CPL_LSBPTR16(&nVal);
     return nVal;
-}
-
-static float ReadFloat(VSILFILE* fp)
-{
-    float fVal;
-    VSIFReadL(&fVal, 1, 4, fp);
-    CPL_LSBPTR32(&fVal);
-    return fVal;
-}
-
-static const GByte abyKey[] =
-{
-    0x2D, 0x4A, 0x43, 0xF1, 0x27, 0x9B, 0x69, 0x4F,
-    0x36, 0x52, 0x87, 0xEC, 0x5F, 0x42, 0x53, 0x22,
-    0x9E, 0x8B, 0x2D, 0x83, 0x3D, 0xD2, 0x84, 0xBA,
-    0xD8, 0x5B
-};
-
-static void OZIDecrypt(void *pabyVal, int n, GByte nKeyInit)
-{
-    int i;
-    for(i = 0; i < n; i++)
-    {
-        ((GByte*)pabyVal)[i] ^= abyKey[i % sizeof(abyKey)] + nKeyInit;
-    }
 }
 
 /************************************************************************/
@@ -239,9 +232,7 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     VSIFSeekL(poGDS->fp, poGDS->panZoomLevelOffsets[nZoomLevel] +
                          12 + 1024 + 4 * nBlock, SEEK_SET);
-    int nPointer = ReadInt(poGDS->fp);
-    if (poGDS->bOzi3)
-        OZIDecrypt(&nPointer, 4, poGDS->nKeyInit);
+    int nPointer = ReadInt(poGDS->fp, poGDS->bOzi3, poGDS->nKeyInit);
     if (nPointer < 0  || (vsi_l_offset)nPointer >= poGDS->nFileSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -249,9 +240,7 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                  nBlockXOff, nBlockYOff, nPointer);
         return CE_Failure;
     }
-    int nNextPointer = ReadInt(poGDS->fp);
-    if (poGDS->bOzi3)
-        OZIDecrypt(&nNextPointer, 4, poGDS->nKeyInit);
+    int nNextPointer = ReadInt(poGDS->fp, poGDS->bOzi3, poGDS->nKeyInit);
     if (nNextPointer <= nPointer + 16  ||
         (vsi_l_offset)nNextPointer >= poGDS->nFileSize)
     {
@@ -361,7 +350,6 @@ OZIDataset::OZIDataset()
 {
     fp = NULL;
     nZoomLevelCount = 0;
-    pafZoomLevels = NULL;
     panZoomLevelOffsets = NULL;
     papoBands = NULL;
     bOzi3 = FALSE;
@@ -386,7 +374,6 @@ OZIDataset::~OZIDataset()
 {
     if (fp)
         VSIFCloseL(fp);
-    CPLFree(pafZoomLevels);
     CPLFree(panZoomLevelOffsets);
     int i;
     if (papoBands)
@@ -536,8 +523,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         VSIFSeekL(fp, 14 + 1 + nRandomNumber, SEEK_SET);
-        int nMagic = ReadInt(fp);
-        OZIDecrypt(&nMagic, 4, nKeyInit);
+        int nMagic = ReadInt(fp, bOzi3, nKeyInit);
         CPLDebug("OZI", "OZI version code : 0x%08X", nMagic);
 
         nKeyInit = (nKeyInit + 0x8A) & 0xFF;
@@ -578,8 +564,6 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     int nSeparator = ReadInt(fp);
-    //if (bOzi3)
-    //    OZIDecrypt(&nSeparator, 4, nKeyInit);
     if (!bOzi3 && nSeparator != 0x77777777)
     {
         CPLDebug("OZI", "didn't get end of header2 marker");
@@ -595,30 +579,11 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    
-    poDS->pafZoomLevels =
-    (float*)CPLMalloc(sizeof(float) * poDS->nZoomLevelCount);
-    int i;
-    for(i=0;i<poDS->nZoomLevelCount;i++)
-    {
-        poDS->pafZoomLevels[i] = ReadFloat(fp);
-        //CPLDebug("OZI", "pafZoomLevels[%d] = %f",
-        //             i, poDS->pafZoomLevels[i]);
-        if ((i == 0 && poDS->pafZoomLevels[i] != 100) ||
-            poDS->pafZoomLevels[i] < 0 || poDS->pafZoomLevels[i] > 100)
-        {
-            CPLDebug("OZI", "pafZoomLevels[%d] = %f",
-                     i, poDS->pafZoomLevels[i]);
-            delete poDS;
-            return NULL;
-        }
-    }
-    /*float fZoomLevel130px = ReadFloat(fp);
-    float fZoomLevel300px = ReadFloat(fp);*/
+
+    /* Skip array of zoom level percentage. We don't need it for GDAL */
+    VSIFSeekL(fp, sizeof(float) * poDS->nZoomLevelCount, SEEK_CUR);
 
     nSeparator = ReadInt(fp);
-    //if (bOzi3)
-    //    OZIDecrypt(&nSeparator, 4, nKeyInit);
     if (!bOzi3 && nSeparator != 0x77777777)
     {
         CPLDebug("OZI", "didn't get end of zoom levels marker");
@@ -630,8 +595,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     vsi_l_offset nFileSize = VSIFTellL(fp);
     poDS->nFileSize = nFileSize;
     VSIFSeekL(fp, nFileSize - 4, SEEK_SET);
-    int nZoomLevelTableOffset = ReadInt(fp);
-    if (bOzi3) OZIDecrypt(&nZoomLevelTableOffset, 4, nKeyInit);
+    int nZoomLevelTableOffset = ReadInt(fp, bOzi3, nKeyInit);
     if (nZoomLevelTableOffset < 0 ||
         (vsi_l_offset)nZoomLevelTableOffset >= nFileSize)
     {
@@ -645,10 +609,10 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->panZoomLevelOffsets =
         (int*)CPLMalloc(sizeof(int) * poDS->nZoomLevelCount);
+    int i;
     for(i=0;i<poDS->nZoomLevelCount;i++)
     {
-        poDS->panZoomLevelOffsets[i] = ReadInt(fp);
-        if (bOzi3) OZIDecrypt(&poDS->panZoomLevelOffsets[i], 4, nKeyInit);
+        poDS->panZoomLevelOffsets[i] = ReadInt(fp, bOzi3, nKeyInit);
         if (poDS->panZoomLevelOffsets[i] < 0 ||
             (vsi_l_offset)poDS->panZoomLevelOffsets[i] >= nFileSize)
         {
@@ -665,14 +629,10 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     for(i=0;i<poDS->nZoomLevelCount;i++)
     {
         VSIFSeekL(fp, poDS->panZoomLevelOffsets[i], SEEK_SET);
-        int nW = ReadInt(fp);
-        int nH = ReadInt(fp);
-        short nTileX = ReadShort(fp);
-        short nTileY = ReadShort(fp);
-        if (bOzi3) OZIDecrypt(&nW, 4, nKeyInit);
-        if (bOzi3) OZIDecrypt(&nH, 4, nKeyInit);
-        if (bOzi3) OZIDecrypt(&nTileX, 2, nKeyInit);
-        if (bOzi3) OZIDecrypt(&nTileY, 2, nKeyInit);
+        int nW = ReadInt(fp, bOzi3, nKeyInit);
+        int nH = ReadInt(fp, bOzi3, nKeyInit);
+        short nTileX = ReadShort(fp, bOzi3, nKeyInit);
+        short nTileY = ReadShort(fp, bOzi3, nKeyInit);
         if (i == 0 && (nW != poDS->nRasterXSize || nH != poDS->nRasterYSize))
         {
             CPLDebug("OZI", "zoom[%d] nW=%d, nH=%d, nTileX=%d, nTileY=%d",
