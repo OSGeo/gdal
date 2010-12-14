@@ -63,12 +63,12 @@ static void GDALDestroy(void)
     // TODO: Confirm if calling CPLCleanupTLS here is safe
     //CPLCleanupTLS();
 
+    CPLDebug("GDAL", "In GDALDestroy - unloading GDAL shared library.");
     GDALDestroyDriverManager();
 
 #ifdef OGR_ENABLED
     OGRCleanupAll();
 #endif
-    //CPLDebug("GDAL", "Library unloaded");
 }
 
 #endif // __GNUC__
