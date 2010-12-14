@@ -71,9 +71,16 @@ def ogr_dxf_1():
 
     # Setup the utf-8 string.
     if version_info >= (3,0,0):
-        gdaltest.sample_text =  'TextSample1\u00BF'
+        gdaltest.sample_text =  'Text Sample1\u00BF\u03BB\n"abc"'
+        gdaltest.sample_style = 'Text Sample1\u00BF\u03BB\n\"abc\"'
     else:
-        exec("gdaltest.sample_text =  u'TextSample1\u00BF'")
+        exec("gdaltest.sample_text =  u'Text Sample1\u00BF\u03BB'")
+        gdaltest.sample_text += chr(10)
+
+        gdaltest.sample_style = gdaltest.sample_text + '\\"abc\\"'
+        gdaltest.sample_style = gdaltest.sample_style.encode('utf-8')
+        
+        gdaltest.sample_text += '"abc"'
         gdaltest.sample_text = gdaltest.sample_text.encode('utf-8')
 
     return 'success'
@@ -310,7 +317,7 @@ def ogr_dxf_9():
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_text+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
@@ -737,7 +744,7 @@ def ogr_dxf_16():
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_text+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
