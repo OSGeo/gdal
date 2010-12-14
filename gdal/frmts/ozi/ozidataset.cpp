@@ -64,6 +64,7 @@ class OZIDataset : public GDALPamDataset
     char*     pszWKT;
     int       nGCPCount;
     GDAL_GCP* pasGCPs;
+    int       bReadMapFileSuccess;
 
   public:
                  OZIDataset();
@@ -374,6 +375,7 @@ OZIDataset::OZIDataset()
     pszWKT = NULL;
     nGCPCount = 0;
     pasGCPs = NULL;
+    bReadMapFileSuccess = FALSE;
 }
 
 /************************************************************************/
@@ -494,11 +496,12 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (bIsMap)
     {
-        GDALLoadOziMapFile( poOpenInfo->pszFilename,
-                            poDS->adfGeoTransform,
-                            &poDS->pszWKT,
-                            &poDS->nGCPCount,
-                            &poDS->pasGCPs );
+        poDS->bReadMapFileSuccess =
+            GDALLoadOziMapFile( poOpenInfo->pszFilename,
+                                poDS->adfGeoTransform,
+                                &poDS->pszWKT,
+                                &poDS->nGCPCount,
+                                &poDS->pasGCPs );
     }
 
     GByte nRandomNumber = 0;
@@ -748,7 +751,7 @@ CPLErr OZIDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( CE_None );
+    return( (bReadMapFileSuccess) ? CE_None : CE_Failure );
 }
 
 /************************************************************************/
