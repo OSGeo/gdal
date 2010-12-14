@@ -537,10 +537,17 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 /* -------------------------------------------------------------------- */
     if( strchr( osText, '"') != NULL )
     {
-        char *pszEscaped = CPLEscapeString( osText, -1, 
-                                            CPLES_BackslashQuotable );
-        osText = pszEscaped;
-        CPLFree( pszEscaped );
+        CPLString osEscaped;
+        size_t iC;
+
+        for( iC = 0; iC < osText.size(); iC++ )
+        {
+            if( osText[iC] == '"' )
+                osEscaped += "\\\"";
+            else
+                osEscaped += osText[iC];
+        }
+        osText = osEscaped;
     }
 
 /* -------------------------------------------------------------------- */
