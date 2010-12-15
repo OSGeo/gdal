@@ -3379,6 +3379,12 @@ def tiff_write_89():
         src_ds = None
         ds = None
 
+        # older versions of python don't have SEEK_END, add if missing.
+        try:
+            os.SEEK_END
+        except:
+            os.SEEK_END = 2
+
         f = open('tmp/tiff_write_89.tif', 'rb')
         f.seek(0, os.SEEK_END)
         size = f.tell()
