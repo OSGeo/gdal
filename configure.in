@@ -1167,7 +1167,9 @@ else
 
   if test x"$with_hdf4" = x"yes" -o x"$with_hdf4" = x"" ; then
 dnl Fedora has hdf static libraries in /usr/lib/hdf
-    if test -d /usr/lib/hdf; then
+    if test -d /usr/lib64/hdf; then
+      HDF_LIB_DIR="/usr/lib64/hdf"
+    elif test -d /usr/lib/hdf; then
       HDF_LIB_DIR="/usr/lib/hdf"
     else
       HDF_LIB_DIR=""
