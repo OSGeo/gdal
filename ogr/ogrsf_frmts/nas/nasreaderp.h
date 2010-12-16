@@ -194,6 +194,10 @@ public:
 
     void        CheckForRelations( const char *pszElement, 
                                    const Attributes &attrs );
+
+    virtual const char* GetGlobalSRSName() { return NULL; }
+
+    virtual int         CanUseGlobalSRSName() { return FALSE; }
 };
 
 #endif /* _CPL_NASREADERP_H_INCLUDED */
