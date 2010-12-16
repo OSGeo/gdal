@@ -3,7 +3,7 @@ GDAL_ROOT	=	..\..
 DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			avc rec mem vrt csv gmt bna kml gpx \
 			geoconcept xplane georss gtm dxf vfk pgdump gpsbabel \
-			sua openair pds htf \
+			sua openair pds htf arcobjects \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
 			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
@@ -59,6 +59,12 @@ DWG_OBJ = dxfdwg\*.obj
 SDE_DIR = sde
 SDE_OBJ = sde\*.obj
 !ENDIF
+
+!IFDEF HAS_ARCOBJECTS
+ARCOBJECTS_DIR = arcobjects
+ARCOBJECTS_OBJ = arcobjects\*.obj
+!ENDIF
+
 
 !IFDEF MYSQL_INC_DIR
 MYSQL_DIR = mysql
@@ -118,7 +124,7 @@ default:
 				 sua\*.obj openair\*.obj pds\*.obj htf\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
-				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(IDB_OBJ) \
+				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(PCIDSKOBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \

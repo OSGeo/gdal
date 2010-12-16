@@ -1,0 +1,38 @@
+OBJ     =       aodatasource.obj aodriver.obj aolayer.obj aoutils.obj
+EXTRAFLAGS =	-I.. -I..\.. -I$(AO_INC)
+
+GDAL_ROOT	=	..\..\..
+
+PLUGIN_DLL 	=	ogr_ao.dll
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	$(INSTALL) *.obj ..\o
+
+all:	default
+
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+	-del *.pdb
+	-del *.tlh
+
+plugin: $(PLUGIN_DLL)
+
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDAL_ROOT)/gdal_i.lib $(SDE_LIB)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
+
+#ogr_ao.dll:	$(OBJ)
+#	link /dll $(LDEBUG) /out:ogr_ao.dll $(OBJ) \
+#		$(GDALLIB) $(AO_LIB)
+#	copy ogr_ao.* c:\warmerda\bld\bin\gdalplugins\
