@@ -1,0 +1,100 @@
+<html>
+<head>
+<title>ESRI ArcObjects</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ESRI ArcObjects</h1>
+
+<h2>Overview</h2>
+
+<p>The OGR ArcObjects driver provides read-only access to ArcObjects based datasources. Since it uses the ESRI SDK, it has the requirement
+of needing an ESRI license to run. Nevertheless, this also means that the driver has full knowledge of ESRI abstractions. Among these, you have:</p>
+
+<ul>
+    <li>GeoDatabases:
+
+    	<ul>
+    		<li>Personal GeoDatabase (.mdb)</li>
+    		<li>File GeoDatabase (.gdb)</li>
+    		<li>Enterprise GeoDatabase (.sde).</li>
+    	</ul>
+    </li>
+
+    <li>ESRI Shapefiles</li>
+</ul>
+
+<p> Although it has not been extended to do this yet (there hasn't been a need), it can potentially also support the following GeoDatabase Abstractions </p>
+
+<ul>
+	<li>Annotation and Dimension feature classes</li>
+	<li>Relationship Classes</li>
+	<li>Networks (GN and ND)</li>
+	<li>Topologies</li>
+	<li>Terrains</li>
+	<li>Representations</li>
+	<li>Parcel Fabrics</li>
+</ul>
+
+<p> You can try those above and they may work - but they have not been tested. Note the abstractions above cannot be supported with the Open FileGeoDatabase API. </p>
+
+
+<h2>Requirements</h2>
+
+<p>
+	<ul>
+		<li>An ArcView license or ArcEngine license (or higher) - Required to run. </li>
+		<li>The ESRI libraries installed. This typically happens if you have ArcEngine or ArcGIS Desktop or Server installed - Required to compile. Note that this code should also compile
+		using the ArcEngine *nix SDKs, however I do not have access to these and thus I have not tried it myself</li>
+	</ul>
+</p>
+
+
+<h2>Usage</h2>
+
+<p> Prefix the Datasource with "AO:" </p>
+
+<ul>
+	<li> Read from FileGDB and load into PostGIS: </li>
+	<br/>
+	<code>ogr2ogr -overwrite -skipfailures -f "PostgreSQL" PG:"host=myhost user=myuser dbname=mydb password=mypass" AO:"C:\somefolder\BigFileGDB.gdb" "MyFeatureClass"</code>
+	<br/>
+	<br/>
+
+	<li> Get detailed info of Personal GeoDatabase: </li>
+	<br/>
+	<code>ogrinfo -al AO:"C:\somefolder\PersonalGDB.mdb"</code>
+	<br/>
+	<br>
+
+	<li> Get detailed info of Enterprise GeoDatabase (.sde contains target version to connect to): </li>
+		<br/>
+		<code>ogrinfo -al AO:"C:\somefolder\MySDEConnection.sde"</code>
+		<br/>
+	<br>
+
+</ul>
+
+
+<h2>Building Notes</h2>
+
+<p> Read the <a href="http://trac.osgeo.org/gdal/wiki/BuildingOnWindows">GDAL Windows Building example for Plugins</a>. You will find a similar section in nmake.opt for ArcObjects.
+After you are done, go to the <i>$gdal_source_root\ogr\ogrsf_frmts\arcobjects</i> folder and execute:</p>
+
+<p>
+	<code>
+		nmake /f makefile.vc plugin
+		nmake /f makefile.vc plugin-install
+	</code>
+</p>
+
+
+<h2>Known Issues</h2>
+
+<p>
+	Date and blob fields have not been implemented. It is probably just a few lines of code, I just have not had time (or need) to do it.
+</p>
+
+</body>
+</html>
