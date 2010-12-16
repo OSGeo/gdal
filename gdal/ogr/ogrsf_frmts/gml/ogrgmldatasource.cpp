@@ -93,7 +93,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
         {
             if (IsGML3Output())
             {
-                int bCoordSwap;
+                int bCoordSwap = FALSE;
                 char* pszSRSName;
                 if (poGlobalSRS)
                     pszSRSName = GML_GetSRSName(poGlobalSRS, IsLongSRSRequired(), &bCoordSwap);
