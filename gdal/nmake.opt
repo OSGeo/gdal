@@ -358,6 +358,17 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #SDE_LIB = $(SDE_SDK)\lib\pe$(SDE_VERSION).lib \
 #          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib      
 
+#uncomment to use ArcObjects
+#ARCOBJECTS_ENABLED = YES
+#ARCOBJECTS_PLUGIN = YES
+#ARCOBJECTS_SDK = C:\PROGRA~2\ArcGIS\com
+#ARCOBJECTS_INC = $(ARCOBJECTS_SDK)\..\include
+#
+#Interestingly, since this is a COM application, we don't link against external libraries,
+#but we still need to link the app, so we put the generic user32.lib to force the linking process
+#ARCOBJECTS_LIB = user32.lib
+
+
 # Uncomment to use libcurl (DLL by default)
 # The cURL library is used for WCS, WMS, GeoJSON, SRS call importFromUrl(), etc.
 #CURL_DIR=C:\curl-7.15.0
@@ -511,7 +522,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ECW_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
-	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(DWG_LIB) \
+	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS)
