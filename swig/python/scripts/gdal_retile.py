@@ -4,6 +4,7 @@
 #
 # Purpose:  Module for retiling (merging) tiles and building tiled pyramids
 # Author:   Christian Meuller, christian.mueller@nvoe.at
+# UseDirForEachRow support by Chris Giesey & Elijah Robison
 #
 ###############################################################################
 # Copyright (c) 2007, Christian Mueller
@@ -167,7 +168,7 @@ class mosaic_info:
            self.ct = None
         self.ci = [0] * self.bands
         for iband in range(self.bands):
-            self.ci[iband] = fhInputTile.GetRasterBand(iband + 1).GetColorInterpretation()
+            self.ci[iband] = fhInputTile.GetRasterBand(iband + 1).GetRasterColorInterpretation()
 
         extent = self.ogrTileIndexDS.GetLayer().GetExtent()
         self.ulx = extent[0];
@@ -320,7 +321,8 @@ def tileImage(minfo, ti ):
 
     """
 
-
+    global LastRowIndx
+    LastRowIndx=-1
     OGRDS=createTileIndex("TileResult_0", TileIndexFieldName, Source_SRS,TileIndexDriverTyp)
 
 
@@ -340,16 +342,25 @@ def tileImage(minfo, ti ):
                 width=ti.lastTileWidth
             else:
                 width=ti.tileWidth
-            tilename=getTileName(minfo,ti, xIndex, yIndex)
+            if UseDirForEachRow :
+                tilename=getTileName(minfo,ti, xIndex, yIndex,0)
+            else:
+                tilename=getTileName(minfo,ti, xIndex, yIndex)
             createTile(minfo, offsetX, offsetY, width, height,tilename,OGRDS)
 
 
     if TileIndexName is not None:
-        shapeName=getTargetDir()+TileIndexName
+        if UseDirForEachRow and PyramidOnly == False:
+            shapeName=getTargetDir(0)+TileIndexName
+        else:
+            shapeName=getTargetDir()+TileIndexName
         copyTileIndexToDisk(OGRDS,shapeName)
 
     if CsvFileName is not None:
-        csvName=getTargetDir()+CsvFileName
+        if UseDirForEachRow and PyramidOnly == False:
+            csvName=getTargetDir(0)+CsvFileName
+        else:
+            csvName=getTargetDir()+CsvFileName
         copyTileIndexToCSV(OGRDS,csvName)
 
 
@@ -364,6 +375,9 @@ def copyTileIndexToDisk(OGRDS, fileName):
           break
       newFeature = feature.Clone()
       basename = os.path.basename(feature.GetField(0))
+      if UseDirForEachRow :
+          t = os.path.split(os.path.dirname(feature.GetField(0)))
+          basename = t[1]+"/"+basename
       newFeature.SetField(0,basename)
       SHAPEDS.GetLayer().CreateFeature(newFeature)
     closeTileIndex(SHAPEDS)
@@ -376,6 +390,9 @@ def copyTileIndexToCSV(OGRDS, fileName):
       if feature is None:
           break
       basename = os.path.basename(feature.GetField(0))
+      if UseDirForEachRow :
+          t = os.path.split(os.path.dirname(feature.GetField(0)))
+          basename = t[1]+"/"+basename
       csvfile.write(basename);
       geom = feature.GetGeometryRef()
       coords = geom.GetEnvelope();
@@ -589,8 +606,10 @@ def closeTileIndex(OGRDataSource):
 
 def buildPyramid(minfo,createdTileIndexDS,tileWidth, tileHeight):
 
+    global LastRowIndx
     inputDS=createdTileIndexDS
     for level in range(1,Levels+1):
+        LastRowIndx = -1
         levelMosaicInfo = mosaic_info(minfo.filename,inputDS)
         levelOutputTileInfo = tile_info(levelMosaicInfo.xsize/2,levelMosaicInfo.ysize/2,tileWidth,tileHeight)
         inputDS=buildPyramidLevel(levelMosaicInfo,levelOutputTileInfo,level)
@@ -634,6 +653,8 @@ def getTileName(minfo,ti,xIndex,yIndex,level = -1):
     """
     creates the tile file name
     """
+    global LastRowIndx
+
     max = ti.countTilesX
     if (ti.countTilesY > max):
         max=ti.countTilesY
@@ -642,10 +663,20 @@ def getTileName(minfo,ti,xIndex,yIndex,level = -1):
     if parts[0][0]=="@" : #remove possible leading "@"
        parts = ( parts[0][1:len(parts[0])], parts[1])
 
-    if Extension is None:
-        format=getTargetDir(level)+parts[0]+"_%0"+str(countDigits)+"i"+"_%0"+str(countDigits)+"i"+parts[1]
+    if UseDirForEachRow :
+        format=getTargetDir(level)+str(yIndex)+os.sep+parts[0]+"_%0"+str(countDigits)+"i"+"_%0"+str(countDigits)+"i"
+        #See if there was a switch in the row, if so then create new dir for row.
+        if LastRowIndx < yIndex :
+            LastRowIndx = yIndex
+            if (os.path.exists(getTargetDir(level)+str(yIndex)) == False) :
+                os.mkdir(getTargetDir(level)+str(yIndex))
     else:
-        format=getTargetDir(level)+parts[0]+"_%0"+str(countDigits)+"i"+"_%0"+str(countDigits)+"i"+"."+Extension
+        format=getTargetDir(level)+parts[0]+"_%0"+str(countDigits)+"i"+"_%0"+str(countDigits)+"i"
+    #Check for the extension that should be used.
+    if Extension is None:
+        format=format+parts[1]
+    else:
+        format=format+"."+Extension
     return format % (yIndex,xIndex)
 
 def UsageFormat():
@@ -666,6 +697,7 @@ def Usage():
      print('        [ -csv fileName [-csvDelim delimiter]]')
      print('        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels')
      print('        [-r {near/bilinear/cubic/cubicspline/lanczos}]')
+     print('        [-useDirForEachRow]')
      print('        -targetDir TileDirectory input_files')
 
 # =============================================================================
@@ -699,6 +731,7 @@ def main(args = None):
     global ResamplingMethod
     global Levels
     global PyramidOnly
+    global UseDirForEachRow
 
     gdal.AllRegister()
 
@@ -796,6 +829,8 @@ def main(args = None):
         elif arg == '-csvDelim':
             i+=1
             CsvDelimiter=argv[i]
+        elif arg == '-useDirForEachRow':
+            UseDirForEachRow=True
         elif arg[:1] == '-':
             print('Unrecognised command option: %s' % arg)
             Usage()
@@ -819,8 +854,15 @@ def main(args = None):
         Usage()
         return 1
 
+    # create level 0 directory if needed
+    if(UseDirForEachRow and PyramidOnly==False) :
+        leveldir=TargetDir+str(0)+os.sep
+        if (os.path.exists(leveldir)==False):
+            os.mkdir(leveldir)
+
     if Levels > 0:    #prepare Dirs for pyramid
-        for levelIndx in range (1,Levels+1):
+        startIndx=1
+        for levelIndx in range (startIndx,Levels+1):
             leveldir=TargetDir+str(levelIndx)+os.sep
             if (os.path.exists(leveldir)):
                 continue
@@ -900,6 +942,9 @@ def initGlobals():
     global ResamplingMethod
     global Levels
     global PyramidOnly
+    global LastRowIndx
+    global UseDirForEachRow
+
 
     Verbose=False
     CreateOptions = []
@@ -922,6 +967,9 @@ def initGlobals():
     ResamplingMethod=GRA_NearestNeighbour
     Levels=0
     PyramidOnly=False
+    LastRowIndx=-1
+    UseDirForEachRow=False
+
 
 
 #global vars
@@ -945,9 +993,9 @@ TargetDir=None
 ResamplingMethod=GRA_NearestNeighbour
 Levels=0
 PyramidOnly=False
-
+LastRowIndx=-1
+UseDirForEachRow=False
 
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

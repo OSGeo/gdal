@@ -1412,6 +1412,7 @@ gdal_retile.py [-v] [-co NAME=VALUE]* [-of out_format] [-ps pixelWidth pixelHeig
                [-s_srs srs_def]  [-pyramidOnly]
                [-r {near/bilinear/cubic/cubicspline/lanczos}]
                -levels numberoflevels
+               [-useDirForEachRow]   
                -targetDir TileDirectory input_files
 
 \endverbatim
@@ -1428,7 +1429,7 @@ If your number of input tiles exhausts the command line buffer, use the general 
 
 <dl>
 <dt> <b>-targetDir</b> <i>directory</i>:</dt><dd>
-The Directory where the tile result is created. Pyramids are stored
+The directory where the tile result is created. Pyramids are stored
 in  subdirs  numbered  from  1. Created tile names have a numbering
 schema and contain the name of the source tiles(s)
 </dd>
@@ -1477,6 +1478,17 @@ The file contains 5 columns: tilename,minx,maxx,miny,maxy
 </dd>
 <dt> <b>-csvDelim</b> <i>column delimiter</i>:</dt><dd>
 The column delimter used in the csv file, default value is a semicolon ";"
+</dd>
+<dt> <b>-useDirForEachRow</b>:</dt><dd>
+Normally the tiles of the base image are stored as described in <b>-targetDir</b>.
+For large images, some file systems have performance problems if the number of files 
+in a directory is to big, causing gdal_retile not to finish in reasonable time. 
+Using this parameter creates a different output structure. The tiles of the base image
+are stored in a subdirectory called 0, the pyramids in subdirectories numbered 1,2,....
+Within each of these directories another level of subdirectories is created, numbered from
+0...n, depending of how many tile rows are needed for each level. Finally, a directory contains
+only the the tiles for one row for a specific level. For large images a performance improvement
+of a factor N could be achieved.
 </dd>
 </dl>
 
