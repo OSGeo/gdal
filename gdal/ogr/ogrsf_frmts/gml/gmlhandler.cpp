@@ -478,6 +478,15 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
             m_bIsAIXM = m_bReportHref = TRUE;
         }
     }
+    else if ( m_nDepth == 2 && m_bInBoundedBy )
+    {
+        if ( strcmp(pszName, "Envelope") == 0 )
+        {
+            char* pszGlobalSRSName = GetAttributeValue(attr, "srsName");
+            m_poReader->SetGlobalSRSName(pszGlobalSRSName);
+            CPLFree(pszGlobalSRSName);
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are in the midst of collecting a feature attribute        */

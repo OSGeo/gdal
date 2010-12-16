@@ -38,7 +38,8 @@ int GML_IsSRSLatLongOrder(const char* pszSRSName);
 
 OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                                           int bTryToMakeMultipolygons,
-                                          int bInvertAxisOrderIfLatLong);
+                                          int bInvertAxisOrderIfLatLong,
+                                          const char* pszDefaultSRSName);
 
 char* GML_GetSRSName(const OGRSpatialReference* poSRS, int bLongSRS, int *pbCoordSwap);
 
