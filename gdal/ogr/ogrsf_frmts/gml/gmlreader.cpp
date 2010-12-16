@@ -127,6 +127,9 @@ GMLReader::GMLReader()
     m_bFetchAllGeometries = CSLTestBoolean(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"));
 
     m_bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
+
+    m_pszGlobalSRSName = NULL;
+    m_bCanUseGlobalSRSName = FALSE;
 }
 
 /************************************************************************/
@@ -154,6 +157,8 @@ GMLReader::~GMLReader()
     if (fpGML)
         VSIFCloseL(fpGML);
     fpGML = NULL;
+
+    CPLFree(m_pszGlobalSRSName);
 }
 
 /************************************************************************/
@@ -1100,6 +1105,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
     if( !SetupParser() )
         return FALSE;
 
+    m_bCanUseGlobalSRSName = TRUE;
+
     while( (poFeature = NextFeature()) != NULL )
     {
         GMLFeatureClass *poClass = poFeature->GetClass();
@@ -1113,7 +1120,7 @@ int GMLReader::PrescanForSchema( int bGetExtents )
         if( bGetExtents )
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
-                poFeature->GetGeometryList(), TRUE, m_bInvertAxisOrderIfLatLong);
+                poFeature->GetGeometryList(), TRUE, m_bInvertAxisOrderIfLatLong, NULL);
 
             if( poGeometry != NULL )
             {
@@ -1123,6 +1130,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
                     poClass->GetGeometryType();
 
                 char* pszSRSName = GML_ExtractSrsNameFromGeometry(poFeature->GetGeometryList());
+                if (pszSRSName != NULL)
+                    m_bCanUseGlobalSRSName = FALSE;
                 poClass->MergeSRSName(pszSRSName);
                 CPLFree(pszSRSName);
 
@@ -1168,6 +1177,10 @@ int GMLReader::PrescanForSchema( int bGetExtents )
     {
         GMLFeatureClass *poClass = m_papoClass[i];
         const char* pszSRSName = poClass->GetSRSName();
+
+        if (m_bCanUseGlobalSRSName)
+            pszSRSName = m_pszGlobalSRSName;
+        
         if (m_bInvertAxisOrderIfLatLong && GML_IsSRSLatLongOrder(pszSRSName))
         {
             OGRSpatialReference oSRS;
@@ -1182,6 +1195,16 @@ int GMLReader::PrescanForSchema( int bGetExtents )
                     if (oSRS.exportToWkt(&pszWKT) == OGRERR_NONE)
                         poClass->SetSRSName(pszWKT);
                     CPLFree(pszWKT);
+
+                    /* So when we have computed the extent, we didn't know yet */
+                    /* the SRS to use. Now we know it, we have to fix the extent */
+                    /* order */
+                    if (m_bCanUseGlobalSRSName)
+                    {
+                        double  dfXMin, dfXMax, dfYMin, dfYMax;
+                        if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
+                            poClass->SetExtents( dfYMin, dfYMax, dfXMin, dfXMax );
+                    }
                 }
             }
         }
@@ -1200,6 +1223,16 @@ void GMLReader::ResetReading()
 
 {
     CleanupParser();
+}
+
+/************************************************************************/
+/*                          SetGlobalSRSName()                          */
+/************************************************************************/
+
+void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
+{
+    if (m_pszGlobalSRSName == NULL && pszGlobalSRSName != NULL)
+        m_pszGlobalSRSName = CPLStrdup(pszGlobalSRSName);
 }
 
 #endif /* HAVE_XERCES == 1 or HAVE_EXPAT */

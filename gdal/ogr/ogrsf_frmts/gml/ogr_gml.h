@@ -118,6 +118,7 @@ class OGRGMLDataSource : public OGRDataSource
     void                InsertHeader();
 
     int                 bExposeGMLId;
+    int                 bIsWFS;
 
     OGRSpatialReference* poGlobalSRS;
 
@@ -150,6 +151,7 @@ class OGRGMLDataSource : public OGRDataSource
 
     int                 IsGML3Output();
     int                 IsLongSRSRequired();
+    const char         *GetGlobalSRSName();
 };
 
 /************************************************************************/

@@ -242,6 +242,9 @@ public:
     virtual int PrescanForSchema( int bGetExtents = TRUE ) = 0;
 
     virtual int HasStoppedParsing() = 0;
+
+    virtual const char* GetGlobalSRSName() = 0;
+    virtual int CanUseGlobalSRSName() = 0;
 };
 
 IGMLReader *CreateGMLReader();

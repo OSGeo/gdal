@@ -19,7 +19,9 @@ http://www.nokis.org/deegree2/ogcwebservice
 http://demo.deegree.org/deegree-wfs/services
 http://testing.deegree.org/deegree-wfs/services (WFS-T, but permission denied)
 http://lkee-xplanung2.lat-lon.de/xplan-wfs/services (with complex schema that we cannot understand with the XSD parser)
-http://deegree3-testing.deegree.org/deegree-geosciml-demo/services
+http://deegree3-testing.deegree.org/deegree-geosciml-demo/services (offline currently)
+http://deegree3-testing.deegree.org:80/deegree-inspire-node/services (GML 3.2.1 output only)
+http://inspire.kademo.nl/deegree-wfs/services
 
 TinyOWS:
 http://dev4.mapgears.com/cgi-bin/tinyows (old & buggy version)
@@ -42,7 +44,8 @@ http://siga.cna.gob.mx/wfsconnector/com.esri.wfs.Esrimap/Acuiferos_Features (enc
 http://sentinel.ga.gov.au/wfsconnector/com.esri.wfs.Esrimap (works)
 http://sima.gencat.cat/wfsconnector/com.esri.wfs.Esrimap/SIMA_WFS (returns invalid XML in GetFeature)
 http://egisws01.nos.noaa.gov/wfsconnector/com.esri.wfs.Esrimap/nosdataexplorer_wfs (Mark invalid error in GetFeature)
- 
+http://services.nationalmap.gov/ArcGIS/services/geonames/MapServer/WFSServer
+
 Microimages ?:
 http://publicatlas.microimages.com/tntgateway/tntgateway.cgi
 
