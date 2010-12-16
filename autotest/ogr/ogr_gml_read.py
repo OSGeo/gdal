@@ -39,6 +39,7 @@ import ogrtest
 import ogr
 import osr
 import gdal
+import shutil
 
 ###############################################################################
 # Test reading geometry and attribute from ionic wfs gml file.
@@ -895,6 +896,94 @@ def ogr_gml_22():
     return 'success'
 
 ###############################################################################
+# Test that use SRS defined in global gml:Envelope if no SRS is set for any
+# feature geometry
+
+def ogr_gml_23():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.remove( 'tmp/global_geometry.gfs' )
+    except:
+        pass
+
+    shutil.copy('data/global_geometry.xml', 'tmp/global_geometry.xml')
+
+    # Here we use only the .xml file
+    ds = ogr.Open('tmp/global_geometry.xml')
+
+    lyr = ds.GetLayer(0)
+    sr = lyr.GetSpatialRef()
+    got_wkt = sr.ExportToWkt()
+    if got_wkt.find('GEOGCS["WGS 84"') == -1 or \
+       got_wkt.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') != -1:
+        gdaltest.post_reason('did not get expected SRS')
+        print(got_wkt)
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    if got_wkt != 'POINT (2 49)':
+        gdaltest.post_reason('did not get expected geometry')
+        print(got_wkt)
+        return 'fail'
+
+    extent = lyr.GetExtent()
+    if extent != (2.0, 3.0, 49.0, 50.0):
+        gdaltest.post_reason('did not get expected layer extent')
+        print(extent)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that use SRS defined in global gml:Envelope if no SRS is set for any
+# feature geometry
+
+def ogr_gml_24():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.remove( 'data/global_geometry.gfs' )
+    except:
+        pass
+
+    # Here we use only the .xml file and the .xsd file
+    ds = ogr.Open('data/global_geometry.xml')
+
+    lyr = ds.GetLayer(0)
+
+    # Because we read the .xsd, we (currently) don't find the SRS
+    
+    #sr = lyr.GetSpatialRef()
+    #got_wkt = sr.ExportToWkt()
+    #if got_wkt.find('GEOGCS["WGS 84"') == -1 or \
+    #   got_wkt.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') != -1:
+    #    gdaltest.post_reason('did not get expected SRS')
+    #    print(got_wkt)
+    #    return 'fail'
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    if got_wkt != 'POINT (2 49)':
+        gdaltest.post_reason('did not get expected geometry')
+        print(got_wkt)
+        return 'fail'
+
+    extent = lyr.GetExtent()
+    if extent != (2.0, 3.0, 49.0, 50.0):
+        gdaltest.post_reason('did not get expected layer extent')
+        print(extent)
+        return 'fail'
+
+    return 'success'
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -935,6 +1024,18 @@ def ogr_gml_clean_files():
         os.remove( 'data/paris_typical_strike_demonstration.gfs' )
     except:
         pass
+    try:
+        os.remove( 'data/global_geometry.gfs' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/global_geometry.gfs' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/global_geometry.xml' )
+    except:
+        pass
 
     files = os.listdir('data')
     for filename in files:
@@ -967,6 +1068,8 @@ gdaltest_list = [
     ogr_gml_20,
     ogr_gml_21,
     ogr_gml_22,
+    ogr_gml_23,
+    ogr_gml_24,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
