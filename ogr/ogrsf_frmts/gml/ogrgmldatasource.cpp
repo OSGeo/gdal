@@ -62,6 +62,7 @@ OGRGMLDataSource::OGRGMLDataSource()
     nBoundedByLocation = -1;
 
     poGlobalSRS = NULL;
+    bIsWFS = FALSE;
 }
 
 /************************************************************************/
@@ -234,6 +235,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         if (pszFeatureCollection)
         {
             bExposeGMLId = TRUE;
+            bIsWFS = TRUE;
             const char* pszNumberOfFeatures = strstr(szPtr, "numberOfFeatures=");
             if (pszNumberOfFeatures)
             {
@@ -250,6 +252,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             /* Who knows what servers can return ? Ok, so when in the context of the WFS driver */
             /* always expose the gml:id to avoid later crashes */
             bExposeGMLId = TRUE;
+            bIsWFS = TRUE;
         }
     }
     
@@ -543,6 +546,18 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
     }
 
     return poLayer;
+}
+
+/************************************************************************/
+/*                         GetGlobalSRSName()                           */
+/************************************************************************/
+
+const char *OGRGMLDataSource::GetGlobalSRSName()
+{
+    if (poReader->CanUseGlobalSRSName() || bIsWFS)
+        return poReader->GetGlobalSRSName();
+    else
+        return NULL;
 }
 
 /************************************************************************/

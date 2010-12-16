@@ -102,7 +102,8 @@ int GML_IsSRSLatLongOrder(const char* pszSRSName)
 
 OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                                           int bTryToMakeMultipolygons,
-                                          int bInvertAxisOrderIfLatLong)
+                                          int bInvertAxisOrderIfLatLong,
+                                          const char* pszDefaultSRSName)
 {
     OGRGeometry* poGeom = NULL;
     if( papszGeometryList != NULL )
@@ -156,7 +157,8 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                             delete poGeom;
                             delete poSubGeom;
                             return GML_BuildOGRGeometryFromList(papszGeometryList, FALSE,
-                                                                bInvertAxisOrderIfLatLong);
+                                                                bInvertAxisOrderIfLatLong,
+                                                                pszDefaultSRSName);
                         }
                         else
                         {
@@ -178,7 +180,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
     if (bInvertAxisOrderIfLatLong)
     {
         char* pszSRSName = GML_ExtractSrsNameFromGeometry(papszGeometryList);
-        if (GML_IsSRSLatLongOrder(pszSRSName))
+        if (GML_IsSRSLatLongOrder(pszSRSName ? pszSRSName : pszDefaultSRSName))
             poGeom->swapXY();
         CPLFree(pszSRSName);
     }

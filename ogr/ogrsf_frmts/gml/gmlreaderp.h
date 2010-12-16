@@ -65,6 +65,7 @@ class GMLHandler
     char      *m_pszHref;
     char      *m_pszUom;
     char      *m_pszValue;
+
 protected:
     GMLReader  *m_poReader;
 
@@ -297,6 +298,10 @@ private:
     int           ParseFeatureType(CPLXMLNode *psSchemaNode,
                                 const char* pszName,
                                 const char *pszType);
+
+    char         *m_pszGlobalSRSName;
+    int           m_bCanUseGlobalSRSName;
+
 public:
                 GMLReader();
     virtual     ~GMLReader();
@@ -347,6 +352,11 @@ public:
     int         HasStoppedParsing() { return m_bStopParsing; }
 
     int         FetchAllGeometries() { return m_bFetchAllGeometries; }
+
+    void        SetGlobalSRSName( const char* pszGlobalSRSName ) ;
+    const char* GetGlobalSRSName() { return m_pszGlobalSRSName; }
+
+    int         CanUseGlobalSRSName() { return m_bCanUseGlobalSRSName; }
 };
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */

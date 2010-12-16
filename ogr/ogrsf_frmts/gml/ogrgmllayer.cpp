@@ -231,7 +231,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         char** papszGeometryList = poGMLFeature->GetGeometryList();
         if( papszGeometryList != NULL )
         {
-            poGeom = GML_BuildOGRGeometryFromList(papszGeometryList, TRUE, m_bInvertAxisOrderIfLatLong);
+            const char* pszSRSName = poDS->GetGlobalSRSName();
+            poGeom = GML_BuildOGRGeometryFromList(papszGeometryList, TRUE,
+                                                  m_bInvertAxisOrderIfLatLong, pszSRSName);
             if (poGeom != NULL && poSRS != NULL)
                 poGeom->assignSpatialReference(poSRS);
 
