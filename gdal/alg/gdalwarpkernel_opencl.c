@@ -1168,7 +1168,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     
     //Assemble the compiler arg string for speed. All invariants should be defined here.
     sprintf(buffer, "-cl-fast-relaxed-math -Werror -D FALSE=0 -D TRUE=1 "
-            "%s "
+            "%s"
             "-D iSrcWidth=%d -D iSrcHeight=%d -D iDstWidth=%d -D iDstHeight=%d "
             "-D useUnifiedSrcDensity=%d -D useUnifiedSrcValid=%d "
             "-D useDstDensity=%d -D useDstValid=%d -D useImag=%d "
@@ -1176,9 +1176,9 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
             "-D nXRadius=%d -D nYRadius=%d -D nFiltInitX=%d -D nFiltInitY=%d "
             "-D PI=%015.15lff -D outType=%s -D dstMinVal=%015.15lff -D dstMaxVal=%015.15lff "
             "-D useDstNoDataReal=%d -D vecf=%s %s -D doCubicSpline=%d "
-            "-D useUseBandSrcValid=%d -D iCoordMult=%d",
+            "-D useUseBandSrcValid=%d -D iCoordMult=%d ",
             /* FIXME: Is it really a ATI specific thing ? */
-            (warper->imageFormat == CL_FLOAT && warper->bIsATI) ? "-D USE_CLAMP_TO_DST_FLOAT=1" : "",
+            (warper->imageFormat == CL_FLOAT && warper->bIsATI) ? "-D USE_CLAMP_TO_DST_FLOAT=1 " : "",
             warper->srcWidth, warper->srcHeight, warper->dstWidth, warper->dstHeight,
             warper->useUnifiedSrcDensity, warper->useUnifiedSrcValid,
             warper->useDstDensity, warper->useDstValid, warper->imagWorkCL != NULL,
