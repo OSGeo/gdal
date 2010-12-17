@@ -379,6 +379,24 @@ fi
 AC_SUBST(LIBZ_SETTING,$LIBZ_SETTING)
 
 dnl ---------------------------------------------------------------------------
+dnl Check if liblzma is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(liblzma,[  --with-liblzma[=ARG]       Include liblzma support (ARG=yes/no)],,)
+
+if test "$with_liblzma" = "yes" ; then
+  AC_CHECK_LIB(lzma,lzma_code,LIBLZMA_SETTING=yes,LIBLZMA_SETTING=no,)
+
+  if test "$LIBLZMA_SETTING" = "yes" ; then
+    LIBS="-llzma $LIBS"
+  fi
+else
+    LIBLZMA_SETTING=no
+fi
+
+AC_SUBST(LIBLZMA_SETTING,$LIBLZMA_SETTING)
+
+dnl ---------------------------------------------------------------------------
 dnl Select an PostgreSQL Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -2845,6 +2863,7 @@ LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
+LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
 LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
