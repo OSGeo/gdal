@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.162 2010-12-11 23:22:07 faxguy Exp $ */
+/* $Id: tif_dirread.c,v 1.165 2010-12-15 01:05:02 faxguy Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -583,7 +583,16 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryFloat(TIFF* tif, TIFFDirEntry* d
 				err=TIFFReadDirEntryCheckedLong8(tif,direntry,&m);
 				if (err!=TIFFReadDirEntryErrOk)
 					return(err);
+#if defined(__WIN32__) && (_MSC_VER < 1500)
+				/*
+				 * XXX: MSVC 6.0 does not support conversion
+				 * of 64-bit integers into floating point
+				 * values.
+				 */
+				*value = _TIFFUInt64ToFloat(m);
+#else
 				*value=(float)m;
+#endif
 				return(TIFFReadDirEntryErrOk);
 			}
 		case TIFF_SLONG8:
@@ -2727,7 +2736,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryPersampleShort(TIFF* tif, TIFFDi
 	uint16* m;
 	uint16* na;
 	uint16 nb;
-	if (direntry->tdir_count!=(uint64)tif->tif_dir.td_samplesperpixel)
+	if (direntry->tdir_count<(uint64)tif->tif_dir.td_samplesperpixel)
 		return(TIFFReadDirEntryErrCount);
 	err=TIFFReadDirEntryShortArray(tif,direntry,&m);
 	if (err!=TIFFReadDirEntryErrOk)
@@ -2755,7 +2764,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryPersampleDouble(TIFF* tif, TIFFD
 	double* m;
 	double* na;
 	uint16 nb;
-	if (direntry->tdir_count!=(uint64)tif->tif_dir.td_samplesperpixel)
+	if (direntry->tdir_count<(uint64)tif->tif_dir.td_samplesperpixel)
 		return(TIFFReadDirEntryErrCount);
 	err=TIFFReadDirEntryDoubleArray(tif,direntry,&m);
 	if (err!=TIFFReadDirEntryErrOk)
@@ -3836,8 +3845,14 @@ TIFFReadDirectory(TIFF* tif)
 	 */
 	if (tif->tif_dir.td_photometric == PHOTOMETRIC_PALETTE &&
 	    !TIFFFieldSet(tif, FIELD_COLORMAP)) {
-		MissingRequired(tif, "Colormap");
-		goto bad;
+		if ( tif->tif_dir.td_bitspersample>=8 && tif->tif_dir.td_samplesperpixel==3)
+			tif->tif_dir.td_photometric = PHOTOMETRIC_RGB;
+		else if (tif->tif_dir.td_bitspersample>=8)
+			tif->tif_dir.td_photometric = PHOTOMETRIC_MINISBLACK;
+		else {
+			MissingRequired(tif, "Colormap");
+			goto bad;
+		}
 	}
 	/*
 	 * OJPEG hack:

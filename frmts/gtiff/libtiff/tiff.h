@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.65 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tiff.h,v 1.66 2010-12-14 12:53:00 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -187,6 +187,7 @@ typedef enum {
 #define     COMPRESSION_SGILOG		34676	/* SGI Log Luminance RLE */
 #define     COMPRESSION_SGILOG24	34677	/* SGI Log 24-bit packed */
 #define     COMPRESSION_JP2000          34712   /* Leadtools JPEG2000 */
+#define	    COMPRESSION_LZMA		34925	/* LZMA2 */
 #define	TIFFTAG_PHOTOMETRIC		262	/* photometric interpretation */
 #define	    PHOTOMETRIC_MINISWHITE	0	/* min value is white */
 #define	    PHOTOMETRIC_MINISBLACK	1	/* min value is black */
@@ -567,6 +568,7 @@ typedef enum {
 #define TIFFTAG_SGILOGENCODE		65561 /* SGILog data encoding control*/
 #define     SGILOGENCODE_NODITHER	0     /* do not dither encoded values*/
 #define     SGILOGENCODE_RANDITHER	1     /* randomly dither encd values */
+#define	TIFFTAG_LZMAPRESET		65562	/* LZMA2 preset (compression level) */
 
 /*
  * EXIF tags

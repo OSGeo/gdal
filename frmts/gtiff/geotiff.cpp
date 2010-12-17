@@ -326,6 +326,7 @@ class GTiffDataset : public GDALPamDataset
     int           bDontReloadFirstBlock; /* Hack for libtiff 3.X and #3633 */
 
     int           nZLevel;
+    int           nLZMAPreset;
     int           nJpegQuality;
     
     int           bPromoteTo8Bits;
@@ -2750,6 +2751,7 @@ GTiffDataset::GTiffDataset()
     bDontReloadFirstBlock = FALSE;
 
     nZLevel = -1;
+    nLZMAPreset = -1;
     nJpegQuality = -1;
     
     bPromoteTo8Bits = FALSE;
@@ -3700,6 +3702,7 @@ CPLErr GTiffDataset::IBuildOverviews(
             poODS = new GTiffDataset();
             poODS->nJpegQuality = nJpegQuality;
             poODS->nZLevel = nZLevel;
+            poODS->nLZMAPreset = nLZMAPreset;
 
             if( nCompression == COMPRESSION_JPEG )
             {
@@ -4782,6 +4785,8 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
         }
         if(nZLevel > 0 && nCompression == COMPRESSION_ADOBE_DEFLATE)
             TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, nZLevel);
+        if(nLZMAPreset > 0 && nCompression == COMPRESSION_LZMA)
+            TIFFSetField(hTIFF, TIFFTAG_LZMAPRESET, nLZMAPreset);
     }
 
     return nSetDirResult;
@@ -5809,6 +5814,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         SetMetadataItem( "COMPRESSION", "SGILOG24", "IMAGE_STRUCTURE" );
     else if( nCompression == COMPRESSION_JP2000 )
         SetMetadataItem( "COMPRESSION", "JP2000", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_LZMA )
+        SetMetadataItem( "COMPRESSION", "LZMA", "IMAGE_STRUCTURE" );
+
     else
     {
         CPLString oComp;
@@ -6141,6 +6149,25 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     return( CE_None );
 }
 
+static int GTiffGetLZMAPreset(char** papszOptions)
+{
+    int nLZMAPreset = -1;
+    const char* pszValue = CSLFetchNameValue( papszOptions, "LZMA_PRESET" );
+    if( pszValue  != NULL )
+    {
+        nLZMAPreset =  atoi( pszValue );
+        if (!(nLZMAPreset >= 0 && nLZMAPreset <= 9))
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg,
+                    "LZMA_PRESET=%s value not recognised, ignoring.",
+                    pszValue );
+            nLZMAPreset = -1;
+        }
+    }
+    return nLZMAPreset;
+}
+
+
 static int GTiffGetZLevel(char** papszOptions)
 {
     int nZLevel = -1;
@@ -6196,7 +6223,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
     uint16              nCompression = COMPRESSION_NONE;
-    int                 nPredictor = PREDICTOR_NONE, nJpegQuality = -1, nZLevel = -1;
+    int                 nPredictor = PREDICTOR_NONE, nJpegQuality = -1, nZLevel = -1,
+                        nLZMAPreset = -1;
     uint16              nSampleFormat;
     int			nPlanar;
     const char          *pszValue;
@@ -6280,7 +6308,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         nPredictor =  atoi( pszValue );
 
     nZLevel = GTiffGetZLevel(papszParmList);
-
+    nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     nJpegQuality = GTiffGetJpegQuality(papszParmList);
 
 /* -------------------------------------------------------------------- */
@@ -6680,9 +6708,11 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if (nCompression == COMPRESSION_ADOBE_DEFLATE
         && nZLevel != -1)
         TIFFSetField( hTIFF, TIFFTAG_ZIPQUALITY, nZLevel );
-    if( nCompression == COMPRESSION_JPEG 
+    else if( nCompression == COMPRESSION_JPEG 
         && nJpegQuality != -1 )
         TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality );
+    else if( nCompression == COMPRESSION_LZMA && nLZMAPreset != -1)
+        TIFFSetField( hTIFF, TIFFTAG_LZMAPRESET, nLZMAPreset );
 
 /* -------------------------------------------------------------------- */
 /*      If we forced production of a file with photometric=palette,     */
@@ -6860,6 +6890,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->papszCreationOptions = CSLDuplicate( papszParmList );
 
     poDS->nZLevel = GTiffGetZLevel(papszParmList);
+    poDS->nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
 
 /* -------------------------------------------------------------------- */
@@ -7466,6 +7497,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* They are just TIFF session parameters */
 
     poDS->nZLevel = GTiffGetZLevel(papszOptions);
+    poDS->nLZMAPreset = GTiffGetLZMAPreset(papszOptions);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszOptions);
 
     if (nCompression == COMPRESSION_ADOBE_DEFLATE)
@@ -7480,6 +7512,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (poDS->nJpegQuality != -1)
         {
             TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, poDS->nJpegQuality );
+        }
+    }
+    else if( nCompression == COMPRESSION_LZMA)
+    {
+        if (poDS->nLZMAPreset != -1)
+        {
+            TIFFSetField( hTIFF, TIFFTAG_LZMAPRESET, poDS->nLZMAPreset );
         }
     }
 
@@ -8445,6 +8484,8 @@ int     GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableN
         nCompression = COMPRESSION_CCITTFAX4;
     else if( EQUAL( pszValue, "CCITTRLE" ) )
         nCompression = COMPRESSION_CCITTRLE;
+    else if( EQUAL( pszValue, "LZMA" ) )
+        nCompression = COMPRESSION_LZMA;
     else
         CPLError( CE_Warning, CPLE_IllegalArg,
                     "%s=%s value not recognised, ignoring.",
@@ -8474,7 +8515,7 @@ void GDALRegister_GTiff()
         GDALDriver	*poDriver;
         char szCreateOptions[3072];
         char szOptionalCompressItems[500];
-        int bHasJPEG = FALSE, bHasLZW = FALSE, bHasDEFLATE = FALSE;
+        int bHasJPEG = FALSE, bHasLZW = FALSE, bHasDEFLATE = FALSE, bHasLZMA = FALSE;
 
         poDriver = new GDALDriver();
         
@@ -8528,6 +8569,12 @@ void GDALRegister_GTiff()
             else if( c->scheme == COMPRESSION_CCITTFAX4 )
                 strcat( szOptionalCompressItems,
                         "       <Value>CCITTFAX4</Value>" );
+            else if( c->scheme == COMPRESSION_LZMA )
+            {
+                bHasLZMA = TRUE;
+                strcat( szOptionalCompressItems,
+                        "       <Value>LZMA</Value>" );
+            }
         }
         _TIFFfree( codecs );
 #endif        
@@ -8549,6 +8596,8 @@ void GDALRegister_GTiff()
         if (bHasDEFLATE)
             strcat( szCreateOptions, ""
 "   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>");
+        strcat( szCreateOptions, ""
+"   <Option name='LZMA_PRESET' type='int' description='LZMA compression level 0(fast)-9(slow)' default='6'/>");
         strcat( szCreateOptions, ""
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
 "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
