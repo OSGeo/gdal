@@ -38,7 +38,8 @@ OBJ	= \
 	tif_version.o \
 	tif_warning.o \
 	tif_write.o \
-	tif_zip.o
+	tif_zip.o \
+	tif_lzma.o
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
@@ -65,6 +66,10 @@ endif
 ifeq ($(JPEG12_ENABLED),yes)
 ALL_C_FLAGS	:=      $(ALL_C_FLAGS) -DJPEG_DUAL_MODE_8_12
 EXTRA_DEP	=	libjpeg12src	
+endif
+
+ifeq ($(LIBLZMA_SETTING),yes)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DLZMA_SUPPORT
 endif
 
 default:	$(EXTRA_DEP) $(OBJ:.o=.$(OBJ_EXT))

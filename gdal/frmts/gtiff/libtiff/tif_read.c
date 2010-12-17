@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.31 2010-04-02 19:26:22 fwarmerdam Exp $ */
+/* $Id: tif_read.c,v 1.32 2010-12-15 00:43:25 faxguy Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -43,7 +43,7 @@ TIFFReadRawStrip1(TIFF* tif, uint32 strip, void* buf, tmsize_t size,const char* 
 #define NOTILE ((uint32)(-1))         /* undefined state */
 
 static int
-TIFFFillStripPartial( TIFF *tif, int strip, int read_ahead, int restart )
+TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
 {
 	static const char module[] = "TIFFFillStripPartial";
 	register TIFFDirectory *td = &tif->tif_dir;
@@ -168,7 +168,8 @@ TIFFSeek(TIFF* tif, uint32 row, uint16 sample )
 {
 	register TIFFDirectory *td = &tif->tif_dir;
 	uint32 strip;
-        int    whole_strip, read_ahead = 0;
+        int    whole_strip;
+	tmsize_t read_ahead = 0;
 
         /*
         ** Establish what strip we are working from.

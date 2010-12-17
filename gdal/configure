@@ -863,6 +863,7 @@ PG_LIB
 PG_INC
 HAVE_PG
 PG_CONFIG
+LIBLZMA_SETTING
 LIBZ_SETTING
 HAVE_HIDE_INTERNAL_SYMBOLS
 HAVE_GCC_ATOMIC_BUILTINS
@@ -968,6 +969,7 @@ with_with_hide_internal_symbols
 with_local
 with_threads
 with_libz
+with_liblzma
 with_pg
 with_grass
 with_libgrass
@@ -1683,6 +1685,7 @@ Optional Packages:
   --with-local=dir      Include /usr/local or other local tree for INCLUDE/LIBS
   --with-threads=ARG    Include thread safe support (ARG=yes(default), no or linkopt)
   --with-libz=ARG       Include libz support (ARG=internal or libz directory)
+  --with-liblzma=ARG       Include liblzma support (ARG=yes/no)
   --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=path to
                           pg_config)
   --with-grass=ARG      Include GRASS support (GRASS 5.7+, ARG=GRASS install tree dir)
@@ -5935,13 +5938,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5938: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5941: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5941: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5944: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5944: output\"" >&5)
+  (eval echo "\"\$as_me:5947: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -7143,7 +7146,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 7146 "configure"' > conftest.$ac_ext
+  echo '#line 7149 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -9069,11 +9072,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9072: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9075: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9076: \$? = $ac_status" >&5
+   echo "$as_me:9079: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9408,11 +9411,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9411: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9414: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9415: \$? = $ac_status" >&5
+   echo "$as_me:9418: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9513,11 +9516,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9516: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9519: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9520: \$? = $ac_status" >&5
+   echo "$as_me:9523: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9568,11 +9571,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9571: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9574: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9575: \$? = $ac_status" >&5
+   echo "$as_me:9578: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11951,7 +11954,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11954 "configure"
+#line 11957 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12047,7 +12050,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12050 "configure"
+#line 12053 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14003,11 +14006,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14006: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14009: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14010: \$? = $ac_status" >&5
+   echo "$as_me:14013: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14102,11 +14105,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14105: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14108: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14109: \$? = $ac_status" >&5
+   echo "$as_me:14112: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14154,11 +14157,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14157: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14160: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14161: \$? = $ac_status" >&5
+   echo "$as_me:14164: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -16865,6 +16868,68 @@ $as_echo "using internal libz code." >&6; }
 fi
 
 LIBZ_SETTING=$LIBZ_SETTING
+
+
+
+
+# Check whether --with-liblzma was given.
+if test "${with_liblzma+set}" = set; then :
+  withval=$with_liblzma;
+fi
+
+
+if test "$with_liblzma" = "yes" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for lzma_code in -llzma" >&5
+$as_echo_n "checking for lzma_code in -llzma... " >&6; }
+if test "${ac_cv_lib_lzma_lzma_code+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-llzma  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char lzma_code ();
+int
+main ()
+{
+return lzma_code ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_lzma_lzma_code=yes
+else
+  ac_cv_lib_lzma_lzma_code=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lzma_lzma_code" >&5
+$as_echo "$ac_cv_lib_lzma_lzma_code" >&6; }
+if test "x$ac_cv_lib_lzma_lzma_code" = x""yes; then :
+  LIBLZMA_SETTING=yes
+else
+  LIBLZMA_SETTING=no
+fi
+
+
+  if test "$LIBLZMA_SETTING" = "yes" ; then
+    LIBS="-llzma $LIBS"
+  fi
+else
+    LIBLZMA_SETTING=no
+fi
+
+LIBLZMA_SETTING=$LIBLZMA_SETTING
 
 
 
@@ -26764,6 +26829,9 @@ echo ""
 
 
 echo "  LIBZ support:              ${LIBZ_SETTING}"
+
+
+echo "  LIBLZMA support:           ${LIBLZMA_SETTING}"
 
 
 echo "  GRASS support:             ${GRASS_SETTING}"
