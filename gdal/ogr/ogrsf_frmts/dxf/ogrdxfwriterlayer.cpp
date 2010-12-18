@@ -357,6 +357,8 @@ CPLString OGRDXFWriterLayer::TextEscape( const char *pszInput )
         else
             osResult += (char) panInput[i];
     }
+
+    CPLFree(panInput);
     
     return osResult;
 }
