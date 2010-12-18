@@ -97,9 +97,7 @@ def basic_test_6():
 ###############################################################################
 # Test fix for #3077 (check that errors are cleared when using UseExceptions())
 
-def basic_test_7():
-    old_use_exceptions_status = gdal.GetUseExceptions()
-    gdal.UseExceptions()
+def basic_test_7_internal():
     try:
         ds = gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
         gdaltest.post_reason('opening should have thrown an exception')
@@ -124,9 +122,13 @@ def basic_test_7():
 
         return 'success'
 
-    finally:
-        if old_use_exceptions_status == 0:
-            gdal.DontUseExceptions()
+def basic_test_7():
+    old_use_exceptions_status = gdal.GetUseExceptions()
+    gdal.UseExceptions()
+    ret = basic_test_7_internal()
+    if old_use_exceptions_status == 0:
+        gdal.DontUseExceptions()
+    return ret
 
 
 gdaltest_list = [ basic_test_1,
