@@ -467,6 +467,39 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
     oMDMD.XMLInit( psTree, TRUE );
 
 /* -------------------------------------------------------------------- */
+/*      Try loading ESRI xml encoded projection                         */
+/* -------------------------------------------------------------------- */
+    if (psPam->pszProjection == NULL)
+    {
+        char** papszXML = oMDMD.GetMetadata( "xml:ESRI" );
+        if (CSLCount(papszXML) == 1)
+        {
+            CPLXMLNode *psValueAsXML = CPLParseXMLString( papszXML[0] );
+            if (psValueAsXML)
+            {
+                const char* pszESRI_WKT = CPLGetXMLValue(psValueAsXML,
+                                  "=GeodataXform.SpatialReference.WKT", NULL);
+                if (pszESRI_WKT)
+                {
+                    OGRSpatialReference* poSRS = new OGRSpatialReference(NULL);
+                    char* pszTmp = (char*)pszESRI_WKT;
+                    if (poSRS->importFromESRI(&pszTmp) == OGRERR_NONE)
+                    {
+                        char* pszWKT = NULL;
+                        if (poSRS->exportToWkt(&pszWKT) == OGRERR_NONE)
+                        {
+                            psPam->pszProjection = CPLStrdup(pszWKT);
+                        }
+                        CPLFree(pszWKT);
+                    }
+                    delete poSRS;
+                }
+                CPLDestroyXMLNode(psValueAsXML);
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Process bands.                                                  */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psBandTree;
