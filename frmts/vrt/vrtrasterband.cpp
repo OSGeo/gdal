@@ -684,6 +684,20 @@ CPLErr VRTRasterBand::SetNoDataValue( double dfNewValue )
 }
 
 /************************************************************************/
+/*                         UnsetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr VRTRasterBand::UnsetNoDataValue()
+{
+    bNoDataValueSet = FALSE;
+    dfNoDataValue = -10000.0;
+
+    ((VRTDataset *)poDS)->SetNeedsFlush();
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 

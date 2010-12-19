@@ -301,6 +301,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     void SetMaskBand(VRTRasterBand* poMaskBand);
 
     void SetIsMaskBand();
+
+    CPLErr UnsetNoDataValue();
 };
 
 /************************************************************************/

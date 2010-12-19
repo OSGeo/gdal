@@ -340,7 +340,9 @@ Assign/override the georeferenced bounds of the output file.  This assigns
 georeferenced bounds to the output file, ignoring what would have been derived 
 from the source file.</dd>
 <dt> <b>-a_nodata</b> <i>value</i>:</dt><dd>
-Assign a specified nodata value to output bands.</dd>
+Assign a specified nodata value to output bands. Starting with GDAL 1.8.0, can
+be set to <i>none</i> to avoid setting a nodata value to the output file if
+one exists for the source file</dd>
 <dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
 value to set on the output dataset if possible.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the

@@ -121,6 +121,7 @@ static int ProxyMain( int argc, char ** argv )
     int                 bCopySubDatasets = FALSE;
     double              adfULLR[4] = { 0,0,0,0 };
     int                 bSetNoData = FALSE;
+    int                 bUnsetNoData = FALSE;
     double		dfNoDataReal = 0.0;
     int                 nRGBExpand = 0;
     int                 bParsedMaskArgument = FALSE;
@@ -314,8 +315,15 @@ static int ProxyMain( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-a_nodata") && i < argc - 1 )
         {
-            bSetNoData = TRUE;
-            dfNoDataReal = CPLAtofM(argv[i+1]);
+            if (EQUAL(argv[i+1], "none"))
+            {
+                bUnsetNoData = TRUE;
+            }
+            else
+            {
+                bSetNoData = TRUE;
+                dfNoDataReal = CPLAtofM(argv[i+1]);
+            }
             i += 1;
         }   
 
@@ -707,7 +715,7 @@ static int ProxyMain( int argc, char ** argv )
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
         && pszOXSize == NULL && pszOYSize == NULL 
         && nGCPCount == 0 && !bGotBounds
-        && pszOutputSRS == NULL && !bSetNoData
+        && pszOutputSRS == NULL && !bSetNoData && !bUnsetNoData
         && nRGBExpand == 0)
     {
         
@@ -1088,6 +1096,10 @@ static int ProxyMain( int argc, char ** argv )
             }
             
             poVRTBand->SetNoDataValue( dfVal );
+        }
+        else if ( bUnsetNoData )
+        {
+            poVRTBand->UnsetNoDataValue();
         }
         
         if (eMaskMode == MASK_AUTO &&
