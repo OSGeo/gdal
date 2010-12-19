@@ -982,6 +982,11 @@ char **GDALPamDataset::GetFileList()
         papszFileList = CSLAddString( papszFileList, psPam->pszPamFilename );
     }
 
+    if( psPam && psPam->osAuxFilename.size() > 0 &&
+        CSLFindString( papszFileList, psPam->osAuxFilename ) == -1 )
+    {
+        papszFileList = CSLAddString( papszFileList, psPam->osAuxFilename );
+    }
     return papszFileList;
 }
 
@@ -1312,6 +1317,8 @@ CPLErr GDALPamDataset::TryLoadAux()
 
     if( poAuxDS == NULL )
         return CE_None;
+
+    psPam->osAuxFilename = poAuxDS->GetDescription();
 
 /* -------------------------------------------------------------------- */
 /*      Do we have an SRS on the aux file?                              */
