@@ -483,7 +483,8 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
                 {
                     OGRSpatialReference* poSRS = new OGRSpatialReference(NULL);
                     char* pszTmp = (char*)pszESRI_WKT;
-                    if (poSRS->importFromESRI(&pszTmp) == OGRERR_NONE)
+                    if (poSRS->importFromWkt(&pszTmp) == OGRERR_NONE &&
+                        poSRS->morphFromESRI() == OGRERR_NONE)
                     {
                         char* pszWKT = NULL;
                         if (poSRS->exportToWkt(&pszWKT) == OGRERR_NONE)
