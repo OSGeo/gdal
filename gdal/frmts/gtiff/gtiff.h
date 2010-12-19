@@ -60,4 +60,12 @@ int     GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableN
 #define PREDICTOR_NONE 1
 #endif
 
+#if !defined(COMPRESSION_LZMA)
+#define     COMPRESSION_LZMA        34925   /* LZMA2 */
+#endif
+
+#if !defined(TIFFTAG_LZMAPRESET)
+#define TIFFTAG_LZMAPRESET      65562   /* LZMA2 preset (compression level) */
+#endif
+
 #endif // GTIFF_H_INCLUDED
