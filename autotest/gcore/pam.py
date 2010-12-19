@@ -242,6 +242,42 @@ def pam_8():
     return 'success'
 
 ###############################################################################
+# Test that we can retrieve projection from xml:ESRI domain
+#
+def pam_9():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pam_9.tif', 1, 1, 1)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/pam_9.tif.aux.xml', 'wb')
+    content = """<PAMDataset>
+  <Metadata domain="xml:ESRI" format="xml">
+    <GeodataXform xsi:type="typens:IdentityXform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/9.2">
+      <SpatialReference xsi:type="typens:ProjectedCoordinateSystem">
+        <WKT>PROJCS[&quot;NAD_1983_UTM_Zone_14N&quot;,GEOGCS[&quot;GCS_North_American_1983&quot;,DATUM[&quot;D_North_American_1983&quot;,SPHEROID[&quot;GRS_1980&quot;,6378137.0,298.257222101]],PRIMEM[&quot;Greenwich&quot;,0.0],UNIT[&quot;Degree&quot;,0.0174532925199433]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;false_easting&quot;,500000.0],PARAMETER[&quot;false_northing&quot;,0.0],PARAMETER[&quot;central_meridian&quot;,-99.0],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;latitude_of_origin&quot;,0.0],UNIT[&quot;Meter&quot;,1.0]]</WKT>
+        <HighPrecision>true</HighPrecision>
+      </SpatialReference>
+    </GeodataXform>
+  </Metadata>
+</PAMDataset>"""
+    gdal.VSIFWriteL(content, 1, len(content), f)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open('/vsimem/pam_9.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/pam_9.tif')
+
+    expected_wkt = """PROJCS["NAD_1983_UTM_Zone_14N",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["false_easting",500000.0],PARAMETER["false_northing",0.0],PARAMETER["central_meridian",-99.0],PARAMETER["scale_factor",0.9996],PARAMETER["latitude_of_origin",0.0],UNIT["Meter",1.0]]"""
+
+    if wkt != expected_wkt:
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def pam_cleanup():
@@ -261,6 +297,7 @@ gdaltest_list = [
     pam_6,
     pam_7,
     pam_8,
+    pam_9,
     pam_cleanup ]
 
 if __name__ == '__main__':
