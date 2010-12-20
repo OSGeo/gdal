@@ -287,7 +287,7 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
     }
     else
     {
-        int index;
+        int index = 0;
         for( ; i < pGrd->iNumColorInflections; i++ )
         {
             if( pGrd->fZMax < pGrd->stInflection[i].zVal )

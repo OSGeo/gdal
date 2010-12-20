@@ -797,10 +797,10 @@ CPLErr EHdrDataset::ReadSTX()
 /*      Read .stx file.                                                 */
 /* -------------------------------------------------------------------- */
     VSILFILE	*fp;
-    if ((fp = VSIFOpenL( osSTXFilename, "rt" )))
+    if ((fp = VSIFOpenL( osSTXFilename, "rt" )) != NULL)
     {
       const char *	pszLine;
-      while( (pszLine = CPLReadLineL( fp )) )
+      while( (pszLine = CPLReadLineL( fp )) != NULL )
       {
           char	**papszTokens;
           papszTokens = CSLTokenizeStringComplex( pszLine, " \t", TRUE, FALSE );
@@ -1017,7 +1017,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     int                 bHasMax = FALSE;
     double              dfMin = 0, dfMax = 0;
     
-    while( (pszLine = CPLReadLineL( fp )) )    
+    while( (pszLine = CPLReadLineL( fp )) != NULL )    
     {
         char	**papszTokens;
 
@@ -1445,7 +1445,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             int bSouth = FALSE;
             int utmZone = 0;
 
-            while( (pszLine = CPLReadLineL( fp )) )
+            while( (pszLine = CPLReadLineL( fp )) != NULL )
             {
                 if (strncmp(pszLine, "PROJ_ID", strlen("PROJ_ID")) == 0 &&
                     strstr(pszLine, "UTM"))

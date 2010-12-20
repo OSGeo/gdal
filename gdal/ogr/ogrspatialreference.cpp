@@ -1741,7 +1741,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         if( EQUALN(pszDefinition,"EPSG:",5) )
             eStatus = importFromEPSG( atoi(pszDefinition+5) );
         
-        else if( EQUALN(pszDefinition,"EPSGA:",6) )
+        else /* if( EQUALN(pszDefinition,"EPSGA:",6) ) */
             eStatus = importFromEPSGA( atoi(pszDefinition+6) );
         
         // Do we want to turn this into a compound definition

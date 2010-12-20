@@ -2163,7 +2163,6 @@ int main( int argc, char ** argv )
     {
         fprintf(stderr, "Not enough arguments\n");
         Usage();
-        exit( 1 );
     }
 
     if( EQUAL(argv[1], "--utility_version") || EQUAL(argv[1], "--utility-version") )
@@ -2204,7 +2203,6 @@ int main( int argc, char ** argv )
     {
         fprintf(stderr, "Missing valid sub-utility mention\n");
         Usage();
-        exit( 1 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2310,8 +2308,6 @@ int main( int argc, char ** argv )
             fprintf( stderr, "Option %s incomplete, or not recognised.\n\n", 
                     argv[i] );
             Usage();
-            GDALDestroyDriverManager();
-            exit( 2 );
         }
         else if( pszSrcFilename == NULL )
         {

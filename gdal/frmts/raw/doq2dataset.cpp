@@ -163,7 +163,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     /* read and discard the first line */
     pszLine = CPLReadLine( poOpenInfo->fp );
 
-    while( (pszLine = CPLReadLine( poOpenInfo->fp )) )
+    while( (pszLine = CPLReadLine( poOpenInfo->fp )) != NULL )
     {
 	char    **papszTokens;
 

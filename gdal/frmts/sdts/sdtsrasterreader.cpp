@@ -345,7 +345,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 
 {
-    DDFRecord   *poRecord;
+    DDFRecord   *poRecord = NULL;
     int         nBytesPerValue;
     int         iTry;
     

@@ -3182,7 +3182,9 @@ int HFAReadXFormStack( HFAHandle hHFA,
     {
         int bSuccess = FALSE;
         Efga_Polynomial sForward, sReverse;
-
+        memset( &sForward, 0, sizeof(sForward) );
+        memset( &sReverse, 0, sizeof(sReverse) );
+        
         if( EQUAL(poXForm->GetType(),"Efga_Polynomial") )
         {
             bSuccess = 
@@ -3200,8 +3202,6 @@ int HFAReadXFormStack( HFAHandle hHFA,
                 adfGT[5] = sForward.polycoefmtx[3];
 
                 bSuccess = HFAInvGeoTransform( adfGT, adfInvGT );
-
-                memset( &sReverse, 0, sizeof(sReverse) );
 
                 sReverse.order = sForward.order;
                 sReverse.polycoefvector[0] = adfInvGT[0];

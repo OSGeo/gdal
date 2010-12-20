@@ -840,8 +840,6 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
                   OGRGeometryTypeToName(eGType) );
         return OGRERR_FAILURE;
     }
-
-    return OGRERR_NONE;
 }
 
 /************************************************************************/

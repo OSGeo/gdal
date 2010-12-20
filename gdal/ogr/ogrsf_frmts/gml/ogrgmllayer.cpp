@@ -168,7 +168,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /*       the poDS then the fids from the poDS are ignored and are       */
 /*       assigned serially thereafter                                   */
 /* -------------------------------------------------------------------- */
-        int nFID;
+        int nFID = -1;
         const char * pszGML_FID = poGMLFeature->GetFID();
         if( bInvalidFIDFound )
         {

@@ -33,7 +33,7 @@ array_list_new(array_list_free_fn *free_fn)
   arr->size = ARRAY_LIST_DEFAULT_SIZE;
   arr->length = 0;
   arr->free_fn = free_fn;
-  if(!(arr->array = (void**)calloc(sizeof(void*), arr->size))) {
+  if((arr->array = (void**)calloc(sizeof(void*), arr->size)) == NULL) {
     free(arr);
     return NULL;
   }
@@ -64,7 +64,7 @@ static int array_list_expand_internal(struct array_list *arr, int max)
 
   if(max < arr->size) return 0;
   new_size = json_max(arr->size << 1, max);
-  if(!(t = realloc(arr->array, new_size*sizeof(void*)))) return -1;
+  if((t = realloc(arr->array, new_size*sizeof(void*))) == NULL) return -1;
   arr->array = (void**)t;
   (void)memset(arr->array + arr->size, 0, (new_size-arr->size)*sizeof(void*));
   arr->size = new_size;
