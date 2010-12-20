@@ -132,7 +132,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
         return FALSE;
     }
 
-    char *pszErrMsg;
+    char *pszErrMsg = NULL;
 
     const char* pszSqliteSync = CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", NULL);
     if (pszSqliteSync != NULL)

@@ -1995,6 +1995,7 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
 /*               FixPolygonCoordinatesAtDateLine()                      */
 /************************************************************************/
 
+#ifdef HAVE_GEOS
 static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly)
 {
     int i, iPart;
@@ -2044,6 +2045,7 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly)
         }
     }
 }
+#endif
 
 /************************************************************************/
 /*                            Sub360ToLon()                             */

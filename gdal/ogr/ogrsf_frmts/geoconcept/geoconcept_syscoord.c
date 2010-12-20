@@ -253,7 +253,7 @@ static GCSpheroidInfo gk_asSpheroidList[]=
 /* -------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------- */
-static int GCSRSAPI_CALL _areCompatibleSpheroids_GCSRS ( id1, id2 )
+static int GCSRSAPI_CALL _areCompatibleSpheroids_GCSRS ( int id1, int id2 )
 {
   if( id1==id2 ) return TRUE;
  
@@ -278,7 +278,7 @@ static int GCSRSAPI_CALL _areCompatibleSpheroids_GCSRS ( id1, id2 )
 }/* _areCompatibleSpheroids_GCSRS */
 
 /* -------------------------------------------------------------------- */
-static int GCSRSAPI_CALL _areCompatibleDatums_GCSRS ( id1, id2 )
+static int GCSRSAPI_CALL _areCompatibleDatums_GCSRS ( int id1, int id2 )
 {
   if( id1==id2 ) return TRUE;
  

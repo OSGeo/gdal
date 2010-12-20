@@ -416,7 +416,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
     if( pszKNP != NULL )
     {
         const char *pszPR = strstr(pszKNP,"PR=");
-        const char *pszValue, *pszEnd;
+        const char *pszValue, *pszEnd = NULL;
         CPLString osPP;
         
         // Capture the PP string.

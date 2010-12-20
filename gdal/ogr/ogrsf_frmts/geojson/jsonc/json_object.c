@@ -195,7 +195,7 @@ const char* json_object_to_json_string(struct json_object *jso)
 {
   if(!jso) return "null";
   if(!jso->_pb) {
-    if(!(jso->_pb = printbuf_new())) return NULL;
+    if((jso->_pb = printbuf_new()) == NULL) return NULL;
   } else {
     printbuf_reset(jso->_pb);
   }
@@ -211,6 +211,7 @@ static int json_object_object_to_json_string(struct json_object* jso,
 {
   int i=0;
   struct json_object_iter iter;
+  iter.key = NULL;
   sprintbuf(pb, "{");
 
   /* CAW: scope operator to make ANSI correctness */

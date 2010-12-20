@@ -3754,8 +3754,8 @@ static void NITFPossibleIGEOLOReorientation( NITFImage *psImage )
         double dfXPivot = (dfXMax + dfXMin) * 0.5;
         double dfYPivot = (dfYMax + dfYMin) * 0.5;
 
-        double dfNewULX, dfNewULY, dfNewURX, dfNewURY, 
-            dfNewLLX, dfNewLLY, dfNewLRX, dfNewLRY;
+        double dfNewULX = 0., dfNewULY = 0., dfNewURX = 0., dfNewURY = 0., 
+            dfNewLLX = 0., dfNewLLY = 0., dfNewLRX = 0., dfNewLRY = 0.;
         int bGotUL = FALSE, bGotUR = FALSE, 
             bGotLL = FALSE, bGotLR = FALSE;
         int iCoord, bChange = FALSE;

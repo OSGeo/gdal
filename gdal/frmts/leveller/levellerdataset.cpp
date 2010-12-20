@@ -1074,7 +1074,6 @@ bool LevellerDataset::locate_data(vsi_l_offset& offset, size_t& len, VSILFILE* f
                 return false;
         }
     }
-    return false;
 }
 
 /************************************************************************/

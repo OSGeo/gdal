@@ -380,7 +380,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     char            **papszHDR			= NULL;
     
 	
-    while( (pszLine = CPLReadLineL( fp )) )    
+    while( (pszLine = CPLReadLineL( fp )) != NULL )    
     {
         char	**papszTokens;
 

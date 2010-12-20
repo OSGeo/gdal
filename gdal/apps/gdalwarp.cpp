@@ -428,7 +428,6 @@ int main( int argc, char ** argv )
             {
                 printf( "Wrong value for -tr parameters\n");
                 Usage();
-                exit( 2 );
             }
             bCreateOutput = TRUE;
         }
@@ -454,7 +453,6 @@ int main( int argc, char ** argv )
             {
                 printf( "Unknown output pixel type: %s\n", argv[i+1] );
                 Usage();
-                exit( 2 );
             }
             i++;
             bCreateOutput = TRUE;
@@ -477,7 +475,6 @@ int main( int argc, char ** argv )
             {
                 printf( "Unknown output pixel type: %s\n", argv[i+1] );
                 Usage();
-                exit( 2 );
             }
             i++;
         }
@@ -571,14 +568,12 @@ int main( int argc, char ** argv )
     {
         printf( "-tr and -ts options cannot be used at the same time\n");
         Usage();
-        exit( 2 );
     }
     
     if (bTargetAlignedPixels && dfXRes == 0 && dfYRes == 0)
     {
         printf( "-tap option cannot be used without using -tr\n");
         Usage();
-        exit( 2 );
     }
 
 /* -------------------------------------------------------------------- */
