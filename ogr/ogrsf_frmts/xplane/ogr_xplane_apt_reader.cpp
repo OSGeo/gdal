@@ -191,7 +191,7 @@ int OGRXPlaneAptReader::IsRecognizedVersion( const char* pszVersionString)
 
 void OGRXPlaneAptReader::Read()
 {
-    const char* pszLine;
+    const char* pszLine = NULL;
 
     if (!bResumeLine)
     {
@@ -1012,7 +1012,7 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
     double dfLat, dfLon;
     double dfFirstLat = 0., dfFirstLon = 0.;
     double dfLastLat = 0., dfLastLon = 0.;
-    double dfLatBezier, dfLonBezier;
+    double dfLatBezier = 0., dfLonBezier = 0.;
     double dfFirstLatBezier = 0., dfFirstLonBezier = 0.;
     double dfLastLatBezier = 0., dfLastLonBezier = 0.;
     int bIsFirst = TRUE;
@@ -1342,7 +1342,7 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
     double dfLat, dfLon;
     double dfFirstLat = 0., dfFirstLon = 0.;
     double dfLastLat = 0., dfLastLon = 0.;
-    double dfLatBezier, dfLonBezier;
+    double dfLatBezier = 0., dfLonBezier = 0.;
     double dfFirstLatBezier = 0., dfFirstLonBezier = 0.;
     double dfLastLatBezier = 0., dfLastLonBezier = 0.;
     int bIsFirst = TRUE;

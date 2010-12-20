@@ -1762,7 +1762,7 @@ static OGRErr SetEPSGCompdCS( OGRSpatialReference * poSRS, int nCCSCode )
 //    papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
 //                                     szSearchKey, CC_Integer );
 
-    if( papszRecord == NULL )
+    //if( papszRecord == NULL )
     {
         pszFilename = CSVFilename( "compdcs.csv" );
         papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",

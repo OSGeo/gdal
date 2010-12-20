@@ -379,8 +379,6 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode *** ppapsRoot,
     //return the tree
         return (*ppapsRoot)[nItems];
     }
-
-    return NULL;
 }
 
 /************************************************************************/

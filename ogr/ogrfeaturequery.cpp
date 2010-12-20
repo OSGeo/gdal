@@ -284,7 +284,7 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
 /* -------------------------------------------------------------------- */
     if (psExpr->nOperation == SWQ_IN)
     {
-        int nFIDCount, nLength;
+        int nFIDCount = 0, nLength;
         long *panFIDs = NULL;
         int iIN;
 

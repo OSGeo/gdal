@@ -1087,7 +1087,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      If the PROJCS name is unset, use the PROJECTION name in         */
 /*      place of unknown, or unnamed.  At the request of Peng Gao.      */
 /* -------------------------------------------------------------------- */
-        if( (poProjCS = GetAttrNode( "PROJCS" )) )
+        if( (poProjCS = GetAttrNode( "PROJCS" )) != NULL )
             poProjCSNodeChild = poProjCS->GetChild(0);
 
         if( poProjCSNodeChild )

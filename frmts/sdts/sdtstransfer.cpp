@@ -619,7 +619,7 @@ int SDTSTransfer::GetBounds( double *pdfMinX, double *pdfMinY,
                 continue;
             
             poLayer->Rewind();
-            while( (poPoint = (SDTSRawPoint*) poLayer->GetNextFeature()) )
+            while( (poPoint = (SDTSRawPoint*) poLayer->GetNextFeature()) != NULL )
             {
                 if( bFirst )
                 {

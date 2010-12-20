@@ -1122,7 +1122,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
              && nCoordinateCount < MAX_GCP )
         {
             int     bReadOk = FALSE;
-            double  dfLon, dfLat;
+            double  dfLon = 0., dfLat = 0.;
 
             if ( !EQUAL(papszTok[6], "")
                  && !EQUAL(papszTok[7], "")

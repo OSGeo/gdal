@@ -144,8 +144,6 @@ int main( int argc, char ** argv )
             {
                 printf( "Unknown output pixel type: %s\n", argv[i+1] );
                 Usage();
-                GDALDestroyDriverManager();
-                exit( 2 );
             }
             i++;
         }
@@ -193,8 +191,6 @@ int main( int argc, char ** argv )
             printf( "Option %s incomplete, or not recognised.\n\n", 
                     argv[i] );
             Usage();
-            GDALDestroyDriverManager();
-            exit( 2 );
         }
         else if( pszSource == NULL )
         {
@@ -209,16 +205,12 @@ int main( int argc, char ** argv )
         {
             printf( "Too many command options.\n\n" );
             Usage();
-            GDALDestroyDriverManager();
-            exit( 2 );
         }
     }
 
     if( pszSource == NULL )
     {
         Usage();
-        GDALDestroyDriverManager();
-        exit( 10 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -263,12 +255,6 @@ int main( int argc, char ** argv )
         }
         printf( "\n" );
         Usage();
-        
-        GDALClose( hDataset );
-        GDALDestroyDriverManager();
-        CSLDestroy( argv );
-        CSLDestroy( papszCreateOptions );
-        exit( 1 );
     }
 
 /* -------------------------------------------------------------------- */

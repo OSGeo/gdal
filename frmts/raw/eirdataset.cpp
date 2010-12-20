@@ -304,7 +304,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osRasterFilename = CPLFormCIFilename( osPath, osName, "" );
     
     // parse the header file
-    while( !bDone && (pszLine = CPLReadLineL( fp )) )
+    while( !bDone && (pszLine = CPLReadLineL( fp )) != NULL )
     {
         char    **papszTokens;
 
