@@ -291,7 +291,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Setup coordinate transformation, if required                    */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReferenceH hSrcSRS, hTrgSRS;
+    OGRSpatialReferenceH hSrcSRS = NULL, hTrgSRS = NULL;
     OGRCoordinateTransformationH hCT = NULL;
     if( pszSourceSRS != NULL && !EQUAL(pszSourceSRS,"-geoloc") )
     {

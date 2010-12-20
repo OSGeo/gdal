@@ -995,7 +995,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Try opening the output datasource as an existing, writable      */
 /* -------------------------------------------------------------------- */
-    OGRDataSource       *poODS;
+    OGRDataSource       *poODS = NULL;
     OGRSFDriver          *poDriver = NULL;
 
     if( bUpdate )

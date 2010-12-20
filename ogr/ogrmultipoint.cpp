@@ -359,7 +359,7 @@ OGRErr OGRMultiPoint::importFromWkt_Bracketed( char ** ppszInput, int bHasM, int
     OGRRawPoint         *paoPoints = NULL;
     double              *padfZ = NULL;
 
-    while( (pszInput = OGRWktReadToken( pszInput, szToken ))
+    while( (pszInput = OGRWktReadToken( pszInput, szToken )) != NULL
            && (EQUAL(szToken,"(") || EQUAL(szToken,",")) )
     {
         OGRGeometry     *poGeom;
