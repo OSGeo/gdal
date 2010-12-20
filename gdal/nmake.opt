@@ -406,6 +406,10 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #POPPLER_HAS_OPTCONTENT = YES
 #POPPLER_LIBS = e:/kde/lib/poppler.lib e:/kde/lib/freetype.lib e:/kde/lib/liblcms-1.lib advapi32.lib gdi32.lib
 
+# Uncomment for LZMA TIFF support
+#LZMA_CFLAGS = -IC:/gdal_trunk/xz-5.0.0-windows/include
+#LZMA_LIBS = C:/gdal_trunk/xz-5.0.0-windows/bin_i486/liblzma.lib
+
 # Any extra libraries needed on this platform?
 ADD_LIBS	= 
 
@@ -525,7 +529,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
-	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS)
+	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS) $(LZMA_LIBS)
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
