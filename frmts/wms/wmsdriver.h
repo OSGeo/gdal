@@ -230,6 +230,7 @@ protected:
     int m_http_max_conn;
     int m_http_timeout;
     int m_clamp_requests;
+    int m_unsafeSsl;
     CPLString m_osUserAgent;
 };
 

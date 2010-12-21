@@ -102,6 +102,11 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
         psRequest->m_headers = curl_slist_append(psRequest->m_headers, headers);
         curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER, psRequest->m_headers);
     }
+    
+    if (CSLFetchBoolean(const_cast<char **>(psRequest->papszOptions), "UNSAFESSL", 0)) {
+        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    }
 
     /* Enable following redirections.  Requires libcurl 7.10.1 at least */
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_FOLLOWLOCATION, 1);

@@ -82,6 +82,9 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
         osUserAgentOptStr += m_parent_dataset->m_osUserAgent;
         http_request_opts = CSLAddString(http_request_opts, osUserAgentOptStr.c_str());
     }
+    if (m_parent_dataset->m_unsafeSsl >= 1) {
+        http_request_opts = CSLAddString(http_request_opts, "UNSAFESSL=1");
+    }
 
     for (int iy = by0; iy <= by1; ++iy) {
         for (int ix = bx0; ix <= bx1; ++ix) {
