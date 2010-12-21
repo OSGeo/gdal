@@ -36,6 +36,7 @@ GDALWMSDataset::GDALWMSDataset() {
     m_hint.m_valid = false;
     m_data_type = GDT_Byte;
     m_clamp_requests = true;
+    m_unsafeSsl = false;
 }
 
 GDALWMSDataset::~GDALWMSDataset() {
@@ -321,6 +322,15 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                 scale *= 0.5;
             }
         }
+    }
+    if (ret == CE_None) {
+    	const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
+    	if (v == -1) {
+	    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
+	    ret = CE_Failure;
+	} else {
+	    m_unsafeSsl = v;
+	}
     }
 
     if (ret == CE_None) {
