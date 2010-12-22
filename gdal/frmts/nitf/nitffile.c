@@ -1546,15 +1546,24 @@ void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
 
 {
     char szWork[400];
+    char* pszWork;
+
+    if (nLength >= sizeof(szWork) - 1)
+        pszWork = (char*)CPLMalloc(nLength + 1);
+    else
+        pszWork = szWork;
 
     /* trim white space */
     while( nLength > 0 && pachHeader[nStart + nLength - 1] == ' ' )
         nLength--;
 
-    memcpy( szWork, pachHeader + nStart, nLength );
-    szWork[nLength] = '\0';
+    memcpy( pszWork, pachHeader + nStart, nLength );
+    pszWork[nLength] = '\0';
 
-    *ppapszMetadata = CSLSetNameValue( *ppapszMetadata, pszName, szWork );
+    *ppapszMetadata = CSLSetNameValue( *ppapszMetadata, pszName, pszWork );
+
+    if (szWork != pszWork)
+        CPLFree(pszWork);
 }
                           
 /************************************************************************/
