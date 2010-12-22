@@ -463,6 +463,7 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
             nGeomCount = iGeom;
             CPLDebug("OGR", "Cannot add geometry of type (%d) to geometry of type (%d)",
                      poSubGeom->getGeometryType(), eGeometryType);
+            delete poSubGeom;
             return OGRERR_CORRUPT_DATA;
         }
 
