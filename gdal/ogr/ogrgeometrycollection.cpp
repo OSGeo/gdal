@@ -444,10 +444,11 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
         OGRErr  eErr;
+        OGRGeometry* poSubGeom = NULL;
 
         eErr = OGRGeometryFactory::
             createFromWkb( pabyData + nDataOffset, NULL,
-                           papoGeoms + iGeom, nSize );
+                           &poSubGeom, nSize );
 
         if( eErr != OGRERR_NONE )
         {
@@ -455,13 +456,26 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
             return eErr;
         }
 
+        if( (wkbFlatten(eGeometryType) == wkbMultiPoint && wkbFlatten(poSubGeom->getGeometryType()) != wkbPoint) ||
+            (wkbFlatten(eGeometryType) == wkbMultiLineString && wkbFlatten(poSubGeom->getGeometryType()) != wkbLineString) ||
+            (wkbFlatten(eGeometryType) == wkbMultiPolygon && wkbFlatten(poSubGeom->getGeometryType()) != wkbPolygon) )
+        {
+            nGeomCount = iGeom;
+            CPLDebug("OGR", "Cannot add geometry of type (%d) to geometry of type (%d)",
+                     poSubGeom->getGeometryType(), eGeometryType);
+            return OGRERR_CORRUPT_DATA;
+        }
+
+        papoGeoms[iGeom] = poSubGeom;
+
         if (papoGeoms[iGeom]->getCoordinateDimension() == 3)
             nCoordDimension = 3;
 
+        int nSubGeomWkbSize = papoGeoms[iGeom]->WkbSize();
         if( nSize != -1 )
-            nSize -= papoGeoms[iGeom]->WkbSize();
+            nSize -= nSubGeomWkbSize;
 
-        nDataOffset += papoGeoms[iGeom]->WkbSize();
+        nDataOffset += nSubGeomWkbSize;
     }
     
     return OGRERR_NONE;
