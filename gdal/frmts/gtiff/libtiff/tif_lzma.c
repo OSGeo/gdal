@@ -1,4 +1,4 @@
-/* $Id: tif_lzma.c,v 1.1 2010-12-14 12:53:00 dron Exp $ */
+/* $Id: tif_lzma.c,v 1.2 2010-12-23 13:07:38 dron Exp $ */
 
 /*
  * Copyright (c) 2010, Andrey Kiselev <dron@ak4719.spb.edu>
@@ -342,8 +342,10 @@ LZMACleanup(TIFF* tif)
 	tif->tif_tagmethods.vgetfield = sp->vgetparent;
 	tif->tif_tagmethods.vsetfield = sp->vsetparent;
 
-	lzma_end(&sp->stream);
-	sp->state = 0;
+	if (sp->state) {
+		lzma_end(&sp->stream);
+		sp->state = 0;
+	}
 	_TIFFfree(sp);
 	tif->tif_data = NULL;
 
@@ -353,13 +355,23 @@ LZMACleanup(TIFF* tif)
 static int
 LZMAVSetField(TIFF* tif, uint32 tag, va_list ap)
 {
+	static const char module[] = "LZMAVSetField";
 	LZMAState* sp = LState(tif);
 
 	switch (tag) {
 	case TIFFTAG_LZMAPRESET:
 		sp->preset = (int) va_arg(ap, int);
-		if ( sp->state & LSTATE_INIT_ENCODE )
-			lzma_lzma_preset(&sp->opt_lzma, sp->preset);
+		lzma_lzma_preset(&sp->opt_lzma, sp->preset);
+		if (sp->state & LSTATE_INIT_ENCODE) {
+			lzma_ret ret = lzma_stream_encoder(&sp->stream,
+							   sp->filters,
+							   sp->check);
+			if (ret != LZMA_OK) {
+				TIFFErrorExt(tif->tif_clientdata, module,
+					     "Liblzma error: %s",
+					     LZMAStrerror(ret));
+			}
+		}
 		return 1;
 	default:
 		return (*sp->vsetparent)(tif, tag, ap);
