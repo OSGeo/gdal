@@ -8596,7 +8596,8 @@ void GDALRegister_GTiff()
         if (bHasDEFLATE)
             strcat( szCreateOptions, ""
 "   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>");
-        strcat( szCreateOptions, ""
+        if (bHasLZMA)
+            strcat( szCreateOptions, ""
 "   <Option name='LZMA_PRESET' type='int' description='LZMA compression level 0(fast)-9(slow)' default='6'/>");
         strcat( szCreateOptions, ""
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
