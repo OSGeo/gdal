@@ -380,7 +380,6 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
 /*      geometry type is between 0 and 255 so we only have to fetch     */
 /*      one byte.                                                       */
 /* -------------------------------------------------------------------- */
-#ifdef DEBUG
     OGRwkbGeometryType eGeometryType;
 
     if( eByteOrder == wkbNDR )
@@ -392,12 +391,8 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
     }
 
-    if (! ( eGeometryType == wkbGeometryCollection
-               || eGeometryType == wkbMultiPolygon 
-               || eGeometryType == wkbMultiLineString 
-               || eGeometryType == wkbMultiPoint ))
+    if ( eGeometryType != wkbFlatten(getGeometryType()) )
         return OGRERR_CORRUPT_DATA;
-#endif    
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing Geoms.                                           */
@@ -456,13 +451,14 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
             return eErr;
         }
 
-        if( (wkbFlatten(eGeometryType) == wkbMultiPoint && wkbFlatten(poSubGeom->getGeometryType()) != wkbPoint) ||
-            (wkbFlatten(eGeometryType) == wkbMultiLineString && wkbFlatten(poSubGeom->getGeometryType()) != wkbLineString) ||
-            (wkbFlatten(eGeometryType) == wkbMultiPolygon && wkbFlatten(poSubGeom->getGeometryType()) != wkbPolygon) )
+        OGRwkbGeometryType eSubGeomType = wkbFlatten(poSubGeom->getGeometryType());
+        if( (eGeometryType == wkbMultiPoint && eSubGeomType != wkbPoint) ||
+            (eGeometryType == wkbMultiLineString && eSubGeomType != wkbLineString) ||
+            (eGeometryType == wkbMultiPolygon && eSubGeomType != wkbPolygon) )
         {
             nGeomCount = iGeom;
             CPLDebug("OGR", "Cannot add geometry of type (%d) to geometry of type (%d)",
-                     poSubGeom->getGeometryType(), eGeometryType);
+                     eSubGeomType, eGeometryType);
             delete poSubGeom;
             return OGRERR_CORRUPT_DATA;
         }
