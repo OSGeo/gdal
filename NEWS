@@ -1,4 +1,4 @@
-= ***Preliminary*** GDAL/OGR 1.8.0 release notes (up to r21282) =
+= GDAL/OGR 1.8.0 release notes =
 
 (Note: Most changes/bugfixes between 1.7.0 and 1.8.0 that have already gone
 to the 1.7.X maintenance releases are not mentionned hereafter.)
@@ -97,6 +97,8 @@ Core:
  * Fix dereferencing of open datasets for GetOpenDatasets (#3871)
  * Add DllMain callback to set-up and tear-down internal GDAL library
    resources automatically (#3824)
+ * List .aux file if it used in GDALPamDataset::GetFileList()
+ * PAM dataset : try retrieving projection from xml:ESRI metadata domain
 
 Algorithms:
  * rasterize: Burn the attribute value in ALL the bands during rasterization. (#3396)
@@ -131,6 +133,7 @@ Utilities :
  * gdal_translate : add support for resizing datasets with mask bands
  * gdal_translate : add -mask option to add a mask band from an input band/mask band.
    Also extend syntax for the value of the -b option to allow specifying mask band as input band
+ * gdal_translate : support '-a_nodata None' as a way of unsetting the nodata value
  * gdal_rasterize: Add capability of creating output file (#3505)
  * gdaldem: add a new option, -compute_edges, that enable gdaldem to compute
    values at image edges or if a nodata value is found in the 3x3 window,
@@ -458,6 +461,7 @@ WMS driver:
  * Adds a <UserAgent> optional parameter so that the user be able to provide
    its own useragent string for picky WMS servers (#3464)
  * Default color interpretation for wms driver (#3420)
+ * Add UnsafeSSL setting (#3882)
 
 XYZ driver:
  * New for GDAL/OGR 1.8.0
