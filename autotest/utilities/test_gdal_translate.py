@@ -512,12 +512,12 @@ def test_gdal_translate_19():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create('tmp/test_gdal_translate_19_src.tif',1,1,2)
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_translate_19_src.tif',1,1,2)
     ct = gdal.ColorTable() 
-    ct.SetColorEntry( 127, (255,255,255,255) )
+    ct.SetColorEntry( 127, (1,2,3,255) )
     ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
     ds.GetRasterBand( 1 ).Fill(127)
-    ds.GetRasterBand( 2 ).Fill(255)
+    ds.GetRasterBand( 2 ).Fill(250)
     ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgba tmp/test_gdal_translate_19_src.tif tmp/test_gdal_translate_19_dst.tif')
@@ -535,13 +535,37 @@ def test_gdal_translate_19():
     if ds.GetRasterBand(3).Checksum() != 3:
         gdaltest.post_reason('Bad checksum for band 3')
         return 'fail'
-    if ds.GetRasterBand(4).Checksum() != 255 % 7:
+    if ds.GetRasterBand(4).Checksum() != 250 % 7:
         gdaltest.post_reason('Bad checksum for band 4')
         return 'fail'
 
     ds = None
 
     return 'success'
+    
+###############################################################################
+# Test -a_nodata None
+
+def test_gdal_translate_20():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata 255 ../gcore/data/byte.tif tmp/test_gdal_translate_20_src.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata None tmp/test_gdal_translate_20_src.tif tmp/test_gdal_translate_20_dst.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_20_dst.tif')
+    if ds is None:
+        return 'fail'
+
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    if nodata != None:
+        print(nodata)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
 ###############################################################################
 # Cleanup
 
@@ -587,6 +611,14 @@ def test_gdal_translate_cleanup():
         os.remove('tmp/test_gdal_translate_19_dst.tif')
     except:
         pass
+    try:
+        os.remove('tmp/test_gdal_translate_20_src.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/test_gdal_translate_20_dst.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -608,6 +640,8 @@ gdaltest_list = [
     test_gdal_translate_16,
     test_gdal_translate_17,
     test_gdal_translate_18,
+    test_gdal_translate_19,
+    test_gdal_translate_20,
     test_gdal_translate_cleanup
     ]
 
