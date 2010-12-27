@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<wfs:FeatureCollection xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<wfs:FeatureCollection xmlns:foo="http://www.foo.net/foo" xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <gml:boundedBy>
     <gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
       <gml:lowerCorner>49 2</gml:lowerCorner>
