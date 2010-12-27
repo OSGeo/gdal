@@ -1510,7 +1510,7 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
 #if GEOS_CAPI_VERSION_MAJOR >= 2 || (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 6)
         GEOSFree( pabyBuf );
 #else
-        //free( pabyBuf );
+        free( pabyBuf );
 #endif
     }
 
