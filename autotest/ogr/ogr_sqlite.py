@@ -744,7 +744,11 @@ def ogr_sqlite_16():
     gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (6, X'0700000000000000')" )
     gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (7, X'070000000200000003000000000000000200000002000000000000000000F03F0000000000000040000000000000084000000000000010400000000003000000000000000200000002000000000000000000F03F00000000000000400000000000000840000000000000104000000000')" )
     gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (8, X'0100000001000000000000000000F03F00000000000000400000000000000840')" )
-
+    
+    # invalid geometries
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (9, X'0700000001000000')" )
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (10,X'060000000100000001')" )
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (11,X'06000000010000000100000000000000000000000000F03F0000000000000040')" )
 
     ######################################################
     # Reopen DB
@@ -799,7 +803,14 @@ def ogr_sqlite_16():
     if geom.ExportToWkt() != 'POINT (1 2 3)':
         return 'fail'
     feat.Destroy()
-
+    
+    # Test invalid geometries
+    for i in range(3):
+        feat = gdaltest.sl_lyr.GetNextFeature()
+        geom = feat.GetGeometryRef()
+        if geom is not None:
+            return 'fail'
+        
     gdaltest.sl_lyr.ResetReading()
 
     return 'success'
