@@ -359,7 +359,7 @@ def main( argv = None ):
 
         if hBand.GetDescription() is not None \
             and len(hBand.GetDescription()) > 0 :
-            print( "  Description = %s", hBand.GetDescription() )
+            print( "  Description = %s" % hBand.GetDescription() )
 
         dfMin = hBand.GetMinimum()
         dfMax = hBand.GetMaximum()
