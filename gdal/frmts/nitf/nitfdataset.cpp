@@ -108,6 +108,8 @@ class NITFDataset : public GDALPamDataset
 
     char       **papszTextMDToWrite;
     char       **papszCgmMDToWrite;
+    
+    int          bInLoadXML;
 
   public:
                  NITFDataset();
@@ -589,6 +591,10 @@ GDALColorTable *NITFRasterBand::GetColorTable()
 CPLErr NITFRasterBand::SetColorTable( GDALColorTable *poNewCT )
 
 {
+    NITFDataset *poGDS = (NITFDataset *) poDS;
+    if( poGDS->bInLoadXML )
+        return GDALPamRasterBand::SetColorTable(poNewCT);
+        
     if( poNewCT == NULL )
         return CE_Failure;
 
@@ -904,6 +910,8 @@ NITFDataset::NITFDataset()
 
     papszTextMDToWrite = NULL;
     papszCgmMDToWrite = NULL;
+    
+    bInLoadXML = FALSE;
 }
 
 /************************************************************************/
@@ -2077,7 +2085,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
         poDS->SetPhysicalFilename( pszFilename );
     }
 
+    poDS->bInLoadXML = TRUE;
     poDS->TryLoadXML();
+    poDS->bInLoadXML = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a special overview file?  If not, do we have         */
