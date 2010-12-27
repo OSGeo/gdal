@@ -316,6 +316,8 @@ def main( argv = None ):
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             hTransform = osr.CoordinateTransformation( hProj, hLatLong )
             gdal.PopErrorHandler()
+            if gdal.GetLastErrorMsg().find( 'Unable to load PROJ.4 library' ) != -1:
+                hTransform = None
 
 #/* -------------------------------------------------------------------- */
 #/*      Report corners.                                                 */

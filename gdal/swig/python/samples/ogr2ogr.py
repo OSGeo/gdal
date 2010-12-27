@@ -907,6 +907,9 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
             return False
 
         poCT = osr.CoordinateTransformation( poSourceSRS, poOutputSRS )
+        if gdal.GetLastErrorMsg().find( 'Unable to load PROJ.4 library' ) != -1:
+            poCT = None
+
         if poCT is None:
             pszWKT = None
 
