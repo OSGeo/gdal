@@ -1510,7 +1510,7 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
 #if GEOS_CAPI_VERSION_MAJOR >= 2 || (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 6)
         GEOSFree( pabyBuf );
 #else
-        free( pabyBuf );
+        //free( pabyBuf );
 #endif
     }
 
@@ -1749,18 +1749,27 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
+            {
+                delete poGeom;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             CPL_LSBPTR32( &nPointCount );
 
             if (nPointCount < 0 || nPointCount > INT_MAX / (nTupleSize * 8))
+            {
+                delete poGeom;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             nNextByte += 4;
 
             if( nBytes - nNextByte < nTupleSize * 8 * nPointCount )
+            {
+                delete poGeom;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
@@ -1799,15 +1808,6 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
         GInt32 nGeomCount;
         int iGeom, nBytesUsed;
 
-        if( nGType == 4 )
-            poGC = new OGRMultiPoint();
-        else if( nGType == 5 )
-            poGC = new OGRMultiLineString();
-        else if( nGType == 6 )
-            poGC = new OGRMultiPolygon();
-        else if( nGType == 7 )
-            poGC = new OGRGeometryCollection();
-
         if( nBytes < 8 )
             return OGRERR_NOT_ENOUGH_DATA;
 
@@ -1823,6 +1823,15 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
 
         nBytesUsed = 8;
 
+        if( nGType == 4 )
+            poGC = new OGRMultiPoint();
+        else if( nGType == 5 )
+            poGC = new OGRMultiLineString();
+        else if( nGType == 6 )
+            poGC = new OGRMultiPolygon();
+        else if( nGType == 7 )
+            poGC = new OGRGeometryCollection();
+        
         for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
         {
             int nThisGeomSize;
@@ -1841,6 +1850,7 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
             if( eErr != OGRERR_NONE )
             {
                 delete poGC;
+                delete poThisGeom;
                 return eErr;
             }
         }
