@@ -1369,20 +1369,9 @@ char* OWStatement::ReadCLob( OCILobLocator* phLocator )
         return NULL;
     }
 
-    nAmont *= this->poConnection->nCharSize;
+    pszBuffer[nAmont] = '\0';
 
-    if( nAmont == nSize )
-    {
-        pszBuffer[nAmont] = '\0';
-    }
-    else
-    {
-        CPLFree( pszBuffer );
-
-        return NULL;
-    }
-
-    return pszBuffer;
+	return pszBuffer;
 }
 
 void OWStatement::BindName( const char* pszName, int* pnData )
