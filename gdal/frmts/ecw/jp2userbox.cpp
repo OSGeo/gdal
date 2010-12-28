@@ -93,9 +93,13 @@ void JP2UserBox::UpdateXLBox()
 /*      Parse box, and data contents from file into memory.             */
 /************************************************************************/
 
+#if ECWSDK_VERSION >= 40
+CNCSError JP2UserBox::Parse( NCS::JP2::CFile &JP2File, 
+                             NCS::CIOStream &Stream )
+#else
 CNCSError JP2UserBox::Parse( class CNCSJP2File &JP2File, 
                              CNCSJPCIOStream &Stream )
-
+#endif
 {
     CNCSError Error = NCS_SUCCESS;
     
@@ -108,9 +112,13 @@ CNCSError JP2UserBox::Parse( class CNCSJP2File &JP2File,
 /*      Write box meta information, and data to file.                   */
 /************************************************************************/
 
+#if ECWSDK_VERSION >= 40
+CNCSError JP2UserBox::UnParse( NCS::JP2::CFile &JP2File, 
+                               NCS::CIOStream &Stream )
+#else
 CNCSError JP2UserBox::UnParse( class CNCSJP2File &JP2File, 
                                CNCSJPCIOStream &Stream )
-
+#endif
 {
     CNCSError Error = NCS_SUCCESS;
 
