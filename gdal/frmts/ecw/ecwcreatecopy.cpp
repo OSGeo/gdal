@@ -406,7 +406,7 @@ CPLErr GDALECWCompressor::WriteJP2Box( GDALJP2Box * poBox )
     poECWBox = new JP2UserBox();
     memcpy( &(poECWBox->m_nTBox), poBox->GetType(), 4 );
 
-    poECWBox->SetData( poBox->GetDataLength(), 
+    poECWBox->SetData( (int) poBox->GetDataLength(), 
                        poBox->GetWritableData() );
 
     AddBox( poECWBox );
@@ -556,10 +556,10 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
     NCSFileViewFileInfoEx    *psClient = &(sFileInfo);
     
-    psClient->nBands = nBands;
+    psClient->nBands = (UINT16) nBands;
     psClient->nSizeX = nXSize;
     psClient->nSizeY = nYSize;
-    psClient->nCompressionRate = (int) MAX(1,100 / (100-fTargetCompression));
+    psClient->nCompressionRate = (UINT16) MAX(1,100/(100-fTargetCompression));
     psClient->eCellSizeUnits = ECW_CELL_UNITS_METERS;
 
     if( nBands == 1 )
@@ -638,8 +638,8 @@ CPLErr GDALECWCompressor::Initialize(
         CPLMalloc( sizeof(NCSFileBandInfo) * nBands );
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        psClient->pBands[iBand].nBits = nBits;
-        psClient->pBands[iBand].bSigned = bSigned;
+        psClient->pBands[iBand].nBits = (UINT8) nBits;
+        psClient->pBands[iBand].bSigned = (BOOLEAN)bSigned;
         psClient->pBands[iBand].szDesc = CPLStrdup(
             CPLSPrintf("Band%d",iBand+1) );
     }
@@ -871,13 +871,14 @@ CPLErr GDALECWCompressor::Initialize(
                           subfile_offset, subfile_size );
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Check if we can enable large files.  This option should only    */
 /*      be set when the application is adhering to one of the           */
 /*      ERMapper options for licensing larger than 500MB input          */
-/*      files.  See Bug 767.                                            */
+/*      files.  See Bug 767.  This option no longer exists with         */
+/*      version 4+.                                                     */
 /* -------------------------------------------------------------------- */
+#if ECWSDK_VERSION < 40
     const char *pszLargeOK = CSLFetchNameValue(papszOptions, "LARGE_OK");
     if( pszLargeOK == NULL )
         pszLargeOK = "NO";
@@ -889,6 +890,7 @@ CPLErr GDALECWCompressor::Initialize(
         CNCSFile::SetKeySize();
         CPLDebug( "ECW", "Large file generation enabled." );
     }
+#endif /* ECWSDK_VERSION < 40 */
 
 /* -------------------------------------------------------------------- */
 /*      Set the file info.                                              */
@@ -936,6 +938,34 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 {
     ECWInitialize();
+
+/* -------------------------------------------------------------------- */
+/*      For 4.x and beyond you need a license key to compress data.     */
+/*      Check for it as a configuration option or a creation option.    */
+/* -------------------------------------------------------------------- */
+#if ECWSDK_VERSION >= 40 
+    const char* pszECWKey = CSLFetchNameValue( papszOptions, "ECW_ENCODE_KEY");
+    if( pszECWKey == NULL )
+        pszECWKey = CPLGetConfigOption( "ECW_ENCODE_KEY", NULL );
+    
+    const char* pszECWCompany = 
+        CSLFetchNameValue( papszOptions, "ECW_ENCODE_COMPANY");
+    if( pszECWCompany == NULL )
+        pszECWCompany = CPLGetConfigOption( "ECW_ENCODE_COMPANY", NULL );
+    
+    if( pszECWKey && pszECWCompany)
+    {
+        CPLDebug( "ECW", "SetOEMKey(%s,%s)", pszECWCompany, pszECWKey );
+        CNCSFile::SetOEMKey( (char *) pszECWCompany, (char *)pszECWKey );
+    }
+    else if( pszECWKey || pszECWCompany )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Only one of ECW_ENCODE_KEY and ECW_ENCODE_COMPANY were provided.\nBoth are required." );
+        return NULL;
+    }
+
+#endif /* ECWSDK_VERSION >= 40
 
 /* -------------------------------------------------------------------- */
 /*      Get various values from the source dataset.                     */

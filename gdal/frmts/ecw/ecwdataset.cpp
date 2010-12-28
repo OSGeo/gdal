@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL 
- * Purpose:  ECW (ERMapper Wavelet Compression Format) Driver
+ * Purpose:  ECW (ERDAS Wavelet Compression Format) Driver
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -729,7 +729,7 @@ int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag,
 
     for( iBufLine = 0; iBufLine < nBufYSize; iBufLine++ )
     {
-        float fFileLine = ((iBufLine+0.5) / nBufYSize) * nYSize + nYOff;
+        double fFileLine = ((iBufLine+0.5) / nBufYSize) * nYSize + nYOff;
         int iWinLine = 
             (int) (((fFileLine - nWinYOff) / nWinYSize) * nWinBufYSize);
         
@@ -779,7 +779,8 @@ CPLErr ECWDataset::LoadNextLine()
     }
 
     NCSEcwReadStatus  eRStatus;
-    eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, nWinBandCount,
+    eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, 
+                                        (UINT16) nWinBandCount,
                                         papCurLineBuf );
     if( eRStatus != NCSECW_READ_OK )
         return CE_Failure;
@@ -922,7 +923,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     {
         NCSEcwReadStatus  eRStatus;
 
-        eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, nBandCount,
+        eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, 
+                                            (UINT16) nBandCount,
                                             (void **) papabyBIL );
         if( eRStatus != NCSECW_READ_OK )
         {
@@ -1601,7 +1603,7 @@ void GDALRegister_ECW()
         
         poDriver->SetDescription( "ECW" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ERMapper Compressed Wavelets" );
+                                   "ERDAS Compressed Wavelets" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_ecw.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
@@ -1618,9 +1620,16 @@ void GDALRegister_ECW()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
-"   <Option name='PROJ' type='string' description='ERMapper Projection Name'/>"
-"   <Option name='DATUM' type='string' description='ERMapper Datum Name' />"
+"   <Option name='PROJ' type='string' description='ECW Projection Name'/>"
+"   <Option name='DATUM' type='string' description='ECW Datum Name' />"
+
+#if ECWSDK_VERSION < 40
 "   <Option name='LARGE_OK' type='boolean' description='Enable compressing 500+MB files'/>"
+#else
+"   <Option name='ECW_ENCODE_KEY' type='string' description='OEM Compress Key from ERDAS.'/>"
+"   <Option name='ECW_ENCODE_COMPANY' type='string' description='OEM Company Name.'/>"
+#endif
+
 "</CreationOptionList>" );
 #endif
 
@@ -1669,7 +1678,7 @@ void GDALRegister_JP2ECW()
         
         poDriver->SetDescription( "JP2ECW" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ERMapper JPEG2000" );
+                                   "ERDAS JPEG2000" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_jp2ecw.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
@@ -1684,9 +1693,16 @@ void GDALRegister_JP2ECW()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
-"   <Option name='PROJ' type='string' description='ERMapper Projection Name'/>"
-"   <Option name='DATUM' type='string' description='ERMapper Datum Name' />"
+"   <Option name='PROJ' type='string' description='ECW Projection Name'/>"
+"   <Option name='DATUM' type='string' description='ECW Datum Name' />"
+
+#if ECWSDK_VERSION < 40
 "   <Option name='LARGE_OK' type='boolean' description='Enable compressing 500+MB files'/>"
+#else
+"   <Option name='ECW_ENCODE_KEY' type='string' description='OEM Compress Key from ERDAS.'/>"
+"   <Option name='ECW_ENCODE_COMPANY' type='string' description='OEM Company Name.'/>"
+#endif
+
 "   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='PROFILE' type='string-select'>"
