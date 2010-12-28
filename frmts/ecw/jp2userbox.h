@@ -35,7 +35,7 @@
 
 #if defined(HAVE_COMPRESS)
 
-class NCSJPC_EXPORT_ALL JP2UserBox : public CNCSJP2Box {
+class JP2UserBox : public CNCSJP2Box {
 
 private:
     int           nDataLength;
@@ -46,10 +46,17 @@ public:
 
     virtual ~JP2UserBox();
 
+#if ECWSDK_VERSION >= 40
+    virtual CNCSError Parse( NCS::JP2::CFile &JP2File, 
+                             NCS::CIOStream &Stream);
+    virtual CNCSError UnParse( NCS::JP2::CFile &JP2File, 
+								NCS::CIOStream &Stream);
+#else        
     virtual CNCSError Parse(class CNCSJP2File &JP2File, 
                             CNCSJPCIOStream &Stream);
     virtual CNCSError UnParse(class CNCSJP2File &JP2File, 
                               CNCSJPCIOStream &Stream);
+#endif
     virtual void UpdateXLBox(void);
 
     void    SetData( int nDataLength, const unsigned char *pabyDataIn );

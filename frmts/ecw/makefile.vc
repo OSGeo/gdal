@@ -1,5 +1,8 @@
 
-EXTRAFLAGS = 	-I$(ECWDIR)\include -I$(ECWDIR)/Source/include \
+EXTRAFLAGS = 	$(ECWFLAGS) \
+		-I$(ECWDIR)\include -I$(ECWDIR)/Source/include \
+		-I$(ECWDIR)\include/ecw/api -I$(ECWDIR)\include/ecw/jp2 \
+		-I$(ECWDIR)\include/ecw/ecw \
 		/D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS \
 		/DLIBECWJ2 /DWIN32 /D_WINDLL -DFRMT_ecw -DNO_X86_MMI
 
