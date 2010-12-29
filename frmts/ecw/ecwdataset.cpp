@@ -1576,6 +1576,7 @@ void ECWInitialize()
 /* -------------------------------------------------------------------- */
     const char *pszOpt;
 
+#if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption( "ECWP_CACHE_SIZE_MB", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_ECWP_CACHE_SIZE_MB, (INT32) atoi( pszOpt ) );
@@ -1586,6 +1587,7 @@ void ECWInitialize()
         NCSecwSetConfig( NCSCFG_ECWP_CACHE_LOCATION, pszOpt );
         NCSecwSetConfig( NCSCFG_ECWP_CACHE_ENABLED, (BOOLEAN) TRUE );
     }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Various other configuration items.                              */
@@ -1610,6 +1612,7 @@ void ECWInitialize()
         NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN, 
                          (BOOLEAN) CSLTestBoolean( pszOpt ) );
 
+#if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption( "ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR, 
@@ -1620,7 +1623,7 @@ void ECWInitialize()
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_RESILIENT_DECODING, 
                          (BOOLEAN) CSLTestBoolean( pszOpt ) );
-
+#endif
 }
 
 /************************************************************************/
