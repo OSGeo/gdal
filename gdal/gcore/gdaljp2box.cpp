@@ -243,9 +243,25 @@ int GDALJP2Box::DumpReadable( FILE *fpOut )
              (int)(nBoxLength - (nDataOffset - nBoxOffset)) );
 
     if( IsSuperBox() )
+    {
         fprintf( fpOut, " (super)" );
+    }
 
     fprintf( fpOut, "\n" );
+    
+    if( IsSuperBox() ) 
+    {
+        GDALJP2Box oSubBox( fpVSIL );
+
+        if( oSubBox.ReadFirstChild( this ) )
+        {
+            oSubBox.DumpReadable( fpOut );
+            while( oSubBox.ReadNextChild( this ) )
+                oSubBox.DumpReadable( fpOut );
+        }
+        printf( "  (end of %s subboxes)\n", szBoxType );
+    }
+
     if( EQUAL(GetType(),"uuid") )
     {
         char *pszHex = CPLBinaryToHex( 16, GetUUID() );
@@ -259,6 +275,7 @@ int GDALJP2Box::DumpReadable( FILE *fpOut )
 
         fprintf( fpOut, "\n" );
     }
+
     return 0;
 }
 
