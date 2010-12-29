@@ -219,10 +219,12 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
         if( EQUALN( pszSrsType, "NAME", 4 ) )
         {
             json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
-            CPLAssert( NULL != poObjSrsProps );
+            if (poObjSrsProps == NULL)
+                return NULL;
 
             json_object* poNameURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "name" );
-            CPLAssert( NULL != poNameURL );
+            if (poNameURL == NULL)
+                return NULL;
 
             const char* pszName = json_object_get_string( poNameURL );
 
@@ -237,10 +239,12 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
         if( EQUALN( pszSrsType, "EPSG", 4 ) )
         {
             json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
-            CPLAssert( NULL != poObjSrsProps );
+            if (poObjSrsProps == NULL)
+                return NULL;
 
             json_object* poObjCode = OGRGeoJSONFindMemberByName( poObjSrsProps, "code" );
-            CPLAssert( NULL != poObjCode );
+            if (poObjCode == NULL)
+                return NULL;
 
             int nEPSG = json_object_get_int( poObjCode );
 
@@ -251,17 +255,20 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
                 poSRS = NULL;
             }
         }
+
         if( EQUALN( pszSrsType, "URL", 3 ) || EQUALN( pszSrsType, "LINK", 4 )  )
         {
             json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
-            CPLAssert( NULL != poObjSrsProps );
+            if (poObjSrsProps == NULL)
+                return NULL;
 
             json_object* poObjURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "url" );
             
             if (NULL == poObjURL) {
                 poObjURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "href" );
             }
-            CPLAssert( NULL != poObjURL );
+            if (poObjURL == NULL)
+                return NULL;
 
             const char* pszURL = json_object_get_string( poObjURL );
 
@@ -271,6 +278,25 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
                 delete poSRS;
                 poSRS = NULL;
 
+            }
+        }
+
+
+        if( EQUAL( pszSrsType, "OGC" ) )
+        {
+            json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
+            if (poObjSrsProps == NULL)
+                return NULL;
+
+            json_object* poObjURN = OGRGeoJSONFindMemberByName( poObjSrsProps, "urn" );
+            if (poObjURN == NULL)
+                return NULL;
+
+            poSRS = new OGRSpatialReference();
+            if( OGRERR_NONE != poSRS->importFromURN( json_object_get_string(poObjURN) ) )
+            {
+                delete poSRS;
+                poSRS = NULL;
             }
         }
     }
