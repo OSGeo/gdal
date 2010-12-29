@@ -44,7 +44,11 @@ CPL_CVSID("$Id$");
 VSIPDFFileStream::VSIPDFFileStream(VSILFILE* f, const char* pszFilename,
                                    Guint startA, GBool limitedA,
                                    Guint lengthA, Object *dictA):
+#ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
+                                                        BaseStream(dictA, lengthA)
+#else
                                                         BaseStream(dictA)
+#endif
 {
     poParent = NULL;
     poFilename = new GooString(pszFilename);
@@ -64,7 +68,11 @@ VSIPDFFileStream::VSIPDFFileStream(VSILFILE* f, const char* pszFilename,
 VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream* poParent,
                                    Guint startA, GBool limitedA,
                                    Guint lengthA, Object *dictA):
-                                                    BaseStream(dictA)
+#ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
+                                                        BaseStream(dictA, lengthA)
+#else
+                                                        BaseStream(dictA)
+#endif
 {
     this->poParent = poParent;
     poFilename = poParent->poFilename;
