@@ -213,6 +213,9 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
     if( NULL != poObjSrs )
     {
         json_object* poObjSrsType = OGRGeoJSONFindMemberByName( poObjSrs, "type" );
+        if (poObjSrsType == NULL)
+            return NULL;
+
         const char* pszSrsType = json_object_get_string( poObjSrsType );
 
         // TODO: Add URL and URN types support
