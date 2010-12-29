@@ -486,7 +486,23 @@ OGRGeoJSONLayer* OGRGeoJSONDataSource::LoadLayer()
     }
 
     OGRErr err = OGRERR_NONE;
-    OGRGeoJSONLayer* poLayer = NULL;    
+    OGRGeoJSONLayer* poLayer = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Is it ESRI Feature Service data ?                               */
+/* -------------------------------------------------------------------- */
+    if ( strstr(pszGeoData_, "esriGeometry") )
+    {
+        OGRESRIJSONReader reader;
+        err = reader.Parse( pszGeoData_ );
+        if( OGRERR_NONE == err )
+        {
+            // TODO: Think about better name selection
+            poLayer = reader.ReadLayer( OGRGeoJSONLayer::DefaultName, this );
+        }
+
+        return poLayer;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Configure GeoJSON format translator.                            */
