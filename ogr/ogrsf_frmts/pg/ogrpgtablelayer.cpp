@@ -730,7 +730,10 @@ CPLString OGRPGTableLayer::BuildFields()
             else if (CSLTestBoolean(CPLGetConfigOption("PG_USE_BASE64", "NO")) &&
                      nCoordDimension != 4 /* we don't know how to decode 4-dim EWKB for now */)
             {
-                osFieldList += "encode(AsEWKB(\"";
+                if (poDS->sPostGISVersion.nMajor >= 2)
+                    osFieldList += "encode(ST_AsEWKB(\"";
+                else
+                    osFieldList += "encode(AsEWKB(\"";
                 osFieldList += pszGeomColumn;
                 osFieldList += "\"), 'base64') AS EWKBBase64";
             }
@@ -747,7 +750,10 @@ CPLString OGRPGTableLayer::BuildFields()
             }
             else if ( poDS->sPostGISVersion.nMajor >= 1 )
             {
-                osFieldList += "AsEWKT(\"";
+                if (poDS->sPostGISVersion.nMajor >= 2)
+                    osFieldList += "ST_AsEWKT(\"";
+                else
+                    osFieldList += "AsEWKT(\"";
                 osFieldList += pszGeomColumn;
                 osFieldList += "\")";
             }
