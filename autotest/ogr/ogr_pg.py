@@ -97,6 +97,10 @@ def ogr_pg_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT postgis_version()')
     gdaltest.pg_has_postgis = sql_lyr is not None
+    if gdaltest.pg_has_postgis:
+        feat = sql_lyr.GetNextFeature()
+        version_str = feat.GetFieldAsString('postgis_version')
+        gdaltest.pg_has_postgis_2 = (float(version_str[0:3]) >= 2.0)
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
     gdal.PopErrorHandler()
 
@@ -285,6 +289,9 @@ def ogr_pg_4():
         geom_read = feat_read.GetGeometryRef()
 
         if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
+            print(item)
+            print(wkt)
+            print(geom_read)
             return 'fail'
 
         feat_read.Destroy()
@@ -2569,7 +2576,10 @@ def ogr_pg_54():
     if not gdaltest.pg_has_postgis:
         return 'skip'
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT AsEWKB(GeomFromEWKT('POINT (0 1 2)'))")
+    if gdaltest.pg_has_postgis_2:
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT ST_AsEWKB(GeomFromEWKT('POINT (0 1 2)'))")
+    else:
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT AsEWKB(GeomFromEWKT('POINT (0 1 2)'))")
     feat = sql_lyr.GetNextFeature()
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
