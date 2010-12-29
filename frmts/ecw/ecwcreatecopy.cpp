@@ -54,7 +54,7 @@ public:
     virtual bool WriteCancel();
 
     CPLErr  Initialize( const char *pszFilename, char **papszOptions, 
-                        int nXSize, int nYSize, int nBands, 
+                        int nXSize, int nYSize, int nBands, int bRGBA,
                         GDALDataType eType, 
                         const char *pszWKT, double *padfGeoTransform,
                         int nGCPCount, const GDAL_GCP *pasGCPList,
@@ -514,7 +514,7 @@ static int ECWTranslateFromWKT( const char *pszWKT,
 
 CPLErr GDALECWCompressor::Initialize( 
     const char *pszFilename, char **papszOptions, 
-    int nXSize, int nYSize, int nBands, 
+    int nXSize, int nYSize, int nBands, int bRGBA,
     GDALDataType eType, 
     const char *pszWKT, double *padfGeoTransform,
     int nGCPCount, const GDAL_GCP *pasGCPList,
@@ -534,7 +534,13 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
 /*      Parse out some known options.                                   */
 /* -------------------------------------------------------------------- */
-    float      fTargetCompression = 75.0;
+    float      fTargetCompression;
+
+    // Default compression based on image type per request from Paul Beaty.
+    if( nBands > 1 ) 
+        fTargetCompression = 95.0;
+    else
+        fTargetCompression = 90.0;
 
     if( CSLFetchNameValue(papszOptions, "TARGET") != NULL )
     {
@@ -565,6 +571,8 @@ CPLErr GDALECWCompressor::Initialize(
     if( nBands == 1 )
         psClient->eColorSpace = NCSCS_GREYSCALE;
     else if( nBands == 3 )
+        psClient->eColorSpace = NCSCS_sRGB;
+    else if( nBands == 4 && bRGBA )
         psClient->eColorSpace = NCSCS_sRGB;
     else
         psClient->eColorSpace = NCSCS_MULTIBAND;
@@ -1014,6 +1022,17 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Is the input RGBA?                                              */
+/* -------------------------------------------------------------------- */
+    int bRGBA = FALSE;
+
+    if( nBands == 4 )
+    {
+        bRGBA = (poSrcDS->GetRasterBand(4)->GetColorInterpretation() 
+                 == GCI_AlphaBand);
+    }        
+
+/* -------------------------------------------------------------------- */
 /*      Setup the compressor.                                           */
 /* -------------------------------------------------------------------- */
     GDALECWCompressor         oCompressor;
@@ -1026,7 +1045,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
 
     if( oCompressor.Initialize( pszFilename, papszOptions, 
-                                nXSize, nYSize, nBands,
+                                nXSize, nYSize, nBands, bRGBA,
                                 eType, pszWKT, adfGeoTransform, 
                                 poSrcDS->GetGCPCount(), 
                                 poSrcDS->GetGCPs(),
@@ -1100,8 +1119,7 @@ ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    if( poSrcDS->GetRasterXSize() < 128 
-        || poSrcDS->GetRasterYSize() < 128 )
+    if( poSrcDS->GetRasterXSize() < 128 || poSrcDS->GetRasterYSize() < 128 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "ECW driver requires image to be at least 128x128,\n"
@@ -1111,7 +1129,7 @@ ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS,
                   
         return NULL;
     }
-    
+
     if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
@@ -1406,7 +1424,7 @@ CPLErr ECWWriteDataset::Crystalize()
         return CE_None;
 
     eErr = oCompressor.Initialize( pszFilename, papszOptions, 
-                                   nRasterXSize, nRasterYSize, nBands, 
+                                   nRasterXSize, nRasterYSize, nBands, FALSE,
                                    eDataType, 
                                    pszProjection, adfGeoTransform, 
                                    0, NULL,
