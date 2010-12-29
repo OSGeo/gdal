@@ -72,7 +72,7 @@ def ogr_dxf_1():
     # Setup the utf-8 string.
     if version_info >= (3,0,0):
         gdaltest.sample_text =  'Text Sample1\u00BF\u03BB\n"abc"'
-        gdaltest.sample_style = 'Text Sample1\u00BF\u03BB\n\"abc\"'
+        gdaltest.sample_style = 'Text Sample1\u00BF\u03BB\n\\"abc\\"'
     else:
         exec("gdaltest.sample_text =  u'Text Sample1\u00BF\u03BB'")
         gdaltest.sample_text += chr(10)
