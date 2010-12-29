@@ -36,10 +36,6 @@
 
 #ifdef FRMT_ecw
 
-#if !defined(NO_COMPRESS)
-#  define HAVE_COMPRESS
-#endif
-
 // The following is needed on 4.x+ to enable rw support.
 #if defined(HAVE_COMPRESS)
 #  define ECW_COMPRESS_RW_SDK_VERSION
@@ -48,6 +44,7 @@
 #if defined(_MSC_VER)
 #  pragma warning(disable:4800)
 #endif
+
 /* -------------------------------------------------------------------- */
 /*      These definitions aren't really specific to the VSIIOStream,    */
 /*      but are shared amoung the ECW driver modules.                   */
@@ -59,7 +56,6 @@
 #include <NCSJP2FileView.h>
 
 /* By default, assume 3.3 SDK Version. */
-
 #if !defined(ECWSDK_VERSION)
 #  define ECWSDK_VERSION 33
 #endif
