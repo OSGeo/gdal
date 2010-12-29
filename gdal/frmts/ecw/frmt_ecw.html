@@ -15,13 +15,6 @@ but in some cases coordinate systems may not translate.<p>
 Support for the ECW driver in GDAL is optional, and requires linking
 in external ECW SDK libraries provided by ERDAS.<p>
 
-By default the ECW SDK will use up to one quarter of physical RAM for 
-internal caching and work memory during decoding.  This is normally fine, 
-but the amount of memory to use can be adjusted by setting the 
-GDAL_ECW_CACHE_MAXMEM configuration variable with an amount of memory in 
-bytes.  Config variables can be set in the environment or using the --config
-commandline switch.<p>
-
 <h2>Creation Issues</h2>
 
 The ECW 4.x SDK from ERDAS is only free for image decompression.  To 
@@ -47,7 +40,8 @@ Creation Options:<p>
 <ul>
 
 <li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of 
-the original.  If not provided defaults to 75 for an 75% reduction.<p>
+the original.  If not provided defaults to 90% for greyscale images, and 95%
+for RGB images.<p>
 
 <li> <b>PROJ=name</b>: Name of the ECW projection string to use. 
 Common examples are NUTM11, or GEODETIC.<p>
@@ -74,12 +68,59 @@ globally as a configuration option.<p>
 ECW format does not support creation of overviews since the ECW format 
 is already considered to be optimized for "arbitrary overviews". <P>
 
-See Also:<p>
+<h2> Configuration Options </h2>
+
+The ERDAS ECW SDK supports a variety of 
+<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration 
+options</a> to control various features.  Most of these are exposed as GDAL 
+configuration options.  See the ECW SDK documentation for full details on the
+meaning of these options. 
 
 <ul>
-<li> Implemented as <tt>gdal/frmts/ecw/ecwdataset.cpp</tt>.<p>
+<li> <b>ECW_CACHE_MAXMEM=bytes</b>: maximum bytes of RAM used for in-memory 
+caching.  If not set, up to one quarter of physical RAM will be used by the 
+SDK for in-memory caching.<p>
 
-<li> ECW SDK available at <a href="http://www.erdas.com/products/ERDASECWJPEG2000SDK/Details.aspx">erdas.com</a>.<p>
+<li> <b>ECWP_CACHE_LOCATION=path</b>: Path to a directory to use for caching
+ECWP results.  If unset ECWP caching will not be enabled.<p>
+
+<li> <b>ECWP_CACHE_SIZE_MB=number_of_megabytes</b>: The maximum 
+number of megabytes of space in the ECWP_CACHE_LOCATION to be used for 
+caching ECWP results.<p>
+
+<li> <b>ECW_TEXTURE_DITHER=TRUE/FALSE</b>: This may be set to FALSE to disable
+dithering when decompressing ECW files.  Defaults to TRUE.<p>
+
+<li> <b>ECW_FORCE_FILE_REOPEN=TRUE/FALSE</b>: This may be set to TRUE to 
+force open a file handle for each file for each connection made.  Defaults to 
+FALSE.<p>
+
+<li> <b>ECW_CACHE_MAXOPEN=number</b>: The maximum number of files to keep 
+open for ECW file handle caching.  Defaults to unlimited.<p>
+
+<li> <b>ECW_AUTOGEN_J2I=TRUE/FALSE</b>: Controls whether .j2i index files 
+should be created when opening jpeg2000 files.  Defaults to TRUE.<p>
+
+<li> <b>ECW_RESILIENT_DECODING=TRUE/FALSE</b>: Controls whether the reader
+should be forgiving of errors in a file, trying to return as much data as is
+available.  Defaults to TRUE.  If set to FALSE an invalid file will result
+in an error.<p>
+
+<li> <b>ECW_ENCODE_KEY, ECW_ENCODE_COMPANY</b>: These values, as described
+in the creation options, may also be set as configuration options. See above.
+<p>
+
+
+</ul>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/ecw/ecwdataset.cpp</tt>.
+
+<li> ECW SDK available at <a href="http://www.erdas.com/products/ERDASECWJPEG2000SDK/Details.aspx">erdas.com</a>.
+
+<li> <a href="http://trac.osgeo.org/gdal/wiki/ECW">GDAL ECW Build Hints</a>
 
 </ul>
 
