@@ -194,6 +194,8 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand )
             eBandInterp = GCI_GreenBand;
         else if( nBand == 3 )
             eBandInterp = GCI_BlueBand;
+        else if( nBand == 4 )
+            eBandInterp = GCI_AlphaBand;
         else
             eBandInterp = GCI_Undefined;
     }
@@ -401,6 +403,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 	    if( eRStatus != NCSECW_READ_OK )
 	    {
 	        CPLFree( pabyWorkBuffer );
+                CPLDebug( "ECW", "ReadLineBIL status=%d", (int) eRStatus );
 	        CPLError( CE_Failure, CPLE_AppDefined,
 			  "NCScbmReadViewLineBIL failed." );
 		return CE_Failure;
@@ -1247,14 +1250,17 @@ try_again:
     poDS->psFileInfo = poFileView->GetFileInfo();
 
     CPLDebug( "ECW", "FileInfo: SizeXY=%d,%d Bands=%d\n"
-              "       OriginXY=%g,%g  CellIncrementXY=%g,%g\n",
+              "       OriginXY=%g,%g  CellIncrementXY=%g,%g\n"
+              "       ColorSpace=%d, eCellType=%d\n", 
               poDS->psFileInfo->nSizeX,
               poDS->psFileInfo->nSizeY,
               poDS->psFileInfo->nBands,
               poDS->psFileInfo->fOriginX,
               poDS->psFileInfo->fOriginY,
               poDS->psFileInfo->fCellIncrementX,
-              poDS->psFileInfo->fCellIncrementY );
+              poDS->psFileInfo->fCellIncrementY,
+              (int) poDS->psFileInfo->eColorSpace,
+              (int) poDS->psFileInfo->eCellType );
 
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
@@ -1553,11 +1559,68 @@ void ECWInitialize()
     NCSecwInit();
     bNCSInitialized = TRUE;
 
+/* -------------------------------------------------------------------- */
+/*      Initialize cache memory limit.  Default is apparently 1/4 RAM.  */
+/* -------------------------------------------------------------------- */
     const char *pszEcwCacheSize = 
         CPLGetConfigOption("GDAL_ECW_CACHE_MAXMEM",NULL);
+    if( pszEcwCacheSize == NULL )
+        CPLGetConfigOption("ECW_CACHE_MAXMEM",NULL);
 
     if( pszEcwCacheSize != NULL )
-        NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, atoi(pszEcwCacheSize) );
+        NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, (UINT32) atoi(pszEcwCacheSize) );
+
+/* -------------------------------------------------------------------- */
+/*      Allow configuration of a local cache based on configuration     */
+/*      options.  Setting the location turns things on.                 */
+/* -------------------------------------------------------------------- */
+    const char *pszOpt;
+
+    pszOpt = CPLGetConfigOption( "ECWP_CACHE_SIZE_MB", NULL );
+    if( pszOpt )
+        NCSecwSetConfig( NCSCFG_ECWP_CACHE_SIZE_MB, (INT32) atoi( pszOpt ) );
+
+    pszOpt = CPLGetConfigOption( "ECWP_CACHE_LOCATION", NULL );
+    if( pszOpt )
+    {
+        NCSecwSetConfig( NCSCFG_ECWP_CACHE_LOCATION, pszOpt );
+        NCSecwSetConfig( NCSCFG_ECWP_CACHE_ENABLED, (BOOLEAN) TRUE );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Various other configuration items.                              */
+/* -------------------------------------------------------------------- */
+    pszOpt = CPLGetConfigOption( "ECW_TEXTURE_DITHER", NULL );
+    if( pszOpt )
+        NCSecwSetConfig( NCSCFG_TEXTURE_DITHER, 
+                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+
+
+    pszOpt = CPLGetConfigOption( "ECW_FORCE_FILE_REOPEN", NULL );
+    if( pszOpt )
+        NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN, 
+                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+
+    pszOpt = CPLGetConfigOption( "ECW_CACHE_MAXOPEN", NULL );
+    if( pszOpt )
+        NCSecwSetConfig( NCSCFG_CACHE_MAXOPEN, (UINT32) atoi(pszOpt) );
+
+    pszOpt = CPLGetConfigOption( "ECW_AUTOGEN_J2I", NULL );
+    if( pszOpt )
+        NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN, 
+                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+
+    pszOpt = CPLGetConfigOption( "ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", NULL );
+    if( pszOpt )
+        NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR, 
+                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+
+
+    pszOpt = CPLGetConfigOption( "ECW_RESILIENT_DECODING", NULL );
+    if( pszOpt )
+        NCSecwSetConfig( NCSCFG_RESILIENT_DECODING, 
+                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+
 }
 
 /************************************************************************/
