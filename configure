@@ -762,6 +762,7 @@ GDAL_VERSION_MAJOR
 PROJ_INCLUDE
 PROJ_STATIC
 POPPLER_INC
+POPPLER_BASE_STREAM_HAS_TWO_ARGS
 POPPLER_HAS_OPTCONTENT
 HAVE_POPPLER
 PAM_SETTING
@@ -5938,13 +5939,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5941: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5942: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5944: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5945: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5947: output\"" >&5)
+  (eval echo "\"\$as_me:5948: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -7146,7 +7147,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 7149 "configure"' > conftest.$ac_ext
+  echo '#line 7150 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -9072,11 +9073,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9075: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9076: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9079: \$? = $ac_status" >&5
+   echo "$as_me:9080: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9411,11 +9412,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9414: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9415: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9418: \$? = $ac_status" >&5
+   echo "$as_me:9419: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9516,11 +9517,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9519: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9520: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9523: \$? = $ac_status" >&5
+   echo "$as_me:9524: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9571,11 +9572,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9574: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9575: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9578: \$? = $ac_status" >&5
+   echo "$as_me:9579: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11954,7 +11955,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11957 "configure"
+#line 11958 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12050,7 +12051,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12053 "configure"
+#line 12054 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14006,11 +14007,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14009: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14010: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14013: \$? = $ac_status" >&5
+   echo "$as_me:14014: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14105,11 +14106,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14108: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14109: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14112: \$? = $ac_status" >&5
+   echo "$as_me:14113: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14157,11 +14158,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14160: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14161: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14164: \$? = $ac_status" >&5
+   echo "$as_me:14165: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -23615,6 +23616,7 @@ fi
 
 HAVE_POPPLER=no
 POPPLER_HAS_OPTCONTENT=no
+POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for poppler" >&5
 $as_echo_n "checking for poppler... " >&6; }
@@ -23660,6 +23662,31 @@ $as_echo "yes" >&6; }
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
         fi
+
+        # And now we check if we have Poppler >= 0.16.0
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if BaseStream constructor needs 2 arguments" >&5
+$as_echo_n "checking if BaseStream constructor needs 2 arguments... " >&6; }
+        rm -f testpoppler.*
+        echo '#include <poppler/Object.h>' > testpoppler.cpp
+        echo '#include <poppler/Stream.h>' >> testpoppler.cpp
+        echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
+        echo 'public:' >> testpoppler.cpp
+        echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
+        echo '  ~TestStream() {}' >> testpoppler.cpp
+        echo '  virtual Stream *makeSubStream(Guint start, GBool limited, Guint length, Object *dict) { return 0; }' >> testpoppler.cpp
+        echo '  virtual void setPos(Guint pos, int dir = 0) { }' >> testpoppler.cpp
+        echo '  virtual Guint getStart() { return 0; }' >> testpoppler.cpp
+        echo '  virtual void moveStart(int delta) { }' >> testpoppler.cpp
+        echo '};' >> testpoppler.cpp
+        echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
     else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -23674,6 +23701,8 @@ fi
 HAVE_POPPLER=$HAVE_POPPLER
 
 POPPLER_HAS_OPTCONTENT=$POPPLER_HAS_OPTCONTENT
+
+POPPLER_BASE_STREAM_HAS_TWO_ARGS=$POPPLER_BASE_STREAM_HAS_TWO_ARGS
 
 POPPLER_INC=$POPPLER_INC
 

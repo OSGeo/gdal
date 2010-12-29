@@ -425,9 +425,11 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #OPENJPEG_LIB = C:\openjpeg\bin\Release\openjpeg.lib
 
 # Uncomment for PDF support
+# Uncomment POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES for Poppler >= 0.16.0
 #POPPLER_ENABLED = YES
 #POPPLER_CFLAGS = -Ie:/kde/include -Ie:/kde/include/poppler
 #POPPLER_HAS_OPTCONTENT = YES
+#POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES
 #POPPLER_LIBS = e:/kde/lib/poppler.lib e:/kde/lib/freetype.lib e:/kde/lib/liblcms-1.lib advapi32.lib gdi32.lib
 
 # Uncomment for LZMA TIFF support
