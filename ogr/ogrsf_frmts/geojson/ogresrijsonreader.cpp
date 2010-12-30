@@ -307,6 +307,10 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
         }
     }
 
+    OGRwkbGeometryType eType = poLayer_->GetGeomType();
+    if (eType == wkbNone)
+        return poFeature;
+
 /* -------------------------------------------------------------------- */
 /*      Translate geometry sub-object of ESRIJSON Feature.               */
 /* -------------------------------------------------------------------- */
@@ -317,7 +321,7 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
     json_object_iter it;
     it.key = NULL;
     it.val = NULL;
-    it.entry = NULL;    
+    it.entry = NULL;
     json_object_object_foreachC(poTmp, it)
     {
         if( EQUAL( it.key, "geometry" ) ) {
@@ -404,7 +408,7 @@ OGRwkbGeometryType OGRESRIJSONGetGeometryType( json_object* poObj )
     poObjType = OGRGeoJSONFindMemberByName( poObj, "geometryType" );
     if( NULL == poObjType )
     {
-        return wkbUnknown;
+        return wkbNone;
     }
 
     const char* name = json_object_get_string( poObjType );
