@@ -172,10 +172,27 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "Invalid FeatureCollection object. "
-                    "Missing \'fields\' member." );
-        bSuccess = false;
+        poObjFeatures = OGRGeoJSONFindMemberByName( poGJObject_, "fieldAliases" );
+        if( NULL != poObjFeatures )
+        {
+            OGRFeatureDefn* poDefn = poLayer_->GetLayerDefn();
+            json_object_iter it;
+            it.key = NULL;
+            it.val = NULL;
+            it.entry = NULL;
+            json_object_object_foreachC( poObjFeatures, it )
+            {
+                OGRFieldDefn fldDefn( it.key, OFTString );
+                poDefn->AddFieldDefn( &fldDefn );
+            }
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                        "Invalid FeatureCollection object. "
+                        "Missing \'fields\' member." );
+            bSuccess = false;
+        }
     }
 
     return bSuccess;
