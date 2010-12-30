@@ -572,8 +572,10 @@ CPLErr GDALECWCompressor::Initialize(
         psClient->eColorSpace = NCSCS_GREYSCALE;
     else if( nBands == 3 )
         psClient->eColorSpace = NCSCS_sRGB;
+#if ECWSDK_VERSION >= 40
     else if( nBands == 4 && bRGBA )
         psClient->eColorSpace = NCSCS_sRGB;
+#endif
     else
         psClient->eColorSpace = NCSCS_MULTIBAND;
 
