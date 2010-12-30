@@ -187,7 +187,8 @@ DTED driver:
  * Fixes to read some weird DTED3 file
 
 ECW driver:
- * Support building against 4.1 read only SDK (#3676)
+ * Support building against 4.1 SDK (#3676)
+ * Add alpha support with 4.1 SDK, and various configuration options
 
 EHdr driver:
  * Improvements to deal with http://www.worldclim.org/futdown.htm datasets
@@ -603,6 +604,7 @@ DXF driver:
  * add support for \U+xxxx unicode chars in labels
 
 GeoJSON driver:
+ * Add reader to parse JSON output of FeatureService following GeoServices REST
  * Various robustness fixes to avoid crashes
  * Fix combined spatial and attribute filtering (#3803)
 
@@ -743,6 +745,7 @@ PostgreSQL driver:
  * Handle Nan and Inf values for float types in INSERT, UPDATE and
    COPY SQL commands. (#3667)
  * Retrieve the FID of a newly inserted feature (#3744)
+ * Remove use of deprecated PostGIS functions when running against PostGIS 2.0SVN
 
 S57 driver:
  * Avoid crashing if there is a missing VRPT field in a vector record.
