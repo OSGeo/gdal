@@ -538,7 +538,7 @@ def nitf_28_jp2ecw():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
-    if nitf_create([ 'ICORDS=G', 'IC=C8' ]) == 'success':
+    if nitf_create([ 'ICORDS=G', 'IC=C8', 'TARGET=75' ]) == 'success':
         ret = nitf_check_created_file(32398, 42502, 38882)
         if ret == 'success':
             gdaltest.nitf_28_jp2ecw_is_ok = True

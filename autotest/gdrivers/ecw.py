@@ -98,7 +98,7 @@ def ecw_3():
         return 'skip'
 
     ds = gdal.Open( 'data/jrc.ecw' )
-    gdaltest.ecw_drv.CreateCopy( 'tmp/jrc_out.ecw', ds )
+    gdaltest.ecw_drv.CreateCopy( 'tmp/jrc_out.ecw', ds, options = ['TARGET=75'] )
     ds = None
 
     return 'success' 
@@ -143,7 +143,7 @@ def ecw_5():
         return 'skip'
 
     ds = gdal.Open( 'data/small.vrt' )
-    ds_out = gdaltest.jp2ecw_drv.CreateCopy( 'tmp/ecw_5.jp2', ds )
+    ds_out = gdaltest.jp2ecw_drv.CreateCopy( 'tmp/ecw_5.jp2', ds, options = ['TARGET=75'] )
     if ds_out.GetDriver().ShortName != "JP2ECW":
         return 'fail'
     ds = None
@@ -209,7 +209,7 @@ def ecw_7():
 
     ds = gdal.Open( 'data/small.vrt' )
     drv = gdal.GetDriverByName( 'NITF' )
-    drv.CreateCopy( 'tmp/ecw_7.ntf', ds, options = ['IC=C8'], strict = 0 )
+    drv.CreateCopy( 'tmp/ecw_7.ntf', ds, options = ['IC=C8', 'TARGET=75'], strict = 0 )
     ds = None
 
     return 'success' 
@@ -226,13 +226,6 @@ def ecw_8():
     
     (exp_mean, exp_stddev) = (145.57, 43.1712)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
-
-    if abs(mean-exp_mean) > 1.0 or abs(stddev-exp_stddev) > 1.0:
-        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
-        return 'fail'
-
-    (exp_mean, exp_stddev) = (145.57, 43.1712)
-    (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
 
     if abs(mean-exp_mean) > 1.0 or abs(stddev-exp_stddev) > 1.0:
         gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
@@ -266,7 +259,7 @@ def ecw_9():
         return 'skip'
 
     ds = gdaltest.jp2ecw_drv.Create( 'tmp/ecw9.jp2', 200, 100, 1,
-                                     gdal.GDT_Int16 )
+                                     gdal.GDT_Int16, options = ['TARGET=75'] )
     ds.SetGeoTransform( (100, 0.1, 0.0, 30.0, 0.0, -0.1 ) )
 
     ds.SetProjection( 'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]' )
