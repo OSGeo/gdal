@@ -263,6 +263,8 @@ OGRGeometry* OGRESRIJSONReader::ReadGeometry( json_object* poObj )
         poGeometry = OGRESRIJSONReadLineString( poObj );
     else if (eType == wkbPolygon)
         poGeometry = OGRESRIJSONReadPolygon( poObj );
+    else if (eType == wkbMultiPoint)
+        poGeometry = OGRESRIJSONReadMultiPoint( poObj );
 
     return poGeometry;
 }
@@ -418,6 +420,8 @@ OGRwkbGeometryType OGRESRIJSONGetGeometryType( json_object* poObj )
         return wkbLineString;
     else if( EQUAL( name, "esriGeometryPolygon" ) )
         return wkbPolygon;
+    else if( EQUAL( name, "esriGeometryMultiPoint" ) )
+        return wkbMultiPoint;
     else
         return wkbUnknown;
 }
@@ -727,6 +731,114 @@ OGRPolygon* OGRESRIJSONReadPolygon( json_object* poObj)
     return poPoly;
 }
 
+/************************************************************************/
+/*                        OGRESRIJSONReadMultiPoint()                   */
+/************************************************************************/
+
+OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj)
+{
+    CPLAssert( NULL != poObj );
+
+    OGRMultiPoint* poMulti = NULL;
+
+    json_object* poObjPoints = OGRGeoJSONFindMemberByName( poObj, "points" );
+    if( NULL == poObjPoints )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Invalid LineString object. "
+            "Missing \'points\' member." );
+        return NULL;
+    }
+
+    if( json_type_array != json_object_get_type( poObjPoints ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Invalid LineString object. "
+            "Invalid \'points\' member." );
+        return NULL;
+    }
+
+    poMulti = new OGRMultiPoint();
+
+    const int nPoints = json_object_array_length( poObjPoints );
+    for(int i = 0; i < nPoints; i++)
+    {
+        json_object* poObjCoords = NULL;
+
+        poObjCoords = json_object_array_get_idx( poObjPoints, i );
+        if (poObjCoords == NULL)
+        {
+            delete poMulti;
+            CPLDebug( "ESRIJSON",
+                    "MultiPoint: got null object." );
+            return NULL;
+        }
+        if( json_type_array != json_object_get_type( poObjCoords ) ||
+            json_object_array_length( poObjCoords ) != 2 )
+        {
+            delete poMulti;
+            CPLDebug( "ESRIJSON",
+                    "MultiPoint: got non-array object." );
+            return NULL;
+        }
+
+        json_object* poObjCoord;
+        int iType;
+        double dfX, dfY;
+
+        // Read X coordinate
+        poObjCoord = json_object_array_get_idx( poObjCoords, 0 );
+        if (poObjCoord == NULL)
+        {
+            CPLDebug( "ESRIJSON", "MultiPoint: got null object." );
+            delete poMulti;
+            return NULL;
+        }
+
+        iType = json_object_get_type(poObjCoord);
+        if ( (json_type_double != iType) && (json_type_int != iType) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Invalid X coordinate. Type is not double or integer for \'%s\'.",
+                    json_object_to_json_string(poObjCoord) );
+            delete poMulti;
+            return NULL;
+        }
+
+        if (iType == json_type_double)
+            dfX = json_object_get_double( poObjCoord );
+        else
+            dfX = json_object_get_int( poObjCoord );
+
+        // Read Y coordinate
+        poObjCoord = json_object_array_get_idx( poObjCoords, 1 );
+        if (poObjCoord == NULL)
+        {
+            CPLDebug( "ESRIJSON", "MultiPoint: got null object." );
+            delete poMulti;
+            return NULL;
+        }
+
+        iType = json_object_get_type(poObjCoord);
+        if ( (json_type_double != iType) && (json_type_int != iType) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Invalid Y coordinate. Type is not double or integer for \'%s\'.",
+                    json_object_to_json_string(poObjCoord) );
+            delete poMulti;
+            return NULL;
+        }
+
+        if (iType == json_type_double)
+            dfY = json_object_get_double( poObjCoord );
+        else
+            dfY = json_object_get_int( poObjCoord );
+
+        poMulti->addGeometryDirectly( new OGRPoint(dfX, dfY) );
+    }
+
+    return poMulti;
+}
 
 /************************************************************************/
 /*                    OGRESRIJSONReadSpatialReference()                 */
