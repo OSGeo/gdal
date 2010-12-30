@@ -831,6 +831,46 @@ def ogr_geojson_18():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test reading ESRI multipoint file
+
+def ogr_geojson_19():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/esrimultipoint.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+    extent = (2,3,49,50)
+
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    if rc is not True:
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49,3 50)')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 
 def ogr_geojson_cleanup():
@@ -881,6 +921,7 @@ gdaltest_list = [
     ogr_geojson_16,
     ogr_geojson_17,
     ogr_geojson_18,
+    ogr_geojson_19,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
