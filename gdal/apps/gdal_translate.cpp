@@ -1110,7 +1110,10 @@ static int ProxyMain( int argc, char ** argv )
             {
                 VRTSourcedRasterBand* hMaskVRTBand =
                     (VRTSourcedRasterBand*)poVRTBand->GetMaskBand();
-                hMaskVRTBand->AddMaskBandSource(poSrcBand);
+                hMaskVRTBand->AddMaskBandSource(poSrcBand,
+                                        anSrcWin[0], anSrcWin[1],
+                                        anSrcWin[2], anSrcWin[3],
+                                        0, 0, nOXSize, nOYSize );
             }
         }
     }
@@ -1124,9 +1127,15 @@ static int ProxyMain( int argc, char ** argv )
             VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)
                 GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
             if (nMaskBand > 0)
-                hMaskVRTBand->AddSimpleSource(poSrcBand);
+                hMaskVRTBand->AddSimpleSource(poSrcBand,
+                                        anSrcWin[0], anSrcWin[1],
+                                        anSrcWin[2], anSrcWin[3],
+                                        0, 0, nOXSize, nOYSize );
             else
-                hMaskVRTBand->AddMaskBandSource(poSrcBand);
+                hMaskVRTBand->AddMaskBandSource(poSrcBand,
+                                        anSrcWin[0], anSrcWin[1],
+                                        anSrcWin[2], anSrcWin[3],
+                                        0, 0, nOXSize, nOYSize );
         }
     }
     else
@@ -1137,7 +1146,10 @@ static int ProxyMain( int argc, char ** argv )
         {
             VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)
                 GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
-            hMaskVRTBand->AddMaskBandSource((GDALRasterBand*)GDALGetRasterBand(hDataset, 1));
+            hMaskVRTBand->AddMaskBandSource((GDALRasterBand*)GDALGetRasterBand(hDataset, 1),
+                                        anSrcWin[0], anSrcWin[1],
+                                        anSrcWin[2], anSrcWin[3],
+                                        0, 0, nOXSize, nOYSize );
         }
     }
 
