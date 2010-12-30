@@ -61,6 +61,11 @@
 #endif
 
 #if ECWSDK_VERSION < 40
+
+#if !defined(NO_COMPRESS)
+#  define HAVE_COMPRESS
+#endif
+
 #  include <NCSJP2File.h>
 #else
 #  include <ECWJP2BuildNumber.h>
