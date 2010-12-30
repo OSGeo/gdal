@@ -598,6 +598,13 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
         }
     }
 
+    if( -1 == poFeature->GetFID() )
+    {
+        json_object* poObjId = OGRGeoJSONFindMemberByName( poObj, "id" );
+        if (poObjId != NULL && json_object_get_type(poObjId) == json_type_int)
+            poFeature->SetFID( json_object_get_int( poObjId ) );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Translate geometry sub-object of GeoJSON Feature.               */
 /* -------------------------------------------------------------------- */
