@@ -605,6 +605,7 @@ DXF driver:
 
 GeoJSON driver:
  * Add reader to parse JSON output of FeatureService following GeoServices REST
+ * Read and write "id" member at feature object level
  * Various robustness fixes to avoid crashes
  * Fix combined spatial and attribute filtering (#3803)
 
