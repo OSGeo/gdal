@@ -189,5 +189,6 @@ OGRwkbGeometryType OGRESRIJSONGetGeometryType( json_object* poObj );
 OGRPoint* OGRESRIJSONReadPoint( json_object* poObj);
 OGRLineString* OGRESRIJSONReadLineString( json_object* poObj);
 OGRPolygon* OGRESRIJSONReadPolygon( json_object* poObj);
+OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj);
 
 #endif /* OGR_GEOJSONUTILS_H_INCLUDED */
