@@ -47,6 +47,15 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature )
                             json_object_new_string("Feature") );
 
 /* -------------------------------------------------------------------- */
+/*      Write FID if available                                          */
+/* -------------------------------------------------------------------- */
+    if ( poFeature->GetFID() != OGRNullFID )
+    {
+        json_object_object_add( poObj, "id",
+                                json_object_new_int((int)poFeature->GetFID()) );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Write feature attributes to GeoJSON "properties" object.        */
 /* -------------------------------------------------------------------- */
     json_object* poObjProps = NULL;
