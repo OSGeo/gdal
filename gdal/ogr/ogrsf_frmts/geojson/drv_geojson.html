@@ -20,6 +20,10 @@ and <a href="http://exportgge.sourceforge.net/kml/">CartoWeb</a>.</p>
 Datasource, Layer, Feature, Geometry. 
 The implementation is based on <a href="http://wiki.geojson.org/GeoJSON_draft_version_5">GeoJSON Specification draft, v5.0</a>.</p>
 
+<p>Starting with OGR 1.8.0, the GeoJSON driver can read the JSON output of Feature Service request following the
+<a href="http://www.esri.com/industries/landing-pages/geoservices/geoservices.html">GeoServices REST Specification<a/>, like
+implemented by <a href="http://help.arcgis.com/en/arcgisserver/10.0/apis/rest/index.html">ArcGIS Server REST API</a></p>
+
 <h2>Datasource</h2>
 
 <p>The OGR GeoJSON driver accepts three types of sources of data:
@@ -101,6 +105,12 @@ ogr2ogr -f "ESRI Shapefile" cities.shp http://featureserver/cities/.geojson OGRG
 </pre>
 </p>
 
+<p>Read the result of a FeatureService request against a GeoServices REST server:
+<pre>
+ogrinfo -ro -al "http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&amp;outfields=*&amp;f=json"
+</pre>
+</p>
+
 <h2>See Also</h2>
 
 <p>
@@ -109,6 +119,7 @@ ogr2ogr -f "ESRI Shapefile" cities.shp http://featureserver/cities/.geojson OGRG
 <li><a href="http://json.org/">JSON</a> - JavaScript Object Notation</li>
 <li><a href="http://oss.metaparadigm.com/json-c/">JSON-C</a> - A JSON implementation in C</li>
 <li><a href="http://lists.osgeo.org/pipermail/gdal-dev/2007-November/014746.html">[Gdal-dev] OGR GeoJSON Driver</a> - driver announcement</li>
+<li><a href="http://www.esri.com/industries/landing-pages/geoservices/geoservices.html">GeoServices REST Specification<a/></li>
 </ul>
 </p>
 
