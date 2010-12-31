@@ -2418,7 +2418,8 @@ HFAHandle HFACreate( const char * pszFilename,
 /*      Create an overview layer object for a band.                     */
 /************************************************************************/
 
-int HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel )
+int HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel,
+                       const char *pszResampling )
 
 {
     if( nBand < 1 || nBand > hHFA->nBands )
@@ -2426,7 +2427,7 @@ int HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel )
     else
     {
         HFABand *poBand = hHFA->papoBand[nBand-1];
-        return poBand->CreateOverview( nOverviewLevel );
+        return poBand->CreateOverview( nOverviewLevel, pszResampling );
     }
 }
 
