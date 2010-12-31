@@ -1220,8 +1220,13 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         
         if( oGeo.getWKT() )
         {
-            CPLFree( pszProjection );
-            pszProjection =  CPLStrdup( oGeo.getWKT() );
+            /* Workaround probable issue with GeoDSK 7 on 64bit Linux */
+            if (!(pszProjection != NULL && !EQUALN(pszProjection, "LOCAL_CS", 8)
+                && EQUALN( oGeo.getWKT(), "LOCAL_CS", 8)))
+            {
+                CPLFree( pszProjection );
+                pszProjection =  CPLStrdup( oGeo.getWKT() );
+            }
         }
     }
 #endif // HAVE_MRSID_GETWKT
@@ -1750,16 +1755,8 @@ static void WKTMassageDatum( char ** ppszDatum )
 
 {
     int         i, j;
-    char        *pszDatum;
+    char        *pszDatum = *ppszDatum;
 
-/* -------------------------------------------------------------------- */
-/*      First copy string and allocate with our CPLStrdup() to so we    */
-/*      know when we are done this function we will have a CPL          */
-/*      string, not a GTIF one.                                         */
-/* -------------------------------------------------------------------- */
-    pszDatum = CPLStrdup(*ppszDatum);
-    GTIFFreeMemory( *ppszDatum );
-    *ppszDatum = pszDatum;
     if (pszDatum[0] == '\0')
         return;
 
@@ -2480,6 +2477,25 @@ void MrSIDDataset::GetGTIFDefn()
     pszProjection = GetOGISDefn( psDefn );
 }
 
+
+/************************************************************************/
+/*                       GTIFToCPLRecyleString()                        */
+/*                                                                      */
+/*      This changes a string from the libgeotiff heap to the GDAL      */
+/*      heap.                                                           */
+/************************************************************************/
+
+static void GTIFToCPLRecycleString( char **ppszTarget )
+
+{
+    if( *ppszTarget == NULL )
+        return;
+
+    char *pszTempString = CPLStrdup(*ppszTarget);
+    GTIFFreeMemory( *ppszTarget );
+    *ppszTarget = pszTempString;
+}
+
 /************************************************************************/
 /*                          GetOGISDefn()                               */
 /*  Copied from the gt_wkt_srs.cpp.                                     */
@@ -2538,12 +2554,20 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefn )
     if( GetMetadataElement( "GEOTIFF_NUM::2049::GeogCitationGeoKey",
                             szGCSName, sizeof(szGCSName) ) )
         pszGeogName = CPLStrdup(szGCSName);
-    GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL );
+    else
+    {
+        GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL );
+        GTIFToCPLRecycleString(&pszGeogName);
+    }
     GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
+    GTIFToCPLRecycleString(&pszDatumName);
     GTIFGetPMInfo( psDefn->PM, &pszPMName, NULL );
+    GTIFToCPLRecycleString(&pszPMName);
     GTIFGetEllipsoidInfo( psDefn->Ellipsoid, &pszSpheroidName, NULL, NULL );
+    GTIFToCPLRecycleString(&pszSpheroidName);
     
     GTIFGetUOMAngleInfo( psDefn->UOMAngle, &pszAngularUnits, NULL );
+    GTIFToCPLRecycleString(&pszAngularUnits);
     if( pszAngularUnits == NULL )
         pszAngularUnits = CPLStrdup("unknown");
 
@@ -2579,11 +2603,11 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefn )
     if( psDefn->Ellipsoid != KvUserDefined )
         oSRS.SetAuthority( "SPHEROID", "EPSG", psDefn->Ellipsoid );
 
-    GTIFFreeMemory( pszGeogName );
+    CPLFree( pszGeogName );
     CPLFree( pszDatumName );
-    GTIFFreeMemory( pszPMName );
-    GTIFFreeMemory( pszSpheroidName );
-    GTIFFreeMemory( pszAngularUnits );
+    CPLFree( pszPMName );
+    CPLFree( pszSpheroidName );
+    CPLFree( pszAngularUnits );
         
 /* ==================================================================== */
 /*      Handle projection parameters.                                   */
