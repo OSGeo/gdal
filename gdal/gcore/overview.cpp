@@ -257,14 +257,14 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
 /* -------------------------------------------------------------------- */
 
     pDstScanline = (T *) VSIMalloc(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
-    int* panSrcXOff = (int*)VSIMalloc(2 * nDstXWidth * sizeof(int));
+    int* panSrcXOffShifted = (int*)VSIMalloc(2 * nDstXWidth * sizeof(int));
 
-    if( pDstScanline == NULL || panSrcXOff == NULL )
+    if( pDstScanline == NULL || panSrcXOffShifted == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "GDALDownsampleChunk32R: Out of memory for line buffer." );
         VSIFree(pDstScanline);
-        VSIFree(panSrcXOff);
+        VSIFree(panSrcXOffShifted);
         return CE_Failure;
     }
 
@@ -314,8 +314,8 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
         if( nSrcXOff2 > nChunkRightXOff || iDstPixel == nOXSize-1 )
             nSrcXOff2 = nChunkRightXOff;
 
-        panSrcXOff[2 * (iDstPixel - nDstXOff)] = nSrcXOff;
-        panSrcXOff[2 * (iDstPixel - nDstXOff) + 1] = nSrcXOff2;
+        panSrcXOffShifted[2 * (iDstPixel - nDstXOff)] = nSrcXOff - nChunkXOff;
+        panSrcXOffShifted[2 * (iDstPixel - nDstXOff) + 1] = nSrcXOff2 - nChunkXOff;
         if (nSrcXOff2 - nSrcXOff != 2)
             bSrcXSpacingIsTwo = FALSE;
     }
@@ -325,8 +325,6 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
 /* ==================================================================== */
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-        T *pSrcScanline;
-        GByte *pabySrcScanlineNodataMask;
         int   nSrcYOff, nSrcYOff2 = 0;
 
         nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
@@ -341,23 +339,16 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
         if( nSrcYOff2 > nChunkYOff + nChunkYSize)
             nSrcYOff2 = nChunkYOff + nChunkYSize;
 
-        pSrcScanline = pChunk + ((-nChunkYOff) * nChunkXSize)-nChunkXOff;
-        if (pabyChunkNodataMask != NULL)
-            pabySrcScanlineNodataMask = pabyChunkNodataMask + ((-nChunkYOff) * nChunkXSize)-nChunkXOff;
-        else
-            pabySrcScanlineNodataMask = NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
         if (poColorTable == NULL)
         {
             if (bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
-                pabySrcScanlineNodataMask == NULL && eWrkDataType == GDT_Byte)
+                pabyChunkNodataMask == NULL && eWrkDataType == GDT_Byte)
             {
                 /* Optimized case : no nodata, overview by a factor of 2 and regular x and y src spacing */
-                int  nSrcXOff = panSrcXOff[0];
-                T* pSrcScanlineShifted = pSrcScanline + nSrcXOff+nSrcYOff*nChunkXSize;
+                T* pSrcScanlineShifted = pChunk + panSrcXOffShifted[0] + (nSrcYOff - nChunkYOff) * nChunkXSize;
                 for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
                 {
                     Tsum nTotal;
@@ -373,10 +364,13 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
             }
             else
             {
+                nSrcYOff -= nChunkYOff;
+                nSrcYOff2 -= nChunkYOff;
+
                 for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
                 {
-                    int  nSrcXOff = panSrcXOff[2 * iDstPixel],
-                        nSrcXOff2 = panSrcXOff[2 * iDstPixel + 1];
+                    int  nSrcXOff = panSrcXOffShifted[2 * iDstPixel],
+                         nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
 
                     T val;
                     Tsum dfTotal = 0;
@@ -386,9 +380,9 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
                     {
                         for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                         {
-                            val = pSrcScanline[iX+iY*nChunkXSize];
-                            if (pabySrcScanlineNodataMask == NULL ||
-                                pabySrcScanlineNodataMask[iX+iY*nChunkXSize])
+                            val = pChunk[iX + iY *nChunkXSize];
+                            if (pabyChunkNodataMask == NULL ||
+                                pabyChunkNodataMask[iX + iY *nChunkXSize])
                             {
                                 dfTotal += val;
                                 nCount++;
@@ -407,10 +401,13 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
         }
         else
         {
+            nSrcYOff -= nChunkYOff;
+            nSrcYOff2 -= nChunkYOff;
+
             for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
             {
-                int  nSrcXOff = panSrcXOff[2 * iDstPixel],
-                     nSrcXOff2 = panSrcXOff[2 * iDstPixel + 1];
+                int  nSrcXOff = panSrcXOffShifted[2 * iDstPixel],
+                     nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
 
                 T val;
                 int    nTotalR = 0, nTotalG = 0, nTotalB = 0;
@@ -420,7 +417,7 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
                 {
                     for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                     {
-                        val = pSrcScanline[iX+iY*nChunkXSize];
+                        val = pChunk[iX + iY *nChunkXSize];
                         if (bHasNoData == FALSE || val != tNoDataValue)
                         {
                             int nVal = (int)val;
@@ -466,7 +463,7 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
 
     CPLFree( pDstScanline );
     CPLFree( aEntries );
-    CPLFree( panSrcXOff );
+    CPLFree( panSrcXOffShifted );
 
     return eErr;
 }
