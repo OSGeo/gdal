@@ -529,6 +529,9 @@ def nitf_28_jp2ecw():
     gdaltest.nitf_28_jp2ecw_is_ok = False
     try:
         jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
+        if jp2ecw_drv is not None:
+            if 'DMD_CREATIONOPTIONLIST' not in jp2ecw_drv.GetMetadata():
+                jp2ecw_drv = None
     except:
         jp2ecw_drv = None
 
@@ -1051,6 +1054,9 @@ def nitf_43(driver_to_test, options):
 
     try:
         jp2_drv = gdal.GetDriverByName( driver_to_test )
+        if driver_to_test == 'JP2ECW' and jp2_drv is not None:
+            if 'DMD_CREATIONOPTIONLIST' not in jp2_drv.GetMetadata():
+                jp2_drv = None
     except:
         jp2_drv = None
 
