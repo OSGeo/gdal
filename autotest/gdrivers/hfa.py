@@ -1074,6 +1074,8 @@ def hfa_write_bit2grayscale():
     if ov.Checksum() != 57325:
         gdaltest.post_reason( 'wrong checksum for greyscale overview.' )
         return 'fail'
+		
+    ds = None
 
     gdal.GetDriverByName('HFA').Delete('tmp/small1bit.img')
     
