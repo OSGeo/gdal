@@ -1032,6 +1032,65 @@ def hfa_ov_nodata():
     return 'success'
  
 ###############################################################################
+# Confirm that we can read 8bit grayscale overviews for 1bit images.
+
+def hfa_read_bit2grayscale():
+
+    ds = gdal.Open( 'data/small1bit.img' )
+    band = ds.GetRasterBand(1)
+    ov = band.GetOverview(0)
+
+    if ov.Checksum() != 4247:
+        gdaltest.post_reason( 'did not get expected overview checksum' )
+        return 'fail'
+
+    ds_md = ds.GetMetadata()
+    if ds_md['PyramidResamplingType'] != 'AVERAGE_BIT2GRAYSCALE':
+        gdaltest.post_reason( 'wrong pyramid resampling type metadata.' )
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+# Confirm that we can create overviews in rrd format for an .img file with
+# the bit2grayscale algorithm (#2914)
+
+def hfa_write_bit2grayscale():
+
+    import shutil
+    
+    shutil.copyfile('data/small1bit.img' , 'tmp/small1bit.img')
+    shutil.copyfile('data/small1bit.rrd' , 'tmp/small1bit.rrd')
+
+    gdal.SetConfigOption( 'USE_RRD', 'YES' )
+    gdal.SetConfigOption( 'HFA_USE_RRD', 'YES' )
+    
+    ds = gdal.Open( 'tmp/small1bit.img', gdal.GA_Update )
+    ds.BuildOverviews( resampling = 'average_bit2grayscale',
+                       overviewlist = [2] )
+
+    ov = ds.GetRasterBand(1).GetOverview(1)
+
+    if ov.Checksum() != 57325:
+        gdaltest.post_reason( 'wrong checksum for greyscale overview.' )
+        return 'fail'
+
+    gdal.GetDriverByName('HFA').Delete('tmp/small1bit.img')
+    
+    gdal.SetConfigOption( 'USE_RRD', 'NO' )
+    gdal.SetConfigOption( 'HFA_USE_RRD', 'NO' )
+
+    # as an aside, confirm the .rrd file was deleted.
+    try:
+        open('tmp/small1bit.rrd')
+        gdaltest.post_reason( 'tmp/small1bit.rrd not deleted!' )
+        return 'fail'
+    except:
+        pass
+    
+    return 'success'
+    
+###############################################################################
 # Verify handling of camera model metadata (#2675)
 
 def hfa_camera_md():
@@ -1104,6 +1163,8 @@ gdaltest_list = [
     hfa_delete_colortable2,
     hfa_excluded_values,
     hfa_ov_nodata,
+    hfa_read_bit2grayscale,
+    hfa_write_bit2grayscale,
     hfa_camera_md ]
 
 if __name__ == '__main__':
