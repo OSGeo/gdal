@@ -1694,7 +1694,107 @@ def tiff_ovr_45():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test overview on a dataset where width * height > 2 billion
+
+def tiff_ovr_46():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    val = gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS', None)
+    if val != 'yes' and val != 'YES':
+        return 'skip'
+
+    # Test NEAREST
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+    ds.BuildOverviews( 'NEAREST', overviewlist = [2] )
+    ds = None
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
+
+
+    # Test AVERAGE in optimized case (x2 reduction)
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
+    ds = None
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
+
+    # Test AVERAGE in un-optimized case (x3 reduction)
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [3] )
+    ds = None
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
+
+    # Test AVERAGE in un-optimized case (color table)
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (255,0,0) )
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
+    ds = None
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
+
+
+    # Test GAUSS
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+    ds.BuildOverviews( 'GAUSS', overviewlist = [2] )
+    ds = None
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
+
+    # Test GAUSS with color table
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (255,0,0) )
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+
+    ds.BuildOverviews( 'GAUSS', overviewlist = [2] )
+    ds = None
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
+
+    # Test MODE
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+    ds.BuildOverviews( 'MODE', overviewlist = [2] )
+    ds = None
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
+
+
+    # Test CUBIC
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+    ds.BuildOverviews( 'CUBIC', overviewlist = [2] )
+    ds = None
+    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -1784,6 +1884,7 @@ gdaltest_list_internal = [
     tiff_ovr_43,
     tiff_ovr_44,
     tiff_ovr_45,
+    tiff_ovr_46,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
@@ -1800,7 +1901,8 @@ for item in gdaltest_list_internal:
     gdaltest_list.append(item)
 gdaltest_list.append(tiff_ovr_invert_endianness)
 for item in gdaltest_list_internal:
-    gdaltest_list.append( (item, item.__name__ + '_inverted') )
+    if item.__name__ != 'tiff_ovr_46':
+        gdaltest_list.append( (item, item.__name__ + '_inverted') )
 gdaltest_list.append(tiff_ovr_restore_endianness)
 
 if __name__ == '__main__':
