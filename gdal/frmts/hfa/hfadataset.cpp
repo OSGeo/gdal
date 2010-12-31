@@ -420,6 +420,35 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     HFAGetBandInfo( hHFA, nBand, &nHFADataType,
                     &nBlockXSize, &nBlockYSize, &nCompression );
     
+/* -------------------------------------------------------------------- */
+/*      If this is an overview, we need to fetch the actual size,       */
+/*      and block size.                                                 */
+/* -------------------------------------------------------------------- */
+    if( iOverview > -1 )
+    {
+        int nHFADataTypeO;
+
+        nOverviews = 0;
+        HFAGetOverviewInfo( hHFA, nBand, iOverview,
+                            &nRasterXSize, &nRasterYSize,
+                            &nBlockXSize, &nBlockYSize, &nHFADataTypeO  );
+
+/* -------------------------------------------------------------------- */
+/*      If we are an 8bit overview of a 1bit layer, we need to mark     */
+/*      ourselves as being "resample: average_bit2grayscale".           */
+/* -------------------------------------------------------------------- */
+        if( nHFADataType == EPT_u1 && nHFADataTypeO == EPT_u8 )
+        {
+            GDALMajorObject::SetMetadataItem( "RESAMPLING", 
+                                              "AVERAGE_BIT2GRAYSCALE" );
+            GDALMajorObject::SetMetadataItem( "NBITS", "8" );
+            nHFADataType = nHFADataTypeO;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set some other information.                                     */
+/* -------------------------------------------------------------------- */
     if( nCompression != 0 )
         GDALMajorObject::SetMetadataItem( "COMPRESSION", "RLE", 
                                           "IMAGE_STRUCTURE" );
@@ -486,31 +515,6 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     {
         GDALMajorObject::SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", 
                                           "IMAGE_STRUCTURE" );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If this is an overview, we need to fetch the actual size,       */
-/*      and block size.                                                 */
-/* -------------------------------------------------------------------- */
-    if( iOverview > -1 )
-    {
-        int nHFADataTypeO;
-
-        nOverviews = 0;
-        HFAGetOverviewInfo( hHFA, nBand, iOverview,
-                            &nRasterXSize, &nRasterYSize,
-                            &nBlockXSize, &nBlockYSize, &nHFADataTypeO  );
-
-/* -------------------------------------------------------------------- */
-/*      If we are an 8bit overview of a 1bit layer, we need to mark     */
-/*      ourselves as being "resample: average_bit2grayscale".           */
-/* -------------------------------------------------------------------- */
-        if( nHFADataType == EPT_u1 && nHFADataTypeO == EPT_u8 )
-        {
-            GDALMajorObject::SetMetadataItem( "RESAMPLING", 
-                                              "AVERAGE_BIT2GRAYSCALE" );
-            GDALMajorObject::SetMetadataItem( "NBITS", "8" );
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -968,7 +972,6 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     CPLErr	eErr;
-    int         nThisDataType = nHFADataType; // overview may differ.
 
     if( nThisOverview == -1 )
         eErr = HFAGetRasterBlockEx( hHFA, nBand, nBlockXOff, nBlockYOff,
@@ -980,11 +983,9 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                            nBlockXOff, nBlockYOff,
                                            pImage,
                                            nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8));
-        nThisDataType = 
-            hHFA->papoBand[nBand-1]->papoOverviews[nThisOverview]->nDataType;
     }
 
-    if( eErr == CE_None && nThisDataType == EPT_u4 )
+    if( eErr == CE_None && nHFADataType == EPT_u4 )
     {
         GByte	*pabyData = (GByte *) pImage;
 
@@ -995,7 +996,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             pabyData[ii]   = (pabyData[k]) & 0xf;
         }
     }
-    if( eErr == CE_None && nThisDataType == EPT_u2 )
+    if( eErr == CE_None && nHFADataType == EPT_u2 )
     {
         GByte	*pabyData = (GByte *) pImage;
 
@@ -1008,7 +1009,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             pabyData[ii]   = (pabyData[k]) & 0x3;
         }
     }
-    if( eErr == CE_None && nThisDataType == EPT_u1)
+    if( eErr == CE_None && nHFADataType == EPT_u1)
     {
         GByte	*pabyData = (GByte *) pImage;
 
@@ -1375,7 +1376,9 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
         if( papoOvBands[iOverview] == NULL )
         {
-            iResult = HFACreateOverview( hHFA, nBand, panOverviewList[iOverview] );
+            iResult = HFACreateOverview( hHFA, nBand, 
+                                         panOverviewList[iOverview],
+                                         pszResampling );
             if( iResult < 0 )
                 return CE_Failure;
             
@@ -3563,6 +3566,12 @@ char **HFADataset::GetFileList()
         papszFileList = CSLAddString( papszFileList, 
                                       HFAGetIGEFilename( hHFA ) );
     }
+
+    // Request an overview to force opening of dependent overview
+    // files. 
+    if( nBands > 0 
+        && GetRasterBand(1)->GetOverviewCount() > 0 )
+        GetRasterBand(1)->GetOverview(0);
 
     if( hHFA->psDependent != NULL )
     {
