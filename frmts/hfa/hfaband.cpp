@@ -1955,7 +1955,7 @@ CPLErr HFABand::SetPCT( int nColors,
 /*                           CreateOverview()                           */
 /************************************************************************/
 
-int HFABand::CreateOverview( int nOverviewLevel )
+int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 
 {
 
@@ -1988,9 +1988,19 @@ int HFABand::CreateOverview( int nOverviewLevel )
     }
 
 /* -------------------------------------------------------------------- */
+/*      What pixel type should we use for the overview.  Usually        */
+/*      this is the same as the base layer, but when                    */
+/*      AVERAGE_BIT2GRAYSCALE is in effect we force it to u8 from u1.   */
+/* -------------------------------------------------------------------- */
+    int nOverviewDataType = nDataType;
+
+    if( EQUALN(pszResampling,"AVERAGE_BIT2GR",14) )
+        nOverviewDataType = EPT_u8;
+
+/* -------------------------------------------------------------------- */
 /*      Eventually we need to decide on the whether to use the spill    */
 /*      file, primarily on the basis of whether the new overview        */
-/*      will drive our .img file size near 4BG.  For now, just base     */
+/*      will drive our .img file size near 4GB.  For now, just base     */
 /*      it on the config options.                                       */
 /* -------------------------------------------------------------------- */
     int bCreateLargeRaster = CSLTestBoolean(
@@ -1999,13 +2009,13 @@ int HFABand::CreateOverview( int nOverviewLevel )
 
     if( (psRRDInfo->nEndOfFile 
          + (nOXSize * (double) nOYSize)
-         * (HFAGetDataTypeBits(nDataType) / 8)) > 2000000000.0 )
+         * (HFAGetDataTypeBits(nOverviewDataType) / 8)) > 2000000000.0 )
         bCreateLargeRaster = TRUE;
 
     if( bCreateLargeRaster )
     {
         if( !HFACreateSpillStack( psRRDInfo, nOXSize, nOYSize, 1, 
-                                  64, nDataType, 
+                                  64, nOverviewDataType, 
                                   &nValidFlagsOffset, &nDataOffset ) )
 	{
 	    return -1;
@@ -2019,7 +2029,7 @@ int HFABand::CreateOverview( int nOverviewLevel )
 
     if( !HFACreateLayer( psRRDInfo, poParent, osLayerName, 
                          TRUE, 64, FALSE, bCreateLargeRaster, FALSE,
-                         nOXSize, nOYSize, nDataType, NULL,
+                         nOXSize, nOYSize, nOverviewDataType, NULL,
                          nValidFlagsOffset, nDataOffset, 1, 0 ) )
         return -1;
     
