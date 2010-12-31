@@ -392,6 +392,26 @@ def misc_9():
 
     return 'success'
 
+
+###############################################################################
+# Test VSIBufferedReaderHandle (fix done in r21358)
+
+def misc_10():
+
+    f = gdal.VSIFOpenL('/vsigzip/./data/byte.tif.gz', 'rb')
+    gdal.VSIFReadL(1, 1, f)
+    gdal.VSIFSeekL(f, 0, 2)
+    gdal.VSIFSeekL(f, 0, 0)
+    data = gdal.VSIFReadL(1, 4, f)
+    gdal.VSIFCloseL(f)
+
+    import struct
+    ar = struct.unpack('B' * 4, data)
+    if ar != (73, 73, 42, 0):
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 def misc_cleanup():
 
@@ -411,6 +431,7 @@ gdaltest_list = [ misc_1,
                   misc_7,
                   misc_8,
                   misc_9,
+                  misc_10,
                   misc_cleanup ]
 
 if __name__ == '__main__':
