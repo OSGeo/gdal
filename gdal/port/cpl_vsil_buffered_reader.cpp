@@ -46,6 +46,7 @@ class VSIBufferedReaderHandle : public VSIVirtualHandle
     GUIntBig          nBufferOffset;
     int               nBufferSize;
     GUIntBig          nCurOffset;
+    int               bNeedBaseHandleSeek;
 
   public:
 
@@ -80,6 +81,7 @@ VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle)
     nBufferOffset = 0;
     nBufferSize = 0;
     nCurOffset = 0;
+    bNeedBaseHandleSeek = FALSE;
 }
 
 /************************************************************************/
@@ -97,12 +99,14 @@ VSIBufferedReaderHandle::~VSIBufferedReaderHandle()
 
 int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
+    //CPLDebug( "BUFFERED", "Seek(%d,%d)", (int)nOffset, (int)nWhence);
     if (nWhence == SEEK_CUR)
         nCurOffset += nOffset;
     else if (nWhence == SEEK_END)
     {
         poBaseHandle->Seek(nOffset, nWhence);
         nCurOffset = poBaseHandle->Tell();
+        bNeedBaseHandleSeek = TRUE;
     }
     else
         nCurOffset = nOffset;
@@ -116,6 +120,7 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 vsi_l_offset VSIBufferedReaderHandle::Tell()
 {
+    //CPLDebug( "BUFFERED", "Tell() = %d", (int)nCurOffset);
     return nCurOffset;
 }
 /************************************************************************/
@@ -125,6 +130,7 @@ vsi_l_offset VSIBufferedReaderHandle::Tell()
 size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 {
     const size_t nTotalToRead = nSize * nMemb;
+    //CPLDebug( "BUFFERED", "Read(%d)", (int)nTotalToRead);
 
     if (nSize == 0)
         return 0;
@@ -140,6 +146,9 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
         {
             /* The beginning of the the data to read is located in the buffer */
             /* but the end must be read from the file */
+            if (bNeedBaseHandleSeek)
+                poBaseHandle->Seek(nBufferOffset + nBufferSize, SEEK_SET);
+            bNeedBaseHandleSeek = FALSE;
             //CPLAssert(poBaseHandle->Tell() == nBufferOffset + nBufferSize);
 
             const int nReadInFile = poBaseHandle->Read((GByte*)pBuffer + nReadInBuffer, 1, nToReadInFile);
@@ -166,6 +175,7 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
     {
         /* We try either to read before or after the buffer, so a seek is necessary */
         poBaseHandle->Seek(nCurOffset, SEEK_SET);
+        bNeedBaseHandleSeek = FALSE;
         const int nReadInFile = poBaseHandle->Read(pBuffer, 1, nTotalToRead);
         nBufferSize = MIN(nReadInFile, MAX_BUFFER_SIZE);
         nBufferOffset = nCurOffset + nReadInFile - nBufferSize;
