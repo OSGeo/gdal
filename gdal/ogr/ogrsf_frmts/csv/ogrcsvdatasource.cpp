@@ -113,6 +113,17 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
     if (bIgnoreExtension)
         pszFilename += 4;
 
+    /* Those are *not* real .XLS files, but text file with tab as column separator */
+    else if (EQUAL(CPLGetFilename(pszFilename), "NfdcFacilities.xls") ||
+             EQUAL(CPLGetFilename(pszFilename), "NfdcRunways.xls") ||
+             EQUAL(CPLGetFilename(pszFilename), "NfdcRemarks.xls") ||
+             EQUAL(CPLGetFilename(pszFilename), "NfdcSchedules.xls"))
+    {
+        if (bUpdateIn)
+            return FALSE;
+        bIgnoreExtension = TRUE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Determine what sort of object this is.                          */
 /* -------------------------------------------------------------------- */
@@ -126,7 +137,22 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(sStatBuf.st_mode)
         && (bIgnoreExtension || EQUAL(CPLGetExtension(pszFilename),"csv")) )
+    {
+        if (EQUAL(CPLGetFilename(pszFilename), "NfdcFacilities.xls"))
+        {
+            return OpenTable( pszFilename, "ARP");
+        }
+        else if (EQUAL(CPLGetFilename(pszFilename), "NfdcRunways.xls"))
+        {
+            OpenTable( pszFilename, "BaseEndPhysical");
+            OpenTable( pszFilename, "BaseEndDisplaced");
+            OpenTable( pszFilename, "ReciprocalEndPhysical");
+            OpenTable( pszFilename, "ReciprocalEndDisplaced");
+            return nLayers != 0;
+        }
+
         return OpenTable( pszFilename );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Is this a single a ZIP file with only a CSV file inside ?       */
@@ -199,7 +225,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /*                              OpenTable()                             */
 /************************************************************************/
 
-int OGRCSVDataSource::OpenTable( const char * pszFilename )
+int OGRCSVDataSource::OpenTable( const char * pszFilename, const char* pszNfdcRunwaysGeomField )
 
 {
 /* -------------------------------------------------------------------- */
@@ -251,11 +277,16 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
 
-    const char* pszLayerName = CPLGetBasename(pszFilename);
+    CPLString osLayerName = CPLGetBasename(pszFilename);
+    if (pszNfdcRunwaysGeomField != NULL)
+    {
+        osLayerName += "_";
+        osLayerName += pszNfdcRunwaysGeomField;
+    }
     if (EQUAL(pszFilename, "/vsistdin/"))
-        pszLayerName = "layer";
+        osLayerName = "layer";
     papoLayers[nLayers-1] = 
-        new OGRCSVLayer( pszLayerName, fp, pszFilename, FALSE, bUpdate, chDelimiter );
+        new OGRCSVLayer( osLayerName, fp, pszFilename, FALSE, bUpdate, chDelimiter, pszNfdcRunwaysGeomField );
 
     return TRUE;
 }
@@ -357,7 +388,7 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
     
-    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, NULL, osFilename, TRUE, TRUE, chDelimiter );
+    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, NULL, osFilename, TRUE, TRUE, chDelimiter, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Was a partiuclar CRLF order requested?                          */

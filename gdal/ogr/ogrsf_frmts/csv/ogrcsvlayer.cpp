@@ -196,12 +196,13 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter )
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn, 
                           VSILFILE * fp, const char *pszFilename, int bNew, int bInWriteMode,
-                          char chDelimiter)
+                          char chDelimiter, const char* pszNfdcGeomField)
 
 {
     fpCSV = fp;
 
     iWktGeomReadField = -1;
+    iNfdcLatitudeS = iNfdcLongitudeS = -1;
     this->bInWriteMode = bInWriteMode;
     this->bNew = bNew;
     this->pszFilename = CPLStrdup(pszFilename);
@@ -379,8 +380,21 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
             iWktGeomReadField = iField;
             poFeatureDefn->SetGeomType( wkbUnknown );
         }
+
+        /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
+        if ( pszNfdcGeomField != NULL &&
+                  EQUALN(oField.GetNameRef(), pszNfdcGeomField, strlen(pszNfdcGeomField)) &&
+                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LatitudeS") )
+            iNfdcLatitudeS = iField;
+        else if ( pszNfdcGeomField != NULL &&
+                  EQUALN(oField.GetNameRef(), pszNfdcGeomField, strlen(pszNfdcGeomField)) &&
+                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LongitudeS") )
+            iNfdcLongitudeS = iField;
     }
 
+    if ( iNfdcLatitudeS != -1 && iNfdcLongitudeS )
+        poFeatureDefn->SetGeomType( wkbPoint );
+    
     CSLDestroy( papszTokens );
     CSLDestroy( papszFieldTypes );
 }
@@ -490,6 +504,26 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
         else
             poFeature->SetField( iAttr, papszTokens[iAttr] );
 
+    }
+
+/* -------------------------------------------------------------------- */
+/*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
+/* -------------------------------------------------------------------- */
+
+    if ( iNfdcLatitudeS != -1 &&
+         iNfdcLongitudeS != -1 &&
+         nAttrCount > iNfdcLatitudeS &&
+         nAttrCount > iNfdcLongitudeS  &&
+         papszTokens[iNfdcLongitudeS][0] != 0 &&
+         papszTokens[iNfdcLatitudeS][0] != 0)
+    {
+        double dfLon = atof(papszTokens[iNfdcLongitudeS]) / 3600;
+        if (strchr(papszTokens[iNfdcLongitudeS], 'W'))
+            dfLon *= -1;
+        double dfLat = atof(papszTokens[iNfdcLatitudeS]) / 3600;
+        if (strchr(papszTokens[iNfdcLatitudeS], 'S'))
+            dfLat *= -1;
+        poFeature->SetGeometryDirectly( new OGRPoint(dfLon, dfLat) );
     }
 
     CSLDestroy( papszTokens );

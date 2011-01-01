@@ -577,6 +577,9 @@ BNA driver:
  * Ported to use VSIF*L API
 
 CSV driver:
+ * For files structured as CSV, but not ending with .CSV extension, the 'CSV:'
+   prefix can be added before the filename to force loading by the CSV driver
+ * Support reading airport data coming from http://www.faa.gov/airports/airport_safety/airportdata_5010
  * If a datasource is created with the extension .csv assume this should be
    the first layer .csv file instead of a directory
  * Skip empty lines (#3782)
