@@ -162,6 +162,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
     pszSrcEncoding = None
     pszDstEncoding = None
     bExplodeCollections = False
+    pszZField = None
 
     if args is None:
         args = sys.argv
@@ -437,6 +438,10 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         elif EQUAL(args[iArg],"-explodecollections"):
             bExplodeCollections = True
 
+        elif EQUAL(args[iArg],"-zfield") and iArg < nArgc-1:
+            pszZField = args[iArg+1]
+            iArg = iArg + 1
+
         elif args[iArg][0] == '-':
             return Usage()
 
@@ -615,7 +620,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                                 poSourceSRS, papszSelFields, bAppend, eGType, \
                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString, \
                                 nCountLayerFeatures, poClipSrc, poClipDst, bExplodeCollections, \
-                                pfnProgress, pProgressData ):
+                                pszZField, pfnProgress, pProgressData ):
                 print(
                         "Terminating translation prematurely after failed\n" + \
                         "translation from sql statement." )
@@ -719,7 +724,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                                 poSourceSRS, papszSelFields, bAppend, eGType, \
                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString, \
                                 panLayerCountFeatures[iLayer], poClipSrc, poClipDst, bExplodeCollections, \
-                                pfnProgress, pProgressData)  \
+                                pszZField, pfnProgress, pProgressData)  \
                 and not bSkipFailures:
                 print(
                         "Terminating translation prematurely after failed\n" + \
@@ -869,6 +874,32 @@ def wkbFlatten(x):
     return x & (~ogr.wkb25DBit)
 
 #/************************************************************************/
+#/*                               SetZ()                                 */
+#/************************************************************************/
+
+def SetZ (poGeom, dfZ ):
+
+    if poGeom is None:
+        return
+
+    eGType = wkbFlatten(poGeom.GetGeometryType())
+    if eGType == ogr.wkbPoint:
+        poGeom.SetPoint(0, poGeom.GetX(), poGeom.GetY(), dfZ)
+
+    elif eGType == ogr.wkbLineString or \
+         eGType == ogr.wkbLinearRing:
+        for i in range(poGeom.GetPointCount()):
+            poGeom.SetPoint(i, poGeom.GetX(i), poGeom.GetY(i), dfZ)
+
+    elif eGType == ogr.wkbPolygon or \
+         eGType == ogr.wkbMultiPoint or \
+         eGType == ogr.wkbMultiLineString or \
+         eGType == ogr.wkbMultiPolygon or \
+         eGType == ogr.wkbGeometryCollection:
+        for i in range(poGeom.GetGeometryCount()):
+            SetZ(poGeom.GetGeometryRef(i), dfZ)
+
+#/************************************************************************/
 #/*                           TranslateLayer()                           */
 #/************************************************************************/
 
@@ -876,7 +907,7 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     bTransform,  poOutputSRS, poSourceSRS, papszSelFields, \
                     bAppend, eGType, bOverwrite, dfMaxSegmentLength, \
                     papszFieldTypesToString, nCountLayerFeatures, \
-                    poClipSrc, poClipDst, bExplodeCollections, pfnProgress, pProgressData) :
+                    poClipSrc, poClipDst, bExplodeCollections, pszZField, pfnProgress, pProgressData) :
 
     bForceToPolygon = False
     bForceToMultiPolygon = False
@@ -976,6 +1007,8 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     eGType = ogr.wkbPolygon | n25DBit
                 elif wkbFlatten(eGType) == ogr.wkbGeometryCollection:
                     eGType = ogr.wkbUnknown | n25DBit
+            elif pszZField is not None:
+                eGType = eGType | ogr.wkb25DBit
 
         if poDstDS.TestCapability( ogr.ODsCCreateLayer ) == False:
             print("Layer " + pszNewLayerName + "not found, and CreateLayer not supported by driver.")
@@ -1141,6 +1174,10 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
     nFeaturesInTransaction = 0
     nCount = 0
 
+    iSrcZField = -1
+    if pszZField is not None:
+        iSrcZField = poSrcFDefn.GetFieldIndex(pszZField)
+
     poSrcLayer.ResetReading()
 
     if nGroupTransactions > 0:
@@ -1211,6 +1248,9 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     poPart = poDstGeometry.GetGeometryRef(iPart).Clone()
                     poDstFeature.SetGeometryDirectly(poPart)
                     poDstGeometry = poPart
+
+                if iSrcZField != -1:
+                    SetZ(poDstGeometry, poFeature.GetFieldAsDouble(iSrcZField))
 
                 if poClipSrc is not None:
                     poClipped = poDstGeometry.Intersection(poClipSrc)
