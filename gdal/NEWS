@@ -568,7 +568,9 @@ Utilities:
  * ogr2ogr: ignore -overwrite options if the output datasource does not yet exist (#3825)
  * ogr2ogr: special case when output datasource is a existing single-file Shapefile :
             auto-fill the -nln argument if not specified (#2711)
- * ogr2ogr : add a -explodecollections option
+ * ogr2ogr: add a -explodecollections option to split multi geometries into several features
+ * ogr2ogr: add a -zfield option to set the Z coordinate of a 3D geometry from the value of
+            a field
 
 ArcObjects driver:
  * New for GDAL/OGR 1.8.0
