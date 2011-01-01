@@ -3894,6 +3894,31 @@ def tiff_write_99():
     return 'success'
 
 ###############################################################################
+# Create copy into a 2 band JPEG-IN-TIFF (#3887)
+
+def tiff_write_100():
+
+    src_ds = gdaltest.tiff_drv.Create( '/vsimem/test_100_src.tif', 16, 16, 2 )
+    src_ds.GetRasterBand(1).Fill(255)
+    new_ds = gdaltest.tiff_drv.CreateCopy( '/vsimem/test_100_dst.tif', src_ds, options = ['COMPRESS=JPEG'] )
+    new_ds = None
+    src_ds = None
+
+    ds = gdal.Open('/vsimem/test_100_dst.tif')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    ds = None
+
+    gdaltest.tiff_drv.Delete( '/vsimem/test_100_src.tif' )
+    gdaltest.tiff_drv.Delete( '/vsimem/test_100_dst.tif' )
+
+    if (cs1, cs2) != (3118,0):
+        print('%d,%d' % (cs1, cs2))
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -4003,6 +4028,7 @@ gdaltest_list = [
     tiff_write_97,
     tiff_write_98,
     tiff_write_99,
+    tiff_write_100,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
