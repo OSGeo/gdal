@@ -195,7 +195,7 @@ Advanced options :
                [-wrapdateline]
                [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]
                [-splitlistfields] [-maxsubfields val]
-               [-explodecollections]
+               [-explodecollections] [-zfield field_name]
 
 \endverbatim
 
@@ -285,6 +285,7 @@ This is an alternate way to using the CAST operator of OGR SQL, that may avoid t
 <dt> <b>-splitlistfields</b>:</dt><dd>(starting with GDAL 1.8.0) split fields of type StringList, RealList or IntegerList into as many fields of type String, Real or Integer as necessary.</dd>
 <dt> <b>-maxsubfields</b> <em>val</em>:</dt><dd>To be combined with -splitlistfields to limit the number of subfields created for each split field.</dd>
 <dt> <b>-explodecollections</b>:</dt><dd>(starting with GDAL 1.8.0) produce one feature for each geometry in any kind of geometry collection in the source file</dd>
+<dt> <b>-zfield</b> <em>field_name</em>:</dt><dd>(starting with GDAL 1.8.0) Uses the specified field to fill the Z coordinate of geometries</dd>
 </dl>
 
 \if man
