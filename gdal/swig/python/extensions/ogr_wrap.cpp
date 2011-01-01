@@ -3627,6 +3627,15 @@ SWIGINTERN void OGRFeatureShadow_SetFieldStringList(OGRFeatureShadow *self,int i
 SWIGINTERN OGRErr OGRFeatureShadow_SetFrom(OGRFeatureShadow *self,OGRFeatureShadow *other,int forgiving=1){
     return OGR_F_SetFrom(self, other, forgiving);
   }
+SWIGINTERN OGRErr OGRFeatureShadow_SetFromWithMap(OGRFeatureShadow *self,OGRFeatureShadow *other,int forgiving,int nList,int *pList){
+    if (nList != OGR_F_GetFieldCount(other))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The size of map doesn't match with the field count of the source feature");
+        return OGRERR_FAILURE;
+    }
+    return OGR_F_SetFromWithMap(self, other, forgiving, pList);
+  }
 SWIGINTERN char const *OGRFeatureShadow_GetStyleString(OGRFeatureShadow *self){
     return (const char*) OGR_F_GetStyleString(self);
   }
@@ -9714,6 +9723,112 @@ SWIGINTERN PyObject *_wrap_Feature_SetFrom(PyObject *SWIGUNUSEDPARM(self), PyObj
   }
   return resultobj;
 fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Feature_SetFromWithMap(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
+  OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
+  int arg3 ;
+  int arg4 ;
+  int *arg5 = (int *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:Feature_SetFromWithMap",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_SetFromWithMap" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_SetFromWithMap" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Feature_SetFromWithMap" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  {
+    /* %typemap(in,numinputs=1) (int nList, int* pList)*/
+    /* check if is List */
+    if ( !PySequence_Check(obj3) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg4 = PySequence_Size(obj3);
+    arg5 = (int*) malloc(arg4*sizeof(int));
+    for( int i = 0; i<arg4; i++ ) {
+      PyObject *o = PySequence_GetItem(obj3,i);
+      if ( !PyArg_Parse(o,"i",&arg5[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        SWIG_fail;
+      }
+      Py_DECREF(o);
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRErr)OGRFeatureShadow_SetFromWithMap(arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
   return NULL;
 }
 
@@ -17031,6 +17146,46 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"hOtherFeat:  handle to the feature from which geometry, and field\n"
 		"values will be copied.\n"
+		"\n"
+		"bForgiving:  TRUE if the operation should continue despite lacking\n"
+		"output fields matching some of the source fields.\n"
+		"\n"
+		"OGRERR_NONE if the operation succeeds, even if some values are not\n"
+		"transferred, otherwise an error code. \n"
+		""},
+	 { (char *)"Feature_SetFromWithMap", _wrap_Feature_SetFromWithMap, METH_VARARGS, (char *)"\n"
+		"Feature_SetFromWithMap(Feature self, Feature other, int forgiving, int nList) -> OGRErr\n"
+		"\n"
+		"OGRErr\n"
+		"OGR_F_SetFromWithMap(OGRFeatureH hFeat, OGRFeatureH hOtherFeat, int\n"
+		"bForgiving, int *panMap)\n"
+		"\n"
+		"Set one feature from another.\n"
+		"\n"
+		"Overwrite the contents of this feature from the geometry and\n"
+		"attributes of another. The hOtherFeature does not need to have the\n"
+		"same OGRFeatureDefn. Field values are copied according to the provided\n"
+		"indices map. Field types do not have to exactly match.\n"
+		"OGR_F_SetField*() function conversion rules will be applied as needed.\n"
+		"This is more efficient than OGR_F_SetFrom() in that this doesn't\n"
+		"lookup the fields by their names. Particularly useful when the field\n"
+		"names don't match.\n"
+		"\n"
+		"This function is the same as the C++ method OGRFeature::SetFrom().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hFeat:  handle to the feature to set to.\n"
+		"\n"
+		"hOtherFeat:  handle to the feature from which geometry, and field\n"
+		"values will be copied.\n"
+		"\n"
+		"panMap:  Array of the indices of the destination feature's fields\n"
+		"stored at the corresponding index of the source feature's fields. A\n"
+		"value of -1 should be used to ignore the source's field. The array\n"
+		"should not be NULL and be as long as the number of fields in the\n"
+		"source feature.\n"
 		"\n"
 		"bForgiving:  TRUE if the operation should continue despite lacking\n"
 		"output fields matching some of the source fields.\n"
