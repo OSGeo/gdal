@@ -1148,14 +1148,43 @@ def test_ogr2ogr_py_35():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_35_dir')
     return 'success'
 
+###############################################################################
+# Test ogr2ogr -zfield
+
+def test_ogr2ogr_py_36():
+
+    script_path = test_py_scripts.get_py_script('ogr2ogr')
+    if script_path is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_36.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_36.shp')
+    except:
+        pass
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_36.shp ../ogr/data/poly.shp -zfield EAS_ID')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_36.shp')
+    feat = ds.GetLayer(0).GetNextFeature()
+    wkt = feat.GetGeometryRef().ExportToWkt()
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_36.shp')
+
+    if wkt.find(' 168,') == -1:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_py_1,
     test_ogr2ogr_py_2,
     test_ogr2ogr_py_3,
     test_ogr2ogr_py_4,
     test_ogr2ogr_py_5,
-    #test_ogr2ogr_py_6,
-    #test_ogr2ogr_py_7,
+    test_ogr2ogr_py_6,
+    test_ogr2ogr_py_7,
     test_ogr2ogr_py_8,
     test_ogr2ogr_py_9,
     test_ogr2ogr_py_10,
@@ -1168,7 +1197,7 @@ gdaltest_list = [
     test_ogr2ogr_py_17,
     #test_ogr2ogr_py_18,
     test_ogr2ogr_py_19,
-    #test_ogr2ogr_py_20,
+    test_ogr2ogr_py_20,
     test_ogr2ogr_py_21,
     test_ogr2ogr_py_22,
     test_ogr2ogr_py_23,
@@ -1180,7 +1209,8 @@ gdaltest_list = [
     test_ogr2ogr_py_32,
     test_ogr2ogr_py_33,
     test_ogr2ogr_py_34,
-    test_ogr2ogr_py_35 ]
+    test_ogr2ogr_py_35,
+    test_ogr2ogr_py_36 ]
     
 if __name__ == '__main__':
 
