@@ -351,6 +351,7 @@ void CPL_DLL RegisterOGRPDS();
 void CPL_DLL RegisterOGRWFS();
 void CPL_DLL RegisterOGRSOSI();
 void CPL_DLL RegisterOGRHTF();
+void CPL_DLL RegisterOGRAeronavFAA();
 CPL_C_END
 
 

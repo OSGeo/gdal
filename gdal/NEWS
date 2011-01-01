@@ -7,7 +7,7 @@ to the 1.7.X maintenance releases are not mentionned hereafter.)
 
 * New GDAL drivers : GTX, HF2, JPEGLS, JP2OpenJPEG, JPIKAK, KMLSUPEROVERLAY,
                      LOS/LAS, MG4Lidar, NTv2, OZI, PDF, RASDAMAN, XYZ
-* New OGR drivers : ArcObjects, GPSBabel, HTF, LIBKML, MSSQLSpatial, NAS,
+* New OGR drivers : AeronavFAA, ArcObjects, GPSBabel, HTF, LIBKML, MSSQLSpatial, NAS,
                     OpenAir, PDS, PGDump, SOSI, SUA, WFS
 * Significantly improved OGR drivers : DXF, GML
 * New implemented RFCs : RFC 7, RFC 24, RFC 28, RFC 29, RFC 30, RFC 33
@@ -571,6 +571,9 @@ Utilities:
  * ogr2ogr: add a -explodecollections option to split multi geometries into several features
  * ogr2ogr: add a -zfield option to set the Z coordinate of a 3D geometry from the value of
             a field
+
+AeronavFAA driver:
+ * New for GDAL/OGR 1.8.0
 
 ArcObjects driver:
  * New for GDAL/OGR 1.8.0
