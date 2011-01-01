@@ -994,7 +994,19 @@ public:
     return OGR_F_SetFrom(self, other, forgiving);
   }
 %clear OGRFeatureShadow *other;
-  
+
+%apply Pointer NONNULL {OGRFeatureShadow *other};
+  OGRErr SetFromWithMap(OGRFeatureShadow *other, int forgiving, int nList, int *pList) {
+    if (nList != OGR_F_GetFieldCount(other))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The size of map doesn't match with the field count of the source feature");
+        return OGRERR_FAILURE;
+    }
+    return OGR_F_SetFromWithMap(self, other, forgiving, pList);
+  }
+%clear OGRFeatureShadow *other;
+
   const char *GetStyleString() {
     return (const char*) OGR_F_GetStyleString(self);
   }

@@ -928,7 +928,7 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 #/* -------------------------------------------------------------------- */
 #/*      Get other info.                                                 */
 #/* -------------------------------------------------------------------- */
-    poFDefn = poSrcLayer.GetLayerDefn()
+    poSrcFDefn = poSrcLayer.GetLayerDefn()
 
     if poOutputSRS is None:
         poOutputSRS = poSrcLayer.GetSpatialRef()
@@ -964,7 +964,7 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 #/* -------------------------------------------------------------------- */
     if poDstLayer is None:
         if eGType == -2:
-            eGType = poFDefn.GetGeomType()
+            eGType = poSrcFDefn.GetGeomType()
 
             if bExplodeCollections:
                 n25DBit = eGType & ogr.wkb25DBit
@@ -1010,23 +1010,53 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 #/*      selected.                                                       */
 #/* -------------------------------------------------------------------- */
 
+    # Initialize the index-to-index map to -1's
+    nSrcFieldCount = poSrcFDefn.GetFieldCount()
+    panMap = [ -1 for i in range(nSrcFieldCount) ]
+
+    poDstFDefn = poDstLayer.GetLayerDefn()
+
     if len(papszSelFields) > 0 and not bAppend:
+
+        nDstFieldCount = 0
+        if poDstFDefn is not None:
+            nDstFieldCount = poDstFDefn.GetFieldCount()
 
         for iField in range(len(papszSelFields)):
 
-            iSrcField = poFDefn.GetFieldIndex(papszSelFields[iField])
+            iSrcField = poSrcFDefn.GetFieldIndex(papszSelFields[iField])
             if iSrcField >= 0:
+                poSrcFieldDefn = poSrcFDefn.GetFieldDefn(iSrcField)
+                oFieldDefn = ogr.FieldDefn( poSrcFieldDefn.GetNameRef(),
+                                            poSrcFieldDefn.GetType() )
+                oFieldDefn.SetWidth( poSrcFieldDefn.GetWidth() )
+                oFieldDefn.SetPrecision( poSrcFieldDefn.GetPrecision() )
+
                 if papszFieldTypesToString is not None and \
                     (CSLFindString(papszFieldTypesToString, "All") != -1 or \
                     CSLFindString(papszFieldTypesToString, \
-                                ogr.GetFieldTypeName(poFDefn.GetFieldDefn(iSrcField).GetType())) != -1):
+                                ogr.GetFieldTypeName(poSrcFieldDefn.GetType())) != -1):
 
-                    oFieldDefn = ogr.FieldDefn( poFDefn.GetFieldDefn(iSrcField).GetName() )
                     oFieldDefn.SetType(ogr.OFTString)
-                    poDstLayer.CreateField( oFieldDefn )
 
-                else:
-                    poDstLayer.CreateField( poFDefn.GetFieldDefn(iSrcField) )
+                # The field may have been already created at layer creation
+                iDstField = -1;
+                if poDstFDefn is not None:
+                    iDstField = poDstFDefn.GetFieldIndex(oFieldDefn.GetNameRef())
+                if iDstField >= 0:
+                    panMap[iSrcField] = iDstField
+                elif poDstLayer.CreateField( oFieldDefn ) == 0:
+                    # now that we've created a field, GetLayerDefn() won't return NULL
+                    if poDstFDefn is None:
+                        poDstFDefn = poDstLayer.GetLayerDefn()
+
+                    #/* Sanity check : if it fails, the driver is buggy */
+                    if poDstFDefn is not None and \
+                        poDstFDefn.GetFieldCount() != nDstFieldCount + 1:
+                        print("The output driver has claimed to have added the %s field, but it did not!" %  oFieldDefn.GetNameRef() )
+                    else:
+                        panMap[iSrcField] = nDstFieldCount
+                        nDstFieldCount = nDstFieldCount + 1
 
             else:
                 print("Field '" + papszSelFields[iField] + "' not found in source layer.")
@@ -1038,8 +1068,8 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
         #/* -------------------------------------------------------------------- */
         if poSrcLayer.TestCapability(ogr.OLCIgnoreFields):
             papszIgnoredFields = []
-            for iSrcField in range(poFDefn.GetFieldCount()):
-                pszFieldName = poFDefn.GetFieldDefn(iSrcField).GetNameRef()
+            for iSrcField in range(nSrcFieldCount):
+                pszFieldName = poSrcFDefn.GetFieldDefn(iSrcField).GetNameRef()
                 bFieldRequested = False
                 for iField in range(len(papszSelFields)):
                     if pszFieldName == papszSelFields[iField]:
@@ -1054,19 +1084,56 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
     elif not bAppend:
 
-        for iField in range(poFDefn.GetFieldCount()):
+        nDstFieldCount = 0
+        if poDstFDefn is not None:
+            nDstFieldCount = poDstFDefn.GetFieldCount()
+
+        for iField in range(nSrcFieldCount):
+
+            poSrcFieldDefn = poSrcFDefn.GetFieldDefn(iField)
+            oFieldDefn = ogr.FieldDefn( poSrcFieldDefn.GetNameRef(),
+                                        poSrcFieldDefn.GetType() )
+            oFieldDefn.SetWidth( poSrcFieldDefn.GetWidth() )
+            oFieldDefn.SetPrecision( poSrcFieldDefn.GetPrecision() )
 
             if papszFieldTypesToString is not None and \
                 (CSLFindString(papszFieldTypesToString, "All") != -1 or \
                 CSLFindString(papszFieldTypesToString, \
-                            ogr.GetFieldTypeName(poFDefn.GetFieldDefn(iField).GetType())) != -1):
+                            ogr.GetFieldTypeName(poSrcFieldDefn.GetType())) != -1):
 
-                oFieldDefn = ogr.FieldDefn( poFDefn.GetFieldDefn(iField).GetName() )
                 oFieldDefn.SetType(ogr.OFTString)
-                poDstLayer.CreateField( oFieldDefn )
 
-            else:
-                poDstLayer.CreateField( poFDefn.GetFieldDefn(iField) )
+            # The field may have been already created at layer creation 
+            iDstField = -1;
+            if poDstFDefn is not None:
+                 iDstField = poDstFDefn.GetFieldIndex(oFieldDefn.GetNameRef())
+            if iDstField >= 0:
+                panMap[iField] = iDstField
+            elif poDstLayer.CreateField( oFieldDefn ) == 0:
+                # now that we've created a field, GetLayerDefn() won't return NULL
+                if poDstFDefn is None:
+                    poDstFDefn = poDstLayer.GetLayerDefn()
+
+                #/* Sanity check : if it fails, the driver is buggy */
+                if poDstFDefn is not None and \
+                    poDstFDefn.GetFieldCount() != nDstFieldCount + 1:
+                    print("The output driver has claimed to have added the %s field, but it did not!" %  oFieldDefn.GetNameRef() )
+                else:
+                    panMap[iField] = nDstFieldCount
+                    nDstFieldCount = nDstFieldCount + 1
+
+    else:
+        #/* For an existing layer, build the map by fetching the index in the destination */
+        #/* layer for each source field */
+        if poDstFDefn is None:
+            print( "poDstFDefn == NULL.\n" )
+            return False
+
+        for iField in range(nSrcFieldCount):
+            poSrcFieldDefn = poSrcFDefn.GetFieldDefn(iField)
+            iDstField = poDstFDefn.GetFieldIndex(poSrcFieldDefn.GetNameRef())
+            if iDstField >= 0:
+                panMap[iField] = iDstField
 
 #/* -------------------------------------------------------------------- */
 #/*      Transfer features.                                              */
@@ -1099,7 +1166,6 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
         nParts = 0
         nIters = 1
         if bExplodeCollections:
-            print("yoh")
             poSrcGeometry = poFeature.GetGeometryRef()
             if poSrcGeometry is not None:
                 eSrcType = wkbFlatten(poSrcGeometry.GetGeometryType())
@@ -1122,12 +1188,12 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
             gdal.ErrorReset()
             poDstFeature = ogr.Feature( poDstLayer.GetLayerDefn() )
 
-            if poDstFeature.SetFrom( poFeature, 1 ) != 0:
+            if poDstFeature.SetFromWithMap( poFeature, 1, panMap ) != 0:
 
                 if nGroupTransactions > 0:
                     poDstLayer.CommitTransaction()
 
-                print("Unable to translate feature %d from layer %s" % (poFeature.GetFID() , poFDefn.GetName() ))
+                print("Unable to translate feature %d from layer %s" % (poFeature.GetFID() , poSrcFDefn.GetName() ))
 
                 return False
 
