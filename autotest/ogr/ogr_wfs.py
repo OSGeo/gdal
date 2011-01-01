@@ -58,6 +58,9 @@ def ogr_wfs_init():
         return 'skip'
     
     gdaltest.have_gml_reader = 0
+    gdaltest.geoserver_wfs = None
+    gdaltest.deegree_wfs = None
+    gdaltest.ionic_wfs = None
 
     try:
         gml_ds = ogr.Open( 'data/ionic_wfs.gml' )
@@ -69,7 +72,7 @@ def ogr_wfs_init():
             return 'skip'
         else:
             gdaltest.post_reason( 'failed to open test file.' )
-            return 'fail'
+            return 'skip'
 
     gdaltest.have_gml_reader = 1
 
@@ -138,9 +141,9 @@ def ogr_wfs_geoserver():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    gdaltest.geoserver_wfs = False
     if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
         print('cannot open URL')
+        gdaltest.geoserver_wfs = False
         return 'skip'
     gdaltest.geoserver_wfs = True
 
@@ -248,6 +251,13 @@ def ogr_wfs_geoserver():
 def ogr_wfs_geoserver_json():
     if gdaltest.wfs_drv is None:
         return 'skip'
+    if not gdaltest.have_gml_reader:
+        if gdaltest.geoserver_wfs is None:
+            if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
+                gdaltest.geoserver_wfs = False
+                print('cannot open URL')
+                return 'skip'
+            gdaltest.geoserver_wfs = True
 
     if gdaltest.geoserver_wfs != True:
         return 'skip'
@@ -297,6 +307,13 @@ def ogr_wfs_geoserver_json():
 def ogr_wfs_geoserver_shapezip():
     if gdaltest.wfs_drv is None:
         return 'skip'
+    if not gdaltest.have_gml_reader:
+        if gdaltest.geoserver_wfs is None:
+            if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
+                gdaltest.geoserver_wfs = False
+                print('cannot open URL')
+                return 'skip'
+            gdaltest.geoserver_wfs = True
 
     if gdaltest.geoserver_wfs != True:
         return 'skip'
@@ -348,8 +365,8 @@ def ogr_wfs_deegree():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    gdaltest.deegree_wfs = False
     if gdaltest.gdalurlopen('http://demo.deegree.org/deegree-wfs/services') is None:
+        gdaltest.deegree_wfs = False
         print('cannot open URL')
         return 'skip'
     gdaltest.deegree_wfs = True
@@ -619,9 +636,9 @@ def ogr_wfs_ionic_wfst():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    gdaltest.ionic_wfs = False
     if gdaltest.gdalurlopen('http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA') is None:
         print('cannot open URL')
+        gdaltest.ionic_wfs = False
         return 'skip'
     gdaltest.ionic_wfs = True
 
