@@ -810,6 +810,7 @@ General :
    to all bindings
  * Initialize return values of GetRasterStatistics() so that we know if they
    have been updated
+ * Add Feature.SetFromWithMap()
  * Add gdal.GridCreate() (#3661)
  * Expose OSR GetSemiMajor(), GetSemiMinor(), GetInvFlattening() and
    ImportFromERM() functions

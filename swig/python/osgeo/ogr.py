@@ -2295,6 +2295,49 @@ class Feature(_object):
         """
         return _ogr.Feature_SetFrom(self, *args, **kwargs)
 
+    def SetFromWithMap(self, *args):
+        """
+        SetFromWithMap(self, Feature other, int forgiving, int nList) -> OGRErr
+
+        OGRErr
+        OGR_F_SetFromWithMap(OGRFeatureH hFeat, OGRFeatureH hOtherFeat, int
+        bForgiving, int *panMap)
+
+        Set one feature from another.
+
+        Overwrite the contents of this feature from the geometry and
+        attributes of another. The hOtherFeature does not need to have the
+        same OGRFeatureDefn. Field values are copied according to the provided
+        indices map. Field types do not have to exactly match.
+        OGR_F_SetField*() function conversion rules will be applied as needed.
+        This is more efficient than OGR_F_SetFrom() in that this doesn't
+        lookup the fields by their names. Particularly useful when the field
+        names don't match.
+
+        This function is the same as the C++ method OGRFeature::SetFrom().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature to set to.
+
+        hOtherFeat:  handle to the feature from which geometry, and field
+        values will be copied.
+
+        panMap:  Array of the indices of the destination feature's fields
+        stored at the corresponding index of the source feature's fields. A
+        value of -1 should be used to ignore the source's field. The array
+        should not be NULL and be as long as the number of fields in the
+        source feature.
+
+        bForgiving:  TRUE if the operation should continue despite lacking
+        output fields matching some of the source fields.
+
+        OGRERR_NONE if the operation succeeds, even if some values are not
+        transferred, otherwise an error code. 
+        """
+        return _ogr.Feature_SetFromWithMap(self, *args)
+
     def GetStyleString(self, *args):
         """
         GetStyleString(self) -> char
