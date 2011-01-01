@@ -19,6 +19,10 @@ or to a directory.  For a directory to be recognised as a .csv datasource
 at least half the files in the directory need to have the extension .csv.
 One layer (table) is produced from each .csv file accessed.</p>
 
+<p> Starting with GDAL 1.8.0, for files structured as CSV, but not ending with
+.CSV extension, the 'CSV:' prefix can be added before the filename to force
+loading by the CSV driver.</p>
+
 <p>The OGR CSV driver supports reading and writing. Because the CSV format 
 has variable length text lines, reading is done sequentially. Reading 
 features in random order will generally be very slow. OGR CSV layer never

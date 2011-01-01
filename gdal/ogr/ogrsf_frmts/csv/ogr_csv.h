@@ -74,9 +74,12 @@ class OGRCSVLayer : public OGRLayer
     int                 iWktGeomReadField;
     int                 bFirstFeatureAppendedDuringSession;
 
+    /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
+    int                 iNfdcLatitudeS, iNfdcLongitudeS;
+
   public:
     OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
-                 int bNew, int bInWriteMode, char chDelimiter );
+                 int bNew, int bInWriteMode, char chDelimiter, const char* pszNfdcRunwaysGeomField );
   ~OGRCSVLayer();
 
     void                ResetReading();
@@ -117,7 +120,7 @@ class OGRCSVDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename,
                               int bUpdate, int bForceAccept );
-    int                 OpenTable( const char * pszFilename );
+    int                 OpenTable( const char * pszFilename, const char* pszNfdcRunwaysGeomField = NULL );
     
     const char          *GetName() { return pszName; }
 
