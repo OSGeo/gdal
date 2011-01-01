@@ -193,5 +193,8 @@ void OGRRegisterAll()
 #endif
 #ifdef HTF_ENABLED
     RegisterOGRHTF();
-#endif 
+#endif
+#ifdef AERONAVFAA_ENABLED
+    RegisterOGRAeronavFAA();
+#endif
 } /* OGRRegisterAll */
