@@ -41,7 +41,7 @@ static int nGroupTransactions = 200;
 static int bPreserveFID = FALSE;
 static int nFIDToFetch = OGRNullFID;
 
-static void Usage();
+static void Usage(int bShort = TRUE);
 
 static int TranslateLayer( OGRDataSource *poSrcDS, 
                            OGRLayer * poSrcLayer,
@@ -62,6 +62,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRGeometry* poClipSrc,
                            OGRGeometry *poClipDst,
                            int bExplodeCollections,
+                           const char* pszZField,
                            GDALProgressFunc pfnProgress,
                            void *pProgressArg);
 
@@ -564,6 +565,7 @@ int main( int nArgc, char ** papszArgv )
     int          bSplitListFields = FALSE;
     int          nMaxSplitListSubFields = -1;
     int          bExplodeCollections = FALSE;
+    const char  *pszZField = NULL;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -588,6 +590,10 @@ int main( int nArgc, char ** papszArgv )
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
+        }
+        else if ( EQUAL(papszArgv[iArg], "--long-usage") )
+        {
+            Usage(FALSE);
         }
         else if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
         {
@@ -899,6 +905,11 @@ int main( int nArgc, char ** papszArgv )
         {
             bExplodeCollections = TRUE;
         }
+        else if( EQUAL(papszArgv[iArg],"-zfield") && iArg < nArgc-1 )
+        {
+            pszZField = papszArgv[iArg+1];
+            iArg ++;
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -1157,7 +1168,7 @@ int main( int nArgc, char ** papszArgv )
                                  poSourceSRS, papszSelFields, bAppend, eGType,
                                  bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
                                  nCountLayerFeatures, bWrapDateline, poClipSrc, poClipDst,
-                                 bExplodeCollections, pfnProgress, pProgressArg))
+                                 bExplodeCollections, pszZField, pfnProgress, pProgressArg))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
@@ -1338,7 +1349,7 @@ int main( int nArgc, char ** papszArgv )
                                 poSourceSRS, papszSelFields, bAppend, eGType,
                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
                                 panLayerCountFeatures[iLayer], bWrapDateline, poClipSrc, poClipDst,
-                                bExplodeCollections, pfnProgress, pProgressArg)
+                                bExplodeCollections, pszZField, pfnProgress, pProgressArg)
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1397,31 +1408,43 @@ int main( int nArgc, char ** papszArgv )
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(int bShort)
 
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-    printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]\n"
-            "               [-select field_list] [-where restricted_where] \n"
-            "               [-progress] [-sql <sql statement>] [-dialect dialect]\n" 
+
+    printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
+            "               [-select field_list] [-where restricted_where]\n"
+            "               [-progress] [-sql <sql statement>] [-dialect dialect]\n"
             "               [-preserve_fid] [-fid FID]\n"
-            "               [-spat xmin ymin xmax ymax] [-wrapdateline]\n"
-            "               [-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent] \n"
-            "               [-clipsrcsql sql_statement] [-clipsrclayer layer] \n"
-            "               [-clipsrcwhere expression]\n"
-            "               [-clipdst [xmin ymin xmax ymax]|WKT|datasource]\n"
-            "               [-clipdstsql sql_statement] [-clipdstlayer layer] \n"
-            "               [-clipdstwhere expression]\n"
+            "               [-spat xmin ymin xmax ymax]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
-            "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n"
-            "               [-splitlistfields] [-maxsubfields val] [-explodecollections]\n"
             "               dst_datasource_name src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n"
             "\n"
-            " -f format_name: output file format name, possible values are:\n");
-    
+            "Advanced options :\n"
+            "               [-gt n]\n"
+            "               [-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent]\n"
+            "               [-clipsrcsql sql_statement] [-clipsrclayer layer]\n"
+            "               [-clipsrcwhere expression]\n"
+            "               [-clipdst [xmin ymin xmax ymax]|WKT|datasource]\n"
+            "               [-clipdstsql sql_statement] [-clipdstlayer layer]\n"
+            "               [-clipdstwhere expression]\n"
+            "               [-wrapdateline]\n"
+            "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n"
+            "               [-splitlistfields] [-maxsubfields val]\n"
+            "               [-explodecollections] [-zfield field_name]\n");
+
+    if (bShort)
+    {
+        printf( "\nNote: ogr2ogr --long-usage for full help.\n");
+        exit( 1 );
+    }
+
+    printf("\n -f format_name: output file format name, possible values are:\n");
+
     for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
     {
         OGRSFDriver *poDriver = poR->GetDriver(iDriver);
@@ -1471,6 +1494,57 @@ static void Usage()
 }
 
 /************************************************************************/
+/*                               SetZ()                                 */
+/************************************************************************/
+static void SetZ (OGRGeometry* poGeom, double dfZ )
+{
+    if (poGeom == NULL)
+        return;
+    switch (wkbFlatten(poGeom->getGeometryType()))
+    {
+        case wkbPoint:
+            ((OGRPoint*)poGeom)->setZ(dfZ);
+            break;
+
+        case wkbLineString:
+        case wkbLinearRing:
+        {
+            int i;
+            OGRLineString* poLS = (OGRLineString*) poGeom;
+            for(i=0;i<poLS->getNumPoints();i++)
+                poLS->setPoint(i, poLS->getX(i), poLS->getY(i), dfZ);
+            break;
+        }
+
+        case wkbPolygon:
+        {
+            int i;
+            OGRPolygon* poPoly = (OGRPolygon*) poGeom;
+            SetZ(poPoly->getExteriorRing(), dfZ);
+            for(i=0;i<poPoly->getNumInteriorRings();i++)
+                SetZ(poPoly->getInteriorRing(i), dfZ);
+            break;
+        }
+
+        case wkbMultiPoint:
+        case wkbMultiLineString:
+        case wkbMultiPolygon:
+        case wkbGeometryCollection:
+        {
+            int i;
+            OGRGeometryCollection* poGeomColl = (OGRGeometryCollection*) poGeom;
+            for(i=0;i<poGeomColl->getNumGeometries();i++)
+                SetZ(poGeomColl->getGeometryRef(i), dfZ);
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+
+/************************************************************************/
 /*                           TranslateLayer()                           */
 /************************************************************************/
 
@@ -1492,6 +1566,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRGeometry* poClipSrc,
                            OGRGeometry *poClipDst,
                            int bExplodeCollections,
+                           const char* pszZField,
                            GDALProgressFunc pfnProgress,
                            void *pProgressArg)
 
@@ -1647,6 +1722,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                     eGType = wkbUnknown | n25DBit;
                 }
             }
+            else if ( pszZField )
+                eGType |= wkb25DBit;
         }
 
         if( !poDstDS->TestCapability( ODsCCreateLayer ) )
@@ -1880,6 +1957,12 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     OGRFeature  *poFeature;
     int         nFeaturesInTransaction = 0;
     long        nCount = 0;
+
+    int iSrcZField = -1;
+    if (pszZField != NULL)
+    {
+        iSrcZField = poSrcFDefn->GetFieldIndex(pszZField);
+    }
     
     poSrcLayer->ResetReading();
 
@@ -1969,6 +2052,9 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                     poDstFeature->SetGeometryDirectly(poPart);
                     poDstGeometry = poPart;
                 }
+
+                if (iSrcZField != -1)
+                    SetZ(poDstGeometry, poFeature->GetFieldAsDouble(iSrcZField));
 
                 if (dfMaxSegmentLength > 0)
                     poDstGeometry->segmentize(dfMaxSegmentLength);
