@@ -6520,7 +6520,7 @@ public class Layer:public String GetGeometryColumn()
 
  By default, no fields are ignored.
 
- @param fields a vector of field names. If null is passed, the ignored list is cleared.
+ @param fieldNames a vector of field names. If null is passed, the ignored list is cleared.
  @return ogr.OGRERR_NONE if all field names have been resolved (even if the driver does not support this method)
 
  @since OGR 1.8.0
@@ -7326,9 +7326,10 @@ public class Feature:public void SetFieldStringList(int ifield, java.util.Vector
  *
  * @return 0 if the operation succeeds, even if some values are
  * not transferred, otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+ *
+ * @see #SetFromWithMap(org.gdal.ogr.Feature srcFeature, int forgiving, int[] map)
  */
 public class Feature:public int SetFrom(Feature srcFeature, int forgiving)
-
 
 /**
  * Set one feature from another.
@@ -7340,6 +7341,39 @@ public class Feature:public int SetFrom(Feature srcFeature, int forgiving)
  * @since Java bindings 1.7.0
  */
 public class Feature:public int SetFrom(Feature srcFeature)
+
+/**
+ * Set one feature from another.
+ *
+ * Overwrite the contents of this feature from the geometry and attributes
+ * of another.  The hOtherFeature does not need to have the same
+ * OGRFeatureDefn.  Field values are copied according to the provided indices
+ * map. Field types do not have to exactly match.  SetField() function
+ * conversion rules will be applied as needed. This is more efficient than
+ * <a href="#SetFrom(org.gdal.ogr.Feature, int)">SetFrom(Feature, int)</a>
+ * in that this doesn't lookup the fields by their names.
+ * Particularly useful when the field names don't match.
+ *
+ * @param srcFeature the feature from which geometry, and field values will
+ * be copied.
+ *
+ * @param forgiving 1 if the operation should continue despite lacking
+ * output fields matching some of the source fields.
+ *
+ * @param map Array of the indices of the destination feature's fields
+ * stored at the corresponding index of the source feature's fields. A value of
+ * -1 should be used to ignore the source's field. The array should not be null
+ * and be as long as the number of fields in the source feature.
+ *
+ * @return 0 if the operation succeeds, even if some values are
+ * not transferred, otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 1.8.0
+ *
+ * @see #SetFrom(org.gdal.ogr.Feature srcFeature, int forgiving)
+ */
+public class Feature:public int SetFromWithMap(Feature srcFeature, int forgiving, int[] map)
+
 
 /**
  * Set feature geometry.
