@@ -3870,6 +3870,30 @@ def tiff_write_98():
     return 'success'
 
 ###############################################################################
+# Create copy into a RGB JPEG-IN-TIFF (#3887)
+
+def tiff_write_99():
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_99.tif', src_ds, options = ['COMPRESS=JPEG'] )
+    new_ds = None
+    src_ds = None
+
+    ds = gdal.Open('tmp/test_99.tif')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    cs3 = ds.GetRasterBand(3).Checksum()
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/test_99.tif' )
+
+    if (cs1, cs2, cs3) != (21629,21651,21371):
+        print('%d,%d,%d' % (cs1, cs2, cs3))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -3978,6 +4002,7 @@ gdaltest_list = [
     tiff_write_96,
     tiff_write_97,
     tiff_write_98,
+    tiff_write_99,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
