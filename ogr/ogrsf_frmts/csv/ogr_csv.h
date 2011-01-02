@@ -43,7 +43,7 @@ typedef enum
 
 class OGRCSVDataSource;
 
-char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter );
+char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStrings );
 
 /************************************************************************/
 /*                             OGRCSVLayer                              */
@@ -76,6 +76,7 @@ class OGRCSVLayer : public OGRLayer
 
     /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
     int                 iNfdcLatitudeS, iNfdcLongitudeS;
+    int                 bDontHonourStrings;
 
   public:
     OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
