@@ -71,7 +71,7 @@ protected:
     virtual OGRFeature *       GetNextRawFeature() = 0;
 
   public:
-                        OGRAeronavFAALayer(VSILFILE* fp);
+                        OGRAeronavFAALayer(VSILFILE* fp, const char* pszLayerName);
                         ~OGRAeronavFAALayer();
 
 
@@ -99,7 +99,7 @@ class OGRAeronavFAADOFLayer : public OGRAeronavFAALayer
     virtual OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGRAeronavFAADOFLayer(VSILFILE* fp);
+                        OGRAeronavFAADOFLayer(VSILFILE* fp, const char* pszLayerName);
 };
 
 /************************************************************************/
@@ -115,7 +115,7 @@ class OGRAeronavFAANAVAIDLayer : public OGRAeronavFAALayer
     virtual OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGRAeronavFAANAVAIDLayer(VSILFILE* fp);
+                        OGRAeronavFAANAVAIDLayer(VSILFILE* fp, const char* pszLayerName);
 };
 
 /************************************************************************/
@@ -125,17 +125,43 @@ class OGRAeronavFAANAVAIDLayer : public OGRAeronavFAALayer
 class OGRAeronavFAARouteLayer : public OGRAeronavFAALayer
 {
   private:
+    int       bIsDPOrSTARS;
     CPLString osLastReadLine;
+    CPLString osAPTName;
+    CPLString osStateName;
     int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
 
   protected:
     virtual OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGRAeronavFAARouteLayer(VSILFILE* fp);
+                        OGRAeronavFAARouteLayer(VSILFILE* fp, const char* pszLayerName, int bIsDPOrSTARS);
 
     virtual void                ResetReading();
 };
+
+/************************************************************************/
+/*                     OGRAeronavFAAIAPLayer                            */
+/************************************************************************/
+
+class OGRAeronavFAAIAPLayer : public OGRAeronavFAALayer
+{
+  private:
+    CPLString osCityName;
+    CPLString osStateName;
+    CPLString osAPTName;
+    CPLString osAPTId;
+    int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
+
+  protected:
+    virtual OGRFeature *       GetNextRawFeature();
+
+  public:
+                        OGRAeronavFAAIAPLayer(VSILFILE* fp, const char* pszLayerName);
+
+    virtual void                ResetReading();
+};
+
 /************************************************************************/
 /*                        OGRAeronavFAADataSource                       */
 /************************************************************************/
