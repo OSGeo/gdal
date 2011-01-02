@@ -137,19 +137,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStr
     /* Special fix to read NdfcFacilities.xls that has non-balanced double quotes */
     if (chDelimiter == '\t' && bDontHonourStrings)
     {
-        papszReturn = CSLTokenizeStringComplex(pszLine, "\t", FALSE, TRUE);
-        char** papszIter = papszReturn;
-        while(papszIter && *papszIter)
-        {
-            int nLen = strlen(*papszIter);
-            if ((*papszIter)[0] == '"' && (*papszIter)[nLen-1] == '"')
-            {
-                memmove(*papszIter, (*papszIter) + 1, nLen - 2);
-                (*papszIter)[nLen - 2] = 0;
-            }
-            papszIter ++;
-        }
-        return papszReturn;
+        return CSLTokenizeStringComplex(pszLine, "\t", FALSE, TRUE);
     }
 
 /* -------------------------------------------------------------------- */
