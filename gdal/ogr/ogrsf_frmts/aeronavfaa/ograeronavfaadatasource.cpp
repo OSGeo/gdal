@@ -131,12 +131,17 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename, int bUpdateIn)
     int bIsROUTE = strncmp(szBuffer, "           UNITED STATES GOVERNMENT FLIGHT INFORMATION PUBLICATION             149343", 85) == 0 &&
                    szBuffer[85] == 13 && szBuffer[85+1] == 10;
 
+    int bIsIAP = strstr(szBuffer, "INSTRUMENT APPROACH PROCEDURE NAVAID & FIX DATA") != NULL &&
+                   szBuffer[85] == 13 && szBuffer[85+1] == 10;
+    if (bIsIAP)
+        bIsROUTE = FALSE;
+
     if (bIsDOF)
     {
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
         papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
-        papoLayers[0] = new OGRAeronavFAADOFLayer(fp);
+        papoLayers[0] = new OGRAeronavFAADOFLayer(fp, CPLGetBasename(pszFilename));
         return TRUE;
     }
     else if (bIsNAVAID)
@@ -144,15 +149,25 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename, int bUpdateIn)
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
         papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
-        papoLayers[0] = new OGRAeronavFAANAVAIDLayer(fp);
+        papoLayers[0] = new OGRAeronavFAANAVAIDLayer(fp, CPLGetBasename(pszFilename));
         return TRUE;
     }
-    else if (bIsROUTE)
+    else if (bIsIAP)
     {
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
         papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
-        papoLayers[0] = new OGRAeronavFAARouteLayer(fp);
+        papoLayers[0] = new OGRAeronavFAAIAPLayer(fp, CPLGetBasename(pszFilename));
+        return TRUE;
+    }
+    else if (bIsROUTE)
+    {
+        int bIsDPOrSTARS = strstr(szBuffer, "DPs - DEPARTURE PROCEDURES") != NULL ||
+                           strstr(szBuffer, "STARS - STANDARD TERMINAL ARRIVALS") != NULL;
+        VSIFSeekL( fp, 0, SEEK_SET );
+        nLayers = 1;
+        papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
+        papoLayers[0] = new OGRAeronavFAARouteLayer(fp, CPLGetBasename(pszFilename), bIsDPOrSTARS);
         return TRUE;
     }
     else
