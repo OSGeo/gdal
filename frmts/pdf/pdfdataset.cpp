@@ -897,7 +897,7 @@ static double GetValue(Object& o, int nIndice = -1)
 static double GetValue(Dict* poDict, const char* pszName)
 {
     ObjectAutoFree o;
-    if (poDict->lookup((char*)pszName, &o) != NULL)
+    if (poDict->lookup((char*)pszName, &o) != NULL && !o.isNull())
         return GetValue(o);
     CPLError(CE_Failure, CPLE_AppDefined,
              "Cannot find parameter %s", pszName);
@@ -923,7 +923,8 @@ int PDFDataset::ParseLGIDictDictFirstPass(Dict* poLGIDict,
 /*      Extract Type attribute                                          */
 /* -------------------------------------------------------------------- */
     ObjectAutoFree oType;
-    if (poLGIDict->lookup((char*)"Type",&oType) == NULL)
+    if (poLGIDict->lookup((char*)"Type",&oType) == NULL &&
+        !oType.isNull())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find Type of LGIDict object");
@@ -949,7 +950,8 @@ int PDFDataset::ParseLGIDictDictFirstPass(Dict* poLGIDict,
 /*      Extract Version attribute                                       */
 /* -------------------------------------------------------------------- */
     ObjectAutoFree oVersion;
-    if (poLGIDict->lookup((char*)"Version",&oVersion) == NULL)
+    if (poLGIDict->lookup((char*)"Version",&oVersion) == NULL &&
+        !oVersion.isNull())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find Version of LGIDict object");
@@ -1063,17 +1065,16 @@ int PDFDataset::ParseLGIDictDictSecondPass(Dict* poLGIDict)
     if (!bHasCTM)
     {
         ObjectAutoFree oRegistration;
-        if (poLGIDict->lookup((char*)"Registration", &oRegistration) != NULL)
+        if (poLGIDict->lookup((char*)"Registration", &oRegistration) != NULL &&
+            !oRegistration.isNull())
         {
             /* TODO */
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Registration unhandled for now");
+            CPLDebug("PDF", "Registration unhandled for now");
             return FALSE;
         }
         else
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Neither CTM nor Registration found");
+            CPLDebug("PDF", "Neither CTM nor Registration found");
             return FALSE;
         }
     }
@@ -1106,7 +1107,8 @@ int PDFDataset::ParseProjDict(Dict* poProjDict)
 /*      Extract Type attribute                                          */
 /* -------------------------------------------------------------------- */
     ObjectAutoFree oType;
-    if (poProjDict->lookup((char*)"Type",&oType) == NULL)
+    if (poProjDict->lookup((char*)"Type",&oType) == NULL &&
+        !oType.isNull())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find Type of Projection object");
@@ -1136,7 +1138,8 @@ int PDFDataset::ParseProjDict(Dict* poProjDict)
     int bIsNAD27 = FALSE;
 
     ObjectAutoFree oDatum;
-    if (poProjDict->lookup((char*)"Datum",&oDatum) != NULL)
+    if (poProjDict->lookup((char*)"Datum",&oDatum) != NULL &&
+        !oDatum.isNull())
     {
         if (oDatum.isString())
         {
