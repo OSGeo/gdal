@@ -695,6 +695,16 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = (dfX2 - dfX1) * dfPixelPerPt;
     poDS->nRasterYSize = (dfY2 - dfY1) * dfPixelPerPt;
 
+    if ( poDoc->getPageRotate(iPage) == 90 ||
+         poDoc->getPageRotate(iPage) == 270 )
+    {
+        /* Wondering how it would work with a georeferenced image */
+        /* Has only been tested with ungeoreferenced image */
+        int nTmp = poDS->nRasterXSize;
+        poDS->nRasterXSize = poDS->nRasterYSize;
+        poDS->nRasterYSize = nTmp;
+    }
+
     ObjectAutoFree oLGIDict;
     ObjectAutoFree oVP;
     int bIsOGCBP = FALSE;
