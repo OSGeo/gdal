@@ -67,7 +67,7 @@ def ozi_online_1():
 
     expected_gt = (-1841870.2731215316, 3310.9550245520159, -13.025246304875619, 8375316.4662204208, -16.912440131236657, -3264.1162527118681)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-10:
+        if abs(gt[i] - expected_gt[i]) > 1e-7:
             gdaltest.post_reason('bad geotransform')
             print(gt)
             print(expected_gt)
