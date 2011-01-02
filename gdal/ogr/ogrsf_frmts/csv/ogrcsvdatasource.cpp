@@ -258,7 +258,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename, const char* pszNfdcRu
     char chDelimiter = CSVDetectSeperator(pszLine);
     VSIRewindL( fp );
 
-    char **papszFields = OGRCSVReadParseLineL( fp, chDelimiter );
+    char **papszFields = OGRCSVReadParseLineL( fp, chDelimiter, FALSE );
 						
     if( CSLCount(papszFields) < 2 )
     {
