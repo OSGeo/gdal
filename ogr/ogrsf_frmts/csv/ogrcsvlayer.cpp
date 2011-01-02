@@ -123,7 +123,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
 /*      result is a stringlist, in the sense of the CSL functions.      */
 /************************************************************************/
 
-char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter )
+char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStrings )
 
 {
     const char  *pszLine;
@@ -133,6 +133,24 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter )
     pszLine = CPLReadLineL( fp );
     if( pszLine == NULL )
         return( NULL );
+
+    /* Special fix to read NdfcFacilities.xls that has non-balanced double quotes */
+    if (chDelimiter == '\t' && bDontHonourStrings)
+    {
+        papszReturn = CSLTokenizeStringComplex(pszLine, "\t", FALSE, TRUE);
+        char** papszIter = papszReturn;
+        while(papszIter && *papszIter)
+        {
+            int nLen = strlen(*papszIter);
+            if ((*papszIter)[0] == '"' && (*papszIter)[nLen-1] == '"')
+            {
+                memmove(*papszIter, (*papszIter) + 1, nLen - 2);
+                (*papszIter)[nLen - 2] = 0;
+            }
+            papszIter ++;
+        }
+        return papszReturn;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If there are no quotes, then this is the simple case.           */
@@ -220,6 +238,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     poFeatureDefn->SetGeomType( wkbNone );
 
     bCreateCSVT = FALSE;
+    bDontHonourStrings = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If this is not a new file, read ahead to establish if it is     */
@@ -251,7 +270,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
     if( !bNew )
     {
-        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter );
+        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, FALSE );
         nFieldCount = CSLCount( papszTokens );
         bHasFieldNames = TRUE;
     }
@@ -294,7 +313,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
         free(fname);
         if (fpCSVT!=NULL) {
             VSIRewindL(fpCSVT);
-            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',');
+            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', FALSE);
             VSIFCloseL(fpCSVT);
         }
     }
@@ -393,7 +412,10 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     }
 
     if ( iNfdcLatitudeS != -1 && iNfdcLongitudeS )
+    {
+        bDontHonourStrings = TRUE;
         poFeatureDefn->SetGeomType( wkbPoint );
+    }
     
     CSLDestroy( papszTokens );
     CSLDestroy( papszFieldTypes );
@@ -431,7 +453,7 @@ void OGRCSVLayer::ResetReading()
         VSIRewindL( fpCSV );
 
     if( bHasFieldNames )
-        CSLDestroy( OGRCSVReadParseLineL( fpCSV, chDelimiter ) );
+        CSLDestroy( OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings ) );
 
     bNeedRewindBeforeRead = FALSE;
 
@@ -455,7 +477,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 
     while(TRUE)
     {
-        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter );
+        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings );
         if( papszTokens == NULL )
             return NULL;
 
