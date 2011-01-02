@@ -249,6 +249,7 @@ class PDFDataset : public GDALPamDataset
     double       dfDPI;
     double       adfCTM[6];
     double       adfGeoTransform[6];
+    int          bGeoTransformValid;
     PDFDoc*      poDoc;
     int          iPage;
 
@@ -430,7 +431,8 @@ PDFDataset::PDFDataset()
     adfGeoTransform[2] = 0;
     adfGeoTransform[3] = 0;
     adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = -1;
+    adfGeoTransform[5] = 1;
+    bGeoTransformValid = FALSE;
     bTried = FALSE;
     pabyData = NULL;
     iPage = -1;
@@ -720,6 +722,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[1] * dfX1 + poDS->adfCTM[3] * dfY2;
             poDS->adfGeoTransform[4] = - poDS->adfCTM[2] / dfPixelPerPt;
             poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfPixelPerPt;
+            poDS->bGeoTransformValid = TRUE;
             bIsOGCBP = TRUE;
         }
     }
@@ -1900,6 +1903,7 @@ int PDFDataset::ParseVP(Object& oVP, double dfMediaBoxWidth, double dfMediaBoxHe
             return FALSE;
         }
     }
+    bGeoTransformValid = TRUE;
 
     /* If the non scaling terms of the geotransform are significantly smaller than */
     /* the pixel size, then nullify them as being just artifacts of reprojection and */
@@ -1948,7 +1952,7 @@ CPLErr PDFDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( CE_None );
+    return( (bGeoTransformValid) ? CE_None : CE_Failure );
 }
 
 /************************************************************************/
