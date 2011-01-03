@@ -428,6 +428,7 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_pszGeometry = NULL;
     m_nGeomAlloc = m_nGeomLen = 0;
     m_nDepthFeature = m_nDepth = 0;
+    m_bIgnoreFeature = FALSE;
     m_nGeometryDepth = 0;
     m_bInBoundedBy = FALSE;
     m_inBoundedByDepth = 0;
@@ -466,6 +467,12 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 
 {
     GMLReadState *poState = m_poReader->GetState();
+
+    if (m_bIgnoreFeature && m_nDepth >= m_nDepthFeature)
+    {
+        m_nDepth ++;
+        return CE_None;
+    }
 
     if ( m_nDepth == 0 )
     {
@@ -609,6 +616,19 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
     else if( m_nDepthFeature == 0 &&
              m_poReader->IsFeatureElement( pszName ) )
     {
+        const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
+        if ( pszFilteredClassName != NULL &&
+             strcmp(pszName, pszFilteredClassName) != 0 )
+        {
+            m_bIgnoreFeature = TRUE;
+            m_nDepthFeature = m_nDepth;
+            m_nDepth ++;
+
+            return CE_None;
+        }
+
+        m_bIgnoreFeature = FALSE;
+
         char* pszFID = GetFID(attr);
 
         m_poReader->PushFeature( pszName, pszFID);
@@ -681,6 +701,16 @@ OGRErr GMLHandler::endElement(const char* pszName )
 
 {
     m_nDepth --;
+
+    if (m_bIgnoreFeature && m_nDepth >= m_nDepthFeature)
+    {
+        if (m_nDepth == m_nDepthFeature)
+        {
+             m_bIgnoreFeature = FALSE;
+             m_nDepthFeature = 0;
+        }
+        return CE_None;
+    }
 
     GMLReadState *poState = m_poReader->GetState();
 

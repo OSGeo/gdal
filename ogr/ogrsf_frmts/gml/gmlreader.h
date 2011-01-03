@@ -245,6 +245,9 @@ public:
 
     virtual const char* GetGlobalSRSName() = 0;
     virtual int CanUseGlobalSRSName() = 0;
+
+    virtual int SetFilteredClassName(const char* pszClassName) = 0;
+    virtual const char* GetFilteredClassName() = 0;
 };
 
 IGMLReader *CreateGMLReader();
