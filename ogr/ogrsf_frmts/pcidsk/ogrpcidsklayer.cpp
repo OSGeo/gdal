@@ -382,7 +382,7 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( long nFID )
 
             for( iRing = 0; iRing < anRingStart.size()+1; iRing++ )
             {
-                unsigned int iStartVertex, iEndVertex, iVertex;
+                int iStartVertex, iEndVertex, iVertex;
                 OGRLinearRing *poRing = new OGRLinearRing();
 
                 if( iRing == 0 )
