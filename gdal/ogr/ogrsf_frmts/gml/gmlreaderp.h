@@ -51,6 +51,7 @@ class GMLHandler
 
     int        m_nDepth;
     int        m_nDepthFeature;
+    int        m_bIgnoreFeature;
 
     int        m_bInBoundedBy;
     int        m_inBoundedByDepth;
@@ -302,6 +303,8 @@ private:
     char         *m_pszGlobalSRSName;
     int           m_bCanUseGlobalSRSName;
 
+    char         *m_pszFilteredClassName;
+
 public:
                 GMLReader();
     virtual     ~GMLReader();
@@ -357,6 +360,9 @@ public:
     const char* GetGlobalSRSName() { return m_pszGlobalSRSName; }
 
     int         CanUseGlobalSRSName() { return m_bCanUseGlobalSRSName; }
+
+    int         SetFilteredClassName(const char* pszClassName);
+    const char* GetFilteredClassName() { return m_pszFilteredClassName; }
 };
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */

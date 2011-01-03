@@ -76,6 +76,7 @@ NASReader::NASReader()
     m_poCompleteFeature = NULL;
 
     m_pszFilename = NULL;
+    m_pszFilteredClassName = NULL;
 }
 
 /************************************************************************/
@@ -90,6 +91,8 @@ NASReader::~NASReader()
     CPLFree( m_pszFilename );
 
     CleanupParser();
+
+    CPLFree( m_pszFilteredClassName );
 }
 
 /************************************************************************/
@@ -219,6 +222,9 @@ void NASReader::CleanupParser()
 
     delete m_poNASHandler;
     m_poNASHandler = NULL;
+
+    delete m_poCompleteFeature;
+    m_poCompleteFeature = NULL;
 
     m_bReadStarted = FALSE;
 }
@@ -851,6 +857,7 @@ void NASReader::ResetReading()
 
 {
     CleanupParser();
+    SetFilteredClassName(NULL);
 }
 
 /************************************************************************/
@@ -897,3 +904,13 @@ int NASReader::ResolveXlinks( const char *pszFile,
     return FALSE;
 }
 
+/************************************************************************/
+/*                       SetFilteredClassName()                         */
+/************************************************************************/
+
+int NASReader::SetFilteredClassName(const char* pszClassName)
+{
+    CPLFree(m_pszFilteredClassName);
+    m_pszFilteredClassName = (pszClassName) ? CPLStrdup(pszClassName) : NULL;
+    return TRUE;
+}

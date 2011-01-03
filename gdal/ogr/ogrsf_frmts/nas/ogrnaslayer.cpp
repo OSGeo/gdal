@@ -91,6 +91,8 @@ void OGRNASLayer::ResetReading()
 {
     iNextNASId = 0;
     poDS->GetReader()->ResetReading();
+    if (poFClass)
+        poDS->GetReader()->SetFilteredClassName(poFClass->GetName());
 }
 
 /************************************************************************/
