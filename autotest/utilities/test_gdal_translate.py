@@ -614,7 +614,33 @@ def test_gdal_translate_22():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test -stats option (#3889)
+
+def test_gdal_translate_23():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -stats ../gcore/data/byte.tif tmp/test_gdal_translate_23.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_23.tif')
+    md = ds.GetRasterBand(1).GetMetadata()
+    ds = None
+
+    if md['STATISTICS_MINIMUM'] != '74':
+        gdaltest.post_reason( 'STATISTICS_MINIMUM is wrong.' )
+        print(md['STATISTICS_MINIMUM'])
+        return 'fail'
+
+    try:
+        os.stat('tmp/test_gdal_translate_23.tif.aux.xml')
+        gdaltest.post_reason( 'did not expect .aux.xml file presence' )
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
 ###############################################################################
 # Cleanup
 
@@ -676,6 +702,10 @@ def test_gdal_translate_cleanup():
         gdal.GetDriverByName('HFA').Delete('tmp/test_gdal_translate_22.img')
     except:
         pass
+    try:
+        gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_23.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -701,6 +731,7 @@ gdaltest_list = [
     test_gdal_translate_20,
     test_gdal_translate_21,
     test_gdal_translate_22,
+    test_gdal_translate_23,
     test_gdal_translate_cleanup
     ]
 
