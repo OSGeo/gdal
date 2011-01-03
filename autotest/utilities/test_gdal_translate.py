@@ -565,6 +565,55 @@ def test_gdal_translate_20():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test that statistics are copied only when appropriate (#3889)
+# in that case, they must be copied
+
+def test_gdal_translate_21():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of HFA ../gcore/data/utmsmall.img tmp/test_gdal_translate_21.img')
+
+    ds = gdal.Open('tmp/test_gdal_translate_21.img')
+    md = ds.GetRasterBand(1).GetMetadata()
+    ds = None
+
+    if md['STATISTICS_MINIMUM'] != '8':
+        gdaltest.post_reason( 'STATISTICS_MINIMUM is wrong.' )
+        print(md['STATISTICS_MINIMUM'])
+        return 'fail'
+
+    if md['STATISTICS_HISTOBINVALUES'] != '0|0|0|0|0|0|0|0|8|0|0|0|0|0|0|0|23|0|0|0|0|0|0|0|0|29|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|':
+        gdaltest.post_reason( 'STATISTICS_HISTOBINVALUES is wrong.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that statistics are copied only when appropriate (#3889)
+# in that case, they must *NOT* be copied
+
+def test_gdal_translate_22():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of HFA -scale 0 255 0 128 ../gcore/data/utmsmall.img tmp/test_gdal_translate_22.img')
+
+    ds = gdal.Open('tmp/test_gdal_translate_22.img')
+    md = ds.GetRasterBand(1).GetMetadata()
+    ds = None
+
+    if 'STATISTICS_MINIMUM' in md:
+        gdaltest.post_reason( 'did not expected a STATISTICS_MINIMUM value.' )
+        return 'fail'
+
+    if 'STATISTICS_HISTOBINVALUES' in md:
+        gdaltest.post_reason( 'did not expected a STATISTICS_MINIMUM value.' )
+        return 'fail'
+
+    return 'success'
     
 ###############################################################################
 # Cleanup
@@ -619,6 +668,14 @@ def test_gdal_translate_cleanup():
         os.remove('tmp/test_gdal_translate_20_dst.tif')
     except:
         pass
+    try:
+        gdal.GetDriverByName('HFA').Delete('tmp/test_gdal_translate_21.img')
+    except:
+        pass
+    try:
+        gdal.GetDriverByName('HFA').Delete('tmp/test_gdal_translate_22.img')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -642,6 +699,8 @@ gdaltest_list = [
     test_gdal_translate_18,
     test_gdal_translate_19,
     test_gdal_translate_20,
+    test_gdal_translate_21,
+    test_gdal_translate_22,
     test_gdal_translate_cleanup
     ]
 
