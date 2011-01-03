@@ -38,6 +38,8 @@ CPL_CVSID("$Id$");
 
 static int ArgIsNumeric( const char * );
 static void AttachMetadata( GDALDatasetH, char ** );
+static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand,
+                            int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData );
 static int bSubCall = FALSE;
 
 /*  ******************************************************************* */
@@ -706,14 +708,19 @@ static int ProxyMain( int argc, char ** argv )
 /*      this entire program to use virtual datasets to construct a      */
 /*      virtual input source to copy from.                              */
 /* -------------------------------------------------------------------- */
+
+
+    int bSpatialArrangementPreserved = (
+           anSrcWin[0] == 0 && anSrcWin[1] == 0
+        && anSrcWin[2] == GDALGetRasterXSize(hDataset)
+        && anSrcWin[3] == GDALGetRasterYSize(hDataset)
+        && pszOXSize == NULL && pszOYSize == NULL );
+
     if( eOutputType == GDT_Unknown 
         && !bScale && !bUnscale
         && CSLCount(papszMetadataOptions) == 0 && bDefBands 
         && eMaskMode == MASK_AUTO
-        && anSrcWin[0] == 0 && anSrcWin[1] == 0 
-        && anSrcWin[2] == GDALGetRasterXSize(hDataset)
-        && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
-        && pszOXSize == NULL && pszOYSize == NULL 
+        && bSpatialArrangementPreserved
         && nGCPCount == 0 && !bGotBounds
         && pszOutputSRS == NULL && !bSetNoData && !bUnsetNoData
         && nRGBExpand == 0)
@@ -857,10 +864,7 @@ static int ProxyMain( int argc, char ** argv )
 /*      Transfer metadata that remains valid if the spatial             */
 /*      arrangement of the data is unaltered.                           */
 /* -------------------------------------------------------------------- */
-    if( anSrcWin[0] == 0 && anSrcWin[1] == 0 
-        && anSrcWin[2] == GDALGetRasterXSize(hDataset)
-        && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
-        && pszOXSize == NULL && pszOYSize == NULL )
+    if( bSpatialArrangementPreserved )
     {
         char **papszMD;
 
@@ -921,6 +925,9 @@ static int ProxyMain( int argc, char ** argv )
             exit( 1 );
         }
     }
+
+    int bFilterOutStatsMetadata =
+        (bScale || bUnscale || !bSpatialArrangementPreserved || nRGBExpand != 0);
 
 /* ==================================================================== */
 /*      Process all bands.                                              */
@@ -1020,7 +1027,7 @@ static int ProxyMain( int argc, char ** argv )
 
 /* -------------------------------------------------------------------- */
 /*      In case of color table translate, we only set the color         */
-/*      interpretation other info copied by CopyCommonInfoFrom are      */
+/*      interpretation other info copied by CopyBandInfo are            */
 /*      not relevant in RGB expansion.                                  */
 /* -------------------------------------------------------------------- */
         if (nRGBExpand == 1)
@@ -1037,13 +1044,10 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
         else
         {
-            poVRTBand->CopyCommonInfoFrom( poSrcBand );
-
-            if( bUnscale )
-            {
-                poVRTBand->SetOffset( 0.0 );
-                poVRTBand->SetScale( 1.0 );
-            }
+            CopyBandInfo( poSrcBand, poVRTBand,
+                          !bFilterOutStatsMetadata,
+                          !bUnscale,
+                          !bSetNoData && !bUnsetNoData );
         }
 
 /* -------------------------------------------------------------------- */
@@ -1097,11 +1101,7 @@ static int ProxyMain( int argc, char ** argv )
             
             poVRTBand->SetNoDataValue( dfVal );
         }
-        else if ( bUnsetNoData )
-        {
-            poVRTBand->UnsetNoDataValue();
-        }
-        
+
         if (eMaskMode == MASK_AUTO &&
             (GDALGetMaskFlags(GDALGetRasterBand(hDataset, 1)) & GMF_PER_DATASET) == 0 &&
             (poSrcBand->GetMaskFlags() & (GMF_ALL_VALID | GMF_NODATA)) == 0)
@@ -1236,6 +1236,60 @@ static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
     }
 
     CSLDestroy( papszMetadataOptions );
+}
+
+/************************************************************************/
+/*                           CopyBandInfo()                            */
+/************************************************************************/
+
+/* A bit of a clone of VRTRasterBand::CopyCommonInfoFrom(), but we need */
+/* more and more custom behaviour in the context of gdal_translate ... */
+
+static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand,
+                          int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData )
+
+{
+    int bSuccess;
+    double dfNoData;
+
+    if (bCanCopyStatsMetadata)
+    {
+        poDstBand->SetMetadata( poSrcBand->GetMetadata() );
+    }
+    else
+    {
+        char** papszMetadata = poSrcBand->GetMetadata();
+        char** papszMetadataNew = NULL;
+        for( int i = 0; papszMetadata != NULL && papszMetadata[i] != NULL; i++ )
+        {
+            if (strncmp(papszMetadata[i], "STATISTICS_", 11) != 0)
+                papszMetadataNew = CSLAddString(papszMetadataNew, papszMetadata[i]);
+        }
+        poDstBand->SetMetadata( papszMetadataNew );
+        CSLDestroy(papszMetadataNew);
+    }
+
+    poDstBand->SetColorTable( poSrcBand->GetColorTable() );
+    poDstBand->SetColorInterpretation(poSrcBand->GetColorInterpretation());
+    if( strlen(poSrcBand->GetDescription()) > 0 )
+        poDstBand->SetDescription( poSrcBand->GetDescription() );
+
+    if (bCopyNoData)
+    {
+        dfNoData = poSrcBand->GetNoDataValue( &bSuccess );
+        if( bSuccess )
+            poDstBand->SetNoDataValue( dfNoData );
+    }
+
+    if (bCopyScale)
+    {
+        poDstBand->SetOffset( poSrcBand->GetOffset() );
+        poDstBand->SetScale( poSrcBand->GetScale() );
+    }
+
+    poDstBand->SetCategoryNames( poSrcBand->GetCategoryNames() );
+    if( !EQUAL(poSrcBand->GetUnitType(),"") )
+        poDstBand->SetUnitType( poSrcBand->GetUnitType() );
 }
 
 /************************************************************************/
