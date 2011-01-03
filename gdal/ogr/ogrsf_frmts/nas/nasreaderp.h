@@ -59,6 +59,10 @@ class NASHandler : public DefaultHandler
     int        m_nGeometryDepth;
     int        IsGeometryElement( const char * );
 
+    int        m_nDepth;
+    int        m_nDepthFeature;
+    int        m_bIgnoreFeature;
+
 public:
     NASHandler( NASReader *poReader );
     virtual ~NASHandler();
@@ -142,6 +146,8 @@ private:
     int           SetupParser();
     void          CleanupParser();
 
+    char         *m_pszFilteredClassName;
+
 public:
                 NASReader();
     virtual     ~NASReader();
@@ -198,6 +204,9 @@ public:
     virtual const char* GetGlobalSRSName() { return NULL; }
 
     virtual int         CanUseGlobalSRSName() { return FALSE; }
+
+    int         SetFilteredClassName(const char* pszClassName);
+    const char* GetFilteredClassName() { return m_pszFilteredClassName; }
 };
 
 #endif /* _CPL_NASREADERP_H_INCLUDED */
