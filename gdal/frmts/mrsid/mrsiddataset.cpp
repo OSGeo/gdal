@@ -1260,7 +1260,7 @@ static int MrSIDIdentify( GDALOpenInfo * poOpenInfo )
 
     if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
         return FALSE;
-        
+
     return TRUE;
 }
 
@@ -1446,6 +1446,12 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
     if( !bIsJP2 )
 #endif
     {
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
+        lt_uint8 gen;
+        bool raster;
+        MrSIDImageReaderInterface::getMrSIDGeneration(poOpenInfo->pabyHeader, gen, raster);
+        poDS->SetMetadataItem( "VERSION", CPLString().Printf("MG%d%s", gen, raster ? "" : " LiDAR") );
+#else
         lt_uint8 major;
         lt_uint8 minor;
         char letter;
@@ -1455,6 +1461,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
             major = 2;
 
         poDS->SetMetadataItem( "VERSION", CPLString().Printf("MG%d", major) );
+#endif
     }
 
     poDS->GetGTIFDefn();
@@ -2857,8 +2864,14 @@ MrSIDDummyImageReader::~MrSIDDummyImageReader()
 
 LT_STATUS MrSIDDummyImageReader::initialize()
 {
-    if ( !LT_SUCCESS(LTIImageReader::initialize()) )
-        return LT_STS_Failure;
+    LT_STATUS eStat = LT_STS_Uninit;
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 6
+    if ( !LT_SUCCESS(eStat = LTIImageReader::init()) )
+        return eStat;
+#else
+    if ( !LT_SUCCESS(eStat = LTIImageReader::initialize()) )
+        return eStat;
+#endif
     
     lt_uint16 nBands = (lt_uint16)poDS->GetRasterCount();
     LTIColorSpace eColorSpace = LTI_COLORSPACE_RGB;
@@ -2943,7 +2956,9 @@ LT_STATUS MrSIDDummyImageReader::initialize()
     }*/
 
     setDefaultDynamicRange();
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR < 8
     setClassicalMetadata();
+#endif
 
     return LT_STS_Success;
 }
@@ -3041,12 +3056,17 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
         }
       
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
+        MG2ImageWriter oImageWriter;
+        eStat = oImageWriter.initialize(&oImageReader);
+#else
         MG2ImageWriter oImageWriter(&oImageReader);
         eStat = oImageWriter.initialize();
+#endif
         if( eStat != LT_STS_Success )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "MG3ImageWriter.initialize() failed.\n%s",
+                      "MG2ImageWriter.initialize() failed.\n%s",
                       getLastStatusString( eStat ) );
             return NULL;
         }
@@ -3100,8 +3120,13 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
         }
       
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
+        MG3ImageWriter oImageWriter;
+        eStat = oImageWriter.initialize(&oImageReader);
+#else
         MG3ImageWriter oImageWriter(&oImageReader);
         eStat = oImageWriter.initialize();
+#endif
         if( eStat != LT_STS_Success )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -3110,8 +3135,22 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
         }
       
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
+        eStat = oImageWriter.setEncodingApplication("MrSID Driver",
+                                               GDALVersionInfo("--version"));
+        if ( LT_FAILURE( eStat ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MG3ImageWriter.setEncodingApplication() failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
+#endif
+
+#if !defined(LTI_SDK_MAJOR) || LTI_SDK_MAJOR < 8
         // Set 64-bit Interface for large files.
         oImageWriter.setFileStream64(true);
+#endif
 
         oImageWriter.setUsageMeterEnabled(bMeter);
       
@@ -3142,7 +3181,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( eStat != LT_STS_Success )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "MG2ImageWriter.write() failed.\n%s",
+                      "MG3ImageWriter.write() failed.\n%s",
                       getLastStatusString( eStat ) );
             return NULL;
         }
@@ -3205,12 +3244,16 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
       
-#ifdef MRSID_POST5
-    JP2WriterManager oImageWriter(&oImageReader);
-#else
+#if !defined(MRSID_POST5)
     J2KImageWriter oImageWriter(&oImageReader);
-#endif
     eStat = oImageWriter.initialize();
+#elif !defined(LTI_SDK_MAJOR) || LTI_SDK_MAJOR < 8
+    JP2WriterManager oImageWriter(&oImageReader);
+    eStat = oImageWriter.initialize();
+#else
+    JP2WriterManager oImageWriter;
+    eStat = oImageWriter.initialize(&oImageReader);
+#endif
     if( eStat != LT_STS_Success )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -3218,9 +3261,11 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   getLastStatusString( eStat ) );
         return NULL;
     }
-      
+
+#if !defined(LTI_SDK_MAJOR) || LTI_SDK_MAJOR < 8
     // Set 64-bit Interface for large files.
     oImageWriter.setFileStream64(true);
+#endif
 
     oImageWriter.setUsageMeterEnabled(bMeter);
       
