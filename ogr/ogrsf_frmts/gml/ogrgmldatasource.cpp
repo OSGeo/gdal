@@ -53,6 +53,9 @@ OGRGMLDataSource::OGRGMLDataSource()
     fpOutput = NULL;
     bFpOutputIsNonSeekable = FALSE;
     bFpOutputSingleFile = FALSE;
+    bIsOutputGML3 = FALSE;
+    bIsLongSRSRequired = FALSE;
+    bWriteSpaceIndentation = TRUE;
 
     papszCreateOptions = NULL;
     bOutIsTempFile = FALSE;
@@ -110,24 +113,38 @@ OGRGMLDataSource::~OGRGMLDataSource()
                     OGRMakeWktCoordinate(szLowerCorner, sBoundingRect.MinX, sBoundingRect.MinY, 0, 2);
                     OGRMakeWktCoordinate(szUpperCorner, sBoundingRect.MaxX, sBoundingRect.MaxY, 0, 2);
                 }
-                PrintLine( fpOutput, "   <gml:boundedBy><gml:Envelope%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL( fpOutput, "  ");
+                PrintLine( fpOutput, "<gml:boundedBy><gml:Envelope%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
                                 pszSRSName, szLowerCorner, szUpperCorner);
                 CPLFree(pszSRSName);
             }
             else
             {
-                PrintLine( fpOutput, "  <gml:boundedBy>" );
-                PrintLine( fpOutput, "    <gml:Box>" );
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL( fpOutput, "  ");
+                PrintLine( fpOutput, "<gml:boundedBy>" );
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL( fpOutput, "    ");
+                PrintLine( fpOutput, "<gml:Box>" );
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL( fpOutput, "      ");
                 PrintLine( fpOutput,
-                            "      <gml:coord><gml:X>%.16g</gml:X>"
+                            "<gml:coord><gml:X>%.16g</gml:X>"
                             "<gml:Y>%.16g</gml:Y></gml:coord>",
                             sBoundingRect.MinX, sBoundingRect.MinY );
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL( fpOutput, "      ");
                 PrintLine( fpOutput,
-                            "      <gml:coord><gml:X>%.16g</gml:X>"
+                            "<gml:coord><gml:X>%.16g</gml:X>"
                             "<gml:Y>%.16g</gml:Y></gml:coord>",
                             sBoundingRect.MaxX, sBoundingRect.MaxY );
-                PrintLine( fpOutput, "    </gml:Box>" );
-                PrintLine( fpOutput, "  </gml:boundedBy>" );
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL( fpOutput, "    ");
+                PrintLine( fpOutput, "</gml:Box>" );
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL( fpOutput, "  ");
+                PrintLine( fpOutput, "</gml:boundedBy>" );
             }
         }
 
@@ -673,6 +690,15 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     else
         nBoundedByLocation = -1;
 
+    const char* pszFormat = CSLFetchNameValue(papszCreateOptions, "FORMAT");
+    bIsOutputGML3 = pszFormat && EQUAL(pszFormat, "GML3");
+
+    bIsLongSRSRequired =
+        CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "GML3_LONGSRS", "YES"));
+
+    bWriteSpaceIndentation =
+        CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "SPACE_INDENTATION", "YES"));
+
     return TRUE;
 }
 
@@ -1172,23 +1198,4 @@ void OGRGMLDataSource::PrintLine(VSILFILE* fp, const char *fmt, ...)
 #endif
 
     VSIFPrintfL(fp, "%s%s", osWork.c_str(), pszEOL);
-}
-
-/************************************************************************/
-/*                          IsGML3Output()                              */
-/************************************************************************/
-
-int OGRGMLDataSource::IsGML3Output()
-{
-    const char* pszFormat = CSLFetchNameValue(papszCreateOptions, "FORMAT");
-    return pszFormat && EQUAL(pszFormat, "GML3");
-}
-
-/************************************************************************/
-/*                        IsLongSRSRequired()                           */
-/************************************************************************/
-
-int OGRGMLDataSource::IsLongSRSRequired()
-{
-    return CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "GML3_LONGSRS", "YES"));
 }
