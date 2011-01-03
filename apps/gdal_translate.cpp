@@ -61,7 +61,7 @@ static void Usage()
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-gcp pixel line easting northing [elevation]]*\n" 
             "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
-            "       [-co \"NAME=VALUE\"]*\n"
+            "       [-co \"NAME=VALUE\"]* [-stats]\n"
             "       src_dataset dst_dataset\n\n" );
 
     printf( "%s\n\n", GDALVersionInfo( "--version" ) );
@@ -129,6 +129,7 @@ static int ProxyMain( int argc, char ** argv )
     int                 bParsedMaskArgument = FALSE;
     int                 eMaskMode = MASK_AUTO;
     int                 nMaskBand = 0; /* negative value means mask band of ABS(nMaskBand) */
+    int                 bStats = FALSE, bApproxStats = FALSE;
 
 
     anSrcWin[0] = 0;
@@ -437,6 +438,17 @@ static int ProxyMain( int argc, char ** argv )
             i++;
         }
 
+        else if( EQUAL(argv[i], "-stats") )
+        {
+            bStats = TRUE;
+            bApproxStats = FALSE;
+        }
+        else if( EQUAL(argv[i], "-approx_stats") )
+        {
+            bStats = TRUE;
+            bApproxStats = TRUE;
+        }
+
         else if( argv[i][0] == '-' )
         {
             printf( "Option %s incomplete, or not recognised.\n\n", 
@@ -723,7 +735,7 @@ static int ProxyMain( int argc, char ** argv )
         && bSpatialArrangementPreserved
         && nGCPCount == 0 && !bGotBounds
         && pszOutputSRS == NULL && !bSetNoData && !bUnsetNoData
-        && nRGBExpand == 0)
+        && nRGBExpand == 0 && !bStats )
     {
         
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
@@ -1045,7 +1057,7 @@ static int ProxyMain( int argc, char ** argv )
         else
         {
             CopyBandInfo( poSrcBand, poVRTBand,
-                          !bFilterOutStatsMetadata,
+                          !bStats && !bFilterOutStatsMetadata,
                           !bUnscale,
                           !bSetNoData && !bUnsetNoData );
         }
@@ -1150,6 +1162,19 @@ static int ProxyMain( int argc, char ** argv )
                                         anSrcWin[0], anSrcWin[1],
                                         anSrcWin[2], anSrcWin[3],
                                         0, 0, nOXSize, nOYSize );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Compute stats if required.                                      */
+/* -------------------------------------------------------------------- */
+    if (bStats)
+    {
+        for( i = 0; i < poVDS->GetRasterCount(); i++ )
+        {
+            double dfMin, dfMax, dfMean, dfStdDev;
+            poVDS->GetRasterBand(i+1)->ComputeStatistics( bApproxStats,
+                    &dfMin, &dfMax, &dfMean, &dfStdDev, GDALDummyProgress, NULL );
         }
     }
 
