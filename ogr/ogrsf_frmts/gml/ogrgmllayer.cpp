@@ -399,34 +399,39 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
 {
     int bIsGML3Output = poDS->IsGML3Output();
     VSILFILE *fp = poDS->GetOutputFP();
+    int bWriteSpaceIndentation = poDS->WriteSpaceIndentation();
 
     if( !bWriter )
         return OGRERR_FAILURE;
 
+    if (bWriteSpaceIndentation)
+        VSIFPrintfL(fp, "  ");
     if (bIsGML3Output)
-        poDS->PrintLine( fp, "  <ogr:featureMember>" );
+        poDS->PrintLine( fp, "<ogr:featureMember>" );
     else
-        poDS->PrintLine( fp, "  <gml:featureMember>" );
+        poDS->PrintLine( fp, "<gml:featureMember>" );
 
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( iNextGMLId++ );
 
     int nGMLIdIndex = -1;
+    if (bWriteSpaceIndentation)
+        VSIFPrintfL(fp, "    ");
     if (bIsGML3Output)
     {
         nGMLIdIndex = poFeatureDefn->GetFieldIndex("gml_id");
         if (nGMLIdIndex >= 0 && poFeature->IsFieldSet( nGMLIdIndex ) )
-            poDS->PrintLine( fp, "    <ogr:%s gml:id=\"%s\">",
+            poDS->PrintLine( fp, "<ogr:%s gml:id=\"%s\">",
                 poFeatureDefn->GetName(),
                 poFeature->GetFieldAsString(nGMLIdIndex) );
         else
-            poDS->PrintLine( fp, "    <ogr:%s gml:id=\"%s.%ld\">",
+            poDS->PrintLine( fp, "<ogr:%s gml:id=\"%s.%ld\">",
                     poFeatureDefn->GetName(),
                     poFeatureDefn->GetName(),
                     poFeature->GetFID() );
     }
     else
-        poDS->PrintLine( fp, "    <ogr:%s fid=\"F%ld\">", 
+        poDS->PrintLine( fp, "<ogr:%s fid=\"F%ld\">",
                 poFeatureDefn->GetName(),
                 poFeature->GetFID() );
 
@@ -460,7 +465,9 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
                 OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinX, sGeomBounds.MinY, 0, 2);
                 OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxX, sGeomBounds.MaxY, 0, 2);
             }
-            poDS->PrintLine( fp, "      <gml:boundedBy><gml:Envelope%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
+            if (bWriteSpaceIndentation)
+                VSIFPrintfL(fp, "      ");
+            poDS->PrintLine( fp, "<gml:boundedBy><gml:Envelope%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
                              pszSRSName, szLowerCorner, szUpperCorner);
             CPLFree(pszSRSName);
         }
@@ -470,7 +477,9 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
             papszOptions = CSLAddString(papszOptions, "GML3_LONGSRS=NO");
         pszGeometry = poGeom->exportToGML(papszOptions);
         CSLDestroy(papszOptions);
-        poDS->PrintLine( fp, "      <ogr:geometryProperty>%s</ogr:geometryProperty>",
+        if (bWriteSpaceIndentation)
+            VSIFPrintfL(fp, "      ");
+        poDS->PrintLine( fp, "<ogr:geometryProperty>%s</ogr:geometryProperty>",
                     pszGeometry );
         CPLFree( pszGeometry );
     }
@@ -498,18 +507,24 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
                     *pszComma = '.';
             }
 
-            poDS->PrintLine( fp, "      <ogr:%s>%s</ogr:%s>", 
+            if (bWriteSpaceIndentation)
+                VSIFPrintfL(fp, "      ");
+            poDS->PrintLine( fp, "<ogr:%s>%s</ogr:%s>",
                         poFieldDefn->GetNameRef(), pszEscaped, 
                         poFieldDefn->GetNameRef() );
             CPLFree( pszEscaped );
         }
     }
 
-    poDS->PrintLine( fp, "    </ogr:%s>", poFeatureDefn->GetName() );
+    if (bWriteSpaceIndentation)
+        VSIFPrintfL(fp, "    ");
+    poDS->PrintLine( fp, "</ogr:%s>", poFeatureDefn->GetName() );
+    if (bWriteSpaceIndentation)
+        VSIFPrintfL(fp, "  ");
     if (bIsGML3Output)
-        poDS->PrintLine( fp, "  </ogr:featureMember>" );
+        poDS->PrintLine( fp, "</ogr:featureMember>" );
     else
-        poDS->PrintLine( fp, "  </gml:featureMember>" );
+        poDS->PrintLine( fp, "</gml:featureMember>" );
 
     return OGRERR_NONE;
 }

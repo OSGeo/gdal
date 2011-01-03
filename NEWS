@@ -654,8 +654,10 @@ GML driver:
    (longitude, latitude) order (unless GML_INVERT_AXIS_ORDER_IF_LAT_LONG is set to NO)
    Also add a GML_CONSIDER_EPSG_AS_URN option that can be set to YES when EPSG:XXXX should
    be considered as urn:ogc:def:crs:EPSG::XXXX
- * Expose gml:id as a string field for <wfs:FeatureCollection>
+ * Expose gml:id as a string field when reading <wfs:FeatureCollection>
  * Add dataset creation option FORMAT=GML3 to write GML3 SF-0 compliant data
+ * Add dataset creation option SPACE_INDENTATION=YES/NO to optionnaly disable space indentation
+   when writing GML.
  * Recognize GML answer of MapServer WMS GetFeatureInfo request
  * Fix datatype detection to fallback to Real when an integer cannot fit into a 32bit int (#3866)
  * GML/WFS : use SRS defined in global gml:Envelope if no SRS is set for any feature geometry

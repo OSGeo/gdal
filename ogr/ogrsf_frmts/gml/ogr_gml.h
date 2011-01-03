@@ -110,6 +110,9 @@ class OGRGMLDataSource : public OGRDataSource
     int                 nBoundedByLocation;
     
     int                 nSchemaInsertLocation;
+    int                 bIsOutputGML3;
+    int                 bIsLongSRSRequired;
+    int                 bWriteSpaceIndentation;
 
     // input related parameters.
     IGMLReader          *poReader;
@@ -149,8 +152,9 @@ class OGRGMLDataSource : public OGRDataSource
 
     static void         PrintLine(VSILFILE* fp, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
 
-    int                 IsGML3Output();
-    int                 IsLongSRSRequired();
+    int                 IsGML3Output() { return bIsOutputGML3; }
+    int                 IsLongSRSRequired() { return bIsLongSRSRequired; }
+    int                 WriteSpaceIndentation() { return bWriteSpaceIndentation; }
     const char         *GetGlobalSRSName();
 };
 
