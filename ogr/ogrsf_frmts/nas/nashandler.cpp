@@ -45,6 +45,8 @@ NASHandler::NASHandler( NASReader *poReader )
     m_pszCurField = NULL;
     m_pszGeometry = NULL;
     m_nGeomAlloc = m_nGeomLen = 0;
+    m_nDepthFeature = m_nDepth = 0;
+    m_bIgnoreFeature = FALSE;
 }
 
 /************************************************************************/
@@ -73,6 +75,12 @@ void NASHandler::startElement(const XMLCh* const    uri,
     GMLReadState *poState = m_poReader->GetState();
 
     tr_strcpy( szElementName, localname );
+
+    if (m_bIgnoreFeature && m_nDepth >= m_nDepthFeature)
+    {
+        m_nDepth ++;
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are in the midst of collecting a feature attribute        */
@@ -118,7 +126,24 @@ void NASHandler::startElement(const XMLCh* const    uri,
 /* -------------------------------------------------------------------- */
     else if( m_poReader->IsFeatureElement( szElementName ) )
     {
+        const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
+        if ( pszFilteredClassName != NULL &&
+             strcmp(szElementName, pszFilteredClassName) != 0 )
+        {
+            m_bIgnoreFeature = TRUE;
+            m_nDepthFeature = m_nDepth;
+            m_nDepth ++;
+
+            return;
+        }
+
+        m_bIgnoreFeature = FALSE;
+
         m_poReader->PushFeature( szElementName, attrs );
+
+        m_nDepthFeature = m_nDepth;
+        m_nDepth ++;
+
         return;
     }
 
@@ -139,6 +164,8 @@ void NASHandler::startElement(const XMLCh* const    uri,
 /*      Push the element onto the current state's path.                 */
 /* -------------------------------------------------------------------- */
     poState->PushPath( szElementName );
+
+    m_nDepth ++;
 }
 
 /************************************************************************/
@@ -153,6 +180,19 @@ void NASHandler::endElement(const   XMLCh* const    uri,
     GMLReadState *poState = m_poReader->GetState();
 
     tr_strcpy( szElementName, localname );
+
+
+    m_nDepth --;
+
+    if (m_bIgnoreFeature && m_nDepth >= m_nDepthFeature)
+    {
+        if (m_nDepth == m_nDepthFeature)
+        {
+             m_bIgnoreFeature = FALSE;
+             m_nDepthFeature = 0;
+        }
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Is this closing off an attribute value?  We assume so if        */
@@ -208,10 +248,11 @@ void NASHandler::endElement(const   XMLCh* const    uri,
 /*      element name for the class, then we have finished the           */
 /*      feature, and we pop the feature read state.                     */
 /* -------------------------------------------------------------------- */
-    if( poState->m_poFeature != NULL
+    if( m_nDepth == m_nDepthFeature && poState->m_poFeature != NULL
         && EQUAL(szElementName,
                  poState->m_poFeature->GetClass()->GetElementName()) )
     {
+        m_nDepthFeature = 0;
         m_poReader->PopState();
     }
 

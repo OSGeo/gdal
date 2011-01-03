@@ -104,6 +104,8 @@ void OGRGMLLayer::ResetReading()
 {
     iNextGMLId = 0;
     poDS->GetReader()->ResetReading();
+    if (poFClass && poDS->GetLayerCount() > 1)
+        poDS->GetReader()->SetFilteredClassName(poFClass->GetName());
 }
 
 /************************************************************************/

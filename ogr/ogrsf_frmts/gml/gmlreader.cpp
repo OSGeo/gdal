@@ -130,6 +130,8 @@ GMLReader::GMLReader()
 
     m_pszGlobalSRSName = NULL;
     m_bCanUseGlobalSRSName = FALSE;
+
+    m_pszFilteredClassName = NULL;
 }
 
 /************************************************************************/
@@ -159,6 +161,8 @@ GMLReader::~GMLReader()
     fpGML = NULL;
 
     CPLFree(m_pszGlobalSRSName);
+
+    CPLFree(m_pszFilteredClassName);
 }
 
 /************************************************************************/
@@ -1223,6 +1227,7 @@ void GMLReader::ResetReading()
 
 {
     CleanupParser();
+    SetFilteredClassName(NULL);
 }
 
 /************************************************************************/
@@ -1233,6 +1238,17 @@ void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
 {
     if (m_pszGlobalSRSName == NULL && pszGlobalSRSName != NULL)
         m_pszGlobalSRSName = CPLStrdup(pszGlobalSRSName);
+}
+
+/************************************************************************/
+/*                       SetFilteredClassName()                         */
+/************************************************************************/
+
+int GMLReader::SetFilteredClassName(const char* pszClassName)
+{
+    CPLFree(m_pszFilteredClassName);
+    m_pszFilteredClassName = (pszClassName) ? CPLStrdup(pszClassName) : NULL;
+    return TRUE;
 }
 
 #endif /* HAVE_XERCES == 1 or HAVE_EXPAT */
