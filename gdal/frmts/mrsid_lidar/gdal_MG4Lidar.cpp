@@ -90,6 +90,7 @@ protected:
    int nOverviewCount;
    MG4LidarDataset **papoOverviewDS;
    CPLXMLNode *poXMLPCView;
+   bool ownsXML;
    int nBlockXSize, nBlockYSize;
    int iLevel;
 };
@@ -525,6 +526,7 @@ MG4LidarDataset::MG4LidarDataset()
    reader = NULL;
 
    poXMLPCView = NULL;
+   ownsXML = false;
    nOverviewCount = 0;
    papoOverviewDS = NULL;
 
@@ -543,11 +545,10 @@ MG4LidarDataset::~MG4LidarDataset()
          delete papoOverviewDS[i];
       CPLFree( papoOverviewDS );
    }
-   else
-   {
+   if (ownsXML)
       CPLDestroyXMLNode(poXMLPCView);
-      RELEASE(reader);
-   }
+
+   RELEASE(reader);
 }
 
 /************************************************************************/
@@ -740,6 +741,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
 
    poDS = new MG4LidarDataset();
    poDS->poXMLPCView = pxmlPCView;
+   poDS->ownsXML = true;
    poDS->reader = CropableMG4PointReader::create();
    const char * pszClipExtent = CPLGetXMLValue(pxmlPCView, "ClipBox", NULL);
    MG4PointReader *r = MG4PointReader::create();
@@ -804,7 +806,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       for ( i = 0; i < poDS->nOverviewCount; i++ )
       {
          poDS->papoOverviewDS[i] = new MG4LidarDataset ();
-         poDS->papoOverviewDS[i]->reader = poDS->reader;
+         poDS->papoOverviewDS[i]->reader = RETAIN(poDS->reader);
          poDS->papoOverviewDS[i]->SetMetadata(poDS->GetMetadata("MG4Lidar"), "MG4Lidar");
          poDS->papoOverviewDS[i]->poXMLPCView = pxmlPCView;
          poDS->papoOverviewDS[i]->OpenZoomLevel( i+1 );
