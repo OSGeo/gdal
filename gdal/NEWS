@@ -650,8 +650,10 @@ GML driver:
    <gml:GeometryCollection>. For backward compatibility, recognize both syntax for
    the reading part (#3683)
  * Support reading SRS per layer when possible, and deal with urn:ogc:def:crs:EPSG::xxx
-   geographic coordinate systems (as returned by WFS 1.1.0) to restore
+   geographic coordinate systems (as returned by WFS 1.1.0 for example) to restore
    (longitude, latitude) order (unless GML_INVERT_AXIS_ORDER_IF_LAT_LONG is set to NO)
+   Also add a GML_CONSIDER_EPSG_AS_URN option that can be set to YES when EPSG:XXXX should
+   be considered as urn:ogc:def:crs:EPSG::XXXX
  * Expose gml:id as a string field for <wfs:FeatureCollection>
  * Add dataset creation option FORMAT=GML3 to write GML3 SF-0 compliant data
  * Recognize GML answer of MapServer WMS GetFeatureInfo request

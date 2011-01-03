@@ -47,7 +47,12 @@ char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList)
             pszSRSName += strlen("srsName=\"");
 
             char* pszRet;
-            if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#",
+            if (strncmp(pszSRSName, "EPSG:", 5) == 0 &&
+                CSLTestBoolean(CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "NO")))
+            {
+                pszRet = CPLStrdup(CPLSPrintf("urn:ogc:def:crs:EPSG::%s", pszSRSName+5));
+            }
+            else if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#",
                         strlen("http://www.opengis.net/gml/srs/epsg.xml#")) == 0)
             {
                 pszRet = CPLStrdup(CPLSPrintf("EPSG:%s", pszSRSName +
