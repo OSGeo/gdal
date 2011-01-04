@@ -134,6 +134,8 @@ Utilities :
  * gdal_translate : add -mask option to add a mask band from an input band/mask band.
    Also extend syntax for the value of the -b option to allow specifying mask band as input band
  * gdal_translate : support '-a_nodata None' as a way of unsetting the nodata value
+ * gdal_translate : invalidate statistics when using -scale, -unscale, -expand, -srcwin,
+                    -projwin or -outsize and a new -stats option to force their (re)computation (#3889)
  * gdal_rasterize: Add capability of creating output file (#3505)
  * gdaldem: add a new option, -compute_edges, that enable gdaldem to compute
    values at image edges or if a nodata value is found in the 3x3 window,
@@ -344,6 +346,10 @@ MG4Lidar driver
  * New for GDAL/OGR 1.8.0
  * Read MG4 Lidar point cloud data and expose it as a Raster. It depends on
    the current, freely-available-though-not-open-source MG4 Lidar SDK v1.1
+
+MrSID:
+ * Updated to support MrSID SDK v8.0.0 (compat with older versions maintained) (#3889)
+ * Updated to support writing MG4/Raster (#3889)
 
 NetCDF driver:
  * Improve coordinate system support (#3425)
