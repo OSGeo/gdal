@@ -82,6 +82,10 @@ CPL_C_END
 # include "MG3WriterParams.h"
 # include "MG2ImageWriter.h"
 # include "MG2WriterParams.h"
+# ifdef MRSID_HAVE_MG4WRITE
+#   include "MG4ImageWriter.h"
+#   include "MG4WriterParams.h"
+# endif
 # ifdef MRSID_J2K
 #   ifdef MRSID_POST5
 #     include "JP2WriterManager.h"
@@ -155,6 +159,22 @@ class LTIDLLCopy : public T
 public:
    LTIDLLCopy(const T& original) : T(original) {}
    virtual ~LTIDLLCopy() {};
+};
+
+template <class T>
+class LTIDLLWriter : public T
+{
+public:
+    LTIDLLWriter(LTIImageStage *image) : T(image) {}
+    virtual ~LTIDLLWriter() {}
+};
+
+template <class T>
+class LTIDLLDefault : public T
+{
+public:
+    LTIDLLDefault() : T() {}
+    virtual ~LTIDLLDefault() {}
 };
 
 /************************************************************************/
@@ -1261,6 +1281,15 @@ static int MrSIDIdentify( GDALOpenInfo * poOpenInfo )
     if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
         return FALSE;
 
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
+    lt_uint8 gen;
+    bool raster;
+    LT_STATUS eStat =
+        MrSIDImageReaderInterface::getMrSIDGeneration(poOpenInfo->pabyHeader, gen, raster);
+    if (!LT_SUCCESS(eStat) || !raster)
+       return FALSE;
+#endif
+
     return TRUE;
 }
 
@@ -1459,7 +1488,6 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
         poMrSIDImageReader->getVersion(major, minor, minor, letter);
         if (major < 2) 
             major = 2;
-
         poDS->SetMetadataItem( "VERSION", CPLString().Printf("MG%d", major) );
 #endif
     }
@@ -2833,7 +2861,7 @@ class MrSIDDummyImageReader : public LTIImageReader
 
     virtual LT_STATUS   decodeStrip( LTISceneBuffer& stripBuffer,
                                      const LTIScene& stripScene );
-    virtual LT_STATUS   decodeBegin( const LTIScene& scene )
+    virtual LT_STATUS   decodeBegin( const LTIScene& )
                             { return LT_STS_Success; };
     virtual LT_STATUS   decodeEnd() { return LT_STS_Success; };
 };
@@ -2956,7 +2984,7 @@ LT_STATUS MrSIDDummyImageReader::initialize()
     }*/
 
     setDefaultDynamicRange();
-#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR < 8
+#if !defined(LTI_SDK_MAJOR) || LTI_SDK_MAJOR < 8
     setClassicalMetadata();
 #endif
 
@@ -3018,7 +3046,12 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 { 
     const char* pszVersion = CSLFetchNameValue(papszOptions, "VERSION");
-    LT_STATUS eStat;
+#ifdef MRSID_HAVE_MG4WRITE
+    int iVersion = pszVersion ? atoi(pszVersion) : 4;
+#else
+    int iVersion = pszVersion ? atoi(pszVersion) : 3;
+#endif
+    LT_STATUS eStat = LT_STS_Uninit;
 
 #ifdef DEBUG
     bool bMeter = false;
@@ -3035,111 +3068,94 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (bStrict)
             return NULL;
     }
-    
-    // Output Mrsid Version 2 file.
-    if( pszVersion && atoi(pszVersion) == 2 )
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
+    // Create the file.                                               
+    MrSIDDummyImageReader oImageReader( poSrcDS );
+    if( LT_FAILURE( eStat = oImageReader.initialize() ) )
     {
-        int nXSize = poSrcDS->GetRasterXSize();
-        int nYSize = poSrcDS->GetRasterYSize();
-      
-        if( !pfnProgress( 0.0, NULL, pProgressData ) )
-            return NULL;
-      
-        // Create the file.                                               
-        MrSIDDummyImageReader oImageReader( poSrcDS );
-        eStat = oImageReader.initialize();
-        if( eStat != LT_STS_Success )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "MrSIDDummyImageReader.Initialize failed.\n%s",
-                      getLastStatusString( eStat ) );
-            return NULL;
-        }
-      
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDummyImageReader.Initialize failed.\n%s",
+                  getLastStatusString( eStat ) );
+        return NULL;
+    }
+
+    LTIGeoFileImageWriter *poImageWriter = NULL;
+    switch (iVersion)
+    {
+    case 2: {
+        // Output Mrsid Version 2 file.
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
-        MG2ImageWriter oImageWriter;
-        eStat = oImageWriter.initialize(&oImageReader);
+        LTIDLLDefault<MG2ImageWriter> *poMG2ImageWriter;
+        poMG2ImageWriter = new LTIDLLDefault<MG2ImageWriter>;
+        eStat = poMG2ImageWriter->initialize(&oImageReader);
 #else
-        MG2ImageWriter oImageWriter(&oImageReader);
-        eStat = oImageWriter.initialize();
+        LTIDLLWriter<MG2ImageWriter> *poMG2ImageWriter;
+        poMG2ImageWriter = new LTIDLLWriter<MG2ImageWriter>(&oImageReader);
+        eStat = poMG2ImageWriter->initialize();
 #endif
-        if( eStat != LT_STS_Success )
+        if( LT_FAILURE( eStat ) )
         {
+            delete poMG2ImageWriter;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MG2ImageWriter.initialize() failed.\n%s",
                       getLastStatusString( eStat ) );
             return NULL;
         }
 
-        oImageWriter.setUsageMeterEnabled(bMeter);
-   
-        // set output filename
-        oImageWriter.setOutputFileSpec( pszFilename );
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
+        eStat = poMG2ImageWriter->setEncodingApplication("MrSID Driver",
+                                                         GDALVersionInfo("--version"));
+        if( LT_FAILURE( eStat ) )
+        {
+            delete poMG2ImageWriter;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MG2ImageWriter.setEncodingApplication() failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
+#endif
 
-        // Set defaults
-        oImageWriter.params().setBlockSize(oImageWriter.params().getBlockSize());
-        oImageWriter.setStripHeight(oImageWriter.getStripHeight());
+        poMG2ImageWriter->setUsageMeterEnabled(bMeter);
+
+        poMG2ImageWriter->params().setBlockSize(poMG2ImageWriter->params().getBlockSize());
 
         // check for compression option
         const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
         if( pszValue != NULL )
-            oImageWriter.params().setCompressionRatio( atof(pszValue) );
+            poMG2ImageWriter->params().setCompressionRatio( (float)atof(pszValue) );
 
-        // set MrSID world file
-        if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
-            oImageWriter.setWorldFileSupport( true );
-      
-        // write the scene
-        const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
-        eStat = oImageWriter.write( oScene );
-        if( eStat != LT_STS_Success )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "MG2ImageWriter.write() failed.\n%s",
-                      getLastStatusString( eStat ) );
-            return NULL;
-        }
-    }
-    // Output Mrsid Version 3 file.
-    else
-    {
-        int nXSize = poSrcDS->GetRasterXSize();
-        int nYSize = poSrcDS->GetRasterYSize();
-      
-        if( !pfnProgress( 0.0, NULL, pProgressData ) )
-            return NULL;
-      
-        // Create the file.   
-        MrSIDDummyImageReader oImageReader( poSrcDS );
-        eStat = oImageReader.initialize();
-        if( eStat != LT_STS_Success )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "MrSIDDummyImageReader.Initialize failed.\n%s",
-                      getLastStatusString( eStat ) );
-            return NULL;
-        }
-      
+        poImageWriter = poMG2ImageWriter;
+
+        break; }
+    case 3: {
+        // Output Mrsid Version 3 file.
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
-        MG3ImageWriter oImageWriter;
-        eStat = oImageWriter.initialize(&oImageReader);
+        LTIDLLDefault<MG3ImageWriter> *poMG3ImageWriter;
+        poMG3ImageWriter = new LTIDLLDefault<MG3ImageWriter>;
+        eStat = poMG3ImageWriter->initialize(&oImageReader);
 #else
-        MG3ImageWriter oImageWriter(&oImageReader);
-        eStat = oImageWriter.initialize();
+        LTIDLLWriter<MG3ImageWriter> *poMG3ImageWriter;
+        poMG3ImageWriter = new LTIDLLWriter<MG3ImageWriter>(&oImageReader);
+        eStat = poMG3ImageWriter->initialize();
 #endif
-        if( eStat != LT_STS_Success )
+        if( LT_FAILURE( eStat ) )
         {
+            delete poMG3ImageWriter;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MG3ImageWriter.initialize() failed.\n%s",
                       getLastStatusString( eStat ) );
             return NULL;
         }
-      
+
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
-        eStat = oImageWriter.setEncodingApplication("MrSID Driver",
-                                               GDALVersionInfo("--version"));
-        if ( LT_FAILURE( eStat ) )
+        eStat = poMG3ImageWriter->setEncodingApplication("MrSID Driver",
+                                                         GDALVersionInfo("--version"));
+        if( LT_FAILURE( eStat ) )
         {
+            delete poMG3ImageWriter;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MG3ImageWriter.setEncodingApplication() failed.\n%s",
                       getLastStatusString( eStat ) );
@@ -3147,46 +3163,99 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 #endif
 
+        // usage meter should only be disabled for debugging
+        poMG3ImageWriter->setUsageMeterEnabled(bMeter);
+
 #if !defined(LTI_SDK_MAJOR) || LTI_SDK_MAJOR < 8
         // Set 64-bit Interface for large files.
-        oImageWriter.setFileStream64(true);
+        poMG3ImageWriter->setFileStream64(true);
 #endif
-
-        oImageWriter.setUsageMeterEnabled(bMeter);
-      
-        // set output filename
-        oImageWriter.setOutputFileSpec( pszFilename );
-
-        // Set defaults
-        oImageWriter.setStripHeight(oImageWriter.getStripHeight());
 
         // set 2 pass optimizer option
         if( CSLFetchNameValue(papszOptions, "TWOPASS") != NULL )
-            oImageWriter.params().setTwoPassOptimizer( true );
+            poMG3ImageWriter->params().setTwoPassOptimizer( true );
 
-        // set MrSID world file
-        if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
-            oImageWriter.setWorldFileSupport( true );
-      
-        const char* pszValue;
-      
         // set filesize in KB
-        pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
+        const char* pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
         if( pszValue != NULL )
-            oImageWriter.params().setTargetFilesize( atoi(pszValue) );
-        
-        // write the scene
-        const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
-        eStat = oImageWriter.write( oScene );
-        if( eStat != LT_STS_Success )
+            poMG3ImageWriter->params().setTargetFilesize( atoi(pszValue) );
+
+        poImageWriter = poMG3ImageWriter;
+
+        break; }
+#ifdef MRSID_HAVE_MG4WRITE
+    case 4: {
+        // Output Mrsid Version 4 file.
+        LTIDLLDefault<MG4ImageWriter> *poMG4ImageWriter;
+        poMG4ImageWriter = new LTIDLLDefault<MG4ImageWriter>;
+        eStat = poMG4ImageWriter->initialize(&oImageReader, NULL, NULL);
+        if( LT_FAILURE( eStat ) )
         {
+            delete poMG4ImageWriter;
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "MG3ImageWriter.write() failed.\n%s",
+                      "MG3ImageWriter.initialize() failed.\n%s",
                       getLastStatusString( eStat ) );
             return NULL;
         }
+
+        eStat = poMG4ImageWriter->setEncodingApplication("MrSID Driver",
+                                                         GDALVersionInfo("--version"));
+        if( LT_FAILURE( eStat ) )
+        {
+            delete poMG4ImageWriter;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MG3ImageWriter.setEncodingApplication() failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
+
+        // usage meter should only be disabled for debugging
+        poMG4ImageWriter->setUsageMeterEnabled(bMeter);
+
+        // set 2 pass optimizer option
+        if( CSLFetchNameValue(papszOptions, "TWOPASS") != NULL )
+            poMG4ImageWriter->params().setTwoPassOptimizer( true );
+
+        // set filesize in KB
+        const char* pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
+        if( pszValue != NULL )
+            poMG4ImageWriter->params().setTargetFilesize( atoi(pszValue) );
+
+        poImageWriter = poMG4ImageWriter;
+
+        break; }
+#endif /* MRSID_HAVE_MG4WRITE */
+    default:
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid MrSID generation specified (VERSION=%s).",
+                  pszVersion );
+        return NULL;
     }
-  
+
+    // set output filename
+    poImageWriter->setOutputFileSpec( pszFilename );
+
+    // set defaults
+    poImageWriter->setStripHeight(poImageWriter->getStripHeight());
+
+    // set MrSID world file
+    if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
+        poImageWriter->setWorldFileSupport( true );
+
+    // write the scene
+    int nXSize = poSrcDS->GetRasterXSize();
+    int nYSize = poSrcDS->GetRasterYSize();
+    const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
+    if( LT_FAILURE( eStat = poImageWriter->write( oScene ) ) )
+    {
+        delete poImageWriter;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MG2ImageWriter.write() failed.\n%s",
+                  getLastStatusString( eStat ) );
+        return NULL;
+    }
+
+    delete poImageWriter;
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
@@ -3229,10 +3298,10 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (bStrict)
             return NULL;
     }
-      
+
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
-      
+
     // Create the file.   
     MrSIDDummyImageReader oImageReader( poSrcDS );
     eStat = oImageReader.initialize();
@@ -3282,7 +3351,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // check for compression option
     const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
     if( pszValue != NULL )
-        oImageWriter.params().setCompressionRatio( atof(pszValue) );
+        oImageWriter.params().setCompressionRatio( (float)atof(pszValue) );
         
     pszValue = CSLFetchNameValue(papszOptions, "XMLPROFILE");
     if( pszValue != NULL )
