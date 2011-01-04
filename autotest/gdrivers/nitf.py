@@ -2564,6 +2564,7 @@ def nitf_cleanup():
         pass
 
     try:
+        os.stat( 'tmp/nitf40.ntf' )
         gdal.GetDriverByName('NITF').Delete( 'tmp/nitf40.ntf' )
     except:
         pass
@@ -2586,6 +2587,7 @@ def nitf_cleanup():
         pass
 
     try:
+        os.stat( 'tmp/nitf46.ntf' )
         gdal.GetDriverByName('NITF').Delete( 'tmp/nitf46.ntf' )
         os.unlink( 'tmp/nitf46.ntf_0.ovr' )
     except:
