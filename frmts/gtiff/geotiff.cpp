@@ -6894,6 +6894,33 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
 
 /* -------------------------------------------------------------------- */
+/*      If we are writing jpeg compression we need to write some        */
+/*      imagery to force the jpegtables to get created.  This is,       */
+/*      likely only needed with libtiff >= 3.9.3 (#3633)                */
+/* -------------------------------------------------------------------- */
+    if( poDS->nCompression == COMPRESSION_JPEG
+        && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != NULL )
+    {
+        CPLDebug( "GDAL",
+                  "Writing zero block to force creation of JPEG tables." );
+        if( TIFFIsTiled( hTIFF ) )
+        {
+            int cc = TIFFTileSize( hTIFF );
+            unsigned char *pabyZeros = (unsigned char *) CPLCalloc(cc,1);
+            TIFFWriteEncodedTile(hTIFF, 0, pabyZeros, cc);
+            CPLFree( pabyZeros );
+        }
+        else
+        {
+            int cc = TIFFStripSize( hTIFF );
+            unsigned char *pabyZeros = (unsigned char *) CPLCalloc(cc,1);
+            TIFFWriteEncodedStrip(hTIFF, 0, pabyZeros, cc);
+            CPLFree( pabyZeros );
+        }
+        poDS->bDontReloadFirstBlock = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     int		iBand;
@@ -7372,7 +7399,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      If we are writing jpeg compression we need to write some        */
 /*      imagery to force the jpegtables to get created.  This is,       */
-/*      likely only needed with libtiff 3.9.x.                          */
+/*      likely only needed with libtiff >= 3.9.3 (#3633)                */
 /* -------------------------------------------------------------------- */
     int bDontReloadFirstBlock = FALSE;
     if( nCompression == COMPRESSION_JPEG
