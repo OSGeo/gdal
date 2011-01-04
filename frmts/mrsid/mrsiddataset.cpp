@@ -59,6 +59,7 @@ CPL_C_END
 #include "lti_metadataDatabase.h"
 #include "lti_metadataRecord.h"
 #include "lti_utils.h"
+#include "lti_delegates.h"
 #include "lt_utilStatus.h"
 #include "MrSIDImageReader.h"
 
@@ -175,6 +176,28 @@ class LTIDLLDefault : public T
 public:
     LTIDLLDefault() : T() {}
     virtual ~LTIDLLDefault() {}
+};
+
+/* -------------------------------------------------------------------- */
+/*      Interface to MrSID SDK progress reporting.                      */
+/* -------------------------------------------------------------------- */
+
+class MrSIDProgress : public LTIProgressDelegate
+{
+public:
+    MrSIDProgress(GDALProgressFunc f, void *arg) : m_f(f), m_arg(arg) {}
+    virtual ~MrSIDProgress() {}
+    virtual LT_STATUS setProgressStatus(float fraction)
+    {
+        if (!m_f)
+            return LT_STS_BadContext;
+        if( !m_f( fraction, NULL, m_arg ) )
+            return LT_STS_Failure;
+        return LT_STS_Success;
+    }
+private:
+    GDALProgressFunc m_f;
+    void *m_arg;
 };
 
 /************************************************************************/
@@ -3069,8 +3092,14 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
     }
 
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    MrSIDProgress oProgressDelegate(pfnProgress, pProgressData);
+    if( LT_FAILURE( eStat = oProgressDelegate.setProgressStatus(0) ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDProgress.setProgressStatus failed.\n%s",
+                  getLastStatusString( eStat ) );
         return NULL;
+    }
 
     // Create the file.                                               
     MrSIDDummyImageReader oImageReader( poSrcDS );
@@ -3235,6 +3264,9 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // set output filename
     poImageWriter->setOutputFileSpec( pszFilename );
 
+    // set progress delegate
+    poImageWriter->setProgressDelegate(&oProgressDelegate);
+
     // set defaults
     poImageWriter->setStripHeight(poImageWriter->getStripHeight());
 
@@ -3299,8 +3331,14 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
     }
 
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    MrSIDProgress oProgressDelegate(pfnProgress, pProgressData);
+    if( LT_FAILURE( eStat = oProgressDelegate.setProgressStatus(0) ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDProgress.setProgressStatus failed.\n%s",
+                  getLastStatusString( eStat ) );
         return NULL;
+    }
 
     // Create the file.   
     MrSIDDummyImageReader oImageReader( poSrcDS );
@@ -3340,6 +3378,9 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
       
     // set output filename
     oImageWriter.setOutputFileSpec( pszFilename );
+
+    // set progress delegate
+    oImageWriter.setProgressDelegate(&oProgressDelegate);
 
     // Set defaults
     //oImageWriter.setStripHeight(oImageWriter.getStripHeight());
