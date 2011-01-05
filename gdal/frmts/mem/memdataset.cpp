@@ -757,45 +757,64 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *MEMDataset::Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType,
-                                 char ** /* notdef: papszParmList */ )
+                                 char **papszOptions )
 
 {
+
+/* -------------------------------------------------------------------- */
+/*      Do we want a pixel interleaved buffer?  I mostly care about     */
+/*      this to test pixel interleaved io in other contexts, but it     */
+/*      could be useful to create a directly accessable buffer for      */
+/*      some apps.                                                      */
+/* -------------------------------------------------------------------- */
+    int bPixelInterleaved = FALSE;
+    const char *pszOption = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
+    if( pszOption && EQUAL(pszOption,"PIXEL") )
+        bPixelInterleaved = TRUE;
+        
 /* -------------------------------------------------------------------- */
 /*      First allocate band data, verifying that we can get enough      */
 /*      memory.                                                         */
 /* -------------------------------------------------------------------- */
-    GByte  	**papBandData;
+    std::vector<GByte*> apbyBandData;
     int   	iBand;
     int         nWordSize = GDALGetDataTypeSize(eType) / 8;
+    int         bAllocOK = TRUE;
 
-    papBandData = (GByte **) VSICalloc(sizeof(void *),nBands);
-    if (papBandData == NULL)
+    if( bPixelInterleaved )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Unable to create band arrays ... out of memory." );
-        return NULL;
+        apbyBandData.push_back( 
+            (GByte *) VSIMalloc3( nWordSize * nBands, nXSize, nYSize ) );
+
+        if( apbyBandData[0] == NULL )
+            bAllocOK = FALSE;
+        else
+        {
+            for( iBand = 1; iBand < nBands; iBand++ )
+                apbyBandData.push_back( apbyBandData[0] + iBand * nWordSize );
+        }
+    }
+    else
+    {
+        for( iBand = 0; iBand < nBands; iBand++ )
+        {
+            apbyBandData.push_back( 
+                (GByte *) VSIMalloc3( nWordSize, nXSize, nYSize ) );
+            if( apbyBandData[iBand] == NULL )
+                bAllocOK = FALSE;
+        }
     }
 
-    for( iBand = 0; iBand < nBands; iBand++ )
+    if( !bAllocOK )
     {
-        size_t nMulResult = ((size_t)nXSize) * nYSize;
-        if ( nMulResult / nXSize != (size_t)nYSize )
-            papBandData[iBand] = NULL;
-        else
-            papBandData[iBand] = (GByte *) VSICalloc( nWordSize, nMulResult );
-        if( papBandData[iBand] == NULL )
+        for( iBand = 0; iBand < (int) apbyBandData.size(); iBand++ )
         {
-            for( iBand = 0; iBand < nBands; iBand++ )
-            {
-                if( papBandData[iBand] )
-                    VSIFree( papBandData[iBand] );
-            }
-
-            CPLFree( papBandData );
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Unable to create band arrays ... out of memory." );
-            return NULL;
+            if( apbyBandData[iBand] )
+                VSIFree( apbyBandData[iBand] );
         }
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Unable to create band arrays ... out of memory." );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -809,17 +828,26 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
 
+    if( bPixelInterleaved )
+        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        poDS->SetBand( iBand+1, 
-                       new MEMRasterBand( poDS, iBand+1, papBandData[iBand],
-                                          eType, 0, 0, TRUE ) );
-    }
+        MEMRasterBand *poNewBand;
 
-    CPLFree( papBandData );
+        if( bPixelInterleaved )
+            poNewBand = new MEMRasterBand( poDS, iBand+1, apbyBandData[iBand],
+                                           eType, nWordSize * nBands, 0, 
+                                           iBand == 0 );
+        else
+            poNewBand = new MEMRasterBand( poDS, iBand+1, apbyBandData[iBand],
+                                           eType, 0, 0, TRUE );
+
+        poDS->SetBand( iBand+1, poNewBand );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to return a regular handle on the file.                     */
@@ -865,6 +893,14 @@ void GDALRegister_MEM()
                                    "In Memory Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='INTERLEAVE' type='string-select' default='BAND'>"
+"       <Value>BAND</Value>"
+"       <Value>PIXEL</Value>"
+"   </Option>"
+"</CreationOptionList>" );
 
 /* Define GDAL_NO_OPEN_FOR_MEM_DRIVER macro to undefine Open() method for MEM driver. */
 /* Otherwise, bad user input can trigger easily a GDAL crash as random pointers can be passed as a string. */
