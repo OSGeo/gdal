@@ -790,7 +790,7 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
             bAllocOK = FALSE;
         else
         {
-            memset(apbyBandData[iBand], 0, ((size_t)nWordSize) * nBands * nXSize * nYSize);
+            memset(apbyBandData[0], 0, ((size_t)nWordSize) * nBands * nXSize * nYSize);
             for( iBand = 1; iBand < nBands; iBand++ )
                 apbyBandData.push_back( apbyBandData[0] + iBand * nWordSize );
         }
