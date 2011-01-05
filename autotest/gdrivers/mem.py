@@ -50,7 +50,7 @@ def mem_1():
     #######################################################
     # Setup dataset
     drv = gdal.GetDriverByName('MEM')
-    gdaltest.mem_ds = drv.Create( 'mem_1.mem', 50, 3, gdal.GDT_Int32, 1 )
+    gdaltest.mem_ds = drv.Create( 'mem_1.mem', 50, 3 )
     ds = gdaltest.mem_ds
 
     raw_data = array.array('f',list(range(150))).tostring()
