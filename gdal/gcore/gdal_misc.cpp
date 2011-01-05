@@ -1074,18 +1074,32 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
     const char *pszProj = NULL, *pszProjParms = NULL;
     OGRErr eErr = OGRERR_NONE;
 
+    /* The Map Scale Factor has been introduced recently on the 6th line */
+    /* and is a trick that is used to just change that line without changing */
+    /* the rest of the MAP file but providing an imagery that is smaller or larger */
+    /* so we have to correct the pixel/line values read in the .MAP file so they */
+    /* match the actual imagery dimension. Well, this is a bad summary of what */
+    /* is explained at http://tech.groups.yahoo.com/group/OziUsers-L/message/12484 */
+    double dfMSF = 1;
+
     for ( iLine = 5; iLine < nLines; iLine++ )
     {
-        if ( EQUALN(papszLines[iLine], "Map Projection", 14) )
+        if ( EQUALN(papszLines[iLine], "MSF,", 4) )
+        {
+            dfMSF = atof(papszLines[iLine] + 4);
+            if (dfMSF <= 0.01) /* Suspicious values */
+            {
+                CPLDebug("OZI", "Suspicious MSF value : %s", papszLines[iLine]);
+                dfMSF = 1;
+            }
+        }
+        else if ( EQUALN(papszLines[iLine], "Map Projection", 14) )
         {
             pszProj = papszLines[iLine];
-            continue;
         }
-
-        if ( EQUALN(papszLines[iLine], "Projection Setup", 16) )
+        else if ( EQUALN(papszLines[iLine], "Projection Setup", 16) )
         {
             pszProjParms = papszLines[iLine];
-            continue;
         }
     }
 
@@ -1174,8 +1188,8 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                 GDALInitGCPs( 1, asGCPs + nCoordinateCount );
 
                 // Set pixel/line part
-                asGCPs[nCoordinateCount].dfGCPPixel = CPLAtofM(papszTok[2]);
-                asGCPs[nCoordinateCount].dfGCPLine = CPLAtofM(papszTok[3]);
+                asGCPs[nCoordinateCount].dfGCPPixel = CPLAtofM(papszTok[2]) / dfMSF;
+                asGCPs[nCoordinateCount].dfGCPLine = CPLAtofM(papszTok[3]) / dfMSF;
 
                 asGCPs[nCoordinateCount].dfGCPX = dfLon;
                 asGCPs[nCoordinateCount].dfGCPY = dfLat;
@@ -1201,7 +1215,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
 /*      possible.  Otherwise we will need to use them as GCPs.          */
 /* -------------------------------------------------------------------- */
     if( !GDALGCPsToGeoTransform( nCoordinateCount, asGCPs, padfGeoTransform, 
-                                 FALSE ) )
+                                 CSLTestBoolean(CPLGetConfigOption("OZI_APPROX_GEOTRANSFORM", "NO")) ) )
     {
         if ( pnGCPCount && ppasGCPs )
         {
