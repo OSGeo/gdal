@@ -191,6 +191,7 @@ DTED driver:
 ECW driver:
  * Support building against 4.1 SDK (#3676)
  * Add alpha support with 4.1 SDK, and various configuration options
+ * Add pseudo powers of two overviews.
 
 EHdr driver:
  * Improvements to deal with http://www.worldclim.org/futdown.htm datasets
