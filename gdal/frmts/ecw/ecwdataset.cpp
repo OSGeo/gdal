@@ -40,6 +40,8 @@
 
 CPL_CVSID("$Id$");
 
+#undef NOISY_DEBUG
+
 #ifdef FRMT_ecw
 
 static const unsigned char jpc_header[] = {0xff,0x4f};
@@ -143,17 +145,24 @@ class ECWRasterBand : public GDALPamRasterBand
 
     GDALColorInterp         eBandInterp;
 
+    int                          iOverview; // -1 for base. 
+
+    std::vector<ECWRasterBand*>  apoOverviews;
+
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
 
   public:
 
-                   ECWRasterBand( ECWDataset *, int );
+                   ECWRasterBand( ECWDataset *, int, int = -1 );
                    ~ECWRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
-    virtual int    HasArbitraryOverviews() { return TRUE; }
+    virtual int    HasArbitraryOverviews() { return apoOverviews.size() == 0; }
+    virtual int    GetOverviewCount() { return apoOverviews.size(); }
+    virtual GDALRasterBand *GetOverview(int);
+
     virtual GDALColorInterp GetColorInterpretation();
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
@@ -166,15 +175,20 @@ class ECWRasterBand : public GDALPamRasterBand
 /*                           ECWRasterBand()                            */
 /************************************************************************/
 
-ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand )
+ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview )
 
 {
     this->poDS = poDS;
     poGDS = poDS;
 
+    this->iOverview = iOverview;
     this->nBand = nBand;
     eDataType = poDS->eRasterDataType;
-    nBlockXSize = poDS->GetRasterXSize();
+
+    nRasterXSize = poDS->GetRasterXSize() / ( 1 << (iOverview+1));
+    nRasterYSize = poDS->GetRasterYSize() / ( 1 << (iOverview+1));
+
+    nBlockXSize = nRasterXSize;
     nBlockYSize = 1;
 
 /* -------------------------------------------------------------------- */
@@ -226,6 +240,21 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand )
     }
     else
         eBandInterp = GCI_Undefined;
+
+/* -------------------------------------------------------------------- */
+/*      If this is the base level, create a set of overviews.           */
+/* -------------------------------------------------------------------- */
+    if( iOverview == -1 )
+    {
+        int i;
+        for( i = 0; 
+             nRasterXSize / (1 << (i+1)) > 128 
+                 && nRasterYSize / (1 << (i+1)) > 128;
+             i++ )
+        {
+            apoOverviews.push_back( new ECWRasterBand( poDS, nBand, i ) );
+        }
+    }
 }
 
 /************************************************************************/
@@ -236,6 +265,25 @@ ECWRasterBand::~ECWRasterBand()
 
 {
     FlushCache();
+
+    while( apoOverviews.size() > 0 )
+    {
+        delete apoOverviews.back();
+        apoOverviews.pop_back();
+    }
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand *ECWRasterBand::GetOverview( int iOverview )
+
+{
+    if( iOverview >= 0 && iOverview < (int) apoOverviews.size() )
+        return apoOverviews[iOverview];
+    else
+        return NULL;
 }
 
 /************************************************************************/
@@ -274,7 +322,12 @@ CPLErr ECWRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                   GDALDataType eDT, 
                                   char **papszOptions )
 {
-    return poGDS->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
+    int nResFactor = 1 << (iOverview+1);
+    
+    return poGDS->AdviseRead( nXOff * nResFactor, 
+                              nYOff * nResFactor, 
+                              nXSize * nResFactor, 
+                              nYSize * nResFactor, 
                               nBufXSize, nBufYSize, eDT, 
                               1, &nBand, papszOptions );
 }
@@ -291,13 +344,15 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     
 {
     int          iBand, bDirect;
-    int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
     GByte        *pabyWorkBuffer = NULL;
+    int nResFactor = 1 << (iOverview+1);
 
 /* -------------------------------------------------------------------- */
 /*      Try to do it based on existing "advised" access.                */
 /* -------------------------------------------------------------------- */
-    if( poGDS->TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+    if( poGDS->TryWinRasterIO( eRWFlag, 
+                               nXOff * nResFactor, nYOff * nResFactor, 
+                               nXSize * nResFactor, nYSize * nResFactor, 
                                (GByte *) pData, nBufXSize, nBufYSize, 
                                eBufType, 1, &nBand, 
                                nPixelSpace, nLineSpace, 0 ) )
@@ -310,7 +365,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     if( nYSize == 1 )
     {
-#ifdef notdef
+#ifdef NOISY_DEBUG
         CPLDebug( "ECWRasterBand", 
                   "RasterIO(%d,%d,%d,%d -> %dx%d) - redirected.", 
                   nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
@@ -320,16 +375,25 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          eBufType, nPixelSpace, nLineSpace );
     }
 
+/* -------------------------------------------------------------------- */
+/*      The ECW SDK doesn't supersample, so adjust for this case.       */
+/* -------------------------------------------------------------------- */
     CPLDebug( "ECWRasterBand", 
               "RasterIO(nXOff=%d,nYOff=%d,nXSize=%d,nYSize=%d -> %dx%d)", 
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 
+    nXOff *= nResFactor;
+    nYOff *= nResFactor;
+    nXSize *= nResFactor;
+    nYSize *= nResFactor;
+
+    int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
 
     if ( nXSize < nBufXSize )
-            nNewXSize = nXSize;
+        nNewXSize = nXSize;
 
     if ( nYSize < nBufYSize )
-            nNewYSize = nYSize;
+        nNewYSize = nYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Default line and pixel spacing if needed.                       */
@@ -459,19 +523,36 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 
 {
     CPLErr eErr = CE_None;
+    int nXOff = 0, nYOff = nBlockYOff, nXSize = nBlockXSize, nYSize = 1;
+    int nResFactor = 1 << (iOverview+1);
+    int nDSXOff, nDSYOff, nDSXSize, nDSYSize;
 
-    if( poGDS->TryWinRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
+    nDSXOff = nXOff * nResFactor;
+    nDSYOff = nYOff * nResFactor;
+    nDSXSize = nXSize * nResFactor;
+    nDSYSize = nYSize * nResFactor;
+
+#ifdef NOISY_DEBUG
+    CPLDebug( "ECW", 
+              "ECWRasterBand::IReadBlock(0,%d) from overview %d, size %dx%d",
+              nBlockYOff,
+              iOverview, nRasterXSize, nRasterYSize );
+#endif
+
+    if( poGDS->TryWinRasterIO( GF_Read, nDSXOff, nDSYOff, nDSXSize, nDSYSize,
                                (GByte *) pImage, nBlockXSize, 1, 
                                eDataType, 1, &nBand, 0, 0, 0 ) )
         return CE_None;
 
-    eErr = AdviseRead( 0, nBlockYOff, nRasterXSize, nRasterYSize - nBlockYOff,
-                       nRasterXSize, nRasterYSize - nBlockYOff, 
+    eErr = AdviseRead( 0, nYOff, 
+                       nRasterXSize, nRasterYSize - nYOff,
+                       nRasterXSize, nRasterYSize - nBlockYOff,
                        eDataType, NULL );
     if( eErr != CE_None )
         return eErr;
 
-    if( poGDS->TryWinRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
+    if( poGDS->TryWinRasterIO( GF_Read, 
+                               nDSXOff, nDSYOff, nDSXSize, nDSYSize,
                                (GByte *) pImage, nBlockXSize, 1, 
                                eDataType, 1, &nBand, 0, 0, 0 ) )
         return CE_None;
@@ -479,6 +560,7 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
     CPLError( CE_Failure, CPLE_AppDefined, 
               "TryWinRasterIO() failed for blocked scanline %d of band %d.",
               nBlockYOff, nBand );
+
     return CE_Failure;
 }
 
@@ -684,6 +766,11 @@ int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag,
 /*      Do some simple tests to see if the current window can           */
 /*      satisfy our requirement.                                        */
 /* -------------------------------------------------------------------- */
+#ifdef NOISY_DEBUG
+    CPLDebug( "ECW", "TryWinRasterIO(%d,%d,%d,%d,%d,%d)", 
+              nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+#endif
+
     if( !bWinActive )
         return FALSE;
     
@@ -1668,8 +1755,17 @@ void GDALRegister_ECW()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ECW" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ERDAS Compressed Wavelets" );
+
+        CPLString osLongName = "ERDAS Compressed Wavelets (SDK ";
+
+#ifdef NCS_ECWSDK_VERSION_STRING
+        osLongName += NCS_ECWSDK_VERSION_STRING;
+#else
+        osLongName += "3.x";
+#endif        
+        osLongName += ")";
+
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_ecw.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
@@ -1743,8 +1839,17 @@ void GDALRegister_JP2ECW()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JP2ECW" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ERDAS JPEG2000" );
+
+        CPLString osLongName = "ERDAS JPEG2000 (SDK ";
+
+#ifdef NCS_ECWSDK_VERSION_STRING
+        osLongName += NCS_ECWSDK_VERSION_STRING;
+#else
+        osLongName += "3.x";
+#endif        
+        osLongName += ")";
+
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_jp2ecw.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
