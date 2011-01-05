@@ -32,7 +32,7 @@ import os
 import sys
 import string
 import array
-import gdal
+from osgeo import gdal
 
 sys.path.append( '../pymod' )
 
@@ -58,6 +58,14 @@ def ecw_1():
     else:
         gdaltest.ecw_write = 0
 
+    longname = gdaltest.ecw_drv.GetMetadataItem('DMD_LONGNAME')
+
+    sdk_off = longname.find('SDK ')
+    if sdk_off != -1:
+        gdaltest.ecw_drv.major_version = int(longname[sdk_off+4])
+    else:
+	gdaltest.ecw_drv.major_version = 3
+
     return 'success'
 
 ###############################################################################
@@ -69,8 +77,12 @@ def ecw_2():
         return 'skip'
 
     ds = gdal.Open( 'data/jrc.ecw' )
-    
-    (exp_mean, exp_stddev) = (141.172, 67.3636)
+
+    if gdaltest.ecw_drv.major_version == 3:    
+        (exp_mean, exp_stddev) = (141.172, 67.3636)
+    else:
+        (exp_mean, exp_stddev) = (140.332, 67.611)
+
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean-exp_mean) > 0.5 or abs(stddev-exp_stddev) > 0.5:
@@ -112,8 +124,12 @@ def ecw_4():
         return 'skip'
 
     ds = gdal.Open( 'tmp/jrc_out.ecw' )
-    
-    (exp_mean, exp_stddev) = (140.290, 66.6303)
+
+    if gdaltest.ecw_drv.major_version == 3:    
+        (exp_mean, exp_stddev) = (140.290, 66.6303)
+    else:
+        (exp_mean, exp_stddev) = (138.971, 67.716)
+
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean-exp_mean) > 1.5 or abs(stddev-exp_stddev) > 0.5:
@@ -159,8 +175,11 @@ def ecw_6():
         return 'skip'
 
     ds = gdal.Open( 'tmp/ecw_5.jp2' )
-    
-    (exp_mean, exp_stddev) = (144.422, 44.9075)
+
+    if gdaltest.ecw_drv.major_version == 3:    
+        (exp_mean, exp_stddev) = (144.422, 44.9075)
+    else:
+        (exp_mean, exp_stddev) = (143.375, 44.853)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     # The difference in the stddev is outragously large between win32 and
@@ -169,7 +188,6 @@ def ecw_6():
         gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
         return 'fail'
 
-    (exp_mean, exp_stddev) = (144.422, 44.9075)
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
 
     # The difference in the stddev is outragously large between win32 and
@@ -487,6 +505,10 @@ def ecw_17():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
 
+    if gdaltest.ecw_drv.major_version > 3:    
+	gdaltest.post_reason( '4.x SDK gets unreliable results for jp2')
+	return 'skip'
+
     ds = gdal.Open( 'data/int16.jp2' )
     ds_ref = gdal.Open( 'data/int16.tif' )
     
@@ -560,6 +582,63 @@ def ecw_19():
     return 'success'
     
 ###############################################################################
+# Confirm that we have an overview for this image and that the statistics 
+# are as expected.
+
+def ecw_20():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+
+    band = ds.GetRasterBand(1)
+    if band.GetOverviewCount() != 1:
+        gdaltest.post_reason( 'did not get expected number of overview')
+        return 'fail'
+
+    if gdaltest.ecw_drv.major_version == 3:    
+        (exp_mean, exp_stddev) = (140.889, 62.742) # not yet set for 3.x
+    else:
+        (exp_mean, exp_stddev) = (140.889, 62.742)
+
+    (mean, stddev) = band.GetOverview(0).ComputeBandStats()
+
+    if abs(mean-exp_mean) > 0.5 or abs(stddev-exp_stddev) > 0.5:
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# This test is intended to go through an optimized data path (likely
+# one big interleaved read) in the CreateCopy() instead of the line by 
+# line access typical of ComputeBandStats.  Make sure we get the same as
+# line by line.
+
+def ecw_21():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+    mem_ds = gdal.GetDriverByName('MEM').CreateCopy('xxxyyy',ds,options=['INTERLEAVE=PIXEL'])
+    ds = None
+
+    if gdaltest.ecw_drv.major_version == 3:    
+        (exp_mean, exp_stddev) = (141.172, 67.3636)
+    else:
+        (exp_mean, exp_stddev) = (140.332, 67.611)
+
+    (mean, stddev) = mem_ds.GetRasterBand(1).ComputeBandStats()
+
+    if abs(mean-exp_mean) > 0.5 or abs(stddev-exp_stddev) > 0.5:
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -613,6 +692,10 @@ def ecw_online_3():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
 
+    if gdaltest.ecw_drv.major_version > 3:    
+	gdaltest.post_reason( '4.x SDK gets unreliable results for jp2')
+	return 'skip'
+
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
         return 'skip'
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.bmp', 'Bretagne1.bmp'):
@@ -660,8 +743,8 @@ def ecw_online_4():
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, width = 256, height = 256)
-    print(ds.GetRasterBand(1).Checksum())
-    print(ds_ref.GetRasterBand(1).Checksum())
+#    print(ds.GetRasterBand(1).Checksum())
+#    print(ds_ref.GetRasterBand(1).Checksum())
 
     ds = None
     ds_ref = None
@@ -669,6 +752,30 @@ def ecw_online_4():
     # Difference between the image before and after compression
     if maxdiff > 1:
         gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ecw_online_5():
+
+    if gdaltest.jp2ecw_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ecw/red_flower.ecw', 'red_flower.ecw'):
+        return 'skip'
+
+    ds = gdal.Open('tmp/cache/red_flower.ecw')
+
+    if gdaltest.ecw_drv.major_version == 3:    
+        (exp_mean, exp_stddev) = (114.337,52.1751) # not yet set for 3.x
+    else:
+        (exp_mean, exp_stddev) = (114.337,52.1751)
+
+    (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
+
+    if abs(mean-exp_mean) > 0.5 or abs(stddev-exp_stddev) > 0.5:
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
         return 'fail'
 
     return 'success'
@@ -702,10 +809,13 @@ gdaltest_list = [
     ecw_17,
     ecw_18,
     ecw_19,
+    ecw_20,
+    ecw_21,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,
     ecw_online_4,
+    ecw_online_5,
     ecw_cleanup ]
 
 if __name__ == '__main__':
