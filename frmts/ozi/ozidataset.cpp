@@ -635,14 +635,18 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         short nTileY = ReadShort(fp, bOzi3, nKeyInit);
         if (i == 0 && (nW != poDS->nRasterXSize || nH != poDS->nRasterYSize))
         {
-            CPLDebug("OZI", "zoom[%d] nW=%d, nH=%d, nTileX=%d, nTileY=%d",
-                     i, nW, nH, nTileX, nTileY);
+            CPLDebug("OZI", "zoom[%d] inconsistant dimensions for zoom level 0 : nW=%d, nH=%d, nTileX=%d, nTileY=%d, nRasterXSize=%d, nRasterYSize=%d",
+                     i, nW, nH, nTileX, nTileY, poDS->nRasterXSize, poDS->nRasterYSize);
             delete poDS;
             return NULL;
         }
-        if ((nW + 63) / 64 != nTileX || (nH + 63) / 64 != nTileY)
+        /* Note (#3895): some files such as world.ozf2 provided with OziExplorer */
+        /* expose nTileY=33, but have nH=2048, so only require 32 tiles in vertical dimension. */
+        /* So there's apparently one extra and useless tile that will be ignored */
+        /* without causing apparent issues */
+        if ((nW + 63) / 64 != nTileX || (nH + 63) / 64 > nTileY)
         {
-            CPLDebug("OZI", "zoom[%d] nW=%d, nH=%d, nTileX=%d, nTileY=%d",
+            CPLDebug("OZI", "zoom[%d] unexpected number of tiles : nW=%d, nH=%d, nTileX=%d, nTileY=%d",
                      i, nW, nH, nTileX, nTileY);
             delete poDS;
             return NULL;
