@@ -622,6 +622,30 @@ def tiff_read_geomatrix():
 
     return 'success'
 
+###############################################################################
+# Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
+
+def tiff_read_online_1():
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/3259/imgpb17.tif', 'imgpb17.tif'):
+        return 'skip'
+        
+    ds = gdal.Open('tmp/cache/imgpb17.tif')
+    gdal.ErrorReset()
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    
+    if gdal.GetLastErrorMsg() != '':
+        return 'fail'
+    
+    if cs != 62628:
+        print(cs)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################################
 
@@ -655,6 +679,7 @@ gdaltest_list.append( (tiff_read_stats_from_pam) )
 gdaltest_list.append( (tiff_read_from_tab) )
 gdaltest_list.append( (tiff_read_pixelispoint) )
 gdaltest_list.append( (tiff_read_geomatrix) )
+gdaltest_list.append( (tiff_read_online_1) )
 
 if __name__ == '__main__':
 
