@@ -147,6 +147,67 @@ def mem_3():
 
     return 'success'
 
+###############################################################################
+# Test creating a band interleaved multi-band MEM dataset
+
+def mem_4():
+
+    drv = gdal.GetDriverByName('MEM')
+
+    ds = drv.Create( '', 100, 100, 3 )
+    expected_cs = [ 0, 0, 0 ]
+    for i in range(3):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('did not get expected checksum for band %d' % (i+1))
+            print(cs)
+            return 'fail'
+
+    ds.GetRasterBand(1).Fill(255)
+    expected_cs = [ 57182, 0, 0 ]
+    for i in range(3):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('did not get expected checksum for band %d after fill' % (i+1))
+            print(cs)
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test creating a pixel interleaved multi-band MEM dataset
+
+def mem_5():
+
+    drv = gdal.GetDriverByName('MEM')
+
+    ds = drv.Create( '', 100, 100, 3, options = ['INTERLEAVE=PIXEL'] )
+    expected_cs = [ 0, 0, 0 ]
+    for i in range(3):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('did not get expected checksum for band %d' % (i+1))
+            print(cs)
+            return 'fail'
+
+    ds.GetRasterBand(1).Fill(255)
+    expected_cs = [ 57182, 0, 0 ]
+    for i in range(3):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('did not get expected checksum for band %d after fill' % (i+1))
+            print(cs)
+            return 'fail'
+
+    if ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') != 'PIXEL':
+        gdaltest.post_reason('did not get expected INTERLEAVE value')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
 
 ###############################################################################
 # cleanup
@@ -160,6 +221,8 @@ gdaltest_list = [
     mem_1,
     mem_2,
     mem_3,
+    mem_4,
+    mem_5,
     mem_cleanup ]
   
 
