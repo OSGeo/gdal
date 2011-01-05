@@ -72,6 +72,10 @@ class OZIDataset : public GDALPamDataset
     virtual const char* GetProjectionRef();
     virtual CPLErr      GetGeoTransform( double * );
 
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 };
@@ -586,9 +590,17 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     nSeparator = ReadInt(fp);
     if (!bOzi3 && nSeparator != 0x77777777)
     {
-        CPLDebug("OZI", "didn't get end of zoom levels marker");
-        delete poDS;
-        return NULL;
+        /* Some files have 8 extra bytes before the marker. I'm not sure */
+        /* what they are used for. So just skeep them and hope that */
+        /* we'll find the marker */
+        nSeparator = ReadInt(fp);
+        nSeparator = ReadInt(fp);
+        if (nSeparator != 0x77777777)
+        {
+            CPLDebug("OZI", "didn't get end of zoom levels marker");
+            delete poDS;
+            return NULL;
+        }
     }
 
     VSIFSeekL(fp, 0, SEEK_END);
@@ -703,7 +715,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 
 const char* OZIDataset::GetProjectionRef()
 {
-    return (pszWKT) ? pszWKT : "";
+    return (pszWKT && nGCPCount == 0) ? pszWKT : "";
 }
 
 /************************************************************************/
@@ -715,7 +727,34 @@ CPLErr OZIDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( (bReadMapFileSuccess) ? CE_None : CE_Failure );
+    return( (bReadMapFileSuccess && nGCPCount == 0) ? CE_None : CE_Failure );
+}
+
+/************************************************************************/
+/*                           GetGCPCount()                              */
+/************************************************************************/
+
+int OZIDataset::GetGCPCount()
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char * OZIDataset::GetGCPProjection()
+{
+    return (pszWKT && nGCPCount != 0) ? pszWKT : "";
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP * OZIDataset::GetGCPs()
+{
+    return pasGCPs;
 }
 
 /************************************************************************/
