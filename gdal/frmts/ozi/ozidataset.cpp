@@ -90,6 +90,7 @@ class OZIRasterBand : public GDALPamRasterBand
 {
     friend class OZIDataset;
 
+    int nXBlocks;
     int nZoomLevel;
     GDALColorTable* poColorTable;
     GByte* pabyTranslationTable;
@@ -98,6 +99,7 @@ class OZIRasterBand : public GDALPamRasterBand
 
                 OZIRasterBand( OZIDataset *, int nZoomLevel,
                                int nRasterXSize, int nRasterYSize,
+                               int nXBlocks,
                                GDALColorTable* poColorTable);
     virtual    ~OZIRasterBand();
 
@@ -173,6 +175,7 @@ static int ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
 
 OZIRasterBand::OZIRasterBand( OZIDataset *poDS, int nZoomLevel,
                               int nRasterXSize, int nRasterYSize,
+                              int nXBlocks,
                               GDALColorTable* poColorTable )
 
 {
@@ -188,6 +191,7 @@ OZIRasterBand::OZIRasterBand( OZIDataset *poDS, int nZoomLevel,
     this->nRasterXSize = nRasterXSize;
     this->nRasterYSize = nRasterYSize;
     this->poColorTable = poColorTable;
+    this->nXBlocks = nXBlocks;
 
     pabyTranslationTable = NULL;
 }
@@ -231,7 +235,6 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     OZIDataset *poGDS = (OZIDataset *) poDS;
 
-    int nXBlocks = (nRasterXSize + 63) / 64;
     int nBlock = nBlockYOff * nXBlocks + nBlockXOff;
 
     VSIFSeekL(poGDS->fp, poGDS->panZoomLevelOffsets[nZoomLevel] +
@@ -656,7 +659,10 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         /* expose nTileY=33, but have nH=2048, so only require 32 tiles in vertical dimension. */
         /* So there's apparently one extra and useless tile that will be ignored */
         /* without causing apparent issues */
-        if ((nW + 63) / 64 != nTileX || (nH + 63) / 64 > nTileY)
+        /* Some other files have more tile in horizontal direction than needed, so let's */
+        /* accept that. But in that case we really need to keep the nTileX value for IReadBlock() */
+        /* to work properly */
+        if ((nW + 63) / 64 > nTileX || (nH + 63) / 64 > nTileY)
         {
             CPLDebug("OZI", "zoom[%d] unexpected number of tiles : nW=%d, nH=%d, nTileX=%d, nTileY=%d",
                      i, nW, nH, nTileX, nTileY);
@@ -680,7 +686,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
             poColorTable->SetColorEntry(j, &sEntry);
         }
 
-        poDS->papoBands[i] = new OZIRasterBand(poDS, i, nW, nH, poColorTable);
+        poDS->papoBands[i] = new OZIRasterBand(poDS, i, nW, nH, nTileX, poColorTable);
 
         if (i > 0)
         {
