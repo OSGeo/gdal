@@ -3917,7 +3917,87 @@ def tiff_write_100():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test CHUNKY_STRIP_READ_SUPPORT (#3894)
+# We use random data so the compressed files are big enough to need partial
+# reloading. tiff_write_78 doesn't produce enough big data to trigger this...
+
+def tiff_write_101():
+
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    if sys.platform == 'linux2':
+        # Much faster to use /dev/urandom than python random generator !
+        f = open('/dev/urandom', 'rb')
+        rand_array = f.read(10 * 1024 * 1024)
+        f.close()
+    else:
+        import random
+        import array
+        rand_array = array.array('B')
+        for i in range(10 * 1024 * 1024):
+            rand_array.append(random.randint(0,255))
+
+    f = open('tmp/tiff_write_101.bin', 'wb')
+    f.write(rand_array)
+    f.close()
+
+    f = open('tmp/tiff_write_101.hdr', 'wb')
+    f.write("""ENVI
+samples = 2500
+lines   = 4000
+bands   = 1
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bsq
+byte order = 0
+map info = {UTM, 1, 1, 440720.000000, 3751320.000000, 60.000000, 60.000000, 11, North}
+band names = {
+Band 1}""")
+    f.close()
+
+    src_ds = gdal.Open('tmp/tiff_write_101.bin')
+    expected_cs = src_ds.GetRasterBand(1).Checksum()
+
+    for compression_method in ['DEFLATE', 'LZW', 'JPEG', 'PACKBITS', 'LZMA' ]:
+        if md['DMD_CREATIONOPTIONLIST'].find(compression_method) == -1:
+            continue
+
+        ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_101.tif', src_ds, \
+            options = ['COMPRESS=' + compression_method, 'BLOCKXSIZE=2500', 'BLOCKYSIZE=4000'])
+        ds = None
+
+        ds = gdal.Open('tmp/tiff_write_101.tif')
+        gdal.ErrorReset()
+        cs = ds.GetRasterBand(1).Checksum()
+        error_msg = gdal.GetLastErrorMsg()
+        ds = None
+
+        gdaltest.tiff_drv.Delete( 'tmp/tiff_write_101.tif' )
+
+        if error_msg != '':
+            src_ds = None
+            gdaltest.tiff_drv.Delete( 'tmp/tiff_write_101.bin' )
+            return 'fail'
+
+        if compression_method != 'JPEG' and cs != expected_cs:
+            gdaltest.post_reason('for compression method %s, got %d instead of %d' % (compression_method, cs, expected_cs))
+            src_ds = None
+            gdaltest.tiff_drv.Delete( 'tmp/tiff_write_101.bin' )
+            return 'fail'
+
+    src_ds = None
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_101.bin' )
+
+    return 'success'
+
 ###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -4029,6 +4109,7 @@ gdaltest_list = [
     tiff_write_98,
     tiff_write_99,
     tiff_write_100,
+    tiff_write_101,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
