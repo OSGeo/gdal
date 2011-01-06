@@ -1,4 +1,4 @@
-/* $Id: tif_zip.c,v 1.30 2010-12-11 23:52:27 faxguy Exp $ */
+/* $Id: tif_zip.c,v 1.31 2011-01-06 16:00:23 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -153,6 +153,9 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	assert(sp != NULL);
 	assert(sp->state == ZSTATE_INIT_DECODE);
 
+        sp->stream.next_in = tif->tif_rawcp;
+	sp->stream.avail_in = (uInt) tif->tif_rawcc;
+        
 	sp->stream.next_out = op;
 	assert(sizeof(sp->stream.avail_out)==4);  /* if this assert gets raised,
 	    we need to simplify this code to reflect a ZLib that is likely updated
@@ -188,6 +191,10 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 		    (unsigned long) tif->tif_row, (TIFF_UINT64_T) sp->stream.avail_out);
 		return (0);
 	}
+
+        tif->tif_rawcp = sp->stream.next_in;
+        tif->tif_rawcc = sp->stream.avail_in;
+
 	return (1);
 }
 
