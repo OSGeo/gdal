@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.32 2010-12-15 00:43:25 faxguy Exp $ */
+/* $Id: tif_read.c,v 1.33 2011-01-06 05:51:13 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -205,7 +205,7 @@ TIFFSeek(TIFF* tif, uint32 row, uint16 sample )
         
         if( !whole_strip )
         {
-                read_ahead = tif->tif_scanlinesize * 2 + 5000;
+                read_ahead = tif->tif_scanlinesize * 16 + 5000;
         }
 
         /*
