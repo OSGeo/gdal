@@ -47,7 +47,8 @@ skip_counter = 0
 failure_summary = []
 
 reason = None
-count_skipped_tests = 0
+count_skipped_tests_download = 0
+count_skipped_tests_slow = 0
 
 jp2kak_drv = None
 jpeg2000_drv = None
@@ -140,7 +141,7 @@ def post_reason( msg ):
 ###############################################################################
 
 def summarize():
-    global count_skipped_tests
+    global count_skipped_tests_download, count_skipped_tests_slow
     global success_counter, failure_counter, blow_counter, skip_counter
     global cur_name
     
@@ -151,9 +152,17 @@ def summarize():
           % (failure_counter+blow_counter, blow_counter))
     print('Skipped:   %d' % skip_counter)
     print('Expected fail:%d' % expected_failure_counter)
-    if count_skipped_tests != 0:
-        print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests)
+    if count_skipped_tests_download != 0:
+        print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests_download)
+    if count_skipped_tests_slow != 0:
+        print('As GDAL_RUN_SLOW_TESTS environment variable is not defined, %d "slow" tests have been skipped' % count_skipped_tests_slow)
     print('')
+
+    print('before cleanup')
+    gdal.Cleanup()
+    import ogr
+    ogr.Cleanup()
+    print('after cleanup')
 
     return failure_counter + blow_counter
 
@@ -906,7 +915,7 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
 def download_file(url, filename, download_size = -1):
-    global count_skipped_tests
+    global count_skipped_tests_download
     try:
         os.stat( 'tmp/cache/' + filename )
         return True
@@ -941,9 +950,9 @@ def download_file(url, filename, download_size = -1):
                 print('Cannot write %s' % (filename))
                 return False
         else:
-            if count_skipped_tests == 0:
+            if count_skipped_tests_download == 0:
                 print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, some tests relying on data to downloaded from the Web will be skipped')
-            count_skipped_tests = count_skipped_tests + 1
+            count_skipped_tests_download = count_skipped_tests_download + 1
             return False
 
 
@@ -1186,3 +1195,19 @@ def isnan(val):
             return False
     else:
         return True
+
+
+###############################################################################
+# Has the user requested to run the slow tests
+
+def run_slow_tests():
+    global count_skipped_tests_slow
+    val = gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS', None)
+    if val != 'yes' and val != 'YES':
+
+        if count_skipped_tests_slow == 0:
+            print('As GDAL_RUN_SLOW_TESTS environment variable is not defined, some "slow" tests will be skipped')
+        count_skipped_tests_slow = count_skipped_tests_slow + 1
+
+        return False
+    return True

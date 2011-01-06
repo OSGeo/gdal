@@ -1704,8 +1704,7 @@ def tiff_ovr_46():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
-    val = gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS', None)
-    if val != 'yes' and val != 'YES':
+    if not gdaltest.run_slow_tests():
         return 'skip'
 
     # Test NEAREST
