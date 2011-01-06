@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.98 2011-01-04 02:52:00 faxguy Exp $ */
+/* $Id: tif_jpeg.c,v 1.99 2011-01-06 05:51:13 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -530,26 +530,28 @@ std_fill_input_buffer(j_decompress_ptr cinfo)
 	static const JOCTET dummy_EOI[2] = { 0xFF, JPEG_EOI };
 
 #ifdef IPPJ_HUFF
-   /*
-    * The Intel IPP performance library does not necessarily read the whole
-    * input buffer in one pass, so it is possible to get here with data
-    * yet to read. 
-    * 
-    * We just return without doing anything, until the entire buffer has been
-    * read. Because the whole input tile is read into memory
-    * we never need to "fill" the buffer, as init_source does that.
-    * http://trac.osgeo.org/gdal/wiki/JpegIPP
-    */
+        /*
+         * The Intel IPP performance library does not necessarily read the whole
+         * input buffer in one pass, so it is possible to get here with data
+         * yet to read. 
+         * 
+         * We just return without doing anything, until the entire buffer has
+         * been read.  
+         * http://trac.osgeo.org/gdal/wiki/JpegIPP
+         */
         if( sp->src.bytes_in_buffer > 0 ) {
             return (TRUE);
         }
 #endif
 
 	/*
-	 * Should never get here since entire strip/tile is
-	 * read into memory before the decompressor is called,
-	 * and thus was supplied by init_source.
+         * Normally the whole strip/tile is read and so we don't need to do
+         * a fill.  In the case of CHUNKY_STRIP_READ_SUPPORT we might not have
+         * all the data, but the rawdata is refreshed between scanlines and
+         * we push this into the io machinery in JPEGDecode(). 	 
+         * http://trac.osgeo.org/gdal/ticket/3894
 	 */
+        
 	WARNMS(cinfo, JWRN_JPEG_EOF);
 	/* insert a fake EOI marker */
 	sp->src.next_input_byte = dummy_EOI;
@@ -577,8 +579,6 @@ static void
 std_term_source(j_decompress_ptr cinfo)
 {
 	/* No work necessary here */
-	/* Or must we update tif->tif_rawcp, tif->tif_rawcc ??? */
-	/* (if so, need empty tables_term_source!) */
 	(void) cinfo;
 }
 
@@ -1016,8 +1016,13 @@ JPEGPreDecode(TIFF* tif, uint16 s)
 	/*
 	 * Read the header for this strip/tile.
 	 */
+        
 	if (TIFFjpeg_read_header(sp, TRUE) != JPEG_HEADER_OK)
 		return (0);
+
+        tif->tif_rawcp = (uint8*) sp->src.next_input_byte;
+        tif->tif_rawcc = sp->src.bytes_in_buffer;
+
 	/*
 	 * Check image parameters and set decompression parameters.
 	 */
@@ -1201,6 +1206,13 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 	tmsize_t nrows;
 	(void) s;
 
+        /*
+        ** Update available information, buffer may have been refilled
+        ** between decode requests
+        */
+	sp->src.next_input_byte = (const JOCTET*) tif->tif_rawcp;
+	sp->src.bytes_in_buffer = (size_t) tif->tif_rawcc;
+        
 	nrows = cc / sp->bytesperline;
 	if (cc % sp->bytesperline)
 		TIFFWarningExt(tif->tif_clientdata, tif->tif_name, "fractional scanline not read");
@@ -1289,6 +1301,10 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 			_TIFFfree( line_work_buf );
 	}
 
+        /* Update information on consumed data */
+        tif->tif_rawcp = (uint8*) sp->src.next_input_byte;
+        tif->tif_rawcc = sp->src.bytes_in_buffer;
+                
 	/* Close down the decompressor if we've finished the strip or tile. */
 	return sp->cinfo.d.output_scanline < sp->cinfo.d.output_height
 	    || TIFFjpeg_finish_decompress(sp);
