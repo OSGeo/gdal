@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.73 2010-04-02 19:26:22 fwarmerdam Exp $ */
+/* $Id: tif_dirwrite.c,v 1.74 2010-12-31 17:51:08 olivier Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -585,6 +585,11 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 			if (TIFFFieldSet(tif,FIELD_YCBCRPOSITIONING))
 			{
 				if (!TIFFWriteDirectoryTagShort(tif,&ndir,dir,TIFFTAG_YCBCRPOSITIONING,tif->tif_dir.td_ycbcrpositioning))
+					goto bad;
+			}
+			if (TIFFFieldSet(tif,FIELD_REFBLACKWHITE))
+			{
+				if (!TIFFWriteDirectoryTagRationalArray(tif,&ndir,dir,TIFFTAG_REFERENCEBLACKWHITE,6,tif->tif_dir.td_refblackwhite))
 					goto bad;
 			}
 			if (TIFFFieldSet(tif,FIELD_TRANSFERFUNCTION))
