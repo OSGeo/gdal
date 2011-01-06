@@ -1580,7 +1580,19 @@ else
 
   if test $HAVE_MRSID = yes ; then
 
-    MRSID_LIBS="-lltidsdk -lpthread"
+    MRSID_LIBS="-lpthread"
+
+    if test -r "$with_mrsid/lib/libltiesdk.a" ; then # v8+ esdk contains dsdk
+      _LIBPART=lib
+      MRSID_LIBS="-lltiesdk $MRSID_LIBS"
+    elif test -r "$with_mrsid/lib/libltidsdk.a" \
+           -o -L "$with_mrsid/lib/libltidsdk.so" ; then
+      _LIBPART=lib
+      MRSID_LIBS="-lltidsdk $MRSID_LIBS"
+    else
+      _LIBPART=lib/Release
+      MRSID_LIBS="-lltidsdk $MRSID_LIBS"
+    fi
 
     AC_MSG_CHECKING([for MG3ImageWriter.h in $with_mrsid/include/mrsid_writers])
     if test -r "$with_mrsid/include/mrsid_writers/MG3ImageWriter.h" ; then
@@ -1604,14 +1616,18 @@ else
     MRSID_KAKADU_LIB=no
     if test "$HAVE_KAKADU" = "no" ; then
       if test x"$with_jp2mrsid" = x"" -o x"$with_jp2mrsid" = x"yes" ; then
-        if test -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then 
+        if test -r "$with_mrsid/3rd-party/$_LIBPART/libltikdu.a" ; then 
           with_jp2mrsid=yes
           MRSID_KAKADU_LIB=-lltikdu
-        elif test -r $with_mrsid/3rd-party/lib/Release/liblt_kakadu.a ; then 
+        elif test -r "$with_mrsid/3rd-party/$_LIBPART/liblt_kakadu.a" ; then 
           with_jp2mrsid=yes
           MRSID_KAKADU_LIB=-llt_kakadu
-        else
+        elif test -L "$with_mrsid/lib/libltidsdk.so"; then # v8+ .so has kdu
+          with_jp2mrsid=yes
+        elif test x"$with_jp2mrsid" = x"yes" ; then
           AC_MSG_ERROR([MrSID JPEG2000 support requested, but libltikdu.a not found.])
+        else
+          with_jp2mrsid=no
         fi
       fi
     fi
@@ -1624,11 +1640,8 @@ else
       AC_MSG_RESULT([disabled])
     fi
 
-    if test -r "$with_mrsid/lib/libltidsdk.a" ; then
-      MRSID_LIBS="-L$with_mrsid/lib -L$with_mrsid/3rd-party/lib $MRSID_LIBS"
-    else
-      MRSID_LIBS="-L$with_mrsid/lib/Release -L$with_mrsid/3rd-party/lib/Release $MRSID_LIBS"
-    fi
+    MRSID_LIBS="-L$with_mrsid/$_LIBPART $MRSID_LIBS"
+    MRSID_LIBS="-L$with_mrsid/3rd-party/$_LIBPART $MRSID_LIBS"
 
   else
     HAVE_MRSID=no
