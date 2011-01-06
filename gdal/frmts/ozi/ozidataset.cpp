@@ -533,42 +533,67 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         int nMagic = ReadInt(fp, bOzi3, nKeyInit);
         CPLDebug("OZI", "OZI version code : 0x%08X", nMagic);
 
-        nKeyInit = (nKeyInit + 0x8A) & 0xFF;
-
         poDS->bOzi3 = bOzi3;
-        poDS->nKeyInit = nKeyInit;
     }
     else
     {
         VSIFSeekL(fp, 14, SEEK_SET);
     }
 
-    GByte abyHeader2[40];
-    GByte* pabyHeader2 = abyHeader2;
+    GByte abyHeader2[40], abyHeader2_Backup[40];
     VSIFReadL(abyHeader2, 40, 1, fp);
+    memcpy(abyHeader2_Backup, abyHeader2, 40);
 
-    if (bOzi3)
-        OZIDecrypt(abyHeader2, 40, nKeyInit);
-    
-    int nHeaderSize = ReadInt(&pabyHeader2); /* should be 40 */
-    poDS->nRasterXSize = ReadInt(&pabyHeader2);
-    poDS->nRasterYSize = ReadInt(&pabyHeader2);
-    int nDepth = ReadShort(&pabyHeader2); /* should be 1 */
-    int nBPP = ReadShort(&pabyHeader2); /* should be 8 */
-    ReadInt(&pabyHeader2); /* reserved */
-    ReadInt(&pabyHeader2); /* pixel number (height * width) : unused */
-    ReadInt(&pabyHeader2); /* reserved */
-    ReadInt(&pabyHeader2); /* reserved */
-    ReadInt(&pabyHeader2); /* ?? 0x100 */
-    ReadInt(&pabyHeader2); /* ?? 0x100 */
-
-    if (nHeaderSize != 40 || nDepth != 1 || nBPP != 8)
+    /* There's apparently a relationship between the nMagic number */
+    /* and the nKeyInit, but I'm too lazy to add switch/cases that might */
+    /* be not exhaustive, so let's try the 'brute force' attack !!! */
+    /* It is much so funny to be able to run one in a few microseconds :-) */
+    for(nKeyInit = 0; nKeyInit < 256; nKeyInit ++)
     {
-        CPLDebug("OZI", "nHeaderSize = %d, nDepth = %d, nBPP = %d",
-                 nHeaderSize, nDepth, nBPP);
-        delete poDS;
-        return NULL;
+        GByte* pabyHeader2 = abyHeader2;
+        if (bOzi3)
+            OZIDecrypt(abyHeader2, 40, nKeyInit);
+
+        int nHeaderSize = ReadInt(&pabyHeader2); /* should be 40 */
+        poDS->nRasterXSize = ReadInt(&pabyHeader2);
+        poDS->nRasterYSize = ReadInt(&pabyHeader2);
+        int nDepth = ReadShort(&pabyHeader2); /* should be 1 */
+        int nBPP = ReadShort(&pabyHeader2); /* should be 8 */
+        ReadInt(&pabyHeader2); /* reserved */
+        ReadInt(&pabyHeader2); /* pixel number (height * width) : unused */
+        ReadInt(&pabyHeader2); /* reserved */
+        ReadInt(&pabyHeader2); /* reserved */
+        ReadInt(&pabyHeader2); /* ?? 0x100 */
+        ReadInt(&pabyHeader2); /* ?? 0x100 */
+
+        if (nHeaderSize != 40 || nDepth != 1 || nBPP != 8)
+        {
+            if (bOzi3)
+            {
+                if (nKeyInit != 255)
+                {
+                    memcpy(abyHeader2, abyHeader2_Backup,40);
+                    continue;
+                }
+                else
+                {
+                    CPLDebug("OZI", "Cannot decypher 2nd header. Sorry...");
+                    delete poDS;
+                    return NULL;
+                }
+            }
+            else
+            {
+                CPLDebug("OZI", "nHeaderSize = %d, nDepth = %d, nBPP = %d",
+                        nHeaderSize, nDepth, nBPP);
+                delete poDS;
+                return NULL;
+            }
+        }
+        else
+            break;
     }
+    poDS->nKeyInit = nKeyInit;
 
     int nSeparator = ReadInt(fp);
     if (!bOzi3 && nSeparator != 0x77777777)
