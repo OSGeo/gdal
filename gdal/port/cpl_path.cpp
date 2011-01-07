@@ -892,7 +892,11 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
     {
         for( i=0; papszFileList[i] != NULL; i++ )
         {
-            if( osOldBasename != CPLGetBasename( papszFileList[i] ) )
+            if( osOldBasename == CPLGetBasename( papszFileList[i] ) )
+                continue;
+
+            if( !EQUALN(papszFileList[i],osOldBasename,osOldBasename.size())
+                || papszFileList[i][osOldBasename.size()] != '.' )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Unable to rename fileset due irregular basenames.");
