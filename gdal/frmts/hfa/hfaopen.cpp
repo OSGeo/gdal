@@ -39,6 +39,7 @@
 #include "hfa_p.h"
 #include "cpl_conv.h"
 #include <limits.h>
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -3683,4 +3684,134 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
     Efga_Polynomial *psForward=&sForward, *psReverse=&sReverse;
 
     return HFAWriteXFormStack( hHFA, 0, 1, &psForward, &psReverse );
+}
+
+/************************************************************************/
+/*                        HFARenameReferences()                         */
+/*                                                                      */
+/*      Rename references in this .img file from the old basename to    */
+/*      a new basename.  This should be passed on to .aux and .rrd      */
+/*      files and should include references to .aux, .rrd and .ige.     */
+/************************************************************************/
+
+CPLErr HFARenameReferences( HFAHandle hHFA, 
+                            const char *pszNewBase, 
+                            const char *pszOldBase )
+
+{
+    int iBand;
+
+/* -------------------------------------------------------------------- */
+/*      Handle RRDNamesList updates.                                    */
+/* -------------------------------------------------------------------- */
+    for( iBand = 0; iBand < hHFA->nBands; iBand++ )
+    {
+        HFAEntry *poBandNode = hHFA->papoBand[iBand]->poNode;
+        HFAEntry *poRRDNL = poBandNode->GetNamedChild( "RRDNamesList" );
+        std::vector<CPLString> aosNL;
+
+        if( poRRDNL == NULL )
+            continue;
+
+        // Collect all the existing names.
+        int i, nNameCount = poRRDNL->GetFieldCount( "nameList" );
+        
+        for( i = 0; i < nNameCount; i++ )
+        {
+            CPLString osFN;
+            osFN.Printf( "nameList[%d].string", i );
+            aosNL.push_back( poRRDNL->GetStringField(osFN) );
+        } 
+
+        // Adjust the names to the new form.
+        for( i = 0; i < nNameCount; i++ )
+        {
+            if( strncmp(aosNL[i],pszOldBase,strlen(pszOldBase)) == 0 )
+            {
+                CPLString osNew = pszNewBase;
+                osNew += aosNL[i].c_str() + strlen(pszOldBase);
+                aosNL[i] = osNew;
+            }
+        } 
+
+        // try to make sure the RRDNamesList is big enough to hold the 
+        // adjusted name list. 
+        if( strlen(pszNewBase) > strlen(pszOldBase) )
+        {
+            CPLDebug( "HFA", "Growing RRDNamesList to hold new names" );
+            poRRDNL->MakeData( poRRDNL->GetDataSize() 
+                               + nNameCount * (strlen(pszNewBase) - strlen(pszOldBase)) );
+        }
+
+        // Write the updates back to the file.
+        for( i = 0; i < nNameCount; i++ )
+        {
+            CPLString osFN;
+            osFN.Printf( "nameList[%d].string", i );
+            poRRDNL->SetStringField( osFN, aosNL[i] );
+        } 
+    }
+
+/* -------------------------------------------------------------------- */
+/*      spill file references.                                          */
+/* -------------------------------------------------------------------- */
+    for( iBand = 0; iBand < hHFA->nBands; iBand++ )
+    {
+        HFAEntry *poBandNode = hHFA->papoBand[iBand]->poNode;
+        HFAEntry *poERDMS = poBandNode->GetNamedChild( "ExternalRasterDMS" );
+
+        if( poERDMS == NULL )
+            continue;
+
+        // Fetch all existing values. 
+        CPLString osFileName = poERDMS->GetStringField("fileName.string");
+        GInt32 anValidFlagsOffset[2], anStackDataOffset[2];
+        GInt32 nStackCount, nStackIndex;
+
+        anValidFlagsOffset[0] = 
+            poERDMS->GetIntField( "layerStackValidFlagsOffset[0]" );
+        anValidFlagsOffset[1] = 
+            poERDMS->GetIntField( "layerStackValidFlagsOffset[1]" );
+        
+        anStackDataOffset[0] = 
+            poERDMS->GetIntField( "layerStackDataOffset[0]" );
+        anStackDataOffset[1] = 
+            poERDMS->GetIntField( "layerStackDataOffset[1]" );
+
+        nStackCount = poERDMS->GetIntField( "layerStackCount" );
+        nStackIndex = poERDMS->GetIntField( "layerStackIndex" );
+
+        // Update the filename. 
+        if( strncmp(osFileName,pszOldBase,strlen(pszOldBase)) == 0 )
+        {
+            CPLString osNew = pszNewBase;
+            osNew += osFileName.c_str() + strlen(pszOldBase);
+            osFileName = osNew;
+        }
+
+        // Grow the node if needed.
+        if( strlen(pszNewBase) > strlen(pszOldBase) )
+        {
+            CPLDebug( "HFA", "Growing ExternalRasterDMS to hold new names" );
+            poERDMS->MakeData( poERDMS->GetDataSize() 
+                               + (strlen(pszNewBase) - strlen(pszOldBase)) );
+        }
+
+        // Write it all out again, this may change the size of the node.
+        poERDMS->SetStringField( "fileName.string", osFileName );
+        poERDMS->SetIntField( "layerStackValidFlagsOffset[0]", 
+                              anValidFlagsOffset[0] );
+        poERDMS->SetIntField( "layerStackValidFlagsOffset[1]", 
+                              anValidFlagsOffset[1] );
+        
+        poERDMS->SetIntField( "layerStackDataOffset[0]", 
+                              anStackDataOffset[0] );
+        poERDMS->SetIntField( "layerStackDataOffset[1]", 
+                              anStackDataOffset[1] );
+
+        poERDMS->SetIntField( "layerStackCount", nStackCount );
+        poERDMS->SetIntField( "layerStackIndex", nStackIndex );
+    }
+
+    return CE_None;
 }
