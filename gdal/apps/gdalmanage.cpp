@@ -166,8 +166,6 @@ int main( int argc, char ** argv )
 
 {
     char *pszDriver = NULL;
-    char **papszRemainingArgv = argv + 2;
-    int  nRemainingArgc = argc - 2;
     GDALDriverH hDriver = NULL;
 
     /* Check that we are running against at least GDAL 1.5 */
@@ -198,6 +196,9 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Do we have a driver specifier?                                  */
 /* -------------------------------------------------------------------- */
+    char **papszRemainingArgv = argv + 2;
+    int  nRemainingArgc = argc - 2;
+
     if( EQUAL(papszRemainingArgv[0],"-f") && nRemainingArgc > 1 )
     {
         pszDriver = papszRemainingArgv[1];
