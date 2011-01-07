@@ -19872,7 +19872,7 @@ $as_echo_n "checking for MrSID JPEG2000 support... " >&6; }
       as_fn_error $? "MrSID JPEG2000 support requested, but this is incompatible with use of standalone Kakadu" "$LINENO" 5
     fi
 
-    MRSID_KAKADU_LIB=no
+    MRSID_KAKADU_LIB=""
     if test "$HAVE_KAKADU" = "no" ; then
       if test x"$with_jp2mrsid" = x"" -o x"$with_jp2mrsid" = x"yes" ; then
         if test -r "$with_mrsid/3rd-party/$_LIBPART/libltikdu.a" ; then
