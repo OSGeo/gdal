@@ -292,6 +292,8 @@ class CPL_DLL HFADataset : public GDALPamDataset
                 ~HFADataset();
 
     static int          Identify( GDALOpenInfo * );
+    static CPLErr       Rename( const char *pszNewName, const char *pszOldName);
+    static CPLErr       CopyFiles( const char *pszNewName, const char *pszOldName);
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -3715,6 +3717,92 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 }
 
 /************************************************************************/
+/*                               Rename()                               */
+/*                                                                      */
+/*      Custom Rename() implementation that knows how to update         */
+/*      filename references in .img and .aux files.                     */
+/************************************************************************/
+
+CPLErr HFADataset::Rename( const char *pszNewName, const char *pszOldName )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Rename all the files at the filesystem level.                   */
+/* -------------------------------------------------------------------- */
+    GDALDriver *poDriver = (GDALDriver*) GDALGetDriverByName( "HFA" );
+
+    CPLErr eErr = poDriver->DefaultRename( pszNewName, pszOldName );
+    
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Now try to go into the .img file and update RRDNames[]          */
+/*      lists.                                                          */
+/* -------------------------------------------------------------------- */
+    CPLString osOldBasename, osNewBasename;
+
+    osOldBasename = CPLGetBasename( pszOldName );
+    osNewBasename = CPLGetBasename( pszNewName );
+
+    if( osOldBasename != osNewBasename )
+    {
+        HFAHandle hHFA = HFAOpen( pszNewName, "r+" );
+
+        if( hHFA != NULL )
+        {
+            eErr = HFARenameReferences( hHFA, osNewBasename, osOldBasename );
+            HFAClose( hHFA );
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                             CopyFiles()                              */
+/*                                                                      */
+/*      Custom CopyFiles() implementation that knows how to update      */
+/*      filename references in .img and .aux files.                     */
+/************************************************************************/
+
+CPLErr HFADataset::CopyFiles( const char *pszNewName, const char *pszOldName )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Rename all the files at the filesystem level.                   */
+/* -------------------------------------------------------------------- */
+    GDALDriver *poDriver = (GDALDriver*) GDALGetDriverByName( "HFA" );
+
+    CPLErr eErr = poDriver->DefaultCopyFiles( pszNewName, pszOldName );
+    
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Now try to go into the .img file and update RRDNames[]          */
+/*      lists.                                                          */
+/* -------------------------------------------------------------------- */
+    CPLString osOldBasename, osNewBasename;
+
+    osOldBasename = CPLGetBasename( pszOldName );
+    osNewBasename = CPLGetBasename( pszNewName );
+
+    if( osOldBasename != osNewBasename )
+    {
+        HFAHandle hHFA = HFAOpen( pszNewName, "r+" );
+
+        if( hHFA != NULL )
+        {
+            eErr = HFARenameReferences( hHFA, osNewBasename, osOldBasename );
+            HFAClose( hHFA );
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/
 
@@ -3996,6 +4084,9 @@ void GDALRegister_HFA()
         poDriver->pfnCreate = HFADataset::Create;
         poDriver->pfnCreateCopy = HFADataset::CreateCopy;
         poDriver->pfnIdentify = HFADataset::Identify;
+        poDriver->pfnRename = HFADataset::Rename;
+        poDriver->pfnCopyFiles = HFADataset::CopyFiles;
+        
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
