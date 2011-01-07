@@ -186,7 +186,16 @@ def ogr_wfs_geoserver():
         print('server perhaps overloaded')
         return 'skip'
     lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
     feat = lyr.GetNextFeature()
+
+    # This error message is generally the sign of a server in a broken state
+    if feat is None and gdal.GetLastErrorMsg().find('<ows:ExceptionText>org.geoserver.platform.ServiceException') != -1:
+        print('server probably in a broken state')
+        # Disable it for wfs-t test
+        gdaltest.geoserver_wfs = False
+        return 'skip'
+    
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
     if feat.GetField('name') != 'Alexander Bay' or \
