@@ -724,6 +724,11 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                            GDALDataset *poDstDS, 
                                            int bStrict );
     static CPLErr       QuietDelete( const char * pszName );
+
+    CPLErr              DefaultRename( const char * pszNewName,
+                                       const char * pszOldName );
+    CPLErr              DefaultCopyFiles( const char * pszNewName,
+                                          const char * pszOldName );
 };
 
 /* ******************************************************************** */
