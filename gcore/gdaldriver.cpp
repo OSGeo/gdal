@@ -794,32 +794,16 @@ CPLErr CPL_STDCALL GDALDeleteDataset( GDALDriverH hDriver, const char * pszFilen
 }
 
 /************************************************************************/
-/*                               Rename()                               */
+/*                           DefaultRename()                            */
+/*                                                                      */
+/*      The generic implementation based on the file list used when     */
+/*      there is no format specific implementation.                     */
 /************************************************************************/
 
-/**
- * \brief Rename a dataset.
- *
- * Rename a dataset. This may including moving the dataset to a new directory
- * or even a new filesystem.  
- *
- * It is unwise to have open dataset handles on this dataset when it is
- * being renamed. 
- *
- * Equivelent of the C function GDALRenameDataset().
- *
- * @param pszNewName new name for the dataset.
- * @param pszOldName old name for the dataset.
- *
- * @return CE_None on success, or CE_Failure if the operation fails.
- */
-
-CPLErr GDALDriver::Rename( const char * pszNewName, const char *pszOldName )
+CPLErr GDALDriver::DefaultRename( const char * pszNewName, 
+                                  const char *pszOldName )
 
 {
-    if( pfnRename != NULL )
-        return pfnRename( pszNewName, pszOldName );
-
 /* -------------------------------------------------------------------- */
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
@@ -878,6 +862,36 @@ CPLErr GDALDriver::Rename( const char * pszNewName, const char *pszOldName )
 }
 
 /************************************************************************/
+/*                               Rename()                               */
+/************************************************************************/
+
+/**
+ * \brief Rename a dataset.
+ *
+ * Rename a dataset. This may including moving the dataset to a new directory
+ * or even a new filesystem.  
+ *
+ * It is unwise to have open dataset handles on this dataset when it is
+ * being renamed. 
+ *
+ * Equivelent of the C function GDALRenameDataset().
+ *
+ * @param pszNewName new name for the dataset.
+ * @param pszOldName old name for the dataset.
+ *
+ * @return CE_None on success, or CE_Failure if the operation fails.
+ */
+
+CPLErr GDALDriver::Rename( const char * pszNewName, const char *pszOldName )
+
+{
+    if( pfnRename != NULL )
+        return pfnRename( pszNewName, pszOldName );
+    else
+        return DefaultRename( pszNewName, pszOldName );
+}
+
+/************************************************************************/
 /*                         GDALRenameDataset()                          */
 /************************************************************************/
 
@@ -907,28 +921,16 @@ CPLErr CPL_STDCALL GDALRenameDataset( GDALDriverH hDriver,
 }
 
 /************************************************************************/
-/*                             CopyFiles()                              */
+/*                          DefaultCopyFiles()                          */
+/*                                                                      */
+/*      The default implementation based on file lists used when        */
+/*      there is no format specific implementation.                     */
 /************************************************************************/
 
-/**
- * \brief Copy the files of a dataset.
- *
- * Copy all the files associated with a dataset.
- *
- * Equivelent of the C function GDALCopyDatasetFiles().
- *
- * @param pszNewName new name for the dataset.
- * @param pszOldName old name for the dataset.
- *
- * @return CE_None on success, or CE_Failure if the operation fails.
- */
-
-CPLErr GDALDriver::CopyFiles( const char * pszNewName, const char *pszOldName )
+CPLErr GDALDriver::DefaultCopyFiles( const char * pszNewName, 
+                                     const char *pszOldName )
 
 {
-    if( pfnRename != NULL )
-        return pfnRename( pszNewName, pszOldName );
-
 /* -------------------------------------------------------------------- */
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
@@ -984,6 +986,32 @@ CPLErr GDALDriver::CopyFiles( const char * pszNewName, const char *pszOldName )
     CSLDestroy( papszFileList );
 
     return eErr;
+}
+
+/************************************************************************/
+/*                             CopyFiles()                              */
+/************************************************************************/
+
+/**
+ * \brief Copy the files of a dataset.
+ *
+ * Copy all the files associated with a dataset.
+ *
+ * Equivelent of the C function GDALCopyDatasetFiles().
+ *
+ * @param pszNewName new name for the dataset.
+ * @param pszOldName old name for the dataset.
+ *
+ * @return CE_None on success, or CE_Failure if the operation fails.
+ */
+
+CPLErr GDALDriver::CopyFiles( const char * pszNewName, const char *pszOldName )
+
+{
+    if( pfnCopyFiles != NULL )
+        return pfnCopyFiles( pszNewName, pszOldName );
+    else
+        return DefaultCopyFiles( pszNewName, pszOldName );
 }
 
 /************************************************************************/
