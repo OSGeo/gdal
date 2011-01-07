@@ -96,6 +96,7 @@ int GDALJP2Box::ReadNext()
 int GDALJP2Box::ReadFirstChild( GDALJP2Box *poSuperBox )
 
 {
+    szBoxType[0] = '\0';
     if( !poSuperBox->IsSuperBox() )
         return FALSE;
 
@@ -251,14 +252,15 @@ int GDALJP2Box::DumpReadable( FILE *fpOut )
     
     if( IsSuperBox() ) 
     {
-        GDALJP2Box oSubBox( fpVSIL );
+        GDALJP2Box oSubBox( GetFILE() );
 
-        if( oSubBox.ReadFirstChild( this ) )
+        for( oSubBox.ReadFirstChild( this );
+             strlen(oSubBox.GetType()) > 0;
+             oSubBox.ReadNextChild( this ) )
         {
             oSubBox.DumpReadable( fpOut );
-            while( oSubBox.ReadNextChild( this ) )
-                oSubBox.DumpReadable( fpOut );
         }
+
         printf( "  (end of %s subboxes)\n", szBoxType );
     }
 
