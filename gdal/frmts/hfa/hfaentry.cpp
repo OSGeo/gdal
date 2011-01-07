@@ -875,13 +875,9 @@ CPLErr HFAEntry::FlushToDisk()
 /* -------------------------------------------------------------------- */
         if( poNext != NULL )
             nNextPos = poNext->nFilePos;
-        else
-            nNextPos = 0;
 
         if( poChild != NULL )
             nChildPos = poChild->nFilePos;
-        else
-            nChildPos = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write the Ehfa_Entry fields.                                    */
