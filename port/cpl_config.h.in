@@ -128,6 +128,9 @@
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
+/* Define to 1 if you have the `readlink' function. */
+#undef HAVE_READLINK
+
 /* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
 #undef HOST_FILLORDER
 

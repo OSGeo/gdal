@@ -33,6 +33,10 @@
 #include "cpl_multiproc.h"
 #include "swq.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 CPL_CVSID("$Id$");
 
 static void *hDRMutex = NULL;
@@ -193,6 +197,11 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
 {
     OGRDataSource       *poDS;
 
+#ifdef HAVE_READLINK
+    char szPointerFilename[2048];
+    int  bHasRetried = FALSE;
+#endif
+
     if( ppoDriver != NULL )
         *ppoDriver = NULL;
 
@@ -202,6 +211,7 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
 
     CPLAcquireMutex( hDRMutex, 0.1 );
 
+retry:
     for( int iDriver = 0; iDriver < poRegistrar->nDrivers; iDriver++ )
     {
         OGRSFDriver *poDriver = poRegistrar->papoDrivers[iDriver];
@@ -229,6 +239,23 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
 
         CPLAcquireMutex( hDRMutex, 0.1 );
     }
+
+#ifdef HAVE_READLINK
+    if (!bHasRetried)
+    {
+        /* If someone creates a file with "ln -sf /vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp my_remote_poly.shp" */
+        /* we will be able to open it by passing my_remote_poly.shp */
+        /* This helps a lot for OGR based readers that only provide file explorers to open datasources */
+        int nBytes = readlink(pszName, szPointerFilename, sizeof(szPointerFilename));
+        if (nBytes != -1)
+        {
+            szPointerFilename[MIN(nBytes, (int)sizeof(szPointerFilename)-1)] = 0;
+            pszName = szPointerFilename;
+            bHasRetried = TRUE;
+            goto retry;
+        }
+    }
+#endif
 
     CPLReleaseMutex( hDRMutex );
 

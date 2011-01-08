@@ -30,6 +30,10 @@
 #include "gdal_priv.h"
 #include "cpl_conv.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -73,12 +77,17 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
     bStatOK = FALSE;
     eAccess = eAccessIn;
     fp = NULL;
-    
+
+#ifdef HAVE_READLINK
+    int  bHasRetried = FALSE;
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Collect information about the file.                             */
 /* -------------------------------------------------------------------- */
     VSIStatBufL  sStat;
 
+retry:
     if( VSIStatExL( pszFilename, &sStat,
                     VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 )
     {
@@ -122,6 +131,25 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
         else if( VSI_ISDIR( sStat.st_mode ) )
             bIsDirectory = TRUE;
     }
+#ifdef HAVE_READLINK
+    else if (!bHasRetried)
+    {
+        /* If someone creates a file with "ln -sf /vsicurl/http://download.osgeo.org/gdal/data/gtiff/utm.tif my_remote_utm.tif" */
+        /* we will be able to open it by passing my_remote_utm.tif */
+        /* This helps a lot for GDAL based readers that only provide file explorers to open datasets */
+        char szPointerFilename[2048];
+        int nBytes = readlink(pszFilename, szPointerFilename, sizeof(szPointerFilename));
+        if (nBytes != -1)
+        {
+            szPointerFilename[MIN(nBytes, (int)sizeof(szPointerFilename)-1)] = 0;
+            CPLFree(pszFilename);
+            pszFilename = CPLStrdup(szPointerFilename);
+            papszSiblingsIn = NULL;
+            bHasRetried = TRUE;
+            goto retry;
+        }
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Capture sibling list either from passed in values, or by        */

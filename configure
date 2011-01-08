@@ -16279,6 +16279,18 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+for ac_func in readlink
+do :
+  ac_fn_c_check_func "$LINENO" "readlink" "ac_cv_func_readlink"
+if test "x$ac_cv_func_readlink" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_READLINK 1
+_ACEOF
+
+fi
+done
+
+
 
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'

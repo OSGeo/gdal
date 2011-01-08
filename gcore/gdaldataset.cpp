@@ -2208,7 +2208,7 @@ GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
         if( poDS != NULL )
         {
             if( strlen(poDS->GetDescription()) == 0 )
-                poDS->SetDescription( pszFilename );
+                poDS->SetDescription( oOpenInfo.pszFilename );
 
             if( poDS->poDriver == NULL )
                 poDS->poDriver = poDriver;
