@@ -94,7 +94,7 @@ def ogr_wfs_mapserver():
     ds = ogr.Open('WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap')
     if ds is None:
         gdaltest.post_reason('did not managed to open WFS datastore')
-        return 'fail'
+        return 'skip'
 
     if ds.GetLayerCount() != 2:
         gdaltest.post_reason('did not get expected layer count')
