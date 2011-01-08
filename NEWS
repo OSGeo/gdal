@@ -5,7 +5,7 @@ to the 1.7.X maintenance releases are not mentionned hereafter.)
 
 == In a nutshell... ==
 
-* New GDAL drivers : GTX, HF2, JPEGLS, JP2OpenJPEG, JPIKAK, KMLSUPEROVERLAY,
+* New GDAL drivers : GTX, HF2, JPEGLS, JP2OpenJPEG, JPIPKAK, KMLSUPEROVERLAY,
                      LOS/LAS, MG4Lidar, NTv2, OZI, PDF, RASDAMAN, XYZ
 * New OGR drivers : AeronavFAA, ArcObjects, GPSBabel, HTF, LIBKML, MSSQLSpatial, NAS,
                     OpenAir, PDS, PGDump, SOSI, SUA, WFS
@@ -69,6 +69,7 @@ Port:
  * HTTP downloader: add PROXY and PROXYUSERPWD options (and GDAL_HTTP_PROXY and
    GDAL_HTTP_PROXYUSERPWD configurations option) to allow request to go through a
    proxy server.
+
 Core:
  * RFC 24: progressive/async raster reading
  * Assume anything less than 100000 for GDAL_CACHEMAX is measured in metabytes.
@@ -189,7 +190,7 @@ DTED driver:
  * Fixes to read some weird DTED3 file
 
 ECW driver:
- * Support building against 4.1 SDK (#3676)
+ * Support building against 4.1 SDK (compat with older versions maintained) (#3676)
  * Add alpha support with 4.1 SDK, and various configuration options
  * Add pseudo powers of two overviews.
 
@@ -329,7 +330,7 @@ JP2OpenJPEG:
  * New for GDAL/OGR 1.8.0
  * JPEG2 driver based on OpenJPEG library
 
-JPIKAK driver:
+JPIPKAK driver:
  * New for GDAL/OGR 1.8.0
  * JPIP driver based on Kakadu library
 
@@ -351,6 +352,7 @@ MG4Lidar driver
 MrSID:
  * Updated to support MrSID SDK v8.0.0 (compat with older versions maintained) (#3889)
  * Updated to support writing MG4/Raster (#3889)
+ * Support reading projection from .met files accompanying NASA LandSat SID files
 
 NetCDF driver:
  * Improve coordinate system support (#3425)
