@@ -247,6 +247,8 @@ class MrSIDDataset : public GDALPamDataset
     int                 nOverviewCount;
     MrSIDDataset        **papoOverviewDS;
 
+    CPLString           osMETFilename;
+
     CPLErr              OpenZoomLevel( lt_int32 iZoom );
     char                *SerializeMetadataRec( const LTIMetadataRecord* );
     int                 GetMetadataElement( const char *, void *, int=0 );
@@ -265,6 +267,8 @@ class MrSIDDataset : public GDALPamDataset
     static GDALDataset  *Open( GDALOpenInfo * poOpenInfo, int bIsJP2 );
     virtual CPLErr      GetGeoTransform( double * padfTransform );
     const char          *GetProjectionRef();
+
+    virtual char      **GetFileList();
 
 #ifdef MRSID_ESDK
     static GDALDataset  *Create( const char * pszFilename,
@@ -1154,6 +1158,20 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char** MrSIDDataset::GetFileList()
+{
+    char** papszFileList = GDALPamDataset::GetFileList();
+
+    if (osMETFilename.size() != 0)
+        papszFileList = CSLAddString(papszFileList, osMETFilename.c_str());
+
+    return papszFileList;
+}
+
+/************************************************************************/
 /*                             OpenZoomLevel()                          */
 /************************************************************************/
 
@@ -1273,6 +1291,53 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         }
     }
 #endif // HAVE_MRSID_GETWKT
+
+/* -------------------------------------------------------------------- */
+/*      Special case for https://zulu.ssc.nasa.gov/mrsid/mrsid.pl       */
+/*      where LandSat .SID are accompanied by a .met file with the      */
+/*      projection                                                      */
+/* -------------------------------------------------------------------- */
+    if (iZoom == 0 && (pszProjection == NULL || pszProjection[0] == '\0') &&
+        EQUAL(CPLGetExtension(GetDescription()), "sid"))
+    {
+        const char* pszMETFilename = CPLResetExtension(GetDescription(), "met");
+        VSILFILE* fp = VSIFOpenL(pszMETFilename, "rb");
+        if (fp)
+        {
+            const char* pszLine;
+            int nCountLine = 0;
+            int nUTMZone = 0;
+            int bWGS84 = FALSE;
+            int bUnitsMeter = FALSE;
+            while ( (pszLine = CPLReadLine2L(fp, 200, NULL)) != NULL &&
+                    ++nCountLine < 1000 )
+            {
+                if (nCountLine == 1 && strcmp(pszLine, "::MetadataFile") != 0)
+                    break;
+                if (EQUALN(pszLine, "Projection UTM ", 15))
+                    nUTMZone = atoi(pszLine + 15);
+                else if (EQUAL(pszLine, "Datum WGS84"))
+                    bWGS84 = TRUE;
+                else if (EQUAL(pszLine, "Units Meters"))
+                    bUnitsMeter = TRUE;
+            }
+            VSIFCloseL(fp);
+
+            /* Images in southern hemisphere have negative northings in the */
+            /* .sdw file. A bit weird, but anyway we must use the northern */
+            /* UTM SRS for consistency */
+            if (nUTMZone >= 1 && nUTMZone <= 60 && bWGS84 && bUnitsMeter)
+            {
+                osMETFilename = pszMETFilename;
+                
+                OGRSpatialReference oSRS;
+                oSRS.importFromEPSG(32600 + nUTMZone);
+                CPLFree(pszProjection);
+                pszProjection = NULL;
+                oSRS.exportToWkt(&pszProjection);
+            }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read NoData value.                                              */
