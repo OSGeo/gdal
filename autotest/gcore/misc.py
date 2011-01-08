@@ -412,6 +412,38 @@ def misc_10():
 
     return 'success'
 
+
+###############################################################################
+# Test that we can open a symlink whose pointed filename isn't a real
+# file, but a filename that GDAL recognizes
+
+def misc_11():
+
+    if sys.platform != 'linux2':
+        return 'skip'
+
+    try:
+        os.unlink('tmp/symlink.tif')
+    except:
+        pass
+    os.symlink('GTIFF_DIR:1:data/byte.tif', 'tmp/symlink.tif')
+
+    ds = gdal.Open('tmp/symlink.tif')
+    if ds is None:
+        os.remove('tmp/symlink.tif')
+        return 'fail'
+    desc = ds.GetDescription()
+    ds = None
+
+    os.remove('tmp/symlink.tif')
+
+    if desc != 'GTIFF_DIR:1:data/byte.tif':
+        gdaltest.post_reason('did not get expected description')
+        print(desc)
+        return 'fail'
+
+    return 'success'
+    
 ###############################################################################
 def misc_cleanup():
 
@@ -432,6 +464,7 @@ gdaltest_list = [ misc_1,
                   misc_8,
                   misc_9,
                   misc_10,
+                  misc_11,
                   misc_cleanup ]
 
 if __name__ == '__main__':

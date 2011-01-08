@@ -1923,6 +1923,31 @@ def ogr_shape_46():
     return 'success'
 
 ###############################################################################
+# Test that we can open a symlink whose pointed filename isn't a real
+# file, but a filename that OGR recognizes
+
+def ogr_shape_47():
+
+    if sys.platform != 'linux2':
+        return 'skip'
+
+    try:
+        os.unlink('tmp/poly.zip')
+    except:
+        pass
+    os.symlink('/vsizip/data/poly.zip', 'tmp/poly.zip')
+
+    ds = ogr.Open('tmp/poly.zip')
+    if ds is None:
+        os.remove('tmp/poly.zip')
+        return 'fail'
+    ds = None
+
+    os.remove('tmp/poly.zip')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1991,6 +2016,7 @@ gdaltest_list = [
     ogr_shape_44,
     ogr_shape_45,
     ogr_shape_46,
+    ogr_shape_47,
     ogr_shape_cleanup ]
  
 if __name__ == '__main__':
