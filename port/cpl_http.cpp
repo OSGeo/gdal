@@ -323,6 +323,17 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", szCurlErrBuf );
     }
+    else
+    {
+        /* HTTP errors do not trigger curl errors. But we need to */
+        /* propagate them to the caller though */
+        long response_code = 0;
+        curl_easy_getinfo(http_handle, CURLINFO_RESPONSE_CODE, &response_code);
+        if (response_code >= 400 && response_code < 600)
+        {
+            psResult->pszErrBuf = CPLStrdup(CPLSPrintf("HTTP error code : %d", (int)response_code));
+        }
+    }
 
     if (!pszPersistent)
         curl_easy_cleanup( http_handle );
