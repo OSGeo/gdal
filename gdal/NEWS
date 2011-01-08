@@ -72,6 +72,9 @@ Port:
 
 Core:
  * RFC 24: progressive/async raster reading
+ * On Unix, add capability of opening the target of a symlink through GDALOpen()
+   even if it not a real filename. Usefull for opening ressources expressed as
+   GDAL virtual filenames in software offering only file explorers (#3902)
  * Assume anything less than 100000 for GDAL_CACHEMAX is measured in metabytes.
  * Read cartesian coordinates if applicable in GDALLoadOziMapFile().
  * Avoid being overly sensitive to numeric imprecision when comparing pixel
@@ -484,6 +487,9 @@ Core:
  * RFC 29 : Support for ignoring fields in OGR
  * Add OGRLayer::GetName() and OGRLayer::GetGeomType() virtual methods,
    and their C and SWIG mappings (#3719)
+ * On Unix, add capability of opening the target of a symlink through OGROpen()
+   even if it not a real filename. Usefull for opening ressources expressed as
+   GDAL virtual filenames in software offering only file explorers (#3902)
  * Expat based XML readers : add support for reading files with Windows-1252
    encoding
  * Use transactions in CopyLayer for better speed. (#3335)
