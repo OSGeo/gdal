@@ -1280,7 +1280,7 @@ CPLHTTPResult* OGRWFSDataSource::HTTPFetch( const char* pszURL, char** papszOpti
     {
         return NULL;
     }
-    if (psResult->nStatus != 0)
+    if (psResult->nStatus != 0 || psResult->pszErrBuf != NULL)
     {
         /* A few buggy servers return chunked data with errouneous remaining bytes value */
         /* curl doesn't like this. Retry with HTTP 1.0 protocol instead that doesn't support */
