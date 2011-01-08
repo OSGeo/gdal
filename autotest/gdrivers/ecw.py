@@ -773,7 +773,7 @@ def ecw_online_4():
 ###############################################################################
 def ecw_online_5():
 
-    if gdaltest.jp2ecw_drv is None:
+    if gdaltest.ecw_drv is None:
         return 'skip'
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ecw/red_flower.ecw', 'red_flower.ecw'):
@@ -783,14 +783,41 @@ def ecw_online_5():
 
     if gdaltest.ecw_drv.major_version == 3:    
         (exp_mean, exp_stddev) = (112.801,52.0431)
+        # on Tamas slavebots, (mean,stddev)  = (113.301,52.0434)
+        mean_tolerance = 1
     else:
         (exp_mean, exp_stddev) = (114.337,52.1751)
+        mean_tolerance = 0.5
 
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
 
-    if abs(mean-exp_mean) > 0.5 or abs(stddev-exp_stddev) > 0.5:
+    if abs(mean-exp_mean) > mean_tolerance or abs(stddev-exp_stddev) > 0.5:
         gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# This tests the HTTP driver in fact. To ensure if keeps the original filename,
+# and in particular the .ecw extension, to make the ECW driver happy
+
+def ecw_online_6():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    ds = gdal.Open('http://download.osgeo.org/gdal/data/ecw/spif83.ecw')
+    if ds is None:
+        return 'fail'
+    ds = None
 
     return 'success'
 
@@ -830,6 +857,7 @@ gdaltest_list = [
     ecw_online_3,
     ecw_online_4,
     ecw_online_5,
+    ecw_online_6,
     ecw_cleanup ]
 
 if __name__ == '__main__':
