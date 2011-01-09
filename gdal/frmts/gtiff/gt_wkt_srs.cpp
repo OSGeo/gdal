@@ -68,10 +68,27 @@ VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
 GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
                                     GUIntBig *pnDataLength, 
                                     int bUnlinkAndSeize );
+
+/* Those stuff are redefined in external libgeotiff cpl_serv.h */
+/* as macros. Let's use GDAL functions instead */
+/* E.Rouault : I'm wondering why we just don't #define CPL_SERV_H_INCLUDED */
+/* at the beginning of this file to avoid cpl_serv.h to be used at all ??? */
+
 #undef CSVReadParseLine
 char CPL_DLL  **CSVReadParseLine( FILE *fp);
 #undef CSLDestroy
 void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);
+#undef VSIFree
+void CPL_DLL    VSIFree( void * );
+#undef CPLFree
+#define CPLFree VSIFree
+#undef CPLMalloc
+void CPL_DLL *CPLMalloc( size_t );
+#undef CPLCalloc
+void CPL_DLL *CPLCalloc( size_t, size_t );
+#undef CPLStrdup
+char CPL_DLL *CPLStrdup( const char * );
+
 #endif /* CPL_SERV_H_INTERNAL */
 
 CPL_C_END
