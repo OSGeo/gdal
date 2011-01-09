@@ -158,12 +158,6 @@ def summarize():
         print('As GDAL_RUN_SLOW_TESTS environment variable is not defined, %d "slow" tests have been skipped' % count_skipped_tests_slow)
     print('')
 
-    print('before cleanup')
-    gdal.Cleanup()
-    import ogr
-    ogr.Cleanup()
-    print('after cleanup')
-
     return failure_counter + blow_counter
 
 ###############################################################################
