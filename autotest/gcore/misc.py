@@ -419,7 +419,7 @@ def misc_10():
 
 def misc_11():
 
-    if sys.platform != 'linux2':
+    if not gdaltest.support_symlink():
         return 'skip'
 
     try:

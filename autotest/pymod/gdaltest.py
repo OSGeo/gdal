@@ -1205,3 +1205,17 @@ def run_slow_tests():
 
         return False
     return True
+
+###############################################################################
+# Return true if the platform support symlinks
+
+def support_symlink():
+    if sys.platform == 'linux2':
+        return True
+    if sys.platform.find('freebsd') != -1:
+        return True
+    if sys.platform == 'darwin':
+        return True
+    if sys.platform.find('sunos') != -1:
+        return True
+    return False

@@ -1928,7 +1928,7 @@ def ogr_shape_46():
 
 def ogr_shape_47():
 
-    if sys.platform != 'linux2':
+    if not gdaltest.support_symlink():
         return 'skip'
 
     try:
