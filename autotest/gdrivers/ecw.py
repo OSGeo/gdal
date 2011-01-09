@@ -49,22 +49,22 @@ def ecw_1():
     except:
         gdaltest.ecw_drv = None
         gdaltest.jp2ecw_drv = None
-        return 'skip'
+
+    gdaltest.ecw_write = 0
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
-    if gdaltest.ecw_drv is not None and gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') != None:
-        gdaltest.ecw_write = 1
-    else:
-        gdaltest.ecw_write = 0
+    if gdaltest.ecw_drv is not None:
+        if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') != None:
+            gdaltest.ecw_write = 1
 
-    longname = gdaltest.ecw_drv.GetMetadataItem('DMD_LONGNAME')
+        longname = gdaltest.ecw_drv.GetMetadataItem('DMD_LONGNAME')
 
-    sdk_off = longname.find('SDK ')
-    if sdk_off != -1:
-        gdaltest.ecw_drv.major_version = int(longname[sdk_off+4])
-    else:
-	gdaltest.ecw_drv.major_version = 3
+        sdk_off = longname.find('SDK ')
+        if sdk_off != -1:
+            gdaltest.ecw_drv.major_version = int(longname[sdk_off+4])
+        else:
+            gdaltest.ecw_drv.major_version = 3
 
     return 'success'
 
@@ -519,9 +519,9 @@ def ecw_17():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
 
-    if gdaltest.ecw_drv.major_version > 3:    
-	gdaltest.post_reason( '4.x SDK gets unreliable results for jp2')
-	return 'skip'
+    if gdaltest.ecw_drv.major_version > 3:
+        gdaltest.post_reason( '4.x SDK gets unreliable results for jp2')
+        return 'skip'
 
     ds = gdal.Open( 'data/int16.jp2' )
     ds_ref = gdal.Open( 'data/int16.tif' )
@@ -706,9 +706,9 @@ def ecw_online_3():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
 
-    if gdaltest.ecw_drv.major_version > 3:    
-	gdaltest.post_reason( '4.x SDK gets unreliable results for jp2')
-	return 'skip'
+    if gdaltest.ecw_drv.major_version > 3:
+        gdaltest.post_reason( '4.x SDK gets unreliable results for jp2')
+        return 'skip'
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
         return 'skip'
