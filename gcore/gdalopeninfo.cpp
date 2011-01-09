@@ -87,7 +87,9 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
 /* -------------------------------------------------------------------- */
     VSIStatBufL  sStat;
 
+#ifdef HAVE_READLINK
 retry:
+#endif
     if( VSIStatExL( pszFilename, &sStat,
                     VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 )
     {

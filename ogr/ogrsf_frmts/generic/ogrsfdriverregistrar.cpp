@@ -211,7 +211,9 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
 
     CPLAcquireMutex( hDRMutex, 0.1 );
 
+#ifdef HAVE_READLINK
 retry:
+#endif
     for( int iDriver = 0; iDriver < poRegistrar->nDrivers; iDriver++ )
     {
         OGRSFDriver *poDriver = poRegistrar->papoDrivers[iDriver];
