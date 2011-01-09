@@ -802,7 +802,10 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
             apbyBandData.push_back( 
                 (GByte *) VSIMalloc3( nWordSize, nXSize, nYSize ) );
             if( apbyBandData[iBand] == NULL )
+            {
                 bAllocOK = FALSE;
+                break;
+            }
             memset(apbyBandData[iBand], 0, ((size_t)nWordSize) * nXSize * nYSize);
         }
     }
