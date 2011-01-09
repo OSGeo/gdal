@@ -624,6 +624,11 @@ def test_ogr2ogr_py_20():
     if script_path is None:
         return 'skip'
 
+    try:
+        os.remove('tmp/Fields.dbf')
+    except:
+        pass
+
     expected_fields = [ 'a',
                         'A_1',
                         'a_1_2',
