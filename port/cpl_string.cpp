@@ -328,10 +328,8 @@ char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszO
                 papszStrList[nLines + 1] = NULL;
                 nLines ++;
             }
-            else if (CPLGetLastErrorType() != 0)
-            {
+            else
                 break;
-            }
         }
 
         VSIFCloseL(fp);
