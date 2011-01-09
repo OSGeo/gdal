@@ -33,6 +33,13 @@
 
 #ifdef HAVE_CURL
 #  include <curl/curl.h>
+
+
+/* CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and earlier */
+#if LIBCURL_VERSION_NUM < 0x070a07
+#define CURLINFO_RESPONSE_CODE CURLINFO_HTTP_CODE
+#endif
+
 #endif
 
 CPL_CVSID("$Id$");
