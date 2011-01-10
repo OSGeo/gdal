@@ -5568,17 +5568,20 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
         psGTIF = GTIFNew( hTIFF ); // I wonder how expensive this is?
 
-        if( GTIFKeyGet(psGTIF, GTRasterTypeGeoKey, &nRasterType, 
-                       0, 1 ) == 1 
-            && nRasterType == (short) RasterPixelIsPoint )
+        if( psGTIF )
         {
-            bPixelIsPoint = true;
-            bPointGeoIgnore = 
-                CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
-                                                   "FALSE") );
-        }
+            if( GTIFKeyGet(psGTIF, GTRasterTypeGeoKey, &nRasterType,
+                        0, 1 ) == 1
+                && nRasterType == (short) RasterPixelIsPoint )
+            {
+                bPixelIsPoint = true;
+                bPointGeoIgnore =
+                    CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
+                                                    "FALSE") );
+            }
 
-        GTIFFree( psGTIF );
+            GTIFFree( psGTIF );
+        }
 
         adfGeoTransform[0] = 0.0;
         adfGeoTransform[1] = 1.0;
