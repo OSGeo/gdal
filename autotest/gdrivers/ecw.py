@@ -816,6 +816,10 @@ def ecw_online_6():
 
     ds = gdal.Open('http://download.osgeo.org/gdal/data/ecw/spif83.ecw')
     if ds is None:
+        # The ECW driver doesn't manage to open in /vsimem, thus fallbacks
+        # to writing to /tmp, which doesn't work on Windows
+        if sys.platform == 'win32':    
+            return 'skip'
         return 'fail'
     ds = None
 
