@@ -3999,6 +3999,42 @@ Band 1}""")
     return 'success'
 
 ###############################################################################
+# Test writing and reading back COMPD_CS
+
+def tiff_write_102():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_102.tif',1,1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(7401)
+    wkt = sr.ExportToWkt()
+    ds.SetProjection(wkt)
+    ds = None
+
+    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', 'YES')
+    ds = gdal.Open('/vsimem/tiff_write_102.tif')
+    wkt1 = ds.GetProjectionRef()
+    ds = None
+
+    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', 'NO')
+    ds = gdal.Open('/vsimem/tiff_write_102.tif')
+    wkt2 = ds.GetProjectionRef()
+    ds = None
+
+    gdaltest.tiff_drv.Delete( '/vsimem/tiff_write_102.tif' )
+
+    if wkt1.find('COMPD_CS') != 0:
+        gdaltest.post_reason('expected COMPD_CS, but got something else')
+        print(wkt1)
+        return 'fail'
+
+    if wkt2.find('COMPD_CS') == 0:
+        gdaltest.post_reason('got COMPD_CS, but did not expected it')
+        print(wkt2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -4110,6 +4146,7 @@ gdaltest_list = [
     tiff_write_99,
     tiff_write_100,
     tiff_write_101,
+    tiff_write_102,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
