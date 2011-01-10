@@ -54,7 +54,8 @@ class PCIDSK2Dataset : public GDALPamDataset
 
     PCIDSKFile  *poFile;
 
-    static GDALDataType PCIDSKTypeToGDAL( eChanType eType );
+    static GDALDataType  PCIDSKTypeToGDAL( eChanType eType );
+	void                 ProcessRPC();
 
   public:
                 PCIDSK2Dataset();
@@ -737,6 +738,137 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
 }
 
 /************************************************************************/
+/*                             ProcessRPC()                             */
+/************************************************************************/
+
+void PCIDSK2Dataset::ProcessRPC()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Search all BIN segments looking for an RPC segment.             */
+/* -------------------------------------------------------------------- */
+	PCIDSKSegment *poSeg = poFile->GetSegment( SEG_BIN, "" );
+	PCIDSKRPCSegment *poRPCSeg = NULL;
+
+	while( poSeg != NULL 
+		   && (poRPCSeg = dynamic_cast<PCIDSKRPCSegment*>( poSeg )) == NULL )
+			   
+	{
+		poSeg = poFile->GetSegment( SEG_BIN, "", 
+									poSeg->GetSegmentNumber() );
+	}
+
+	if( poRPCSeg == NULL )
+		return;
+
+/* -------------------------------------------------------------------- */
+/*      Turn RPC segment into GDAL RFC 22 style metadata.               */
+/* -------------------------------------------------------------------- */
+	try
+	{
+		CPLString osValue;
+		double dfLineOffset, dfLineScale, dfSampOffset, dfSampScale;
+		double dfLatOffset, dfLatScale,
+			dfLongOffset, dfLongScale,
+			dfHeightOffset, dfHeightScale;
+		
+		poRPCSeg->GetRPCTranslationCoeffs( 
+			dfLongOffset, dfLongScale, 
+			dfLatOffset, dfLatScale,
+			dfHeightOffset, dfHeightScale,
+			dfSampOffset, dfSampScale,
+			dfLineOffset, dfLineScale );
+
+		osValue.Printf( "%.16g", dfLineOffset );
+		GDALPamDataset::SetMetadataItem( "LINE_OFF", osValue, "RPC" );
+
+		osValue.Printf( "%.16g", dfLineScale );
+		GDALPamDataset::SetMetadataItem( "LINE_SCALE", osValue, "RPC" );
+
+		osValue.Printf( "%.16g", dfSampOffset );
+		GDALPamDataset::SetMetadataItem( "SAMP_OFF", osValue, "RPC" );
+
+		osValue.Printf( "%.16g", dfSampScale );
+		GDALPamDataset::SetMetadataItem( "SAMP_SCALE", osValue, "RPC" );
+
+		osValue.Printf( "%.16g", dfLongOffset );
+		GDALPamDataset::SetMetadataItem( "LONG_OFF", osValue, "RPC" );
+
+		osValue.Printf( "%.16g", dfLongScale );
+		GDALPamDataset::SetMetadataItem( "LONG_SCALE", osValue, "RPC" );
+
+		osValue.Printf( "%.16g", dfLatOffset );
+		GDALPamDataset::SetMetadataItem( "LAT_OFF", osValue, "RPC" );
+
+		osValue.Printf( "%.16g", dfLatScale );
+		GDALPamDataset::SetMetadataItem( "LAT_SCALE", osValue, "RPC" );
+
+		osValue.Printf( "%.16g", dfHeightOffset );
+		GDALPamDataset::SetMetadataItem( "HEIGHT_OFF", osValue, "RPC" );
+
+		osValue.Printf( "%.16g", dfHeightScale );
+		GDALPamDataset::SetMetadataItem( "HEIGHT_SCALE", osValue, "RPC" );
+
+		CPLString osCoefList;
+		std::vector<double> adfCoef;
+		int i;
+
+		if( poRPCSeg->GetXNumerator().size() != 20 
+			|| poRPCSeg->GetXDenominator().size() != 20 
+			|| poRPCSeg->GetYNumerator().size() != 20 
+			|| poRPCSeg->GetYDenominator().size() != 20 )
+		{
+			GDALPamDataset::SetMetadata( NULL, "RPC" );
+			CPLError( CE_Failure, CPLE_AppDefined,
+					  "Did not get 20 values in the RPC coefficients lists." );
+			return;
+		}
+
+		adfCoef = poRPCSeg->GetYNumerator();
+		osCoefList = "";
+		for( i = 0; i < 20; i++ )
+		{
+			osValue.Printf( "%.16g ", adfCoef[i] );
+			osCoefList += osValue;
+		}
+		GDALPamDataset::SetMetadataItem( "LINE_NUM_COEFF", osCoefList, "RPC" );
+
+		adfCoef = poRPCSeg->GetYDenominator();
+		osCoefList = "";
+		for( i = 0; i < 20; i++ )
+		{
+			osValue.Printf( "%.16g ", adfCoef[i] );
+			osCoefList += osValue;
+		}
+		GDALPamDataset::SetMetadataItem( "LINE_DEN_COEFF", osCoefList, "RPC" );
+
+		adfCoef = poRPCSeg->GetXNumerator();
+		osCoefList = "";
+		for( i = 0; i < 20; i++ )
+		{
+			osValue.Printf( "%.16g ", adfCoef[i] );
+			osCoefList += osValue;
+		}
+		GDALPamDataset::SetMetadataItem( "SAMP_NUM_COEFF", osCoefList, "RPC" );
+
+		adfCoef = poRPCSeg->GetXDenominator();
+		osCoefList = "";
+		for( i = 0; i < 20; i++ )
+		{
+			osValue.Printf( "%.16g ", adfCoef[i] );
+			osCoefList += osValue;
+		}
+		GDALPamDataset::SetMetadataItem( "SAMP_DEN_COEFF", osCoefList, "RPC" );
+	}
+	catch( PCIDSKException ex )
+	{
+		GDALPamDataset::SetMetadata( NULL, "RPC" );
+		CPLError( CE_Failure, CPLE_AppDefined,
+				  "%s", ex.what() );
+	}
+}
+
+/************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
@@ -757,7 +889,6 @@ void PCIDSK2Dataset::FlushCache()
         }
     }
 }
-
 
 /************************************************************************/
 /*                            SetMetadata()                             */
@@ -1447,6 +1578,11 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
             nLastBitmapSegment = poBitSeg->GetSegmentNumber();
         }
+
+/* -------------------------------------------------------------------- */
+/*      Process RPC segment, if there is one.                           */
+/* -------------------------------------------------------------------- */
+		poDS->ProcessRPC();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
