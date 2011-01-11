@@ -342,7 +342,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     else if( EQUALN( pszProj, "MER", 3 ) )
     {
         SetMercator( padfPrjParams[3], padfPrjParams[2],
-                     (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
+                     (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                      padfPrjParams[6], padfPrjParams[7] );
     }
 
@@ -363,7 +363,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     else if( EQUALN( pszProj, "PS", 2 ) )
     {
         SetPS( padfPrjParams[3], padfPrjParams[2],
-               (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
+               (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
@@ -429,7 +429,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     else if( EQUALN( pszProj, "TM", 2 ) )
     {
         SetTM( padfPrjParams[3], padfPrjParams[2],
-               (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
+               (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
