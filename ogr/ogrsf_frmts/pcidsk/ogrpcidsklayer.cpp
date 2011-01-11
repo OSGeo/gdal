@@ -176,6 +176,8 @@ OGRPCIDSKLayer::~OGRPCIDSKLayer()
     }
 
     poFeatureDefn->Release();
+
+    delete poSRS;
 }
 
 /************************************************************************/
