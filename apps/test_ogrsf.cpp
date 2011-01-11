@@ -855,9 +855,12 @@ static int TestAttributeFilter( OGRLayer *poLayer )
     }
 
     int i;
+    OGRFieldType eType = OFTString;
     for(i=0;i<poTargetFeature->GetFieldCount();i++)
     {
-        if (poTargetFeature->IsFieldSet(i))
+        eType = poTargetFeature->GetFieldDefnRef(i)->GetType();
+        if (poTargetFeature->IsFieldSet(i) &&
+            (eType == OFTString || eType == OFTInteger || eType == OFTReal))
         {
             break;
         }
@@ -872,7 +875,6 @@ static int TestAttributeFilter( OGRLayer *poLayer )
     }
 
     const char* pszFieldName = poTargetFeature->GetFieldDefnRef(i)->GetNameRef();
-    OGRFieldType eType = poTargetFeature->GetFieldDefnRef(i)->GetType();
     CPLString osValue = poTargetFeature->GetFieldAsString(i);
 
 /* -------------------------------------------------------------------- */
@@ -886,6 +888,10 @@ static int TestAttributeFilter( OGRLayer *poLayer )
     osAttributeFilter += osValue;
     if (eType == OFTString)
         osAttributeFilter += "'";
+    /* Make sure that the literal will be recognized as a float value */
+    /* to avoid int underflow/overflow */
+    else if (eType == OFTReal && strchr(osValue, '.') == NULL)
+        osAttributeFilter += ".";
     poLayer->SetAttributeFilter( osAttributeFilter );
 
 /* -------------------------------------------------------------------- */
@@ -926,6 +932,10 @@ static int TestAttributeFilter( OGRLayer *poLayer )
     osAttributeFilter += osValue;
     if (eType == OFTString)
         osAttributeFilter += "'";
+    /* Make sure that the literal will be recognized as a float value */
+    /* to avoid int underflow/overflow */
+    else if (eType == OFTReal && strchr(osValue, '.') == NULL)
+        osAttributeFilter += ".";
     poLayer->SetAttributeFilter( osAttributeFilter );
 
 /* -------------------------------------------------------------------- */
