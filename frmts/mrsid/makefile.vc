@@ -8,6 +8,7 @@ EXTRAFLAGS 	= 	$(MRSID_INCLUDE) $(GEOTIFF_INC) $(MRSID_FLAGS)
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+!INCLUDE nmake.opt
 
 !IFNDEF GEOTIFF_INC
 GEOTIFF_INC   =	-I..\gtiff\libgeotiff

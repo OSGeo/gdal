@@ -29,7 +29,7 @@
 #
 !IFNDEF MSVC_VER
 #assume msvc VS2008.
-MSVC_VER=1500
+MSVC_VER=1600
 !ENDIF
 
 ###############################################################################
@@ -281,31 +281,20 @@ JPEG12_SUPPORTED = 1
 #HDF5_DIR =	c:\warmerda\supportlibs\hdf5\5-164-win
 #HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib 
 
-# Uncomment the following for MrSID support.
-# You will likely require /MD and /EHsc in OPTFLAGS. 
+# Uncomment the following for MrSID support.  Only MRSID_DIR is required,
+# which may point to a MrSID Raster SDK, Lidar SDK, or the combined SDK, and
+# will auto-configure the mrsid and/or mrsid_lidar drivers as appropriate.
+# Other configuration options can be specified to control specific features
+# that may be available.  See comments at the top of frmts/mrsid/nmake.opt
+# for more details.
 #MRSID_DIR =	d:\projects\mrsid
-#MRSID_INCLUDE = -I$(MRSID_DIR)\include\base -I$(MRSID_DIR)\include\support \
-#		-I$(MRSID_DIR)\include\metadata \
-#		-I$(MRSID_DIR)\include\mrsid_readers \
-#		-I$(MRSID_DIR)\include\j2k_readers
-#MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_dsdk_dll.lib advapi32.lib user32.lib
+#MRSID_JP2 =    YES
 
-# Uncomment the following for MrSID Lidar (MG4 Lidar) support.
-#MRSID_LIDAR_PLUGIN = NO
-#MRSID_LIDAR_DIR = C:\dev\Lidar_DSDK-1.1.0.2814
-#MRSID_LIDAR_INCLUDE = -I$(MRSID_LIDAR_DIR)\include
-#MRSID_LIDAR_LIB = $(MRSID_LIDAR_DIR)\lib\Release_md\lti_lidar_dsdk.lib
-
-# Comment out the following to supress JP2MRSID driver. 
-#MRSID_FLAGS =	-DMRSID_J2K
-# Enable these, if you have the MrSID Encoding SDK and want
-# to create MrSID files
-#MRSID_FLAGS =	-DMRSID_ESDK $(MRSID_FLAGS)
-#MRSID_INCLUDE = -I$(MRSID_DIR)\include\mrsid_writers \
-#		-I$(MRSID_DIR)\include\j2k_writers $(MRSID_INCLUDE)
-#MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_esdk_dll.lib $(MRSID_LIB)
-# Enable the following if you prefer to build MrSID support as a plugin.
-#MRSID_PLUGIN = YES
+!IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)
+!IF EXIST(frmts\mrsid\nmake.opt)
+!INCLUDE frmts\mrsid\nmake.opt
+!ENDIF
+!ENDIF
 
 # PCIDSK Libraries - default configuration uses internal implementation
 PCIDSK_SETTING=INTERNAL
@@ -488,7 +477,7 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 ODBCLIB = odbc32.lib odbccp32.lib user32.lib
 !ENDIF
 
-!IFDEF MRSID_DIR
+!IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)
 !IF "$(MRSID_PLUGIN)" != "YES"
 MRSID_LIB_LINK = $(MRSID_LIB)
 !ELSE

@@ -3,11 +3,12 @@ OBJ		=	gdal_MG4Lidar.obj
 
 PLUGIN_DLL 	=	gdal_MG4Lidar.dll
 
-EXTRAFLAGS 	= 	$(MRSID_LIDAR_INCLUDE) -D_CRT_SECURE_NO_WARNINGS
+EXTRAFLAGS 	= 	$(MRSID_INCLUDE) -D_CRT_SECURE_NO_WARNINGS
 
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+!INCLUDE $(GDAL_ROOT)\frmts\mrsid\nmake.opt
 
 default:	$(OBJ)
 	$(INSTALL) *.obj ..\o
@@ -23,7 +24,7 @@ plugin:	$(PLUGIN_DLL)
 
 $(PLUGIN_DLL):	$(OBJ)
 	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) \
-		$(GDAL_ROOT)/gdal_i.lib $(MRSID_LIDAR_LIB) $(GEOTIFF_LIB)
+		$(GDAL_ROOT)/gdal_i.lib $(MRSID_LIB) $(GEOTIFF_LIB)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 plugin-install:
