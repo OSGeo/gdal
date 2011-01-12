@@ -159,8 +159,10 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
     nBlockYSize = (int) poChannel->GetBlockHeight();
     
     eDataType = PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() );
-    
-    SetDescription( poChannel->GetDescription().c_str() );
+
+    if( !EQUALN(poChannel->GetDescription().c_str(),
+                "Contents Not Specified",20) )
+        SetDescription( poChannel->GetDescription().c_str() );
 
 /* -------------------------------------------------------------------- */
 /*      Do we have overviews?                                           */
