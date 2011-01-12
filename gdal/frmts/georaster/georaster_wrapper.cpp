@@ -897,6 +897,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
     char szBindRDT[OWNAME];
     int  nBindRID = 0;
+    szBindRDT[0] = '\0';
 
     if( poConnection->GetVersion() > 10 )
     {
