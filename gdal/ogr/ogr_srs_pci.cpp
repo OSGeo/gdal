@@ -285,6 +285,12 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
+    else if( EQUALN( pszProj, "CASS ", 5 ) )
+    {
+        SetCS( padfPrjParams[3], padfPrjParams[2],
+               padfPrjParams[6], padfPrjParams[7] );
+    }
+
     else if( EQUALN( pszProj, "EC", 2 ) )
     {
         SetEC( padfPrjParams[4], padfPrjParams[5],
@@ -308,17 +314,26 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     // FIXME: GVNP --- General Vertical Near- Side Perspective skipped
 
+    // FIXME: GOOD -- our Goode's is not the interrupted version from pci
+
     else if( EQUALN( pszProj, "LAEA", 4 ) )
     {
         SetLAEA( padfPrjParams[3], padfPrjParams[2],
                  padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "LCC", 3 ) )
+    else if( EQUALN( pszProj, "LCC ", 4 ) )
     {
         SetLCC( padfPrjParams[4], padfPrjParams[5],
                 padfPrjParams[3], padfPrjParams[2],
                 padfPrjParams[6], padfPrjParams[7] );
+    }
+
+    else if( EQUALN( pszProj, "LCC_1SP ", 7 ) )
+    {
+        SetLCC1SP( padfPrjParams[3], padfPrjParams[2],
+                   padfPrjParams[8],
+                   padfPrjParams[6], padfPrjParams[7] );
     }
 
     else if( EQUALN( pszProj, "MC", 2 ) )
@@ -330,7 +345,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     else if( EQUALN( pszProj, "MER", 3 ) )
     {
         SetMercator( padfPrjParams[3], padfPrjParams[2],
-                     (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
+                     (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                      padfPrjParams[6], padfPrjParams[7] );
     }
 
@@ -340,7 +355,28 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                          padfPrjParams[6], padfPrjParams[7] );
     }
 
-    // FIXME: OM --- Oblique Mercator skipped
+    else if( EQUALN( pszProj, "OM ", 3 ) )
+    {
+        if( padfPrjParams[10] == 0.0
+            && padfPrjParams[11] == 0.0
+            && padfPrjParams[12] == 0.0
+            && padfPrjParams[13] == 0.0 )
+        {
+            SetHOM( padfPrjParams[3], padfPrjParams[2],
+                    padfPrjParams[14], 
+                    padfPrjParams[14], // use azimuth for grid angle
+                    padfPrjParams[8],
+                    padfPrjParams[6], padfPrjParams[7] );
+        }
+        else
+        {
+            SetHOM2PNO( padfPrjParams[3], 
+                        padfPrjParams[11], padfPrjParams[10],
+                        padfPrjParams[13], padfPrjParams[12],
+                        padfPrjParams[8],
+                        padfPrjParams[6], padfPrjParams[7] );
+        }
+    }
 
     else if( EQUALN( pszProj, "PC", 2 ) )
     {
@@ -351,7 +387,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     else if( EQUALN( pszProj, "PS", 2 ) )
     {
         SetPS( padfPrjParams[3], padfPrjParams[2],
-               (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
+               (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
@@ -390,6 +426,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         iZone = CPLScanLong( (char *)pszProj + 5, 4 );
 
         SetStatePlane( iZone, !bIsNAD27 );
+        SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
     }
 
     else if( EQUALN( pszProj, "SPIF", 4 ) )
@@ -417,7 +454,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     else if( EQUALN( pszProj, "TM", 2 ) )
     {
         SetTM( padfPrjParams[3], padfPrjParams[2],
-               (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
+               (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
@@ -828,6 +865,16 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
 
+    else if( EQUAL(pszProjection, SRS_PT_CASSINI_SOLDNER) )
+    {
+        CPLPrintStringFill( szProj, "CASS", 16 );
+        (*ppadfPrjParams)[2] = GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
+        (*ppadfPrjParams)[3] =
+            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
+        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    }
+
     else if( EQUAL(pszProjection, SRS_PT_EQUIDISTANT_CONIC) )
     {
         CPLPrintStringFill( szProj, "EC", 16 );
@@ -887,6 +934,17 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
 
+    else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
+    {
+        CPLPrintStringFill( szProj, "LCC_1SP", 16 );
+        (*ppadfPrjParams)[2] = GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
+        (*ppadfPrjParams)[3] =
+            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
+        (*ppadfPrjParams)[8] = GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 );
+        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    }
+
     else if( EQUAL(pszProjection, SRS_PT_MILLER_CYLINDRICAL) )
     {
         CPLPrintStringFill( szProj, "MC", 16 );
@@ -914,6 +972,31 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         (*ppadfPrjParams)[2] = GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         (*ppadfPrjParams)[3] =
             GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
+        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
+    {
+        CPLPrintStringFill( szProj, "OM", 16 );
+        (*ppadfPrjParams)[2] = GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER,0.0);
+        (*ppadfPrjParams)[3] = GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0);
+        (*ppadfPrjParams)[14] = GetNormProjParm( SRS_PP_AZIMUTH, 0.0);
+        // note we are ignoring rectified_grid_angle which has no pci analog.
+        (*ppadfPrjParams)[8] = GetNormProjParm( SRS_PP_SCALE_FACTOR, 0.0);
+        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
+    {
+        CPLPrintStringFill( szProj, "OM", 16 );
+        (*ppadfPrjParams)[3] = GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0);
+        (*ppadfPrjParams)[11] = GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0);
+        (*ppadfPrjParams)[10] = GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,0.0);
+        (*ppadfPrjParams)[13] = GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2,0.0);
+        (*ppadfPrjParams)[12] = GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,0.0);
+        (*ppadfPrjParams)[8] = GetNormProjParm( SRS_PP_SCALE_FACTOR, 0.0);
         (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
