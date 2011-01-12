@@ -3580,3 +3580,27 @@ void GDALRegister_MrSID()
     }
 #endif /* def MRSID_J2K */
 }
+
+#if defined(MRSID_USE_TIFFSYMS_WORKAROUND)
+extern "C" {
+
+/* This is not pretty but I am not sure how else to get the plugin to build
+ * against the ESDK.  ESDK symbol dependencies bring in __TIFFmemcpy and
+ * __gtiff_size, which are not exported from gdal.dll.  Rather than link these
+ * symbols from the ESDK distribution of GDAL, or link in the entire gdal.lib
+ * statically, it seemed safer and smaller to bring in just the objects that
+ * wouldsatisfy these symbols from the enclosing GDAL build.  However, doing
+ * so pulls in a few more dependencies.  /Gy and /OPT:REF did not seem to help
+ * things, so I have implemented no-op versions of these symbols since they
+ * do not actually get called.  If the MrSID ESDK ever comes to require the
+ * actual versions of these functions, we'll hope duplicate symbol errors will
+ * bring attention back to this problem.
+ */
+void TIFFClientOpen() {}
+void TIFFError() {}
+void TIFFGetField() {}
+void TIFFSetField() {}
+
+}
+#endif
+
