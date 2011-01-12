@@ -503,6 +503,8 @@ MRSID_LIB =        "$(MRSID_RASTER_DIR)\3rd-party\lib\$(MRSID_CONFIG)\xmlparse.l
 
 !ENDIF # end ESDK lib search
 
+MRSID_LIB =        $(MRSID_LIB) advapi32.lib user32.lib
+
 !ENDIF # end static raster build environment
 
 !ENDIF # end raster libs
