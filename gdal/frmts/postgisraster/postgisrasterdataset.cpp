@@ -109,7 +109,7 @@ PostGISRasterDataset::~PostGISRasterDataset() {
  * Needed before tokenize function
  *************************************************************/
 static
-char * DriverEscapeString(const char * pszInput, int nLength) {
+char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
     int i;
     char* pszOutput = NULL;
 
@@ -129,6 +129,32 @@ char * DriverEscapeString(const char * pszInput, int nLength) {
     return pszOutput;
 }
 
+
+/**************************************************************
+ * \brief Replace the quotes by single quotes in the input string
+ *
+ * Needed in the 'where' part of the input string
+ *************************************************************/
+static
+char * ReplaceQuotes(const char * pszInput, int nLength) {
+    int i;
+    char * pszOutput = NULL;
+
+    if (nLength == -1)
+        nLength = strlen(pszInput);
+
+    pszOutput = (char*) CPLCalloc(nLength + 1, sizeof (char));
+
+    for(i = 0; i < nLength; i++) {
+        if (pszInput[i] == '"')
+            pszOutput[i] = '\'';
+        else
+            pszOutput[i] = pszInput[i];
+    }
+
+    return pszOutput;
+}
+
 /*****************************************************************************
  * \brief Split connection string into user, password, host, database...
  *
@@ -143,7 +169,7 @@ char** ParseConnectionString(const char * pszConnectionString) {
     char * pszEscapedConnectionString = NULL;
 
     /* Escape string following SQL scheme */
-    pszEscapedConnectionString = DriverEscapeString(pszConnectionString, -1);
+    pszEscapedConnectionString = ReplaceSingleQuotes(pszConnectionString, -1);
 
     /* Avoid PG: part */
     char* pszStartPos = (char*) strstr(pszEscapedConnectionString, ":") + 1;
@@ -295,13 +321,17 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
  * tiles of a continuous layer are the same size, snap to the same grid and do 
  * not overlap.
  *
- * So, when we query for a raster table, we have to different cases:
+ * So, when we query for a raster table, we have 3 different cases:
  *	- If the result is only one row, we can gather the raster properties
  *	  from the returned object, regardless is a tile or a whole raster
- *	- If the result are several rows of a table, we assume all the rows
- *	  are from the same raster coverage. The rows are ordered by upper left y,
- *	  upper left x, growing way, and we can get raster size from the first
- *	  and last elements.
+ *	- If the result are several rows of a table, and the working mode is 
+ *    ONE_RASTER_PER_TABLE, we assume all the rows are from the same raster 
+ *    coverage. The rows are ordered by upper left y, upper left x, growing way, 
+ *    and we can get raster size from the first and last elements.
+ *  - If the result are several rows of a table, and the working mode is
+ *    ONE_RASTER_PER_ROW, we assume each row is a different raster object,
+ *    and is reported as a subdataset. If you want only one of the raster rows,
+ *    you must specify a where clause to restrict the number of rows returned.
  **************************************************************************/
 GBool PostGISRasterDataset::SetRasterProperties(const char* pszValidConnectionString) {
     PGresult* poResult = NULL;
@@ -666,6 +696,7 @@ GBool PostGISRasterDataset::SetRasterBands() {
  *	table = <table_name>
  *	column = <column_name>
  *	where = <SQL where>
+ *  mode = <working mode> (1 or 2)
  *
  * These pairs are used for selecting the right raster table.
  *****************************************************************************/
@@ -677,6 +708,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
     char* pszTable = NULL;
     char* pszColumn = NULL;
     char* pszWhere = NULL;
+    char* pszTmp = NULL;
     int nMode = -1;
     int nPos = -1;
     int i = 0;
@@ -724,8 +756,8 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
 
     /**************************************************************************
      * Get mode:
-     *  - 0. ONE_RASTER_PER_ROW: Each row is considered as a separate raster
-     *  - 1. ONE_RASTER_PER_TABLE: All the table rows are considered as a whole
+     *  - 1. ONE_RASTER_PER_ROW: Each row is considered as a separate raster
+     *  - 2. ONE_RASTER_PER_TABLE: All the table rows are considered as a whole
      *      raster coverage
      **************************************************************************/
     nPos = CSLFindName(papszParams, "mode");
@@ -802,7 +834,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
 
         /**
          * Case 3: There's database and table name, but no column
-         * name: Use a default table name and use the table to create the
+         * name: Use a default column name and use the table to create the
          * dataset
          **/
         nPos = CSLFindName(papszParams, "column");
@@ -837,6 +869,13 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
 
+    }
+
+    /* Parse pszWhere, if needed */
+    if (pszWhere) {
+        pszTmp = ReplaceQuotes(pszWhere, strlen(pszWhere));
+        CPLFree(pszWhere);
+        pszWhere = pszTmp;
     }
 
 
