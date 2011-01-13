@@ -333,6 +333,11 @@ class GTiffDataset : public GDALPamDataset
 
     int           bDebugDontWriteBlocks;
 
+    CPLErr        RegisterNewOverviewDataset(toff_t nOverviewOffset);
+    CPLErr        CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS);
+    CPLErr        CreateInternalMaskOverviews(int nOvrBlockXSize,
+                                              int nOvrBlockYSize);
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -3475,6 +3480,255 @@ CPLErr GTiffDataset::CleanOverviews()
     return CE_None;
 }
 
+
+/************************************************************************/
+/*                   RegisterNewOverviewDataset()                       */
+/************************************************************************/
+
+CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset)
+{
+    GTiffDataset* poODS = new GTiffDataset();
+    poODS->nJpegQuality = nJpegQuality;
+    poODS->nZLevel = nZLevel;
+    poODS->nLZMAPreset = nLZMAPreset;
+
+    if( nCompression == COMPRESSION_JPEG )
+    {
+        if ( CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ) != NULL )
+        {
+            poODS->nJpegQuality =  atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
+        }
+        TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY,
+                        poODS->nJpegQuality );
+    }
+
+    if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nOverviewOffset, FALSE,
+                            GA_Update ) != CE_None )
+    {
+        return CE_Failure;
+    }
+    else
+    {
+        nOverviewCount++;
+        papoOverviewDS = (GTiffDataset **)
+            CPLRealloc(papoOverviewDS,
+                        nOverviewCount * (sizeof(void*)));
+        papoOverviewDS[nOverviewCount-1] = poODS;
+        poODS->poBaseDS = this;
+        return CE_None;
+    }
+}
+
+/************************************************************************/
+/*                  CreateOverviewsFromSrcOverviews()                   */
+/************************************************************************/
+
+CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
+{
+    CPLAssert(poSrcDS->GetRasterCount() != 0);
+    CPLAssert(nOverviewCount == 0);
+
+/* -------------------------------------------------------------------- */
+/*      Move to the directory for this dataset.                         */
+/* -------------------------------------------------------------------- */
+    if (!SetDirectory())
+        return CE_Failure;
+    FlushDirectory();
+
+    int nOvBitsPerSample = nBitsPerSample;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a palette?  If so, create a TIFF compatible version. */
+/* -------------------------------------------------------------------- */
+    std::vector<unsigned short> anTRed, anTGreen, anTBlue;
+    unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
+
+    if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
+    {
+        int nColors;
+
+        if( nOvBitsPerSample == 8 )
+            nColors = 256;
+        else if( nOvBitsPerSample < 8 )
+            nColors = 1 << nOvBitsPerSample;
+        else
+            nColors = 65536;
+
+        anTRed.resize(nColors,0);
+        anTGreen.resize(nColors,0);
+        anTBlue.resize(nColors,0);
+
+        for( int iColor = 0; iColor < nColors; iColor++ )
+        {
+            if( iColor < poColorTable->GetColorEntryCount() )
+            {
+                GDALColorEntry  sRGB;
+
+                poColorTable->GetColorEntryAsRGB( iColor, &sRGB );
+
+                anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
+                anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+                anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+            }
+            else
+            {
+                anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+            }
+        }
+
+        panRed = &(anTRed[0]);
+        panGreen = &(anTGreen[0]);
+        panBlue = &(anTBlue[0]);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we need some metadata for the overviews?                     */
+/* -------------------------------------------------------------------- */
+    CPLString osMetadata;
+
+    GTIFFBuildOverviewMetadata( "NONE", this, osMetadata );
+
+/* -------------------------------------------------------------------- */
+/*      Fetch extra sample tag                                          */
+/* -------------------------------------------------------------------- */
+    uint16 *panExtraSampleValues = NULL;
+    uint16 nExtraSamples = 0;
+
+    if( TIFFGetField( hTIFF, TIFFTAG_EXTRASAMPLES, &nExtraSamples, &panExtraSampleValues) )
+    {
+        uint16* panExtraSampleValuesNew = (uint16*) CPLMalloc(nExtraSamples * sizeof(uint16));
+        memcpy(panExtraSampleValuesNew, panExtraSampleValues, nExtraSamples * sizeof(uint16));
+        panExtraSampleValues = panExtraSampleValuesNew;
+    }
+    else
+    {
+        panExtraSampleValues = NULL;
+        nExtraSamples = 0;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch predictor tag                                             */
+/* -------------------------------------------------------------------- */
+    uint16 nPredictor = PREDICTOR_NONE;
+    if ( nCompression == COMPRESSION_LZW ||
+         nCompression == COMPRESSION_ADOBE_DEFLATE )
+        TIFFGetField( hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
+    int nOvrBlockXSize, nOvrBlockYSize;
+    GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
+
+    int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+    int i;
+    CPLErr eErr = CE_None;
+
+    for(i=0;i<nSrcOverviews && eErr == CE_None;i++)
+    {
+        GDALRasterBand* poOvrBand = poSrcDS->GetRasterBand(1)->GetOverview(i);
+
+        int         nOXSize = poOvrBand->GetXSize(), nOYSize = poOvrBand->GetYSize();
+
+        toff_t nOverviewOffset =
+                GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE,
+                                    nOXSize, nOYSize,
+                                    nOvBitsPerSample, nPlanarConfig,
+                                    nSamplesPerPixel, nOvrBlockXSize, nOvrBlockYSize, TRUE,
+                                    nCompression, nPhotometric, nSampleFormat,
+                                    nPredictor,
+                                    panRed, panGreen, panBlue,
+                                    nExtraSamples, panExtraSampleValues,
+                                    osMetadata );
+
+        if( nOverviewOffset == 0 )
+            eErr = CE_Failure;
+        else
+            eErr = RegisterNewOverviewDataset(nOverviewOffset);
+    }
+
+    CPLFree(panExtraSampleValues);
+    panExtraSampleValues = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create overviews for the mask.                                  */
+/* -------------------------------------------------------------------- */
+    if (eErr == CE_None)
+        eErr = CreateInternalMaskOverviews(nOvrBlockXSize, nOvrBlockYSize);
+
+    return eErr;
+}
+
+
+/************************************************************************/
+/*                       CreateInternalMaskOverviews()                  */
+/************************************************************************/
+
+CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
+                                                 int nOvrBlockYSize)
+{
+    GTiffDataset *poODS;
+/* -------------------------------------------------------------------- */
+/*      Create overviews for the mask.                                  */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
+
+    if (poMaskDS != NULL &&
+        poMaskDS->GetRasterCount() == 1 &&
+        CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
+    {
+        int nMaskOvrCompression;
+        if( strstr(GDALGetMetadataItem(GDALGetDriverByName( "GTiff" ),
+                                       GDAL_DMD_CREATIONOPTIONLIST, NULL ),
+                   "<Value>DEFLATE</Value>") != NULL )
+            nMaskOvrCompression = COMPRESSION_ADOBE_DEFLATE;
+        else
+            nMaskOvrCompression = COMPRESSION_PACKBITS;
+
+        int i;
+        for( i = 0; i < nOverviewCount; i++ )
+        {
+            if (papoOverviewDS[i]->poMaskDS == NULL)
+            {
+                toff_t  nOverviewOffset;
+
+                nOverviewOffset =
+                    GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK,
+                                        papoOverviewDS[i]->nRasterXSize, papoOverviewDS[i]->nRasterYSize,
+                                        1, PLANARCONFIG_CONTIG,
+                                        1, nOvrBlockXSize, nOvrBlockYSize, TRUE,
+                                        nMaskOvrCompression, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, PREDICTOR_NONE,
+                                        NULL, NULL, NULL, 0, NULL,
+                                        "" );
+
+                if( nOverviewOffset == 0 )
+                {
+                    eErr = CE_Failure;
+                    continue;
+                }
+
+                poODS = new GTiffDataset();
+                if( poODS->OpenOffset( hTIFF, ppoActiveDSRef,
+                                       nOverviewOffset, FALSE,
+                                       GA_Update ) != CE_None )
+                {
+                    delete poODS;
+                    eErr = CE_Failure;
+                }
+                else
+                {
+                    poODS->bPromoteTo8Bits = CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
+                    poODS->poBaseDS = this;
+                    papoOverviewDS[i]->poMaskDS = poODS;
+                    poMaskDS->nOverviewCount++;
+                    poMaskDS->papoOverviewDS = (GTiffDataset **)
+                    CPLRealloc(poMaskDS->papoOverviewDS,
+                               poMaskDS->nOverviewCount * (sizeof(void*)));
+                    poMaskDS->papoOverviewDS[poMaskDS->nOverviewCount-1] = poODS;
+                }
+            }
+        }
+    }
+
+    return eErr;
+}
+
 /************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
@@ -3657,7 +3911,7 @@ CPLErr GTiffDataset::IBuildOverviews(
     {
         int   j;
 
-        for( j = 0; j < nOverviewCount; j++ )
+        for( j = 0; j < nOverviewCount && eErr == CE_None; j++ )
         {
             int    nOvFactor;
 
@@ -3693,42 +3947,11 @@ CPLErr GTiffDataset::IBuildOverviews(
                                     nExtraSamples, panExtraSampleValues,
                                     osMetadata );
 
+
             if( nOverviewOffset == 0 )
-            {
                 eErr = CE_Failure;
-                continue;
-            }
-
-            poODS = new GTiffDataset();
-            poODS->nJpegQuality = nJpegQuality;
-            poODS->nZLevel = nZLevel;
-            poODS->nLZMAPreset = nLZMAPreset;
-
-            if( nCompression == COMPRESSION_JPEG )
-            {
-                if ( CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ) != NULL )
-                {
-                    poODS->nJpegQuality =  atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
-                }
-                TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY,
-                               poODS->nJpegQuality );
-            }
-    
-            if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nOverviewOffset, FALSE,
-                                   GA_Update ) != CE_None )
-            {
-                delete poODS;
-                eErr = CE_Failure;
-            }
             else
-            {
-                nOverviewCount++;
-                papoOverviewDS = (GTiffDataset **)
-                    CPLRealloc(papoOverviewDS, 
-                               nOverviewCount * (sizeof(void*)));
-                papoOverviewDS[nOverviewCount-1] = poODS;
-                poODS->poBaseDS = this;
-            }
+                eErr = RegisterNewOverviewDataset(nOverviewOffset);
         }
         else
             panOverviewList[i] *= -1;
@@ -3740,62 +3963,10 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
 /*      Create overviews for the mask.                                  */
 /* -------------------------------------------------------------------- */
-
-    if (poMaskDS != NULL &&
-        poMaskDS->GetRasterCount() == 1 &&
-        CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
-    {
-        int nMaskOvrCompression;
-        if( strstr(GDALGetMetadataItem(GDALGetDriverByName( "GTiff" ),
-                                       GDAL_DMD_CREATIONOPTIONLIST, NULL ),
-                   "<Value>DEFLATE</Value>") != NULL )
-            nMaskOvrCompression = COMPRESSION_ADOBE_DEFLATE;
-        else
-            nMaskOvrCompression = COMPRESSION_PACKBITS;
-
-        for( i = 0; i < nOverviewCount; i++ )
-        {
-            if (papoOverviewDS[i]->poMaskDS == NULL)
-            {
-                toff_t	nOverviewOffset;
-
-                nOverviewOffset = 
-                    GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK,
-                                        papoOverviewDS[i]->nRasterXSize, papoOverviewDS[i]->nRasterYSize, 
-                                        1, PLANARCONFIG_CONTIG,
-                                        1, nOvrBlockXSize, nOvrBlockYSize, TRUE,
-                                        nMaskOvrCompression, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, PREDICTOR_NONE,
-                                        NULL, NULL, NULL, 0, NULL,
-                                        "" );
-
-                if( nOverviewOffset == 0 )
-                {
-                    eErr = CE_Failure;
-                    continue;
-                }
-
-                poODS = new GTiffDataset();
-                if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, 
-                                       nOverviewOffset, FALSE, 
-                                       GA_Update ) != CE_None )
-                {
-                    delete poODS;
-                    eErr = CE_Failure;
-                }
-                else
-                {
-                    poODS->bPromoteTo8Bits = CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
-                    poODS->poBaseDS = this;
-                    papoOverviewDS[i]->poMaskDS = poODS;
-                    poMaskDS->nOverviewCount++;
-                    poMaskDS->papoOverviewDS = (GTiffDataset **)
-                    CPLRealloc(poMaskDS->papoOverviewDS, 
-                               poMaskDS->nOverviewCount * (sizeof(void*)));
-                    poMaskDS->papoOverviewDS[poMaskDS->nOverviewCount-1] = poODS;
-                }
-            }
-        }
-    }
+    if (eErr == CE_None)
+        eErr = CreateInternalMaskOverviews(nOvrBlockXSize, nOvrBlockYSize);
+    else
+        return eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Refresh overviews for the mask                                  */
@@ -7578,52 +7749,22 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         nSrcOverviews != 0 &&
         CSLFetchBoolean(papszOptions, "COPY_SRC_OVERVIEWS", FALSE))
     {
-        int* panOverviewList = (int*)CPLMalloc(sizeof(int) * nSrcOverviews);
-        int* panBandList =  (int*)CPLMalloc(sizeof(int) * poDS->nBands);
-        int i;
-        for(i=0;i<nSrcOverviews;i++)
-        {
-            GDALRasterBand* poOvrBand = poSrcDS->GetRasterBand(1)->GetOverview(i);
-            panOverviewList[i] = (int)( 0.5 + nXSize / (double)poOvrBand->GetXSize());
-            int k;
-            /* Adjust the overview level so that it can produce the expected overview */
-            /* size */
-            for(k=-1;k<=1;k++)
-            {
-                int nOvrLevel = panOverviewList[i] + k;
-                if (nOvrLevel <= 0)
-                    continue;
-                int nOXSize = (nXSize + nOvrLevel - 1) / nOvrLevel;
-                int nOYSize = (nYSize + nOvrLevel - 1) / nOvrLevel;
-                if (nOXSize == poOvrBand->GetXSize() &&
-                    nOYSize == poOvrBand->GetYSize())
-                {
-                    panOverviewList[i] += k;
-                    break;
-                }
-            }
-                
-            dfTotalPixels += ((double)poOvrBand->GetXSize()) *
-                                      poOvrBand->GetYSize();
-        }
-        for(i=0;i<poDS->nBands;i++)
-        {
-            panBandList[i] = i + 1;
-        }
-        
-        /* Create the IFDs for the overviews (and potentially the overviews */
-        /* of the mask too) */
-        poDS->IBuildOverviews("NONE",
-                              nSrcOverviews, panOverviewList,
-                              poDS->nBands, panBandList,
-                              GDALDummyProgress, NULL);
-                              
+        eErr = poDS->CreateOverviewsFromSrcOverviews(poSrcDS);
+
         if (poDS->nOverviewCount != nSrcOverviews)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Did only manage to instanciate %d overview levels, whereas source contains %d",
                      poDS->nOverviewCount, nSrcOverviews);
             eErr = CE_Failure;
+        }
+
+        int i;
+        for(i=0;i<nSrcOverviews;i++)
+        {
+            GDALRasterBand* poOvrBand = poSrcDS->GetRasterBand(1)->GetOverview(i);
+            dfTotalPixels += ((double)poOvrBand->GetXSize()) *
+                                      poOvrBand->GetYSize();
         }
 
         char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
@@ -7669,9 +7810,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 poDS->papoOverviewDS[iOvrLevel]->poMaskDS->FlushCache();
             }
         }
-
-        CPLFree(panOverviewList);
-        CPLFree(panBandList);
     }
 
 /* -------------------------------------------------------------------- */
