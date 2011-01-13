@@ -3752,6 +3752,13 @@ CPLErr HFADataset::Rename( const char *pszNewName, const char *pszOldName )
         if( hHFA != NULL )
         {
             eErr = HFARenameReferences( hHFA, osNewBasename, osOldBasename );
+
+            HFAGetOverviewCount( hHFA, 1 );
+
+            if( hHFA->psDependent != NULL )
+                HFARenameReferences( hHFA->psDependent, 
+                                     osNewBasename, osOldBasename );
+
             HFAClose( hHFA );
         }
     }
@@ -3795,6 +3802,13 @@ CPLErr HFADataset::CopyFiles( const char *pszNewName, const char *pszOldName )
         if( hHFA != NULL )
         {
             eErr = HFARenameReferences( hHFA, osNewBasename, osOldBasename );
+
+            HFAGetOverviewCount( hHFA, 1 );
+
+            if( hHFA->psDependent != NULL )
+                HFARenameReferences( hHFA->psDependent, 
+                                     osNewBasename, osOldBasename );
+
             HFAClose( hHFA );
         }
     }
