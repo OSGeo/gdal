@@ -266,6 +266,7 @@ GTiff driver :
  * auto-promote mask band to full 8 bits by default (unless
    GDAL_TIFF_INTERNAL_MASK_TO_8BIT is set TO FALSE).
  * add LZMA compression optionnal support (requires latest libtiff4 CVS HEAD)
+ * Supporting writing compound coordinate systems.
 
 GTX driver:
  * New for GDAL/OGR 1.8.0
@@ -315,6 +316,7 @@ HFA driver:
    use for overviews (#3570)
  * Add support for New Zealand Map Grid to HFA driver (#3613)
  * Support EPT_s8 in BASEDATA (#3819)
+ * Substantial improvements for Rename/CopyFiles (#3897)
 
 Idrisi driver:
  * Allow color items greater than maximum value (#3605)
@@ -414,6 +416,7 @@ PCIDSK2 driver:
  * Support for reading/writing complex PCIDSK files through libpcidsk
  * Support worldfile if lacking internal georef (#3544)
  * Fix locking state at CPLThreadMutex creation (#3755)
+ * Improved projection support. 
 
 PDF driver:
  * New for GDAL/OGR 1.8.0
