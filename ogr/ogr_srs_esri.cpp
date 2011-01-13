@@ -98,6 +98,12 @@ static const char *apszDefaultDatumMapping[] = {
     "6269", "North_American_1983", SRS_DN_NAD83,
     NULL, NULL, NULL }; 
 
+static const char *apszSpheroidMapping[] = {
+    "WGS_84", "WGS_1984",
+    "WGS_72", "WGS_1972",
+    "GRS_1967_Modified", "GRS_1967_Truncated",
+    NULL, NULL }; 
+ 
 static const char *apszUnitMapping[] = {
     "Meter", "meter",
     "Meter", "metre",
@@ -260,23 +266,6 @@ static const int anUsgsEsriZones[] =
 };
 
 void OGREPSGDatumNameMassage( char ** ppszDatum );
-
-/************************************************************************/
-/*                           RemapSpheroidName()                        */
-/*                                                                      */
-/*      Convert Spheroid name to ESRI style name                        */
-/************************************************************************/
-
-static const char* RemapSpheroidName(const char* pszName)
-{
-  if (strcmp(pszName, "WGS 84") == 0)
-    return "WGS 1984";
-
-  if (strcmp(pszName, "WGS 72") == 0)
-    return "WGS 1972";
-
-  return pszName;
-}
 
 /************************************************************************/
 /*                           ESRIToUSGSZone()                           */
@@ -1250,12 +1239,17 @@ OGRErr OGRSpatialReference::morphToESRI()
 
     if( poSpheroidChild != NULL )
     {
-        char *pszNewValue = CPLStrdup(RemapSpheroidName(poSpheroidChild->GetValue()));
+//        char *pszNewValue = CPLStrdup(RemapSpheroidName(poSpheroidChild->GetValue()));
+        char *pszNewValue = CPLStrdup(poSpheroidChild->GetValue());
 
         MorphNameToESRI( &pszNewValue );
 
         poSpheroidChild->SetValue( pszNewValue );
         CPLFree( pszNewValue );
+
+        GetRoot()->applyRemapper( "SPHEROID", 
+                                  (char **) apszSpheroidMapping+0,
+                                  (char **) apszSpheroidMapping+1, 2 );
     }
 
     if( poSpheroid != NULL )
@@ -1441,6 +1435,13 @@ OGRErr OGRSpatialReference::morphFromESRI()
             CPLFree( pszNewValue );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Translate some SPHEROID keywords that are oddly named.          */
+/* -------------------------------------------------------------------- */
+    GetRoot()->applyRemapper( "SPHEROID", 
+                              (char **)apszSpheroidMapping+1,
+                              (char **)apszSpheroidMapping+0, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Split Lambert_Conformal_Conic into 1SP or 2SP form.             */
