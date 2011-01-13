@@ -1130,6 +1130,94 @@ def hfa_camera_md():
     ds = None
     return 'success'
    
+###############################################################################
+# Check that overviews with an .rde file are properly supported in file list,
+# and fetching actual overviews.
+
+def hfa_rde_overviews():
+
+    # Create an imagine file, forcing creation of an .ige file.
+
+    ds = gdal.Open( 'data/spill.img' )
+
+    exp_cs = 1631
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if exp_cs != cs:
+        print( cs )
+        gdaltest.post_reason( 'did not get expected band checksum' )
+        return 'fail'
+
+    exp_cs = 340
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    
+    if exp_cs != cs:
+        print( cs )
+        gdaltest.post_reason( 'did not get expected overview checksum' )
+        return 'fail'
+
+    filelist = ds.GetFileList()
+    exp_filelist = ['data/spill.img', 'data/spill.ige', 'data/spill.rrd', 'data/spill.rde']
+    if filelist != exp_filelist:
+        print( filelist )
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    ds = None
+    
+    return 'success'
+ 
+###############################################################################
+# Check that we can copy a complex file set, and that the internal filenames
+# in the .img and .rrd seem to be updated properly.
+
+def hfa_copyfiles():
+
+    drv = gdal.GetDriverByName( 'HFA' )
+    drv.CopyFiles( 'tmp/newnamexxx.img', 'data/spill.img' )
+
+    ds = gdal.Open( 'tmp/newnamexxx.img' )
+    
+    exp_cs = 340
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    
+    if exp_cs != cs:
+        print( cs )
+        gdaltest.post_reason( 'did not get expected overview checksum' )
+        return 'fail'
+
+    filelist = ds.GetFileList()
+    exp_filelist = ['tmp/newnamexxx.img', 'tmp/newnamexxx.ige', 'tmp/newnamexxx.rrd', 'tmp/newnamexxx.rde']
+    if filelist != exp_filelist:
+        print( filelist )
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    ds = None
+
+    # Check that the filenames in the actual files seem to have been updated.
+    img = open('tmp/newnamexxx.img').read()
+    if img.find('newnamexxx.rrd') == -1:
+        gdaltest.post_reason( 'RRDNames not updated?' )
+        return 'fail'
+
+    if img.find('newnamexxx.ige') == -1:
+        gdaltest.post_reason( 'spill file not updated?' )
+        return 'fail'
+
+    rrd = open('tmp/newnamexxx.rrd').read()
+    if rrd.find('newnamexxx.img') == -1:
+        gdaltest.post_reason( 'DependentFile not updated?' )
+        return 'fail'
+
+    if rrd.find('newnamexxx.rde') == -1:
+        gdaltest.post_reason( 'overview spill file not updated?' )
+        return 'fail'
+
+    drv.Delete( 'tmp/newnamexxx.img' )
+
+    return 'success'
+
 
 ###############################################################################
 #
@@ -1167,7 +1255,9 @@ gdaltest_list = [
     hfa_ov_nodata,
     hfa_read_bit2grayscale,
     hfa_write_bit2grayscale,
-    hfa_camera_md ]
+    hfa_camera_md,
+    hfa_rde_overviews,
+    hfa_copyfiles ]
 
 if __name__ == '__main__':
 
