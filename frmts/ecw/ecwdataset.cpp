@@ -1679,6 +1679,18 @@ void ECWInitialize()
 /* -------------------------------------------------------------------- */
 /*      Various other configuration items.                              */
 /* -------------------------------------------------------------------- */
+    pszOpt = CPLGetConfigOption( "ECWP_BLOCKING_TIME_MS", NULL );
+    if( pszOpt )
+        NCSecwSetConfig( NCSCFG_BLOCKING_TIME_MS, 
+                         (NCSTimeStampMs) atoi(pszOpt) );
+
+    // I believe 10s means we wait for complete data back from
+    // ECWP almost all the time which is good for our blocking model.
+    pszOpt = CPLGetConfigOption( "ECWP_REFRESH_TIME_MS", "10000" );
+    if( pszOpt )
+        NCSecwSetConfig( NCSCFG_REFRESH_TIME_MS, 
+                         (NCSTimeStampMs) atoi(pszOpt) );
+
     pszOpt = CPLGetConfigOption( "ECW_TEXTURE_DITHER", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_TEXTURE_DITHER, 
