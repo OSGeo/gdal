@@ -82,8 +82,8 @@ Process :
 
  ie. On www.gdal.org:
  % cd /osgeo/gdal
- % ./gdalhtmlupdate.sh
- % zip -r /osgeo/download/gdal/gdal150doc.zip gdal-web/*.* gdal-web/ogr
+ % ./gdal-web-refresh.sh
+ % zip -r gdal180doc.zip gdal-web/*.* gdal-web/ogr gdal-web/java 
 
 11) Create a snapshot of autotest suite:
 
