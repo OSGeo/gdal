@@ -105,6 +105,10 @@ public:
     return GDALRenameDataset( self, newName, oldName );
   }
 
+  int CopyFiles( const char *newName, const char *oldName ) {
+    return GDALCopyDatasetFiles( self, newName, oldName );
+  }
+
   int Register() {
     return GDALRegisterDriver( self );
   }
