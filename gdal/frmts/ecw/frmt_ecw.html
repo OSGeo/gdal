@@ -88,6 +88,15 @@ ECWP results.  If unset ECWP caching will not be enabled.<p>
 number of megabytes of space in the ECWP_CACHE_LOCATION to be used for 
 caching ECWP results.<p>
 
+<li> <b>ECWP_BLOCKING_TIME_MS</b>: time an ecwp:// blocking read will wait
+before returning - default 10000 ms.<p>
+
+<li> <b>ECWP_REFRESH_TIME_MS</b>: time delay between blocks arriving and the 
+next refresh callback - default 10000 ms.  For the purposes of GDAL this is
+the amount of time the driver will wait for more data on an ecwp connection 
+for which the final result has not yet been returned.  If set small then 
+RasterIO() requests will often produce low resolution results.<p>
+
 <li> <b>ECW_TEXTURE_DITHER=TRUE/FALSE</b>: This may be set to FALSE to disable
 dithering when decompressing ECW files.  Defaults to TRUE.<p>
 
@@ -106,7 +115,6 @@ in an error.<p>
 <li> <b>ECW_ENCODE_KEY, ECW_ENCODE_COMPANY</b>: These values, as described
 in the creation options, may also be set as configuration options. See above.
 <p>
-
 
 </ul>
 
