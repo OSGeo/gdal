@@ -409,10 +409,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
 /*      Open raw data file.                                             */
 /* -------------------------------------------------------------------- */
-    const char *pszRawFilename = poDMS->GetStringField( "fileName.string" );
-    const char *pszFullFilename;
-
-    pszFullFilename = CPLFormFilename( psInfo->pszPath, pszRawFilename, NULL );
+    const char *pszFullFilename = HFAGetIGEFilename( psInfo );
 
     if( psInfo->eAccess == HFA_ReadOnly )
 	fpExternal = VSIFOpenL( pszFullFilename, "rb" );

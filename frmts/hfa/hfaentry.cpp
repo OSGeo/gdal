@@ -567,6 +567,43 @@ void HFAEntry::DumpFieldValues( FILE * fp, const char * pszPrefix )
 }
 
 /************************************************************************/
+/*                            FindChildren()                            */
+/*                                                                      */
+/*      Find all the children of the current node that match the        */
+/*      name and type provided.  Either may be NULL if it is not a      */
+/*      factor.  The pszName should be just the node name, not a        */
+/*      path.                                                           */
+/************************************************************************/
+
+std::vector<HFAEntry*> HFAEntry::FindChildren( const char *pszName,
+                                               const char *pszType )
+
+{
+    std::vector<HFAEntry*> apoChildren;
+    HFAEntry *poEntry;
+
+    if( this == NULL )
+        return apoChildren;
+    
+    for( poEntry = GetChild(); poEntry != NULL; poEntry = poEntry->GetNext() )
+    {
+        std::vector<HFAEntry*> apoEntryChildren;
+        size_t i;
+
+        if( (pszName == NULL || EQUAL(poEntry->GetName(),pszName))
+            && (pszType == NULL || EQUAL(poEntry->GetType(),pszType)) )
+            apoChildren.push_back( poEntry );
+
+        apoEntryChildren = poEntry->FindChildren( pszName, pszType );
+
+        for( i = 0; i < apoEntryChildren.size(); i++ )
+            apoChildren.push_back( apoEntryChildren[i] );
+    }
+
+    return apoChildren;
+}
+
+/************************************************************************/
 /*                           GetNamedChild()                            */
 /************************************************************************/
 
