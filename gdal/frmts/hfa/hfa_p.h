@@ -35,6 +35,7 @@
 #include "cpl_port.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
+#include <vector>
 
 #ifdef CPL_LSB
 #  define HFAStandard(n,p)	{}
@@ -271,6 +272,8 @@ public:
     HFAEntry	*GetChild();
     HFAEntry	*GetNext();
     HFAEntry    *GetNamedChild( const char * );
+    std::vector<HFAEntry*> FindChildren( const char *pszName, 
+                                         const char *pszType );
 
     GInt32	GetIntField( const char *, CPLErr * = NULL );
     double	GetDoubleField( const char *, CPLErr * = NULL );

@@ -2863,35 +2863,54 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 const char *HFAGetIGEFilename( HFAHandle hHFA )
 
 {
-    HFAEntry    *poDMS = NULL;
-    HFAEntry    *poLayer = NULL;
-    HFAEntry    *poNode = NULL;
-
     if( hHFA->pszIGEFilename == NULL )
     {
-        poNode = hHFA->poRoot->GetChild();
-        while( ( poNode != NULL ) && ( poLayer == NULL ) )
-        {
-            if( EQUAL(poNode->GetType(),"Eimg_Layer") )
-            {
-                poLayer = poNode;
-            }
-            poNode = poNode->GetNext();
-        }
+        HFAEntry    *poDMS = NULL;
+        std::vector<HFAEntry*> apoDMSList = 
+            hHFA->poRoot->FindChildren( NULL, "ImgExternalRaster" );
+
+        if( apoDMSList.size() > 0 )
+            poDMS = apoDMSList[0];
         
-        if( poLayer != NULL )
-            poDMS = poLayer->GetNamedChild( "ExternalRasterDMS" );
-        
-        if ( poDMS )
+/* -------------------------------------------------------------------- */
+/*      Get the IGE filename from if we have an ExternalRasterDMS       */
+/* -------------------------------------------------------------------- */
+        if( poDMS )
         {
             const char *pszRawFilename =
                 poDMS->GetStringField( "fileName.string" );
             
             if( pszRawFilename != NULL )
-                hHFA->pszIGEFilename = CPLStrdup( pszRawFilename );
+            {
+                VSIStatBufL sStatBuf;
+                CPLString osFullFilename = 
+                    CPLFormFilename( hHFA->pszPath, pszRawFilename, NULL );
+
+                if( VSIStatL( osFullFilename, &sStatBuf ) != 0 )
+                {
+                    CPLString osExtension = CPLGetExtension(pszRawFilename);
+                    CPLString osBasename = CPLGetBasename(hHFA->pszFilename);
+                    CPLString osFullFilename = 
+                        CPLFormFilename( hHFA->pszPath, osBasename, 
+                                         osExtension );
+
+                    if( VSIStatL( osFullFilename, &sStatBuf ) == 0 )
+                        hHFA->pszIGEFilename = 
+                            CPLStrdup(
+                                CPLFormFilename( NULL, osBasename, 
+                                                 osExtension ) );
+                    else
+                        hHFA->pszIGEFilename = CPLStrdup( pszRawFilename );
+                }
+                else
+                    hHFA->pszIGEFilename = CPLStrdup( pszRawFilename );
+            }
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Return the full filename.                                       */
+/* -------------------------------------------------------------------- */
     if( hHFA->pszIGEFilename )
         return CPLFormFilename( hHFA->pszPath, hHFA->pszIGEFilename, NULL );
     else
@@ -3699,19 +3718,17 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
                             const char *pszOldBase )
 
 {
-    int iBand;
-
 /* -------------------------------------------------------------------- */
 /*      Handle RRDNamesList updates.                                    */
 /* -------------------------------------------------------------------- */
-    for( iBand = 0; iBand < hHFA->nBands; iBand++ )
-    {
-        HFAEntry *poBandNode = hHFA->papoBand[iBand]->poNode;
-        HFAEntry *poRRDNL = poBandNode->GetNamedChild( "RRDNamesList" );
-        std::vector<CPLString> aosNL;
+    size_t iNode;
+    std::vector<HFAEntry*> apoNodeList = 
+        hHFA->poRoot->FindChildren( "RRDNamesList", NULL );
 
-        if( poRRDNL == NULL )
-            continue;
+    for( iNode = 0; iNode < apoNodeList.size(); iNode++ )
+    {
+        HFAEntry *poRRDNL = apoNodeList[iNode];
+        std::vector<CPLString> aosNL;
 
         // Collect all the existing names.
         int i, nNameCount = poRRDNL->GetFieldCount( "nameList" );
@@ -3755,10 +3772,12 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
 /* -------------------------------------------------------------------- */
 /*      spill file references.                                          */
 /* -------------------------------------------------------------------- */
-    for( iBand = 0; iBand < hHFA->nBands; iBand++ )
+    apoNodeList =
+        hHFA->poRoot->FindChildren( "ExternalRasterDMS", "ImgExternalRaster" );
+
+    for( iNode = 0; iNode < apoNodeList.size(); iNode++ )
     {
-        HFAEntry *poBandNode = hHFA->papoBand[iBand]->poNode;
-        HFAEntry *poERDMS = poBandNode->GetNamedChild( "ExternalRasterDMS" );
+        HFAEntry *poERDMS = apoNodeList[iNode];
 
         if( poERDMS == NULL )
             continue;
@@ -3812,6 +3831,37 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
         poERDMS->SetIntField( "layerStackCount", nStackCount );
         poERDMS->SetIntField( "layerStackIndex", nStackIndex );
     }
+
+/* -------------------------------------------------------------------- */
+/*      DependentFile                                                   */
+/* -------------------------------------------------------------------- */
+    apoNodeList =
+        hHFA->poRoot->FindChildren( "DependentFile", "Eimg_DependentFile" );
+
+    for( iNode = 0; iNode < apoNodeList.size(); iNode++ )
+    {
+        CPLString osFileName = apoNodeList[iNode]->
+            GetStringField("dependent.string");
+
+        // Grow the node if needed.
+        if( strlen(pszNewBase) > strlen(pszOldBase) )
+        {
+            CPLDebug( "HFA", "Growing DependentFile to hold new names" );
+            apoNodeList[iNode]->MakeData( apoNodeList[iNode]->GetDataSize() 
+                                          + (strlen(pszNewBase) 
+                                             - strlen(pszOldBase)) );
+        }
+
+        // Update the filename. 
+        if( strncmp(osFileName,pszOldBase,strlen(pszOldBase)) == 0 )
+        {
+            CPLString osNew = pszNewBase;
+            osNew += osFileName.c_str() + strlen(pszOldBase);
+            osFileName = osNew;
+        }
+
+        apoNodeList[iNode]->SetStringField( "dependent.string", osFileName );
+    }        
 
     return CE_None;
 }
