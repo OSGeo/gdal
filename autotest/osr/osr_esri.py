@@ -597,6 +597,37 @@ def osr_esri_18():
     return 'success'
 
 ###############################################################################
+# Test spheroid remaping (per #3904)
+
+def osr_esri_19():
+    
+    original = """GEOGCS["GCS_South_American_1969",DATUM["D_South_American_1969",SPHEROID["GRS_1967_Truncated",6378160.0,298.25]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]"""
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( original )
+
+    srs.MorphFromESRI()
+
+    expected = 'GRS_1967_Modified'
+    if srs.GetAttrValue( 'SPHEROID' ) != expected:
+        print('')
+        print('Got:      ', srs.ExportToPrettyWkt())
+        gdaltest.post_reason( 'Did not get expected spheroid name after morphFromESRI' )
+        return 'fail'
+
+    srs.MorphToESRI()
+    
+    expected = 'GRS_1967_Truncated'
+    if srs.GetAttrValue( 'SPHEROID' ) != expected:
+        print('')
+        print('Got:      ', srs.ExportToPrettyWkt())
+        gdaltest.post_reason( 'Did not get expected spheroid name after morphToESRI' )
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_esri_1,
@@ -617,6 +648,7 @@ gdaltest_list = [
     osr_esri_16,
     osr_esri_17,
     osr_esri_18,
+    osr_esri_19,
     None ]
 
 if __name__ == '__main__':
