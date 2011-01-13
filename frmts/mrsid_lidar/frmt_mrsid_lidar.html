@@ -11,13 +11,14 @@
 <h1>MrSID/MG4 LiDAR Compression / Point Cloud View files</h1>
 
 <p>This driver provides a way to view MrSID/MG4 compressed LiDAR file as a
-raster DEM.The specifics of the conversion depend on the desired cellsize,
+raster DEM. The specifics of the conversion depend on the desired cellsize,
 filter criteria, aggregation methods and possibly several other parameters.
-For this reason, <b>the driver will not read an MG4 file directly.  Instead
-it will read an (xml-based) View file which references the MG4 file and
-parameterizes the raster-conversion.</b>  The contents of the View file are
-described in the separate specification for "MrSID/MG4 LiDAR View Documents",
-a copy of which is included with the driver source distribution.</p>
+For this reason, <b>the best way to read a MrSID/MG4 compressed LiDAR file
+is by referencing it in a View (.view) file, which also parameterizes its
+raster-conversion.  The driver will read an MG4 file directly, however it
+uses default rasterization parameters that may not produce a desirable
+output.</b>  The contents of the View file are described in the specification
+<a href="view_point_cloud.html">MrSID/MG4 LiDAR View Documents</a>.</p>
 
 <p>MrSID/MG4 is a wavelet-based point-cloud compression technology. You may
 think of it like a LAS file, only smaller and with a built in spatial index.
@@ -38,7 +39,7 @@ any bands explicitly, we get the default, which is elevation only.  By default,
 we aggregate based on mean.  That is, if two (or more) points land on a single
 cell, we will expose the average of the two.  There's no filtering here so
 we'll get all the points regardless of classification code or return number.
-Since the native datatype  of elevation is "Float64", that is the datatype of
+Since the native datatype of elevation is "Float64", that is the datatype of
 the band we will expose.</p>
 
 <pre>
@@ -126,17 +127,18 @@ a .view file like this to expose that data.</p>
 file.</p>
 
 <p>The only <i>&lt;InterpolationMethod&gt;</i> that is supported is
-<i>&lt;None&gt;</i> (default).  Use this to specify a NODATA value if the default
-(maximum value of the datatype) is not what you want. See View Specification for
-details.</p>
+<i>&lt;None&gt;</i> (default).  Use this to specify a NODATA value if the
+default (maximum value of the datatype) is not what you want. See View
+Specification for details.</p>
 
-<p>There is insufficient error checking for format errors and invalid parameters.
-Many invalid entries will likely fail silently.</p>
+<p>There is insufficient error checking for format errors and invalid
+parameters.  Many invalid entries will likely fail silently.</p>
 
 <h2>See Also:</h2>
 
 <ul>
  <li>Implemented as <i>gdal/frmts/mrsid_lidar/gdal_MG4Lidar.cpp</i></li>
+ <li><a href="view_point_cloud.html">MrSID/MG4 LiDAR View Document Specification</a></li>
  <li><a href="http://www.lizardtech.com">LizardTech's Web site</a></li>
 </ul>
 
