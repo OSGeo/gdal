@@ -1939,7 +1939,7 @@ def ogr_shape_47():
 
     ds = ogr.Open('tmp/poly.zip')
     if ds is None:
-        os.remove('tmp/poly.zip')
+        gdaltest.post_reason( 'tmp/polyzip symlink does not open.' )
         return 'fail'
     ds = None
 
