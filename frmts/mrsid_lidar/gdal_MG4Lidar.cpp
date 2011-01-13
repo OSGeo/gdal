@@ -36,6 +36,7 @@
 ****************************************************************************/
 #include "lidar/MG4PointReader.h"
 #include "lidar/Error.h"
+#include "lidar/Version.h"
 #include <float.h>
 LT_USE_LIDAR_NAMESPACE
 
@@ -689,17 +690,40 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    CPLSetConfigOption( "CPL_DEBUG", "ON" );
    CPLSetConfigOption( "CPL_LOG", "C:\\ArcGIS_GDAL\\jdem\\cpl.log" );
 #endif
-   if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
-      return NULL;
-   if( strstr((const char *) poOpenInfo->pabyHeader, "<PointCloudView" ) == NULL )
+
+   if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 32 )
       return NULL;
 
-   CPLXMLNode *pxmlPCView, *psInputFile;
-   pxmlPCView = CPLParseXMLFile( poOpenInfo->pszFilename );
-   if (pxmlPCView == NULL)
-       return NULL;
+   CPLXMLNode *pxmlPCView;
 
-   psInputFile = CPLGetXMLNode( pxmlPCView, "InputFile" );
+   // do something sensible for .sid files without a .view
+   if( EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
+   {
+      int gen;
+      bool raster;
+      if( !Version::getMrSIDFileVersion(poOpenInfo->pabyHeader, gen, raster)
+          || raster )
+         return NULL;
+
+      CPLString xmltmp( "<PointCloudView><InputFile>" );
+      xmltmp.append( poOpenInfo->pszFilename );
+      xmltmp.append( "</InputFile></PointCloudView>" );
+      pxmlPCView = CPLParseXMLString( xmltmp );
+      if (pxmlPCView == NULL)
+         return NULL;
+   }
+   else
+   {
+      // support .view xml
+      if( !EQUALN((const char *) poOpenInfo->pabyHeader, "<PointCloudView", 15 ) )
+         return NULL;
+
+      pxmlPCView = CPLParseXMLFile( poOpenInfo->pszFilename );
+      if (pxmlPCView == NULL)
+          return NULL;
+   }
+
+   CPLXMLNode *psInputFile = CPLGetXMLNode( pxmlPCView, "InputFile" );
    if( psInputFile == NULL )
    {
       CPLError( CE_Failure, CPLE_OpenFailed, 
