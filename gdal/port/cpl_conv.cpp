@@ -2067,7 +2067,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 
 {
-    if( VSIRename( pszNewPath, pszOldPath ) == 0 )
+    if( VSIRename( pszOldPath, pszNewPath ) == 0 )
         return 0;
 
     int nRet = CPLCopyFile( pszNewPath, pszOldPath );
