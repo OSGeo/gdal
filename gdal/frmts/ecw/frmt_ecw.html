@@ -26,9 +26,7 @@ compressed for free, while larger images require licensing from ERDAS.  See
 the licensing agreement and the LARGE_OK option.<p>
 
 Files to be compressed into ECW format must also
-be at least 128x128.  Non-eight bit source data will be rescaled by
-the ECW SDK in some manner that I don't understand ... the resulting image
-is effectively eight bit.<p>
+be at least 128x128.  ECW currently only supports 8 bits per channel.<p>
 
 When writing coordinate system information to ECW files, many less
 common coordinate systems are not mapped properly.  If you know the 

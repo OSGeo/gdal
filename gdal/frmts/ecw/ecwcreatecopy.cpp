@@ -1005,7 +1005,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Confirm the datatype is 8bit.  It appears no other datatype     */
 /*      is supported in ECW format.                                     */
 /* -------------------------------------------------------------------- */
-    if( eType != GDT_Byte )
+    if( eType != GDT_Byte && !bIsJPEG2000 )
     {
         if( bStrict )
         {
