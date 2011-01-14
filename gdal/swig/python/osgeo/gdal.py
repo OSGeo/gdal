@@ -350,6 +350,10 @@ class Driver(MajorObject):
         """Rename(self, char newName, char oldName) -> int"""
         return _gdal.Driver_Rename(self, *args)
 
+    def CopyFiles(self, *args):
+        """CopyFiles(self, char newName, char oldName) -> int"""
+        return _gdal.Driver_CopyFiles(self, *args)
+
     def Register(self, *args):
         """Register(self) -> int"""
         return _gdal.Driver_Register(self, *args)
