@@ -106,8 +106,11 @@ cd ${CWD}
 echo "* Generating SWIG Perl interfaces..."
 CWD=${PWD}
 cd gdal/swig/perl
+
 rm *wrap*
+touch ../../GDALmake.opt
 make generate
+rm -f ../../GDALmake.opt
 cd ${CWD}
 
 #
