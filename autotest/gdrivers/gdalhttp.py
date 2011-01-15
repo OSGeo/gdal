@@ -43,6 +43,8 @@ import gdaltest
 
 def http_1():
 
+    gdaltest.dods_drv = None
+
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
     except:
@@ -50,6 +52,13 @@ def http_1():
 
     if drv is None:
         return 'skip'
+
+    try:
+        gdaltest.dods_drv = gdal.GetDriverByName( 'DODS' )
+        if gdaltest.dods_drv is not None:
+            gdaltest.dods_drv.Deregister()
+    except:
+        gdaltest.dods_drv = None
 
     conn = gdaltest.gdalurlopen('http://home.gdal.org/~warmerda/frank.gif')
     if conn is None:
@@ -139,10 +148,21 @@ def http_4():
 
     return 'success'
 
+###############################################################################
+#
+
+def http_cleanup():
+    if gdaltest.dods_drv is not None:
+        gdaltest.dods_drv.Register()
+    gdaltest.dods_drv = None
+
+    return 'success'
+
 gdaltest_list = [ http_1,
                   http_2,
                   http_3,
-                  http_4 ]
+                  http_4,
+                  http_cleanup ]
 
 if __name__ == '__main__':
 
