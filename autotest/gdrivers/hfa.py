@@ -1158,7 +1158,8 @@ def hfa_rde_overviews():
 
     filelist = ds.GetFileList()
     exp_filelist = ['data/spill.img', 'data/spill.ige', 'data/spill.rrd', 'data/spill.rde']
-    if filelist != exp_filelist:
+    exp_filelist_win32 = ['data/spill.img', 'data\\spill.ige', 'data\\spill.rrd', 'data\\spill.rde']
+    if filelist != exp_filelist and filelist != exp_filelist_win32:
         print( filelist )
         gdaltest.post_reason( 'did not get expected file list.' )
         return 'fail'
@@ -1188,7 +1189,8 @@ def hfa_copyfiles():
 
     filelist = ds.GetFileList()
     exp_filelist = ['tmp/newnamexxx.img', 'tmp/newnamexxx.ige', 'tmp/newnamexxx.rrd', 'tmp/newnamexxx.rde']
-    if filelist != exp_filelist:
+    exp_filelist_win32 = ['tmp/newnamexxx.img', 'tmp\\newnamexxx.ige', 'tmp\\newnamexxx.rrd', 'tmp\\newnamexxx.rde']
+    if filelist != exp_filelist and filelist != exp_filelist_win32:
         print( filelist )
         gdaltest.post_reason( 'did not get expected file list.' )
         return 'fail'
@@ -1196,7 +1198,7 @@ def hfa_copyfiles():
     ds = None
 
     # Check that the filenames in the actual files seem to have been updated.
-    img = open('tmp/newnamexxx.img').read()
+    img = open('tmp/newnamexxx.img', 'rb').read()
     if img.find('newnamexxx.rrd') == -1:
         gdaltest.post_reason( 'RRDNames not updated?' )
         return 'fail'
@@ -1205,7 +1207,7 @@ def hfa_copyfiles():
         gdaltest.post_reason( 'spill file not updated?' )
         return 'fail'
 
-    rrd = open('tmp/newnamexxx.rrd').read()
+    rrd = open('tmp/newnamexxx.rrd', 'rb').read()
     if rrd.find('newnamexxx.img') == -1:
         gdaltest.post_reason( 'DependentFile not updated?' )
         return 'fail'
