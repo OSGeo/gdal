@@ -387,6 +387,30 @@ def jpeg_11():
 
     return 'success'
 
+###############################################################################
+# Test reading a stored JPEG in ZIP (#3908)
+
+def jpeg_12():
+
+    ds = gdal.Open('/vsizip/data/byte_jpg.zip')
+    if ds is None:
+        return 'fail'
+
+    gdal.ErrorReset()
+    ds.GetRasterBand(1).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        return 'fail'
+
+    gdal.ErrorReset()
+    ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+
 gdaltest_list = [
     jpeg_1,
     jpeg_2,
@@ -398,7 +422,8 @@ gdaltest_list = [
     jpeg_8,
     jpeg_9,
     jpeg_10,
-    jpeg_11 ]
+    jpeg_11,
+    jpeg_12 ]
 
 if __name__ == '__main__':
 
