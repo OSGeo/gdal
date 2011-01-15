@@ -102,9 +102,9 @@ AC_DEFUN([AX_LIB_LIBKML],
         libkml_include_dir2="$libkml_prefix/include/kml"
         libkml_include_dir3="$libkml_prefix/include/kml/third_party/boost_1_34_1"
         if test "$libkml_prefix" = "/usr"; then
-            libkml_lib_flags="-lkmlengine -lkmldom -lkmlbase -lkmlconvenience"
+            libkml_lib_flags="-lkmlengine -lkmldom -lkmlbase -lkmlconvenience -lminizip -luriparser"
         else
-            libkml_lib_flags="-L$libkml_prefix/lib -lkmlengine -lkmldom -lkmlbase -lkmlconvenience"
+            libkml_lib_flags="-L$libkml_prefix/lib -lkmlengine -lkmldom -lkmlbase -lkmlconvenience -lminizip -luriparser"
         fi
         run_libkml_test="yes"
     elif test "$libkml_requested" = "yes"; then
@@ -125,8 +125,8 @@ AC_DEFUN([AX_LIB_LIBKML],
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$libkml_include_dir -I$libkml_include_dir2 -I$libkml_include_dir3"
 
-        saved_LDFLAGS="$LDFLAGS"
-        LDFLAGS="$LDFLAGS $libkml_lib_flags"
+        saved_LIBS="$LIBS"
+        LIBS="$LIBS $libkml_lib_flags"
 
         dnl
         dnl Check headers
@@ -184,7 +184,7 @@ kmldom::KmlFactory* factory = kmldom::KmlFactory::GetFactory();
         fi
 
         CPPFLAGS="$saved_CPPFLAGS"
-        LDFLAGS="$saved_LDFLAGS"
+        LIBS="$saved_LIBS"
     fi
 
     AC_MSG_CHECKING([for Google libkml])
