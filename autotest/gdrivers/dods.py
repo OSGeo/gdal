@@ -130,7 +130,9 @@ def dods_cleanup():
 
     return 'success'
 
-gdaltest_list = [
+gdaltest_list = []
+
+manual_gdaltest_list = [
     dods_1,
     dods_2,
     dods_3,
@@ -144,7 +146,7 @@ if __name__ == '__main__':
 
     gdaltest.setup_run( 'dods' )
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests( manual_gdaltest_list )
 
     gdaltest.summarize()
 
