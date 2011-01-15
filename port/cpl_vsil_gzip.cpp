@@ -783,7 +783,7 @@ size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
                 nRead += n;
             }
             if  (stream.avail_out > 0) {
-                uint nToRead = MIN(compressed_size - (in + nRead), stream.avail_out);
+                uInt nToRead = (uInt) MIN(compressed_size - (in + nRead), stream.avail_out);
                 uInt nReadFromFile =
                     (uInt)VSIFReadL(next_out, 1, nToRead, (VSILFILE*)poBaseHandle);
                 stream.avail_out -= nReadFromFile;
