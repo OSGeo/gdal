@@ -236,7 +236,9 @@ def ogr_dods_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = []
+
+manual_gdaltest_list = [ 
     ogr_dods_1,
     ogr_dods_2,
     ogr_dods_3,
@@ -248,7 +250,7 @@ if __name__ == '__main__':
 
     gdaltest.setup_run( 'ogr_dods' )
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests( manual_gdaltest_list )
 
     gdaltest.summarize()
 
