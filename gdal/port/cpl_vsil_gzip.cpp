@@ -572,7 +572,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         }
 
         in = out = offset - startOff;
-        if (ENABLE_DEBUG) CPLDebug("GZIP", "return " CPL_FRMT_GUIB, offset);
+        if (ENABLE_DEBUG) CPLDebug("GZIP", "return " CPL_FRMT_GUIB, in);
         return (int) in;
     }
 
@@ -770,6 +770,7 @@ size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
 
         if  (transparent) {
             /* Copy first the lookahead bytes: */
+            uInt nRead = 0;
             uInt n = stream.avail_in;
             if (n > stream.avail_out) n = stream.avail_out;
             if (n > 0) {
@@ -779,17 +780,20 @@ size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
                 stream.next_in   += n;
                 stream.avail_out -= n;
                 stream.avail_in  -= n;
+                nRead += n;
             }
             if  (stream.avail_out > 0) {
-                stream.avail_out -=
-                    (uInt)VSIFReadL(next_out, 1, stream.avail_out, (VSILFILE*)poBaseHandle);
+                uint nToRead = MIN(compressed_size - (in + nRead), stream.avail_out);
+                uInt nReadFromFile =
+                    (uInt)VSIFReadL(next_out, 1, nToRead, (VSILFILE*)poBaseHandle);
+                stream.avail_out -= nReadFromFile;
+                nRead += nReadFromFile;
             }
-            len -= stream.avail_out;
-            in  += len;
-            out += len;
-            if (len == 0) z_eof = 1;
-            if (ENABLE_DEBUG) CPLDebug("GZIP", "Read return %d", (int)(len / nSize));
-            return (int)len / nSize;
+            in  += nRead;
+            out += nRead;
+            if (nRead < len) z_eof = 1;
+            if (ENABLE_DEBUG) CPLDebug("GZIP", "Read return %d", (int)(nRead / nSize));
+            return (int)nRead / nSize;
         }
         if  (stream.avail_in == 0 && !z_eof)
         {
