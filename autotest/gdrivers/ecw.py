@@ -814,7 +814,18 @@ def ecw_online_6():
     if drv is None:
         return 'skip'
 
+    try:
+        dods_drv = gdal.GetDriverByName( 'DODS' )
+        if dods_drv is not None:
+            dods_drv.Deregister()
+    except:
+        dods_drv = None
+
     ds = gdal.Open('http://download.osgeo.org/gdal/data/ecw/spif83.ecw')
+
+    if dods_drv is not None:
+        dods_drv.Register()
+
     if ds is None:
         # The ECW driver doesn't manage to open in /vsimem, thus fallbacks
         # to writing to /tmp, which doesn't work on Windows
