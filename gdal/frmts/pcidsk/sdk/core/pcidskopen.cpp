@@ -87,7 +87,7 @@ PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
 /*      Create the PCIDSKFile object.                                   */
 /* -------------------------------------------------------------------- */
 
-    CPCIDSKFile *file = new CPCIDSKFile();
+    CPCIDSKFile *file = new CPCIDSKFile( filename );
     
     file->interfaces = *interfaces;
     file->io_handle = io_handle;
