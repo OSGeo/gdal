@@ -64,12 +64,13 @@ using namespace PCIDSK;
 /*                             CPCIDSKFile()                             */
 /************************************************************************/
 
-CPCIDSKFile::CPCIDSKFile()
+CPCIDSKFile::CPCIDSKFile( std::string filename )
 
 {
     io_handle = NULL;
     io_mutex = NULL;
     updatable = false;
+    base_filename = filename;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the metadata object, but do not try to load till     */
@@ -382,14 +383,23 @@ void CPCIDSKFile::InitializeFromHeader()
 /*      Get the number of each channel type - only used for some        */
 /*      interleaving cases.                                             */
 /* -------------------------------------------------------------------- */
-    int count_8u = atoi(fh.Get(464,4));
-    int count_16s = atoi(fh.Get(468,4));
-    int count_16u = atoi(fh.Get(472,4));
-    int count_32r = atoi(fh.Get(476,4));
-    int count_c16u = atoi(fh.Get(480,4));
-    int count_c16s = atoi(fh.Get(484,4));
-    int count_c32r = atoi(fh.Get(488,4));
+    int count_8u = 0, count_16s = 0, count_16u = 0, count_32r = 0;
+    int count_c16u = 0, count_c16s = 0, count_c32r = 0;
 
+    if (strcmp(fh.Get(464,4), "    ") == 0)
+    {
+            count_8u = channel_count;
+    }
+    else
+    {
+            count_8u = atoi(fh.Get(464,4));
+            count_16s = atoi(fh.Get(468,4));
+            count_16u = atoi(fh.Get(472,4));
+            count_32r = atoi(fh.Get(476,4));
+            count_c16u = atoi(fh.Get(480,4));
+            count_c16s = atoi(fh.Get(484,4));
+            count_c32r = atoi(fh.Get(488,4));
+    }
 /* -------------------------------------------------------------------- */
 /*      for pixel interleaved files we need to compute the length of    */
 /*      a scanline padded out to a 512 byte boundary.                   */
@@ -428,6 +438,10 @@ void CPCIDSKFile::InitializeFromHeader()
         // fetch the filename, if there is one.
         std::string filename;
         ih.Get(64,64,filename);
+
+        // adjust it relative to the path of the pcidsk file.
+        filename = MergeRelativePath( interfaces.io,
+                                      base_filename, filename );
 
         // work out channel type from header
         eChanType pixel_type;
@@ -482,7 +496,7 @@ void CPCIDSKFile::InitializeFromHeader()
                  && filename != ""
                  && strncmp(((const char*)ih.buffer)+250, "        ", 8 ) != 0 )
         {
-            channel = new CExternalChannel( ih, ih_offset, fh, 
+            channel = new CExternalChannel( ih, ih_offset, fh, filename,
                                             channelnum, this, pixel_type );
         }
 
