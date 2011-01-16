@@ -34,6 +34,8 @@
 
 namespace PCIDSK
 {
+    class IOInterfaces;
+    
     /************************************************************************/
     /*                          Utility functions.                          */
     /************************************************************************/
@@ -61,6 +63,11 @@ namespace PCIDSK
                                            std::string parms );
     std::string         ProjParmsToText( std::vector<double> );
 
+    std::string         MergeRelativePath( const PCIDSK::IOInterfaces *,
+                                           std::string base,
+                                           std::string src_filename );
+    std::string         ExtractPath( std::string );
+    
     void LibJPEG_DecompressBlock(
         uint8 *src_data, int src_bytes, uint8 *dst_data, int dst_bytes,
         int xsize, int ysize, eChanType pixel_type );
