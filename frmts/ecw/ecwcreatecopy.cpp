@@ -27,19 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
+#include "gdal_ecw.h"
 #include "ogr_spatialref.h"
-#include "cpl_string.h"
-#include "cpl_conv.h"
-#include "vsiiostream.h"
-#include "jp2userbox.h"
-#include "gdaljp2metadata.h"
 
 CPL_CVSID("$Id$");
-
-void ECWInitialize( void );
-
-GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo);
 
 #if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
 
