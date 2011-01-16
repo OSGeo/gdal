@@ -52,6 +52,7 @@ using namespace PCIDSK;
 CExternalChannel::CExternalChannel( PCIDSKBuffer &image_header, 
                                     uint64 ih_offset, 
                                     PCIDSKBuffer &file_header,
+                                    std::string filename,
                                     int channelnum,
                                     CPCIDSKFile *file,
                                     eChanType pixel_type )
@@ -74,7 +75,10 @@ CExternalChannel::CExternalChannel( PCIDSKBuffer &image_header,
 /* -------------------------------------------------------------------- */
 /*      Establish the file we will be accessing.                        */
 /* -------------------------------------------------------------------- */
-    image_header.Get(64,64,filename);
+    if( filename != "" )
+        this->filename = filename;
+    else
+        image_header.Get(64,64,this->filename);
 }
 
 /************************************************************************/
