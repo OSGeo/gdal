@@ -53,7 +53,7 @@ namespace PCIDSK
             std::string access, const PCIDSKInterfaces *interfaces );
     public:
 
-        CPCIDSKFile();
+        CPCIDSKFile( std::string filename );
         virtual ~CPCIDSKFile();
 
         virtual PCIDSKInterfaces *GetInterfaces() { return &interfaces; }
@@ -113,6 +113,8 @@ namespace PCIDSK
 
         void         InitializeFromHeader();
 
+        std::string  base_filename;
+        
         int          width;
         int          height;
         int          channel_count;

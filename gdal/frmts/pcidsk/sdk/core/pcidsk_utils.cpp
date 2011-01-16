@@ -28,6 +28,7 @@
 #include "pcidsk_types.h"
 #include "pcidsk_exception.h"
 #include "pcidsk_georef.h"
+#include "pcidsk_io.h"
 #include "core/pcidsk_utils.h"
 #include <cstdlib>
 #include <cstring>
@@ -461,6 +462,93 @@ std::string PCIDSK::ProjParmsToText( std::vector<double> dparms )
     return sparms;
 }
 
+/************************************************************************/
+/*                            ExtractPath()                             */
+/*                                                                      */
+/*      Extract the directory path portion of the passed filename.      */
+/*      It assumes the last component is a filename and should not      */
+/*      be passed a bare path.  The trailing directory delimeter is     */
+/*      removed from the result.  The return result is an empty         */
+/*      string for a simple filename passed in with no directory        */
+/*      component.                                                      */
+/************************************************************************/
 
+std::string PCIDSK::ExtractPath( std::string filename )
 
+{
+    int i;
 
+    for( i = filename.size()-1; i >= 0; i-- )
+    {
+        if( filename[i] == '\\' || filename[i] == '/' )
+            break;
+    }
+
+    if( i > 0 )
+        return filename.substr(0,i);
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                         MergeRelativePath()                          */
+/*                                                                      */
+/*      This attempts to take src_filename and make it relative to      */
+/*      the base of the file "base", if this evaluates to a new file    */
+/*      in the filesystem.  It will not make any change if              */
+/*      src_filename appears to be absolute or if the altered path      */
+/*      does not resolve to a file in the filesystem.                   */
+/************************************************************************/
+
+std::string PCIDSK::MergeRelativePath( const PCIDSK::IOInterfaces *io_interfaces,
+                                       std::string base, 
+                                       std::string src_filename )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Does src_filename appear to be absolute?                        */
+/* -------------------------------------------------------------------- */
+    if( src_filename.size() == 0 )
+        return src_filename; // we can't do anything with a blank.
+    else if( src_filename.size() > 2 && src_filename[1] == ':' )
+        return src_filename; // has a drive letter?
+    else if( src_filename[0] == '/' || src_filename[0] == '\\' )
+        return src_filename; // has a leading dir marker. 
+
+/* -------------------------------------------------------------------- */
+/*      Figure out what path split char we want to use.                 */
+/* -------------------------------------------------------------------- */
+#if defined(__MSVCRT__) || defined(_MSC_VER)
+    const static char  path_split = '\\';
+#else
+    const static char  path_split = '/';
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Merge paths.                                                    */
+/* -------------------------------------------------------------------- */
+    std::string base_path = ExtractPath( base );
+    std::string result;
+
+    if( base_path == "" )
+        return src_filename;
+
+    result = base_path;
+    result += path_split;
+    result += src_filename;
+
+/* -------------------------------------------------------------------- */
+/*      Check if the target exists by this name.                        */
+/* -------------------------------------------------------------------- */
+    try 
+    {
+        void *hFile = io_interfaces->Open( result, "r" );
+        // should throw an exception on failure.
+        io_interfaces->Close( hFile );
+        return result;
+    }
+    catch( ... )
+    {
+        return src_filename;
+    }
+}
