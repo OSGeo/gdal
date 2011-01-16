@@ -27,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "jp2userbox.h"
+#include "gdal_ecw.h"
 
 CPL_CVSID("$Id$");
 

@@ -27,14 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "gdaljp2metadata.h"
-#include "ogr_spatialref.h"
-#include "cpl_string.h"
-#include "cpl_conv.h"
-#include "vsiiostream.h"
-#include "cpl_multiproc.h"
+#include "gdal_ecw.h"
 #include "cpl_minixml.h"
+#include "ogr_spatialref.h"
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 
@@ -54,122 +49,6 @@ static int    bNCSInitialized = FALSE;
 void ECWInitialize( void );
 
 GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo);
-
-/************************************************************************/
-/* ==================================================================== */
-/*				ECWDataset				*/
-/* ==================================================================== */
-/************************************************************************/
-
-class ECWRasterBand;
-
-class CPL_DLL ECWDataset : public GDALPamDataset
-{
-    friend class ECWRasterBand;
-
-    CNCSJP2FileView *poFileView;
-    NCSFileViewFileInfoEx *psFileInfo;
-
-    GDALDataType eRasterDataType;
-    NCSEcwCellType eNCSRequestDataType;
-
-    int         bUsingCustomStream;
-
-    // Current view window. 
-    int         bWinActive;
-    int         nWinXOff, nWinYOff, nWinXSize, nWinYSize;
-    int         nWinBufXSize, nWinBufYSize;
-    int         nWinBandCount;
-    int         *panWinBandList;
-    int         nWinBufLoaded;
-    void        **papCurLineBuf;
-
-    int         bGeoTransformValid;
-    double      adfGeoTransform[6];
-    char        *pszProjection;
-    int         nGCPCount;
-    GDAL_GCP    *pasGCPList;
-
-    char        **papszGMLMetadata;
-
-    void        ECW2WKTProjection();
-
-    void        CleanupWindow();
-    int         TryWinRasterIO( GDALRWFlag, int, int, int, int,
-                                GByte *, int, int, GDALDataType,
-                                int, int *, int, int, int );
-    CPLErr      LoadNextLine();
-
-  public:
-		ECWDataset(int bIsJPEG2000);
-		~ECWDataset();
-                
-    static GDALDataset *Open( GDALOpenInfo *, int bIsJPEG2000 );
-    static int          IdentifyJPEG2000( GDALOpenInfo * poOpenInfo );
-    static GDALDataset *OpenJPEG2000( GDALOpenInfo * );
-    static int          IdentifyECW( GDALOpenInfo * poOpenInfo );
-    static GDALDataset *OpenECW( GDALOpenInfo * );
-
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
-
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef();
-
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-
-    virtual char      **GetMetadata( const char * pszDomain = "" );
-
-    virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                               int nBufXSize, int nBufYSize, 
-                               GDALDataType eDT, 
-                               int nBandCount, int *panBandList,
-                               char **papszOptions );
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            ECWRasterBand                             */
-/* ==================================================================== */
-/************************************************************************/
-
-class ECWRasterBand : public GDALPamRasterBand
-{
-    friend class ECWDataset;
-    
-    // NOTE: poDS may be altered for NITF/JPEG2000 files!
-    ECWDataset     *poGDS;
-
-    GDALColorInterp         eBandInterp;
-
-    int                          iOverview; // -1 for base. 
-
-    std::vector<ECWRasterBand*>  apoOverviews;
-
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int );
-
-  public:
-
-                   ECWRasterBand( ECWDataset *, int, int = -1 );
-                   ~ECWRasterBand();
-
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual int    HasArbitraryOverviews() { return apoOverviews.size() == 0; }
-    virtual int    GetOverviewCount() { return apoOverviews.size(); }
-    virtual GDALRasterBand *GetOverview(int);
-
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr SetColorInterpretation( GDALColorInterp );
-
-    virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                               int nBufXSize, int nBufYSize, 
-                               GDALDataType eDT, char **papszOptions );
-};
 
 /************************************************************************/
 /*                           ECWRasterBand()                            */
@@ -1095,7 +974,8 @@ int ECWDataset::IdentifyECW( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
          || poOpenInfo->nHeaderBytes == 0)
-        && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
+        && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5)
+        && !EQUALN(poOpenInfo->pszFilename,"ecwps:",5) )
         return FALSE;
 
     return TRUE;
@@ -1115,7 +995,115 @@ GDALDataset *ECWDataset::OpenECW( GDALOpenInfo * poOpenInfo )
 
     return Open( poOpenInfo, FALSE );
 }
+
+/************************************************************************/
+/*                            OpenFileView()                            */
+/************************************************************************/
+
+CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
+                                           bool bProgressive,
+                                           int &bUsingCustomStream )
+
+{
+/* -------------------------------------------------------------------- */
+/*      First we try to open it as a normal CNCSFile, letting the       */
+/*      ECW SDK manage the IO itself.   This will only work for real    */
+/*      files, and ecwp: or ecwps: sources.                             */
+/* -------------------------------------------------------------------- */
+    CNCSJP2FileView *poFileView = NULL;
+    NCSError         eErr;
+    CNCSError        oErr;
+
+    bUsingCustomStream = FALSE;
+    poFileView = new CNCSFile();
+    oErr = poFileView->Open( (char *) pszDatasetName, bProgressive );
+    eErr = oErr.GetErrorNumber();
+
+/* -------------------------------------------------------------------- */
+/*      If that did not work, trying opening as a virtual file.         */
+/* -------------------------------------------------------------------- */
+    if( eErr != NCS_SUCCESS )
+    {
+        CPLDebug( "ECW", 
+                  "NCScbmOpenFileView(%s): eErr=%d, will try VSIL stream.", 
+                  pszDatasetName, (int) eErr );
+
+        delete poFileView;
+
+        VSILFILE *fpVSIL = VSIFOpenL( pszDatasetName, "rb" );
+        if( fpVSIL == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to open %s.", pszDatasetName );
+            return NULL;
+        }
+
+        if( hECWDatasetMutex == NULL )
+        {
+            hECWDatasetMutex = CPLCreateMutex();
+        }
+        else if( !CPLAcquireMutex( hECWDatasetMutex, 60.0 ) )
+        {
+            CPLDebug( "ECW", "Failed to acquire mutex in 60s." );
+        }
+        else
+        {
+            CPLDebug( "ECW", "Got mutex." );
+        }
+        VSIIOStream *poIOStream = new VSIIOStream();
+        poIOStream->Access( fpVSIL, FALSE, pszDatasetName, 0, -1 );
+
+        poFileView = new CNCSJP2FileView();
+        oErr = poFileView->Open( poIOStream, bProgressive );
+
+        // The CNCSJP2FileView (poFileView) object may not use the iostream 
+        // (poIOStream) passed to the CNCSJP2FileView::Open() method if an 
+        // iostream is already available to the ECW JPEG 2000 SDK for a given
+        // file.  Consequently, if the iostream passed to 
+        // CNCSJP2FileView::Open() does not become the underlying iostream 
+        // of the CNCSJP2FileView object, then it should be deleted.
+        //
+        // In addition, the underlying iostream of the CNCSJP2FileView object
+        // should not be deleted until all CNCSJP2FileView objects using the 
+        // underlying iostream are deleted. Consequently, each time a 
+        // CNCSJP2FileView object is created, the nFileViewCount attribute 
+        // of the underlying VSIIOStream object must be incremented for use 
+        // in the ECWDataset destructor.
+		  
+        VSIIOStream * poUnderlyingIOStream = 
+            ((VSIIOStream *)(poFileView->GetStream()));
+
+        if ( poUnderlyingIOStream )
+            poUnderlyingIOStream->nFileViewCount++;
+
+        if ( poIOStream != poUnderlyingIOStream ) 
+        {
+            delete poIOStream;
+        }
+        else
+        {
+            bUsingCustomStream = TRUE;
+        }
+
+        CPLReleaseMutex( hECWDatasetMutex );
+
+        if( oErr.GetErrorNumber() != NCS_SUCCESS )
+        {
+            if (poFileView)
+                delete poFileView;
+
+            char* pszErrorMessage = oErr.GetErrorMessage();
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "%s", pszErrorMessage );
+            NCSFree(pszErrorMessage);
+
+            return NULL;
+        }
+    }
     
+    return poFileView;
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -1124,209 +1112,68 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
 {
     CNCSJP2FileView *poFileView = NULL;
-    NCSError         eErr;
-    CNCSError        oErr;
     int              i;
-    VSILFILE        *fpVSIL = NULL;
-    VSIIOStream *poIOStream = NULL;
     int              bUsingCustomStream = FALSE;
+    CPLString        osFilename = poOpenInfo->pszFilename;
 
     ECWInitialize();
 
 /* -------------------------------------------------------------------- */
-/*      This will disable automatic conversion of YCbCr to RGB by       */
-/*      the toolkit.                                                    */
+/*      If we get a J2K_SUBFILE style name, convert it into the         */
+/*      corresponding /vsisubfile/ path.                                */
+/*                                                                      */
+/*      From: J2K_SUBFILE:offset,size,filename                           */
+/*      To: /vsisubfile/offset_size,filename                            */
 /* -------------------------------------------------------------------- */
-    if( !CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
-        NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
-
-/* -------------------------------------------------------------------- */
-/*      Handle special case of a JPEG2000 data stream in another file.  */
-/* -------------------------------------------------------------------- */
-    int bIsVirtualFile = FALSE;
-try_again:
-    if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) ||
-        bIsVirtualFile )
+    if (EQUALN(osFilename,"J2K_SUBFILE:",12))
     {
-        GIntBig            subfile_offset=-1, subfile_size=-1;
-        const char *real_filename = NULL;
-
-          if (EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12))
-          {
-            char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename + 12, ",", 0);
-            if (CSLCount(papszTokens) >= 2)
-            {
-                subfile_offset = CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
-                subfile_size = CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
-            }
-            else
-            {
-                CPLError( CE_Failure, CPLE_OpenFailed, 
-                            "Failed to parse J2K_SUBFILE specification." );
-                CSLDestroy(papszTokens);
-                return NULL;
-            }
+        char** papszTokens = CSLTokenizeString2(osFilename.c_str()+12, ",", 0);
+        if (CSLCount(papszTokens) >= 2)
+        {
+            osFilename.Printf( "/vsisubfile/%s_%s,%s",
+                               papszTokens[0], papszTokens[1], papszTokens[2]);
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to parse J2K_SUBFILE specification." );
             CSLDestroy(papszTokens);
-
-            real_filename = strstr(poOpenInfo->pszFilename,",");
-            if( real_filename != NULL )
-                real_filename = strstr(real_filename+1,",");
-            if( real_filename != NULL )
-                real_filename++;
-            else
-            {
-                CPLError( CE_Failure, CPLE_OpenFailed, 
-                            "Failed to parse J2K_SUBFILE specification." );
-                return NULL;
-            }
-
-          }
-          else
-          {
-              real_filename = poOpenInfo->pszFilename;
-              subfile_offset = 0;
-          }
-
-          fpVSIL = VSIFOpenL( real_filename, "rb" );
-          if( fpVSIL == NULL )
-          {
-              CPLError( CE_Failure, CPLE_OpenFailed, 
-                        "Failed to open %s.",  real_filename );
-              return NULL;
-          }
-
-          if( hECWDatasetMutex == NULL )
-          {
-              hECWDatasetMutex = CPLCreateMutex();
-          }
-          else if( !CPLAcquireMutex( hECWDatasetMutex, 60.0 ) )
-          {
-              CPLDebug( "ECW", "Failed to acquire mutex in 60s." );
-          }
-          else
-          {
-              CPLDebug( "ECW", "Got mutex." );
-          }
-          poIOStream = new VSIIOStream();
-          poIOStream->Access( fpVSIL, FALSE, real_filename,
-                              subfile_offset, subfile_size );
-
-          poFileView = new CNCSJP2FileView();
-          oErr = poFileView->Open( poIOStream, false );
-
-          // The CNCSJP2FileView (poFileView) object may not use the iostream 
-          // (poIOStream) passed to the CNCSJP2FileView::Open() method if an 
-          // iostream is already available to the ECW JPEG 2000 SDK for a given
-          // file.  Consequently, if the iostream passed to 
-          // CNCSJP2FileView::Open() does not become the underlying iostream 
-          // of the CNCSJP2FileView object, then it should be deleted.
-          //
-          // In addition, the underlying iostream of the CNCSJP2FileView object
-          // should not be deleted until all CNCSJP2FileView objects using the 
-          // underlying iostream are deleted. Consequently, each time a 
-          // CNCSJP2FileView object is created, the nFileViewCount attribute 
-          // of the underlying VSIIOStream object must be incremented for use 
-          // in the ECWDataset destructor.
-		  
-          VSIIOStream * poUnderlyingIOStream = 
-              ((VSIIOStream *)(poFileView->GetStream()));
-
-          if ( poUnderlyingIOStream )
-              poUnderlyingIOStream->nFileViewCount++;
-
-          if ( poIOStream != poUnderlyingIOStream ) 
-          {
-              delete poIOStream;
-          }
-          else
-          {
-              bUsingCustomStream = TRUE;
-          }
-
-          CPLReleaseMutex( hECWDatasetMutex );
-
-          if( oErr.GetErrorNumber() != NCS_SUCCESS )
-          {
-              if (poFileView)
-                  delete poFileView;
-
-              char* pszErrorMessage = oErr.GetErrorMessage();
-              CPLError( CE_Failure, CPLE_AppDefined, 
-                        "%s", pszErrorMessage );
-              NCSFree(pszErrorMessage);
-
-              return NULL;
-          }
+            return NULL;
+        }
+        CSLDestroy(papszTokens);
     }
 
-/* -------------------------------------------------------------------- */
-/*      This has to either be a file on disk ending in .ecw or a        */
-/*      ecwp: protocol url.                                             */
-/* -------------------------------------------------------------------- */
-    else if( poOpenInfo->nHeaderBytes >= 16 
-        && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
-                    sizeof(jpc_header) ) == 0
-            || memcmp( poOpenInfo->pabyHeader, jp2_header, 
-                    sizeof(jp2_header) ) == 0) )
-    {
-        /* accept JPEG2000 files */
-    }
-    else if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
-              || poOpenInfo->nHeaderBytes == 0)
-             && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
-        return( NULL );
-    
 /* -------------------------------------------------------------------- */
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
+    poFileView = OpenFileView( osFilename, false, bUsingCustomStream );
     if( poFileView == NULL )
-    {
-        poFileView = new CNCSFile();
-        oErr = poFileView->Open( (char *) poOpenInfo->pszFilename, FALSE );
-        eErr = oErr.GetErrorNumber();
-        CPLDebug( "ECW", "NCScbmOpenFileView(%s): eErr = %d", 
-                  poOpenInfo->pszFilename, (int) eErr );
-        if( eErr != NCS_SUCCESS )
-        {
-            delete poFileView;
-
-            /* If the file is not a 'real' file but recognized as a */
-            /* virtual file by the VSIL API, try again by using a */
-            /* VSIIOStream object, like in the J2K_SUBFILE case */
-            VSIStatBuf sBuf;
-            VSIStatBufL sBufL;
-            if (!bIsVirtualFile &&
-                VSIStat(poOpenInfo->pszFilename, &sBuf) != 0 &&
-                VSIStatL(poOpenInfo->pszFilename, &sBufL) == 0)
-            {
-                bIsVirtualFile = TRUE;
-                goto try_again;
-            }
-
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "%s", NCSGetErrorText(eErr) );
-            return NULL;
-        }
-    }
-
+        return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm that update access was not requested.                   */
+/* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "The ECW driver does not support update access to existing"
                   " datasets.\n" );
+        delete poFileView;
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     ECWDataset  *poDS;
 
     poDS = new ECWDataset(bIsJPEG2000);
-
     poDS->poFileView = poFileView;
 
-    if( fpVSIL != NULL )
+    // Disable .aux.xml writing for subfiles and such.  Unfortunately
+    // this will also disable it in some cases where it might be 
+    // applicable. 
+    if( bUsingCustomStream )
         poDS->nPamFlags |= GPF_DISABLED;
 
     poDS->bUsingCustomStream = bUsingCustomStream;
@@ -1409,7 +1256,7 @@ try_again:
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
 
-    if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
+    if( oJP2Geo.ReadAndParse( osFilename ) )
     {
         poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
         poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
@@ -1429,34 +1276,22 @@ try_again:
 /*      Check for world file for ecw files.                             */
 /* -------------------------------------------------------------------- */
     if( !poDS->bGeoTransformValid 
-        && EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw") )
+        && EQUAL(CPLGetExtension(osFilename),"ecw") )
     {
         poDS->bGeoTransformValid |= 
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".eww", 
+            GDALReadWorldFile( osFilename, ".eww", 
                                poDS->adfGeoTransform )
-            || GDALReadWorldFile( poOpenInfo->pszFilename, ".ecww", 
+            || GDALReadWorldFile( osFilename, ".ecww", 
                                   poDS->adfGeoTransform )
-            || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+            || GDALReadWorldFile( osFilename, ".wld", 
                                   poDS->adfGeoTransform );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->SetDescription( osFilename );
     poDS->TryLoadXML();
-    
-/* -------------------------------------------------------------------- */
-/*      Confirm the requested access is supported.                      */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        delete poDS;
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "The ECW driver does not support update access to existing"
-                  " datasets.\n" );
-        return NULL;
-    }
     
     return( poDS );
 }
@@ -1645,6 +1480,13 @@ void ECWInitialize()
 
     NCSecwInit();
     bNCSInitialized = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      This will disable automatic conversion of YCbCr to RGB by       */
+/*      the toolkit.                                                    */
+/* -------------------------------------------------------------------- */
+    if( !CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
+        NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize cache memory limit.  Default is apparently 1/4 RAM.  */
@@ -1918,7 +1760,3 @@ void GDALRegister_JP2ECW()
     }
 #endif /* def FRMT_ecw */
 }
-
-
-
-

@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	ecwdataset.o ecwcreatecopy.o jp2userbox.o
+OBJ	=	ecwdataset.o ecwcreatecopy.o jp2userbox.o ecwasyncread.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) -DFRMT_ecw $(CPPFLAGS) $(EXTRA_CFLAGS)
 PLUGIN_SO =	gdal_ECW_JP2ECW.so
@@ -12,6 +12,8 @@ clean:
 	rm -f *.o $(O_OBJ) *.so
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
+
+$(OBJ) $(O_OBJ):	gdal_ecw.h
 
 plugin: $(PLUGIN_SO)
 
