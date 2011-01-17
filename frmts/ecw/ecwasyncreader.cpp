@@ -31,7 +31,7 @@
 
 CPL_CVSID("$Id: ecwdataset.cpp 21486 2011-01-13 17:38:17Z warmerdam $");
 
-#ifdef FRMT_ecw
+#if defined(FRMT_ecw) && (ECWSDK_VERSION >= 40)
 
 /************************************************************************/
 /*                          BeginAsyncReader()                          */

@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	ecwdataset.o ecwcreatecopy.o jp2userbox.o ecwasyncread.o
+OBJ	=	ecwdataset.o ecwcreatecopy.o jp2userbox.o ecwasyncreader.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) -DFRMT_ecw $(CPPFLAGS) $(EXTRA_CFLAGS)
 PLUGIN_SO =	gdal_ECW_JP2ECW.so

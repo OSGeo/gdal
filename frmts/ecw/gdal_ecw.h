@@ -256,6 +256,9 @@ class VSIIOStream : public CNCSJPCIOStream
 /* ==================================================================== */
 /************************************************************************/
 class ECWDataset;
+
+#if ECWSDK_VERSION >= 40
+
 class ECWAsyncReader : public GDALAsyncReader
 {
 private:
@@ -280,6 +283,7 @@ public:
 
     friend class ECWDataset;
 };
+#endif /* ECWSDK_VERSION >= 40 */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -360,6 +364,7 @@ class CPL_DLL ECWDataset : public GDALPamDataset
                                char **papszOptions );
 
     // progressive methods
+#if ECWSDK_VERSION >= 40
     virtual GDALAsyncReader* BeginAsyncReader( int nXOff, int nYOff,
                                                int nXSize, int nYSize, 
                                                void *pBuf,
@@ -371,6 +376,7 @@ class CPL_DLL ECWDataset : public GDALPamDataset
                                                char **papszOptions);
 
     virtual void EndAsyncReader(GDALAsyncReader *);
+#endif /* ECWSDK_VERSION > 40 */
 };
 
 /************************************************************************/
