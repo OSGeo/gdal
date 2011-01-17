@@ -469,7 +469,9 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosys )
             zone = atoi(ptr);
             for( ; isdigit((unsigned char)*ptr) || *ptr == '-'; ptr++ ) {}
             for( ; isspace(*ptr); ptr++ ) {}
-            if( isalpha(*ptr) && !isdigit((unsigned char)*(ptr+1)) )
+            if( isalpha(*ptr) 
+                && !isdigit((unsigned char)*(ptr+1)) 
+                && ptr[1] != '-' )
                 zone_code = *(ptr++);
         }
         else
