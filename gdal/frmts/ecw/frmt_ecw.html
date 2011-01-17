@@ -15,6 +15,13 @@ but in some cases coordinate systems may not translate.<p>
 Support for the ECW driver in GDAL is optional, and requires linking
 in external ECW SDK libraries provided by ERDAS.<p>
 
+In addition to ECW files, this driver also supports access to network
+image services using the "ECWP" protocol.  Use the full ecwp:// url of 
+the service as the dataset name.  When built with SDK 4.1 or newer it
+is also possible to take advantage of 
+<a href="http://trac.osgeo.org/gdal/wiki/rfc24_progressive_data_support">
+RFC 24</a> style asynchronous access to ECWP services.<p>
+
 <h2>Creation Issues</h2>
 
 The ECW 4.x SDK from ERDAS is only free for image decompression.  To 
@@ -119,7 +126,7 @@ in the creation options, may also be set as configuration options. See above.
 <h2>See Also:</h2>
 
 <ul>
-<li> Implemented as <tt>gdal/frmts/ecw/ecwdataset.cpp</tt>.
+<li> Implemented in <tt>gdal/frmts/ecw</tt>.
 
 <li> ECW SDK available at <a href="http://www.erdas.com/products/ERDASECWJPEG2000SDK/Details.aspx">erdas.com</a>.
 
