@@ -966,7 +966,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-#endif /* ECWSDK_VERSION >= 40
+#endif /* ECWSDK_VERSION >= 40 */
 
 /* -------------------------------------------------------------------- */
 /*      Get various values from the source dataset.                     */
