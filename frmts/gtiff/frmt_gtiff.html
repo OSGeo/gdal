@@ -232,7 +232,9 @@ used. Primarily intended for debugging & test purposes</p>
 
 <li><p><b>COPY_SRC_OVERVIEWS=[YES/NO]</b>: (GDAL >= 1.8.0, CreateCopy() only) By setting this to YES (default is NO), the potential existing overviews
 of the source dataset will be copied to the target dataset without being recomputed. If overviews of mask band
-also exist, provided that the GDAL_TIFF_INTERNAL_MASK configuration option is set to YES, they will also be copied.</p></li>
+also exist, provided that the GDAL_TIFF_INTERNAL_MASK configuration option is set to YES, they will also be copied.
+Note that this creation option will have <a href="http://trac.osgeo.org/gdal/ticket/3917">no effect</a> if general options
+(i.e. options which are not creation options) of gdal_translate are used.</p></li>
 
 </ul>
 
