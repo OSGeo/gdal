@@ -514,6 +514,34 @@ CPLErr GDALECWCompressor::Initialize(
 
 {
 /* -------------------------------------------------------------------- */
+/*      For 4.x and beyond you need a license key to compress data.     */
+/*      Check for it as a configuration option or a creation option.    */
+/* -------------------------------------------------------------------- */
+#if ECWSDK_VERSION >= 40 
+    const char* pszECWKey = CSLFetchNameValue( papszOptions, "ECW_ENCODE_KEY");
+    if( pszECWKey == NULL )
+        pszECWKey = CPLGetConfigOption( "ECW_ENCODE_KEY", NULL );
+    
+    const char* pszECWCompany = 
+        CSLFetchNameValue( papszOptions, "ECW_ENCODE_COMPANY");
+    if( pszECWCompany == NULL )
+        pszECWCompany = CPLGetConfigOption( "ECW_ENCODE_COMPANY", NULL );
+    
+    if( pszECWKey && pszECWCompany)
+    {
+        CPLDebug( "ECW", "SetOEMKey(%s,%s)", pszECWCompany, pszECWKey );
+        CNCSFile::SetOEMKey( (char *) pszECWCompany, (char *)pszECWKey );
+    }
+    else if( pszECWKey || pszECWCompany )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Only one of ECW_ENCODE_KEY and ECW_ENCODE_COMPANY were provided.\nBoth are required." );
+        return CE_Failure;
+    }
+
+#endif /* ECWSDK_VERSION >= 40 */
+
+/* -------------------------------------------------------------------- */
 /*      Do some rudimentary checking in input.                          */
 /* -------------------------------------------------------------------- */
     if( nBands == 0 )
@@ -917,34 +945,6 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 {
     ECWInitialize();
-
-/* -------------------------------------------------------------------- */
-/*      For 4.x and beyond you need a license key to compress data.     */
-/*      Check for it as a configuration option or a creation option.    */
-/* -------------------------------------------------------------------- */
-#if ECWSDK_VERSION >= 40 
-    const char* pszECWKey = CSLFetchNameValue( papszOptions, "ECW_ENCODE_KEY");
-    if( pszECWKey == NULL )
-        pszECWKey = CPLGetConfigOption( "ECW_ENCODE_KEY", NULL );
-    
-    const char* pszECWCompany = 
-        CSLFetchNameValue( papszOptions, "ECW_ENCODE_COMPANY");
-    if( pszECWCompany == NULL )
-        pszECWCompany = CPLGetConfigOption( "ECW_ENCODE_COMPANY", NULL );
-    
-    if( pszECWKey && pszECWCompany)
-    {
-        CPLDebug( "ECW", "SetOEMKey(%s,%s)", pszECWCompany, pszECWKey );
-        CNCSFile::SetOEMKey( (char *) pszECWCompany, (char *)pszECWKey );
-    }
-    else if( pszECWKey || pszECWCompany )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Only one of ECW_ENCODE_KEY and ECW_ENCODE_COMPANY were provided.\nBoth are required." );
-        return NULL;
-    }
-
-#endif /* ECWSDK_VERSION >= 40 */
 
 /* -------------------------------------------------------------------- */
 /*      Get various values from the source dataset.                     */
