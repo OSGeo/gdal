@@ -200,6 +200,12 @@ class VSIIOStream : public CNCSJPCIOStream
         if( osPath != "" && stat( osPath, &sStatBuf ) != 0 )
         {
             osFilenameUsed = CPLGenerateTempFilename( NULL );
+            // try to preserve the extension.
+            if( strlen(CPLGetExtension(pszFilename)) > 0 )
+            {
+                osFilenameUsed += ".";
+                osFilenameUsed += CPLGetExtension(pszFilename);
+            }
             CPLDebug( "ECW", "Using filename '%s' for temporary directory determination purposes.", osFilenameUsed.c_str() );
         }
         return(CNCSJPCIOStream::Open((char *)osFilenameUsed.c_str(), 
