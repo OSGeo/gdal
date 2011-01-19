@@ -215,12 +215,15 @@ class VSIIOStream : public CNCSJPCIOStream
         switch(origin) {
             case START:
               success = (0 == VSIFSeekL(fpVSIL, offset+startOfJPData, SEEK_SET));
+              break;
 
             case CURRENT:
               success = (0 == VSIFSeekL(fpVSIL, offset, SEEK_CUR));
+              break;
                 
             case END:
               success = (0 == VSIFSeekL(fpVSIL, offset, SEEK_END));
+              break;
         }
         if( !success )
             CPLDebug( "ECW", "VSIIOStream::Seek(%d,%d) failed.", 
