@@ -165,12 +165,18 @@ class VSIIOStream : public CNCSJPCIOStream
     }
     virtual ~VSIIOStream() {
         Close();
+    }
+
+    virtual CNCSError Close() {
+        CNCSError oErr = CNCSJPCIOStream::Close();
         if( fpVSIL != NULL )
         {
             VSIFCloseL( fpVSIL );
             fpVSIL = NULL;
         }
-    }
+        return oErr;
+    }        
+        
 #if ECWSDK_VERSION >= 40
     virtual NCS::CIOStream *Clone() { return NULL; }
 #endif /* ECWSDK_VERSION >= 4 */
@@ -185,7 +191,19 @@ class VSIIOStream : public CNCSJPCIOStream
         bWritable = bWrite;
         VSIFSeekL(fpVSIL, startOfJPData, SEEK_SET);
 
-        return(CNCSJPCIOStream::Open((char *)pszFilename, (bool) bWrite));
+        // the filename is used to establish where to put temporary files.
+        // if it does not have a path to a real directory, we will 
+        // substitute something. 
+        CPLString osFilenameUsed = pszFilename;
+        CPLString osPath = CPLGetPath( pszFilename );
+        struct stat sStatBuf;
+        if( osPath != "" && stat( osPath, &sStatBuf ) != 0 )
+        {
+            osFilenameUsed = CPLGenerateTempFilename( NULL );
+            CPLDebug( "ECW", "Using filename '%s' for temporary directory determination purposes.", osFilenameUsed.c_str() );
+        }
+        return(CNCSJPCIOStream::Open((char *)osFilenameUsed.c_str(), 
+                                     (bool) bWrite));
     }
 
     virtual bool NCS_FASTCALL Seek() {
@@ -193,18 +211,21 @@ class VSIIOStream : public CNCSJPCIOStream
     }
     
     virtual bool NCS_FASTCALL Seek(INT64 offset, Origin origin = CURRENT) {
+        bool success = false;
         switch(origin) {
             case START:
-                return(0 == VSIFSeekL(fpVSIL, offset+startOfJPData, SEEK_SET));
+              success = (0 == VSIFSeekL(fpVSIL, offset+startOfJPData, SEEK_SET));
 
             case CURRENT:
-                return(0 == VSIFSeekL(fpVSIL, offset, SEEK_CUR));
+              success = (0 == VSIFSeekL(fpVSIL, offset, SEEK_CUR));
                 
             case END:
-                return(0 == VSIFSeekL(fpVSIL, offset, SEEK_END));
+              success = (0 == VSIFSeekL(fpVSIL, offset, SEEK_END));
         }
-        
-        return(false);
+        if( !success )
+            CPLDebug( "ECW", "VSIIOStream::Seek(%d,%d) failed.", 
+                      (int) offset, (int) origin );
+        return(success);
     }
 
     virtual INT64 NCS_FASTCALL Tell() {
@@ -246,7 +267,14 @@ class VSIIOStream : public CNCSJPCIOStream
     virtual bool NCS_FASTCALL Write(void* buffer, UINT32 count) {
         if( count == 0 )
             return true;
-        return(1 == VSIFWriteL(buffer, count, 1, fpVSIL));
+        if( 1 != VSIFWriteL(buffer, count, 1, fpVSIL) )
+        {
+            CPLDebug( "ECW", "VSIIOStream::Write(%d) failed.", 
+                      (int) count );
+            return false;
+        }
+        else 
+            return true;
     }
 };
 
