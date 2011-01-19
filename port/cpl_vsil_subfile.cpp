@@ -50,7 +50,6 @@ class VSISubFileHandle : public VSIVirtualHandle
     VSILFILE     *fp;
     vsi_l_offset  nSubregionOffset;
     vsi_l_offset  nSubregionSize;
-    int           bUpdate;
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -305,6 +304,13 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
         errno = ENOENT;
         return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      We can't open the containing file with "w" access, so if tht    */
+/*      is requested use "r+" instead to update in place.               */
+/* -------------------------------------------------------------------- */
+    if( pszAccess[0] == 'w' )
+        pszAccess = "r+";
 
 /* -------------------------------------------------------------------- */
 /*      Open the underlying file.                                       */
