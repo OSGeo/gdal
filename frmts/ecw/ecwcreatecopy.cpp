@@ -121,6 +121,7 @@ CPLErr GDALECWCompressor::CloseDown()
     CPLFree( sFileInfo.pBands );
 
     Close( true );
+    m_OStream.Close();
 
     return CE_None;
 }
@@ -831,46 +832,23 @@ CPLErr GDALECWCompressor::Initialize(
         WriteJP2Box( oJP2MD.CreateJP2GeoTIFF() );
 
 /* -------------------------------------------------------------------- */
-/*      Handle special case of a JPEG2000 data stream in another file.  */
+/*      We handle all jpeg2000 files via the VSIIOStream, but ECW       */
+/*      files cannot be done this way for some reason.                  */
 /* -------------------------------------------------------------------- */
     VSILFILE *fpVSIL = NULL;
 
-    if( EQUALN(pszFilename,"J2K_SUBFILE:",12) )
+    if( bIsJPEG2000 )
     {
-        int  subfile_offset=-1, subfile_size=-1;
-        const char *real_filename = NULL;
-
-        if( sscanf( pszFilename, "J2K_SUBFILE:%d,%d", 
-                    &subfile_offset, &subfile_size ) != 2 )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to parse J2K_SUBFILE specification." );
-            return CE_Failure;
-        }
-
-        real_filename = strstr(pszFilename,",");
-        if( real_filename != NULL )
-            real_filename = strstr(real_filename+1,",");
-        if( real_filename != NULL )
-            real_filename++;
-        else
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to parse J2K_SUBFILE specification." );
-            return CE_Failure;
-        }
-
-        fpVSIL = VSIFOpenL( real_filename, "rb+" );
+        fpVSIL = VSIFOpenL( pszFilename, "wb+" );
         if( fpVSIL == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to open %s.",  real_filename );
+                      "Failed to open %s.", pszFilename );
             return CE_Failure;
         }
 
-        m_OStream.Access( fpVSIL, TRUE, real_filename,
-                          subfile_offset, subfile_size );
-    }
+        m_OStream.Access( fpVSIL, TRUE, pszFilename, 0, -1 );
+    }    
 
 /* -------------------------------------------------------------------- */
 /*      Check if we can enable large files.  This option should only    */
@@ -1029,6 +1007,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Setup the compressor.                                           */
 /* -------------------------------------------------------------------- */
     GDALECWCompressor         oCompressor;
+    CNCSError oErr;
 
     oCompressor.pfnProgress = pfnProgress;
     oCompressor.pProgressData = pProgressData;
@@ -1049,7 +1028,17 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Start the compression.                                          */
 /* -------------------------------------------------------------------- */
-    oCompressor.Write();
+    oErr = oCompressor.Write();
+
+    if( oErr.GetErrorNumber() != NCS_SUCCESS )
+    {
+        char* pszErrorMessage = oErr.GetErrorMessage();
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s", pszErrorMessage );
+        NCSFree(pszErrorMessage);
+        
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup, and return read-only handle.                           */
