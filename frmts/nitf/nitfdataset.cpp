@@ -3760,7 +3760,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
 
         CPLString osDSName;
 
-        osDSName.Printf("J2K_SUBFILE:" CPL_FRMT_GUIB ",%d,%s", nImageOffset, -1, pszFilename);
+        osDSName.Printf("/vsisubfile/" CPL_FRMT_GUIB "_%d,%s", nImageOffset, -1, pszFilename);
 
         NITFClose( psFile );
 
