@@ -446,6 +446,10 @@ OGRStylePen *kml2pen (
 
     OGRStylePen *poOgrStylePen = new OGRStylePen (  );
 
+    /***** <LineStyle> should always have a width in pixels *****/
+    
+    poOgrStylePen->SetUnit(OGRSTUPixel);
+
     /***** width *****/
 
     if ( poKmlLineStyle->has_width (  ) )
