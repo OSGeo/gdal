@@ -108,7 +108,14 @@ void OGRRegisterAll()
 #endif
 #ifdef ODBC_ENABLED
     RegisterOGRODBC();
-#endif    
+#endif
+
+/* Register before PGeo and Geomedia drivers */
+/* that don't work well on Linux */
+#ifdef MDB_ENABLED
+    RegisterOGRMDB();
+#endif
+
 #ifdef PGEO_ENABLED
     RegisterOGRPGeo();
 #endif
