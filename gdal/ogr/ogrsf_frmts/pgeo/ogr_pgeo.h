@@ -64,9 +64,6 @@ class OGRPGeoLayer : public OGRLayer
                                           CPLODBCStatement *poStmt );
 
     virtual CPLODBCStatement *  GetStatement() { return poStmt; }
-    OGRErr              createFromShapeBin( GByte *pabyShape, 
-                                            OGRGeometry **ppoGeom,
-                                            int nBytes );
 
     void                LookupSRID( int );
 
