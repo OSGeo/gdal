@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include <vector>
+#include "ogrgeomediageometry.h"
 
 CPL_CVSID("$Id$");
 
@@ -43,7 +44,9 @@ OGRMDBDataSource::OGRMDBDataSource()
 {
     pszName = NULL;
     papoLayers = NULL;
+    papoLayersInvisible = NULL;
     nLayers = 0;
+    nLayersWithInvisible = 0;
     poDB = NULL;
 }
 
@@ -60,8 +63,12 @@ OGRMDBDataSource::~OGRMDBDataSource()
 
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
     CPLFree( papoLayers );
+
+    for( i = 0; i < nLayersWithInvisible; i++ )
+        delete papoLayersInvisible[i];
+    CPLFree( papoLayersInvisible );
+
 
     delete poDB;
 }
@@ -149,7 +156,9 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
     if (iTableName < 0 || iTableType < 0)
         return FALSE;
 
-    char* pszTableName = NULL;
+    char* pszFeatureTableName = NULL;
+    char* pszGeometryProperties = NULL;
+    char* pszGCoordSystemTable = NULL;
     while(poGAliasTable->GetNextRow())
     {
         char* pszTableType = poGAliasTable->GetColumnAsString(iTableType);
@@ -158,21 +167,45 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
 
         if (strcmp(pszTableType, "INGRFeatures") == 0)
         {
-            CPLFree(pszTableType);
-            pszTableName = poGAliasTable->GetColumnAsString(iTableName);
-            break;
+            pszFeatureTableName = poGAliasTable->GetColumnAsString(iTableName);
         }
+        else if (strcmp(pszTableType, "INGRGeometryProperties") == 0)
+        {
+            pszGeometryProperties = poGAliasTable->GetColumnAsString(iTableName);
+        }
+        else if (strcmp(pszTableType, "GCoordSystemTable") == 0)
+        {
+            pszGCoordSystemTable = poGAliasTable->GetColumnAsString(iTableName);
+        }
+
         CPLFree(pszTableType);
     }
 
-    if (pszTableName == NULL)
+    if (pszFeatureTableName == NULL)
+    {
+        CPLFree(pszGeometryProperties);
+        CPLFree(pszGCoordSystemTable);
         return FALSE;
+    }
 
-    OGRMDBTable* poGFeaturesTable = poDB->GetTable(pszTableName);
-    CPLFree(pszTableName);
+    OGRMDBTable* poGFeaturesTable = poDB->GetTable(pszFeatureTableName);
+    CPLFree(pszFeatureTableName);
+    pszFeatureTableName = NULL;
+
+    OGRMDBTable* poGeometryPropertiesTable;
+    if (pszGeometryProperties)
+        poGeometryPropertiesTable = poDB->GetTable(pszGeometryProperties);
+    else
+        poGeometryPropertiesTable = NULL;
+    CPLFree(pszGeometryProperties);
+    pszGeometryProperties = NULL;
 
     if (poGFeaturesTable == NULL)
+    {
+        delete poGeometryPropertiesTable;
+        CPLFree(pszGCoordSystemTable);
         return FALSE;
+    }
 
     int iFeatureName = poGFeaturesTable->GetColumnIndex("FeatureName", TRUE);
     int iGeometryType = poGFeaturesTable->GetColumnIndex("GeometryType", TRUE);
@@ -180,15 +213,42 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
 
     if (iFeatureName < 0 || iGeometryType < 0 || iPrimaryGeometryFieldName < 0)
     {
+        delete poGeometryPropertiesTable;
         delete poGFeaturesTable;
+        CPLFree(pszGCoordSystemTable);
         return FALSE;
     }
 
-    while(poGFeaturesTable->GetNextRow())
+    if (poGeometryPropertiesTable != NULL && poGeometryPropertiesTable->GetRowCount() != poGFeaturesTable->GetRowCount())
+    {
+        delete poGeometryPropertiesTable;
+        poGeometryPropertiesTable = NULL;
+    }
+
+    int iGCoordSystemGUID = -1;
+    if (poGeometryPropertiesTable)
+    {
+        iGCoordSystemGUID = poGeometryPropertiesTable->GetColumnIndex("GCoordSystemGUID", TRUE);
+        if (iGCoordSystemGUID < 0)
+        {
+            delete poGeometryPropertiesTable;
+            delete poGFeaturesTable;
+            CPLFree(pszGCoordSystemTable);
+            return FALSE;
+        }
+    }
+
+    while(poGFeaturesTable->GetNextRow() &&
+          (poGeometryPropertiesTable == NULL || poGeometryPropertiesTable->GetNextRow()))
     {
         char* pszFeatureName = poGFeaturesTable->GetColumnAsString(iFeatureName);
         //int nGeometryType = poGFeaturesTable->GetColumnAsInt(iGeometryType);
         char* pszGeometryFieldName = poGFeaturesTable->GetColumnAsString(iPrimaryGeometryFieldName);
+        char* pszGCoordSystemGUID;
+        if (poGeometryPropertiesTable)
+            pszGCoordSystemGUID = poGeometryPropertiesTable->GetColumnAsString(iGCoordSystemGUID);
+        else
+            pszGCoordSystemGUID = NULL;
         if (pszFeatureName && pszGeometryFieldName)
         {
             OGRMDBTable* poTable = poDB->GetTable(pszFeatureName);
@@ -197,7 +257,8 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
                 OGRMDBLayer* poLayer = new OGRMDBLayer( this, poTable );
 
                 if( poLayer->Initialize( pszFeatureName,
-                                         pszGeometryFieldName )
+                                         pszGeometryFieldName,
+                                         GetGeomediaSRS(pszGCoordSystemTable, pszGCoordSystemGUID) )
                     != CE_None )
                 {
                     delete poLayer;
@@ -211,9 +272,12 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
         }
         CPLFree(pszFeatureName);
         CPLFree(pszGeometryFieldName);
+        CPLFree(pszGCoordSystemGUID);
     }
 
+    delete poGeometryPropertiesTable;
     delete poGFeaturesTable;
+    CPLFree(pszGCoordSystemTable);
 
     return TRUE;
 }
@@ -276,6 +340,7 @@ int OGRMDBDataSource::Open( const char * pszNewName, int bUpdate,
 
         papoLayers = (OGRMDBLayer**)CPLRealloc(papoLayers, (nLayers+1) * sizeof(OGRMDBLayer*));
         papoLayers[nLayers++] = poLayer;
+        nLayersWithInvisible = nLayers;
     }
 
     return TRUE;
@@ -302,4 +367,76 @@ OGRLayer *OGRMDBDataSource::GetLayer( int iLayer )
         return NULL;
     else
         return papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
+
+OGRLayer *OGRMDBDataSource::GetLayerByName( const char* pszName )
+
+{
+    if (pszName == NULL)
+        return NULL;
+    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszName);
+    if (poLayer)
+        return poLayer;
+
+    for( int i = 0; i < nLayersWithInvisible; i++ )
+    {
+        poLayer = papoLayersInvisible[i];
+
+        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+            return poLayer;
+    }
+
+    OGRMDBTable* poTable = poDB->GetTable(pszName);
+    if (poTable == NULL)
+        return NULL;
+
+    OGRMDBLayer* poMDBLayer = new OGRMDBLayer( this, poTable );
+    if( poMDBLayer->BuildFeatureDefn() != CE_None )
+    {
+        delete poMDBLayer;
+        return NULL;
+    }
+
+    papoLayersInvisible = (OGRMDBLayer**)CPLRealloc(papoLayersInvisible,
+                            (nLayersWithInvisible+1) * sizeof(OGRMDBLayer*));
+    papoLayersInvisible[nLayersWithInvisible++] = poMDBLayer;
+
+    return poMDBLayer;
+}
+
+/************************************************************************/
+/*                          GetGeomediaSRS()                            */
+/************************************************************************/
+
+OGRSpatialReference* OGRMDBDataSource::GetGeomediaSRS(const char* pszGCoordSystemTable,
+                                                      const char* pszGCoordSystemGUID)
+{
+    if (pszGCoordSystemTable == NULL || pszGCoordSystemGUID == NULL)
+        return NULL;
+
+    OGRLayer* poGCoordSystemTable = GetLayerByName(pszGCoordSystemTable);
+    if (poGCoordSystemTable == NULL)
+        return NULL;
+
+    poGCoordSystemTable->ResetReading();
+    
+    OGRFeature* poFeature;
+    while((poFeature = poGCoordSystemTable->GetNextFeature()) != NULL)
+    {
+        const char* pszCSGUID = poFeature->GetFieldAsString("CSGUID");
+        if (pszCSGUID && strcmp(pszCSGUID, pszGCoordSystemGUID) == 0)
+        {
+            OGRSpatialReference* poSRS = OGRGetGeomediaSRS(poFeature);
+            delete poFeature;
+            return poSRS;
+        }
+
+        delete poFeature;
+    }
+
+    return NULL;
 }
