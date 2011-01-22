@@ -745,6 +745,10 @@ LIBOBJS
 RASDAMAN_LIB
 RASDAMAN_INC
 RASDAMAN_ENABLED
+JVM_LIB
+MDB_ENABLED
+JAVA_INC
+JAVA_HOME
 BINDINGS
 PY_HAVE_SETUPTOOLS
 pymoddir
@@ -1038,6 +1042,9 @@ with_php
 with_ruby
 with_python
 with_pymoddir
+with_java
+with_mdb
+with_jvm_lib
 with_rasdaman
 '
       ac_precious_vars='build_alias
@@ -1764,6 +1771,9 @@ Optional Packages:
   --with-ruby           Enable Ruby bindings
   --with-python       Enable python bindings
   --with-pymoddir=ARG   Override Old-gen Python package install dir
+  --with-java       Include Java support (ARG=yes, no or JDK root path)
+  --with-mdb       Include MDB driver
+  --with-jvm-lib          Java libjvm path
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
 
 Some influential environment variables:
@@ -5939,13 +5949,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5942: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5952: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5945: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5955: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5948: output\"" >&5)
+  (eval echo "\"\$as_me:5958: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -7147,7 +7157,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 7150 "configure"' > conftest.$ac_ext
+  echo '#line 7160 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -9073,11 +9083,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9076: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9086: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9080: \$? = $ac_status" >&5
+   echo "$as_me:9090: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9412,11 +9422,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9415: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9425: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9419: \$? = $ac_status" >&5
+   echo "$as_me:9429: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9517,11 +9527,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9520: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9530: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9524: \$? = $ac_status" >&5
+   echo "$as_me:9534: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9572,11 +9582,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9575: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9585: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9579: \$? = $ac_status" >&5
+   echo "$as_me:9589: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11955,7 +11965,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11958 "configure"
+#line 11968 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12051,7 +12061,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12054 "configure"
+#line 12064 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14007,11 +14017,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14010: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14020: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14014: \$? = $ac_status" >&5
+   echo "$as_me:14024: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14106,11 +14116,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14109: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14119: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14113: \$? = $ac_status" >&5
+   echo "$as_me:14123: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14158,11 +14168,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14161: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14171: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14165: \$? = $ac_status" >&5
+   echo "$as_me:14175: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -24401,6 +24411,206 @@ fi
 
 
 
+
+# Check whether --with-java was given.
+if test "${with_java+set}" = set; then :
+  withval=$with_java;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should include Java support" >&5
+$as_echo_n "checking whether we should include Java support... " >&6; }
+
+JAVA_HOME=""
+JAVA_INC=""
+
+if test "x$with_java" = "xyes"; then
+
+    if test -d /usr/lib/jvm/java-6-openjdk; then
+        with_java=/usr/lib/jvm/java-6-openjdk
+    else
+        as_fn_error $? "\"cannot find JDK root directory.\"" "$LINENO" 5
+    fi
+fi
+
+if test "x$JAVA_INC" != "x"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
+
+    if test "x$with_java/include" != "x"; then
+        if test -d "$with_java/include/linux"; then
+            JAVA_HOME="$with_java"
+            JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+            as_fn_error $? "\"Cannot find $with_java/include/linux directory.\"" "$LINENO" 5
+        fi
+    else
+        as_fn_error $? "\"Cannot find $with_java/include directory.\"" "$LINENO" 5
+    fi
+
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+JAVA_HOME=$JAVA_HOME
+
+JAVA_INC=$JAVA_INC
+
+
+
+
+# Check whether --with-mdb was given.
+if test "${with_mdb+set}" = set; then :
+  withval=$with_mdb;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should include MDB support" >&5
+$as_echo_n "checking whether we should include MDB support... " >&6; }
+
+MDB_ENABLED=no
+JVM_LIB=""
+
+if test "$with_mdb" = "yes" ; then
+    if test "x$JAVA_INC" = "x"; then
+        as_fn_error $? "\"--with-java-inc must be specified.\"" "$LINENO" 5
+    fi
+
+
+# Check whether --with-jvm-lib was given.
+if test "${with_jvm_lib+set}" = set; then :
+  withval=$with_jvm_lib;
+fi
+
+
+    if test "x$with_jvm_lib" != "x"; then
+        if test -d "$with_jvm_lib"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
+$as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
+if test "${ac_cv_lib_jvm_JNI_CreateJavaVM+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljvm -L$with_jvm_lib -ljvm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JNI_CreateJavaVM ();
+int
+main ()
+{
+return JNI_CreateJavaVM ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_jvm_JNI_CreateJavaVM=yes
+else
+  ac_cv_lib_jvm_JNI_CreateJavaVM=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jvm_JNI_CreateJavaVM" >&5
+$as_echo "$ac_cv_lib_jvm_JNI_CreateJavaVM" >&6; }
+if test "x$ac_cv_lib_jvm_JNI_CreateJavaVM" = x""yes; then :
+  HAS_LIB_JVM=yes
+else
+  HAS_LIB_JVM=no
+fi
+
+            if test "$HAS_LIB_JVM" = "yes"; then
+                JVM_LIB="-L$with_jvm_lib -ljvm"
+            else
+                as_fn_error $? "\"--with-jvm-lib must point to a directory with a libjvm.\"" "$LINENO" 5
+            fi
+        else
+            as_fn_error $? "\"--with-jvm-lib must point to a directory.\"" "$LINENO" 5
+        fi
+    elif test "x$JAVA_HOME" != "x"; then
+        if test -d "$JAVA_HOME/jre/lib/amd64/server"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
+$as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
+if test "${ac_cv_lib_jvm_JNI_CreateJavaVM+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljvm -L$JAVA_HOME/jre/lib/amd64/server -ljvm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JNI_CreateJavaVM ();
+int
+main ()
+{
+return JNI_CreateJavaVM ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_jvm_JNI_CreateJavaVM=yes
+else
+  ac_cv_lib_jvm_JNI_CreateJavaVM=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jvm_JNI_CreateJavaVM" >&5
+$as_echo "$ac_cv_lib_jvm_JNI_CreateJavaVM" >&6; }
+if test "x$ac_cv_lib_jvm_JNI_CreateJavaVM" = x""yes; then :
+  HAS_LIB_JVM=yes
+else
+  HAS_LIB_JVM=no
+fi
+
+            if test "$HAS_LIB_JVM" = "yes"; then
+                JVM_LIB="-L$JAVA_HOME/jre/lib/amd64/server -ljvm"
+            else
+                as_fn_error $? "\"--with-jvm-lib must point to a directory with a libjvm.\"" "$LINENO" 5
+            fi
+        else
+            as_fn_error $? "\"--with-jvm-lib must be specified.\"" "$LINENO" 5
+        fi
+    else
+        as_fn_error $? "\"--with-jvm-lib must be specified.\"" "$LINENO" 5
+    fi
+
+    MDB_ENABLED=yes
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+MDB_ENABLED=$MDB_ENABLED
+
+JVM_LIB=$JVM_LIB
+
+
+
+
 RASDAMAN_ENABLED=no
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should include rasdaman support..." >&5
@@ -26999,6 +27209,9 @@ echo "  ODBC support:              ${ODBC_SETTING}"
 
 
 echo "  PGeo support:              ${ODBC_SETTING}"
+
+
+echo "  MDB support:               ${MDB_ENABLED}"
 
 
 echo "  PCIDSK support:            ${PCIDSK_SETTING}"

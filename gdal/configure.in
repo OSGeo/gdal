@@ -2852,6 +2852,108 @@ AC_SUBST([PY_HAVE_SETUPTOOLS])
 AC_SUBST([BINDINGS])
 
 dnl ---------------------------------------------------------------------------
+dnl Java support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(java,[  --with-java       Include Java support (ARG=yes, no or JDK root path)],,)
+
+AC_MSG_CHECKING([whether we should include Java support])
+
+JAVA_HOME=""
+JAVA_INC=""
+
+if test "x$with_java" = "xyes"; then
+
+    if test -d /usr/lib/jvm/java-6-openjdk; then
+        with_java=/usr/lib/jvm/java-6-openjdk
+dnl    elif test -d /System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers; then
+dnl        JAVA_INC="-I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
+    else
+        AC_MSG_ERROR("cannot find JDK root directory.")
+    fi
+fi
+
+if test "x$JAVA_INC" != "x"; then
+    AC_MSG_RESULT([yes])
+elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
+
+    if test "x$with_java/include" != "x"; then
+        if test -d "$with_java/include/linux"; then
+            JAVA_HOME="$with_java"
+            JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
+            AC_MSG_RESULT([yes])
+        else
+            AC_MSG_ERROR("Cannot find $with_java/include/linux directory.")
+        fi
+    else
+        AC_MSG_ERROR("Cannot find $with_java/include directory.")
+    fi
+
+else
+    AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(JAVA_HOME,$JAVA_HOME)
+AC_SUBST(JAVA_INC,$JAVA_INC)
+
+dnl ---------------------------------------------------------------------------
+dnl MDB driver
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(mdb,[  --with-mdb       Include MDB driver],,)
+
+AC_MSG_CHECKING([whether we should include MDB support])
+
+MDB_ENABLED=no
+JVM_LIB=""
+
+if test "$with_mdb" = "yes" ; then
+    if test "x$JAVA_INC" = "x"; then
+        AC_MSG_ERROR("--with-java-inc must be specified.")
+    fi
+
+    AC_ARG_WITH(jvm-lib,[  --with-jvm-lib          Java libjvm path],,)
+
+    if test "x$with_jvm_lib" != "x"; then
+        if test -d "$with_jvm_lib"; then
+            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,-L$with_jvm_lib -ljvm)
+            if test "$HAS_LIB_JVM" = "yes"; then
+                JVM_LIB="-L$with_jvm_lib -ljvm"
+            else
+                AC_MSG_ERROR("--with-jvm-lib must point to a directory with a libjvm.")
+            fi
+        else
+            AC_MSG_ERROR("--with-jvm-lib must point to a directory.")
+        fi
+    elif test "x$JAVA_HOME" != "x"; then
+        if test -d "$JAVA_HOME/jre/lib/amd64/server"; then
+            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,-L$JAVA_HOME/jre/lib/amd64/server -ljvm)
+            if test "$HAS_LIB_JVM" = "yes"; then
+                JVM_LIB="-L$JAVA_HOME/jre/lib/amd64/server -ljvm"
+            else
+                AC_MSG_ERROR("--with-jvm-lib must point to a directory with a libjvm.")
+            fi
+        else
+            AC_MSG_ERROR("--with-jvm-lib must be specified.")
+        fi
+dnl    elif test -f /System/Library/Frameworks/JavaVM.framework/Versions/Current/JavaVM; then
+dnl        JVM_LIB="-framework /System/Library/Frameworks/JavaVM.framework/Versions/Current/JavaVM"
+    else
+        AC_MSG_ERROR("--with-jvm-lib must be specified.")
+    fi
+
+    MDB_ENABLED=yes
+    AC_MSG_RESULT([yes])
+
+else
+    AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(MDB_ENABLED,$MDB_ENABLED)
+AC_SUBST(JVM_LIB,$JVM_LIB)
+
+
+dnl ---------------------------------------------------------------------------
 dnl Select Rasdaman or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -2950,6 +3052,7 @@ LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  PGeo support:              ${ODBC_SETTING}])
+LOC_MSG([  MDB support:               ${MDB_ENABLED}])
 LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
 LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
