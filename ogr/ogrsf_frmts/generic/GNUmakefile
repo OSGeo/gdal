@@ -133,6 +133,10 @@ ifeq ($(CURL_SETTING),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DWFS_ENABLED
 endif
 
+ifeq ($(GEOMEDIA_SETTING),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DGEOMEDIA_ENABLED
+endif
+
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
