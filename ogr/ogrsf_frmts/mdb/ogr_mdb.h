@@ -155,6 +155,7 @@ class OGRMDBTable
     CPLString osTableName;
 
     std::vector<CPLString> apoColumnNames;
+    std::vector<jstring>   apoColumnNameObjects;
     std::vector<int>       apoColumnTypes;
     std::vector<int>       apoColumnLengths;
 
