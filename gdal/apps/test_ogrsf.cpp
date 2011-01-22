@@ -926,7 +926,7 @@ static int TestAttributeFilter( OGRLayer *poLayer )
 /*      Construct exclusive filter.                                     */
 /* -------------------------------------------------------------------- */
     osAttributeFilter = pszFieldName;
-    osAttributeFilter += " != ";
+    osAttributeFilter += " <> ";
     if (eType == OFTString)
         osAttributeFilter += "'";
     osAttributeFilter += osValue;
