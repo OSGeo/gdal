@@ -197,4 +197,7 @@ void OGRRegisterAll()
 #ifdef AERONAVFAA_ENABLED
     RegisterOGRAeronavFAA();
 #endif
+#ifdef GEOMEDIA_ENABLED
+    RegisterOGRGeomedia();
+#endif
 } /* OGRRegisterAll */
