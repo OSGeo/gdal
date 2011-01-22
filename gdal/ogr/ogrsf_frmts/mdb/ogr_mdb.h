@@ -265,7 +265,8 @@ class OGRMDBLayer : public OGRLayer
                                     int bHasZ );
 
     CPLErr              Initialize( const char *pszTableName,
-                                    const char *pszGeomCol );
+                                    const char *pszGeomCol,
+                                    OGRSpatialReference* poSRS );
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int bForce );
@@ -295,6 +296,9 @@ class OGRMDBDataSource : public OGRDataSource
     OGRMDBLayer        **papoLayers;
     int                 nLayers;
 
+    OGRMDBLayer        **papoLayersInvisible;
+    int                 nLayersWithInvisible;
+
     char               *pszName;
 
     OGRMDBJavaEnv       env;
@@ -303,6 +307,8 @@ class OGRMDBDataSource : public OGRDataSource
 
     int                 OpenGDB(OGRMDBTable* poGDB_GeomColumns);
     int                 OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable);
+    OGRSpatialReference* GetGeomediaSRS(const char* pszGCoordSystemTable,
+                                        const char* pszGCoordSystemGUID);
 
   public:
                         OGRMDBDataSource();
@@ -316,6 +322,7 @@ class OGRMDBDataSource : public OGRDataSource
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
+    OGRLayer            *GetLayerByName( const char* pszLayerName );
 
     int                 TestCapability( const char * );
 };
