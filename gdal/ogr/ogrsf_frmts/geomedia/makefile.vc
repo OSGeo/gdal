@@ -1,0 +1,14 @@
+
+OBJ	=	ogrgeomediadriver.obj ogrgeomediadatasource.obj ogrgeomedialayer.obj \
+		ogrgeomediatablelayer.obj  ogrgeomediaselectlayer.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\..
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
