@@ -517,12 +517,12 @@ CPLErr OGRMDBLayer::Initialize( const char *pszTableName,
 
     LookupSRID( nSRID );
 
+    eGeometryType = MDB_GEOM_PGEO;
+
     CPLErr eErr;
     eErr = BuildFeatureDefn();
     if( eErr != CE_None )
         return eErr;
-
-    eGeometryType = MDB_GEOM_PGEO;
 
     return CE_None;
 }
@@ -550,12 +550,12 @@ CPLErr OGRMDBLayer::Initialize( const char *pszTableName,
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
 
+    eGeometryType = MDB_GEOM_GEOMEDIA;
+
     CPLErr eErr;
     eErr = BuildFeatureDefn();
     if( eErr != CE_None )
         return eErr;
-
-    eGeometryType = MDB_GEOM_GEOMEDIA;
 
     return CE_None;
 }
