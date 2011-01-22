@@ -41,6 +41,10 @@ CPL_CVSID("$Id$");
 #define GEOMEDIA_MULTILINE      0xCB
 #define GEOMEDIA_MULTIPOLYGON   0xCC
 
+/************************************************************************/
+/*                       OGRCreateFromGeomedia()                        */
+/************************************************************************/
+
 OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
                               OGRGeometry **ppoGeom,
                               int nBytes )
@@ -228,6 +232,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         if (nBytes < 4)
             return OGRERR_FAILURE;
 
+        int i;
         int nParts;
         memcpy(&nParts, pabyGeom, 4);
         CPL_LSBPTR32(&nParts);
@@ -238,10 +243,65 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         if (nParts < 0 || nParts > INT_MAX / (4 + 16) || nBytes < nParts * (4 + 16))
             return OGRERR_FAILURE;
 
+        /* Can this collection be considered as a multipolyline or multipolygon ? */
+        if ( nGeomType == GEOMEDIA_COLLECTION )
+        {
+            GByte* pabyGeomBackup = pabyGeom;
+            int nBytesBackup = nBytes;
+
+            int bAllPolyline = TRUE;
+            int bAllPolygon = TRUE;
+
+            for(i=0;i<nParts;i++)
+            {
+                if (nBytes < 4)
+                    return OGRERR_FAILURE;
+                int nSubBytes;
+                memcpy(&nSubBytes, pabyGeom, 4);
+                CPL_LSBPTR32(&nSubBytes);
+
+                if (nSubBytes < 0)
+                {
+                    return OGRERR_FAILURE;
+                }
+
+                pabyGeom += 4;
+                nBytes -= 4;
+
+                if (nBytes < nSubBytes)
+                {
+                    return OGRERR_FAILURE;
+                }
+
+                if( nSubBytes < 16 )
+                    return OGRERR_FAILURE;
+
+                if( !(pabyGeom[1] == 0xFF && pabyGeom[2] == 0xD2 && pabyGeom[3] == 0x0F) )
+                    return OGRERR_FAILURE;
+
+                int nSubGeomType = pabyGeom[0];
+                if ( nSubGeomType != GEOMEDIA_POLYLINE )
+                    bAllPolyline = FALSE;
+                if ( nSubGeomType != GEOMEDIA_POLYGON )
+                    bAllPolygon = FALSE;
+
+                pabyGeom += nSubBytes;
+                nBytes -= nSubBytes;
+            }
+
+            pabyGeom = pabyGeomBackup;
+            nBytes = nBytesBackup;
+
+            if (bAllPolyline)
+                nGeomType = GEOMEDIA_MULTILINE;
+            else if (bAllPolygon)
+                nGeomType = GEOMEDIA_MULTIPOLYGON;
+        }
+
         OGRGeometryCollection* poColl = (nGeomType == GEOMEDIA_MULTILINE) ? new OGRMultiLineString() :
                                         (nGeomType == GEOMEDIA_MULTIPOLYGON) ? new OGRMultiPolygon() :
                                                               new OGRGeometryCollection();
-        int i;
+
         for(i=0;i<nParts;i++)
         {
             if (nBytes < 4)
@@ -300,4 +360,45 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
     }
 
     return OGRERR_FAILURE;
+}
+
+
+/************************************************************************/
+/*                         OGRGetGeomediaSRS()                          */
+/************************************************************************/
+
+OGRSpatialReference* OGRGetGeomediaSRS(OGRFeature* poFeature)
+{
+    if (poFeature == NULL)
+        return NULL;
+
+    int nGeodeticDatum = poFeature->GetFieldAsInteger("GeodeticDatum");
+    int nEllipsoid = poFeature->GetFieldAsInteger("Ellipsoid");
+    int nProjAlgorithm = poFeature->GetFieldAsInteger("ProjAlgorithm");
+
+    if (nGeodeticDatum == 17 && nEllipsoid == 22)
+    {
+        if (nProjAlgorithm == 12)
+        {
+            OGRSpatialReference* poSRS = new OGRSpatialReference();
+
+            const char* pszDescription = poFeature->GetFieldAsString("Description");
+            if (pszDescription)
+                poSRS->SetNode( "PROJCS", pszDescription );
+            poSRS->SetWellKnownGeogCS("WGS84");
+
+            double dfStdP1 = poFeature->GetFieldAsDouble("StandPar1");
+            double dfStdP2 = poFeature->GetFieldAsDouble("StandPar2");
+            double dfCenterLat = poFeature->GetFieldAsDouble("LatOfOrigin");
+            double dfCenterLong = poFeature->GetFieldAsDouble("LonOfOrigin");
+            double dfFalseEasting = poFeature->GetFieldAsDouble("FalseX");
+            double dfFalseNorthing = poFeature->GetFieldAsDouble("FalseY");
+            poSRS->SetACEA( dfStdP1, dfStdP2,
+                            dfCenterLat, dfCenterLong,
+                            dfFalseEasting, dfFalseNorthing );
+            return poSRS;
+        }
+    }
+
+    return NULL;
 }
