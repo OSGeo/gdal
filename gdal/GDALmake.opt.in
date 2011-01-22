@@ -39,7 +39,7 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
 		$(MRSID_LIBS) $(MRSID_LIDAR_LIBS) $(INGRES_LIB) \
 		$(PCIDSK_LIB) $(RASDAMAN_LIB) $(CHARLS_LIB) \
-		$(OPENCL_LIB)
+		$(OPENCL_LIB) $(JVM_LIB)
 
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_LIBS = @PYTHON_LIBS@
@@ -392,6 +392,14 @@ CPPFLAGS	:= -DOGR_ENABLED $(CPPFLAGS)
 else
 GDAL_LIBS	=	$(GDAL_LIB)
 endif
+
+#
+# Java stuff
+#
+JAVA_INC  =   @JAVA_INC@
+JVM_LIB  =   @JVM_LIB@
+
+MDB_ENABLED =   @MDB_ENABLED@
 
 #
 #	Note these codes have to exactly match the format directory names, 
