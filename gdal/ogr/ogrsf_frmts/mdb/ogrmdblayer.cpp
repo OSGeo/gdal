@@ -533,7 +533,8 @@ CPLErr OGRMDBLayer::Initialize( const char *pszTableName,
 /************************************************************************/
 
 CPLErr OGRMDBLayer::Initialize( const char *pszTableName,
-                                const char *pszGeomCol )
+                                const char *pszGeomCol,
+                                OGRSpatialReference* poSRS )
 
 
 {
@@ -551,6 +552,8 @@ CPLErr OGRMDBLayer::Initialize( const char *pszTableName,
     pszFIDColumn = NULL;
 
     eGeometryType = MDB_GEOM_GEOMEDIA;
+
+    this->poSRS = poSRS;
 
     CPLErr eErr;
     eErr = BuildFeatureDefn();

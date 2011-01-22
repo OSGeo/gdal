@@ -31,9 +31,13 @@
 #define _OGR_GEOMEDIAGEOMETRY_H_INCLUDED
 
 #include "ogr_geometry.h"
+#include "ogr_spatialref.h"
+#include "ogr_feature.h"
 
 OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
                               OGRGeometry **ppoGeom,
                               int nBytes );
+
+OGRSpatialReference* OGRGetGeomediaSRS(OGRFeature* poFeature);
 
 #endif
