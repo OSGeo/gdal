@@ -1788,6 +1788,48 @@ def nitf_64():
     gdal.Unlink('/vsimem/nitf_64.ntf')
 
     return 'success'
+
+###############################################################################
+# Test creating an image with block_width = image_width > 8192 (#3922)
+
+def nitf_65():
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_65.ntf', 10000, 100, options = ['BLOCKXSIZE=10000'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_65.ntf')
+    (block_xsize, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
+    ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink('/vsimem/nitf_65.ntf')
+
+    if block_xsize != 10000:
+        print(block_xsize)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test creating an image with block_height = image_height > 8192 (#3922)
+
+def nitf_66():
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_66.ntf', 100, 10000, options = ['BLOCKYSIZE=10000', 'BLOCKXSIZE=50'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_66.ntf')
+    (block_xsize, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
+    ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink('/vsimem/nitf_66.ntf')
+
+    if block_ysize != 10000:
+        print(block_ysize)
+        return 'fail'
+
+    return 'success'
     
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
@@ -2738,6 +2780,8 @@ gdaltest_list = [
     nitf_62,
     nitf_63,
     nitf_64,
+    nitf_65,
+    nitf_66,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
