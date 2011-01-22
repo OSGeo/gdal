@@ -1245,7 +1245,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         /* read all the data needed to get our requested band-block */
         if( psImage->nBitsPerSample != psImage->nWordSize * 8 )
         {
-            if( psImage->chIMODE == 'S' )
+            if( psImage->chIMODE == 'S' || (psImage->chIMODE == 'B' && psImage->nBands == 1) )
             {
                 nWrkBufSize = ((psImage->nBlockWidth * psImage->nBlockHeight * psImage->nBitsPerSample) + 7) / 8;
                 if( VSIFSeekL( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], SEEK_SET ) != 0 
@@ -1569,7 +1569,7 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 
     if( psImage->nBlocksPerRow != 1 || psImage->nBlocksPerColumn != 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Scanline access not supported on tiled NITF files." );
         return BLKREAD_FAIL;
     }
