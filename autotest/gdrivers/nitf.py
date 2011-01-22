@@ -1830,7 +1830,31 @@ def nitf_66():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test that we don't use scanline access in illegal cases (#3926)
+
+def nitf_67():
+
+    src_ds = gdal.Open('data/byte.tif')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_67.ntf', src_ds, options = ['BLOCKYSIZE=1', 'BLOCKXSIZE=10'], strict=0)
+    gdal.PopErrorHandler()
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open('/vsimem/nitf_67.ntf')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink('/vsimem/nitf_67.ntf')
+
+    if cs != 4672:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
@@ -2782,6 +2806,7 @@ gdaltest_list = [
     nitf_64,
     nitf_65,
     nitf_66,
+    nitf_67,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,

@@ -231,6 +231,8 @@ class NITFRasterBand : public GDALPamRasterBand
 
     GByte       *pUnpackData;
 
+    int          bScanlineAccess;
+
   public:
                    NITFRasterBand( NITFDataset *, int );
                   ~NITFRasterBand();
@@ -306,11 +308,13 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
         && psImage->nBitsPerSample >= 8
         && EQUAL(psImage->szIC,"NC") )
     {
+        bScanlineAccess = TRUE;
         nBlockXSize = psImage->nBlockWidth;
         nBlockYSize = 1;
     }
     else
     {
+        bScanlineAccess = FALSE;
         nBlockXSize = psImage->nBlockWidth;
         nBlockYSize = psImage->nBlockHeight;
     }
@@ -383,7 +387,7 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Read the line/block                                             */
 /* -------------------------------------------------------------------- */
-    if( nBlockYSize == 1 )
+    if( bScanlineAccess )
     {
         nBlockResult = 
             NITFReadImageLine(psImage, nBlockYOff, nBand, pImage);
@@ -433,7 +437,7 @@ CPLErr NITFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Write the line/block                                            */
 /* -------------------------------------------------------------------- */
-    if( nBlockYSize == 1 )
+    if( bScanlineAccess )
     {
         nBlockResult = 
             NITFWriteImageLine(psImage, nBlockYOff, nBand, pImage);
