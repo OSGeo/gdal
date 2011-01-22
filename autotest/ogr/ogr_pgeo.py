@@ -41,15 +41,23 @@ import ogrtest
 ###############################################################################
 # Basic testing
 
-def ogr_pgeo_1():
+def ogr_pgeo_1(tested_driver = 'PGeo', other_driver = 'MDB'):
 
     ogrtest.pgeo_ds = None
 
     try:
-        drv = ogr.GetDriverByName('PGEO')
+        ogrtest.other_driver = ogr.GetDriverByName(other_driver)
+    except:
+        ogrtest.other_driver = None
+    if ogrtest.other_driver is not None:
+        print('Unregistering %s driver' % ogrtest.other_driver.GetName())
+        ogrtest.other_driver.Deregister()
+
+    try:
+        drv = ogr.GetDriverByName(tested_driver)
     except:
         drv = None
-   
+
     if drv is None:
         return 'skip'
 
@@ -98,6 +106,9 @@ def ogr_pgeo_1():
         return 'fail'
 
     return 'success'
+
+def ogr_pgeo_mdb_1():
+    return ogr_pgeo_1('MDB', 'PGeo')
 
 ###############################################################################
 # Test spatial filter
@@ -256,14 +267,18 @@ def ogr_pgeo_7():
 ###############################################################################
 
 def ogr_pgeo_cleanup():
+
+    if ogrtest.other_driver is not None:
+        print('Reregistering %s driver' % ogrtest.other_driver.GetName())
+        ogrtest.other_driver.Register()
+
     if ogrtest.pgeo_ds is None:
         return 'skip'
 
     ogrtest.pgeo_ds = None
     return 'success'
-    
-gdaltest_list = [
-    ogr_pgeo_1,
+
+gdaltest_list_internal = [
     ogr_pgeo_2,
     ogr_pgeo_3,
     ogr_pgeo_4,
@@ -271,6 +286,25 @@ gdaltest_list = [
     ogr_pgeo_6,
     ogr_pgeo_7,
     ogr_pgeo_cleanup    ]
+
+###############################################################################
+#
+
+def ogr_pgeo_main():
+
+    # Run with the PGeo driver only (MDB disabled)
+    gdaltest.run_tests( [ ogr_pgeo_1 ] )
+    gdaltest.run_tests( gdaltest_list_internal )
+
+    # Run with the MDB driver only (PGeo disabled)
+    gdaltest.run_tests( [ ogr_pgeo_mdb_1 ] )
+    gdaltest.run_tests( gdaltest_list_internal )
+
+    return 'success'
+
+gdaltest_list = [
+    ogr_pgeo_main
+]
 
 if __name__ == '__main__':
 
