@@ -338,6 +338,7 @@ OGRMDBDatabase* OGRMDBDatabase::Open(OGRMDBJavaEnv* env, const char* pszName)
     OGRMDBDatabase* poDB = new OGRMDBDatabase();
     poDB->env = env;
     poDB->database = env->env->NewGlobalRef(database);
+    env->env->DeleteLocalRef(database);
     return poDB;
 }
 
@@ -391,7 +392,9 @@ OGRMDBTable* OGRMDBDatabase::GetTable(const char* pszTableName)
     if (!table)
         return NULL;
 
-    table = env->env->NewGlobalRef(table);
+    jobject global_table = env->env->NewGlobalRef(table);
+    env->env->DeleteLocalRef(table);
+    table = global_table;
 
     OGRMDBTable* poTable = new OGRMDBTable(env, this, table, pszTableName);
     if (!poTable->FetchColumns())
@@ -424,8 +427,13 @@ OGRMDBTable::~OGRMDBTable()
 {
     if (env)
     {
+        //CPLDebug("MDB", "Freeing table %s", osTableName.c_str());
         if (env->bCalledFromJava)
             env->Init();
+
+        int i;
+        for(i=0;i<(int)apoColumnNameObjects.size();i++)
+            env->env->DeleteGlobalRef(apoColumnNameObjects[i]);
 
         env->env->DeleteGlobalRef(table_iterator_obj);
         env->env->DeleteGlobalRef(row);
@@ -461,6 +469,8 @@ int OGRMDBTable::FetchColumns()
         const char* column_name_str = env->env->GetStringUTFChars(column_name_jstring, &is_copy);
         apoColumnNames.push_back(column_name_str);
         env->env->ReleaseStringUTFChars(column_name_jstring, column_name_str);
+
+        apoColumnNameObjects.push_back((jstring) env->env->NewGlobalRef(column_name_jstring));
         env->env->DeleteLocalRef(column_name_jstring);
 
         jobject column_type = env->env->CallObjectMethod(column, env->column_getType);
@@ -521,7 +531,11 @@ int OGRMDBTable::GetNextRow()
         table_iterator_obj = env->env->CallObjectMethod(table, env->table_iterator);
         if (env->ExceptionOccured()) return FALSE;
         if (table_iterator_obj)
-            table_iterator_obj = env->env->NewGlobalRef(table_iterator_obj);
+        {
+            jobject global_table_iterator_obj = env->env->NewGlobalRef(table_iterator_obj);
+            env->env->DeleteLocalRef(table_iterator_obj);
+            table_iterator_obj = global_table_iterator_obj;
+        }
     }
     if (table_iterator_obj == NULL)
         return FALSE;
@@ -531,14 +545,20 @@ int OGRMDBTable::GetNextRow()
     if (env->ExceptionOccured()) return FALSE;
 
     if (row)
+    {
         env->env->DeleteGlobalRef(row);
+        row = NULL;
+    }
 
     row = env->env->CallObjectMethod(table_iterator_obj, env->iterator_next);
     if (env->ExceptionOccured()) return FALSE;
     if (row == NULL)
         return FALSE;
 
-    row = env->env->NewGlobalRef(row);
+    jobject global_row = env->env->NewGlobalRef(row);
+    env->env->DeleteLocalRef(row);
+    row = global_row;
+
     return TRUE;
 }
 
@@ -551,11 +571,8 @@ jobject OGRMDBTable::GetColumnVal(int iCol)
     if (row == NULL)
         return NULL;
 
-    jstring column_name_jstring = env->env->NewStringUTF(apoColumnNames[iCol]);
+    jobject val = env->env->CallObjectMethod(row, env->map_get, apoColumnNameObjects[iCol]);
     if (env->ExceptionOccured()) return NULL;
-    jobject val = env->env->CallObjectMethod(row, env->map_get, column_name_jstring);
-    if (env->ExceptionOccured()) return NULL;
-    env->env->DeleteLocalRef(column_name_jstring);
     return val;
 }
 
