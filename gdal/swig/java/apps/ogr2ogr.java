@@ -126,6 +126,8 @@ public class ogr2ogr
         boolean bExplodeCollections = false;
         String pszZField = null;
 
+        ogr.DontUseExceptions();
+
     /* -------------------------------------------------------------------- */
     /*      Register format(s).                                             */
     /* -------------------------------------------------------------------- */
