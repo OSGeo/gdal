@@ -30,7 +30,8 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
 		ogr_srs_usgs.obj ogr_srs_dict.obj ogr_srs_panorama.obj \
 		ogr_srs_ozi.obj ogr_srs_erm.obj ogr_expat.obj \
 		swq.obj swq_parser.obj swq_select.obj swq_op_registrar.obj \
-		swq_op_general.obj swq_expr_node.obj ogrpgeogeometry.obj
+		swq_op_general.obj swq_expr_node.obj ogrpgeogeometry.obj \
+		ogrgeomediageometry.cpp
 
 default:        ogr.lib 
 
