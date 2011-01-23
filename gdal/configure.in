@@ -2868,6 +2868,8 @@ if test "x$with_java" = "xyes"; then
         with_java=/usr/lib/jvm/java-6-openjdk
 dnl    elif test -d /System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers; then
 dnl        JAVA_INC="-I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
+    elif test -d /usr/java -a -d /usr/java/include; then
+        with_java=/usr/java
     else
         AC_MSG_ERROR("cannot find JDK root directory.")
     fi
@@ -2882,8 +2884,12 @@ elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
             JAVA_HOME="$with_java"
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
             AC_MSG_RESULT([yes])
+        elif test -d "$with_java/include/solaris"; then
+            JAVA_HOME="$with_java"
+            JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/solaris"
+            AC_MSG_RESULT([yes])
         else
-            AC_MSG_ERROR("Cannot find $with_java/include/linux directory.")
+            AC_MSG_ERROR("Cannot find $with_java/include/(linux or solaris) directory.")
         fi
     else
         AC_MSG_ERROR("Cannot find $with_java/include directory.")
@@ -2927,7 +2933,10 @@ if test "$with_mdb" = "yes" ; then
         fi
     elif test "x$JAVA_HOME" != "x"; then
         if test -d "$JAVA_HOME/jre/lib/amd64/server"; then
-            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,-L$JAVA_HOME/jre/lib/amd64/server -ljvm)
+            saved_LDFLAGS="$LDFLAGS"
+            LDFLAGS="$LDFLAGS -L$JAVA_HOME/jre/lib/amd64/server"
+            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
+            LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$JAVA_HOME/jre/lib/amd64/server -ljvm"
             fi
@@ -2935,7 +2944,10 @@ if test "$with_mdb" = "yes" ; then
 
         if test "x$JVM_LIB" = "x" -a -d "$JAVA_HOME/jre/lib/i386/server"; then
             unset ac_cv_lib_jvm_JNI_CreateJavaVM
-            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,-L$JAVA_HOME/jre/lib/i386/server -ljvm)
+            saved_LDFLAGS="$LDFLAGS"
+            LDFLAGS="$LDFLAGS -L$JAVA_HOME/jre/lib/i386/server"
+            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
+            LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$JAVA_HOME/jre/lib/i386/server -ljvm"
             fi
