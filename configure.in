@@ -2866,8 +2866,11 @@ if test "x$with_java" = "xyes"; then
 
     if test -d /usr/lib/jvm/java-6-openjdk; then
         with_java=/usr/lib/jvm/java-6-openjdk
+
 dnl    elif test -d /System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers; then
 dnl        JAVA_INC="-I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
+
+dnl OpenSolaris
     elif test -d /usr/java -a -d /usr/java/include; then
         with_java=/usr/java
     else
@@ -2915,16 +2918,24 @@ JVM_LIB=""
 
 if test "$with_mdb" = "yes" ; then
     if test "x$JAVA_INC" = "x"; then
-        AC_MSG_ERROR("--with-java-inc must be specified.")
+        AC_MSG_ERROR("--with-java must be specified.")
     fi
 
-    AC_ARG_WITH(jvm-lib,[  --with-jvm-lib          Java libjvm path],,)
+    AC_ARG_WITH(jvm-lib,          [  --with-jvm-lib=[ARG]        ARG points to Java libjvm path],,)
+
+    AC_ARG_WITH(jvm-lib-add-rpath,[  --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)],,)
 
     if test "x$with_jvm_lib" != "x"; then
         if test -d "$with_jvm_lib"; then
-            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,-L$with_jvm_lib -ljvm)
+            saved_LDFLAGS="$LDFLAGS"
+            LDFLAGS="$LDFLAGS -L$with_jvm_lib"
+            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
+            LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$with_jvm_lib -ljvm"
+                if test "x$with_jvm_lib_add_rpath" = "xyes"; then
+                    JVM_LIB="-Wl,-rpath=$with_jvm_lib $JVM_LIB"
+                fi
             else
                 AC_MSG_ERROR("--with-jvm-lib must point to a directory with a libjvm.")
             fi
@@ -2932,24 +2943,33 @@ if test "$with_mdb" = "yes" ; then
             AC_MSG_ERROR("--with-jvm-lib must point to a directory.")
         fi
     elif test "x$JAVA_HOME" != "x"; then
-        if test -d "$JAVA_HOME/jre/lib/amd64/server"; then
+        TEST_DIR="$JAVA_HOME/jre/lib/amd64/server"
+        if test "x$JVM_LIB" = "x" -a -d "$TEST_DIR"; then
+            unset ac_cv_lib_jvm_JNI_CreateJavaVM
             saved_LDFLAGS="$LDFLAGS"
-            LDFLAGS="$LDFLAGS -L$JAVA_HOME/jre/lib/amd64/server"
+            LDFLAGS="$LDFLAGS -L$TEST_DIR"
             AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
             LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
-                JVM_LIB="-L$JAVA_HOME/jre/lib/amd64/server -ljvm"
+                JVM_LIB="-L$TEST_DIR -ljvm"
+                if test "x$with_jvm_lib_add_rpath" = "xyes"; then
+                    JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
+                fi
             fi
         fi
 
-        if test "x$JVM_LIB" = "x" -a -d "$JAVA_HOME/jre/lib/i386/server"; then
+        TEST_DIR="$JAVA_HOME/jre/lib/i386/server"
+        if test "x$JVM_LIB" = "x" -a -d "$TEST_DIR"; then
             unset ac_cv_lib_jvm_JNI_CreateJavaVM
             saved_LDFLAGS="$LDFLAGS"
-            LDFLAGS="$LDFLAGS -L$JAVA_HOME/jre/lib/i386/server"
+            LDFLAGS="$LDFLAGS -L$TEST_DIR"
             AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
             LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
-                JVM_LIB="-L$JAVA_HOME/jre/lib/i386/server -ljvm"
+                JVM_LIB="-L$TEST_DIR -ljvm"
+                if test "x$with_jvm_lib_add_rpath" = "xyes"; then
+                    JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
+                fi
             fi
         fi
 
