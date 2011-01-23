@@ -24429,13 +24429,20 @@ JAVA_INC=""
 if test "x$with_java" = "xyes"; then
 
     if test -d /usr/lib/jvm/java-6-openjdk; then
-        with_java=/usr/lib/jvm/java-6-openjdk
+        with_java="/usr/lib/jvm/java-6-openjdk"
+
+    elif test -d /usr/lib/jvm/java-openjdk; then
+        with_java="/usr/lib/jvm/java-openjdk"
 
 
-    elif test -d /usr/java -a -d /usr/java/include; then
-        with_java=/usr/java
+    elif test -d /usr/java; then
+        with_java="/usr/java"
     else
         as_fn_error $? "\"cannot find JDK root directory.\"" "$LINENO" 5
+    fi
+
+    if test \! -d "$with_java/include" ; then
+        as_fn_error $? "\"$with_java is not a valid JDK.\"" "$LINENO" 5
     fi
 fi
 
@@ -24444,7 +24451,7 @@ if test "x$JAVA_INC" != "x"; then
 $as_echo "yes" >&6; }
 elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
 
-    if test "x$with_java/include" != "x"; then
+    if test -d "$with_java/include"; then
         if test -d "$with_java/include/linux"; then
             JAVA_HOME="$with_java"
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
@@ -24456,7 +24463,7 @@ $as_echo "yes" >&6; }
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
         else
-            as_fn_error $? "\"Cannot find $with_java/include/(linux or solaris) directory.\"" "$LINENO" 5
+            as_fn_error $? "\"Cannot find $with_java/include/linux or solaris directory.\"" "$LINENO" 5
         fi
     else
         as_fn_error $? "\"Cannot find $with_java/include directory.\"" "$LINENO" 5

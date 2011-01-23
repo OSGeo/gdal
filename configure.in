@@ -2864,17 +2864,26 @@ JAVA_INC=""
 
 if test "x$with_java" = "xyes"; then
 
+dnl Ubuntu
     if test -d /usr/lib/jvm/java-6-openjdk; then
-        with_java=/usr/lib/jvm/java-6-openjdk
+        with_java="/usr/lib/jvm/java-6-openjdk"
+
+dnl RHEL6
+    elif test -d /usr/lib/jvm/java-openjdk; then
+        with_java="/usr/lib/jvm/java-openjdk"
 
 dnl    elif test -d /System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers; then
 dnl        JAVA_INC="-I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
 
 dnl OpenSolaris
-    elif test -d /usr/java -a -d /usr/java/include; then
-        with_java=/usr/java
+    elif test -d /usr/java; then
+        with_java="/usr/java"
     else
         AC_MSG_ERROR("cannot find JDK root directory.")
+    fi
+
+    if test \! -d "$with_java/include" ; then
+        AC_MSG_ERROR("$with_java is not a valid JDK.")
     fi
 fi
 
@@ -2882,7 +2891,7 @@ if test "x$JAVA_INC" != "x"; then
     AC_MSG_RESULT([yes])
 elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
 
-    if test "x$with_java/include" != "x"; then
+    if test -d "$with_java/include"; then
         if test -d "$with_java/include/linux"; then
             JAVA_HOME="$with_java"
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
@@ -2892,7 +2901,7 @@ elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/solaris"
             AC_MSG_RESULT([yes])
         else
-            AC_MSG_ERROR("Cannot find $with_java/include/(linux or solaris) directory.")
+            AC_MSG_ERROR("Cannot find $with_java/include/linux or solaris directory.")
         fi
     else
         AC_MSG_ERROR("Cannot find $with_java/include directory.")
