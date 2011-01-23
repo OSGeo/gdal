@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "ogr_geomedia.h"
+#include "ogrgeomediageometry.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include <vector>
@@ -44,7 +45,9 @@ OGRGeomediaDataSource::OGRGeomediaDataSource()
 {
     pszName = NULL;
     papoLayers = NULL;
+    papoLayersInvisible = NULL;
     nLayers = 0;
+    nLayersWithInvisible = 0;
 }
 
 /************************************************************************/
@@ -60,8 +63,11 @@ OGRGeomediaDataSource::~OGRGeomediaDataSource()
 
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
     CPLFree( papoLayers );
+
+    for( i = 0; i < nLayersWithInvisible; i++ )
+        delete papoLayersInvisible[i];
+    CPLFree( papoLayersInvisible );
 }
 
 /************************************************************************/
@@ -151,60 +157,74 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Collect list of tables and their supporting info from           */
 /*      GAliasTable.                                                    */
 /* -------------------------------------------------------------------- */
-    char* pszGFeaturesTable = NULL;
-    {
-    CPLODBCStatement oStmt( &oSession );
-
-    oStmt.Append( "SELECT TableName FROM GAliasTable WHERE TableType = 'INGRFeatures'" );
-
-    if( !oStmt.ExecuteSQL() )
-    {
-        CPLDebug( "GEOMEDIA", 
-                  "SELECT on GAliasTable fails, perhaps not a geomedia geodatabase?\n%s",
-                  oSession.GetLastError() );
+    CPLString osGFeaturesTable = GetTableNameFromType("INGRFeatures");
+    if (osGFeaturesTable.size() == 0)
         return FALSE;
-    }
 
-    while( oStmt.Fetch() )
-    {
-        pszGFeaturesTable = CPLStrdup( oStmt.GetColData(0) );
-        break;
-    }
-
-    if (pszGFeaturesTable == NULL)
-    {
-        return FALSE;
-    }
-    }
+    CPLString osGeometryProperties = GetTableNameFromType("INGRGeometryProperties");
+    CPLString osGCoordSystemTable = GetTableNameFromType("GCoordSystemTable");
 
     std::vector<char **> apapszGeomColumns;
-
     {
-    CPLODBCStatement oStmt( &oSession );
-    oStmt.Appendf( "SELECT FeatureName, PrimaryGeometryFieldName FROM GFeatures" );
+        CPLODBCStatement oStmt( &oSession );
+        oStmt.Appendf( "SELECT FeatureName, PrimaryGeometryFieldName FROM %s", osGFeaturesTable.c_str() );
 
-    if( !oStmt.ExecuteSQL() )
-    {
-        CPLDebug( "GEOMEDIA",
-                  "SELECT on %s fails, perhaps not a geomedia geodatabase?\n%s",
-                  pszGFeaturesTable,
-                  oSession.GetLastError() );
-        CPLFree(pszGFeaturesTable);
-        return FALSE;
+        if( !oStmt.ExecuteSQL() )
+        {
+            CPLDebug( "GEOMEDIA",
+                    "SELECT on %s fails, perhaps not a geomedia geodatabase?\n%s",
+                    osGFeaturesTable.c_str(),
+                    oSession.GetLastError() );
+            return FALSE;
+        }
+
+        while( oStmt.Fetch() )
+        {
+            int i, iNew = apapszGeomColumns.size();
+            char **papszRecord = NULL;
+            for( i = 0; i < 2; i++ )
+                papszRecord = CSLAddString( papszRecord,
+                                            oStmt.GetColData(i) );
+            apapszGeomColumns.resize(iNew+1);
+            apapszGeomColumns[iNew] = papszRecord;
+        }
     }
 
-    CPLFree(pszGFeaturesTable);
-
-    while( oStmt.Fetch() )
+    std::vector<OGRSpatialReference*> apoSRS;
+    if (osGeometryProperties.size() != 0 && osGCoordSystemTable.size() != 0)
     {
-        int i, iNew = apapszGeomColumns.size();
-        char **papszRecord = NULL;
-        for( i = 0; i < 2; i++ )
-            papszRecord = CSLAddString( papszRecord,
-                                        oStmt.GetColData(i) );
-        apapszGeomColumns.resize(iNew+1);
-        apapszGeomColumns[iNew] = papszRecord;
-    }
+        std::vector<CPLString> aosGUID;
+        {
+            CPLODBCStatement oStmt( &oSession );
+            oStmt.Appendf( "SELECT GCoordSystemGUID FROM %s", osGeometryProperties.c_str() );
+
+            if( !oStmt.ExecuteSQL() )
+            {
+                CPLDebug( "GEOMEDIA",
+                        "SELECT on %s fails, perhaps not a geomedia geodatabase?\n%s",
+                        osGeometryProperties.c_str(),
+                        oSession.GetLastError() );
+                return FALSE;
+            }
+
+            while( oStmt.Fetch() )
+            {
+                aosGUID.push_back(oStmt.GetColData(0));
+            }
+
+            if (apapszGeomColumns.size() != aosGUID.size())
+            {
+                CPLDebug( "GEOMEDIA", "%s and %s don't have the same size",
+                        osGFeaturesTable.c_str(), osGeometryProperties.c_str() );
+                return FALSE;
+            }
+        }
+
+        int i;
+        for(i=0; i<(int)aosGUID.size();i++)
+        {
+            apoSRS.push_back(GetGeomediaSRS(osGCoordSystemTable, aosGUID[i]));
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -222,7 +242,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 
         poLayer = new OGRGeomediaTableLayer( this );
 
-        if( poLayer->Initialize( papszRecord[0], papszRecord[1] )
+        if( poLayer->Initialize( papszRecord[0], papszRecord[1], (apoSRS.size()) ? apoSRS[iTable] : NULL )
             != CE_None )
         {
             delete poLayer;
@@ -235,6 +255,68 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     return TRUE;
+}
+
+
+/************************************************************************/
+/*                     GetTableNameFromType()                           */
+/************************************************************************/
+
+CPLString OGRGeomediaDataSource::GetTableNameFromType(const char* pszTableType)
+{
+    CPLODBCStatement oStmt( &oSession );
+
+    oStmt.Appendf( "SELECT TableName FROM GAliasTable WHERE TableType = '%s'", pszTableType );
+
+    if( !oStmt.ExecuteSQL() )
+    {
+        CPLDebug( "GEOMEDIA",
+                  "SELECT for %s on GAliasTable fails, perhaps not a geomedia geodatabase?\n%s",
+                  pszTableType,
+                  oSession.GetLastError() );
+        return "";
+    }
+
+    while( oStmt.Fetch() )
+    {
+        return oStmt.GetColData(0);
+    }
+
+    return "";
+}
+
+
+/************************************************************************/
+/*                          GetGeomediaSRS()                            */
+/************************************************************************/
+
+OGRSpatialReference* OGRGeomediaDataSource::GetGeomediaSRS(const char* pszGCoordSystemTable,
+                                                      const char* pszGCoordSystemGUID)
+{
+    if (pszGCoordSystemTable == NULL || pszGCoordSystemGUID == NULL)
+        return NULL;
+
+    OGRLayer* poGCoordSystemTable = GetLayerByName(pszGCoordSystemTable);
+    if (poGCoordSystemTable == NULL)
+        return NULL;
+
+    poGCoordSystemTable->ResetReading();
+
+    OGRFeature* poFeature;
+    while((poFeature = poGCoordSystemTable->GetNextFeature()) != NULL)
+    {
+        const char* pszCSGUID = poFeature->GetFieldAsString("CSGUID");
+        if (pszCSGUID && strcmp(pszCSGUID, pszGCoordSystemGUID) == 0)
+        {
+            OGRSpatialReference* poSRS = OGRGetGeomediaSRS(poFeature);
+            delete poFeature;
+            return poSRS;
+        }
+
+        delete poFeature;
+    }
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -260,6 +342,44 @@ OGRLayer *OGRGeomediaDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
+
+/************************************************************************/
+/*                          GetLayerByName()                            */
+/************************************************************************/
+
+OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszName )
+
+{
+    if (pszName == NULL)
+        return NULL;
+    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszName);
+    if (poLayer)
+        return poLayer;
+
+    for( int i = 0; i < nLayersWithInvisible; i++ )
+    {
+        poLayer = papoLayersInvisible[i];
+
+        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+            return poLayer;
+    }
+
+    OGRGeomediaTableLayer  *poGeomediaLayer;
+
+    poGeomediaLayer = new OGRGeomediaTableLayer( this );
+
+    if( poGeomediaLayer->Initialize(pszName, NULL, NULL) != CE_None )
+    {
+        delete poGeomediaLayer;
+        return NULL;
+    }
+
+    papoLayersInvisible = (OGRGeomediaLayer**)CPLRealloc(papoLayersInvisible,
+                            (nLayersWithInvisible+1) * sizeof(OGRGeomediaLayer*));
+    papoLayersInvisible[nLayersWithInvisible++] = poGeomediaLayer;
+
+    return poGeomediaLayer;
+}
 
 /************************************************************************/
 /*                             ExecuteSQL()                             */
