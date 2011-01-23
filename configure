@@ -1045,6 +1045,7 @@ with_pymoddir
 with_java
 with_mdb
 with_jvm_lib
+with_jvm_lib_add_rpath
 with_rasdaman
 '
       ac_precious_vars='build_alias
@@ -1773,7 +1774,8 @@ Optional Packages:
   --with-pymoddir=ARG   Override Old-gen Python package install dir
   --with-java       Include Java support (ARG=yes, no or JDK home path)
   --with-mdb       Include MDB driver
-  --with-jvm-lib          Java libjvm path
+  --with-jvm-lib=ARG        ARG points to Java libjvm path
+  --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
 
 Some influential environment variables:
@@ -5949,13 +5951,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5952: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5954: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5955: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5957: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5958: output\"" >&5)
+  (eval echo "\"\$as_me:5960: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -7157,7 +7159,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 7160 "configure"' > conftest.$ac_ext
+  echo '#line 7162 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -9083,11 +9085,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9086: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9088: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9090: \$? = $ac_status" >&5
+   echo "$as_me:9092: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9422,11 +9424,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9425: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9427: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9429: \$? = $ac_status" >&5
+   echo "$as_me:9431: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9527,11 +9529,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9530: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9532: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9534: \$? = $ac_status" >&5
+   echo "$as_me:9536: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9582,11 +9584,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9585: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9587: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9589: \$? = $ac_status" >&5
+   echo "$as_me:9591: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11965,7 +11967,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11968 "configure"
+#line 11970 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12061,7 +12063,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12064 "configure"
+#line 12066 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14017,11 +14019,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14020: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14022: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14024: \$? = $ac_status" >&5
+   echo "$as_me:14026: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14116,11 +14118,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14119: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14121: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14123: \$? = $ac_status" >&5
+   echo "$as_me:14125: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14168,11 +14170,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14171: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14173: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14175: \$? = $ac_status" >&5
+   echo "$as_me:14177: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -24428,6 +24430,8 @@ if test "x$with_java" = "xyes"; then
 
     if test -d /usr/lib/jvm/java-6-openjdk; then
         with_java=/usr/lib/jvm/java-6-openjdk
+
+
     elif test -d /usr/java -a -d /usr/java/include; then
         with_java=/usr/java
     else
@@ -24484,7 +24488,7 @@ JVM_LIB=""
 
 if test "$with_mdb" = "yes" ; then
     if test "x$JAVA_INC" = "x"; then
-        as_fn_error $? "\"--with-java-inc must be specified.\"" "$LINENO" 5
+        as_fn_error $? "\"--with-java must be specified.\"" "$LINENO" 5
     fi
 
 
@@ -24494,15 +24498,24 @@ if test "${with_jvm_lib+set}" = set; then :
 fi
 
 
+
+# Check whether --with-jvm-lib-add-rpath was given.
+if test "${with_jvm_lib_add_rpath+set}" = set; then :
+  withval=$with_jvm_lib_add_rpath;
+fi
+
+
     if test "x$with_jvm_lib" != "x"; then
         if test -d "$with_jvm_lib"; then
+            saved_LDFLAGS="$LDFLAGS"
+            LDFLAGS="$LDFLAGS -L$with_jvm_lib"
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
 $as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
 if test "${ac_cv_lib_jvm_JNI_CreateJavaVM+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-ljvm -L$with_jvm_lib -ljvm $LIBS"
+LIBS="-ljvm  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -24538,8 +24551,12 @@ else
   HAS_LIB_JVM=no
 fi
 
+            LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$with_jvm_lib -ljvm"
+                if test "x$with_jvm_lib_add_rpath" = "xyes"; then
+                    JVM_LIB="-Wl,-rpath=$with_jvm_lib $JVM_LIB"
+                fi
             else
                 as_fn_error $? "\"--with-jvm-lib must point to a directory with a libjvm.\"" "$LINENO" 5
             fi
@@ -24547,9 +24564,11 @@ fi
             as_fn_error $? "\"--with-jvm-lib must point to a directory.\"" "$LINENO" 5
         fi
     elif test "x$JAVA_HOME" != "x"; then
-        if test -d "$JAVA_HOME/jre/lib/amd64/server"; then
+        TEST_DIR="$JAVA_HOME/jre/lib/amd64/server"
+        if test "x$JVM_LIB" = "x" -a -d "$TEST_DIR"; then
+            unset ac_cv_lib_jvm_JNI_CreateJavaVM
             saved_LDFLAGS="$LDFLAGS"
-            LDFLAGS="$LDFLAGS -L$JAVA_HOME/jre/lib/amd64/server"
+            LDFLAGS="$LDFLAGS -L$TEST_DIR"
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
 $as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
 if test "${ac_cv_lib_jvm_JNI_CreateJavaVM+set}" = set; then :
@@ -24594,14 +24613,18 @@ fi
 
             LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
-                JVM_LIB="-L$JAVA_HOME/jre/lib/amd64/server -ljvm"
+                JVM_LIB="-L$TEST_DIR -ljvm"
+                if test "x$with_jvm_lib_add_rpath" = "xyes"; then
+                    JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
+                fi
             fi
         fi
 
-        if test "x$JVM_LIB" = "x" -a -d "$JAVA_HOME/jre/lib/i386/server"; then
+        TEST_DIR="$JAVA_HOME/jre/lib/i386/server"
+        if test "x$JVM_LIB" = "x" -a -d "$TEST_DIR"; then
             unset ac_cv_lib_jvm_JNI_CreateJavaVM
             saved_LDFLAGS="$LDFLAGS"
-            LDFLAGS="$LDFLAGS -L$JAVA_HOME/jre/lib/i386/server"
+            LDFLAGS="$LDFLAGS -L$TEST_DIR"
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
 $as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
 if test "${ac_cv_lib_jvm_JNI_CreateJavaVM+set}" = set; then :
@@ -24646,7 +24669,10 @@ fi
 
             LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
-                JVM_LIB="-L$JAVA_HOME/jre/lib/i386/server -ljvm"
+                JVM_LIB="-L$TEST_DIR -ljvm"
+                if test "x$with_jvm_lib_add_rpath" = "xyes"; then
+                    JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
+                fi
             fi
         fi
 
