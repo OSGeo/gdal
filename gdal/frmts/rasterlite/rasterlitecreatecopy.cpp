@@ -332,6 +332,13 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     
     const char* pszDriverName = CSLFetchNameValueDef(papszOptions, "DRIVER", "GTiff");
+    if (EQUAL(pszDriverName, "MEM") || EQUAL(pszDriverName, "VRT"))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDAL %s driver cannot be used as underlying driver",
+                 pszDriverName);
+        return NULL;
+    }
+
     GDALDriverH hTileDriver = GDALGetDriverByName(pszDriverName);
     if ( hTileDriver == NULL)
     {
@@ -646,7 +653,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Insert new entry into raster table                              */
 /* -------------------------------------------------------------------- */
 
-            vsi_l_offset nDataLength;
+            vsi_l_offset nDataLength = 0;
             GByte *pabyData = VSIGetMemFileBuffer( osTempFileName.c_str(),
                                                    &nDataLength, FALSE);
 
