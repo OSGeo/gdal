@@ -218,7 +218,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData,
  *    const char* wkt= "POINT(0 0)";
  *  
  *    // cast because OGR_G_CreateFromWkt will move the pointer 
- *    char* pszWkt = (char*) wkt.c_str(); 
+ *    char* pszWkt = (char*) wkt;
  *    OGRSpatialReferenceH ref = OSRNewSpatialReference(NULL);
  *    OGRGeometryH new_geom;
  *    OGRErr err = OGR_G_CreateFromWkt(&pszWkt, ref, &new_geom);
