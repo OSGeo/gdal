@@ -383,7 +383,7 @@ OGRSpatialReference* OGRGetGeomediaSRS(OGRFeature* poFeature)
             OGRSpatialReference* poSRS = new OGRSpatialReference();
 
             const char* pszDescription = poFeature->GetFieldAsString("Description");
-            if (pszDescription)
+            if (pszDescription && pszDescription[0] != 0)
                 poSRS->SetNode( "PROJCS", pszDescription );
             poSRS->SetWellKnownGeogCS("WGS84");
 

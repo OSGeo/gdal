@@ -64,7 +64,8 @@ OGRGeomediaTableLayer::~OGRGeomediaTableLayer()
 /************************************************************************/
 
 CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
-                                          const char *pszGeomCol )
+                                          const char *pszGeomCol,
+                                          OGRSpatialReference* poSRS )
 
 
 {
@@ -78,6 +79,8 @@ CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
+
+    this->poSRS = poSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
