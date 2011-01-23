@@ -1771,7 +1771,7 @@ Optional Packages:
   --with-ruby           Enable Ruby bindings
   --with-python       Enable python bindings
   --with-pymoddir=ARG   Override Old-gen Python package install dir
-  --with-java       Include Java support (ARG=yes, no or JDK root path)
+  --with-java       Include Java support (ARG=yes, no or JDK home path)
   --with-mdb       Include MDB driver
   --with-jvm-lib          Java libjvm path
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
@@ -24585,10 +24585,59 @@ fi
 
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$JAVA_HOME/jre/lib/amd64/server -ljvm"
-            else
-                as_fn_error $? "\"--with-jvm-lib must point to a directory with a libjvm.\"" "$LINENO" 5
             fi
-        else
+        fi
+
+        if test "x$JVM_LIB" = "x" -a -d "$JAVA_HOME/jre/lib/i386/server"; then
+            unset ac_cv_lib_jvm_JNI_CreateJavaVM
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
+$as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
+if test "${ac_cv_lib_jvm_JNI_CreateJavaVM+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljvm -L$JAVA_HOME/jre/lib/i386/server -ljvm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JNI_CreateJavaVM ();
+int
+main ()
+{
+return JNI_CreateJavaVM ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_jvm_JNI_CreateJavaVM=yes
+else
+  ac_cv_lib_jvm_JNI_CreateJavaVM=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jvm_JNI_CreateJavaVM" >&5
+$as_echo "$ac_cv_lib_jvm_JNI_CreateJavaVM" >&6; }
+if test "x$ac_cv_lib_jvm_JNI_CreateJavaVM" = x""yes; then :
+  HAS_LIB_JVM=yes
+else
+  HAS_LIB_JVM=no
+fi
+
+            if test "$HAS_LIB_JVM" = "yes"; then
+                JVM_LIB="-L$JAVA_HOME/jre/lib/i386/server -ljvm"
+            fi
+        fi
+
+        if test "x$JVM_LIB" = "x"; then
             as_fn_error $? "\"--with-jvm-lib must be specified.\"" "$LINENO" 5
         fi
     else
