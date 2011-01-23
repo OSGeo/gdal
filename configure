@@ -24428,6 +24428,8 @@ if test "x$with_java" = "xyes"; then
 
     if test -d /usr/lib/jvm/java-6-openjdk; then
         with_java=/usr/lib/jvm/java-6-openjdk
+    elif test -d /usr/java -a -d /usr/java/include; then
+        with_java=/usr/java
     else
         as_fn_error $? "\"cannot find JDK root directory.\"" "$LINENO" 5
     fi
@@ -24444,8 +24446,13 @@ elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+        elif test -d "$with_java/include/solaris"; then
+            JAVA_HOME="$with_java"
+            JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/solaris"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
         else
-            as_fn_error $? "\"Cannot find $with_java/include/linux directory.\"" "$LINENO" 5
+            as_fn_error $? "\"Cannot find $with_java/include/(linux or solaris) directory.\"" "$LINENO" 5
         fi
     else
         as_fn_error $? "\"Cannot find $with_java/include directory.\"" "$LINENO" 5
@@ -24541,13 +24548,15 @@ fi
         fi
     elif test "x$JAVA_HOME" != "x"; then
         if test -d "$JAVA_HOME/jre/lib/amd64/server"; then
+            saved_LDFLAGS="$LDFLAGS"
+            LDFLAGS="$LDFLAGS -L$JAVA_HOME/jre/lib/amd64/server"
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
 $as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
 if test "${ac_cv_lib_jvm_JNI_CreateJavaVM+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-ljvm -L$JAVA_HOME/jre/lib/amd64/server -ljvm $LIBS"
+LIBS="-ljvm  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -24583,6 +24592,7 @@ else
   HAS_LIB_JVM=no
 fi
 
+            LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$JAVA_HOME/jre/lib/amd64/server -ljvm"
             fi
@@ -24590,13 +24600,15 @@ fi
 
         if test "x$JVM_LIB" = "x" -a -d "$JAVA_HOME/jre/lib/i386/server"; then
             unset ac_cv_lib_jvm_JNI_CreateJavaVM
+            saved_LDFLAGS="$LDFLAGS"
+            LDFLAGS="$LDFLAGS -L$JAVA_HOME/jre/lib/i386/server"
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
 $as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
 if test "${ac_cv_lib_jvm_JNI_CreateJavaVM+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-ljvm -L$JAVA_HOME/jre/lib/i386/server -ljvm $LIBS"
+LIBS="-ljvm  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -24632,6 +24644,7 @@ else
   HAS_LIB_JVM=no
 fi
 
+            LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$JAVA_HOME/jre/lib/i386/server -ljvm"
             fi
