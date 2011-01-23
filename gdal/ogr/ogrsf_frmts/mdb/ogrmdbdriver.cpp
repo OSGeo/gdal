@@ -68,6 +68,10 @@ OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
     if( !EQUAL(CPLGetExtension(pszFilename),"mdb") )
         return NULL;
 
+    VSIStatBuf sStat;
+    if (VSIStat(pszFilename, &sStat) != 0)
+        return NULL;
+
     // Open data source
     poDS = new OGRMDBDataSource();
 
