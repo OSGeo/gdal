@@ -2900,8 +2900,12 @@ elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
             JAVA_HOME="$with_java"
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/solaris"
             AC_MSG_RESULT([yes])
+        elif test -d "$with_java/include/freebsd"; then
+            JAVA_HOME="$with_java"
+            JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/freebsd"
+            AC_MSG_RESULT([yes])
         else
-            AC_MSG_ERROR("Cannot find $with_java/include/linux or solaris directory.")
+            AC_MSG_ERROR("Cannot find $with_java/include/linux or solaris or freebsd directory.")
         fi
     else
         AC_MSG_ERROR("Cannot find $with_java/include directory.")

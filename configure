@@ -24462,8 +24462,13 @@ $as_echo "yes" >&6; }
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/solaris"
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+        elif test -d "$with_java/include/freebsd"; then
+            JAVA_HOME="$with_java"
+            JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/freebsd"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
         else
-            as_fn_error $? "\"Cannot find $with_java/include/linux or solaris directory.\"" "$LINENO" 5
+            as_fn_error $? "\"Cannot find $with_java/include/linux or solaris or freebsd directory.\"" "$LINENO" 5
         fi
     else
         as_fn_error $? "\"Cannot find $with_java/include directory.\"" "$LINENO" 5
