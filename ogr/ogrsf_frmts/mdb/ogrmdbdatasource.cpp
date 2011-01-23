@@ -340,7 +340,6 @@ int OGRMDBDataSource::Open( const char * pszNewName, int bUpdate,
 
         papoLayers = (OGRMDBLayer**)CPLRealloc(papoLayers, (nLayers+1) * sizeof(OGRMDBLayer*));
         papoLayers[nLayers++] = poLayer;
-        nLayersWithInvisible = nLayers;
     }
 
     return TRUE;
