@@ -123,6 +123,8 @@ class PCIDSK2Band : public GDALPamRasterBand
     virtual GDALColorTable *GetColorTable();
     virtual CPLErr SetColorTable( GDALColorTable * ); 
 
+    virtual void        SetDescription( const char * );
+
     CPLErr              SetMetadata( char **, const char * );
     char              **GetMetadata( const char* );
     CPLErr              SetMetadataItem(const char*,const char*,const char*);
@@ -162,7 +164,7 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
 
     if( !EQUALN(poChannel->GetDescription().c_str(),
                 "Contents Not Specified",20) )
-        SetDescription( poChannel->GetDescription().c_str() );
+        GDALMajorObject::SetDescription( poChannel->GetDescription().c_str() );
 
 /* -------------------------------------------------------------------- */
 /*      Do we have overviews?                                           */
@@ -197,7 +199,10 @@ PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )
     if( poChannel->GetType() == CHN_BIT )
     {
         SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
-        SetDescription( poChannel->GetDescription().c_str() );
+
+        if( !EQUALN(poChannel->GetDescription().c_str(),
+                    "Contents Not Specified",20) )
+            GDALMajorObject::SetDescription( poChannel->GetDescription().c_str() );
     }
 }
 
@@ -234,6 +239,28 @@ PCIDSK2Band::~PCIDSK2Band()
     CSLDestroy( papszLastMDListValue );
 
     delete poColorTable;
+}
+
+/************************************************************************/
+/*                           SetDescription()                           */
+/************************************************************************/
+
+void PCIDSK2Band::SetDescription( const char *pszDescription )
+
+{
+    try 
+    {
+        poChannel->SetDescription( pszDescription );
+
+        if( !EQUALN(poChannel->GetDescription().c_str(),
+                    "Contents Not Specified",20) )
+            GDALMajorObject::SetDescription( poChannel->GetDescription().c_str() );
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+    }
 }
 
 /************************************************************************/
@@ -1681,9 +1708,28 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
         poFile = PCIDSK::Create( pszFilename, nXSize, nYSize, nBands, 
                                  &(aeChanTypes[0]), osOptions, 
                                  PCIDSK2GetInterfaces() );
-        delete poFile;
+
+/* -------------------------------------------------------------------- */
+/*      Apply band descriptions, if provided as creation options.       */
+/* -------------------------------------------------------------------- */
+        size_t i;
+
+        for( i = 0; papszParmList != NULL && papszParmList[i] != NULL; i++ )
+        {
+            if( EQUALN(papszParmList[i],"BANDDESC",8) )
+            {
+                int nBand = atoi(papszParmList[i] + 8 );
+                const char *pszDescription = strstr(papszParmList[i],"=");
+                if( pszDescription && nBand > 0 && nBand <= nBands )
+                {
+                    poFile->GetChannel(nBand)->SetDescription( pszDescription+1 );
+                }
+            }
+        }
 
         // TODO: should we ensure this driver gets used?
+
+        delete poFile;
 
         return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
     }
