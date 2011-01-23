@@ -2855,7 +2855,7 @@ dnl ---------------------------------------------------------------------------
 dnl Java support
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(java,[  --with-java       Include Java support (ARG=yes, no or JDK root path)],,)
+AC_ARG_WITH(java,[  --with-java       Include Java support (ARG=yes, no or JDK home path)],,)
 
 AC_MSG_CHECKING([whether we should include Java support])
 
@@ -2930,10 +2930,18 @@ if test "$with_mdb" = "yes" ; then
             AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,-L$JAVA_HOME/jre/lib/amd64/server -ljvm)
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$JAVA_HOME/jre/lib/amd64/server -ljvm"
-            else
-                AC_MSG_ERROR("--with-jvm-lib must point to a directory with a libjvm.")
             fi
-        else
+        fi
+
+        if test "x$JVM_LIB" = "x" -a -d "$JAVA_HOME/jre/lib/i386/server"; then
+            unset ac_cv_lib_jvm_JNI_CreateJavaVM
+            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,-L$JAVA_HOME/jre/lib/i386/server -ljvm)
+            if test "$HAS_LIB_JVM" = "yes"; then
+                JVM_LIB="-L$JAVA_HOME/jre/lib/i386/server -ljvm"
+            fi
+        fi
+
+        if test "x$JVM_LIB" = "x"; then
             AC_MSG_ERROR("--with-jvm-lib must be specified.")
         fi
 dnl    elif test -f /System/Library/Frameworks/JavaVM.framework/Versions/Current/JavaVM; then
