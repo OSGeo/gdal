@@ -119,6 +119,13 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
     while( (hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL )
     {
         OGRGeometryH hGeom = OGR_F_GetGeometryRef(hFeat);
+        if (hGeom == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "null geometry found");
+            OGR_F_Destroy(hFeat);
+            OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
+            return CE_Failure;
+        }
         
         OGREnvelope oEnvelope;
         OGR_G_GetEnvelope(hGeom, &oEnvelope);
