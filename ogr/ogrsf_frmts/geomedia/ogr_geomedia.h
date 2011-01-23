@@ -108,7 +108,8 @@ class OGRGeomediaTableLayer : public OGRGeomediaLayer
                         ~OGRGeomediaTableLayer();
 
     CPLErr              Initialize( const char *pszTableName, 
-                                    const char *pszGeomCol );
+                                    const char *pszGeomCol,
+                                    OGRSpatialReference* poSRS );
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
@@ -151,13 +152,20 @@ class OGRGeomediaSelectLayer : public OGRGeomediaLayer
 
 class OGRGeomediaDataSource : public OGRDataSource
 {
-    OGRGeomediaLayer        **papoLayers;
+    OGRGeomediaLayer  **papoLayers;
     int                 nLayers;
-    
+
+    OGRGeomediaLayer  **papoLayersInvisible;
+    int                 nLayersWithInvisible;
+
     char               *pszName;
 
     int                 bDSUpdate;
     CPLODBCSession      oSession;
+
+    CPLString          GetTableNameFromType(const char* pszTableType);
+    OGRSpatialReference* GetGeomediaSRS(const char* pszGCoordSystemTable,
+                                        const char* pszGCoordSystemGUID);
 
   public:
                         OGRGeomediaDataSource();
@@ -171,6 +179,7 @@ class OGRGeomediaDataSource : public OGRDataSource
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
+    OGRLayer            *GetLayerByName( const char* pszLayerName );
 
     int                 TestCapability( const char * );
 
