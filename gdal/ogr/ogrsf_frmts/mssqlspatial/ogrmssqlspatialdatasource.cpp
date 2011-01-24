@@ -462,10 +462,6 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             continue;
         }
 
-        if (ParseValue(&pszCatalog, pszConnectionName, "initial catalog=", 
-            nCurrent, nNext, nTerm, FALSE))
-            continue;
-
         if (ParseValue(&pszCatalog, pszConnectionName, "database=", 
             nCurrent, nNext, nTerm, FALSE))
             continue;
@@ -504,9 +500,8 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     /* Determine if the connection string contains the catalog portion */
     if( pszCatalog == NULL )
     {
-        if( !bTestOpen )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s does not contain the initial catalog portion\n", pszNewName );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                      "'%s' does not contain the 'database' portion\n", pszNewName );
         
         CPLFree(pszTableSpec);
         CPLFree(pszGeometryFormat);
