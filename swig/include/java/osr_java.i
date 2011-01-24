@@ -48,6 +48,10 @@
     }
 %}
 
+/* This hacks turns the osrJNI class into a package private class */
+%pragma(java) jniclassimports=%{
+%}
+
 /*
  *  Needed to make the Constructor and getCptr 'public' and not 'protected'.
  *   There is likely a better way to do this (with javamethodmodifiers) but

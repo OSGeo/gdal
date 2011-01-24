@@ -42,6 +42,9 @@
   }
 %}
 
+/* This hacks turns the gdalJNI class into a package private class */
+%pragma(java) jniclassimports=%{
+%}
 
 %pragma(java) modulecode=%{
 
