@@ -16,9 +16,10 @@
 To connect to a MSSQL datasource, use a connection string specifying the database name,
 with additional parameters as necessary. The connection strings must be prefixed 
     with &#39;<i>MSSQL:</i>&#39;.<br>
-<blockquote><pre>MSSQL:server=.\MSSQLSERVER2008;database=dbname;Integrated Security=true</pre></blockquote>
+<blockquote><pre>
+MSSQL:server=.\MSSQLSERVER2008;database=dbname;trusted_connection=yes</pre></blockquote>
 In addition to the standard parameters of the 
-    <a href="http://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlconnection.connectionstring.aspx">connection string</a> 
+    <a href="http://msdn.microsoft.com/en-us/library/ms130822.aspx">ODBC driver connection string</a> 
     format the following custom parameters can also be used in the following syntax:
 
 <ul>
@@ -30,7 +31,8 @@ In addition to the standard parameters of the
 
 </ul>
     <p>The parameter names are not case sensitive in the connection strings.</p> 
-    <p>Specifying the <b>Initial Catalog (Database)</b> parameter is required by the driver in order to select the proper database.</p> 
+    <p>Specifying the <b>
+    Database</b> parameter is required by the driver in order to select the proper database.</p> 
 
 <h2>SQL statements</h2>
 
@@ -96,13 +98,16 @@ The corresponding entry should already be added to the spatial_ref_sys metadata 
 <h2>Examples</h2>
 
 <p>Creating a layer from an OGR data source</p>
-<blockquote><pre>ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=.\MSSQLSERVER2008;database=geodb;Integrated Security=true" "rivers.tab"</pre></blockquote>
+<blockquote><pre>
+ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=yes" "rivers.tab"</pre></blockquote>
 
 <p>Connecting to a layer and dump the contents</p>
-<blockquote><pre>ogrinfo -al "MSSQL:server=.\MSSQLSERVER2008;database=geodb;tables=rivers;Integrated Security=true"</pre></blockquote>
+<blockquote><pre>
+ogrinfo -al "MSSQL:server=.\MSSQLSERVER2008;database=geodb;tables=rivers;trusted_connection=yes"</pre></blockquote>
 
 <p>Creating a spatial index</p>
-<blockquote><pre>ogrinfo -sql "create spatial index on rivers" "MSSQL:server=.\MSSQLSERVER2008;database=geodb;Integrated Security=true"</pre></blockquote>
+<blockquote><pre>
+ogrinfo -sql "create spatial index on rivers" "MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=yes"</pre></blockquote>
 
 </body>
 </html>
