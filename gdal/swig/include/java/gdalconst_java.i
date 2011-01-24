@@ -36,6 +36,10 @@
   }
 %}
 
+/* This hacks turns the gdalconstJNI class into a package private class */
+%pragma(java) jniclassimports=%{
+%}
+
 %pragma(java) modulecode=%{
 
     /* Uninstanciable class */
