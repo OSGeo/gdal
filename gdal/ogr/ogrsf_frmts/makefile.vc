@@ -60,6 +60,12 @@ SDE_DIR = sde
 SDE_OBJ = sde\*.obj
 !ENDIF
 
+!IFDEF FGDB_LIB
+FGDB_DIR = filegdb
+FGDB_OBJ = filegdb\*.obj
+!ENDIF
+
+
 !IFDEF HAS_ARCOBJECTS
 ARCOBJECTS_DIR = arcobjects
 ARCOBJECTS_OBJ = arcobjects\*.obj
@@ -125,7 +131,7 @@ default:
 				 aeronavfaa\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
-				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
+				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(PCIDSKOBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
