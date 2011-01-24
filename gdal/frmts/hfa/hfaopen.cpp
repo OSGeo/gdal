@@ -3733,6 +3733,7 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
         // Collect all the existing names.
         int i, nNameCount = poRRDNL->GetFieldCount( "nameList" );
         
+        CPLString osAlgorithm = poRRDNL->GetStringField("algorithm.string");
         for( i = 0; i < nNameCount; i++ )
         {
             CPLString osFN;
@@ -3760,7 +3761,11 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
                                + nNameCount * (strlen(pszNewBase) - strlen(pszOldBase)) );
         }
 
+        // Initialize the whole thing to zeros for a clean start.
+        memset( poRRDNL->GetData(), 0, poRRDNL->GetDataSize() );
+
         // Write the updates back to the file.
+        poRRDNL->SetStringField( "algorithm.string", osAlgorithm );
         for( i = 0; i < nNameCount; i++ )
         {
             CPLString osFN;
