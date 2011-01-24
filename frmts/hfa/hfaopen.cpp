@@ -3821,6 +3821,9 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
                                + (strlen(pszNewBase) - strlen(pszOldBase)) );
         }
 
+        // Initialize the whole thing to zeros for a clean start.
+        memset( poERDMS->GetData(), 0, poERDMS->GetDataSize() );
+
         // Write it all out again, this may change the size of the node.
         poERDMS->SetStringField( "fileName.string", osFileName );
         poERDMS->SetIntField( "layerStackValidFlagsOffset[0]", 
