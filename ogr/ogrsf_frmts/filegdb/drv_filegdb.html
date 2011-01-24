@@ -1,0 +1,66 @@
+<html>
+<head>
+<title>FileGDB Open API driver</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>FileGDB Open API driver</h1>
+
+<h2>Overview</h2>
+
+<p>The FileGDB driver provides read-only access to FileGDB based datasources.</p>
+
+
+<h2>Requirements</h2>
+
+<p>
+	<ul>
+		<li>FileGDB SDK</li>
+	</ul>
+</p>
+
+
+<h2>Usage</h2>
+
+<p> Use like any other file based driver - just point to FileGDB directory (a directory that ends with the ".gdb" suffix)</p>
+
+<ul>
+	<li> Read from FileGDB and load into PostGIS: </li>
+	<br/>
+	<code>ogr2ogr -overwrite -skipfailures -f "PostgreSQL" PG:"host=myhost user=myuser dbname=mydb password=mypass" "C:\somefolder\BigFileGDB.gdb" "MyFeatureClass"</code>
+	<br/>
+	<br/>
+
+	<li> Get detailed info of FileGDB: </li>
+	<br/>
+	<code>ogrinfo -al "C:\somefolder\MyGDB.gdb"</code>
+	<br/>
+	<br>
+
+
+</ul>
+
+
+<h2>Building Notes</h2>
+
+<p> Read the <a href="http://trac.osgeo.org/gdal/wiki/BuildingOnWindows">GDAL Windows Building example for Plugins</a>. You will find a similar section in nmake.opt for FileGDB.
+After you are done, go to the <i>$gdal_source_root\ogr\ogrsf_frmts\filegdb</i> folder and execute:</p>
+
+<p>
+	<code>
+		nmake /f makefile.vc plugin
+		nmake /f makefile.vc plugin-install
+	</code>
+</p>
+
+
+<h2>Known Issues</h2>
+
+<p>
+    <h1>Only works with points</h1>
+	Date and blob fields have not been implemented. It is probably just a few lines of code, I just have not had time (or need) to do it.
+</p>
+
+</body>
+</html>
