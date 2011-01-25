@@ -5,24 +5,27 @@
 These pages document the development version of the GDAL Perl API,
 which is extended from the released versions APIs.
 
-<a href="http://map.hut.fi/doc/Geo-GDAL-1.4/html/index.html">The
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.4/html/index.html">The
 documentation for the version 1.4 API.</a>
 
-<a href="http://map.hut.fi/doc/Geo-GDAL-1.5/html/index.html">The
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.5/html/index.html">The
 documentation for the version 1.5 API.</a>
 
-<a href="http://map.hut.fi/doc/Geo-GDAL-1.6/html/index.html">The
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.6/html/index.html">The
 documentation for the version 1.6 API.</a>
 
-<a href="http://map.hut.fi/doc/Geo-GDAL-1.7/html/index.html">The
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.7/html/index.html">The
 documentation for the version 1.7 API.</a>
+
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.8/html/index.html">The
+documentation for the version 1.8 API.</a>
 
 \section index_intro Introduction
 
 The Geo::GDAL modules are the Perl bindings to the GDAL/OGR
-library. The modules allow you to access and manipulate from Perl all
-geospatial data that the installed GDAL library is configured to
-read/write.
+library. The modules allow you to use Perl to access and manipulate
+all geospatial data that the installed GDAL library is configured to
+access and manipulate.
 
 This documentation covers mainly the syntax of the bindings. For more
 in-depth documentation see the main documentation of <a
@@ -102,10 +105,10 @@ constructors (new and create) must be called as class methods.
 
 \section index_exceptions Exceptions
 
-Geo::GDAL uses the Perl exception mechanism in such a way that
-exceptions that are classified in GDAL as failures or fatal errors
-trigger a Perl exception, and an exception that is classified as a
-warning triggers a Perl warning.
+Geo::GDAL uses the Perl exception mechanism. This means that
+exceptions that GDAL classifies as failures or fatal errors trigger a
+Perl exception, and an exception that is classified as a warning
+triggers a Perl warning.
 
 Perl exceptions can be caught by \a eval() and Perl warnings can be
 caught by signal '__WARN__'. Examples:
@@ -139,6 +142,7 @@ Warning: Driver GTiff does not support a creation option at site/lib/Geo/GDAL.pm
 This documentation is generated from files within the GDAL
 distribution (directory swig/perl) with a tweaked version of <a
 href="http://www.bigsister.ch/doxygenfilter/">Perl Doxygen Filter</a>
-with Doxygen.
+with Doxygen. The modified version is available <a
+href="https://geoinformatics.tkk.fi/svn/doxygenfilter/">here</a>.
 
 */
