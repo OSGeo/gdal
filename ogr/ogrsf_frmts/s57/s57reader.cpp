@@ -2057,7 +2057,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
             
                 nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 1 );
 
-                if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
+                if( nVC_RCID != -1 
+                    && FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
                     poLine->addPoint( dfX, dfY );
             }
 
