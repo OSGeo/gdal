@@ -1905,9 +1905,9 @@ const char * OGR_GetFieldTypeName(OGRFieldType type);
 %feature( "kwargs" ) Open;
 #endif
 %inline %{
-  OGRDataSourceShadow* Open( const char *filename, int update =0 ) {
+  OGRDataSourceShadow* Open( const char *utf8_path, int update =0 ) {
     CPLErrorReset();
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(utf8_path,update,NULL);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
         CPLDebug( "SWIG", 
