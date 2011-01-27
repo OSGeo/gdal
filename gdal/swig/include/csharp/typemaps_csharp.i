@@ -382,6 +382,11 @@ OPTIONAL_POD(int, int);
 %apply (int inout[ANY]) {int *pList};
 
 /*
+ * Typemap for const char *utf8_path. 
+ */
+%typemap(csin) (const char *utf8_path)  "System.Text.Encoding.Default.GetString(System.Text.Encoding.UTF8.GetBytes($csinput))" 
+
+/*
  * Typemap for double *defaultval. 
  */
 
