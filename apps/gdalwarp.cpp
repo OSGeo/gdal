@@ -1873,6 +1873,13 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     }
 
 /* -------------------------------------------------------------------- */
+/*      It may be unwise to let the mask geometry be re-wrapped by      */
+/*      the CENTER_LONG machinery as this can easily screw up world     */
+/*      spanning masks and invert the mask topology.                    */
+/* -------------------------------------------------------------------- */
+    papszTO = CSLSetNameValue( papszTO, "INSERT_CENTER_LONG", "FALSE" );
+
+/* -------------------------------------------------------------------- */
 /*      Transform the geometry to pixel/line coordinates.               */
 /* -------------------------------------------------------------------- */
     CutlineTransformer oTransformer;

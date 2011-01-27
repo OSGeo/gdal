@@ -1008,6 +1008,9 @@ static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
  * considered on the source dataset. 
  * <li> RPC_HEIGHT: A fixed height to be used with RPC calculations.
  * <li> RPC_DEM: The name of a DEM file to be used with RPC calculations.
+ * <li> INSERT_CENTER_LONG: May be set to FALSE to disable setting up a 
+ * CENTER_LONG value on the coordinate system to rewrap things around the
+ * center of the image.  
  * </ul>
  * 
  * @param hSrcDS source dataset, or NULL.
@@ -1183,7 +1186,8 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         && !EQUAL(pszSrcWKT,pszDstWKT) )
     {
         CPLString osSrcWKT = pszSrcWKT;
-        if (hSrcDS)
+        if (hSrcDS 
+            && CSLFetchBoolean( papszOptions, "INSERT_CENTER_LONG", TRUE ) )
             osSrcWKT = InsertCenterLong( hSrcDS, osSrcWKT );
         
         psInfo->pReprojectArg = 
