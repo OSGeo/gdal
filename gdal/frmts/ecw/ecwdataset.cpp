@@ -1431,7 +1431,7 @@ void ECWDataset::ECW2WKTProjection()
         
         adfGeoTransform[3] = psFileInfo->fOriginY;
         adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = psFileInfo->fCellIncrementY;
+        adfGeoTransform[5] = -fabs(psFileInfo->fCellIncrementY);
     }
 
 /* -------------------------------------------------------------------- */
