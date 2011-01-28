@@ -611,11 +611,26 @@ void GDALDriverManager::AutoLoadDrivers()
     }
 
 /* -------------------------------------------------------------------- */
+/*      Format the ABI version specific subdirectory to look in.        */
+/* -------------------------------------------------------------------- */
+    CPLString osABIVersion;
+
+    osABIVersion.Printf( "%d.%d", GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR );
+
+/* -------------------------------------------------------------------- */
 /*      Scan each directory looking for files starting with gdal_       */
 /* -------------------------------------------------------------------- */
     for( int iDir = 0; iDir < CSLCount(papszSearchPath); iDir++ )
     {
-        char  **papszFiles = CPLReadDir( papszSearchPath[iDir] );
+        char **papszFiles = NULL;
+        VSIStatBufL sStatBuf;
+        CPLString osABISpecificDir =
+            CPLFormFilename( papszSearchPath[iDir], osABIVersion, NULL );
+        
+        if( VSIStatL( osABISpecificDir, &sStatBuf ) != 0 )
+            osABISpecificDir = papszSearchPath[iDir];
+
+        papszFiles = CPLReadDir( osABISpecificDir );
 
         for( int iFile = 0; iFile < CSLCount(papszFiles); iFile++ )
         {
@@ -637,7 +652,7 @@ void GDALDriverManager::AutoLoadDrivers()
                      CPLGetBasename(papszFiles[iFile]) + 5 );
             
             pszFilename = 
-                CPLFormFilename( papszSearchPath[iDir], 
+                CPLFormFilename( osABISpecificDir, 
                                  papszFiles[iFile], NULL );
 
             pRegister = CPLGetSymbol( pszFilename, pszFuncName );
