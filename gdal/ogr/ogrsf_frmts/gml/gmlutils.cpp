@@ -182,7 +182,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
         }
     }
 
-    if (bInvertAxisOrderIfLatLong)
+    if ( poGeom != NULL && bInvertAxisOrderIfLatLong )
     {
         char* pszSRSName = GML_ExtractSrsNameFromGeometry(papszGeometryList);
         if (GML_IsSRSLatLongOrder(pszSRSName ? pszSRSName : pszDefaultSRSName))
