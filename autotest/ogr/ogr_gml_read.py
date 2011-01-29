@@ -983,6 +983,34 @@ def ogr_gml_24():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test fixes for #3934 and #3935
+
+def ogr_gml_25():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.remove( 'data/curveProperty.gfs' )
+    except:
+        pass
+
+    ds = ogr.Open('data/curveProperty.xml')
+
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    if got_wkt != 'POLYGON ((14 21 0,6 21 0,6 21 0,6 9 0,6 9 0,14 9 0,14 9 0,22 9 0,22 9 0,22 21 0,22 21 0,14 21 0))':
+        gdaltest.post_reason('did not get expected geometry')
+        print(got_wkt)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -1036,6 +1064,10 @@ def ogr_gml_clean_files():
         os.remove( 'tmp/global_geometry.xml' )
     except:
         pass
+    try:
+        os.remove( 'data/curveProperty.gfs' )
+    except:
+        pass
 
     files = os.listdir('data')
     for filename in files:
@@ -1070,6 +1102,7 @@ gdaltest_list = [
     ogr_gml_22,
     ogr_gml_23,
     ogr_gml_24,
+    ogr_gml_25,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
