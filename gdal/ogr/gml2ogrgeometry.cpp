@@ -1341,9 +1341,11 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         psCurve = FindBareXMLChild(psCurveProperty,"LineString");
         if( psCurve == NULL )
+            psCurve = FindBareXMLChild(psCurveProperty,"Curve");
+        if( psCurve == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "directedEdge: Failed to get LineString geometry in curveProperty" );
+                      "directedEdge: Failed to get LineString or Curve tag in curveProperty" );
             return NULL;
         }
 
