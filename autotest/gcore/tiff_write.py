@@ -4035,6 +4035,38 @@ def tiff_write_102():
     return 'success'
 
 ###############################################################################
+# Test -co COPY_SRC_OVERVIEWS=YES on a multiband source with external overviews (#3938)
+
+def tiff_write_103():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_gdaladdo_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' data/rgbsmall.tif tmp/tiff_write_103_src.tif -outsize 260 260')
+    gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/tiff_write_103_src.tif 2')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/tiff_write_103_src.tif tmp/tiff_write_103_dst.tif -co COPY_SRC_OVERVIEWS=YES')
+
+    src_ds = gdal.Open('tmp/tiff_write_103_src.tif')
+    dst_ds = gdal.Open('tmp/tiff_write_103_dst.tif')
+    src_cs = src_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    dst_cs = dst_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    src_ds = None
+    dst_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_103_src.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_103_dst.tif' )
+
+    if src_cs != dst_cs:
+        gdaltest.post_reason('did not get expected checksum')
+        print(src_cs)
+        print(dst_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -4147,6 +4179,7 @@ gdaltest_list = [
     tiff_write_100,
     tiff_write_101,
     tiff_write_102,
+    tiff_write_103,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
