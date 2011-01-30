@@ -72,6 +72,7 @@ class GDALOverviewDS : public GDALDataset
         friend class GDALOverviewBand;
 
         GDALDataset* poDS;
+        GDALDataset* poOvrDS;
         int          nOvrLevel;
 
     public:
@@ -101,6 +102,7 @@ GDALOverviewDS::GDALOverviewDS(GDALDataset* poDS, int nOvrLevel)
     eAccess = poDS->GetAccess();
     nRasterXSize = poDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetXSize();
     nRasterYSize = poDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetYSize();
+    poOvrDS = poDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetDataset();
     nBands = poDS->GetRasterCount();
     int i;
     for(i=0;i<nBands;i++)
@@ -114,11 +116,17 @@ GDALOverviewDS::~GDALOverviewDS()
 
 char  **GDALOverviewDS::GetMetadata( const char * pszDomain )
 {
+    if (poOvrDS != NULL)
+        return poOvrDS->GetMetadata(pszDomain);
+
     return poDS->GetMetadata(pszDomain);
 }
 
 const char *GDALOverviewDS::GetMetadataItem( const char * pszName, const char * pszDomain )
 {
+    if (poOvrDS != NULL)
+        return poOvrDS->GetMetadataItem(pszName, pszDomain);
+
     return poDS->GetMetadataItem(pszName, pszDomain);
 }
 
@@ -718,6 +726,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
     }
 
+    CPLAssert(nBlocksPerRow != 0);
     nBlockIdBand0 = nBlockXOff + nBlockYOff * nBlocksPerRow;
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
         nBlockId = nBlockIdBand0 + (nBand-1) * poGDS->nBlocksPerBand;
@@ -995,6 +1004,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && nBlockXOff >= 0
                && nBlockYOff >= 0
                && pImage != NULL );
+    CPLAssert(nBlocksPerRow != 0);
 
 /* -------------------------------------------------------------------- */
 /*      Handle case of "separate" images                                */
@@ -1013,7 +1023,6 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Handle case of pixel interleaved (PLANARCONFIG_CONTIG) images.  */
 /* -------------------------------------------------------------------- */
-
     nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
         
     eErr = poGDS->LoadBlockBuf( nBlockId );
@@ -1789,6 +1798,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if (!poGDS->SetDirectory())
         return CE_Failure;
 
+    CPLAssert(nBlocksPerRow != 0);
     nBlockBufSize = 4 * nBlockXSize * nBlockYSize;
     nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
@@ -1973,6 +1983,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Load the block buffer.                                          */
 /* -------------------------------------------------------------------- */
+    CPLAssert(nBlocksPerRow != 0);
     nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
@@ -2228,6 +2239,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if (!poGDS->SetDirectory())
         return CE_Failure;
 
+    CPLAssert(nBlocksPerRow != 0);
     nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
