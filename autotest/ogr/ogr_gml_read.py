@@ -1004,7 +1004,7 @@ def ogr_gml_25():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     got_wkt = geom.ExportToWkt()
-    if got_wkt != 'POLYGON ((14 21 0,6 21 0,6 21 0,6 9 0,6 9 0,14 9 0,14 9 0,22 9 0,22 9 0,22 21 0,22 21 0,14 21 0))':
+    if got_wkt != 'POLYGON ((14 21,6 21,6 21,6 9,6 9,14 9,14 9,22 9,22 9,22 21,22 21,14 21))':
         gdaltest.post_reason('did not get expected geometry')
         print(got_wkt)
         return 'fail'
