@@ -30,14 +30,13 @@
 
 import os
 import sys
-import gdal
+from osgeo import gdal, osr
 import array
 import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import osr
 
 ###############################################################################
 # Read a truncated and modified version of http://download.osgeo.org/gdal/data/pds/mc02.img
@@ -73,11 +72,16 @@ def pds_2():
         return 'fail'
 
     ds = gdal.Open('data/fl73n003_truncated.img')
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+    if ds.GetRasterBand(1).GetNoDataValue() != 7:
         return 'fail'
     if ds.GetRasterBand(1).GetScale() != 0.2:
         return 'fail'
     if ds.GetRasterBand(1).GetOffset() != -20.2:
+        return 'fail'
+
+    # Per #3939 we would also like to test a dataset with MISSING_CONSTANT.
+    ds = gdal.Open('data/fl73n003_alt_truncated.img')
+    if ds.GetRasterBand(1).GetNoDataValue() != 7:
         return 'fail'
 
     return 'success'
