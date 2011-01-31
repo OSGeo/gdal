@@ -73,13 +73,13 @@ class PDSDataset : public RawDataset
     CPLString   osTempResult;
 
     void        ParseSRS();
-    int         ParseUncompressedImage();
     int         ParseCompressedImage();
+    int	        ParseImage( CPLString osPrefix = "" );
     void        CleanString( CPLString &osInput );
 
-    const char *GetKeyword( const char *pszPath, 
+    const char *GetKeyword( std::string osPath,
                             const char *pszDefault = "");
-    const char *GetKeywordSub( const char *pszPath, 
+    const char *GetKeywordSub( std::string osPath,
                                int iSubscript, 
                                const char *pszDefault = "");
     const char *GetKeywordUnit( const char *pszPath, 
@@ -564,11 +564,10 @@ void PDSDataset::ParseSRS()
 }
 
 /************************************************************************/
-/*                       ParseUncompressedImage()                       */
+/*                             ParseImage()                             */
 /************************************************************************/
 
-int PDSDataset::ParseUncompressedImage()
-
+int PDSDataset::ParseImage( CPLString osPrefix )
 {
 /* ------------------------------------------------------------------- */
 /*	We assume the user is pointing to the label (ie. .lbl) file.  	   */
@@ -583,7 +582,7 @@ int PDSDataset::ParseUncompressedImage()
     // ^IMAGE             = 10851 <BYTES>
     // ^SPECTRAL_QUBE = 5  for multi-band images
 
-    CPLString osImageKeyword = "^IMAGE";
+    CPLString osImageKeyword = osPrefix + "^IMAGE";
     CPLString osQube = GetKeyword( osImageKeyword, "" );
     CPLString osTargetFile = GetDescription();
 
@@ -635,7 +634,7 @@ int PDSDataset::ParseUncompressedImage()
     /* -------------------------------------------------------------------- */
     const char *value;
 
-    CPLString osEncodingType = GetKeyword( "IMAGE.ENCODING_TYPE", "N/A" );
+    CPLString osEncodingType = GetKeyword(osPrefix+"IMAGE.ENCODING_TYPE","N/A");
     CleanString(osEncodingType);
     if ( !EQUAL(osEncodingType.c_str(),"N/A") )
     {
@@ -656,30 +655,30 @@ int PDSDataset::ParseUncompressedImage()
     /** if not NULL then CORE_ITEMS keyword i.e. (234,322,2)  **/
     /***********************************************************/
     char szLayout[10] = "BSQ"; //default to band seq.
-    value = GetKeyword( "IMAGE.AXIS_NAME", "" );
+    value = GetKeyword( osPrefix+"IMAGE.AXIS_NAME", "" );
     if (EQUAL(value,"(SAMPLE,LINE,BAND)") ) {
         strcpy(szLayout,"BSQ");
-        nCols = atoi(GetKeywordSub("IMAGE.CORE_ITEMS",1));
-        nRows = atoi(GetKeywordSub("IMAGE.CORE_ITEMS",2));
-        nBands = atoi(GetKeywordSub("IMAGE.CORE_ITEMS",3));
+        nCols = atoi(GetKeywordSub(osPrefix+"IMAGE.CORE_ITEMS",1));
+        nRows = atoi(GetKeywordSub(osPrefix+"IMAGE.CORE_ITEMS",2));
+        nBands = atoi(GetKeywordSub(osPrefix+"IMAGE.CORE_ITEMS",3));
     }
     else if (EQUAL(value,"(BAND,LINE,SAMPLE)") ) {
         strcpy(szLayout,"BIP");
-        nBands = atoi(GetKeywordSub("IMAGE.CORE_ITEMS",1));
-        nRows = atoi(GetKeywordSub("IMAGE.CORE_ITEMS",2));
-        nCols = atoi(GetKeywordSub("IMAGE.CORE_ITEMS",3));
+        nBands = atoi(GetKeywordSub(osPrefix+"IMAGE.CORE_ITEMS",1));
+        nRows = atoi(GetKeywordSub(osPrefix+"IMAGE.CORE_ITEMS",2));
+        nCols = atoi(GetKeywordSub(osPrefix+"IMAGE.CORE_ITEMS",3));
     }
     else if (EQUAL(value,"(SAMPLE,BAND,LINE)") ) {
         strcpy(szLayout,"BIL");
-        nCols = atoi(GetKeywordSub("IMAGE.CORE_ITEMS",1));
-        nBands = atoi(GetKeywordSub("IMAGE.CORE_ITEMS",2));
-        nRows = atoi(GetKeywordSub("IMAGE.CORE_ITEMS",3));
+        nCols = atoi(GetKeywordSub(osPrefix+"IMAGE.CORE_ITEMS",1));
+        nBands = atoi(GetKeywordSub(osPrefix+"IMAGE.CORE_ITEMS",2));
+        nRows = atoi(GetKeywordSub(osPrefix+"IMAGE.CORE_ITEMS",3));
     }
     else if ( EQUAL(value,"") ) {
         strcpy(szLayout,"BSQ");
-        nCols = atoi(GetKeyword("IMAGE.LINE_SAMPLES",""));
-        nRows = atoi(GetKeyword("IMAGE.LINES",""));
-        nBands = atoi(GetKeyword("IMAGE.BANDS","1"));        
+        nCols = atoi(GetKeyword(osPrefix+"IMAGE.LINE_SAMPLES",""));
+        nRows = atoi(GetKeyword(osPrefix+"IMAGE.LINES",""));
+        nBands = atoi(GetKeyword(osPrefix+"IMAGE.BANDS","1"));
     }
     else {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -688,9 +687,9 @@ int PDSDataset::ParseUncompressedImage()
     }
     
     /***********   Grab Qube record bytes  **********/
-    record_bytes = atoi(GetKeyword("IMAGE.RECORD_BYTES"));
+    record_bytes = atoi(GetKeyword(osPrefix+"IMAGE.RECORD_BYTES"));
     if (record_bytes == 0)
-        record_bytes = atoi(GetKeyword("RECORD_BYTES"));
+        record_bytes = atoi(GetKeyword(osPrefix+"RECORD_BYTES"));
 
     // this can happen with "record_type = undefined". 
     if( record_bytes == 0 )
@@ -710,11 +709,11 @@ int PDSDataset::ParseUncompressedImage()
     else
         nSkipBytes = 0;     
 
-    nSkipBytes += atoi(GetKeyword("IMAGE.LINE_PREFIX_BYTES",""));
+    nSkipBytes += atoi(GetKeyword(osPrefix+"IMAGE.LINE_PREFIX_BYTES",""));
     
     /***********   Grab SAMPLE_TYPE *****************/
     /** if keyword not found leave as "M" or "MSB" **/
-    CPLString osST = GetKeyword( "IMAGE.SAMPLE_TYPE" );
+    CPLString osST = GetKeyword( osPrefix+"IMAGE.SAMPLE_TYPE" );
     if( osST.size() >= 2 && osST[0] == '"' && osST[osST.size()-1] == '"' )
         osST = osST.substr( 1, osST.size() - 2 );
 
@@ -732,7 +731,7 @@ int PDSDataset::ParseUncompressedImage()
 
     /**** Grab format type - pds supports 1,2,4,8,16,32,64 (in theory) **/
     /**** I have only seen 8, 16, 32 (float) in released datasets      **/
-    itype = atoi(GetKeyword("IMAGE.SAMPLE_BITS",""));
+    itype = atoi(GetKeyword(osPrefix+"IMAGE.SAMPLE_BITS",""));
     switch(itype) {
       case 8 :
         eDataType = GDT_Byte;
@@ -764,11 +763,11 @@ int PDSDataset::ParseUncompressedImage()
 /*      Is there a specific nodata value in the file? Either the        */
 /*      MISSING or MISSING_CONSTANT keywords are nodata.                */
 /* -------------------------------------------------------------------- */
-    if( GetKeyword( "IMAGE.MISSING", NULL ) != NULL )
-        dfNoData = CPLAtofM( GetKeyword( "IMAGE.MISSING", "" ) );
+    if( GetKeyword( osPrefix+"IMAGE.MISSING", NULL ) != NULL )
+        dfNoData = CPLAtofM( GetKeyword( osPrefix+"IMAGE.MISSING", "" ) );
 
-    if( GetKeyword( "IMAGE.MISSING_CONSTANT", NULL ) != NULL )
-        dfNoData = CPLAtofM( GetKeyword( "IMAGE.MISSING_CONSTANT", "" ) );
+    if( GetKeyword( osPrefix+"IMAGE.MISSING_CONSTANT", NULL ) != NULL )
+        dfNoData = CPLAtofM( GetKeyword( osPrefix+"IMAGE.MISSING_CONSTANT",""));
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
@@ -870,10 +869,10 @@ int PDSDataset::ParseUncompressedImage()
 
         if( nBands == 1 )
         {
-            const char* pszMin = GetKeyword("IMAGE.MINIMUM", NULL);
-            const char* pszMax = GetKeyword("IMAGE.MAXIMUM", NULL);
-            const char* pszMean = GetKeyword("IMAGE.MEAN", NULL);
-            const char* pszStdDev= GetKeyword("IMAGE.STANDARD_DEVIATION", NULL);
+            const char* pszMin = GetKeyword(osPrefix+"IMAGE.MINIMUM", NULL);
+            const char* pszMax = GetKeyword(osPrefix+"IMAGE.MAXIMUM", NULL);
+            const char* pszMean = GetKeyword(osPrefix+"IMAGE.MEAN", NULL);
+            const char* pszStdDev= GetKeyword(osPrefix+"IMAGE.STANDARD_DEVIATION", NULL);
             if (pszMin != NULL && pszMax != NULL &&
                 pszMean != NULL && pszStdDev != NULL)
             {
@@ -890,9 +889,9 @@ int PDSDataset::ParseUncompressedImage()
 
         // Set offset/scale values at the PAM level.
         poBand->SetOffset( 
-            CPLAtofM(GetKeyword("IMAGE.OFFSET","0.0")));
+            CPLAtofM(GetKeyword(osPrefix+"IMAGE.OFFSET","0.0")));
         poBand->SetScale( 
-            CPLAtofM(GetKeyword("IMAGE.SCALING_FACTOR","1.0")));
+            CPLAtofM(GetKeyword(osPrefix+"IMAGE.SCALING_FACTOR","1.0")));
     }
 
     return TRUE;
@@ -1010,7 +1009,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFCloseL( fpQube );
 
 /* -------------------------------------------------------------------- */
-/*      Is this a comprssed image with COMPRESSED_FILE subdomain?       */
+/*      Is this a compressed image with COMPRESSED_FILE subdomain?      */
 /*                                                                      */
 /*      The corresponding parse operations will read keywords,          */
 /*      establish bands and raster size.                                */
@@ -1027,7 +1026,13 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        if( !poDS->ParseUncompressedImage() )
+        CPLString osPrefix;
+    	CPLString osObject = poDS->GetKeyword( "UNCOMPRESSED_FILE.IMAGE.NAME", "");
+
+        if( osObject != "" )
+            osPrefix = "UNCOMPRESSED_FILE.";
+        
+        if( !poDS->ParseImage(osPrefix) )
         {
             delete poDS;
             return NULL;
@@ -1076,23 +1081,23 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             GetKeyword()                             */
 /************************************************************************/
 
-const char *PDSDataset::GetKeyword( const char *pszPath, 
-                                      const char *pszDefault )
+const char *PDSDataset::GetKeyword( std::string osPath,
+                                    const char *pszDefault )
 
 {
-    return oKeywords.GetKeyword( pszPath, pszDefault );
+    return oKeywords.GetKeyword( osPath.c_str(), pszDefault );
 }
 
 /************************************************************************/
 /*                            GetKeywordSub()                           */
 /************************************************************************/
 
-const char *PDSDataset::GetKeywordSub( const char *pszPath, 
-                                         int iSubscript,
-                                         const char *pszDefault )
+const char *PDSDataset::GetKeywordSub( std::string osPath,
+                                       int iSubscript,
+                                       const char *pszDefault )
 
 {
-    const char *pszResult = oKeywords.GetKeyword( pszPath, NULL );
+    const char *pszResult = oKeywords.GetKeyword( osPath.c_str(), NULL );
     
     if( pszResult == NULL )
         return pszDefault;
