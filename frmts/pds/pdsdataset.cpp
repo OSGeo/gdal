@@ -625,7 +625,6 @@ int PDSDataset::ParseUncompressedImage()
     int nSkipBytes = 0;
     int itype;
     int record_bytes;
-    int	bNoDataSet = FALSE;
     char chByteOrder = 'M';  //default to MSB
     double dfNoData = 0.0;
  
@@ -738,7 +737,6 @@ int PDSDataset::ParseUncompressedImage()
       case 8 :
         eDataType = GDT_Byte;
         dfNoData = NULL1;
-        bNoDataSet = TRUE;
         break;
       case 16 :
         if( strstr(osST,"UNSIGNED") != NULL )
@@ -746,17 +744,14 @@ int PDSDataset::ParseUncompressedImage()
         else
             eDataType = GDT_Int16;
         dfNoData = NULL2;
-        bNoDataSet = TRUE;
         break;
       case 32 :
         eDataType = GDT_Float32;
         dfNoData = NULL3;
-        bNoDataSet = TRUE;
         break;
       case 64 :
         eDataType = GDT_Float64;
         dfNoData = NULL3;
-        bNoDataSet = TRUE;
         break;
       default :
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -764,6 +759,16 @@ int PDSDataset::ParseUncompressedImage()
                   itype); 
         return FALSE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Is there a specific nodata value in the file? Either the        */
+/*      MISSING or MISSING_CONSTANT keywords are nodata.                */
+/* -------------------------------------------------------------------- */
+    if( GetKeyword( "IMAGE.MISSING", NULL ) != NULL )
+        dfNoData = CPLAtofM( GetKeyword( "IMAGE.MISSING", "" ) );
+
+    if( GetKeyword( "IMAGE.MISSING_CONSTANT", NULL ) != NULL )
+        dfNoData = CPLAtofM( GetKeyword( "IMAGE.MISSING_CONSTANT", "" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
@@ -879,8 +884,7 @@ int PDSDataset::ParseUncompressedImage()
             }
         }
         
-        if( bNoDataSet )
-            poBand->SetNoDataValue( dfNoData );
+        poBand->SetNoDataValue( dfNoData );
 
         SetBand( i+1, poBand );
 
