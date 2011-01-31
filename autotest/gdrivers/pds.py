@@ -149,13 +149,26 @@ def pds_6():
 
     return 'success'
 
+###############################################################################
+# Read an uncompressed image via the PDS label. (#3943)
+
+def pds_7():
+
+    tst = gdaltest.GDALTest( 'PDS', 'LDEM_4.LBL', 1, 50938,
+                             0, 0, 1440, 2 )
+    if tst.testOpen( ) != 'success':
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     pds_1,
     pds_2,
     pds_3,
     pds_4,
     pds_5,
-    pds_6 ]
+    pds_6,
+    pds_7 ]
 
 if __name__ == '__main__':
 
