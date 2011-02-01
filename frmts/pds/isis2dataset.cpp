@@ -43,6 +43,8 @@
 #  define PI 3.1415926535897932384626433832795
 #endif
 
+#define RECORD_SIZE 512
+
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h" 
@@ -95,6 +97,20 @@ public:
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
+
+
+    // Write related.
+
+    static int WriteRaster(CPLString osFilename, bool includeLabel, GUIntBig iRecord, GUIntBig iLabelRecords, GDALDataType eType, const char * pszInterleaving);
+
+    static int WriteLabel(CPLString osFilename, CPLString osRasterFile, CPLString sObjectTag, unsigned int nXSize, unsigned int nYSize, unsigned int nBands, GDALDataType eType,
+    						GUIntBig iRecords, const char * pszInterleaving, GUIntBig & iLabelRecords, bool bRelaunch=false);
+    static int WriteQUBE_Information(VSILFILE *fpLabel, unsigned int iLevel, unsigned int & nWritingBytes,
+                                     unsigned int nXSize, unsigned int nYSize, unsigned int nBands, GDALDataType eType, const char * pszInterleaving);
+
+    static unsigned int WriteKeyword(VSILFILE *fpLabel, unsigned int iLevel, CPLString key, CPLString value);
+    static unsigned int WriteFormatting(VSILFILE *fpLabel, CPLString data);
+    static GUIntBig RecordSizeCalculation(unsigned int nXSize, unsigned int nYSize, unsigned int nBands, GDALDataType eType );
 };
 
 /************************************************************************/
@@ -751,27 +767,363 @@ void ISIS2Dataset::CleanString( CPLString &osInput )
 }
 
 /************************************************************************/
+/*                           Create()                                   */
+/************************************************************************/
+/**
+ * Creation Options:
+ * INTERLEAVE=BSQ/BIP/BIL: Force the generation specified type of interleaving.
+ *  BSQ --- band sequental (default),
+ *  BIP --- band interleaved by pixel,
+ *  BIL --- band interleaved by line.
+ * LABELING_METHOD=attached/detached
+ * LABEL_EXTENSION=???, if null default is "pds"
+ * OBJECT=QUBE/IMAGE/SPECTRAL_QUBE, if null default is QUBE
+ */
+
+GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
+                                  int nXSize, int nYSize, int nBands,
+                                  GDALDataType eType, char** papszParmList) {
+
+    /* Verify settings. In Isis 2 core pixel values can be represented in
+     * three different ways : 1, 2 or 4 Bytes */
+    if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_Float32){
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The ISIS2 driver does not supporting creating files of types %s.",
+                 GDALGetDataTypeName( eType ) );
+        return NULL;
+    }
+
+    /*  (SAMPLE, LINE, BAND) - Band Sequential (BSQ) - default choice
+        (SAMPLE, BAND, LINE) - Band Interleaved by Line (BIL)
+        (BAND, SAMPLE, LINE) - Band Interleaved by Pixel (BIP) */
+    const char *pszInterleaving = "(SAMPLE,LINE,BAND)";
+    const char *pszInterleavingParam = CSLFetchNameValue( papszParmList, "INTERLEAVE" );
+    if ( pszInterleavingParam ) {
+        if ( EQUALN( pszInterleavingParam, "bip", 3 ) )
+            pszInterleaving = "(BAND, SAMPLE, LINE)";
+        else if ( EQUALN( pszInterleavingParam, "bil", 3 ) )
+            pszInterleaving = "(SAMPLE, BAND, LINE)";
+        else
+            pszInterleaving = "(SAMPLE,LINE,BAND)";
+    }
+
+    /* default labeling method is attached */
+    bool bAttachedLabelingMethod = true;
+    /* check if labeling method is set : check the all three first chars */
+    const char *pszLabelingMethod = CSLFetchNameValue( papszParmList, "LABELING_METHOD" );
+    if ( pszLabelingMethod ){
+        if ( EQUALN( pszLabelingMethod, "detached", 3 ) ){
+            bAttachedLabelingMethod = false;
+        }
+        if ( EQUALN( pszLabelingMethod, "attached", 3 ) ){
+            bAttachedLabelingMethod = true;
+        }
+    }
+
+    /*  set the label and data files */
+    CPLString osLabelFile, osRasterFile, osOutFile;
+    if( bAttachedLabelingMethod ) {
+        osLabelFile = "";
+        osRasterFile = pszFilename;
+        osOutFile = osRasterFile;
+    }
+    else
+    {
+        /* default extension is pds */
+        CPLString sExtension = "pds";
+        const char* pszExtension = CSLFetchNameValue( papszParmList, "LABEL_EXTENSION" );
+        if( pszExtension ){
+            sExtension = pszExtension;
+        }
+
+        if( EQUAL(CPLGetExtension( pszFilename ), sExtension) )
+        {
+            osLabelFile = pszFilename;
+            osRasterFile = osLabelFile.substr(0,osLabelFile.length()-4);
+        }else{
+            osRasterFile = pszFilename;
+            osLabelFile = osRasterFile + "." + sExtension;
+        }
+        osOutFile = osLabelFile;
+    }
+
+    CPLDebug("ISIS2", "outfile = %s, labelfile = %s, rasterfile = %s", osOutFile.c_str(), osLabelFile.c_str(), osRasterFile.c_str());
+    const char *pszObject = CSLFetchNameValue( papszParmList, "OBJECT" );
+    CPLString sObject = "QUBE"; // default choice
+    if (pszObject) {
+        if ( EQUAL( pszObject, "IMAGE") ){
+            sObject = "IMAGE";
+        }
+        if ( EQUAL( pszObject, "SPECTRAL_QUBE")){
+            sObject = "SPECTRAL_QUBE";
+        }
+    }
+
+    GUIntBig iRecords = ISIS2Dataset::RecordSizeCalculation(nXSize, nYSize, nBands, eType);
+    GUIntBig iLabelRecords(2);
+
+    CPLDebug("ISIS2","irecord = %i",static_cast<int>(iRecords));
+
+    if( bAttachedLabelingMethod ) 
+    {
+        ISIS2Dataset::WriteLabel(osRasterFile, "", sObject, nXSize, nYSize, nBands, eType, iRecords, pszInterleaving, iLabelRecords, true);
+    }
+    else
+    {
+        ISIS2Dataset::WriteLabel(osLabelFile, osRasterFile, sObject, nXSize, nYSize, nBands, eType, iRecords, pszInterleaving, iLabelRecords);
+    }
+
+    if( !ISIS2Dataset::WriteRaster(osRasterFile, bAttachedLabelingMethod, 
+                                   iRecords, iLabelRecords, eType, 
+                                   pszInterleaving) )
+        return NULL;
+
+    return (GDALDataset *) GDALOpen( osOutFile, GA_Update );
+}
+
+
+/************************************************************************/
+/*                            WriteRaster()                             */
+/************************************************************************/
+
+int ISIS2Dataset::WriteRaster(CPLString osFilename, bool includeLabel, GUIntBig iRecords, GUIntBig iLabelRecords, GDALDataType eType, const char * pszInterleaving) {
+    GUIntBig nSize;
+    GByte byZero(0);
+    CPLString pszAccess("wb");
+    if(includeLabel)
+        pszAccess = "ab";
+
+    VSILFILE *fpBin = VSIFOpenL( osFilename, pszAccess.c_str() );
+    if( fpBin == NULL ) {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to create %s:\n%s",
+                  osFilename.c_str(), VSIStrerror( errno ) );
+        return FALSE;
+    }
+
+    nSize = iRecords * RECORD_SIZE;
+    CPLDebug("ISIS2","nSize = %i", static_cast<int>(nSize));
+
+    if(includeLabel)
+        nSize = iLabelRecords * RECORD_SIZE + nSize;
+
+    // write last byte
+    if(VSIFSeekL( fpBin, nSize-1, SEEK_SET ) != 0 ||
+       VSIFWriteL( &byZero, 1, 1, fpBin ) != 1){
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to write %s:\n%s",
+                  osFilename.c_str(), VSIStrerror( errno ) );
+        return FALSE;
+    }
+    VSIFCloseL( fpBin );
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                       RecordSizeCalculation()                        */
+/************************************************************************/
+GUIntBig ISIS2Dataset::RecordSizeCalculation(unsigned int nXSize, unsigned int nYSize, unsigned int nBands, GDALDataType eType )
+
+{
+    GUIntBig n = nXSize * nYSize * nBands * (  GDALGetDataTypeSize(eType) / 8);
+    // size of pds file is a multiple of RECORD_SIZE Bytes.
+    CPLDebug("ISIS2","n = %i", static_cast<int>(n));
+    CPLDebug("ISIS2","RECORD SIZE = %i", RECORD_SIZE);
+    CPLDebug("ISIS2","nXSize = %i", nXSize);
+    CPLDebug("ISIS2","nYSize = %i", nYSize);
+    CPLDebug("ISIS2","nBands = %i", nBands);
+    CPLDebug("ISIS2","DataTypeSize = %i", GDALGetDataTypeSize(eType));
+    return (GUIntBig) ceil(static_cast<float>(n)/RECORD_SIZE);
+}
+
+/************************************************************************/
+/*                       WriteQUBE_Information()                        */
+/************************************************************************/
+
+int ISIS2Dataset::WriteQUBE_Information(
+    VSILFILE *fpLabel, unsigned int iLevel, unsigned int & nWritingBytes,
+    unsigned int nXSize,  unsigned int nYSize, unsigned int nBands, 
+    GDALDataType eType, const char * pszInterleaving)
+
+{
+    nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "");
+    nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "/* Qube structure */");
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "OBJECT", "QUBE");
+    iLevel++;
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "AXES", "3");
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "AXIS_NAME", pszInterleaving);
+    nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "/* Core description */");
+
+    CPLDebug("ISIS2","%d,%d,%d",nXSize,nYSize,nBands);
+
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEMS",CPLString().Printf("(%d,%d,%d)",nXSize,nYSize,nBands));
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_NAME", "\"RAW DATA NUMBER\"");
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_UNIT", "\"N/A\"");
+    // TODO change for eType
+
+    if( eType == GDT_Byte ) 
+    {
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_TYPE", "PC_UNSIGNED_INTEGER");
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_BYTES", "1");
+    }
+    else if( eType == GDT_UInt16 ) 
+    {
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_TYPE", "PC_UNSIGNED_INTEGER");
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_BYTES", "2");
+    }
+    else if( eType == GDT_Int16 ) 
+    {
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_TYPE", "PC_INTEGER");
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_BYTES", "2");
+    }
+    else if( eType == GDT_Float32 )
+    {
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_TYPE", "PC_REAL");
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_BYTES", "4");
+    }
+    else if( eType == GDT_Float64 )
+    {
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_TYPE", "PC_REAL");
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_BYTES", "8");
+    }
+
+    // TODO add core null value
+
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_BASE", "0.0");
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_MULTIPLIER", "1.0");
+    nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "/* Suffix description */");
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "SUFFIX_BYTES", "4");
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "SUFFIX_ITEMS", "( 0, 0, 0)");
+    iLevel--;
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "END_OBJECT", "QUBE");
+    
+    return TRUE;
+}
+
+/************************************************************************/
+/*                             WriteLabel()                             */
+/*                                                                      */
+/*      osRasterFile : name of raster file but if it is empty we        */
+/*                     have only one file with an attached label        */
+/*      sObjectTag : QUBE, IMAGE or SPECTRAL_QUBE                       */
+/*      bRelaunch : flag to allow recursiv call                         */
+/************************************************************************/
+
+int ISIS2Dataset::WriteLabel(
+    CPLString osFilename, CPLString osRasterFile, CPLString sObjectTag,
+    unsigned int nXSize, unsigned int nYSize, unsigned int nBands, 
+    GDALDataType eType,
+    GUIntBig iRecords, const char * pszInterleaving, 
+    GUIntBig &iLabelRecords, bool bRelaunch)
+
+{
+    CPLDebug("ISIS2", "Write Label filename = %s, rasterfile = %s",osFilename.c_str(),osRasterFile.c_str());
+    bool bAttachedLabel = EQUAL(osRasterFile, "");
+
+    VSILFILE *fpLabel = VSIFOpenL( osFilename, "w" );
+
+    if( fpLabel == NULL ){
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to create %s:\n%s",
+                  osFilename.c_str(), VSIStrerror( errno ) );
+        return FALSE;
+    }
+
+    unsigned int iLevel(0);
+    unsigned int nWritingBytes(0);
+
+    /* write common header */
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "PDS_VERSION_ID", "PDS3" );
+    nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "");
+    nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "/* File identification and structure */");
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "RECORD_TYPE", "FIXED_LENGTH" );
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "RECORD_BYTES", CPLString().Printf("%d",RECORD_SIZE));
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "FILE_RECORDS", CPLString().Printf("%lu",(long unsigned int)(iRecords)));
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "LABEL_RECORDS", CPLString().Printf("%llu", iLabelRecords));
+    if(!bAttachedLabel){
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "FILE_NAME", CPLGetFilename(osRasterFile));
+    }
+    nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "");
+
+    nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "/* Pointers to Data Objects */");
+
+    if(bAttachedLabel){
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, CPLString().Printf("^%s",sObjectTag.c_str()), CPLString().Printf("%llu",iLabelRecords+1));
+    }else{
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, CPLString().Printf("^%s",sObjectTag.c_str()), CPLString().Printf("(\"%s\",1)",CPLGetFilename(osRasterFile)));
+    }
+
+    if(EQUAL(sObjectTag, "QUBE")){
+        ISIS2Dataset::WriteQUBE_Information(fpLabel, iLevel, nWritingBytes, nXSize, nYSize, nBands, eType, pszInterleaving);
+    }
+
+    nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "END");
+
+    // check if file record is correct
+    unsigned int q = nWritingBytes/RECORD_SIZE;
+    if( q <= iLabelRecords){
+        // correct we add space after the label end for complete from iLabelRecords
+        unsigned int nSpaceBytesToWrite = iLabelRecords * RECORD_SIZE - nWritingBytes;
+        VSIFPrintfL(fpLabel,"%*c", nSpaceBytesToWrite, ' ');
+    }else{
+        iLabelRecords = q+1;
+        ISIS2Dataset::WriteLabel(osFilename, osRasterFile, sObjectTag, nXSize, nYSize, nBands, eType, iRecords, pszInterleaving, iLabelRecords);
+    }
+    VSIFCloseL( fpLabel );
+  
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            WriteKeyword()                            */
+/************************************************************************/
+
+    unsigned int ISIS2Dataset::WriteKeyword(
+        VSILFILE *fpLabel, unsigned int iLevel, CPLString key, CPLString value)
+
+    {
+        CPLString tab = "";
+        iLevel *= 4; // each struct is idented by 4 spaces
+        int ret = VSIFPrintfL(fpLabel,"%*s%s=%s\n", iLevel, tab.c_str(), key.c_str(), value.c_str());
+        return ret;
+    }
+
+/************************************************************************/
+/*                          WriteFormatting()                           */
+/************************************************************************/
+
+    unsigned int ISIS2Dataset::WriteFormatting(VSILFILE *fpLabel, CPLString data)
+
+    {
+        int ret = VSIFPrintfL(fpLabel,"%s\n", data.c_str());
+        return ret;
+    }
+
+/************************************************************************/
 /*                         GDALRegister_ISIS2()                         */
 /************************************************************************/
 
-void GDALRegister_ISIS2()
+    void GDALRegister_ISIS2()
 
-{
-    GDALDriver	*poDriver;
-
-    if( GDALGetDriverByName( "ISIS2" ) == NULL )
     {
-        poDriver = new GDALDriver();
+        GDALDriver	*poDriver;
+
+        if( GDALGetDriverByName( "ISIS2" ) == NULL )
+        {
+            poDriver = new GDALDriver();
         
-        poDriver->SetDescription( "ISIS2" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "USGS Astrogeology ISIS cube (Version 2)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#ISIS2" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+            poDriver->SetDescription( "ISIS2" );
+            poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                       "USGS Astrogeology ISIS cube (Version 2)" );
+            poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                       "frmt_various.html#ISIS2" );
+            poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+            poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 Int32 Float32 Float64");
 
-        poDriver->pfnOpen = ISIS2Dataset::Open;
+            poDriver->pfnOpen = ISIS2Dataset::Open;
+            poDriver->pfnCreate = ISIS2Dataset::Create;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
+            GetGDALDriverManager()->RegisterDriver( poDriver );
+        }
     }
-}
