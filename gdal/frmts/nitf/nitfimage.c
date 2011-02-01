@@ -3235,7 +3235,11 @@ static void NITFLoadLocationTable( NITFImage *psImage )
         VSIFReadL( achHeaderChunk, 1, sizeof(achHeaderChunk), 
                    psImage->psFile->fp );
 
-        if( !EQUALN(achHeaderChunk,"RPFHDR",6) )
+        /* You can define NITF_DISABLE_RPF_LOCATION_TABLE_SANITY_TESTS to TRUE */
+        /* to blindly trust the RPF location table even if it doesn't look */
+        /* sane. Necessary for dataset attached to http://trac.osgeo.org/gdal/ticket/3930 */
+        if( !EQUALN(achHeaderChunk,"RPFHDR",6) &&
+            !CSLTestBoolean(CPLGetConfigOption("NITF_DISABLE_RPF_LOCATION_TABLE_SANITY_TESTS", "FALSE")) )
         {
             /* Image of http://trac.osgeo.org/gdal/ticket/3848 has incorrect */
             /* RPFHDR offset, but all other locations are correct... */
