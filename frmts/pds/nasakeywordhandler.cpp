@@ -371,6 +371,15 @@ void NASAKeywordHandler::SkipWhite()
             }
 
             pszHeaderNext += 2;
+
+            // consume till end of line.
+            // reduce sensibility to a label error
+            while( *pszHeaderNext != '\0'
+            		&& *pszHeaderNext != 10
+            		&& *pszHeaderNext != 13 )
+            {
+            	pszHeaderNext++;
+            }
             continue;
         }
 
@@ -418,5 +427,14 @@ const char *NASAKeywordHandler::GetKeyword( const char *pszPath,
         return pszDefault;
     else
         return pszResult;
+}
+
+/************************************************************************/
+/*                             GetKeywordList()                         */
+/************************************************************************/
+ 
+char **NASAKeywordHandler::GetKeywordList()
+{
+    return papszKeywordList;
 }
 
