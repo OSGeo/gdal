@@ -287,24 +287,49 @@ void PDSDataset::ParseSRS()
         }            
     }
     
-    // Calculate upper left corner of pixel in meters from the upper left center pixel which
-    // should be correct for what is documented in the PDS manual
-    // It doesn't mean it will work perfectly for every PDS image, as they tend to be released in different ways.
-    // both dfULYMap, dfULXMap were update October 11, 2007 to correct 0.5 cellsize offset
+/* -------------------------------------------------------------------- */
+/*      Calculate upper left corner of pixel in meters from the         */
+/*      upper  left center pixel sample/line offsets.  It doesn't       */
+/*      mean the defaults will work for every PDS image, as these       */
+/*      values are used inconsistantly.  Thus we have included          */
+/*      conversion options to allow the user to override the            */
+/*      documented PDS3 default. Jan. 2011, for known mapping issues    */
+/*      see GDAL PDS page or mapping within ISIS3 source (USGS)         */
+/*      $ISIS3DATA/base/translations/pdsProjectionLineSampToXY.def      */
+/* -------------------------------------------------------------------- */
+   
+    // defaults should be correct for what is documented in the PDS3 standard
+    double   dfSampleOffset_Shift;
+    double   dfLineOffset_Shift;
+    double   dfSampleOffset_Mult;
+    double   dfLineOffset_Mult;
+
+    dfSampleOffset_Shift = 
+        atof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "-0.5" ));
+    
+    dfLineOffset_Shift = 
+        atof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "-0.5" ));
+
+    dfSampleOffset_Mult =
+        atof(CPLGetConfigOption( "PDS_SampleProjOffset_Mult", "-1.0") );
+
+    dfLineOffset_Mult = 
+        atof( CPLGetConfigOption( "PDS_LineProjOffset_Mult", "1.0") );
+
     /***********   Grab LINE_PROJECTION_OFFSET ************/
     value = GetKeyword("IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
         yulcenter = (float) atof(value);
-        dfULYMap = ((yulcenter - 0.5) * dfYDim * -1); 
-        //notice dfYDim is negative here which is why it is negated again
+        dfULYMap = ((yulcenter + dfLineOffset_Shift) * -dfYDim * dfLineOffset_Mult);
+        //notice dfYDim is negative here which is why it is again negated here
     }
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
     value = GetKeyword("IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
         xulcenter = (float) atof(value);
-        dfULXMap = ((xulcenter - 0.5) * dfXDim * -1);
+        dfULXMap = ((xulcenter + dfSampleOffset_Shift) * dfXDim * dfSampleOffset_Mult);
     }
-     
+
 /* ==================================================================== */
 /*      Get the coordinate system.                                      */
 /* ==================================================================== */
@@ -1197,7 +1222,7 @@ void GDALRegister_PDS()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "NASA Planetary Data System" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#PDS" );
+                                   "frmt_pds.html" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = PDSDataset::Open;
