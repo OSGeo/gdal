@@ -1026,6 +1026,7 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
     CPLString osExpectedString;
     CPLString osExpectedString2;
     CPLString osExpectedString3;
+    CPLString osExpectedString_unescaped;
     
     *pbGotFileList = FALSE;
 
@@ -1048,13 +1049,34 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
     osExpectedString3 = "FTP Listing of ";
     osExpectedString3 += pszDir;
     osExpectedString3 += "/";
+
+    /* The listing of http://dds.cr.usgs.gov/srtm/SRTM_image_sample/picture%20examples/ */
+    /* has "<title>Index of /srtm/SRTM_image_sample/picture examples</title>" so we must */
+    /* try unescaped %20 also */
+    if (strstr(pszDir, "%20"))
+    {
+        char* pszUnescapedDir = CPLStrdup(pszDir);
+        char* c;
+        while ((c = strstr(pszUnescapedDir, "%20")) != NULL)
+        {
+            *c = ' ';
+            memmove(c + 1, c + 3, strlen(c + 3) + 1);
+        }
+        osExpectedString_unescaped = "<title>Index of ";
+        osExpectedString_unescaped += pszUnescapedDir;
+        osExpectedString_unescaped += "</title>";
+
+        CPLFree(pszUnescapedDir);
+    }
+    
     while( (c = strstr(iter, "<br>")) != NULL ||
            (c = strchr(iter, '\n')) != NULL )
     {
         *c = 0;
         if (strstr(iter, osExpectedString.c_str()) ||
             strstr(iter, osExpectedString2.c_str()) ||
-            strstr(iter, osExpectedString3.c_str()))
+            strstr(iter, osExpectedString3.c_str()) ||
+            (osExpectedString_unescaped.size() != 0 && strstr(iter, osExpectedString_unescaped.c_str())))
         {
             bIsHTMLDirList = TRUE;
             *pbGotFileList = TRUE;
