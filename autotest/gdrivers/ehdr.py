@@ -183,7 +183,7 @@ def ehdr_9():
         return 'fail'
 
     wkt = ds.GetProjectionRef()
-    if wkt.find("""GEOGCS["WGS 84""") != 0:
+    if wkt.find('GEOGCS["WGS 84') != 0:
         gdaltest.post_reason( 'wrong projection' )
         print(wkt)
         return 'fail'
@@ -191,6 +191,20 @@ def ehdr_9():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test detecting floating point file based on image file size (#3933)
+
+def ehdr_10():
+    tst = gdaltest.GDALTest( 'EHDR', 'ehdr10.bil', 1, 8202 )
+    return tst.testOpen()
+
+###############################################################################
+# Test detecting floating point file based on .flt extension (#3933)
+
+def ehdr_11():
+    tst = gdaltest.GDALTest( 'EHDR', 'ehdr11.flt', 1, 8202 )
+    return tst.testOpen()
 
 gdaltest_list = [
     ehdr_1,
@@ -201,8 +215,9 @@ gdaltest_list = [
     ehdr_6,
     ehdr_7,
     ehdr_8,
-    ehdr_9
-    ]
+    ehdr_9,
+    ehdr_10,
+    ehdr_11 ]
 
 if __name__ == '__main__':
 
