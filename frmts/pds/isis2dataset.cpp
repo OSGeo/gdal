@@ -221,6 +221,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "ISIS2 driver does not support detached images." );
+        delete poDS;
         return NULL;
     }
 
@@ -274,6 +275,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                   "*** ISIS 2 cube file has invalid SUFFIX_ITEMS parameters:\n"
                   "*** gdal isis2 driver requires (0, 0, 0), thus no sideplanes or backplanes\n"
                   "found: (%i, %i, %i)\n\n", s_ix, s_iy, s_iz );
+        delete poDS;
         return NULL;
     } 
 
@@ -296,6 +298,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     else {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "%s layout not supported. Abort\n\n", value);
+        delete poDS;
         return NULL;
     }
 
@@ -539,6 +542,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( nRows < 1 || nCols < 1 || nBands < 1 )
     {
+        delete poDS;
         return NULL;
     }
 
@@ -913,6 +917,7 @@ int ISIS2Dataset::WriteRaster(CPLString osFilename, bool includeLabel, GUIntBig 
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to write %s:\n%s",
                   osFilename.c_str(), VSIStrerror( errno ) );
+        VSIFCloseL( fpBin );
         return FALSE;
     }
     VSIFCloseL( fpBin );
