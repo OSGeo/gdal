@@ -80,7 +80,7 @@ def usgsdem_4():
 
     tst = gdaltest.GDALTest( 'USGSDEM', '39079G6_truncated.dem', 1, 61424, \
         options = [ 'RESAMPLE=Nearest' ] )
-    return tst.testCreateCopy ( check_gt = 1, check_srs = 1 )
+    return tst.testCreateCopy ( check_gt = 1, check_srs = 1, vsimem = 1 )
 
 
 ###############################################################################
