@@ -2464,6 +2464,7 @@ def ogr_pg_50():
 
     for option in [ 'NO', 'YES' ]:
         gdal.SetConfigOption( 'PG_USE_COPY', option )
+        gdaltest.pg_lyr.ResetReading()
         for value in [ 'NaN', 'Inf', '-Inf' ]:
             dst_feat.SetField( 'AREA', float(value) )
             dst_feat.SetField( 'PRFEDEA', value )
