@@ -453,7 +453,14 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                     strcat( pszNeedToFree+nOff, "," );
 
                 nOff += strlen(pszNeedToFree+nOff);
-                sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+                //Check for special values. They need to be quoted.
+                if( CPLIsNan(padfItems[j]) )
+                    sprintf( pszNeedToFree+nOff, "NaN" );
+                else if( CPLIsInf(padfItems[j]) )
+                    sprintf( pszNeedToFree+nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
+                else
+                    sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+
             }
             strcat( pszNeedToFree+nOff, "}" );
             pszStrValue = pszNeedToFree;
@@ -477,6 +484,19 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             char* pszBytea = GByteArrayToBYTEA( pabyData, nLen);
 
             pszStrValue = pszNeedToFree = pszBytea;
+        }
+
+        else if( nOGRFieldType == OFTReal )
+        {
+            char* pszComma = strchr((char*)pszStrValue, ',');
+            if (pszComma)
+                *pszComma = '.';
+            //Check for special values. They need to be quoted.
+            double dfVal = poFeature->GetFieldAsDouble(i);
+            if( CPLIsNan(dfVal) )
+                pszStrValue = "NaN";
+            else if( CPLIsInf(dfVal) )
+                pszStrValue = (dfVal > 0) ? "Infinity" : "-Infinity";
         }
 
         if( nOGRFieldType != OFTIntegerList &&
@@ -808,7 +828,14 @@ void OGRPGDumpLayer::AppendFieldValue(CPLString& osCommand,
                 strcat( pszNeedToFree+nOff, "," );
 
             nOff += strlen(pszNeedToFree+nOff);
-            sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+            //Check for special values. They need to be quoted.
+            if( CPLIsNan(padfItems[j]) )
+                sprintf( pszNeedToFree+nOff, "NaN" );
+            else if( CPLIsInf(padfItems[j]) )
+                sprintf( pszNeedToFree+nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
+            else
+                sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+
         }
         strcat( pszNeedToFree+nOff, "}'" );
 
@@ -859,6 +886,18 @@ void OGRPGDumpLayer::AppendFieldValue(CPLString& osCommand,
             pszStrValue = "NULL";
             bIsDateNull = TRUE;
         }
+    }
+    else if ( nOGRFieldType == OFTReal )
+    {
+        char* pszComma = strchr((char*)pszStrValue, ',');
+        if (pszComma)
+            *pszComma = '.';
+        //Check for special values. They need to be quoted.
+        double dfVal = poFeature->GetFieldAsDouble(i);
+        if( CPLIsNan(dfVal) )
+            pszStrValue = "'NaN'";
+        else if( CPLIsInf(dfVal) )
+            pszStrValue = (dfVal > 0) ? "'Infinity'" : "'-Infinity'";
     }
 
     if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTReal
