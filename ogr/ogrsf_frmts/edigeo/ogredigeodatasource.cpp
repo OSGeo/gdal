@@ -174,21 +174,44 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
     return TRUE;
 }
 
+
+/************************************************************************/
+/*                             OpenFile()                               */
+/************************************************************************/
+
+VSILFILE* OGREDIGEODataSource::OpenFile(const char *pszType,
+                                        const CPLString& osExt)
+{
+    CPLString osTmp = osLON + pszType;
+    CPLString osFilename = CPLFormCIFilename(CPLGetPath(pszName),
+                                             osTmp.c_str(), osExt.c_str());
+    VSILFILE* fp = VSIFOpenL(osFilename, "rb");
+    if (fp == NULL)
+    {
+        CPLString osExtLower = osExt;
+        for(int i=0;i<(int)osExt.size();i++)
+            osExtLower[i] = (char)tolower(osExt[i]);
+        CPLString osFilename2 = CPLFormCIFilename(CPLGetPath(pszName),
+                                             osTmp.c_str(), osExtLower.c_str());
+        VSILFILE* fp = VSIFOpenL(osFilename2, "rb");
+        if (fp == NULL)
+        {
+            CPLDebug("EDIGEO", "Cannot open %s", osFilename.c_str());
+            return NULL;
+        }
+    }
+    return fp;
+}
+
 /************************************************************************/
 /*                              ReadGEO()                               */
 /************************************************************************/
 
 int OGREDIGEODataSource::ReadGEO()
 {
-    CPLString osTmp = osLON + osGON;
-    CPLString osFilename = CPLFormCIFilename(CPLGetPath(pszName),
-                                             osTmp.c_str(), "GEO");
-    VSILFILE* fp = VSIFOpenL(osFilename, "rb");
+    VSILFILE* fp = OpenFile(osGON, "GEO");
     if (fp == NULL)
-    {
-        CPLDebug("EDIGEO", "Cannot open %s", osFilename.c_str());
         return FALSE;
-    }
 
     const char* pszLine;
     while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
@@ -245,15 +268,9 @@ int OGREDIGEODataSource::ReadGEO()
 
 int OGREDIGEODataSource::ReadGEN()
 {
-    CPLString osTmp = osLON + osGNN;
-    CPLString osFilename = CPLFormCIFilename(CPLGetPath(pszName),
-                                             osTmp.c_str(), "GEN");
-    VSILFILE* fp = VSIFOpenL(osFilename, "rb");
+    VSILFILE* fp = OpenFile(osGNN, "GEN");
     if (fp == NULL)
-    {
-        CPLDebug("EDIGEO", "Cannot open %s", osFilename.c_str());
         return FALSE;
-    }
 
     const char* pszLine;
     CPLString osCM1, osCM2;
@@ -299,15 +316,9 @@ int OGREDIGEODataSource::ReadGEN()
 
 int OGREDIGEODataSource::ReadDIC()
 {
-    CPLString osTmp = osLON + osDIN;
-    CPLString osFilename = CPLFormCIFilename(CPLGetPath(pszName),
-                                             osTmp.c_str(), "DIC");
-    VSILFILE* fp = VSIFOpenL(osFilename, "rb");
+    VSILFILE* fp = OpenFile(osDIN, "DIC");
     if (fp == NULL)
-    {
-        CPLDebug("EDIGEO", "Cannot open %s", osFilename.c_str());
         return FALSE;
-    }
 
     const char* pszLine;
     CPLString osRTY, osRID, osLAB, osTYP;
@@ -364,15 +375,9 @@ int OGREDIGEODataSource::ReadDIC()
 
 int OGREDIGEODataSource::ReadSCD()
 {
-    CPLString osTmp = osLON + osDIN;
-    CPLString osFilename = CPLFormCIFilename(CPLGetPath(pszName),
-                                             osTmp.c_str(), "SCD");
-    VSILFILE* fp = VSIFOpenL(osFilename, "rb");
+    VSILFILE* fp = OpenFile(osSCN, "SCD");
     if (fp == NULL)
-    {
-        CPLDebug("EDIGEO", "Cannot open %s", osFilename.c_str());
         return FALSE;
-    }
 
     const char* pszLine;
     CPLString osRTY, osRID, osNameRID, osKND;
@@ -532,15 +537,9 @@ int OGREDIGEODataSource::CreateLayer(const OGREDIGEOObjectDescriptor& objDesc)
 
 int OGREDIGEODataSource::ReadVEC(const char* pszVECName)
 {
-    CPLString osTmp = osLON + pszVECName;
-    CPLString osFilename = CPLFormCIFilename(CPLGetPath(pszName),
-                                             osTmp.c_str(), "VEC");
-    VSILFILE* fp = VSIFOpenL(osFilename, "rb");
+    VSILFILE* fp = OpenFile(pszVECName, "VEC");
     if (fp == NULL)
-    {
-        CPLDebug("EDIGEO", "Cannot open %s", osFilename.c_str());
         return FALSE;
-    }
 
     const char* pszLine;
     CPLString osRTY, osRID;
