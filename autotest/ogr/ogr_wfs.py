@@ -653,6 +653,9 @@ def ogr_wfs_ionic_wfst():
 
     ds = ogr.Open('WFS:http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA', update = 1)
     if ds is None:
+        if gdal.GetLastErrorMsg().find('HTTP error code : 403') != -1:
+            gdaltest.ionic_wfs = False
+            return 'skip'
         return 'fail'
 
     lyr = ds.GetLayerByName('wfs:BUSINESS')
