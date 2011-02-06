@@ -51,6 +51,12 @@ typedef enum {
 class OGRVRTLayer : public OGRLayer
 {
   protected:
+    int                 bHasFullInitialized;
+    CPLString           osName;
+    OGRwkbGeometryType  eGeomType;
+    CPLXMLNode         *psLTree;
+    CPLString           osVRTDirectory;
+
     OGRFeatureDefn      *poFeatureDefn;
 
     OGRDataSource       *poSrcDS;
@@ -72,7 +78,7 @@ class OGRVRTLayer : public OGRLayer
     int                 iStyleField; // -1 means pass through.
 
     // Geometry interpretation related.
-    OGRVRTGeometryStyle eGeometryType;
+    OGRVRTGeometryStyle eGeometryStyle;
     
     int                 iGeomField; 
 
@@ -94,14 +100,24 @@ class OGRVRTLayer : public OGRLayer
 
     int                 ResetSourceReading();
 
+    int                 FullInitialize();
+
   public:
                         OGRVRTLayer();
     virtual             ~OGRVRTLayer();
 
-    virtual int         Initialize( CPLXMLNode *psLTree, 
+    int                FastInitialize( CPLXMLNode *psLTree,
                                     const char *pszVRTDirectory,
                                     int bUpdate);
 
+    virtual const char  *GetName() { return osName.c_str(); }
+    virtual OGRwkbGeometryType GetGeomType();
+
+/* -------------------------------------------------------------------- */
+/*      Caution : all the below methods should care of calling          */
+/*      FullInitialize() if not already done                            */
+/* -------------------------------------------------------------------- */
+    
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
 
@@ -109,7 +125,7 @@ class OGRVRTLayer : public OGRLayer
 
     virtual OGRErr      SetNextByIndex( long nIndex );
 
-    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *GetLayerDefn();
 
     virtual OGRSpatialReference *GetSpatialRef();
 
@@ -142,6 +158,8 @@ class OGRVRTDataSource : public OGRDataSource
     int                 nLayers;
     
     char               *pszName;
+
+    CPLXMLNode         *psTree;
 
   public:
                         OGRVRTDataSource();
