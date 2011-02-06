@@ -193,11 +193,10 @@ VSILFILE* OGREDIGEODataSource::OpenFile(const char *pszType,
             osExtLower[i] = (char)tolower(osExt[i]);
         CPLString osFilename2 = CPLFormCIFilename(CPLGetPath(pszName),
                                              osTmp.c_str(), osExtLower.c_str());
-        VSILFILE* fp = VSIFOpenL(osFilename2, "rb");
+        fp = VSIFOpenL(osFilename2, "rb");
         if (fp == NULL)
         {
             CPLDebug("EDIGEO", "Cannot open %s", osFilename.c_str());
-            return NULL;
         }
     }
     return fp;
