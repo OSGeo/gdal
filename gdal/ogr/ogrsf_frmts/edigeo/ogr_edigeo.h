@@ -146,6 +146,9 @@ class OGREDIGEODataSource : public OGRDataSource
     OGRLayer**          papoLayers;
     int                 nLayers;
 
+    VSILFILE*           OpenFile(const char *pszType,
+                                 const CPLString& osExt);
+
     CPLString osLON; /* Nom du lot */
     CPLString osGNN; /* Nom du sous-ensemble de données générales */
     CPLString osGON; /* Nom du sous-ensemble de la référence de coordonnées */
