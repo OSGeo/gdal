@@ -143,14 +143,12 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /*      Create a virtual datasource configured based on this XML input. */
 /* -------------------------------------------------------------------- */
     poDS = new OGRVRTDataSource();
+    /* psTree is owned by poDS */
     if( !poDS->Initialize( psTree, pszFilename, bUpdate ) )
     {
-        CPLDestroyXMLNode( psTree );
         delete poDS;
         return NULL;
     }
-
-    CPLDestroyXMLNode( psTree );
 
     return poDS;
 }

@@ -42,6 +42,7 @@ OGRVRTDataSource::OGRVRTDataSource()
     pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+    psTree = NULL;
 }
 
 /************************************************************************/
@@ -59,6 +60,9 @@ OGRVRTDataSource::~OGRVRTDataSource()
         delete papoLayers[i];
     
     CPLFree( papoLayers );
+
+    if( psTree != NULL)
+        CPLDestroyXMLNode( psTree );
 }
 
 /************************************************************************/
@@ -70,6 +74,8 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
 
 {
     CPLAssert( nLayers == 0 );
+
+    this->psTree = psTree;
 
 /* -------------------------------------------------------------------- */
 /*      Set name, and capture the directory path so we can use it       */
@@ -97,7 +103,7 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
         
         poLayer = new OGRVRTLayer();
         
-        if( !poLayer->Initialize( psLTree, pszVRTDirectory, bUpdate ) )
+        if( !poLayer->FastInitialize( psLTree, pszVRTDirectory, bUpdate ) )
         {
             CPLFree( pszVRTDirectory );
             delete poLayer;
