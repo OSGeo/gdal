@@ -1041,6 +1041,239 @@ def ogr_vrt_20():
     return 'success'
 
 ###############################################################################
+# Test lazy initialization with valid layer
+
+def ogr_vrt_21_internal():
+
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetName() != 'test3':
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetGeomType() != ogr.wkbPoint:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetSpatialRef().ExportToWkt().find('84') == -1:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    lyr.ResetReading()
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetNextFeature() is None:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetFeature(1) is None:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetFeatureCount() == 0:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.SetNextByIndex(1) != 0:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetLayerDefn().GetFieldCount() == 0:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.SetAttributeFilter('') != 0:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    lyr.SetSpatialFilter(None)
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetExtent() is None:
+        return 'fail'
+    ds = None
+
+    feature_defn = ogr.FeatureDefn()
+    feat = ogr.Feature(feature_defn)
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    lyr.CreateFeature(feat)
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    lyr.SetFeature(feat)
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    lyr.DeleteFeature(0)
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    lyr.SyncToDisk()
+    ds = None
+
+    return 'success'
+
+def ogr_vrt_21():
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    try:
+        ret = ogr_vrt_21_internal()
+    except:
+        ret = 'fail'
+    gdal.PopErrorHandler()
+    return ret
+
+###############################################################################
+# Test lazy initialization with invalid layer
+
+def ogr_vrt_22_internal():
+
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.GetName() != 'test5':
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.GetGeomType() != ogr.wkbPoint:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.GetSpatialRef().ExportToWkt().find('84') == -1:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.ResetReading()
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.GetNextFeature() is not None:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.GetFeature(1) is not None:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.GetFeatureCount() != 0:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.SetNextByIndex(1) == 0:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.GetLayerDefn().GetFieldCount() != 0:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.SetAttributeFilter('') == 0:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.SetSpatialFilter(None)
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) != 0:
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.GetExtent()
+    ds = None
+
+    feature_defn = ogr.FeatureDefn()
+    feat = ogr.Feature(feature_defn)
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.CreateFeature(feat)
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.SetFeature(feat)
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.DeleteFeature(0)
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.SyncToDisk()
+    ds = None
+
+    return 'success'
+
+def ogr_vrt_22():
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    try:
+        ret = ogr_vrt_22_internal()
+    except:
+        ret = 'fail'
+    gdal.PopErrorHandler()
+    return ret
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -1074,6 +1307,8 @@ gdaltest_list = [
     ogr_vrt_18,
     ogr_vrt_19,
     ogr_vrt_20,
+    ogr_vrt_21,
+    ogr_vrt_22,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':

@@ -24,4 +24,13 @@
 	<GeometryField encoding="WKT" field="wkt"/> 
     </OGRVRTLayer>
 
+    <OGRVRTLayer name="test5">
+        <dummySrcDataSource shared="TRUE">data/flat.dbf</dummySrcDataSource>
+        <SrcLayer>flat</SrcLayer>
+        <LayerSRS>WGS84</LayerSRS>
+        <FID>fid</FID>
+        <GeometryType>wkbPoint</GeometryType>
+        <GeometryField encoding="WKT" field="wkt"/>
+    </OGRVRTLayer>
+
 </OGRVRTDataSource>
