@@ -207,4 +207,7 @@ void OGRRegisterAll()
 #ifdef GEOMEDIA_ENABLED
     RegisterOGRGeomedia();
 #endif
+#ifdef EDIGEO_ENABLED
+    RegisterOGREDIGEO();
+#endif
 } /* OGRRegisterAll */
