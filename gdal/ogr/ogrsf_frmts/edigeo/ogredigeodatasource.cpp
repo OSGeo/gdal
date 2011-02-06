@@ -135,6 +135,8 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
             osGNN = pszLine + 8;
         else if (strncmp(pszLine, "GONSA", 5) == 0)
             osGON = pszLine + 8;
+        else if (strncmp(pszLine, "QANSA", 5) == 0)
+            osQAN = pszLine + 8;
         else if (strncmp(pszLine, "DINSA", 5) == 0)
             osDIN = pszLine + 8;
         else if (strncmp(pszLine, "SCNSA", 5) == 0)
@@ -166,6 +168,7 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
     CPLDebug("EDIGEO", "LON = %s", osLON.c_str());
     CPLDebug("EDIGEO", "GNN = %s", osGNN.c_str());
     CPLDebug("EDIGEO", "GON = %s", osGON.c_str());
+    CPLDebug("EDIGEO", "QAN = %s", osQAN.c_str());
     CPLDebug("EDIGEO", "DIN = %s", osDIN.c_str());
     CPLDebug("EDIGEO", "SCN = %s", osSCN.c_str());
     for(int i=0;i<(int)aosGDN.size();i++)
@@ -478,6 +481,54 @@ int OGREDIGEODataSource::ReadSCD()
 }
 
 /************************************************************************/
+/*                              ReadQAL()                               */
+/************************************************************************/
+
+int OGREDIGEODataSource::ReadQAL()
+{
+    VSILFILE* fp = OpenFile(osQAN, "QAL");
+    if (fp == NULL)
+        return FALSE;
+
+    const char* pszLine;
+    CPLString osRTY, osRID;
+    int nODA = 0, nUDA = 0;
+    while(TRUE)
+    {
+        pszLine = CPLReadLine2L(fp, 81, NULL);
+        if (pszLine != NULL)
+        {
+            if (strlen(pszLine) < 8 || pszLine[7] != ':')
+                continue;
+        }
+
+        if (pszLine == NULL || strncmp(pszLine, "RTYSA", 5) == 0)
+        {
+            if (osRTY == "QUP")
+            {
+                mapQAL[osRID] = intintType(nODA, nUDA);
+            }
+            if (pszLine == NULL)
+                break;
+            osRTY = pszLine + 8;
+            osRID = "";
+            nODA = 0;
+            nUDA = 0;
+        }
+        else if (strncmp(pszLine, "RIDSA", 5) == 0)
+            osRID = pszLine + 8;
+        else if (strncmp(pszLine, "ODASD", 5) == 0)
+            nODA = atoi(pszLine + 8);
+        else if (strncmp(pszLine, "UDASD", 5) == 0)
+            nUDA = atoi(pszLine + 8);
+    }
+
+    VSIFCloseL(fp);
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                           CreateLayer()                              */
 /************************************************************************/
 
@@ -513,11 +564,18 @@ int OGREDIGEODataSource::CreateLayer(const OGREDIGEOObjectDescriptor& objDesc)
             const OGREDIGEOAttributeDef& attrDef =
                                     mapAttributes[attrDesc.osNameRID];
             OGRFieldType eType = OFTString;
-            if (attrDef.osTYP == "R")
+            if (attrDef.osTYP == "R" || attrDef.osTYP == "E")
                 eType = OFTReal;
+            else if (attrDef.osTYP == "I" || attrDef.osTYP == "N")
+                eType = OFTInteger;
 
             poLayer->AddFieldDefn(attrDef.osLAB, eType, objDesc.aosAttrRID[j]);
         }
+    }
+    if (strcmp(poLayer->GetName(), "ID_S_OBJ_Z_1_2_2") != 0 && mapQAL.size() != 0)
+    {
+        poLayer->AddFieldDefn("CREAT_DATE", OFTInteger, "");
+        poLayer->AddFieldDefn("UPDATE_DATE", OFTInteger, "");
     }
 
     mapLayer[objDesc.osRID] = poLayer;
@@ -548,6 +606,7 @@ int OGREDIGEODataSource::ReadVEC(const char* pszVECName)
     CPLString osAttId;
     std::vector< strstrType > aosAttIdVal;
     CPLString osSCP;
+    CPLString osQUP_RID;
     int bIso8859_1 = FALSE;
 
     while(TRUE)
@@ -635,6 +694,7 @@ skip_read_next_line:
                 OGREDIGEOFEADesc feaDesc;
                 feaDesc.aosAttIdVal = aosAttIdVal;
                 feaDesc.osSCP = osSCP;
+                feaDesc.osQUP_RID = osQUP_RID;
                 mapFEA[osRID] = feaDesc;
             }
             else if (osRTY == "PNO")
@@ -659,6 +719,7 @@ skip_read_next_line:
             aosAttIdVal.resize(0);
             osLnkEndNameList.resize(0);
             osSCP = "";
+            osQUP_RID = "";
             bIso8859_1 = FALSE;
         }
         else if (strncmp(pszLine, "RIDSA", 5) == 0)
@@ -765,6 +826,18 @@ skip_read_next_line:
             }
             CSLDestroy(papszTokens);
         }
+        else if (strncmp(pszLine, "QAPCP", 5) == 0)
+        {
+            char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
+            if (CSLCount(papszTokens) == 4)
+            {
+                if (strcmp(papszTokens[2], "QUP") == 0)
+                {
+                    osQUP_RID = papszTokens[3];
+                }
+            }
+            CSLDestroy(papszTokens);
+        }
     }
 
     VSIFCloseL(fp);
@@ -805,6 +878,21 @@ OGRFeature* OGREDIGEODataSource::CreateFeature(const CPLString& osFEA)
             else
                 CPLDebug("EDIGEO",
                          "ERROR: Cannot find attribute %s", id.c_str());
+        }
+
+        if (strcmp(poLayer->GetName(), "ID_S_OBJ_Z_1_2_2") != 0 &&
+            mapQAL.size() != 0 && fea.osQUP_RID.size() != 0)
+        {
+            const std::map<CPLString, intintType>::iterator itQAL =
+                                                        mapQAL.find(fea.osQUP_RID);
+            if (itQAL != mapQAL.end())
+            {
+                const intintType& creationUpdateDate = itQAL->second;
+                if (creationUpdateDate.first != 0)
+                    poFeature->SetField("CREAT_DATE", creationUpdateDate.first);
+                if (creationUpdateDate.second != 0)
+                    poFeature->SetField("UPDATE_DATE", creationUpdateDate.second);
+            }
         }
 
         poLayer->AddFeature(poFeature);
@@ -1218,6 +1306,12 @@ void OGREDIGEODataSource::ReadEDIGEO()
         return;
 
 /* -------------------------------------------------------------------- */
+/*      Read .QAL file                                                  */
+/* -------------------------------------------------------------------- */
+    if (osQAN.size() != 0)
+        ReadQAL();
+
+/* -------------------------------------------------------------------- */
 /*      Create layers from SCD definitions                              */
 /* -------------------------------------------------------------------- */
     int i;
@@ -1246,6 +1340,11 @@ void OGREDIGEODataSource::ReadEDIGEO()
         listFEA_PNO.clear();
         mapLNK_FEA_FEA.clear();
     }
+
+    mapObjects.clear();
+    mapAttributes.clear();
+    mapAttributesSCD.clear();
+    mapQAL.clear();
 
 /* -------------------------------------------------------------------- */
 /*      Delete empty layers                                             */
