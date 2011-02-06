@@ -387,12 +387,25 @@ CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
 {
     if( EQUAL(osProduct,"ASRP") )
     {
-        padfGeoTransform[0] = LSO/3600.0;
-        padfGeoTransform[1] = 360. / ARV;
-        padfGeoTransform[2] = 0.0;
-        padfGeoTransform[3] = PSO/3600.0;
-        padfGeoTransform[4] = 0.0;
-        padfGeoTransform[5] = - 360. / BRV;
+        if( ZNA == 9 || ZNA == 18 )
+        {
+            padfGeoTransform[0] = -1152000.0;
+            padfGeoTransform[1] = 500.0;
+            padfGeoTransform[2] = 0.0;
+            padfGeoTransform[3] = 1152000.0;
+            padfGeoTransform[4] = 0.0;
+            padfGeoTransform[5] = -500.0;
+
+        }
+        else
+        {
+            padfGeoTransform[0] = LSO/3600.0;
+            padfGeoTransform[1] = 360. / ARV;
+            padfGeoTransform[2] = 0.0;
+            padfGeoTransform[3] = PSO/3600.0;
+            padfGeoTransform[4] = 0.0;
+            padfGeoTransform[5] = - 360. / BRV;
+        }
 
         return CE_None;
     }
@@ -729,10 +742,14 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
     {
         osSRS = SRS_WKT_WGS84;
 
-        if (ZNA == 9 || ZNA == 18)
+        if( ZNA == 9 )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Polar cases are not handled by SRP driver");
-            return FALSE;
+            osSRS = "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Azimuthal_Equidistant\"],PARAMETER[\"latitude_of_center\",90],PARAMETER[\"longitude_of_center\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]";
+        }
+
+        if (ZNA == 18)
+        {
+            osSRS = "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Azimuthal_Equidistant\"],PARAMETER[\"latitude_of_center\",-90],PARAMETER[\"longitude_of_center\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]";
         }
     }
     else
