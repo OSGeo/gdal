@@ -70,7 +70,8 @@ OGREDIGEODataSource::~OGREDIGEODataSource()
     if (fpTHF)
         VSIFCloseL(fpTHF);
 
-    delete poSRS;
+    if (poSRS)
+        poSRS->Release();
 }
 
 /************************************************************************/
