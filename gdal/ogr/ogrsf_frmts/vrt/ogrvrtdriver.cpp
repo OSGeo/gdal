@@ -84,8 +84,9 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
         char achHeader[18];
 
         VSIStatBufL sStatBuf;
-        if (VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0 ||
-            VSI_ISDIR(sStatBuf.st_mode))
+        if (VSIStatL( pszFilename, &sStatBuf ) != 0 ||
+            VSI_ISDIR(sStatBuf.st_mode) ||
+            sStatBuf.st_size > 1024 * 1024 )
             return FALSE;
 
         fp = VSIFOpenL( pszFilename, "rb" );
@@ -108,10 +109,8 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      It is the right file, now load the full XML definition.         */
 /* -------------------------------------------------------------------- */
-        int nLen;
+        int nLen = (int) sStatBuf.st_size;
 
-        VSIFSeekL( fp, 0, SEEK_END );
-        nLen = (int) VSIFTellL( fp );
         VSIFSeekL( fp, 0, SEEK_SET );
 
         pszXML = (char *) VSIMalloc(nLen+1);
