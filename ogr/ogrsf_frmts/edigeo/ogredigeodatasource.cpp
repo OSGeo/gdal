@@ -949,69 +949,74 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
 /* -------------------------------------------------------------------- */
 /*      Now try to chain all arcs together.                             */
 /* -------------------------------------------------------------------- */
-    const xyPairListType& sFirstRing = *(aoPARPtrList[0]);
-    const xyPairType* psNext = &(sFirstRing[sFirstRing.size()-1]);
+    std::vector<xyPairListType> aoXYList;
 
-    xyPairListType aoXY;
-    for(i=0;i<(int)sFirstRing.size();i++)
-        aoXY.push_back(sFirstRing[i]);
-    aoPARPtrList[0] = NULL;
-
-    int nIter = 1;
-    int bError = FALSE;
-    while(nIter < (int)aoPARPtrList.size())
+    int j;
+    for(j=0;j<(int)aoPARPtrList.size();j++)
     {
-        int bFound = FALSE;
-        int bReverseSecond = FALSE;
-        for(i=0;i<(int)aoPARPtrList.size();i++)
+        if (aoPARPtrList[j] == NULL)
+            continue;
+        const xyPairListType& sFirstRing = *(aoPARPtrList[j]);
+        const xyPairType* psNext = &(sFirstRing[sFirstRing.size()-1]);
+
+        xyPairListType aoXY;
+        for(i=0;i<(int)sFirstRing.size();i++)
+            aoXY.push_back(sFirstRing[i]);
+        aoPARPtrList[j] = NULL;
+
+        int nIter = 1;
+        while(aoXY[aoXY.size()-1] != aoXY[0] && nIter < (int)aoPARPtrList.size())
         {
-            if (aoPARPtrList[i] != NULL)
+            int bFound = FALSE;
+            int bReverseSecond = FALSE;
+            for(i=0;i<(int)aoPARPtrList.size();i++)
             {
-                const xyPairListType& sSecondRing = *(aoPARPtrList[i]);
-                if (*psNext == sSecondRing[0])
+                if (aoPARPtrList[i] != NULL)
                 {
-                    bFound = TRUE;
-                    bReverseSecond = FALSE;
-                    break;
-                }
-                else if (*psNext == sSecondRing[sSecondRing.size()-1])
-                {
-                    bFound = TRUE;
-                    bReverseSecond = TRUE;
-                    break;
+                    const xyPairListType& sSecondRing = *(aoPARPtrList[i]);
+                    if (*psNext == sSecondRing[0])
+                    {
+                        bFound = TRUE;
+                        bReverseSecond = FALSE;
+                        break;
+                    }
+                    else if (*psNext == sSecondRing[sSecondRing.size()-1])
+                    {
+                        bFound = TRUE;
+                        bReverseSecond = TRUE;
+                        break;
+                    }
                 }
             }
-        }
 
-        if (!bFound)
-        {
-            bError = TRUE;
-            CPLDebug("EDIGEO", "Cannot find ring for FEA %s / PFE %s",
-                    osFEA.c_str(), osPFE.c_str());
-            break;
-        }
-        else
-        {
-            const xyPairListType& secondRing = *(aoPARPtrList[i]);
-            aoPARPtrList[i] = NULL;
-            if (!bReverseSecond)
+            if (!bFound)
             {
-                for(i=1;i<(int)secondRing.size();i++)
-                    aoXY.push_back(secondRing[i]);
-                psNext = &secondRing[secondRing.size()-1];
+                CPLDebug("EDIGEO", "Cannot find ring for FEA %s / PFE %s",
+                        osFEA.c_str(), osPFE.c_str());
+                break;
             }
             else
             {
-                for(i=1;i<(int)secondRing.size();i++)
-                    aoXY.push_back(secondRing[secondRing.size()-1-i]);
-                psNext = &secondRing[0];
+                const xyPairListType& secondRing = *(aoPARPtrList[i]);
+                aoPARPtrList[i] = NULL;
+                if (!bReverseSecond)
+                {
+                    for(i=1;i<(int)secondRing.size();i++)
+                        aoXY.push_back(secondRing[i]);
+                    psNext = &secondRing[secondRing.size()-1];
+                }
+                else
+                {
+                    for(i=1;i<(int)secondRing.size();i++)
+                        aoXY.push_back(secondRing[secondRing.size()-1-i]);
+                    psNext = &secondRing[0];
+                }
             }
+
+            nIter ++;
         }
 
-        nIter ++;
-
-        if (aoXY[aoXY.size()-1] == aoXY[0])
-            break;
+        aoXYList.push_back(aoXY);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1020,61 +1025,29 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
     OGRFeature* poFeature = CreateFeature(osFEA);
     if (poFeature)
     {
-        OGRLinearRing* poLS = new OGRLinearRing();
-        OGRPolygon* poPolygon = new OGRPolygon();
-        poPolygon->addRingDirectly(poLS);
-        if (poSRS)
-            poPolygon->assignSpatialReference(poSRS);
-        poFeature->SetGeometryDirectly(poPolygon);
-
-        poLS->setNumPoints((int)aoXY.size());
-        for(i=0;i<(int)aoXY.size();i++)
-            poLS->setPoint(i, aoXY[i].first, aoXY[i].second);
-
-        if (bError)
-            poLS->closeRings();
-        else if (nIter < (int)aoPARPtrList.size())
+        std::vector<OGRGeometry*> aosPolygons;
+        for(j=0;j<(int)aoXYList.size();j++)
         {
-            OGREnvelope oExteriorEnvelope;
-            poLS->getEnvelope(&oExteriorEnvelope);
-            CPLDebug("EDIGEO", "FEA %s / PFE %s has inner rings",
-                        osFEA.c_str(), osPFE.c_str());
-            for(i=0;i<(int)aoPARPtrList.size();i++)
-            {
-                if (aoPARPtrList[i] != NULL)
-                {
-                        const xyPairListType & listXY = *(aoPARPtrList[i]);
-                        if (listXY[0] == listXY[listXY.size() - 1])
-                        {
-                        OGRLinearRing* poInnerLS = new OGRLinearRing();
-                        poInnerLS->setNumPoints((int)listXY.size());
-                        for(int j=0;j<(int)listXY.size();j++)
-                            poInnerLS->setPoint(j, listXY[j].first, listXY[j].second);
+            const xyPairListType& aoXY = aoXYList[j];
+            OGRLinearRing* poLS = new OGRLinearRing();
+            poLS->setNumPoints((int)aoXY.size());
+            for(i=0;i<(int)aoXY.size();i++)
+                poLS->setPoint(i, aoXY[i].first, aoXY[i].second);
+            poLS->closeRings();
+            OGRPolygon* poPolygon = new OGRPolygon();
+            poPolygon->addRingDirectly(poLS);
+            aosPolygons.push_back(poPolygon);
+        }
 
-                        OGREnvelope oInnerEnvelope;
-                        poInnerLS->getEnvelope(&oInnerEnvelope);
-                        if (oInnerEnvelope.MinX >= oExteriorEnvelope.MinX &&
-                            oInnerEnvelope.MinY >= oExteriorEnvelope.MinY &&
-                            oInnerEnvelope.MaxX <= oExteriorEnvelope.MaxX &&
-                            oInnerEnvelope.MaxY <= oExteriorEnvelope.MaxY)
-                        {
-                            poPolygon->addRingDirectly(poInnerLS);
-                        }
-                        else
-                        {
-                            CPLDebug("EDIGEO",
-                                     "FEA %s / PFE %s ring[%d] is not inner",
-                                     osFEA.c_str(), osPFE.c_str(), i);
-                        }
-                        }
-                        else
-                        {
-                            CPLDebug("EDIGEO",
-                                     "FEA %s / PFE %s ring[%d] is not closed",
-                                     osFEA.c_str(), osPFE.c_str(), i);
-                        }
-                }
-            }
+        int bIsValidGeometry;
+        OGRGeometry* poGeom = OGRGeometryFactory::organizePolygons(
+            &aosPolygons[0], (int)aosPolygons.size(),
+            &bIsValidGeometry, NULL);
+        if (poGeom)
+        {
+            if (poSRS)
+                poGeom->assignSpatialReference(poSRS);
+            poFeature->SetGeometryDirectly(poGeom);
         }
     }
 
