@@ -80,7 +80,7 @@ OGRXPlaneReader* OGRXPlaneAwyReader::CloneForLayer(OGRXPlaneLayer* poLayer)
     if (pszFilename)
     {
         poReader->pszFilename = CPLStrdup(pszFilename);
-        poReader->fp = VSIFOpen( pszFilename, "rt" );
+        poReader->fp = VSIFOpenL( pszFilename, "rt" );
     }
 
     return poReader;
@@ -104,7 +104,7 @@ int OGRXPlaneAwyReader::IsRecognizedVersion( const char* pszVersionString)
 void OGRXPlaneAwyReader::Read()
 {
     const char* pszLine;
-    while((pszLine = CPLReadLine(fp)) != NULL)
+    while((pszLine = CPLReadLineL(fp)) != NULL)
     {
         papszTokens = CSLTokenizeString(pszLine);
         nTokens = CSLCount(papszTokens);

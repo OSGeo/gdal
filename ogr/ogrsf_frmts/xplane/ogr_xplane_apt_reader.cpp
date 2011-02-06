@@ -147,7 +147,7 @@ OGRXPlaneReader* OGRXPlaneAptReader::CloneForLayer(OGRXPlaneLayer* poLayer)
     if (pszFilename)
     {
         poReader->pszFilename = CPLStrdup(pszFilename);
-        poReader->fp = VSIFOpen( pszFilename, "rt" );
+        poReader->fp = VSIFOpenL( pszFilename, "rb" );
     }
 
     return poReader;
@@ -198,7 +198,7 @@ void OGRXPlaneAptReader::Read()
         CPLAssert(papszTokens == NULL);
     }
 
-    while(bResumeLine || (pszLine = CPLReadLine(fp)) != NULL)
+    while(bResumeLine || (pszLine = CPLReadLineL(fp)) != NULL)
     {
         int nType;
         if (!bResumeLine)
@@ -1027,7 +1027,7 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
 
     *ppoGeom = NULL;
 
-    while((pszLine = CPLReadLine(fp)) != NULL)
+    while((pszLine = CPLReadLineL(fp)) != NULL)
     {
         int nType = -1;
         papszTokens = CSLTokenizeString(pszLine);
@@ -1354,7 +1354,7 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
 
     OGRLineString lineString;
 
-    while((pszLine = CPLReadLine(fp)) != NULL)
+    while((pszLine = CPLReadLineL(fp)) != NULL)
     {
         int nType = -1;
         papszTokens = CSLTokenizeString(pszLine);
