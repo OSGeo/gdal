@@ -48,6 +48,8 @@ OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDS,
     nNextFID = 0;
 
     this->poSRS = poSRS;
+    if (poSRS)
+        poSRS->Reference();
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
@@ -63,7 +65,11 @@ OGREDIGEOLayer::~OGREDIGEOLayer()
 {
     for(int i=0;i<(int)aosFeatures.size();i++)
         delete aosFeatures[i];
+
     poFeatureDefn->Release();
+
+    if (poSRS)
+        poSRS->Release();
 }
 
 
