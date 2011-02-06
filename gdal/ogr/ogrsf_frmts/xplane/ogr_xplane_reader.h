@@ -53,7 +53,7 @@ class OGRXPlaneReader
         int             nLineNumber;
         char**          papszTokens;
         int             nTokens;
-        FILE*           fp;
+        VSILFILE*       fp;
         char*           pszFilename;
         int             bEOF;
         OGRXPlaneLayer* poInterestLayer;
