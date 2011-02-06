@@ -88,6 +88,7 @@ class OGREDIGEOLayer : public OGRLayer
 /*                         OGREDIGEODataSource                          */
 /************************************************************************/
 
+typedef std::pair<int, int> intintType;
 typedef std::pair<double, double> xyPairType;
 typedef std::vector< xyPairType > xyPairListType;
 typedef std::pair<CPLString, CPLString> strstrType;
@@ -134,6 +135,7 @@ class OGREDIGEOFEADesc
 
         std::vector< strstrType > aosAttIdVal; /* e.g. (TEX2_id,BECHEREL),(IDU_id,022) */
         CPLString osSCP;                       /* e.g. COMMUNE_id */
+        CPLString osQUP_RID;                   /* e.g. Actualite_Objet_X */
 };
 
 class OGREDIGEODataSource : public OGRDataSource
@@ -152,6 +154,7 @@ class OGREDIGEODataSource : public OGRDataSource
     CPLString osLON; /* Nom du lot */
     CPLString osGNN; /* Nom du sous-ensemble de données générales */
     CPLString osGON; /* Nom du sous-ensemble de la référence de coordonnées */
+    CPLString osQAN; /* Nom du sous-ensemble de qualité */
     CPLString osDIN; /* Nom du sous-ensemble de définition de la nomenclature */
     CPLString osSCN; /* Nom du sous-ensemble de définition du SCD */
     strListType aosGDN; /* Nom du sous-ensemble de données géographiques */
@@ -179,6 +182,10 @@ class OGREDIGEODataSource : public OGRDataSource
     double              dfMaxX;
     double              dfMaxY;
     int                 ReadGEN();
+
+    /* Map from Actualite_Objet_X to (creationData, updateData) */
+    std::map<CPLString,intintType> mapQAL;
+    int                 ReadQAL();
 
     std::map<CPLString, OGREDIGEOLayer*> mapLayer;
 
