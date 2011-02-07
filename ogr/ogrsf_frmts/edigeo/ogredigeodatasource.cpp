@@ -61,6 +61,9 @@ OGREDIGEODataSource::OGREDIGEODataSource()
     dfSizeFactor = atof(CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"));
     if (dfSizeFactor <= 0 || dfSizeFactor >= 100)
         dfSizeFactor = 2;
+
+    bRecodeToUTF8 = CSLTestBoolean(CPLGetConfigOption(
+                                        "OGR_EDIGEO_RECODE_TO_UTF8", "YES"));
 }
 
 /************************************************************************/
@@ -838,7 +841,7 @@ skip_read_next_line:
                     break;
                 }
             }
-            if (bIso8859_1)
+            if (bIso8859_1 && bRecodeToUTF8)
             {
                 char* pszNewVal = CPLRecode(osAttVal.c_str(),
                                             CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
