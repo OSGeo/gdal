@@ -64,7 +64,7 @@ def ogr_edigeo_1():
         return 'skip'
 
     ds = ogr.Open('tmp/cache/E000AB01.THF')
-    if ds.GetLayerCount() != 17:
+    if ds.GetLayerCount() != 24:
         print(ds.GetLayerCount())
         return 'fail'
 
