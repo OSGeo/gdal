@@ -33,6 +33,7 @@
 #include "ogrsf_frmts.h"
 #include <vector>
 #include <map>
+#include <set>
 
 /************************************************************************/
 /*                           OGREDIGEOLayer                             */
@@ -198,7 +199,7 @@ class OGREDIGEODataSource : public OGRDataSource
     std::vector< strstrType >                         listFEA_PFE; /* List of (Object_X,Face_Y) */
     std::vector< std::pair<CPLString, strListType > > listFEA_PAR; /* List of (Object_X,(Arc_Y1,..Arc_Yn))) */
     std::vector< strstrType >                         listFEA_PNO; /* List of (Object_X,Noeud_Y) */
-    std::map< CPLString, strstrType >                 mapLNK_FEA_FEA; /* unused for now */
+    std::map< CPLString, CPLString>                   mapFEA_FEA; /* Map Attribut_TEX{X}_id_Objet_{Y} to Objet_Y */
 
     int                 ReadVEC(const char* pszVECName);
 
@@ -208,6 +209,16 @@ class OGREDIGEODataSource : public OGRDataSource
     int                 BuildPolygon(const CPLString& osFEA,
                                      const CPLString& osPFE);
     int                 BuildPolygons();
+
+    int                 iATR, iDI3, iDI4, iHEI, iFON;
+    int                 iATR_VAL, iANGLE, iSIZE, iOBJ_LNK, iOBJ_LNK_LAYER;
+    double              dfSizeFactor;
+    int                 bIncludeFontFamily;
+    int                 SetStyle(const CPLString& osFEA,
+                                 OGRFeature* poFeature);
+
+    std::set< CPLString >  setLayersWithLabels;
+    void                CreateLabelLayers();
 
     int                 bHasReadEDIGEO;
     void                ReadEDIGEO();
