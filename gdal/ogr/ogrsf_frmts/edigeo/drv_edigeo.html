@@ -27,8 +27,29 @@ the defintion of IGN SRS must be placed in the directory of PROJ.4 ressource fil
 The whole set of files will be parsed into memory. This may be a limitation if dealing with
 big EDIGEO exchanges.<p>
 
+<!-- Default to YES.
 If you define the configuration option / environment variable OGR_EDIGEO_SORT_FOR_QGIS to YES,
 the layers of the French PCI will be ordered such as they overlay nicely when opened from QGIS.<p>
+-->
+
+<h3>Labels</h3>
+
+For EDIGEO PCI files, the labels are contained in the ID_S_OBJ_Z_1_2_2 layer. OGR will export
+styling following the <a href="http://gdal.org/ogr/ogr_feature_style.html">OGR Feature Style specification</a>.<p>
+
+It will also add the following fields :
+<ul>
+<li>OGR_OBJ_LNK: the id of the object that is linked to this label
+<li>OBJ_OBJ_LNK_LAYER: the name of the layer of the linked object
+<li>OGR_ATR_VAL: the value of the attribute to display (found in the ATR attribute of the OGR_OBJ_LNK object)
+<li>OGR_ANGLE: the rotation angle in degrees (0 = horizontal, counter-clock-wise oriented)
+<li>OGR_FONT_SIZE: the value of the HEI attribute multiplied by the value of the configuration option OGR_EDIGEO_FONT_SIZE_FACTOR that defaults to 2.
+</ul>
+
+Combined with the FON (font family) attributes, they can be used to define the styling in QGIS for example.<p>
+
+By default, OGR will create specific layers (xxx_LABEL) to dispatch into the various labels of the ID_S_OBJ_Z_1_2_2 layer
+according to the value of xxx=OBJ_OBJ_LNK_LAYER. This can be disabled by setting OGR_EDIGEO_CREATE_LABEL_LAYERS to NO.<p>
 
 <h3>See Also</h3>
 

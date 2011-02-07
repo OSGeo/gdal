@@ -52,6 +52,15 @@ OGREDIGEODataSource::OGREDIGEODataSource()
 
     fpTHF = NULL;
     bHasReadEDIGEO = FALSE;
+
+    bIncludeFontFamily = CSLTestBoolean(CPLGetConfigOption(
+                                 "OGR_EDIGEO_INCLUDE_FONT_FAMILY", "YES"));
+
+    iATR = iDI3 = iDI4 = iHEI = iFON = -1;
+    iATR_VAL = iANGLE = iSIZE = iOBJ_LNK = iOBJ_LNK_LAYER = -1;
+    dfSizeFactor = atof(CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"));
+    if (dfSizeFactor <= 0 || dfSizeFactor >= 100)
+        dfSizeFactor = 2;
 }
 
 /************************************************************************/
@@ -572,7 +581,34 @@ int OGREDIGEODataSource::CreateLayer(const OGREDIGEOObjectDescriptor& objDesc)
             poLayer->AddFieldDefn(attrDef.osLAB, eType, objDesc.aosAttrRID[j]);
         }
     }
-    if (strcmp(poLayer->GetName(), "ID_S_OBJ_Z_1_2_2") != 0 && mapQAL.size() != 0)
+
+
+    if (strcmp(poLayer->GetName(), "ID_S_OBJ_Z_1_2_2") == 0)
+    {
+        OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+
+        iATR = poFDefn->GetFieldIndex("ATR");
+        iDI3 = poFDefn->GetFieldIndex("DI3");
+        iDI4 = poFDefn->GetFieldIndex("DI4");
+        iHEI = poFDefn->GetFieldIndex("HEI");
+        iFON = poFDefn->GetFieldIndex("FON");
+
+        poLayer->AddFieldDefn("OGR_OBJ_LNK", OFTString, "");
+        iOBJ_LNK = poFDefn->GetFieldIndex("OGR_OBJ_LNK");
+
+        poLayer->AddFieldDefn("OGR_OBJ_LNK_LAYER", OFTString, "");
+        iOBJ_LNK_LAYER = poFDefn->GetFieldIndex("OGR_OBJ_LNK_LAYER");
+
+        poLayer->AddFieldDefn("OGR_ATR_VAL", OFTString, "");
+        iATR_VAL = poFDefn->GetFieldIndex("OGR_ATR_VAL");
+
+        poLayer->AddFieldDefn("OGR_ANGLE", OFTReal, "");
+        iANGLE = poFDefn->GetFieldIndex("OGR_ANGLE");
+
+        poLayer->AddFieldDefn("OGR_FONT_SIZE", OFTReal, "");
+        iSIZE = poFDefn->GetFieldIndex("OGR_FONT_SIZE");
+    }
+    else if (mapQAL.size() != 0)
     {
         poLayer->AddFieldDefn("CREAT_DATE", OFTInteger, "");
         poLayer->AddFieldDefn("UPDATE_DATE", OFTInteger, "");
@@ -675,8 +711,8 @@ skip_read_next_line:
                 {
                     /*CPLDebug("EDIGEO", "FEA[%s] -> FEA[%s]",
                              osLnkStartName.c_str(), osLnkEndName.c_str());*/
-                    mapLNK_FEA_FEA[osRID] = strstrType
-                                                (osLnkStartName, osLnkEndName);
+                    if (osSCP == "IS_S_REL_IWW")
+                        mapFEA_FEA[osLnkStartName] = osLnkEndName;
                 }
                 else if (osLnkStartType == "PAR" && osLnkEndType == "PNO")
                 {
@@ -758,7 +794,12 @@ skip_read_next_line:
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
             {
-                if (strcmp(papszTokens[2], "OBJ") == 0)
+                if (osRTY == "LNK")
+                {
+                    if (strcmp(papszTokens[2], "ASS") == 0)
+                        osSCP = papszTokens[3];
+                }
+                else if (strcmp(papszTokens[2], "OBJ") == 0)
                     osSCP = papszTokens[3];
             }
             CSLDestroy(papszTokens);
@@ -907,6 +948,94 @@ OGRFeature* OGREDIGEODataSource::CreateFeature(const CPLString& osFEA)
 }
 
 /************************************************************************/
+/*                             SetStyle()                               */
+/************************************************************************/
+
+int OGREDIGEODataSource::SetStyle(const CPLString& osFEA,
+                                  OGRFeature* poFeature)
+{
+    /* EDIGEO PCI specific */
+    /* See EDIGeO_PCI.pdf, chapter 3 "Principes généraux de */
+    /* positionnement de la toponymie. */
+    const char* pszATR = NULL;
+    if (strcmp(poFeature->GetDefnRef()->GetName(), "ID_S_OBJ_Z_1_2_2") == 0 &&
+        iATR != -1 && (pszATR = poFeature->GetFieldAsString(iATR)) != NULL)
+    {
+        const CPLString osATR = pszATR;
+        std::map< CPLString, CPLString>::iterator itFEA_FEA =
+                                                mapFEA_FEA.find(osFEA);
+        if (itFEA_FEA != mapFEA_FEA.end())
+        {
+            const CPLString& osOBJ_LNK = itFEA_FEA->second;
+            std::map< CPLString, OGREDIGEOFEADesc >::iterator itFEA_LNK =
+                                                        mapFEA.find(osOBJ_LNK);
+            if (itFEA_LNK != mapFEA.end())
+            {
+                const OGREDIGEOFEADesc& fea_lnk = itFEA_LNK->second;
+                for(int j=0;j<(int)fea_lnk.aosAttIdVal.size();j++)
+                {
+                    if (fea_lnk.aosAttIdVal[j].first == osATR)
+                    {
+                        double dfAngle = 0;
+                        if (iDI3 != -1 && iDI4 != -1)
+                        {
+                            double dfBaseVectorX =
+                                poFeature->GetFieldAsDouble(iDI3);
+                            double dfBaseVectorY =
+                                poFeature->GetFieldAsDouble(iDI4);
+                            dfAngle = atan2(dfBaseVectorY, dfBaseVectorX)
+                                                                / M_PI * 180;
+                            if (dfAngle < 0)
+                                dfAngle += 360;
+                        }
+                        double dfSize = 1;
+                        if (iHEI != -1)
+                            dfSize = poFeature->GetFieldAsDouble(iHEI);
+                        if (dfSize <= 0 || dfSize >= 100)
+                            dfSize = 1;
+                        const char* pszFontFamily = NULL;
+                        if (iFON != -1)
+                            pszFontFamily = poFeature->GetFieldAsString(iFON);
+
+                        CPLString osStyle("LABEL(t:\"");
+                        osStyle += fea_lnk.aosAttIdVal[j].second;
+                        osStyle += "\"";
+                        if (dfAngle != 0)
+                        {
+                            osStyle += ",a:";
+                            osStyle += CPLString().Printf("%.1f", dfAngle);
+                        }
+                        if (pszFontFamily != NULL && bIncludeFontFamily)
+                        {
+                            osStyle += ",f:\"";
+                            osStyle += pszFontFamily;
+                            osStyle += "\"";
+                        }
+                        osStyle += ",s:";
+                        osStyle += CPLString().Printf("%.1f", dfSize);
+                        osStyle += ",c:#000000)";
+                        poFeature->SetStyleString(osStyle);
+
+                        poFeature->SetField(iATR_VAL,
+                                            fea_lnk.aosAttIdVal[j].second);
+                        poFeature->SetField(iANGLE, dfAngle);
+                        poFeature->SetField(iSIZE, dfSize * dfSizeFactor);
+                        poFeature->SetField(iOBJ_LNK, osOBJ_LNK);
+                        poFeature->SetField(iOBJ_LNK_LAYER, fea_lnk.osSCP);
+
+                        setLayersWithLabels.insert(fea_lnk.osSCP);
+
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                           BuildPoints()                              */
 /************************************************************************/
 
@@ -932,6 +1061,8 @@ int OGREDIGEODataSource::BuildPoints()
                 if (poSRS)
                     poPoint->assignSpatialReference(poSRS);
                 poFeature->SetGeometryDirectly(poPoint);
+
+                SetStyle(osFEA, poFeature);
             }
         }
     }
@@ -1245,6 +1376,7 @@ int OGREDIGEODataSource::Open( const char * pszFilename, int bUpdateIn)
             bIsEDIGEO = TRUE;
             break;
         }
+        i++;
     }
 
     if (!bIsEDIGEO)
@@ -1338,7 +1470,7 @@ void OGREDIGEODataSource::ReadEDIGEO()
         listFEA_PFE.clear();
         listFEA_PAR.clear();
         listFEA_PNO.clear();
-        mapLNK_FEA_FEA.clear();
+        mapFEA_FEA.clear();
     }
 
     mapObjects.clear();
@@ -1367,8 +1499,70 @@ void OGREDIGEODataSource::ReadEDIGEO()
 /*      When added from QGIS, the layers must be ordered from           */
 /*      bottom (Polygon) to top (Point) to get nice visual effect       */
 /* -------------------------------------------------------------------- */
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_EDIGEO_SORT_FOR_QGIS", "NO")))
+    if (CSLTestBoolean(CPLGetConfigOption("OGR_EDIGEO_SORT_FOR_QGIS", "YES")))
         qsort(papoLayers, nLayers, sizeof(OGREDIGEOLayer*), OGREDIGEOSortForQGIS);
+
+/* -------------------------------------------------------------------- */
+/*      Create a label layer for each feature layer                     */
+/* -------------------------------------------------------------------- */
+    if (CSLTestBoolean(CPLGetConfigOption("OGR_EDIGEO_CREATE_LABEL_LAYERS", "YES")))
+        CreateLabelLayers();
 
     return;
 }
+
+/************************************************************************/
+/*                         CreateLabelLayers()                          */
+/************************************************************************/
+
+void OGREDIGEODataSource::CreateLabelLayers()
+{
+    OGRLayer* poLayer = GetLayerByName("ID_S_OBJ_Z_1_2_2");
+    if (poLayer == NULL)
+        return;
+
+    std::map<CPLString, OGREDIGEOLayer*> mapLayerNameToLayer;
+
+    OGRFeature* poFeature;
+    OGRFeatureDefn* poFeatureDefn = poLayer->GetLayerDefn();
+    while((poFeature = poLayer->GetNextFeature()) != NULL)
+    {
+        const char* pszBelongingLayerName =
+            poFeature->GetFieldAsString(iOBJ_LNK_LAYER);
+        if (pszBelongingLayerName)
+        {
+            CPLString osBelongingLayerName = pszBelongingLayerName;
+            std::map<CPLString, OGREDIGEOLayer*>::iterator it =
+                        mapLayerNameToLayer.find(osBelongingLayerName);
+            OGREDIGEOLayer* poLabelLayer;
+
+            if (it == mapLayerNameToLayer.end())
+            {
+                /* Create label layer if it does not already exist */
+                CPLString osLayerLabelName = osBelongingLayerName + "_LABEL";
+                poLabelLayer = new OGREDIGEOLayer(this, osLayerLabelName.c_str(),
+                                             wkbPoint, poSRS);
+                int i;
+                OGRFeatureDefn* poLabelFeatureDefn = poLabelLayer->GetLayerDefn();
+                for(i=0;i<poFeatureDefn->GetFieldCount();i++)
+                    poLabelFeatureDefn->AddFieldDefn(poFeatureDefn->GetFieldDefn(i));
+                mapLayerNameToLayer[osBelongingLayerName] = poLabelLayer;
+
+                papoLayers = (OGRLayer**)
+                    CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+                papoLayers[nLayers] = poLabelLayer;
+                nLayers ++;
+            }
+            else
+                poLabelLayer = mapLayerNameToLayer[osBelongingLayerName];
+
+            OGRFeature* poNewFeature = new OGRFeature(poLabelLayer->GetLayerDefn());
+            poNewFeature->SetFrom(poFeature);
+            poLabelLayer->AddFeature(poNewFeature);
+        }
+        delete poFeature;
+    }
+
+    poLayer->ResetReading();
+}
+
