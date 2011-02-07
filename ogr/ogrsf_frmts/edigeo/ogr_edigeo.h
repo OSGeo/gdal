@@ -201,6 +201,7 @@ class OGREDIGEODataSource : public OGRDataSource
     std::vector< strstrType >                         listFEA_PNO; /* List of (Object_X,Noeud_Y) */
     std::map< CPLString, CPLString>                   mapFEA_FEA; /* Map Attribut_TEX{X}_id_Objet_{Y} to Objet_Y */
 
+    int                 bRecodeToUTF8;
     int                 ReadVEC(const char* pszVECName);
 
     OGRFeature*         CreateFeature(const CPLString& osFEA);
