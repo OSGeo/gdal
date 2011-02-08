@@ -47,7 +47,8 @@ def rfc30_1():
         filename =  'xx\u4E2D\u6587.\u4E2D\u6587'
     else:
         exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
-        filename = filename.encode( 'utf-8' )
+        # The typemaps should accept unicode strings directly
+        #filename = filename.encode( 'utf-8' )
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gtiff/' + filename, filename):
         return 'skip'
@@ -81,7 +82,8 @@ def rfc30_2():
         filename =  'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
     else:
         exec("filename =  u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
-        filename = filename.encode( 'utf-8' )
+        # The typemaps should accept Unicode strings directly
+        #filename = filename.encode( 'utf-8' )
 
     fd = gdal.VSIFOpenL( filename, 'w' )
     if fd is None:
@@ -95,11 +97,13 @@ def rfc30_2():
 
     if version_info >= (3,0,0):
         new_filename = 'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
+        filename_for_rename = filename
     else:
         exec("new_filename = u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
-        new_filename = new_filename.encode( 'utf-8' )
+        filename_for_rename = filename.encode( 'utf-8' ) # FIXME ? rename should perhaps accept unicode strings
+        new_filename = new_filename.encode( 'utf-8' ) # FIXME ? rename should perhaps accept unicode strings
 
-    if gdal.Rename( filename, new_filename ) != 0:
+    if gdal.Rename( filename_for_rename, new_filename ) != 0:
         gdaltest.post_reason( 'utf-8 rename failed.' )
         return 'failure'
 
