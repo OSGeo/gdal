@@ -193,9 +193,12 @@ def main(argv = None):
         print( "INFO: Open of `%s'\n"
                 "      using driver `%s' successful." % (pszDataSource, poDriver.GetName()) )
 
-    if bVerbose and pszDataSource != poDS.GetName():
+    poDS_Name = poDS.GetName()
+    if str(type(pszDataSource)) == "<type 'unicode'>" and str(type(poDS_Name)) == "<type 'str'>":
+        poDS_Name = unicode(poDS_Name, "utf8")
+    if bVerbose and pszDataSource != poDS_Name:
         print( "INFO: Internal data source name `%s'\n"
-                "      different from user name `%s'." % (poDS.GetName(), pszDataSource ))
+                "      different from user name `%s'." % (poDS_Name, pszDataSource ))
 
 #/* -------------------------------------------------------------------- */
 #/*      Special case for -sql clause.  No source layers required.       */
