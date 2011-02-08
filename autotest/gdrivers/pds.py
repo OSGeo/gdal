@@ -96,7 +96,9 @@ def pds_3():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
     tst = gdaltest.GDALTest( 'PDS', 'EN0001426030M_truncated.IMG', 1, 1367 )
-    if tst.testOpen( ) != 'success':
+
+    gt_expected = (0,1,0,0,0,1)
+    if tst.testOpen( check_gt=gt_expected ) != 'success':
         return 'fail'
 
     ds = gdal.Open('data/EN0001426030M_truncated.IMG')
@@ -113,7 +115,8 @@ def pds_3():
 def pds_4():
 
     tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 3418 )
-    return tst.testOpen()
+    gt_expected = (6119184.37008214, 1.0113804340362549, 0.0, -549696.39108347893, 0.0, -1.0113804340362549)
+    return tst.testOpen( check_gt = gt_expected )
 
 ###############################################################################
 # Read a hacked example of reading a detached file with an offset #3355.
@@ -130,7 +133,10 @@ def pds_5():
 def pds_6():
 
     tst = gdaltest.GDALTest( 'PDS', 'ESP_013951_1955_RED.LBL', 1, 4672 )
-    if tst.testOpen( ) != 'success':
+
+    gt_expected = (-6139197.75, 0.5, 0.0, 936003.0, 0.0, -0.5)
+    
+    if tst.testOpen( check_gt=gt_expected ) != 'success':
         return 'fail'
 
     ds = gdal.Open('data/ESP_013951_1955_RED.LBL')
@@ -156,10 +162,52 @@ def pds_7():
 
     tst = gdaltest.GDALTest( 'PDS', 'LDEM_4.LBL', 1, 50938,
                              0, 0, 1440, 2 )
-    if tst.testOpen( ) != 'success':
+    gt_expected = (-5450622.3254203796, 7580.8377265930176, 0.0, 2721520.7438468933, 0.0, -7580.8377265930176)
+    prj_expected = """PROJCS["SIMPLE_CYLINDRICAL MOON",
+    GEOGCS["GCS_MOON",
+        DATUM["D_MOON",
+            SPHEROID["MOON",1737400,0]],
+        PRIMEM["Reference_Meridian",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Equirectangular"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",180],
+    PARAMETER["standard_parallel_1",0],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0]]"""
+    
+    if tst.testOpen( check_prj=prj_expected,
+                     check_gt=gt_expected ) != 'success':
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test applying adjument offsets via configuration variables for the
+# geotransform (#3940)
+
+def pds_8():
+
+    # values for MAGELLAN FMAP data.
+    gdal.SetConfigOption( 'PDS_SampleProjOffset_Shift', '1.5' )
+    gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', '1.5' )
+    gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', '1.0' )
+    gdal.SetConfigOption( 'PDS_LineProjOffset_Mult', '-1.0' )
+    
+    tst = gdaltest.GDALTest( 'PDS', 'mc02_truncated.img', 1, 47151 )
+
+    expected_gt = (10670237.134337425, 926.11527442932129, 0.0, -3854028.7145376205, 0.0, -926.11527442932129)
+
+    result = tst.testOpen( check_gt = expected_gt )
+
+    # clear config settings
+    gdal.SetConfigOption( 'PDS_SampleProjOffset_Shift', None )
+    gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
+    gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', None )
+    gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
+
+    return result
+    
 
 gdaltest_list = [
     pds_1,
@@ -168,7 +216,8 @@ gdaltest_list = [
     pds_4,
     pds_5,
     pds_6,
-    pds_7 ]
+    pds_7,
+    pds_8 ]
 
 if __name__ == '__main__':
 
