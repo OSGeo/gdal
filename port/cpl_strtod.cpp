@@ -172,7 +172,7 @@ double CPLAtofM( const char *nptr )
 
 static void CPLReplacePointByLocalePoint(char* pszNumber, char point)
 {
-#if defined(WIN32CE)
+#if defined(WIN32CE) || defined(__ANDROID__)
     static char byPoint = 0;
     if (byPoint == 0)
     {
