@@ -1458,7 +1458,7 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
   * ogrinfo --config CPL_DEBUG ON ~/data/test/point.shp
   *
   * @param pszKey the key of the option
-  * @param pszValue the value of the option
+  * @param pszValue the value of the option, or NULL to clear a setting.
   * 
   * @see http://trac.osgeo.org/gdal/wiki/ConfigOptions
   */
@@ -1487,7 +1487,7 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
   * that applies on all threads.
   *
   * @param pszKey the key of the option
-  * @param pszValue the value of the option
+  * @param pszValue the value of the option, or NULL to clear a setting.
   */
 
 void CPL_STDCALL 
