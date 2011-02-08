@@ -1827,6 +1827,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char *pszName, const GDALRasterAttrib
 #endif
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
             VSIFWriteL( panColData, nRowCount, sizeof(GInt32), hHFA->fp );
+            CPLFree( panColData );
         }
         else
         {
