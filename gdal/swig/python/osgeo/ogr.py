@@ -144,7 +144,7 @@ class Driver(_object):
     if _newclass:name = _swig_property(_ogr.Driver_name_get)
     def CreateDataSource(self, *args, **kwargs):
         """
-        CreateDataSource(self, char name, char options = None) -> DataSource
+        CreateDataSource(self, char utf8_path, char options = None) -> DataSource
 
         OGRDataSourceH
         OGR_Dr_CreateDataSource(OGRSFDriverH hDriver, const char *pszName,
@@ -243,7 +243,7 @@ class Driver(_object):
 
     def DeleteDataSource(self, *args):
         """
-        DeleteDataSource(self, char name) -> int
+        DeleteDataSource(self, char utf8_path) -> int
 
         OGRErr
         OGR_Dr_DeleteDataSource(OGRSFDriverH hDriver, const char
@@ -4240,7 +4240,7 @@ def GetOpenDS(*args):
   return _ogr.GetOpenDS(*args)
 
 def Open(*args, **kwargs):
-  """Open(char filename, int update = 0) -> DataSource"""
+  """Open(char utf8_path, int update = 0) -> DataSource"""
   return _ogr.Open(*args, **kwargs)
 
 def OpenShared(*args, **kwargs):

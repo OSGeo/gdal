@@ -322,9 +322,9 @@ public:
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CreateDataSource;
 #endif
-  OGRDataSourceShadow *CreateDataSource( const char *name, 
+  OGRDataSourceShadow *CreateDataSource( const char *utf8_path, 
                                     char **options = 0 ) {
-    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, name, options);
+    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, utf8_path, options);
     return ds;
   }
   
@@ -350,11 +350,11 @@ public:
   }
 
 #ifdef SWIGJAVA
-  OGRErr DeleteDataSource( const char *name ) {
+  OGRErr DeleteDataSource( const char *utf8_path ) {
 #else
-  int DeleteDataSource( const char *name ) {
+  int DeleteDataSource( const char *utf8_path ) {
 #endif
-    return OGR_Dr_DeleteDataSource( self, name );
+    return OGR_Dr_DeleteDataSource( self, utf8_path );
   }
 
 %apply Pointer NONNULL {const char * cap};
