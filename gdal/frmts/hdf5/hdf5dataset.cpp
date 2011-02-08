@@ -621,9 +621,8 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     hAttrSpace       = H5Aget_space( hAttrID );
     nAttrDims        = H5Sget_simple_extent_dims( hAttrSpace, nSize, NULL );
 
-
     if( H5Tget_class( hAttrNativeType ) == H5T_STRING ) {
-	nAttrSize = H5Tget_size( hAttrTypeID );
+        nAttrSize = H5Aget_storage_size( hAttrID );
 	szData = (char*) CPLMalloc(nAttrSize+1);
 	szValue = (char*) CPLMalloc(nAttrSize+1);
 	H5Aread( hAttrID, hAttrNativeType, szData  );
@@ -728,6 +727,9 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
 	CPLFree( buf );
 
     }
+    H5Sclose(hAttrSpace);
+    H5Tclose(hAttrNativeType);
+    H5Tclose(hAttrTypeID);
     H5Aclose( hAttrID );
     //printf( "%s = %s\n",szTemp, szValue );
     poDS->papszMetadata =
