@@ -1221,6 +1221,56 @@ def hfa_copyfiles():
     return 'success'
 
 
+ 
+###############################################################################
+# Test the ability to write a RAT (#999)
+
+def hfa_write_rat():
+
+    drv = gdal.GetDriverByName( 'HFA' )
+
+    src_ds = gdal.Open( 'data/i8u_c_i.img' )
+
+    rat = src_ds.GetRasterBand(1).GetDefaultRAT()
+
+    dst_ds = drv.Create( 'tmp/write_rat.img', 100, 100, 1, gdal.GDT_Byte )
+
+    dst_ds.GetRasterBand(1).SetDefaultRAT( rat )
+
+    dst_ds = None
+    src_ds = None
+
+    rat = None
+
+    ds = gdal.Open( 'tmp/write_rat.img' )
+    rat = ds.GetRasterBand(1).GetDefaultRAT()
+
+    if rat.GetColumnCount() != 6 \
+       or rat.GetTypeOfCol(0) != gdal.GFT_Integer \
+       or rat.GetUsageOfCol(0) != gdal.GFU_Generic: # should be GFU_MinMax
+        print(rat.GetColumnCount())
+        print(rat.GetTypeOfCol(0))
+        print(rat.GetUsageOfCol(0))
+        gdaltest.post_reason( 'BinValues column wrong.')
+        return 'fail'
+
+    if rat.GetValueAsInt( 2, 0 ) != 4:
+        print(rat.GetValueAsInt( 2, 0 ))
+        gdaltest.post_reason( 'BinValues value wrong.' )
+        return 'fail'
+
+    if rat.GetValueAsInt( 4, 5 ) != 656:
+        print(rat.GetValueAsInt( 4, 5 ))
+        gdaltest.post_reason( 'Histogram value wrong.' )
+        return 'fail'
+
+    rat = None
+    ds = None
+
+    drv.Delete( 'tmp/write_rat.img' )
+    
+    return 'success'
+    
 ###############################################################################
 #
 
@@ -1259,7 +1309,8 @@ gdaltest_list = [
     hfa_write_bit2grayscale,
     hfa_camera_md,
     hfa_rde_overviews,
-    hfa_copyfiles ]
+    hfa_copyfiles,
+    hfa_write_rat ]
 
 if __name__ == '__main__':
 

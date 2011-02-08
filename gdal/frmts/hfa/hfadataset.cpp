@@ -357,6 +357,8 @@ class HFARasterBand : public GDALPamRasterBand
     void        ReadAuxMetadata();
     void        ReadHistogramMetadata();
     void        EstablishOverviews();
+    CPLErr      WriteNamedRAT( const char *pszName, const GDALRasterAttributeTable *poRAT );
+
 
     GDALRasterAttributeTable* ReadNamedRAT( const char *pszName );
 
@@ -1478,7 +1480,7 @@ HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 CPLErr HFARasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
 
 {
-    return GDALPamRasterBand::SetDefaultRAT( poRAT );
+    return WriteNamedRAT( "Descriptor_Table", poRAT );
 }
 
 /************************************************************************/
@@ -1673,6 +1675,170 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
 
     return poRAT;
 }
+
+/************************************************************************/
+/*                            WriteNamedRAT()                            */
+/************************************************************************/
+ 
+CPLErr HFARasterBand::WriteNamedRAT( const char *pszName, const GDALRasterAttributeTable *poRAT )
+{
+/* -------------------------------------------------------------------- */
+/*      Find the requested table.                                       */
+/* -------------------------------------------------------------------- */
+    HFAEntry * poDT = hHFA->papoBand[nBand-1]->poNode->GetNamedChild( "Descriptor_Table" );
+    if( poDT == NULL || !EQUAL(poDT->GetType(),"Edsc_Table") )
+        poDT = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo, 
+                             "Descriptor_Table", "Edsc_Table",
+                             hHFA->papoBand[nBand-1]->poNode );
+   
+  
+    int nRowCount = poRAT->GetRowCount();
+
+    poDT->SetIntField( "numrows", nRowCount );
+    /* Check if binning is set on this RAT */    
+    double dfBinSize, dfRow0Min;
+    if(poRAT->GetLinearBinning( &dfRow0Min, &dfBinSize)) 
+    {
+        /* then it should have an Edsc_BinFunction */
+        HFAEntry *poBinFunction = poDT->GetNamedChild( "#Bin_Function#" );
+        if( poBinFunction == NULL || !EQUAL(poBinFunction->GetType(),"Edsc_BinFunction") )
+            poBinFunction = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
+                                          "#Bin_Function#", "Edsc_BinFunction",
+                                          poDT );
+       
+        poBinFunction->SetStringField("binFunction", "direct");
+        poBinFunction->SetDoubleField("minLimit",dfRow0Min);
+        poBinFunction->SetDoubleField("maxLimit",(nRowCount -1)*dfBinSize+dfRow0Min);
+        poBinFunction->SetIntField("numBins",nRowCount);
+    }
+ 
+/* -------------------------------------------------------------------- */
+/*      Loop through each column in the RAT                             */
+/* -------------------------------------------------------------------- */
+    for(int col = 0; col < poRAT->GetColumnCount(); col++)
+    {
+        const char *pszName = NULL;
+ 
+        if( poRAT->GetUsageOfCol(col) == GFU_Red )
+        {
+            pszName = "Red";
+        }
+        else if( poRAT->GetUsageOfCol(col) == GFU_Green )
+        {
+            pszName = "Green";
+        }
+        else if( poRAT->GetUsageOfCol(col) == GFU_Blue )
+        {
+            pszName = "Blue";
+        }
+        else if( poRAT->GetUsageOfCol(col) == GFU_Alpha )
+        {
+            pszName = "Alpha";
+        }
+        else if( poRAT->GetUsageOfCol(col) == GFU_PixelCount )
+        {
+            pszName = "Histogram";
+        }
+        else if( poRAT->GetUsageOfCol(col) == GFU_Name )
+        {
+            pszName = "Class_Names";
+        }
+        else
+        {
+            pszName = poRAT->GetNameOfCol(col);
+        }
+            
+/* -------------------------------------------------------------------- */
+/*      Check to see if a column with pszName exists and create if      */
+/*      if necessary.                                                   */
+/* -------------------------------------------------------------------- */
+
+        HFAEntry        *poColumn;
+        poColumn = poDT->GetNamedChild(pszName);
+	    
+        if(poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column"))
+	    poColumn = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
+                                     pszName, "Edsc_Column",
+                                     poDT );
+
+
+        poColumn->SetIntField( "numRows", nRowCount );
+   
+        if( poRAT->GetTypeOfCol(col) == GFT_Real )
+        {
+            int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
+                                            nRowCount * sizeof(double) );
+            poColumn->SetIntField( "columnDataPtr", nOffset );
+            poColumn->SetStringField( "dataType", "real" );
+            
+            double *padfColData = (double*)CPLCalloc( nRowCount, sizeof(double) );
+            for( int i = 0; i < nRowCount; i++)
+            {
+                padfColData[i] = poRAT->GetValueAsDouble(i,col);
+            }
+#ifdef CPL_MSB
+            GDALSwapWords( padfColData, 8, nRowCount, 8 );
+#endif
+            VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
+            VSIFWriteL( padfColData, nRowCount, sizeof(double), hHFA->fp );
+            CPLFree( padfColData );
+        }
+        else if( poRAT->GetTypeOfCol(col) == GFT_String )
+        {
+            unsigned int nMaxNumChars = 0;
+            /* find the length of the longest string */
+            for( int i = 0; i < nRowCount; i++)
+            {
+                if(nMaxNumChars < strlen(poRAT->GetValueAsString(i,col)))
+                {
+                    nMaxNumChars = strlen(poRAT->GetValueAsString(i,col));
+                }
+            }
+       
+            int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
+                                            (nRowCount+1) * nMaxNumChars );
+            poColumn->SetIntField( "columnDataPtr", nOffset );
+            poColumn->SetStringField( "dataType", "string" );
+            poColumn->SetIntField( "maxNumChars", nMaxNumChars );
+       
+            char *pachColData = (char*)CPLCalloc(nRowCount+1,nMaxNumChars);
+            for( int i = 0; i < nRowCount; i++)
+            {
+                strcpy(&pachColData[nMaxNumChars*i],poRAT->GetValueAsString(i,col));
+            }
+            VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
+            VSIFWriteL( pachColData, nRowCount, nMaxNumChars, hHFA->fp );
+            CPLFree( pachColData );
+        }
+        else if (poRAT->GetTypeOfCol(col) == GFT_Integer)
+        {
+            int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
+                                            nRowCount * sizeof(GInt32) );
+            poColumn->SetIntField( "columnDataPtr", nOffset );
+            poColumn->SetStringField( "dataType", "integer" );
+            
+            GInt32 *panColData = (GInt32*)CPLCalloc(nRowCount, sizeof(GInt32));
+            for( int i = 0; i < nRowCount; i++)
+            {
+                panColData[i] = poRAT->GetValueAsInt(i,col);
+            }
+#ifdef CPL_MSB
+            GDALSwapWords( panColData, 4, nRowCount, 4 );
+#endif
+            VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
+            VSIFWriteL( panColData, nRowCount, sizeof(GInt32), hHFA->fp );
+        }
+        else
+        {
+            /* can't deal with any of the others yet */
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "Writing this data type in a column is not supported for this Raster Attribute Table.");
+        }
+    }
+   
+    return CE_None;  
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
