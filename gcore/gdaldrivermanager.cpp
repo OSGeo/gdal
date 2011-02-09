@@ -124,10 +124,6 @@ GDALDriverManager::GDALDriverManager()
 
 /************************************************************************/
 /*                         ~GDALDriverManager()                         */
-/*                                                                      */
-/*      Eventually this should also likely clean up all open            */
-/*      datasets.  Or perhaps the drivers that own them should do       */
-/*      that in their destructor?                                       */
 /************************************************************************/
 
 GDALDriverManager::~GDALDriverManager()
@@ -136,14 +132,30 @@ GDALDriverManager::~GDALDriverManager()
 /* -------------------------------------------------------------------- */
 /*      Cleanup any open datasets.                                      */
 /* -------------------------------------------------------------------- */
-    int nDSCount;
+    int i, nDSCount;
     GDALDataset **papoDSList;
 
-    while( (papoDSList = GDALDataset::GetOpenDatasets(&nDSCount)) != NULL )
+    /* First begin by requesting each reamining dataset to drop any reference */
+    /* to other datasets */
+    int bHasDroppedRef;
+    do
+    {
+        papoDSList = GDALDataset::GetOpenDatasets(&nDSCount);
+        /* If a dataset has dropped a reference, the list might have become */
+        /* invalid, so go out of the loop and try again with the new valid */
+        /* list */
+        bHasDroppedRef = FALSE;
+        for(i=0;i<nDSCount && !bHasDroppedRef;i++)
+            bHasDroppedRef = papoDSList[i]->CloseDependentDatasets();
+    } while(bHasDroppedRef);
+
+    /* Now close the stand-alone datasets */
+    papoDSList = GDALDataset::GetOpenDatasets(&nDSCount);
+    for(i=0;i<nDSCount;i++)
     {
         CPLDebug( "GDAL", "force close of %s in GDALDriverManager cleanup.",
-                  papoDSList[0]->GetDescription() );
-        GDALClose( papoDSList[0] );
+                  papoDSList[i]->GetDescription() );
+        GDALClose( papoDSList[i] );
     }
 
 /* -------------------------------------------------------------------- */

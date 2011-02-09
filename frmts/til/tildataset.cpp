@@ -48,6 +48,9 @@ class CPL_DLL TILDataset : public GDALPamDataset
     VRTDataset *poVRTDS;
     std::vector<GDALDataset *> apoTileDS;
 
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
     TILDataset();
     ~TILDataset();
@@ -124,14 +127,28 @@ TILDataset::TILDataset()
 TILDataset::~TILDataset()
 
 {
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int TILDataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = poVRTDS != NULL;
+
     if( poVRTDS )
         delete poVRTDS;
+    poVRTDS = NULL;
 
     while( !apoTileDS.empty() )
     {
         GDALClose( (GDALDatasetH) apoTileDS.back() );
         apoTileDS.pop_back();
     }
+
+    return bHasDroppedRef;
 }
 
 /************************************************************************/

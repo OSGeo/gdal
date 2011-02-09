@@ -71,6 +71,9 @@ class BIGGIFDataset : public GDALPamDataset
 
     CPLErr       ReOpen();
 
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
                  BIGGIFDataset();
                  ~BIGGIFDataset();
@@ -315,6 +318,17 @@ BIGGIFDataset::~BIGGIFDataset()
     if( fp != NULL )
         VSIFCloseL( fp );
 
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                      CloseDependentDatasets()                        */
+/************************************************************************/
+
+int BIGGIFDataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = poWorkDS != NULL;
+
     if( poWorkDS != NULL )
     {
         CPLString osTempFilename = poWorkDS->GetDescription();
@@ -324,9 +338,12 @@ BIGGIFDataset::~BIGGIFDataset()
 
         GDALDriver *poGTiff = (GDALDriver *) GDALGetDriverByName( "GTiff" );
         poGTiff->Delete( osTempFilename );
-    }
-}
 
+        poWorkDS = NULL;
+    }
+
+    return bHasDroppedRef;
+}
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/

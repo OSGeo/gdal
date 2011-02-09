@@ -2630,3 +2630,35 @@ void CPL_STDCALL GDALEndAsyncReader(GDALDatasetH hDS, GDALAsyncReaderH hAsyncRea
     ((GDALDataset *) hDS) -> EndAsyncReader((GDALAsyncReader *)hAsyncReaderH);	
 }
 
+/************************************************************************/
+/*                       CloseDependentDatasets()                       */
+/************************************************************************/
+
+/**
+ * Drop references to any other datasets referenced by this dataset.
+ *
+ * This method should release any reference to other datasets (e.g. a VRT
+ * dataset to its sources), but not close the current dataset itself.
+ *
+ * If at least, one reference to a dependant dataset has been dropped,
+ * this method should return TRUE. Otherwise it *should* return FALSE.
+ * (Failure to return the proper value might result in infinite loop)
+ *
+ * This method can be called several times on a given dataset. After
+ * the first time, it should not do anything and return FALSE.
+ *
+ * The driver implementation may choose to destroy its raster bands,
+ * so be careful not to call any method on the raster bands afterwards.
+ *
+ * Basically the only safe action you can do after calling CloseDependantDatasets()
+ * is to call the destructor.
+ *
+ * Note: the only legitimate caller of CloseDependantDatasets() is
+ * GDALDriverManager::~GDALDriverManager()
+ *
+ * @return TRUE if at least one reference to another dataset has been dropped.
+ */
+int GDALDataset::CloseDependentDatasets()
+{
+    return FALSE;
+}

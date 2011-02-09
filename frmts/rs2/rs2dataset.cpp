@@ -89,6 +89,9 @@ class RS2Dataset : public GDALPamDataset
 
     char        **papszExtraFiles;
 
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
             RS2Dataset();
            ~RS2Dataset();
@@ -564,9 +567,28 @@ RS2Dataset::~RS2Dataset()
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
+
+    CloseDependentDatasets();
     
     CSLDestroy( papszSubDatasets );
     CSLDestroy( papszExtraFiles );
+}
+
+/************************************************************************/
+/*                      CloseDependentDatasets()                        */
+/************************************************************************/
+
+int RS2Dataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = nBands != 0;
+
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+       delete papoBands[iBand];
+    }
+    nBands = 0;
+
+    return bHasDroppedRef;
 }
 
 /************************************************************************/
