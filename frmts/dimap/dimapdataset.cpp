@@ -32,6 +32,7 @@
 #include "gdal_pam.h"
 #include "cpl_minixml.h"
 #include "ogr_spatialref.h"
+#include "gdal_proxy.h"
 
 CPL_CVSID("$Id$");
 
@@ -62,6 +63,9 @@ class DIMAPDataset : public GDALPamDataset
 
     char          **papszXMLDimapMetadata;
 
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
 		DIMAPDataset();
 	        ~DIMAPDataset();
@@ -80,6 +84,27 @@ class DIMAPDataset : public GDALPamDataset
     CPLXMLNode *GetProduct() { return psProduct; }
 };
 
+/************************************************************************/
+/* ==================================================================== */
+/*                        DIMAPWrapperRasterBand                        */
+/* ==================================================================== */
+/************************************************************************/
+class DIMAPWrapperRasterBand : public GDALProxyRasterBand
+{
+  GDALRasterBand* poBaseBand;
+
+  protected:
+    virtual GDALRasterBand* RefUnderlyingRasterBand() { return poBaseBand; }
+
+  public:
+    DIMAPWrapperRasterBand( GDALRasterBand* poBaseBand )
+        {
+            this->poBaseBand = poBaseBand;
+            eDataType = poBaseBand->GetRasterDataType();
+            poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        }
+    ~DIMAPWrapperRasterBand() {}
+};
 /************************************************************************/
 /* ==================================================================== */
 /*				DIMAPDataset				*/
@@ -122,18 +147,34 @@ DIMAPDataset::~DIMAPDataset()
         CPLFree( pasGCPList );
     }
 
+    CSLDestroy(papszXMLDimapMetadata);
+
+    CloseDependentDatasets();
+}
+
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int DIMAPDataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = poImageDS != NULL;
+
     if( poImageDS != NULL )
         delete poImageDS;
-
-    CSLDestroy(papszXMLDimapMetadata);
+    poImageDS = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Disconnect the bands so our destructor doesn't try and          */
 /*      delete them since they really belonged to poImageDS.            */
 /* -------------------------------------------------------------------- */
     int iBand;
-    for( iBand = 0; iBand < GetRasterCount(); iBand++ )
-        papoBands[iBand] = NULL;
+    for( iBand = 0; iBand < nBands; iBand++ )
+        delete papoBands[iBand];
+    nBands = 0;
+
+    return bHasDroppedRef;
 }
 
 /************************************************************************/
@@ -334,7 +375,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLAssert( nBands == poDS->poImageDS->GetRasterCount() );
 
     for( iBand = 1; iBand <= poDS->poImageDS->GetRasterCount(); iBand++ )
-        poDS->SetBand( iBand, poDS->poImageDS->GetRasterBand( iBand ) );
+        poDS->SetBand( iBand, new DIMAPWrapperRasterBand(poDS->poImageDS->GetRasterBand( iBand )) );
 
 /* -------------------------------------------------------------------- */
 /*      Try to collect simple insertion point.                          */
