@@ -285,6 +285,17 @@ VRTWarpedDataset::VRTWarpedDataset( int nXSize, int nYSize )
 VRTWarpedDataset::~VRTWarpedDataset()
 
 {
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int VRTWarpedDataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = FALSE;
+
     FlushCache();
 
 /* -------------------------------------------------------------------- */
@@ -300,10 +311,13 @@ VRTWarpedDataset::~VRTWarpedDataset()
         {
             GDALReferenceDataset( hDS );
             GDALClose( hDS );
+            bHasDroppedRef = TRUE;
         }
     }
 
     CPLFree( papoOverviews );
+    nOverviewCount = 0;
+    papoOverviews = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup warper if one is in effect.                             */
@@ -326,6 +340,7 @@ VRTWarpedDataset::~VRTWarpedDataset()
             {
                 GDALReferenceDataset( psWO->hSrcDS );
                 GDALClose( psWO->hSrcDS );
+                bHasDroppedRef = TRUE;
             }
         }
 
@@ -336,7 +351,19 @@ VRTWarpedDataset::~VRTWarpedDataset()
             GDALDestroyTransformer( psWO->pTransformerArg );
 
         delete poWarper;
+        poWarper = NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Destroy the raster bands if they exist.                         */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+       delete papoBands[iBand];
+    }
+    nBands = 0;
+
+    return bHasDroppedRef;
 }
 
 /************************************************************************/

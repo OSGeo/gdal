@@ -111,6 +111,9 @@ class NITFDataset : public GDALPamDataset
     
     int          bInLoadXML;
 
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
                  NITFDataset();
                  ~NITFDataset();
@@ -925,6 +928,29 @@ NITFDataset::NITFDataset()
 NITFDataset::~NITFDataset()
 
 {
+    CloseDependentDatasets();
+
+/* -------------------------------------------------------------------- */
+/*      Free datastructures.                                            */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszProjection );
+
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
+    CPLFree( pasGCPList );
+    CPLFree( pszGCPProjection );
+
+    CPLFree( panJPEGBlockOffset );
+    CPLFree( pabyJPEGBlock );
+}
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int NITFDataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = FALSE;
+
     FlushCache();
 
 /* -------------------------------------------------------------------- */
@@ -958,21 +984,14 @@ NITFDataset::~NITFDataset()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Free datastructures.                                            */
-/* -------------------------------------------------------------------- */
-    CPLFree( pszProjection );
-
-    GDALDeinitGCPs( nGCPCount, pasGCPList );
-    CPLFree( pasGCPList );
-    CPLFree( pszGCPProjection );
-
-/* -------------------------------------------------------------------- */
 /*      If we have a jpeg2000 output file, make sure it gets closed     */
 /*      and flushed out.                                                */
 /* -------------------------------------------------------------------- */
     if( poJ2KDataset != NULL )
     {
         GDALClose( (GDALDatasetH) poJ2KDataset );
+        poJ2KDataset = NULL;
+        bHasDroppedRef = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -988,6 +1007,8 @@ NITFDataset::~NITFDataset()
                               "C8" );
     }
 
+    bJP2Writing = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      If we have a jpeg output file, make sure it gets closed         */
 /*      and flushed out.                                                */
@@ -995,10 +1016,9 @@ NITFDataset::~NITFDataset()
     if( poJPEGDataset != NULL )
     {
         GDALClose( (GDALDatasetH) poJPEGDataset );
+        poJPEGDataset = NULL;
+        bHasDroppedRef = TRUE;
     }
-
-    CPLFree( panJPEGBlockOffset );
-    CPLFree( pabyJPEGBlock );
 
 /* -------------------------------------------------------------------- */
 /*      If the dataset was opened by Create(), we may need to write     */
@@ -1008,7 +1028,25 @@ NITFDataset::~NITFDataset()
     NITFWriteTextSegments( GetDescription(), papszTextMDToWrite );
 
     CSLDestroy(papszTextMDToWrite);
+    papszTextMDToWrite = NULL;
     CSLDestroy(papszCgmMDToWrite);
+    papszCgmMDToWrite = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Destroy the raster bands if they exist.                         */
+/* We must do it now since the rasterbands can be NITFWrapperRasterBand */
+/* that derive from the GDALProxyRasterBand object, which keeps         */
+/* a reference on the JPEG/JP2K dataset, so any later call to           */
+/* FlushCache() would result in FlushCache() being called on a          */
+/* already destroyed object                                             */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+       delete papoBands[iBand];
+    }
+    nBands = 0;
+
+    return bHasDroppedRef;
 }
 
 /************************************************************************/

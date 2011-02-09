@@ -224,6 +224,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     friend class GDALDriver;
     friend class GDALDefaultOverviews;
     friend class GDALProxyDataset;
+    friend class GDALDriverManager;
 
   protected:
     GDALDriver  *poDriver;
@@ -257,6 +258,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                void *, int, int, GDALDataType,
                                int, int *, int, int, int );
     void   BlockBasedFlushCache();
+
+    virtual int         CloseDependentDatasets();
 
     friend class GDALRasterBand;
     
