@@ -86,6 +86,9 @@ class PDSDataset : public RawDataset
                                int iSubscript, 
                                const char *pszDefault = "");
 
+  protected:
+    virtual int         CloseDependentDatasets();
+
 public:
     PDSDataset();
     ~PDSDataset();
@@ -137,8 +140,28 @@ PDSDataset::~PDSDataset()
     if( fpImage != NULL )
         VSIFCloseL( fpImage );
 
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int PDSDataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = poCompressedDS != NULL;
+
     if( poCompressedDS )
         delete poCompressedDS;
+    poCompressedDS = NULL;
+
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+       delete papoBands[iBand];
+    }
+    nBands = 0;
+
+    return bHasDroppedRef;
 }
 
 /************************************************************************/
