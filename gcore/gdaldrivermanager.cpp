@@ -134,6 +134,19 @@ GDALDriverManager::~GDALDriverManager()
 
 {
 /* -------------------------------------------------------------------- */
+/*      Cleanup any open datasets.                                      */
+/* -------------------------------------------------------------------- */
+    int nDSCount;
+    GDALDataset **papoDSList;
+
+    while( (papoDSList = GDALDataset::GetOpenDatasets(&nDSCount)) != NULL )
+    {
+        CPLDebug( "GDAL", "force close of %s in GDALDriverManager cleanup.",
+                  papoDSList[0]->GetDescription() );
+        GDALClose( papoDSList[0] );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Destroy the existing drivers.                                   */
 /* -------------------------------------------------------------------- */
     while( GetDriverCount() > 0 )
