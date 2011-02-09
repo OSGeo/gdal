@@ -85,6 +85,17 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
         return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
+/*      Do we have an EPSG coordinate system?                           */
+/* -------------------------------------------------------------------- */
+
+    if( EQUALN(pszProj,"EPSG:",5) )
+        return importFromEPSG( atoi(pszProj+5) );
+
+
+    if( EQUALN(pszDatum,"EPSG:",5) )
+        return importFromEPSG( atoi(pszDatum+5) );
+
+/* -------------------------------------------------------------------- */
 /*      Set projection if we have it.                                   */
 /* -------------------------------------------------------------------- */
     OGRErr eErr;
