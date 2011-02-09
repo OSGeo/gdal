@@ -119,6 +119,9 @@ class CPL_DLL VRTDataset : public GDALDataset
 
     VRTRasterBand *poMaskBand;
 
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
                  VRTDataset(int nXSize, int nYSize);
                 ~VRTDataset();
@@ -177,6 +180,9 @@ class CPL_DLL VRTWarpedDataset : public VRTDataset
     GDALWarpOperation *poWarper;
 
     friend class VRTWarpedRasterBand;
+
+  protected:
+    virtual int         CloseDependentDatasets();
 
 public:
     int               nOverviewCount;
@@ -303,6 +309,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     void SetIsMaskBand();
 
     CPLErr UnsetNoDataValue();
+
+    virtual int         CloseDependentDatasets();
 };
 
 /************************************************************************/
@@ -378,6 +386,8 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     
     virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
                                int *pnMaxSize, CPLHashSet* hSetFiles);
+
+    virtual int         CloseDependentDatasets();
 };
 
 /************************************************************************/
