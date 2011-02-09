@@ -104,11 +104,7 @@ void VRTSourcedRasterBand::Initialize( int nXSize, int nYSize )
 VRTSourcedRasterBand::~VRTSourcedRasterBand()
 
 {
-    for( int i = 0; i < nSources; i++ )
-        delete papoSources[i];
-
-    CPLFree( papoSources );
-    nSources = 0;
+    CloseDependentDatasets();
 }
 
 /************************************************************************/
@@ -977,4 +973,23 @@ void VRTSourcedRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
 
     VRTRasterBand::GetFileList( ppapszFileList, pnSize,
                                 pnMaxSize, hSetFiles);
+}
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int VRTSourcedRasterBand::CloseDependentDatasets()
+{
+    if (nSources == 0)
+        return FALSE;
+
+    for( int i = 0; i < nSources; i++ )
+        delete papoSources[i];
+
+    CPLFree( papoSources );
+    papoSources = NULL;
+    nSources = 0;
+
+    return TRUE;
 }

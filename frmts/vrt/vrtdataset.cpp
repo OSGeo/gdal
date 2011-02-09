@@ -1118,3 +1118,18 @@ void VRTDataset::SetMaskBand(VRTRasterBand* poMaskBand)
     this->poMaskBand = poMaskBand;
     poMaskBand->SetIsMaskBand();
 }
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int VRTDataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = FALSE;
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+       bHasDroppedRef |= ((VRTRasterBand *) papoBands[iBand])->
+                                                CloseDependentDatasets();
+    }
+    return bHasDroppedRef;
+}

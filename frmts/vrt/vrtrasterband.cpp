@@ -1111,3 +1111,12 @@ void VRTRasterBand::SetIsMaskBand()
     nBand = 0;
     bIsMaskBand = TRUE;
 }
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int VRTRasterBand::CloseDependentDatasets()
+{
+    return FALSE;
+}

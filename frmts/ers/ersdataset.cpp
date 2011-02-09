@@ -63,6 +63,10 @@ class ERSDataset : public RawDataset
     char          *pszGCPProjection;
 
     void          ReadGCPs();
+
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
     		ERSDataset();
 	       ~ERSDataset();
@@ -130,15 +134,7 @@ ERSDataset::~ERSDataset()
         VSIFCloseL( fpImage );
     }
 
-    if( poDepFile != NULL )
-    {
-        int iBand;
-
-        for( iBand = 0; iBand < nBands; iBand++ )
-            papoBands[iBand] = NULL;
-
-        GDALClose( (GDALDatasetH) poDepFile );
-    }
+    CloseDependentDatasets();
 
     CPLFree( pszProjection );
 
@@ -151,6 +147,29 @@ ERSDataset::~ERSDataset()
 
     if( poHeader != NULL )
         delete poHeader;
+}
+
+/************************************************************************/
+/*                      CloseDependentDatasets()                        */
+/************************************************************************/
+
+int ERSDataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = poDepFile != 0;
+
+    if( poDepFile != NULL )
+    {
+        int iBand;
+
+        for( iBand = 0; iBand < nBands; iBand++ )
+            papoBands[iBand] = NULL;
+        nBands = 0;
+
+        GDALClose( (GDALDatasetH) poDepFile );
+        poDepFile = NULL;
+    }
+
+    return bHasDroppedRef;
 }
 
 /************************************************************************/
