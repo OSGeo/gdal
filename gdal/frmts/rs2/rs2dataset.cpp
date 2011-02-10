@@ -580,7 +580,10 @@ RS2Dataset::~RS2Dataset()
 
 int RS2Dataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = nBands != 0;
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
+
+    if (nBands != 0)
+        bHasDroppedRef = TRUE;
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
