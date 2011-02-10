@@ -126,6 +126,9 @@ GDALDriverManager::GDALDriverManager()
 /*                         ~GDALDriverManager()                         */
 /************************************************************************/
 
+void GDALDatasetPoolPreventDestroy(); /* keep that in sync with gdalproxypool.cpp */
+void GDALDatasetPoolForceDestroy(); /* keep that in sync with gdalproxypool.cpp */
+
 GDALDriverManager::~GDALDriverManager()
 
 {
@@ -138,6 +141,20 @@ GDALDriverManager::~GDALDriverManager()
     /* First begin by requesting each reamining dataset to drop any reference */
     /* to other datasets */
     int bHasDroppedRef;
+
+    /* We have to prevent the destroying of the dataset pool during this first */
+    /* phase, otherwise it cause crashes with a VRT B referencing a VRT A, and if */
+    /* CloseDependentDatasets() is called first on VRT A. */
+    /* If we didn't do this nasty trick, due to the refCountOfDisableRefCount */
+    /* mechanism that cheats the real refcount of the dataset pool, we might */
+    /* destroy the dataset pool too early, leading the VRT A to */
+    /* destroy itself indirectly ... Ok, I am aware this explanation does */
+    /* not make any sense unless you try it under a debugger ... */
+    /* When people just manipulate "top-level" dataset handles, we luckily */
+    /* don't need this horrible hack, but GetOpenDatasets() expose "low-level" */
+    /* datasets, which defeat some "design" of the proxy pool */
+    GDALDatasetPoolPreventDestroy();
+
     do
     {
         papoDSList = GDALDataset::GetOpenDatasets(&nDSCount);
@@ -146,8 +163,16 @@ GDALDriverManager::~GDALDriverManager()
         /* list */
         bHasDroppedRef = FALSE;
         for(i=0;i<nDSCount && !bHasDroppedRef;i++)
+        {
+            //CPLDebug("GDAL", "Call CloseDependentDatasets() on %s",
+            //      papoDSList[i]->GetDescription() );
             bHasDroppedRef = papoDSList[i]->CloseDependentDatasets();
+        }
     } while(bHasDroppedRef);
+
+    /* Now let's destroy the dataset pool. Nobody shoud use it afterwards */
+    /* if people have well released their dependent datasets above */
+    GDALDatasetPoolForceDestroy();
 
     /* Now close the stand-alone datasets */
     papoDSList = GDALDataset::GetOpenDatasets(&nDSCount);
