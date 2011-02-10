@@ -102,6 +102,9 @@ class GDALDatasetPool
         static void Unref();
         static GDALProxyPoolCacheEntry* RefDataset(const char* pszFileName, GDALAccess eAccess);
         static void UnrefDataset(GDALProxyPoolCacheEntry* cacheEntry);
+
+        static void PreventDestroy();
+        static void ForceDestroy();
 };
 
 
@@ -319,6 +322,22 @@ void GDALDatasetPool::Ref()
       singleton->refCount++;
 }
 
+/* keep that in sync with gdaldrivermanager.cpp */
+void GDALDatasetPool::PreventDestroy()
+{
+    CPLMutexHolderD( GDALGetphDLMutex() );
+    if (! singleton)
+        return;
+    singleton->refCountOfDisableRefCount ++;
+}
+
+/* keep that in sync with gdaldrivermanager.cpp */
+void GDALDatasetPoolPreventDestroy()
+{
+    GDALDatasetPool::PreventDestroy();
+}
+
+
 /************************************************************************/
 /*                               Unref()                                */
 /************************************************************************/
@@ -340,6 +359,25 @@ void GDALDatasetPool::Unref()
           singleton = NULL;
       }
     }
+}
+
+/* keep that in sync with gdaldrivermanager.cpp */
+void GDALDatasetPool::ForceDestroy()
+{
+    CPLMutexHolderD( GDALGetphDLMutex() );
+    if (! singleton)
+        return;
+    singleton->refCountOfDisableRefCount --;
+    CPLAssert(singleton->refCountOfDisableRefCount == 0);
+    singleton->refCount = 0;
+    delete singleton;
+    singleton = NULL;
+}
+
+/* keep that in sync with gdaldrivermanager.cpp */
+void GDALDatasetPoolForceDestroy()
+{
+    GDALDatasetPool::ForceDestroy();
 }
 
 /************************************************************************/
