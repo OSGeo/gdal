@@ -219,45 +219,45 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszDatum,"RAW") )
     {
-        nEPSGCode = GetEPSGGeogCS();
+        int nEPSGGCSCode = GetEPSGGeogCS();
 
-        if( nEPSGCode == 4326 )
+        if( nEPSGGCSCode == 4326 )
             strcpy( pszDatum, "WGS84" );
 
-        else if( nEPSGCode == 4322 )
+        else if( nEPSGGCSCode == 4322 )
             strcpy( pszDatum, "WGS72DOD" );
         
-        else if( nEPSGCode == 4267 )
+        else if( nEPSGGCSCode == 4267 )
             strcpy( pszDatum, "NAD27" );
         
-        else if( nEPSGCode == 4269 )
+        else if( nEPSGGCSCode == 4269 )
             strcpy( pszDatum, "NAD83" );
 
-        else if( nEPSGCode == 4277 )
+        else if( nEPSGGCSCode == 4277 )
             strcpy( pszDatum, "OSGB36" );
 
-        else if( nEPSGCode == 4278 )
+        else if( nEPSGGCSCode == 4278 )
             strcpy( pszDatum, "OSGB78" );
 
-        else if( nEPSGCode == 4201 )
+        else if( nEPSGGCSCode == 4201 )
             strcpy( pszDatum, "ADINDAN" );
 
-        else if( nEPSGCode == 4202 )
+        else if( nEPSGGCSCode == 4202 )
             strcpy( pszDatum, "AGD66" );
 
-        else if( nEPSGCode == 4203 )
+        else if( nEPSGGCSCode == 4203 )
             strcpy( pszDatum, "AGD84" );
 
-        else if( nEPSGCode == 4209 )
+        else if( nEPSGGCSCode == 4209 )
             strcpy( pszDatum, "ARC1950" );
 
-        else if( nEPSGCode == 4210 )
+        else if( nEPSGGCSCode == 4210 )
             strcpy( pszDatum, "ARC1960" );
 
-        else if( nEPSGCode == 4275 )
+        else if( nEPSGGCSCode == 4275 )
             strcpy( pszDatum, "NTF" );
 
-        else if( nEPSGCode == 4284 )
+        else if( nEPSGGCSCode == 4284 )
             strcpy( pszDatum, "PULKOVO" );
     }
 
@@ -304,6 +304,16 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
             strncpy( pszProj, pszPROJCS, 32 );
             pszProj[31] = '\0';
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have not translated it yet, but we have an EPSG code      */
+/*      then use EPSG:n notation.                                       */
+/* -------------------------------------------------------------------- */
+    if( (EQUAL(pszDatum,"RAW") || EQUAL(pszProj,"RAW")) && nEPSGCode != 0 )
+    {
+        sprintf( pszProj, "EPSG:%d", nEPSGCode );
+        sprintf( pszDatum, "EPSG:%d", nEPSGCode );
     }
 
 /* -------------------------------------------------------------------- */
