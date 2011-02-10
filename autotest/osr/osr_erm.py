@@ -54,8 +54,31 @@ def osr_erm_1():
 
     return 'success'
 
+###############################################################################
+# Confirm that unsupported SRSes will be translated from/to EPSG:n
+# format (#3955)
+#
+
+def osr_erm_2():
+
+    srs = osr.SpatialReference()
+    if srs.ImportFromERM( 'EPSG:3395', 'EPSG:3395', 'METRE' ) != 0 \
+       or not srs.IsProjected():
+        gdaltest.post_reason( 'EPSG:n import failed.' )
+        return 'fail'
+
+    srs2 = osr.SpatialReference()
+    srs2.SetFromUserInput('EPSG:3395')
+
+    if not srs2.IsSame(srs):
+        gdaltest.post_reason( 'EPSG:n import does not match.' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_erm_1,
+    osr_erm_2,
     None ]
 
 if __name__ == '__main__':
