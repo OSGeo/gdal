@@ -149,11 +149,14 @@ PDSDataset::~PDSDataset()
 
 int PDSDataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = poCompressedDS != NULL;
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
     if( poCompressedDS )
+    {
+        bHasDroppedRef = TRUE;
         delete poCompressedDS;
-    poCompressedDS = NULL;
+        poCompressedDS = NULL;
+    }
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {

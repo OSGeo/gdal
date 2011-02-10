@@ -171,6 +171,8 @@ class CPL_DLL GDALDefaultOverviews
 
     int        IsInitialized();
 
+    int        CloseDependentDatasets();
+
     // Overview Related
 
     int        GetOverviewCount(int);

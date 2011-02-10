@@ -155,11 +155,13 @@ ERSDataset::~ERSDataset()
 
 int ERSDataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = poDepFile != 0;
+    int bHasDroppedRef = RawDataset::CloseDependentDatasets();
 
     if( poDepFile != NULL )
     {
         int iBand;
+
+        bHasDroppedRef = TRUE;
 
         for( iBand = 0; iBand < nBands; iBand++ )
             papoBands[iBand] = NULL;
