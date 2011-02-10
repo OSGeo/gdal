@@ -66,8 +66,19 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
     CPLFree( pszInitName );
     CSLDestroy( papszInitSiblingFiles );
 
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                       CloseDependentDatasets()                       */
+/************************************************************************/
+
+int GDALDefaultOverviews::CloseDependentDatasets()
+{
+    int bHasDroppedRef = FALSE;
     if( poODS != NULL )
     {
+        bHasDroppedRef = TRUE;
         poODS->FlushCache();
         GDALClose( poODS );
         poODS = NULL;
@@ -77,11 +88,14 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
     {
         if( bOwnMaskDS )
         {
+            bHasDroppedRef = TRUE;
             poMaskDS->FlushCache();
             GDALClose( poMaskDS );
         }
         poMaskDS = NULL;
     }
+
+    return bHasDroppedRef;
 }
 
 /************************************************************************/

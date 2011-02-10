@@ -159,11 +159,14 @@ DIMAPDataset::~DIMAPDataset()
 
 int DIMAPDataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = poImageDS != NULL;
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
     if( poImageDS != NULL )
+    {
         delete poImageDS;
-    poImageDS = NULL;
+        poImageDS = NULL;
+        bHasDroppedRef = TRUE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Disconnect the bands so our destructor doesn't try and          */

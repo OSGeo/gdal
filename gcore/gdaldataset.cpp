@@ -2660,5 +2660,5 @@ void CPL_STDCALL GDALEndAsyncReader(GDALDatasetH hDS, GDALAsyncReaderH hAsyncRea
  */
 int GDALDataset::CloseDependentDatasets()
 {
-    return FALSE;
+    return oOvManager.CloseDependentDatasets();
 }
