@@ -327,10 +327,12 @@ BIGGIFDataset::~BIGGIFDataset()
 
 int BIGGIFDataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = poWorkDS != NULL;
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
     if( poWorkDS != NULL )
     {
+        bHasDroppedRef = TRUE;
+
         CPLString osTempFilename = poWorkDS->GetDescription();
 
         GDALClose( (GDALDatasetH) poWorkDS );

@@ -949,9 +949,9 @@ NITFDataset::~NITFDataset()
 
 int NITFDataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = FALSE;
-
     FlushCache();
+
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
 /* -------------------------------------------------------------------- */
 /*      If we have been writing to a JPEG2000 file, check if the        */

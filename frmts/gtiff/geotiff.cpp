@@ -346,6 +346,12 @@ class GTiffDataset : public GDALPamDataset
     CPLErr        CreateInternalMaskOverviews(int nOvrBlockXSize,
                                               int nOvrBlockYSize);
 
+    int           bIsFinalized;
+    int           Finalize();
+
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -2774,6 +2780,8 @@ GTiffDataset::GTiffDataset()
     bPromoteTo8Bits = FALSE;
 
     bDebugDontWriteBlocks = CSLTestBoolean(CPLGetConfigOption("GTIFF_DONT_WRITE_BLOCKS", "NO"));
+
+    bIsFinalized = FALSE;
 }
 
 /************************************************************************/
@@ -2783,6 +2791,20 @@ GTiffDataset::GTiffDataset()
 GTiffDataset::~GTiffDataset()
 
 {
+    Finalize();
+}
+
+/************************************************************************/
+/*                             Finalize()                               */
+/************************************************************************/
+
+int GTiffDataset::Finalize()
+{
+    if (bIsFinalized)
+        return FALSE;
+
+    int bHasDroppedRef = FALSE;
+
     Crystalize();
 
 /* -------------------------------------------------------------------- */
@@ -2836,41 +2858,76 @@ GTiffDataset::~GTiffDataset()
         for( int i = 0; i < nOverviewCount; i++ )
         {
             delete papoOverviewDS[i];
+            bHasDroppedRef = TRUE;
         }
+        nOverviewCount = 0;
     }
 
     /* If we are a mask dataset, we can have overviews, but we don't */
     /* own them. We can only free the array, not the overviews themselves */
     CPLFree( papoOverviewDS );
+    papoOverviewDS = NULL;
 
     /* poMaskDS is owned by the main image and the overviews */
     /* so because of the latter case, we can delete it even if */
     /* we are not the base image */
     if (poMaskDS)
+    {
         delete poMaskDS;
+        poMaskDS = NULL;
+        bHasDroppedRef = TRUE;
+    }
 
     if( poColorTable != NULL )
         delete poColorTable;
+    poColorTable = NULL;
 
     if( bBase || bCloseTIFFHandle )
     {
         XTIFFClose( hTIFF );
+        hTIFF = NULL;
     }
 
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
+        pasGCPList = NULL;
+        nGCPCount = 0;
     }
 
     CPLFree( pszProjection );
+    pszProjection = NULL;
 
     CSLDestroy( papszCreationOptions );
+    papszCreationOptions = NULL;
 
     CPLFree(pabyTempWriteBuffer);
+    pabyTempWriteBuffer = NULL;
 
     if( *ppoActiveDSRef == this )
         *ppoActiveDSRef = NULL;
+    ppoActiveDSRef = NULL;
+
+    bIsFinalized = TRUE;
+
+    return bHasDroppedRef;
+}
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int GTiffDataset::CloseDependentDatasets()
+{
+    if (!bBase)
+        return FALSE;
+
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
+
+    bHasDroppedRef |= Finalize();
+
+    return bHasDroppedRef;
 }
 
 /************************************************************************/
@@ -3295,6 +3352,9 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
 void GTiffDataset::FlushCache()
 
 {
+    if (bIsFinalized)
+        return;
+
     GDALPamDataset::FlushCache();
 
     if( bLoadedBlockDirty && nLoadedBlock != -1 )
@@ -3517,6 +3577,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset)
     if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nOverviewOffset, FALSE,
                             GA_Update ) != CE_None )
     {
+        delete poODS;
         return CE_Failure;
     }
     else

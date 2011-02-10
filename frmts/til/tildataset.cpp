@@ -136,11 +136,14 @@ TILDataset::~TILDataset()
 
 int TILDataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = poVRTDS != NULL;
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
     if( poVRTDS )
+    {
+        bHasDroppedRef = TRUE;
         delete poVRTDS;
-    poVRTDS = NULL;
+        poVRTDS = NULL;
+    }
 
     while( !apoTileDS.empty() )
     {

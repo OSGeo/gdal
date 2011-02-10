@@ -294,9 +294,9 @@ VRTWarpedDataset::~VRTWarpedDataset()
 
 int VRTWarpedDataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = FALSE;
-
     FlushCache();
+
+    int bHasDroppedRef = VRTDataset::CloseDependentDatasets();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup overviews.                                              */
