@@ -1126,6 +1126,11 @@ void VRTDataset::SetMaskBand(VRTRasterBand* poMaskBand)
 int VRTDataset::CloseDependentDatasets()
 {
     int bHasDroppedRef = FALSE;
+
+    /* We need to call it before removing the sources, otherwise */
+    /* we would remove them from the serizalized VRT */
+    FlushCache();
+
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
        bHasDroppedRef |= ((VRTRasterBand *) papoBands[iBand])->
