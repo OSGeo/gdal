@@ -49,7 +49,8 @@ init_list = [ \
     ('uint32.img', 1, 4672, None),
     ('float32.img', 1, 4672, None),
     ('float64.img', 1, 4672, None),
-    ('utmsmall.img', 1, 50054, None)]
+    ('utmsmall.img', 1, 50054, None),
+    ('2bit_compressed.img', 1, 11918, None)]
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2] )

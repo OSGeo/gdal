@@ -913,6 +913,25 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 }
             }
         }
+        else if( nDataType == EPT_u2 )
+        {
+            int		i;
+
+            CPLAssert( nDataValue >= 0 && nDataValue < 4 );
+
+            for( i = 0; i < nRepeatCount; i++ )
+            {
+                if( (nPixelsOutput & 0x3) == 0 )
+                    pabyDest[nPixelsOutput>>2] = (GByte) nDataValue;
+                else if( (nPixelsOutput & 0x3) == 1 )
+                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<2);
+                else if( (nPixelsOutput & 0x3) == 2 )
+                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<4);
+                else
+                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<6);
+                nPixelsOutput++;
+            }
+        }
         else if( nDataType == EPT_u4 )
         {
             int		i;
@@ -939,7 +958,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 
     return CE_None;
     
-not_enough_bytes:
+  not_enough_bytes:
 
     CPLError(CE_Failure, CPLE_AppDefined, "Not enough bytes in compressed block");
     return CE_Failure;
