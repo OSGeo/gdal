@@ -150,8 +150,8 @@ bool BAGRasterBand::Initialize( hid_t hDatasetID, const char *pszName )
     {
         H5Sget_simple_extent_dims( dataspace, dims, maxdims );
 
-        nRasterXSize = dims[1];
-        nRasterYSize = dims[0];
+        nRasterXSize = (int) dims[1];
+        nRasterYSize = (int) dims[0];
     }
     else
     {
@@ -174,8 +174,8 @@ bool BAGRasterBand::Initialize( hid_t hDatasetID, const char *pszName )
         {
             hsize_t panChunkDims[3];
             int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
-            nBlockXSize   = panChunkDims[nDimSize-1];
-            nBlockYSize   = panChunkDims[nDimSize-2];
+            nBlockXSize  = (int) panChunkDims[nDimSize-1];
+            nBlockYSize  = (int) panChunkDims[nDimSize-2];
         }
         H5Pclose(listid);
     }
@@ -289,7 +289,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     col_dims[0]=nBlockYSize;
     col_dims[1]=nBlockXSize;
-    memspace = H5Screate_simple( rank, col_dims, NULL );
+    memspace = H5Screate_simple( (int) rank, col_dims, NULL );
     H5OFFSET_TYPE mem_offset[3] = {0, 0, 0};
     status =  H5Sselect_hyperslab(memspace,
                                   H5S_SELECT_SET,
@@ -529,7 +529,7 @@ void BAGDataset::LoadMetadata()
 
     H5Sget_simple_extent_dims( dataspace, dims, maxdims );
 
-    pszXMLMetadata = (char *) CPLCalloc(dims[0]+1,1);
+    pszXMLMetadata = (char *) CPLCalloc((int) (dims[0]+1),1);
 
     H5Dread( hMDDS, native, H5S_ALL, dataspace, H5P_DEFAULT, pszXMLMetadata );
 

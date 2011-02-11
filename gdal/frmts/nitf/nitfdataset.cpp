@@ -3144,7 +3144,7 @@ int NITFDataset::CheckForRSets( const char *pszNITFFilename )
         if ( isR0File )
         {
           osTarget = pszNITFFilename;
-          osTarget[osTarget.size()-1] = ('0' + i );
+          osTarget[osTarget.size()-1] = (char) ('0' + i );
         }
         else
           osTarget.Printf( "%s.r%d", pszNITFFilename, i );
@@ -5249,13 +5249,13 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
     nOffset ++;
 
     /* Number of image blocks per row */
-    nUInt16 = nNBPR;
+    nUInt16 = (GUInt16) nNBPR;
     CPL_MSBPTR16(&nUInt16);
     memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
     nOffset += sizeof(nUInt16);
 
     /* Number of image blocks per column */
-    nUInt16 = nNBPC;
+    nUInt16 = (GUInt16) nNBPC;
     CPL_MSBPTR16(&nUInt16);
     memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
     nOffset += sizeof(nUInt16);

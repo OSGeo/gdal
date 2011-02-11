@@ -528,8 +528,8 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
     }
 
     /* take into account z resolutions that are not 1.0 */
-    nMin = (int) floor(nMin * psWInfo->dfElevStepSize);
-    nMax = (int) ceil(nMax * psWInfo->dfElevStepSize);
+    nMin = (GInt16) floor(nMin * psWInfo->dfElevStepSize);
+    nMax = (GInt16) ceil(nMax * psWInfo->dfElevStepSize);
     
     USGSDEMPrintDouble( achARec + 738, (double) nMin );
     USGSDEMPrintDouble( achARec + 762, (double) nMax );
@@ -787,8 +787,8 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
     }
     
     /* take into account z resolutions that are not 1.0 */
-    nMin = (int) floor(nMin * psWInfo->dfElevStepSize);
-    nMax = (int) ceil(nMax * psWInfo->dfElevStepSize);
+    nMin = (GInt16) floor(nMin * psWInfo->dfElevStepSize);
+    nMax = (GInt16) ceil(nMax * psWInfo->dfElevStepSize);
 
     USGSDEMPrintDouble( achBuffer +  96, (double) nMin );
     USGSDEMPrintDouble( achBuffer +  120, (double) nMax );

@@ -86,7 +86,7 @@ class NTv2Dataset : public RawDataset
     VSILFILE	*fpImage;	// image data file.
 
     int         nRecordLength;
-    int         nGridOffset;
+    vsi_l_offset nGridOffset;
     
     double      adfGeoTransform[6];
 
@@ -824,10 +824,10 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
     memset( achHeader, 0, 16 );
 
     // Use -1 (0x000080bf) as the default error value.
-    achHeader[10] = 0x80;
-    achHeader[11] = 0xbf;
-    achHeader[14] = 0x80;
-    achHeader[15] = 0xbf;
+    memset( achHeader + 10, 1, 0x80 );
+    memset( achHeader + 11, 1, 0xbf );
+    memset( achHeader + 14, 1, 0x80 );
+    memset( achHeader + 15, 1, 0xbf );
 
     for( i = 0; i < nXSize * nYSize; i++ )
         VSIFWriteL( achHeader, 1, 16, fp );

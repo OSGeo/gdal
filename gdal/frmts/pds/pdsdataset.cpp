@@ -363,10 +363,10 @@ void PDSDataset::ParseSRS()
     double semi_major = 0.0;
     double semi_minor = 0.0;
     double iflattening = 0.0;
-    float center_lat = 0.0;
-    float center_lon = 0.0;
-    float first_std_parallel = 0.0;
-    float second_std_parallel = 0.0;
+    double center_lat = 0.0;
+    double center_lon = 0.0;
+    double first_std_parallel = 0.0;
+    double second_std_parallel = 0.0;
     OGRSpatialReference oSRS;
 
     /***********  Grab TARGET_NAME  ************/

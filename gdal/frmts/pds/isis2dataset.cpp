@@ -255,10 +255,10 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     double semi_major = 0.0;
     double semi_minor = 0.0;
     double iflattening = 0.0;
-    float center_lat = 0.0;
-    float center_lon = 0.0;
-    float first_std_parallel = 0.0;
-    float second_std_parallel = 0.0;
+    double center_lat = 0.0;
+    double center_lon = 0.0;
+    double first_std_parallel = 0.0;
+    double second_std_parallel = 0.0;
     VSILFILE	*fp;
 
     /* -------------------------------------------------------------------- */
@@ -1069,7 +1069,7 @@ int ISIS2Dataset::WriteLabel(
     unsigned int q = nWritingBytes/RECORD_SIZE;
     if( q <= iLabelRecords){
         // correct we add space after the label end for complete from iLabelRecords
-        unsigned int nSpaceBytesToWrite = iLabelRecords * RECORD_SIZE - nWritingBytes;
+        unsigned int nSpaceBytesToWrite = (unsigned int) (iLabelRecords * RECORD_SIZE - nWritingBytes);
         VSIFPrintfL(fpLabel,"%*c", nSpaceBytesToWrite, ' ');
     }else{
         iLabelRecords = q+1;

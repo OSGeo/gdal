@@ -115,7 +115,7 @@ static char **OSRProj4Tokenize( const char *pszFull )
 static const char *OSR_GSV( char **papszNV, const char * pszField )
 
 {
-    int field_len = strlen(pszField);
+    size_t field_len = strlen(pszField);
     int i;
     
     if( !papszNV )

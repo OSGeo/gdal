@@ -142,7 +142,7 @@ static int ReadInt(GByte**pptr)
     return nVal;
 }
 
-static int ReadShort(GByte**pptr)
+static short ReadShort(GByte**pptr)
 {
     short nVal;
     memcpy(&nVal, *pptr, 2);
@@ -155,16 +155,16 @@ static int ReadInt(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
 {
     int nVal;
     VSIFReadL(&nVal, 1, 4, fp);
-    if (bOzi3) OZIDecrypt(&nVal, 4, nKeyInit);
+    if (bOzi3) OZIDecrypt(&nVal, 4, (GByte) nKeyInit);
     CPL_LSBPTR32(&nVal);
     return nVal;
 }
 
-static int ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
+static short ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
 {
     short nVal;
     VSIFReadL(&nVal, 1, 2, fp);
-    if (bOzi3) OZIDecrypt(&nVal, 2, nKeyInit);
+    if (bOzi3) OZIDecrypt(&nVal, 2, (GByte) nKeyInit);
     CPL_LSBPTR16(&nVal);
     return nVal;
 }

@@ -434,7 +434,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             if (ok_to_add) {
                 poDS->SetBand( band_count, new MSGNRasterBand( poDS, band_count, open_mode, i+1, i+1 - missing_band_count));
-                band_map[band_count] = i+1;
+                band_map[band_count] = (unsigned char) (i+1);
                 band_count++;
             }
         } else {

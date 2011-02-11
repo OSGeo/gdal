@@ -110,7 +110,7 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     VSIFSeekL( fp, 0, SEEK_END );
-    nFileSize = VSIFTellL( fp );
+    nFileSize = (unsigned int) VSIFTellL( fp );
     
     pszFileContents = (char *) VSIMalloc(nFileSize+1);
     if( pszFileContents == NULL )

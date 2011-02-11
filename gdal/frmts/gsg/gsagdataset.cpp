@@ -335,8 +335,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( (nBlockYOff > 0) && ( panLineOffset[nBlockYOff-1] != 0 ) )
     {
 	assert(panLineOffset[nBlockYOff-1] > panLineOffset[nBlockYOff]);
-	nLineBufSize = panLineOffset[nBlockYOff-1]
-            - panLineOffset[nBlockYOff] + 1;
+	nLineBufSize = (size_t) (panLineOffset[nBlockYOff-1]
+                                 - panLineOffset[nBlockYOff] + 1);
     }
     else
     {
@@ -626,8 +626,8 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     CPLString sOut = ssOutBuf.str();
     if( sOut.length() != panLineOffset[nBlockYOff+1]-panLineOffset[nBlockYOff] )
     {
-	int nShiftSize = sOut.length() - (panLineOffset[nBlockYOff+1]
-					  - panLineOffset[nBlockYOff]);
+	int nShiftSize = (int) (sOut.length() - (panLineOffset[nBlockYOff+1]
+                                                 - panLineOffset[nBlockYOff]));
 	if( nBlockYOff != poGDS->nRasterYSize
 	    && GSAGDataset::ShiftFileContents( poGDS->fp,
 					       panLineOffset[nBlockYOff+1],
@@ -1309,7 +1309,10 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
 	nRead = VSIFReadL( (void *)(pabyBuffer+nOverlap), 1,
 			   nBufferSize - nOverlap, fp );
 
-	bEOF = VSIFEofL( fp );
+        if( VSIFEofL( fp ) )
+            bEOF = true;
+        else 
+            bEOF = false;
 
 	if( nRead == 0 && !bEOF )
 	{
@@ -1440,7 +1443,7 @@ CPLErr GSAGDataset::UpdateHeader()
     CPLString sOut = ssOutBuf.str();
     if( sOut.length() != poBand->panLineOffset[0] )
     {
-	int nShiftSize = sOut.length() - poBand->panLineOffset[0];
+	int nShiftSize = (int) (sOut.length() - poBand->panLineOffset[0]);
 	if( ShiftFileContents( fp, poBand->panLineOffset[0], nShiftSize,
 			       szEOL ) != CE_None )
 	{

@@ -250,7 +250,7 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         iBitOffset = iBitOffset + nPixelOffsetBits - nBits;
                 
-        ((GByte *) pImage)[iPixel++] = nOutWord;
+        ((GByte *) pImage)[iPixel++] = (GByte) nOutWord;
     }
 
     CPLFree( pabyBuffer );
@@ -1099,11 +1099,11 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"PIXELTYPE") )
         {
-            chPixelType = toupper(papszTokens[1][0]);
+            chPixelType = (char) toupper(papszTokens[1][0]);
         }
         else if( EQUAL(papszTokens[0],"byteorder") )
         {
-            chByteOrder = toupper(papszTokens[1][0]);
+            chByteOrder = (char) toupper(papszTokens[1][0]);
         }
 
         /* http://www.worldclim.org/futdown.htm have the projection extensions */
@@ -1171,7 +1171,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIStatBufL sStatBuf;
         if( VSIStatL( poOpenInfo->pszFilename, &sStatBuf ) == 0 )
         {
-            size_t nBytes = sStatBuf.st_size/nCols/nRows/nBands;
+            size_t nBytes = (size_t) (sStatBuf.st_size/nCols/nRows/nBands);
             if( nBytes > 0 && nBytes != 3 )
                 nBits = nBytes*8;
 
@@ -1599,9 +1599,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                 int nIndex = atoi( papszValues[0] ); // Index
                 if (nIndex >= 0 && nIndex < 65536)
                 {
-                    oEntry.c1 = atoi( papszValues[1] ); // Red
-                    oEntry.c2 = atoi( papszValues[2] ); // Green
-                    oEntry.c3 = atoi( papszValues[3] ); // Blue
+                    oEntry.c1 = (short) atoi( papszValues[1] ); // Red
+                    oEntry.c2 = (short) atoi( papszValues[2] ); // Green
+                    oEntry.c3 = (short) atoi( papszValues[3] ); // Blue
                     oEntry.c4 = 255;
 
                     oColorTable.SetColorEntry( nIndex, &oEntry );

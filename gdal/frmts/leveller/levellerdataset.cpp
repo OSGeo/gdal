@@ -488,8 +488,8 @@ CPLErr LevellerRasterBand::IWriteBlock
 		for(size_t x = 0; x < (size_t)nBlockXSize; x++)
 		{
 			// Convert logical elevations to physical.
-			m_pLine[x] = 
-				(pfImage[x] - ds.m_dElevBase) / ds.m_dElevScale;
+                    m_pLine[x] = (float) 
+				((pfImage[x] - ds.m_dElevBase) / ds.m_dElevScale);
 		}
 
 #ifdef CPL_MSB 

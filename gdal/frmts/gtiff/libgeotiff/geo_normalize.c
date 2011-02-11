@@ -109,13 +109,13 @@ int GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
             }
 
             if (pnProjOp)
-                *pnProjOp = ((Proj == MapSys_UTM_North) ? Proj_UTM_zone_1N - 1 : Proj_UTM_zone_1S - 1) + nZone;
+                *pnProjOp = (short) (((Proj == MapSys_UTM_North) ? Proj_UTM_zone_1N - 1 : Proj_UTM_zone_1S - 1) + nZone);
 
             if (pnUOMLengthCode)
                 *pnUOMLengthCode = 9001; /* Linear_Meter */
 
             if (pnGeogCS)
-                *pnGeogCS = nDatum;
+                *pnGeogCS = (short) nDatum;
 
             return TRUE;
         }
@@ -325,7 +325,7 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 
 {
     char	szSearchKey[24];
-    int		nDatum, nPM, nUOMAngle;
+    int		nDatum=0, nPM, nUOMAngle;
     const char *pszFilename;
 
 /* -------------------------------------------------------------------- */
@@ -452,14 +452,14 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
 
 {
     char	szSearchKey[24];
-    double	dfSemiMajor, dfToMeters = 1.0;
+    double	dfSemiMajor=0.0, dfToMeters = 1.0;
     int		nUOMLength;
     const char* pszFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Try some well known ellipsoids.                                 */
 /* -------------------------------------------------------------------- */
-    double     dfInvFlattening, dfSemiMinor;
+    double     dfInvFlattening=0.0, dfSemiMinor=0.0;
     const char *pszName = NULL;
     
     if( nEllipseCode == Ellipse_Clarke_1866 )
@@ -645,7 +645,7 @@ int GTIFGetDatumInfo( int nDatumCode, char ** ppszName, short * pnEllipsoid )
 
 {
     char	szSearchKey[24];
-    int		nEllipsoid;
+    int		nEllipsoid = 0;
     const char *pszFilename;
     FILE       *fp;
     const char *pszName = NULL;

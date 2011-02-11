@@ -141,7 +141,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     if (pGrd->iNumColorInflections > 32)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Corrupt header");
-        pGrd->iNumColorInflections = i;
+        pGrd->iNumColorInflections = (unsigned short)i;
         return FALSE;
     }
     
@@ -574,8 +574,8 @@ HLS RGBtoHLS( NWT_RGB rgb )
     B = rgb.b;
 
     /* calculate lightness */
-    cMax = MAX( MAX(R,G), B );
-    cMin = MIN( MIN(R,G), B );
+    cMax = (unsigned char) MAX( MAX(R,G), B );
+    cMin = (unsigned char) MIN( MIN(R,G), B );
     hls.l = (((cMax + cMin) * HLSMAX) + RGBMAX) / (2 * RGBMAX);
 
     if( cMax == cMin )
@@ -647,7 +647,7 @@ NWT_RGB HLStoRGB( HLS hls )
 
     if( hls.s == 0 )
     {                            /* achromatic case */
-        rgb.r = rgb.g = rgb.b = (hls.l * RGBMAX) / HLSMAX;
+        rgb.r = rgb.g = rgb.b = (unsigned char) ((hls.l * RGBMAX) / HLSMAX);
         if( hls.h != UNDEFINED )
         {
             /* ERROR */
@@ -663,12 +663,9 @@ NWT_RGB HLStoRGB( HLS hls )
         Magic1 = 2 * hls.l - Magic2;
 
         /* get RGB, change units from HLSMAX to RGBMAX */
-        rgb.r = (HueToRGB (Magic1, Magic2, hls.h + (HLSMAX / 3)) * RGBMAX +
-                 (HLSMAX / 2)) / HLSMAX;
-        rgb.g = (HueToRGB (Magic1, Magic2, hls.h) * RGBMAX + (HLSMAX / 2)) /
-                  HLSMAX;
-        rgb.b = (HueToRGB (Magic1, Magic2, hls.h - (HLSMAX / 3)) * RGBMAX +
-                 (HLSMAX / 2)) / HLSMAX;
+        rgb.r = (unsigned char) ((HueToRGB (Magic1, Magic2, hls.h + (HLSMAX / 3)) * RGBMAX + (HLSMAX / 2)) / HLSMAX);
+        rgb.g = (unsigned char) ((HueToRGB (Magic1, Magic2, hls.h) * RGBMAX + (HLSMAX / 2)) / HLSMAX);
+        rgb.b = (unsigned char) ((HueToRGB (Magic1, Magic2, hls.h - (HLSMAX / 3)) * RGBMAX + (HLSMAX / 2)) / HLSMAX);
     }
 
     return rgb;
