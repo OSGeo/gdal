@@ -64,6 +64,10 @@ CPL_C_END
 // at the same time. Do NOT use it unless you're ready to fix it
 //#define SUPPORT_CREATE
 
+// we believe it is ok to use setjmp() in this situation.
+#ifdef _MSC_VER
+#  pragma warning(disable:4611)
+#endif
 
 static void
 png_vsi_read_data(png_structp png_ptr, png_bytep data, png_size_t length);

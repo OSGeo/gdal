@@ -6,6 +6,8 @@ GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
+EXTRAFLAGS =	$(SOFTWARNFLAGS)
+
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\..\o
 

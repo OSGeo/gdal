@@ -86,7 +86,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
 /* -------------------------------------------------------------------- */
-    const char *interleaving;
+    const char *interleaving = NULL;
     std::string compression = "NONE";
     bool nozero = false;
     int  blocksize = 127;
@@ -146,7 +146,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /*      Establish some key file layout information.                     */
 /* ==================================================================== */
     int image_header_start = 1;                    // in blocks
-    uint64 image_data_start, image_data_size;      // in blocks
+    uint64 image_data_start, image_data_size=0;    // in blocks
     uint64 segment_ptr_start, segment_ptr_size=64; // in blocks
     int pixel_group_size, line_size;               // in bytes
     int image_header_count = channel_count;

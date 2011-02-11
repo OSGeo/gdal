@@ -778,7 +778,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                                         szSearchKey, CC_Integer, 
                                         "datum_code" );
                 if( pszValue != NULL )
-                    verticalDatum = atoi(pszValue);
+                    verticalDatum = (short) atoi(pszValue);
             }
 
             if( EQUAL(citation,"unknown") )
@@ -805,7 +805,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                                             pszValue, CC_Integer, 
                                             "uom_code" );
                     if( pszValue != NULL )
-                        verticalUnits = atoi(pszValue);
+                        verticalUnits = (short) atoi(pszValue);
                 }                
             }
         }

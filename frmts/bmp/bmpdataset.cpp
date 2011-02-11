@@ -1040,7 +1040,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef CPL_MSB
     CPL_SWAP32PTR( &poDS->sFileHeader.iOffBits );
 #endif
-    poDS->sFileHeader.iSize = sStat.st_size;
+    poDS->sFileHeader.iSize = (GUInt32) sStat.st_size;
 
 #ifdef BMP_DEBUG
     CPLDebug( "BMP", "File size %d bytes.", poDS->sFileHeader.iSize );

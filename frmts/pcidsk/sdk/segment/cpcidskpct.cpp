@@ -68,9 +68,9 @@ void CPCIDSK_PCT::ReadPCT( unsigned char pct[768] )
     int i;
     for( i = 0; i < 256; i++ )
     {
-        pct[  0+i] = seg_data.GetInt(   0+i*4, 4 );
-        pct[256+i] = seg_data.GetInt(1024+i*4, 4 );
-        pct[512+i] = seg_data.GetInt(2048+i*4, 4 );
+        pct[  0+i] = (unsigned char) seg_data.GetInt(   0+i*4, 4 );
+        pct[256+i] = (unsigned char) seg_data.GetInt(1024+i*4, 4 );
+        pct[512+i] = (unsigned char) seg_data.GetInt(2048+i*4, 4 );
     }
 }
 

@@ -716,7 +716,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
 
     GDALDataType eSrcDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     GDALDataType eReqDT;
-    float fVertPres = 0.01;
+    float fVertPres = (float) 0.01;
     if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16)
     {
         fVertPres = 1;
@@ -736,12 +736,12 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     const char* pszVerticalPrecision = CSLFetchNameValue(papszOptions, "VERTICAL_PRECISION");
     if (pszVerticalPrecision)
     {
-        fVertPres = CPLAtofM(pszVerticalPrecision);
+        fVertPres = (float) CPLAtofM(pszVerticalPrecision);
         if (fVertPres <= 0)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Unsupported value for VERTICAL_PRECISION. Defaulting to 0.01");
-            fVertPres = 0.01;
+            fVertPres = (float) 0.01;
         }
         if (eReqDT == GDT_Int16 && fVertPres > 1)
             eReqDT = GDT_Float32;
@@ -846,9 +846,9 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     WriteShort(fp, 0);
     WriteInt(fp, nXSize);
     WriteInt(fp, nYSize);
-    WriteShort(fp, nTileSize);
+    WriteShort(fp, (GInt16) nTileSize);
     WriteFloat(fp, fVertPres);
-    float fHorizScale = (fabs(adfGeoTransform[1]) + fabs(adfGeoTransform[5])) / 2;
+    float fHorizScale = (float) ((fabs(adfGeoTransform[1]) + fabs(adfGeoTransform[5])) / 2);
     WriteFloat(fp, fHorizScale);
     WriteInt(fp, nExtendedHeaderLen);
 
@@ -864,7 +864,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
         strcpy(szBlockName, "georef-extents");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 34);
-        WriteShort(fp, nExtentUnits);
+        WriteShort(fp, (GInt16) nExtentUnits);
         WriteDouble(fp, adfGeoTransform[0]);
         WriteDouble(fp, adfGeoTransform[0] + nXSize * adfGeoTransform[1]);
         WriteDouble(fp, adfGeoTransform[3] + nYSize * adfGeoTransform[5]);
@@ -877,7 +877,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
         strcpy(szBlockName, "georef-utm");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 2);
-        WriteShort(fp, (bNorth) ? nUTMZone : -nUTMZone);
+        WriteShort(fp, (GInt16) ((bNorth) ? nUTMZone : -nUTMZone));
     }
     if (nDatumCode != -2)
     {
@@ -886,7 +886,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
         strcpy(szBlockName, "georef-datum");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 2);
-        WriteShort(fp, nDatumCode);
+        WriteShort(fp, (GInt16) nDatumCode);
     }
     if (nEPSGCode != 0)
     {
@@ -895,7 +895,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
         strcpy(szBlockName, "georef-epsg-prj");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 2);
-        WriteShort(fp, nEPSGCode);
+        WriteShort(fp, (GInt16) nEPSGCode);
     }
 
 /* -------------------------------------------------------------------- */

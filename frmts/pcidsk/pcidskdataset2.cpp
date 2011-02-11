@@ -410,9 +410,9 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
             GDALColorEntry sEntry;
 
             poCT->GetColorEntryAsRGB( i, &sEntry );
-            abyPCT[256 * 0 + i] = sEntry.c1;
-            abyPCT[256 * 1 + i] = sEntry.c2;
-            abyPCT[256 * 2 + i] = sEntry.c3;
+            abyPCT[256 * 0 + i] = (unsigned char) sEntry.c1;
+            abyPCT[256 * 1 + i] = (unsigned char) sEntry.c2;
+            abyPCT[256 * 2 + i] = (unsigned char) sEntry.c3;
         }
 
         PCIDSK_PCT *poPCT = dynamic_cast<PCIDSK_PCT*>( 

@@ -13,7 +13,7 @@ static int NrLegendEntries(MAP *m)
 	int size = CsfAttributeSize(m, ATTR_ID_LEGEND_V2);
 	if (size == 0)
 	{
-		if ( (size = -CsfAttributeSize(m, ATTR_ID_LEGEND_V1)) != 0 )
+		if ( (size = -1 * CsfAttributeSize(m, ATTR_ID_LEGEND_V1)) != 0 )
 			size -= CSF_LEGEND_ENTRY_SIZE;
 	}
 	return size/CSF_LEGEND_ENTRY_SIZE;

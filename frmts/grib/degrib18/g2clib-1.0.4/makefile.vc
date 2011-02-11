@@ -2,7 +2,7 @@ OBJ = gridtemplates.obj drstemplates.obj pdstemplates.obj gbits.obj g2_free.obj 
 	dec_jpeg2000.obj jpcunpack.obj jpcpack.obj enc_jpeg2000.obj
 	
 
-EXTRAFLAGS = -I ../../../png/libpng -I ../../../zlib -DUSE_PNG
+EXTRAFLAGS = -I ../../../png/libpng -I ../../../zlib -DUSE_PNG $(SOFTWARNFLAGS)
 
 GDAL_ROOT       =       ..\..\..\..
 

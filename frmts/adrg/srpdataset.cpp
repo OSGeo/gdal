@@ -306,7 +306,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
             while( nCount > 0 )
             {
-                ((GByte *) pImage)[iPixel++] = nValue;
+                ((GByte *) pImage)[iPixel++] = (GByte) nValue;
                 nCount--;
             }
         }
@@ -719,9 +719,9 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
                 nNSG = record->GetIntSubfield( "COL", 0, "NSG", iColor );
                 nNSB = record->GetIntSubfield( "COL", 0, "NSB", iColor );
 
-                sEntry.c1 = nNSR;
-                sEntry.c2 = nNSG;
-                sEntry.c3 = nNSB;
+                sEntry.c1 = (short) nNSR;
+                sEntry.c2 = (short) nNSG;
+                sEntry.c3 = (short) nNSB;
                 sEntry.c4 = 255;
 
                 oCT.SetColorEntry( nCCD, &sEntry );

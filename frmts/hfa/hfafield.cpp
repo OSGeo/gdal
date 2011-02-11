@@ -676,7 +676,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         // or type?
         
         if( nIndexValue == -3 )
-            nBaseItemType = nIntValue;
+            nBaseItemType = (GInt16) nIntValue;
         else if( nIndexValue == -2 )
             nColumns = nIntValue;
         else if( nIndexValue == -1 )

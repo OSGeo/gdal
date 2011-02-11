@@ -1704,7 +1704,7 @@ CPLErr GTiffSplitBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( TIFFReadScanline( poGDS->hTIFF,
                               poGDS->pabyBlockBuf ? poGDS->pabyBlockBuf : pImage,
                               ++poGDS->nLastLineRead,
-                              (poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) ? nBand-1 : 0 ) == -1 )
+                              (poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) ? (uint16) (nBand-1) : 0 ) == -1 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TIFFReadScanline() failed." );
@@ -3519,7 +3519,7 @@ CPLErr GTiffDataset::CleanOverviews()
             {
                 CPLDebug( "GTiff", "%d -> %d", 
                           (int) anOvDirOffsets[i], iThisOffset );
-                anOvDirIndexes.push_back( iThisOffset );
+                anOvDirIndexes.push_back( (uint16) iThisOffset );
             }
         }
         
@@ -6469,7 +6469,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     TIFF		*hTIFF;
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
-    uint16              nCompression = COMPRESSION_NONE;
+    int                 nCompression = COMPRESSION_NONE;
     int                 nPredictor = PREDICTOR_NONE, nJpegQuality = -1, nZLevel = -1,
                         nLZMAPreset = -1;
     uint16              nSampleFormat;
@@ -7943,7 +7943,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         }
                     }
                     if (eErr == CE_None &&
-                        TIFFWriteScanline( hTIFF, pabyScanline, j, iBand - 1) == -1)
+                        TIFFWriteScanline( hTIFF, pabyScanline, j, (uint16) (iBand-1)) == -1)
                     {
                         CPLError( CE_Failure, CPLE_AppDefined,
                                   "TIFFWriteScanline() failed." );
@@ -8705,7 +8705,7 @@ void GDALDeregister_GTiff( GDALDriver * )
 /*                   GTIFFGetCompressionMethod()                        */
 /************************************************************************/
 
-int     GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
+int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
 {
     int nCompression = COMPRESSION_NONE;
     if( EQUAL( pszValue, "NONE" ) )
@@ -8735,7 +8735,7 @@ int     GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableN
 
 #if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION > 20031007 /* 3.6.0 */
     if (nCompression != COMPRESSION_NONE &&
-        !TIFFIsCODECConfigured(nCompression))
+        !TIFFIsCODECConfigured((uint16) nCompression))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                 "Cannot create TIFF file due to missing codec for %s.", pszValue );

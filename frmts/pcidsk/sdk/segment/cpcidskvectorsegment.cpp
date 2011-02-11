@@ -406,9 +406,9 @@ char *CPCIDSKVectorSegment::GetData( int section, uint32 offset,
 /* -------------------------------------------------------------------- */
 /*      Select the section to act on.                                   */
 /* -------------------------------------------------------------------- */
-    PCIDSKBuffer *pbuf;
-    uint32       *pbuf_offset;
-    bool         *pbuf_dirty;
+    PCIDSKBuffer *pbuf = NULL;
+    uint32       *pbuf_offset = NULL;
+    bool         *pbuf_dirty = NULL;
 
     if( section == sec_raw )
     {
@@ -540,9 +540,9 @@ void CPCIDSKVectorSegment::FlushDataBuffer( int section )
 /* -------------------------------------------------------------------- */
 /*      Select the section to act on.                                   */
 /* -------------------------------------------------------------------- */
-    PCIDSKBuffer *pbuf;
-    uint32       *pbuf_offset;
-    bool         *pbuf_dirty;
+    PCIDSKBuffer *pbuf = NULL;
+    uint32       *pbuf_offset = NULL;
+    bool         *pbuf_dirty = NULL;
 
     if( section == sec_raw )
     {

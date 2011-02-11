@@ -138,8 +138,6 @@ static int
 _TIFFPrettyPrintField(TIFF* tif, FILE* fd, uint32 tag,
 		      uint32 value_count, void *raw_data)
 {
-	TIFFDirectory *td = &tif->tif_dir;
-
 	switch (tag)
 	{
 		case TIFFTAG_INKSET:
