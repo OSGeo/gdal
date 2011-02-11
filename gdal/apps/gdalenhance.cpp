@@ -609,9 +609,9 @@ static CPLErr EnhancerCallback( void *hCBData,
         iBin = MAX(0,MIN(psEInfo->nLUTBins-1,iBin));
 
         if( psEInfo->panLUT )
-            pabyOutImage[iPixel] = psEInfo->panLUT[iBin];
+            pabyOutImage[iPixel] = (GByte) psEInfo->panLUT[iBin];
         else
-            pabyOutImage[iPixel] = iBin;
+            pabyOutImage[iPixel] = (GByte) iBin;
     }
 
     CPLFree( pafSrcImage );

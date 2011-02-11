@@ -362,7 +362,7 @@ int OGRGeoJSONDataSource::ReadFromFile( const char* pszSource )
 
     VSIFSeekL( fp, 0, SEEK_SET );
 
-    pszGeoData_ = (char*)VSIMalloc(nDataLen + 1);
+    pszGeoData_ = (char*)VSIMalloc((size_t)(nDataLen + 1));
     if( NULL == pszGeoData_ )
     {
         VSIFCloseL(fp);
@@ -370,7 +370,7 @@ int OGRGeoJSONDataSource::ReadFromFile( const char* pszSource )
     }
 
     pszGeoData_[nDataLen] = '\0';
-    if( ( nDataLen != VSIFReadL( pszGeoData_, 1, nDataLen, fp ) ) )
+    if( ( nDataLen != VSIFReadL( pszGeoData_, 1, (size_t)nDataLen, fp ) ) )
     {
         Clear();
         VSIFCloseL( fp );

@@ -534,7 +534,7 @@ int OGRGPXDataSource::Create( const char *pszFilename,
       char szMetadata[SPACE_FOR_METADATA+1];
       memset(szMetadata, ' ', SPACE_FOR_METADATA);
       szMetadata[SPACE_FOR_METADATA] = '\0';
-      nOffsetBounds = VSIFTellL(fpOutput);
+      nOffsetBounds = (int) VSIFTellL(fpOutput);
       PrintLine("%s", szMetadata);
     }
 

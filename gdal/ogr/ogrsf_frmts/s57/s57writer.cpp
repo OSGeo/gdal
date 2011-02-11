@@ -549,7 +549,7 @@ DDFRecord *S57Writer::MakeRecord()
     unsigned char abyData[3];
 
     abyData[0] = nNext0001Index % 256;
-    abyData[1] = nNext0001Index / 256; 
+    abyData[1] = (unsigned char) (nNext0001Index / 256); 
     abyData[2] = DDF_FIELD_TERMINATOR;
 
     poField = poRec->AddField( poModule->FindFieldDefn( "0001" ) );
@@ -736,9 +736,9 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
         nRCID = poFeature->GetFieldAsInteger( "NAME_RCID_0");
         szName[0] = RCNM_VC;
         szName[1] = nRCID & 0xff;
-        szName[2] = (nRCID & 0xff00) >> 8;
-        szName[3] = (nRCID & 0xff0000) >> 16;
-        szName[4] = (nRCID & 0xff000000) >> 24;
+        szName[2] = (char) ((nRCID & 0xff00) >> 8);
+        szName[3] = (char) ((nRCID & 0xff0000) >> 16);
+        szName[4] = (char) ((nRCID & 0xff000000) >> 24);
         
         poRec->SetStringSubfield( "VRPT", 0, "NAME", 0, szName, 5 );
         poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 0, 
@@ -753,9 +753,9 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
         nRCID = poFeature->GetFieldAsInteger( "NAME_RCID_1");
         szName[0] = RCNM_VC;
         szName[1] = nRCID & 0xff;
-        szName[2] = (nRCID & 0xff00) >> 8;
-        szName[3] = (nRCID & 0xff0000) >> 16;
-        szName[4] = (nRCID & 0xff000000) >> 24;
+        szName[2] = (char) ((nRCID & 0xff00) >> 8);
+        szName[3] = (char) ((nRCID & 0xff0000) >> 16);
+        szName[4] = (char) ((nRCID & 0xff000000) >> 24);
 
         poRec->SetStringSubfield( "VRPT", 0, "NAME", 1, szName, 5 );
         poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 1, 
@@ -781,13 +781,13 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
 /*                             GetHEXChar()                             */
 /************************************************************************/
 
-static int GetHEXChar( const char *pszSrcHEXString )
+static char GetHEXChar( const char *pszSrcHEXString )
 
 {
     int nResult = 0;
 
     if( pszSrcHEXString[0] == '\0' || pszSrcHEXString[1] == '\0' )
-        return 0;
+        return (char) 0;
 
     if( pszSrcHEXString[0] >= '0' && pszSrcHEXString[0] <= '9' )
         nResult += (pszSrcHEXString[0] - '0') * 16;
@@ -803,7 +803,7 @@ static int GetHEXChar( const char *pszSrcHEXString )
     else if( pszSrcHEXString[1] >= 'A' && pszSrcHEXString[1] <= 'F' )
         nResult += pszSrcHEXString[1] - 'A' + 10;
 
-    return nResult;
+    return (char) nResult;
 }
 
 /************************************************************************/
@@ -894,11 +894,11 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
         {
             GInt32 nRCID = CPL_LSBWORD32(panRCID[i]);
 
-            pabyRawData[i*8 + 0] = panRCNM[i];
+            pabyRawData[i*8 + 0] = (GByte) panRCNM[i];
             memcpy( pabyRawData + i*8 + 1, &nRCID, 4 );
-            pabyRawData[i*8 + 5] = panORNT[i];
-            pabyRawData[i*8 + 6] = panUSAG[i];
-            pabyRawData[i*8 + 7] = panMASK[i];
+            pabyRawData[i*8 + 5] = (GByte) panORNT[i];
+            pabyRawData[i*8 + 6] = (GByte) panUSAG[i];
+            pabyRawData[i*8 + 7] = (GByte) panMASK[i];
         }
 
         poField = poRec->AddField( poModule->FindFieldDefn( "FSPT" ) );
