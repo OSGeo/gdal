@@ -824,10 +824,10 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
     memset( achHeader, 0, 16 );
 
     // Use -1 (0x000080bf) as the default error value.
-    memset( achHeader + 10, 1, 0x80 );
-    memset( achHeader + 11, 1, 0xbf );
-    memset( achHeader + 14, 1, 0x80 );
-    memset( achHeader + 15, 1, 0xbf );
+    memset( achHeader + 10, 0x80, 1 );
+    memset( achHeader + 11, 0xbf, 1 );
+    memset( achHeader + 14, 0x80, 1 );
+    memset( achHeader + 15, 0xbf, 1 );
 
     for( i = 0; i < nXSize * nYSize; i++ )
         VSIFWriteL( achHeader, 1, 16, fp );
