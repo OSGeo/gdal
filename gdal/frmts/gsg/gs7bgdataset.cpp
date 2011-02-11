@@ -503,8 +503,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poDS->nData_Position =  VSIFTellL(poDS->fp);
-
+    poDS->nData_Position =  (size_t) VSIFTellL(poDS->fp);
 
     /* --------------------------------------------------------------------*/
     /*      Initialize any PAM information.                                */

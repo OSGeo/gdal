@@ -69,7 +69,7 @@ class HDF5ImageDataset : public HDF5Dataset
     hid_t        dataset_id;
     hid_t        dataspace_id;
     hsize_t      size;
-    int          address;
+    haddr_t      address;
     hid_t        datatype;
     hid_t        native;
     H5T_class_t  clas;
@@ -219,8 +219,8 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
         {
             hsize_t panChunkDims[3];
             int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
-            nBlockXSize   = panChunkDims[nDimSize-1];
-            nBlockYSize   = panChunkDims[nDimSize-2];
+            nBlockXSize   = (int) panChunkDims[nDimSize-1];
+            nBlockYSize   = (int) panChunkDims[nDimSize-2];
         }
         H5Pclose(listid);
     }
@@ -317,7 +317,7 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     col_dims[poGDS->ndims-2]=nBlockYSize;
     col_dims[poGDS->ndims-1]=nBlockXSize;
-    memspace = H5Screate_simple( rank, col_dims, NULL );
+    memspace = H5Screate_simple( (int) rank, col_dims, NULL );
     H5OFFSET_TYPE mem_offset[3] = {0, 0, 0};
     status =  H5Sselect_hyperslab(memspace,
                                   H5S_SELECT_SET,
@@ -469,12 +469,12 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->address = H5Dget_offset( poDS->dataset_id );
     poDS->native  = H5Tget_native_type( poDS->datatype, H5T_DIR_ASCEND );
 
-    poDS->nRasterYSize=poDS->dims[poDS->ndims-2];   // Y
-    poDS->nRasterXSize=poDS->dims[poDS->ndims-1];   // X alway last
+    poDS->nRasterYSize=(int)poDS->dims[poDS->ndims-2];   // Y
+    poDS->nRasterXSize=(int)poDS->dims[poDS->ndims-1];   // X alway last
 
     poDS->nBands=1;
 
-    if( poDS->ndims == 3 ) poDS->nBands=poDS->dims[0];
+    if( poDS->ndims == 3 ) poDS->nBands=(int) poDS->dims[0];
 
 
     for(  i = 1; i <= poDS->nBands; i++ ) {

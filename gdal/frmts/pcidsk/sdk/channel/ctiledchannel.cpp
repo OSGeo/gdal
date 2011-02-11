@@ -708,7 +708,7 @@ void CTiledChannel::RLECompressBlock( PCIDSKBuffer &oUncompressedData,
                 if( oCompressedData.buffer_size < dst_offset + pixel_size+1 )
                     oCompressedData.SetSize( oCompressedData.buffer_size*2+100);
 
-                oCompressedData.buffer[dst_offset++] = count+128;
+                oCompressedData.buffer[dst_offset++] = (char) (count+128);
 
                 for( i = 0; i < pixel_size; i++ )
                     oCompressedData.buffer[dst_offset++] = src[src_offset+i];
@@ -759,7 +759,7 @@ void CTiledChannel::RLECompressBlock( PCIDSKBuffer &oUncompressedData,
                    < dst_offset + count*pixel_size+1 )
                 oCompressedData.SetSize( oCompressedData.buffer_size*2+100 );
 
-            oCompressedData.buffer[dst_offset++] = count;
+            oCompressedData.buffer[dst_offset++] = (char) count;
             memcpy( oCompressedData.buffer + dst_offset, 
                     src + src_offset, 
                     count * pixel_size );

@@ -127,7 +127,7 @@ uint64 VSI_IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
 
     errno = 0;
 
-    uint64 result = VSIFReadL( buffer, size, nmemb, fp );
+    uint64 result = VSIFReadL( buffer, (size_t) size, (size_t) nmemb, fp );
 
     if( errno != 0 && result == 0 && nmemb != 0 )
         ThrowPCIDSKException( "Read(%d): %s", 
@@ -149,7 +149,7 @@ uint64 VSI_IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
 
     errno = 0;
 
-    uint64 result = VSIFWriteL( buffer, size, nmemb, fp );
+    uint64 result = VSIFWriteL( buffer, (size_t) size, (size_t) nmemb, fp );
 
     if( errno != 0 && result == 0 && nmemb != 0 )
         ThrowPCIDSKException( "Write(%d): %s", 

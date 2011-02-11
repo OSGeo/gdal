@@ -2070,9 +2070,9 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             GDALColorEntry sEntry;
 
-            sEntry.c1 = atoi(papszClassColors[i*3+0]);
-            sEntry.c2 = atoi(papszClassColors[i*3+1]);
-            sEntry.c3 = atoi(papszClassColors[i*3+2]);
+            sEntry.c1 = (short) atoi(papszClassColors[i*3+0]);
+            sEntry.c2 = (short) atoi(papszClassColors[i*3+1]);
+            sEntry.c3 = (short) atoi(papszClassColors[i*3+2]);
             sEntry.c4 = 255;
             oCT.SetColorEntry( i, &sEntry );
         }

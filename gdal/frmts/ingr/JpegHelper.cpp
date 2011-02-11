@@ -202,7 +202,7 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
         *( pabNext++ )  = 0xDB;         // DQT
         *( pabNext++ )  = 0;            // Segment Length (msb)
         *( pabNext++ )  = 67;           // Length (msb)
-        *( pabNext++ )  = i;            // Table ID
+        *( pabNext++ )  = (GByte) i;    // Table ID
         memcpy( pabNext, abQuantTables[i], 64 );
         pabNext += 64;
     }
@@ -219,11 +219,11 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
     else
         *( pabNext++ )  = 11;           // Segment Length (lsb)
     *( pabNext++ )      = 8;            // 8-bit Precision 
-    *( pabNext++ )      = nRows >> 8;   // Height in rows (msb) 
-    *( pabNext++ )      = nRows;        // Height in rows (lsb) 
-    *( pabNext++ )      = nCols >> 8;   // Width in columns (msb)
-    *( pabNext++ )      = nCols;        // Width in columns (lsb)
-    *( pabNext++ )      = nComponents;  // Number of components 
+    *( pabNext++ )      = (GByte) (nRows >> 8); // Height in rows (msb) 
+    *( pabNext++ )      = (GByte) nRows;// Height in rows (lsb) 
+    *( pabNext++ )      = (GByte) (nCols >> 8); // Width in columns (msb)
+    *( pabNext++ )      = (GByte) nCols;// Width in columns (lsb)
+    *( pabNext++ )      = (GByte) nComponents;// Number of components 
     *( pabNext++ )      = 0;            // Component ID
     *( pabNext++ )      = 0x21;         // Hozontal/Vertical Sampling
     *( pabNext++ )      = 0;            // Quantization table ID 
@@ -274,8 +274,8 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
             *( pabNext++ ) = 0xFF;                  // Tag Mark
             *( pabNext++ ) = 0xc4;                  // DHT 
             *( pabNext++ ) = 0;                     // Segment Length (msb)
-            *( pabNext++ ) = 3 + nCodes + nSymbols; // Segment Length (lsb)
-            *( pabNext++ ) = (j << 4) | i;          // Table ID
+            *( pabNext++ ) = (GByte) (3 + nCodes + nSymbols); // Segment Length (lsb)
+            *( pabNext++ ) = (GByte) ((j << 4) | i);          // Table ID
             memcpy( pabNext, pabHuffTab[i][j], nCodes );
             pabNext += nCodes;
             memcpy( pabNext, pabHuffTab[i][k], nSymbols );
