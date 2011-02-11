@@ -124,13 +124,13 @@ OPTFLAGS=	/nologo /MD /EHsc /GR /Zi /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb  /DDEBUG
 # Set flags controlling warnings level, and supression of some warnings.
 # 
 !IFNDEF WARNFLAGS
-WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100
+WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 /wd4389
 !ENDIF
 
 # The followin are extra disables that can be applied to external source
 # not under our control that we wish to use less stringent warnings with.
 !IFNDEF SOFTWARNFLAGS
-SOFTWARNFLAGS= /wd4244 /wd4702 /wd4701 /wd4018 /wd4389 /wd4013 /wd4706
+SOFTWARNFLAGS= /wd4244 /wd4702 /wd4701 /wd4013 /wd4706 /wd4057 /wd4210 /wd4305
 !ENDIF
 
 # Linker debug options
