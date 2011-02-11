@@ -16,7 +16,7 @@ GDAL_ROOT	=	..\..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS =	-I.. -I..\.. -I..\..\..
+EXTRAFLAGS =	-I.. -I..\.. -I..\..\.. $(SOFTWARNFLAGS)
 
 default:	$(OBJ)
 
