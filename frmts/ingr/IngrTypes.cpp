@@ -760,7 +760,7 @@ uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
 
         VSIStatBufL  sStat;
         VSIStatL( pszFilename, &sStat );
-        return sStat.st_size - nDataOffset;
+        return (uint32) (sStat.st_size - nDataOffset);
     }
     else
     {

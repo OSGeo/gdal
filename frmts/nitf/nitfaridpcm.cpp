@@ -421,7 +421,7 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
             CPLFree(full_image);
             return FALSE;
         }
-        L00[i] = get_bits( pabyInputData, block_offset[i], 8 );
+        L00[i] = (unsigned char) get_bits( pabyInputData, block_offset[i], 8 );
 
         total += block_size[i];
     }

@@ -334,7 +334,7 @@ CPLErr SGIRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                 && pabyRawBuf[iX + nRepeatCount + 1] 
                 == pabyRawBuf[iX + nRepeatCount + 3]) )
         { // encode a constant run.
-            pabyRLEBuf[nRLEBytes++] = nRepeatCount; 
+            pabyRLEBuf[nRLEBytes++] = (GByte) nRepeatCount; 
             pabyRLEBuf[nRLEBytes++] = pabyRawBuf[iX];
             iX += nRepeatCount;
         }
@@ -357,7 +357,7 @@ CPLErr SGIRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                     break;
             }
 
-            pabyRLEBuf[nRLEBytes++] = 0x80 | nRepeatCount; 
+            pabyRLEBuf[nRLEBytes++] = (GByte) (0x80 | nRepeatCount); 
             memcpy( pabyRLEBuf + nRLEBytes, 
                     pabyRawBuf + iX, 
                     nRepeatCount );
@@ -758,7 +758,7 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
     
     while( nPixelsRemaining > 0 )
     {
-        pabyRLELine[nRLEBytes] = MIN(127,nPixelsRemaining);
+        pabyRLELine[nRLEBytes] = (GByte) MIN(127,nPixelsRemaining);
         pabyRLELine[nRLEBytes+1] = 0;
         nPixelsRemaining -= pabyRLELine[nRLEBytes];
 

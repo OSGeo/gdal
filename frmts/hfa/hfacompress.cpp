@@ -168,14 +168,14 @@ void HFACompress::makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCoun
       lower 2 bits of the data it restricts what we can use */
   if( count < 0x40 )
   {
-    pCounter[0] = count;
+    pCounter[0] = (GByte) count;
     *pnSizeCount = 1;
   }
   else if( count < 0x8000 )
   {
     pCounter[1] = count & 0xff;
     count /= 256;
-    pCounter[0] = count | 0x40;
+    pCounter[0] = (GByte) (count | 0x40);
     *pnSizeCount = 2;
   }
   else if( count < 0x800000 )
@@ -184,7 +184,7 @@ void HFACompress::makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCoun
     count /= 256;
     pCounter[1] = count & 0xff;
     count /= 256;
-    pCounter[0] = count | 0x80;
+    pCounter[0] = (GByte) (count | 0x80);
     *pnSizeCount = 3;
   }
   else
@@ -195,7 +195,7 @@ void HFACompress::makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCoun
     count /= 256;
     pCounter[1] = count & 0xff;
     count /= 256;
-    pCounter[0] = count | 0xc0;
+    pCounter[0] = (GByte) (count | 0xc0);
     *pnSizeCount = 4;
   }
 }

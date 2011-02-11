@@ -180,11 +180,11 @@ CPLErr NWT_GRDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pIma
             CPL_LSBPTR16(&raw1);
             if( raw1 == 0 )
             {
-                ((float *)pImage)[i] = -1.e37;    // null value
+                ((float *)pImage)[i] = (float)-1.e37;    // null value
             }
             else
             {
-                ((float *)pImage)[i] = dfOffset + ((raw1 - 1) * dfScale);
+                ((float *)pImage)[i] = (float) (dfOffset + ((raw1 - 1) * dfScale));
             }
         }
     }

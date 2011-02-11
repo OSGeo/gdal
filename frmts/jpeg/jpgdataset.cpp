@@ -48,6 +48,11 @@ CPL_C_START
 #endif
 CPL_C_END
 
+// we believe it is ok to use setjmp() in this situation.
+#ifdef _MSC_VER
+#  pragma warning(disable:4611)
+#endif
+
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
 GDALDataset* JPEGDataset12Open(GDALOpenInfo* poOpenInfo);
 GDALDataset*
@@ -887,7 +892,7 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 {
                     int C = poGDS->pabyScanline[i * 4 + 0];
                     int K = poGDS->pabyScanline[i * 4 + 3];
-                    ((GByte*)pImage)[i] = (C * K) / 255;
+                    ((GByte*)pImage)[i] = (GByte) ((C * K) / 255);
                 }
             }
             else  if (nBand == 2)
@@ -896,7 +901,7 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 {
                     int M = poGDS->pabyScanline[i * 4 + 1];
                     int K = poGDS->pabyScanline[i * 4 + 3];
-                    ((GByte*)pImage)[i] = (M * K) / 255;
+                    ((GByte*)pImage)[i] = (GByte) ((M * K) / 255);
                 }
             }
             else if (nBand == 3)
@@ -905,7 +910,7 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 {
                     int Y = poGDS->pabyScanline[i * 4 + 2];
                     int K = poGDS->pabyScanline[i * 4 + 3];
-                    ((GByte*)pImage)[i] = (Y * K) / 255;
+                    ((GByte*)pImage)[i] = (GByte) ((Y * K) / 255);
                 }
             }
         }
@@ -2019,6 +2024,11 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
 /*      file (or really any file) pulled from an existing mask band.    */
 /************************************************************************/
 
+// MSVC does not know that memset() has initialized sStream.
+#ifdef _MSC_VER
+#  pragma warning(disable:4701)
+#endif
+
 static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
 
 {
@@ -2122,7 +2132,7 @@ static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
         {
             VSIFSeekL( fpOut, 0, SEEK_END );
 
-            nImageSize = VSIFTellL( fpOut );
+            nImageSize = (GUInt32) VSIFTellL( fpOut );
             CPL_LSBPTR32( &nImageSize );
 
             if( VSIFWriteL( pabyCMask, 1, sStream.total_out, fpOut ) 

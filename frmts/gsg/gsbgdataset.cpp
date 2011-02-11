@@ -451,7 +451,8 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( bHeaderNeedsUpdate && dfMaxZ > dfMinZ )
     {
 	CPLErr eErr = poGDS->WriteHeader( poGDS->fp,
-					  nRasterXSize, nRasterYSize,
+					  (GInt16) nRasterXSize, 
+                                          (GInt16) nRasterYSize,
 					  dfMinX, dfMaxX,
 					  dfMinY, dfMaxY,
 					  dfMinZ, dfMaxZ );
@@ -739,7 +740,9 @@ CPLErr GSBGDataset::SetGeoTransform( double *padfGeoTransform )
         padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
     double dfMaxY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
 
-    eErr = WriteHeader( fp, poGRB->nRasterXSize, poGRB->nRasterYSize,
+    eErr = WriteHeader( fp, 
+                        (GInt16) poGRB->nRasterXSize, 
+                        (GInt16) poGRB->nRasterYSize,
 			dfMinX, dfMaxX, dfMinY, dfMaxY,
 			poGRB->dfMinZ, poGRB->dfMaxZ );
 
@@ -900,8 +903,8 @@ GDALDataset *GSBGDataset::Create( const char * pszFilename,
                   pszFilename );
         return NULL;
     }
-
-    CPLErr eErr = WriteHeader( fp, nXSize, nYSize,
+    
+    CPLErr eErr = WriteHeader( fp, (GInt16) nXSize, (GInt16) nYSize,
 			       0.0, nXSize, 0.0, nYSize, 0.0, 0.0 );
     if( eErr != CE_None )
     {
@@ -994,8 +997,8 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
         return NULL;
     }
 
-    GInt16  nXSize = poSrcBand->GetXSize();
-    GInt16  nYSize = poSrcBand->GetYSize();
+    GInt16  nXSize = (GInt16) poSrcBand->GetXSize();
+    GInt16  nYSize = (GInt16) poSrcBand->GetYSize();
     double  adfGeoTransform[6];
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
@@ -1026,7 +1029,7 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
     }
 
     int     bSrcHasNDValue;
-    float   fSrcNoDataValue = poSrcBand->GetNoDataValue( &bSrcHasNDValue );
+    float   fSrcNoDataValue = (float) poSrcBand->GetNoDataValue( &bSrcHasNDValue );
     double  dfMinZ = DBL_MAX;
     double  dfMaxZ = -DBL_MAX;
     for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )

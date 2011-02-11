@@ -507,16 +507,16 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
 	    nbAttrs          = H5Aget_num_attrs( hGroupID );
 	    ret              = H5Gget_num_objs( hGroupID, &nbObjs );
 	    poHchild->nbAttrs= nbAttrs;
-	    poHchild->nbObjs = nbObjs;
+	    poHchild->nbObjs = (int) nbObjs;
 	    poHchild->nRank      = 0;
 	    poHchild->paDims    = 0;
 	    poHchild->HDatatype = 0;
 	    
 	    if( nbObjs > 0 ) {
 		poHchild->poHchild =( HDF5GroupObjects * )
-		    CPLCalloc( nbObjs, sizeof( HDF5GroupObjects ) );
+		    CPLCalloc( (int)nbObjs, sizeof( HDF5GroupObjects ) );
 		memset( poHchild->poHchild,0,
-			sizeof( HDF5GroupObjects ) * nbObjs );
+			(size_t) (sizeof( HDF5GroupObjects ) * nbObjs) );
 	    }
 	    else 
 		poHchild->poHchild = NULL;
@@ -623,8 +623,8 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
 
     if( H5Tget_class( hAttrNativeType ) == H5T_STRING ) {
         nAttrSize = H5Aget_storage_size( hAttrID );
-	szData = (char*) CPLMalloc(nAttrSize+1);
-	szValue = (char*) CPLMalloc(nAttrSize+1);
+	szData = (char*) CPLMalloc((size_t) (nAttrSize+1));
+	szValue = (char*) CPLMalloc((size_t) (nAttrSize+1));
 	H5Aread( hAttrID, hAttrNativeType, szData  );
 	szData[nAttrSize]='\0';
 	sprintf( szValue, "%s", szData );
@@ -633,7 +633,7 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     else {
 	nAttrElmts = 1;
 	for( i=0; i < nAttrDims; i++ ) {
-	    nAttrElmts *= nSize[i];
+	    nAttrElmts *= (int) nSize[i];
 	}
 	if( nAttrElmts > 0 ){
 	    buf = (void *) CPLMalloc( nAttrElmts*

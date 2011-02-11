@@ -490,7 +490,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
 /* -------------------------------------------------------------------- */
     int bNorth;
 
-    nShortTemp = oSRS.GetUTMZone( &bNorth );
+    nShortTemp = (GInt16) oSRS.GetUTMZone( &bNorth );
     if( bNorth )
         nShortTemp = -nShortTemp;
 
@@ -502,7 +502,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
 /* -------------------------------------------------------------------- */
     if( oSRS.GetAuthorityName( "GEOGCS|DATUM" ) != NULL
         && EQUAL(oSRS.GetAuthorityName( "GEOGCS|DATUM" ),"EPSG") )
-        nShortTemp = atoi(oSRS.GetAuthorityCode( "GEOGCS|DATUM" )) + 2000;
+        nShortTemp = (GInt16) (atoi(oSRS.GetAuthorityCode( "GEOGCS|DATUM" )) + 2000);
     else
         nShortTemp = -2;
     nShortTemp = CPL_LSBWORD16( nShortTemp ); /* datum unknown */
@@ -863,7 +863,7 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
     nTemp = CPL_LSBWORD32( nYSize );
     memcpy( abyHeader+14, &nTemp, 4 );
 
-    nShortTemp = CPL_LSBWORD16( GDALGetDataTypeSize( eType ) / 8 );
+    nShortTemp = (GInt16) (CPL_LSBWORD16( GDALGetDataTypeSize( eType ) / 8 ));
     memcpy( abyHeader + 18, &nShortTemp, 2 );
     
     if( eType == GDT_Float32 )

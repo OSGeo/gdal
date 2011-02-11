@@ -118,7 +118,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
     int i, nAttrElements = 1;
 
     for( i=0; i < nAttrDims; i++ ) {
-        nAttrElements *= anSize[i];
+        nAttrElements *= (int) anSize[i];
     }
 
     if( nAttrElements != 1 )

@@ -1931,7 +1931,7 @@ void ValueRange::init(double rRaw0)
             iBeforeDec = (short)floor(log10(rMax)) + 1;
         if (get_rLo() < 0)
             iBeforeDec++;
-        _iWidth = iBeforeDec + _iDec;
+        _iWidth = (short) (iBeforeDec + _iDec);
         if (_iDec > 0)
             _iWidth++;
         if (_iWidth > 12)

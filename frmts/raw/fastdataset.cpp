@@ -463,7 +463,8 @@ void FASTDataset::TryEuromap_IRS_1C_1D_ChannelNameConvention()
             for (int j = 0; j < 2; j ++)
             {
                 char* pszChannelFilename = CPLStrdup(pszFilename);
-                pszChannelFilename[strlen(pszChannelFilename)-1] = '1' + j;
+                pszChannelFilename[strlen(pszChannelFilename)-1] 
+                    = (char) ('1' + j);
                 if (OpenChannel( pszChannelFilename, nBands ))
                     nBands++;
                 else
