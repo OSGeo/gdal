@@ -169,7 +169,7 @@ OGRFeature *OGRBNALayer::GetNextFeature()
     while(1)
     {
         int ok = FALSE;
-        offset = VSIFTellL(fpBNA);
+        offset = (int) VSIFTellL(fpBNA);
         line = curLine;
         if (nNextFID < nFeatures)
         {
@@ -787,7 +787,7 @@ void OGRBNALayer::FastParseUntil ( int interestFID)
         while(1)
         {
             int ok = FALSE;
-            int offset = VSIFTellL(fpBNA);
+            int offset = (int) VSIFTellL(fpBNA);
             int line = curLine;
             record =  BNA_GetNextRecord(fpBNA, &ok, &curLine, TRUE, BNA_READ_NONE);
             if (ok == FALSE)

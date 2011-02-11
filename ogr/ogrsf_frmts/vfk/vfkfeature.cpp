@@ -237,7 +237,7 @@ bool VFKFeature::LoadGeometry()
         idxBp_Id = m_poDataBlock->GetPropertyIndex("BP_ID");
         idxPCB   = m_poDataBlock->GetPropertyIndex("PORADOVE_CISLO_BODU");
         if (idxId < 0 || idxBp_Id < 0 || idxPCB < 0)
-            return -1;
+            return false;
         
         poLine = this;
         while (TRUE)

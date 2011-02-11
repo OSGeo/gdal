@@ -124,7 +124,7 @@ void OGRGTMDataSource::WriteWaypointStyles()
                 strncpy((char*)pBufferAux, "Arial", 5);
                 pBufferAux = ((char*)pBufferAux) + 5; 
                 // dspl
-                appendUChar(pBufferAux, i);
+                appendUChar(pBufferAux, (unsigned char) i);
                 pBufferAux = ((char*)pBufferAux) + 1;
                 // color
                 appendInt(pBufferAux, 0);
@@ -417,7 +417,7 @@ int OGRGTMDataSource::Create( const char* pszFilename, char** papszOptions )
         strcpy((char*)pCurrentPos, "Arial");
         pCurrentPos = ((char*)pCurrentPos) + 5;
     }
-    appendUShort(pCurrentPos, strlen(pszBaseFileName));
+    appendUShort(pCurrentPos, (unsigned short) strlen(pszBaseFileName));
     pCurrentPos = ((char*)pCurrentPos) + 2;
     strcpy((char*)pCurrentPos, pszBaseFileName);
 
