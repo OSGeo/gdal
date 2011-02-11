@@ -153,7 +153,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     pBuffer = CPLMalloc(bufferSize);
     void* pBufferAux = pBuffer;
     /* Write track string name size to buffer */
-    appendUShort(pBufferAux, trackNameLength);
+    appendUShort(pBufferAux, (unsigned short) trackNameLength);
     pBufferAux = (char*)pBufferAux + 2;
 
     /* Write track name */
@@ -161,7 +161,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     pBufferAux = (char*)pBufferAux + trackNameLength;
 
     /* Write track type */
-    appendUChar(pBufferAux, type);
+    appendUChar(pBufferAux, (unsigned char) type);
     pBufferAux = (char*)pBufferAux + 1;
   
     /* Write track color */

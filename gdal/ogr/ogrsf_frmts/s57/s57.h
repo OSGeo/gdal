@@ -116,7 +116,7 @@ class CPL_DLL S57ClassRegistrar
     char     ***papapszAttrValues;
     char       *pachAttrType;
     char       *pachAttrClass;
-    int        *panAttrIndex; // sorted by acronym.
+    GInt16     *panAttrIndex; // sorted by acronym.
 
     int         FindFile( const char *pszTarget, const char *pszDirectory,
                           int bReportErr, FILE **fp );
@@ -161,7 +161,7 @@ public:
 #define SAT_FREE_TEXT   'S'
 
     char        GetAttrClass( int i ) { return pachAttrClass[i]; }
-    int         FindAttrByAcronym( const char * );
+    GInt16      FindAttrByAcronym( const char * );
 
 };
 

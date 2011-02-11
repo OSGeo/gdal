@@ -926,7 +926,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_BSPLINE_SURFACE_BOUNDARY:
         {
           DGNElemBSplineSurfaceBoundary *psBounds;
-          int numverts = psDGN->abyElem[38] + psDGN->abyElem[39]*256;
+          short numverts = psDGN->abyElem[38] + psDGN->abyElem[39]*256;
 
           psBounds = (DGNElemBSplineSurfaceBoundary *)
             CPLCalloc(sizeof(DGNElemBSplineSurfaceBoundary)+
