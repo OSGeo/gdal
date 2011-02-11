@@ -43,15 +43,15 @@ def isis_1():
     srs = """PROJCS["Equirectangular Mars",
     GEOGCS["GCS_Mars",
         DATUM["D_Mars",
-            SPHEROID["Mars_localRadius",3394813.857975946,0]],
+            SPHEROID["Mars_localRadius",3394813.857978216,0]],
         PRIMEM["Reference_Meridian",0],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Equirectangular"],
     PARAMETER["latitude_of_origin",0],
-    PARAMETER["central_meridian",184.4129943847656],
+    PARAMETER["central_meridian",184.4129944],
+    PARAMETER["standard_parallel_1",-15.1470003],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0],
-    PARAMETER["standard_parallel_1",-15.14700031280518]]
+    PARAMETER["false_northing",0]]
 """  
     gt = (-4766.96484375, 10.102499961853027, 0.0,
           -872623.625, 0.0, -10.102499961853027)
@@ -66,15 +66,15 @@ def isis_2():
     srs = """PROJCS["Equirectangular mars",
     GEOGCS["GCS_mars",
         DATUM["D_mars",
-            SPHEROID["mars_localRadius",3388271.70261438,0]],
+            SPHEROID["mars_localRadius",3388271.702979241,0]],
         PRIMEM["Reference_Meridian",0],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Equirectangular"],
     PARAMETER["latitude_of_origin",0],
-    PARAMETER["central_meridian",195.9199981689453],
+    PARAMETER["central_meridian",195.92],
+    PARAMETER["standard_parallel_1",-38.88],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0],
-    PARAMETER["standard_parallel_1",-38.88000106811523]]
+    PARAMETER["false_northing",0]]
 """  
     gt = (653.132641495800044, 0.38, 0,
           -2298409.710162799805403, 0, -0.38)
