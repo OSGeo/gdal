@@ -31,11 +31,6 @@
 #ifndef CPL_BASE_H_INCLUDED
 #define CPL_BASE_H_INCLUDED
 
-/* Remove annoying warnings Microsoft Visual C++ */
-#if defined(_MSC_VER)
-#  pragma warning(disable:4251 4275 4786 4127 4100)
-#endif
-
 /**
  * \file cpl_port.h
  *
