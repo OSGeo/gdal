@@ -2119,7 +2119,7 @@ typedef enum
 int main( int argc, char ** argv )
 
 {
-    Algorithm eUtilityMode;
+    Algorithm eUtilityMode = HILL_SHADE;
     double z = 1.0;
     double scale = 1.0;
     double az = 315.0;

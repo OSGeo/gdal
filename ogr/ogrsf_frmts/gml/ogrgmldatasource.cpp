@@ -636,7 +636,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
                 "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" );
 
     if (!bFpOutputIsNonSeekable)
-        nSchemaInsertLocation = VSIFTellL( fpOutput );
+        nSchemaInsertLocation = (int) VSIFTellL( fpOutput );
 
     PrintLine( fpOutput, "%s", 
                 "<ogr:FeatureCollection" );
@@ -682,7 +682,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     if( CSLFetchBoolean( papszOptions, "BOUNDEDBY", TRUE ) &&
         !bFpOutputIsNonSeekable )
     {
-        nBoundedByLocation = VSIFTellL( fpOutput );
+        nBoundedByLocation = (int) VSIFTellL( fpOutput );
 
         if( nBoundedByLocation != -1 )
             PrintLine( fpOutput, "%280s", "" );
@@ -860,7 +860,7 @@ void OGRGMLDataSource::InsertHeader()
     {
         if (fpOutput == NULL)
             return;
-        nSchemaStart = VSIFTellL( fpOutput );
+        nSchemaStart = (int) VSIFTellL( fpOutput );
         fpSchema = fpOutput;
     }
     else                                                               
@@ -1124,7 +1124,7 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
 /*      Read the schema into memory.                                    */
 /* -------------------------------------------------------------------- */
-        int nSchemaSize = VSIFTellL( fpOutput ) - nSchemaStart;
+        int nSchemaSize = (int) VSIFTellL( fpOutput ) - nSchemaStart;
         char *pszSchema = (char *) CPLMalloc(nSchemaSize+1);
     
         VSIFSeekL( fpOutput, nSchemaStart, SEEK_SET );

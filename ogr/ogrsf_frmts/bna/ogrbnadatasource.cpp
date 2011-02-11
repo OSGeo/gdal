@@ -204,7 +204,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
 
         while(1)
         {
-            int offset = VSIFTellL(fp);
+            int offset = (int) VSIFTellL(fp);
             int line = curLine;
             record =  BNA_GetNextRecord(fp, &ok, &curLine, FALSE, BNA_READ_NONE);
             if (ok == FALSE)

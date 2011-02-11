@@ -421,7 +421,7 @@ CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
             sscanf( osHex.c_str(), "%x", &iChar );
 
             wchar_t anWCharString[2];
-            anWCharString[0] = iChar;
+            anWCharString[0] = (wchar_t) iChar;
             anWCharString[1] = 0;
             
             char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,

@@ -102,7 +102,10 @@ int OGRPCIDSKDataSource::Open( const char * pszFilename, int bUpdateIn )
         return FALSE;
 
     osName = pszFilename;
-    bUpdate = bUpdateIn;
+    if( bUpdateIn )
+        bUpdate = true;
+    else
+        bUpdate = false;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file, and create layer for each vector segment.        */
