@@ -341,7 +341,8 @@ void GDALRegister_DIPEx()
         poDriver->SetDescription( "DIPEx" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "DIPEx" );
-        
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = DIPExDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
