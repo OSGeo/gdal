@@ -1,7 +1,7 @@
 %extend OGRFeatureDefnShadow {
 // File: ogrfeaturedefn_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeaturedefn.cpp
-17587 2009-08-27 17:56:01Z warmerdam $\") ";
+21018 2010-10-30 11:30:51Z rouault $\") ";
 
 %feature("docstring")  Create "OGRFeatureDefnH OGR_FD_Create(const
 char *pszName)
@@ -228,5 +228,69 @@ hDefn:  handle to the feature definition to get field index from.
 pszFieldName:  the field name to search for.
 
 the field index, or -1 if no match found. ";
+
+%feature("docstring")  IsGeometryIgnored "int
+OGR_FD_IsGeometryIgnored(OGRFeatureDefnH hDefn)
+
+Determine whether the geometry can be omitted when fetching features.
+
+This function is the same as the C++ method
+OGRFeatureDefn::IsGeometryIgnored().
+
+Parameters:
+-----------
+
+hDefn:  hanlde to the feature definition on witch OGRFeature are based
+on.
+
+ignore state ";
+
+%feature("docstring")  SetGeometryIgnored "void
+OGR_FD_SetGeometryIgnored(OGRFeatureDefnH hDefn, int bIgnore)
+
+Set whether the geometry can be omitted when fetching features.
+
+This function is the same as the C++ method
+OGRFeatureDefn::SetGeometryIgnored().
+
+Parameters:
+-----------
+
+hDefn:  hanlde to the feature definition on witch OGRFeature are based
+on.
+
+bIgnore:  ignore state ";
+
+%feature("docstring")  IsStyleIgnored "int
+OGR_FD_IsStyleIgnored(OGRFeatureDefnH hDefn)
+
+Determine whether the style can be omitted when fetching features.
+
+This function is the same as the C++ method
+OGRFeatureDefn::IsStyleIgnored().
+
+Parameters:
+-----------
+
+hDefn:  handle to the feature definition on which OGRFeature are based
+on.
+
+ignore state ";
+
+%feature("docstring")  SetStyleIgnored "void
+OGR_FD_SetStyleIgnored(OGRFeatureDefnH hDefn, int bIgnore)
+
+Set whether the style can be omitted when fetching features.
+
+This function is the same as the C++ method
+OGRFeatureDefn::SetStyleIgnored().
+
+Parameters:
+-----------
+
+hDefn:  hanlde to the feature definition on witch OGRFeature are based
+on.
+
+bIgnore:  ignore state ";
 
 }
