@@ -161,6 +161,7 @@ void CPL_DLL GDALRegister_HF2(void);
 void CPL_DLL GDALRegister_PDF(void);
 void CPL_DLL GDALRegister_JPEGLS(void);
 void CPL_DLL GDALRegister_OZI(void);
+void CPL_DLL GDALRegister_ACE2(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
