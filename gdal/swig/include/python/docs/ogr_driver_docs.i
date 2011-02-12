@@ -25,7 +25,7 @@ Parameters:
 
 hDriver:  handle to the driver on which data source creation is based.
 
-pszName:  the name for the new data source.
+pszName:  the name for the new data source. UTF-8 encoded.
 
 papszOptions:  a StringList of name=value options. Options are driver
 specific, and driver information can be found at the following
