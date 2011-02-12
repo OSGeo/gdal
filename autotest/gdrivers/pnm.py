@@ -52,7 +52,7 @@ def pnm_2():
 
     tst = gdaltest.GDALTest( 'PNM', 'byte.pgm', 1, 4672 )
 
-    return tst.testCreateCopy()
+    return tst.testCreateCopy(vsimem = 1)
 
 ###############################################################################
 # Read Test RGB (PPM)

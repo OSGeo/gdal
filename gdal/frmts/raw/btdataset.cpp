@@ -629,7 +629,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         if( fp != NULL )
         {
             char *pszBuffer, *pszBufPtr;
-            int  nBufMax = 100000;
+            int  nBufMax = 10000;
             int nBytes;
 
             pszBuffer = (char *) CPLMalloc(nBufMax);
@@ -946,6 +946,8 @@ void GDALRegister_BT()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bt" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                    "Int16 Int32 Float32" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = BTDataset::Open;
         poDriver->pfnCreate = BTDataset::Create;
 
