@@ -1511,6 +1511,7 @@ char** VSIGZipFilesystemHandler::ReadDir( const char *pszDirname )
  *
  * Additional documentation is to be found at http://trac.osgeo.org/gdal/wiki/UserDocs/ReadInZip
  *
+ * @since GDAL 1.6.0
  */
 
 void VSIInstallGZipFileHandler(void)
@@ -2219,12 +2220,36 @@ void  VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle* poSubFile)
 /**
  * \brief Install ZIP file system handler. 
  *
- * A special file handler is installed that allows reading on-the-fly in ZIP (.zip) archives.
- * All portions of the file system underneath the base
- * path "/vsizip/" will be handled by this driver.
+ * A special file handler is installed that allows reading on-the-fly in ZIP
+ * (.zip) archives.
+ *
+ * All portions of the file system underneath the base path "/vsizip/" will be
+ * handled by this driver.
+ *
+ * The syntax to open a file inside a zip file is /vsizip/path/to/the/file.zip/path/inside/the/zip/file
+ * were path/to/the/file.zip is relative or absolute and path/inside/the/zip/file
+ * is the relative path to the file inside the archive.
+ * 
+ * If the path is absolute, it should begin with a / on a Unix-like OS (or C:\ on Windows),
+ * so the line looks like /vsizip//home/gdal/...
+ * For example gdalinfo /vsizip/myarchive.zip/subdir1/file1.tif
+ *
+ * Syntaxic sugar : if the .zip file contains only one file located at its root,
+ * just mentionning "/vsizip/path/to/the/file.zip" will work
+ *
+ * VSIStatL() will return the uncompressed size in st_size member and file
+ * nature- file or directory - in st_mode member.
+ *
+ * Directory listing is available through VSIReadDir().
+ *
+ * Since GDAL 1.8.0, write capabilities are available. They allow creating
+ * a new zip file and adding new files to an already existing (or just created)
+ * zip file. Read and write operations cannot be interleaved : the new zip must
+ * be closed before being re-opened for read.
  *
  * Additional documentation is to be found at http://trac.osgeo.org/gdal/wiki/UserDocs/ReadInZip
  *
+ * @since GDAL 1.6.0
  */
 
 void VSIInstallZipFileHandler(void)
