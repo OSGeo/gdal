@@ -1,7 +1,7 @@
 %extend OGRFieldDefnShadow {
 // File: ogrfielddefn_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfielddefn.cpp
-16574 2009-03-14 13:09:10Z rouault $\") ";
+21018 2010-10-30 11:30:51Z rouault $\") ";
 
 %feature("docstring")  Create "OGRFieldDefnH OGR_Fld_Create(const
 char *pszName, OGRFieldType eType)
@@ -219,5 +219,33 @@ zero indicating undefined.
 
 eJustifyIn:  the formatting justification (OJLeft or OJRight),
 defaults to OJUndefined. ";
+
+%feature("docstring")  IsIgnored "int OGR_Fld_IsIgnored(OGRFieldDefnH
+hDefn)
+
+Return whether this field should be omitted when fetching features.
+
+This method is the same as the C++ method OGRFieldDefn::IsIgnored().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition
+
+ignore state ";
+
+%feature("docstring")  SetIgnored "void
+OGR_Fld_SetIgnored(OGRFieldDefnH hDefn, int ignore)
+
+Set whether this field should be omitted when fetching features.
+
+This method is the same as the C function OGRFieldDefn::SetIgnored().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition
+
+ignore:  ignore state ";
 
 }

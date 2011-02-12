@@ -1,7 +1,7 @@
 %extend OGRLayerShadow {
 // File: ogrlayer_8cpp.xml
-%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrlayer.cpp 17223
-2009-06-07 19:41:08Z rouault $\") ";
+%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrlayer.cpp 20885
+2010-10-19 00:16:08Z warmerdam $\") ";
 
 %feature("docstring")  Reference "int OGR_L_Reference(OGRLayerH
 hLayer) ";
@@ -25,6 +25,9 @@ implementations will actually scan the entire layer once to count
 objects.
 
 The returned count takes the spatial filter into account.
+
+Note that some implementations of this method may alter the read
+cursor of the layer.
 
 This function is the same as the CPP OGRLayer::GetFeatureCount().
 
@@ -55,6 +58,9 @@ without setting a spatial filter.
 
 Layers without any geometry may return OGRERR_FAILURE just indicating
 that no meaningful extents could be collected.
+
+Note that some implementations of this method may alter the read
+cursor of the layer.
 
 This function is the same as the C++ method OGRLayer::GetExtent().
 
@@ -185,8 +191,7 @@ SetSpatialFilter()) will be returned.
 
 This function implements sequential access to the features of a layer.
 The OGR_L_ResetReading() function can be used to start at the
-beginning again. Random reading, writing and spatial filtering will be
-added to the OGRLayer in the future.
+beginning again.
 
 This function is the same as the C++ method
 OGRLayer::GetNextFeature().
@@ -630,5 +635,75 @@ hStyleTable) ";
 
 %feature("docstring")  SetStyleTable "void
 OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable) ";
+
+%feature("docstring")  GetName "const char* OGR_L_GetName(OGRLayerH
+hLayer)
+
+Return the layer name.
+
+This returns the same content as
+OGR_FD_GetName(OGR_L_GetLayerDefn(hLayer)), but for a few drivers,
+calling OGR_L_GetName() directly can avoid lengthy layer definition
+initialization.
+
+This function is the same as the C++ method OGRLayer::GetName().
+
+Parameters:
+-----------
+
+hLayer:  handle to the layer.
+
+the layer name (must not been freed)
+
+OGR 1.8.0 ";
+
+%feature("docstring")  GetGeomType "OGRwkbGeometryType
+OGR_L_GetGeomType(OGRLayerH hLayer)
+
+Return the layer geometry type.
+
+This returns the same result as
+OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hLayer)), but for a few drivers,
+calling OGR_L_GetGeomType() directly can avoid lengthy layer
+definition initialization.
+
+This function is the same as the C++ method OGRLayer::GetGeomType().
+
+Parameters:
+-----------
+
+hLayer:  handle to the layer.
+
+the geometry type
+
+OGR 1.8.0 ";
+
+%feature("docstring")  SetIgnoredFields "OGRErr
+OGR_L_SetIgnoredFields(OGRLayerH hLayer, const char **papszFields)
+
+Set which fields can be omitted when retrieving features from the
+layer.
+
+If the driver supports this functionality (testable using
+OLCIgnoreFields capability), it will not fetch the specified fields in
+subsequent calls to GetFeature() / GetNextFeature() and thus save some
+processing time and/or bandwidth.
+
+Besides field names of the layers, the following special fields can be
+passed: \"OGR_GEOMETRY\" to ignore geometry and \"OGR_STYLE\" to
+ignore layer style.
+
+By default, no fields are ignored.
+
+This method is the same as the C++ method OGRLayer::SetIgnoredFields()
+
+Parameters:
+-----------
+
+papszFields:  an array of field names terminated by NULL item. If NULL
+is passed, the ignored list is cleared.
+
+OGRERR_NONE if all field names have been resolved (even if the driver
+does not support this method) ";
 
 }

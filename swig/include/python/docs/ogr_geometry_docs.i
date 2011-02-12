@@ -1,7 +1,7 @@
 %extend OGRGeometryShadow {
 // File: ogrgeometry_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrgeometry.cpp
-17010 2009-05-13 20:33:01Z warmerdam $\") ";
+21072 2010-11-06 17:31:02Z rouault $\") ";
 
 %feature("docstring")  DumpReadable "void
 OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char
@@ -189,7 +189,22 @@ in practice this always returns 2 indicating that coordinates are
 specified within a two dimensional space. ";
 
 %feature("docstring")  SetCoordinateDimension "void
-OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension) ";
+OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension)
+
+Set the coordinate dimension.
+
+This method sets the explicit coordinate dimension. Setting the
+coordinate dimension of a geometry to 2 should zero out any existing Z
+values. Setting the dimension of a geometry collection will not
+necessarily affect the children geometries.
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to set the dimension of the
+coordinates.
+
+nNewDimension:  New coordinate dimension value, either 2 or 3. ";
 
 %feature("docstring")  Equals "int OGR_G_Equals(OGRGeometryH hGeom,
 OGRGeometryH hOther)
@@ -498,6 +513,12 @@ hGeom:  The Geometry to test.
 
 TRUE if the geometry has no points, otherwise FALSE. ";
 
+%feature("docstring")  OGRFromOGCGeomType "OGRwkbGeometryType
+OGRFromOGCGeomType(const char *pszGeomType) ";
+
+%feature("docstring")  OGRToOGCGeomType "const char*
+OGRToOGCGeomType(OGRwkbGeometryType eGeomType) ";
+
 %feature("docstring")  OGRGeometryTypeToName "const char*
 OGRGeometryTypeToName(OGRwkbGeometryType eType)
 
@@ -612,15 +633,15 @@ hTarget:  The Geometry to calculate the convex hull of.
 a handle to a newly allocated geometry now owned by the caller, or
 NULL on failure. ";
 
-%feature("docstring")  GetBoundary "OGRGeometryH
-OGR_G_GetBoundary(OGRGeometryH hTarget)
+%feature("docstring")  Boundary "OGRGeometryH
+OGR_G_Boundary(OGRGeometryH hTarget)
 
 Compute boundary.
 
 A new geometry object is created and returned containing the boundary
 of the geometry on which the method is invoked.
 
-This function is the same as the C++ method OGR_G_GetBoundary().
+This function is the same as the C++ method OGR_G_Boundary().
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -633,7 +654,16 @@ Parameters:
 hTarget:  The Geometry to calculate the boundary of.
 
 a handle to a newly allocated geometry now owned by the caller, or
-NULL on failure. ";
+NULL on failure.
+
+OGR 1.8.0 ";
+
+%feature("docstring")  GetBoundary "OGRGeometryH
+OGR_G_GetBoundary(OGRGeometryH hTarget)
+
+Compute boundary (deprecated).
+
+Deprecated See:   OGR_G_Boundary() ";
 
 %feature("docstring")  Buffer "OGRGeometryH OGR_G_Buffer(OGRGeometryH
 hTarget, double dfDist, int nQuadSegs)
@@ -721,6 +751,26 @@ hOther:  the other geometry.
 
 a new geometry representing the union or NULL if an error occurs. ";
 
+%feature("docstring")  UnionCascaded "OGRGeometryH
+OGR_G_UnionCascaded(OGRGeometryH hThis)
+
+Compute union using cascading.
+
+This function is the same as the C++ method
+OGRGeometry::UnionCascaded().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry.
+
+a new geometry representing the union or NULL if an error occurs. ";
+
 %feature("docstring")  Difference "OGRGeometryH
 OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)
 
@@ -746,8 +796,8 @@ hOther:  the other geometry.
 a new geometry representing the difference or NULL if the difference
 is empty or an error occurs. ";
 
-%feature("docstring")  SymmetricDifference "OGRGeometryH
-OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther)
+%feature("docstring")  SymDifference "OGRGeometryH
+OGR_G_SymDifference(OGRGeometryH hThis, OGRGeometryH hOther)
 
 Compute symmetric difference.
 
@@ -770,7 +820,16 @@ hThis:  the geometry.
 hOther:  the other geometry.
 
 a new geometry representing the symmetric difference or NULL if the
-difference is empty or an error occurs. ";
+difference is empty or an error occurs.
+
+OGR 1.8.0 ";
+
+%feature("docstring")  SymmetricDifference "OGRGeometryH
+OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther)
+
+Compute symmetric difference (deprecated).
+
+Deprecated See:   OGR_G_SymmetricDifference() ";
 
 %feature("docstring")  Disjoint "int OGR_G_Disjoint(OGRGeometryH
 hThis, OGRGeometryH hOther)
@@ -912,6 +971,64 @@ hOther:  the other geometry to compare.
 TRUE if they are overlapping, otherwise FALSE. ";
 
 %feature("docstring")  CloseRings "void OGR_G_CloseRings(OGRGeometryH
-hGeom) ";
+hGeom)
+
+Force rings to be closed.
+
+If this geometry, or any contained geometries has polygon rings that
+are not closed, they will be closed by adding the starting point at
+the end.
+
+Parameters:
+-----------
+
+hGeom:  handle to the geometry. ";
+
+%feature("docstring")  Centroid "int OGR_G_Centroid(OGRGeometryH
+hGeom, OGRGeometryH hCentroidPoint)
+
+Compute the geometry centroid.
+
+The centroid location is applied to the passed in OGRPoint object. The
+centroid is not necessarily within the geometry.
+
+This method relates to the SFCOM ISurface::get_Centroid() method
+however the current implementation based on GEOS can operate on other
+geometry types such as multipoint, linestring, geometrycollection such
+as multipolygons. OGC SF SQL 1.1 defines the operation for surfaces
+(polygons). SQL/MM-Part 3 defines the operation for surfaces and
+multisurfaces (multipolygons).
+
+This function is the same as the C++ method OGRGeometry::Centroid().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+OGRERR_NONE on success or OGRERR_FAILURE on error. ";
+
+%feature("docstring")  Simplify "OGRGeometryH
+OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)
+
+Compute a simplified geometry.
+
+This function is the same as the C++ method OGRGeometry::Simplify().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry.
+
+dTolerance:  the distance tolerance for the simplification.
+
+the simplified geometry or NULL if an error occurs.
+
+OGR 1.8.0 ";
 
 }

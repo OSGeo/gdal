@@ -1,7 +1,7 @@
 %extend OGRFeatureShadow {
 // File: ogrfeature_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeature.cpp
-18231 2009-12-09 17:33:09Z rouault $\") ";
+21270 2010-12-15 22:48:30Z warmerdam $\") ";
 
 %feature("docstring")  Create "OGRFeatureH
 OGR_F_Create(OGRFeatureDefnH hDefn)
@@ -101,6 +101,20 @@ hGeom:  handle to the new geometry to apply to feature.
 OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the
 geometry type is illegal for the OGRFeatureDefn (checking not yet
 implemented). ";
+
+%feature("docstring")  StealGeometry "OGRGeometryH
+OGR_F_StealGeometry(OGRFeatureH hFeat)
+
+Take away ownership of geometry.
+
+Fetch the geometry from this feature, and clear the reference to the
+geometry on the feature. This is a mechanism for the application to
+take over ownship of the geometry from the feature without copying.
+Sort of an inverse to OGR_FSetGeometryDirectly().
+
+After this call the OGRFeature will have a NULL geometry.
+
+the pointer to the geometry. ";
 
 %feature("docstring")  GetGeometryRef "OGRGeometryH
 OGR_F_GetGeometryRef(OGRFeatureH hFeat)
@@ -298,7 +312,7 @@ hFeat:  handle to the feature that owned the field.
 iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
 the field value. This string is internal, and should not be modified,
-or freed. It's lifetime may be very brief. ";
+or freed. Its lifetime may be very brief. ";
 
 %feature("docstring")  GetFieldAsIntegerList "const int*
 OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField, int
@@ -321,7 +335,7 @@ iField:  the field to fetch, from 0 to GetFieldCount()-1.
 pnCount:  an integer to put the list count (number of integers) into.
 
 the field value. This list is internal, and should not be modified, or
-freed. It's lifetime may be very brief. If *pnCount is zero on return
+freed. Its lifetime may be very brief. If *pnCount is zero on return
 the returned pointer may be NULL or non-NULL. ";
 
 %feature("docstring")  GetFieldAsDoubleList "const double*
@@ -345,7 +359,7 @@ iField:  the field to fetch, from 0 to GetFieldCount()-1.
 pnCount:  an integer to put the list count (number of doubles) into.
 
 the field value. This list is internal, and should not be modified, or
-freed. It's lifetime may be very brief. If *pnCount is zero on return
+freed. Its lifetime may be very brief. If *pnCount is zero on return
 the returned pointer may be NULL or non-NULL. ";
 
 %feature("docstring")  GetFieldAsStringList "char**
@@ -369,7 +383,7 @@ hFeat:  handle to the feature that owned the field.
 iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
 the field value. This list is internal, and should not be modified, or
-freed. It's lifetime may be very brief. ";
+freed. Its lifetime may be very brief. ";
 
 %feature("docstring")  GetFieldAsBinary "GByte*
 OGR_F_GetFieldAsBinary(OGRFeatureH hFeat, int iField, int *pnBytes)
@@ -391,7 +405,7 @@ iField:  the field to fetch, from 0 to GetFieldCount()-1.
 pnBytes:  location to place count of bytes returned.
 
 the field value. This list is internal, and should not be modified, or
-freed. It's lifetime may be very brief. ";
+freed. Its lifetime may be very brief. ";
 
 %feature("docstring")  GetFieldAsDateTime "int
 OGR_F_GetFieldAsDateTime(OGRFeatureH hFeat, int iField, int *pnYear,
