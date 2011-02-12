@@ -223,6 +223,48 @@ def pcidsk_7():
     return 'success'
 
 ###############################################################################
+# Check various items from a modern irvine.pix
+
+def pcidsk_online_1():
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+    
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/irvine_gcp2.pix', 'irvine_gcp2.pix'):
+        return 'skip'
+
+    ds = gdal.Open('tmp/cache/irvine_gcp2.pix')
+
+    band = ds.GetRasterBand(6)
+
+    names = band.GetRasterCategoryNames()
+
+    exp_names = ['', '', '', '', '', '', '', '', '', '', '', 'Residential', 'Commercial', 'Industrial', 'Transportation', 'Commercial/Industrial', 'Mixed', 'Other', '', '', '', 'Crop/Pasture', 'Orchards', 'Feeding', 'Other', '', '', '', '', '', '', 'Herbaceous', 'Shrub', 'Mixed', '', '', '', '', '', '', '', 'Deciduous', 'Evergreen', 'Mixed', '', '', '', '', '', '', '', 'Streams/Canals', 'Lakes', 'Reservoirs', 'Bays/Estuaries', '', '', '', '', '', '', 'Forested', 'Nonforested', '', '', '', '', '', '', '', '', 'Dry_Salt_Flats', 'Beaches', 'Sandy_Areas', 'Exposed_Rock', 'Mines/Quarries/Pits', 'Transitional_Area', 'Mixed', '', '', '', 'Shrub/Brush', 'Herbaceous', 'Bare', 'Wet', 'Mixed', '', '', '', '', '', 'Perennial_Snow', 'Glaciers']
+
+    if names != exp_names:
+        print(names)
+        gdaltest.post_reason( 'did not get expected category names.' )
+        return 'false'
+
+    band = ds.GetRasterBand(20)
+    if band.GetDescription() != 'Training site for type 2 crop':
+        gdaltest.post_reason( 'did not get expected band 20 description' )
+        return 'fail'
+
+    exp_checksum = 2057
+    checksum = band.Checksum()
+    if exp_checksum != checksum:
+        print(checksum)
+        gdaltest.post_reason( 'did not get right bitmap checksum.')
+        return 'fail'
+
+    md = band.GetMetadata('IMAGE_STRUCTURE')
+    if md['NBITS'] != '1':
+        gdaltest.post_reason( 'did not get expected NBITS=1 metadata.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def pcidsk_cleanup():
@@ -238,6 +280,7 @@ gdaltest_list = [
     pcidsk_5,
     pcidsk_6,
     pcidsk_7,
+    pcidsk_online_1,
     pcidsk_cleanup ]
 
 if __name__ == '__main__':
