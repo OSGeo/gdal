@@ -593,6 +593,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int		i;
 
+    if( poOpenInfo->nHeaderBytes < 1024)
+        return NULL;
+
     if( !EQUALN((const char *) poOpenInfo->pabyHeader + 52,
 		"ACQUISITION DATE =", 18)
         && !EQUALN((const char *) poOpenInfo->pabyHeader + 36,
