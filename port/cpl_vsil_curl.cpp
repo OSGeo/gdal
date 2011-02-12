@@ -1391,6 +1391,37 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname )
 /*                   VSIInstallCurlFileHandler()                        */
 /************************************************************************/
 
+/**
+ * \brief Install /vsicurl/ HTTP/FTP file system handler (requires libcurl)
+ *
+ * A special file handler is installed that allows reading on-the-fly of files
+ * available through HTTP/FTP web protocols, without downloading the entire file.
+ *
+ * Recognized filenames are of the form /vsicurl/http://path/to/remote/ressource or
+ * /vsicurl/ftp://path/to/remote/ressource where path/to/remote/ressource is the
+ * URL of a remote ressource.
+ *
+ * Partial downloads (requires the HTTP server to support random reading) are done
+ * with a 16 KB granularity by default. If the driver detects sequential reading
+ * it will progressively increase the chunk size up to 2 MB to improve download
+ * performance.
+ *
+ * The GDAL_HTTP_PROXY and GDAL_HTTP_PROXYUSERPWD configuration options can be
+ * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY
+ * and CURLOPT_PROXYUSERPWD options.
+ *
+ * VSIStatL() will return the size in st_size member and file
+ * nature- file or directory - in st_mode member (the later only reliable with FTP
+ * resources for now).
+ *
+ * VSIReadDir() should be able to parse the HTML directory listing returned by the
+ * most popular web servers, such as Apache or Microsoft IIS.
+ *
+ * This special file handler can be combined with other virtual filesystems handlers,
+ * such as /vsizip. For example, /vsizip//vsicurl/path/to/remote/file.zip/path/inside/zip
+ *
+ * @since GDAL 1.8.0
+ */
 void VSIInstallCurlFileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsicurl/", new VSICurlFilesystemHandler );

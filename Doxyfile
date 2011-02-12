@@ -950,6 +950,7 @@ PREDEFINED             = HAVE_DLFCN_H \
                          CPL_C_END \
                          __cplusplus \
                          DOXYGEN_SKIP \
+                         HAVE_CURL \
 			 OGR_ENABLED
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
