@@ -306,11 +306,27 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 #define EPRJ_STEREOGRAPHIC_EXTENDED             50
 #define EPRJ_CASSINI                            51
 #define EPRJ_TWO_POINT_EQUIDISTANT              52
-#define EPRJ_STEREOGRAPHIC_NORTH_POLE           53
-#define EPRJ_STEREOGRAPHIC_SOUTH_POLE           54
+#define EPRJ_ANCHORED_LSR                       53
+#define EPRJ_KROVAK                             54
+#define EPRJ_DOUBLE_STEREOGRAPHIC               55
+#define EPRJ_AITOFF                             56
+#define EPRJ_CRASTER_PARABOLIC                  57
+#define EPRJ_CYLINDRICAL_EQUAL_AREA             58
+#define EPRJ_FLAT_POLAR_QUARTIC                 59
+#define EPRJ_TIMES                              60
+#define EPRJ_WINKEL_TRIPEL                      61
+#define EPRJ_HAMMER_AITOFF                      62
+#define EPRJ_VERTICAL_NEAR_SIDE_PERSPECTIVE     63
+#define EPRJ_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER           64
+#define EPRJ_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_CENTER         65
+#define EPRJ_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN 66
+#define EPRJ_LAMBERT_CONFORMAL_CONIC_1SP        67
+#define EPRJ_PSEUDO_MERCATOR                    68
+#define EPRJ_MERCATOR_VARIANT_A                 69
 
 #define EPRJ_EXTERNAL_RSO			"eprj_rso"
 #define EPRJ_EXTERNAL_NZMG                      "nzmg"
+#define EPRJ_EXTERNAL_INTEGERIZED_SINUSOIDAL    "isin"
 
 CPL_C_END
 
