@@ -39,6 +39,7 @@ void CPL_DLL GDALRegister_GXF(void);
 void CPL_DLL GDALRegister_OGDI(void);
 void CPL_DLL GDALRegister_HFA(void);
 void CPL_DLL GDALRegister_AAIGrid(void);
+void CPL_DLL GDALRegister_GRASSASCIIGrid(void);
 void CPL_DLL GDALRegister_AIGrid(void);
 void CPL_DLL GDALRegister_AIGrid2(void);
 void CPL_DLL GDALRegister_CEOS(void);
