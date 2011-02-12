@@ -357,9 +357,20 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                       VSIInstallStdinHandler()                      */
+/*                       VSIInstallStdinHandler()                       */
 /************************************************************************/
 
+/**
+ * \brief Install /vsistdin/ file system handler
+ *
+ * A special file handler is installed that allows reading from the standard
+ * input steam.
+ *
+ * The file operations available are of course limited to Read() and
+ * forward Seek() (full seek in the first MB of a file).
+ *
+ * @since GDAL 1.8.0
+ */
 void VSIInstallStdinHandler()
 
 {
