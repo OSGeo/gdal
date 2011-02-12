@@ -1111,12 +1111,14 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             bHasInternalProjection = TRUE;
         }
-        else if( EQUAL(papszTokens[0],"MinValue") )
+        else if( EQUAL(papszTokens[0],"MinValue") ||
+                 EQUAL(papszTokens[0],"MIN_VALUE") )
         {
             dfMin = atof(papszTokens[1]);
             bHasMin = TRUE;
         }
-        else if( EQUAL(papszTokens[0],"MaxValue") )
+        else if( EQUAL(papszTokens[0],"MaxValue") ||
+                 EQUAL(papszTokens[0],"MAX_VALUE") )
         {
             dfMax = atof(papszTokens[1]);
             bHasMax = TRUE;
