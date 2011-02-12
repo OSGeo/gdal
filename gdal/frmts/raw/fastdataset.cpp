@@ -110,7 +110,7 @@ class FASTDataset : public GDALPamDataset
     double      adfGeoTransform[6];
     char        *pszProjection;
 
-    FILE	*fpHeader;
+    VSILFILE	*fpHeader;
     CPLString apoChannelFilenames[7];
     VSILFILE	*fpChannels[7];
     const char	*pszFilename;
@@ -209,7 +209,7 @@ FASTDataset::~FASTDataset()
 	if ( fpChannels[i] )
 	    VSIFCloseL( fpChannels[i] );
     if( fpHeader != NULL )
-        VSIFClose( fpHeader );
+        VSIFCloseL( fpHeader );
 }
 
 /************************************************************************/
@@ -592,9 +592,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int		i;
-	
-    if( poOpenInfo->fp == NULL )
-        return NULL;
 
     if( !EQUALN((const char *) poOpenInfo->pabyHeader + 52,
 		"ACQUISITION DATE =", 18)
@@ -609,8 +606,13 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new FASTDataset();
 
-    poDS->fpHeader = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    poDS->fpHeader = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    if (poDS->fpHeader == NULL)
+    {
+        delete poDS;
+        return NULL;
+    }
+
     poDS->pszFilename = poOpenInfo->pszFilename;
     poDS->pszDirname = CPLStrdup( CPLGetDirname( poOpenInfo->pszFilename ) );
     
@@ -621,8 +623,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     char	*pszHeader = (char *) CPLMalloc( ADM_HEADER_SIZE + 1 );
     size_t      nBytesRead;
  
-    VSIFSeek( poDS->fpHeader, 0, SEEK_SET );
-    nBytesRead = VSIFRead( pszHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader );
+    VSIFSeekL( poDS->fpHeader, 0, SEEK_SET );
+    nBytesRead = VSIFReadL( pszHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader );
     if ( nBytesRead < ADM_MIN_HEADER_SIZE )
     {
 	CPLDebug( "FAST", "Header file too short. Reading failed" );
@@ -1130,6 +1132,7 @@ void GDALRegister_FAST()
                                    "EOSAT FAST Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_fast.html" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = FASTDataset::Open;
 

@@ -893,6 +893,8 @@ void GDALRegister_GenBin()
                                    "Generic Binary (.hdr Labelled)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#GenBin" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = GenBinDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
