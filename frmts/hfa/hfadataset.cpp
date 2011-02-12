@@ -2101,15 +2101,44 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
-    else if( EQUAL(pszProjName,SRS_PT_MERCATOR_1SP) )
+    else if( EQUAL(pszProjName,SRS_PT_MERCATOR_1SP) 
+             && oSRS.GetProjParm(SRS_PP_SCALE_FACTOR) == 1.0 )
     {
         sPro.proNumber = EPRJ_MERCATOR;
         sPro.proName = (char*) "Mercator";
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
         sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
-        /* hopefully the scale factor is 1.0! */
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_MERCATOR_1SP) )
+    {
+        sPro.proNumber = EPRJ_MERCATOR_VARIANT_A;
+        sPro.proName = (char*) "Mercator (Variant A)";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR);
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_KROVAK) )
+    {
+        sPro.proNumber = EPRJ_KROVAK;
+        sPro.proName = (char*) "Krovak";
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR);
+        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_AZIMUTH)*D2R;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+        sPro.proParams[9] = oSRS.GetProjParm(SRS_PP_PSEUDO_STD_PARALLEL_1);
+
+        // XY plane rotation
+        sPro.proParams[8] = 0.0;
+        // X scale
+        sPro.proParams[10] = 1.0;
+        // Y scale
+        sPro.proParams[11] = 1.0;
     }
     else if( EQUAL(pszProjName,SRS_PT_POLAR_STEREOGRAPHIC) )
     {
@@ -3090,6 +3119,25 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[6] );
       }
       break;
+
+      case EPRJ_KROVAK:
+        oSRS.SetKrovak( psPro->proParams[4]*R2D, psPro->proParams[5]*R2D,
+                        psPro->proParams[3]*R2D, psPro->proParams[9]*R2D,
+                        psPro->proParams[2],
+                        psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_MERCATOR_VARIANT_A:
+        oSRS.SetMercator( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
+                          psPro->proParams[2],
+                          psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_PSEUDO_MERCATOR: // likely this is google mercator?
+        oSRS.SetMercator( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
+                          1.0,
+                          psPro->proParams[6], psPro->proParams[7] );
+        break;
 
       default:
         if( oSRS.IsProjected() )
