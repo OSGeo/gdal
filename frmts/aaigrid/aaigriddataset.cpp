@@ -79,6 +79,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     virtual char **GetFileList(void);
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
     static CPLErr       Delete( const char *pszFilename );
     static CPLErr       Remove( const char *pszFilename, int bRepError );
 
@@ -377,6 +378,30 @@ char **AAIGDataset::GetFileList()
 }
 
 /************************************************************************/
+/*                            Identify()                                */
+/************************************************************************/
+
+int AAIGDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Does this look like an AI grid file?                            */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 100
+        || !( EQUALN((const char *) poOpenInfo->pabyHeader,"ncols",5) ||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"nrows",5) ||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcorner",9)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcorner",9)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcenter",9)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcenter",9)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"dx",2)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"dy",2)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"cellsize",8)) )
+        return FALSE;
+
+    return TRUE;
+}
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -386,6 +411,9 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     int i = 0;
     int j = 0;
     char **papszTokens = NULL;
+
+    if (!Identify(poOpenInfo))
+        return NULL;
 
     /* Default data type */
     GDALDataType eDataType = GDT_Int32;
@@ -403,21 +431,6 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
             pszDataType = NULL;
         }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Does this look like an AI grid file?                            */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 100
-        || !( EQUALN((const char *) poOpenInfo->pabyHeader,"ncols",5) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"nrows",5) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcorner",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcorner",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcenter",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcenter",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"dx",2)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"dy",2)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"cellsize",8)) )
-        return NULL;
 
     papszTokens =  
         CSLTokenizeString2( (const char *) poOpenInfo->pabyHeader,
@@ -601,7 +614,13 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         /* Allocate 100K chunk + 1 extra byte for NULL character. */
         const size_t nChunkSize = 1024 * 100;
-        GByte* pabyChunk = (GByte *) CPLCalloc( nChunkSize + 1, sizeof(GByte) );
+        GByte* pabyChunk = (GByte *) VSICalloc( nChunkSize + 1, sizeof(GByte) );
+        if (pabyChunk == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            delete poDS;
+            return NULL;
+        }
         pabyChunk[nChunkSize] = '\0';
 
         VSIFSeekL( poDS->fp, nStartOfData, SEEK_SET );
@@ -1037,6 +1056,7 @@ void GDALRegister_AAIGrid()
 "</CreationOptionList>\n" );
 
         poDriver->pfnOpen = AAIGDataset::Open;
+        poDriver->pfnIdentify = AAIGDataset::Identify;
         poDriver->pfnCreateCopy = AAIGCreateCopy;
         
         GetGDALDriverManager()->RegisterDriver( poDriver );
