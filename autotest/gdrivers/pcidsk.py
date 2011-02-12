@@ -269,7 +269,7 @@ def pcidsk_online_1():
 
 def pcidsk_cleanup():
     gdaltest.pcidsk_ds = None
-    #gdaltest.clean_tmp()
+    gdaltest.clean_tmp()
     return 'success'
 
 gdaltest_list = [
