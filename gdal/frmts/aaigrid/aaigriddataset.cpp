@@ -469,6 +469,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
+        CSLDestroy( papszTokens );
         delete poDS;
         return NULL;
     }
