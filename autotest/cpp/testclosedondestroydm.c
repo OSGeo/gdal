@@ -92,10 +92,19 @@ int main(int argc, char* argv[])
     hDS = GDALOpen("byte3.tif", GA_ReadOnly);
     GDALGetMaskFlags(GDALGetRasterBand(hDS, 1));
 
-
-    hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
-    hDS = GDALCreateCopy(GDALGetDriverByName("VRT"), "byte.vrt", hSrcDS, 0, NULL, NULL, NULL);
-    GDALClose(hSrcDS);
+    FILE* f = fopen("byte.vrt", "wb");
+    fprintf(f, "%s", "<VRTDataset rasterXSize=\"20\" rasterYSize=\"20\">"
+  "<VRTRasterBand dataType=\"Byte\" band=\"1\">"
+    "<SimpleSource>"
+      "<SourceFilename relativeToVRT=\"1\">../gcore/data/byte.tif</SourceFilename>"
+      "<SourceBand>1</SourceBand>"
+      "<SourceProperties RasterXSize=\"20\" RasterYSize=\"20\" DataType=\"Byte\" BlockXSize=\"20\" BlockYSize=\"20\" />"
+      "<SrcRect xOff=\"0\" yOff=\"0\" xSize=\"20\" ySize=\"20\"/>"
+      "<DstRect xOff=\"0\" yOff=\"0\" xSize=\"20\" ySize=\"20\"/>"
+    "</SimpleSource>"
+  "</VRTRasterBand>"
+"</VRTDataset>");
+    fclose(f);
 
     hDS = GDALOpen("byte.vrt", GA_ReadOnly);
     nOvrLevel = 2;
@@ -119,6 +128,9 @@ int main(int argc, char* argv[])
   "</VRTRasterBand>"
 "</VRTDataset>", GA_ReadOnly);
     GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
+
+    hDS = GDALOpenShared("../gcore/data/byte.tif", GA_ReadOnly);
+    hDS = GDALOpenShared("../gcore/data/byte.tif", GA_ReadOnly);
 
     CPLDebug("TEST","Call GDALDestroyDriverManager()");
     GDALDestroyDriverManager();
