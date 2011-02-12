@@ -123,6 +123,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_aaigrid
     GDALRegister_AAIGrid();
+    GDALRegister_GRASSASCIIGrid();
 #endif
 
 #ifdef FRMT_sdts

@@ -390,6 +390,23 @@ when provided. </p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
+<h2><a name="GRASSASCIIGrid">GRASSASCIIGrid -- GRASS ASCII Grid</a></h2>
+
+<p> (GDAL >= 1.9.0)</p>
+
+<p>Supports reading GRASS ASCII grid format (similar to Arc/Info ASCIIGRID command).</p>
+
+<p>By default, the datatype returned for GRASS ASCII grid datasets by GDAL is autodetected,
+and set to Float32 for grid with floating point values or Int32 otherwise. This is
+done by analysing the format of the null value and the first 100k bytes of data of the
+grid. You can also explictely specify the datatype by setting the
+GRASSASCIIGRID_DATATYPE configuration option (Int32, Float32 and Float64 values are
+supported currently)</p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/aaigrid/aaigriddataset.cpp</tt>.</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
 <h2><a name="GSAG">GSAG -- Golden Software ASCII Grid File Format</a></h2>
 
 <p>This is the ASCII-based (human-readable) version of one of the raster formats
