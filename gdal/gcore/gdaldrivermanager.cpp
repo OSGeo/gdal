@@ -180,7 +180,10 @@ GDALDriverManager::~GDALDriverManager()
     {
         CPLDebug( "GDAL", "force close of %s in GDALDriverManager cleanup.",
                   papoDSList[i]->GetDescription() );
-        GDALClose( papoDSList[i] );
+        /* Destroy with delete operator rather than GDALClose() to force deletion of */
+        /* datasets with multiple reference count */
+        /* We could also iterate while GetOpenDatasets() returns a non NULL list */
+        delete papoDSList[i];
     }
 
 /* -------------------------------------------------------------------- */
