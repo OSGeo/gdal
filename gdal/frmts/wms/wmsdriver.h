@@ -38,9 +38,10 @@ void URLAppendF(CPLString *url, const char *s, ...);
 void URLAppend(CPLString *url, const CPLString &s);
 CPLString BufferToVSIFile(GByte *buffer, size_t size);
 CPLErr MakeDirs(const char *path);
+
+
 int StrToBool(const char *p);
 int URLSearchAndReplace (CPLString *base, const char *search, const char *fmt, ...);
-
 /* Convert a.b.c.d to a * 0x1000000 + b * 0x10000 + c * 0x100 + d */
 int VersionStringToInt(const char *version);
 
@@ -196,25 +197,27 @@ public:
     GDALWMSDataset();
     virtual ~GDALWMSDataset();
 
-public:
     virtual const char *GetProjectionRef();
     virtual CPLErr SetProjection(const char *proj);
     virtual CPLErr GetGeoTransform(double *gt);
     virtual CPLErr SetGeoTransform(double *gt);
     virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options);
 
+    const GDALWMSDataWindow *WMSGetDataWindow() const;
+    void WMSSetClamp(bool flag);
+    void WMSSetOverviewCount(int count);
+    void WMSSetBlockSize(int x, int y);
+    void WMSSetRasterSize(int x, int y);
+    void WMSSetDataType(GDALDataType type);
+    void WMSSetDataWindow(GDALWMSDataWindow &window);
+    void WMSSetBandsCount(int count);
+    void mSetBand(int i, GDALRasterBand *band) { SetBand(i,band); };
+    GDALWMSRasterBand *mGetBand(int i) { return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i)); };
+
 protected:
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, int pixel_space, int line_space, int band_space);
-
-protected:
     CPLErr Initialize(CPLXMLNode *config);
 
-public:
-    const GDALWMSDataWindow *WMSGetDataWindow() const;
-    int WMSGetBlockSizeX() const;
-    int WMSGetBlockSizeY() const;
-
-protected:
     GDALWMSDataWindow m_data_window;
     GDALWMSMiniDriver *m_mini_driver;
     GDALWMSMiniDriverCapabilities m_mini_driver_caps;
@@ -240,8 +243,7 @@ class GDALWMSRasterBand : public GDALPamRasterBand {
 public:
     GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale);
     virtual ~GDALWMSRasterBand();
-
-public:
+    void AddOverview(double scale);
     virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options);
 
 protected:
@@ -251,7 +253,6 @@ protected:
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int n);
-    void AddOverview(double scale);
     bool IsBlockInCache(int x, int y);
     void AskMiniDriverForBlock(CPLString *url, int x, int y);
     CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read);

@@ -11,6 +11,7 @@
 #include <gdal_priv.h>
 #include <gdal_pam.h>
 #include <cpl_multiproc.h>
+#include <cpl_http.h>
 
 #include "md5.h"
 #include "gdalhttp.h"
@@ -19,3 +20,4 @@
 #include "minidriver_tileservice.h"
 #include "minidriver_worldwind.h"
 #include "minidriver_tms.h"
+#include "minidriver_tiled_wms.h"

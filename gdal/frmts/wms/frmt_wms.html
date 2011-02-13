@@ -271,6 +271,26 @@
   Two examples of usage of the TMS service are included in the examples below.
 </p>  
 
+<h3>OnEarth Tiled WMS</h3>
+<p>
+The OnEarth Tiled WMS minidriver supports the Tiled WMS specification
+implemented for the JPL OnEarth driver per the specification at
+<a href="http://onearth.jpl.nasa.gov/tiled.html">http://onearth.jpl.nasa.gov/tiled.html</a>.<p>
+
+A typical OnEarth Tiled WMS configuration file might look like:
+
+<pre>
+&lt;GDAL_WMS&gt;
+    &lt;Service name="TiledWMS"&gt;
+	&lt;ServerUrl&gt;http://onmoon.jpl.nasa.gov/wms.cgi?&lt;/ServerUrl&gt;
+	&lt;TiledGroupName&gt;Clementine&lt;/TiledGroupName&gt;
+    &lt;/Service&gt;
+&lt;/GDAL_WMS&gt;
+</pre>
+
+Most of the other information is automatically fetched from the remote
+server using the GetTileService method at open time. <p>
+
 <h2>Examples</h2>
 
 <ul>
@@ -308,6 +328,12 @@
     <li>
      <a href="frmt_wms_metacarta_tms.xml">MetaCarta TMS Layer Example</a>, accessing the default MetaCarta TMS layer.<br />
           <tt>gdal_translate -of PNG -outsize 512 256 frmt_wms_metacarta_tms.xml metacarta.png</tt>
+    </li>
+
+    <li>
+     OnEarth Tiled WMS <a href="frmt_twms_Clementine.xml">Clementine</a>,
+     <a href="frmt_twms_daily.xml">daily</a>, and
+     <a href="frmt_twms_srtm.xml">srtm</a> examples.<p>
     </li>
 </ul>
 
