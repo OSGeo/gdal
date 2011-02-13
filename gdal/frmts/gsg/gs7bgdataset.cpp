@@ -579,6 +579,7 @@ void GDALRegister_GS7BG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
             "Byte Int16 UInt16 Float32 Float64" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = GS7BGDataset::Open;
 

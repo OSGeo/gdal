@@ -84,7 +84,7 @@ def rmf_7():
 
     tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672 )
 
-    return tst.testCreateCopy( check_srs = 1, check_gt = 1 )
+    return tst.testCreateCopy( check_srs = 1, check_gt = 1, vsimem = 1 )
     
 def rmf_8():
 
