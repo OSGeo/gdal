@@ -2053,6 +2053,7 @@ void GDALRegister_WCS()
                                    "OGC Web Coverage Service" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_wcs.html" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         
         poDriver->pfnOpen = WCSDataset::Open;
 

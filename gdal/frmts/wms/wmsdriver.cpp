@@ -94,6 +94,7 @@ void GDALRegister_WMS() {
         driver->SetDescription("WMS");
         driver->SetMetadataItem(GDAL_DMD_LONGNAME, "OGC Web Map Service");
         driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_wms.html");
+        driver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         driver->pfnOpen = GDALWMSDatasetOpen;
         driver->pfnUnloadDriver = GDALDeregister_WMS;
         GetGDALDriverManager()->RegisterDriver(driver);
