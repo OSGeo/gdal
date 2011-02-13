@@ -206,11 +206,13 @@ void FindChangePattern( char *cdata,char **substs, CPLString &ret) {
 }
 
 GDALWMSMiniDriver_TiledWMS::GDALWMSMiniDriver_TiledWMS() {
+    m_requests = NULL;
+    m_substs = NULL;
 }
 
 GDALWMSMiniDriver_TiledWMS::~GDALWMSMiniDriver_TiledWMS() {
-    delete[] m_requests;
-    delete[] m_substs;
+    CSLDestroy(m_requests);
+    CSLDestroy(m_substs);
 }
 
 
@@ -225,7 +227,7 @@ double GDALWMSMiniDriver_TiledWMS::Scale(const char *request) {
 
 
 // Finds, extracts, and returns the highest resolution request string from a list, starting at item i
-void GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **list,int i, CPLString &req) {
+void GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i, CPLString &req) {
     req="";
     double scale=-1;
     int position=-1;
@@ -239,7 +241,7 @@ void GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **list,int i, CPLString &re
     }
     if (position>-1) {
         req=list[position];
-	CSLRemoveStrings(list,position,1,NULL);
+        list = CSLRemoveStrings(list,position,1,NULL);
     }
 }
 
@@ -432,7 +434,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                 int startBbox=FindBbox(request);
                 int BboxSize=request.find_first_of("&",startBbox);
                 request.replace(startBbox,BboxSize,"${GDAL_BBOX}");
-                CSLInsertString(requests,i,request);
+                requests = CSLInsertString(requests,i,request);
 
                 // Create the Rasterband or overview
                 for (int j = 1; j <= m_bands_count; j++) {
