@@ -44,7 +44,7 @@ public:
 
 protected:
     double Scale(const char *request);
-    void GetLowestScale(char **list,int i, CPLString &req);
+    void GetLowestScale(char **& list,int i, CPLString &req);
     GDALWMSDataWindow m_data_window;
     int m_overview_count;
     int m_bands_count;
