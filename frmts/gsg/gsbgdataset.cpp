@@ -1229,6 +1229,7 @@ void GDALRegister_GSBG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
 	poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
 				   "Byte Int16 UInt16 Float32" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = GSBGDataset::Open;
 	poDriver->pfnCreate = GSBGDataset::Create;
