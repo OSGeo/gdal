@@ -64,9 +64,9 @@ GDALWMSMiniDriverFactory::~GDALWMSMiniDriverFactory() {
 }
 
 GDALWMSMiniDriverManager *GetGDALWMSMiniDriverManager() {
-    if (g_mini_driver_manager == 0) {
+    if (g_mini_driver_manager == NULL) {
         CPLMutexHolderD(&g_mini_driver_manager_mutex);
-        if (g_mini_driver_manager == 0) {
+        if (g_mini_driver_manager == NULL) {
             g_mini_driver_manager = new GDALWMSMiniDriverManager();
         }
         CPLAssert(g_mini_driver_manager != NULL);

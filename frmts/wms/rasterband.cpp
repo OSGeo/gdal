@@ -40,7 +40,7 @@ GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, d
     poDS = parent_dataset;
     nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale + 0.5);
     nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale + 0.5);
-    nBand = band + 1;
+    nBand = band;
     eDataType = m_parent_dataset->m_data_type;
     nBlockXSize = m_parent_dataset->m_block_size_x;
     nBlockYSize = m_parent_dataset->m_block_size_y;
@@ -275,8 +275,7 @@ GDALRasterBand *GDALWMSRasterBand::GetOverview(int n) {
 }
 
 void GDALWMSRasterBand::AddOverview(double scale) {
-    int i;
-    GDALWMSRasterBand *overview = new GDALWMSRasterBand(m_parent_dataset, nBand - 1, scale);
+    GDALWMSRasterBand *overview = new GDALWMSRasterBand(m_parent_dataset, nBand, scale);
     std::vector<GDALWMSRasterBand *>::iterator it = m_overviews.begin();
     for (; it != m_overviews.end(); ++it) {
         GDALWMSRasterBand *p = *it;
@@ -284,7 +283,7 @@ void GDALWMSRasterBand::AddOverview(double scale) {
     }
     m_overviews.insert(it, overview);
     it = m_overviews.begin();
-    for (i = 0; it != m_overviews.end(); ++it, ++i) {
+    for (int i = 0; it != m_overviews.end(); ++it, ++i) {
         GDALWMSRasterBand *p = *it;
         p->m_overview = i;
     }
@@ -300,6 +299,8 @@ bool GDALWMSRasterBand::IsBlockInCache(int x, int y) {
     return ret;
 }
 
+
+// This is the function that calculates the block coordinates for the fetch
 void GDALWMSRasterBand::AskMiniDriverForBlock(CPLString *url, int x, int y) {
     GDALWMSImageRequestInfo iri;
     GDALWMSTiledImageRequestInfo tiri;
@@ -436,10 +437,15 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                         int line_space = pixel_space * nBlockXSize;
                         if (color_table == NULL) {
                             if( ib <= ds->GetRasterCount()) {
-                               if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, &ib, pixel_space, line_space, 0) != CE_None) {
-                                   CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
-                                   ret = CE_Failure;
-                               }
+				GDALDataType dt=eDataType;
+				// Get the data from the PNG as stored instead of converting, if the server asks for that
+                                // TODO: This hack is from #3493 - not sure it really belongs here.
+				if ((GDT_Int16==dt)&&(GDT_UInt16==ds->GetRasterBand(ib)->GetRasterDataType()))
+				    dt=GDT_UInt16;
+				if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, dt, 1, &ib, pixel_space, line_space, 0) != CE_None) {
+				    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
+				    ret = CE_Failure;
+				}
                             }
                             else
                             {  // parent expects 4 bands but file only has 3 so generate a all "opaque" 4th band
@@ -600,3 +606,4 @@ CPLErr GDALWMSRasterBand::AdviseRead(int x0, int y0, int sx, int sy, int bsx, in
 GDALColorInterp GDALWMSRasterBand::GetColorInterpretation() {
     return m_color_interp;
 }
+
