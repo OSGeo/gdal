@@ -246,19 +246,21 @@ public:
     void AddOverview(double scale);
     virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options);
 
-protected:
-    CPLErr ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read);
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
     virtual CPLErr IReadBlock(int x, int y, void *buffer);
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space);
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int n);
+
+protected:
+    CPLErr ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read);
     bool IsBlockInCache(int x, int y);
     void AskMiniDriverForBlock(CPLString *url, int x, int y);
     CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read);
     CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
     CPLErr ReportWMSException(const char *file_name);
-    virtual GDALColorInterp GetColorInterpretation();
 
 protected:
     GDALWMSDataset *m_parent_dataset;
