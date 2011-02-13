@@ -607,3 +607,9 @@ GDALColorInterp GDALWMSRasterBand::GetColorInterpretation() {
     return m_color_interp;
 }
 
+CPLErr GDALWMSRasterBand::SetColorInterpretation( GDALColorInterp eNewInterp )
+{
+    m_color_interp = eNewInterp;
+    return CE_None;
+}
+
