@@ -5,6 +5,8 @@
  * Purpose:  Implementation of ISIS2Dataset
  * Author:   Trent Hare (thare@usgs.gov),
  *           Robert Soricone (rsoricone@usgs.gov)
+ *           Ludovic Mercier (ludovic.mercier@gmail.com) 
+ *           Frank Warmerdam (warmerdam@pobox.com)
  *
  * NOTE: Original code authored by Trent and Robert and placed in the public 
  * domain as per US government policy.  I have (within my rights) appropriated 
@@ -34,9 +36,6 @@
 
 #define NULL1 0
 #define NULL2 -32768
-//#define NULL3 0xFF7FFFFB //in hex
-//Same as ESRI_GRID_FLOAT_NO_DATA
-//#define NULL3 -340282346638528859811704183484516925440.0
 #define NULL3 -3.4028226550889044521e+38
 
 #ifndef PI
@@ -65,6 +64,7 @@ CPL_C_END
 class ISIS2Dataset : public RawDataset
 {
     VSILFILE	*fpImage;	// image data file.
+    CPLString    osExternalCube;
 
     NASAKeywordHandler  oKeywords;
   
@@ -89,18 +89,19 @@ class ISIS2Dataset : public RawDataset
 public:
     ISIS2Dataset();
     ~ISIS2Dataset();
-  
+
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);
   
+    virtual char **GetFileList();
+
+    static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 
-
     // Write related.
-
     static int WriteRaster(CPLString osFilename, bool includeLabel, GUIntBig iRecord, GUIntBig iLabelRecords, GDALDataType eType, const char * pszInterleaving);
 
     static int WriteLabel(CPLString osFilename, CPLString osRasterFile, CPLString sObjectTag, unsigned int nXSize, unsigned int nYSize, unsigned int nBands, GDALDataType eType,
@@ -142,6 +143,23 @@ ISIS2Dataset::~ISIS2Dataset()
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **ISIS2Dataset::GetFileList()
+
+{
+    char **papszFileList = NULL;
+
+    papszFileList = GDALPamDataset::GetFileList();
+
+    if( strlen(osExternalCube) > 0 )
+        papszFileList = CSLAddString( papszFileList, osExternalCube );
+
+    return papszFileList;
+}
+
+/************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
@@ -173,16 +191,34 @@ CPLErr ISIS2Dataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+
+int ISIS2Dataset::Identify( GDALOpenInfo * poOpenInfo )
+{
+    if( poOpenInfo->pabyHeader == NULL )
+        return FALSE;
+
+    if( strstr((const char *)poOpenInfo->pabyHeader,"^QUBE") == NULL &&
+    	strstr((const char *)poOpenInfo->pabyHeader,"^IMAGE") == NULL &&
+    	strstr((const char *)poOpenInfo->pabyHeader,"^SPECTRAL_QUBE") == NULL &&
+    	strstr((const char *)poOpenInfo->pabyHeader,"^PDS_VERSION_ID") == NULL )
+        return FALSE;
+    else
+        return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
-/*      Does this look like a CUBE dataset?                             */
+/*      Does this look like a CUBE or an IMAGE Primary Data Object?     */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->pabyHeader == NULL
-        || strstr((const char *)poOpenInfo->pabyHeader,"^QUBE") == NULL )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -215,14 +251,35 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     // ^QUBE = "ui31s015.img" - which implies no label or skip value
 
     const char *pszQube = poDS->GetKeyword( "^QUBE" );
-    int nQube = atoi(pszQube);
+    GUIntBig nQube = 0;
+    int bByteLocation = FALSE;
+    CPLString osTargetFile = poOpenInfo->pszFilename;
 
-    if( pszQube[0] == '"' || pszQube[0] == '(' )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "ISIS2 driver does not support detached images." );
-        delete poDS;
-        return NULL;
+    if( pszQube[0] == '"' )
+    { 
+        CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename); 
+        CPLString osFilename = pszQube;
+        poDS->CleanString( osFilename ); 
+        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL ); 
+        poDS->osExternalCube = osTargetFile;
+    }
+    else if( pszQube[0] == '(' ) 
+    { 
+        CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename); 
+        CPLString osFilename = poDS->GetKeywordSub("^QUBE",1,""); 
+        poDS->CleanString( osFilename ); 
+        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL ); 
+        poDS->osExternalCube = osTargetFile;
+
+        nQube = atoi(poDS->GetKeywordSub("^QUBE",2,"1"));
+        if( strstr(poDS->GetKeywordSub("^QUBE",2,"1"),"<BYTES>") != NULL )
+            bByteLocation = true;
+    } 
+    else 
+    { 
+        nQube = atoi(pszQube);
+        if( strstr(pszQube,"<BYTES>") != NULL )
+            bByteLocation = true;
     }
 
 /* -------------------------------------------------------------------- */
@@ -310,11 +367,21 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     /***********   Grab Qube record bytes  **********/
     record_bytes = atoi(poDS->GetKeyword("RECORD_BYTES"));
 
-    if (nQube > 0)
+    if (nQube > 0 && bByteLocation )
+        nSkipBytes = (nQube - 1);
+    else if( nQube > 0 )
         nSkipBytes = (nQube - 1) * record_bytes;     
     else
         nSkipBytes = 0;     
      
+    /***********   Grab samples lines band ************/
+    CPLString osCoreItemType = poDS->GetKeyword( "QUBE.CORE_ITEM_TYPE" );
+    if( (EQUAL(osCoreItemType,"PC_INTEGER")) || 
+        (EQUAL(osCoreItemType,"PC_UNSIGNED_INTEGER")) || 
+        (EQUAL(osCoreItemType,"PC_REAL")) ) {
+        chByteOrder = 'I';
+    }
+    
     /********   Grab format type - isis2 only supports 8,16,32 *******/
     itype = atoi(poDS->GetKeyword("QUBE.CORE_ITEM_BYTES",""));
     switch(itype) {
@@ -324,12 +391,25 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         bNoDataSet = TRUE;
         break;
       case 2 :
-        eDataType = GDT_Int16;
-        dfNoData = NULL2;
+        if( strstr(osCoreItemType,"UNSIGNED") != NULL )
+        {
+            dfNoData = 0;
+            eDataType = GDT_UInt16;
+        }
+        else
+        {
+            dfNoData = NULL2;
+            eDataType = GDT_Int16;
+        }
         bNoDataSet = TRUE;
         break;
       case 4 :
         eDataType = GDT_Float32;
+        dfNoData = NULL3;
+        bNoDataSet = TRUE;
+        break;
+      case 8 :
+        eDataType = GDT_Float64;
         dfNoData = NULL3;
         bNoDataSet = TRUE;
         break;
@@ -341,14 +421,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    /***********   Grab samples lines band ************/
-    value = poDS->GetKeyword( "QUBE.CORE_ITEM_TYPE" );
-    if( (EQUAL(value,"PC_INTEGER")) || 
-        (EQUAL(value,"PC_UNSIGNED_INTEGER")) || 
-        (EQUAL(value,"PC_REAL")) ) {
-        chByteOrder = 'I';
-    }
-    
     /***********   Grab Cellsize ************/
     value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.MAP_SCALE");
     if (strlen(value) > 0 ) {
@@ -434,6 +506,9 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         oSRS.OGRSpatialReference::SetTM ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "LAMBERT_CONFORMAL_CONIC" )) {
         oSRS.OGRSpatialReference::SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
+    } else if (EQUAL( map_proj_name, "") ) {
+        /* no projection */
+        bProjectionSet = FALSE;
     } else {
         CPLDebug( "ISIS2",
                   "Dataset projection %s is not supported. Continuing...",
@@ -557,15 +632,15 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        poDS->fpImage = VSIFOpenL( osTargetFile, "rb" );
     else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+        poDS->fpImage = VSIFOpenL( osTargetFile, "r+b" );
 
     if( poDS->fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to open %s with write permission.\n%s", 
-                  poOpenInfo->pszFilename, VSIStrerror( errno ) );
+                  osTargetFile.c_str(), VSIStrerror( errno ) );
         delete poDS;
         return NULL;
     }
@@ -774,13 +849,11 @@ void ISIS2Dataset::CleanString( CPLString &osInput )
 /*                           Create()                                   */
 /************************************************************************/
 /**
- * Creation Options:
+ * Hidden Creation Options:
  * INTERLEAVE=BSQ/BIP/BIL: Force the generation specified type of interleaving.
  *  BSQ --- band sequental (default),
  *  BIP --- band interleaved by pixel,
  *  BIL --- band interleaved by line.
- * LABELING_METHOD=attached/detached
- * LABEL_EXTENSION=???, if null default is "pds"
  * OBJECT=QUBE/IMAGE/SPECTRAL_QUBE, if null default is QUBE
  */
 
@@ -789,10 +862,11 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
                                   GDALDataType eType, char** papszParmList) {
 
     /* Verify settings. In Isis 2 core pixel values can be represented in
-     * three different ways : 1, 2 or 4 Bytes */
-    if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_Float32){
+     * three different ways : 1, 2 4, or 8 Bytes */
+    if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_Float32
+        && eType != GDT_UInt16 && eType != GDT_Float64 ){
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "The ISIS2 driver does not supporting creating files of types %s.",
+                 "The ISIS2 driver does not supporting creating files of type %s.",
                  GDALGetDataTypeName( eType ) );
         return NULL;
     }
@@ -804,9 +878,9 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
     const char *pszInterleavingParam = CSLFetchNameValue( papszParmList, "INTERLEAVE" );
     if ( pszInterleavingParam ) {
         if ( EQUALN( pszInterleavingParam, "bip", 3 ) )
-            pszInterleaving = "(BAND, SAMPLE, LINE)";
+            pszInterleaving = "(BAND,SAMPLE,LINE)";
         else if ( EQUALN( pszInterleavingParam, "bil", 3 ) )
-            pszInterleaving = "(SAMPLE, BAND, LINE)";
+            pszInterleaving = "(SAMPLE,BAND,LINE)";
         else
             pszInterleaving = "(SAMPLE,LINE,BAND)";
     }
@@ -833,25 +907,25 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
     }
     else
     {
-        /* default extension is pds */
-        CPLString sExtension = "pds";
-        const char* pszExtension = CSLFetchNameValue( papszParmList, "LABEL_EXTENSION" );
+        CPLString sExtension = "cub";
+        const char* pszExtension = CSLFetchNameValue( papszParmList, "IMAGE_EXTENSION" );
         if( pszExtension ){
             sExtension = pszExtension;
         }
 
         if( EQUAL(CPLGetExtension( pszFilename ), sExtension) )
         {
-            osLabelFile = pszFilename;
-            osRasterFile = osLabelFile.substr(0,osLabelFile.length()-4);
-        }else{
-            osRasterFile = pszFilename;
-            osLabelFile = osRasterFile + "." + sExtension;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "IMAGE_EXTENSION (%s) cannot match LABEL file extension.",
+                      sExtension.c_str() );
+            return NULL;
         }
+
+        osLabelFile = pszFilename;
+        osRasterFile = CPLResetExtension( osLabelFile, sExtension );
         osOutFile = osLabelFile;
     }
 
-    CPLDebug("ISIS2", "outfile = %s, labelfile = %s, rasterfile = %s", osOutFile.c_str(), osLabelFile.c_str(), osRasterFile.c_str());
     const char *pszObject = CSLFetchNameValue( papszParmList, "OBJECT" );
     CPLString sObject = "QUBE"; // default choice
     if (pszObject) {
@@ -1121,11 +1195,20 @@ int ISIS2Dataset::WriteLabel(
             poDriver->SetDescription( "ISIS2" );
             poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                        "USGS Astrogeology ISIS cube (Version 2)" );
-            poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                       "frmt_various.html#ISIS2" );
+            poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_isis2.html" );
             poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-            poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 Int32 Float32 Float64");
+            poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 UInt16 Float32 Float64");
 
+            poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>\n"
+"   <Option name='LABELING_METHOD' type='string-select' default='ATTACHED'>\n"
+"     <Value>ATTACHED</Value>"
+"     <Value>DETACHED</Value>"
+"   </Option>"
+"   <Option name='IMAGE_EXTENSION' type='string' default='cub'/>\n"
+"</CreationOptionList>\n" );
+
+            poDriver->pfnIdentify = ISIS2Dataset::Identify;
             poDriver->pfnOpen = ISIS2Dataset::Open;
             poDriver->pfnCreate = ISIS2Dataset::Create;
 

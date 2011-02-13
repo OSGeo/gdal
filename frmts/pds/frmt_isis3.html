@@ -1,0 +1,37 @@
+<html>
+<head>
+<title>ISIS3 -- USGS Astrogeology ISIS Cube (Version 3)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ISIS3 -- USGS Astrogeology ISIS Cube (Version 3)</h1>
+
+ISIS3 is a format used by the USGS Planetary Cartography group
+to store and distribute planetary imagery data.  GDAL provides 
+read-only access to ISIS3 formatted imagery data.<p>
+
+ISIS3 files often have the extension .cub, sometimes with an associated
+.lbl (label) file.  When a .lbl file exists it should be used as
+the dataset name rather than the .cub file.<p>
+
+In addition to support for most ISIS3 imagery configurations, this
+driver also reads georeferencing and coordinate system information
+as well as selected other header metadata.<p>
+
+Implementation of this driver was supported by the United States
+Geological Survey.<p>
+
+ISIS3 is part of a family of related formats including PDS and ISIS2.<p>
+
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/pds/isis2dataset.cpp</tt>.
+<li> <a href="frmt_pds.html">GDAL PDS Driver</a>
+<li> <a href="frmt_isis2.html">GDAL ISIS2 Driver</a>
+</ul>
+
+</body>
+</html>

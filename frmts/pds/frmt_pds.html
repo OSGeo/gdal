@@ -1,0 +1,37 @@
+<html>
+<head>
+<title>PDS -- Planetary Data System</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>PDS -- Planetary Data System</h1>
+
+PDS is a format used primarily by NASA to store and distribute 
+solar, lunar and planetary imagery data.  GDAL provides read-only
+access to PDS formatted imagery data.<p>
+
+PDS files often have the extension .img, sometimes with an associated
+.lbl (label) file.  When a .lbl file exists it should be used as
+the dataset name rather than the .img file.<p>
+
+In addition to support for most PDS imagery configurations, this
+driver also reads georeferencing and coordinate system information
+as well as selected other header metadata.<p>
+
+Implementation of this driver was supported by the United States
+Geological Survey.<p>
+
+PDS is part of a family of related formats including ISIS2 and ISIS3.<p>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/pds/pdsdataset.cpp</tt>.
+<li> <a href="http://pds.nasa.gov/">NASA Planetary Data System</a>
+<li> <a href="frmt_isis2.html">GDAL ISIS2 Driver</a>
+<li> <a href="frmt_isis3.html">GDAL ISIS3 Driver</a>
+</ul>
+
+</body>
+</html>
