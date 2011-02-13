@@ -94,5 +94,6 @@ void GDALRegister_WMS() {
         mdm->Register(new GDALWMSMiniDriverFactory_TileService());
         mdm->Register(new GDALWMSMiniDriverFactory_WorldWind());
         mdm->Register(new GDALWMSMiniDriverFactory_TMS());
+	mdm->Register(new GDALWMSMiniDriverFactory_TiledWMS());
     }
 }
