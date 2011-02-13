@@ -595,13 +595,19 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
     {
         CPLXMLNode *psCT_XML = CPLCreateXMLNode( psTree, CXT_Element, 
                                                  "ColorTable" );
+        CPLXMLNode* psLastChild = NULL;
 
         for( int iEntry=0; iEntry < poColorTable->GetColorEntryCount(); 
              iEntry++ )
         {
             GDALColorEntry sEntry;
-            CPLXMLNode *psEntry_XML = CPLCreateXMLNode( psCT_XML, CXT_Element, 
+            CPLXMLNode *psEntry_XML = CPLCreateXMLNode( NULL, CXT_Element,
                                                         "Entry" );
+            if( psLastChild == NULL )
+                psCT_XML->psChild = psEntry_XML;
+            else
+                psLastChild->psNext = psEntry_XML;
+            psLastChild = psEntry_XML;
 
             poColorTable->GetColorEntryAsRGB( iEntry, &sEntry );
             
