@@ -30,14 +30,13 @@
 
 import os
 import sys
-import gdal
+from osgeo import gdal, osr
 import array
 import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import osr
 
 ###############################################################################
 # Read a truncated and modified version of arvidson_original.cub from
@@ -63,8 +62,29 @@ def isis2_1():
                          check_gt = expected_gt )
 
 
+###############################################################################
+# Test simple creation on disk.
+
+def isis2_2():
+
+    tst = gdaltest.GDALTest( 'ISIS2', 'byte.tif', 1, 4672 )
+
+    return tst.testCreate()
+
+###############################################################################
+# Test a different data type with some options.
+
+def isis2_3():
+
+    tst = gdaltest.GDALTest( 'ISIS2', 'float32.tif', 1, 4672,
+                             options = ['LABELING_METHOD=DETACHED', 'IMAGE_EXTENSION=qub'] )
+
+    return tst.testCreateCopy( vsimem=1 )
+
 gdaltest_list = [
-    isis2_1 ]
+    isis2_1,
+    isis2_2,
+    isis2_3 ]
 
 if __name__ == '__main__':
 
