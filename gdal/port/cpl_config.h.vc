@@ -14,7 +14,7 @@
 #define HAVE_VPRINTF 1
 #define HAVE_VSNPRINTF 1
 #define HAVE_SNPRINTF 1
-#if (_MSC_VER < 1500)
+#if defined(_MSC_VER) && (_MSC_VER < 1500)
 #  define vsnprintf _vsnprintf
 #endif
 #define snprintf _snprintf
@@ -100,7 +100,7 @@
 
 #define lfind _lfind
 
-#if (_MSC_VER < 1310)
+#if defined(_MSC_VER) && (_MSC_VER < 1310)
 #  define VSI_STAT64 _stat
 #  define VSI_STAT64_T _stat
 #else
@@ -109,7 +109,7 @@
 #endif
 
 /* VC6 doesn't known intptr_t */
-#if (_MSC_VER <= 1200)
+#if defined(_MSC_VER) && (_MSC_VER <= 1200)
     typedef int intptr_t;
 #endif
 
