@@ -1057,7 +1057,7 @@ int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
     if( poOpenInfo->pabyHeader == NULL)
-        return NULL;
+        return FALSE;
 
     if( memcmp(poOpenInfo->pabyHeader, RMF_SigRSW, sizeof(RMF_SigRSW)) != 0
         && memcmp(poOpenInfo->pabyHeader, RMF_SigRSW_BE, sizeof(RMF_SigRSW_BE)) != 0
