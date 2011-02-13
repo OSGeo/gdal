@@ -319,6 +319,40 @@ def wms_8():
     return 'success'
 
 ###############################################################################
+# Test OnEarth Tiled WMS minidriver
+
+def wms_9():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    tms = """<GDAL_WMS>
+    <Service name="TiledWMS">
+	<ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>
+	<TiledGroupName>Global SRTM Elevation</TiledGroupName>
+    </Service>
+</GDAL_WMS>
+"""
+
+    ds = gdal.Open( tms )
+
+    if ds is None:
+        gdaltest.post_reason( 'open failed.' )
+        return 'fail'
+
+    expected_cs = 5478
+    cs = ds.GetRasterBand(1).GetOverview(9).Checksum()
+
+    if cs != expected_cs:
+        gdaltest.post_reason( 'Did not get expected SRTM checksum.' )
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 def wms_cleanup():
 
     gdaltest.wms_ds = None
@@ -335,6 +369,7 @@ gdaltest_list = [
     wms_6,
     wms_7,
     wms_8,
+    wms_9,
     wms_cleanup ]
 
 if __name__ == '__main__':
