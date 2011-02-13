@@ -61,6 +61,12 @@ GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo) {
     }
     CPLDestroyXMLNode(config);
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    ds->SetDescription( poOpenInfo->pszFilename );
+    ds->TryLoadXML();
+
     return ds;
 }
 
