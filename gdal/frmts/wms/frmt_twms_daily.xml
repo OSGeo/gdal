@@ -1,0 +1,7 @@
+<GDAL_WMS>
+    <Service name="TiledWMS">
+	<ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>
+	<TiledGroupName>Daily Planet</TiledGroupName>
+	<Change key="${time}">2009-10-12</Change>
+    </Service>
+</GDAL_WMS>
