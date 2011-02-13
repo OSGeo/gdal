@@ -159,7 +159,8 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      it to disk as a special case to avoid extra layers of           */
 /*      indirection.                                                    */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(poSrcDS->GetDriver()->GetDescription(),"VRT") )
+    if( poSrcDS->GetDriver() != NULL &&
+        EQUAL(poSrcDS->GetDriver()->GetDescription(),"VRT") )
     {
 
     /* -------------------------------------------------------------------- */
