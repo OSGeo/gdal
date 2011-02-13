@@ -1833,6 +1833,7 @@ void GDALRegister_GSAG()
 	poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
 				   "Byte Int16 UInt16 Int32 UInt32 "
 				   "Float32 Float64" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = GSAGDataset::Open;
 	poDriver->pfnCreateCopy = GSAGDataset::CreateCopy;

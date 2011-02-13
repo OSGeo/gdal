@@ -1056,8 +1056,8 @@ void RMFDataset::FlushCache()
 int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    if( poOpenInfo->fp == NULL )
-        return FALSE;
+    if( poOpenInfo->pabyHeader == NULL)
+        return NULL;
 
     if( memcmp(poOpenInfo->pabyHeader, RMF_SigRSW, sizeof(RMF_SigRSW)) != 0
         && memcmp(poOpenInfo->pabyHeader, RMF_SigRSW_BE, sizeof(RMF_SigRSW_BE)) != 0
@@ -1698,7 +1698,13 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         poDS->sHeader.nClrTblOffset = nCurPtr;
         poDS->nColorTableSize = 1 << poDS->sHeader.nBitDepth;
         poDS->sHeader.nClrTblSize = poDS->nColorTableSize * 4;
-        poDS->pabyColorTable = (GByte *) CPLMalloc( poDS->sHeader.nClrTblSize );
+        poDS->pabyColorTable = (GByte *) VSIMalloc( poDS->sHeader.nClrTblSize );
+        if (poDS->pabyColorTable == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            delete poDS;
+            return NULL;
+        }
         for ( i = 0; i < poDS->nColorTableSize; i++ )
         {
             poDS->pabyColorTable[i * 4] =
@@ -1804,6 +1810,7 @@ void GDALRegister_RMF()
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Tile Height'/>"
 "</CreationOptionList>" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnIdentify = RMFDataset::Identify;
         poDriver->pfnOpen = RMFDataset::Open;

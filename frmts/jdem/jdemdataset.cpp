@@ -354,6 +354,7 @@ void GDALRegister_JDEM()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#JDEM" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = JDEMDataset::Open;
 
