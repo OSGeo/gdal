@@ -78,7 +78,7 @@ RMFRasterBand::RMFRasterBand( RMFDataset *poDS, int nBand,
         (poDS->GetRasterXSize() % poDS->sHeader.nTileWidth) * nDataSize;
     nLastTileHeight = poDS->GetRasterYSize() % poDS->sHeader.nTileHeight;
 
-#if DEBUG
+#ifdef DEBUG
     CPLDebug( "RMF",
               "Band %d: tile width is %d, tile height is %d, "
               " last tile width %d, last tile height %d, "
@@ -1312,7 +1312,7 @@ do {                                                                    \
     }
 #endif
 
-#if DEBUG
+#ifdef DEBUG
     CPLDebug( "RMF", "List of block offsets/sizes:" );
 
     for ( i = 0; i < poDS->sHeader.nTileTblSize / sizeof(GUInt32); i += 2 )
@@ -1430,7 +1430,7 @@ do {                                                                    \
     poDS->nYTiles = ( poDS->nRasterYSize + poDS->sHeader.nTileHeight - 1 ) /
         poDS->sHeader.nTileHeight;
 
-#if DEBUG
+#ifdef DEBUG
     CPLDebug( "RMF", "Image is %d tiles wide, %d tiles long",
               poDS->nXTiles, poDS->nYTiles );
 #endif
