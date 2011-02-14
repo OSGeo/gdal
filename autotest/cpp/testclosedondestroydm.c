@@ -132,6 +132,8 @@ int main(int argc, char* argv[])
     hDS = GDALOpenShared("../gcore/data/byte.tif", GA_ReadOnly);
     hDS = GDALOpenShared("../gcore/data/byte.tif", GA_ReadOnly);
 
+    hDS = GDALOpenShared("../gdrivers/data/mercator.sid", GA_ReadOnly);
+
     CPLDebug("TEST","Call GDALDestroyDriverManager()");
     GDALDestroyDriverManager();
 
