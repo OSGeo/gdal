@@ -260,6 +260,9 @@ class MrSIDDataset : public GDALPamDataset
                                    int, int, GDALDataType, int, int *,int,
                                    int, int );
 
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
                 MrSIDDataset(int bIsJPEG2000);
                 ~MrSIDDataset();
@@ -791,12 +794,26 @@ MrSIDDataset::~MrSIDDataset()
         CPLFree( pszProjection );
     if ( psDefn )
         delete psDefn;
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                      CloseDependentDatasets()                        */
+/************************************************************************/
+
+int MrSIDDataset::CloseDependentDatasets()
+{
+    int bRet = GDALPamDataset::CloseDependentDatasets();
+
     if ( papoOverviewDS )
     {
         for( int i = 0; i < nOverviewCount; i++ )
             delete papoOverviewDS[i];
         CPLFree( papoOverviewDS );
+        papoOverviewDS = NULL;
+        bRet = TRUE;
     }
+    return bRet;
 }
 
 /************************************************************************/
