@@ -352,7 +352,9 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     DWORD dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes;
     HANDLE hFile;
 
-    if( strchr(pszAccess, '+') != NULL || strchr(pszAccess, 'w') != 0 )
+    if( strchr(pszAccess, '+') != NULL ||
+        strchr(pszAccess, 'w') != 0 ||
+        strchr(pszAccess, 'a') != 0 )
         dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
     else
         dwDesiredAccess = GENERIC_READ;
@@ -410,6 +412,9 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
         
         poHandle->hFile = hFile;
         
+        if (strchr(pszAccess, 'a') != 0)
+            poHandle->Seek(0, SEEK_END);
+
         return poHandle;
     }
 }
