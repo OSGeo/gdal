@@ -259,7 +259,6 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
 
     char **requests=NULL;
     char **substs=NULL;
-    m_srs="";
 
     for (int once=1;once;once--) { // Something to break out of
         // Parse info from the service
@@ -337,6 +336,11 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                      "GDALWMS, Tiled WMS: Invalid number of bands in server response");
             break;
         }
+        if (!GDALCheckBandCount(m_bands_count, FALSE))
+        {
+            ret = CE_Failure;
+            break;
+        }
 
         m_parent_dataset->WMSSetBandsCount(m_bands_count);
         m_parent_dataset->WMSSetDataType(GDALGetDataTypeByName(CPLGetXMLValue(TG, "DataType", "Byte")));
@@ -379,7 +383,8 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                 mbsx=atoi(CSLFetchNameValue(papszTokens,"WIDTH"));
                 mbsy=atoi(CSLFetchNameValue(papszTokens,"HEIGHT"));
                 if ('\0'==m_projection_wkt[0]) {
-                    m_projection_wkt=CSLFetchNameValue(papszTokens,"SRS");
+                    const char* pszSRS = CSLFetchNameValue(papszTokens,"SRS");
+                    m_projection_wkt = (pszSRS) ? pszSRS : "";
                     if ('\0'!=m_projection_wkt[0])
                         m_projection_wkt=ProjToWKT(m_projection_wkt);
                 }
@@ -390,12 +395,27 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                     CPLError(ret=CE_Failure,CPLE_AppDefined,
                              "GDALWMS, Tiled WMS: Tileset uses different block sizes.");
                     m_overview_count=0;
+                    CSLDestroy(papszTokens);
                     break;
                 }
 
-                if (m_srs.size()) m_srs=CSLFetchNameValue(papszTokens,"SRS");
+                const char* pszBBOX = CSLFetchNameValue(papszTokens,"BBOX");
+                if (pszBBOX == NULL)
+                {
+                    CPLError(ret=CE_Failure,CPLE_AppDefined,
+                        "GDALWMS, Tiled WMS: BBOX parameter not found in server response.");
+                    CSLDestroy(papszTokens);
+                    break;
+                }
+
                 double x,y,X,Y;
-                sscanf(CSLFetchNameValue(papszTokens,"BBOX"),"%lf,%lf,%lf,%lf",&x,&y,&X,&Y);
+                if (sscanf(pszBBOX,"%lf,%lf,%lf,%lf",&x,&y,&X,&Y) != 4)
+                {
+                    CPLError(ret=CE_Failure,CPLE_AppDefined,
+                        "GDALWMS, Tiled WMS: Invalid value for BBOX parameter in server response.");
+                    CSLDestroy(papszTokens);
+                    break;
+                }
                 int sx=static_cast<int>((m_data_window.m_x1-m_data_window.m_x0)/(X-x)*m_bsx);
                 int sy=static_cast<int>(abs((m_data_window.m_y1-m_data_window.m_y0)/(Y-y)*m_bsy));
                 if (sx>m_data_window.m_sx) m_data_window.m_sx=sx;

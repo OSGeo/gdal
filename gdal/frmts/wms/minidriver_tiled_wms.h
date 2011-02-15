@@ -55,7 +55,6 @@ protected:
     CPLString m_tiledGroupName;
     int m_iversion;
     int m_bsx,m_bsy;
-    CPLString m_srs;
     CPLString m_projection_wkt;
 };
 
