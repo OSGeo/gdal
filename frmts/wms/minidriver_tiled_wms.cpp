@@ -95,12 +95,12 @@ static CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement
 static CPLXMLNode *SearchLeafGroupName( CPLXMLNode *psRoot, const char *name )
 
 {
-    CPLXMLNode *ret=0;
+    CPLXMLNode *ret=NULL;
 
     if( psRoot == NULL || name == NULL ) return NULL;
 
     // Has to be a leaf TileGroup with the right name
-    if (0==SearchXMLSiblings(psRoot->psChild,"TiledGroup")) {
+    if (NULL==SearchXMLSiblings(psRoot->psChild,"TiledGroup")) {
 	if (EQUAL(name,CPLGetXMLValue(psRoot,"Name",""))) {
 	    return psRoot;
 	} else { // Try a sibling
@@ -108,7 +108,7 @@ static CPLXMLNode *SearchLeafGroupName( CPLXMLNode *psRoot, const char *name )
 	}
     } else { // Is metagroup, try children then siblings
 	ret=SearchLeafGroupName(psRoot->psChild,name);
-	if (0!=ret) return ret;
+	if (NULL!=ret) return ret;
 	return SearchLeafGroupName(psRoot->psNext,name);
     }
 }
@@ -296,13 +296,13 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
         CPLString getTileServiceUrl = m_base_url + "request=GetTileService";
         psResult = CPLHTTPFetch(getTileServiceUrl, NULL);
 
-        if (0==psResult) {
+        if (NULL==psResult) {
             CPLError(ret=CE_Failure, CPLE_AppDefined, 
                      "GDALWMS, Tiled WMS: Can't use GDAL HTTP, no curl support.");
             break;
         }
 
-        if ((psResult->nStatus!=0)||(0==psResult->pabyData)||('\0'==psResult->pabyData[0])) {
+        if ((psResult->nStatus!=0)||(NULL==psResult->pabyData)||('\0'==psResult->pabyData[0])) {
             CPLError(ret=CE_Failure, CPLE_AppDefined,
                      "GDALWMS, Tiled WMS: Can't get server response to GetTileService.");
             break;
