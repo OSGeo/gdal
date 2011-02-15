@@ -127,6 +127,7 @@ docs:
 	cp doc/grid/*.png html
 	cp frmts/*.html frmts/*/frmt_*.html html
 	cp frmts/wms/frmt_wms_*.xml html
+	cp frmts/wms/frmt_twms_*.xml html
 
 man:
 # Generate man pages
