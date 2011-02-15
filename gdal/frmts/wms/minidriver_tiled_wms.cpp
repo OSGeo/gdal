@@ -185,19 +185,24 @@ void FindChangePattern( char *cdata,char **substs, CPLString &ret) {
                                           CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
 
     int matchcount=CSLCount(substs);
-    for (int j=0;j<CSLCount(papszTokens);j++) {
-	int thiscount=0;
-	CPLString this_string=papszTokens[j];
-	for (int i=0;i<matchcount;i++) {
-	    char *key;
-	    CPLParseNameValue(substs[i],&key);
-	    if (std::string::npos!=this_string.find(key,0))
-		thiscount++;
-	}
-	if (thiscount==matchcount) {
-	    ret=papszTokens[j];
-	    break;
-	}
+    for (int j=0;j<CSLCount(papszTokens);j++)
+    {
+        int thiscount=0;
+        CPLString this_string=papszTokens[j];
+        for (int i=0;i<matchcount;i++) {
+            char *key = NULL;
+            CPLParseNameValue(substs[i],&key);
+            if (key)
+            {
+                if (std::string::npos!=this_string.find(key,0))
+                    thiscount++;
+                CPLFree(key);
+            }
+        }
+        if (thiscount==matchcount) {
+            ret=papszTokens[j];
+            break;
+        }
     }
 
     // if no match is found, return first string
