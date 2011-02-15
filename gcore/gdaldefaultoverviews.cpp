@@ -969,7 +969,7 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
         pszBasename = poDS->GetDescription();
 
     // Don't bother checking for masks of masks. 
-    if( EQUAL(CPLGetExtension(pszBasename),".msk") )
+    if( EQUAL(CPLGetExtension(pszBasename),"msk") )
         return FALSE;
 
     osMskFilename.Printf( "%s.msk", pszBasename );
