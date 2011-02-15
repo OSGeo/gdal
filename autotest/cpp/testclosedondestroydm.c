@@ -134,6 +134,9 @@ int main(int argc, char* argv[])
 
     hDS = GDALOpenShared("../gdrivers/data/mercator.sid", GA_ReadOnly);
 
+    hDS = GDALOpen("RASTERLITE:../gdrivers/data/rasterlite_pyramids.sqlite,table=test", GA_ReadOnly);
+    hDS = GDALOpen("RASTERLITE:../gdrivers/data/rasterlite_pyramids.sqlite,table=test,level=1", GA_ReadOnly);
+
     CPLDebug("TEST","Call GDALDestroyDriverManager()");
     GDALDestroyDriverManager();
 

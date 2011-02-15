@@ -577,12 +577,27 @@ RasterliteDataset::RasterliteDataset(RasterliteDataset* poMainDS, int nLevel)
 
 RasterliteDataset::~RasterliteDataset()
 {
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                      CloseDependentDatasets()                        */
+/************************************************************************/
+
+int RasterliteDataset::CloseDependentDatasets()
+{
+    int bRet = GDALPamDataset::CloseDependentDatasets();
+
     if (poMainDS == NULL)
     {
         CSLDestroy(papszMetadata);
+        papszMetadata = NULL;
         CSLDestroy(papszSubDatasets);
+        papszSubDatasets = NULL;
         CSLDestroy(papszImageStructure);
+        papszImageStructure = NULL;
         CPLFree(pszSRS);
+        pszSRS = NULL;
 
         if (papoOverviews)
         {
@@ -590,21 +605,31 @@ RasterliteDataset::~RasterliteDataset()
             for(i=1;i<nResolutions;i++)
                 delete papoOverviews[i-1];
             CPLFree(papoOverviews);
+            papoOverviews = NULL;
+            nResolutions = 0;
+            bRet = TRUE;
         }
 
         if (hDS != NULL)
             OGRReleaseDataSource(hDS);
-            
+        hDS = NULL;
+
         CPLFree(padfXResolutions);
         CPLFree(padfYResolutions);
-        
+        padfXResolutions = padfYResolutions = NULL;
+
         delete poCT;
+        poCT = NULL;
     }
     else if (bMustFree)
     {
         poMainDS->papoOverviews[nLevel-1] = NULL;
         delete poMainDS;
+        bMustFree = FALSE;
+        bRet = TRUE;
     }
+
+    return bRet;
 }
 
 /************************************************************************/
