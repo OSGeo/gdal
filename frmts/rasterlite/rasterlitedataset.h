@@ -65,7 +65,10 @@ class RasterliteDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
-    
+
+  protected:
+    virtual int         CloseDependentDatasets();
+
   private:
   
     int bMustFree;
