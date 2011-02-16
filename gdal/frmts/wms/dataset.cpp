@@ -58,10 +58,10 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     // Initialize the minidriver, which can set parameters for the dataset using member functions
     CPLXMLNode *service_node = CPLGetXMLNode(config, "Service");
     if (service_node != NULL) {
-	CPLString service_name = CPLGetXMLValue(service_node, "name", "");
-	if (service_name[0] != '\0') {
+	const CPLString service_name = CPLGetXMLValue(service_node, "name", "");
+	if (!service_name.empty()) {
 	    GDALWMSMiniDriverManager *const mdm = GetGDALWMSMiniDriverManager();
-	    GDALWMSMiniDriverFactory *const mdf = mdm->Find(CPLString(service_name));
+	    GDALWMSMiniDriverFactory *const mdf = mdm->Find(service_name);
 	    if (mdf != NULL) {
 		m_mini_driver = mdf->New();
 		m_mini_driver->m_parent_dataset = this;
