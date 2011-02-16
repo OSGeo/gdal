@@ -206,7 +206,7 @@ void FindChangePattern( char *cdata,char **substs, CPLString &ret) {
     }
 
     // if no match is found, return first string
-    if (ret[0]=='\0') ret=papszTokens[0];
+    if (ret.empty()) ret=papszTokens[0];
     CSLDestroy(papszTokens);
 }
 
@@ -265,13 +265,13 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
 
         m_end_url = CPLGetXMLValue(config,"AdditionalArgs","");
         m_base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if ('\0' == m_base_url[0]) {
+        if (m_base_url.empty()) {
             CPLError(ret=CE_Failure, CPLE_AppDefined, "GDALWMS, WMS mini-driver: ServerURL missing.");
             break;
         }
 
         m_tiledGroupName = CPLGetXMLValue(config, "TiledGroupName", "");
-        if ('\0' == m_tiledGroupName[0]) {
+        if (m_tiledGroupName.empty()) {
             CPLError(ret=CE_Failure, CPLE_AppDefined, "GDALWMS, Tiled WMS: TiledGroupName missing.");
             break;
         }
@@ -281,7 +281,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
         TG=CPLSearchXMLNode(config, "Change");
         while(TG!=NULL) {
             CPLString name=CPLGetXMLValue(TG,"key","");
-            if (name[0]!='\0') {
+            if (!name.empty()) {
                 CPLString value=CPLGetXMLValue(TG,"","");
                 substs=CSLSetNameValue(substs,name,value);
             } else {
@@ -314,7 +314,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
         }
     
         m_base_url=CPLGetXMLValue(tileServiceConfig,"TiledPatterns.OnlineResource.xlink:href","");
-        if (m_base_url[0]=='\0') {
+        if (m_base_url.empty()) {
             CPLError(ret=CE_Failure,CPLE_AppDefined, "GDALWMS, Tiled WMS: Can't locate OnlineResource in the server response.");
             break;
         }
@@ -382,10 +382,10 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
 
                 mbsx=atoi(CSLFetchNameValue(papszTokens,"WIDTH"));
                 mbsy=atoi(CSLFetchNameValue(papszTokens,"HEIGHT"));
-                if ('\0'==m_projection_wkt[0]) {
+                if (m_projection_wkt.empty()) {
                     const char* pszSRS = CSLFetchNameValue(papszTokens,"SRS");
                     m_projection_wkt = (pszSRS) ? pszSRS : "";
-                    if ('\0'!=m_projection_wkt[0])
+                    if (m_projection_wkt.empty())
                         m_projection_wkt=ProjToWKT(m_projection_wkt);
                 }
 
