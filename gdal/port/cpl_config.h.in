@@ -46,6 +46,9 @@
 /* Define to 1 if you have the `getcwd' function. */
 #undef HAVE_GETCWD
 
+/* Define if you have the iconv() function and it works. */
+#undef HAVE_ICONV
+
 /* Define as 0 or 1 according to the floating point format suported by the
    machine */
 #undef HAVE_IEEEFP
@@ -133,6 +136,9 @@
 
 /* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
 #undef HOST_FILLORDER
+
+/* Define as const if the declaration of iconv() needs const. */
+#undef ICONV_CONST
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
