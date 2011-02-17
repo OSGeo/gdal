@@ -34,7 +34,7 @@ define([AC_CACHE_SAVE], )
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(GDALmake.opt.in)
 AC_CONFIG_MACRO_DIR(m4)
-AC_CONFIG_HEADER(port/cpl_config.h:port/cpl_config.h.in:port/cpl_config_extras.h)
+AC_CONFIG_HEADER([port/cpl_config.h:port/cpl_config.h.in])
 
 dnl We require autoconf 2.52+ for libtool support on cygwin/mingw hosts
 AC_PREREQ(2.52)
@@ -379,6 +379,14 @@ else
 fi
 
 AC_SUBST(LIBZ_SETTING,$LIBZ_SETTING)
+
+dnl ---------------------------------------------------------------------------
+dnl Check for iconv/libiconv.
+dnl A rationale for this macro is described in "GNU `gettext' utilities"
+dnl manual at
+dnl http://www.gnu.org/software/gettext/manual/html_node/AM_005fICONV.html
+dnl ---------------------------------------------------------------------------
+AM_ICONV
 
 dnl ---------------------------------------------------------------------------
 dnl Check if liblzma is available.
