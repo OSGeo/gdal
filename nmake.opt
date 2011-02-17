@@ -170,6 +170,14 @@ INCLUDE_OGR_FRMTS = YES
 # programs to be able to expand wildcards. 
 #SETARGV =	$(VCDIR)\lib\setargv.obj
 
+# Uncomment to build with libiconv library to support extended character
+# recoding capabilities. GDAL's internal stub implementation supports
+# latin1<->utf-8 translations only.
+#LIBICONV_DIR = "C:\Program Files\GnuWin32"
+#LIBICONV_INCLUDE = -I$(LIBICONV_DIR)\include
+#LIBICONV_LIBRARY = $(LIBICONV_DIR)\lib\libiconv.lib
+#LIBICONV_CFLAGS = -DICONV_CONST=const
+
 # Comment out the following to disable BSB support.
 BSB_SUPPORTED = 1
 
@@ -569,7 +577,8 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
-	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS) $(LZMA_LIBS)
+	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS) $(LZMA_LIBS) \
+	$(LIBICONV_LIBRARY)
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c

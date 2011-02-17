@@ -97,6 +97,18 @@
 #endif
 
 /* ==================================================================== */
+/*      If iconv() is available use extended recoding module.           */
+/*      Stub implementation is always compiled in, because it works     */
+/*      faster than iconv() for encodings it supports.                  */
+/* ==================================================================== */
+
+#if defined(HAVE_ICONV)
+#  define CPL_RECODE_ICONV
+#endif
+
+#define CPL_RECODE_STUB
+
+/* ==================================================================== */
 /*      Standard include files.                                         */
 /* ==================================================================== */
 
@@ -309,8 +321,8 @@ int strncasecmp(char * str1, char * str2, int len);
 char * strdup (char *instr);
 #endif
 
-#ifndef CPL_THREADLOCAL 
-#  define CPL_THREADLOCAL 
+#ifndef CPL_THREADLOCAL
+#  define CPL_THREADLOCAL
 #endif
 
 /* -------------------------------------------------------------------- */
