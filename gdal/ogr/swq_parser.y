@@ -475,7 +475,16 @@ column_spec:
         }
 	    }
 
-        | value_expr
+    | SWQT_DISTINCT SWQT_STRING
+        {
+        if( !context->poSelect->PushField( $2, NULL, TRUE ) )
+        {
+            delete $2;
+            YYERROR;
+        }
+        }
+
+    | value_expr
 	    {
 		if( !context->poSelect->PushField( $1 ) )
         {
