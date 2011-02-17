@@ -22,6 +22,8 @@ OBJ	=	cpl_conv.obj \
                 cpl_http.obj \
                 cpl_hash_set.obj \
                 cplkeywordparser.obj \
+		cpl_recode.obj \
+		cpl_recode_iconv.obj \
 		cpl_recode_stub.obj \
 		cpl_quad_tree.obj \
 		cpl_vsil_gzip.obj \
@@ -48,6 +50,10 @@ GDAL_ROOT = ..
 !INCLUDE ..\nmake.opt
 
 EXTRAFLAGS	= 	 -I..\frmts\zlib -DHAVE_LIBZ
+
+!IFDEF LIBICONV_INCLUDE
+EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_ICONV $(LIBICONV_CFLAGS) $(LIBICONV_INCLUDE)
+!ENDIF
 
 !IFDEF CURL_INC
 EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)

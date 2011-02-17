@@ -1,9 +1,11 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     cpl_recode.cpp
+ * Name:     cpl_recode_stub.cpp
  * Project:  CPL - Common Portability Library
- * Purpose:  Character set recoding and char/wchar_t conversions.
+ * Purpose:  Character set recoding and char/wchar_t conversions, stub
+ *           implementation to be used if iconv() functionality is not
+ *           available.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  * The bulk of this code is derived from the utf.c module from FLTK. It
@@ -30,8 +32,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-#define CPL_RECODE_STUB
 
 #ifdef CPL_RECODE_STUB 
 
@@ -60,7 +60,7 @@ static int utf8bytes(unsigned ucs);
 /************************************************************************/
 
 /************************************************************************/
-/*                             CPLRecode()                              */
+/*                           CPLRecodeStub()                            */
 /************************************************************************/
 
 /**
@@ -76,31 +76,18 @@ static int utf8bytes(unsigned ucs);
  *
  * If an error occurs an error may, or may not be posted with CPLError(). 
  *
- * @param pszSource a NUL terminated string.
+ * @param pszSource a NULL terminated string.
  * @param pszSrcEncoding the source encoding.
  * @param pszDstEncoding the destination encoding.
  *
- * @return a NUL terminated string which should be freed with CPLFree().
- *
- * @since GDAL 1.6.0
+ * @return a NULL terminated string which should be freed with CPLFree().
  */
 
-char CPL_DLL *CPLRecode( const char *pszSource, 
-                         const char *pszSrcEncoding, 
-                         const char *pszDstEncoding )
+char CPL_DLL *CPLRecodeStub( const char *pszSource, 
+                             const char *pszSrcEncoding, 
+                             const char *pszDstEncoding )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Handle a few common short cuts.                                 */
-/* -------------------------------------------------------------------- */
-    if( strcmp(pszSrcEncoding,pszDstEncoding) == 0 )
-        return CPLStrdup(pszSource);
-
-    if( strcmp(pszSrcEncoding,CPL_ENC_ASCII) == 0 
-        && (strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 
-            || strcmp(pszDstEncoding,CPL_ENC_ISO8859_1) == 0) )
-        return CPLStrdup(pszSource);
-
 /* -------------------------------------------------------------------- */
 /*      If the source or destination is current locale(), we change     */
 /*      it to ISO8859-1 since our stub implementation does not          */
@@ -207,7 +194,7 @@ char CPL_DLL *CPLRecode( const char *pszSource,
 }
 
 /************************************************************************/
-/*                         CPLRecodeFromWChar()                         */
+/*                       CPLRecodeFromWCharStub()                       */
 /************************************************************************/
 
 /**
@@ -230,13 +217,11 @@ char CPL_DLL *CPLRecode( const char *pszSource,
  *
  * @return a zero terminated multi-byte string which should be freed with 
  * CPLFree(), or NULL if an error occurs. 
- *
- * @since GDAL 1.6.0
  */
 
-char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource, 
-                                  const char *pszSrcEncoding, 
-                                  const char *pszDstEncoding )
+char CPL_DLL *CPLRecodeFromWCharStub( const wchar_t *pwszSource, 
+                                      const char *pszSrcEncoding, 
+                                      const char *pszDstEncoding )
 
 {
 /* -------------------------------------------------------------------- */
@@ -250,7 +235,7 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Stub recoding implementation does not support\n"
-                  "CPLRecodeFromWChar(...,%s,%s)", 
+                  "CPLRecodeFromWCharStub(...,%s,%s)", 
                   pszSrcEncoding, pszDstEncoding );
         return NULL;
     }
@@ -289,7 +274,7 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
         return pszResult;
 
     char *pszFinalResult = 
-        CPLRecode( pszResult, CPL_ENC_UTF8, pszDstEncoding );
+        CPLRecodeStub( pszResult, CPL_ENC_UTF8, pszDstEncoding );
 
     CPLFree( pszResult );
     
@@ -297,7 +282,7 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
 }
 
 /************************************************************************/
-/*                          CPLRecodeToWChar()                          */
+/*                        CPLRecodeToWCharStub()                        */
 /************************************************************************/
 
 /**
@@ -325,9 +310,9 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
  * @since GDAL 1.6.0
  */
 
-wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
-                                   const char *pszSrcEncoding, 
-                                   const char *pszDstEncoding )
+wchar_t CPL_DLL *CPLRecodeToWCharStub( const char *pszSource,
+                                       const char *pszSrcEncoding, 
+                                       const char *pszDstEncoding )
 
 {
     char *pszUTF8Source = (char *) pszSource;
@@ -335,7 +320,7 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
     if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) != 0 
         && strcmp(pszSrcEncoding,CPL_ENC_ASCII) != 0 )
     {
-        pszUTF8Source = CPLRecode( pszSource, pszSrcEncoding, CPL_ENC_UTF8 );
+        pszUTF8Source = CPLRecodeStub( pszSource, pszSrcEncoding, CPL_ENC_UTF8 );
         if( pszUTF8Source == NULL )
             return NULL;
     }
@@ -350,7 +335,7 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Stub recoding implementation does not support\n"
-                  "CPLRecodeToWChar(...,%s,%s)", 
+                  "CPLRecodeToWCharStub(...,%s,%s)", 
                   pszSrcEncoding, pszDstEncoding );
         return NULL;
     }
@@ -384,49 +369,12 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
  *
  * @since GDAL 1.7.0
  */
-int CPLIsUTF8(const char* pabyData, int nLen)
+int CPLIsUTF8Stub(const char* pabyData, int nLen)
 {
     if (nLen < 0)
         nLen = strlen(pabyData);
     return utf8test(pabyData, (unsigned)nLen) != 0;
 }
-
-/************************************************************************/
-/*                          CPLForceToASCII()                           */
-/************************************************************************/
-
-/**
- * Return a new string that is made only of ASCII characters. If non-ASCII
- * characters are found in the input string, they will be replaced by the
- * provided replacement character.
- *
- * @param pabyData input string to test
- * @param nLen length of the input string, or -1 if the function must compute
- *             the string length. In which case it must be null terminated.
- * @param chReplacementChar character which will be used when the input stream
- *                          contains a non ASCII character. Must be valid ASCII !
- *
- * @return a new string that must be freed with CPLFree().
- *
- * @since GDAL 1.7.0
- */
-char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacementChar)
-{
-    if (nLen < 0)
-        nLen = strlen(pabyData);
-    char* pszOutputString = (char*)CPLMalloc(nLen + 1);
-    int i;
-    for(i=0;i<nLen;i++)
-    {
-        if (((unsigned char*)pabyData)[i] > 127)
-            pszOutputString[i] = chReplacementChar;
-        else
-            pszOutputString[i] = pabyData[i];
-    }
-    pszOutputString[i] = '\0';
-    return pszOutputString;
-}
-
 
 /************************************************************************/
 /* ==================================================================== */
