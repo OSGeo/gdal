@@ -173,6 +173,10 @@ INCLUDE_OGR_FRMTS = YES
 # Uncomment to build with libiconv library to support extended character
 # recoding capabilities. GDAL's internal stub implementation supports
 # latin1<->utf-8 translations only.
+# Depending on your libiconv build you may need to set ICONV_CONST macro to
+# const or leave it empty. Take a look on your iconv() declaration in iconv.h.
+# If the second parameter declared as const char** then you need to define
+# ICONV_CONST=const otherwise leave it empty.
 #LIBICONV_DIR = "C:\Program Files\GnuWin32"
 #LIBICONV_INCLUDE = -I$(LIBICONV_DIR)\include
 #LIBICONV_LIBRARY = $(LIBICONV_DIR)\lib\libiconv.lib
