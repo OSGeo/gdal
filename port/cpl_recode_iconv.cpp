@@ -51,9 +51,9 @@ CPL_CVSID("$Id$");
  * @return a NULL terminated string which should be freed with CPLFree().
  */
 
-char CPL_DLL *CPLRecodeIconv( const char *pszSource, 
-                              const char *pszSrcEncoding, 
-                              const char *pszDstEncoding )
+char *CPLRecodeIconv( const char *pszSource, 
+                      const char *pszSrcEncoding, 
+                      const char *pszDstEncoding )
 
 {
     iconv_t sConv;
@@ -69,10 +69,16 @@ char CPL_DLL *CPLRecodeIconv( const char *pszSource,
         return CPLStrdup(pszSource);
     }
 
+/* -------------------------------------------------------------------- */
+/*      XXX: There is a portability issue: iconv() function could be    */
+/*      declared differently on different platforms. The second         */
+/*      argument could be declared as char** (as POSIX defines) or      */
+/*      as a const char**. Handle it with the ICONV_CONST macro here.   */
+/* -------------------------------------------------------------------- */
+    ICONV_CONST char *pszSrcBuf = (char *)pszSource;
     size_t  nSrcLen = strlen( pszSource );
     size_t  nDstCurLen = MAX(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
     size_t  nDstLen = nDstCurLen;
-    ICONV_CONST char *pszSrcBuf = (char *)pszSource;
     char    *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
     char    *pszDstBuf = pszDestination;
 
@@ -138,9 +144,9 @@ char CPL_DLL *CPLRecodeIconv( const char *pszSource,
  * CPLFree(), or NULL if an error occurs. 
  */
 
-char CPL_DLL *CPLRecodeFromWCharIconv( const wchar_t *pwszSource, 
-                                       const char *pszSrcEncoding, 
-                                       const char *pszDstEncoding )
+char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource, 
+                               const char *pszSrcEncoding, 
+                               const char *pszDstEncoding )
 
 {
     return CPLRecodeIconv( (const char *)pwszSource,
@@ -170,9 +176,9 @@ char CPL_DLL *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
  * NULL on error.
  */
 
-wchar_t CPL_DLL *CPLRecodeToWCharIconv( const char *pszSource,
-                                        const char *pszSrcEncoding, 
-                                        const char *pszDstEncoding )
+wchar_t *CPLRecodeToWCharIconv( const char *pszSource,
+                                const char *pszSrcEncoding, 
+                                const char *pszDstEncoding )
 
 {
     return (wchar_t *)CPLRecodeIconv( pszSource,
