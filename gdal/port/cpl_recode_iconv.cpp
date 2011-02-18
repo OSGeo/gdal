@@ -44,7 +44,7 @@ CPL_CVSID("$Id$");
  *
  * If an error occurs an error may, or may not be posted with CPLError(). 
  *
- * @param pszSource a NUL terminated string.
+ * @param pszSource a NULL terminated string.
  * @param pszSrcEncoding the source encoding.
  * @param pszDstEncoding the destination encoding.
  *
@@ -75,7 +75,7 @@ char *CPLRecodeIconv( const char *pszSource,
 /*      argument could be declared as char** (as POSIX defines) or      */
 /*      as a const char**. Handle it with the ICONV_CONST macro here.   */
 /* -------------------------------------------------------------------- */
-    ICONV_CONST char *pszSrcBuf = (char *)pszSource;
+    ICONV_CONST char *pszSrcBuf = (ICONV_CONST char *)pszSource;
     size_t  nSrcLen = strlen( pszSource );
     size_t  nDstCurLen = MAX(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
     size_t  nDstLen = nDstCurLen;
@@ -149,8 +149,82 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
                                const char *pszDstEncoding )
 
 {
-    return CPLRecodeIconv( (const char *)pwszSource,
-                           pszSrcEncoding, pszDstEncoding);
+    iconv_t sConv;
+
+    sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
+
+    if ( sConv == (iconv_t)-1 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Recode from %s to %s failed with the error: \"%s\".", 
+                  pszSrcEncoding, pszDstEncoding, strerror(errno) );
+
+        return CPLStrdup( "" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      XXX: There is a portability issue: iconv() function could be    */
+/*      declared differently on different platforms. The second         */
+/*      argument could be declared as char** (as POSIX defines) or      */
+/*      as a const char**. Handle it with the ICONV_CONST macro here.   */
+/* -------------------------------------------------------------------- */
+    ICONV_CONST char *pszSrcBuf = (ICONV_CONST char *)pwszSource;
+
+/* -------------------------------------------------------------------- */
+/*      What is the source length.                                      */
+/*      TODO: use wcslen() if available.                                */
+/* -------------------------------------------------------------------- */
+    size_t  nSrcLen = 0;
+
+    while ( pwszSource[nSrcLen] != 0 )
+        nSrcLen++;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate destination buffer.                                    */
+/* -------------------------------------------------------------------- */
+    size_t  nDstCurLen = MAX(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
+    size_t  nDstLen = nDstCurLen;
+    char    *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
+    char    *pszDstBuf = pszDestination;
+
+    while ( nSrcLen > 0 )
+    {
+        size_t  nConverted =
+            iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
+
+        if ( nConverted == (size_t)-1 )
+        {
+            if ( errno == EILSEQ )
+            {
+                // Silently skip the invalid sequence in the input string.
+                nSrcLen--;
+                pszSrcBuf += sizeof(wchar_t);
+                continue;
+            }
+
+            else if ( errno == E2BIG )
+            {
+                // We are running out of the output buffer.
+                // Dynamically increase the buffer size.
+                size_t nTmp = nDstCurLen;
+                nDstCurLen *= 2;
+                pszDestination =
+                    (char *)CPLRealloc( pszDestination, nDstCurLen );
+                pszDstBuf = pszDestination + nTmp - nDstLen;
+                nDstLen += nDstCurLen - nTmp;
+                continue;
+            }
+
+            else
+                break;
+        }
+    }
+
+    pszDestination[nDstCurLen - nDstLen] = '\0';
+
+    iconv_close( sConv );
+
+    return pszDestination;
 }
 
 /************************************************************************/
