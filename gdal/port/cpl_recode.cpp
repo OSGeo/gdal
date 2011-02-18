@@ -28,19 +28,19 @@
 CPL_CVSID("$Id$");
 
 #ifdef CPL_RECODE_ICONV
-extern char CPL_DLL *CPLRecodeIconv( const char *, const char *, const char * );
-extern char CPL_DLL *CPLRecodeFromWCharIconv( const wchar_t *,
-                                              const char *, const char * );
-extern wchar_t CPL_DLL *CPLRecodeToWCharIconv( const char *,
-                                               const char *, const char * );
+extern char *CPLRecodeIconv( const char *, const char *, const char * );
+extern char *CPLRecodeFromWCharIconv( const wchar_t *,
+                                      const char *, const char * );
+extern wchar_t *CPLRecodeToWCharIconv( const char *,
+                                       const char *, const char * );
 #endif /* CPL_RECODE_ICONV */
 
-extern char CPL_DLL *CPLRecodeStub( const char *, const char *, const char * );
-extern char CPL_DLL *CPLRecodeFromWCharStub( const wchar_t *,
-                                             const char *, const char * );
-extern wchar_t CPL_DLL *CPLRecodeToWCharStub( const char *,
-                                              const char *, const char * );
-extern int CPL_DLL CPLIsUTF8Stub( const char *, int );
+extern char *CPLRecodeStub( const char *, const char *, const char * );
+extern char *CPLRecodeFromWCharStub( const wchar_t *,
+                                     const char *, const char * );
+extern wchar_t *CPLRecodeToWCharStub( const char *,
+                                      const char *, const char * );
+extern int CPLIsUTF8Stub( const char *, int );
 
 /************************************************************************/
 /*                             CPLRecode()                              */
