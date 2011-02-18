@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.34 2011-02-18 20:53:04 fwarmerdam Exp $ */
+/* $Id: tif_read.c,v 1.35 2011-02-18 22:15:40 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -50,7 +50,8 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
         uint64 unused_data;
         uint64 read_offset;
         tmsize_t cc, to_read;
-
+        tmsize_t bytecountm;
+        
         _TIFFFillStriles( tif );
         
         /*
@@ -58,9 +59,8 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
          * strip coming from file (perhaps should set upper
          * bound on the size of a buffer we'll use?).
          */
-        tmsize_t bytecountm;
+
         bytecountm=(tmsize_t) td->td_stripbytecount[strip];
-                        
         if (read_ahead*2 > tif->tif_rawdatasize) {
                 assert( restart );
                 
