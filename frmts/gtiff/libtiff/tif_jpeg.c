@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.99 2011-01-06 05:51:13 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.100 2011-02-18 20:53:04 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -688,12 +688,13 @@ static void JPEGFixupTagsSubsamplingSkip(struct JPEGFixupTagsSubsamplingData* da
 static int
 JPEGFixupTags(TIFF* tif)
 {
-	#ifdef CHECK_JPEG_YCBCR_SUBSAMPLING
+#ifdef CHECK_JPEG_YCBCR_SUBSAMPLING
 	if ((tif->tif_dir.td_photometric==PHOTOMETRIC_YCBCR)&&
 	    (tif->tif_dir.td_planarconfig==PLANARCONFIG_CONTIG)&&
 	    (tif->tif_dir.td_samplesperpixel==3))
 		JPEGFixupTagsSubsampling(tif);
-	#endif
+#endif
+        
 	return(1);
 }
 
@@ -725,6 +726,8 @@ JPEGFixupTagsSubsampling(TIFF* tif)
 	static const char module[] = "JPEGFixupTagsSubsampling";
 	struct JPEGFixupTagsSubsamplingData m;
 
+        _TIFFFillStriles( tif );
+        
         if( tif->tif_dir.td_stripbytecount == NULL
             || tif->tif_dir.td_stripbytecount[0] == 0 )
         {

@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.35 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tif_write.c,v 1.36 2011-02-18 20:53:04 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -498,6 +498,8 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 		    "Can not write scanlines to a tiled image");
 		return (0);
 	}
+
+        _TIFFFillStriles( tif );
         
 	/*
 	 * On the first write verify all the required information

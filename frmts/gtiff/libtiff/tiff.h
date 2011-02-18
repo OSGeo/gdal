@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.66 2010-12-14 12:53:00 dron Exp $ */
+/* $Id: tiff.h,v 1.67 2011-01-24 21:06:32 olivier Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -569,6 +569,9 @@ typedef enum {
 #define     SGILOGENCODE_NODITHER	0     /* do not dither encoded values*/
 #define     SGILOGENCODE_RANDITHER	1     /* randomly dither encd values */
 #define	TIFFTAG_LZMAPRESET		65562	/* LZMA2 preset (compression level) */
+#define TIFFTAG_PERSAMPLE       65563	/* interface for per sample tags */
+#define     PERSAMPLE_MERGED        0	/* present as a single value */
+#define     PERSAMPLE_MULTI         1	/* present as multiple values */
 
 /*
  * EXIF tags
