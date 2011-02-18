@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.35 2011-02-18 22:15:40 fwarmerdam Exp $ */
+/* $Id: tif_read.c,v 1.36 2011-02-18 22:20:59 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -198,7 +198,8 @@ TIFFSeek(TIFF* tif, uint32 row, uint16 sample )
          * Do we want to treat this strip as one whole chunk or
          * read it a few lines at a time?
          */
-#if defined(CHUNKY_STRIP_READ_SUPPORT)        
+#if defined(CHUNKY_STRIP_READ_SUPPORT)
+        _TIFFFillStriles( tif );
         whole_strip = tif->tif_dir.td_stripbytecount[strip] < 10
                 || isMapped(tif);
 #else
