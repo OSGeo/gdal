@@ -83,9 +83,9 @@ static int utf8bytes(unsigned ucs);
  * @return a NULL terminated string which should be freed with CPLFree().
  */
 
-char CPL_DLL *CPLRecodeStub( const char *pszSource, 
-                             const char *pszSrcEncoding, 
-                             const char *pszDstEncoding )
+char *CPLRecodeStub( const char *pszSource, 
+                     const char *pszSrcEncoding, 
+                     const char *pszDstEncoding )
 
 {
 /* -------------------------------------------------------------------- */
@@ -219,9 +219,9 @@ char CPL_DLL *CPLRecodeStub( const char *pszSource,
  * CPLFree(), or NULL if an error occurs. 
  */
 
-char CPL_DLL *CPLRecodeFromWCharStub( const wchar_t *pwszSource, 
-                                      const char *pszSrcEncoding, 
-                                      const char *pszDstEncoding )
+char *CPLRecodeFromWCharStub( const wchar_t *pwszSource, 
+                              const char *pszSrcEncoding, 
+                              const char *pszDstEncoding )
 
 {
 /* -------------------------------------------------------------------- */
@@ -310,9 +310,9 @@ char CPL_DLL *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
  * @since GDAL 1.6.0
  */
 
-wchar_t CPL_DLL *CPLRecodeToWCharStub( const char *pszSource,
-                                       const char *pszSrcEncoding, 
-                                       const char *pszDstEncoding )
+wchar_t *CPLRecodeToWCharStub( const char *pszSource,
+                               const char *pszSrcEncoding, 
+                               const char *pszDstEncoding )
 
 {
     char *pszUTF8Source = (char *) pszSource;
