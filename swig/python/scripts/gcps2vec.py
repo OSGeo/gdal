@@ -27,34 +27,27 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
-# 
-# $Log$
-# Revision 1.2  2006/03/21 21:54:00  fwarmerdam
-# fixup headers
-#
-# Revision 1.1  2005/02/07 14:36:12  fwarmerdam
-# New
-#
-#
 
 try:
     from osgeo import gdal
     from osgeo import ogr
+    from osgeo import osr
 except ImportError:
     import gdal
     import ogr
+    import osr
 
 import sys
 
 def Usage():
-    print('Usage: gcp2vec.py [-of <ogr_drivername>] <raster_file> <vector_file>')
+    print('Usage: gcps2vec.py [-of <ogr_drivername>] [-p] <raster_file> <vector_file>')
     sys.exit(1)
 
 # =============================================================================
 # 	Mainline
 # =============================================================================
 
-format = 'GML'
+out_format = 'GML'
 in_file = None
 out_file = None
 pixel_out = 0
@@ -70,9 +63,10 @@ while i < len(argv):
     arg = argv[i]
 
     if arg == '-of':
-        format = argv[i]
+        i = i + 1
+        out_format = argv[i]
 
-    if arg == '-p':
+    elif arg == '-p':
         pixel_out = 1
 
     elif in_file is None:
@@ -110,16 +104,25 @@ if gcps is None or len(gcps) == 0:
 # Create output file, and layer.
 # ----------------------------------------------------------------------------
 
-drv = ogr.GetDriverByName( format )
+drv = ogr.GetDriverByName( out_format )
 if drv is None:
-    print('No driver named %s available.' % format)
+    print('No driver named %s available.' % out_format)
     sys.exit(1)
 
 ds = drv.CreateDataSource( out_file )
 
-srs = None
+if pixel_out == 0 and gcp_srs != "":
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt(gcp_srs)
+else:
+    srs = None
 
-layer = ds.CreateLayer( 'gcps', srs, geom_type = ogr.wkbPoint25D )
+if pixel_out == 0:
+    geom_type = ogr.wkbPoint25D
+else:
+    geom_type = ogr.wkbPoint
+
+layer = ds.CreateLayer( 'gcps', srs, geom_type = geom_type )
 
 if pixel_out == 0:
     fd = ogr.FieldDefn( 'Pixel', ogr.OFTReal )
@@ -132,6 +135,9 @@ else:
     layer.CreateField( fd )
 
     fd = ogr.FieldDefn( 'Y', ogr.OFTReal )
+    layer.CreateField( fd )
+
+    fd = ogr.FieldDefn( 'Z', ogr.OFTReal )
     layer.CreateField( fd )
 
 fd = ogr.FieldDefn( 'Id', ogr.OFTString )
@@ -148,15 +154,16 @@ for gcp in gcps:
 
     feat = ogr.Feature( layer.GetLayerDefn() )
 
-    geom = ogr.Geometry( ogr.wkbPoint25D )
-
     if pixel_out == 0:
+        geom = ogr.Geometry( geom_type )
         feat.SetField( 'Pixel', gcp.GCPPixel )
         feat.SetField( 'Line',  gcp.GCPLine )
         geom.SetPoint( 0, gcp.GCPX, gcp.GCPY, gcp.GCPZ )
     else:
+        geom = ogr.Geometry( geom_type )
         feat.SetField( 'X', gcp.GCPX )
         feat.SetField( 'Y',  gcp.GCPY )
+        feat.SetField( 'Z',  gcp.GCPZ )
         geom.SetPoint( 0, gcp.GCPPixel, gcp.GCPLine )
         
     feat.SetField( 'Id',    gcp.Id )
