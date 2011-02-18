@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.51 2010-12-11 23:52:27 faxguy Exp $ */
+/* $Id: tif_ojpeg.c,v 1.52 2011-02-18 22:54:48 fwarmerdam Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -967,6 +967,8 @@ OJPEGSubsamplingCorrect(TIFF* tif)
 	OJPEGState* sp=(OJPEGState*)tif->tif_data;
 	uint8 mh;
 	uint8 mv;
+        _TIFFFillStriles( tif );
+        
 	assert(sp->subsamplingcorrect_done==0);
 	if ((tif->tif_dir.td_samplesperpixel!=3) || ((tif->tif_dir.td_photometric!=PHOTOMETRIC_YCBCR) &&
 	    (tif->tif_dir.td_photometric!=PHOTOMETRIC_ITULAB)))
