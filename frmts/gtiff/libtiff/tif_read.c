@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.33 2011-01-06 05:51:13 fwarmerdam Exp $ */
+/* $Id: tif_read.c,v 1.34 2011-02-18 20:53:04 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -50,6 +50,8 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
         uint64 unused_data;
         uint64 read_offset;
         tmsize_t cc, to_read;
+
+        _TIFFFillStriles( tif );
         
         /*
          * Expand raw data buffer, if needed, to hold data
@@ -357,6 +359,8 @@ TIFFReadRawStrip1(TIFF* tif, uint32 strip, void* buf, tmsize_t size,
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
+        _TIFFFillStriles( tif );
+        
 	assert((tif->tif_flags&TIFF_NOREADRAW)==0);
 	if (!isMapped(tif)) {
 		tmsize_t cc;
@@ -480,6 +484,8 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 	static const char module[] = "TIFFFillStrip";
 	TIFFDirectory *td = &tif->tif_dir;
 
+        _TIFFFillStriles( tif );
+        
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
 		uint64 bytecount = td->td_stripbytecount[strip];
@@ -647,6 +653,8 @@ TIFFReadRawTile1(TIFF* tif, uint32 tile, void* buf, tmsize_t size, const char* m
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
+        _TIFFFillStriles( tif );
+
 	assert((tif->tif_flags&TIFF_NOREADRAW)==0);
 	if (!isMapped(tif)) {
 		tmsize_t cc;
@@ -761,6 +769,8 @@ TIFFFillTile(TIFF* tif, uint32 tile)
 	static const char module[] = "TIFFFillTile";
 	TIFFDirectory *td = &tif->tif_dir;
 
+        _TIFFFillStriles( tif );
+        
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
 		uint64 bytecount = td->td_stripbytecount[tile];
@@ -904,6 +914,8 @@ TIFFStartStrip(TIFF* tif, uint32 strip)
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
+        _TIFFFillStriles( tif );
+
 	if ((tif->tif_flags & TIFF_CODERSETUP) == 0) {
 		if (!(*tif->tif_setupdecode)(tif))
 			return (0);
@@ -935,6 +947,8 @@ static int
 TIFFStartTile(TIFF* tif, uint32 tile)
 {
 	TIFFDirectory *td = &tif->tif_dir;
+
+        _TIFFFillStriles( tif );
 
 	if ((tif->tif_flags & TIFF_CODERSETUP) == 0) {
 		if (!(*tif->tif_setupdecode)(tif))
