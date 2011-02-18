@@ -130,6 +130,34 @@ def tiff_read_cmyk_raw():
 
     return 'success'
 
+###############################################################################
+# Test reading a OJPEG image
+
+def tiff_read_ojpeg():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/zackthecat.tif')
+    gdal.PopErrorHandler()
+    if ds is None:
+        if gdal.GetLastErrorMsg().find('Cannot open TIFF file due to missing codec') == 0:
+            return 'skip'
+        else:
+            print(gdal.GetLastErrorMsg())
+            return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    got_cs = ds.GetRasterBand(1).Checksum()
+    gdal.PopErrorHandler()
+    expected_cs = 61570
+    if got_cs != expected_cs:
+        print('Expected checksum = %d. Got = %d' % (expected_cs, got_cs))
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Read a .tif.gz file
@@ -668,6 +696,7 @@ for item in init_list:
 gdaltest_list.append( (tiff_read_off) )
 gdaltest_list.append( (tiff_read_cmyk_rgba) )
 gdaltest_list.append( (tiff_read_cmyk_raw) )
+gdaltest_list.append( (tiff_read_ojpeg) )
 gdaltest_list.append( (tiff_read_gzip) )
 gdaltest_list.append( (tiff_read_zip_1) )
 gdaltest_list.append( (tiff_read_zip_2) )
