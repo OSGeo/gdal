@@ -141,7 +141,7 @@ namespace tut
             { "25e25e3", CPL_VALUE_STRING },
         };
     
-        int i;
+        size_t i;
         for(i=0;i < sizeof(apszTestStrings) / sizeof(apszTestStrings[0]); i++)
         {
             ensure(CPLGetValueType(apszTestStrings[i].testString) == apszTestStrings[i].expectedResult);
