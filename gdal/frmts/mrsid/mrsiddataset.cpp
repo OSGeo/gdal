@@ -263,6 +263,9 @@ class MrSIDDataset : public GDALPamDataset
   protected:
     virtual int         CloseDependentDatasets();
 
+    virtual CPLErr      IBuildOverviews( const char *, int, int *,
+                                         int, int *, GDALProgressFunc, void * );
+
   public:
                 MrSIDDataset(int bIsJPEG2000);
                 ~MrSIDDataset();
@@ -1019,6 +1022,21 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr MrSIDDataset::IBuildOverviews( const char *, int, int *,
+                                      int, int *, GDALProgressFunc,
+                                      void * )
+{
+	CPLError( CE_Warning, CPLE_AppDefined,
+			  "MrSID overviews are built-in, so building external "
+			  "overviews is unnecessary. Ignoring.\n" );
+
+	return CE_None;
+}
+
+/************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
@@ -1645,6 +1663,11 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the overview manager for mask band support.          */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
 }
