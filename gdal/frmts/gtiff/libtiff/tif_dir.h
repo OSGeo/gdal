@@ -1,4 +1,4 @@
-/* $Id: tif_dir.h,v 1.52 2010-03-10 18:56:48 bfriesen Exp $ */
+/* $Id: tif_dir.h,v 1.54 2011-02-18 20:53:05 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -37,6 +37,28 @@ typedef struct {
 } TIFFTagValue;
 
 /*
+ * TIFF Image File Directories are comprised of a table of field
+ * descriptors of the form shown below.  The table is sorted in
+ * ascending order by tag.  The values associated with each entry are
+ * disjoint and may appear anywhere in the file (so long as they are
+ * placed on a word boundary).
+ *
+ * If the value is 4 bytes or less, in ClassicTIFF, or 8 bytes or less in
+ * BigTIFF, then it is placed in the offset field to save space. If so,
+ * it is left-justified in the offset field.
+ */
+typedef struct {
+	uint16 tdir_tag;        /* see below */
+	uint16 tdir_type;       /* data type; see below */
+	uint64 tdir_count;      /* number of items; length in spec */
+	union {
+		uint16 toff_short;
+		uint32 toff_long;
+		uint64 toff_long8;
+	} tdir_offset;		/* either offset or the data itself if fits */
+} TIFFDirEntry;
+
+/*
  * Internal format of a TIFF directory entry.
  */
 typedef struct {
@@ -57,7 +79,8 @@ typedef struct {
 	uint16  td_samplesperpixel;
 	uint32  td_rowsperstrip;
 	uint16  td_minsamplevalue, td_maxsamplevalue;
-	double  td_sminsamplevalue, td_smaxsamplevalue;
+	double* td_sminsamplevalue;
+	double* td_smaxsamplevalue;
 	float   td_xresolution, td_yresolution;
 	uint16  td_resolutionunit;
 	uint16  td_planarconfig;
@@ -75,6 +98,10 @@ typedef struct {
 	uint64* td_stripoffset;
 	uint64* td_stripbytecount;
 	int     td_stripbytecountsorted; /* is the bytecount array sorted ascending? */
+#if defined(DEFER_STRILE_LOAD)
+        TIFFDirEntry td_stripoffset_entry;    /* for deferred loading */
+        TIFFDirEntry td_stripbytecount_entry; /* for deferred loading */
+#endif
 	uint16  td_nsubifd;
 	uint64* td_subifd;
 	/* YCbCr parameters */
@@ -230,6 +257,8 @@ extern const TIFFFieldArray* _TIFFGetFields(void);
 extern const TIFFFieldArray* _TIFFGetExifFields(void);
 extern void _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* infoarray);
 extern void _TIFFPrintFieldInfo(TIFF*, FILE*);
+
+extern int _TIFFFillStriles(TIFF*);        
 
 typedef enum {
 	tfiatImage,

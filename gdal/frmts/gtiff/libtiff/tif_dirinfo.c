@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.111 2010-07-06 14:16:05 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.112 2011-01-24 21:06:31 olivier Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -191,6 +191,8 @@ tiffFields[] = {
 	{ TIFFTAG_CURRENTICCPROFILE, -1, -1, TIFF_UNDEFINED, 0, TIFF_SETGET_C16_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "CurrentICCProfile", NULL },
 	{ TIFFTAG_CURRENTPREPROFILEMATRIX, -1, -1, TIFF_SRATIONAL, 0, TIFF_SETGET_C16_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "CurrentPreProfileMatrix", NULL },
 	/* end DNG tags */
+	/* begin pseudo tags */
+	{ TIFFTAG_PERSAMPLE, 0, 0, TIFF_SHORT, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, TRUE, FALSE, "PerSample", NULL},
 };
 
 static TIFFField
