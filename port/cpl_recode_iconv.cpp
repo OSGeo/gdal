@@ -179,6 +179,9 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
     while ( pwszSource[nSrcLen] != 0 )
         nSrcLen++;
 
+    /* iconv expects a number of bytes, not characters */
+    nSrcLen *= sizeof(wchar_t);
+
 /* -------------------------------------------------------------------- */
 /*      Allocate destination buffer.                                    */
 /* -------------------------------------------------------------------- */
