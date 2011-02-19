@@ -1011,20 +1011,14 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
         }
     }
 
-    VSIVirtualHandle* poHandle = new VSICurlHandle( this, osFilename + strlen("/vsicurl/"));
+    VSICurlHandle* poHandle = new VSICurlHandle( this, osFilename + strlen("/vsicurl/"));
     if (!bGotFileList)
     {
-        /* If we didn't get a filelist, the only way to be sure the file exists is to */
-        /* actually try reading it */
-        char c;
-        if (poHandle->Read(&c, 1, 1) != 1)
+        /* If we didn't get a filelist, check that the file really exists */
+        if (!poHandle->Exists())
         {
             delete poHandle;
             poHandle = NULL;
-        }
-        else
-        {
-            poHandle->Seek(0, SEEK_SET);
         }
     }
     return poHandle;
