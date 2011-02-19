@@ -30,7 +30,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "FGdbUtils.h"
-#include <strstream>
 #include "cpl_minixml.h" // the only way right now to extract schema information
 
 using std::string;
@@ -40,8 +39,8 @@ using std::wstring;
 /*                              FGdbLayer()                               */
 /************************************************************************/
 FGdbLayer::FGdbLayer():
-OGRLayer(),m_pEnumRows(NULL),m_pSRS(NULL), m_pDS(NULL), m_pOGRFilterGeometry(NULL), m_bFilterDirty(true),
-m_supressColumnMappingError(false),m_forceMulti(false),m_wstrSubfields(L"*")
+OGRLayer(), m_pDS(NULL),m_pSRS(NULL),m_wstrSubfields(L"*"),m_pOGRFilterGeometry(NULL),m_pEnumRows(NULL),  m_bFilterDirty(true),
+m_supressColumnMappingError(false),m_forceMulti(false)
 {
   m_pEnumRows = new EnumRows;
 }
@@ -112,7 +111,7 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std
 
   if (psRoot == NULL)
   {
-    CPLError( CE_Failure, CPLE_AppDefined, ("Failed parsing GDB Table Schema XML for " + m_strName).c_str());
+    CPLError( CE_Failure, CPLE_AppDefined, "%s", ("Failed parsing GDB Table Schema XML for " + m_strName).c_str());
     return false;
   }
 
@@ -156,14 +155,14 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std
   }
   else
   {
-    CPLError( CE_Failure, CPLE_AppDefined, ("Failed parsing GDB Table Schema XML (DataElement) for " + m_strName).c_str());
+    CPLError( CE_Failure, CPLE_AppDefined, "%s", ("Failed parsing GDB Table Schema XML (DataElement) for " + m_strName).c_str());
     return false;
   }
   CPLDestroyXMLNode( psRoot );
 
   if (m_strShapeFieldName.length() <= 0)
   {
-    CPLError( CE_Failure, CPLE_AppDefined, "Attempting to open non-spatial table");
+    CPLError( CE_Failure, CPLE_AppDefined, "%s", "Attempting to open non-spatial table");
     
     return false;
   }
@@ -446,6 +445,7 @@ void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
   if (m_pOGRFilterGeometry)
   {
     OGRGeometryFactory::destroyGeometry(m_pOGRFilterGeometry);
+    m_pOGRFilterGeometry = NULL;
   }
 
   if (pOGRGeom == NULL || pOGRGeom->IsEmpty())
@@ -498,7 +498,7 @@ void FGdbLayer::SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMax
 
 OGRErr FGdbLayer::SetAttributeFilter( const char* pszQuery )
 {
-  m_wstrWhereClause = StringToWString(pszQuery); 
+  m_wstrWhereClause = StringToWString( (pszQuery != NULL) ? pszQuery : "" );
 
   m_bFilterDirty = true;
 
@@ -512,7 +512,6 @@ OGRErr FGdbLayer::SetAttributeFilter( const char* pszQuery )
 bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
 {
   long hr;
-  char lngBuffer[11];
 
   OGRFeature* pOutFeature = new OGRFeature(m_pFeatureDefn);
 
@@ -538,7 +537,7 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
   if (FAILED(hr = pRow->GetGeometry(gdbGeometry)))
   {
     delete pOutFeature;
-    return GDBErr(hr, "Failed retrieving shape for row " + string(ltoa(oid, lngBuffer, 10 )));
+    return GDBErr(hr, "Failed retrieving shape for row " + string(CPLSPrintf("%d", (int)oid)));
   }
 
   OGRGeometry* pOGRGeo = NULL;
@@ -546,7 +545,7 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
   if ((!GhettoGDBGeometryToOGRGeometry(m_forceMulti, &gdbGeometry, m_pSRS, &pOGRGeo)) || pOGRGeo == NULL)
   {
     delete pOutFeature;
-    return GDBErr(hr, "Failed to translate FileGDB Geometry to OGR Geometry for row " + string(ltoa(oid, lngBuffer, 10 )));
+    return GDBErr(hr, "Failed to translate FileGDB Geometry to OGR Geometry for row " + string(CPLSPrintf("%d", (int)oid)));
   }
 
   pOutFeature->SetGeometryDirectly(pOGRGeo);
@@ -597,7 +596,7 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
           continue;
         }
 
-        pOutFeature->SetField(i, val);
+        pOutFeature->SetField(i, (int)val);
       }
       break;
 
@@ -647,7 +646,7 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
         if (!m_supressColumnMappingError)
         {
           foundBadColumn = true;
-          CPLError( CE_Warning, CPLE_AppDefined, "Row id: %d col:%d has unhandled col type (%d). Setting to NULL.", oid, i, m_pFeatureDefn->GetFieldDefn(i)->GetType());
+          CPLError( CE_Warning, CPLE_AppDefined, "Row id: %d col:%d has unhandled col type (%d). Setting to NULL.", (int)oid, i, m_pFeatureDefn->GetFieldDefn(i)->GetType());
         }
       }
     }
@@ -701,10 +700,7 @@ OGRFeature* FGdbLayer::GetNextFeature()
       long oid = -1;
       row.GetOID(oid);
 
-      std::strstream msg;
-      msg << "Failed translating ArcObjects row [" << oid << "] to OGR Feature";
-
-      GDBErr(hr, msg.str());
+      GDBErr(hr, CPLSPrintf("Failed translating ArcObjects row [%ld] to OGR Feature", oid));
 
       //return NULL;
       continue; //skip feature
@@ -725,11 +721,11 @@ OGRFeature *FGdbLayer::GetFeature( long oid )
   long           hr;
   Row            row;
   EnumRows       enumRows;
-  std::strstream query;
+  CPLString      osQuery;
 
-  query << m_strOIDFieldName << " = " << oid; 
+  osQuery.Printf("%s = %ld", m_strOIDFieldName.c_str(), oid);
 
-  if (FAILED(hr = m_pTable->Search(m_wstrSubfields, StringToWString(query.str()), true, enumRows)))
+  if (FAILED(hr = m_pTable->Search(m_wstrSubfields, StringToWString(osQuery.c_str()), true, enumRows)))
   {
     GDBErr(hr, "Failed fetching row ");
     return NULL;
@@ -770,14 +766,17 @@ int FGdbLayer::GetFeatureCount( int bForce )
   long           rowCount = 0;
   Row            row;
   EnumRows       enumRows;
-    
+
+  if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0)
+      return OGRLayer::GetFeatureCount(bForce);
+
   if (FAILED(hr = m_pTable->Search(StringToWString(m_strOIDFieldName), L"", true, enumRows)))
   {
     GDBErr(hr, "Failed counting rows");
     return -1;
   }
 
-  while (S_OK != (hr = enumRows.Next(row)))
+  while (S_OK == (hr = enumRows.Next(row)))
     ++rowCount;
 
   if (FAILED(hr))

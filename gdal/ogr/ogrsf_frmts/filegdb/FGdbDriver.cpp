@@ -30,6 +30,8 @@
 #include "cpl_conv.h"
 #include "FGdbUtils.h"
 
+//g++ -Wall -g ogr/ogrsf_frmts/filegdb/*.c* -shared -o ogr_FileGDB.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/filegdb -L. -lgdal -I/home/even/filegdb/dist/include -L/home/even/filegdb/dist/lib  -I/home/even/filegdb/dist/src/FileGDBEngine/include/FileGDBLinux -lFileGDBAPI
+extern "C" void RegisterOGRFileGDB();
 
 /************************************************************************/
 /*                            FGdbDriver()                            */
@@ -67,18 +69,14 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename,
 
 {
   // First check if we have to do any work.
-  
-  std::string fileName = pszFilename;
-  size_t length = fileName.length();
-
-  if (!(length > 4 &&  !strcmpi(fileName.substr(length - 4, 4).c_str(), ".gdb")))
+  if (!EQUAL(CPLGetExtension(pszFilename), "gdb"))
     return NULL;
 
   long hr;
 
   Geodatabase* pGeoDatabase = new Geodatabase;
 
-  hr = ::OpenGeodatabase(StringToWString(fileName), *pGeoDatabase);
+  hr = ::OpenGeodatabase(StringToWString(pszFilename), *pGeoDatabase);
 
   if (FAILED(hr) || pGeoDatabase == NULL)
   {
@@ -159,7 +157,7 @@ int FGdbDriver::TestCapability( const char * pszCap )
 *                           RegisterOGRGdb()                                 *
 ************************************************************************/
 
-void RegisterOGRfilegdb()
+void RegisterOGRFileGDB()
 
 {
   if (! GDAL_CHECK_VERSION("OGR FGDB"))
