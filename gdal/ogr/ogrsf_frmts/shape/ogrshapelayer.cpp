@@ -43,11 +43,13 @@ CPL_CVSID("$Id$");
 
 OGRShapeLayer::OGRShapeLayer( const char * pszName,
                               SHPHandle hSHPIn, DBFHandle hDBFIn, 
-                              OGRSpatialReference *poSRSIn, int bUpdate,
+                              OGRSpatialReference *poSRSIn, int bSRSSetIn,
+                              int bUpdate,
                               OGRwkbGeometryType eReqType )
 
 {
     poSRS = poSRSIn;
+    bSRSSet = bSRSSetIn;
 
     pszFullName = CPLStrdup(pszName);
     
@@ -378,7 +380,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
         {
             if( poFeature->GetGeometryRef() != NULL )
             {
-                poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
+                poFeature->GetGeometryRef()->assignSpatialReference( GetSpatialRef() );
             }
 
             m_nFeaturesRead++;
@@ -412,7 +414,9 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
     if( poFeature != NULL )
     {
         if( poFeature->GetGeometryRef() != NULL )
-            poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
+        {
+            poFeature->GetGeometryRef()->assignSpatialReference( GetSpatialRef() );
+        }
 
         m_nFeaturesRead++;
     
@@ -845,6 +849,36 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 OGRSpatialReference *OGRShapeLayer::GetSpatialRef()
 
 {
+    if (bSRSSet)
+        return poSRS;
+
+    bSRSSet = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Is there an associated .prj file we can read?                   */
+/* -------------------------------------------------------------------- */
+    const char  *pszPrjFile = CPLResetExtension( pszFullName, "prj" );
+    char    **papszLines;
+
+    char* apszOptions[] = { (char*)"EMIT_ERROR_IF_CANNOT_OPEN_FILE=FALSE", NULL };
+    papszLines = CSLLoad2( pszPrjFile, -1, -1, apszOptions );
+    if (papszLines == NULL)
+    {
+        pszPrjFile = CPLResetExtension( pszFullName, "PRJ" );
+        papszLines = CSLLoad2( pszPrjFile, -1, -1, apszOptions );
+    }
+
+    if( papszLines != NULL )
+    {
+        poSRS = new OGRSpatialReference();
+        if( poSRS->importFromESRI( papszLines ) != OGRERR_NONE )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
+        CSLDestroy( papszLines );
+    }
+
     return poSRS;
 }
 

@@ -302,43 +302,11 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Is there an associated .prj file we can read?                   */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReference *poSRS = NULL;
-    const char  *pszPrjFile = CPLResetExtension( pszNewName, "prj" );
-    VSILFILE        *fp = NULL;
-
-    fp = VSIFOpenL( pszPrjFile, "r" );
-
-    if( NULL == fp )
-    {
-        pszPrjFile = CPLResetExtension( pszNewName, "PRJ" );
-        fp = VSIFOpenL( pszPrjFile, "r" );
-    }
-
-    if( fp != NULL )
-    {
-        char    **papszLines;
-
-        VSIFCloseL( fp );
-        
-        papszLines = CSLLoad( pszPrjFile );
-
-        poSRS = new OGRSpatialReference();
-        if( poSRS->importFromESRI( papszLines ) != OGRERR_NONE )
-        {
-            delete poSRS;
-            poSRS = NULL;
-        }
-        CSLDestroy( papszLines );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRShapeLayer       *poLayer;
 
-    poLayer = new OGRShapeLayer( pszNewName, hSHP, hDBF, poSRS, bUpdate,
+    poLayer = new OGRShapeLayer( pszNewName, hSHP, hDBF, NULL, FALSE, bUpdate,
                                  wkbNone );
 
 
@@ -608,7 +576,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGRShapeLayer       *poLayer;
 
-    poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, poSRS, TRUE,
+    poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, poSRS, TRUE, TRUE,
                                  eType );
     
     poLayer->InitializeIndexSupport( pszBasename );
