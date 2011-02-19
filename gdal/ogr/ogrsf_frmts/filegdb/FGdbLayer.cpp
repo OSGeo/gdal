@@ -764,11 +764,19 @@ int FGdbLayer::GetFeatureCount( int bForce )
 
   long           hr;
   long           rowCount = 0;
-  Row            row;
-  EnumRows       enumRows;
 
   if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0)
       return OGRLayer::GetFeatureCount(bForce);
+
+  if (FAILED(hr = m_pTable->GetRowCount(rowCount)))
+  {
+    GDBErr(hr, "Failed counting rows");
+    return 0;
+  }
+
+#if 0
+  Row            row;
+  EnumRows       enumRows;
 
   if (FAILED(hr = m_pTable->Search(StringToWString(m_strOIDFieldName), L"", true, enumRows)))
   {
@@ -784,6 +792,7 @@ int FGdbLayer::GetFeatureCount( int bForce )
     GDBErr(hr, "Failed counting rows (during fetch)");
     return -1;
   }
+#endif
 
   return static_cast<int>(rowCount);
 }
@@ -796,11 +805,23 @@ int FGdbLayer::GetFeatureCount( int bForce )
 
 OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
 {
-  // No other option but to force in beta1 
-  //if (bForce) 
-  //{
-  return OGRLayer::GetExtent( psExtent, bForce );
-  //}
+  if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0)
+      return OGRLayer::GetExtent(psExtent, bForce);
+
+  long hr;
+  Envelope envelope;
+  if (FAILED(hr = m_pTable->GetExtent(envelope)))
+  {
+    GDBErr(hr, "Failed fetching extent");
+    return OGRERR_FAILURE;
+  }
+
+  psExtent->MinX = envelope.xMin;
+  psExtent->MinY = envelope.yMin;
+  psExtent->MaxX = envelope.xMax;
+  psExtent->MaxY = envelope.yMax;
+
+  return OGRERR_NONE;
 }
 
 
@@ -814,13 +835,13 @@ int FGdbLayer::TestCapability( const char* pszCap )
     return TRUE;
 
   else if (EQUAL(pszCap,OLCFastFeatureCount)) 
-    return FALSE;
+    return m_pOGRFilterGeometry == NULL && m_wstrWhereClause.size() == 0;
 
   else if (EQUAL(pszCap,OLCFastSpatialFilter))
     return TRUE;
 
   else if (EQUAL(pszCap,OLCFastGetExtent))
-    return FALSE;
+    return m_pOGRFilterGeometry == NULL && m_wstrWhereClause.size() == 0;
 
   // Have not implemented this yet
   else if (EQUAL(pszCap,OLCCreateField))
