@@ -1063,19 +1063,13 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
     /* The listing of http://dds.cr.usgs.gov/srtm/SRTM_image_sample/picture%20examples/ */
     /* has "<title>Index of /srtm/SRTM_image_sample/picture examples</title>" so we must */
     /* try unescaped %20 also */
-    if (strstr(pszDir, "%20"))
+    /* Similar with http://datalib.usask.ca/gis/Data/Central_America_goodbutdoweown%3f/ */
+    if (strchr(pszDir, '%'))
     {
-        char* pszUnescapedDir = CPLStrdup(pszDir);
-        char* c;
-        while ((c = strstr(pszUnescapedDir, "%20")) != NULL)
-        {
-            *c = ' ';
-            memmove(c + 1, c + 3, strlen(c + 3) + 1);
-        }
+        char* pszUnescapedDir = CPLUnescapeString(pszDir, NULL, CPLES_URL);
         osExpectedString_unescaped = "<title>Index of ";
         osExpectedString_unescaped += pszUnescapedDir;
         osExpectedString_unescaped += "</title>";
-
         CPLFree(pszUnescapedDir);
     }
     
