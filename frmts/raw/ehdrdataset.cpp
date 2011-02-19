@@ -813,6 +813,18 @@ CPLErr EHdrDataset::ReadSTX()
               EHdrRasterBand* poBand = (EHdrRasterBand*)papoBands[i-1];
               poBand->dfMin = atof(papszTokens[1]);
               poBand->dfMax = atof(papszTokens[2]);
+
+              int bNoDataSet = FALSE;
+              double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
+              if (bNoDataSet && dfNoData == poBand->dfMin)
+              {
+                  /* Triggered by /vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil */
+                  CPLDebug("EHDr", "Ignoring .stx file where min == nodata. "
+                           "The nodata value shouldn't be taken into account "
+                           "in minimum value computation.");
+                  break;
+              }
+
               poBand->minmaxmeanstddev = HAS_MIN_FLAG | HAS_MAX_FLAG;
               // reads optional mean and stddev
               if ( !EQUAL(papszTokens[3], "#") )
