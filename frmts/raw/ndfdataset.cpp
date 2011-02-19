@@ -49,8 +49,6 @@ class NDFDataset : public RawDataset
     char        **papszHeader;
     const char  *Get( const char *pszKey, const char *pszDefault);
 
-    int         ReadHeader( VSILFILE * );
-
   public:
     		NDFDataset();
     	        ~NDFDataset();
@@ -166,9 +164,6 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      The user must select the header file (ie. .H1).                 */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL )
-        return NULL;
-
     if( poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
@@ -182,14 +177,18 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      keyword is already seperated from the value by an equal         */
 /*      sign.                                                           */
 /* -------------------------------------------------------------------- */
+
+    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    if (fp == NULL)
+        return NULL;
+
     const char *pszLine;
     const int nHeaderMax = 1000;
     int nHeaderLines = 0;
     char **papszHeader = (char **) CPLMalloc(sizeof(char *) * (nHeaderMax+1));
 
-    VSIRewind( poOpenInfo->fp );
-    while( nHeaderLines < nHeaderMax 
-           && (pszLine = CPLReadLine( poOpenInfo->fp )) != NULL 
+    while( nHeaderLines < nHeaderMax
+           && (pszLine = CPLReadLineL( fp )) != NULL
            && !EQUAL(pszLine,"END_OF_HDR;") )
     {
         char *pszFixed;
@@ -204,6 +203,8 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         papszHeader[nHeaderLines++] = pszFixed;
         papszHeader[nHeaderLines] = NULL;
     }
+    VSIFCloseL(fp);
+    fp = NULL;
     
     if( CSLFetchNameValue( papszHeader, "PIXELS_PER_LINE" ) == NULL 
         || CSLFetchNameValue( papszHeader, "LINES_PER_DATA_FILE" ) == NULL 
@@ -443,6 +444,7 @@ void GDALRegister_NDF()
                                    "NLAPS Data Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#NDF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = NDFDataset::Open;
 
