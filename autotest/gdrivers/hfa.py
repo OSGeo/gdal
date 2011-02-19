@@ -1199,6 +1199,7 @@ def hfa_copyfiles():
 
     # Check that the filenames in the actual files seem to have been updated.
     img = open('tmp/newnamexxx.img', 'rb').read()
+    img = str(img)
     if img.find('newnamexxx.rrd') == -1:
         gdaltest.post_reason( 'RRDNames not updated?' )
         return 'fail'
@@ -1208,6 +1209,7 @@ def hfa_copyfiles():
         return 'fail'
 
     rrd = open('tmp/newnamexxx.rrd', 'rb').read()
+    rrd = str(rrd)
     if rrd.find('newnamexxx.img') == -1:
         gdaltest.post_reason( 'DependentFile not updated?' )
         return 'fail'
