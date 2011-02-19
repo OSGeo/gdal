@@ -338,10 +338,13 @@ char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszO
     }
     else
     {
-        /* Unable to open file */
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "CSLLoad2(\"%s\") failed: unable to open output file.",
-                  pszFname );
+        if (CSLFetchBoolean(papszOptions, "EMIT_ERROR_IF_CANNOT_OPEN_FILE", TRUE))
+        {
+            /* Unable to open file */
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                    "CSLLoad2(\"%s\") failed: unable to open output file.",
+                    pszFname );
+        }
     }
 
     return papszStrList;
@@ -1907,6 +1910,10 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
  * Detect the type of the value contained in a string, whether it is
  * a real, an integer or a string
  * Leading and trailing spaces are skipped in the analysis.
+ *
+ * Note: in the context of this function, integer must be understood in a
+ * broad sense. It does not mean that the value can fit into a 32 bit integer
+ * for example. It might be larger.
  *
  * @param pszValue the string to analyze
  *

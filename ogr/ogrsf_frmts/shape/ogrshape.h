@@ -53,7 +53,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
 class OGRShapeLayer : public OGRLayer
 {
-    OGRSpatialReference *poSRS;
+    OGRSpatialReference *poSRS; /* lazy loaded --> use GetSpatialRef() */
+    int                 bSRSSet;
     OGRFeatureDefn     *poFeatureDefn;
     int                 iNextShapeId;
     int                 nTotalShapeCount;
@@ -92,7 +93,7 @@ class OGRShapeLayer : public OGRLayer
   public:
                         OGRShapeLayer( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
-                                       OGRSpatialReference *poSRS,
+                                       OGRSpatialReference *poSRS, int bSRSSet,
                                        int bUpdate, 
                                        OGRwkbGeometryType eReqType );
                         ~OGRShapeLayer();
