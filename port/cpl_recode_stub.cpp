@@ -228,7 +228,8 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
 /*      We try to avoid changes of character set.  We are just          */
 /*      providing for unicode to unicode.                               */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) != 0
+    if( strcmp(pszSrcEncoding,"WCHAR_T") != 0 &&
+        strcmp(pszSrcEncoding,CPL_ENC_UTF8) != 0
         && strcmp(pszSrcEncoding,CPL_ENC_UTF16) != 0
         && strcmp(pszSrcEncoding,CPL_ENC_UCS2) != 0
         && strcmp(pszSrcEncoding,CPL_ENC_UCS4) != 0 )
@@ -329,7 +330,8 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
 /*      We try to avoid changes of character set.  We are just          */
 /*      providing for unicode to unicode.                               */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszDstEncoding,CPL_ENC_UCS2) != 0
+    if( strcmp(pszDstEncoding,"WCHAR_T") != 0
+        && strcmp(pszDstEncoding,CPL_ENC_UCS2) != 0
         && strcmp(pszDstEncoding,CPL_ENC_UCS4) != 0 
         && strcmp(pszDstEncoding,CPL_ENC_UTF16) != 0 )
     {
