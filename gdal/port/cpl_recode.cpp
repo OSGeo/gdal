@@ -147,7 +147,7 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
 /*      to CPL_ENC_UTF8, CPL_ENC_ISO8859_1 and CPL_ENC_ASCII are well   */
 /*      handled by the stub implementation.                             */
 /* -------------------------------------------------------------------- */
-    if ( EQUAL(pszSrcEncoding, CPL_ENC_UCS2)
+    if ( (EQUAL(pszSrcEncoding, CPL_ENC_UCS2) || EQUAL(pszSrcEncoding, "WCHAR_T"))
          && ( EQUAL(pszDstEncoding, CPL_ENC_UTF8)
               || EQUAL(pszDstEncoding, CPL_ENC_ASCII)
               || EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1) ) )
@@ -206,7 +206,7 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
 /*      from CPL_ENC_UTF8, CPL_ENC_ISO8859_1 and CPL_ENC_ASCII are well */
 /*      handled by the stub implementation.                             */
 /* -------------------------------------------------------------------- */
-    if ( EQUAL(pszDstEncoding, CPL_ENC_UCS2)
+    if ( (EQUAL(pszDstEncoding, CPL_ENC_UCS2) || EQUAL(pszDstEncoding, "WCHAR_T"))
          && ( EQUAL(pszSrcEncoding, CPL_ENC_UTF8)
               || EQUAL(pszSrcEncoding, CPL_ENC_ASCII)
               || EQUAL(pszSrcEncoding, CPL_ENC_ISO8859_1) ) )
