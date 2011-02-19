@@ -3,7 +3,7 @@ EXTRAFLAGS =	-I.. -I..\.. -I$(FGDB_INC)
 
 GDAL_ROOT	=	..\..\..
 
-PLUGIN_DLL 	=	ogr_filegdb.dll
+PLUGIN_DLL 	=	ogr_FileGDB.dll
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 

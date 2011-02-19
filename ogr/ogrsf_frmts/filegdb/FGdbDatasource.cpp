@@ -41,7 +41,7 @@ using std::wstring;
 
 FGdbDataSource::FGdbDataSource():
 OGRDataSource(),
-m_pszName(0)
+m_pszName(0), m_pGeodatabase(NULL)
 {
 }
 
@@ -56,6 +56,12 @@ FGdbDataSource::~FGdbDataSource()
     size_t count = m_layers.size();
     for(size_t i = 0; i < count; ++i )
         delete m_layers[i];
+
+    if (m_pGeodatabase)
+    {
+        ::CloseGeodatabase(*m_pGeodatabase);
+        delete m_pGeodatabase;
+    }
 }
 
 

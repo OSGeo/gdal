@@ -67,7 +67,7 @@ bool GDBErr(long hr, std::string desc)
   //  }
   //  else
   //  {
-  CPLError( CE_Failure, CPLE_AppDefined, "GDB Error: %s long:%d", desc.c_str(), hr);
+  CPLError( CE_Failure, CPLE_AppDefined, "GDB Error: %s long:%ld", desc.c_str(), hr);
   //  }
 
   return false;
@@ -182,7 +182,7 @@ bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut)
     esriFieldTypeGeometry
     esriFieldTypeRaster
     */
-    CPLError( CE_Warning, CPLE_AppDefined, ("Cannot map field " + gdbType).c_str());
+    CPLError( CE_Warning, CPLE_AppDefined, "%s", ("Cannot map field " + gdbType).c_str());
 
     return false;
   }
