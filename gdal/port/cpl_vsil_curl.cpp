@@ -998,10 +998,10 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     }
 
     CPLString osFilename(pszFilename);
+    int bGotFileList = TRUE;
     if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
         strncmp(CPLGetExtension(osFilename), "zip", 3) != 0)
     {
-        int bGotFileList;
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
         int bFound = (CSLFindStringSensitive(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
@@ -1011,7 +1011,23 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
         }
     }
 
-    return new VSICurlHandle( this, osFilename + strlen("/vsicurl/"));
+    VSIVirtualHandle* poHandle = new VSICurlHandle( this, osFilename + strlen("/vsicurl/"));
+    if (!bGotFileList)
+    {
+        /* If we didn't get a filelist, the only way to be sure the file exists is to */
+        /* actually try reading it */
+        char c;
+        if (poHandle->Read(&c, 1, 1) != 1)
+        {
+            delete poHandle;
+            poHandle = NULL;
+        }
+        else
+        {
+            poHandle->Seek(0, SEEK_SET);
+        }
+    }
+    return poHandle;
 }
 
 static char** VSICurlParseHTMLFileList(const char* pszFilename,
