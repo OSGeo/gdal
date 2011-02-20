@@ -313,6 +313,14 @@ typedef struct
 {
     char*           pBuffer;
     size_t          nSize;
+    int             bIsHTTP;
+    int             bIsInHeader;
+    vsi_l_offset    nStartOffset;
+    vsi_l_offset    nEndOffset;
+    int             nHTTPCode;
+    vsi_l_offset    nContentLength;
+    int             bFoundContentRange;
+    int             bError;
 } WriteFuncStruct;
 
 /************************************************************************/
@@ -323,6 +331,14 @@ static void VSICURLInitWriteFuncStruct(WriteFuncStruct* psStruct)
 {
     psStruct->pBuffer = NULL;
     psStruct->nSize = 0;
+    psStruct->bIsHTTP = FALSE;
+    psStruct->bIsInHeader = TRUE;
+    psStruct->nStartOffset = 0;
+    psStruct->nEndOffset = 0;
+    psStruct->nHTTPCode = 0;
+    psStruct->nContentLength = 0;
+    psStruct->bFoundContentRange = FALSE;
+    psStruct->bError = FALSE;
 }
 
 /************************************************************************/
@@ -334,12 +350,50 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
     WriteFuncStruct* psStruct = (WriteFuncStruct*) req;
     size_t nSize = count * nmemb;
 
-    char* pNewBuffer = (char*) VSIRealloc(psStruct->pBuffer, psStruct->nSize + nSize + 1);
+    char* pNewBuffer = (char*) VSIRealloc(psStruct->pBuffer,
+                                          psStruct->nSize + nSize + 1);
     if (pNewBuffer)
     {
         psStruct->pBuffer = pNewBuffer;
         memcpy(psStruct->pBuffer + psStruct->nSize, buffer, nSize);
         psStruct->pBuffer[psStruct->nSize + nSize] = '\0';
+        if (psStruct->bIsHTTP && psStruct->bIsInHeader)
+        {
+            char* pszLine = psStruct->pBuffer + psStruct->nSize;
+            if (EQUALN(pszLine, "HTTP/1.0 ", 9) ||
+                EQUALN(pszLine, "HTTP/1.1 ", 9))
+                psStruct->nHTTPCode = atoi(pszLine + 9);
+            else if (EQUALN(pszLine, "Content-Length: ", 16))
+                psStruct->nContentLength = CPLScanUIntBig(pszLine + 16,
+                                                          strlen(pszLine + 16));
+            else if (EQUALN(pszLine, "Content-Range: ", 15))
+                psStruct->bFoundContentRange = TRUE;
+
+            /*if (nSize > 2 && pszLine[nSize - 2] == '\r' &&
+                pszLine[nSize - 1] == '\n')
+            {
+                pszLine[nSize - 2] = 0;
+                CPLDebug("VSICURL", "%s", pszLine);
+                pszLine[nSize - 2] = '\r';
+            }*/
+
+            if (pszLine[0] == '\r' || pszLine[0] == '\n')
+            {
+                psStruct->bIsInHeader = FALSE;
+
+                /* Detect servers that don't support range downloading */
+                if (psStruct->nHTTPCode == 200 &&
+                    !psStruct->bFoundContentRange &&
+                    (psStruct->nStartOffset != 0 || psStruct->nContentLength > 10 *
+                        (psStruct->nEndOffset - psStruct->nStartOffset + 1)))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Range downloading not supported by this server !");
+                    psStruct->bError = TRUE;
+                    return 0;
+                }
+            }
+        }
         psStruct->nSize += nSize;
         return nmemb;
     }
@@ -493,6 +547,9 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
+    sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
+    sWriteFuncHeaderData.nStartOffset = startOffset;
+    sWriteFuncHeaderData.nEndOffset = startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE - 1;
 
     char rangeStr[512];
     sprintf(rangeStr, CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, startOffset, startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE - 1);
@@ -515,8 +572,8 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     char *content_type = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
 
-    if (response_code != 200 && response_code != 206 &&
-        response_code != 226 && response_code != 426)
+    if ((response_code != 200 && response_code != 206 &&
+        response_code != 226 && response_code != 426) || sWriteFuncHeaderData.bError)
     {
         bHastComputedFileSize = cachedFileProp->bHastComputedFileSize = TRUE;
         cachedFileProp->fileSize = 0;
