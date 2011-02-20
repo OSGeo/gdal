@@ -1243,6 +1243,13 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
         poProX = hHFA->papoBand[iBand]->poNode->GetNamedChild( "ProjectionX" );
 
 /* -------------------------------------------------------------------- */
+/*      If we are setting an empty string then a missing entry is       */
+/*      equivelent.                                                     */
+/* -------------------------------------------------------------------- */
+        if( strlen(pszPEString) == 0 && poProX == NULL )
+            continue;
+
+/* -------------------------------------------------------------------- */
 /*      Create the node.                                                */
 /* -------------------------------------------------------------------- */
         if( poProX == NULL )
