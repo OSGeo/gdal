@@ -50,7 +50,7 @@ CPL_C_END
 #  define D2R	(PI/180)
 #endif
 
-OGRBoolean WritePeStringIfNeeded(OGRSpatialReference*	poSRS, HFAHandle hHFA);
+int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA);
 void ClearSR(HFAHandle hHFA);
 
 static const char *apszDatumMap[] = {
@@ -1957,7 +1957,7 @@ CPLErr HFADataset::WriteProjection()
     OGRSpatialReference *poGeogSRS = NULL;
     int                 bHaveSRS;
     char		*pszP = pszProjection;
-    OGRBoolean peStrStored = FALSE;
+    int                 bPEStringStored = FALSE;
 
     bGeoDirty = FALSE;
 
@@ -2024,7 +2024,7 @@ CPLErr HFADataset::WriteProjection()
         }
 
         /* Verify if we need to write a ESRI PE string */
-        peStrStored = WritePeStringIfNeeded(&oSRS, hHFA);
+        bPEStringStored = WritePeStringIfNeeded(&oSRS, hHFA);
 
         sPro.proSpheroid.sphereName = (char *)
             poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
@@ -2046,7 +2046,7 @@ CPLErr HFADataset::WriteProjection()
     if( bHaveSRS )
         pszProjName = oSRS.GetAttrValue( "PROJCS|PROJECTION" );
 
-    if( bForceToPEString )
+    if( bForceToPEString && !bPEStringStored )
     {
         char *pszPEString = NULL;
         oSRS.morphToESRI();
@@ -2054,6 +2054,8 @@ CPLErr HFADataset::WriteProjection()
         // need to transform this into ESRI format.
         HFASetPEString( hHFA, pszPEString );
         CPLFree( pszPEString );
+
+        bPEStringStored = TRUE;
     }
     else if( pszProjName == NULL )
     {
@@ -2588,16 +2590,16 @@ CPLErr HFADataset::WriteProjection()
     // Anything we can't map, we store as an ESRI PE_STRING 
     else if( oSRS.IsProjected() || oSRS.IsGeographic() )
     {
-      if(!peStrStored)
-      {
-        char *pszPEString = NULL;
-        oSRS.morphToESRI();
-        oSRS.exportToWkt( &pszPEString );
-        // need to transform this into ESRI format.
-        HFASetPEString( hHFA, pszPEString );
-        CPLFree( pszPEString );
-        peStrStored = TRUE;
-      }
+        if(!bPEStringStored)
+        {
+            char *pszPEString = NULL;
+            oSRS.morphToESRI();
+            oSRS.exportToWkt( &pszPEString );
+            // need to transform this into ESRI format.
+            HFASetPEString( hHFA, pszPEString );
+            CPLFree( pszPEString );
+            bPEStringStored = TRUE;
+        }
     }
     else
     {
@@ -2687,9 +2689,12 @@ CPLErr HFADataset::WriteProjection()
     {
         HFASetProParameters( hHFA, &sPro );
         HFASetDatum( hHFA, &sDatum );
+
+        if( !bPEStringStored )
+            HFASetPEString( hHFA, "" );
     }
-    else if( !peStrStored )
-      ClearSR(hHFA);
+    else if( !bPEStringStored )
+        ClearSR(hHFA);
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
@@ -2703,7 +2708,7 @@ CPLErr HFADataset::WriteProjection()
 /************************************************************************/
 /*                       WritePeStringIfNeeded()                        */
 /************************************************************************/
-OGRBoolean WritePeStringIfNeeded(OGRSpatialReference*	poSRS, HFAHandle hHFA)
+int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA)
 {
   OGRBoolean ret = FALSE;
   if(!poSRS || !hHFA)
@@ -3525,6 +3530,7 @@ CPLErr HFADataset::ReadProjection()
 /* -------------------------------------------------------------------- */
     pszPE_COORDSYS = HFAGetPEString( hHFA );
     if( pszPE_COORDSYS != NULL
+        && strlen(pszPE_COORDSYS) > 0 
         && oSRS.SetFromUserInput( pszPE_COORDSYS ) == OGRERR_NONE )
     {
         CPLFree( pszPE_COORDSYS );
@@ -3539,6 +3545,8 @@ CPLErr HFADataset::ReadProjection()
         return CE_None;
     }
     
+    CPLFree( pszPE_COORDSYS );
+
 /* -------------------------------------------------------------------- */
 /*      General case for Erdas style projections.                       */
 /*                                                                      */
