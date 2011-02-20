@@ -46,6 +46,10 @@
   If this method fails, CPLGetLastErrorMsg() can be used to check if there
   is an error message explaining why.
 
+  For drivers supporting the VSI virtual file API, it is possible to open
+  a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
+  (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
+ 
   This method is the same as the C function OGROpen().
 
   @param pszName the name of the file, or data source to open. UTF-8 encoded.
@@ -92,6 +96,10 @@
 
   If this function fails, CPLGetLastErrorMsg() can be used to check if there
   is an error message explaining why.
+
+  For drivers supporting the VSI virtual file API, it is possible to open
+  a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
+  (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
 
   This function is the same as the C++ method OGRSFDriverRegistrar::Open().
 
@@ -369,6 +377,10 @@
   usually result in a datasource that does not know what driver it relates to
   if GetDriver() is called on the datasource.  The application may directly
   call SetDriver() after opening with this method to avoid this problem.
+
+  For drivers supporting the VSI virtual file API, it is possible to open
+  a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
+  (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
 
   This method is the same as the C function OGR_Dr_Open().
 

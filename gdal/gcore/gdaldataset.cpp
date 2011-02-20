@@ -2156,6 +2156,10 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  * use.) </li>
  * </ul>
  *
+ * For drivers supporting the VSI virtual file API, it is possible to open
+ * a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
+ * (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
+ *
  * \sa GDALOpenShared()
  *
  * @param pszFilename the name of the file to access.  In the case of
@@ -2261,6 +2265,10 @@ GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
  * from two different threads, a different GDALDataset object will be returned as
  * it is not safe to use the same dataset from different threads, unless the user
  * does explicitely use mutexes in its code.
+ *
+ * For drivers supporting the VSI virtual file API, it is possible to open
+ * a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
+ * (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
  *
  * \sa GDALOpen()
  *
