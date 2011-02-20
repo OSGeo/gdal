@@ -8577,16 +8577,23 @@ GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 {
     char	*pszModFmt;
 
-    if( strstr(fmt,"unknown field") != NULL )
+    if( strstr(fmt,"nknown field") != NULL )
         return;
 
     pszModFmt = PrepareTIFFErrorFormat( module, fmt );
-    CPLErrorV( CE_Warning, CPLE_AppDefined, pszModFmt, ap );
+    if( strstr(fmt, "does not end in null byte") != NULL )
+    {
+        CPLString osMsg;
+        osMsg.vPrintf(pszModFmt, ap);
+        CPLDebug( "GTiff", "%s", osMsg.c_str() );
+    }
+    else
+        CPLErrorV( CE_Warning, CPLE_AppDefined, pszModFmt, ap );
     CPLFree( pszModFmt );
 }
 
 /************************************************************************/
-/*                        GTiffWarningHandler()                         */
+/*                         GTiffErrorHandler()                          */
 /************************************************************************/
 void
 GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
