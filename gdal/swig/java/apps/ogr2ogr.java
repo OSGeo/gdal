@@ -569,16 +569,7 @@ public class ogr2ogr
         {
             int                  iDriver;
     
-            for( iDriver = 0;
-                iDriver < ogr.GetDriverCount() && poDriver == null;
-                iDriver++ )
-            {
-                if( ogr.GetDriver(iDriver).GetName().equalsIgnoreCase(pszFormat) )
-                {
-                    poDriver = ogr.GetDriver(iDriver);
-                }
-            }
-    
+            poDriver = ogr.GetDriverByName(pszFormat);
             if( poDriver == null )
             {
                 System.err.println("Unable to find driver `" + pszFormat +"'." );
@@ -596,7 +587,34 @@ public class ogr2ogr
                 System.err.println( pszFormat + " driver does not support data source creation.");
                 System.exit( 1 );
             }
-    
+
+    /* -------------------------------------------------------------------- */
+    /*      Special case to improve user experience when translating        */
+    /*      a datasource with multiple layers into a shapefile. If the      */
+    /*      user gives a target datasource with .shp and it does not exist, */
+    /*      the shapefile driver will try to create a file, but this is not */
+    /*      appropriate because here we have several layers, so create      */
+    /*      a directory instead.                                            */
+    /* -------------------------------------------------------------------- */
+            if (poDriver.GetName().equalsIgnoreCase("ESRI Shapefile") &&
+                (papszLayers.size() > 1 ||
+                 (papszLayers.size() == 0 && poDS.GetLayerCount() > 1)) &&
+                pszNewLayerName == null &&
+                (pszDestDataSource.endsWith(".shp") || pszDestDataSource.endsWith(".SHP")))
+            {
+                File f = new File(pszDestDataSource);
+                if (!f.exists())
+                {
+                    if (!f.mkdir())
+                    {
+                        System.err.println(
+                            "Failed to create directory " + pszDestDataSource + "\n" +
+                            "for shapefile datastore.");
+                        System.exit(1);
+                    }
+                }
+            }
+
     /* -------------------------------------------------------------------- */
     /*      Create the output data source.                                  */
     /* -------------------------------------------------------------------- */
@@ -671,7 +689,8 @@ public class ogr2ogr
 /*      single file shapefile and source has only one layer, and that   */
 /*      the layer name isn't specified                                  */
 /* -------------------------------------------------------------------- */
-                if (poDriver.GetName().equals("ESRI Shapefile") && pszNewLayerName == null)
+                if (poDriver.GetName().equalsIgnoreCase("ESRI Shapefile") &&
+                    pszNewLayerName == null)
                 {
                     File f = new File(pszDestDataSource);
                     if (f.exists() && f.listFiles() == null)
@@ -756,7 +775,8 @@ public class ogr2ogr
 /*      single file shapefile and source has only one layer, and that   */
 /*      the layer name isn't specified                                  */
 /* -------------------------------------------------------------------- */
-            if (poDriver.GetName().equals("ESRI Shapefile") && nLayerCount == 1 && pszNewLayerName == null)
+            if (poDriver.GetName().equalsIgnoreCase("ESRI Shapefile") &&
+                nLayerCount == 1 && pszNewLayerName == null)
             {
                 File f = new File(pszDestDataSource);
                 if (f.exists() && f.listFiles() == null)
