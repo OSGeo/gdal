@@ -533,11 +533,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 #/*      Find the output driver.                                         */
 #/* -------------------------------------------------------------------- */
     if not bUpdate:
-        for iDriver in range(ogr.GetDriverCount()):
-            if EQUAL(ogr.GetDriver(iDriver).GetName(),pszFormat):
-                poDriver = ogr.GetDriver(iDriver)
-                break
-
+        poDriver = ogr.GetDriverByName(pszFormat)
         if poDriver is None:
             print("Unable to find driver `%s'." % pszFormat)
             print( "The following drivers are available:" )
@@ -550,6 +546,30 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         if poDriver.TestCapability( ogr.ODrCCreateDataSource ) == False:
             print( "%s driver does not support data source creation." % pszFormat)
             return False
+
+#/* -------------------------------------------------------------------- */
+#/*      Special case to improve user experience when translating        */
+#/*      a datasource with multiple layers into a shapefile. If the      */
+#/*      user gives a target datasource with .shp and it does not exist, */
+#/*      the shapefile driver will try to create a file, but this is not */
+#/*      appropriate because here we have several layers, so create      */
+#/*      a directory instead.                                            */
+#/* -------------------------------------------------------------------- */
+        if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
+           (len(papszLayers) > 1 or \
+            (len(papszLayers) == 0 and poDS.GetLayerCount() > 1)) and \
+            pszNewLayerName is None and \
+            EQUAL(os.path.splitext(pszDestDataSource)[1], ".SHP") :
+
+            try:
+                os.stat(pszDestDataSource)
+            except:
+                try:
+                    os.mkdir(pszDestDataSource, 0755)
+                except:
+                    print("Failed to create directory %s\n"
+                          "for shapefile datastore.\n" % pszDestDataSource )
+                    return False
 
 #/* -------------------------------------------------------------------- */
 #/*      Create the output data source.                                  */
