@@ -1037,16 +1037,7 @@ int main( int nArgc, char ** papszArgv )
         OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
         int                  iDriver;
 
-        for( iDriver = 0;
-             iDriver < poR->GetDriverCount() && poDriver == NULL;
-             iDriver++ )
-        {
-            if( EQUAL(poR->GetDriver(iDriver)->GetName(),pszFormat) )
-            {
-                poDriver = poR->GetDriver(iDriver);
-            }
-        }
-
+        poDriver = poR->GetDriverByName(pszFormat);
         if( poDriver == NULL )
         {
             fprintf( stderr, "Unable to find driver `%s'.\n", pszFormat );
@@ -1064,6 +1055,32 @@ int main( int nArgc, char ** papszArgv )
             fprintf( stderr,  "%s driver does not support data source creation.\n",
                     pszFormat );
             exit( 1 );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Special case to improve user experience when translating        */
+/*      a datasource with multiple layers into a shapefile. If the      */
+/*      user gives a target datasource with .shp and it does not exist, */
+/*      the shapefile driver will try to create a file, but this is not */
+/*      appropriate because here we have several layers, so create      */
+/*      a directory instead.                                            */
+/* -------------------------------------------------------------------- */
+        VSIStatBufL  sStat;
+        if (EQUAL(poDriver->GetName(), "ESRI Shapefile") &&
+            (CSLCount(papszLayers) > 1 ||
+             (CSLCount(papszLayers) == 0 && poDS->GetLayerCount() > 1)) &&
+            pszNewLayerName == NULL &&
+            EQUAL(CPLGetExtension(pszDestDataSource), "SHP") &&
+            VSIStatL(pszDestDataSource, &sStat) != 0)
+        {
+            if (VSIMkdir(pszDestDataSource, 0755) != 0)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to create directory %s\n"
+                      "for shapefile datastore.\n",
+                      pszDestDataSource );
+                exit(1);
+            }
         }
 
 /* -------------------------------------------------------------------- */
