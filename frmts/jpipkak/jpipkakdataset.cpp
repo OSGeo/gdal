@@ -1549,8 +1549,8 @@ void JPIPKAKAsyncReader::Start()
         exp_denominator.y = (int) ceil(nYSize / (double) nRes);
 
         // formulate jpip parameters and adjust offsets for current level
-        int fx = view_siz->x;
-        int fy = view_siz->y;
+        int fx = view_siz->x / nRes;
+        int fy = view_siz->y / nRes;
 
         rr_win.pos.x = (int) ceil(nXOff / (1.0 * nRes)); // roffx
         rr_win.pos.y = (int) ceil(nYOff / (1.0 * nRes)); // roffy
@@ -1740,10 +1740,12 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
 /*      applied, and compute region from the original window cut        */
 /*      down to the target canvas.                                      */
 /* -------------------------------------------------------------------- */
+    kdu_dims view_dims, region;
+    int nBytesPerPixel = GDALGetDataTypeSize(poJDS->eDT) / 8;
+    int nPrecision = 0;
+
     try
     {
-        kdu_dims view_dims;
-
         // Ensure we are working against full res
         poJDS->poCodestream->apply_input_restrictions( 0, 0, 0, 0, NULL );
 
@@ -1755,12 +1757,12 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         x_ratio = view_dims.size.x / (double) poDS->GetRasterXSize();
         y_ratio = view_dims.size.y / (double) poDS->GetRasterYSize();
 
-        kdu_dims region = rr_win;
+        region = rr_win;
 
-        region.pos.x = (int) ceil(nXOff * x_ratio);
-        region.pos.y = (int) ceil(nYOff * y_ratio);
-        region.size.x = (int) ceil(nXSize * x_ratio);
-        region.size.y = (int) ceil(nYSize * y_ratio);
+        region.pos.x = (int) ceil(region.pos.x * x_ratio);
+        region.pos.y = (int) ceil(region.pos.y * y_ratio);
+        region.size.x = (int) ceil(region.size.x * x_ratio);
+        region.size.y = (int) ceil(region.size.y * y_ratio);
 
         region.size.x = MIN(region.size.x,nBufXSize);
         region.size.y = MIN(region.size.y,nBufYSize);
@@ -1772,14 +1774,17 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         
         region.pos += view_dims.pos;
     
-        int nBytesPerPixel = GDALGetDataTypeSize(poJDS->eDT) / 8;
-        int nPrecision = 0;
-
         CPLAssert( nBytesPerPixel == 1 || nBytesPerPixel == 2  );
 
         if( poJDS->poCodestream->get_bit_depth(0) > 16 )
             nPrecision = 16;
-    
+    }
+    catch(...)
+    {
+        // The error handler should already have posted an error message.
+        return GARIO_ERROR;
+    }
+
 /* ==================================================================== */
 /*      Now we process the available cached jpeg2000 data into          */
 /*      imagery.  The kdu_region_decompressor only seems to support     */
@@ -1788,55 +1793,58 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
 /*      want. We try to do groups of three were possible, and handle    */
 /*      the rest one band at a time.                                    */
 /* ==================================================================== */
-        int nBandsCompleted = 0;
+    int nBandsCompleted = 0;
 
-        while( nBandsCompleted < nBandCount )
-        {
+    while( nBandsCompleted < nBandCount )
+    {
 /* -------------------------------------------------------------------- */
 /*      Set up channel list requested.                                  */
 /* -------------------------------------------------------------------- */
-            std::vector<int> component_indices;
-            unsigned int i;
+        std::vector<int> component_indices;
+        unsigned int i;
 
-            if( nBandCount - nBandsCompleted >= 3 )
-            {
-                CPLDebug( "JPIPKAK", "process bands %d,%d,%d", 
-                          panBandMap[nBandsCompleted],
-                          panBandMap[nBandsCompleted+1],
-                          panBandMap[nBandsCompleted+2] );
+        if( nBandCount - nBandsCompleted >= 3 )
+        {
+            CPLDebug( "JPIPKAK", "process bands %d,%d,%d", 
+                      panBandMap[nBandsCompleted],
+                      panBandMap[nBandsCompleted+1],
+                      panBandMap[nBandsCompleted+2] );
 
-                component_indices.push_back( panBandMap[nBandsCompleted++]-1 );
-                component_indices.push_back( panBandMap[nBandsCompleted++]-1 );
-                component_indices.push_back( panBandMap[nBandsCompleted++]-1 );
-            }
-            else
-            {
-                CPLDebug( "JPIPKAK", "process band %d", 
-                          panBandMap[nBandsCompleted] );
-                component_indices.push_back( panBandMap[nBandsCompleted++]-1 );
-            }
+            component_indices.push_back( panBandMap[nBandsCompleted++]-1 );
+            component_indices.push_back( panBandMap[nBandsCompleted++]-1 );
+            component_indices.push_back( panBandMap[nBandsCompleted++]-1 );
+        }
+        else
+        {
+            CPLDebug( "JPIPKAK", "process band %d", 
+                      panBandMap[nBandsCompleted] );
+            component_indices.push_back( panBandMap[nBandsCompleted++]-1 );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Apply region, channel and overview level restrictions.          */
 /* -------------------------------------------------------------------- */
-            kdu_dims region_pass = region;
+        kdu_dims region_pass = region;
 
-            poJDS->poCodestream->apply_input_restrictions(
-                component_indices.size(), &(component_indices[0]), 
-                nLevel, nQualityLayers, &region_pass, 
-                KDU_WANT_CODESTREAM_COMPONENTS);
+        poJDS->poCodestream->apply_input_restrictions(
+            component_indices.size(), &(component_indices[0]), 
+            nLevel, nQualityLayers, &region_pass, 
+            KDU_WANT_CODESTREAM_COMPONENTS);
 
-            channels.configure(*(poJDS->poCodestream));
+        channels.configure(*(poJDS->poCodestream));
 
-            for( i=0; i < component_indices.size(); i++ )
-                channels.source_components[i] = component_indices[i];
+        for( i=0; i < component_indices.size(); i++ )
+            channels.source_components[i] = component_indices[i];
 
-            kdu_dims incomplete_region = region_pass;
-            kdu_coords origin = region_pass.pos;
+        kdu_dims incomplete_region = region_pass;
+        kdu_coords origin = region_pass.pos;
         
-            int bIsDecompressing = FALSE;
+        int bIsDecompressing = FALSE;
 		
-            CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
+        CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
+
+        try
+        {
 
             bIsDecompressing = poJDS->poDecompressor->start(
                 *(poJDS->poCodestream), 
@@ -1889,14 +1897,16 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
             poJDS->poDecompressor->finish();
             CPLReleaseMutex(poJDS->pGlobalMutex);
 
-        } // nBandsCompleted < nBandCount
+        }
+        catch(...)
+        {
+            poJDS->poDecompressor->finish();
+            CPLReleaseMutex(poJDS->pGlobalMutex);
+            // The error handler should already have posted an error message.
+            return GARIO_ERROR;
+        }
+    } // nBandsCompleted < nBandCount
 
-    }
-    catch(...)
-    {
-        // The error handler should already have posted an error message.
-        return GARIO_ERROR;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If the application buffer is of a different type than our       */
