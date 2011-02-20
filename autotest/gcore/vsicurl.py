@@ -132,12 +132,54 @@ def vsicurl_5():
 
     return 'success'
 
+###############################################################################
+# Test with FTP server that doesn't support EPSV command 
+
+def vsicurl_6():
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    fl = gdal.ReadDir('/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif')
+    if len(fl) == 0:
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test Microsoft-IIS/6.0 listing
+
+def vsicurl_7():
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    fl = gdal.ReadDir('/vsicurl/http://ortho.linz.govt.nz/tifs/2005_06')
+    if len(fl) == 0:
+        return 'fail'
+
+    return 'success'
+
+
 # Not run by run_all.py
 my_gdaltest_list = [ vsicurl_1,
                      vsicurl_2,
                      vsicurl_3,
                      vsicurl_4,
-                     vsicurl_5 ]
+                     vsicurl_5,
+                     vsicurl_6,
+                     vsicurl_7 ]
 
 if __name__ == '__main__':
 
