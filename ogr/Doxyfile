@@ -1008,7 +1008,8 @@ PREDEFINED             = HAVE_DLFCN_H \
                          CPL_C_START \
                          CPL_C_END \
                          __cplusplus \
-                         DOXYGEN_SKIP 
+                         DOXYGEN_SKIP \
+                         HAVE_CURL
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 
