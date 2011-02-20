@@ -1435,6 +1435,9 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
         pabyData = poMIEntry->MakeData( nSize );
         poMIEntry->SetPosition();
 
+        // Initialize the whole thing to zeros for a clean start.
+        memset( poMIEntry->GetData(), 0, poMIEntry->GetDataSize() );
+
 /* -------------------------------------------------------------------- */
 /*      Write the various fields.                                       */
 /* -------------------------------------------------------------------- */
@@ -1576,6 +1579,9 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
 
         pabyData = poDatumEntry->MakeData( nSize );
         poDatumEntry->SetPosition();
+
+        // Initialize the whole thing to zeros for a clean start.
+        memset( poDatumEntry->GetData(), 0, poDatumEntry->GetDataSize() );
 
 /* -------------------------------------------------------------------- */
 /*      Write the various fields.                                       */
