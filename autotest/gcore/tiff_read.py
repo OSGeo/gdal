@@ -661,6 +661,19 @@ def tiff_read_corrupted_gtiff():
     return 'success'
 
 ###############################################################################
+# Test that we don't crash when reading a TIFF with corrupted GeoTIFF tags
+
+def tiff_read_tag_without_null_byte():
+
+    ds = gdal.Open('data/tag_without_null_byte.tif')
+    if gdal.GetLastErrorType() != 0:
+        gdaltest.post_reason( 'should have not emitted a warning, but only a CPLDebug() message' )
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
 def tiff_read_online_1():
@@ -719,6 +732,7 @@ gdaltest_list.append( (tiff_read_from_tab) )
 gdaltest_list.append( (tiff_read_pixelispoint) )
 gdaltest_list.append( (tiff_read_geomatrix) )
 gdaltest_list.append( (tiff_read_corrupted_gtiff) )
+gdaltest_list.append( (tiff_read_tag_without_null_byte) )
 gdaltest_list.append( (tiff_read_online_1) )
 
 if __name__ == '__main__':
