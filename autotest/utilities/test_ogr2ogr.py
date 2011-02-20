@@ -30,6 +30,7 @@
 
 import sys
 import os
+import shutil
 
 sys.path.append( '../pymod' )
 sys.path.append( '../ogr' )
@@ -1298,6 +1299,43 @@ def test_ogr2ogr_36():
 
     return 'success'
 
+###############################################################################
+# Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer'
+
+def test_ogr2ogr_37():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_37_dir.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_37_dir.shp')
+    except:
+        pass
+
+    try:
+        os.mkdir('tmp/test_ogr2ogr_37_src')
+    except:
+        pass
+    shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/poly.dbf', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/testpoly.shp', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/testpoly.shx', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/testpoly.dbf', 'tmp/test_ogr2ogr_37_src')
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_37_dir.shp tmp/test_ogr2ogr_37_src')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_37_dir.shp')
+    if ds is None or ds.GetLayerCount() != 2:
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_37_src')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_37_dir.shp')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1334,7 +1372,8 @@ gdaltest_list = [
     test_ogr2ogr_33,
     test_ogr2ogr_34,
     test_ogr2ogr_35,
-    test_ogr2ogr_36 ]
+    test_ogr2ogr_36,
+    test_ogr2ogr_37 ]
     
 if __name__ == '__main__':
 
