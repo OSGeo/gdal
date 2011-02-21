@@ -200,10 +200,7 @@ int ISIS2Dataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->pabyHeader == NULL )
         return FALSE;
 
-    if( strstr((const char *)poOpenInfo->pabyHeader,"^QUBE") == NULL &&
-    	strstr((const char *)poOpenInfo->pabyHeader,"^IMAGE") == NULL &&
-    	strstr((const char *)poOpenInfo->pabyHeader,"^SPECTRAL_QUBE") == NULL &&
-    	strstr((const char *)poOpenInfo->pabyHeader,"^PDS_VERSION_ID") == NULL )
+    if( strstr((const char *)poOpenInfo->pabyHeader,"^QUBE") == NULL )
         return FALSE;
     else
         return TRUE;
