@@ -1006,6 +1006,14 @@ class Band(MajorObject):
         """HasArbitraryOverviews(self) -> bool"""
         return _gdal.Band_HasArbitraryOverviews(self, *args)
 
+    def GetCategoryNames(self, *args):
+        """GetCategoryNames(self) -> char"""
+        return _gdal.Band_GetCategoryNames(self, *args)
+
+    def SetCategoryNames(self, *args):
+        """SetCategoryNames(self, char papszCategoryNames) -> CPLErr"""
+        return _gdal.Band_SetCategoryNames(self, *args)
+
     def ReadRaster1(self, *args, **kwargs):
         """
         ReadRaster1(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
