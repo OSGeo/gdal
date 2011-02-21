@@ -11,20 +11,6 @@
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
-<h2><a name="ACE2">ACE2 -- ACE2</a></h2>
-
-<p>(GDAL >= 1.9.0)</p>
-
-<p>This is a conveniency driver to read ACE2 DEMs. Those files contain raw binary data. The
-georeferencing is entirely determined by the filename. Quality, source and confidence
-layers are of Int16 type, whereas elevation data is returned as Float32.</p>
-
-<p><a href="http://tethys.eaprs.cse.dmu.ac.uk/ACE2/shared/overview">ACE2 product overview</a></p>
-
-<p>NOTE: Implemented as <tt>gdal/frmts/raw/ace2dataset.cpp</tt>.</p>
-
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-
 <h2><a name="AAIGrid">AAIGrid -- Arc/Info ASCII Grid</a></h2>
 
 <p>
@@ -65,6 +51,20 @@ option. For example, DECIMAL_PRECISION=3 will output numbers with 3 decimal plac
 for Arc/Info Binary Grid format.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/aaigrid/aaigriddataset.cpp</tt>.</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+<h2><a name="ACE2">ACE2 -- ACE2</a></h2>
+
+<p>(GDAL >= 1.9.0)</p>
+
+<p>This is a conveniency driver to read ACE2 DEMs. Those files contain raw binary data. The
+georeferencing is entirely determined by the filename. Quality, source and confidence
+layers are of Int16 type, whereas elevation data is returned as Float32.</p>
+
+<p><a href="http://tethys.eaprs.cse.dmu.ac.uk/ACE2/shared/overview">ACE2 product overview</a></p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/raw/ace2dataset.cpp</tt>.</p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
@@ -171,6 +171,45 @@ only work with eight bit unsigned data.</p>
 SAR CEOS data products.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/ceos/ceosdataset.cpp</tt>.</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+<h2><a name="CTG">CTG -- USGS LULC Composite Theme Grid</a></h2>
+
+<p>(GDAL >= 1.9.0)</p>
+
+<p>
+This driver can read USGS Land Use and Land Cover (LULC) grids encoded in the
+Character Composite Theme Grid (CTG) format. Each file is reported as a 6-band
+dataset of type Int32. The meaning of each band is the following one :
+<ol>
+<li>Land Use and Land Cover Code</li>
+<li>Political units Code</li>
+<li>Census county subdivisions and SMSA tracts Code</li>
+<li>Hydrologic units Code</li>
+<li>Federal land ownership Code</li>
+<li>State land ownership Code</li>
+</ol>
+</p>
+<p>Those files are typically named grid_cell.gz, grid_cell1.gz or grid_cell2.gz
+on the USGS site.</p>
+<p>
+<ul>
+<li>
+<a href="http://edc2.usgs.gov/geodata/LULC/LULCDataUsersGuide.pdf">
+Land Use and Land Cover Digital Data (Data Users Guide 4)</a> - PDF version from USGS
+</li>
+<li>
+<a href="http://www.vterrain.org/Culture/LULC/Data_Users_Guide_4.html">
+Land Use and Land Cover Digital Data (Data Users Guide 4)</a> - HTML version converted by Ben Discoe
+</li>
+<li>
+<a href="http://edcftp.cr.usgs.gov/pub/data/LULC">USGS LULC data at 250K and 100K</a>
+</li>
+</ul>
+</p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/ctg/ctgdataset.cpp</tt>.</p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
