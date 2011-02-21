@@ -530,6 +530,19 @@ CPLErr SetDefaultHistogram( double min, double max,
       return (GDALHasArbitraryOverviews( self ) != 0) ? true : false;
   }
 
+  /* Interface method added for GDAL 1.9.0 */
+%apply (char **options) {char **};
+  char **GetCategoryNames() {
+    return GDALGetRasterCategoryNames( self );
+  }
+%clear char **;
+
+%apply (char **options) { char ** papszCategoryNames };
+  CPLErr SetCategoryNames( char ** papszCategoryNames ) {
+    return GDALSetRasterCategoryNames( self, papszCategoryNames );
+  }
+%clear char **papszMetadata;
+
 } /* %extend */
 
 };
