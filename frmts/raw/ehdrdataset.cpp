@@ -825,6 +825,8 @@ CPLErr EHdrDataset::ReadSTX()
                   CPLDebug("EHDr", "Ignoring .stx file where min == nodata. "
                            "The nodata value shouldn't be taken into account "
                            "in minimum value computation.");
+                  CSLDestroy( papszTokens );
+                  papszTokens = NULL;
                   break;
               }
 
