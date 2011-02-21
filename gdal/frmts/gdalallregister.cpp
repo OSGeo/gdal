@@ -482,6 +482,10 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_ozi
     GDALRegister_OZI();
 #endif
+
+#ifdef FRMT_ctg
+    GDALRegister_CTG();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
