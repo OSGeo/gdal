@@ -327,6 +327,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     double	dfYMin;
     int		bad = FALSE;
     USGSDEMDataset *poGDS = (USGSDEMDataset *) poDS;
+    CPLLocaleC  oLocaleForcer;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize image buffer to nodata value.                        */
