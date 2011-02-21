@@ -565,7 +565,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                 os.stat(pszDestDataSource)
             except:
                 try:
-                    os.mkdir(pszDestDataSource, 0755)
+                    # decimal 493 = octal 0755. Python 3 needs 0o755, but
+                    # this syntax is only supported by Python >= 2.6
+                    os.mkdir(pszDestDataSource, 493)
                 except:
                     print("Failed to create directory %s\n"
                           "for shapefile datastore.\n" % pszDestDataSource )
