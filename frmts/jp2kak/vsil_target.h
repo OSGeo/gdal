@@ -70,7 +70,7 @@ public:
             if( file == NULL )
                 return false;
 
-            if( VSIFSeekL( file, SEEK_CUR, -1 * backtrack ) != 0 )
+            if( VSIFSeekL( file, VSIFTellL(file)-backtrack, SEEK_SET ) != 0 )
                 return false;
             else
                 return true;

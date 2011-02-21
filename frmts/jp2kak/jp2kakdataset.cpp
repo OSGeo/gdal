@@ -1931,7 +1931,7 @@ static void JP2KAKWriteBox( jp2_target *jp2_out, GDALJP2Box *poBox )
     jp2_out->open_next( nBoxType );
 
     jp2_out->write( (kdu_byte *) poBox->GetWritableData(), 
-                    poBox->GetDataLength() );
+                    (int) poBox->GetDataLength() );
 
     jp2_out->close();
 
@@ -1946,7 +1946,7 @@ static int
 JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                             kdu_roi_image *poROIImage, 
                             int nXOff, int nYOff, int nXSize, int nYSize,
-                            int bReversible, int nBits, GDALDataType eType,
+                            bool bReversible, int nBits, GDALDataType eType,
                             kdu_codestream &oCodeStream, int bFlushEnabled,
                             kdu_long *layer_bytes, int layer_count,
                             GDALProgressFunc pfnProgress, void * pProgressData,
@@ -2051,7 +2051,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                     kdu_sample32 *dest = lines[c].get_buf32();
                     kdu_byte *sp = pabyBuffer;
                     int nOffset = 1 << (nBits-1);
-                    float fScale = 1.0 / (1 << nBits);
+                    float fScale = (float) (1.0 / (1 << nBits));
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
                         dest->fval = (float) 
@@ -2061,7 +2061,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                 {
                     kdu_sample32 *dest = lines[c].get_buf32();
                     GInt16  *sp = (GInt16 *) pabyBuffer;
-                    float fScale = 1.0 / (1 << nBits);
+                    float fScale = (float) (1.0 / (1 << nBits));
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
                         dest->fval = (float) 
@@ -2072,7 +2072,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                     kdu_sample32 *dest = lines[c].get_buf32();
                     GUInt16  *sp = (GUInt16 *) pabyBuffer;
                     int nOffset = 1 << (nBits-1);
-                    float fScale = 1.0 / (1 << nBits);
+                    float fScale = (float) (1.0 / (1 << nBits));
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
                         dest->fval = (float) 
@@ -2298,7 +2298,10 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     bool bComseg;
 
-    bComseg = (bool) CSLFetchBoolean( papszOptions, "COMSEG", TRUE );
+    if( CSLFetchBoolean( papszOptions, "COMSEG", TRUE ) )
+        bComseg = true;
+    else
+        bComseg = false;
 
 /* -------------------------------------------------------------------- */
 /*      Work out the precision.                                         */

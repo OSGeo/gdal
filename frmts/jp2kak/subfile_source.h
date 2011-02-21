@@ -55,8 +55,8 @@ class subfile_source : public kdu_compressed_source {
               char** papszTokens = CSLTokenizeString2(fname + 12, ",", 0);
               if (CSLCount(papszTokens) >= 2)
               {
-                  subfile_offset = CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
-                  subfile_size = CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
+                  subfile_offset = (int) CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
+                  subfile_size = (int) CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
               }
               else
               {
