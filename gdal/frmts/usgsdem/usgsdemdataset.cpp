@@ -153,6 +153,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 
 {
+    CPLLocaleC  oLocaleForcer;
     double	dfYMin;
     int		bad = FALSE;
     USGSDEMDataset *poGDS = (USGSDEMDataset *) poDS;
