@@ -2503,19 +2503,23 @@ SWIGRUNTIME void
 #ifdef SWIG_PYTHON_USE_CAPSULE
 SWIG_Python_DestroyModule(PyObject *capsule)
 {
-  swig_module_info *swig_module = (swig_module_info *)PyCapsule_GetPointer(capsule, (char*)"swig_runtime_data" SWIG_RUNTIME_VERSION);
+  swig_module_info *swig_module;
+  swig_type_info **types;
+  size_t i;
+  swig_module = (swig_module_info *)PyCapsule_GetPointer(capsule, (char*)"swig_runtime_data" SWIG_RUNTIME_VERSION);
   if (swig_module == NULL)
   {
     PyErr_Clear();
     return;
   }
+  types = swig_module->types;
 #else
 SWIG_Python_DestroyModule(void *vptr)
 {
   swig_module_info *swig_module = (swig_module_info *) vptr;
-#endif
   swig_type_info **types = swig_module->types;
   size_t i;
+#endif
   for (i =0; i < swig_module->size; ++i) {
     swig_type_info *ty = types[i];
     if (ty->owndata) {

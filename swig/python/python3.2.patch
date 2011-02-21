@@ -1,7 +1,5 @@
-Index: extensions/gdal_wrap.cpp
-===================================================================
---- extensions/gdal_wrap.cpp	(révision 21744)
-+++ extensions/gdal_wrap.cpp	(copie de travail)
+--- extensions/gdal_wrap.cpp.before	2011-02-21 21:35:04.495185339 +0100
++++ extensions/gdal_wrap.cpp	2011-02-21 21:36:08.275188019 +0100
 @@ -1129,6 +1129,10 @@
  
  /* Runtime API */
@@ -26,28 +24,34 @@ Index: extensions/gdal_wrap.cpp
      if (PyErr_Occurred()) {
        PyErr_Clear();
        type_pointer = (void *)0;
-@@ -2492,9 +2500,20 @@
+@@ -2492,11 +2500,26 @@
  #endif
  
  SWIGRUNTIME void
 +#ifdef SWIG_PYTHON_USE_CAPSULE
 +SWIG_Python_DestroyModule(PyObject *capsule)
 +{
-+  swig_module_info *swig_module = (swig_module_info *)PyCapsule_GetPointer(capsule, (char*)"swig_runtime_data" SWIG_RUNTIME_VERSION);
++  swig_module_info *swig_module;
++  swig_type_info **types;
++  size_t i;
++  swig_module = (swig_module_info *)PyCapsule_GetPointer(capsule, (char*)"swig_runtime_data" SWIG_RUNTIME_VERSION);
 +  if (swig_module == NULL)
 +  {
 +    PyErr_Clear();
 +    return;
 +  }
++  types = swig_module->types;
 +#else
  SWIG_Python_DestroyModule(void *vptr)
  {
    swig_module_info *swig_module = (swig_module_info *) vptr;
-+#endif
    swig_type_info **types = swig_module->types;
    size_t i;
++#endif
    for (i =0; i < swig_module->size; ++i) {
-@@ -2518,7 +2537,13 @@
+     swig_type_info *ty = types[i];
+     if (ty->owndata) {
+@@ -2518,7 +2541,13 @@
    PyObject *module = Py_InitModule((char*)"swig_runtime_data" SWIG_RUNTIME_VERSION,
  				   swig_empty_runtime_method_table);
  #endif
@@ -61,7 +65,7 @@ Index: extensions/gdal_wrap.cpp
    if (pointer && module) {
      PyModule_AddObject(module, (char*)"type_pointer" SWIG_TYPE_TABLE_NAME, pointer);
    } else {
-@@ -2541,12 +2566,20 @@
+@@ -2541,12 +2570,20 @@
    PyObject *obj = PyDict_GetItem(cache, key);
    swig_type_info *descriptor;
    if (obj) {
