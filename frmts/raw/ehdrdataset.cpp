@@ -57,6 +57,8 @@ class EHdrDataset : public RawDataset
 
     VSILFILE	*fpImage;	// image data file.
 
+    CPLString   osHeaderExt;
+
     int         bGotTransform;
     double      adfGeoTransform[6];
     char       *pszProjection;
@@ -428,6 +430,7 @@ EHdrDataset::EHdrDataset()
     papszHDR = NULL;
     bHDRDirty = FALSE;
     bCLRDirty = FALSE;
+    osHeaderExt = "hdr";
 }
 
 /************************************************************************/
@@ -710,7 +713,7 @@ CPLErr EHdrDataset::RewriteHDR()
 {
     CPLString osPath = CPLGetPath( GetDescription() );
     CPLString osName = CPLGetBasename( GetDescription() );
-    CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, "hdr" );
+    CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, osHeaderExt );
 
 /* -------------------------------------------------------------------- */
 /*      Write .hdr file.                                                */
@@ -929,7 +932,7 @@ char **EHdrDataset::GetFileList()
     papszFileList = GDALPamDataset::GetFileList();
 
     // Header file.
-    CPLString osFilename = CPLFormCIFilename( osPath, osName, "hdr" );
+    CPLString osFilename = CPLFormCIFilename( osPath, osName, osHeaderExt );
     papszFileList = CSLAddString( papszFileList, osFilename );
 
     // Statistics file
@@ -977,10 +980,21 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
     CPLString osHDRFilename;
 
+    const char* pszHeaderExt = "hdr";
+    if( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "SRC" ) &&
+        osName.size() == 7 &&
+        (osName[0] == 'e' || osName[0] == 'E' || osName[0] == 'w' || osName[0] == 'W') &&
+        (osName[4] == 'n' || osName[4] == 'N' || osName[4] == 's' || osName[4] == 'S') )
+    {
+        /* It is a GTOPO30 or SRTM30 source file, whose header extension is .sch */
+        /* see http://dds.cr.usgs.gov/srtm/version1/SRTM30/GTOPO30_Documentation */
+        pszHeaderExt = "sch";
+    }
+
     if( poOpenInfo->papszSiblingFiles )
     {
         int iFile = CSLFindString(poOpenInfo->papszSiblingFiles, 
-                                  CPLFormFilename( NULL, osName, "hdr" ) );
+                                  CPLFormFilename( NULL, osName, pszHeaderExt ) );
         if( iFile < 0 ) // return if there is no corresponding .hdr file
             return NULL;
         
@@ -990,7 +1004,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        osHDRFilename = CPLFormCIFilename( osPath, osName, "hdr" );
+        osHDRFilename = CPLFormCIFilename( osPath, osName, pszHeaderExt );
     }
 
     bSelectedHDR = EQUAL( osHDRFilename, poOpenInfo->pszFilename );
@@ -1219,6 +1233,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     EHdrDataset     *poDS;
 
     poDS = new EHdrDataset();
+
+    poDS->osHeaderExt = pszHeaderExt;
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
