@@ -45,6 +45,7 @@ def test_gdallocationinfo_1():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' ../gcore/data/byte.tif 0 0')
+    ret = ret.replace('\r\n', '\n')
     expected_ret = """Report:
   Location: (0P,0L)
   Band 1:
@@ -63,6 +64,7 @@ def test_gdallocationinfo_2():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -xml ../gcore/data/byte.tif 0 0')
+    ret = ret.replace('\r\n', '\n')
     expected_ret = """<Report pixel="0" line="0">
   <BandReport band="1">
     <Value>107</Value>
@@ -97,6 +99,7 @@ def test_gdallocationinfo_4():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -geoloc ../gcore/data/byte.tif 440720.000 3751320.000')
+    ret = ret.replace('\r\n', '\n')
     expected_ret = """Report:
   Location: (0P,0L)
   Band 1:
