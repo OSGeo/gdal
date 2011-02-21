@@ -3813,7 +3813,7 @@ SWIGINTERN void OGRFieldDefnShadow_SetIgnored(OGRFieldDefnShadow *self,int bIgno
 
   OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
                                             OSRSpatialReferenceShadow *reference=NULL ) {
-    OGRGeometryShadow *geom;
+    OGRGeometryH geom = NULL;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
                                       reference,
                                       &geom,
@@ -3829,7 +3829,7 @@ SWIGINTERN void OGRFieldDefnShadow_SetIgnored(OGRFieldDefnShadow *self,int bIgno
 
   OGRGeometryShadow* CreateGeometryFromWkt( char **val, 
                                       OSRSpatialReferenceShadow *reference=NULL ) {
-    OGRGeometryShadow *geom;
+    OGRGeometryH geom = NULL;
     OGRErr err = OGR_G_CreateFromWkt(val,
                                       reference,
                                       &geom);
@@ -3873,7 +3873,7 @@ SWIGINTERN void OGRFieldDefnShadow_SetIgnored(OGRFieldDefnShadow *self,int bIgno
     return NULL;
   }
 
-  return hPolygon;
+  return (OGRGeometryShadow* )hPolygon;
   }
 
 
@@ -3883,7 +3883,7 @@ SWIGINTERN void OGRFieldDefnShadow_SetIgnored(OGRFieldDefnShadow *self,int bIgno
         double dfStartAngle, double dfEndAngle,
         double dfMaxAngleStepSizeDegrees ) {
   
-  return OGR_G_ApproximateArcAngles( 
+  return (OGRGeometryShadow* )OGR_G_ApproximateArcAngles( 
              dfCenterX, dfCenterY, dfZ, 
              dfPrimaryRadius, dfSecondaryAxis, dfRotation,
              dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees );
@@ -3893,28 +3893,28 @@ SWIGINTERN void OGRFieldDefnShadow_SetIgnored(OGRFieldDefnShadow *self,int bIgno
 OGRGeometryShadow* ForceToPolygon( OGRGeometryShadow *geom_in ) {
  if (geom_in == NULL)
      return NULL;
- return OGR_G_ForceToPolygon( OGR_G_Clone(geom_in) );
+ return (OGRGeometryShadow* )OGR_G_ForceToPolygon( OGR_G_Clone(geom_in) );
 }
 
 
 OGRGeometryShadow* ForceToMultiPolygon( OGRGeometryShadow *geom_in ) {
  if (geom_in == NULL)
      return NULL;
- return OGR_G_ForceToMultiPolygon( OGR_G_Clone(geom_in) );
+ return (OGRGeometryShadow* )OGR_G_ForceToMultiPolygon( OGR_G_Clone(geom_in) );
 }
 
 
 OGRGeometryShadow* ForceToMultiPoint( OGRGeometryShadow *geom_in ) {
  if (geom_in == NULL)
      return NULL;
- return OGR_G_ForceToMultiPoint( OGR_G_Clone(geom_in) );
+ return (OGRGeometryShadow* )OGR_G_ForceToMultiPoint( OGR_G_Clone(geom_in) );
 }
 
 
 OGRGeometryShadow* ForceToMultiLineString( OGRGeometryShadow *geom_in ) {
  if (geom_in == NULL)
      return NULL;
- return OGR_G_ForceToMultiLineString( OGR_G_Clone(geom_in) );
+ return (OGRGeometryShadow* )OGR_G_ForceToMultiLineString( OGR_G_Clone(geom_in) );
 }
 
 SWIGINTERN void delete_OGRGeometryShadow(OGRGeometryShadow *self){

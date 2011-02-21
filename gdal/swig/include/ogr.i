@@ -1252,7 +1252,7 @@ public:
 %inline %{
   OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
                                             OSRSpatialReferenceShadow *reference=NULL ) {
-    OGRGeometryShadow *geom;
+    OGRGeometryH geom = NULL;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
                                       reference,
                                       &geom,
@@ -1277,7 +1277,7 @@ public:
 %inline {
 OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf, 
                                             OSRSpatialReferenceShadow *reference=NULL ) {
-    OGRGeometryShadow *geom;
+    OGRGeometryH geom = NULL;
     OGRErr err = OGR_G_CreateFromWkb((unsigned char*) pBuf, reference, &geom, nLen);
     if (err != 0 ) {
        CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
@@ -1296,7 +1296,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 %inline %{
   OGRGeometryShadow* CreateGeometryFromWkt( char **val, 
                                       OSRSpatialReferenceShadow *reference=NULL ) {
-    OGRGeometryShadow *geom;
+    OGRGeometryH geom = NULL;
     OGRErr err = OGR_G_CreateFromWkt(val,
                                       reference,
                                       &geom);
@@ -1350,7 +1350,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
     return NULL;
   }
 
-  return hPolygon;
+  return (OGRGeometryShadow* )hPolygon;
   }
 %}
 
@@ -1365,7 +1365,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
         double dfStartAngle, double dfEndAngle,
         double dfMaxAngleStepSizeDegrees ) {
   
-  return OGR_G_ApproximateArcAngles( 
+  return (OGRGeometryShadow* )OGR_G_ApproximateArcAngles( 
              dfCenterX, dfCenterY, dfZ, 
              dfPrimaryRadius, dfSecondaryAxis, dfRotation,
              dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees );
@@ -1379,7 +1379,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 OGRGeometryShadow* ForceToPolygon( OGRGeometryShadow *geom_in ) {
  if (geom_in == NULL)
      return NULL;
- return OGR_G_ForceToPolygon( OGR_G_Clone(geom_in) );
+ return (OGRGeometryShadow* )OGR_G_ForceToPolygon( OGR_G_Clone(geom_in) );
 }
 %}
 
@@ -1390,7 +1390,7 @@ OGRGeometryShadow* ForceToPolygon( OGRGeometryShadow *geom_in ) {
 OGRGeometryShadow* ForceToMultiPolygon( OGRGeometryShadow *geom_in ) {
  if (geom_in == NULL)
      return NULL;
- return OGR_G_ForceToMultiPolygon( OGR_G_Clone(geom_in) );
+ return (OGRGeometryShadow* )OGR_G_ForceToMultiPolygon( OGR_G_Clone(geom_in) );
 }
 %}
 
@@ -1401,7 +1401,7 @@ OGRGeometryShadow* ForceToMultiPolygon( OGRGeometryShadow *geom_in ) {
 OGRGeometryShadow* ForceToMultiPoint( OGRGeometryShadow *geom_in ) {
  if (geom_in == NULL)
      return NULL;
- return OGR_G_ForceToMultiPoint( OGR_G_Clone(geom_in) );
+ return (OGRGeometryShadow* )OGR_G_ForceToMultiPoint( OGR_G_Clone(geom_in) );
 }
 %}
 
@@ -1412,7 +1412,7 @@ OGRGeometryShadow* ForceToMultiPoint( OGRGeometryShadow *geom_in ) {
 OGRGeometryShadow* ForceToMultiLineString( OGRGeometryShadow *geom_in ) {
  if (geom_in == NULL)
      return NULL;
- return OGR_G_ForceToMultiLineString( OGR_G_Clone(geom_in) );
+ return (OGRGeometryShadow* )OGR_G_ForceToMultiLineString( OGR_G_Clone(geom_in) );
 }
 %}
 
