@@ -203,12 +203,20 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     psSrc = CPLCreateXMLNode( NULL, CXT_Element, "SimpleSource" );
 
     VSIStatBufL sStat;
+    if ( strstr(poDS->GetDescription(), "/vsicurl/http") != NULL ||
+         strstr(poDS->GetDescription(), "/vsicurl/ftp") != NULL )
+    {
+        /* Testing the existence of remote ressources can be excruciating */
+        /* slow, so let's just suppose they exist */
+        pszRelativePath = poDS->GetDescription();
+        bRelativeToVRT = FALSE;
+    }
     /* If this isn't actually a file, don't even try to know if it is */
     /* a relative path. It can't be !, and unfortunately */
     /* CPLIsFilenameRelative() can only work with strings that are filenames */
     /* To be clear NITF_TOC_ENTRY:CADRG_JOG-A_250K_1_0:some_path isn't a relative */
     /* file path */
-    if( VSIStatExL( poDS->GetDescription(), &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
+    else if( VSIStatExL( poDS->GetDescription(), &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
     {
         pszRelativePath = poDS->GetDescription();
         bRelativeToVRT = FALSE;
