@@ -5208,6 +5208,7 @@ void GTiffDataset::LookForProjection()
 /* -------------------------------------------------------------------- */
     GTIF 	*hGTIF;
     GTIFDefn	sGTIFDefn;
+    CPLLocaleC  oLocaleForcer;
 
     CPLFree( pszProjection );
     pszProjection = NULL;
