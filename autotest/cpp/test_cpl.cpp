@@ -25,7 +25,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <tut.h>
+#include <tut_gdal.h>
+#include <gdal_common.h>
 #include <string>
+#include <fstream>
 #include "cpl_list.h"
 #include "cpl_hash_set.h"
 #include "cpl_string.h"
@@ -36,8 +39,12 @@ namespace tut
     // Common fixture with test data
     struct test_cpl_data
     {
+        std::string data_;
+
         test_cpl_data()
         {
+            // Compose data path for test group
+            data_ = tut::common::data_basedir;
         }
     };
 
@@ -348,6 +355,102 @@ namespace tut
         ensure(EQUAL(papszStringList[3], "four"));
         ensure(EQUAL(papszStringList[4], "five"));
         CSLDestroy(papszStringList);
+    }
+
+    typedef struct
+    {
+        char szEncoding[24];
+        char szString[1024 - 24];
+    } TestRecodeStruct;
+
+    // Test cpl_recode API
+    template<>
+    template<>
+    void object::test<6>()
+    {
+        /*
+         * CPLRecode() will be tested using the test file containing
+         * a list of strings of the same text in different encoding. The
+         * string is non-ASCII to avoid trivial transformations. Test file
+         * has a simple binary format: a table of records, each record
+         * is 1024 bytes long. The first 24 bytes of each record contain
+         * encoding name (ASCII, zero padded), the last 1000 bytes contain
+         * encoded string, zero padded.
+         *
+         * NOTE 1: We can't use a test file in human readable text format
+         *         here because of multiple different encodings including
+         *         multibyte ones.
+         *
+         * The test file could be generated with the following simple shell
+         * script:
+         *
+         * #!/bin/sh
+         *
+         * # List of encodings to convert the test string into
+         * ENCODINGS="UTF-8 CP1251 KOI8-R UCS-2 UCS-2BE UCS-2LE UCS-4 UCS-4BE UCS-4LE UTF-16 UTF-32"
+         * # The test string itself in UTF-8 encoding.
+         * # This means "Improving GDAL internationalization." in Russian.
+         * TESTSTRING="\u0423\u043b\u0443\u0447\u0448\u0430\u0435\u043c \u0438\u043d\u0442\u0435\u0440\u043d\u0430\u0446\u0438\u043e\u043d\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044e GDAL."
+         *
+         * RECORDSIZE=1024
+         * ENCSIZE=24
+         *
+         * i=0
+         * for enc in ${ENCODINGS}; do
+         *  env printf "${enc}" | dd ibs=${RECORDSIZE} conv=sync obs=1 seek=$((${RECORDSIZE}*${i})) of="recode-rus.dat" status=noxfer
+         *  env printf "${TESTSTRING}" | iconv -t ${enc} | dd ibs=${RECORDSIZE} conv=sync obs=1 seek=$((${RECORDSIZE}*${i}+${ENCSIZE})) of="recode-rus.dat" status=noxfer
+         *  i=$((i+1))
+         * done
+         *
+         * NOTE 2: The test string is encoded with the special format
+         *         "\uXXXX" sequences, so we able to paste it here.
+         *
+         * NOTE 3: We need a printf utility from the coreutils because of
+         *         that. "env printf" should work avoiding the shell
+         *         built-in.
+         *
+         * NOTE 4: "iconv" utility without the "-f" option will work with
+         *         encoding read from the current locale.
+         *
+         *  TODO: 1. Add more encodings maybe more test files.
+         *        2. Add test for CPLRecodeFromWChar()/CPLRecodeToWChar().
+         *        3. Test translation between each possible pair of
+         *        encodings in file, not only into the UTF-8.
+         */
+
+        std::ifstream fin((data_ + SEP + "recode-rus.dat").c_str(),
+                          std::ifstream::binary);
+        TestRecodeStruct oReferenceString;
+
+        // Read reference string (which is the first one in the file)
+        fin.read(oReferenceString.szEncoding,
+                 sizeof(oReferenceString.szEncoding));
+        oReferenceString.szEncoding[sizeof(oReferenceString.szEncoding) - 1] = '\0';
+        fin.read(oReferenceString.szString,
+                 sizeof(oReferenceString.szString));
+        oReferenceString.szString[sizeof(oReferenceString.szString) - 1] = '\0';
+
+        while ( !fin.eof() )
+        {
+            TestRecodeStruct oTestString;
+
+            fin.read(oTestString.szEncoding, sizeof(oTestString.szEncoding));
+            oTestString.szEncoding[sizeof(oTestString.szEncoding) - 1] = '\0';
+            fin.read(oTestString.szString, sizeof(oTestString.szString));
+            oTestString.szString[sizeof(oTestString.szString) - 1] = '\0';
+
+            // Compare each string with the reference one
+            char    *pszDecodedString = CPLRecode( oTestString.szString,
+                oTestString.szEncoding, oReferenceString.szEncoding);
+            size_t  nLength =
+                MIN( strlen(pszDecodedString),
+                     sizeof(oReferenceString.szEncoding) );
+            ensure( memcmp(pszDecodedString, oReferenceString.szString,
+                           nLength) == 0 );
+            CPLFree( pszDecodedString );
+        }
+
+        fin.close();
     }
 
 } // namespace tut
