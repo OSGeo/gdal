@@ -335,8 +335,18 @@ GTIFFBuildOverviews( const char * pszFilename,
             return CE_Failure;
     }
     
-    if( nCompression == COMPRESSION_JPEG && nBitsPerPixel == 16 )
+    if( nCompression == COMPRESSION_JPEG && nBitsPerPixel > 8 )
+    {  
+        if( nBitsPerPixel > 16 )
+        {
+            CPLError( CE_Failure, CPLE_NotSupported, 
+                      "GTIFFBuildOverviews() doesn't support building"
+                      " JPEG compressed overviews of nBitsPerPixel > 16." );
+            return CE_Failure;
+        }
+
         nBitsPerPixel = 12;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the planar configuration to use.                     */
