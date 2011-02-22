@@ -141,6 +141,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
               EQUALN(osBaseFilename, "ANTARCTICA_", 11) ||
               EQUALN(osBaseFilename, "GOVT_UNITS_", 11) ||
               EQUALN(osBaseFilename, "NationalFedCodes_", 17) ||
+              EQUALN(osBaseFilename, "AllStates_", 10) ||
               EQUALN(osBaseFilename, "AllStatesFedCodes_", 18) ||
               (strlen(osBaseFilename) > 2 && EQUALN(osBaseFilename+2, "_Features_", 10)) ||
               (strlen(osBaseFilename) > 2 && EQUALN(osBaseFilename+2, "_FedCodes_", 10))) &&
