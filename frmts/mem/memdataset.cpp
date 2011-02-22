@@ -54,7 +54,7 @@ GDALRasterBandH MEMCreateRasterBand( GDALDataset *poDS, int nBand,
 MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
                               GByte *pabyDataIn, GDALDataType eTypeIn, 
                               int nPixelOffsetIn, int nLineOffsetIn,
-                              int bAssumeOwnership )
+                              int bAssumeOwnership, const char * pszPixelType)
 
 {
     //CPLDebug( "MEM", "MEMRasterBand(%p)", this );
@@ -91,6 +91,10 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
     dfOffset = 0.0;
     dfScale = 1.0;
     pszUnitType = NULL;
+    psSavedHistograms = NULL;
+
+    if( pszPixelType && EQUAL(pszPixelType,"SIGNEDBYTE") )
+        this->SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
 }
 
 /************************************************************************/
@@ -357,6 +361,90 @@ CPLErr MEMRasterBand::SetCategoryNames( char ** papszNewNames )
     papszCategoryNames = CSLDuplicate( papszNewNames );
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                        SetDefaultHistogram()                         */
+/************************************************************************/
+
+CPLErr MEMRasterBand::SetDefaultHistogram( double dfMin, double dfMax, 
+                                           int nBuckets, int *panHistogram)
+
+{
+    CPLXMLNode *psNode;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a matching histogram we should replace?              */
+/* -------------------------------------------------------------------- */
+    psNode = PamFindMatchingHistogram( psSavedHistograms, 
+                                       dfMin, dfMax, nBuckets,
+                                       TRUE, TRUE );
+    if( psNode != NULL )
+    {
+        /* blow this one away */
+        CPLRemoveXMLChild( psSavedHistograms, psNode );
+        CPLDestroyXMLNode( psNode );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Translate into a histogram XML tree.                            */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psHistItem;
+
+    psHistItem = PamHistogramToXMLTree( dfMin, dfMax, nBuckets, 
+                                        panHistogram, TRUE, FALSE );
+
+/* -------------------------------------------------------------------- */
+/*      Insert our new default histogram at the front of the            */
+/*      histogram list so that it will be the default histogram.        */
+/* -------------------------------------------------------------------- */
+
+    if( psSavedHistograms == NULL )
+        psSavedHistograms = CPLCreateXMLNode( NULL, CXT_Element,
+                                              "Histograms" );
+            
+    psHistItem->psNext = psSavedHistograms->psChild;
+    psSavedHistograms->psChild = psHistItem;
+    
+    return CE_None;
+}
+/************************************************************************/
+/*                        GetDefaultHistogram()                         */
+/************************************************************************/
+
+CPLErr 
+MEMRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax, 
+                                    int *pnBuckets, int **ppanHistogram, 
+                                    int bForce,
+                                    GDALProgressFunc pfnProgress, 
+                                    void *pProgressData )
+    
+{
+    if( psSavedHistograms != NULL )
+    {
+        CPLXMLNode *psXMLHist;
+
+        for( psXMLHist = psSavedHistograms->psChild;
+             psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
+        {
+            int bApprox, bIncludeOutOfRange;
+
+            if( psXMLHist->eType != CXT_Element
+                || !EQUAL(psXMLHist->pszValue,"HistItem") )
+                continue;
+
+            if( PamParseHistogram( psXMLHist, pdfMin, pdfMax, pnBuckets, 
+                                   ppanHistogram, &bIncludeOutOfRange,
+                                   &bApprox ) )
+                return CE_None;
+            else
+                return CE_Failure;
+        }
+    }
+
+    return GDALRasterBand::GetDefaultHistogram( pdfMin, pdfMax, pnBuckets, 
+                                                ppanHistogram, bForce, 
+                                                pfnProgress,pProgressData);
 }
 
 /************************************************************************/
@@ -789,16 +877,16 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
         if( apbyBandData[0] == NULL )
             bAllocOK = FALSE;
         else
-        {
+    {
             memset(apbyBandData[0], 0, ((size_t)nWordSize) * nBands * nXSize * nYSize);
             for( iBand = 1; iBand < nBands; iBand++ )
                 apbyBandData.push_back( apbyBandData[0] + iBand * nWordSize );
         }
     }
-    else
-    {
-        for( iBand = 0; iBand < nBands; iBand++ )
+        else
         {
+            for( iBand = 0; iBand < nBands; iBand++ )
+            {
             apbyBandData.push_back( 
                 (GByte *) VSIMalloc3( nWordSize, nXSize, nYSize ) );
             if( apbyBandData[iBand] == NULL )
@@ -808,7 +896,7 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
             }
             memset(apbyBandData[iBand], 0, ((size_t)nWordSize) * nXSize * nYSize);
         }
-    }
+            }
 
     if( !bAllocOK )
     {
@@ -817,10 +905,10 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
             if( apbyBandData[iBand] )
                 VSIFree( apbyBandData[iBand] );
         }
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "Unable to create band arrays ... out of memory." );
-        return NULL;
-    }
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Unable to create band arrays ... out of memory." );
+            return NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Create the new GTiffDataset object.                             */
@@ -832,6 +920,10 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
+
+    const char *pszPixelType = CSLFetchNameValue( papszOptions, "PIXELTYPE" );
+    if( pszPixelType && EQUAL(pszPixelType,"SIGNEDBYTE") )
+        poDS->SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
 
     if( bPixelInterleaved )
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
