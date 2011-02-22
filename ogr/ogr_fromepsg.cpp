@@ -1928,6 +1928,7 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
 {
     OGRErr  eErr;
+    CPLLocaleC  oLocaleForcer;
 
     bNormInfoSet = FALSE;
 
