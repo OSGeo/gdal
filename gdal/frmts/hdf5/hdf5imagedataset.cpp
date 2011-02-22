@@ -331,6 +331,8 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		      H5P_DEFAULT, 
 		      pImage );
 
+    H5Sclose( memspace );
+
     return CE_None;
 }
 
