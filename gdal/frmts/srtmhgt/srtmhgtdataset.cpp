@@ -486,6 +486,12 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename, GDALDataset 
 /*      Write output file.                                              */
 /* -------------------------------------------------------------------- */
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
+    if (fp == NULL)
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Cannot create file %s", pszFilename );
+        return NULL;
+    }
 
     GInt16* panData = (GInt16*) CPLMalloc(sizeof(GInt16) * nXSize);
     GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand(1);
