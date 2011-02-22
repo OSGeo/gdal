@@ -134,6 +134,11 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStr
     if( pszLine == NULL )
         return( NULL );
 
+    /* Skip BOM */
+    GByte* pabyData = (GByte*) pszLine;
+    if (pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF)
+        pszLine += 3;
+
     /* Special fix to read NdfcFacilities.xls that has non-balanced double quotes */
     if (chDelimiter == '\t' && bDontHonourStrings)
     {
@@ -202,13 +207,15 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStr
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn, 
                           VSILFILE * fp, const char *pszFilename, int bNew, int bInWriteMode,
-                          char chDelimiter, const char* pszNfdcGeomField)
+                          char chDelimiter, const char* pszNfdcGeomField,
+                          const char* pszGeonamesGeomFieldPrefix)
 
 {
     fpCSV = fp;
 
     iWktGeomReadField = -1;
     iNfdcLatitudeS = iNfdcLongitudeS = -1;
+    iLatitudeField = iLongitudeField = -1;
     this->bInWriteMode = bInWriteMode;
     this->bNew = bNew;
     this->pszFilename = CPLStrdup(pszFilename);
@@ -228,11 +235,13 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     bCreateCSVT = FALSE;
     bDontHonourStrings = FALSE;
 
+    nTotalFeatures = -1;
+
 /* -------------------------------------------------------------------- */
 /*      If this is not a new file, read ahead to establish if it is     */
 /*      already in CRLF (DOS) mode, or just a normal unix CR mode.      */
 /* -------------------------------------------------------------------- */
-    if( !bNew )
+    if( !bNew && bInWriteMode )
     {
         int nBytesRead = 0;
         char chNewByte;
@@ -378,8 +387,6 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
                 CPLError(CE_Warning, CPLE_NotSupported, "Unknown type : %s", papszFieldTypes[iField]);
         }
 
-        poFeatureDefn->AddFieldDefn( &oField );
-
         if( EQUAL(oField.GetNameRef(),"WKT")
             && oField.GetType() == OFTString 
             && iWktGeomReadField == -1 )
@@ -397,11 +404,38 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
                   EQUALN(oField.GetNameRef(), pszNfdcGeomField, strlen(pszNfdcGeomField)) &&
                   EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LongitudeS") )
             iNfdcLongitudeS = iField;
+
+        /* GNIS specific */
+        else if ( pszGeonamesGeomFieldPrefix != NULL &&
+                  EQUALN(oField.GetNameRef(), pszGeonamesGeomFieldPrefix, strlen(pszGeonamesGeomFieldPrefix)) &&
+                  (EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LAT_DEC") ||
+                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE_DEC") ||
+                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE")) )
+        {
+            oField.SetType(OFTReal);
+            iLatitudeField = iField;
+        }
+        else if ( pszGeonamesGeomFieldPrefix != NULL &&
+                  EQUALN(oField.GetNameRef(), pszGeonamesGeomFieldPrefix, strlen(pszGeonamesGeomFieldPrefix)) &&
+                  (EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONG_DEC") ||
+                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE_DEC") ||
+                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE")) )
+        {
+            oField.SetType(OFTReal);
+            iLongitudeField = iField;
+        }
+
+        poFeatureDefn->AddFieldDefn( &oField );
+
     }
 
-    if ( iNfdcLatitudeS != -1 && iNfdcLongitudeS )
+    if ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 )
     {
         bDontHonourStrings = TRUE;
+        poFeatureDefn->SetGeomType( wkbPoint );
+    }
+    else if ( iLatitudeField != -1 && iLongitudeField != -1 )
+    {
         poFeatureDefn->SetGeomType( wkbPoint );
     }
     
@@ -534,6 +568,28 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
         if (strchr(papszTokens[iNfdcLatitudeS], 'S'))
             dfLat *= -1;
         poFeature->SetGeometryDirectly( new OGRPoint(dfLon, dfLat) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      GNIS specific                                                   */
+/* -------------------------------------------------------------------- */
+    else if ( iLatitudeField != -1 &&
+              iLongitudeField != -1 &&
+              nAttrCount > iLatitudeField &&
+              nAttrCount > iLongitudeField  &&
+              papszTokens[iLongitudeField][0] != 0 &&
+              papszTokens[iLatitudeField][0] != 0)
+    {
+        /* Some records have dummy 0,0 value */
+        if (papszTokens[iLongitudeField][0] != '0' ||
+            papszTokens[iLongitudeField][1] != '\0' ||
+            papszTokens[iLatitudeField][0] != '0' ||
+            papszTokens[iLatitudeField][1] != '\0')
+        {
+            double dfLon = atof(papszTokens[iLongitudeField]);
+            double dfLat = atof(papszTokens[iLatitudeField]);
+            poFeature->SetGeometryDirectly( new OGRPoint(dfLon, dfLat) );
+        }
     }
 
     CSLDestroy( papszTokens );
@@ -961,4 +1017,40 @@ void OGRCSVLayer::SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat)
 void OGRCSVLayer::SetCreateCSVT(int bCreateCSVT)
 {
     this->bCreateCSVT = bCreateCSVT;
+}
+
+/************************************************************************/
+/*                        GetFeatureCount()                             */
+/************************************************************************/
+
+int OGRCSVLayer::GetFeatureCount( int bForce )
+{
+    if (bInWriteMode || m_poFilterGeom != NULL || m_poAttrQuery != NULL)
+        return OGRLayer::GetFeatureCount(bForce);
+
+    if (nTotalFeatures >= 0)
+        return nTotalFeatures;
+
+    if (fpCSV == NULL)
+        return 0;
+
+    ResetReading();
+
+    char **papszTokens;
+    nTotalFeatures = 0;
+    while(TRUE)
+    {
+        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings );
+        if( papszTokens == NULL )
+            break;
+
+        if( papszTokens[0] != NULL )
+            nTotalFeatures ++;
+
+        CSLDestroy(papszTokens);
+    }
+
+    ResetReading();
+
+    return nTotalFeatures;
 }

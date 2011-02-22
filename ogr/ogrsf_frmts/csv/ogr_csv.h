@@ -78,9 +78,16 @@ class OGRCSVLayer : public OGRLayer
     int                 iNfdcLatitudeS, iNfdcLongitudeS;
     int                 bDontHonourStrings;
 
+    /* GNIS specific */
+    int                 iLongitudeField, iLatitudeField;
+
+    int                 nTotalFeatures;
+
   public:
     OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
-                 int bNew, int bInWriteMode, char chDelimiter, const char* pszNfdcRunwaysGeomField );
+                 int bNew, int bInWriteMode, char chDelimiter,
+                 const char* pszNfdcRunwaysGeomField,
+                 const char* pszGeonamesGeomFieldPrefix );
   ~OGRCSVLayer();
 
     void                ResetReading();
@@ -98,6 +105,8 @@ class OGRCSVLayer : public OGRLayer
     void                SetCRLF(int);
     void                SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat);
     void                SetCreateCSVT(int bCreateCSVT);
+
+    virtual int         GetFeatureCount( int bForce = TRUE );
 };
 
 /************************************************************************/
@@ -121,7 +130,9 @@ class OGRCSVDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename,
                               int bUpdate, int bForceAccept );
-    int                 OpenTable( const char * pszFilename, const char* pszNfdcRunwaysGeomField = NULL );
+    int                 OpenTable( const char * pszFilename,
+                                   const char* pszNfdcRunwaysGeomField = NULL,
+                                   const char* pszGeonamesGeomFieldPrefix = NULL);
     
     const char          *GetName() { return pszName; }
 
