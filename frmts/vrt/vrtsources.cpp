@@ -457,9 +457,18 @@ void VRTSimpleSource::GetFileList(char*** ppapszFileList, int *pnSize,
 /* -------------------------------------------------------------------- */
 /*      Is the filename even a real filesystem object?                  */
 /* -------------------------------------------------------------------- */
-        VSIStatBufL  sStat;
-        if( VSIStatExL( pszFilename, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
-            return;
+        if ( strstr(pszFilename, "/vsicurl/http") != NULL ||
+             strstr(pszFilename, "/vsicurl/ftp") != NULL )
+        {
+            /* Testing the existence of remote ressources can be excruciating */
+            /* slow, so let's just suppose they exist */
+        }
+        else
+        {
+            VSIStatBufL  sStat;
+            if( VSIStatExL( pszFilename, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
+                return;
+        }
             
 /* -------------------------------------------------------------------- */
 /*      Is it already in the list ?                                     */
