@@ -50,7 +50,7 @@ void Usage()
 
 {
     printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
-            "                [-norat] [-noct] [-checksum] [-mdd domain]* datasetname\n" );
+            "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname\n" );
     exit( 1 );
 }
 
@@ -76,6 +76,7 @@ int main( int argc, char ** argv )
     char              **papszExtraMDDomains = NULL, **papszFileList;
     const char  *pszProjection = NULL;
     OGRCoordinateTransformationH hTransform = NULL;
+    int             bShowFileList = TRUE;
 
     /* Check that we are running against at least GDAL 1.5 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -146,6 +147,8 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i], "-mdd") && i < argc-1 )
             papszExtraMDDomains = CSLAddString( papszExtraMDDomains,
                                                 argv[++i] );
+        else if( EQUAL(argv[i], "-nofl") )
+            bShowFileList = FALSE;
         else if( argv[i][0] == '-' )
             Usage();
         else if( pszFilename == NULL )
@@ -196,8 +199,11 @@ int main( int argc, char ** argv )
     else
     {
         printf( "Files: %s\n", papszFileList[0] );
-        for( i = 1; papszFileList[i] != NULL; i++ )
-            printf( "       %s\n", papszFileList[i] );
+        if( bShowFileList )
+        {
+            for( i = 1; papszFileList[i] != NULL; i++ )
+                printf( "       %s\n", papszFileList[i] );
+        }
     }
     CSLDestroy( papszFileList );
 

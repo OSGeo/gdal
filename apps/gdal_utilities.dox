@@ -180,7 +180,7 @@ lists information about a raster dataset
 
 \verbatim
 gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
-         [-noct] [-checksum] [-mdd domain]* datasetname
+         [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname
 \endverbatim
 
 \section description DESCRIPTION
@@ -200,6 +200,7 @@ of metadata strings.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
 <dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
+<dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the file list.</dd>
 </dl>
 
 The gdalinfo will report all of the following (if known):
