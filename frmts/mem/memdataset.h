@@ -108,12 +108,13 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
     double         dfOffset;
     double         dfScale;
 
+    CPLXMLNode    *psSavedHistograms;
   public:
 
                    MEMRasterBand( GDALDataset *poDS, int nBand,
                                   GByte *pabyData, GDALDataType eType,
                                   int nPixelOffset, int nLineOffset,
-                                  int bAssumeOwnership );
+                                  int bAssumeOwnership,  const char * pszPixelType = NULL);
     virtual        ~MEMRasterBand();
 
     // should override RasterIO eventually.
@@ -140,6 +141,13 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
     CPLErr SetOffset( double );
     virtual double GetScale( int *pbSuccess = NULL );
     CPLErr SetScale( double );
+
+    virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
+                                        int nBuckets, int *panHistogram );
+    virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                        int *pnBuckets, int ** ppanHistogram,
+                                        int bForce,
+                                        GDALProgressFunc, void *pProgressData);
 
     // allow access to MEM driver's private internal memory buffer
     GByte *GetData(void) const {return(pabyData);}
