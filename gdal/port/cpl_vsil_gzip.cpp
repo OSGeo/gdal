@@ -1850,13 +1850,17 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
 
     delete poReader;
 
-    return new VSIGZipHandle(poVirtualHandle,
+    VSIGZipHandle* poGZIPHandle = new VSIGZipHandle(poVirtualHandle,
                              NULL,
                              pos,
                              file_info.compressed_size,
                              file_info.uncompressed_size,
                              file_info.crc,
                              file_info.compression_method == 0);
+    /* Wrap the VSIGZipHandle inside a buffered reader that will */
+    /* improve dramatically performance when doing small backward */
+    /* seeks */
+    return VSICreateBufferedReaderHandle(poGZIPHandle);
 }
 
 /************************************************************************/
