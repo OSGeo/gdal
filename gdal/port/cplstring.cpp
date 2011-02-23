@@ -232,3 +232,44 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
 
     return *this;
 }
+
+/************************************************************************/
+/*                               ifind()                                */
+/************************************************************************/
+
+/** 
+ * Case insensitive find() alternative. 
+ */
+
+size_t CPLString::ifind( const std::string & str, size_t pos ) const
+
+{
+    return ifind( str.c_str(), pos );
+}
+
+size_t CPLString::ifind( const char *s, size_t nPos ) const
+
+{
+    const char *pszHaystack = c_str();
+    char chFirst = (char) tolower( s[0] );
+    int nTargetLen = strlen(s);
+
+    if( nPos > size() )
+        nPos = size();
+
+    pszHaystack += nPos;
+
+    while( *pszHaystack != '\0' )
+    {
+        if( chFirst == tolower(*pszHaystack) )
+        {
+            if( EQUALN(pszHaystack,s,nTargetLen) )
+                return nPos;
+        }
+
+        nPos++;
+        pszHaystack++;
+    }
+
+    return std::string::npos;
+}
