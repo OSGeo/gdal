@@ -253,6 +253,10 @@ public:
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
 
+    /* case insensitive find alternates */
+    size_t    ifind( const std::string & str, size_t pos = 0 ) const;
+    size_t    ifind( const char * s, size_t pos = 0 ) const;
+
 };
 
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
