@@ -30,6 +30,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include <map>
 
 CPL_CVSID("$Id$");
 
@@ -252,11 +253,27 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, int bMerge )
 /* -------------------------------------------------------------------- */
         else
         {
+            /* Keep a map of keys to ensure that if duplicate keys are found */
+            /* in the metadata, the newer values will replace the older */
+            /* ones, as done with CSLSetNameValue() before r21714 */
+            std::map<CPLString, int> oMap;
             if( bMerge )
             {
                 papszMD = GetMetadata( pszDomain );
                 if( papszMD != NULL )
+                {
                     papszMD = CSLDuplicate( papszMD );
+                    for(int i=0;papszMD[i] != NULL;i++)
+                    {
+                        char* pszKey = NULL;
+                        CPLParseNameValue(papszMD[i], &pszKey);
+                        if (pszKey)
+                        {
+                            oMap[pszKey] = i;
+                            CPLFree(pszKey);
+                        }
+                    }
+                }
             }
 
             int nCount = 0;
@@ -295,9 +312,20 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, int bMerge )
                     if( pszName != NULL && pszValue != NULL )
                     {
                         char* pszLine = (char *) CPLMalloc(strlen(pszName)+
-                                                           strlen(pszValue)+2);
+                                                        strlen(pszValue)+2);
                         sprintf( pszLine, "%s=%s", pszName, pszValue );
-                        papszMD[i++] = pszLine;
+                        std::map<CPLString, int>::iterator iter = oMap.find(pszName);
+                        if (iter == oMap.end())
+                        {
+                            oMap[pszName] = i;
+                            papszMD[i++] = pszLine;
+                        }
+                        else
+                        {
+                            int iToReplace = iter->second;
+                            CPLFree(papszMD[iToReplace]);
+                            papszMD[iToReplace] = pszLine;
+                        }
                     }
                 }
                 papszMD[i] = NULL;
