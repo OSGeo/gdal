@@ -129,7 +129,49 @@ def vrt_read_3():
 
     return 'success'
 
-    
+
+###############################################################################
+# Test complex source with complex data (#3977)
+
+def vrt_read_4():
+
+    try:
+        import numpy as np
+    except:
+        return 'skip'
+
+    data = np.zeros((1, 1), np.complex64)
+    data[0, 0] = 1. + 3.j
+
+    drv = gdal.GetDriverByName('GTiff')
+    ds = drv.Create("/vsimem/test.tif", 1, 1, 1, gdal.GDT_CFloat32)
+    ds.GetRasterBand(1).WriteArray(data)
+    ds = None
+
+    complex_xml = '''<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="CFloat32" band="1">
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">/vsimem/test.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <ScaleOffset>3</ScaleOffset>
+      <ScaleRatio>2</ScaleRatio>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>
+'''
+
+    ds = gdal.Open(complex_xml)
+    scaleddata = ds.GetRasterBand(1).ReadAsArray()
+    ds = None
+
+    gdal.Unlink("/vsimem/test.tif")
+
+    if scaleddata[0, 0].real != 5.0 or scaleddata[0, 0].imag != 9.0:
+        gdaltest.post_reason('did not get expected value')
+        print('scaleddata[0, 0]: %f %f' % (scaleddata[0, 0].real, scaleddata[0, 0].imag))
+        return 'fail'
+
+    return 'success'
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
@@ -141,6 +183,7 @@ for item in init_list:
 gdaltest_list.append( vrt_read_1 )
 gdaltest_list.append( vrt_read_2 )
 gdaltest_list.append( vrt_read_3 )
+gdaltest_list.append( vrt_read_4 )
 
 if __name__ == '__main__':
 
