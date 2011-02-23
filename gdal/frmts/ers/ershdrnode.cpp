@@ -189,7 +189,7 @@ int ERSHdrNode::ParseChildren( VSILFILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Got a Begin for an object.                                      */
 /* -------------------------------------------------------------------- */
-        else if( (iOff = osLine.find( " Begin" )) != std::string::npos )
+        else if( (iOff = osLine.ifind( " Begin" )) != std::string::npos )
         {
             CPLString osName = osLine.substr(0,iOff);
             osName.Trim();
@@ -209,7 +209,7 @@ int ERSHdrNode::ParseChildren( VSILFILE * fp )
 /*      Got an End for our object.  Well, at least we *assume* it       */
 /*      must be for our object.                                         */
 /* -------------------------------------------------------------------- */
-        else if( osLine.find( " End" ) != std::string::npos )
+        else if( osLine.ifind( " End" ) != std::string::npos )
         {
             return TRUE;
         }
