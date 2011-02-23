@@ -117,6 +117,22 @@ def ers_6():
     return 'success'
     
 ###############################################################################
+# Test opening a file with everything in lower case.
+
+def ers_7():
+
+    ds = gdal.Open( 'data/caseinsensitive.ers' )
+
+    desc = ds.GetRasterBand(1).GetDescription()
+
+    if desc != 'RTP 1st Vertical Derivative':
+        print(desc)
+        gdaltest.post_reason( 'did not get expected values.' )
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Create simple copy and check (greyscale) using progressive option.
 
 def ers_cleanup():
@@ -130,6 +146,7 @@ gdaltest_list = [
     ers_4,
     ers_5,
     ers_6,
+    ers_7,
     ers_cleanup
     ]
   
