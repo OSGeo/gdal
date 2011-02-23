@@ -1188,6 +1188,9 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     float *pafData;
     CPLErr eErr;
     GDALColorTable* poColorTable = NULL;
+    int bIsComplex = GDALDataTypeIsComplex(eBufType);
+    GDALDataType eWrkDataType = (bIsComplex) ? GDT_CFloat32 : GDT_Float32;
+    int nWordSize = GDALGetDataTypeSize(eWrkDataType) / 8;
 
     if( bDoScaling && bNoDataSet == FALSE && dfScaleRatio == 0)
     {
@@ -1199,7 +1202,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     }
     else
     {
-        pafData = (float *) VSIMalloc3(nOutXSize,nOutYSize,sizeof(float));
+        pafData = (float *) VSIMalloc3(nOutXSize,nOutYSize,nWordSize);
         if (pafData == NULL)
         {
             CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
@@ -1207,8 +1210,8 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         }
         eErr = poRasterBand->RasterIO( GF_Read, 
                                        nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                                       pafData, nOutXSize, nOutYSize, GDT_Float32,
-                                       sizeof(float), sizeof(float) * nOutXSize );
+                                       pafData, nOutXSize, nOutYSize, eWrkDataType,
+                                       nWordSize, nWordSize * nOutXSize );
         if( eErr != CE_None )
         {
             CPLFree( pafData );
@@ -1222,6 +1225,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Source band has no color table.");
+                CPLFree( pafData );
                 return CE_Failure;
             }
         }
@@ -1237,11 +1241,15 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     {
         for( iX = 0; iX < nOutXSize; iX++ )
         {
-            float fResult;
+            GByte *pDstLocation;
 
-            if (pafData)
+            pDstLocation = ((GByte *)pData)
+                + nPixelSpace * (iX + nOutXOff)
+                + nLineSpace * (iY + nOutYOff);
+
+            if (pafData && !bIsComplex)
             {
-                fResult = pafData[iX + iY * nOutXSize];
+                float fResult = pafData[iX + iY * nOutXSize];
                 if( CPLIsNan(dfNoDataValue) && CPLIsNan(fResult) )
                     continue;
                 if( bNoDataSet && EQUAL_TO_NODATA(fResult, dfNoDataValue) )
@@ -1276,27 +1284,52 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
                 if( bDoScaling )
                     fResult = (float) (fResult * dfScaleRatio + dfScaleOff);
+
+                if (nLUTItemCount)
+                    fResult = (float) LookupValue( fResult );
+
+                if( eBufType == GDT_Byte )
+                    *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
+                else
+                    GDALCopyWords( &fResult, GDT_Float32, 0,
+                                pDstLocation, eBufType, 0, 1 );
+            }
+            else if (pafData && bIsComplex)
+            {
+                float afResult[2];
+                afResult[0] = pafData[2 * (iX + iY * nOutXSize)];
+                afResult[1] = pafData[2 * (iX + iY * nOutXSize) + 1];
+
+                /* Do not use color table */
+
+                if( bDoScaling )
+                {
+                    afResult[0] = (float) (afResult[0] * dfScaleRatio + dfScaleOff);
+                    afResult[1] = (float) (afResult[1] * dfScaleRatio + dfScaleOff);
+                }
+
+                /* Do not use LUT */
+
+                if( eBufType == GDT_Byte )
+                    *pDstLocation = (GByte) MIN(255,MAX(0,afResult[0] + 0.5));
+                else
+                    GDALCopyWords( afResult, GDT_CFloat32, 0,
+                                   pDstLocation, eBufType, 0, 1 );
             }
             else
             {
-                fResult = (float) dfScaleOff;
+                float fResult = (float) dfScaleOff;
+
+                if (nLUTItemCount)
+                    fResult = (float) LookupValue( fResult );
+
+                if( eBufType == GDT_Byte )
+                    *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
+                else
+                    GDALCopyWords( &fResult, GDT_Float32, 0,
+                                pDstLocation, eBufType, 0, 1 );
             }
 
-            if (nLUTItemCount)
-                fResult = (float) LookupValue( fResult );
-
-            GByte *pDstLocation;
-
-            pDstLocation = ((GByte *)pData) 
-                + nPixelSpace * (iX + nOutXOff)
-                + nLineSpace * (iY + nOutYOff);
-
-            if( eBufType == GDT_Byte )
-                *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
-            else
-                GDALCopyWords( &fResult, GDT_Float32, 4, 
-                               pDstLocation, eBufType, 8, 1 );
-                
         }
     }
 
