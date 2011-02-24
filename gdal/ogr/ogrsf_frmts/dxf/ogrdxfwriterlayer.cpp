@@ -112,7 +112,9 @@ void OGRDXFWriterLayer::ResetFP( VSILFILE *fpNew )
 int OGRDXFWriterLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCSequentialWrite) )
+    if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TRUE;
+    else if( EQUAL(pszCap,OLCSequentialWrite) )
         return TRUE;
     else 
         return FALSE;
