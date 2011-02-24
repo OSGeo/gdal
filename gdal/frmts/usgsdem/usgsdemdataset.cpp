@@ -69,7 +69,7 @@ static double DConvert( FILE *fp, int nCharCount )
             szBuffer[i] = 'E';
     }
 
-    return atof(szBuffer);
+    return CPLAtof(szBuffer);
 }
 
 /************************************************************************/
@@ -153,7 +153,6 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 
 {
-    CPLLocaleC  oLocaleForcer;
     double	dfYMin;
     int		bad = FALSE;
     USGSDEMDataset *poGDS = (USGSDEMDataset *) poDS;
