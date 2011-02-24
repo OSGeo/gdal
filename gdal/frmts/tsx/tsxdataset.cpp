@@ -256,9 +256,26 @@ TSXDataset::~TSXDataset() {
 /*                              Identify()                              */
 /************************************************************************/
 
-int TSXDataset::Identify( GDALOpenInfo *poOpenInfo ) {
+int TSXDataset::Identify( GDALOpenInfo *poOpenInfo ) 
+{
     if (poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 260)
-        return 0;
+    {
+        if( poOpenInfo->bIsDirectory )
+        {
+            CPLString osFilename = 
+                CPLFormCIFilename( poOpenInfo->pszFilename, CPLGetFilename( poOpenInfo->pszFilename ), "xml" );
+        
+            /* Check if the filename contains TSX1_SAR */
+            if (!EQUALN(CPLGetBasename( osFilename ), "TSX1_SAR", 8))
+                return 0;
+
+            VSIStatBufL sStat;
+            if( VSIStatL( osFilename, &sStat ) == 0 )
+                return 1;
+
+            return 0;
+        }
+    }
 
     /* Check if the filename contains TSX1_SAR */
     if (!EQUALN(CPLGetBasename( poOpenInfo->pszFilename ), "TSX1_SAR", 8))
@@ -398,7 +415,8 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 /* -------------------------------------------------------------------- */
 /*      Is this a TerraSAR-X product file?                              */
 /* -------------------------------------------------------------------- */
-    if (!TSXDataset::Identify( poOpenInfo )) {
+    if (!TSXDataset::Identify( poOpenInfo )) 
+    {
         return NULL; /* nope */
     }
 
@@ -413,9 +431,19 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
         return NULL;
     }
 
+    CPLString osFilename;
+
+    if( poOpenInfo->bIsDirectory )
+    {
+        osFilename = 
+                CPLFormCIFilename( poOpenInfo->pszFilename, CPLGetFilename( poOpenInfo->pszFilename ), "xml" );
+    }
+    else
+        osFilename = poOpenInfo->pszFilename;
+
     /* Ingest the XML */
     CPLXMLNode *psData, *psComponents, *psProductInfo;
-    psData = CPLParseXMLFile( poOpenInfo->pszFilename );
+    psData = CPLParseXMLFile( osFilename );
 
     /* find the product components */
     psComponents = CPLGetXMLNode( psData, "=level1Product.productComponents" );
@@ -513,7 +541,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
     {
         char *pszType;
         pszPath = CPLFormFilename(
-                CPLGetDirname( poOpenInfo->pszFilename ),
+                CPLGetDirname( osFilename ),
                 GetFilePath(psComponent, &pszType),
                 "" );
         const char *pszPolLayer = CPLGetXMLValue(psComponent, "polLayer", " ");
@@ -558,14 +586,14 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
                 poBand = new TSXRasterBand( poDS, eDataType, ePol,
                     poBandData );
                 poDS->SetBand( poDS->GetRasterCount() + 1, poBand );
-            }
 
-            //copy georeferencing info from the band
-            //need error checking??
-            //it will just save the info from the last band
-            CPLFree( poDS->pszProjection );
-            poDS->pszProjection = CPLStrdup(poBandData->GetProjectionRef());
-            geoTransformErr = poBandData->GetGeoTransform(poDS->adfGeoTransform);
+                //copy georeferencing info from the band
+                //need error checking??
+                //it will just save the info from the last band
+                CPLFree( poDS->pszProjection );
+                poDS->pszProjection = CPLStrdup(poBandData->GetProjectionRef());
+                geoTransformErr = poBandData->GetGeoTransform(poDS->adfGeoTransform);
+            }
         }
     }
 
