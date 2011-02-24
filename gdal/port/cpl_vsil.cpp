@@ -326,9 +326,13 @@ int VSIIsCaseSensitiveFS( const char * pszFilename )
  * than 2GB) should be supported.  Binary access is always implied and
  * the "b" does not need to be included in the pszAccess string.
  *
- * Note that the "VSILFILE *" returned since GDAL 1.8.0 by this function is *NOT* a
- * standard C library FILE *, and cannot be used with any functions other
- * than the "VSI*L" family of functions.  They aren't "real" FILE objects.
+ * Note that the "VSILFILE *" returned since GDAL 1.8.0 by this function is 
+ * *NOT* a standard C library FILE *, and cannot be used with any functions 
+ * other than the "VSI*L" family of functions.  They aren't "real" FILE objects.
+ *
+ * On windows it is possible to define the configuration option 
+ * GDAL_FILE_IS_UTF8 to have pszFilename treated as being in the local
+ * encoding instead of UTF-8, retoring the pre-1.8.0 behavior of VSIFOpenL().
  *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
