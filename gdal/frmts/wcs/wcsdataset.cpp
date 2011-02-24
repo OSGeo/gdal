@@ -85,6 +85,9 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     GByte      *pabySavedDataBuffer;
 
     char      **papszHttpOptions;
+
+    int         nMaxCols;
+    int         nMaxRows;
     
   public:
                 WCSDataset();
@@ -341,6 +344,10 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nPixelSpace, int nLineSpace )
     
 {
+    if( poODS->nMaxCols > 0 && poODS->nMaxCols < nBufXSize
+    ||  poODS->nMaxRows > 0 && poODS->nMaxRows < nBufYSize )
+      return CE_Failure;
+
     if( poODS->TestUseBlockIO( nXOff, nYOff, nXSize, nYSize,
                                nBufXSize,nBufYSize ) )
         return GDALPamRasterBand::IRasterIO( 
@@ -425,6 +432,9 @@ WCSDataset::WCSDataset()
 
     pabySavedDataBuffer = NULL;
     papszHttpOptions = NULL;
+
+    nMaxCols = -1;
+    nMaxRows = -1;
 }
 
 /************************************************************************/
@@ -489,6 +499,10 @@ CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nPixelSpace, int nLineSpace, int nBandSpace)
 
 {
+    if( nMaxCols > 0 && nMaxCols < nBufXSize
+    ||  nMaxRows > 0 && nMaxRows < nBufYSize )
+      return CE_Failure;
+
 /* -------------------------------------------------------------------- */
 /*      We need various criteria to skip out to block based methods.    */
 /* -------------------------------------------------------------------- */
@@ -556,7 +570,7 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                   "Returned tile does not match expected configuration.\n"
                   "Got %dx%d instead of %dx%d.", 
                   poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
-                  nBufXSize, nBufXSize );
+                  nBufXSize, nBufYSize );
         delete poTileDS;
         return CE_Failure;
     }
@@ -692,6 +706,12 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
             osCRS.c_str(),
             CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
  
+        if( CPLGetXMLValue( psService, "Resample", NULL ) )
+        {
+            osRequest += "&INTERPOLATION=";
+            osRequest += CPLGetXMLValue( psService, "Resample", "" );
+        }
+
         if( bSelectingBands )
         {
             osRequest += CPLString().Printf( "&%s=%s", 
@@ -1648,6 +1668,18 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
 int WCSDataset::EstablishRasterDetails()
 
 {
+    CPLXMLNode * psCO = CPLGetXMLNode( psService, "CoverageOffering" );
+
+    const char* pszCols = CPLGetXMLValue( psCO, "dimensionLimit.columns", NULL );
+    const char* pszRows = CPLGetXMLValue( psCO, "dimensionLimit.rows", NULL );
+    if( pszCols && pszRows )
+    {
+        nMaxCols = atoi(pszCols);
+        nMaxRows = atoi(pszRows);
+        SetMetadataItem("MAXNCOLS", pszCols, "IMAGE_STRUCTURE" );
+        SetMetadataItem("MAXNROWS", pszRows, "IMAGE_STRUCTURE" );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Do we already have bandcount and pixel type settings?           */
 /* -------------------------------------------------------------------- */
@@ -1672,7 +1704,16 @@ int WCSDataset::EstablishRasterDetails()
 
     if( poDS == NULL )
         return FALSE;
-    
+
+    const char* pszPrj = poDS->GetProjectionRef();
+    if( pszPrj && strlen(pszPrj) > 0 )
+    {
+        if( pszProjection )
+            CPLFree( pszProjection );
+
+        pszProjection = CPLStrdup( pszPrj );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Record details.                                                 */
 /* -------------------------------------------------------------------- */
@@ -1838,10 +1879,10 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /*      Steal the memory buffer from HTTP result.                       */
 /* -------------------------------------------------------------------- */
     pabySavedDataBuffer = psResult->pabyData;
-
+        
     psResult->pabyData = NULL;
     psResult->nDataLen = psResult->nDataAlloc = 0;
-
+    
     if( poDS == NULL )
         FlushMemoryResult();
 
@@ -2029,10 +2070,14 @@ CPLErr WCSDataset::GetGeoTransform( double * padfTransform )
 const char *WCSDataset::GetProjectionRef()
 
 {
-    if( pszProjection )
+    const char* pszPrj = GDALPamDataset::GetProjectionRef();
+    if( pszPrj && strlen(pszPrj) > 0 )
+        return pszPrj;
+
+    if ( pszProjection && strlen(pszProjection) > 0 )
         return pszProjection;
-    else
-        return GDALPamDataset::GetProjectionRef();
+
+    return( "" );
 }
 
 /************************************************************************/
