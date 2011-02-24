@@ -94,6 +94,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
                 ~WCSDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * );
 
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
@@ -1892,6 +1893,31 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 }
 
 /************************************************************************/
+/*                             Identify()                               */
+/************************************************************************/
+
+int WCSDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Is this a WCS_GDAL service description file or "in url"         */
+/*      equivelent?                                                     */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes == 0
+        && EQUALN((const char *) poOpenInfo->pszFilename,"<WCS_GDAL>",10) )
+    {
+        return TRUE;
+    }
+    else if( poOpenInfo->nHeaderBytes >= 10
+             && EQUALN((const char *) poOpenInfo->pabyHeader,"<WCS_GDAL>",10) )
+    {
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -2101,6 +2127,7 @@ void GDALRegister_WCS()
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         
         poDriver->pfnOpen = WCSDataset::Open;
+        poDriver->pfnIdentify = WCSDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

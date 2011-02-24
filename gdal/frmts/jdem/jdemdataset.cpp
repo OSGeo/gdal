@@ -89,9 +89,11 @@ class JDEMDataset : public GDALPamDataset
     GByte	abyHeader[1012];
 
   public:
-		~JDEMDataset();
+                     JDEMDataset();
+                    ~JDEMDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * );
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
@@ -208,7 +210,17 @@ CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                            ~JDEMDataset()                             */
+/*                            JDEMDataset()                             */
+/************************************************************************/
+
+JDEMDataset::JDEMDataset() : fp(NULL)
+
+{
+    fp = NULL;
+}
+
+/************************************************************************/
+/*                           ~JDEMDataset()                             */
 /************************************************************************/
 
 JDEMDataset::~JDEMDataset()
@@ -256,10 +268,10 @@ const char *JDEMDataset::GetProjectionRef()
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
-GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
+int JDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
@@ -267,7 +279,7 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      expected locations.  Sadly this is a relatively weak test.      */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 50 )
-        return NULL;
+        return FALSE;
 
     /* check if century values seem reasonable */
     if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
@@ -277,9 +289,22 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
         || (!EQUALN((char *)poOpenInfo->pabyHeader+19,"19",2)
              && !EQUALN((char *)poOpenInfo->pabyHeader+19,"20",2)) )
     {
-        return NULL;
+        return FALSE;
     }
-    
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+    if (!Identify(poOpenInfo))
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -299,6 +324,11 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new JDEMDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    if (poDS->fp == NULL)
+    {
+        delete poDS;
+        return NULL;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
@@ -357,6 +387,7 @@ void GDALRegister_JDEM()
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = JDEMDataset::Open;
+        poDriver->pfnIdentify = JDEMDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
