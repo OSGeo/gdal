@@ -2859,6 +2859,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     {
                         double dfReal = ((GInt16 *)pData)[iOffset*2];
                         double dfImag = ((GInt16 *)pData)[iOffset*2+1];
+                        if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
+                            continue;
                         dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
                     }
                     break;
@@ -2866,6 +2868,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     {
                         double dfReal = ((GInt32 *)pData)[iOffset*2];
                         double dfImag = ((GInt32 *)pData)[iOffset*2+1];
+                        if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
+                            continue;
                         dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
                     }
                     break;
@@ -3374,13 +3378,13 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
      && (pdfStdDev == NULL || GetMetadataItem("STATISTICS_STDDEV") != NULL) )
     {
         if( pdfMin != NULL )
-            *pdfMin = atof(GetMetadataItem("STATISTICS_MINIMUM"));
+            *pdfMin = CPLAtofM(GetMetadataItem("STATISTICS_MINIMUM"));
         if( pdfMax != NULL )
-            *pdfMax = atof(GetMetadataItem("STATISTICS_MAXIMUM"));
+            *pdfMax = CPLAtofM(GetMetadataItem("STATISTICS_MAXIMUM"));
         if( pdfMean != NULL )
-            *pdfMean = atof(GetMetadataItem("STATISTICS_MEAN"));
+            *pdfMean = CPLAtofM(GetMetadataItem("STATISTICS_MEAN"));
         if( pdfStdDev != NULL )
-            *pdfStdDev = atof(GetMetadataItem("STATISTICS_STDDEV"));
+            *pdfStdDev = CPLAtofM(GetMetadataItem("STATISTICS_STDDEV"));
 
         return CE_None;
     }
