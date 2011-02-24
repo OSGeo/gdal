@@ -2223,7 +2223,10 @@ int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 CPLLocaleC::CPLLocaleC() : pszOldLocale(CPLStrdup(setlocale(LC_NUMERIC,NULL)))
 
 {
-    if( setlocale(LC_NUMERIC,"C") == NULL )
+    if( CSLTestBoolean(CPLGetConfigOption("GDAL_DISABLE_CPLLOCALEC","NO"))
+        || EQUAL(pszOldLocale,"C")
+        || EQUAL(pszOldLocale,"POSIX")
+        || setlocale(LC_NUMERIC,"C") == NULL )
     {
         CPLFree( pszOldLocale );
         pszOldLocale = NULL;
