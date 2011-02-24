@@ -1680,12 +1680,11 @@ int RemapImgUTMNames( OGRSpatialReference* pOgr, const char* pszProjCSName, cons
 int RemapNameBasedOnKeyName( OGRSpatialReference* pOgr, const char* pszName, const char* pszkeyName, 
                                                  char **mappingTable )
 {
-  long i, n;
+  long i;
   long iIndex = -1;
   for( i = 0; mappingTable[i] != NULL; i += 2 )
   {
-    n = strlen(pszName);
-    if( EQUALN(pszName, mappingTable[i],n) )
+    if( EQUAL(pszName, mappingTable[i]) )
     {
       iIndex = i;
       break;
