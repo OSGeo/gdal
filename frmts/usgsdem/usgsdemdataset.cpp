@@ -214,7 +214,7 @@ static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount )
             szPtr[i] = 'E';
     }
 
-    double dfVal = atof(szPtr);
+    double dfVal = CPLAtof(szPtr);
     szPtr[nCharCount] = backupC;
     psBuffer->cur_index += nCharCount;
 
@@ -240,7 +240,7 @@ static double DConvert( VSILFILE *fp, int nCharCount )
             szBuffer[i] = 'E';
     }
 
-    return atof(szBuffer);
+    return CPLAtof(szBuffer);
 }
 
 /************************************************************************/
@@ -281,7 +281,7 @@ class USGSDEMDataset : public GDALPamDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*                            USGSDEMRasterBand                             */
+/*                            USGSDEMRasterBand                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -327,7 +327,6 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     double	dfYMin;
     int		bad = FALSE;
     USGSDEMDataset *poGDS = (USGSDEMDataset *) poDS;
-    CPLLocaleC  oLocaleForcer;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize image buffer to nodata value.                        */
