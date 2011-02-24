@@ -295,6 +295,9 @@ void OGRSOSILayer::ResetReading() {
 /************************************************************************/
 
 int OGRSOSILayer::TestCapability( const char * pszCap ) {
-    CPLDebug( "[TestCapability]","Capability %s not supported by SOSI layer", pszCap);
-    return FALSE;
+
+    if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TRUE;
+    else
+        return FALSE;
 }
