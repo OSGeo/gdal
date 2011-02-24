@@ -107,6 +107,7 @@ class ACE2Dataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * );
 };
 
 /************************************************************************/
@@ -213,15 +214,28 @@ char **ACE2RasterBand::GetCategoryNames()
 }
 
 /************************************************************************/
+/*                             Identify()                               */
+/************************************************************************/
+
+int ACE2Dataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    if (! (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ACE2") ||
+           strstr(poOpenInfo->pszFilename, ".ACE2.gz") ||
+           strstr(poOpenInfo->pszFilename, ".ace2.gz")) )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if (! (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ACE2") ||
-           strstr(poOpenInfo->pszFilename, ".ACE2.gz") ||
-           strstr(poOpenInfo->pszFilename, ".ace2.gz")) )
+    if (!Identify(poOpenInfo))
         return NULL;
 
     const char* pszBasename = CPLGetBasename(poOpenInfo->pszFilename);
@@ -379,6 +393,7 @@ void GDALRegister_ACE2()
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = ACE2Dataset::Open;
+        poDriver->pfnIdentify = ACE2Dataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
