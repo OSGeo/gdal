@@ -87,7 +87,7 @@ class BTDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BTRasterBand : public GDALRasterBand
+class BTRasterBand : public GDALPamRasterBand
 {
     VSILFILE          *fpImage;
 
@@ -102,6 +102,7 @@ class BTRasterBand : public GDALRasterBand
     virtual const char* GetUnitType();
     virtual CPLErr SetUnitType(const char*);
 	virtual double GetNoDataValue( int* = NULL );
+    virtual CPLErr SetNoDataValue( double );
 };
 
 
@@ -258,6 +259,11 @@ double BTRasterBand::GetNoDataValue( int* pbSuccess /*= NULL */ )
 	return -32768;
 }
 
+CPLErr BTRasterBand::SetNoDataValue( double )
+
+{
+    return CE_None;
+}
 
 /************************************************************************/
 /*                            GetUnitType()                             */
