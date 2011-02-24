@@ -42,7 +42,7 @@ CPL_C_START
 void    GDALRegister_BLX(void);
 CPL_C_END
 
-class BLXDataset : public GDALDataset
+class BLXDataset : public GDALPamDataset
 {
     friend class BLXRasterBand;
 
@@ -62,7 +62,7 @@ class BLXDataset : public GDALDataset
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
-class BLXRasterBand : public GDALRasterBand
+class BLXRasterBand : public GDALPamRasterBand
 {
     int overviewLevel;
   public:
@@ -144,6 +144,12 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }
