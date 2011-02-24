@@ -252,7 +252,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
 {
     OGRSpatialReference	oSRS;
-    CPLLocaleC  oLocaleForcer;
+//    CPLLocaleC  oLocaleForcer;
 
 /* -------------------------------------------------------------------- */
 /*  Handle non-standard coordinate systems where GTModelTypeGeoKey      */
@@ -1000,7 +1000,7 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     int		nPCS = KvUserDefined;
     OGRErr      eErr;
     OGRBoolean peStrStored = FALSE;    
-    CPLLocaleC  oLocaleForcer;
+//    CPLLocaleC  oLocaleForcer;
 
     GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
                RasterPixelIsArea);
@@ -2048,7 +2048,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
     GTIF 	*hGTIF;
     GTIFDefn	sGTIFDefn;
     char        szFilename[100];
-    CPLLocaleC  oLocaleForcer;
+//    CPLLocaleC  oLocaleForcer;
 
     sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif", 
              (long) CPLGetPID() );
@@ -2177,7 +2177,7 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
     TIFF        *hTIFF;
     GTIF 	*hGTIF;
     char        szFilename[100];
-    CPLLocaleC  oLocaleForcer;
+//    CPLLocaleC  oLocaleForcer;
 
     sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif", 
              (long) CPLGetPID() );
