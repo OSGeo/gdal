@@ -1779,6 +1779,9 @@ OGRFeature *OGRDXFLayer::GetNextFeature()
 int OGRDXFLayer::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
