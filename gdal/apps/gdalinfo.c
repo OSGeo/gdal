@@ -50,7 +50,8 @@ void Usage()
 
 {
     printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
-            "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname\n" );
+            "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]*\n"
+            "                [-sd subdataset] datasetname\n" );
     exit( 1 );
 }
 
@@ -72,6 +73,7 @@ int main( int argc, char ** argv )
     int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
     int                 bShowColorTable = TRUE, bComputeChecksum = FALSE;
     int                 bReportHistograms = FALSE;
+    int                 nSubdataset = -1;
     const char          *pszFilename = NULL;
     char              **papszExtraMDDomains = NULL, **papszFileList;
     const char  *pszProjection = NULL;
@@ -149,6 +151,8 @@ int main( int argc, char ** argv )
                                                 argv[++i] );
         else if( EQUAL(argv[i], "-nofl") )
             bShowFileList = FALSE;
+        else if( EQUAL(argv[i], "-sd") && i < argc-1 )
+            nSubdataset = atoi(argv[++i]);
         else if( argv[i][0] == '-' )
             Usage();
         else if( pszFilename == NULL )
@@ -183,6 +187,38 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Read specified subdataset if requested.                         */
+/* -------------------------------------------------------------------- */
+    if ( nSubdataset > 0 )
+    {
+        char **papszSubdatasets = GDALGetMetadata( hDataset, "SUBDATASETS" );
+        int nSubdatasets = CSLCount( papszSubdatasets );
+
+        if ( nSubdatasets > 0 && nSubdataset <= nSubdatasets )
+        {
+            char szKeyName[1024];
+            char *pszSubdatasetName;
+
+            snprintf( szKeyName, sizeof(szKeyName),
+                      "SUBDATASET_%d_NAME", nSubdataset );
+            szKeyName[sizeof(szKeyName) - 1] = '\0';
+            pszSubdatasetName =
+                CPLStrdup( CSLFetchNameValue( papszSubdatasets, szKeyName ) );
+            GDALClose( hDataset );
+            hDataset = GDALOpen( pszSubdatasetName, GA_ReadOnly );
+            CPLFree( pszSubdatasetName );
+        }
+        else
+        {
+            fprintf( stderr,
+                     "gdalinfo warning: subdataset %d of %d requested. "
+                     "Reading the main dataset.\n",
+                     nSubdataset, nSubdatasets );
+
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Report general info.                                            */
 /* -------------------------------------------------------------------- */
