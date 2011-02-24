@@ -85,20 +85,9 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
                     osFileName, (unsigned char*)injpc, bufsize, 
                     FALSE ) ); // TRUE to let vsi delete the buffer when done
 
-/* -------------------------------------------------------------------- */
-/*      Currently the JP2ECW driver doesn't support /vsimem and         */
-/*      other virtual files *unless* we force processing to go          */
-/*      through J2K_SUBFILE.  Grr.  It would be ideal to fix this in    */
-/*      the ECW driver eventually.                                      */
-/* -------------------------------------------------------------------- */
-    CPLString osSubfileName;
-
-    osSubfileName.Printf( "J2K_SUBFILE:%d,%d,%s", 
-                          0, bufsize, osFileName.c_str() );
-
     // Open memory buffer for reading 
     GDALDataset* poJ2KDataset = (GDALDataset *)
-        GDALOpen( osSubfileName, GA_ReadOnly );
+        GDALOpen( osFileName, GA_ReadOnly );
  
     if( poJ2KDataset == NULL )
     {
