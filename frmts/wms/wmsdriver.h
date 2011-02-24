@@ -191,7 +191,6 @@ protected:
 
 class GDALWMSDataset : public GDALPamDataset {
     friend class GDALWMSRasterBand;
-    friend GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo);
 
 public:
     GDALWMSDataset();
@@ -213,6 +212,9 @@ public:
     void WMSSetBandsCount(int count);
     void mSetBand(int i, GDALRasterBand *band) { SetBand(i,band); };
     GDALWMSRasterBand *mGetBand(int i) { return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i)); };
+
+    static GDALDataset* Open(GDALOpenInfo *poOpenInfo);
+    static int Identify(GDALOpenInfo *poOpenInfo);
 
 protected:
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, int pixel_space, int line_space, int band_space);
@@ -270,6 +272,5 @@ protected:
     GDALColorInterp m_color_interp;
 };
 
-GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo);
 GDALWMSMiniDriverManager *GetGDALWMSMiniDriverManager();
 void DestroyWMSMiniDriverManager(void);

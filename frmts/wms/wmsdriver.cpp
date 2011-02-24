@@ -30,7 +30,32 @@
 
 #include "stdinc.h"
 
-GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo) {
+/************************************************************************/
+/*                             Identify()                               */
+/************************************************************************/
+
+int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
+{
+    if (poOpenInfo->nHeaderBytes == 0 &&
+         EQUALN((const char *) poOpenInfo->pszFilename, "<GDAL_WMS>", 10))
+    {
+        return TRUE;
+    }
+    else if (poOpenInfo->nHeaderBytes >= 10 &&
+             EQUALN((const char *) poOpenInfo->pabyHeader, "<GDAL_WMS>", 10))
+    {
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                                 Open()                               */
+/************************************************************************/
+
+GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
+{
     CPLXMLNode *config = NULL;
     CPLErr ret = CE_None;
 
@@ -95,7 +120,8 @@ void GDALRegister_WMS() {
         driver->SetMetadataItem(GDAL_DMD_LONGNAME, "OGC Web Map Service");
         driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_wms.html");
         driver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        driver->pfnOpen = GDALWMSDatasetOpen;
+        driver->pfnOpen = GDALWMSDataset::Open;
+        driver->pfnIdentify = GDALWMSDataset::Identify;
         driver->pfnUnloadDriver = GDALDeregister_WMS;
         GetGDALDriverManager()->RegisterDriver(driver);
 

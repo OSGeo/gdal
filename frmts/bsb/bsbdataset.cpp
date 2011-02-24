@@ -61,6 +61,9 @@ class BSBDataset : public GDALPamDataset
     void        ScanForGCPs( bool isNos, const char *pszFilename );
     void        ScanForGCPsNos( const char *pszFilename );
     void        ScanForGCPsBSB();
+
+    static int IdentifyInternal( GDALOpenInfo *, bool & isNosOut );
+
   public:
                 BSBDataset();
 		~BSBDataset();
@@ -68,6 +71,7 @@ class BSBDataset : public GDALPamDataset
     BSBInfo     *psInfo;
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * );
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -680,53 +684,78 @@ void BSBDataset::ScanForGCPsBSB()
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                          IdentifyInternal()                          */
 /************************************************************************/
 
-GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
+int BSBDataset::IdentifyInternal( GDALOpenInfo * poOpenInfo, bool& isNosOut )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Check for BSB/ keyword.                                         */
 /* -------------------------------------------------------------------- */
-    int		i;
-    bool        isNos = false;
+    int     i;
+    isNosOut = false;
 
     if( poOpenInfo->nHeaderBytes < 1000 )
         return NULL;
 
     for( i = 0; i < poOpenInfo->nHeaderBytes - 4; i++ )
     {
-        if( poOpenInfo->pabyHeader[i+0] == 'B' 
-            && poOpenInfo->pabyHeader[i+1] == 'S' 
-            && poOpenInfo->pabyHeader[i+2] == 'B' 
+        if( poOpenInfo->pabyHeader[i+0] == 'B'
+            && poOpenInfo->pabyHeader[i+1] == 'S'
+            && poOpenInfo->pabyHeader[i+2] == 'B'
             && poOpenInfo->pabyHeader[i+3] == '/' )
             break;
-        if( poOpenInfo->pabyHeader[i+0] == 'N' 
-            && poOpenInfo->pabyHeader[i+1] == 'O' 
-            && poOpenInfo->pabyHeader[i+2] == 'S' 
+        if( poOpenInfo->pabyHeader[i+0] == 'N'
+            && poOpenInfo->pabyHeader[i+1] == 'O'
+            && poOpenInfo->pabyHeader[i+2] == 'S'
             && poOpenInfo->pabyHeader[i+3] == '/' )
         {
-            isNos = true;
+            isNosOut = true;
             break;
         }
-        if( poOpenInfo->pabyHeader[i+0] == 'W' 
-            && poOpenInfo->pabyHeader[i+1] == 'X' 
-            && poOpenInfo->pabyHeader[i+2] == '\\' 
+        if( poOpenInfo->pabyHeader[i+0] == 'W'
+            && poOpenInfo->pabyHeader[i+1] == 'X'
+            && poOpenInfo->pabyHeader[i+2] == '\\'
             && poOpenInfo->pabyHeader[i+3] == '8' )
             break;
     }
 
     if( i == poOpenInfo->nHeaderBytes - 4 )
-        return NULL;
+        return FALSE;
 
     /* Additional test to avoid false positive. See #2881 */
     const char* pszRA = strstr((const char*)poOpenInfo->pabyHeader + i, "RA=");
     if (pszRA == NULL) /* This may be a NO1 file */
         pszRA = strstr((const char*)poOpenInfo->pabyHeader + i, "[JF");
     if (pszRA == NULL || pszRA - ((const char*)poOpenInfo->pabyHeader + i) > 100 )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int BSBDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    bool isNos;
+    return IdentifyInternal(poOpenInfo, isNos);
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+    bool        isNos = false;
+    if (!IdentifyInternal(poOpenInfo, isNos))
         return NULL;
-        
+
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -1152,6 +1181,7 @@ void GDALRegister_BSB()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 #endif
         poDriver->pfnOpen = BSBDataset::Open;
+        poDriver->pfnIdentify = BSBDataset::Identify;
 #ifdef BSB_CREATE
         poDriver->pfnCreateCopy = BSBCreateCopy;
 #endif

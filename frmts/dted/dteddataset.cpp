@@ -65,6 +65,7 @@ class DTEDDataset : public GDALPamDataset
     void SetFileName(const char* pszFilename);
     
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * );
 };
 
 /************************************************************************/
@@ -278,27 +279,26 @@ void DTEDDataset::SetFileName(const char* pszFilename)
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
-GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
+int DTEDDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
     int         i;
-    DTEDInfo    *psDTED;
 
 /* -------------------------------------------------------------------- */
 /*      Does the file start with one of the possible DTED header        */
 /*      record types, and do we have a UHL marker?                      */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 240 )
-        return NULL;
+        return FALSE;
 
     if( !EQUALN((const char *)poOpenInfo->pabyHeader,"VOL",3)
         && !EQUALN((const char *)poOpenInfo->pabyHeader,"HDR",3)
         && !EQUALN((const char *)poOpenInfo->pabyHeader,"UHL",3) )
     {
-        return NULL;
+        return FALSE;
     }
 
     int bFoundUHL = FALSE;
@@ -310,6 +310,22 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
     if (!bFoundUHL)
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+    int         i;
+    DTEDInfo    *psDTED;
+
+    if (!Identify(poOpenInfo))
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -346,7 +362,7 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->nBands = 1;;
+    poDS->nBands = 1;
     for( i = 0; i < poDS->nBands; i++ )
         poDS->SetBand( i+1, new DTEDRasterBand( poDS, i+1 ) );
 
@@ -894,6 +910,7 @@ void GDALRegister_DTED()
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = DTEDDataset::Open;
+        poDriver->pfnIdentify = DTEDDataset::Identify;
         poDriver->pfnCreateCopy = DTEDCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
