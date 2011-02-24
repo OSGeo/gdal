@@ -1,9 +1,9 @@
 /******************************************************************************
- * $Id: geo_normalize.c 1685 2009-11-11 17:08:09Z warmerdam $
+ * $Id: geo_normalize.c 1979 2011-02-24 22:17:39Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -279,7 +279,7 @@ double GTIFAngleStringToDD( const char * pszAngle, int nUOMAngle )
                     szSeconds[1] = '0';
                     szSeconds[2] = '\0';
                 }
-                dfAngle += atof(szSeconds) / 3600.0;
+                dfAngle += GTIFAtof(szSeconds) / 3600.0;
             }
         }
 
@@ -288,26 +288,26 @@ double GTIFAngleStringToDD( const char * pszAngle, int nUOMAngle )
     }
     else if( nUOMAngle == 9105 || nUOMAngle == 9106 )	/* grad */
     {
-        dfAngle = 180 * (atof(pszAngle ) / 200);
+        dfAngle = 180 * (GTIFAtof(pszAngle ) / 200);
     }
     else if( nUOMAngle == 9101 )			/* radians */
     {
-        dfAngle = 180 * (atof(pszAngle ) / PI);
+        dfAngle = 180 * (GTIFAtof(pszAngle ) / PI);
     }
     else if( nUOMAngle == 9103 )			/* arc-minute */
     {
-        dfAngle = atof(pszAngle) / 60;
+        dfAngle = GTIFAtof(pszAngle) / 60;
     }
     else if( nUOMAngle == 9104 )			/* arc-second */
     {
-        dfAngle = atof(pszAngle) / 3600;
+        dfAngle = GTIFAtof(pszAngle) / 3600;
     }
     else /* decimal degrees ... some cases missing but seeminly never used */
     {
         CPLAssert( nUOMAngle == 9102 || nUOMAngle == KvUserDefined
                    || nUOMAngle == 0 );
         
-        dfAngle = atof(pszAngle );
+        dfAngle = GTIFAtof(pszAngle );
     }
 
     return( dfAngle );
@@ -513,7 +513,7 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
     pszFilename = CSVFilename("ellipsoid.csv" );
 
     dfSemiMajor =
-        atof(CSVGetField( pszFilename,
+        GTIFAtof(CSVGetField( pszFilename,
                           "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                           "SEMI_MAJOR_AXIS" ) );
 
@@ -542,7 +542,7 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
     if( pdfSemiMinor != NULL )
     {
         *pdfSemiMinor =
-            atof(CSVGetField( pszFilename,
+            GTIFAtof(CSVGetField( pszFilename,
                               "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                               "SEMI_MINOR_AXIS" )) * dfToMeters;
 
@@ -551,7 +551,7 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
             double	dfInvFlattening;
             
             dfInvFlattening = 
-                atof(CSVGetField( pszFilename,
+                GTIFAtof(CSVGetField( pszFilename,
                                   "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                                   "INV_FLATTENING" ));
             *pdfSemiMinor = dfSemiMajor * (1 - 1.0/dfInvFlattening);
@@ -817,9 +817,9 @@ int GTIFGetUOMLengthInfo( int nUOMLengthCode,
         iBFactorField = CSVGetFileFieldId( pszFilename, "FACTOR_B" );
         iCFactorField = CSVGetFileFieldId( pszFilename, "FACTOR_C" );
 
-        if( atof(CSLGetField(papszUnitsRecord, iCFactorField)) > 0.0 )
-            *pdfInMeters = atof(CSLGetField(papszUnitsRecord, iBFactorField))
-                / atof(CSLGetField(papszUnitsRecord, iCFactorField));
+        if( GTIFAtof(CSLGetField(papszUnitsRecord, iCFactorField)) > 0.0 )
+            *pdfInMeters = GTIFAtof(CSLGetField(papszUnitsRecord, iBFactorField))
+                / GTIFAtof(CSLGetField(papszUnitsRecord, iCFactorField));
         else
             *pdfInMeters = 0.0;
     }
@@ -919,12 +919,12 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
         double dfFactorB, dfFactorC, dfInRadians;
         
         dfFactorB = 
-            atof(CSVGetField( pszFilename,
+            GTIFAtof(CSVGetField( pszFilename,
                               "UOM_CODE", szSearchKey, CC_Integer,
                               "FACTOR_B" ));
         
         dfFactorC = 
-            atof(CSVGetField( pszFilename,
+            GTIFAtof(CSVGetField( pszFilename,
                               "UOM_CODE", szSearchKey, CC_Integer,
                               "FACTOR_C" ));
 
@@ -1338,10 +1338,10 @@ int GTIFGetProjTRFInfo( /* COORD_OP_CODE from coordinate_operation.csv */
 
             if( !GTIFGetUOMLengthInfo( nUOM, NULL, &dfInMeters ) )
                 dfInMeters = 1.0;
-            adfProjParms[i] = atof(pszValue) * dfInMeters;
+            adfProjParms[i] = GTIFAtof(pszValue) * dfInMeters;
         }
         else
-            adfProjParms[i] = atof(pszValue);
+            adfProjParms[i] = GTIFAtof(pszValue);
     }
 
 /* -------------------------------------------------------------------- */

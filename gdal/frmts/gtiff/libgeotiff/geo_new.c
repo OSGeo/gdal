@@ -160,7 +160,11 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
     else
     {
         /* last NULL doesn't count; "|" used for delimiter */
-        --tempData.tk_asciiParamsLength;
+        if( tempData.tk_asciiParamsLength > 0 
+            && tempData.tk_asciiParams[tempData.tk_asciiParamsLength-1] == '\0')
+        {
+            --tempData.tk_asciiParamsLength;
+        }
     }
 
     /* allocate space for GeoKey array and its index */
