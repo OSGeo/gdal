@@ -344,8 +344,8 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nPixelSpace, int nLineSpace )
     
 {
-    if( poODS->nMaxCols > 0 && poODS->nMaxCols < nBufXSize
-    ||  poODS->nMaxRows > 0 && poODS->nMaxRows < nBufYSize )
+    if( (poODS->nMaxCols > 0 && poODS->nMaxCols < nBufXSize)
+    ||  (poODS->nMaxRows > 0 && poODS->nMaxRows < nBufYSize) )
       return CE_Failure;
 
     if( poODS->TestUseBlockIO( nXOff, nYOff, nXSize, nYSize,
@@ -499,8 +499,8 @@ CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nPixelSpace, int nLineSpace, int nBandSpace)
 
 {
-    if( nMaxCols > 0 && nMaxCols < nBufXSize
-    ||  nMaxRows > 0 && nMaxRows < nBufYSize )
+    if( (nMaxCols > 0 && nMaxCols < nBufXSize)
+    ||  (nMaxRows > 0 && nMaxRows < nBufYSize) )
       return CE_Failure;
 
 /* -------------------------------------------------------------------- */
