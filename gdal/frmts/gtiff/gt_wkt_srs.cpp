@@ -59,6 +59,11 @@ typedef struct _VSILFILE VSILFILE;
 typedef FILE VSILFILE;
 #endif
 
+// ensure compatability with older libgeotiffs. 
+#if !defined(GTIFAtof)
+#  define GTIFAtof atof
+#endif
+
 int CPL_DLL VSIFCloseL( VSILFILE * );
 int CPL_DLL VSIUnlink( const char * );
 VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
@@ -252,7 +257,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
 {
     OGRSpatialReference	oSRS;
-//    CPLLocaleC  oLocaleForcer;
 
 /* -------------------------------------------------------------------- */
 /*  Handle non-standard coordinate systems where GTModelTypeGeoKey      */
@@ -875,12 +879,14 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
             // Value
             double dfFactorB, dfFactorC;
-            dfFactorB = atof(CSVGetField( pszFilename, 
-                                          "uom_code", szSearchKey, CC_Integer,
-                                          "factor_b" ));
-            dfFactorC = atof(CSVGetField( pszFilename, 
-                                          "uom_code", szSearchKey, CC_Integer,
-                                          "factor_b" ));
+            dfFactorB = GTIFAtof(
+                CSVGetField( pszFilename, 
+                             "uom_code", szSearchKey, CC_Integer,
+                             "factor_b" ));
+            dfFactorC = GTIFAtof(
+                CSVGetField( pszFilename, 
+                             "uom_code", szSearchKey, CC_Integer,
+                             "factor_b" ));
             if( dfFactorB != 0.0 && dfFactorC != 0.0 )
                 sprintf( szInMeters, "%.16g", dfFactorB / dfFactorC );
             else
@@ -1000,7 +1006,6 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     int		nPCS = KvUserDefined;
     OGRErr      eErr;
     OGRBoolean peStrStored = FALSE;    
-//    CPLLocaleC  oLocaleForcer;
 
     GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
                RasterPixelIsArea);
@@ -1082,11 +1087,11 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
     if( (pszLinearUOMName != NULL
          && EQUAL(pszLinearUOMName,SRS_UL_FOOT))
-        || dfLinearUOM == atof(SRS_UL_FOOT_CONV) )
+        || dfLinearUOM == GTIFAtof(SRS_UL_FOOT_CONV) )
         nUOMLengthCode = 9002; /* international foot */
     else if( (pszLinearUOMName != NULL
               && EQUAL(pszLinearUOMName,SRS_UL_US_FOOT))
-             || ABS(dfLinearUOM-atof(SRS_UL_US_FOOT_CONV)) < 0.0000001 )
+             || ABS(dfLinearUOM-GTIFAtof(SRS_UL_US_FOOT_CONV)) < 0.0000001 )
         nUOMLengthCode = 9003; /* us survey foot */
     else if( dfLinearUOM != 1.0 )
         nUOMLengthCode = KvUserDefined;
@@ -2048,7 +2053,6 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
     GTIF 	*hGTIF;
     GTIFDefn	sGTIFDefn;
     char        szFilename[100];
-//    CPLLocaleC  oLocaleForcer;
 
     sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif", 
              (long) CPLGetPID() );
@@ -2177,7 +2181,6 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
     TIFF        *hTIFF;
     GTIF 	*hGTIF;
     char        szFilename[100];
-//    CPLLocaleC  oLocaleForcer;
 
     sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif", 
              (long) CPLGetPID() );

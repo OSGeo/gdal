@@ -4526,9 +4526,9 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                 else if( EQUAL(pszItemName,"TIFFTAG_COPYRIGHT") )
                     TIFFSetField( hTIFF, TIFFTAG_COPYRIGHT, pszItemValue );
                 else if( EQUAL(pszItemName,"TIFFTAG_XRESOLUTION") )
-                    TIFFSetField( hTIFF, TIFFTAG_XRESOLUTION, atof(pszItemValue) );
+                    TIFFSetField( hTIFF, TIFFTAG_XRESOLUTION, CPLAtof(pszItemValue) );
                 else if( EQUAL(pszItemName,"TIFFTAG_YRESOLUTION") )
-                    TIFFSetField( hTIFF, TIFFTAG_YRESOLUTION, atof(pszItemValue) );
+                    TIFFSetField( hTIFF, TIFFTAG_YRESOLUTION, CPLAtof(pszItemValue) );
                 else if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") )
                     TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, atoi(pszItemValue) );
                 else
@@ -5208,7 +5208,6 @@ void GTiffDataset::LookForProjection()
 /* -------------------------------------------------------------------- */
     GTIF 	*hGTIF;
     GTIFDefn	sGTIFDefn;
-    CPLLocaleC  oLocaleForcer;
 
     CPLFree( pszProjection );
     pszProjection = NULL;
