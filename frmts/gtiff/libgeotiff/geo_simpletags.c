@@ -199,7 +199,7 @@ int ST_SetKey( ST_TIFF *st, int tag, int count, int st_type, void *data )
 /* -------------------------------------------------------------------- */
     if (count == 0 && st_type == STT_ASCII ) 
     {
-        count = strlen((char*)data);
+        count = strlen((char*)data)+1;
     }
 
 /* -------------------------------------------------------------------- */
