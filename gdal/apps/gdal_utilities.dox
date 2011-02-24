@@ -180,7 +180,8 @@ lists information about a raster dataset
 
 \verbatim
 gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
-         [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname
+         [-noct] [-nofl] [-checksum] [-mdd domain]*
+	 [-sd subdataset] datasetname
 \endverbatim
 
 \section description DESCRIPTION
@@ -194,13 +195,18 @@ band in the dataset.</dd>
 <dt> <b>-hist</b></dt><dd> Report histogram information for all bands.</dd>
 <dt> <b>-nogcp</b></dt><dd> Suppress ground control points list printing. It may be
 useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
-which contain thousands of the ones.</dd>
+which contain thousands of them.</dd>
 <dt> <b>-nomd</b></dt><dd> Suppress metadata printing. Some datasets may contain a lot
 of metadata strings.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
 <dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
-<dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the file list.</dd>
+<dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the
+file list.</dd>
+<dt> <b>-sd</b> <i>subdataset</i></dt><dd> (GDAL >= 1.9.0) If the input
+dataset contains several subdatasets read and display a subdataset with
+specified number (starting from 1). This is an alternative of giving the full
+subdataset name.</dd>
 </dl>
 
 The gdalinfo will report all of the following (if known):
