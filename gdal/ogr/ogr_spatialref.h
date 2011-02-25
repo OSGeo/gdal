@@ -502,6 +502,13 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE,
                                const char *pszOverrideUnitName = NULL,
                                double dfOverrideUnit = 0.0 );
+
+    OGRErr      ImportFromESRIStatePlaneWKT( 
+        int nCode, const char* pszDatumName, const char* pszUnitsName, 
+        int nPCSCode, const char* pszCSName = 0 );
+    OGRErr      ImportFromESRIWisconsinWKT( 
+        char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin, 
+        const char* pszUnitsName, const char* pszCSName = 0 );
 };
 
 /************************************************************************/
