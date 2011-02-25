@@ -443,9 +443,9 @@ bool PCIDSK2Band::CheckForColorTable()
             // we have an entry - apply to the color table.
             GDALColorEntry sEntry;
 
-            sEntry.c1 = nRed;
-            sEntry.c2 = nGreen;
-            sEntry.c3 = nBlue;
+            sEntry.c1 = (short) nRed;
+            sEntry.c2 = (short) nGreen;
+            sEntry.c3 = (short) nBlue;
             sEntry.c4 = 255;
 
             if( poColorTable == NULL )
