@@ -237,7 +237,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
   OGRBoolean nameFound = FALSE;
   while((pStr-psCitation+1)< nameLen)
   {
-    if( (pDelimit = strstr(pStr, "|")))
+    if( (pDelimit = strstr(pStr, "|")) != NULL )
     {
       strncpy( name, pStr, pDelimit-pStr );
       name[pDelimit-pStr] = '\0';
@@ -727,7 +727,7 @@ void CheckUTM( GTIFDefn * psDefn, char * pszCtString )
     {
       if(psDefn->ProjCode != atoi(apszUtmProjCode[i+2]))
       {
-        psDefn->ProjCode = atoi(apszUtmProjCode[i+2]);
+        psDefn->ProjCode = (short) atoi(apszUtmProjCode[i+2]);
         GTIFGetProjTRFInfo( psDefn->ProjCode, NULL, &(psDefn->Projection),
                             psDefn->ProjParm );
         break;
