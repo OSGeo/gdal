@@ -288,7 +288,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     //image parameters
     int	nRows, nCols, nBands = 1;
-    int nSkipBytes = 0;
+    GUIntBig nSkipBytes = 0;
     int itype;
     int  s_ix, s_iy, s_iz; // check SUFFIX_ITEMS params.
     int record_bytes;
