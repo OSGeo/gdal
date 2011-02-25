@@ -55,6 +55,8 @@ int   AddParamBasedOnPrjName( OGRSpatialReference* pOgr,
                              const char* pszProjectionName, char **mappingTable);
 int   RemapGeogCSName(OGRSpatialReference* pOgr, const char *pszGeogCSName);
 
+static int   FindCodeFromDict( const char* pszDictFile, const char* CSName, char* code );
+
 static const char *apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Cassini", SRS_PT_CASSINI_SOLDNER,
@@ -1934,3 +1936,214 @@ int RemapGeogCSName( OGRSpatialReference* pOgr, const char *pszGeogCSName )
   return ret;
 }
 
+/************************************************************************/
+/*                    ImportFromESRIStatePlaneWKT()                     */
+/*                                                                      */
+/*      Search a ESRI State Plane WKT and import it.                    */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* datumName, const char* unitsName, int pcsCode, const char* csName )
+{
+  int i;
+  long searchCode = -1;
+
+  /* if the CS name is known */
+  if (code == 0 && !datumName && !unitsName && pcsCode == 32767 && csName)
+  {
+    char codeS[10];
+    if (FindCodeFromDict( "esri_StatePlane_extra.wkt", csName, codeS ) != OGRERR_NONE)
+      return OGRERR_FAILURE;
+    return importFromDict( "esri_StatePlane_extra.wkt", codeS);
+  }
+
+  /* Find state plane prj str by pcs code only */
+  if( code == 0 && !datumName && pcsCode != 32767 )
+  {
+
+    int unitCode = 1;
+    if( EQUAL(unitsName, "international_feet") )
+      unitCode = 3;
+    else if( strstr(unitsName, "feet") || strstr(unitsName, "foot") )
+      unitCode = 2;
+   for(i=0; statePlanePcsCodeToZoneCode[i] != 0; i+=2)
+    {
+      if( pcsCode == statePlanePcsCodeToZoneCode[i] )
+      {
+        searchCode = statePlanePcsCodeToZoneCode[i+1];
+        int unitIndex =  searchCode % 10;
+        if( (unitCode == 1 && !(unitIndex == 0 || unitIndex == 1)) 
+            || (unitCode == 2 && !(unitIndex == 2 || unitIndex == 3 || unitIndex == 4 ))
+            || (unitCode == 3 && !(unitIndex == 5 || unitIndex == 6 )) )
+        {
+          searchCode -= unitIndex; 
+          switch (unitIndex)
+          {
+          case 0:
+          case 3:
+          case 5:
+            if(unitCode == 2)
+              searchCode += 3;
+            else if(unitCode == 3)
+              searchCode += 5;
+            break;
+          case 1:
+          case 2:
+          case 6:
+            if(unitCode == 1)
+              searchCode += 1;
+            if(unitCode == 2)
+              searchCode += 2;
+            else if(unitCode == 3)
+              searchCode += 6;
+           break;
+          case 4:
+            if(unitCode == 2)
+              searchCode += 4;
+            break;
+          }
+        }
+        break;
+      }
+    }
+  }
+  else /* Find state plane prj str by all inputs. */
+  {
+    /* Need to have a specail EPSG-ESRI zone code mapping first. */
+    for(i=0; statePlaneZoneMapping[i] != 0; i+=3)
+    {
+      if( code == statePlaneZoneMapping[i] 
+       && (statePlaneZoneMapping[i+1] == -1 || pcsCode == statePlaneZoneMapping[i+1]))
+      {
+        code = statePlaneZoneMapping[i+2];
+        break;
+      }
+    }
+    searchCode = (long)code * 10;
+    if(EQUAL(datumName, "HARN"))
+    {
+      if( EQUAL(unitsName, "international_feet") )
+        searchCode += 5;
+      else if( strstr(unitsName, "feet") || strstr(unitsName, "foot") )
+        searchCode += 3;
+    }
+    else if(strstr(datumName, "NAD") && strstr(datumName, "83"))
+    {
+      if( EQUAL(unitsName, "meters") )
+         searchCode += 1;
+      else if( EQUAL(unitsName, "international_feet") )
+        searchCode += 6;
+      else if( strstr(unitsName, "feet") || strstr(unitsName, "foot") )
+         searchCode += 2;
+    }
+    else if(strstr(datumName, "NAD") && strstr(datumName, "27") && !EQUAL(unitsName, "meters"))
+    {
+      searchCode += 4;
+    }
+    else
+      searchCode = -1;
+  }
+  if(searchCode > 0)
+  {
+    char codeS[10];
+    sprintf(codeS, "%d", (int)searchCode);
+    return importFromDict( "esri_StatePlane_extra.wkt", codeS);
+  }
+  return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                     ImportFromESRIWisconsinWKT()                     */
+/*                                                                      */
+/*      Search a ESRI State Plane WKT and import it.                    */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( char* prjName, double centralMeridian, double latOfOrigin, const char* unitsName, const char* csName )
+{
+  /* if the CS name is known */
+  if (!prjName && !unitsName && csName)
+  {
+    char codeS[10];
+    if (FindCodeFromDict( "esri_Wisconsin_extra.wkt", csName, codeS ) != OGRERR_NONE)
+      return OGRERR_FAILURE;
+    return importFromDict( "esri_Wisconsin_extra.wkt", codeS);
+  }
+  double* tableWISCRS;
+  if(EQUALN(prjName, "Lambert_Conformal_Conic", 22))
+    tableWISCRS = apszWISCRS_LCC_meter;
+  else if(EQUAL(prjName, SRS_PT_TRANSVERSE_MERCATOR))
+    tableWISCRS = apszWISCRS_TM_meter;
+  else
+    return OGRERR_FAILURE;
+  int k = -1;
+  for(int i=0; tableWISCRS[i] != 0; i+=3)
+  {
+    if( fabs(centralMeridian - tableWISCRS[i]) <= 0.0000000001 && fabs(latOfOrigin - tableWISCRS[i+1]) <= 0.0000000001) 
+    {
+      k = (long)tableWISCRS[i+2];
+      break;
+    }
+  }
+  if(k > 0)
+  {
+    if(!EQUAL(unitsName, "meters"))
+      k += 100;
+    char codeS[10];
+    sprintf(codeS, "%d", k);
+    return importFromDict( "esri_Wisconsin_extra.wkt", codeS);
+  }
+  return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                       FindCodeFromDict()                             */
+/*                                                                      */
+/*      Find the code from a dict file.                                 */
+/************************************************************************/
+static int FindCodeFromDict( const char* pszDictFile, const char* CSName, char* code )
+{
+    const char *pszFilename;
+    FILE *fp;
+    OGRErr eErr = OGRERR_UNSUPPORTED_SRS;
+
+/* -------------------------------------------------------------------- */
+/*      Find and open file.                                             */
+/* -------------------------------------------------------------------- */
+    pszFilename = CPLFindFile( "gdal", pszDictFile );
+    if( pszFilename == NULL )
+        return OGRERR_UNSUPPORTED_SRS;
+
+    fp = VSIFOpen( pszFilename, "rb" );
+    if( fp == NULL )
+        return OGRERR_UNSUPPORTED_SRS;
+
+/* -------------------------------------------------------------------- */
+/*      Process lines.                                                  */
+/* -------------------------------------------------------------------- */
+    const char *pszLine;
+
+    while( (pszLine = CPLReadLine(fp)) != NULL )
+
+    {
+        if( pszLine[0] == '#' )
+            /* do nothing */;
+
+        else if( strstr(pszLine,CSName) )
+        {
+          const char* pComma = strchr(pszLine, ',');
+          if( pComma )
+          {
+            strncpy( code, pszLine, pComma - pszLine);
+            code[pComma - pszLine] = '\0';
+            eErr = OGRERR_NONE;  
+          }
+          break;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    VSIFClose( fp );
+    
+    return eErr;
+}
