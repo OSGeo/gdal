@@ -4244,7 +4244,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /* -------------------------------------------------------------------- */
     if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
-        || adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0 )
+        || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 )
     {
         bNeedsRewrite = TRUE;
 
@@ -4790,7 +4790,7 @@ void GTiffDataset::PushMetadataToPam()
             double dfOffset = poBand->GetOffset( &bSuccess );
             double dfScale = poBand->GetScale();
 
-            if( bSuccess )
+            if( bSuccess && (dfOffset != 0.0 || dfScale != 1.0) )
             {
                 poBand->GDALPamRasterBand::SetScale( dfScale );
                 poBand->GDALPamRasterBand::SetOffset( dfOffset );
@@ -5320,21 +5320,21 @@ void GTiffDataset::ApplyPamInfo()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Copy any PAM metadata into our GeoTIFF context, but with the    */
-/*      GeoTIFF context overriding the PAM info.                        */
+/*      Copy any PAM metadata into our GeoTIFF context, and with        */
+/*      the PAM info overriding the GeoTIFF context.                    */
 /* -------------------------------------------------------------------- */
     char **papszPamDomains = oMDMD.GetDomainList();
 
     for( int iDomain = 0; papszPamDomains && papszPamDomains[iDomain] != NULL; iDomain++ )
     {
         const char *pszDomain = papszPamDomains[iDomain];
-        char **papszGT_MD = oGTiffMDMD.GetMetadata( pszDomain );
-        char **papszPAM_MD = CSLDuplicate(oMDMD.GetMetadata( pszDomain ));
+        char **papszGT_MD = CSLDuplicate(oGTiffMDMD.GetMetadata( pszDomain ));
+        char **papszPAM_MD = oMDMD.GetMetadata( pszDomain );
 
-        papszPAM_MD = CSLMerge( papszPAM_MD, papszGT_MD );
+        papszGT_MD = CSLMerge( papszGT_MD, papszPAM_MD );
 
-        oGTiffMDMD.SetMetadata( papszPAM_MD, pszDomain );
-        CSLDestroy( papszPAM_MD );
+        oGTiffMDMD.SetMetadata( papszGT_MD, pszDomain );
+        CSLDestroy( papszGT_MD );
     }
 
     for( int i = 1; i <= GetRasterCount(); i++)
@@ -5345,13 +5345,13 @@ void GTiffDataset::ApplyPamInfo()
         for( int iDomain = 0; papszPamDomains && papszPamDomains[iDomain] != NULL; iDomain++ )
         {
             const char *pszDomain = papszPamDomains[iDomain];
-            char **papszGT_MD = poBand->oGTiffMDMD.GetMetadata( pszDomain );
-            char **papszPAM_MD = CSLDuplicate(poBand->oMDMD.GetMetadata( pszDomain ));
+            char **papszGT_MD = CSLDuplicate(poBand->oGTiffMDMD.GetMetadata( pszDomain ));
+            char **papszPAM_MD = poBand->oMDMD.GetMetadata( pszDomain );
 
-            papszPAM_MD = CSLMerge( papszPAM_MD, papszGT_MD );
+            papszGT_MD = CSLMerge( papszGT_MD, papszPAM_MD );
 
-            poBand->oGTiffMDMD.SetMetadata( papszPAM_MD, pszDomain );
-            CSLDestroy( papszPAM_MD );
+            poBand->oGTiffMDMD.SetMetadata( papszGT_MD, pszDomain );
+            CSLDestroy( papszGT_MD );
         }
     }
 }
