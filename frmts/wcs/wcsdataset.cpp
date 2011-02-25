@@ -346,8 +346,8 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     
 {
     if( (poODS->nMaxCols > 0 && poODS->nMaxCols < nBufXSize)
-    ||  (poODS->nMaxRows > 0 && poODS->nMaxRows < nBufYSize) )
-      return CE_Failure;
+        ||  (poODS->nMaxRows > 0 && poODS->nMaxRows < nBufYSize) )
+        return CE_Failure;
 
     if( poODS->TestUseBlockIO( nXOff, nYOff, nXSize, nYSize,
                                nBufXSize,nBufYSize ) )
@@ -501,8 +501,8 @@ CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 {
     if( (nMaxCols > 0 && nMaxCols < nBufXSize)
-    ||  (nMaxRows > 0 && nMaxRows < nBufYSize) )
-      return CE_Failure;
+        ||  (nMaxRows > 0 && nMaxRows < nBufYSize) )
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      We need various criteria to skip out to block based methods.    */
@@ -762,13 +762,13 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
             dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
             dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
             
-            dfMinX = nXOff * adfGeoTransform[1] + adfGeoTransform[0] 
-                + dfXStep * 0.49;
-            dfMaxX = dfMinX + (nBufXSize - 1 + 0.02) * dfXStep;
+            dfMinX  = nXOff * adfGeoTransform[1] + adfGeoTransform[0] 
+                    + dfXStep * 0.5;
+            dfMaxX  = dfMinX + (nBufXSize - 1) * dfXStep;
 
-            dfMaxY = nYOff * adfGeoTransform[5] + adfGeoTransform[3] 
-                + dfYStep * 0.49;
-            dfMinY = dfMaxY + (nBufYSize - 1 + 0.02) * dfYStep;
+            dfMaxY  = nYOff * adfGeoTransform[5] + adfGeoTransform[3] 
+                    + dfYStep * 0.5;
+            dfMinY  = dfMaxY + (nBufYSize - 1) * dfYStep;
         }
 
         osRequest.Printf( 
@@ -2074,7 +2074,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->TryLoadXML();
-
     return( poDS );
 }
 
