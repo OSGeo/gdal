@@ -478,7 +478,7 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
     if(strlen(szCTString) > 0 && !strstr(szCTString, "PCS Name = "))
     {
       const char* pszProjCS = poSRS->GetAttrValue( "PROJCS" );
-      if(!(pszProjCS && strlen(pszProjCS) > 0) && !strstr(szCTString, "Projected Coordinates")
+      if((!(pszProjCS && strlen(pszProjCS) > 0) && !strstr(szCTString, "Projected Coordinates"))
          || strstr(pszProjCS, "unnamed"))
         poSRS->SetNode( "PROJCS", szCTString );
       ret = TRUE;
@@ -639,8 +639,8 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
       SetCitationToSRS(hGTIF, szCTString, strlen(szCTString), PCSCitationGeoKey, poSRS, pLinearUnitIsSet);
       const char *pcsName = poSRS->GetAttrValue("PROJCS");
       const char *pStr = NULL;
-      if( pcsName && (pStr = strstr(pcsName, "State Plane Zone ")) != NULL
-       || (pStr = strstr(szCTString, "State Plane Zone ")) != NULL )
+      if( (pcsName && (pStr = strstr(pcsName, "State Plane Zone ")) != NULL)
+          || (pStr = strstr(szCTString, "State Plane Zone ")) != NULL )
       {
         pStr += strlen("State Plane Zone ");
         int statePlaneZone = abs(atoi(pStr));
