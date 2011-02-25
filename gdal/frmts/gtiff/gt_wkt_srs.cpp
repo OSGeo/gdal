@@ -364,6 +364,25 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
           else
             oSRS.SetNode( "PROJCS", szCTString );
         }
+
+#if defined(ESRI_SPECIFIC)
+        /* Handle state plane and UTM in citation key */
+        if( CheckCitationKeyForStatePlaneUTM(hGTIF, psDefn, &oSRS, &linearUnitIsSet) )
+        {
+          char	*pszWKT;
+          oSRS.morphFromESRI();
+          oSRS.FixupOrdering();
+          if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
+              return pszWKT;
+        }
+
+        // ESRI specific, override with citation string to match PE names.
+        // check GTCitationGeoKey if it exists
+        szCTString[0] = '\0';
+        if( hGTIF && GTIFKeyGet( hGTIF, GTCitationGeoKey, szCTString, 0, sizeof(szCTString) ) )
+          SetCitationToSRS(hGTIF, szCTString, sizeof(szCTString), GTCitationGeoKey, &oSRS, &linearUnitIsSet);
+#endif /* defined(ESRI_SPECIFIC) */
+
     }
     
 /* ==================================================================== */
@@ -661,6 +680,10 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
           case CT_CylindricalEqualArea:
             oSRS.SetCEA( adfParm[0], adfParm[1],
                          adfParm[5], adfParm[6] );
+            break;
+          default:
+            if( oSRS.IsProjected() )
+                oSRS.GetRoot()->SetValue( "LOCAL_CS" );
             break;
         }
 
@@ -1111,7 +1134,8 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /*      Handle the projection transformation.                           */
 /* -------------------------------------------------------------------- */
     const char *pszProjection = poSRS->GetAttrValue( "PROJECTION" );
-
+    int bWritePEString = FALSE;
+    
     if( nPCS != KvUserDefined )
     {
         GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
@@ -1849,8 +1873,17 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
     }
-    
+
     else
+    {
+        bWritePEString = TRUE;
+    }
+    
+    if( bWritePEString 
+#if defined(ESRI_SPECIFIC)
+        || poSRS->GetAttrValue("VERTCS") != NULL 
+#endif
+        )
     {
         /* Anyhing we can't map, we store as an ESRI PE string with a citation key */
         char *pszPEString = NULL;
@@ -1859,12 +1892,12 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         int peStrLen = strlen(pszPEString);
         if(peStrLen > 0)
         {
-            char *outPeStr = new char[peStrLen + strlen("ESRI PE String = ")+1];
+            char *outPeStr = (char *) CPLMalloc( peStrLen + strlen("ESRI PE String = ")+1 );
             strcpy(outPeStr, "ESRI PE String = "); 
             strcat(outPeStr, pszPEString); 
             GTIFKeySet( psGTIF, PCSCitationGeoKey, TYPE_ASCII, 0, outPeStr ); 
             peStrStored = TRUE;
-            delete[] outPeStr; 
+            CPLFree( outPeStr );
         }
         if(pszPEString)
             CPLFree( pszPEString );
@@ -1914,8 +1947,21 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         && poSRS->GetRoot()->GetChild(0) != NULL 
         && (poSRS->IsProjected() || poSRS->IsLocal()) )
     {
+#if defined(ESRI_SPECIFIC)
+      const char* pszPcsName = poSRS->GetRoot()->GetChild(0)->GetValue(); 
+      if( strlen(pszPcsName) > 0 ) 
+      { 
+          char* newPcsName = (char *) CPLMalloc(strlen(pszPcsName) + strlen("PCS Name = ") + 1); 
+          strcpy( newPcsName, "PCS Name = " ); 
+          strcat(newPcsName, pszPcsName); 
+          GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0,  
+                      newPcsName ); 
+          CPLFree( newPcsName ); 
+      } 
+#else
         GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0, 
                     poSRS->GetRoot()->GetChild(0)->GetValue() );
+#endif
     }
 
 /* -------------------------------------------------------------------- */
