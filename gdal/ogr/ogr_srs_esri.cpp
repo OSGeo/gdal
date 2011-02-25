@@ -597,8 +597,8 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
  * importFromESRI() by an automatical call to morphFromESRI(). 
  *
  * Currently only GEOGRAPHIC, UTM, STATEPLANE, GREATBRITIAN_GRID, ALBERS, 
- * EQUIDISTANT_CONIC, and TRANSVERSE (mercator) projections are supported
- * from old style files. 
+ * EQUIDISTANT_CONIC, TRANSVERSE (mercator), POLAR, MERCATOR and POLYCONIC
+ * projections are supported from old style files.
  *
  * At this time there is no equivelent exportToESRI() method.  Writing old
  * style .prj files is not supported by OGRSpatialReference. However the
@@ -780,6 +780,14 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                      1.0, 
                      OSR_GDV( papszPrj, "PARAM_2", 0.0 ), 
                      OSR_GDV( papszPrj, "PARAM_3", 0.0 ) );
+    }
+
+    else if( EQUAL(osProj,"POLYCONIC") )
+    {
+        SetPolyconic( OSR_GDV( papszPrj, "PARAM_2", 0.0 ),
+                      OSR_GDV( papszPrj, "PARAM_1", 0.0 ),
+                      OSR_GDV( papszPrj, "PARAM_3", 0.0 ),
+                      OSR_GDV( papszPrj, "PARAM_4", 0.0 ) );
     }
 
     else
