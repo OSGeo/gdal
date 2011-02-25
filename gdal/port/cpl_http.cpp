@@ -339,6 +339,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         if (response_code >= 400 && response_code < 600)
         {
             psResult->pszErrBuf = CPLStrdup(CPLSPrintf("HTTP error code : %d", (int)response_code));
+            CPLError( CE_Failure, CPLE_AppDefined, "%s", psResult->pszErrBuf );
         }
     }
 
