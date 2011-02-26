@@ -872,6 +872,10 @@ static int ProxyMain( int argc, char ** argv )
     poVDS->SetMetadata( ((GDALDataset*)hDataset)->GetMetadata() );
     AttachMetadata( (GDALDatasetH) poVDS, papszMetadataOptions );
 
+    const char* pszInterleave = GDALGetMetadataItem(hDataset, "INTERLEAVE", "IMAGE_STRUCTURE");
+    if (pszInterleave)
+        poVDS->SetMetadataItem("INTERLEAVE", pszInterleave, "IMAGE_STRUCTURE");
+
 /* -------------------------------------------------------------------- */
 /*      Transfer metadata that remains valid if the spatial             */
 /*      arrangement of the data is unaltered.                           */
