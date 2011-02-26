@@ -507,7 +507,7 @@ class CPL_DLL OGRSpatialReference
         int nCode, const char* pszDatumName, const char* pszUnitsName, 
         int nPCSCode, const char* pszCSName = 0 );
     OGRErr      ImportFromESRIWisconsinWKT( 
-        char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin, 
+        const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin, 
         const char* pszUnitsName, const char* pszCSName = 0 );
 };
 
