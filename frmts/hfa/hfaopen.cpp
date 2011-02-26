@@ -586,6 +586,9 @@ int HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfNoData )
 
     HFABand *poBand = hHFA->papoBand[nBand-1];
 
+    if( !poBand->bNoDataSet && poBand->nOverviews > 0 )
+      poBand = poBand->papoOverviews[0];
+
     *pdfNoData = poBand->dfNoData;
     return poBand->bNoDataSet;
 }
@@ -1025,11 +1028,15 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
         padfGeoTransform[0] = psMapInfo->upperLeftCenter.x
             - psMapInfo->pixelSize.width*0.5;
         padfGeoTransform[1] = psMapInfo->pixelSize.width;
+        if(padfGeoTransform[1] == 0.0)
+            padfGeoTransform[1] = 1.0;
         padfGeoTransform[2] = 0.0;
         if( psMapInfo->upperLeftCenter.y >= psMapInfo->lowerRightCenter.y )
             padfGeoTransform[5] = - psMapInfo->pixelSize.height;
         else
             padfGeoTransform[5] = psMapInfo->pixelSize.height;
+        if(padfGeoTransform[5] == 0.0)
+            padfGeoTransform[5] = 1.0;
 
         padfGeoTransform[3] = psMapInfo->upperLeftCenter.y
             - padfGeoTransform[5]*0.5;
@@ -1440,6 +1447,9 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
             nSize += strlen(poPro->proExeName) + 1;
 
         pabyData = poMIEntry->MakeData( nSize );
+        if(!pabyData)
+            return CE_Failure;
+
         poMIEntry->SetPosition();
 
         // Initialize the whole thing to zeros for a clean start.
@@ -1585,6 +1595,9 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
             nSize += strlen(poDatum->gridname) + 1;
 
         pabyData = poDatumEntry->MakeData( nSize );
+        if(!pabyData)
+            return CE_Failure;
+
         poDatumEntry->SetPosition();
 
         // Initialize the whole thing to zeros for a clean start.
