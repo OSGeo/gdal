@@ -2616,9 +2616,8 @@ def tiff_write_78():
     
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
-        if blocky == 1:
-            print('using SplitBand')
-        else:
+        if blocky != 1:
+            print('')
             print('using regular band (libtiff <= 3.9.2 or <= 4.0.0beta5, or SplitBand disabled by config option)')
 
     # Test reading a few samples to check that random reading works
@@ -3390,7 +3389,7 @@ def tiff_write_89():
         size = f.tell()
         f.close()
 
-        print('quality = %d, size = %d' % (quality, size))
+        #print('quality = %d, size = %d' % (quality, size))
 
         if quality != 90:
             if size >= last_size:
@@ -3438,7 +3437,7 @@ def tiff_write_90():
         size = f.tell()
         f.close()
 
-        print('quality = %d, size = %d' % (quality, size))
+        #print('quality = %d, size = %d' % (quality, size))
 
         if quality != 90:
             if size >= last_size:
@@ -3492,7 +3491,7 @@ def tiff_write_91():
         size = f.tell()
         f.close()
 
-        print('quality = %d, size = %d' % (quality, size))
+        #print('quality = %d, size = %d' % (quality, size))
 
         if quality != 90:
             if size >= last_size:
@@ -3548,7 +3547,7 @@ def tiff_write_92():
         size = f.tell()
         f.close()
 
-        print('quality = %d, size = %d' % (quality, size))
+        #print('quality = %d, size = %d' % (quality, size))
 
         if use_jpeg_quality_overview:
             if size >= last_size:
@@ -3609,7 +3608,7 @@ def tiff_write_93():
         size = f.tell()
         f.close()
 
-        print('quality = %d, size = %d' % (quality, size))
+        #print('quality = %d, size = %d' % (quality, size))
 
         if quality != 90:
             if size >= last_size:
