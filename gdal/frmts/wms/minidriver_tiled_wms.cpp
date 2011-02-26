@@ -383,7 +383,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                 if (m_projection_wkt.empty()) {
                     const char* pszSRS = CSLFetchNameValue(papszTokens,"SRS");
                     m_projection_wkt = (pszSRS) ? pszSRS : "";
-                    if (m_projection_wkt.empty())
+                    if (!m_projection_wkt.empty())
                         m_projection_wkt=ProjToWKT(m_projection_wkt);
                 }
 
