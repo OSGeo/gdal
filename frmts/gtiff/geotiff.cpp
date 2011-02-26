@@ -4786,16 +4786,8 @@ void GTiffDataset::PushMetadataToPam()
 /* -------------------------------------------------------------------- */
         if( poBand != NULL )
         {
-            int bSuccess;
-            double dfOffset = poBand->GetOffset( &bSuccess );
-            double dfScale = poBand->GetScale();
-
-            if( bSuccess && (dfOffset != 0.0 || dfScale != 1.0) )
-            {
-                poBand->GDALPamRasterBand::SetScale( dfScale );
-                poBand->GDALPamRasterBand::SetOffset( dfOffset );
-            }
-
+            poBand->GDALPamRasterBand::SetOffset( poBand->GetOffset() );
+            poBand->GDALPamRasterBand::SetScale( poBand->GetScale() );
             poBand->GDALPamRasterBand::SetUnitType( poBand->GetUnitType() );
         }
     }
@@ -8700,7 +8692,6 @@ int GTiffOneTimeInit()
 void GDALDeregister_GTiff( GDALDriver * )
 
 {
-    CPLDebug( "GDAL", "GDALDeregister_GTiff() called." );
     CSVDeaccess( NULL );
 
 #if defined(LIBGEOTIFF_VERSION) && LIBGEOTIFF_VERSION > 1150
