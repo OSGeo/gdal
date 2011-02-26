@@ -2065,7 +2065,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
 /*      Search a ESRI State Plane WKT and import it.                    */
 /************************************************************************/
 
-OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( char* prjName, double centralMeridian, double latOfOrigin, const char* unitsName, const char* csName )
+OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, double centralMeridian, double latOfOrigin, const char* unitsName, const char* csName )
 {
   /* if the CS name is known */
   if (!prjName && !unitsName && csName)
