@@ -519,77 +519,6 @@ int OGRWFSDataSource::DetectTransactionSupport(CPLXMLNode* psRoot)
 }
 
 /************************************************************************/
-/*                      WFS_FetchValueFromURL()                         */
-/************************************************************************/
-
-CPLString WFS_FetchValueFromURL(const char* pszURL, const char* pszKey)
-{
-    CPLString osKey(pszKey);
-    osKey += "=";
-    const char* pszExistingKey = FindSubStringInsensitive(pszURL, osKey);
-    if (pszExistingKey)
-    {
-        CPLString osValue(pszExistingKey + strlen(osKey));
-        const char* pszValue = osValue.c_str();
-        const char* pszSep = strchr(pszValue, '&');
-        if (pszSep)
-        {
-            osValue.resize(pszSep - pszValue);
-        }
-        return osValue;
-    }
-    return "";
-}
-
-/************************************************************************/
-/*                        WFS_AddKVToURL()                              */
-/************************************************************************/
-
-CPLString WFS_AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue)
-{
-    CPLString osURL(pszURL);
-    if (strchr(osURL, '?') == NULL)
-        osURL += "?";
-    pszURL = osURL.c_str();
-
-    CPLString osKey(pszKey);
-    osKey += "=";
-    const char* pszExistingKey = FindSubStringInsensitive(pszURL, osKey);
-    if (pszExistingKey)
-    {
-        CPLString osNewURL(osURL);
-        osNewURL.resize(pszExistingKey - pszURL);
-        if (pszValue)
-        {
-            if (osNewURL[osNewURL.size()-1] != '&' && osNewURL[osNewURL.size()-1] != '?')
-                osNewURL += '&';
-            osNewURL += osKey;
-            osNewURL += pszValue;
-        }
-        const char* pszNext = strchr(pszExistingKey, '&');
-        if (pszNext)
-        {
-            if (osNewURL[osNewURL.size()-1] == '&')
-                osNewURL += pszNext + 1;
-            else
-                osNewURL += pszNext;
-        }
-        return osNewURL;
-    }
-    else
-    {
-        if (pszValue)
-        {
-            if (osURL[osURL.size()-1] != '&' && osURL[osURL.size()-1] != '?')
-                osURL += '&';
-            osURL += osKey;
-            osURL += pszValue;
-        }
-        return osURL;
-    }
-}
-
-/************************************************************************/
 /*                      FindComparisonOperator()                        */
 /************************************************************************/
 
@@ -719,14 +648,14 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             return FALSE;
 
         CPLString osURL(pszBaseURL);
-        osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
-        osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetCapabilities");
-        osTypeName = WFS_FetchValueFromURL(osURL, "TYPENAME");
-        osURL = WFS_AddKVToURL(osURL, "TYPENAME", NULL);
-        osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
-        osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
-        osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", NULL);
-        osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", NULL);
+        osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
+        osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
+        osTypeName = CPLURLGetValue(osURL, "TYPENAME");
+        osURL = CPLURLAddKVP(osURL, "TYPENAME", NULL);
+        osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
+        osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
+        osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
+        osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", NULL);
 
         CPLDebug("WFS", "%s", osURL.c_str());
 
@@ -816,19 +745,19 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 nPageSize = 100;
         }
 
-        osTypeName = WFS_FetchValueFromURL(pszBaseURL, "TYPENAME");
+        osTypeName = CPLURLGetValue(pszBaseURL, "TYPENAME");
 
         psWFSCapabilities = WFSFindNode( psRoot, "WFS_Capabilities" );
         if (psWFSCapabilities == NULL)
         {
             CPLString osURL(pszBaseURL);
-            osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
-            osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetCapabilities");
-            osTypeName = WFS_FetchValueFromURL(osURL, "TYPENAME");
-            osURL = WFS_AddKVToURL(osURL, "TYPENAME", NULL);
-            osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
-            osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
-            osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", NULL);
+            osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
+            osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
+            osTypeName = CPLURLGetValue(osURL, "TYPENAME");
+            osURL = CPLURLAddKVP(osURL, "TYPENAME", NULL);
+            osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
+            osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
+            osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
 
             CPLDebug("WFS", "%s", osURL.c_str());
 
@@ -1003,7 +932,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 int bAxisOrderAlreadyInverted = FALSE;
 
                 /* If a SRSNAME parameter has been encoded in the URL, use it as the SRS */
-                CPLString osSRSName = WFS_FetchValueFromURL(pszBaseURL, "SRSNAME");
+                CPLString osSRSName = CPLURLGetValue(pszBaseURL, "SRSNAME");
                 if (osSRSName.size() != 0)
                 {
                     pszDefaultSRS = osSRSName.c_str();

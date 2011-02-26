@@ -238,7 +238,12 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
 /************************************************************************/
 
 /** 
- * Case insensitive find() alternative. 
+ * Case insensitive find() alternative.
+ *
+ * @param str substring to find.
+ * @param pos offset in the string at which the search starts.
+ * @return the position of substring in the string or std::string::npos if not found.
+ * @since GDAL 1.9.0
  */
 
 size_t CPLString::ifind( const std::string & str, size_t pos ) const
@@ -246,6 +251,15 @@ size_t CPLString::ifind( const std::string & str, size_t pos ) const
 {
     return ifind( str.c_str(), pos );
 }
+
+/**
+ * Case insensitive find() alternative.
+ *
+ * @param s substring to find.
+ * @param nPos offset in the string at which the search starts.
+ * @return the position of the substring in the string or std::string::npos if not found.
+ * @since GDAL 1.9.0
+ */
 
 size_t CPLString::ifind( const char *s, size_t nPos ) const
 
@@ -272,4 +286,94 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
     }
 
     return std::string::npos;
+}
+
+/************************************************************************/
+/*                         CPLURLGetValue()                             */
+/************************************************************************/
+
+/**
+ * Return the value matching a key from a key=value pair in a URL.
+ *
+ * @param pszURL the URL.
+ * @param pszKey the key to find.
+ * @return the value of empty string if not found.
+ * @since GDAL 1.9.0
+ */
+CPLString CPLURLGetValue(const char* pszURL, const char* pszKey)
+{
+    CPLString osKey(pszKey);
+    osKey += "=";
+    size_t nKeyPos = CPLString(pszURL).ifind(osKey);
+    if (nKeyPos != std::string::npos)
+    {
+        CPLString osValue(pszURL + nKeyPos + strlen(osKey));
+        const char* pszValue = osValue.c_str();
+        const char* pszSep = strchr(pszValue, '&');
+        if (pszSep)
+        {
+            osValue.resize(pszSep - pszValue);
+        }
+        return osValue;
+    }
+    return "";
+}
+
+/************************************************************************/
+/*                          CPLURLAddKVP()                              */
+/************************************************************************/
+
+/**
+ * Return a new URL with a new key=value pair.
+ *
+ * @param pszURL the URL.
+ * @param pszKey the key to find.
+ * @param pszValue the value of the key (may be NULL to unset an existing KVP).
+ * @return the modified URL.
+ * @since GDAL 1.9.0
+ */
+CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
+                       const char* pszValue)
+{
+    CPLString osURL(pszURL);
+    if (strchr(osURL, '?') == NULL)
+        osURL += "?";
+    pszURL = osURL.c_str();
+
+    CPLString osKey(pszKey);
+    osKey += "=";
+    size_t nKeyPos = osURL.ifind(osKey);
+    if (nKeyPos != std::string::npos)
+    {
+        CPLString osNewURL(osURL);
+        osNewURL.resize(nKeyPos);
+        if (pszValue)
+        {
+            if (osNewURL[osNewURL.size()-1] != '&' &&
+                osNewURL[osNewURL.size()-1] != '?')
+                osNewURL += '&';
+            osNewURL += osKey;
+            osNewURL += pszValue;
+        }
+        const char* pszNext = strchr(pszURL + nKeyPos, '&');
+        if (pszNext)
+        {
+            if (osNewURL[osNewURL.size()-1] == '&')
+                osNewURL += pszNext + 1;
+            else
+                osNewURL += pszNext;
+        }
+        return osNewURL;
+    }
+    else
+    {
+        if (pszValue)
+        {
+            if (osURL[osURL.size()-1] != '&' && osURL[osURL.size()-1] != '?')
+                osURL += '&';
+            osURL += osKey;
+            osURL += pszValue;
+        }
+        return osURL;
+    }
 }

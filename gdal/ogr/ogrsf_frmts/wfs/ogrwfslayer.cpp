@@ -161,14 +161,14 @@ OGRWFSLayer::~OGRWFSLayer()
 CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(int bWithNS)
 {
     CPLString osURL(pszBaseURL);
-    osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
-    osURL = WFS_AddKVToURL(osURL, "VERSION", poDS->GetVersion());
-    osURL = WFS_AddKVToURL(osURL, "REQUEST", "DescribeFeatureType");
-    osURL = WFS_AddKVToURL(osURL, "TYPENAME", pszName);
-    osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", NULL);
-    osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", NULL);
-    osURL = WFS_AddKVToURL(osURL, "FILTER", NULL);
-    osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
+    osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
+    osURL = CPLURLAddKVP(osURL, "VERSION", poDS->GetVersion());
+    osURL = CPLURLAddKVP(osURL, "REQUEST", "DescribeFeatureType");
+    osURL = CPLURLAddKVP(osURL, "TYPENAME", pszName);
+    osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
+    osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
+    osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
+    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
 
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -179,7 +179,7 @@ CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(int bWithNS)
         osValue += "=";
         osValue += pszNSVal;
         osValue += ")";
-        osURL = WFS_AddKVToURL(osURL, "NAMESPACE", osValue);
+        osURL = CPLURLAddKVP(osURL, "NAMESPACE", osValue);
     }
 
     return osURL;
@@ -333,12 +333,12 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
 CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
 {
     CPLString osURL(pszBaseURL);
-    osURL = WFS_AddKVToURL(osURL, "SERVICE", "WFS");
-    osURL = WFS_AddKVToURL(osURL, "VERSION", poDS->GetVersion());
-    osURL = WFS_AddKVToURL(osURL, "REQUEST", "GetFeature");
-    osURL = WFS_AddKVToURL(osURL, "TYPENAME", pszName);
+    osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
+    osURL = CPLURLAddKVP(osURL, "VERSION", poDS->GetVersion());
+    osURL = CPLURLAddKVP(osURL, "REQUEST", "GetFeature");
+    osURL = CPLURLAddKVP(osURL, "TYPENAME", pszName);
     if (poDS->GetRequiredOutputFormat())
-        osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
+        osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
 
     if (poDS->IsPagingAllowed() && !bRequestHits)
     {
@@ -352,20 +352,20 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         }
         if (nFeatures >= poDS->GetPageSize())
         {
-            osURL = WFS_AddKVToURL(osURL, "STARTINDEX", CPLSPrintf("%d", nPagingStartIndex + 1));
+            osURL = CPLURLAddKVP(osURL, "STARTINDEX", CPLSPrintf("%d", nPagingStartIndex + 1));
             nMaxFeatures = poDS->GetPageSize();
             nFeatureCountRequested = nMaxFeatures;
             bPagingActive = TRUE;
         }
         else
         {
-            osURL = WFS_AddKVToURL(osURL, "STARTINDEX", NULL);
+            osURL = CPLURLAddKVP(osURL, "STARTINDEX", NULL);
         }
     }
 
     if (nMaxFeatures)
     {
-        osURL = WFS_AddKVToURL(osURL, "MAXFEATURES", CPLSPrintf("%d", nMaxFeatures));
+        osURL = CPLURLAddKVP(osURL, "MAXFEATURES", CPLSPrintf("%d", nMaxFeatures));
     }
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -376,7 +376,7 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         osValue += "=";
         osValue += pszNSVal;
         osValue += ")";
-        osURL = WFS_AddKVToURL(osURL, "NAMESPACE", osValue);
+        osURL = CPLURLAddKVP(osURL, "NAMESPACE", osValue);
     }
 
     delete poFetchedFilterGeom;
@@ -437,16 +437,16 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
             osFilter += "</And>";
         osFilter += "</Filter>";
 
-        osURL = WFS_AddKVToURL(osURL, "FILTER", osFilter);
+        osURL = CPLURLAddKVP(osURL, "FILTER", osFilter);
     }
         
     if (bRequestHits)
     {
-        osURL = WFS_AddKVToURL(osURL, "RESULTTYPE", "hits");
+        osURL = CPLURLAddKVP(osURL, "RESULTTYPE", "hits");
     }
 
     /* If no PROPERTYNAME is specified, build one if there are ignored fields */
-    const char* pszPropertyName = WFS_FetchValueFromURL(osURL, "PROPERTYNAME");
+    const char* pszPropertyName = CPLURLGetValue(osURL, "PROPERTYNAME");
     if (pszPropertyName[0] == 0 && poFeatureDefn != NULL)
     {
         int bHasIgnoredField = FALSE;
@@ -485,7 +485,7 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         if (bHasIgnoredField)
         {
             osPropertyName = "(" + osPropertyName + ")";
-            osURL = WFS_AddKVToURL(osURL, "PROPERTYNAME", osPropertyName);
+            osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", osPropertyName);
         }
     }
 
@@ -592,7 +592,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     int bZIP = FALSE;
     int bGZIP = FALSE;
 
-    CPLString osOutputFormat = WFS_FetchValueFromURL(osURL, "OUTPUTFORMAT");
+    CPLString osOutputFormat = CPLURLGetValue(osURL, "OUTPUTFORMAT");
     const char* pszOutputFormat = osOutputFormat.c_str();
 
     if (FindSubStringInsensitive(pszContentType, "json") ||
@@ -812,7 +812,7 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(CPLXMLNode* psSchema)
         bGotApproximateLayerDefn = TRUE;
     }
 
-    const char* pszPropertyName = WFS_FetchValueFromURL(pszBaseURL, "PROPERTYNAME");
+    const char* pszPropertyName = CPLURLGetValue(pszBaseURL, "PROPERTYNAME");
 
     int i;
     poFeatureDefn->SetGeomType(poSrcFDefn->GetGeomType());
@@ -1129,7 +1129,7 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 {
     char* pabyData = NULL;
     CPLString osURL = MakeGetFeatureURL(0, TRUE);
-    osURL = WFS_AddKVToURL(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
+    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
     CPLDebug("WFS", "%s", osURL.c_str());
 
     CPLHTTPResult* psResult = poDS->HTTPFetch( osURL, NULL);
@@ -1241,7 +1241,7 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
     int nFeatures = atoi(pszValue);
     /* Hum, http://deegree3-testing.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=ad:Address&OUTPUTFORMAT=text/xml;%20subtype=gml/3.2.1&RESULTTYPE=hits */
     /* returns more than MAXFEATURES features... So truncate to MAXFEATURES */
-    CPLString osMaxFeatures = WFS_FetchValueFromURL(osURL, "MAXFEATURES");
+    CPLString osMaxFeatures = CPLURLGetValue(osURL, "MAXFEATURES");
     if (osMaxFeatures.size() != 0)
     {
         int nMaxFeatures = atoi(osMaxFeatures);
