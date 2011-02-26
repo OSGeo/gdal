@@ -4,6 +4,7 @@ GeoServer:
 http://sigma.openplans.org/geoserver/ows
 http://demo.opengeo.org/geoserver/wfs (WFS-T with write permissions)
 http://giswebservices.massgis.state.ma.us/geoserver/wfs
+http://gem.demo.opengeo.org/geoserver/wfs
 
 MapServer:
 http://www.bsc-eoc.org/cgi-bin/bsc_ows.asp (4.8.1)
@@ -26,6 +27,7 @@ http://inspire.kademo.nl/deegree-wfs/services
 TinyOWS:
 http://dev4.mapgears.com/cgi-bin/tinyows (old & buggy version)
 http://www.tinyows.org/cgi-bin/tinyows (WFS-T with write permissions)
+http://gis-lab.info/scripts/tinyows/tinyows.cgi
 
 CubeWerx:
 http://ceoware2.ccrs.nrcan.gc.ca/cubewerx/cwwfs/cubeserv.cgi?datastore=CEOWARE2
