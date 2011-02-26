@@ -415,6 +415,19 @@ def osr_basic_11():
     return 'fail'
 
 ###############################################################################
+# Test URN support for OGC:CRS84.
+
+def osr_basic_12():
+
+    wkt_1 = osr.GetUserInputAsWKT( 'CRS:84' )
+    wkt_2 = osr.GetUserInputAsWKT( 'WGS84' )
+    if wkt_1 != wkt_2:
+        gdaltest.post_reason( 'CRS:84 lookup not as expected.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_basic_1,
@@ -428,6 +441,7 @@ gdaltest_list = [
     osr_basic_9,
     osr_basic_10,
     osr_basic_11,
+    osr_basic_12,
     None ]
 
 if __name__ == '__main__':
