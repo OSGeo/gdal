@@ -451,6 +451,22 @@ def wms_12():
     return 'success'
 
 ###############################################################################
+# Test reading WMS through VRT (test effect of r21866)
+
+def wms_13():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    name = "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/"
+    ds = gdal.Open( "data/DNEC_250K.vrt" )
+    if ds.ReadRaster(0, 0, 1024, 682) is None:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 def wms_cleanup():
 
     gdaltest.wms_ds = None
@@ -471,6 +487,7 @@ gdaltest_list = [
     wms_10,
     wms_11,
     wms_12,
+    wms_13,
     wms_cleanup ]
 
 if __name__ == '__main__':
