@@ -259,6 +259,10 @@ public:
 
 };
 
+CPLString CPL_DLL CPLURLGetValue(const char* pszURL, const char* pszKey);
+CPLString CPL_DLL CPLURLAddKVP(const char* pszURL, const char* pszKey,
+                               const char* pszValue);
+
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
 
 #endif /* _CPL_STRING_H_INCLUDED */

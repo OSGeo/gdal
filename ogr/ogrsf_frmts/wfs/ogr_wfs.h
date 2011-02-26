@@ -38,8 +38,6 @@
 #include "cpl_http.h"
 
 CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName);
-CPLString WFS_FetchValueFromURL(const char* pszURL, const char* pszKey);
-CPLString WFS_AddKVToURL(const char* pszURL, const char* pszKey, const char* pszValue);
 CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
                                     int nVersion,
                                     int bPropertyIsNotEqualToSupported,
