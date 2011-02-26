@@ -880,7 +880,7 @@ double HFARasterBand::GetMinimum( int *pbSuccess )
     {
         if( pbSuccess )
             *pbSuccess = TRUE;
-        return atof(pszValue);
+        return CPLAtofM(pszValue);
     }
     else
     {
@@ -901,7 +901,7 @@ double HFARasterBand::GetMaximum( int *pbSuccess )
     {
         if( pbSuccess )
             *pbSuccess = TRUE;
-        return atof(pszValue);
+        return CPLAtofM(pszValue);
     }
     else
     {
@@ -1547,7 +1547,7 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             
             if( padfBinValues != NULL )
             {
-                poRAT->CreateColumn( "Value", GFT_Integer, GFU_MinMax );
+                poRAT->CreateColumn( "BinValues", GFT_Real, GFU_MinMax );
                 for( i = 0; i < nRowCount; i++ )
                     poRAT->SetValue( i, poRAT->GetColumnCount()-1, 
                                      padfBinValues[i] );
@@ -2242,7 +2242,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proNumber = EPRJ_EQUIRECTANGULAR;
         sPro.proName = (char*) "Equirectangular";
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -2441,7 +2441,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
-    else if( EQUAL(pszProjName, "Krovak") )
+    else if( EQUAL(pszProjName, SRS_PT_KROVAK) )
     {
         sPro.proNumber = EPRJ_KROVAK;
         sPro.proName = (char*) "Krovak";
@@ -2482,7 +2482,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
-    else if( EQUAL(pszProjName, "Cylindrical_Equal_Area") )
+    else if( EQUAL(pszProjName, SRS_PT_CYLINDRICAL_EQUAL_AREA) )
     {
         sPro.proNumber = EPRJ_CYLINDRICAL_EQUAL_AREA;
         sPro.proName = (char*) "Cylindrical_Equal_Area";
@@ -2558,7 +2558,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[10] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_POINT_2, 60.0)*D2R;
         sPro.proParams[11] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_POINT_2, 60.0)*D2R;
     }
-    else if( EQUAL(pszProjName, "Hotine_Oblique_Mercator_Two_Point_Natural_Origin") )
+    else if( EQUAL(pszProjName, SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
     {
         sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN;
         sPro.proName = (char*) "Hotine_Oblique_Mercator_Two_Point_Natural_Origin";
@@ -3032,6 +3032,15 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         // UTM description.
         oSRS.SetProjCS( "unnamed" );
         oSRS.SetUTM( psPro->proZone, psPro->proParams[3] >= 0.0 );
+
+        // The PCS name from the above function may be different with the input name. 
+        // If there is a PCS name in psMapInfo that is different with 
+        // the one in psPro, just use it as the PCS name. This case happens 
+        // if the dataset's SR was written by the new GDAL. 
+        if( psMapInfo && strlen(psMapInfo->proName) > 0 
+            && strlen(psPro->proName) > 0 
+            && !EQUAL(psMapInfo->proName, psPro->proName) )
+            oSRS.SetProjCS( psMapInfo->proName );
         break;
 
       case EPRJ_STATE_PLANE:
@@ -3041,12 +3050,43 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
           
           pszUnitsName = CPLStrdup( pszUnitsName );
 
+          /* Historically, hfa used esri state plane zone code. Try esri pe string first. */ 
+          int zoneCode = ESRIToUSGSZone(psPro->proZone);
+          char nad[32];
+          strcpy(nad, "HARN");
+          if(psDatum)
+              strcpy(nad, psDatum->datumname);
+          char units[32];
+          strcpy(units, "meters");
+          if(psMapInfo)
+              strcpy(units, psMapInfo->units);
+          else if(pszUnitsName && strlen(pszUnitsName) > 0)
+              strcpy(units, pszUnitsName);
+          int proNu = 0;
+          if(psPro)
+              proNu = psPro->proNumber;
+          if(oSRS.ImportFromESRIStatePlaneWKT(zoneCode, nad, units, proNu) == OGRERR_NONE)
+          {
+              CPLFree( pszUnitsName );
+              oSRS.morphFromESRI();
+              oSRS.AutoIdentifyEPSG();
+              oSRS.Fixup();
+              if( oSRS.exportToWkt( &pszNewProj ) == OGRERR_NONE )
+                  return pszNewProj;
+          }
+
           /* Set state plane zone.  Set NAD83/27 on basis of spheroid */
           oSRS.SetStatePlane( ESRIToUSGSZone(psPro->proZone), 
                               fabs(psPro->proSpheroid.a - 6378137.0)< 1.0,
                               pszUnitsName, dfLinearUnits );
 
           CPLFree( pszUnitsName );
+
+          // Same as the UTM, The following is needed.
+          if( psMapInfo && strlen(psMapInfo->proName) > 0 
+              && strlen(psPro->proName) > 0 
+              && !EQUAL(psMapInfo->proName, psPro->proName) )
+              oSRS.SetProjCS( psMapInfo->proName );
       }
       break;
 
@@ -3057,6 +3097,18 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         break;
 
       case EPRJ_LAMBERT_CONFORMAL_CONIC:
+        // check the possible Wisconsin first
+        if(psDatum && psMapInfo && EQUAL(psDatum->datumname, "HARN"))
+        {
+            if(oSRS.ImportFromESRIWisconsinWKT("Lambert_Conformal_Conic", psPro->proParams[4]*R2D, psPro->proParams[5]*R2D, psMapInfo->units) == OGRERR_NONE)
+            {
+                oSRS.morphFromESRI();
+                oSRS.AutoIdentifyEPSG();
+                oSRS.Fixup();
+                if( oSRS.exportToWkt( &pszNewProj ) == OGRERR_NONE )
+                    return pszNewProj;
+            }
+        }
         oSRS.SetLCC( psPro->proParams[2]*R2D, psPro->proParams[3]*R2D,
                      psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
                      psPro->proParams[6], psPro->proParams[7] );
@@ -3093,6 +3145,18 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
       case EPRJ_TRANSVERSE_MERCATOR:
       case EPRJ_GAUSS_KRUGER:
+        // check the possible Wisconsin first
+        if(psDatum && psMapInfo && EQUAL(psDatum->datumname, "HARN"))
+        {
+            if(oSRS.ImportFromESRIWisconsinWKT("Transverse_Mercator", psPro->proParams[4]*R2D, psPro->proParams[5]*R2D, psMapInfo->units) == OGRERR_NONE)
+            {
+                oSRS.morphFromESRI();
+                oSRS.AutoIdentifyEPSG();
+                oSRS.Fixup();
+                if( oSRS.exportToWkt( &pszNewProj ) == OGRERR_NONE )
+                    return pszNewProj;
+            }
+        }
         oSRS.SetTM( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
                     psPro->proParams[2],
                     psPro->proParams[6], psPro->proParams[7] );
