@@ -98,6 +98,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
+    virtual char **GetFileList(void);
 };
 
 /************************************************************************/
@@ -2103,6 +2104,31 @@ const char *WCSDataset::GetProjectionRef()
         return pszProjection;
 
     return( "" );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **WCSDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+/* -------------------------------------------------------------------- */
+/*      ESRI also wishes to include service urls in the file list       */
+/*      though this is not currently part of the general definition     */
+/*      of GetFileList() for GDAL.                                      */
+/* -------------------------------------------------------------------- */
+#ifdef ESRI_BUILD
+    CPLString file;
+    file.Printf( "%s%s",
+                 CPLGetXMLValue( psService, "ServiceURL", "" ),
+                 CPLGetXMLValue( psService, "CoverageName", "" ) );
+    papszFileList = CSLAddString( papszFileList, file.c_str() );
+#endif /* def ESRI_BUILD */
+    
+    return papszFileList;
 }
 
 /************************************************************************/
