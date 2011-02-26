@@ -454,3 +454,7 @@
 104261,GEOGCS["GCS_Merchich_Degree",DATUM["Merchich",SPHEROID["Clarke_1880_IGN",6378249.2,293.46602]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AUTHORITY["EPSG","104261"]]
 104304,GEOGCS["GCS_Voirol_1875_Degree",DATUM["Voirol_1875",SPHEROID["Clarke_1880_IGN",6378249.2,293.46602]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AUTHORITY["EPSG","104304"]]
 104305,GEOGCS["GCS_Voirol_Unifie_1960_Degree",DATUM["Voirol_Unifie_1960",SPHEROID["Clarke_1880_RGS",6378249.145,293.465]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AUTHORITY["EPSG","104305"]]
+
+# 102113 is defined in http://www.spatialreference.org/ref/sr-org/45/ as equivalent to EPSG:3857
+# and is used by the http://137.227.242.85/ArcGIS/services/FWS_Wetlands_WMS/mapserver/wmsserver? WMS server
+102113,PROJCS["WGS_1984_Web_Mercator",GEOGCS["GCS_WGS_1984_Major_Auxiliary_Sphere",DATUM["WGS_1984_Major_Auxiliary_Sphere",SPHEROID["WGS_1984_Major_Auxiliary_Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["latitude_of_origin",0.0],UNIT["Meter",1.0],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"],AUTHORITY["EPSG","102113"]]
