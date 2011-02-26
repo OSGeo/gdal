@@ -269,6 +269,15 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
             dfInDegrees = 180.0 / PI;
             break;
 
+          case 9102:
+          case 9107:
+          case 9108:
+          case 9110:
+          case 9122:
+            pszUOMName = "degree";
+            dfInDegrees = 1.0;
+            break;
+
           case 9103:
             pszUOMName = "arc-minute";
             dfInDegrees = 1 / 60.0;
