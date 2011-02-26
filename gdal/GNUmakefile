@@ -74,7 +74,7 @@ else
 swig-target:    swig-modules;
 endif
 
-swig-modules:
+swig-modules:	lib-target
 	(cd swig; $(MAKE) build)
 
 clean:	lclean
