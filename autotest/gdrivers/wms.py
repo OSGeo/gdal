@@ -353,6 +353,104 @@ def wms_9():
     return 'success'
 
 ###############################################################################
+# Test getting subdatasets from GetCapabilities
+
+def wms_10():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    name = "WMS:http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?"
+    ds = gdal.Open( name )
+    if ds is None:
+        gdaltest.post_reason( 'open of %s failed.' % name)
+        return 'fail'
+
+    subdatasets = ds.GetMetadata("SUBDATASETS")
+    if len(subdatasets) == 0:
+        gdaltest.post_reason( 'did not get expected subdataset count' )
+        print(subdatasets)
+        return 'fail'
+
+    ds = None
+
+    name = subdatasets['SUBDATASET_1_NAME']
+    ds = gdal.Open( name )
+    if ds is None:
+        gdaltest.post_reason( 'open of %s failed.' % name)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test getting subdatasets from GetTileService
+
+def wms_11():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    name = "WMS:http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService"
+    ds = gdal.Open( name )
+    if ds is None:
+        gdaltest.post_reason( 'open of %s failed.' % name)
+        return 'fail'
+
+    subdatasets = ds.GetMetadata("SUBDATASETS")
+    if len(subdatasets) == 0:
+        gdaltest.post_reason( 'did not get expected subdataset count' )
+        print(subdatasets)
+        return 'fail'
+
+    ds = None
+
+    name = subdatasets['SUBDATASET_1_NAME']
+    ds = gdal.Open( name )
+    if ds is None:
+        gdaltest.post_reason( 'open of %s failed.' % name)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test getting subdatasets from a TMS server
+
+def wms_12():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    name = "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/"
+    ds = gdal.Open( name )
+    if ds is None:
+        gdaltest.post_reason( 'open of %s failed.' % name)
+        return 'fail'
+
+    subdatasets = ds.GetMetadata("SUBDATASETS")
+    if len(subdatasets) == 0:
+        gdaltest.post_reason( 'did not get expected subdataset count' )
+        print(subdatasets)
+        return 'fail'
+
+    ds = None
+
+    for i in range(len(subdatasets) / 2):
+        desc = subdatasets['SUBDATASET_%d_DESC' % (i+1)]
+        if desc == 'basic':
+            name = subdatasets['SUBDATASET_%d_NAME' % (i+1)]
+            ds = gdal.Open( name )
+            if ds is None:
+                gdaltest.post_reason( 'open of %s failed.' % name)
+                return 'fail'
+            ds = None
+
+    return 'success'
+
+###############################################################################
 def wms_cleanup():
 
     gdaltest.wms_ds = None
@@ -370,6 +468,9 @@ gdaltest_list = [
     wms_7,
     wms_8,
     wms_9,
+    wms_10,
+    wms_11,
+    wms_12,
     wms_cleanup ]
 
 if __name__ == '__main__':

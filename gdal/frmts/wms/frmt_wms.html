@@ -30,7 +30,7 @@
 		</tr>
 		<tr>
 			<td class="xml">    &lt;Service name="<span class="value">WMS</span>"&gt;</td>
-			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS. (required)</td>
+			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS or TiledWMS. (required)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;Version&gt;<span class="value">1.1.1</span>&lt;/Version&gt;</td>
@@ -58,8 +58,12 @@
         </tr>
 		<tr>
 			<td class="xml">        &lt;Layers&gt;<span class="value">modis,global_mosaic</span>&lt;/Layers&gt;</td>
-			<td class="desc">Comma separated list of layers. (required)</td>
+			<td class="desc">Comma separated list of layers. (required, except for TiledWMS)</td>
 		</tr>
+        <tr>
+            <td class="xml">        &lt;TiledGroupName&gt;<span class="value">Clementine</span>&lt;/TiledGroupName&gt;</td>
+            <td class="desc">Comma separated list of layers. (required for TiledWMS)</td>
+        </tr>
 		<tr>
 			<td class="xml">        &lt;Styles&gt;&lt;/Styles&gt;</td>
 			<td class="desc">Comma separated list of styles. (optional)</td>
@@ -76,7 +80,7 @@
 		</tr>
 		<tr>
 			<td class="xml">    &lt;DataWindow&gt;</td>
-			<td class="desc">Define size and extents of the data. (required)</td>
+			<td class="desc">Define size and extents of the data. (required, except for TiledWMS)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;UpperLeftX&gt;<span class="value">-180.0</span>&lt;/UpperLeftX&gt;</td>
@@ -271,7 +275,7 @@
   Two examples of usage of the TMS service are included in the examples below.
 </p>  
 
-<h3>OnEarth Tiled WMS</h3>
+<h3>OnEarth Tiled WMS (GDAL 1.9.0 and later)</h3>
 <p>
 The OnEarth Tiled WMS minidriver supports the Tiled WMS specification
 implemented for the JPL OnEarth driver per the specification at
@@ -294,14 +298,15 @@ server using the GetTileService method at open time. <p>
 <h2>Examples</h2>
 
 <ul>
-    <li>
+    <li><p>
 	<a href="frmt_wms_onearth_global_mosaic.xml">onearth_global_mosaic.xml</a> - Landsat mosaic from a <a href="http://onearth.jpl.nasa.gov/">OnEarth</a> WMS server<br>
 	<pre>gdal_translate -of JPEG -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic.jpg</pre>
 	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic.jpg" alt="example output">
 	<pre>gdal_translate -of JPEG -projwin -10 55 30 35 -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic2.jpg</pre>
 	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic2.jpg" alt="example output">
-    </li>
-    <li>
+    </p></li>
+
+    <li><p>
 	<a href="frmt_wms_metacarta_wmsc.xml">metacarta_wmsc.xml</a> - 
 	It is possible to configure a WMS Service conforming to a WMS-C cache by
 	specifying a number of overviews and specifying the 'block size' as the 
@@ -309,40 +314,76 @@ server using the GetTileService method at open time. <p>
 	a 19-level "Global Profile" WMS-C cache.
 	<pre>gdal_translate -of PNG -outsize 500 250 metacarta_wmsc.xml metacarta_wmsc.png</pre>
 	<img src="http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png" alt="example output">
-    </li>
-    <li>
+    </p></li>
+
+    <li><p>
 	<a href="frmt_wms_tileservice_bmng.xml">tileservice_bmng.xml</a> - TileService, Blue Marble NG (January)<br>
 	<pre>gdal_translate -of JPEG -outsize 500 250 tileservice_bmng.xml tileservice_bmng.jpg</pre>
 	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg" alt="example output">
-    </li>
-    <li>
+    </p></li>
+
+    <li><p>
 	<a href="frmt_wms_tileservice_nysdop2004.xml">tileservice_nysdop2004.xml</a> - TileService, NYSDOP 2004<br>
 	<pre>gdal_translate -of JPEG -projwin -73.687030 41.262680 -73.686359 41.262345 -outsize 500 250 tileservice_nysdop2004.xml tileservice_nysdop2004.jpg</pre>
 	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg" alt="example output">
-    </li>
-    <li>
+    </p></li>
+
+    <li><p>
      <a href="frmt_wms_openstreetmap_tms.xml">OpenStreetMap TMS Service Example</a>: Connect to OpenStreetMap tile service. Note that this file takes advantage of the tile cache; more information about configuring the tile cache settings is available above.<br />
      <tt>gdal_translate -of PNG -outsize 512 512 frmt_wms_openstreetmap_tms.xml openstreetmap.png</tt>
-    </li>
+    </p></li>
 
-    <li>
+    <li><p>
      <a href="frmt_wms_metacarta_tms.xml">MetaCarta TMS Layer Example</a>, accessing the default MetaCarta TMS layer.<br />
           <tt>gdal_translate -of PNG -outsize 512 256 frmt_wms_metacarta_tms.xml metacarta.png</tt>
-    </li>
+    </p></li>
 
-    <li>
+    <li><p>
      OnEarth Tiled WMS <a href="frmt_twms_Clementine.xml">Clementine</a>,
      <a href="frmt_twms_daily.xml">daily</a>, and
      <a href="frmt_twms_srtm.xml">srtm</a> examples.<p>
-    </li>
+    </p></li>
 </ul>
 
-<p>See Also:</p>
+<h2>Open syntax</h2>
+
+The WMS driver can open :
+<ul>
+<li><p>
+a local service description XML file : <pre>gdalinfo description_file.xml</pre>
+</p></li>
+
+<li><p>
+the content of a description XML file provided as filename :
+<pre>gdalinfo "&lt;GDAL_WMS&gt;&lt;Service name=\"TiledWMS\"&gt;&lt;ServerUrl&gt;http://onearth.jpl.nasa.gov/wms.cgi?&lt;/ServerUrl&gt;&lt;TiledGroupName&gt;Global SRTM Elevation&lt;/TiledGroupName&gt;&lt;/Service&gt;&lt;/GDAL_WMS&gt;"</pre>
+</p></li>
+
+<li><p>
+(GDAL >= 1.9.0) the base URL of a WMS service, prefixed with <i>WMS:</i> :
+<pre>gdalinfo "WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi"</pre><p>
+A list of subdatasets will be returned, resulting from the parsing of the GetCapabilities request on that server.
+</p></li>
+
+<li><p>
+(GDAL >= 1.9.0) a pseudo GetMap request, such as the subdataset name returned by the previous syntax :
+<pre>gdalinfo "WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;LAYERS=DNEC_250K:ELEVATION/ELEVATION&amp;SRS=EPSG:42304&amp;BBOX=-3000000,-1500000,6000000,4500000"</pre>
+</p></li>
+
+<li><p>
+(GDAL >= 1.9.0) the base URL of a Tiled WMS service, prefixed with <i>WMS:</i> and with request=GetTileService as GET argument:
+<pre>gdalinfo "WMS:http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService"</pre><p>
+A list of subdatasets will be returned, resulting from the parsing of the GetTileService request on that server.
+</p></li>
+</ul>
+
+<h2>See Also:</h2>
 
 <ul>
 <li><a href="http://www.opengeospatial.org/standards/wms">OGC WMS Standards</a></li>
 <li><a href="http://wiki.osgeo.org/index.php/WMS_Tiling_Client_Recommendation">WMS Tiling Client Recommendation</a></li>
 <li><a href="http://www.worldwindcentral.com/wiki/TileService">TileService</a></li>
+<li><a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification">TMS Specification</a></li>
+<li><a href="http://onearth.jpl.nasa.gov/tiled.html">OnEarth Tiled WMS specification</a></li>
 </ul>
 
 </body>
