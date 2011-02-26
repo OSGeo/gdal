@@ -178,7 +178,7 @@ RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IReadBlock,
 RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IWriteBlock,
                                 ( int nXBlockOff, int nYBlockOff, void* pImage), 
                                 (nXBlockOff, nYBlockOff, pImage) )
-RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IRasterIO,
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                         ( GDALRWFlag eRWFlag,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void * pData, int nBufXSize, int nBufYSize,
