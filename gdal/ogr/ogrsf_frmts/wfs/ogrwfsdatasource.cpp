@@ -252,24 +252,10 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
 const char* FindSubStringInsensitive(const char* pszStr,
                                      const char* pszSubStr)
 {
-    while(*pszStr)
-    {
-        const char* pszStrIter = pszStr;
-        const char* pszSubStrIter = pszSubStr;
-        while(*pszSubStrIter)
-        {
-            if (toupper((int)*pszStrIter) != toupper((int)*pszSubStrIter))
-            {
-                break;
-            }
-            pszStrIter ++;
-            pszSubStrIter ++;
-        }
-        if (*pszSubStrIter == 0)
-            return pszStrIter - (pszSubStrIter - pszSubStr);
-        pszStr ++;
-    }
-    return NULL;
+    size_t nSubStrPos = CPLString(pszStr).ifind(pszSubStr);
+    if (nSubStrPos == std::string::npos)
+        return NULL;
+    return pszStr + nSubStrPos;
 }
 
 /************************************************************************/
