@@ -32,8 +32,6 @@
 
 CPP_GDALWMSMiniDriverFactory(TiledWMS)
 
-const double EPSILON=1e-8;
-
 /************************************************************************/
 /*                           SearchXMLSiblings()                        */
 /************************************************************************/
@@ -450,10 +448,21 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
             m_parent_dataset->WMSSetClamp(false);
 
             // Ready for the Rasterband creation
-            for (int i=0;i<m_overview_count;i++) {
+            int i;
+            for (i=0;i<m_overview_count;i++) {
                 CPLString request="";
                 GetLowestScale(requests,i,request);
                 double scale=Scale(request);
+
+                if (i == 0)
+                {
+                    if (fabs(scale-1.0) >1e-6)
+                    {
+                        CPLError(ret=CE_Failure,CPLE_AppDefined,
+                         "GDALWMS, Tiled WMS: Did not get expected scale : %.15f", scale);
+                        break;
+                    }
+                }
 
                 // Prepare the request and insert it back into the list
                 int startBbox=FindBbox(request);
@@ -463,7 +472,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
 
                 // Create the Rasterband or overview
                 for (int j = 1; j <= m_bands_count; j++) {
-                    if (fabs(scale-1.0)<EPSILON) {
+                    if (i == 0) {
                         GDALWMSRasterBand *band=new GDALWMSRasterBand(m_parent_dataset, j, scale);
                         band->SetColorInterpretation(BandInterp(m_bands_count,j));
                         m_parent_dataset->mSetBand(j, band);
@@ -471,6 +480,9 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                         m_parent_dataset->mGetBand(j)->AddOverview(scale);
                 }
             }
+
+            if (i != m_overview_count)
+                break;
 
             if ((m_overview_count==0)||(m_bsx<1)||(m_bsy<1)) {
                 CPLError(ret=CE_Failure,CPLE_AppDefined,
