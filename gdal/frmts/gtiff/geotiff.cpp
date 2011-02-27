@@ -255,6 +255,9 @@ class GTiffDataset : public GDALPamDataset
     int         bLookedForProjection;
 
     void        LookForProjection();
+#ifdef ESRI_BUILD
+    void        AdjustLinearUnit( short UOMLength );
+#endif
 
     double	adfGeoTransform[6];
     int		bGeoTransformValid;
@@ -1535,7 +1538,14 @@ void GTiffRasterBand::NullBlock( void *pData )
     double dfNoData = GetNoDataValue( &bNoDataSet );
     if( !bNoDataSet )
     {
+#ifdef ESRI_BUILD
+        if ( poGDS->nBitsPerSample >= 2 )
+            memset( pData, 0, nWords*nChunkSize );
+        else
+            memset( pData, 1, nWords*nChunkSize );
+#else
         memset( pData, 0, nWords*nChunkSize );
+#endif
     }
     else
     {
@@ -2535,6 +2545,9 @@ GTiffBitmapBand::GTiffBitmapBand( GTiffDataset *poDS, int nBand )
         poColorTable = poDS->poColorTable->Clone();
     else
     {
+#ifdef ESRI_BUILD
+        poColorTable = NULL;
+#else
         GDALColorEntry	oWhite, oBlack;
 
         oWhite.c1 = 255;
@@ -2559,6 +2572,7 @@ GTiffBitmapBand::GTiffBitmapBand( GTiffDataset *poDS, int nBand )
             poColorTable->SetColorEntry( 0, &oBlack );
             poColorTable->SetColorEntry( 1, &oWhite );
         }
+#endif /* not defined ESRI_BUILD */
     }
 }
 
@@ -5237,6 +5251,11 @@ void GTiffDataset::LookForProjection()
         // Is this a pixel-is-point dataset?
         short nRasterType;
 
+        // check the tif linear unit and the CS linear unit 
+#ifdef ESRI_BUILD
+        AdjustLinearUnit(sGTIFDefn.UOMLength); 
+#endif
+
         if( GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType, 
                        0, 1 ) == 1 )
         {
@@ -5256,6 +5275,47 @@ void GTiffDataset::LookForProjection()
 
     bGeoTIFFInfoChanged = FALSE;
 }
+
+/************************************************************************/
+/*                          AdjustLinearUnit()                          */
+/*                                                                      */
+/*      The following code is only used in ESRI Builds and there is     */
+/*      outstanding discussion on whether it is even appropriate        */
+/*      then.                                                           */
+/************************************************************************/
+#ifdef ESRI_BUILD
+
+void GTiffDataset::AdjustLinearUnit(short UOMLength)
+{
+    if (!pszProjection || strlen(pszProjection) == 0)
+        return;
+    if( UOMLength == 9001)
+    {
+        char* pstr = strstr(pszProjection, "PARAMETER");
+        if (!pstr)
+            return;
+        pstr = strstr(pstr, "UNIT[");
+        if (!pstr)
+            return;
+        pstr = strchr(pstr, ',') + 1;
+        if (!pstr)
+            return;
+        char* pstr1 = strchr(pstr, ']');
+        if (!pstr1 || pstr1 - pstr >= 128)
+            return;
+        char csUnitStr[128];
+        strncpy(csUnitStr, pstr, pstr1-pstr);
+        csUnitStr[pstr1-pstr] = '\0';
+        double csUnit = CPLAtof(csUnitStr);
+        if(fabs(csUnit - 1.0) > 0.000001)
+        {
+            for(long i=0; i<6; i++)
+                adfGeoTransform[i] /= csUnit;
+        }
+    }
+}
+
+#endif /* def ESRI_BUILD */
 
 /************************************************************************/
 /*                            ApplyPamInfo()                            */
