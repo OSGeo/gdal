@@ -458,7 +458,6 @@ def wms_13():
     if gdaltest.wms_drv is None:
         return 'skip'
 
-    name = "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/"
     ds = gdal.Open( "data/DNEC_250K.vrt" )
     if ds.ReadRaster(0, 0, 1024, 682) is None:
         return 'fail'
