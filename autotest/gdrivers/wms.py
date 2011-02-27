@@ -33,6 +33,7 @@ import sys
 import string
 import array
 import gdal
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -221,8 +222,10 @@ def wms_7():
         return 'skip'
 
     srv = 'http://labs.metacarta.com/wms-c/Basic.py'
+    gdaltest.metacarta_tms = False
     if gdaltest.gdalurlopen(srv) is None:
         return 'skip'
+    gdaltest.metacarta_tms = True
 
     tms = """<GDAL_WMS>
     <Service name="TMS">
@@ -280,10 +283,9 @@ def wms_8():
     if gdaltest.wms_drv is None:
         return 'skip'
 
-    srv = 'http://labs.metacarta.com/wms-c/Basic.py'
-    if gdaltest.gdalurlopen(srv) is None:
+    if gdaltest.metacarta_tms is not True:
         return 'skip'
-        
+
     tms = """<GDAL_WMS>
     <Service name="TMS">
         <ServerUrl>http://labs.metacarta.com/wms-c/Basic.py</ServerUrl>
@@ -306,6 +308,11 @@ def wms_8():
     <Cache><Path>./tmp/gdalwmscache</Path></Cache>
 </GDAL_WMS>"""
 
+    try:
+        shutil.rmtree('tmp/gdalwmscache')
+    except:
+        pass
+
     ds = gdal.Open( tms )
 
     if ds is None:
@@ -314,6 +321,17 @@ def wms_8():
 
     ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
 
+    ds = None
+
+    try:
+        os.stat('tmp/gdalwmscache')
+    except:
+        gdaltest.post_reason( 'tmp/gdalwmscache should exist')
+        return 'fail'
+
+    # Now, we should read from the cache
+    ds = gdal.Open( tms )
+    ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
     ds = None
 
     return 'success'
@@ -424,6 +442,9 @@ def wms_12():
     if gdaltest.wms_drv is None:
         return 'skip'
 
+    if gdaltest.metacarta_tms is not True:
+        return 'skip'
+
     name = "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/"
     ds = gdal.Open( name )
     if ds is None:
@@ -438,7 +459,7 @@ def wms_12():
 
     ds = None
 
-    for i in range(len(subdatasets) / 2):
+    for i in range(len(subdatasets) // 2):
         desc = subdatasets['SUBDATASET_%d_DESC' % (i+1)]
         if desc == 'basic':
             name = subdatasets['SUBDATASET_%d_NAME' % (i+1)]
