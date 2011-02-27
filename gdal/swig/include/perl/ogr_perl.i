@@ -999,7 +999,16 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		if ($t eq 'Unknown' or $t eq 'None' or $t eq 'GeometryCollection') {
 		    croak("Can't set points of a geometry of type: $t");
 		} elsif ($t eq 'Point') {
-		    $flat ? AddPoint_2D($self, @$points[0..1]) : AddPoint_3D($self, @$points[0..2]);
+		    # support both "Point" as a list of one point and one point
+		    if (ref($points->[0])) {
+			$flat ? 
+			    AddPoint_2D($self, @{$points->[0]}[0..1]) : 
+			    AddPoint_3D($self, @{$points->[0]}[0..2]);
+		    } else {
+			$flat ? 
+			    AddPoint_2D($self, @$points[0..1]) : 
+			    AddPoint_3D($self, @$points[0..2]);
+		    }
 		} elsif ($t eq 'LineString' or $t eq 'LinearRing') {
 		    if ($flat) {
 			for my $p (@$points) {
