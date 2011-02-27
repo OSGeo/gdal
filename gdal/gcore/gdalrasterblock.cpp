@@ -514,7 +514,10 @@ CPLErr GDALRasterBlock::Write()
 
     MarkClean();
 
-    return poBand->IWriteBlock( nXOff, nYOff, pData );
+    if (poBand->eFlushBlockErr == CE_None)
+        return poBand->IWriteBlock( nXOff, nYOff, pData );
+    else
+        return poBand->eFlushBlockErr;
 }
 
 /************************************************************************/
