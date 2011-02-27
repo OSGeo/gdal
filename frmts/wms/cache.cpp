@@ -66,9 +66,10 @@ CPLErr GDALWMSCache::Write(const char *key, const CPLString &file_name) {
 CPLErr GDALWMSCache::Read(const char *key, CPLString *file_name) {
     CPLErr ret = CE_Failure;
     CPLString cache_file(KeyToCacheFile(key));
-    VSIStatBufL sStat;
-    if (VSIStatExL(cache_file.c_str(), &sStat, VSI_STAT_EXISTS_FLAG) == 0)
+    VSILFILE* fp = VSIFOpenL(cache_file.c_str(), "rb");
+    if (fp != NULL)
     {
+        VSIFCloseL(fp);
         *file_name = cache_file;
         ret = CE_None;
     }
