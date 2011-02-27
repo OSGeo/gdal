@@ -330,6 +330,8 @@ static GUIntBig nVSIFrees = 0;
 
 void VSIShowMemStats()
 {
+    if (getenv("CPL_SHOW_MEM_STATS") == NULL)
+        return;
     printf("Current VSI memory usage        : " CPL_FRMT_GUIB " bytes\n",
             (GUIntBig)nCurrentTotalAllocs);
     printf("Maximum VSI memory usage        : " CPL_FRMT_GUIB " bytes\n",
@@ -347,6 +349,11 @@ void VSIShowMemStats()
 }
 #endif
 
+#ifdef DEBUG_VSIMALLOC
+static GIntBig nMaxPeakAllocSize = -1;
+static GIntBig nMaxCumulAllocSize = -1;
+#endif
+
 /************************************************************************/
 /*                             VSICalloc()                              */
 /************************************************************************/
@@ -362,19 +369,45 @@ void *VSICalloc( size_t nCount, size_t nSize )
                 (int)nCount, (int)nSize);
         return NULL;
     }
-    void* ptr = VSIMalloc(nCount * nSize);
+    if (nMaxPeakAllocSize < 0)
+    {
+        char* pszMaxPeakAllocSize = getenv("CPL_MAX_PEAK_ALLOC_SIZE");
+        nMaxPeakAllocSize = (pszMaxPeakAllocSize) ? atoi(pszMaxPeakAllocSize) : 0;
+        char* pszMaxCumulAllocSize = getenv("CPL_MAX_CUMUL_ALLOC_SIZE");
+        nMaxCumulAllocSize = (pszMaxCumulAllocSize) ? atoi(pszMaxCumulAllocSize) : 0;
+    }
+    if (nMaxPeakAllocSize > 0 && (GIntBig)nMul > nMaxPeakAllocSize)
+        return NULL;
+#ifdef DEBUG_VSIMALLOC_STATS
+    if (nMaxCumulAllocSize > 0 && (GIntBig)nCurrentTotalAllocs + (GIntBig)nMul > nMaxCumulAllocSize)
+        return NULL;
+#endif
+    char* ptr = (char*) calloc(1, 2 * sizeof(void*) + nMul);
     if (ptr == NULL)
         return NULL;
-
-    memset(ptr, 0, nCount * nSize);
-#ifdef DEBUG_VSIMALLOC_STATS
+    ptr[0] = 'V';
+    ptr[1] = 'S';
+    ptr[2] = 'I';
+    ptr[3] = 'M';
+    memcpy(ptr + sizeof(void*), &nMul, sizeof(void*));
+#if defined(DEBUG_VSIMALLOC_STATS) || defined(DEBUG_VSIMALLOC_VERBOSE)
     {
         CPLMutexHolderD(&hMemStatMutex);
+#ifdef DEBUG_VSIMALLOC_VERBOSE
+        fprintf(stderr, "Thread[%p] VSICalloc(%d,%d) = %p\n",
+                (void*)CPLGetPID(), (int)nCount, (int)nSize, ptr + 2 * sizeof(void*));
+#endif
+#ifdef DEBUG_VSIMALLOC_STATS
         nVSICallocs ++;
-        nVSIMallocs --;
+        if (nMaxTotalAllocs == 0)
+            atexit(VSIShowMemStats);
+        nCurrentTotalAllocs += nMul;
+        if (nCurrentTotalAllocs > nMaxTotalAllocs)
+            nMaxTotalAllocs = nCurrentTotalAllocs;
+#endif
     }
 #endif
-    return ptr;
+    return ptr + 2 * sizeof(void*);
 #else
     return( calloc( nCount, nSize ) );
 #endif
@@ -388,6 +421,19 @@ void *VSIMalloc( size_t nSize )
 
 {
 #ifdef DEBUG_VSIMALLOC
+    if (nMaxPeakAllocSize < 0)
+    {
+        char* pszMaxPeakAllocSize = getenv("CPL_MAX_PEAK_ALLOC_SIZE");
+        nMaxPeakAllocSize = (pszMaxPeakAllocSize) ? atoi(pszMaxPeakAllocSize) : 0;
+        char* pszMaxCumulAllocSize = getenv("CPL_MAX_CUMUL_ALLOC_SIZE");
+        nMaxCumulAllocSize = (pszMaxCumulAllocSize) ? atoi(pszMaxCumulAllocSize) : 0;
+    }
+    if (nMaxPeakAllocSize > 0 && (GIntBig)nSize > nMaxPeakAllocSize)
+        return NULL;
+#ifdef DEBUG_VSIMALLOC_STATS
+    if (nMaxCumulAllocSize > 0 && (GIntBig)nCurrentTotalAllocs + (GIntBig)nSize > nMaxCumulAllocSize)
+        return NULL;
+#endif
     char* ptr = (char*) malloc(2 * sizeof(void*) + nSize);
     if (ptr == NULL)
         return NULL;
@@ -448,6 +494,18 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 #ifdef DEBUG_VSIMALLOC_STATS
     size_t nOldSize;
     memcpy(&nOldSize, ptr + sizeof(void*), sizeof(void*));
+#endif
+
+    if (nMaxPeakAllocSize < 0)
+    {
+        char* pszMaxPeakAllocSize = getenv("CPL_MAX_PEAK_ALLOC_SIZE");
+        nMaxPeakAllocSize = (pszMaxPeakAllocSize) ? atoi(pszMaxPeakAllocSize) : 0;
+    }
+    if (nMaxPeakAllocSize > 0 && (GIntBig)nNewSize > nMaxPeakAllocSize)
+        return NULL;
+#ifdef DEBUG_VSIMALLOC_STATS
+    if (nMaxCumulAllocSize > 0 && (GIntBig)nCurrentTotalAllocs + (GIntBig)nNewSize - (GIntBig)nOldSize > nMaxCumulAllocSize)
+        return NULL;
 #endif
 
     ptr = (char*) realloc(ptr, nNewSize + 2 * sizeof(void*));
