@@ -254,7 +254,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
         }
         
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",
-                 conn_i, psRequest->pszURL, psRequest->nStatus,
+                 i, psRequest->pszURL, psRequest->nStatus,
                  (psRequest->pszContentType) ? psRequest->pszContentType : "(null)",
                  (psRequest->pszError) ? psRequest->pszError : "(null)");
 
