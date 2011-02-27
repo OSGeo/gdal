@@ -82,6 +82,15 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 }
 
 {
+    # test the Points method
+    my $g = Geo::OGR::Geometry->create( WKT => 'POINT(1.1 2.2)');
+    my $p = $g->Points;
+    $g->Points($p);
+    my $q = $g->Points;
+    is_deeply($p, $q, "Points with a point");
+}
+
+{
     my $g = Geo::OGR::Geometry->create(wkt => "linestring(1 1, 1 2, 2 2)");
     ok ($g->Length == 2, "Length 1");
 }
