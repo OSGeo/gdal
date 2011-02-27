@@ -4542,7 +4542,10 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                            NULL, pfnProgress, pProgressData );
         
         if( eErr != CE_None )
+        {
+            delete poDS;
             return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
