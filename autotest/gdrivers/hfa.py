@@ -517,25 +517,7 @@ def hfa_mapinformation_units():
     gdal.PopErrorHandler()
 
     wkt = ds.GetProjectionRef()
-    expected_wkt = """PROJCS["NAD83 / Virginia North",
-    GEOGCS["NAD83",
-        DATUM["North_American_Datum_1983",
-            SPHEROID["GRS 1980",6378137,298.257222101,
-                AUTHORITY["EPSG","7019"]],
-            AUTHORITY["EPSG","6269"]],
-        PRIMEM["Greenwich",0,
-            AUTHORITY["EPSG","8901"]],
-        UNIT["degree",0.01745329251994328,
-            AUTHORITY["EPSG","9122"]],
-        AUTHORITY["EPSG","4269"]],
-    PROJECTION["Lambert_Conformal_Conic_2SP"],
-    PARAMETER["standard_parallel_1",39.2],
-    PARAMETER["standard_parallel_2",38.03333333333333],
-    PARAMETER["latitude_of_origin",37.66666666666666],
-    PARAMETER["central_meridian",-78.5],
-    PARAMETER["false_easting",11482916.66666667],
-    PARAMETER["false_northing",6561666.666666667],
-    UNIT["us_survey_feet",0.3048006096012192]]"""
+    expected_wkt = """PROJCS["NAD_1983_StatePlane_Virginia_North_FIPS_4501_Feet",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199432955],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["False_Easting",11482916.66666666],PARAMETER["False_Northing",6561666.666666666],PARAMETER["Central_Meridian",-78.5],PARAMETER["Standard_Parallel_1",38.03333333333333],PARAMETER["Standard_Parallel_2",39.2],PARAMETER["Latitude_Of_Origin",37.66666666666666],UNIT["Foot_US",0.304800609601219241]]"""
 
     if gdaltest.equal_srs_from_wkt( expected_wkt, wkt ):
         return 'success'
@@ -825,7 +807,7 @@ def hfa_unique_values_hist():
     rat = ds.GetRasterBand(1).GetDefaultRAT()
 
     if rat.GetColumnCount() != 6 \
-       or rat.GetTypeOfCol(0) != gdal.GFT_Integer \
+       or rat.GetTypeOfCol(0) != gdal.GFT_Real \
        or rat.GetUsageOfCol(0) != gdal.GFU_MinMax:
         print(rat.GetColumnCount())
         print(rat.GetTypeOfCol(0))
@@ -1248,7 +1230,7 @@ def hfa_write_rat():
     rat = ds.GetRasterBand(1).GetDefaultRAT()
 
     if rat.GetColumnCount() != 6 \
-       or rat.GetTypeOfCol(0) != gdal.GFT_Integer \
+       or rat.GetTypeOfCol(0) != gdal.GFT_Real \
        or rat.GetUsageOfCol(0) != gdal.GFU_Generic: # should be GFU_MinMax
         print(rat.GetColumnCount())
         print(rat.GetTypeOfCol(0))
