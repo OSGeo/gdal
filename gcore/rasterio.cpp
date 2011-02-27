@@ -70,6 +70,15 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     GDALRasterBlock *poBlock = NULL;
     int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
 
+    if( eRWFlag == GF_Write && eFlushBlockErr != CE_None )
+    {
+        CPLError(eFlushBlockErr, CPLE_AppDefined,
+                 "An error occured while writing a dirty block");
+        CPLErr eErr = eFlushBlockErr;
+        eFlushBlockErr = CE_None;
+        return eErr;
+    }
+
 /* ==================================================================== */
 /*      A common case is the data requested with the destination        */
 /*      is packed, and the block width is the raster width.             */
