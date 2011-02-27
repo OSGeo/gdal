@@ -223,6 +223,8 @@ typedef enum {
 #define SRS_UL_CHAIN_CONV                   "20.116684023368047"
 #define SRS_UL_ROD              "Rod"           /* based on US Foot */
 #define SRS_UL_ROD_CONV                     "5.02921005842012"
+#define SRS_UL_LINK_Clarke      "Link_Clarke"          
+#define SRS_UL_LINK_Clarke_CONV              "0.2011661949"
 
 #define SRS_UA_DEGREE           "degree"
 #define SRS_UA_DEGREE_CONV                  "0.0174532925199433"
