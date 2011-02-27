@@ -347,6 +347,19 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             }
         }
     }
+
+    if (ret == CE_None) {
+        CPLXMLNode *cache_node = CPLGetXMLNode(config, "Cache");
+        if (cache_node != NULL) {
+            m_cache = new GDALWMSCache();
+            if (m_cache->Initialize(cache_node) != CE_None) {
+                delete m_cache;
+                m_cache = NULL;
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize cache.");
+                ret = CE_Failure;
+            }
+        }
+    }
     
     if (ret == CE_None) {
     	const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
