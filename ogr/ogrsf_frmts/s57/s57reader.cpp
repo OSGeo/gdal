@@ -1685,7 +1685,10 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
 
     if( !FetchPoint( nRCNM, nRCID, &dfX, &dfY, &dfZ ) )
     {
-        CPLAssert( FALSE );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Failed to fetch %d/%d point geometry for point feature.\n"
+                  "Feature will have empty geometry.",
+                  nRCNM, nRCID );
         return;
     }
 
