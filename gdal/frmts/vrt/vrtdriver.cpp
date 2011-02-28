@@ -218,6 +218,8 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                             poSrcDS->GetRasterXSize(),
                             poSrcDS->GetRasterYSize(),
                             0, GDT_Byte, NULL );
+    if (poVRTDS == NULL)
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a geotransform?                                      */
