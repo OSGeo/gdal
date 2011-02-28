@@ -999,7 +999,8 @@ VRTDataset::Create( const char * pszName,
     if( EQUALN(pszName,"<VRTDataset",11) )
     {
         GDALDataset *poDS = OpenXML( pszName, NULL, GA_Update );
-        poDS->SetDescription( "<FromXML>" );
+        if (poDS)
+            poDS->SetDescription( "<FromXML>" );
         return poDS;
     }
     else
@@ -1075,7 +1076,8 @@ CPLErr VRTDataset::Delete( const char * pszFilename )
     GDALDriverH hDriver = GDALIdentifyDriver(pszFilename, NULL);
     if (hDriver && EQUAL(GDALGetDriverShortName(hDriver), "VRT"))
     {
-        if( VSIUnlink( pszFilename ) != 0 )
+        if( strstr(pszFilename, "<VRTDataset") == NULL &&
+            VSIUnlink( pszFilename ) != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Deleting %s failed:\n%s",
