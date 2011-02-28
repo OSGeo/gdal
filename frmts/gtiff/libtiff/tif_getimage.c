@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.77 2010-07-02 13:39:10 dron Exp $ */
+/* $Id: tif_getimage.c,v 1.78 2011-02-23 21:46:09 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -215,6 +215,7 @@ TIFFRGBAImageEnd(TIFFRGBAImage* img)
 		_TIFFfree( img->redcmap );
 		_TIFFfree( img->greencmap );
 		_TIFFfree( img->bluecmap );
+                img->redcmap = img->greencmap = img->bluecmap = NULL;
 	}
 }
 
@@ -261,7 +262,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 		default:
 			sprintf(emsg, "Sorry, can not handle images with %d-bit samples",
 			    img->bitspersample);
-			return (0);
+			goto fail_return;
 	}
 	img->alpha = 0;
 	TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLESPERPIXEL, &img->samplesperpixel);
@@ -310,7 +311,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 				break;
 			default:
 				sprintf(emsg, "Missing needed %s tag", photoTag);
-				return (0);
+                                goto fail_return;
 		}
 	}
 	switch (img->photometric) {
@@ -318,7 +319,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			if (!TIFFGetField(tif, TIFFTAG_COLORMAP,
 			    &red_orig, &green_orig, &blue_orig)) {
 				sprintf(emsg, "Missing required \"Colormap\" tag");
-				return (0);
+                                goto fail_return;
 			}
 
 			/* copy the colormaps so we can modify them */
@@ -328,7 +329,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			img->bluecmap = (uint16 *) _TIFFmalloc(sizeof(uint16)*n_color);
 			if( !img->redcmap || !img->greencmap || !img->bluecmap ) {
 				sprintf(emsg, "Out of memory for colormap copy");
-				return (0);
+                                goto fail_return;
 			}
 
 			_TIFFmemcpy( img->redcmap, red_orig, n_color * 2 );
@@ -347,7 +348,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 				    photoTag, img->photometric,
 				    "Samples/pixel", img->samplesperpixel,
 				    img->bitspersample);
-				return (0);
+                                goto fail_return;
 			}
 			break;
 		case PHOTOMETRIC_YCBCR:
@@ -380,7 +381,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			if (colorchannels < 3) {
 				sprintf(emsg, "Sorry, can not handle RGB image with %s=%d",
 				    "Color channels", colorchannels);
-				return (0);
+                                goto fail_return;
 			}
 			break;
 		case PHOTOMETRIC_SEPARATED:
@@ -390,12 +391,12 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 				if (inkset != INKSET_CMYK) {
 					sprintf(emsg, "Sorry, can not handle separated image with %s=%d",
 					    "InkSet", inkset);
-					return (0);
+                                        goto fail_return;
 				}
 				if (img->samplesperpixel < 4) {
 					sprintf(emsg, "Sorry, can not handle separated image with %s=%d",
 					    "Samples/pixel", img->samplesperpixel);
-					return (0);
+                                        goto fail_return;
 				}
 			}
 			break;
@@ -403,7 +404,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			if (compress != COMPRESSION_SGILOG) {
 				sprintf(emsg, "Sorry, LogL data must have %s=%d",
 				    "Compression", COMPRESSION_SGILOG);
-				return (0);
+                                goto fail_return;
 			}
 			TIFFSetField(tif, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_8BIT);
 			img->photometric = PHOTOMETRIC_MINISBLACK;	/* little white lie */
@@ -413,7 +414,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			if (compress != COMPRESSION_SGILOG && compress != COMPRESSION_SGILOG24) {
 				sprintf(emsg, "Sorry, LogLuv data must have %s=%d or %d",
 				    "Compression", COMPRESSION_SGILOG, COMPRESSION_SGILOG24);
-				return (0);
+                                goto fail_return;
 			}
 			if (planarconfig != PLANARCONFIG_CONTIG) {
 				sprintf(emsg, "Sorry, can not handle LogLuv images with %s=%d",
@@ -429,7 +430,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 		default:
 			sprintf(emsg, "Sorry, can not handle image with %s=%d",
 			    photoTag, img->photometric);
-			return (0);
+                        goto fail_return;
 	}
 	img->Map = NULL;
 	img->BWmap = NULL;
@@ -446,15 +447,22 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 	if (img->isContig) {
 		if (!PickContigCase(img)) {
 			sprintf(emsg, "Sorry, can not handle image");
-			return 0;
+			goto fail_return;
 		}
 	} else {
 		if (!PickSeparateCase(img)) {
 			sprintf(emsg, "Sorry, can not handle image");
-			return 0;
+			goto fail_return;
 		}
 	}
 	return 1;
+
+  fail_return:
+        _TIFFfree( img->redcmap );
+        _TIFFfree( img->greencmap );
+        _TIFFfree( img->bluecmap );
+        img->redcmap = img->greencmap = img->bluecmap = NULL;
+        return 0;
 }
 
 int
