@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.100 2011-02-18 20:53:04 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.101 2011-02-23 21:58:00 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1215,6 +1215,9 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
         */
 	sp->src.next_input_byte = (const JOCTET*) tif->tif_rawcp;
 	sp->src.bytes_in_buffer = (size_t) tif->tif_rawcc;
+
+        if( sp->bytesperline == 0 )
+                return 0;
         
 	nrows = cc / sp->bytesperline;
 	if (cc % sp->bytesperline)
