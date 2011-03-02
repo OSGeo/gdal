@@ -75,8 +75,72 @@ def e00grid_1():
 
     return ret
 
+###############################################################################
+# Test a fake E00GRID dataset, compressed and with statistics
+
+def e00grid_2():
+
+    tst = gdaltest.GDALTest( 'E00GRID', 'fake_e00grid_compressed.e00', 1, 65347 )
+    expected_gt = [ 500000.0, 1000.0, 0.0, 4000000.0, 0.0, -1000.0 ]
+    expected_srs = """PROJCS["UTM Zone 15, Northern Hemisphere",
+    GEOGCS["NAD83",
+        DATUM["North_American_Datum_1983",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6269"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9108"]],
+        AUTHORITY["EPSG","4269"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-93],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["METERS",1]]"""
+    ret = tst.testOpen(check_gt = expected_gt, check_prj = expected_srs)
+
+    if ret == 'success':
+        ds = gdal.Open('data/fake_e00grid_compressed.e00')
+        line0 = ds.ReadRaster(0,0,5,1)
+        ds.ReadRaster(0,1,5,1)
+        line2 = ds.ReadRaster(0,2,5,1)
+        if line0 == line2:
+            gdaltest.post_reason('should not have gotten the same values')
+            return 'fail'
+        ds.ReadRaster(0,0,5,1)
+        line2_bis = ds.ReadRaster(0,2,5,1)
+        if line2 != line2_bis:
+            gdaltest.post_reason('did not get the same values for the same line')
+            return 'fail'
+
+        if ds.GetRasterBand(1).GetMinimum() != None:
+            gdaltest.post_reason('should not have gotten a minimum value at that point')
+            return 'fail'
+
+        # This also forces the stats to be loaded
+        ds.GetProjectionRef()
+
+        if ds.GetRasterBand(1).GetMinimum() != 1:
+            gdaltest.post_reason('did not get expected minimum value')
+            return 'fail'
+        if ds.GetRasterBand(1).GetMaximum() != 50:
+            gdaltest.post_reason('did not get expected maximum value')
+            return 'fail'
+        stats = ds.GetRasterBand(1).GetStatistics(False, True)
+        if stats != [1.0, 50.0, 25.5, 24.5]:
+            gdaltest.post_reason('did not get expected statistics')
+            print(stats)
+            return 'fail'
+
+    return ret
+
 gdaltest_list = [
-    e00grid_1 ]
+    e00grid_1,
+    e00grid_2 ]
 
 if __name__ == '__main__':
 

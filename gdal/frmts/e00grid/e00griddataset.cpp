@@ -32,6 +32,14 @@
 #include "ogr_spatialref.h"
 #include "gdal_pam.h"
 
+/* Private import of e00read.c */
+#define E00ReadOpen         GDALE00GRIDReadOpen
+#define E00ReadCallbackOpen GDALE00GRIDReadCallbackOpen
+#define E00ReadClose        GDALE00GRIDReadClose
+#define E00ReadNextLine     GDALE00GRIDReadNextLine
+#define E00ReadRewind       GDALE00GRIDReadRewind
+#include "e00read.c"
+
 #define E00_INT_SIZE    10
 #define E00_INT14_SIZE  14
 #define E00_FLOAT_SIZE  14
@@ -53,6 +61,9 @@ http://dusk.geo.orst.edu/djl/samoa/data/samoa_bathy.e00
 http://dusk.geo.orst.edu/djl/samoa/FBNMS/RasterGrids-Metadata/ntae02_3m_utm.e00
 http://www.navdat.org/coverages/elevation/iddem1.e00        (int32)
 http://delta-vision.projects.atlas.ca.gov/lidar/bare_earth.grids/sac0165.e00
+http://ag.arizona.edu/SRER/maps_e00/srer_dem.e00
+http://ok.water.usgs.gov/projects/norlan/spatial/ntopo0408-10.e00 (compressed)
+http://wrri.nmsu.edu/publish/techrpt/tr322/GIS/dem.e00 (compressed)
 */
 
 /************************************************************************/
@@ -66,18 +77,28 @@ class E00GRIDRasterBand;
 class E00GRIDDataset : public GDALPamDataset
 {
     friend class E00GRIDRasterBand;
-    
+
+    E00ReadPtr  e00ReadPtr;
     VSILFILE   *fp;
     int         nDataStart;
     int         nBytesEOL;
 
+    int         nLastLine;
+
     double      adfGeoTransform[6];
-    int         bHasSearchedProjection;
     CPLString   osProjection;
 
     double      dfNoData;
 
     char**      papszPrj;
+
+    const char* ReadLine();
+
+    int         bHasReadMetadata;
+    void        ReadMetadata();
+
+    int         bHasStats;
+    double      dfMin, dfMax, dfMean, dfStddev;
 
   public:
                  E00GRIDDataset();
@@ -104,10 +125,15 @@ class E00GRIDRasterBand : public GDALPamRasterBand
 
                 E00GRIDRasterBand( E00GRIDDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr      IReadBlock( int, int, void * );
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual double      GetNoDataValue( int *pbSuccess = NULL );
     virtual const char *GetUnitType();
+    virtual double      GetMinimum( int *pbSuccess = NULL );
+    virtual double      GetMaximum( int *pbSuccess = NULL );
+    virtual CPLErr      GetStatistics( int bApproxOK, int bForce,
+                                       double *pdfMin, double *pdfMax,
+                                       double *pdfMean, double *padfStdDev );
 };
 
 
@@ -148,16 +174,59 @@ CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     /* A new data line begins on a new text line. So if the xsize */
     /* is not a multiple of VALS_PER_LINE, there are padding values */
     /* that must be ignored */
-    int nRoundedBlockXSize = ((nBlockXSize + VALS_PER_LINE - 1) / VALS_PER_LINE) * VALS_PER_LINE;
+    const int nRoundedBlockXSize = ((nBlockXSize + VALS_PER_LINE - 1) / VALS_PER_LINE) * VALS_PER_LINE;
+
+    if (poGDS->e00ReadPtr)
+    {
+        if (nBlockYOff <= poGDS->nLastLine || poGDS->nLastLine < 0)
+        {
+            E00ReadRewind(poGDS->e00ReadPtr);
+            for(i=0;i<6;i++)
+                E00ReadNextLine(poGDS->e00ReadPtr);
+            poGDS->nLastLine = -1;
+        }
+
+        if (nBlockYOff > poGDS->nLastLine + 1)
+        {
+            int nValsToSkip = (nBlockYOff - poGDS->nLastLine - 1) * nRoundedBlockXSize;
+            int nLinesToSkip = nValsToSkip / VALS_PER_LINE;
+            for(i=0;i<nLinesToSkip;i++)
+                E00ReadNextLine(poGDS->e00ReadPtr);
+        }
+
+        const char* pszLine = NULL;
+        for(i=0;i<nBlockXSize;i++)
+        {
+            if ((i % VALS_PER_LINE) == 0)
+            {
+                pszLine = E00ReadNextLine(poGDS->e00ReadPtr);
+                if (pszLine == NULL || strlen(pszLine) < 5 * E00_FLOAT_SIZE)
+                    return CE_Failure;
+            }
+            if (eDataType == GDT_Float32)
+            {
+                pafImage[i] = atof(pszLine + (i%VALS_PER_LINE) * E00_FLOAT_SIZE);
+                /* Workaround single vs double precision problems */
+                if (fNoData != 0 && fabs((pafImage[i] - fNoData)/fNoData) < 1e-6)
+                    pafImage[i] = fNoData;
+            }
+            else
+            {
+                panImage[i] = atoi(pszLine + (i%VALS_PER_LINE) * E00_FLOAT_SIZE);
+            }
+        }
+
+        poGDS->nLastLine = nBlockYOff;
+
+        return CE_None;
+    }
+
     int nValsToSkip = nBlockYOff * nRoundedBlockXSize;
     int nLinesToSkip = nValsToSkip / VALS_PER_LINE;
-    int nStartCol = nValsToSkip % VALS_PER_LINE;
     int nBytesPerLine = VALS_PER_LINE * E00_FLOAT_SIZE + poGDS->nBytesEOL;
-    int nPos = poGDS->nDataStart + nLinesToSkip * nBytesPerLine + nStartCol * E00_FLOAT_SIZE;
-
+    int nPos = poGDS->nDataStart + nLinesToSkip * nBytesPerLine;
     VSIFSeekL(poGDS->fp, nPos, SEEK_SET);
 
-    int nCol = nStartCol;
     for(i=0;i<nBlockXSize;i++)
     {
         if (VSIFReadL(szVal, E00_FLOAT_SIZE, 1, poGDS->fp) != 1)
@@ -175,12 +244,8 @@ CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             panImage[i] = atoi(szVal);
         }
 
-        nCol ++;
-        if (nCol == VALS_PER_LINE)
-        {
+        if (((i+1) % VALS_PER_LINE) == 0)
             VSIFReadL(szVal, poGDS->nBytesEOL, 1, poGDS->fp);
-            nCol = 0;
-        }
     }
 
     return CE_None;
@@ -211,7 +276,7 @@ const char * E00GRIDRasterBand::GetUnitType()
 {
     E00GRIDDataset *poGDS = (E00GRIDDataset *) poDS;
 
-    poGDS->GetProjectionRef();
+    poGDS->ReadMetadata();
 
     if (poGDS->papszPrj == NULL)
         return GDALPamRasterBand::GetUnitType();
@@ -240,6 +305,81 @@ const char * E00GRIDRasterBand::GetUnitType()
 }
 
 /************************************************************************/
+/*                           GetMinimum()                               */
+/************************************************************************/
+
+double E00GRIDRasterBand::GetMinimum( int *pbSuccess )
+{
+    E00GRIDDataset *poGDS = (E00GRIDDataset *) poDS;
+
+    if (poGDS->e00ReadPtr == NULL)
+        poGDS->ReadMetadata();
+
+    if (poGDS->bHasStats)
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
+
+        return poGDS->dfMin;
+    }
+
+    return GDALPamRasterBand::GetMinimum( pbSuccess );
+}
+
+/************************************************************************/
+/*                           GetMaximum()                               */
+/************************************************************************/
+
+double E00GRIDRasterBand::GetMaximum( int *pbSuccess )
+{
+    E00GRIDDataset *poGDS = (E00GRIDDataset *) poDS;
+
+    if (poGDS->e00ReadPtr == NULL)
+        poGDS->ReadMetadata();
+
+    if (poGDS->bHasStats)
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
+
+        return poGDS->dfMax;
+    }
+
+    return GDALPamRasterBand::GetMaximum( pbSuccess );
+}
+
+/************************************************************************/
+/*                            GetStatistics()                           */
+/************************************************************************/
+
+CPLErr E00GRIDRasterBand::GetStatistics( int bApproxOK, int bForce,
+                                         double *pdfMin, double *pdfMax,
+                                         double *pdfMean, double *pdfStdDev )
+{
+    E00GRIDDataset *poGDS = (E00GRIDDataset *) poDS;
+
+    if (poGDS->e00ReadPtr == NULL || bForce)
+        poGDS->ReadMetadata();
+
+    if (poGDS->bHasStats)
+    {
+        if (pdfMin)
+            *pdfMin = poGDS->dfMin;
+        if (pdfMax)
+            *pdfMax = poGDS->dfMax;
+        if (pdfMean)
+            *pdfMean = poGDS->dfMean;
+        if (pdfStdDev)
+            *pdfStdDev = poGDS->dfStddev;
+        return CE_None;
+    }
+
+    return GDALPamRasterBand::GetStatistics(bApproxOK, bForce,
+                                            pdfMin, pdfMax,
+                                            pdfMean, pdfStdDev);
+}
+
+/************************************************************************/
 /*                           E00GRIDDataset()                           */
 /************************************************************************/
 
@@ -252,11 +392,18 @@ E00GRIDDataset::E00GRIDDataset()
     adfGeoTransform[3] = 0;
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = 1;
-    bHasSearchedProjection = FALSE;
+    bHasReadMetadata = FALSE;
     dfNoData = 0;
     nDataStart = 0;
     nBytesEOL = 1;
     papszPrj = NULL;
+    e00ReadPtr = NULL;
+    nLastLine = -1;
+    bHasStats = FALSE;
+    dfMin = 0;
+    dfMax = 0;
+    dfMean = 0;
+    dfStddev = 0;
 }
 
 /************************************************************************/
@@ -270,6 +417,7 @@ E00GRIDDataset::~E00GRIDDataset()
     if (fp)
         VSIFCloseL(fp);
     CSLDestroy(papszPrj);
+    E00ReadClose(e00ReadPtr);
 }
 
 /************************************************************************/
@@ -281,7 +429,8 @@ int E00GRIDDataset::Identify( GDALOpenInfo * poOpenInfo )
     if (poOpenInfo->nHeaderBytes == 0)
         return FALSE;
 
-    if (!EQUALN((const char*)poOpenInfo->pabyHeader, "EXP  0", 6))
+    if (!(EQUALN((const char*)poOpenInfo->pabyHeader, "EXP  0", 6) ||
+          EQUALN((const char*)poOpenInfo->pabyHeader, "EXP  1", 6)))
         return FALSE;
 
     /* FIXME: handle GRD  3 if that ever exists ? */
@@ -289,6 +438,24 @@ int E00GRIDDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                    E00GRIDDatasetReadNextLine()                      */
+/************************************************************************/
+
+static const char* E00GRIDDatasetReadNextLine(void * fp)
+{
+    return CPLReadLine2L((VSILFILE*)fp, 256, NULL);
+}
+
+/************************************************************************/
+/*                        E00GRIDDatasetRewind()                       */
+/************************************************************************/
+
+static void E00GRIDDatasetRewind(void * fp)
+{
+    VSIRewindL((VSILFILE*)fp);
 }
 
 /************************************************************************/
@@ -321,8 +488,9 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     const char* pszLine;
-    /* skip EXP  1 line */
+    /* read EXP  0 or EXP  1 line */
     pszLine = CPLReadLine2L(fp, 81, NULL);
+    int bCompressed = EQUALN(pszLine, "EXP  1", 6);
     if (pszLine == NULL)
     {
         CPLDebug("E00GRID", "Bad 1st line");
@@ -330,22 +498,45 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    E00ReadPtr e00ReadPtr = NULL;
+    if (bCompressed)
+    {
+        VSIRewindL(fp);
+        e00ReadPtr = E00ReadCallbackOpen(fp,
+                                         E00GRIDDatasetReadNextLine,
+                                         E00GRIDDatasetRewind);
+        if (e00ReadPtr == NULL)
+        {
+            VSIFCloseL(fp);
+            return NULL;
+        }
+        E00ReadNextLine(e00ReadPtr);
+    }
+
     /* skip GRD  2 line */
-    pszLine = CPLReadLine2L(fp, 81, NULL);
+    if (e00ReadPtr)
+        pszLine = E00ReadNextLine(e00ReadPtr);
+    else
+        pszLine = CPLReadLine2L(fp, 81, NULL);
     if (pszLine == NULL || !EQUALN(pszLine, "GRD  2", 6))
     {
         CPLDebug("E00GRID", "Bad 2nd line");
         VSIFCloseL(fp);
+        E00ReadClose(e00ReadPtr);
         return NULL;
     }
 
     /* read ncols, nrows and nodata value */
-    pszLine = CPLReadLine2L(fp, 81, NULL);
+    if (e00ReadPtr)
+        pszLine = E00ReadNextLine(e00ReadPtr);
+    else
+        pszLine = CPLReadLine2L(fp, 81, NULL);
     if (pszLine == NULL || strlen(pszLine) <
                 E00_INT_SIZE+E00_INT_SIZE+2+E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 3rd line");
         VSIFCloseL(fp);
+        E00ReadClose(e00ReadPtr);
         return NULL;
     }
 
@@ -364,11 +555,15 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfNoData = atof(pszLine + E00_INT_SIZE + E00_INT_SIZE + 2);
 
     /* read pixel size */
-    pszLine = CPLReadLine2L(fp, 81, NULL);
+    if (e00ReadPtr)
+        pszLine = E00ReadNextLine(e00ReadPtr);
+    else
+        pszLine = CPLReadLine2L(fp, 81, NULL);
     if (pszLine == NULL || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 4th line");
         VSIFCloseL(fp);
+        E00ReadClose(e00ReadPtr);
         return NULL;
     }
 /*
@@ -377,22 +572,30 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
 */
 
     /* read xmin, ymin */
-    pszLine = CPLReadLine2L(fp, 81, NULL);
+    if (e00ReadPtr)
+        pszLine = E00ReadNextLine(e00ReadPtr);
+    else
+        pszLine = CPLReadLine2L(fp, 81, NULL);
     if (pszLine == NULL || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 5th line");
         VSIFCloseL(fp);
+        E00ReadClose(e00ReadPtr);
         return NULL;
     }
     double dfMinX = atof(pszLine);
     double dfMinY = atof(pszLine + E00_DOUBLE_SIZE);
 
     /* read xmax, ymax */
-    pszLine = CPLReadLine2L(fp, 81, NULL);
+    if (e00ReadPtr)
+        pszLine = E00ReadNextLine(e00ReadPtr);
+    else
+        pszLine = CPLReadLine2L(fp, 81, NULL);
     if (pszLine == NULL || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 6th line");
         VSIFCloseL(fp);
+        E00ReadClose(e00ReadPtr);
         return NULL;
     }
     double dfMaxX = atof(pszLine);
@@ -417,6 +620,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[4] = 0;
     poDS->adfGeoTransform[5] = - (dfMaxY - dfMinY) / nRasterYSize;
     poDS->fp = fp;
+    poDS->e00ReadPtr = e00ReadPtr;
     poDS->nDataStart = VSIFTellL(fp);
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
@@ -457,6 +661,19 @@ CPLErr E00GRIDDataset::GetGeoTransform( double * padfTransform )
     return( CE_None );
 }
 
+
+/************************************************************************/
+/*                             ReadLine()                               */
+/************************************************************************/
+
+const char* E00GRIDDataset::ReadLine()
+{
+    if (e00ReadPtr)
+        return E00ReadNextLine(e00ReadPtr);
+    else
+        return CPLReadLine2L(fp, 81, NULL);
+}
+
 /************************************************************************/
 /*                         GetProjectionRef()                           */
 /************************************************************************/
@@ -464,23 +681,45 @@ CPLErr E00GRIDDataset::GetGeoTransform( double * padfTransform )
 const char* E00GRIDDataset::GetProjectionRef()
 
 {
-    if (bHasSearchedProjection)
-        return osProjection.c_str();
+    ReadMetadata();
+    return osProjection.c_str();
+}
 
-    bHasSearchedProjection = TRUE;
+/************************************************************************/
+/*                          ReadMetadata()                              */
+/************************************************************************/
 
-    int nRoundedBlockXSize = ((nRasterXSize + VALS_PER_LINE - 1) / VALS_PER_LINE) * VALS_PER_LINE;
-    int nValsToSkip = nRasterYSize * nRoundedBlockXSize;
-    int nLinesToSkip = nValsToSkip / VALS_PER_LINE;
-    int nBytesPerLine = VALS_PER_LINE * E00_FLOAT_SIZE + nBytesEOL;
-    int nPos = nDataStart + nLinesToSkip * nBytesPerLine;
-    VSIFSeekL(fp, nPos, SEEK_SET);
+void E00GRIDDataset::ReadMetadata()
+
+{
+    if (bHasReadMetadata)
+        return;
+
+    bHasReadMetadata = TRUE;
+
+    if (e00ReadPtr == NULL)
+    {
+        int nRoundedBlockXSize = ((nRasterXSize + VALS_PER_LINE - 1) / VALS_PER_LINE) * VALS_PER_LINE;
+        int nValsToSkip = nRasterYSize * nRoundedBlockXSize;
+        int nLinesToSkip = nValsToSkip / VALS_PER_LINE;
+        int nBytesPerLine = VALS_PER_LINE * E00_FLOAT_SIZE + nBytesEOL;
+        int nPos = nDataStart + nLinesToSkip * nBytesPerLine;
+        VSIFSeekL(fp, nPos, SEEK_SET);
+    }
+    else
+    {
+        nLastLine = -1;
+    }
+
     const char* pszLine;
-    while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
+    int bPRJFound = FALSE;
+    int bStatsFound = FALSE;
+    while((pszLine = ReadLine()) != NULL)
     {
         if (EQUALN(pszLine, "PRJ  2", 6))
         {
-            while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
+            bPRJFound = TRUE;
+            while((pszLine = ReadLine()) != NULL)
             {
                 if (EQUAL(pszLine, "EOP"))
                 {
@@ -502,12 +741,36 @@ const char* E00GRIDDataset::GetProjectionRef()
                     osProjection = pszWKT;
                 CPLFree(pszWKT);
             }
-
-            break;
+            if (bStatsFound)
+                break;
+        }
+        else if (strcmp(pszLine, "STDV              8-1  254-1  15 3 60-1  -1  -1-1                   4-") == 0)
+        {
+            bStatsFound = TRUE;
+            pszLine = ReadLine();
+            if (pszLine)
+            {
+                CPLString osStats = pszLine;
+                pszLine = ReadLine();
+                if (pszLine)
+                {
+                    osStats += pszLine;
+                    char** papszTokens = CSLTokenizeString(osStats);
+                    if (CSLCount(papszTokens) == 4)
+                    {
+                        dfMin = atof(papszTokens[0]);
+                        dfMax = atof(papszTokens[1]);
+                        dfMean = atof(papszTokens[2]);
+                        dfStddev = atof(papszTokens[3]);
+                        bHasStats = TRUE;
+                    }
+                    CSLDestroy(papszTokens);
+                }
+            }
+            if (bPRJFound)
+                break;
         }
     }
-
-    return osProjection.c_str();
 }
 
 /************************************************************************/
