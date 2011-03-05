@@ -117,18 +117,13 @@ def e00grid_2():
             gdaltest.post_reason('did not get the same values for the same line')
             return 'fail'
 
-        if ds.GetRasterBand(1).GetMinimum() != None:
-            gdaltest.post_reason('should not have gotten a minimum value at that point')
-            return 'fail'
-
-        # This also forces the stats to be loaded
-        ds.GetProjectionRef()
-
         if ds.GetRasterBand(1).GetMinimum() != 1:
             gdaltest.post_reason('did not get expected minimum value')
+            print(ds.GetRasterBand(1).GetMinimum())
             return 'fail'
         if ds.GetRasterBand(1).GetMaximum() != 50:
             gdaltest.post_reason('did not get expected maximum value')
+            print(ds.GetRasterBand(1).GetMaximum())
             return 'fail'
         stats = ds.GetRasterBand(1).GetStatistics(False, True)
         if stats != [1.0, 50.0, 25.5, 24.5]:
