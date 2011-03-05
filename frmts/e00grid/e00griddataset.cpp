@@ -83,7 +83,10 @@ class E00GRIDDataset : public GDALPamDataset
     int         nDataStart;
     int         nBytesEOL;
 
-    int         nLastLine;
+    vsi_l_offset  nPosBeforeReadLine;
+    vsi_l_offset* panOffsets;
+    int         nLastYOff;
+    int         nMaxYOffset;
 
     double      adfGeoTransform[6];
     CPLString   osProjection;
@@ -99,6 +102,9 @@ class E00GRIDDataset : public GDALPamDataset
 
     int         bHasStats;
     double      dfMin, dfMax, dfMean, dfStddev;
+
+    static const char* ReadNextLine(void * ptr);
+    static void        Rewind(void* ptr);
 
   public:
                  E00GRIDDataset();
@@ -141,7 +147,8 @@ class E00GRIDRasterBand : public GDALPamRasterBand
 /*                         E00GRIDRasterBand()                          */
 /************************************************************************/
 
-E00GRIDRasterBand::E00GRIDRasterBand( E00GRIDDataset *poDS, int nBand, GDALDataType eDT )
+E00GRIDRasterBand::E00GRIDRasterBand( E00GRIDDataset *poDS, int nBand,
+                                      GDALDataType eDT )
 
 {
     this->poDS = poDS;
@@ -174,24 +181,41 @@ CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     /* A new data line begins on a new text line. So if the xsize */
     /* is not a multiple of VALS_PER_LINE, there are padding values */
     /* that must be ignored */
-    const int nRoundedBlockXSize = ((nBlockXSize + VALS_PER_LINE - 1) / VALS_PER_LINE) * VALS_PER_LINE;
+    const int nRoundedBlockXSize = ((nBlockXSize + VALS_PER_LINE - 1) /
+                                            VALS_PER_LINE) * VALS_PER_LINE;
 
     if (poGDS->e00ReadPtr)
     {
-        if (nBlockYOff <= poGDS->nLastLine || poGDS->nLastLine < 0)
+        if (poGDS->nLastYOff < 0)
         {
             E00ReadRewind(poGDS->e00ReadPtr);
             for(i=0;i<6;i++)
                 E00ReadNextLine(poGDS->e00ReadPtr);
-            poGDS->nLastLine = -1;
         }
 
-        if (nBlockYOff > poGDS->nLastLine + 1)
+        if (nBlockYOff == poGDS->nLastYOff + 1)
         {
-            int nValsToSkip = (nBlockYOff - poGDS->nLastLine - 1) * nRoundedBlockXSize;
-            int nLinesToSkip = nValsToSkip / VALS_PER_LINE;
-            for(i=0;i<nLinesToSkip;i++)
-                E00ReadNextLine(poGDS->e00ReadPtr);
+        }
+        else if (nBlockYOff <= poGDS->nMaxYOffset)
+        {
+            //CPLDebug("E00GRID", "Skip to %d from %d", nBlockYOff, poGDS->nLastYOff);
+            VSIFSeekL(poGDS->fp, poGDS->panOffsets[nBlockYOff], SEEK_SET);
+            poGDS->nPosBeforeReadLine = poGDS->panOffsets[nBlockYOff];
+            poGDS->e00ReadPtr->iInBufPtr = 0;
+            poGDS->e00ReadPtr->szInBuf[0] = '\0';
+        }
+        else if (nBlockYOff > poGDS->nLastYOff + 1)
+        {
+            //CPLDebug("E00GRID", "Forward skip to %d from %d", nBlockYOff, poGDS->nLastYOff);
+            for(i=poGDS->nLastYOff + 1; i < nBlockYOff;i++)
+                IReadBlock(0, i, pImage);
+        }
+
+        if (nBlockYOff > poGDS->nMaxYOffset)
+        {
+            poGDS->panOffsets[nBlockYOff] = poGDS->nPosBeforeReadLine +
+                                            poGDS->e00ReadPtr->iInBufPtr;
+            poGDS->nMaxYOffset = nBlockYOff;
         }
 
         const char* pszLine = NULL;
@@ -216,15 +240,15 @@ CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
         }
 
-        poGDS->nLastLine = nBlockYOff;
+        poGDS->nLastYOff = nBlockYOff;
 
         return CE_None;
     }
 
-    int nValsToSkip = nBlockYOff * nRoundedBlockXSize;
-    int nLinesToSkip = nValsToSkip / VALS_PER_LINE;
+    vsi_l_offset nValsToSkip = (vsi_l_offset)nBlockYOff * nRoundedBlockXSize;
+    vsi_l_offset nLinesToSkip = nValsToSkip / VALS_PER_LINE;
     int nBytesPerLine = VALS_PER_LINE * E00_FLOAT_SIZE + poGDS->nBytesEOL;
-    int nPos = poGDS->nDataStart + nLinesToSkip * nBytesPerLine;
+    vsi_l_offset nPos = poGDS->nDataStart + nLinesToSkip * nBytesPerLine;
     VSIFSeekL(poGDS->fp, nPos, SEEK_SET);
 
     for(i=0;i<nBlockXSize;i++)
@@ -312,8 +336,7 @@ double E00GRIDRasterBand::GetMinimum( int *pbSuccess )
 {
     E00GRIDDataset *poGDS = (E00GRIDDataset *) poDS;
 
-    if (poGDS->e00ReadPtr == NULL)
-        poGDS->ReadMetadata();
+    poGDS->ReadMetadata();
 
     if (poGDS->bHasStats)
     {
@@ -334,8 +357,7 @@ double E00GRIDRasterBand::GetMaximum( int *pbSuccess )
 {
     E00GRIDDataset *poGDS = (E00GRIDDataset *) poDS;
 
-    if (poGDS->e00ReadPtr == NULL)
-        poGDS->ReadMetadata();
+    poGDS->ReadMetadata();
 
     if (poGDS->bHasStats)
     {
@@ -358,8 +380,7 @@ CPLErr E00GRIDRasterBand::GetStatistics( int bApproxOK, int bForce,
 {
     E00GRIDDataset *poGDS = (E00GRIDDataset *) poDS;
 
-    if (poGDS->e00ReadPtr == NULL || bForce)
-        poGDS->ReadMetadata();
+    poGDS->ReadMetadata();
 
     if (poGDS->bHasStats)
     {
@@ -385,20 +406,29 @@ CPLErr E00GRIDRasterBand::GetStatistics( int bApproxOK, int bForce,
 
 E00GRIDDataset::E00GRIDDataset()
 {
+    e00ReadPtr = NULL;
     fp = NULL;
+    nDataStart = 0;
+    nBytesEOL = 1;
+
+    nPosBeforeReadLine = 0;
+    panOffsets = NULL;
+    nLastYOff = -1;
+    nMaxYOffset = -1;
+
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
     adfGeoTransform[3] = 0;
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = 1;
-    bHasReadMetadata = FALSE;
+
     dfNoData = 0;
-    nDataStart = 0;
-    nBytesEOL = 1;
+
     papszPrj = NULL;
-    e00ReadPtr = NULL;
-    nLastLine = -1;
+
+    bHasReadMetadata = FALSE;
+
     bHasStats = FALSE;
     dfMin = 0;
     dfMax = 0;
@@ -418,6 +448,7 @@ E00GRIDDataset::~E00GRIDDataset()
         VSIFCloseL(fp);
     CSLDestroy(papszPrj);
     E00ReadClose(e00ReadPtr);
+    CPLFree(panOffsets);
 }
 
 /************************************************************************/
@@ -441,21 +472,24 @@ int E00GRIDDataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                    E00GRIDDatasetReadNextLine()                      */
+/*                            ReadNextLine()                            */
 /************************************************************************/
 
-static const char* E00GRIDDatasetReadNextLine(void * fp)
+const char* E00GRIDDataset::ReadNextLine(void * ptr)
 {
-    return CPLReadLine2L((VSILFILE*)fp, 256, NULL);
+    E00GRIDDataset* poDS = (E00GRIDDataset*) ptr;
+    poDS->nPosBeforeReadLine = VSIFTellL(poDS->fp);
+    return CPLReadLine2L(poDS->fp, 256, NULL);
 }
 
 /************************************************************************/
-/*                        E00GRIDDatasetRewind()                       */
+/*                                Rewind()                              */
 /************************************************************************/
 
-static void E00GRIDDatasetRewind(void * fp)
+void E00GRIDDataset::Rewind(void * ptr)
 {
-    VSIRewindL((VSILFILE*)fp);
+    E00GRIDDataset* poDS = (E00GRIDDataset*) ptr;
+    VSIRewindL(poDS->fp);
 }
 
 /************************************************************************/
@@ -487,6 +521,16 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Create a corresponding GDALDataset.                             */
+/* -------------------------------------------------------------------- */
+    E00GRIDDataset         *poDS;
+
+    poDS = new E00GRIDDataset();
+    if (strstr((const char*)poOpenInfo->pabyHeader, "\r\n") != NULL)
+        poDS->nBytesEOL = 2;
+    poDS->fp = fp;
+
     const char* pszLine;
     /* read EXP  0 or EXP  1 line */
     pszLine = CPLReadLine2L(fp, 81, NULL);
@@ -494,7 +538,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (pszLine == NULL)
     {
         CPLDebug("E00GRID", "Bad 1st line");
-        VSIFCloseL(fp);
+        delete poDS;
         return NULL;
     }
 
@@ -502,15 +546,16 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (bCompressed)
     {
         VSIRewindL(fp);
-        e00ReadPtr = E00ReadCallbackOpen(fp,
-                                         E00GRIDDatasetReadNextLine,
-                                         E00GRIDDatasetRewind);
+        e00ReadPtr = E00ReadCallbackOpen(poDS,
+                                         E00GRIDDataset::ReadNextLine,
+                                         E00GRIDDataset::Rewind);
         if (e00ReadPtr == NULL)
         {
-            VSIFCloseL(fp);
+            delete poDS;
             return NULL;
         }
         E00ReadNextLine(e00ReadPtr);
+        poDS->e00ReadPtr = e00ReadPtr;
     }
 
     /* skip GRD  2 line */
@@ -521,8 +566,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (pszLine == NULL || !EQUALN(pszLine, "GRD  2", 6))
     {
         CPLDebug("E00GRID", "Bad 2nd line");
-        VSIFCloseL(fp);
-        E00ReadClose(e00ReadPtr);
+        delete poDS;
         return NULL;
     }
 
@@ -535,14 +579,19 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
                 E00_INT_SIZE+E00_INT_SIZE+2+E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 3rd line");
-        VSIFCloseL(fp);
-        E00ReadClose(e00ReadPtr);
+        delete poDS;
         return NULL;
     }
 
     int nRasterXSize = atoi(pszLine);
     int nRasterYSize = atoi(pszLine + E00_INT_SIZE);
-    
+
+    if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
+    {
+        delete poDS;
+        return NULL;
+    }
+
     if (EQUALN(pszLine + E00_INT_SIZE + E00_INT_SIZE, " 1", 2))
         eDT = GDT_Int32;
     else if (EQUALN(pszLine + E00_INT_SIZE + E00_INT_SIZE, " 2", 2))
@@ -562,8 +611,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (pszLine == NULL || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 4th line");
-        VSIFCloseL(fp);
-        E00ReadClose(e00ReadPtr);
+        delete poDS;
         return NULL;
     }
 /*
@@ -579,8 +627,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (pszLine == NULL || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 5th line");
-        VSIFCloseL(fp);
-        E00ReadClose(e00ReadPtr);
+        delete poDS;
         return NULL;
     }
     double dfMinX = atof(pszLine);
@@ -594,21 +641,11 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (pszLine == NULL || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 6th line");
-        VSIFCloseL(fp);
-        E00ReadClose(e00ReadPtr);
+        delete poDS;
         return NULL;
     }
     double dfMaxX = atof(pszLine);
     double dfMaxY = atof(pszLine + E00_DOUBLE_SIZE);
-
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
-    E00GRIDDataset         *poDS;
-
-    poDS = new E00GRIDDataset();
-    if (strstr((const char*)poOpenInfo->pabyHeader, "\r\n") != NULL)
-        poDS->nBytesEOL = 2;
 
     poDS->nRasterXSize = nRasterXSize;
     poDS->nRasterYSize = nRasterYSize;
@@ -619,16 +656,17 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[3] = dfMaxY;
     poDS->adfGeoTransform[4] = 0;
     poDS->adfGeoTransform[5] = - (dfMaxY - dfMinY) / nRasterYSize;
-    poDS->fp = fp;
-    poDS->e00ReadPtr = e00ReadPtr;
     poDS->nDataStart = VSIFTellL(fp);
-
-    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    if (bCompressed)
     {
-        delete poDS;
-        return NULL;
+        poDS->panOffsets = (vsi_l_offset*)
+                        VSIMalloc2(sizeof(vsi_l_offset), nRasterYSize);
+        if (poDS->panOffsets == NULL)
+        {
+            delete poDS;
+            return NULL;
+        }
     }
-
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -699,16 +737,97 @@ void E00GRIDDataset::ReadMetadata()
 
     if (e00ReadPtr == NULL)
     {
-        int nRoundedBlockXSize = ((nRasterXSize + VALS_PER_LINE - 1) / VALS_PER_LINE) * VALS_PER_LINE;
-        int nValsToSkip = nRasterYSize * nRoundedBlockXSize;
-        int nLinesToSkip = nValsToSkip / VALS_PER_LINE;
+        int nRoundedBlockXSize = ((nRasterXSize + VALS_PER_LINE - 1) /
+                                                VALS_PER_LINE) * VALS_PER_LINE;
+        vsi_l_offset nValsToSkip =
+                               (vsi_l_offset)nRasterYSize * nRoundedBlockXSize;
+        vsi_l_offset nLinesToSkip = nValsToSkip / VALS_PER_LINE;
         int nBytesPerLine = VALS_PER_LINE * E00_FLOAT_SIZE + nBytesEOL;
-        int nPos = nDataStart + nLinesToSkip * nBytesPerLine;
+        vsi_l_offset nPos = nDataStart + nLinesToSkip * nBytesPerLine;
         VSIFSeekL(fp, nPos, SEEK_SET);
     }
     else
     {
-        nLastLine = -1;
+        nLastYOff = -1;
+
+        const unsigned int BUFFER_SIZE = 80;
+        const unsigned int NEEDLE_SIZE = 3*5;
+        const unsigned int nToRead = BUFFER_SIZE - NEEDLE_SIZE;
+        char* pabyBuffer = (char*)CPLCalloc(1, BUFFER_SIZE+NEEDLE_SIZE);
+        int nRead;
+        int bEOGFound = FALSE;
+
+        VSIFSeekL(fp, 0, SEEK_END);
+        vsi_l_offset nEndPos = VSIFTellL(fp);
+        if (nEndPos > BUFFER_SIZE)
+            nEndPos -= BUFFER_SIZE;
+        else
+            nEndPos = 0;
+        VSIFSeekL(fp, nEndPos, SEEK_SET);
+
+#define GOTO_NEXT_CHAR() \
+    i ++; \
+    if (pabyBuffer[i] == 13 || pabyBuffer[i] == 10) \
+    { \
+        i++; \
+        if (pabyBuffer[i] == 10) \
+            i++; \
+    } \
+
+        while ((nRead = VSIFReadL(pabyBuffer, 1, nToRead, fp)) != 0)
+        {
+            int i;
+            for(i = 0; i < nRead; i++)
+            {
+                if (pabyBuffer[i] == 'E')
+                {
+                    GOTO_NEXT_CHAR();
+                    if (pabyBuffer[i] == 'O')
+                    {
+                        GOTO_NEXT_CHAR();
+                        if (pabyBuffer[i] == 'G')
+                        {
+                            GOTO_NEXT_CHAR();
+                            if (pabyBuffer[i] == '~')
+                            {
+                                GOTO_NEXT_CHAR();
+                                if (pabyBuffer[i] == '}')
+                                {
+                                    bEOGFound = TRUE;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (bEOGFound)
+            {
+                VSIFSeekL(fp, VSIFTellL(fp) - nRead + i + 1, SEEK_SET);
+                e00ReadPtr->iInBufPtr = 0;
+                e00ReadPtr->szInBuf[0] = '\0';
+                break;
+            }
+
+            if (nEndPos == 0)
+                break;
+
+            if ((unsigned int)nRead == nToRead)
+            {
+                memmove(pabyBuffer + nToRead, pabyBuffer, NEEDLE_SIZE);
+                if (nEndPos >= (vsi_l_offset)nToRead)
+                    nEndPos -= nToRead;
+                else
+                    nEndPos = 0;
+                VSIFSeekL(fp, nEndPos, SEEK_SET);
+            }
+            else
+                break;
+        }
+        CPLFree(pabyBuffer);
+        if (!bEOGFound)
+            return;
     }
 
     const char* pszLine;
