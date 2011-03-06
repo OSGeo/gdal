@@ -750,7 +750,7 @@ void E00GRIDDataset::ReadMetadata()
     {
         nLastYOff = -1;
 
-        const unsigned int BUFFER_SIZE = 80;
+        const unsigned int BUFFER_SIZE = 65536;
         const unsigned int NEEDLE_SIZE = 3*5;
         const unsigned int nToRead = BUFFER_SIZE - NEEDLE_SIZE;
         char* pabyBuffer = (char*)CPLCalloc(1, BUFFER_SIZE+NEEDLE_SIZE);
