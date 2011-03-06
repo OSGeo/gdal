@@ -657,7 +657,7 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GifFileType *hGifFile;
     VSILFILE *fp;
 
-    fp = VSIFOpenL( pszFilename, "w" );
+    fp = VSIFOpenL( pszFilename, "wb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -848,23 +848,6 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     hGifFile = NULL;
 
-    /* This is a hack to write a GIF89a instead of GIF87a */
-    /* (we have to, since we are using graphical extension block) */
-    /* EGifSpew would write GIF89a when it detects an extension block if we were using it */
-    /* As we don't, we could have used EGifSetGifVersion instead, but the version of libungif */
-    /* in GDAL has a bug : it writes on read-only memory ! */
-    /* (this is a well-known problem. Just google for "EGifSetGifVersion segfault") */
-    /* Most readers don't even care if it is GIF87a or GIF89a, but it is */
-    /* better to write the right version */
-
-    VSIFSeekL(fp, 0, SEEK_SET);
-    if (VSIFWriteL("GIF89a", 1, 6, fp) != 6)
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Error writing gif file." );
-        goto error;
-    }
-
     VSIFCloseL( fp );
     fp = NULL;
 
@@ -924,8 +907,25 @@ static int VSIGIFWriteFunc( GifFileType *psGFile,
                             const GifByteType *pabyBuffer, int nBytesToWrite )
 
 {
-    return VSIFWriteL( (void *) pabyBuffer, 1, nBytesToWrite, 
-                       (VSILFILE *) psGFile->UserData );
+    VSILFILE* fp = (VSILFILE *) psGFile->UserData;
+    if ( VSIFTellL(fp) == 0 && nBytesToWrite >= 6 &&
+         memcmp(pabyBuffer, "GIF87a", 6) == 0 )
+    {
+        /* This is a hack to write a GIF89a instead of GIF87a */
+        /* (we have to, since we are using graphical extension block) */
+        /* EGifSpew would write GIF89a when it detects an extension block if we were using it */
+        /* As we don't, we could have used EGifSetGifVersion instead, but the version of libungif */
+        /* in GDAL has a bug : it writes on read-only memory ! */
+        /* (this is a well-known problem. Just google for "EGifSetGifVersion segfault") */
+        /* Most readers don't even care if it is GIF87a or GIF89a, but it is */
+        /* better to write the right version */
+
+        int nRet = VSIFWriteL("GIF89a", 1, 6, fp);
+        nRet += VSIFWriteL( (char *) pabyBuffer + 6, 1, nBytesToWrite - 6, fp );
+        return nRet;
+    }
+    else
+        return VSIFWriteL( (void *) pabyBuffer, 1, nBytesToWrite, fp );
 }
 
 /************************************************************************/
