@@ -491,6 +491,12 @@ static int ProxyMain( int argc, char ** argv )
         exit( 1 );
     }
 
+    if( strcmp(pszDest, "/vsistdout/") == 0)
+    {
+        bQuiet = TRUE;
+        pfnProgress = GDALDummyProgress;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Attempt to open source file.                                    */
 /* -------------------------------------------------------------------- */
