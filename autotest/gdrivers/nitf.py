@@ -807,6 +807,7 @@ with a newline."""
 
 ###############################################################################
 # Create and read a JPEG encoded NITF file (C3) with several blocks
+# Check that statistics are persisted (#3985)
 
 def nitf_36():
 
@@ -817,10 +818,19 @@ def nitf_36():
     ds = None
 
     ds = gdal.Open( 'tmp/nitf36.ntf' )
-    
+
+    if ds.GetRasterBand(1).GetMinimum() is not None:
+        gdaltest.post_reason( 'Did not expect to have minimum value at that point.' )
+        return 'fail'
+
+    (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
+    if stddev >= 0:
+        gdaltest.post_reason( 'Did not expect to have statistics at that point.' )
+        return 'fail'
+
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
-    
+    (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)
+
     if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
         print(mean, stddev)
         gdaltest.post_reason( 'did not get expected mean or standard dev.' )
@@ -829,6 +839,21 @@ def nitf_36():
     md = ds.GetMetadata('IMAGE_STRUCTURE')
     if md['COMPRESSION'] != 'JPEG':
         gdaltest.post_reason( 'Did not get expected compression value.' )
+        return 'fail'
+
+    ds = None
+
+    # Check that statistics are persisted (#3985)
+    ds = gdal.Open( 'tmp/nitf36.ntf' )
+
+    if ds.GetRasterBand(1).GetMinimum() is None:
+        gdaltest.post_reason( 'Should have minimum value at that point.' )
+        return 'fail'
+
+    (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
+    if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
+        print(mean, stddev)
+        gdaltest.post_reason( 'Should have statistics at that point.' )
         return 'fail'
 
     ds = None
