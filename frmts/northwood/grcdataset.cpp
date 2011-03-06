@@ -53,7 +53,7 @@ class NWT_GRCDataset : public GDALPamDataset
   friend class NWT_GRCRasterBand;
 
   private:
-    FILE * fp;
+    VSILFILE * fp;
     GByte abyHeader[1024];
     NWT_GRID *pGrd;
     char **papszCategories;
@@ -67,6 +67,7 @@ class NWT_GRCDataset : public GDALPamDataset
     ~NWT_GRCDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * poOpenInfo );
 
     CPLErr GetGeoTransform( double *padfTransform );
     const char *GetProjectionRef();
@@ -234,8 +235,8 @@ CPLErr NWT_GRCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( nBand == 1 )
     {                            //grc's are just one band of indices
-        VSIFSeek( poGDS->fp, 1024 + nRecordSize * nBlockYOff, SEEK_SET );
-        VSIFRead( pImage, 1, nRecordSize, poGDS->fp );
+        VSIFSeekL( poGDS->fp, 1024 + nRecordSize * nBlockYOff, SEEK_SET );
+        VSIFReadL( pImage, 1, nRecordSize, poGDS->fp );
     }
     else
     {
@@ -297,7 +298,7 @@ CPLErr NWT_GRCRasterBand::SetScale( double dfNewValue )
 /************************************************************************/
 NWT_GRCDataset::NWT_GRCDataset()
 {
-    poColorTable = new GDALColorTable();
+    poColorTable = NULL;
     papszCategories = NULL;
     pszProjection = NULL;
 }
@@ -308,8 +309,7 @@ NWT_GRCDataset::NWT_GRCDataset()
 /************************************************************************/
 NWT_GRCDataset::~NWT_GRCDataset()
 {
-    if( poColorTable )
-        delete poColorTable;
+    delete poColorTable;
     CSLDestroy( papszCategories );
 
     FlushCache();
@@ -317,14 +317,9 @@ NWT_GRCDataset::~NWT_GRCDataset()
     nwtCloseGrid( pGrd );
 
     if( fp != NULL )
-        VSIFClose( fp );
+        VSIFCloseL( fp );
 
-    if( pszProjection != NULL )
-    {
-        CPLFree( pszProjection );
-    }
-    /*if( poCT != NULL )
-        delete poCT;*/
+    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -364,22 +359,34 @@ const char *NWT_GRCDataset::GetProjectionRef()
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
-GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
+int NWT_GRCDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
 /*  Look for the header                                                 */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
-        return NULL;
+    if( poOpenInfo->nHeaderBytes < 50 )
+        return FALSE;
 
     if( poOpenInfo->pabyHeader[0] != 'H' ||
         poOpenInfo->pabyHeader[1] != 'G' ||
         poOpenInfo->pabyHeader[2] != 'P' ||
         poOpenInfo->pabyHeader[3] != 'C' ||
         poOpenInfo->pabyHeader[4] != '8' )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
+{
+    if( !Identify(poOpenInfo) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -389,14 +396,18 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new NWT_GRCDataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    if (poDS->fp == NULL)
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( poDS->fp, 0, SEEK_SET );
-    VSIFRead( poDS->abyHeader, 1, 1024, poDS->fp );
+    VSIFSeekL( poDS->fp, 0, SEEK_SET );
+    VSIFReadL( poDS->abyHeader, 1, 1024, poDS->fp );
     poDS->pGrd = (NWT_GRID *) malloc( sizeof (NWT_GRID) );
 
     poDS->pGrd->fp = poDS->fp;
@@ -446,8 +457,10 @@ GDALRegister_NWT_GRC()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                  "frmt_various.html#northwood_grc" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grc" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = NWT_GRCDataset::Open;
+        poDriver->pfnIdentify = NWT_GRCDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
