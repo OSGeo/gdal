@@ -134,6 +134,11 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview )
             apoOverviews.push_back( new ECWRasterBand( poDS, nBand, i ) );
         }
     }
+
+    if( (poDS->psFileInfo->pBands[nBand-1].nBits % 8) != 0 )
+        SetMetadataItem("NBITS",
+                        CPLString().Printf("%d",poDS->psFileInfo->pBands[nBand-1].nBits),
+                        "IMAGE_STRUCTURE" );
 }
 
 /************************************************************************/
@@ -1647,6 +1652,10 @@ void GDALRegister_ECW()
 #endif
 
 "</CreationOptionList>" );
+#else
+        /* In read-only mode, we support VirtualIO. This is not the case */
+        /* for ECWCreateCopyECW() */
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
@@ -1707,6 +1716,7 @@ void GDALRegister_JP2ECW()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_jp2ecw.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         
         poDriver->pfnIdentify = ECWDataset::IdentifyJPEG2000;
         poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
