@@ -3580,6 +3580,11 @@ void GDALRegister_MrSID()
 "</CreationOptionList>" );
 
         poDriver->pfnCreateCopy = MrSIDCreateCopy;
+
+#else
+        /* In read-only mode, we support VirtualIO. I don't think this is the case */
+        /* for MrSIDCreateCopy() */
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
         poDriver->pfnIdentify = MrSIDIdentify;
         poDriver->pfnOpen = MrSIDOpen;
@@ -3612,6 +3617,10 @@ void GDALRegister_MrSID()
 "</CreationOptionList>" );
 
         poDriver->pfnCreateCopy = JP2CreateCopy;
+#else
+        /* In read-only mode, we support VirtualIO. I don't think this is the case */
+        /* for JP2CreateCopy() */
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
         poDriver->pfnIdentify = JP2Identify;
         poDriver->pfnOpen = JP2Open;
