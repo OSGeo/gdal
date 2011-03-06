@@ -204,6 +204,27 @@ def png_9():
 
     return tst.testCreateCopy( vsimem = 1 )
 
+###############################################################################
+# Test outputing to /vsistdout/
+
+def png_10():
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('PNG').CreateCopy('/vsistdout_redirect//vsimem/tmp.png', src_ds)
+    if ds.GetRasterBand(1).Checksum() != 0:
+        return 'fail'
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('/vsimem/tmp.png')
+    if ds is None:
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        return 'fail'
+
+    gdal.Unlink('/vsimem/tmp.png')
+
+    return 'success'
 
 gdaltest_list = [
     png_1,
@@ -214,7 +235,8 @@ gdaltest_list = [
     png_6,
     png_7,
     png_8,
-    png_9 ]
+    png_9,
+    png_10 ]
 
 if __name__ == '__main__':
 

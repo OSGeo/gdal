@@ -55,10 +55,11 @@ CPL_C_END
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
 GDALDataset* JPEGDataset12Open(GDALOpenInfo* poOpenInfo);
-GDALDataset*
-        JPEGCreateCopy12( const char * pszFilename, GDALDataset *poSrcDS, 
-                          int bStrict, char ** papszOptions, 
-                          GDALProgressFunc pfnProgress, void * pProgressData );
+GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData );
 #endif
 
 CPL_C_START
@@ -166,6 +167,11 @@ class JPGDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+    static GDALDataset* CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData );
 
     static void ErrorExit(j_common_ptr cinfo);
 };
@@ -261,6 +267,8 @@ void JPGDataset::ReadEXIFMetadata()
 /************************************************************************/
 char  **JPGDataset::GetMetadata( const char * pszDomain )
 {
+    if (fpImage == NULL)
+        return NULL;
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
         (pszDomain == NULL || EQUAL(pszDomain, "")))
         ReadEXIFMetadata();
@@ -273,6 +281,8 @@ char  **JPGDataset::GetMetadata( const char * pszDomain )
 const char *JPGDataset::GetMetadataItem( const char * pszName,
                                          const char * pszDomain )
 {
+    if (fpImage == NULL)
+        return NULL;
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL && EQUALN(pszName, "EXIF_", 5))
@@ -853,6 +863,12 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     
     CPLAssert( nBlockXOff == 0 );
 
+    if (poGDS->fpImage == NULL)
+    {
+        memset( pImage, 0, nXSize * nWordSize );
+        return CE_None;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Load the desired scanline into the working buffer.              */
 /* -------------------------------------------------------------------- */
@@ -1008,6 +1024,9 @@ GDALColorInterp JPGRasterBand::GetColorInterpretation()
 GDALRasterBand *JPGRasterBand::GetMaskBand()
 
 {
+    if (poGDS->fpImage == NULL)
+        return NULL;
+
     if( !poGDS->bHasCheckedForMask)
     {
         poGDS->CheckForMask();
@@ -1031,6 +1050,9 @@ GDALRasterBand *JPGRasterBand::GetMaskBand()
 int JPGRasterBand::GetMaskFlags()
 
 {
+    if (poGDS->fpImage == NULL)
+        return 0;
+
     GetMaskBand();
     if( poGDS->poMaskBand != NULL )
         return GMF_PER_DATASET;
@@ -1052,6 +1074,8 @@ int JPGRasterBand::GetMaskFlags()
 JPGDataset::JPGDataset()
 
 {
+    fpImage = NULL;
+
     pabyScanline = NULL;
     nLoadedScanline = -1;
 
@@ -1082,6 +1106,8 @@ JPGDataset::JPGDataset()
     nCMaskSize = 0;
 
     eGDALColorSpace = JCS_UNKNOWN;
+
+    sDInfo.data_precision = 8;
 }
 
 /************************************************************************/
@@ -1093,8 +1119,11 @@ JPGDataset::~JPGDataset()
 {
     FlushCache();
 
-    jpeg_abort_decompress( &sDInfo );
-    jpeg_destroy_decompress( &sDInfo );
+    if (bHasDoneJpegStartDecompress)
+    {
+        jpeg_abort_decompress( &sDInfo );
+        jpeg_destroy_decompress( &sDInfo );
+    }
 
     if( fpImage != NULL )
         VSIFCloseL( fpImage );
@@ -1662,26 +1691,26 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Open the file using the large file api.                         */
+/* -------------------------------------------------------------------- */
+    VSILFILE* fpImage = VSIFOpenL( real_filename, "rb" );
+
+    if( fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp",
+                  real_filename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     JPGDataset	*poDS;
 
     poDS = new JPGDataset();
     poDS->nQLevel = nQLevel;
-
-/* -------------------------------------------------------------------- */
-/*      Open the file using the large file api.                         */
-/* -------------------------------------------------------------------- */
-    poDS->fpImage = VSIFOpenL( real_filename, "rb" );
-    
-    if( poDS->fpImage == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp", 
-                  real_filename );
-        delete poDS;
-        return NULL;
-    }
+    poDS->fpImage = fpImage;
 
 /* -------------------------------------------------------------------- */
 /*      Move to the start of jpeg data.                                 */
@@ -2155,13 +2184,13 @@ static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
 }
 
 /************************************************************************/
-/*                           JPEGCreateCopy()                           */
+/*                              CreateCopy()                            */
 /************************************************************************/
 
 GDALDataset *
-JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                int bStrict, char ** papszOptions, 
-                GDALProgressFunc pfnProgress, void * pProgressData )
+JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                        int bStrict, char ** papszOptions,
+                        GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
     int  nBands = poSrcDS->GetRasterCount();
@@ -2215,7 +2244,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( eDT == GDT_UInt16 || eDT == GDT_Int16 )
     {
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
-        return JPEGCreateCopy12(pszFilename, poSrcDS,
+        return JPEGDataset12CreateCopy(pszFilename, poSrcDS,
                                 bStrict, papszOptions, 
                                 pfnProgress, pProgressData );
 #else
@@ -2426,12 +2455,27 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
-    JPGDataset *poDS = (JPGDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
 
+    /* If outputing to stdout, we can't reopen it, so we'll return */
+    /* a fake dataset to make the caller happy */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    JPGDataset *poDS = (JPGDataset*) JPGDataset::Open( &oOpenInfo );
+    CPLPopErrorHandler();
     if( poDS )
+    {
         poDS->CloneInfo( poSrcDS, nCloneFlags );
+        return poDS;
+    }
 
-    return poDS;
+    CPLErrorReset();
+
+    JPGDataset* poJPG_DS = new JPGDataset();
+    poJPG_DS->nRasterXSize = nXSize;
+    poJPG_DS->nRasterYSize = nYSize;
+    for(int i=0;i<nBands;i++)
+        poJPG_DS->SetBand( i+1, new JPGRasterBand( poJPG_DS, i+1) );
+    return poJPG_DS;
 }
 
 /************************************************************************/
@@ -2474,7 +2518,7 @@ void GDALRegister_JPEG()
 
         poDriver->pfnIdentify = JPGDataset::Identify;
         poDriver->pfnOpen = JPGDataset::Open;
-        poDriver->pfnCreateCopy = JPEGCreateCopy;
+        poDriver->pfnCreateCopy = JPGDataset::CreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

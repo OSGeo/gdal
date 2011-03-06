@@ -410,6 +410,53 @@ def jpeg_12():
 
     return 'success'
 
+###############################################################################
+# Test outputing to /vsistdout/
+
+def jpeg_13():
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsistdout_redirect//vsimem/tmp.jpg', src_ds)
+    if ds.GetRasterBand(1).Checksum() != 0:
+        return 'fail'
+    ds.ReadRaster(0,0,1,1)
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('/vsimem/tmp.jpg')
+    if ds is None:
+        return 'fail'
+
+    gdal.Unlink('/vsimem/tmp.jpg')
+
+    return 'success'
+
+###############################################################################
+# Test outputing to /vsistdout/
+
+def jpeg_14():
+
+    # Check if JPEG driver supports 12bit JPEG reading/writing
+    drv = gdal.GetDriverByName('JPEG')
+    md = drv.GetMetadata()
+    if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
+        sys.stdout.write('(12bit jpeg not available) ... ')
+        return 'skip'
+
+    src_ds = gdal.Open('data/12bit_rose_extract.jpg')
+    ds = drv.CreateCopy('/vsistdout_redirect//vsimem/tmp.jpg', src_ds)
+    if ds.GetRasterBand(1).Checksum() != 0:
+        return 'fail'
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('/vsimem/tmp.jpg')
+    if ds is None:
+        return 'fail'
+
+    gdal.Unlink('/vsimem/tmp.jpg')
+
+    return 'success'
 
 gdaltest_list = [
     jpeg_1,
@@ -423,7 +470,9 @@ gdaltest_list = [
     jpeg_9,
     jpeg_10,
     jpeg_11,
-    jpeg_12 ]
+    jpeg_12,
+    jpeg_13,
+    jpeg_14 ]
 
 if __name__ == '__main__':
 
