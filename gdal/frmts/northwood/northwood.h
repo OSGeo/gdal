@@ -27,8 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
+#ifdef NOT_GDAL
 #include <stdio.h>
+#define VSILFILE    FILE
+#define VSIFOpenL   fopen
+#define VSIFCloseL  fclose
+#define VSIFSeekL   fseek
+#define VSIFReadL   fread
+#else
+#include "cpl_vsi.h"
+#endif
 
 #ifndef MAX
 #define MAX(a, b) (a > b ? a : b)
@@ -91,7 +99,7 @@ typedef struct
 typedef struct
 {
     char szFileName[256];
-    FILE *fp;
+    VSILFILE *fp;
     float fVersion;
     unsigned char cFormat;        //0x00 16 bit, 0x01 32 bit, 0x80 8 bit classifed, 0x81 16 bit classified
     unsigned int nBitsPerPixel;
