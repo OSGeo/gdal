@@ -183,11 +183,11 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
     if( pGrd->cFormat & 0x80 )        // if is GRC load the Dictionary
     {
-        fseek( pGrd->fp,
+        VSIFSeekL( pGrd->fp,
                1024 + (pGrd->nXSide * pGrd->nYSide) * pGrd->nBitsPerPixel / 8,
                SEEK_SET );
 
-        if( !fread( &usTmp, 2, 1, pGrd->fp) )
+        if( !VSIFReadL( &usTmp, 2, 1, pGrd->fp) )
             return FALSE;
         CPL_LSBPTR16(&usTmp);
         pGrd->stClassDict =
@@ -206,7 +206,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
         {
             pGrd->stClassDict->stClassifedItem[usTmp] =
               (NWT_CLASSIFIED_ITEM *) calloc( sizeof(NWT_CLASSIFIED_ITEM), 1 );
-            if( !fread( &cTmp, 9, 1, pGrd->fp ) )
+            if( !VSIFReadL( &cTmp, 9, 1, pGrd->fp ) )
                 return FALSE;
             memcpy( (void *) &pGrd->stClassDict->
                     stClassifedItem[usTmp]->usPixVal, (void *) &cTmp[0], 2 );
@@ -228,7 +228,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
             if ( pGrd->stClassDict->stClassifedItem[usTmp]->usLen > 256)
                 return FALSE;
 
-            if( !fread( &pGrd->stClassDict->stClassifedItem[usTmp]->szClassName,
+            if( !VSIFReadL( &pGrd->stClassDict->stClassifedItem[usTmp]->szClassName,
                         pGrd->stClassDict->stClassifedItem[usTmp]->usLen,
                         1, pGrd->fp ) )
                 return FALSE;
@@ -410,15 +410,15 @@ NWT_GRID *nwtOpenGrid( char *filename )
 {
     NWT_GRID *pGrd;
     char nwtHeader[1024];
-    FILE *fp;
+    VSILFILE *fp;
 
-    if( (fp = fopen( filename, "rb" )) == NULL )
+    if( (fp = VSIFOpenL( filename, "rb" )) == NULL )
     {
         fprintf( stderr, "\nCan't open %s\n", filename );
         return NULL;
     }
 
-    if( !fread( nwtHeader, 1024, 1, fp ) )
+    if( !VSIFReadL( nwtHeader, 1024, 1, fp ) )
         return NULL;
 
     if( nwtHeader[0] != 'H' ||
@@ -464,7 +464,7 @@ void nwtCloseGrid( NWT_GRID * pGrd )
         free( pGrd->stClassDict );
     }
     if( pGrd->fp )
-        fclose( pGrd->fp );
+        VSIFCloseL( pGrd->fp );
     free( pGrd );
         return;
 }
