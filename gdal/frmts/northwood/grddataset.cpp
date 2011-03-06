@@ -52,7 +52,7 @@ class NWT_GRDDataset:public GDALPamDataset
 {
   friend class NWT_GRDRasterBand;
 
-    FILE *fp;
+    VSILFILE *fp;
     GByte abyHeader[1024];
     NWT_GRID *pGrd;
     NWT_RGB ColorMap[4096];
@@ -63,6 +63,7 @@ class NWT_GRDDataset:public GDALPamDataset
     ~NWT_GRDDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * );
 
     CPLErr GetGeoTransform( double *padfTransform );
     const char *GetProjectionRef();
@@ -167,10 +168,10 @@ CPLErr NWT_GRDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pIma
     int i;
     unsigned short raw1;
 
-    VSIFSeek( poGDS->fp, 1024 + nRecordSize * nBlockYOff, SEEK_SET );
+    VSIFSeekL( poGDS->fp, 1024 + nRecordSize * nBlockYOff, SEEK_SET );
 
     pszRecord = (char *) CPLMalloc( nRecordSize );
-    VSIFRead( pszRecord, 1, nRecordSize, poGDS->fp );
+    VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
 
     if( nBand == 4 )                //Z values
     {
@@ -296,7 +297,7 @@ NWT_GRDDataset::~NWT_GRDDataset()
     nwtCloseGrid( pGrd );
 
     if( fp != NULL )
-        VSIFClose( fp );
+        VSIFCloseL( fp );
 
     if( pszProjection != NULL )
     {
@@ -343,21 +344,34 @@ const char *NWT_GRDDataset::GetProjectionRef()
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                              Identify()                              */
 /************************************************************************/
-GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
+
+int NWT_GRDDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
 /*  Look for the header                                                 */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
-        return NULL;
+    if( poOpenInfo->nHeaderBytes < 50 )
+        return FALSE;
 
     if( poOpenInfo->pabyHeader[0] != 'H' ||
         poOpenInfo->pabyHeader[1] != 'G' ||
         poOpenInfo->pabyHeader[2] != 'P' ||
-        poOpenInfo->pabyHeader[3] != 'C' || poOpenInfo->pabyHeader[4] != '1' )
-    return NULL;
+        poOpenInfo->pabyHeader[3] != 'C' ||
+        poOpenInfo->pabyHeader[4] != '1' )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
+{
+    if( !Identify(poOpenInfo) )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -366,14 +380,18 @@ GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new NWT_GRDDataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    if (poDS->fp == NULL)
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( poDS->fp, 0, SEEK_SET );
-    VSIFRead( poDS->abyHeader, 1, 1024, poDS->fp );
+    VSIFSeekL( poDS->fp, 0, SEEK_SET );
+    VSIFReadL( poDS->abyHeader, 1, 1024, poDS->fp );
     poDS->pGrd = (NWT_GRID *) malloc(sizeof(NWT_GRID));
     if (!nwt_ParseHeader( poDS->pGrd, (char *) poDS->abyHeader ) ||
         !GDALCheckDatasetDimensions(poDS->pGrd->nXSide, poDS->pGrd->nYSide) )
@@ -423,8 +441,10 @@ void GDALRegister_NWT_GRD()
                                  "Northwood Numeric Grid Format .grd/.tab" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#grd");
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = NWT_GRDDataset::Open;
+        poDriver->pfnIdentify = NWT_GRDDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
