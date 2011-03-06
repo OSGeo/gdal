@@ -36,6 +36,7 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 #include "gdal_proxy.h"
+#include <map>
 
 CPL_CVSID("$Id$");
 
@@ -53,6 +54,356 @@ static int NITFWriteJPEGImage( GDALDataset *, VSILFILE *, vsi_l_offset, char **,
                                GDALProgressFunc pfnProgress, 
                                void * pProgressData );
 #endif
+
+/* This class is potentially of general interest and could be moved to gdal_proxy.h */
+/* We don't proxy all methods. Generally speaking, the getters go to PAM first and */
+/* then to the underlying band if no value exist in PAM. The setters aren't */
+/* overriden, so they go to PAM */
+
+class NITFProxyPamRasterBand : public GDALPamRasterBand
+{
+    private:
+        std::map<CPLString, char**> oMDMap;
+
+    protected:
+        virtual GDALRasterBand* RefUnderlyingRasterBand() = 0;
+        virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
+
+        virtual CPLErr IReadBlock( int, int, void * );
+        virtual CPLErr IWriteBlock( int, int, void * );
+        virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                                void *, int, int, GDALDataType,
+                                int, int );
+
+    public:
+                         ~NITFProxyPamRasterBand();
+
+        virtual char      **GetMetadata( const char * pszDomain = ""  );
+        /*virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                        const char * pszDomain = ""  );*/
+        virtual const char *GetMetadataItem( const char * pszName,
+                                            const char * pszDomain = "" );
+        /*virtual CPLErr      SetMetadataItem( const char * pszName,
+                                            const char * pszValue,
+                                            const char * pszDomain = "" );*/
+        virtual CPLErr FlushCache();
+        /*virtual char **GetCategoryNames();*/
+        virtual double GetNoDataValue( int *pbSuccess = NULL );
+        virtual double GetMinimum( int *pbSuccess = NULL );
+        virtual double GetMaximum(int *pbSuccess = NULL );
+        /*virtual double GetOffset( int *pbSuccess = NULL );
+        virtual double GetScale( int *pbSuccess = NULL );*/
+        /*virtual const char *GetUnitType();*/
+        virtual GDALColorInterp GetColorInterpretation();
+        virtual GDALColorTable *GetColorTable();
+        virtual CPLErr Fill(double dfRealValue, double dfImaginaryValue = 0);
+
+        /*
+        virtual CPLErr SetCategoryNames( char ** );
+        virtual CPLErr SetNoDataValue( double );
+        virtual CPLErr SetColorTable( GDALColorTable * );
+        virtual CPLErr SetColorInterpretation( GDALColorInterp );
+        virtual CPLErr SetOffset( double );
+        virtual CPLErr SetScale( double );
+        virtual CPLErr SetUnitType( const char * );
+        */
+
+        virtual CPLErr GetStatistics( int bApproxOK, int bForce,
+                                    double *pdfMin, double *pdfMax,
+                                    double *pdfMean, double *padfStdDev );
+        virtual CPLErr ComputeStatistics( int bApproxOK,
+                                        double *pdfMin, double *pdfMax,
+                                        double *pdfMean, double *pdfStdDev,
+                                        GDALProgressFunc, void *pProgressData );
+        /*virtual CPLErr SetStatistics( double dfMin, double dfMax,
+                                    double dfMean, double dfStdDev );*/
+        virtual CPLErr ComputeRasterMinMax( int, double* );
+
+        virtual int HasArbitraryOverviews();
+        virtual int GetOverviewCount();
+        virtual GDALRasterBand *GetOverview(int);
+        virtual GDALRasterBand *GetRasterSampleOverview( int );
+        virtual CPLErr BuildOverviews( const char *, int, int *,
+                                    GDALProgressFunc, void * );
+
+        virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                                int nBufXSize, int nBufYSize,
+                                GDALDataType eDT, char **papszOptions );
+
+        /*virtual CPLErr  GetHistogram( double dfMin, double dfMax,
+                            int nBuckets, int * panHistogram,
+                            int bIncludeOutOfRange, int bApproxOK,
+                            GDALProgressFunc, void *pProgressData );
+
+        virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                            int *pnBuckets, int ** ppanHistogram,
+                                            int bForce,
+                                            GDALProgressFunc, void *pProgressData);
+        virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
+                                            int nBuckets, int *panHistogram );*/
+
+        /*virtual const GDALRasterAttributeTable *GetDefaultRAT();
+        virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );*/
+
+        virtual GDALRasterBand *GetMaskBand();
+        virtual int             GetMaskFlags();
+        virtual CPLErr          CreateMaskBand( int nFlags );
+};
+
+NITFProxyPamRasterBand::~NITFProxyPamRasterBand()
+{
+    std::map<CPLString, char**>::iterator oIter = oMDMap.begin();
+    while(oIter != oMDMap.end())
+    {
+        CSLDestroy(oIter->second);
+        oIter ++;
+    }
+}
+
+
+#define RB_PROXY_METHOD_WITH_RET(retType, retErrValue, methodName, argList, argParams) \
+retType NITFProxyPamRasterBand::methodName argList \
+{ \
+    retType ret; \
+    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand(); \
+    if (_poSrcBand) \
+    { \
+        ret = _poSrcBand->methodName argParams; \
+        UnrefUnderlyingRasterBand(_poSrcBand); \
+    } \
+    else \
+    { \
+        ret = retErrValue; \
+    } \
+    return ret; \
+}
+
+
+#define RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(retType, retErrValue, methodName, underlyingMethodName, argList, argParams) \
+retType NITFProxyPamRasterBand::methodName argList \
+{ \
+    retType ret; \
+    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand(); \
+    if (_poSrcBand) \
+    { \
+        ret = _poSrcBand->underlyingMethodName argParams; \
+        UnrefUnderlyingRasterBand(_poSrcBand); \
+    } \
+    else \
+    { \
+        ret = retErrValue; \
+    } \
+    return ret; \
+}
+
+char      **NITFProxyPamRasterBand::GetMetadata( const char * pszDomain  )
+{
+    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
+    if (_poSrcBand)
+    {
+        /* Let's merge metadata of PAM and the underlying band */
+        /* PAM metadata should override underlying band metadata */
+        char** papszMD = CSLDuplicate(_poSrcBand->GetMetadata( pszDomain ));
+        papszMD = CSLMerge( papszMD, GDALPamRasterBand::GetMetadata(pszDomain) );
+
+        if (pszDomain == NULL)
+            pszDomain = "";
+
+        std::map<CPLString, char**>::iterator oIter = oMDMap.find(pszDomain);
+        if (oIter != oMDMap.end())
+            CSLDestroy(oIter->second);
+        oMDMap[pszDomain] = papszMD;
+        UnrefUnderlyingRasterBand(_poSrcBand);
+
+        return papszMD;
+    }
+
+    return GDALPamRasterBand::GetMetadata(pszDomain);
+}
+
+
+const char *NITFProxyPamRasterBand::GetMetadataItem( const char * pszName,
+                                                     const char * pszDomain )
+{
+    const char* pszRet = GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
+    if (pszRet)
+        return pszRet;
+
+    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
+    if (_poSrcBand)
+    {
+        pszRet = _poSrcBand->GetMetadataItem( pszName, pszDomain );
+        UnrefUnderlyingRasterBand(_poSrcBand);
+    }
+
+    return pszRet;
+}
+
+CPLErr NITFProxyPamRasterBand::GetStatistics( int bApproxOK, int bForce,
+                                      double *pdfMin, double *pdfMax,
+                                      double *pdfMean, double *pdfStdDev )
+{
+    CPLErr ret;
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have metadata items for the requested values?     */
+/* -------------------------------------------------------------------- */
+    if( (pdfMin == NULL || GetMetadataItem("STATISTICS_MINIMUM") != NULL)
+     && (pdfMax == NULL || GetMetadataItem("STATISTICS_MAXIMUM") != NULL)
+     && (pdfMean == NULL || GetMetadataItem("STATISTICS_MEAN") != NULL)
+     && (pdfStdDev == NULL || GetMetadataItem("STATISTICS_STDDEV") != NULL) )
+    {
+        return GDALPamRasterBand::GetStatistics( bApproxOK, bForce,
+                                                 pdfMin, pdfMax,
+                                                 pdfMean, pdfStdDev);
+    }
+
+    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
+    if (_poSrcBand)
+    {
+        ret = _poSrcBand->GetStatistics( bApproxOK, bForce,
+                                         pdfMin, pdfMax, pdfMean, pdfStdDev);
+        if (ret == CE_None)
+        {
+            /* Report underlying statistics at PAM level */
+            SetMetadataItem("STATISTICS_MINIMUM",
+                            _poSrcBand->GetMetadataItem("STATISTICS_MINIMUM"));
+            SetMetadataItem("STATISTICS_MAXIMUM",
+                            _poSrcBand->GetMetadataItem("STATISTICS_MAXIMUM"));
+            SetMetadataItem("STATISTICS_MEAN",
+                            _poSrcBand->GetMetadataItem("STATISTICS_MEAN"));
+            SetMetadataItem("STATISTICS_STDDEV",
+                            _poSrcBand->GetMetadataItem("STATISTICS_STDDEV"));
+        }
+        UnrefUnderlyingRasterBand(_poSrcBand);
+    }
+    else
+    {
+        ret = CE_Failure;
+    }
+    return ret;
+}
+
+CPLErr NITFProxyPamRasterBand::ComputeStatistics( int bApproxOK,
+                                        double *pdfMin, double *pdfMax,
+                                        double *pdfMean, double *pdfStdDev,
+                                        GDALProgressFunc pfn, void *pProgressData )
+{
+    CPLErr ret;
+    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
+    if (_poSrcBand)
+    {
+        ret = _poSrcBand->ComputeStatistics( bApproxOK, pdfMin, pdfMax,
+                                             pdfMean, pdfStdDev,
+                                             pfn, pProgressData);
+        if (ret == CE_None)
+        {
+            /* Report underlying statistics at PAM level */
+            SetMetadataItem("STATISTICS_MINIMUM",
+                            _poSrcBand->GetMetadataItem("STATISTICS_MINIMUM"));
+            SetMetadataItem("STATISTICS_MAXIMUM",
+                            _poSrcBand->GetMetadataItem("STATISTICS_MAXIMUM"));
+            SetMetadataItem("STATISTICS_MEAN",
+                            _poSrcBand->GetMetadataItem("STATISTICS_MEAN"));
+            SetMetadataItem("STATISTICS_STDDEV",
+                            _poSrcBand->GetMetadataItem("STATISTICS_STDDEV"));
+        }
+        UnrefUnderlyingRasterBand(_poSrcBand);
+    }
+    else
+    {
+        ret = CE_Failure;
+    }
+    return ret;
+}
+
+
+#define RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(methodName) \
+double NITFProxyPamRasterBand::methodName( int *pbSuccess ) \
+{ \
+    int bSuccess = FALSE; \
+    double dfRet = GDALPamRasterBand::methodName(&bSuccess); \
+    if (bSuccess) \
+    { \
+        if (pbSuccess) \
+            *pbSuccess = TRUE; \
+        return dfRet; \
+    } \
+    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand(); \
+    if (_poSrcBand) \
+    { \
+        dfRet = _poSrcBand->methodName( pbSuccess ); \
+        UnrefUnderlyingRasterBand(_poSrcBand); \
+    } \
+    else \
+    { \
+        dfRet = 0; \
+    } \
+    return dfRet; \
+}
+
+RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(GetNoDataValue)
+RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(GetMinimum)
+RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(GetMaximum)
+
+RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IReadBlock, ReadBlock,
+                                ( int nXBlockOff, int nYBlockOff, void* pImage),
+                                (nXBlockOff, nYBlockOff, pImage) )
+RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IWriteBlock, WriteBlock,
+                                ( int nXBlockOff, int nYBlockOff, void* pImage),
+                                (nXBlockOff, nYBlockOff, pImage) )
+RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IRasterIO, RasterIO,
+                        ( GDALRWFlag eRWFlag,
+                                int nXOff, int nYOff, int nXSize, int nYSize,
+                                void * pData, int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType,
+                                int nPixelSpace,
+                                int nLineSpace ),
+                        (eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                pData, nBufXSize, nBufYSize, eBufType,
+                                nPixelSpace, nLineSpace ) )
+
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushCache, (), ())
+
+RB_PROXY_METHOD_WITH_RET(GDALColorInterp, GCI_Undefined, GetColorInterpretation, (), ())
+RB_PROXY_METHOD_WITH_RET(GDALColorTable*, NULL, GetColorTable, (), ())
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, Fill,
+                        (double dfRealValue, double dfImaginaryValue),
+                        (dfRealValue, dfImaginaryValue))
+
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ComputeRasterMinMax,
+                        ( int arg1, double* arg2 ), (arg1, arg2))
+
+RB_PROXY_METHOD_WITH_RET(int, 0, HasArbitraryOverviews, (), ())
+RB_PROXY_METHOD_WITH_RET(int, 0,  GetOverviewCount, (), ())
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetOverview, (int arg1), (arg1))
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetRasterSampleOverview,
+                        (int arg1), (arg1))
+
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
+                        (const char * arg1, int arg2, int *arg3,
+                        GDALProgressFunc arg4, void * arg5),
+                        (arg1, arg2, arg3, arg4, arg5))
+
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
+                        ( int nXOff, int nYOff, int nXSize, int nYSize,
+                        int nBufXSize, int nBufYSize,
+                        GDALDataType eDT, char **papszOptions ),
+                        (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT, papszOptions))
+
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL, GetMaskBand, (), ())
+RB_PROXY_METHOD_WITH_RET(int, 0, GetMaskFlags, (), ())
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlags ), (nFlags))
+
+
+/************************************************************************/
+/*                 UnrefUnderlyingRasterBand()                        */
+/************************************************************************/
+
+void NITFProxyPamRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand)
+{
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -775,14 +1126,14 @@ void NITFRasterBand::Unpack( GByte* pData )
 /* We just override the few specific methods where we want that */
 /* the NITFWrapperRasterBand behaviour differs from the JPEG/JPEG2000 one */
 
-class NITFWrapperRasterBand : public GDALProxyRasterBand
+class NITFWrapperRasterBand : public NITFProxyPamRasterBand
 {
   GDALRasterBand* poBaseBand;
   GDALColorTable* poColorTable;
   GDALColorInterp eInterp;
 
   protected:
-    /* Pure virtual method of the GDALProxyRasterBand */
+    /* Pure virtual method of the NITFProxyPamRasterBand */
     virtual GDALRasterBand* RefUnderlyingRasterBand();
 
   public:
