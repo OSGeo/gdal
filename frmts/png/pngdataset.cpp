@@ -121,6 +121,11 @@ class PNGDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+    static GDALDataset* CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData );
 
     virtual CPLErr GetGeoTransform( double * );
     virtual void FlushCache( void );
@@ -231,13 +236,21 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLErr      eErr;
     GByte       *pabyScanline;
     int         i, nPixelSize, nPixelOffset, nXSize = GetXSize();
-    
+
     CPLAssert( nBlockXOff == 0 );
 
     if( poGDS->nBitDepth == 16 )
         nPixelSize = 2;
     else
         nPixelSize = 1;
+
+
+    if (poGDS->fpImage == NULL)
+    {
+        memset( pImage, 0, nPixelSize * nXSize );
+        return CE_None;
+    }
+
     nPixelOffset = poGDS->nBands * nPixelSize;
 
 /* -------------------------------------------------------------------- */
@@ -387,6 +400,7 @@ double PNGRasterBand::GetNoDataValue( int *pbSuccess )
 PNGDataset::PNGDataset()
 
 {
+    fpImage = NULL;
     hPNG = NULL;
     psPNGInfo = NULL;
     pabyBuffer = NULL;
@@ -394,6 +408,7 @@ PNGDataset::PNGDataset()
     nBufferLines = 0;
     nLastLineRead = -1;
     poColorTable = NULL;
+    nBitDepth = 8;
 
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -976,11 +991,11 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                           PNGCreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
-static GDALDataset *
-PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+GDALDataset *
+PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                int bStrict, char ** papszOptions, 
                GDALProgressFunc pfnProgress, void * pProgressData )
 
@@ -1296,10 +1311,28 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
-    PNGDataset *poDS = (PNGDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
 
+    /* If outputing to stdout, we can't reopen it, so we'll return */
+    /* a fake dataset to make the caller happy */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    PNGDataset *poDS = (PNGDataset*) PNGDataset::Open( &oOpenInfo );
+    CPLPopErrorHandler();
     if( poDS )
+    {
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        return poDS;
+    }
+
+    CPLErrorReset();
+
+    PNGDataset* poPNG_DS = new PNGDataset();
+    poPNG_DS->nRasterXSize = nXSize;
+    poPNG_DS->nRasterYSize = nYSize;
+    poPNG_DS->nBitDepth = nBitDepth;
+    for(int i=0;i<nBands;i++)
+        poPNG_DS->SetBand( i+1, new PNGRasterBand( poPNG_DS, i+1) );
+    return poPNG_DS;
 
     return poDS;
 }
@@ -1410,7 +1443,7 @@ void GDALRegister_PNG()
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = PNGDataset::Open;
-        poDriver->pfnCreateCopy = PNGCreateCopy;
+        poDriver->pfnCreateCopy = PNGDataset::CreateCopy;
         poDriver->pfnIdentify = PNGDataset::Identify;
 #ifdef SUPPORT_CREATE
         poDriver->pfnCreate = PNGDataset::Create;

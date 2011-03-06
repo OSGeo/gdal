@@ -83,6 +83,12 @@ class GIFDataset : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs();
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+    static GDALDataset* CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData );
+
 };
 
 /************************************************************************/
@@ -132,6 +138,13 @@ GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand,
     nBlockYSize = 1;
 
     psImage = psSavedImage;
+
+    poColorTable = NULL;
+    panInterlaceMap = NULL;
+    nTransparentColor = 0;
+
+    if (psImage == NULL)
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Setup interlacing map if required.                              */
@@ -236,6 +249,12 @@ CPLErr GIFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     CPLAssert( nBlockXOff == 0 );
+
+    if (psImage == NULL)
+    {
+        memset(pImage, 0, nBlockXSize);
+        return CE_None;
+    }
 
     if( panInterlaceMap != NULL )
         nBlockYOff = panInterlaceMap[nBlockYOff];
@@ -601,11 +620,11 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                           GIFCreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
-static GDALDataset *
-GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+GDALDataset *
+GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                int bStrict, char ** papszOptions, 
                GDALProgressFunc pfnProgress, void * pProgressData )
 
@@ -865,13 +884,28 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
-    poDS = (GDALPamDataset *) 
-        GDALOpen( pszFilename, GA_ReadOnly );
 
-    if( poDS )
+    /* If outputing to stdout, we can't reopen it, so we'll return */
+    /* a fake dataset to make the caller happy */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    poDS = (GDALPamDataset*) GDALOpen(pszFilename, GA_ReadOnly);
+    CPLPopErrorHandler();
+    if (poDS)
+    {
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        return poDS;
+    }
+    else
+    {
+        CPLErrorReset();
 
-    return poDS;
+        GIFDataset* poGIF_DS = new GIFDataset();
+        poGIF_DS->nRasterXSize = nXSize;
+        poGIF_DS->nRasterYSize = nYSize;
+        for(int i=0;i<nBands;i++)
+            poGIF_DS->SetBand( i+1, new GIFRasterBand( poGIF_DS, i+1, NULL, 0 ) );
+        return poGIF_DS;
+    }
 
 error:
     if (hGifFile)
@@ -960,7 +994,7 @@ void GDALRegister_GIF()
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = GIFDataset::Open;
-        poDriver->pfnCreateCopy = GIFCreateCopy;
+        poDriver->pfnCreateCopy = GIFDataset::CreateCopy;
         poDriver->pfnIdentify = GIFDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
