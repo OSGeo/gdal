@@ -1290,6 +1290,8 @@ ECWWriteDataset::ECWWriteDataset( const char *pszFilename,
     pabyBILBuffer = NULL;
     nLoadedLine = -1;
 
+    eAccess = GA_Update;
+
     this->bIsJPEG2000 = bIsJPEG2000;
     this->eDataType = eType;
     this->papszOptions = CSLDuplicate( papszOptions );
