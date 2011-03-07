@@ -695,7 +695,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Line %d: Attribute value should be single or double quoted. "
                           "Going on, but this is invalid XML that might be rejected in "
-                          "future versions."
+                          "future versions.",
                           sContext.nInputLine );
             }
             else if( sContext.eTokenType != TString )
