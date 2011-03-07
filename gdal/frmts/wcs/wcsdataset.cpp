@@ -316,12 +316,17 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             GDALRasterBlock *poBlock = poTargBand->GetLockedBlockRef(
                 nBlockXOff, nBlockYOff, TRUE );
 
-            eErr = poTileBand->RasterIO( GF_Read, 
-                                         0, 0, nBlockXSize, nBlockYSize, 
-                                         poBlock->GetDataRef(), 
-                                         nBlockXSize, nBlockYSize, 
-                                         eDataType, 0, 0 );
-            poBlock->DropLock();
+            if( poBlock != NULL )
+            {
+                eErr = poTileBand->RasterIO( GF_Read,
+                                            0, 0, nBlockXSize, nBlockYSize,
+                                            poBlock->GetDataRef(),
+                                            nBlockXSize, nBlockYSize,
+                                            eDataType, 0, 0 );
+                poBlock->DropLock();
+            }
+            else
+                eErr = CE_Failure;
         }
     }
     
