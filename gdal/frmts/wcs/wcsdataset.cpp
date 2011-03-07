@@ -189,13 +189,19 @@ WCSRasterBand::WCSRasterBand( WCSDataset *poDS, int nBand, int iOverview )
 
         nOverviewCount = atoi(CPLGetXMLValue(poODS->psService,"OverviewCount",
                                              "-1"));
-        if( nOverviewCount == -1 )
+        if( nOverviewCount < 0 )
         {
             for( nOverviewCount = 0; 
                  (MAX(nRasterXSize,nRasterYSize) / (1 << nOverviewCount)) > 900;
                  nOverviewCount++ ) {}
         }
-        
+        else if( nOverviewCount > 30 )
+        {
+            /* There's no reason to have more than 30 overviews, because */
+            /* 2^(30+1) overflows a int32 */
+            nOverviewCount = 30;
+        }
+
         papoOverviews = (WCSRasterBand **) 
             CPLCalloc( nOverviewCount, sizeof(void*) );
         
