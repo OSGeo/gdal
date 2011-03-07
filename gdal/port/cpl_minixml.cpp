@@ -688,8 +688,17 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                 break;
             }
 
-            if( ReadToken(&sContext) != TString 
-                && sContext.eTokenType != TToken )
+            if( ReadToken(&sContext) == TToken )
+            {
+                /* TODO: at some point we could just error out like any other */
+                /* sane XML parser would do */
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Line %d: Attribute value should be single or double quoted. "
+                          "Going on, but this is invalid XML that might be rejected in "
+                          "future versions."
+                          sContext.nInputLine );
+            }
+            else if( sContext.eTokenType != TString )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Line %d: Didn't find expected attribute value.",
