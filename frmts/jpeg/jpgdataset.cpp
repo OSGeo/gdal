@@ -952,7 +952,8 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             poBlock = 
                 poGDS->GetRasterBand(iBand)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
-            poBlock->DropLock();
+            if( poBlock != NULL )
+                poBlock->DropLock();
         }
     }
 

@@ -1251,6 +1251,8 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GDALRasterBlock *poBlock;
 
     poBlock = GetLockedBlockRef( nBlockXOff, nBlockYOff, TRUE );
+    if( poBlock == NULL )
+        return CE_Failure;
 
     eErr = poWDS->ProcessBlock( nBlockXOff, nBlockYOff );
 
