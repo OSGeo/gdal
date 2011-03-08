@@ -125,7 +125,7 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
  *
  * The path to the executable currently running is returned.  This path
  * includes the name of the executable.   Currently this only works on 
- * win32 platform.  The returned path is UTF-8 encoded.
+ * win32 and linux platforms.  The returned path is UTF-8 encoded.
  *
  * @param pszPathBuf the buffer into which the path is placed.
  * @param nMaxLength the buffer size, MAX_PATH+1 is suggested.
