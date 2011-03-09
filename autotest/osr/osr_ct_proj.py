@@ -194,6 +194,11 @@ transform_list = [ \
      '+proj=latlong +ellps=sphere', (-140.0, 40.0, 0.0), 0.000001,
      'Equirectangular(#2706)', None, "4.6.1"),
 
+    # Test Geocentric
+    ('+proj=latlong +datum=WGS84', (-140.0, 40.0, 0.0), 0.000001,
+     'EPSG:4328', (-3748031.46884168,-3144971.82314589,4077985.57220038), 0.1,
+     'Geocentric', None, None),
+
     # Test Vertical Datum Shift
     ('+proj=utm +zone=11 +datum=WGS84', (100000.0,3500000.0,0.0), 0.1,
      '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx', (100000.0,3500000.0,41.41686), 0.01,

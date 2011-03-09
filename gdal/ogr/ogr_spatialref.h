@@ -236,6 +236,7 @@ class CPL_DLL OGRSpatialReference
 
     int         IsGeographic() const;
     int         IsProjected() const;
+    int         IsGeocentric() const;
     int         IsLocal() const;
     int         IsVertical() const;
     int         IsSameGeogCS( const OGRSpatialReference * ) const;
@@ -246,6 +247,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetLocalCS( const char * );
     OGRErr      SetProjCS( const char * );
     OGRErr      SetProjection( const char * );
+    OGRErr      SetGeocCS( const char * pszGeocName );
     OGRErr      SetGeogCS( const char * pszGeogName,
                            const char * pszDatumName,
                            const char * pszEllipsoidName,

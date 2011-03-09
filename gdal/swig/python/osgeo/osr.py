@@ -166,6 +166,8 @@ SRS_UL_CHAIN = _osr.SRS_UL_CHAIN
 SRS_UL_CHAIN_CONV = _osr.SRS_UL_CHAIN_CONV
 SRS_UL_ROD = _osr.SRS_UL_ROD
 SRS_UL_ROD_CONV = _osr.SRS_UL_ROD_CONV
+SRS_UL_LINK_Clarke = _osr.SRS_UL_LINK_Clarke
+SRS_UL_LINK_Clarke_CONV = _osr.SRS_UL_LINK_Clarke_CONV
 SRS_UA_DEGREE = _osr.SRS_UA_DEGREE
 SRS_UA_DEGREE_CONV = _osr.SRS_UA_DEGREE_CONV
 SRS_UA_RADIAN = _osr.SRS_UA_RADIAN
@@ -229,6 +231,10 @@ class SpatialReference(_object):
     def IsProjected(self, *args):
         """IsProjected(self) -> int"""
         return _osr.SpatialReference_IsProjected(self, *args)
+
+    def IsGeocentric(self, *args):
+        """IsGeocentric(self) -> int"""
+        return _osr.SpatialReference_IsGeocentric(self, *args)
 
     def IsLocal(self, *args):
         """IsLocal(self) -> int"""
@@ -575,6 +581,10 @@ class SpatialReference(_object):
     def SetProjCS(self, *args):
         """SetProjCS(self, char name = "unnamed") -> OGRErr"""
         return _osr.SpatialReference_SetProjCS(self, *args)
+
+    def SetGeocCS(self, *args):
+        """SetGeocCS(self, char name = "unnamed") -> OGRErr"""
+        return _osr.SpatialReference_SetGeocCS(self, *args)
 
     def ImportFromWkt(self, *args):
         """ImportFromWkt(self, char ppszInput) -> OGRErr"""
