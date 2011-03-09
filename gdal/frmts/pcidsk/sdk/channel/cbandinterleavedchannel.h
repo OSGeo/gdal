@@ -63,6 +63,14 @@ namespace PCIDSK
             int xoff=-1, int yoff=-1,
             int xsize=-1, int ysize=-1 );
         virtual int WriteBlock( int block_index, void *buffer );
+
+        virtual void GetChanInfo( std::string &filename, uint64 &image_offset, 
+                                  uint64 &pixel_offset, uint64 &line_offset, 
+                                  bool &little_endian ) const;
+        virtual void SetChanInfo( std::string filename, uint64 image_offset, 
+                                  uint64 pixel_offset, uint64 line_offset, 
+                                  bool little_endian );
+
     private:
     // raw file layout - internal or external
         uint64    start_byte;

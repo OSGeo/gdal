@@ -726,7 +726,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
 
 void CPCIDSKFile::GetIODetails( void ***io_handle_pp, 
                                 Mutex ***io_mutex_pp, 
-                                std::string filename )
+                                std::string filename,
+                                bool writable )
 
 {
     *io_handle_pp = NULL;
@@ -749,7 +750,8 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 
     for( i = 0; i < file_list.size(); i++ )
     {
-        if( file_list[i].filename == filename )
+        if( file_list[i].filename == filename
+            && (!writable || file_list[i].writable) )
         {
             *io_handle_pp = &(file_list[i].io_handle);
             *io_mutex_pp = &(file_list[i].io_mutex);
@@ -763,7 +765,11 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 /* -------------------------------------------------------------------- */
     ProtectedFile new_file;
     
-    new_file.io_handle = interfaces.io->Open( filename, "r" );
+    if( writable )
+        new_file.io_handle = interfaces.io->Open( filename, "r+" );
+    else
+        new_file.io_handle = interfaces.io->Open( filename, "r" );
+        
     if( new_file.io_handle == NULL )
         ThrowPCIDSKException( "Unable to open file '%s'.", 
                               filename.c_str() );
@@ -774,6 +780,7 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 /* -------------------------------------------------------------------- */
     new_file.io_mutex = interfaces.CreateMutex();
     new_file.filename = filename;
+    new_file.writable = writable;
 
     file_list.push_back( new_file );
 
