@@ -85,6 +85,13 @@ namespace PCIDSK
         virtual void PushHistory(const std::string &app,
                                  const std::string &message);
 
+        virtual void GetChanInfo( std::string &filename, uint64 &image_offset, 
+                                  uint64 &pixel_offset, uint64 &line_offset, 
+                                  bool &little_endian ) const;
+        virtual void SetChanInfo( std::string filename, uint64 image_offset, 
+                                  uint64 pixel_offset, uint64 line_offset, 
+                                  bool little_endian );
+
     private:
         bool      loaded;
 

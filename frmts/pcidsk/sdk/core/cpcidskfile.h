@@ -77,7 +77,7 @@ namespace PCIDSK
         bool      GetUpdatable() const { return updatable; } 
         uint64    GetFileSize() const { return file_size; }
 
-    // the following are only for pixel interleaved IO
+        // the following are only for pixel interleaved IO
         int       GetPixelGroupSize() const { return pixel_group_size; }
         void     *ReadAndLockBlock( int block_index, int xoff=-1, int xsize=-1 );
         void      UnlockBlock( bool mark_dirty = false );
@@ -87,8 +87,10 @@ namespace PCIDSK
         void      WriteToFile( const void *buffer, uint64 offset, uint64 size );
         void      ReadFromFile( void *buffer, uint64 offset, uint64 size );
 
+        std::string GetFilename() const { return base_filename; }
+
         void      GetIODetails( void ***io_handle_pp, Mutex ***io_mutex_pp,
-            std::string filename = "" );
+                                std::string filename="", bool writable=false );
 
         bool      GetEDBFileDetails( EDBFile** file_p, Mutex **io_mutex_p,
                                      std::string filename );
