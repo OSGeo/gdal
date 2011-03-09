@@ -45,7 +45,7 @@ CPL_CVSID("$Id$");
 /*                           OGRPrintDouble()                           */
 /************************************************************************/
 
-static void OGRPrintDouble( char * pszStrBuf, double dfValue )
+void OGRPrintDouble( char * pszStrBuf, double dfValue )
 
 {
     sprintf( pszStrBuf, "%.16g", dfValue );
@@ -1118,6 +1118,8 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
         poCS = GetAttrNode( "VERT_CS" );
     if( poCS == NULL )
         poCS = GetAttrNode( "LOCAL_CS" );
+    if( poCS == NULL )
+        poCS = GetAttrNode( "GEOCCS" );
 
     if( poCS == NULL )
         return OGRERR_FAILURE;
@@ -1358,18 +1360,35 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     bNormInfoSet = FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      For a geocentric coordinate system we want to set the datum     */
+/*      and ellipsoid based on the GEOGCS.  Create the GEOGCS in a      */
+/*      temporary srs and use the copy method which has special         */
+/*      handling for GEOCCS.                                            */
+/* -------------------------------------------------------------------- */
+    if( IsGeocentric() )
+    {
+        OGRSpatialReference oGCS;
+
+        oGCS.SetGeogCS( pszGeogName, pszDatumName, pszSpheroidName,
+                        dfSemiMajor, dfInvFlattening, 
+                        pszPMName, dfPMOffset, 
+                        pszAngularUnits, dfConvertToRadians );
+        return CopyGeogCSFrom( &oGCS );
+    }        
+
+/* -------------------------------------------------------------------- */
 /*      Do we already have a GEOGCS?  If so, blow it away so it can     */
 /*      be properly replaced.                                           */
 /* -------------------------------------------------------------------- */
     if( GetAttrNode( "GEOGCS" ) != NULL )
     {
-        OGR_SRSNode *poPROJCS;
+        OGR_SRSNode *poCS;
 
         if( EQUAL(GetRoot()->GetValue(),"GEOGCS") )
             Clear();
-        else if( (poPROJCS = GetAttrNode( "PROJCS" )) != NULL
-                 && poPROJCS->FindChild( "GEOGCS" ) != -1 )
-            poPROJCS->DestroyChild( poPROJCS->FindChild( "GEOGCS" ) );
+        else if( (poCS = GetAttrNode( "PROJCS" )) != NULL
+                 && poCS->FindChild( "GEOGCS" ) != -1 )
+            poCS->DestroyChild( poCS->FindChild( "GEOGCS" ) );
         else
             return OGRERR_FAILURE;
     }
@@ -1629,6 +1648,30 @@ OGRErr OGRSpatialReference::CopyGeogCSFrom(
     bNormInfoSet = FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      Handle geocentric coordinate systems specially.  We just        */
+/*      want to copy the DATUM and PRIMEM nodes.                        */
+/* -------------------------------------------------------------------- */
+    if( IsGeocentric() )
+    {
+        if( GetRoot()->FindChild( "DATUM" ) != -1 )
+            GetRoot()->DestroyChild( GetRoot()->FindChild( "DATUM" ) );
+        if( GetRoot()->FindChild( "PRIMEM" ) != -1 )
+            GetRoot()->DestroyChild( GetRoot()->FindChild( "PRIMEM" ) );
+
+        const OGR_SRSNode *poDatum = poSrcSRS->GetAttrNode( "DATUM" );
+        const OGR_SRSNode *poPrimeM = poSrcSRS->GetAttrNode( "PRIMEM" );
+
+        if( poDatum == NULL || poPrimeM == NULL )
+            return OGRERR_FAILURE;
+        
+        poRoot->InsertChild( poDatum->Clone(), 1 );
+        poRoot->InsertChild( poPrimeM->Clone(), 2 );
+
+        return OGRERR_NONE;
+        
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do we already have a GEOGCS?  If so, blow it away so it can     */
 /*      be properly replaced.                                           */
 /* -------------------------------------------------------------------- */
@@ -1743,7 +1786,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /* -------------------------------------------------------------------- */
     if( EQUALN(pszDefinition,"PROJCS",6)
         || EQUALN(pszDefinition,"GEOGCS",6)
-        || EQUALN(pszDefinition,"COMPD_CS",6)
+        || EQUALN(pszDefinition,"COMPD_CS",8)
+        || EQUALN(pszDefinition,"GEOCCS",6)
+        || EQUALN(pszDefinition,"VERT_CS",7)
         || EQUALN(pszDefinition,"LOCAL_CS",8) )
     {
         err = importFromWkt( (char **) &pszDefinition );
@@ -2516,6 +2561,74 @@ OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
     VALIDATE_POINTER1( hSRS, "OSRSetLocalCS", CE_Failure );
 
     return ((OGRSpatialReference *) hSRS)->SetLocalCS( pszName );
+}
+
+/************************************************************************/
+/*                             SetGeocCS()                              */
+/************************************************************************/
+
+/**
+ * \brief Set the user visible GEOCCS name.
+ *
+ * This method is the same as the C function OSRSetGeocCS(). 
+
+ * This method is will ensure a GEOCCS node is created as the root, 
+ * and set the provided name on it.  If used on a GEOGCS coordinate system, 
+ * the DATUM and PRIMEM nodes from the GEOGCS will be tarnsferred over to 
+ * the GEOGCS. 
+ *
+ * @param pszName the user visible name to assign.  Not used as a key.
+ * 
+ * @return OGRERR_NONE on success.
+ */
+
+OGRErr OGRSpatialReference::SetGeocCS( const char * pszName )
+
+{
+    OGR_SRSNode *poGeogCS = NULL;
+    OGR_SRSNode *poGeocCS = GetAttrNode( "GEOCCS" );
+
+    if( poRoot != NULL && EQUAL(poRoot->GetValue(),"GEOGCS") )
+    {
+        poGeogCS = poRoot;
+        poRoot = NULL;
+    }
+
+    if( poGeocCS == NULL && GetRoot() != NULL )
+    {
+        CPLDebug( "OGR", 
+                  "OGRSpatialReference::SetGeocCS(%s) failed.\n"
+               "It appears an incompatible root node (%s) already exists.\n",
+                  pszName, GetRoot()->GetValue() );
+        return OGRERR_FAILURE;
+    }
+
+    SetNode( "GEOCCS", pszName );
+
+    if( poGeogCS != NULL )
+    {
+        poRoot->InsertChild( poGeogCS->GetNode( "DATUM" )->Clone(), 1 );
+        poRoot->InsertChild( poGeogCS->GetNode( "PRIMEM" )->Clone(), 2 );
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            OSRSetGeocCS()                            */
+/************************************************************************/
+
+/**
+ * \brief Set the user visible PROJCS name.
+ *
+ * This function is the same as OGRSpatialReference::SetGeocCS()
+ */
+OGRErr OSRSetGeocCS( OGRSpatialReferenceH hSRS, const char * pszName )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetGeocCS", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->SetGeocCS( pszName );
 }
 
 /************************************************************************/
@@ -5236,6 +5349,47 @@ int OSRIsProjected( OGRSpatialReferenceH hSRS )
 }
 
 /************************************************************************/
+/*                            IsGeocentric()                            */
+/************************************************************************/
+
+/**
+ * \brief Check if geocentric coordinate system.
+ *
+ * This method is the same as the C function OSRIsGeocentric().
+ *
+ * @return TRUE if this contains a GEOCCS node indicating a it is a 
+ * geocentric coordinate system. 
+ */
+
+int OGRSpatialReference::IsGeocentric() const
+
+{
+    if( poRoot == NULL )
+        return FALSE;
+
+    if( EQUAL(poRoot->GetValue(),"GEOCCS") )
+        return TRUE;
+    else 
+        return FALSE;
+}
+
+/************************************************************************/
+/*                           OSRIsGeocentric()                          */
+/************************************************************************/
+/** 
+ * \brief Check if geocentric coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::IsGeocentric().
+ */
+int OSRIsGeocentric( OGRSpatialReferenceH hSRS ) 
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRIsGeocentric", 0 );
+
+    return ((OGRSpatialReference *) hSRS)->IsGeocentric();
+}
+
+/************************************************************************/
 /*                            IsGeographic()                            */
 /************************************************************************/
 
@@ -5992,13 +6146,16 @@ OGRErr OGRSpatialReference::Fixup()
 
 {
 /* -------------------------------------------------------------------- */
-/*      Ensure linear units defaulted to METER if missing for PROJCS    */
-/*      or LOCAL_CS.                                                    */
+/*      Ensure linear units defaulted to METER if missing for PROJCS,   */
+/*      GEOCCS or LOCAL_CS.                                             */
 /* -------------------------------------------------------------------- */
     const OGR_SRSNode *poCS = GetAttrNode( "PROJCS" );
 
     if( poCS == NULL )
         poCS = GetAttrNode( "LOCAL_CS" );
+
+    if( poCS == NULL )
+        poCS = GetAttrNode( "GEOCCS" );
 
     if( poCS != NULL && poCS->FindChild( "UNIT" ) == -1 )
         SetLinearUnits( SRS_UL_METER, 1.0 );
@@ -6255,6 +6412,12 @@ OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
             *peOrientation = OAO_South;
         else if( EQUAL(pszOrientation,"WEST") )
             *peOrientation = OAO_West;
+        else if( EQUAL(pszOrientation,"UP") )
+            *peOrientation = OAO_Up;
+        else if( EQUAL(pszOrientation,"DOWN") )
+            *peOrientation = OAO_Down;
+        else if( EQUAL(pszOrientation,"OTHER") )
+            *peOrientation = OAO_Other;
         else
         {
             CPLDebug( "OSR", "Unrecognised orientation value '%s'.",
@@ -6307,6 +6470,12 @@ const char *OSRAxisEnumToName( OGRAxisOrientation eOrientation )
         return "SOUTH";
     if( eOrientation == OAO_West )
         return "WEST";
+    if( eOrientation == OAO_Up )
+        return "UP";
+    if( eOrientation == OAO_Down )
+        return "DOWN";
+    if( eOrientation == OAO_Other )
+        return "OTHER";
 
     return "UNKNOWN";
 }
