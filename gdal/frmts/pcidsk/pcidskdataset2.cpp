@@ -68,6 +68,7 @@ class PCIDSK2Dataset : public GDALPamDataset
                                  GDALDataType eType,
                                  char **papszParmList );
 
+    char              **GetFileList(void);
     CPLErr              GetGeoTransform( double * padfTransform );
     CPLErr              SetGeoTransform( double * );
     const char         *GetProjectionRef();
@@ -898,6 +899,38 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
     }
 
     CSLDestroy( papszLastMDListValue );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **PCIDSK2Dataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+    CPLString osBaseDir = CPLGetPath( GetDescription() );
+
+    for( int nChan = 1; nChan <= nBands; nChan++ )
+    {
+        PCIDSKChannel *poChannel = poFile->GetChannel( nChan );
+        CPLString osChanFilename;
+        uint64 image_offset, pixel_offset, line_offset;
+        bool little_endian;
+
+        poChannel->GetChanInfo( osChanFilename, image_offset, 
+                                pixel_offset, line_offset, little_endian );
+
+        if( osChanFilename != "" )
+        {
+            papszFileList = 
+                CSLAddString( papszFileList, 
+                              CPLProjectRelativeFilename( osBaseDir, 
+                                                          osChanFilename ) );
+        }
+    }
+    
+    return papszFileList;
 }
 
 /************************************************************************/

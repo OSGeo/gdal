@@ -84,6 +84,11 @@ CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
 
     if( filename.length() == 0 )
         file->GetIODetails( &io_handle_p, &io_mutex_p );
+
+    else
+        filename = MergeRelativePath( file->GetInterfaces()->io,
+                                      file->GetFilename(), 
+                                      filename );
 }
 
 /************************************************************************/
@@ -140,7 +145,8 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
 /*      Get file access handles if we don't already have them.          */
 /* -------------------------------------------------------------------- */
     if( io_handle_p == NULL )
-        file->GetIODetails( &io_handle_p, &io_mutex_p, filename.c_str() );
+        file->GetIODetails( &io_handle_p, &io_mutex_p, filename.c_str(),
+                            file->GetUpdatable() );
 
 /* -------------------------------------------------------------------- */
 /*      If the imagery is packed, we can read directly into the         */
@@ -213,7 +219,8 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
 /*      Get file access handles if we don't already have them.          */
 /* -------------------------------------------------------------------- */
     if( io_handle_p == NULL )
-        file->GetIODetails( &io_handle_p, &io_mutex_p, filename.c_str() );
+        file->GetIODetails( &io_handle_p, &io_mutex_p, filename.c_str(),
+                            file->GetUpdatable() );
 
 /* -------------------------------------------------------------------- */
 /*      If the imagery is packed, we can read directly into the         */
@@ -272,3 +279,84 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
     return 1;
 }
 
+/************************************************************************/
+/*                            GetChanInfo()                             */
+/************************************************************************/
+void CBandInterleavedChannel
+::GetChanInfo( std::string &filename, uint64 &image_offset, 
+               uint64 &pixel_offset, uint64 &line_offset, 
+               bool &little_endian ) const
+
+{
+    image_offset = start_byte;
+    pixel_offset = this->pixel_offset;
+    line_offset = this->line_offset;
+    little_endian = (byte_order == 'S');
+
+/* -------------------------------------------------------------------- */
+/*      We fetch the filename from the header since it will be the      */
+/*      "clean" version without any paths.                              */
+/* -------------------------------------------------------------------- */
+    PCIDSKBuffer ih(64);
+    file->ReadFromFile( ih.buffer, ih_offset+64, 64 );
+
+    ih.Get(0,64,filename);
+}
+
+/************************************************************************/
+/*                            SetChanInfo()                             */
+/************************************************************************/
+
+void CBandInterleavedChannel
+::SetChanInfo( std::string filename, uint64 image_offset, 
+               uint64 pixel_offset, uint64 line_offset, 
+               bool little_endian )
+
+{
+    if( ih_offset == 0 )
+        ThrowPCIDSKException( "No Image Header available for this channel." );
+        
+/* -------------------------------------------------------------------- */
+/*      Update the image header.                                        */
+/* -------------------------------------------------------------------- */
+    PCIDSKBuffer ih(1024);
+
+    file->ReadFromFile( ih.buffer, ih_offset, 1024 );
+
+    // IHi.2
+    ih.Put( filename.c_str(), 64, 64 );
+
+    // IHi.6.1
+    ih.Put( image_offset, 168, 16 );
+
+    // IHi.6.2
+    ih.Put( pixel_offset, 184, 8 );
+
+    // IHi.6.3
+    ih.Put( line_offset, 192, 8 );
+
+    // IHi.6.5
+    if( little_endian )
+        ih.Put( "S", 201, 1 );
+    else
+        ih.Put( "N", 201, 1 );
+
+    file->WriteToFile( ih.buffer, ih_offset, 1024 );
+
+/* -------------------------------------------------------------------- */
+/*      Update local configuration.                                     */
+/* -------------------------------------------------------------------- */
+    this->filename = MergeRelativePath( file->GetInterfaces()->io,
+                                        file->GetFilename(), 
+                                        filename );
+
+    start_byte = image_offset;
+    this->pixel_offset = pixel_offset;
+    this->line_offset = line_offset;
+    
+    if( little_endian )
+        byte_order = 'S';
+    else
+        byte_order = 'N';
+
+}

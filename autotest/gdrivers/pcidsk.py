@@ -223,6 +223,16 @@ def pcidsk_7():
     return 'success'
 
 ###############################################################################
+# Test FILE interleaving.
+
+def pcidsk_8():
+
+    tst = gdaltest.GDALTest( 'PCIDSK', 'rgba16.png', 2, 2042,
+                             options = ['INTERLEAVING=FILE'] )
+
+    return tst.testCreate()
+    
+###############################################################################
 # Check various items from a modern irvine.pix
 
 def pcidsk_online_1():
@@ -280,6 +290,7 @@ gdaltest_list = [
     pcidsk_5,
     pcidsk_6,
     pcidsk_7,
+    pcidsk_8,
     pcidsk_online_1,
     pcidsk_cleanup ]
 

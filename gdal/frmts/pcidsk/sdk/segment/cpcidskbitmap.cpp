@@ -479,4 +479,29 @@ void CPCIDSKBitmap::PushHistory( const std::string &app,
     CPCIDSKSegment::PushHistory( app, message );
 }
                                  
+/************************************************************************/
+/*                            GetChanInfo()                             */
+/************************************************************************/
+void CPCIDSKBitmap::GetChanInfo( std::string &filename, uint64 &image_offset, 
+                                 uint64 &pixel_offset, uint64 &line_offset, 
+                                 bool &little_endian ) const
 
+{
+    image_offset = 0;
+    pixel_offset = 0;
+    line_offset = 0;
+    little_endian = true;
+    filename = "";
+}
+
+/************************************************************************/
+/*                            SetChanInfo()                             */
+/************************************************************************/
+
+void CPCIDSKBitmap::SetChanInfo( std::string filename, uint64 image_offset, 
+                                  uint64 pixel_offset, uint64 line_offset, 
+                                  bool little_endian )
+
+{
+    ThrowPCIDSKException( "Attempt to SetChanInfo() on a bitmap." );
+}

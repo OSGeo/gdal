@@ -80,7 +80,7 @@ namespace PCIDSK
         virtual void ReadFromFile( void *buffer, uint64 offset, uint64 size ) = 0;
 
         virtual void GetIODetails( void ***io_handle_pp, Mutex ***io_mutex_pp,
-            std::string filename = "" ) = 0;
+                                   std::string filename="", bool writable=false ) = 0;
 
         virtual std::string GetMetadataValue( const std::string& key ) = 0;
         virtual void SetMetadataValue( const std::string& key, const std::string& value ) = 0;
