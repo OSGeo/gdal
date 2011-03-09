@@ -428,6 +428,92 @@ def osr_basic_12():
     return 'success'
 
 ###############################################################################
+# Test GEOCCS lookup in supporting data files.
+
+def osr_basic_13():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4328 )
+
+    expected_wkt = 'GEOCCS["WGS 84 (geocentric)",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Geocentric X",OTHER],AXIS["Geocentric Y",OTHER],AXIS["Geocentric Z",OTHER],AUTHORITY["EPSG","4328"]]'
+    wkt = srs.ExportToWkt()
+
+    if wkt != expected_wkt:
+        gdaltest.post_reason( 'did not get expected GEOCCS WKT.' )
+        print(wkt)
+        return 'fail'
+
+    if not srs.IsGeocentric():
+        gdaltest.post_reason( 'srs not recognised as geocentric.' )
+        return 'fail'
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'epsg geoccs import does not validate!' )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+# Manually setup a simple geocentric/wgs84 srs.
+
+def osr_basic_14():
+
+    srs = osr.SpatialReference()
+    srs.SetGeocCS( 'My Geocentric' )
+    srs.SetWellKnownGeogCS( 'WGS84' )
+    srs.SetLinearUnits( 'meter', 1.0 )
+
+    expected_wkt = 'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["meter",1]]'
+    wkt = srs.ExportToWkt()
+
+    if wkt != expected_wkt:
+        gdaltest.post_reason( 'did not get expected GEOCCS WKT.' )
+        print(wkt)
+        return 'fail'
+
+    if not srs.IsGeocentric():
+        gdaltest.post_reason( 'srs not recognised as geocentric.' )
+        return 'fail'
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'geocentric srs not recognised as valid.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test validation and fixup methods.
+
+def osr_basic_15():
+
+    wkt = """GEOCCS["WGS 84 (geocentric)",
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    AXIS["Geocentric X",OTHER],
+    AXIS["Geocentric Y",OTHER],
+    AXIS["Geocentric Z",OTHER],
+    AUTHORITY["EPSG","4328"]]"""
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( wkt )
+
+    if srs.Validate() == 0:
+        gdaltest.post_reason( 'Validate() fails to detect misordering.' )
+        return 'fail'
+
+    srs.Fixup()
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'Fixup() failed to correct srs.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_basic_1,
@@ -442,6 +528,9 @@ gdaltest_list = [
     osr_basic_10,
     osr_basic_11,
     osr_basic_12,
+    osr_basic_13,
+    osr_basic_14,
+    osr_basic_15,
     None ]
 
 if __name__ == '__main__':

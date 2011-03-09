@@ -313,6 +313,34 @@ def osr_proj4_9():
 
     return 'success'
 
+###############################################################################
+# Does geocentric work ok?
+#
+
+def osr_proj4_10():
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( '+proj=geocent +ellps=WGS84 +towgs84=0,0,0 ' )
+
+    wkt_expected = 'GEOCCS["Geocentric",DATUM["unknown",SPHEROID["WGS84",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0]]'
+
+    if not gdaltest.equal_srs_from_wkt( wkt_expected, srs.ExportToWkt() ):
+        gdaltest.post_reason( 'did not get expected wkt.' )
+        return 'fail'
+
+    p4 = srs.ExportToProj4()
+    srs2 = osr.SpatialReference()
+    srs2.ImportFromProj4( p4 )
+
+    if not srs.IsSame(srs2):
+        gdaltest.post_reason( 'round trip via PROJ.4 damaged srs?' )
+        print(srs.ExportToPrettyWkt())
+        print(srs2.ExportToPrettyWkt())
+        return 'fail'
+    
+    return 'success'
+
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -323,6 +351,7 @@ gdaltest_list = [
     osr_proj4_7,
     osr_proj4_8,
     osr_proj4_9,
+    osr_proj4_10,
     None ]
 
 if __name__ == '__main__':

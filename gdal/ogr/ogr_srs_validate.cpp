@@ -659,6 +659,104 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
     }
 
 /* -------------------------------------------------------------------- */
+/*      Validate GEOCCS                                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(poRoot->GetValue(),"GEOCCS") )
+    {
+        OGR_SRSNode     *poNode;
+        int             i;
+        int             bGotDatum = FALSE;
+        int             bGotPrimeM = FALSE;
+        int             bGotUnit = FALSE;
+        int             nCountAxis = 0;
+
+        for( i = 1; i < poRoot->GetChildCount(); i++ )
+        {
+            poNode = poRoot->GetChild(i);
+
+            if( EQUAL(poNode->GetValue(),"DATUM") )
+            {
+                bGotDatum = TRUE;
+            }
+            else if( EQUAL(poNode->GetValue(),"PRIMEM") )
+            {
+                bGotPrimeM = TRUE;
+
+                if( poNode->GetChildCount() < 2 
+                    || poNode->GetChildCount() > 3 )
+                {
+                    CPLDebug( "OGRSpatialReference::Validate",
+                              "PRIMEM has wrong number of children (%d),"
+                              "not 2 or 3 as expected.\n",
+                              poNode->GetChildCount() );
+                    
+                    return OGRERR_CORRUPT_DATA;
+                }
+            }
+            else if( EQUAL(poNode->GetValue(),"UNIT") )
+            {
+                OGRErr eErr = ValidateUnit(poNode);
+                if (eErr != OGRERR_NONE)
+                    return eErr;
+                bGotUnit = TRUE;
+            }
+            else if( EQUAL(poNode->GetValue(),"AXIS") )
+            {
+                OGRErr eErr = ValidateAxis(poNode);
+                if (eErr != OGRERR_NONE)
+                    return eErr;
+                nCountAxis ++;
+            }
+            else if( EQUAL(poNode->GetValue(),"AUTHORITY") )
+            {
+                OGRErr eErr = ValidateAuthority(poNode);
+                if (eErr != OGRERR_NONE)
+                    return eErr;
+            }
+            else
+            {
+                CPLDebug( "OGRSpatialReference::Validate",
+                          "Unexpected child for GEOCCS `%s'.\n",
+                          poNode->GetValue() );
+
+                return OGRERR_CORRUPT_DATA;
+            }
+        }
+
+        if (!bGotDatum)
+        {
+            CPLDebug( "OGRSpatialReference::Validate",
+                      "No DATUM child in GEOCCS.\n" );
+
+            return OGRERR_CORRUPT_DATA;
+        }
+
+        if (!bGotPrimeM)
+        {
+            CPLDebug( "OGRSpatialReference::Validate",
+                      "No PRIMEM child in GEOCCS.\n" );
+
+            return OGRERR_CORRUPT_DATA;
+        }
+
+        if (!bGotUnit)
+        {
+            CPLDebug( "OGRSpatialReference::Validate",
+                      "No UNIT child in GEOCCS.\n" );
+
+            return OGRERR_CORRUPT_DATA;
+        }
+
+        if (nCountAxis != 0 && nCountAxis != 3 )
+        {
+            CPLDebug( "OGRSpatialReference::Validate",
+                      "Wrong number of AXIS children in GEOCCS.\n" );
+
+            return OGRERR_CORRUPT_DATA;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      For a PROJCS, validate subparameters (other than GEOGCS).       */
 /* -------------------------------------------------------------------- */
     if( EQUAL(poRoot->GetValue(),"PROJCS") )
@@ -940,12 +1038,6 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
     eErr = ValidateProjection(poRoot);
     if( eErr != OGRERR_NONE )
         return eErr;
-
-/* -------------------------------------------------------------------- */
-/*      Final check.                                                    */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(poRoot->GetValue(),"GEOCCS") )
-        return OGRERR_UNSUPPORTED_SRS;
 
     return OGRERR_NONE;
 }
