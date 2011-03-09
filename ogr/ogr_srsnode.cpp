@@ -850,8 +850,11 @@ static const char * const apszDATUMRule[] =
 static const char * const apszGEOGCSRule[] = 
 { "GEOGCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", NULL };
 
+static const char * const apszGEOCCSRule[] = 
+{ "GEOCCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", NULL };
+
 static const char * const *apszOrderingRules[] = {
-    apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, NULL };
+    apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, apszGEOCCSRule, NULL };
 
 OGRErr OGR_SRSNode::FixupOrdering()
 

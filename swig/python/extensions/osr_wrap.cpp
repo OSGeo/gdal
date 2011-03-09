@@ -3231,6 +3231,9 @@ SWIGINTERN int OSRSpatialReferenceShadow_IsGeographic(OSRSpatialReferenceShadow 
 SWIGINTERN int OSRSpatialReferenceShadow_IsProjected(OSRSpatialReferenceShadow *self){
     return OSRIsProjected(self);
   }
+SWIGINTERN int OSRSpatialReferenceShadow_IsGeocentric(OSRSpatialReferenceShadow *self){
+    return OSRIsGeocentric(self);
+  }
 SWIGINTERN int OSRSpatialReferenceShadow_IsLocal(OSRSpatialReferenceShadow *self){
     return OSRIsLocal(self);
   }
@@ -3662,6 +3665,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGeogCS(OSRSpatialReferenceShadow 
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetProjCS(OSRSpatialReferenceShadow *self,char const *name="unnamed"){
     return OSRSetProjCS( self, name );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGeocCS(OSRSpatialReferenceShadow *self,char const *name="unnamed"){
+    return OSRSetGeocCS( self, name );
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromWkt(OSRSpatialReferenceShadow *self,char **ppszInput){
     return OSRImportFromWkt( self, ppszInput );
@@ -4304,6 +4310,39 @@ SWIGINTERN PyObject *_wrap_SpatialReference_IsProjected(PyObject *SWIGUNUSEDPARM
       CPLErrorReset();
     }
     result = (int)OSRSpatialReferenceShadow_IsProjected(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_IsGeocentric(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_IsGeocentric",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_IsGeocentric" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)OSRSpatialReferenceShadow_IsGeocentric(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -9977,6 +10016,74 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_SetGeocCS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char *arg2 = (char *) "unnamed" ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O|O:SpatialReference_SetGeocCS",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetGeocCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  if (obj1) {
+    res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_SetGeocCS" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = reinterpret_cast< char * >(buf2);
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRErr)OSRSpatialReferenceShadow_SetGeocCS(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromWkt(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -12169,6 +12276,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_IsSameGeogCS", _wrap_SpatialReference_IsSameGeogCS, METH_VARARGS, (char *)"SpatialReference_IsSameGeogCS(SpatialReference self, SpatialReference rhs) -> int"},
 	 { (char *)"SpatialReference_IsGeographic", _wrap_SpatialReference_IsGeographic, METH_VARARGS, (char *)"SpatialReference_IsGeographic(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsProjected", _wrap_SpatialReference_IsProjected, METH_VARARGS, (char *)"SpatialReference_IsProjected(SpatialReference self) -> int"},
+	 { (char *)"SpatialReference_IsGeocentric", _wrap_SpatialReference_IsGeocentric, METH_VARARGS, (char *)"SpatialReference_IsGeocentric(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsLocal", _wrap_SpatialReference_IsLocal, METH_VARARGS, (char *)"SpatialReference_IsLocal(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_EPSGTreatsAsLatLong", _wrap_SpatialReference_EPSGTreatsAsLatLong, METH_VARARGS, (char *)"SpatialReference_EPSGTreatsAsLatLong(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_SetAuthority", _wrap_SpatialReference_SetAuthority, METH_VARARGS, (char *)"\n"
@@ -12354,6 +12462,7 @@ static PyMethodDef SwigMethods[] = {
 		"    double dfConvertToRadians = 0.0174532925199433) -> OGRErr\n"
 		""},
 	 { (char *)"SpatialReference_SetProjCS", _wrap_SpatialReference_SetProjCS, METH_VARARGS, (char *)"SpatialReference_SetProjCS(SpatialReference self, char name = \"unnamed\") -> OGRErr"},
+	 { (char *)"SpatialReference_SetGeocCS", _wrap_SpatialReference_SetGeocCS, METH_VARARGS, (char *)"SpatialReference_SetGeocCS(SpatialReference self, char name = \"unnamed\") -> OGRErr"},
 	 { (char *)"SpatialReference_ImportFromWkt", _wrap_SpatialReference_ImportFromWkt, METH_VARARGS, (char *)"SpatialReference_ImportFromWkt(SpatialReference self, char ppszInput) -> OGRErr"},
 	 { (char *)"SpatialReference_ImportFromProj4", _wrap_SpatialReference_ImportFromProj4, METH_VARARGS, (char *)"SpatialReference_ImportFromProj4(SpatialReference self, char ppszInput) -> OGRErr"},
 	 { (char *)"SpatialReference_ImportFromUrl", _wrap_SpatialReference_ImportFromUrl, METH_VARARGS, (char *)"SpatialReference_ImportFromUrl(SpatialReference self, char url) -> OGRErr"},
@@ -13133,6 +13242,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "SRS_UL_CHAIN_CONV",SWIG_FromCharPtr("20.116684023368047"));
   SWIG_Python_SetConstant(d, "SRS_UL_ROD",SWIG_FromCharPtr("Rod"));
   SWIG_Python_SetConstant(d, "SRS_UL_ROD_CONV",SWIG_FromCharPtr("5.02921005842012"));
+  SWIG_Python_SetConstant(d, "SRS_UL_LINK_Clarke",SWIG_FromCharPtr("Link_Clarke"));
+  SWIG_Python_SetConstant(d, "SRS_UL_LINK_Clarke_CONV",SWIG_FromCharPtr("0.2011661949"));
   SWIG_Python_SetConstant(d, "SRS_UA_DEGREE",SWIG_FromCharPtr("degree"));
   SWIG_Python_SetConstant(d, "SRS_UA_DEGREE_CONV",SWIG_FromCharPtr("0.0174532925199433"));
   SWIG_Python_SetConstant(d, "SRS_UA_RADIAN",SWIG_FromCharPtr("radian"));

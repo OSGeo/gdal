@@ -456,6 +456,11 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
     }
     
+    else if( EQUAL(pszProj,"geocent") )
+    {
+        SetGeocCS( "Geocentric" );
+    }
+    
     else if( EQUAL(pszProj,"bonne") )
     {
         SetBonne( OSR_GDV( papszNV, "lat_1", 0.0 ), 
@@ -1026,7 +1031,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
 /*      Linear units translation                                        */
 /* -------------------------------------------------------------------- */
-    if( IsProjected() || IsLocal() )
+    if( IsProjected() || IsLocal() || IsGeocentric() )
     {
         pszValue = CSLFetchNameValue(papszNV, "to_meter");
 
@@ -1230,6 +1235,11 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4), "+proj=longlat " );
     }
+    else if( IsGeocentric() )
+    {
+        sprintf( szProj4+strlen(szProj4), "+proj=geocent " );
+    }
+
     else if( pszProjection == NULL && !IsGeographic() )
     {
         // LOCAL_CS, or incompletely initialized coordinate systems.

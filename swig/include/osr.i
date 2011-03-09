@@ -235,6 +235,10 @@ public:
     return OSRIsProjected(self);
   }
 
+  int IsGeocentric() {
+    return OSRIsGeocentric(self);
+  }
+
   int IsLocal() {
     return OSRIsLocal(self);
   }
@@ -705,6 +709,10 @@ public:
 
   OGRErr SetProjCS( const char *name = "unnamed" ) {
     return OSRSetProjCS( self, name );
+  }
+
+  OGRErr SetGeocCS( const char *name = "unnamed" ) {
+    return OSRSetGeocCS( self, name );
   }
 
 %apply (char **ignorechange) { (char **) };
