@@ -89,6 +89,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     const char *interleaving = NULL;
     std::string compression = "NONE";
     bool nozero = false;
+    bool nocreate = false;
     int  blocksize = 127;
 
     UCaseStr( options );
@@ -103,7 +104,11 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         ParseTileFormat( options, blocksize, compression );
     }
     else if( strncmp(options.c_str(),"FILE",4) == 0 )
+    {
+        if( strncmp(options.c_str(),"FILENOCREATE",12) == 0 )
+            nocreate = true;
         interleaving = "FILE";
+    }
     else
         ThrowPCIDSKException( "PCIDSK::Create() options '%s' not recognised.", 
                               options.c_str() );
@@ -438,6 +443,54 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
             bm->CreateVirtualImageFile( pixels, lines, blocksize, blocksize,
                                         channel_types[chan_index], 
                                         compression );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have a non-tiled FILE interleaved file, should we         */
+/*      create external band files now?                                 */
+/* -------------------------------------------------------------------- */
+    if( strncmp(interleaving,"FILE",4) == 0 
+        && strncmp(options.c_str(),"TILED",5) != 0 
+        && !nocreate )
+    {
+        for( chan_index = 0; chan_index < channel_count; chan_index++ )
+        {
+            PCIDSKChannel *channel = file->GetChannel( chan_index + 1 );
+            int pixel_size = DataTypeSize(channel->GetType());
+
+            // build a band filename that uses the basename of the PCIDSK
+            // file, and adds ".nnn" based on the band. 
+            std::string band_filename = filename;
+            char ext[5];
+            sprintf( ext, ".%03d", chan_index+1 );
+            
+            size_t last_dot = band_filename.find_last_of(".");
+            if( last_dot != std::string::npos 
+                && (band_filename.find_last_of("/\\:") == std::string::npos
+                    || band_filename.find_last_of("/\\:") < last_dot) )
+            {
+                band_filename.resize( last_dot );
+            }
+
+            band_filename += ext;
+
+            // Now build a version without a path. 
+            std::string relative_band_filename;
+            size_t path_div = band_filename.find_last_of( "/\\:" );
+            if( path_div == std::string::npos )
+                relative_band_filename = band_filename;
+            else
+                relative_band_filename = band_filename.c_str() + path_div + 1;
+            
+            // create the file - ought we write the whole file?
+            void *band_io_handle = interfaces->io->Open( band_filename, "w" );
+            interfaces->io->Write( "\0", 1, 1, band_io_handle );
+            interfaces->io->Close( band_io_handle );
+
+            // Set the channel header information.
+            channel->SetChanInfo( relative_band_filename, 0, pixel_size, 
+                                  pixel_size * pixels, true );
         }
     }
 

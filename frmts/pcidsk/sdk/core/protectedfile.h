@@ -36,6 +36,7 @@ namespace PCIDSK
     struct ProtectedFile
     {
         std::string     filename;
+        bool            writable;
         void           *io_handle;
         Mutex          *io_mutex;
     };
