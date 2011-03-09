@@ -2037,7 +2037,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     poAxis = new OGR_SRSNode( "AXIS" );
 
     poAxis->AddChild( new OGR_SRSNode( "Geocentric Z" ) );
-    poAxis->AddChild( new OGR_SRSNode( OSRAxisEnumToName(OAO_Other) ) );
+    poAxis->AddChild( new OGR_SRSNode( OSRAxisEnumToName(OAO_North) ) );
 
     poSRS->GetRoot()->AddChild( poAxis );
 
