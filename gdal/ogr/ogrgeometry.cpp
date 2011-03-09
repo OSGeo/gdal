@@ -2542,7 +2542,7 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
     return NULL;
 
 /* GEOS >= 3.1.0 */
-#elif GEOS_CAPI_VERSION_MAJOR >= 2 || (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 5)
+#elif GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 1)
 
     GEOSGeom hThisGeosGeom = NULL;
     GEOSGeom hGeosProduct = NULL;
