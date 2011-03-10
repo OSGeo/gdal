@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 1979 2011-02-24 22:17:39Z warmerdam $
+ * $Id: geo_normalize.c 1983 2011-03-10 02:10:00Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -1994,6 +1994,8 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     psDefn->SemiMinor = 0.0;
     psDefn->PM = KvUserDefined;
     psDefn->PMLongToGreenwich = 0.0;
+    psDefn->TOWGS84Count = 0;
+    memset( psDefn->TOWGS84, 0, sizeof(psDefn->TOWGS84) );
 
     psDefn->ProjCode = KvUserDefined;
     psDefn->Projection = KvUserDefined;
@@ -2181,6 +2183,12 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
             GTIFAngleToDD( psDefn->PMLongToGreenwich,
                            psDefn->UOMAngle );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Get the TOWGS84 parameters.                                     */
+/* -------------------------------------------------------------------- */
+    psDefn->TOWGS84Count = 
+        GTIFKeyGet(psGTIF, GeogTOWGS84GeoKey, &(psDefn->TOWGS84), 0, 7 );
 
 /* -------------------------------------------------------------------- */
 /*      Have the projection units of measure been overridden?  We       */
@@ -2447,6 +2455,25 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
                  psDefn->PMLongToGreenwich,
                  GTIFDecToDMS( psDefn->PMLongToGreenwich, "Long", 2 ) );
         CPLFree( pszName );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report TOWGS84 parameters.                                      */
+/* -------------------------------------------------------------------- */
+    if( psDefn->TOWGS84Count > 0 )
+    {
+        int i;
+
+        fprintf( fp, "TOWGS84: " );
+        
+        for( i = 0; i < psDefn->TOWGS84Count; i++ )
+        {
+            if( i > 0 )
+                fprintf( fp, "," );
+            fprintf( fp, "%g", psDefn->TOWGS84[i] );
+        }
+
+        fprintf( fp, "\n" );
     }
 
 /* -------------------------------------------------------------------- */

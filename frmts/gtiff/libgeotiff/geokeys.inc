@@ -31,6 +31,7 @@ ValuePair(  GeogSemiMinorAxisGeoKey,	2058) /* GeogLinearUnits           */
 ValuePair(  GeogInvFlatteningGeoKey,	2059) /* ratio                     */
 ValuePair(  GeogAzimuthUnitsGeoKey,	2060) /* Section 6.3.1.4 Codes     */
 ValuePair(  GeogPrimeMeridianLongGeoKey,	2061) /* GeoAngularUnit            */
+ValuePair(  GeogTOWGS84GeoKey,          2062) /* 2011 - proposed addition  */
 
 /* 6.2.3 Projected CS Parameter Keys */
 /*    Several keys have been renamed,*/
