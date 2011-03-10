@@ -220,9 +220,9 @@ LZMADecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 		return 0;
 	}
 
-    tif->tif_rawcp = sp->stream.next_in;
-    tif->tif_rawcc = sp->stream.avail_in;
-	
+        tif->tif_rawcp = sp->stream.next_in;
+        tif->tif_rawcc = sp->stream.avail_in;
+        
 	return 1;
 }
 
