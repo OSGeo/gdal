@@ -499,6 +499,17 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     CPLFree( pszSpheroidName );
     CPLFree( pszPMName );
     CPLFree( pszAngularUnits );
+
+#if LIBGEOTIFF_VERSION >= 1310
+    if( psDefn->TOWGS84Count > 0 )
+        oSRS.SetTOWGS84( psDefn->TOWGS84[0],
+                         psDefn->TOWGS84[1],
+                         psDefn->TOWGS84[2],
+                         psDefn->TOWGS84[3],
+                         psDefn->TOWGS84[4],
+                         psDefn->TOWGS84[5],
+                         psDefn->TOWGS84[6] );
+#endif
         
 /* ==================================================================== */
 /*      Handle projection parameters.                                   */
@@ -2033,6 +2044,25 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         if( nGCS == KvUserDefined )
             SetGeogCSCitation(psGTIF, poSRS, angUnitName, nDatum, nSpheroid);
     }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have TOWGS84 parameters?                                  */
+/* -------------------------------------------------------------------- */
+
+#if LIBGEOTIFF_VERSION >= 1310
+    double adfTOWGS84[7];
+
+    if( poSRS->GetTOWGS84( adfTOWGS84 ) == OGRERR_NONE )
+    {
+        if( adfTOWGS84[3] == 0.0 && adfTOWGS84[4] == 0.0
+            && adfTOWGS84[5] == 0.0 && adfTOWGS84[6] == 0.0 )
+            GTIFKeySet( psGTIF, GeogTOWGS84GeoKey, TYPE_DOUBLE, 3, 
+                        adfTOWGS84 );
+        else
+            GTIFKeySet( psGTIF, GeogTOWGS84GeoKey, TYPE_DOUBLE, 7, 
+                        adfTOWGS84 );
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Do we have vertical datum information to set?                   */
