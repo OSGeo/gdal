@@ -25,6 +25,7 @@
  */
 
 #include "tiffiop.h"
+#include <assert.h>
 #ifdef THUNDER_SUPPORT
 /*
  * TIFF Library.
@@ -55,12 +56,15 @@
 static const int twobitdeltas[4] = { 0, 1, 0, -1 };
 static const int threebitdeltas[8] = { 0, 1, 2, 3, 0, -3, -2, -1 };
 
-#define	SETPIXEL(op, v) { \
-	lastpixel = (v) & 0xf; \
-	if (npixels++ & 1) \
-	    *op++ |= lastpixel; \
-	else \
+#define	SETPIXEL(op, v) {                     \
+	lastpixel = (v) & 0xf;                \
+        if ( npixels < maxpixels )         \
+        {                                     \
+	  if (npixels++ & 1)                  \
+	    *op++ |= lastpixel;               \
+	  else                                \
 	    op[0] = (uint8) (lastpixel << 4); \
+        }                                     \
 }
 
 static int
@@ -71,6 +75,7 @@ ThunderDecode(TIFF* tif, uint8* op, tmsize_t maxpixels)
 	register tmsize_t cc;
 	unsigned int lastpixel;
 	tmsize_t npixels;
+        uint8* op_original = op;
 
 	bp = (unsigned char *)tif->tif_rawcp;
 	cc = tif->tif_rawcc;
@@ -139,7 +144,8 @@ ThunderDecode(TIFF* tif, uint8* op, tmsize_t maxpixels)
 #endif
 		return (0);
 	}
-	return (1);
+
+        return (1);
 }
 
 static int
@@ -166,7 +172,17 @@ ThunderDecodeRow(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 int
 TIFFInitThunderScan(TIFF* tif, int scheme)
 {
+	static const char module[] = "TIFFInitThunderScan";
+
 	(void) scheme;
+        if( tif->tif_dir.td_bitspersample != 4 )
+        {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                             "Wrong bitspersample value (%d), Thunder decoder only supports 4bits per sample.",
+                             (int) tif->tif_dir.td_bitspersample );
+                return 0;
+        }
+        
 	tif->tif_decoderow = ThunderDecodeRow;
 	tif->tif_decodestrip = ThunderDecodeRow; 
 	return (1);
