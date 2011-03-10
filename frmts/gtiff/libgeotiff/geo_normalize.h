@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.h 1641 2009-09-24 19:35:59Z warmerdam $
+ * $Id: geo_normalize.h 1983 2011-03-10 02:10:00Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Include file related to geo_normalize.c containing Code to
@@ -94,6 +94,12 @@ typedef struct {
 
     /** The length of the semi minor ellipse axis in meters. */
     double	SemiMinor;
+
+    /** TOWGS84 transformation values (0/3/7) */
+    short       TOWGS84Count;
+
+    /** TOWGS84 transformation values */
+    double      TOWGS84[7];
 
     /** Projection id from ProjectionGeoKey.  For example Proj_UTM_11S. */
     short	ProjCode;
