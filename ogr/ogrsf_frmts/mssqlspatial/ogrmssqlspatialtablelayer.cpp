@@ -111,7 +111,8 @@ OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
 /*                             Initialize()                             */
 /************************************************************************/
 
-CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszLayerName, 
+CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
+                                              const char *pszLayerName, 
                                               const char *pszGeomCol,
                                               int nCoordDimension, 
                                               int nSRId,
@@ -138,7 +139,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszLayerName,
     else
     {
         pszTableName = CPLStrdup(pszLayerName);
-        pszSchemaName = CPLStrdup("dbo");
+        pszSchemaName = CPLStrdup(pszSchema);
     }
 
 /* -------------------------------------------------------------------- */
@@ -472,7 +473,9 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
     poStatement->Append( "select " );
     poStatement->Append( pszColumns );
     poStatement->Append( " from " );
-    poStatement->Append( poFeatureDefn->GetName() );
+    poStatement->Append( pszSchemaName );
+    poStatement->Append( "." );
+    poStatement->Append( pszTableName );
 
     /* Append attribute query if we have it */
     if( pszQuery != NULL )
