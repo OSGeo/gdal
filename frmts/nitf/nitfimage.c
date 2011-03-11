@@ -37,6 +37,7 @@
 
 CPL_CVSID("$Id$");
 
+static int NITFReadIMRFCA( NITFImage *psImage, NITFRPC00BInfo *psRPC );
 static char *NITFTrimWhite( char * );
 #ifdef CPL_LSB
 static void NITFSwapWords( NITFImage *psImage, void *pData, int nWordCount );
@@ -632,7 +633,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
         if( nExtendedTREBytes > 3 )
         {
-            if( (int)psSegInfo->nSegmentHeaderSize <
+            if( (int)psSegInfo->nSegmentHeaderSize < 
                             nOffset + nExtendedTREBytes )
                 GOTO_header_too_small();
 
@@ -2148,6 +2149,123 @@ static void NITFSwapWords( NITFImage *psImage, void *pData, int nWordCount )
 #endif /* def CPL_LSB */
 
 /************************************************************************/
+/*                           NITFReadCSEXRA()                           */
+/*                                                                      */
+/*      Read a CSEXRA TRE and return contents as metadata strings.      */
+/************************************************************************/
+
+char **NITFReadCSEXRA( NITFImage *psImage )
+
+{
+    const char *pachTRE;
+    int  nTRESize;
+    char **papszMD = NULL;
+    int nRemainingBytes;
+
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the TRE?                                             */
+/* -------------------------------------------------------------------- */
+    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
+                           "CSEXRA", &nTRESize );
+
+    if( pachTRE == NULL )
+        return NULL;
+
+    if( nTRESize != 132 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "CSEXRA TRE wrong size, ignoring." );
+        return NULL;
+    }
+
+    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
+
+    if (nRemainingBytes < 132)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot read CSEXRA TRE. Not enough bytes");
+        return FALSE;
+    }
+/* -------------------------------------------------------------------- */
+/*      Parse out field values.                                         */
+/* -------------------------------------------------------------------- */
+    NITFExtractMetadata( &papszMD, pachTRE,   0,   6, 
+                         "NITF_CSEXRA_SENSOR" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   6,   12, 
+                         "NITF_CSEXRA_TIME_FIRST_LINE_IMAGE" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   18,   12, 
+                         "NITF_CSEXRA_TIME_IMAGE_DURATION" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   30,   5, 
+                         "NITF_CSEXRA_MAX_GSD" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   35,   5, 
+                         "NITF_CSEXRA_ALONG_SCAN_GSD" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   40,   5, 
+                         "NITF_CSEXRA_CROSS_SCAN_GSD" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   45,   5, 
+                         "NITF_CSEXRA_GEO_MEAN_GSD" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   50,   5, 
+                         "NITF_CSEXRA_A_S_VERT_GSD" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   55,   5, 
+                         "NITF_CSEXRA_C_S_VERT_GSD" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   60,   5, 
+                         "NITF_CSEXRA_GEO_MEAN_VERT_GSD" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   65,   5, 
+                         "NITF_CSEXRA_GSD_BETA_ANGLE" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   70,   5, 
+                         "NITF_CSEXRA_DYNAMIC_RANGE" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   75,   7, 
+                         "NITF_CSEXRA_NUM_LINES" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   82,   5, 
+                         "NITF_CSEXRA_NUM_SAMPLES" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   87,   7, 
+                         "NITF_CSEXRA_ANGLE_TO_NORTH" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   94,   6, 
+                         "NITF_CSEXRA_OBLIQUITY_ANGLE" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   100,   7, 
+                         "NITF_CSEXRA_AZ_OF_OBLIQUITY" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   107,   1, 
+                         "NITF_CSEXRA_GRD_COVER" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   108,   1, 
+                         "NITF_CSEXRA_SNOW_DEPTH_CAT" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   109,   7, 
+                         "NITF_CSEXRA_SUN_AZIMUTH" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   116,   7, 
+                         "NITF_CSEXRA_SUN_ELEVATION" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   123,   3, 
+                         "NITF_CSEXRA_PREDICTED_NIIRS" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   126,   3, 
+                         "NITF_CSEXRA_CIRCL_ERR" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   129,   3, 
+                         "NITF_CSEXRA_LINEAR_ERR" );
+
+    return papszMD;
+}
+
+/************************************************************************/
 /*                           NITFReadRPC00B()                           */
 /*                                                                      */
 /*      Read an RPC00A or RPC00B structure if the TRE is available.     */
@@ -2184,7 +2302,9 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 
     if( pachTRE == NULL )
     {
-        return FALSE;
+        /* No RPC00 tag. Check to see if we have the IMASDA and IMRFCA 
+           tags (DPPDB data) before returning. */
+        return NITFReadIMRFCA( psImage, psRPC );
     }
 
     if (nTRESize < 801 + 19*12 + 12)
@@ -2414,6 +2534,7 @@ char **NITFReadBLOCKA( NITFImage *psImage )
     char **papszMD = NULL;
     int nBlockaCount = 0;
     char szTemp[128];
+    int nRemainingBytes;
 
     while ( TRUE )
     {
@@ -2431,6 +2552,14 @@ char **NITFReadBLOCKA( NITFImage *psImage )
         {
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "BLOCKA TRE wrong size, ignoring." );
+            break;
+        }
+
+        nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
+        if (nRemainingBytes < 123)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot read BLOCKA TRE. Not enough bytes");
             break;
         }
 
@@ -2543,6 +2672,7 @@ int NITFReadBLOCKA_GCPs( NITFImage *psImage )
     int        nTRESize;
     int        nBlockaLines;
     char       szTemp[128];
+    int        nRemainingBytes;
     
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -2558,6 +2688,13 @@ int NITFReadBLOCKA_GCPs( NITFImage *psImage )
         return FALSE;
     }
 
+    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
+    if (nRemainingBytes < 123)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Cannot read BLOCKA TRE. Not enough bytes");
+        return FALSE;
+    }
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
@@ -2626,6 +2763,7 @@ static int NITFReadGEOLOB( NITFImage *psImage )
     const char *pachTRE;
     int        nTRESize;
     char       szTemp[128];
+    int        nRemainingBytes;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -2646,6 +2784,14 @@ static int NITFReadGEOLOB( NITFImage *psImage )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Cannot read GEOLOB TRE. Wrong size.");
+        return FALSE;
+    }
+
+    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
+    if (nRemainingBytes < 48)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Cannot read GEOLOB TRE. Not enough bytes");
         return FALSE;
     }
 
@@ -3256,7 +3402,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
                     double adfTarget[8];
 
                     VSIFSeekL( psImage->psFile->fp, psImage->pasLocations[i].nLocOffset,
-                              SEEK_SET );
+                               SEEK_SET );
                     VSIFReadL( adfTarget, 8, 8, psImage->psFile->fp );
                     for( i = 0; i < 8; i++ )
                         CPL_MSBPTR64( (adfTarget + i) );
@@ -3300,7 +3446,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                        "Ignoring NITF RPF Location table since it seems to be corrupt." );
+                          "Ignoring NITF RPF Location table since it seems to be corrupt." );
                 CPLFree( psImage->pasLocations );
                 psImage->pasLocations = NULL;
                 psImage->nLocCount = 0;
@@ -3821,4 +3967,91 @@ static void NITFPossibleIGEOLOReorientation( NITFImage *psImage )
         CPLDebug( "NITF", 
                   "IGEOLO corners have been reoriented by NITFPossibleIGEOLOReorientation()." );
     }
+}
+
+/************************************************************************/
+/*                           NITFReadIMRFCA()                           */
+/*                                                                      */
+/*      Read DPPDB IMRFCA TRE (and the associated IMASDA TRE) if it is  */
+/*      available. IMRFCA RPC coefficients are remapped into RPC00B     */
+/*      organization.                                                   */
+/************************************************************************/
+int NITFReadIMRFCA( NITFImage *psImage, NITFRPC00BInfo *psRPC )
+{
+    char        szTemp[100];
+    const char *pachTreIMASDA   = NULL;
+    const char *pachTreIMRFCA   = NULL;
+    double      dfTolerance     = 1.0e-10;
+    int         count           = 0;
+    int         nNotEnoughBytes = 0;
+    int         nRemainingBytes = 0;
+
+    if( (psImage == NULL) || (psRPC == NULL) ) return FALSE;
+
+    /* Check to see if we have the IMASDA and IMRFCA tag (DPPDB data). */
+
+    pachTreIMASDA = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, "IMASDA", NULL );
+    pachTreIMRFCA = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, "IMRFCA", NULL );
+
+    if ( (pachTreIMASDA == NULL) || (pachTreIMRFCA == NULL) ) return FALSE;
+
+    nRemainingBytes = psImage->nTREBytes - ( pachTreIMASDA-psImage->pachTRE );
+
+    if( nRemainingBytes < 242 ) nNotEnoughBytes += 1;
+
+    nRemainingBytes = psImage->nTREBytes - ( pachTreIMRFCA-psImage->pachTRE );
+
+    if( nRemainingBytes < 1760 ) nNotEnoughBytes += 1;
+
+    if( nNotEnoughBytes > 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Cannot read DPPDB IMASDA/IMRFCA TREs; not enough bytes." );
+
+        return FALSE;
+    }
+
+    /* Parse out the field values. */
+
+    /* Set the errors to 0.0 for now. */
+
+    psRPC->ERR_BIAS = 0.0;
+    psRPC->ERR_RAND = 0.0;
+    
+    psRPC->LONG_OFF     = atof( NITFGetField(szTemp, pachTreIMASDA, 0,   22) );
+    psRPC->LAT_OFF      = atof( NITFGetField(szTemp, pachTreIMASDA, 22,  22) );
+    psRPC->HEIGHT_OFF   = atof( NITFGetField(szTemp, pachTreIMASDA, 44,  22) );
+    psRPC->LONG_SCALE   = atof( NITFGetField(szTemp, pachTreIMASDA, 66,  22) );
+    psRPC->LAT_SCALE    = atof( NITFGetField(szTemp, pachTreIMASDA, 88,  22) );
+    psRPC->HEIGHT_SCALE = atof( NITFGetField(szTemp, pachTreIMASDA, 110, 22) );
+    psRPC->SAMP_OFF     = atof( NITFGetField(szTemp, pachTreIMASDA, 132, 22) );
+    psRPC->LINE_OFF     = atof( NITFGetField(szTemp, pachTreIMASDA, 154, 22) );
+    psRPC->SAMP_SCALE   = atof( NITFGetField(szTemp, pachTreIMASDA, 176, 22) );
+    psRPC->LINE_SCALE   = atof( NITFGetField(szTemp, pachTreIMASDA, 198, 22) );
+
+    if (psRPC->HEIGHT_SCALE == 0.0 ) psRPC->HEIGHT_SCALE = dfTolerance;
+    if (psRPC->LAT_SCALE    == 0.0 ) psRPC->LAT_SCALE    = dfTolerance;
+    if (psRPC->LINE_SCALE   == 0.0 ) psRPC->LINE_SCALE   = dfTolerance;
+    if (psRPC->LONG_SCALE   == 0.0 ) psRPC->LONG_SCALE   = dfTolerance;
+    if (psRPC->SAMP_SCALE   == 0.0 ) psRPC->SAMP_SCALE   = dfTolerance;
+
+    psRPC->HEIGHT_SCALE = 1.0/psRPC->HEIGHT_SCALE;
+    psRPC->LAT_SCALE    = 1.0/psRPC->LAT_SCALE;
+    psRPC->LINE_SCALE   = 1.0/psRPC->LINE_SCALE;
+    psRPC->LONG_SCALE   = 1.0/psRPC->LONG_SCALE;
+    psRPC->SAMP_SCALE   = 1.0/psRPC->SAMP_SCALE;
+
+    /* Parse out the RPC coefficients. */
+
+    for( count = 0; count < 20; ++count )
+    {
+        psRPC->LINE_NUM_COEFF[count] = atof( NITFGetField(szTemp, pachTreIMRFCA, count*22,     22) );
+        psRPC->LINE_DEN_COEFF[count] = atof( NITFGetField(szTemp, pachTreIMRFCA, 440+count*22, 22) );
+
+        psRPC->SAMP_NUM_COEFF[count] = atof( NITFGetField(szTemp, pachTreIMRFCA, 880+count*22,  22) );
+        psRPC->SAMP_DEN_COEFF[count] = atof( NITFGetField(szTemp, pachTreIMRFCA, 1320+count*22, 22) );
+    }
+
+    psRPC->SUCCESS = 1;
+
+    return TRUE;
 }
