@@ -8103,6 +8103,7 @@ CPLErr GTiffDataset::SetProjection( const char * pszNewProjection )
         && !EQUALN(pszNewProjection,"PROJCS",6)
         && !EQUALN(pszNewProjection,"LOCAL_CS",8)
         && !EQUALN(pszNewProjection,"COMPD_CS",8)
+        && !EQUALN(pszNewProjection,"GEOCCS",6)
         && !EQUAL(pszNewProjection,"") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
