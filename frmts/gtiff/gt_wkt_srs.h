@@ -41,6 +41,6 @@
 CPL_C_START
 char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
 int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
-CPL_C_END;
+CPL_C_END
 
 #endif // GT_WKT_SRS_H_INCLUDED
