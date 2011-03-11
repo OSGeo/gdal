@@ -2160,8 +2160,6 @@ char **NITFReadCSEXRA( NITFImage *psImage )
     const char *pachTRE;
     int  nTRESize;
     char **papszMD = NULL;
-    int nRemainingBytes;
-
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -2179,14 +2177,6 @@ char **NITFReadCSEXRA( NITFImage *psImage )
         return NULL;
     }
 
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-
-    if (nRemainingBytes < 132)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot read CSEXRA TRE. Not enough bytes");
-        return FALSE;
-    }
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
@@ -2461,8 +2451,6 @@ char **NITFReadUSE00A( NITFImage *psImage )
     const char *pachTRE;
     int  nTRESize;
     char **papszMD = NULL;
-    int nRemainingBytes;
-
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -2480,13 +2468,6 @@ char **NITFReadUSE00A( NITFImage *psImage )
         return NULL;
     }
 
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-    if (nRemainingBytes < 107)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Cannot read USE00A TRE. Not enough bytes");
-        return FALSE;
-    }
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
@@ -2534,7 +2515,6 @@ char **NITFReadBLOCKA( NITFImage *psImage )
     char **papszMD = NULL;
     int nBlockaCount = 0;
     char szTemp[128];
-    int nRemainingBytes;
 
     while ( TRUE )
     {
@@ -2552,14 +2532,6 @@ char **NITFReadBLOCKA( NITFImage *psImage )
         {
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "BLOCKA TRE wrong size, ignoring." );
-            break;
-        }
-
-        nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-        if (nRemainingBytes < 123)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot read BLOCKA TRE. Not enough bytes");
             break;
         }
 
@@ -2672,7 +2644,6 @@ int NITFReadBLOCKA_GCPs( NITFImage *psImage )
     int        nTRESize;
     int        nBlockaLines;
     char       szTemp[128];
-    int        nRemainingBytes;
     
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -2688,13 +2659,6 @@ int NITFReadBLOCKA_GCPs( NITFImage *psImage )
         return FALSE;
     }
 
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-    if (nRemainingBytes < 123)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Cannot read BLOCKA TRE. Not enough bytes");
-        return FALSE;
-    }
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
@@ -2763,7 +2727,6 @@ static int NITFReadGEOLOB( NITFImage *psImage )
     const char *pachTRE;
     int        nTRESize;
     char       szTemp[128];
-    int        nRemainingBytes;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -2784,14 +2747,6 @@ static int NITFReadGEOLOB( NITFImage *psImage )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Cannot read GEOLOB TRE. Wrong size.");
-        return FALSE;
-    }
-
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-    if (nRemainingBytes < 48)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Cannot read GEOLOB TRE. Not enough bytes");
         return FALSE;
     }
 
