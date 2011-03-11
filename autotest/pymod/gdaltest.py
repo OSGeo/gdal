@@ -1019,7 +1019,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2kak_drv = gdal.GetDriverByName('JP2KAK')
         if name_of_driver_to_keep != 'JP2KAK' and jp2kak_drv:
-            print('Deregistering JP2KAK')
+            gdal.Debug('gdaltest','Deregistering JP2KAK')
             jp2kak_drv.Deregister()
             jp2kak_drv_unregistered = True
     except:
@@ -1028,7 +1028,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
         if name_of_driver_to_keep != 'JPEG2000' and jpeg2000_drv:
-            print('Deregistering JPEG2000')
+            gdal.Debug('gdaltest','Deregistering JPEG2000')
             jpeg2000_drv.Deregister()
             jpeg2000_drv_unregistered = True
     except:
@@ -1037,7 +1037,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
         if name_of_driver_to_keep != 'JP2ECW' and jp2ecw_drv:
-            print('Deregistering JP2ECW')
+            gdal.Debug('gdaltest.','Deregistering JP2ECW')
             jp2ecw_drv.Deregister()
             jp2ecw_drv_unregistered = True
     except:
@@ -1046,7 +1046,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
         if name_of_driver_to_keep != 'JP2MrSID' and jp2mrsid_drv:
-            print('Deregistering JP2MrSID')
+            gdal.Debug('gdaltest.','Deregistering JP2MrSID')
             jp2mrsid_drv.Deregister()
             jp2mrsid_drv_unregistered = True
     except:
@@ -1055,7 +1055,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
         if name_of_driver_to_keep != 'JP2OpenJPEG' and jp2openjpeg_drv:
-            print('Deregistering JP2OpenJPEG')
+            gdal.Debug('gdaltest.','Deregistering JP2OpenJPEG')
             jp2openjpeg_drv.Deregister()
             jp2openjpeg_drv_unregistered = True
     except:
@@ -1075,7 +1075,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2kak_drv_unregistered:
             jp2kak_drv.Register()
             jp2kak_drv_unregistered = False
-            print('Registering JP2KAK')
+            gdal.Debug('gdaltest','Registering JP2KAK')
     except:
         pass
 
@@ -1083,7 +1083,7 @@ def reregister_all_jpeg2000_drivers():
         if jpeg2000_drv_unregistered:
             jpeg2000_drv.Register()
             jpeg2000_drv_unregistered = False
-            print('Registering JPEG2000')
+            gdal.Debug('gdaltest','Registering JPEG2000')
     except:
         pass
 
@@ -1091,7 +1091,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2ecw_drv_unregistered:
             jp2ecw_drv.Register()
             jp2ecw_drv_unregistered = False
-            print('Registering JP2ECW')
+            gdal.Debug('gdaltest','Registering JP2ECW')
     except:
         pass
 
@@ -1099,7 +1099,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2mrsid_drv_unregistered:
             jp2mrsid_drv.Register()
             jp2mrsid_drv_unregistered = False
-            print('Registering JP2MrSID')
+            gdal.Debug('gdaltest','Registering JP2MrSID')
     except:
         pass
 
@@ -1107,7 +1107,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2openjpeg_drv_unregistered:
             jp2openjpeg_drv.Register()
             jp2openjpeg_drv = False
-            print('Registering JP2OpenJPEG')
+            gdal.Debug('gdaltest','Registering JP2OpenJPEG')
     except:
         pass
 
