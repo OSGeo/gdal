@@ -491,7 +491,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         dfInvFlattening = -1.0 / (psDefn->SemiMinor/psDefn->SemiMajor - 1.0);
 
         /* Take official inverse flattening definition in the WGS84 case */
-        if (dfSemiMajor == SRS_WGS84_SEMIMAJOR &&
+        if (fabs(dfSemiMajor-SRS_WGS84_SEMIMAJOR) < 1e-10 &&
             fabs(dfInvFlattening - SRS_WGS84_INVFLATTENING) < 1e-10)
             dfInvFlattening = SRS_WGS84_INVFLATTENING;
     }
@@ -1148,13 +1148,13 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
     if( (pszLinearUOMName != NULL
          && EQUAL(pszLinearUOMName,SRS_UL_FOOT))
-        || dfLinearUOM == GTIFAtof(SRS_UL_FOOT_CONV) )
+        || fabs(dfLinearUOM-GTIFAtof(SRS_UL_FOOT_CONV)) < 0.0000001 )
         nUOMLengthCode = 9002; /* international foot */
     else if( (pszLinearUOMName != NULL
               && EQUAL(pszLinearUOMName,SRS_UL_US_FOOT))
              || ABS(dfLinearUOM-GTIFAtof(SRS_UL_US_FOOT_CONV)) < 0.0000001 )
         nUOMLengthCode = 9003; /* us survey foot */
-    else if( dfLinearUOM != 1.0 )
+    else if( fabs(dfLinearUOM-1.0) > 0.00000001 )
         nUOMLengthCode = KvUserDefined;
 
 /* -------------------------------------------------------------------- */

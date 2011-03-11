@@ -35,18 +35,6 @@
 #include "geo_normalize.h"
 #include "ogr_spatialref.h"
 
-void SetLinearUnitCitation(GTIF* psGTIF, char* pszLinearUOMName);
-void SetGeogCSCitation(GTIF * psGTIF, OGRSpatialReference *poSRS, char* angUnitName, int nDatum, short nSpheroid);
-OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
-                            geokey_t geoKey, OGRSpatialReference* poSRS, OGRBoolean* linearUnitIsSet);
-void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
-                           geokey_t geoKey,
-                          char  **ppszGeogName,
-                          char  **ppszDatumName,
-                          char  **ppszPMName,
-                          char  **ppszSpheroidName,
-                          char  **ppszAngularUnits);
-
 char* ImagineCitationTranslation(char* psCitation, geokey_t keyID);
 char** CitationStringParse(char* psCitation, geokey_t keyID);
 
