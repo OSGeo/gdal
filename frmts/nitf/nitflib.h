@@ -105,7 +105,7 @@ typedef struct {
 
 } NITFBandInfo;
 
-typedef struct {
+typedef struct { 
     GUInt16 nLocId;
     GUInt32 nLocOffset;
     GUInt32 nLocSize;
@@ -214,6 +214,7 @@ int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
                                     double dfURX, double dfURY,
                                     double dfLRX, double dfLRY,
                                     double dfLLX, double dfLLY );
+char      CPL_DLL **NITFReadCSEXRA( NITFImage *psImage );
 char      CPL_DLL **NITFReadUSE00A( NITFImage *psImage );
 char      CPL_DLL **NITFReadSTDIDC( NITFImage *psImage );
 char      CPL_DLL **NITFReadBLOCKA( NITFImage *psImage );
