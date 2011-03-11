@@ -946,6 +946,10 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
 
     CPLODBCStatement oStatement( poDS->GetSession() );
 
+    /* the fid values are retieved from the source layer */
+    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
+        oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] ON;", pszSchemaName, pszTableName );
+
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
@@ -987,6 +991,12 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
         {
             oStatement.Appendf( "[%s]", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
             bNeedComma = TRUE;
+        }
+
+        if (poFeature->GetGeometryRef() != poGeom)
+        {
+            CPLError( CE_Warning, CPLE_NotSupported,
+                      "Geometry with FID = %d has been modified.", poFeature->GetFID() );
         }
     }
 
@@ -1050,7 +1060,10 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
         AppendFieldValue(&oStatement, poFeature, i);
     }
 
-    oStatement.Append( ")" );
+    oStatement.Append( ");" );
+
+    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
+        oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] OFF;", pszSchemaName, pszTableName );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
