@@ -5529,6 +5529,35 @@ OGRSpatialReference *OGRSpatialReference::CloneGeogCS() const
     const OGR_SRSNode *poGeogCS;
     OGRSpatialReference * poNewSRS;
 
+/* -------------------------------------------------------------------- */
+/*      We have to reconstruct the GEOGCS node for geocentric           */
+/*      coordinate systems.                                             */
+/* -------------------------------------------------------------------- */
+    if( IsGeocentric() )
+    {
+        const OGR_SRSNode *poDatum = GetAttrNode( "DATUM" );
+        const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
+        OGR_SRSNode *poGeogCS;
+        
+        if( poDatum == NULL || poPRIMEM == NULL )
+            return NULL;
+        
+        poGeogCS = new OGR_SRSNode( "GEOGCS" );
+        poGeogCS->AddChild( new OGR_SRSNode( "unnamed" ) );
+        poGeogCS->AddChild( poDatum->Clone() );
+        poGeogCS->AddChild( poPRIMEM->Clone() );
+
+        poNewSRS = new OGRSpatialReference();
+        poNewSRS->SetRoot( poGeogCS );
+
+        poNewSRS->SetAngularUnits( "degree", CPLAtof(SRS_UA_DEGREE_CONV) );
+
+        return poNewSRS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      For all others we just search the tree, and duplicate.          */
+/* -------------------------------------------------------------------- */
     poGeogCS = GetAttrNode( "GEOGCS" );
     if( poGeogCS == NULL )
         return NULL;

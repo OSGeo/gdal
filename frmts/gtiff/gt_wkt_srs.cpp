@@ -271,7 +271,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 /*      Handle non-standard coordinate systems as LOCAL_CS.             */
 /* -------------------------------------------------------------------- */
     if( psDefn->Model != ModelTypeProjected 
-        && psDefn->Model != ModelTypeGeographic )
+        && psDefn->Model != ModelTypeGeographic 
+        && psDefn->Model != ModelTypeGeocentric )
     {
         char	*pszWKT;
         char    szPeStr[2400];
@@ -322,6 +323,36 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
             return pszWKT;
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle Geocentric coordinate systems.                           */
+/* -------------------------------------------------------------------- */
+    if( psDefn->Model == ModelTypeGeocentric )
+    {
+        char    szName[300];
+
+        strcpy( szName, "unnamed" );
+        if( !GTIFKeyGet( hGTIF, GTCitationGeoKey, szName, 
+                         0, sizeof(szName) ) )
+            GTIFKeyGet( hGTIF, GeogCitationGeoKey, szName, 
+                        0, sizeof(szName) );
+
+        oSRS.SetGeocCS( szName );
+
+        char	*pszUnitsName = NULL;
+          
+        GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszUnitsName, NULL );
+        
+        if( pszUnitsName != NULL && psDefn->UOMLength != KvUserDefined )
+        {
+            oSRS.SetLinearUnits( pszUnitsName, psDefn->UOMLengthInMeters );
+            oSRS.SetAuthority( "GEOCCS|UNIT", "EPSG", psDefn->UOMLength );
+        }
+        else
+            oSRS.SetLinearUnits( "unknown", psDefn->UOMLengthInMeters );
+
+        GTIFFreeMemory( pszUnitsName );
     }
     
 /* -------------------------------------------------------------------- */
@@ -1149,6 +1180,11 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
                    ModelTypeProjected);
         GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
     }
+    else if( poSRS->IsGeocentric() )
+    {
+        GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1, 
+                   ModelTypeGeocentric );
+    }
     else if( pszProjection == NULL )
     {
         if( poSRS->IsGeographic() )
@@ -1913,7 +1949,15 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /* -------------------------------------------------------------------- */
 /*      Write linear units information.                                 */
 /* -------------------------------------------------------------------- */
-    if( !poSRS->IsGeographic() )
+    if( poSRS->IsGeocentric() )
+    {
+        GTIFKeySet(psGTIF, GeogLinearUnitsGeoKey, TYPE_SHORT, 1, 
+                   nUOMLengthCode );
+        if( nUOMLengthCode == KvUserDefined )
+            GTIFKeySet( psGTIF, GeogLinearUnitSizeGeoKey, TYPE_DOUBLE, 1, 
+                        dfLinearUOM);
+    }
+    else if( !poSRS->IsGeographic() )
     {
         GTIFKeySet(psGTIF, ProjLinearUnitsGeoKey, TYPE_SHORT, 1, 
                    nUOMLengthCode );
@@ -1950,7 +1994,7 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /* -------------------------------------------------------------------- */
     if( poSRS->GetRoot() != NULL
         && poSRS->GetRoot()->GetChild(0) != NULL 
-        && (poSRS->IsProjected() || poSRS->IsLocal()) )
+        && (poSRS->IsProjected() || poSRS->IsLocal() || poSRS->IsGeocentric()) )
     {
         GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0, 
                     poSRS->GetRoot()->GetChild(0)->GetValue() );
