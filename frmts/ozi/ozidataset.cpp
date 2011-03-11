@@ -806,7 +806,7 @@ void GDALRegister_OZI()
 
         poDriver->SetDescription( "OZI" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "OZI" );
+                                   "OziExplorer Image File" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_ozi.html" );
 
