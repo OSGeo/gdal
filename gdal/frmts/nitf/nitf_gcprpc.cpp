@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: nitfdataset.cpp 21793 2011-02-22 19:42:16Z warmerdam $
+ * $Id$
  *
  * Project:  NITF Read/Write Translator
  * Purpose:  GCP / RPC Georeferencing Model (custom by/for ESRI)
