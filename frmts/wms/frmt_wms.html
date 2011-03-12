@@ -30,14 +30,14 @@
 		</tr>
 		<tr>
 			<td class="xml">    &lt;Service name="<span class="value">WMS</span>"&gt;</td>
-			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS or TiledWMS. (required)</td>
+			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS or VirtualEarth. (required)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;Version&gt;<span class="value">1.1.1</span>&lt;/Version&gt;</td>
 			<td class="desc">WMS version. (optional, defaults to 1.1.1)</td>
 		</tr>
 		<tr>
-			<td class="xml">        &lt;ServerURL&gt;<span class="value">http://onearth.jpl.nasa.gov/wms.cgi?</span>&lt;/ServerUrl&gt;</td>
+			<td class="xml">        &lt;ServerUrl&gt;<span class="value">http://onearth.jpl.nasa.gov/wms.cgi?</span>&lt;/ServerUrl&gt;</td>
 			<td class="desc">WMS server URL. (required)</td>
 		</tr>
 		<tr>
@@ -80,23 +80,23 @@
 		</tr>
 		<tr>
 			<td class="xml">    &lt;DataWindow&gt;</td>
-			<td class="desc">Define size and extents of the data. (required, except for TiledWMS)</td>
+			<td class="desc">Define size and extents of the data. (required, except for TiledWMS and VirtualEarth)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;UpperLeftX&gt;<span class="value">-180.0</span>&lt;/UpperLeftX&gt;</td>
-			<td class="desc">X (longitude) coordinate of upper-left corner. (optional, defaults to -180.0)</td>
+			<td class="desc">X (longitude) coordinate of upper-left corner. (optional, defaults to -180.0, except for VirtualEarth)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;UpperLeftY&gt;<span class="value">90.0</span>&lt;/UpperLeftY&gt;</td>
-			<td class="desc">Y (latitude) coordinate of upper-left corner. (optional, defaults to 90.0)</td>
+			<td class="desc">Y (latitude) coordinate of upper-left corner. (optional, defaults to 90.0, except for VirtualEarth)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;LowerRightX&gt;<span class="value">180.0</span>&lt;/LowerRightX&gt;</td>
-			<td class="desc">X (longitude) coordinate of lower-right corner. (optional, defaults to 180.0)</td>
+			<td class="desc">X (longitude) coordinate of lower-right corner. (optional, defaults to 180.0, except for VirtualEarth)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;LowerRightY&gt;<span class="value">-90.0</span>&lt;/LowerRightY&gt;</td>
-			<td class="desc">Y (latitude) coordinate of lower-right corner. (optional, defaults to -90.0)</td>
+			<td class="desc">Y (latitude) coordinate of lower-right corner. (optional, defaults to -90.0, except for VirtualEarth)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;SizeX&gt;<span class="value">2666666</span>&lt;/SizeX&gt;</td>
@@ -118,6 +118,10 @@
 			<td class="xml">        &lt;TileLevel&gt;<span class="value">0</span>&lt;/TileLevel&gt;</td>
 			<td class="desc">Tile level at highest resolution. (tiled image sources only, optional, defaults to 0)</td>
 		</tr>
+        <tr>
+            <td class="xml">        &lt;TileLevelMin&gt;<span class="value">0</span>&lt;/TileLevelMin&gt;</td>
+            <td class="desc">Tile level at minimum resolution. (tiled image sources only, optional, defaults to 0, GDAL >= 1.9.0)</td>
+        </tr>
 		<tr>
 			<td class="xml">        &lt;TileCountX&gt;<span class="value">0</span>&lt;/TileCountX&gt;</td>
 			<td class="desc">Can be used to define image size, SizeX = TileCountX * BlockSizeX * 2<sup>TileLevel</sup>. (tiled image sources only, optional, defaults to 0)</td>
@@ -144,11 +148,11 @@
 		</tr>
 		<tr>
 			<td class="xml">    &lt;BlockSizeX&gt;<span class="value">1024</span>&lt;/BlockSizeX&gt;</td>
-			<td class="desc">Block size in pixels. (optional, defaults to 1024)</td>
+			<td class="desc">Block size in pixels. (optional, defaults to 1024, except for VirtualEarth)</td>
 		</tr>
 		<tr>
 			<td class="xml">    &lt;BlockSizeY&gt;<span class="value">1024</span>&lt;/BlockSizeY&gt;</td>
-			<td class="desc">Block size in pixels. (optional, defaults to 1024)</td>
+			<td class="desc">Block size in pixels. (optional, defaults to 1024, except for VirtualEarth)</td>
 		</tr>
 		<tr>
 			<td class="xml">    &lt;OverviewCount&gt;<span class="value">10</span>&lt;/OverviewCount&gt;</td>
@@ -295,6 +299,24 @@ A typical OnEarth Tiled WMS configuration file might look like:
 Most of the other information is automatically fetched from the remote
 server using the GetTileService method at open time. <p>
 
+<h3>VirtualEarth (GDAL 1.9.0 and later)</h3>
+<p>
+Access to web-based Virtual Earth tile services. Access is always tile based.<p>
+<p>The ${quadkey} variable must be found in the ServerUrl element.<p>
+<p>The DataWindow element might be omitted. The default values are :
+<ul>
+<li>UpperLeftX = -20037508.34</li>
+<li>UpperLeftY = 20037508.34</li>
+<li>LowerRightX = 20037508.34</li>
+<li>LowerRightY = -20037508.34</li>
+<li>TileLevelMin = 1</li>
+<li>TileLevel = 19</li>
+<li>SRS = EPSG:900913</li>
+<li>BlockSizeX = 256</li>
+<li>BlockSizeY = 256</li>
+</ul>
+</p> 
+
 <h2>Examples</h2>
 
 <ul>
@@ -339,12 +361,17 @@ server using the GetTileService method at open time. <p>
     </p></li>
 
     <li><p>
-     <a href="frmt_wms_bluemarble_s3_tms.xml">BlueMarble Amazon S3 Example</a> accessed with the TMS minidriver</li>
+     <a href="frmt_wms_bluemarble_s3_tms.xml">BlueMarble Amazon S3 Example</a> accessed with the TMS minidriver.
+    </p></li>
 
     <li><p>
      OnEarth Tiled WMS <a href="frmt_twms_Clementine.xml">Clementine</a>,
      <a href="frmt_twms_daily.xml">daily</a>, and
      <a href="frmt_twms_srtm.xml">srtm</a> examples.<p>
+    </p></li>
+
+    <li><p>
+     <a href="frmt_wms_virtualearth.xml">VirtualEarth Aerial Layer</a> accessed with the VirtualEarth minidriver.
     </p></li>
 </ul>
 

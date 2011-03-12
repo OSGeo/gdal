@@ -21,3 +21,4 @@
 #include "minidriver_worldwind.h"
 #include "minidriver_tms.h"
 #include "minidriver_tiled_wms.h"
+#include "minidriver_virtualearth.h"
