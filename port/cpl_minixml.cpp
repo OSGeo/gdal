@@ -654,6 +654,20 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                 }
                 else
                 {
+                    if (strcmp(sContext.pszToken+1,
+                         sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue) != 0)
+                    {
+                        /* TODO: at some point we could just error out like any other */
+                        /* sane XML parser would do */
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                "Line %d: <%.500s> matches <%.500s>, but the case isn't the same. "
+                                "Going on, but this is invalid XML that might be rejected in "
+                                "future versions.",
+                                sContext.nInputLine,
+                                sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue,
+                                sContext.pszToken );
+                    }
+
                     if( ReadToken(&sContext) != TClose )
                     {
                         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -816,7 +830,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
 /*      Did we pop all the way out of our stack?                        */
 /* -------------------------------------------------------------------- */
-    if( CPLGetLastErrorType() == CE_None && sContext.nStackSize != 0 )
+    if( CPLGetLastErrorType() != CE_Failure && sContext.nStackSize != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Parse error at EOF, not all elements have been closed,\n"
@@ -831,7 +845,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     if( sContext.papsStack != NULL )
         CPLFree( sContext.papsStack );
 
-    if( CPLGetLastErrorType() != CE_None )
+    if( CPLGetLastErrorType() == CE_Failure )
     {
         CPLDestroyXMLNode( sContext.psFirstNode );
         sContext.psFirstNode = NULL;
