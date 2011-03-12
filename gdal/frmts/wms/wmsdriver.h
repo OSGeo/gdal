@@ -58,8 +58,12 @@ public:
     double m_x0, m_y0;
     double m_x1, m_y1;
     int m_sx, m_sy;
-    int m_tx, m_ty, m_tlevel;
+    int m_tx, m_ty, m_tlevel, m_tlevelmin;
     enum { BOTTOM = -1, DEFAULT = 0, TOP = 1 } m_y_origin;
+
+    GDALWMSDataWindow() : m_x0(-180), m_y0(90), m_x1(180), m_y1(-90),
+                          m_sx(-1), m_sy(-1), m_tx(0), m_ty(0),
+                          m_tlevel(-1), m_tlevelmin(0), m_y_origin(DEFAULT) {}
 };
 
 class GDALWMSTiledImageRequestInfo {
@@ -213,6 +217,13 @@ public:
     void mSetBand(int i, GDALRasterBand *band) { SetBand(i,band); };
     GDALWMSRasterBand *mGetBand(int i) { return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i)); };
 
+
+    void WMSSetDefaultDataWindowCoordinates(double x0, double y0, double x1, double y1);
+    void WMSSetDefaultTileLevel(int tlevel);
+    void WMSSetDefaultTileLevelMin(int tlevelmin);
+    void WMSSetDefaultBlockSize(int x, int y);
+    void WMSSetNeedsDataWindow(int flag);
+
     static GDALDataset* Open(GDALOpenInfo *poOpenInfo);
     static int Identify(GDALOpenInfo *poOpenInfo);
 
@@ -237,6 +248,11 @@ protected:
     int m_clamp_requests;
     int m_unsafeSsl;
     CPLString m_osUserAgent;
+
+    GDALWMSDataWindow m_default_data_window;
+    int m_default_block_size_x, m_default_block_size_y;
+
+    int m_bNeedsDataWindow;
 };
 
 class GDALWMSRasterBand : public GDALPamRasterBand {

@@ -46,6 +46,9 @@ GDALWMSDataset::GDALWMSDataset() {
     m_unsafeSsl = false;
     m_data_window.m_sx = -1;
     nBands = 0;
+    m_default_block_size_x = 1024;
+    m_default_block_size_y = 1024;
+    m_bNeedsDataWindow = TRUE;
 }
 
 GDALWMSDataset::~GDALWMSDataset() {
@@ -109,8 +112,8 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     if (m_data_window.m_sx<1) {
 
 	if (ret == CE_None) {
-	    m_block_size_x = atoi(CPLGetXMLValue(config, "BlockSizeX", "1024"));
-	    m_block_size_y = atoi(CPLGetXMLValue(config, "BlockSizeY", "1024"));
+	    m_block_size_x = atoi(CPLGetXMLValue(config, "BlockSizeX", CPLString().Printf("%d", m_default_block_size_x)));
+	    m_block_size_y = atoi(CPLGetXMLValue(config, "BlockSizeY", CPLString().Printf("%d", m_default_block_size_y)));
 	    if (m_block_size_x <= 0 || m_block_size_y <= 0) {
 		CPLError( CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value in BlockSizeX or BlockSizeY" );
 		ret = CE_Failure;
@@ -127,20 +130,30 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
 
 	if (ret == CE_None) {
 	    CPLXMLNode *data_window_node = CPLGetXMLNode(config, "DataWindow");
-	    if (data_window_node == NULL) {
+	    if (data_window_node == NULL && m_bNeedsDataWindow) {
 		CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: DataWindow missing.");
 		ret = CE_Failure;
 	    } else {
+        CPLString osDefaultX0, osDefaultX1, osDefaultY0, osDefaultY1;
+        CPLString osDefaultTileLevelMin, osDefaultTileLevel;
+        osDefaultX0.Printf("%.8f", m_default_data_window.m_x0);
+        osDefaultX1.Printf("%.8f", m_default_data_window.m_x1);
+        osDefaultY0.Printf("%.8f", m_default_data_window.m_y0);
+        osDefaultY1.Printf("%.8f", m_default_data_window.m_y1);
+        osDefaultTileLevelMin.Printf("%d", m_default_data_window.m_tlevelmin);
+        if (m_default_data_window.m_tlevel >= 0)
+            osDefaultTileLevel.Printf("%d", m_default_data_window.m_tlevel);
 		const char *overview_count = CPLGetXMLValue(config, "OverviewCount", "");
-		const char *ulx = CPLGetXMLValue(data_window_node, "UpperLeftX", "-180.0");
-		const char *uly = CPLGetXMLValue(data_window_node, "UpperLeftY", "90.0");
-		const char *lrx = CPLGetXMLValue(data_window_node, "LowerRightX", "180.0");
-		const char *lry = CPLGetXMLValue(data_window_node, "LowerRightY", "-90.0");
+		const char *ulx = CPLGetXMLValue(data_window_node, "UpperLeftX", osDefaultX0);
+		const char *uly = CPLGetXMLValue(data_window_node, "UpperLeftY", osDefaultY0);
+		const char *lrx = CPLGetXMLValue(data_window_node, "LowerRightX", osDefaultX1);
+		const char *lry = CPLGetXMLValue(data_window_node, "LowerRightY", osDefaultY1);
 		const char *sx = CPLGetXMLValue(data_window_node, "SizeX", "");
 		const char *sy = CPLGetXMLValue(data_window_node, "SizeY", "");
 		const char *tx = CPLGetXMLValue(data_window_node, "TileX", "0");
 		const char *ty = CPLGetXMLValue(data_window_node, "TileY", "0");
-		const char *tlevel = CPLGetXMLValue(data_window_node, "TileLevel", "");
+        const char *tlevelmin = CPLGetXMLValue(data_window_node, "TileLevelMin", osDefaultTileLevelMin);
+		const char *tlevel = CPLGetXMLValue(data_window_node, "TileLevel", osDefaultTileLevel);
 		const char *str_tile_count_x = CPLGetXMLValue(data_window_node, "TileCountX", "1");
 		const char *str_tile_count_y = CPLGetXMLValue(data_window_node, "TileCountY", "1");
 		const char *y_origin = CPLGetXMLValue(data_window_node, "YOrigin", "default");
@@ -156,13 +169,10 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
 			ret = CE_Failure;
 		    }
 		}
-		if (ret == CE_None) {
-		    if (tlevel[0] != '\0') {
-			m_data_window.m_tlevel = atoi(tlevel);
-		    } else {
-			m_data_window.m_tlevel = 0;
-		    }
-		}
+		
+        m_data_window.m_tlevel = atoi(tlevel);
+        m_data_window.m_tlevelmin = atoi(tlevelmin);
+
 		if (ret == CE_None) {
 		    if ((sx[0] != '\0') && (sy[0] != '\0')) {
 			m_data_window.m_sx = atoi(sx);
@@ -259,7 +269,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                 band->m_color_interp = color_interp;
                 SetBand(i + 1, band);
                 double scale = 0.5;
-                for (int j = 0; j < m_overview_count; ++j) {
+                for (int j = m_data_window.m_tlevelmin; j < m_overview_count; ++j) {
                     band->AddOverview(scale);
                     band->m_color_interp = color_interp;
                     scale *= 0.5;
@@ -458,6 +468,34 @@ void GDALWMSDataset::WMSSetDataType(GDALDataType type) {
 
 void GDALWMSDataset::WMSSetDataWindow(GDALWMSDataWindow &window) {
     m_data_window=window;
+}
+
+void GDALWMSDataset::WMSSetDefaultBlockSize(int x, int y) {
+    m_default_block_size_x=x;
+    m_default_block_size_y=y;
+}
+
+void GDALWMSDataset::WMSSetDefaultDataWindowCoordinates(double x0, double y0, double x1, double y1)
+{
+    m_default_data_window.m_x0 = x0;
+    m_default_data_window.m_y0 = y0;
+    m_default_data_window.m_x1 = x1;
+    m_default_data_window.m_y1 = y1;
+}
+
+void GDALWMSDataset::WMSSetDefaultTileLevelMin(int tlevelmin)
+{
+    m_default_data_window.m_tlevelmin = tlevelmin;
+}
+
+void GDALWMSDataset::WMSSetDefaultTileLevel(int tlevel)
+{
+    m_default_data_window.m_tlevel = tlevel;
+}
+
+void GDALWMSDataset::WMSSetNeedsDataWindow(int flag)
+{
+    m_bNeedsDataWindow = flag;
 }
 
 CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options) {

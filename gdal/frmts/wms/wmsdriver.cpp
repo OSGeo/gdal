@@ -131,7 +131,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             "<GDAL_WMS>\n"
             "  <Service name=\"WMS\">\n"
             "    <Version>%s</Version>\n"
-            "    <ServerURL>%s</ServerUrl>\n"
+            "    <ServerUrl>%s</ServerUrl>\n"
             "    <Layers>%s</Layers>\n"
             "    <SRS>%s</SRS>\n"
             "    <ImageFormat>%s</ImageFormat>\n"
@@ -287,7 +287,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
             "  <Service name=\"TMS\">\n"
-            "    <ServerURL>%s</ServerUrl>\n"
+            "    <ServerUrl>%s</ServerUrl>\n"
             "    <Format>%s</Format>\n"
             "  </Service>\n"
             "  <DataWindow>\n"
@@ -509,6 +509,7 @@ void GDALRegister_WMS() {
         mdm->Register(new GDALWMSMiniDriverFactory_TileService());
         mdm->Register(new GDALWMSMiniDriverFactory_WorldWind());
         mdm->Register(new GDALWMSMiniDriverFactory_TMS());
-	mdm->Register(new GDALWMSMiniDriverFactory_TiledWMS());
+        mdm->Register(new GDALWMSMiniDriverFactory_TiledWMS());
+        mdm->Register(new GDALWMSMiniDriverFactory_VirtualEarth());
     }
 }
