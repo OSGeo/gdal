@@ -254,6 +254,10 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( papszMD )
         poVRTDS->SetMetadata( papszMD, "IMD" );
 
+    papszMD = poSrcDS->GetMetadata( "GEOLOCATION" );
+    if( papszMD )
+        poVRTDS->SetMetadata( papszMD, "GEOLOCATION" );
+
 /* -------------------------------------------------------------------- */
 /*      GCPs                                                            */
 /* -------------------------------------------------------------------- */
