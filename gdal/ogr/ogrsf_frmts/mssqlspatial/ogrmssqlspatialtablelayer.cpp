@@ -817,7 +817,7 @@ OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
     if (poFeature->GetGeometryRef() != poGeom)
     {
         CPLError( CE_Warning, CPLE_NotSupported,
-                  "Geometry with FID = %d has been modified.", poFeature->GetFID() );
+                  "Geometry with FID = %ld has been modified.", poFeature->GetFID() );
     }
 
     int bNeedComma = FALSE;
@@ -968,6 +968,12 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
     OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef());
     OGRGeometry *poGeom = oValidator.GetValidGeometryRef();
 
+    if (poFeature->GetGeometryRef() != poGeom)
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "Geometry with FID = %ld has been modified.", poFeature->GetFID() );
+    }
+
     int bNeedComma = FALSE;
 
     if (poGeom != NULL && pszGeomColumn != NULL)
@@ -984,12 +990,6 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
         {
             oStatement.Appendf( "[%s]", pszFIDColumn );
             bNeedComma = TRUE;
-        }
-
-        if (poFeature->GetGeometryRef() != poGeom)
-        {
-            CPLError( CE_Warning, CPLE_NotSupported,
-                      "Geometry with FID = %d has been modified.", poFeature->GetFID() );
         }
     }
 
