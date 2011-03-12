@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: nitfdataset.cpp 21897 2011-03-06 13:30:49Z rouault $
+ * $Id$
  *
  * Project:  NITF Read/Write Translator
  * Purpose:  GDALDataset/GDALRasterBand declarations.
@@ -94,6 +94,7 @@ class NITFDataset : public GDALPamDataset
     CPLErr       ScanJPEGBlocks( void );
     CPLErr       ReadJPEGBlock( int, int );
     void         CheckGeoSDEInfo();
+    char**       AddFile(char **papszFileList, const char* EXTENSION, const char* extension);
 
     int          nIMIndex;
     CPLString    osNITFFilename;
@@ -131,6 +132,7 @@ class NITFDataset : public GDALPamDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+    virtual char **GetFileList(void);
 
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual const char *GetMetadataItem( const char * pszName,

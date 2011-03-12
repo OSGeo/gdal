@@ -876,6 +876,15 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have RPCs?                                                */
+/* -------------------------------------------------------------------- */
+    int            bHasRPC00 = FALSE;
+    NITFRPC00BInfo sRPCInfo;
+
+    if( psImage && NITFReadRPC00B( psImage, &sRPCInfo ) && sRPCInfo.SUCCESS )
+        bHasRPC00 = TRUE;
+        
+/* -------------------------------------------------------------------- */
 /*      Do we have IGEOLO data that can be treated as a                 */
 /*      geotransform?  Our approach should support images in an         */
 /*      affine rotated frame of reference.                              */
@@ -924,6 +933,22 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
 
         psGCPs[3].dfGCPX		= psImage->dfLLX;
         psGCPs[3].dfGCPY		= psImage->dfLLY;
+
+/* -------------------------------------------------------------------- */
+/*      ESRI desires to use the RPCs to produce a denser and more       */
+/*      accurate set of GCPs in this case.  Details are unclear at      */
+/*      this time.                                                      */
+/* -------------------------------------------------------------------- */
+#ifdef ESRI_BUILD
+        if( bHasRPC00
+            &&  ( (psImage->chICORDS == 'G') || (psImage->chICORDS == 'C') ) )
+        {
+            if( nGCPCount == 4 )
+                NITFDensifyGCPs( &psGCPs, &nGCPCount );
+
+            NITFUpdateGCPsWithRPC( &sRPCInfo, psGCPs, &nGCPCount );
+        }
+#endif /* def ESRI_BUILD */
     }
 
 /* -------------------------------------------------------------------- */
@@ -948,7 +973,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
               || psImage->dfLRX != 0 || psImage->dfLLX != 0)
              && psImage->chICORDS != ' ' && 
              ( poDS->bGotGeoTransform == FALSE ) &&
-             nGCPCount == 4 )
+             nGCPCount >= 4 )
     {
         CPLDebug( "GDAL", 
                   "NITFDataset::Open() wasn't able to derive a first order\n"
@@ -994,6 +1019,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Do we have metadata.                                            */
 /* -------------------------------------------------------------------- */
+    char **papszCSEXRA_MD;
     char **papszMergedMD;
     char **papszUSE00A_MD;
 
@@ -1048,6 +1074,16 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
             papszMergedMD = 
                 CSLSetNameValue( papszMergedMD, "NITF_IMAG", 
                                  psImage->szIMAG );
+        }
+
+        // CSEXRA
+        papszCSEXRA_MD = NITFReadCSEXRA( psImage );
+        if( papszCSEXRA_MD != NULL )
+        {
+            papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                              CSLCount( papszCSEXRA_MD ),
+                                              papszCSEXRA_MD );
+            CSLDestroy( papszCSEXRA_MD );
         }
 
         // USE00A 
@@ -1110,10 +1146,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Do we have RPC info.                                            */
 /* -------------------------------------------------------------------- */
-    NITFRPC00BInfo sRPCInfo;
-
-    if( psImage
-        && NITFReadRPC00B( psImage, &sRPCInfo ) && sRPCInfo.SUCCESS )
+    if( psImage && bHasRPC00 )
     {
         char szValue[1280];
         int  i;
@@ -2743,6 +2776,57 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
     delete poDS;
 
     return eErr;
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **NITFDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+/* -------------------------------------------------------------------- */
+/*      Check for .imd file.                                            */
+/* -------------------------------------------------------------------- */
+    papszFileList = AddFile( papszFileList, "IMD", "imd" );
+
+/* -------------------------------------------------------------------- */
+/*      Check for .rpb file.                                            */
+/* -------------------------------------------------------------------- */
+    papszFileList = AddFile( papszFileList, "RPB", "rpb" );
+
+/* -------------------------------------------------------------------- */
+/*      Check for other files.                                          */
+/* -------------------------------------------------------------------- */
+    papszFileList = AddFile( papszFileList, "ATT", "att" );
+    papszFileList = AddFile( papszFileList, "EPH", "eph" );
+    papszFileList = AddFile( papszFileList, "GEO", "geo" );
+    papszFileList = AddFile( papszFileList, "XML", "xml" );
+
+    return papszFileList;
+}
+
+/************************************************************************/
+/*                              AddFile()                               */
+/*                                                                      */
+/*      Helper method for GetFileList()                                 */
+/************************************************************************/
+char **NITFDataset::AddFile(char **papszFileList, const char* EXTENSION, const char* extension)
+{
+    VSIStatBufL sStatBuf;
+    CPLString osTarget = CPLResetExtension( osNITFFilename, EXTENSION );
+    if( VSIStatL( osTarget, &sStatBuf ) == 0 )
+        papszFileList = CSLAddString( papszFileList, osTarget );
+    else
+    {
+        osTarget = CPLResetExtension( osNITFFilename, extension );
+        if( VSIStatL( osTarget, &sStatBuf ) == 0 )
+            papszFileList = CSLAddString( papszFileList, osTarget );
+    }
+
+    return papszFileList;
 }
 
 /************************************************************************/
