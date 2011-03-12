@@ -128,26 +128,26 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     }
 
     CPLString osXML = CPLSPrintf(
-            "<GDAL_WMS>"
-            "  <Service name=\"WMS\">"
-            "    <Version>%s</Version>"
-            "    <ServerURL>%s</ServerUrl>"
-            "    <Layers>%s</Layers>"
-            "    <SRS>%s</SRS>"
-            "    <ImageFormat>%s</ImageFormat>"
-            "    <Transparent>%s</Transparent>"
-            "  </Service>"
-            "  <DataWindow>"
-            "    <UpperLeftX>%s</UpperLeftX>"
-            "    <UpperLeftY>%s</UpperLeftY>"
-            "    <LowerRightX>%s</LowerRightX>"
-            "    <LowerRightY>%s</LowerRightY>"
-            "    <SizeX>%d</SizeX>"
-            "    <SizeY>%d</SizeY>"
-            "  </DataWindow>"
-            "  <BandsCount>%d</BandsCount>"
-            "  <OverviewCount>%d</OverviewCount>"
-            "</GDAL_WMS>",
+            "<GDAL_WMS>\n"
+            "  <Service name=\"WMS\">\n"
+            "    <Version>%s</Version>\n"
+            "    <ServerURL>%s</ServerUrl>\n"
+            "    <Layers>%s</Layers>\n"
+            "    <SRS>%s</SRS>\n"
+            "    <ImageFormat>%s</ImageFormat>\n"
+            "    <Transparent>%s</Transparent>\n"
+            "  </Service>\n"
+            "  <DataWindow>\n"
+            "    <UpperLeftX>%s</UpperLeftX>\n"
+            "    <UpperLeftY>%s</UpperLeftY>\n"
+            "    <LowerRightX>%s</LowerRightX>\n"
+            "    <LowerRightY>%s</LowerRightY>\n"
+            "    <SizeX>%d</SizeX>\n"
+            "    <SizeY>%d</SizeY>\n"
+            "  </DataWindow>\n"
+            "  <BandsCount>%d</BandsCount>\n"
+            "  <OverviewCount>%d</OverviewCount>\n"
+            "</GDAL_WMS>\n",
             osVersion.c_str(),
             osBaseURL.c_str(),
             osLayer.c_str(),
@@ -160,6 +160,8 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             nOverviewCount);
 
     CSLDestroy(papszTokens);
+
+    CPLDebug("WMS", "Opening WMS :\n%s", osXML.c_str());
 
     return CPLParseXMLString(osXML);
 }
@@ -183,9 +185,16 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     if (pszURL == NULL)
         return NULL;
     CPLString osURL = pszURL;
+    /* Special hack for http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/ */
+    int bCanChangeURL = TRUE;
     if (strlen(pszURL) > 10 &&
+        strncmp(pszURL, "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/",
+                        strlen("http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/")) == 0 &&
         strcmp(pszURL + strlen(pszURL) - strlen("1.0.0/"), "1.0.0/") == 0)
+    {
         osURL.resize(strlen(pszURL) - strlen("1.0.0/"));
+        bCanChangeURL = FALSE;
+    }
     osURL += "${z}/${x}/${y}.${format}";
 
     const char* pszSRS = CPLGetXMLValue(psRoot, "SRS", NULL);
@@ -233,8 +242,32 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
         if (psIter->eType == CXT_Element &&
             EQUAL(psIter->pszValue, "TileSet"))
         {
+            const char* pszOrder =
+                CPLGetXMLValue(psIter, "order", NULL);
+            if (pszOrder == NULL)
+            {
+                CPLDebug("WMS", "Cannot find order attribute");
+                return NULL;
+            }
+            if (atoi(pszOrder) != nLevelCount)
+            {
+                CPLDebug("WMS", "Expected order=%d, got %s", nLevelCount, pszOrder);
+                return NULL;
+            }
             if (nLevelCount == 0)
             {
+                const char* pszHref =
+                    CPLGetXMLValue(psIter, "href", NULL);
+                if (pszHref != NULL)
+                {
+                    if (bCanChangeURL && strlen(pszHref) > 10 &&
+                        strcmp(pszHref + strlen(pszHref) - strlen("/0"), "/0") == 0)
+                    {
+                        osURL = pszHref;
+                        osURL.resize(strlen(pszHref) - strlen("/0"));
+                        osURL += "/${z}/${x}/${y}.${format}";
+                    }
+                }
                 const char* pszUnitsPerPixel =
                     CPLGetXMLValue(psIter, "units-per-pixel", NULL);
                 if (pszUnitsPerPixel == NULL)
@@ -252,25 +285,25 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     int nTileCountY = (int)((dfMaxY - dfMinY) / dfPixelSize / nTileHeight + 0.1);
 
     CPLString osXML = CPLSPrintf(
-            "<GDAL_WMS>"
-            "  <Service name=\"TMS\">"
-            "    <ServerURL>%s</ServerUrl>"
-            "    <Format>%s</Format>"
-            "  </Service>"
-            "  <DataWindow>"
-            "    <UpperLeftX>%s</UpperLeftX>"
-            "    <UpperLeftY>%s</UpperLeftY>"
-            "    <LowerRightX>%s</LowerRightX>"
-            "    <LowerRightY>%s</LowerRightY>"
-            "    <TileLevel>%d</TileLevel>"
-            "    <TileCountX>%d</TileCountX>"
-            "    <TileCountY>%d</TileCountY>"
-            "  </DataWindow>"
-            "  <Projection>%s</Projection>"
-            "  <BlockSizeX>%d</BlockSizeX>"
-            "  <BlockSizeY>%d</BlockSizeY>"
-            "  <BandsCount>%d</BandsCount>"
-            "</GDAL_WMS>",
+            "<GDAL_WMS>\n"
+            "  <Service name=\"TMS\">\n"
+            "    <ServerURL>%s</ServerUrl>\n"
+            "    <Format>%s</Format>\n"
+            "  </Service>\n"
+            "  <DataWindow>\n"
+            "    <UpperLeftX>%s</UpperLeftX>\n"
+            "    <UpperLeftY>%s</UpperLeftY>\n"
+            "    <LowerRightX>%s</LowerRightX>\n"
+            "    <LowerRightY>%s</LowerRightY>\n"
+            "    <TileLevel>%d</TileLevel>\n"
+            "    <TileCountX>%d</TileCountX>\n"
+            "    <TileCountY>%d</TileCountY>\n"
+            "  </DataWindow>\n"
+            "  <Projection>%s</Projection>\n"
+            "  <BlockSizeX>%d</BlockSizeX>\n"
+            "  <BlockSizeY>%d</BlockSizeY>\n"
+            "  <BandsCount>%d</BandsCount>\n"
+            "</GDAL_WMS>\n",
             osURL.c_str(),
             pszTileFormat,
             pszMinX, pszMaxY, pszMaxX, pszMinY,
@@ -278,6 +311,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
             nTileCountX, nTileCountY,
             pszSRS,
             nTileWidth, nTileHeight, 3);
+    CPLDebug("WMS", "Opening TMS :\n%s", osXML.c_str());
 
     return CPLParseXMLString(osXML);
 }
