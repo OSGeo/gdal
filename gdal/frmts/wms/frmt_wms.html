@@ -118,10 +118,6 @@
 			<td class="xml">        &lt;TileLevel&gt;<span class="value">0</span>&lt;/TileLevel&gt;</td>
 			<td class="desc">Tile level at highest resolution. (tiled image sources only, optional, defaults to 0)</td>
 		</tr>
-        <tr>
-            <td class="xml">        &lt;TileLevelMin&gt;<span class="value">0</span>&lt;/TileLevelMin&gt;</td>
-            <td class="desc">Tile level at minimum resolution. (tiled image sources only, optional, defaults to 0, GDAL >= 1.9.0)</td>
-        </tr>
 		<tr>
 			<td class="xml">        &lt;TileCountX&gt;<span class="value">0</span>&lt;/TileCountX&gt;</td>
 			<td class="desc">Can be used to define image size, SizeX = TileCountX * BlockSizeX * 2<sup>TileLevel</sup>. (tiled image sources only, optional, defaults to 0)</td>
@@ -309,8 +305,9 @@ Access to web-based Virtual Earth tile services. Access is always tile based.<p>
 <li>UpperLeftY = 20037508.34</li>
 <li>LowerRightX = 20037508.34</li>
 <li>LowerRightY = -20037508.34</li>
-<li>TileLevelMin = 1</li>
-<li>TileLevel = 19</li>
+<li>TileCountX = 2</li>
+<li>TileCountY = 2</li>
+<li>TileLevel = 18</li>
 <li>SRS = EPSG:900913</li>
 <li>BlockSizeX = 256</li>
 <li>BlockSizeY = 256</li>
