@@ -62,8 +62,8 @@ CPLErr GDALWMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config)
 
     m_parent_dataset->WMSSetDefaultBlockSize(256, 256);
     m_parent_dataset->WMSSetDefaultDataWindowCoordinates(-20037508.34,20037508.34,20037508.34,-20037508.34);
-    m_parent_dataset->WMSSetDefaultTileLevelMin(1);
-    m_parent_dataset->WMSSetDefaultTileLevel(19);
+    m_parent_dataset->WMSSetDefaultTileCount(2, 2);
+    m_parent_dataset->WMSSetDefaultTileLevel(18);
     m_parent_dataset->WMSSetNeedsDataWindow(FALSE);
 
     m_projection_wkt=ProjToWKT("EPSG:900913");
@@ -90,22 +90,23 @@ void GDALWMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
     char szTileNumber[64];
     int x = tiri.m_x;
     int y = tiri.m_y;
+    int z = MIN(32,tiri.m_level) + 1; /* + 1 since the first level starts at 1 for V.E. */
 
-    for(int i = 0; i < MIN(32,tiri.m_level); i ++)
+    for(int i = 0; i < z; i ++)
     {
         int row = (y & 1);
         int col = (x & 1);
 
-        szTileNumber[tiri.m_level-1-i] = '0' + (col | (row << 1));
+        szTileNumber[z-1-i] = '0' + (col | (row << 1));
 
         x = x >> 1;
         y = y >> 1;
     }
-    szTileNumber[tiri.m_level] = 0;
+    szTileNumber[z] = 0;
 
     URLSearchAndReplace(url, "${quadkey}", "%s", szTileNumber);
     URLSearchAndReplace(url, "${server_num}", "%d",
-                        (tiri.m_x + tiri.m_y + tiri.m_level) % 4);
+                        (tiri.m_x + tiri.m_y + z) % 4);
 }
 
 const char *GDALWMSMiniDriver_VirtualEarth::GetProjectionInWKT() {
