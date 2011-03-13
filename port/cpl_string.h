@@ -132,6 +132,9 @@ char CPL_DLL *CPLUnescapeString( const char *pszString, int *pnLength,
 char CPL_DLL *CPLBinaryToHex( int nBytes, const GByte *pabyData );
 GByte CPL_DLL *CPLHexToBinary( const char *pszHex, int *pnBytes );
 
+char CPL_DLL *CPLBase64Encode( int nBytes, const GByte *pabyData );
+int CPL_DLL CPLBase64DecodeInPlace(GByte* pszBase64);
+
 typedef enum
 {
     CPL_VALUE_STRING,
