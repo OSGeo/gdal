@@ -243,6 +243,70 @@ void NITFDataset::FlushCache()
 }
 
 /************************************************************************/
+/*                           ExtractEsriMD()                            */
+/*                                                                      */
+/*      Extracts ESRI-specific required meta data from metadata         */
+/*      string list papszStrList.                                       */
+/************************************************************************/
+
+#ifdef ESRI_BUILD
+
+static char **ExtractEsriMD( char **papszMD )
+{
+    char **papszEsriMD = NULL;
+
+    if( papszMD )
+    {
+        // These are the current generic ESRI metadata.
+
+        const char *const pEsriMDAngleToNorth = "ESRI_MD_ANGLE_TO_NORTH";
+        const char *const pEsriMDCloudCover   = "ESRI_MD_ISCLOUDCOVER";    
+        const char *const pEsriMDSunAzimuth   = "ESRI_MD_SUN_AZIMUTH";
+        const char *const pEsriMDSunElevation = "ESRI_MD_SUN_ELEVATION";
+    
+        char         szField[11];
+        const char  *pCCImageSegment = CSLFetchNameValue( papszMD, "NITF_IID1" );
+        std::string  ccSegment("false");
+
+        if( ( pCCImageSegment != NULL ) && ( strlen(pCCImageSegment) <= 10 ) )
+        {
+            szField[0] = '\0';
+            strncpy( szField, pCCImageSegment, strlen(pCCImageSegment) );
+            szField[strlen(pCCImageSegment)] = '\0';
+
+            // trim white off tag. 
+            while( ( strlen(szField) > 0 ) && ( szField[strlen(szField)-1] == ' ' ) )
+                szField[strlen(szField)-1] = '\0';
+
+            if ((strlen(szField) == 2) && (EQUALN(szField, "CC", 2))) ccSegment.assign("true");
+        }
+   
+        const char *pAngleToNorth = CSLFetchNameValue( papszMD, "NITF_CSEXRA_ANGLE_TO_NORTH" );
+        const char *pSunAzimuth   = CSLFetchNameValue( papszMD, "NITF_CSEXRA_SUN_AZIMUTH" );
+        const char *pSunElevation = CSLFetchNameValue( papszMD, "NITF_CSEXRA_SUN_ELEVATION" );
+
+        if( pAngleToNorth == NULL )
+            pAngleToNorth = CSLFetchNameValue( papszMD, "NITF_USE00A_ANGLE_TO_NORTH" );
+
+        if( pSunAzimuth == NULL )
+            pSunAzimuth = CSLFetchNameValue( papszMD, "NITF_USE00A_SUN_AZ" );
+
+        if( pSunElevation == NULL )
+            pSunElevation = CSLFetchNameValue( papszMD, "NITF_USE00A_SUN_EL" );
+    
+        // CSLAddNameValue will not add the key/value pair if the value is NULL.
+
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDAngleToNorth, pAngleToNorth );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDCloudCover,   ccSegment.c_str() );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDSunAzimuth,   pSunAzimuth );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDSunElevation, pSunElevation );
+    }
+
+    return (papszEsriMD);
+}
+#endif /* def ESRI_BUILD */
+
+/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -1116,6 +1180,18 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
         }
     }
         
+#ifdef ESRI_BUILD
+    // Extract ESRI generic metadata.
+    char **papszESRI_MD = ExtractEsriMD( papszMergedMD );
+    if( papszESRI_MD != NULL )
+    {
+        papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                          CSLCount( papszESRI_MD ),
+                                          papszESRI_MD );
+        CSLDestroy( papszESRI_MD );
+    }
+#endif
+
     poDS->SetMetadata( papszMergedMD );
     CSLDestroy( papszMergedMD );
 
@@ -1894,6 +1970,122 @@ CPLErr NITFDataset::SetProjection(const char* _pszProjection)
 }
 
 /************************************************************************/
+/*                       InitializeNITFMetadata()                        */
+/************************************************************************/
+
+void NITFDataset::InitializeNITFMetadata()
+
+{
+    static const char *pszDomainName            = "NITF_METADATA";
+    static const char *pszTagNITFFileHeader     = "NITFFileHeader";
+    static const char *pszTagNITFImageSubheader = "NITFImageSubheader";
+
+    if( oSpecialMD.GetMetadata( pszDomainName ) != NULL )
+        return;
+
+    // nHeaderLenOffset is the number of bytes to skip from the beginning of the NITF file header
+    // in order to get to the field HL (NITF file header length).
+
+    int nHeaderLen       = 0;
+    int nHeaderLenOffset = 0;
+
+    // Get the NITF file header length.
+
+    if( psFile->pachHeader != NULL )
+    {
+        if ( (strncmp(psFile->pachHeader, "NITF02.10", 9) == 0) || (strncmp(psFile->pachHeader, "NSIF01.00", 9) == 0) )
+            nHeaderLenOffset = 354;
+        else if ( (strncmp(psFile->pachHeader, "NITF01.10", 9) == 0) || (strncmp(psFile->pachHeader, "NITF02.00", 9) == 0) )
+            nHeaderLenOffset = ( strncmp((psFile->pachHeader+280), "999998", 6 ) == 0 ) ? 394 : 354;
+    }
+
+    char fieldHL[7];
+
+    if( nHeaderLenOffset > 0 )
+    {
+        char *pszFieldHL = psFile->pachHeader + nHeaderLenOffset;
+
+        memcpy(fieldHL, pszFieldHL, 6);
+        fieldHL[6] = '\0';
+        nHeaderLen = atoi(fieldHL);
+    }
+
+    if( nHeaderLen <= 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Zero length NITF file header!");
+        return;
+    }
+
+    char *encodedHeader = CPLBase64Encode(nHeaderLen, 
+                                          (GByte*)psFile->pachHeader);
+
+    if (encodedHeader == NULL || strlen(encodedHeader) == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, 
+                 "Failed to encode NITF file header!");
+        return;
+    }
+
+    // The length of the NITF file header plus a space is append to the beginning of the encoded string so
+    // that we can recover the length of the NITF file header when we decode it without having to pull it
+    // out the HL field again.
+
+    std::string nitfFileheaderStr(fieldHL);
+    nitfFileheaderStr.append(" ");
+    nitfFileheaderStr.append(encodedHeader);
+
+    CPLFree( encodedHeader );
+
+    oSpecialMD.SetMetadataItem( pszTagNITFFileHeader, nitfFileheaderStr.c_str(), pszDomainName );
+
+    // Get the image subheader length.
+
+    int nImageSubheaderLen = 0;
+    
+    for( int i = 0; i < psFile->nSegmentCount; ++i )
+    {
+        if (strncmp(psFile->pasSegmentInfo[i].szSegmentType, "IM", 2) == 0)
+        {
+            nImageSubheaderLen = psFile->pasSegmentInfo[i].nSegmentHeaderSize;
+            break;
+        }
+    }
+
+    if( nImageSubheaderLen < 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid length NITF image subheader!");
+        return;
+    }
+
+    if( nImageSubheaderLen > 0 )
+    {
+        char *encodedImageSubheader = CPLBase64Encode(nImageSubheaderLen,(GByte*) psImage->pachHeader);
+    
+        if( encodedImageSubheader == NULL || strlen(encodedImageSubheader) ==0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, 
+                     "Failed to encode image subheader!");
+            return;
+        }
+
+        // The length of the image subheader plus a space is append to the beginning of the encoded string so
+        // that we can recover the actual length of the image subheader when we decode it.
+      
+        char buffer[20];
+
+        sprintf(buffer, "%d", nImageSubheaderLen);
+
+        std::string imageSubheaderStr(buffer);
+        imageSubheaderStr.append(" ");
+        imageSubheaderStr.append(encodedImageSubheader);
+
+        CPLFree( encodedImageSubheader );
+
+        oSpecialMD.SetMetadataItem( pszTagNITFImageSubheader, imageSubheaderStr.c_str(), pszDomainName );
+    }
+}
+
+/************************************************************************/
 /*                       InitializeCGMMetadata()                        */
 /************************************************************************/
 
@@ -2233,6 +2425,12 @@ void NITFDataset::InitializeTREMetadata()
 char **NITFDataset::GetMetadata( const char * pszDomain )
 
 {
+    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_METADATA") )
+    {
+        InitializeNITFMetadata();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
+
     if( pszDomain != NULL && EQUAL(pszDomain,"CGM") )
     {
         InitializeCGMMetadata();
@@ -2262,6 +2460,12 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
                                          const char * pszDomain )
 
 {
+    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_METADATA") )
+    {
+        InitializeNITFMetadata();
+        return oSpecialMD.GetMetadataItem( pszName, pszDomain );
+    }
+
     if( pszDomain != NULL && EQUAL(pszDomain,"CGM") )
     {
         InitializeCGMMetadata();
