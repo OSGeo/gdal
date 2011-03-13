@@ -31,7 +31,6 @@
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
-#include "cpl_base64.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
