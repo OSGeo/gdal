@@ -222,6 +222,7 @@ public:
     void WMSSetDefaultTileLevel(int tlevel);
     void WMSSetDefaultTileCount(int tilecountx, int tilecounty);
     void WMSSetDefaultBlockSize(int x, int y);
+    void WMSSetDefaultOverviewCount(int overview_count);
     void WMSSetNeedsDataWindow(int flag);
 
     static GDALDataset* Open(GDALOpenInfo *poOpenInfo);
@@ -252,6 +253,7 @@ protected:
     GDALWMSDataWindow m_default_data_window;
     int m_default_block_size_x, m_default_block_size_y;
     int m_default_tile_count_x, m_default_tile_count_y;
+    int m_default_overview_count;
 
     int m_bNeedsDataWindow;
 };
