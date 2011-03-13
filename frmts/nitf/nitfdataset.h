@@ -82,6 +82,7 @@ class NITFDataset : public GDALPamDataset
 
     GDALMultiDomainMetadata oSpecialMD;
 
+    void         InitializeNITFMetadata();
     void         InitializeCGMMetadata();
     void         InitializeTextMetadata();
     void         InitializeTREMetadata();

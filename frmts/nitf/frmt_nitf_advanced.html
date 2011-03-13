@@ -149,6 +149,22 @@ Metadata (TRE):
   MAPLOB=M  0598005958-000003067885.8-000002163353.8
 </pre>
 
+<h2>Raw File / Image Headers</h2>
+
+In some cases application may need to recover very specific information
+from the image or file headers that isn't normally available as metadata.
+In this case it is possible to query the "NITF_METADATA" metadata domain.  
+The complete file and image headers will be returned as metadata in base64 
+encoded format.  Something like:<p>
+
+<pre>
+Metadata (NITF_METADATA):
+  NITFFileHeader=002213 TklURjAyLjAwMDEgICAgVTIxN0cwSjA...
+  NITFImageSubheader=439 SU1NaXNzaW5nIElEMjUxNTI1NTlaTU...
+</pre>
+
+Note that the ascii encoded numeric values prefixing the base64 encoded
+header is the length (decoded) in bytes, followed by one space.  <p>
 
 </body>
 </html>
