@@ -2693,7 +2693,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             case H4ST_EOS_SWATH:
             case H4ST_EOS_SWATH_GEOL:
             {
-                int32   hSW, nStrBufSize;
+                int32   hSW;
                 char    *pszDimList = NULL;
 
                 if( poOpenInfo->eAccess == GA_ReadOnly )
@@ -2721,10 +2721,28 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Decode the dimension map.                                       */
 /* -------------------------------------------------------------------- */
-                SWnentries( hSW, HDFE_NENTDIM, &nStrBufSize );
+                int32   nStrBufSize = 0;
+
+                if ( SWnentries( hSW, HDFE_NENTDIM, &nStrBufSize ) < 0
+                     || nStrBufSize <= 0 )
+                {
+                    CPLDebug( "HDF4Image",
+                              "Can't read a number of dimension maps." );
+                    delete poDS;
+                    return NULL;
+                }
+
                 pszDimList = (char *)CPLMalloc( nStrBufSize + 1 );
-                SWfieldinfo( hSW, poDS->pszFieldName, &poDS->iRank,
-                             poDS->aiDimSizes, &poDS->iNumType, pszDimList );
+                if ( SWfieldinfo( hSW, poDS->pszFieldName, &poDS->iRank,
+                                  poDS->aiDimSizes, &poDS->iNumType,
+                                  pszDimList ) < 0 )
+                {
+                    CPLDebug( "HDF4Image", "Can't read dimension maps." );
+                    CPLFree( pszDimList );
+                    delete poDS;
+                    return NULL;
+                }
+                pszDimList[nStrBufSize] = '\0';
 #ifdef DEBUG
                 CPLDebug( "HDF4Image",
                           "List of dimensions in swath \"%s\": %s",
