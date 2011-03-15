@@ -62,7 +62,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "cpl_base64.h"
 
 CPL_CVSID("$Id$");
 
