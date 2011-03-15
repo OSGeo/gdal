@@ -26,6 +26,9 @@
   #undef WORDS_BIGENDIAN
 #endif
 
+#undef VSI_STAT64
+#undef VSI_STAT64_T
+
 #define VSI_STAT64 stat
 #define VSI_STAT64_T stat
 
