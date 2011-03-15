@@ -50,6 +50,9 @@
 
 CPL_CVSID("$Id$");
 
+/* Should theortically be a TLS variable, but it isn't worth the effort */
+static int bIgnoreDecodeError = FALSE;
+
 /************************************************************************/
 /* ==================================================================== */
 /*                                GDALOverviewDS                        */
@@ -791,11 +794,18 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( TIFFReadEncodedStrip( poGDS->hTIFF, nBlockId, pImage,
                                       nBlockReqSize ) == -1 )
             {
-                memset( pImage, 0, nBlockBufSize );
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "TIFFReadEncodedStrip() failed.\n" );
-                
-                eErr = CE_Failure;
+                if (bIgnoreDecodeError)
+                {
+                    bIgnoreDecodeError = FALSE;
+                }
+                else
+                {
+                    memset( pImage, 0, nBlockBufSize );
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                            "TIFFReadEncodedStrip() failed.\n" );
+
+                    eErr = CE_Failure;
+                }
             }
         }
 
@@ -8654,7 +8664,36 @@ GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
     char *pszModFmt;
 
     pszModFmt = PrepareTIFFErrorFormat( module, fmt );
-    CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
+    if( strstr(pszModFmt, "PackBitsDecode:Not enough data for scanline") != NULL )
+    {
+        if (CSLTestBoolean(CPLGetConfigOption(
+                            "GTIFF_SKIP_PACKBITS_DECODE_ERROR", "NO")))
+        {
+            CPLErrorV( CE_Warning, CPLE_AppDefined, pszModFmt, ap );
+            bIgnoreDecodeError = TRUE;
+        }
+        else
+        {
+            static int bHasWarned = FALSE;
+            if (!bHasWarned)
+            {
+                bHasWarned = TRUE;
+                char* pszNewFmt = CPLStrdup(CPLSPrintf(
+                    "%s\nYou can try to recover from this error by setting the "
+                    "GTIFF_SKIP_PACKBITS_DECODE_ERROR configuration option "
+                    "to TRUE, but this error is a sign that some tiles/strips "
+                    "will be read corrupted.", pszModFmt));
+                CPLErrorV(CE_Failure, CPLE_AppDefined, pszNewFmt, ap);
+                CPLFree(pszNewFmt);
+            }
+            else
+                CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
+        }
+    }
+    else
+    {
+        CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
+    }
     CPLFree( pszModFmt );
 }
 
