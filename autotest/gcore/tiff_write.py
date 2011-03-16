@@ -609,6 +609,17 @@ def tiff_write_17():
     return 'success'
 
 ###############################################################################
+# Test that above test still work with the optimization in the GDAL_DISABLE_READDIR_ON_OPEN
+# case (#3996)
+
+def tiff_write_17_disable_readdir():
+    oldval = gdal.GetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN')
+    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'TRUE')
+    ret = tiff_write_17()
+    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', oldval)
+    return ret
+
+###############################################################################
 # Test writing a TIFF with an RPB file and IMD file.
 
 def tiff_write_18():
@@ -654,6 +665,16 @@ def tiff_write_18():
 
     ds = None
 
+    # Test differed loading with GetMetadataItem()
+    ds = gdal.Open( 'tmp/tw_18.tif' )
+    if ds.GetMetadataItem('LINE_OFF', 'RPC') != '16201':
+        gdaltest.post_reason("wrong value for GetMetadataItem('LINE_OFF', 'RPC')")
+        return 'fail'
+    if ds.GetMetadataItem('version', 'IMD') != '"R"':
+        gdaltest.post_reason("wrong value for GetMetadataItem('version', 'IMD')")
+        return 'fail'
+    ds = None
+
     gdaltest.tiff_drv.Delete( 'tmp/tw_18.tif' )
 
     # Confirm IMD and RPC files are cleaned up.  If not likely the
@@ -673,6 +694,17 @@ def tiff_write_18():
         pass
     
     return 'success'
+
+###############################################################################
+# Test that above test still work with the optimization in the GDAL_DISABLE_READDIR_ON_OPEN
+# case (#3996)
+
+def tiff_write_18_disable_readdir():
+    oldval = gdal.GetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN')
+    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'TRUE')
+    ret = tiff_write_18()
+    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', oldval)
+    return ret
 
 ###############################################################################
 # Test the write of a pixel-interleaved image with NBITS = 7
@@ -4092,7 +4124,9 @@ gdaltest_list = [
     tiff_write_15,
     tiff_write_16,
     tiff_write_17,
+    tiff_write_17_disable_readdir,
     tiff_write_18,
+    tiff_write_18_disable_readdir,
     tiff_write_19,
     tiff_write_20,
     tiff_write_21,

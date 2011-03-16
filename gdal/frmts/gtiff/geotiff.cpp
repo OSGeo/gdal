@@ -331,6 +331,11 @@ class GTiffDataset : public GDALPamDataset
     int           FindRPCFile(char** papszSiblingFiles);
     CPLString     osIMDFile;
     int           FindIMDFile(char** papszSiblingFiles);
+    int           bSiblingFilesAreNull; /* set to true if no sibling file list is provided to Open() */
+    int           bHasSearchedRPC;
+    void          LoadRPCRPB();
+    int           bHasSearchedIMD;
+    void          LoadIMD();
 
     int           bHasWarnedDisableAggressiveBandCaching;
 
@@ -2805,6 +2810,10 @@ GTiffDataset::GTiffDataset()
 
     bIsFinalized = FALSE;
     bIgnoreReadErrors = CSLTestBoolean(CPLGetConfigOption("GTIFF_IGNORE_READ_ERRORS", "NO"));
+
+    bSiblingFilesAreNull = FALSE;
+    bHasSearchedRPC = FALSE;
+    bHasSearchedIMD = FALSE;
 }
 
 /************************************************************************/
@@ -5572,6 +5581,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
     this->eAccess = eAccess;
 
+    bSiblingFilesAreNull = (papszSiblingFiles == NULL);
+
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
@@ -6228,41 +6239,16 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     bMetadataChanged = FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Check for RPC metadata in an RPB or _rpc.txt file.              */
+/*      If we have a sibling file list, try to detect the presence      */
+/*      of RPB/RPC/IMD files, but don't load them for now. Just memorize*/
+/*      the filenames. If the sibling file list is not provided, the    */
+/*      look-up will be done only when they are needed                  */
 /* -------------------------------------------------------------------- */
-    if( bBaseIn )
+    if( bBaseIn && papszSiblingFiles != NULL)
     {
-        char **papszRPCMD = NULL;
-        /* Read Digital Globe .RPB file */
-        if (FindRPBFile(papszSiblingFiles))
-            papszRPCMD = GDALLoadRPBFile( osRPBFile.c_str(), NULL );
-        /* Read GeoEye _rpc.txt file */
-        if(papszRPCMD == NULL && FindRPCFile(papszSiblingFiles))
-            papszRPCMD = GDALLoadRPCFile( osRPCFile.c_str(), NULL );
-
-        if( papszRPCMD != NULL )
-        {
-            oGTiffMDMD.SetMetadata( papszRPCMD, "RPC" );
-            CSLDestroy( papszRPCMD );
-            bMetadataChanged = FALSE;
-        }
-        else
-            ReadRPCTag();
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Check for RPC metadata in an RPB file.                          */
-/* -------------------------------------------------------------------- */
-    if( bBaseIn && FindIMDFile(papszSiblingFiles) )
-    {
-        char **papszIMDMD = GDALLoadIMDFile( osIMDFile.c_str(), NULL );
-
-        if( papszIMDMD != NULL )
-        {
-            oGTiffMDMD.SetMetadata( papszIMDMD, "IMD" );
-            CSLDestroy( papszIMDMD );
-            bMetadataChanged = FALSE;
-        }
+        FindRPBFile(papszSiblingFiles);
+        FindRPCFile(papszSiblingFiles);
+        FindIMDFile(papszSiblingFiles);
     }
 
 /* -------------------------------------------------------------------- */
@@ -8252,6 +8238,12 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
     if( pszDomain != NULL && EQUAL(pszDomain,"ProxyOverviewRequest") )
         return GDALPamDataset::GetMetadata( pszDomain );
 
+    else if( pszDomain != NULL && EQUAL(pszDomain,"RPC") )
+        LoadRPCRPB();
+
+    else if( pszDomain != NULL && EQUAL(pszDomain,"IMD") )
+        LoadIMD();
+
     /* FIXME ? Should we call LookForProjection() to load GDALMD_AREA_OR_POINT ? */
     /* This can impact performances */
 
@@ -8296,7 +8288,13 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
     if( pszDomain != NULL && EQUAL(pszDomain,"ProxyOverviewRequest") )
         return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
 
-    if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+    else if( pszDomain != NULL && EQUAL(pszDomain,"RPC") )
+        LoadRPCRPB();
+
+    else if( pszDomain != NULL && EQUAL(pszDomain,"IMD") )
+        LoadIMD();
+
+    else if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL && EQUAL(pszName, GDALMD_AREA_OR_POINT) )
     {
         LookForProjection();
@@ -8462,6 +8460,59 @@ int GTiffDataset::FindIMDFile(char** papszSiblingFiles)
 }
 
 /************************************************************************/
+/*                            LoadRPCRPB()                              */
+/************************************************************************/
+
+void GTiffDataset::LoadRPCRPB()
+{
+    if (bHasSearchedRPC)
+        return;
+
+    bHasSearchedRPC = TRUE;
+
+    char **papszRPCMD = NULL;
+    /* Read Digital Globe .RPB file */
+    if (osRPBFile.size() != 0 || (bSiblingFilesAreNull && FindRPBFile(NULL)))
+        papszRPCMD = GDALLoadRPBFile( osRPBFile.c_str(), NULL );
+
+    /* Read GeoEye _rpc.txt file */
+    if(papszRPCMD == NULL &&
+        (osRPCFile.size() != 0 || (bSiblingFilesAreNull && FindRPCFile(NULL))))
+        papszRPCMD = GDALLoadRPCFile( osRPCFile.c_str(), NULL );
+
+    if( papszRPCMD != NULL )
+    {
+        oGTiffMDMD.SetMetadata( papszRPCMD, "RPC" );
+        CSLDestroy( papszRPCMD );
+    }
+    else
+        ReadRPCTag();
+}
+
+/************************************************************************/
+/*                              LoadIMD()                               */
+/************************************************************************/
+
+void GTiffDataset::LoadIMD()
+{
+    if (bHasSearchedIMD)
+        return;
+
+    bHasSearchedIMD = TRUE;
+
+    if (osIMDFile.size() != 0 || (bSiblingFilesAreNull && FindIMDFile(NULL)))
+    {
+        char **papszIMDMD = GDALLoadIMDFile( osIMDFile.c_str(), NULL );
+
+        if( papszIMDMD != NULL )
+        {
+            oGTiffMDMD.SetMetadata( papszIMDMD, "IMD" );
+            CSLDestroy( papszIMDMD );
+        }
+    }
+}
+
+/************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
 
@@ -8469,6 +8520,14 @@ char **GTiffDataset::GetFileList()
 
 {
     char **papszFileList = GDALPamDataset::GetFileList();
+
+    /* If GDAL_DISABLE_READDIR_ON_OPEN has been set, we potentially haven't */
+    /* looked for the presence of RPC/RPB/IMD files, so we have to do it now */
+    if (bSiblingFilesAreNull)
+    {
+        LoadRPCRPB();
+        LoadIMD();
+    }
 
     if (osIMDFile.size() != 0)
         papszFileList = CSLAddString( papszFileList, osIMDFile );
