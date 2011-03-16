@@ -673,6 +673,37 @@ def tiff_read_tag_without_null_byte():
 
     return 'success'
 
+
+###############################################################################
+# Test the effect of the GTIFF_IGNORE_READ_ERRORS configuration option (#3994)
+
+def tiff_read_buggy_packbits():
+
+    old_val = gdal.GetConfigOption('GTIFF_IGNORE_READ_ERRORS')
+    gdal.SetConfigOption('GTIFF_IGNORE_READ_ERRORS', None)
+    ds = gdal.Open('data/byte_buggy_packbits.tif')
+    gdal.SetConfigOption('GTIFF_IGNORE_READ_ERRORS', old_val)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = ds.ReadRaster(0,0,20,20)
+    gdal.PopErrorHandler()
+    if ret is not None:
+        gdaltest.post_reason('did not expected a valid result')
+        return 'fail'
+    ds = None
+
+    gdal.SetConfigOption('GTIFF_IGNORE_READ_ERRORS', 'YES')
+    ds = gdal.Open('data/byte_buggy_packbits.tif')
+    gdal.SetConfigOption('GTIFF_IGNORE_READ_ERRORS', old_val)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = ds.ReadRaster(0,0,20,20)
+    gdal.PopErrorHandler()
+    if ret is None:
+        gdaltest.post_reason('expected a valid result')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
@@ -733,6 +764,7 @@ gdaltest_list.append( (tiff_read_pixelispoint) )
 gdaltest_list.append( (tiff_read_geomatrix) )
 gdaltest_list.append( (tiff_read_corrupted_gtiff) )
 gdaltest_list.append( (tiff_read_tag_without_null_byte) )
+gdaltest_list.append( (tiff_read_buggy_packbits) )
 gdaltest_list.append( (tiff_read_online_1) )
 
 if __name__ == '__main__':
