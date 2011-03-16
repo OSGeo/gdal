@@ -50,9 +50,6 @@
 
 CPL_CVSID("$Id$");
 
-/* Should theortically be a TLS variable, but it isn't worth the effort */
-static int bIgnoreDecodeError = FALSE;
-
 /************************************************************************/
 /* ==================================================================== */
 /*                                GDALOverviewDS                        */
@@ -354,6 +351,8 @@ class GTiffDataset : public GDALPamDataset
 
     int           bIsFinalized;
     int           Finalize();
+
+    int           bIgnoreReadErrors;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -780,7 +779,8 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( TIFFIsTiled( poGDS->hTIFF ) )
         {
             if( TIFFReadEncodedTile( poGDS->hTIFF, nBlockId, pImage,
-                                     nBlockReqSize ) == -1 )
+                                     nBlockReqSize ) == -1
+                && !poGDS->bIgnoreReadErrors )
             {
                 memset( pImage, 0, nBlockBufSize );
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -792,20 +792,14 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             if( TIFFReadEncodedStrip( poGDS->hTIFF, nBlockId, pImage,
-                                      nBlockReqSize ) == -1 )
+                                      nBlockReqSize ) == -1
+                && !poGDS->bIgnoreReadErrors )
             {
-                if (bIgnoreDecodeError)
-                {
-                    bIgnoreDecodeError = FALSE;
-                }
-                else
-                {
-                    memset( pImage, 0, nBlockBufSize );
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                            "TIFFReadEncodedStrip() failed.\n" );
+                memset( pImage, 0, nBlockBufSize );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "TIFFReadEncodedStrip() failed.\n" );
 
-                    eErr = CE_Failure;
-                }
+                eErr = CE_Failure;
             }
         }
 
@@ -1724,7 +1718,8 @@ CPLErr GTiffSplitBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( TIFFReadScanline( poGDS->hTIFF,
                               poGDS->pabyBlockBuf ? poGDS->pabyBlockBuf : pImage,
                               ++poGDS->nLastLineRead,
-                              (poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) ? (uint16) (nBand-1) : 0 ) == -1 )
+                              (poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) ? (uint16) (nBand-1) : 0 ) == -1
+            && !poGDS->bIgnoreReadErrors )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TIFFReadScanline() failed." );
@@ -1848,7 +1843,8 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( TIFFReadRGBATile(poGDS->hTIFF, 
                                  nBlockXOff * nBlockXSize, 
                                  nBlockYOff * nBlockYSize,
-                                 (uint32 *) poGDS->pabyBlockBuf) == -1 )
+                                 (uint32 *) poGDS->pabyBlockBuf) == -1
+                && !poGDS->bIgnoreReadErrors )
             {
                 /* Once TIFFError() is properly hooked, this can go away */
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -1863,7 +1859,8 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             if( TIFFReadRGBAStrip(poGDS->hTIFF, 
                                   nBlockId * nBlockYSize,
-                                  (uint32 *) poGDS->pabyBlockBuf) == -1 )
+                                  (uint32 *) poGDS->pabyBlockBuf) == -1
+                && !poGDS->bIgnoreReadErrors )
             {
                 /* Once TIFFError() is properly hooked, this can go away */
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -2688,7 +2685,8 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     while( poGDS->nLastLineRead < nBlockYOff )
     {
-        if( TIFFReadScanline( poGDS->hTIFF, poGDS->pabyBlockBuf, ++poGDS->nLastLineRead, 0 ) == -1 )
+        if( TIFFReadScanline( poGDS->hTIFF, poGDS->pabyBlockBuf, ++poGDS->nLastLineRead, 0 ) == -1
+            && !poGDS->bIgnoreReadErrors )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TIFFReadScanline() failed." );
@@ -2806,6 +2804,7 @@ GTiffDataset::GTiffDataset()
     bDebugDontWriteBlocks = CSLTestBoolean(CPLGetConfigOption("GTIFF_DONT_WRITE_BLOCKS", "NO"));
 
     bIsFinalized = FALSE;
+    bIgnoreReadErrors = CSLTestBoolean(CPLGetConfigOption("GTIFF_IGNORE_READ_ERRORS", "NO"));
 }
 
 /************************************************************************/
@@ -3258,7 +3257,8 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, int bReadFromDisk )
     if( TIFFIsTiled( hTIFF ) )
     {
         if( TIFFReadEncodedTile(hTIFF, nBlockId, pabyBlockBuf,
-                                nBlockReqSize) == -1 )
+                                nBlockReqSize) == -1
+            && !bIgnoreReadErrors )
         {
             /* Once TIFFError() is properly hooked, this can go away */
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -3272,7 +3272,8 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, int bReadFromDisk )
     else
     {
         if( TIFFReadEncodedStrip(hTIFF, nBlockId, pabyBlockBuf,
-                                 nBlockReqSize) == -1 )
+                                 nBlockReqSize) == -1
+            && !bIgnoreReadErrors )
         {
             /* Once TIFFError() is properly hooked, this can go away */
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -8664,36 +8665,7 @@ GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
     char *pszModFmt;
 
     pszModFmt = PrepareTIFFErrorFormat( module, fmt );
-    if( strstr(pszModFmt, "PackBitsDecode:Not enough data for scanline") != NULL )
-    {
-        if (CSLTestBoolean(CPLGetConfigOption(
-                            "GTIFF_SKIP_PACKBITS_DECODE_ERROR", "NO")))
-        {
-            CPLErrorV( CE_Warning, CPLE_AppDefined, pszModFmt, ap );
-            bIgnoreDecodeError = TRUE;
-        }
-        else
-        {
-            static int bHasWarned = FALSE;
-            if (!bHasWarned)
-            {
-                bHasWarned = TRUE;
-                char* pszNewFmt = CPLStrdup(CPLSPrintf(
-                    "%s\nYou can try to recover from this error by setting the "
-                    "GTIFF_SKIP_PACKBITS_DECODE_ERROR configuration option "
-                    "to TRUE, but this error is a sign that some tiles/strips "
-                    "will be read corrupted.", pszModFmt));
-                CPLErrorV(CE_Failure, CPLE_AppDefined, pszNewFmt, ap);
-                CPLFree(pszNewFmt);
-            }
-            else
-                CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
-        }
-    }
-    else
-    {
-        CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
-    }
+    CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
     CPLFree( pszModFmt );
 }
 
