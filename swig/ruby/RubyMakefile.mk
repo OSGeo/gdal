@@ -18,13 +18,21 @@ RUBY = ruby
 include $(GDAL_ROOT)/GDALmake.opt
 
 RUBY_MODULES = gdal.so ogr.so gdalconst.so osr.so
-RUBY_INCLUDE_DIR := $(shell ruby -rrbconfig -e "puts Config::CONFIG['archdir']")
+RUBY_INCLUDE_DIR := $(shell ruby -rrbconfig -e "puts Config::CONFIG['rubyhdrdir'] || Config::CONFIG['archdir']")
+RUBY_ARCH_INCLUDE_DIR := $(shell ruby -rrbconfig -e "puts Config::CONFIG['rubyhdrdir'] + '/' + Config::CONFIG['arch'] unless Config::CONFIG['rubyhdrdir'].nil?")
 RUBY_LIB_DIR := $(shell ruby -rrbconfig -e "puts Config::CONFIG['libdir']")
 RUBY_SO_NAME := $(shell ruby -rrbconfig -e "puts Config::CONFIG['RUBY_SO_NAME']")
 RUBY_EXTENSIONS_DIR := $(shell ruby -rrbconfig -e "puts Config::CONFIG['sitearchdir']")
 INSTALL_DIR := $(RUBY_EXTENSIONS_DIR)/gdal
 
+ifeq ($(RUBY_ARCH_INCLUDE_DIR),)
+# For Ruby < 1.9
 RUBY_INCLUDE = -I$(RUBY_INCLUDE_DIR)
+else
+# For Ruby 1.9
+RUBY_INCLUDE = -I$(RUBY_INCLUDE_DIR) -I$(RUBY_ARCH_INCLUDE_DIR)
+endif
+
 LDFLAGS += -Xcompiler -shared -L$(RUBY_LIB_DIR)
 RUBY_LIB := -l$(RUBY_SO_NAME)
 
@@ -36,6 +44,7 @@ clean:
 	rm -f *.lo
 	
 veryclean: clean
+	rm -f *_wrap.cpp
 
 $(INSTALL_DIR):
 	mkdir -p $(DESTDIR)$(INSTALL_DIR)
