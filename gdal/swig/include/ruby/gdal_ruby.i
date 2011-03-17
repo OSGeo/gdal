@@ -36,7 +36,7 @@ static CPLXMLNode *RubyArrayToXMLTree(VALUE rubyArray)
     CPLXMLNode *psChild;
     char       *pszText = NULL;
 
-    nChildCount = RARRAY(rubyArray)->len - 2;
+    nChildCount = RARRAY_LEN(rubyArray) - 2;
     if( nChildCount < 0 )
     {
 		 rb_raise(rb_eRuntimeError, "Error in input XMLTree, child count is less than zero.");

@@ -147,7 +147,7 @@
   Check_Type($input, T_ARRAY);
 
   /* Get the length */
-  int seq_size = RARRAY($input)->len;
+  int seq_size = RARRAY_LEN($input);
   
   if ( seq_size != $dim0 ) {
     rb_raise(rb_eRangeError, "sequence must have length %i.", seq_size);
@@ -225,7 +225,7 @@
   Check_Type($input, T_ARRAY);
 
   /* Get the length */
-  $1 = RARRAY($input)->len;
+  $1 = RARRAY_LEN($input);
   
   /* Allocate space for the C array. */
   $2 = (int*) malloc($1*sizeof(int));
@@ -315,7 +315,7 @@
   /* Check if is a list */
   Check_Type($input, T_ARRAY);
 
-  $1 = RARRAY($input)->len;
+  $1 = RARRAY_LEN($input);
   tmpGCPList = (GDAL_GCP*) malloc($1*sizeof(GDAL_GCP));
   $2 = tmpGCPList;
 
@@ -386,7 +386,7 @@
   /* is the provided object an array or a hash? */
   if ( TYPE($input) == T_ARRAY) {
     /* get the size of the array */
-    int size = RARRAY($input)->len;
+    int size = RARRAY_LEN($input);
     
     for (int i = 0; i < size; i++) {
       /* get the ruby object */
@@ -489,7 +489,7 @@
   /* Check if is a list */
   Check_Type($input, T_ARRAY);
 
-  int size = RARRAY($input)->len;
+  int size = RARRAY_LEN($input);
   for (int i = 0; i < size; i++) {
     VALUE item = rb_ary_entry($input, i);
     char *pszItem = StringValuePtr(item);
