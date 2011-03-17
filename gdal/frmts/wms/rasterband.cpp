@@ -82,6 +82,12 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
         osUserAgentOptStr += m_parent_dataset->m_osUserAgent;
         http_request_opts = CSLAddString(http_request_opts, osUserAgentOptStr.c_str());
     }
+    if (m_parent_dataset->m_osReferer.size() != 0)
+    {
+        CPLString osRefererOptStr("REFERER=");
+        osRefererOptStr += m_parent_dataset->m_osReferer;
+        http_request_opts = CSLAddString(http_request_opts, osRefererOptStr.c_str());
+    }
     if (m_parent_dataset->m_unsafeSsl >= 1) {
         http_request_opts = CSLAddString(http_request_opts, "UNSAFESSL=1");
     }

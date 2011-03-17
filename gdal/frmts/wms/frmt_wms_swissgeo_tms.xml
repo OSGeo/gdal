@@ -1,0 +1,30 @@
+<GDAL_WMS>
+
+<!-- Caution : currently the georeferencing only works properly for the lowest-resolution level (base band).
+     Some overviews levels are not exactly at half resolution of the neighbouring overview level, and
+     the extent might also be slightly different... -->
+
+<!-- Data is subject to term of use detailed at http://www.geo.admin.ch/internet/geoportal/en/home/geoadmin/contact.html#copyright -->
+
+    <Service name="TMS">
+        <ServerUrl>http://tile8.geo.admin.ch/geoadmin/ch.swisstopo.pixelkarte-farbe/${z}/000/000/${03x}/000/000/${03y}.jpeg</ServerUrl>
+    </Service>
+    <DataWindow>
+        <UpperLeftX>420000</UpperLeftX>
+        <UpperLeftY>357680</UpperLeftY>
+        <LowerRightX>911520</LowerRightX>
+        <LowerRightY>30000</LowerRightY>
+        <SizeX>196608</SizeX>
+        <SizeY>131072</SizeY>
+        <TileLevel>22</TileLevel>
+        <YOrigin>bottom</YOrigin>
+    </DataWindow>
+    <Projection>+proj=somerc +lat_0=46.952405555556 +lon_0=7.4395833333333 +ellps=bessel +x_0=600000 +y_0=200000 +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs</Projection>
+    <OverviewCount>8</OverviewCount>
+    <BlockSizeX>256</BlockSizeX>
+    <BlockSizeY>256</BlockSizeY>
+    <BandsCount>3</BandsCount>
+    <Cache />
+    <UserAgent>Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.2.13) Gecko/20110103 Gentoo Firefox/3.6.13</UserAgent>
+    <Referer>http://map.geo.admin.ch/?lang=en</Referer>
+</GDAL_WMS>

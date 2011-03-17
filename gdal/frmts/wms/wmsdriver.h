@@ -249,6 +249,7 @@ protected:
     int m_clamp_requests;
     int m_unsafeSsl;
     CPLString m_osUserAgent;
+    CPLString m_osReferer;
 
     GDALWMSDataWindow m_default_data_window;
     int m_default_block_size_x, m_default_block_size_y;
