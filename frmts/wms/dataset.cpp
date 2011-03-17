@@ -287,6 +287,10 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     if (pszUserAgent[0] != '\0')
         m_osUserAgent = pszUserAgent;
 
+    const char *pszReferer = CPLGetXMLValue(config, "Referer", "");
+    if (pszReferer[0] != '\0')
+        m_osReferer = pszReferer;
+
     if (ret == CE_None) {
         const char *max_conn = CPLGetXMLValue(config, "MaxConnections", "");
         if (max_conn[0] != '\0') {

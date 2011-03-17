@@ -87,6 +87,11 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
         pszUserAgent = "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)";
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_USERAGENT, pszUserAgent);
 
+    /* Set Referer */
+    const char *pszReferer = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "REFERER");
+    if (pszReferer != NULL)
+        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_REFERER, pszReferer);
+
     /* Set URL */
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->pszURL);
 
