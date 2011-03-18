@@ -729,6 +729,7 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 
 MrSIDDataset::MrSIDDataset(int bIsJPEG2000)
 {
+    poStream = NULL;
     poImageReader = NULL;
 #ifdef MRSID_ESDK
     poImageWriter = NULL;
