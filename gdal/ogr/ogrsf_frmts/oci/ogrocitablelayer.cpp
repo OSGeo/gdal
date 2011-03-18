@@ -283,6 +283,8 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
             OGROCIStatement oDimStatement2( poSession );
             char **papszResult2;
 
+            CPLErrorReset();
+			
             oDimCmd2.Appendf( 1024,
                 "select m.sdo_index_dims\n"
                 "from   all_sdo_index_metadata m, all_sdo_index_info i\n"
@@ -298,6 +300,11 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
             if( CSLCount( papszResult2 ) > 0 )
             {
                 iDim = atoi( papszResult2[0] );
+            }
+            else
+            {
+            	// we want to clear any errors to avoid confusing the application.
+            	CPLErrorReset();
             }
         }
         else
