@@ -20910,7 +20910,8 @@ $as_echo_n "checking for MrSID JPEG2000 support... " >&6; }
         elif test -r "$with_mrsid/3rd-party/$_LIBPART/liblt_kakadu.a" ; then
           with_jp2mrsid=yes
           MRSID_KAKADU_LIB=-llt_kakadu
-        elif test -L "$with_mrsid/lib/libltidsdk.so"; then # v8+ .so has kdu
+        elif test -e "$with_mrsid/lib/libltidsdk.so" \
+               -o -e "$with_mrsid/lib/libltidsdk.dylib"; then # v8+ .so has kdu
           with_jp2mrsid=yes
         elif test x"$with_jp2mrsid" = x"yes" ; then
           as_fn_error $? "MrSID JPEG2000 support requested, but libltikdu.a not found." "$LINENO" 5
