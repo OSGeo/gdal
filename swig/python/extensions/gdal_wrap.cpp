@@ -6540,10 +6540,8 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetDescription(PyObject *SWIGUNUSEDPARM(s
   }
   arg2 = reinterpret_cast< char * >(buf2);
   {
-    /* %typemap(check) (OGRFeatureShadow *feature) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
     }
   }
   {
