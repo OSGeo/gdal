@@ -94,6 +94,10 @@ in USER_SDO_GEOM_METADATA and rebuilding the spatial index.<p>
 <li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
 desired name to be destroyed before creating the requested layer.<p>
 
+<li> <b>TRUNCATE</b>: This may be "YES" to force the existing table to 
+be reused, but to first truncate all records in the table, preserving 
+indexes or dependencies.<p>
+
 <li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
 layer to have their field names "laundered" into a form more compatible with
 Oracle.  This converts to lower case and converts some special characters

@@ -518,6 +518,8 @@ class OGROCIDataSource : public OGRDataSource
     int                 TestCapability( const char * );
 
     void                DeleteLayer( const char * );
+
+    void                TruncateLayer( const char * );
     void                ValidateLayer( const char * );
     
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,

@@ -407,6 +407,29 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
 }
 
 /************************************************************************/
+/*                           TruncateLayer()                            */
+/************************************************************************/
+
+void OGROCIDataSource::TruncateLayer( const char *pszLayerName )
+
+{
+
+/* -------------------------------------------------------------------- */
+/*      Set OGR Debug statement explaining what is happening            */
+/* -------------------------------------------------------------------- */
+    CPLDebug( "OCI", "Truncate TABLE %s", pszLayerName );
+    
+/* -------------------------------------------------------------------- */
+/*      Truncate the layer in the database.                             */
+/* -------------------------------------------------------------------- */
+    OGROCIStatement oCommand( poSession );
+    char            szCommand[1024];
+
+    sprintf( szCommand, "TRUNCATE TABLE \"%s\"", pszLayerName );
+    oCommand.Execute( szCommand );
+}
+
+/************************************************************************/
 /*                            CreateLayer()                             */
 /************************************************************************/
 
@@ -421,35 +444,45 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
     char               *pszSafeLayerName = CPLStrdup(pszLayerName);
 
     poSession->CleanName( pszSafeLayerName );
+    CPLDebug( "OCI", "In Create Layer ..." );
+              
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
     int iLayer;
-
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    
+    if( CSLFetchBoolean( papszOptions, "TRUNCATE", FALSE ) )
     {
-        if( EQUAL(pszSafeLayerName,
-                  papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+        CPLDebug( "OCI", "Calling TruncateLayer for %s", pszLayerName );
+        TruncateLayer( pszSafeLayerName );
+    }
+    else
+    {  
+        for( iLayer = 0; iLayer < nLayers; iLayer++ )
         {
-            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
-                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            if( EQUAL(pszSafeLayerName,
+                      papoLayers[iLayer]->GetLayerDefn()->GetName()) )
             {
-                DeleteLayer( pszSafeLayerName );
-            }
-            else
-            {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Layer %s already exists, CreateLayer failed.\n"
-                          "Use the layer creation option OVERWRITE=YES to "
-                          "replace it.",
-                          pszSafeLayerName );
-                CPLFree( pszSafeLayerName );
-                return NULL;
+                if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+                    && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+                {
+                    DeleteLayer( pszSafeLayerName );
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Layer %s already exists, CreateLayer failed.\n"
+                              "Use the layer creation option OVERWRITE=YES to "
+                              "replace it.",
+                              pszSafeLayerName );
+                    CPLFree( pszSafeLayerName );
+                    return NULL;
+                }              
             }
         }
-    }
+    } 
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the SRS Id of this spatial reference system,         */
@@ -485,27 +518,30 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /*      If geometry type is wkbNone, do not create a geoemtry column    */
 /* -------------------------------------------------------------------- */
 
-    if (eType == wkbNone)
+    if ( CSLFetchNameValue( papszOptions, "TRUNCATE" ) == NULL  )
     {
-        sprintf( szCommand,
-             "CREATE TABLE \"%s\" ( "
-             "%s INTEGER)",
-             pszSafeLayerName, pszExpectedFIDName);
-    }
-    else
-    {
-        sprintf( szCommand,
-             "CREATE TABLE \"%s\" ( "
-             "%s INTEGER, "
-             "%s %s )",
-             pszSafeLayerName, pszExpectedFIDName, pszGeometryName, SDO_GEOMETRY );
-    }
+        if (eType == wkbNone)
+        {
+            sprintf( szCommand,
+                     "CREATE TABLE \"%s\" ( "
+                     "%s INTEGER)",
+                     pszSafeLayerName, pszExpectedFIDName);
+        }
+        else
+        {
+            sprintf( szCommand,
+                     "CREATE TABLE \"%s\" ( "
+                     "%s INTEGER, "
+                     "%s %s )",
+                     pszSafeLayerName, pszExpectedFIDName, pszGeometryName, SDO_GEOMETRY );
+        }
 
-    if( oStatement.Execute( szCommand ) != CE_None )
-    {
-        CPLFree( pszSafeLayerName );
-        return NULL;
-    }
+        if( oStatement.Execute( szCommand ) != CE_None )
+        {
+            CPLFree( pszSafeLayerName );
+            return NULL;
+        }
+    }  
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
