@@ -46,9 +46,11 @@ public:
 /*
  * SetDescription
  */
+%apply Pointer NONNULL {const char * pszNewDesc};
   void SetDescription( const char *pszNewDesc ) {
     GDALSetDescription( self, pszNewDesc );
   }
+%clear const char * pszNewDesc;
 
 /*
  * GetMetadata methods
