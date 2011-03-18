@@ -1371,73 +1371,106 @@ void OGROCITableLayer::FinalizeNewLayer()
     dfZRes = 0.002;
     ParseDIMINFO( "DIMINFO_Z", &dfZMin, &dfZMax, &dfZRes );
     
+    if( CSLFetchBoolean( papszOptions, "TRUNCATE", FALSE ) )
+    {
+        sDimUpdate.Append( "UPDATE USER_SDO_GEOM_METADATA " );
+        sDimUpdate.Append( "SET DIMINFO =" );
+        sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
+        sDimUpdate.Appendf(200,
+                           "MDSYS.SDO_DIM_ELEMENT('X',%.16g,%.16g,%.12g)",
+                           dfXMin, dfXMax, dfXRes );
+        sDimUpdate.Appendf(200,
+                           ",MDSYS.SDO_DIM_ELEMENT('Y',%.16g,%.16g,%.12g)",
+                           dfYMin, dfYMax, dfYRes );
+
+        if( nDimension == 3 )
+        {
+            sDimUpdate.Appendf(200,
+                               ",MDSYS.SDO_DIM_ELEMENT('Z',%.16g,%.16g,%.12g)",
+                               dfZMin, dfZMax, dfZRes );
+        }      
+    
+        sDimUpdate.Appendf(strlen(poFeatureDefn->GetName()) + 100,") WHERE TABLE_NAME = '%s'", poFeatureDefn->GetName());    
+        
+/* -------------------------------------------------------------------- */
+/*      Update the existing metadata                                    */
+/* -------------------------------------------------------------------- */
+        OGROCIStatement oExecStatement( poDS->GetSession() );
+
+        if( oExecStatement.Execute( sDimUpdate.GetString() ) != CE_None )
+            return;
+    
+  	
+    } 
+    else
+    {	  
 /* -------------------------------------------------------------------- */
 /*      Prepare dimension update statement.                             */
 /* -------------------------------------------------------------------- */
-    sDimUpdate.Append( "INSERT INTO USER_SDO_GEOM_METADATA VALUES " );
-    sDimUpdate.Appendf( strlen(poFeatureDefn->GetName()) + 100,
-                        "('%s', '%s', ",
-                        poFeatureDefn->GetName(),
-                        pszGeomName );
+        sDimUpdate.Append( "INSERT INTO USER_SDO_GEOM_METADATA VALUES " );
+        sDimUpdate.Appendf( strlen(poFeatureDefn->GetName()) + 100,
+                            "('%s', '%s', ",
+                            poFeatureDefn->GetName(),
+                            pszGeomName );
 
-    sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
-    sDimUpdate.Appendf(200,
-                       "MDSYS.SDO_DIM_ELEMENT('X',%.16g,%.16g,%.12g)",
-                       dfXMin, dfXMax, dfXRes );
-    sDimUpdate.Appendf(200,
-                       ",MDSYS.SDO_DIM_ELEMENT('Y',%.16g,%.16g,%.12g)",
-                       dfYMin, dfYMax, dfYRes );
-
-    if( nDimension == 3 )
-    {
+        sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
         sDimUpdate.Appendf(200,
-                           ",MDSYS.SDO_DIM_ELEMENT('Z',%.16g,%.16g,%.12g)",
-                           dfZMin, dfZMax, dfZRes );
-    }
+                           "MDSYS.SDO_DIM_ELEMENT('X',%.16g,%.16g,%.12g)",
+                           dfXMin, dfXMax, dfXRes );
+        sDimUpdate.Appendf(200,
+                           ",MDSYS.SDO_DIM_ELEMENT('Y',%.16g,%.16g,%.12g)",
+                           dfYMin, dfYMax, dfYRes );
 
-    if( nSRID == -1 )
-        sDimUpdate.Append( "), NULL)" );
-    else
-        sDimUpdate.Appendf( 100, "), %d)", nSRID );
+        if( nDimension == 3 )
+        {
+            sDimUpdate.Appendf(200,
+                               ",MDSYS.SDO_DIM_ELEMENT('Z',%.16g,%.16g,%.12g)",
+                               dfZMin, dfZMax, dfZRes );
+        }
+
+        if( nSRID == -1 )
+            sDimUpdate.Append( "), NULL)" );
+        else
+            sDimUpdate.Appendf( 100, "), %d)", nSRID );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the metadata update.                                    */
 /* -------------------------------------------------------------------- */
-    OGROCIStatement oExecStatement( poDS->GetSession() );
+        OGROCIStatement oExecStatement( poDS->GetSession() );
 
-    if( oExecStatement.Execute( sDimUpdate.GetString() ) != CE_None )
-        return;
+        if( oExecStatement.Execute( sDimUpdate.GetString() ) != CE_None )
+            return;
 
 /* -------------------------------------------------------------------- */
 /*      If the user has disabled INDEX support then don't create the    */
 /*      index.                                                          */
 /* -------------------------------------------------------------------- */
-    if( !CSLFetchBoolean( papszOptions, "INDEX", TRUE ) )
-        return;
+        if( !CSLFetchBoolean( papszOptions, "INDEX", TRUE ) )
+            return;
 
 /* -------------------------------------------------------------------- */
 /*      Establish an index name.  For some reason Oracle 8.1.7 does     */
 /*      not support spatial index names longer than 18 characters so    */
 /*      we magic up an index name if it would be too long.              */
 /* -------------------------------------------------------------------- */
-    char  szIndexName[20];
+        char  szIndexName[20];
 
-    if( strlen(poFeatureDefn->GetName()) < 15 )
-        sprintf( szIndexName, "%s_idx", poFeatureDefn->GetName() );
-    else if( strlen(poFeatureDefn->GetName()) < 17 )
-        sprintf( szIndexName, "%si", poFeatureDefn->GetName() );
-    else
-    {
-        int i, nHash = 0;
-        const char *pszSrcName = poFeatureDefn->GetName();
+        if( strlen(poFeatureDefn->GetName()) < 15 )
+            sprintf( szIndexName, "%s_idx", poFeatureDefn->GetName() );
+        else if( strlen(poFeatureDefn->GetName()) < 17 )
+            sprintf( szIndexName, "%si", poFeatureDefn->GetName() );
+        else
+        {
+            int i, nHash = 0;
+            const char *pszSrcName = poFeatureDefn->GetName();
 
-        for( i = 0; pszSrcName[i] != '\0'; i++ )
-            nHash = (nHash + i * pszSrcName[i]) % 987651;
+            for( i = 0; pszSrcName[i] != '\0'; i++ )
+                nHash = (nHash + i * pszSrcName[i]) % 987651;
         
-        sprintf( szIndexName, "OSI_%d", nHash );
-    }
+            sprintf( szIndexName, "OSI_%d", nHash );
+        }
 
-    poDS->GetSession()->CleanName( szIndexName );
+        poDS->GetSession()->CleanName( szIndexName );
 
 /* -------------------------------------------------------------------- */
 /*      Try creating an index on the table now.  Use a simple 5         */
@@ -1446,27 +1479,28 @@ void OGROCITableLayer::FinalizeNewLayer()
 
 // Disable for now, spatial index creation always seems to cause me to 
 // lose my connection to the database!
-    OGROCIStringBuf  sIndexCmd;
+        OGROCIStringBuf  sIndexCmd;
 
-    sIndexCmd.Appendf( 10000, "CREATE INDEX \"%s\" ON %s(\"%s\") "
-                       "INDEXTYPE IS MDSYS.SPATIAL_INDEX ",
-                       szIndexName, 
-                       poFeatureDefn->GetName(), 
-                       pszGeomName );
+        sIndexCmd.Appendf( 10000, "CREATE INDEX \"%s\" ON %s(\"%s\") "
+                           "INDEXTYPE IS MDSYS.SPATIAL_INDEX ",
+                           szIndexName, 
+                           poFeatureDefn->GetName(), 
+                           pszGeomName );
 
-    if( CSLFetchNameValue( papszOptions, "INDEX_PARAMETERS" ) != NULL )
-    {
-        sIndexCmd.Append( " PARAMETERS( '" );
-        sIndexCmd.Append( CSLFetchNameValue(papszOptions,"INDEX_PARAMETERS") );
-        sIndexCmd.Append( "' )" );
-    }
+        if( CSLFetchNameValue( papszOptions, "INDEX_PARAMETERS" ) != NULL )
+        {
+            sIndexCmd.Append( " PARAMETERS( '" );
+            sIndexCmd.Append( CSLFetchNameValue(papszOptions,"INDEX_PARAMETERS") );
+            sIndexCmd.Append( "' )" );
+        }
 
-    if( oExecStatement.Execute( sIndexCmd.GetString() ) != CE_None )
-    {
-        char szDropCommand[2000];
-        sprintf( szDropCommand, "DROP INDEX \"%s\"", szIndexName );
-        oExecStatement.Execute( szDropCommand );
-    }
+        if( oExecStatement.Execute( sIndexCmd.GetString() ) != CE_None )
+        {
+            char szDropCommand[2000];
+            sprintf( szDropCommand, "DROP INDEX \"%s\"", szIndexName );
+            oExecStatement.Execute( szDropCommand );
+        }
+    }  
 }
 
 /************************************************************************/
