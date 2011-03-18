@@ -1131,7 +1131,7 @@ GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
 /**
  * Create regular grid from the scattered data.
  *
- * This fucntion takes the arrays of X and Y coordinates and corresponding Z
+ * This function takes the arrays of X and Y coordinates and corresponding Z
  * values as input and computes regular grid (or call it a raster) from these
  * scattered data. You should supply geometry and extent of the output grid
  * and allocate array sufficient to hold such a grid.
