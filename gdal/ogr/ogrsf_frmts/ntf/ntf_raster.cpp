@@ -241,8 +241,7 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint25D );
 
-    OGRFieldDefn      oHeight( "HEIGHT", OFTInteger );
-    oHeight.SetWidth(5);
+    OGRFieldDefn      oHeight( "HEIGHT", OFTReal );
     poFeatureDefn->AddFieldDefn( &oHeight );
 
     poReader = poReaderIn;
@@ -387,7 +386,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( long nFeatureId )
         new OGRPoint( padfGeoTransform[0] + padfGeoTransform[1] * iReqColumn,
                       padfGeoTransform[3] + padfGeoTransform[5] * iReqRow,
                       pafColumn[iReqRow] ) );
-    poFeature->SetField( 0, (int) pafColumn[iReqRow] );
+    poFeature->SetField( 0, pafColumn[iReqRow] );
     
     return poFeature;
 }
