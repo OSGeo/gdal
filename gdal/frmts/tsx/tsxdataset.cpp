@@ -64,18 +64,18 @@ enum eProductType {
 /* GetFilePath: return a relative path to a file within an XML node.
  * Returns Null on failure
  */
-const char *GetFilePath(CPLXMLNode *psXMLNode, char **pszNodeType) {
+const char *GetFilePath(CPLXMLNode *psXMLNode, const char **pszNodeType) {
     const char *pszDirectory, *pszFilename;
 
     pszDirectory = CPLGetXMLValue( psXMLNode, "file.location.path", "" );
     pszFilename = CPLGetXMLValue( psXMLNode, "file.location.filename", "" );
-    *pszNodeType = strdup(CPLGetXMLValue (psXMLNode, "type", " " ));
+    *pszNodeType = CPLGetXMLValue (psXMLNode, "type", " " );
 
     if (pszDirectory == NULL || pszFilename == NULL) {
         return NULL;
     }
 
-    return strdup( CPLFormFilename( pszDirectory, pszFilename, "" ) );
+    return CPLFormFilename( pszDirectory, pszFilename, "" );
 }
 
 /************************************************************************/
@@ -402,6 +402,7 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
 
     }
 
+    CPLFree(pszGCPProjection);
     osr.exportToWkt( &(pszGCPProjection) );
 
     return true;
@@ -487,7 +488,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
         "acquisitionInfo.imagingMode", "unknown" ) );
     poDS->SetMetadataItem( "PRODUCT_VARIANT", CPLGetXMLValue( psProductInfo,
         "productVariantInfo.productVariant", "unknown" ) );
-    char *pszDataType = strdup( CPLGetXMLValue( psProductInfo,
+    char *pszDataType = CPLStrdup( CPLGetXMLValue( psProductInfo,
         "imageDataInfo.imageDataType", "unknown" ) );
     poDS->SetMetadataItem( "IMAGE_TYPE", pszDataType );
 
@@ -539,7 +540,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
     for (psComponent = psComponents->psChild; psComponent != NULL;
          psComponent = psComponent->psNext)
     {
-        char *pszType;
+        const char *pszType = NULL;
         pszPath = CPLFormFilename(
                 CPLGetDirname( osFilename ),
                 GetFilePath(psComponent, &pszType),
@@ -553,9 +554,8 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
             }
             else if (EQUALN(pszType, "GEOREF", 6)) {
                 /* save the path to the georef data for later use */
-                pszGeorefFile = strdup( pszPath );
+                pszGeorefFile = CPLStrdup( pszPath );
             }
-            CPLFree(pszType);
         }
         else if( !EQUALN(pszPolLayer, " ", 1) &&
             EQUALN(psComponent->pszValue, "imageData", 9) ) {
@@ -647,7 +647,6 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
             int nGCP = 0;
             double dfAvgHeight = atof(CPLGetXMLValue(psSceneInfo,
                 "sceneAverageHeight", "0.0"));
-            char szID[3];
 
             //count and allocate gcps - there should be five - 4 corners and a centre
             poDS->nGCPCount = 0;
@@ -672,15 +671,13 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
                         !EQUAL(psNode->pszValue, "sceneCornerCoord"))
                         continue;
 
-                    CPLSPrintf( szID, "%d", nGCP );
-
                     psGCP->dfGCPPixel = atof(CPLGetXMLValue(psNode, "refColumn",
                         "0.0"));
                     psGCP->dfGCPLine = atof(CPLGetXMLValue(psNode, "refRow", "0.0"));
                     psGCP->dfGCPX = atof(CPLGetXMLValue(psNode, "lon", "0.0"));
                     psGCP->dfGCPY = atof(CPLGetXMLValue(psNode, "lat", "0.0"));
                     psGCP->dfGCPZ = dfAvgHeight;
-                    psGCP->pszId = CPLStrdup( szID );
+                    psGCP->pszId = CPLStrdup( CPLSPrintf( "%d", nGCP ) );
                     psGCP->pszInfo = CPLStrdup("");
 
                     nGCP++;
@@ -689,6 +686,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
                 //set the projection string - the fields are lat/long - seems to be WGS84 datum
                 OGRSpatialReference osr;
                 osr.SetWellKnownGeogCS( "WGS84" );
+                CPLFree(poDS->pszGCPProjection);
                 osr.exportToWkt( &(poDS->pszGCPProjection) );
             }
         }
@@ -713,6 +711,8 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
             "Unable to find sceneInfo tag in XML document. "
             "Proceeding with caution.");
     }
+
+    CPLFree(pszGeorefFile);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
