@@ -95,7 +95,6 @@ class TSXDataset : public GDALPamDataset {
     bool bHaveGeoTransform;
 
     char *pszGeorefFile;
-    FILE *fp;
 
     eProductType nProduct;
 public:
@@ -445,20 +444,24 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
     /* Ingest the XML */
     CPLXMLNode *psData, *psComponents, *psProductInfo;
     psData = CPLParseXMLFile( osFilename );
+    if (psData == NULL)
+        return NULL;
 
     /* find the product components */
     psComponents = CPLGetXMLNode( psData, "=level1Product.productComponents" );
     if (psComponents == NULL) {
         CPLError( CE_Failure, CPLE_OpenFailed,
             "Unable to find <productComponents> tag in file.\n" );
+        CPLDestroyXMLNode(psData);
         return NULL;
     }
 
     /* find the product info tag */
     psProductInfo = CPLGetXMLNode( psData, "=level1Product.productInfo" );
-    if (psComponents == NULL) {
+    if (psProductInfo == NULL) {
         CPLError( CE_Failure, CPLE_OpenFailed,
             "Unable to find <productInfo> tag in file.\n" );
+        CPLDestroyXMLNode(psData);
         return NULL;
     }
 
@@ -467,8 +470,6 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 /* -------------------------------------------------------------------- */
 
     TSXDataset *poDS = new TSXDataset();
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Read in product info.                                           */
@@ -790,6 +791,8 @@ void GDALRegister_TSX() {
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "TerraSAR-X Product" );
 /*        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_tsx.html" ); */
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = TSXDataset::Open;
         poDriver->pfnIdentify = TSXDataset::Identify;
