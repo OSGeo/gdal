@@ -1,0 +1,107 @@
+Format version: NOHRSC GIS/RS raster file v1.1
+Data source: FSL
+Created by module: sm_products
+Created by module comment: number BARD codes: 0000000000 BARD codes:
+Created year: 2010
+Created month: 6 
+Created day: 16
+Created hour: 6 
+Created minute: 37
+Created second: 42
+Last modified by module: sm_products
+Last modified by module comment: Not applicable
+Last modified year: 2010
+Last modified month: 6 
+Last modified day: 16
+Last modified hour: 6 
+Last modified minute: 37
+Last modified second: 42
+Satellite data: no
+Satellite name: Not applicable
+Satellite channel: 0
+Satellite data calibrated: no
+Description: Non-snow accumulation, 24-hour total
+Thematic: no
+Theme file: Not applicable
+Data units: Kilograms per square meter / 10.000000
+Product code: 419956286 
+Attribute table: Not applicable
+Data file pathname: fake_snodas.dat
+Data type: integer
+Data bytes per pixel: 2
+Data intercept: 0.00000000000000
+Data slope: 1.00000000000000
+Minimum data value: 0.00000000000000
+Maximum data value: 429.000000000000
+No data value: -9999.00000000000
+Number of columns: 6935      
+Number of rows: 3351      
+Geographically corrected: yes
+Projected: no
+Projection file: Not applicable
+Horizontal datum: WGS84
+Horizontal precision: 2031.80000000000
+Elevation above datum: yes
+Vertical datum: Unknown
+Vertical precision: 40.0000000000000
+Benchmark column: 0         
+Benchmark row: 0         
+Benchmark x-axis coordinate: -124.729583333328
+Benchmark y-axis coordinate: 52.8704166666646
+X-axis resolution: 0.00833333333333300
+Y-axis resolution: 0.00833333333333300
+X-axis offset: 0.00375000000000000
+Y-axis offset: 0.00375000000000000
+Minimum x-axis coordinate: -124.733749999995
+Maximum x-axis coordinate: -66.9420833333302
+Minimum y-axis coordinate: 24.9495833333324
+Maximum y-axis coordinate: 52.8745833333313
+Start year: 2010
+Start month: 6 
+Start day: 15
+Start hour: 6 
+Start minute: 0 
+Start second: 0 
+Stop year: 2010
+Stop month: 6 
+Stop day: 16
+Stop hour: 6 
+Stop minute: 0 
+Stop second: 0 
+Compressed: no
+Compression file: Not applicable
+Number of color tables: 0 
+Color table 01 descriptor: Not applicable
+Color table 02 descriptor: Not applicable
+Color table 03 descriptor: Not applicable
+Color table 04 descriptor: Not applicable
+Color table 05 descriptor: Not applicable
+Color table 06 descriptor: Not applicable
+Color table 07 descriptor: Not applicable
+Color table 08 descriptor: Not applicable
+Color table 09 descriptor: Not applicable
+Color table 10 descriptor: Not applicable
+Color table 11 descriptor: Not applicable
+Color table 12 descriptor: Not applicable
+Color table 13 descriptor: Not applicable
+Color table 14 descriptor: Not applicable
+Color table 15 descriptor: Not applicable
+Color table 16 descriptor: Not applicable
+Color table 01 file: Not applicable
+Color table 02 file: Not applicable
+Color table 03 file: Not applicable
+Color table 04 file: Not applicable
+Color table 05 file: Not applicable
+Color table 06 file: Not applicable
+Color table 07 file: Not applicable
+Color table 08 file: Not applicable
+Color table 09 file: Not applicable
+Color table 10 file: Not applicable
+Color table 11 file: Not applicable
+Color table 12 file: Not applicable
+Color table 13 file: Not applicable
+Color table 14 file: Not applicable
+Color table 15 file: Not applicable
+Color table 16 file: Not applicable
+Histogram: no
+Histogram file: Not applicable
