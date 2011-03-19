@@ -1171,6 +1171,8 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
     const char* pszDir;
     if (EQUALN(pszFilename, "/vsicurl/http://", strlen("/vsicurl/http://")))
         pszDir = strchr(pszFilename + strlen("/vsicurl/http://"), '/');
+    else if (EQUALN(pszFilename, "/vsicurl/https://", strlen("/vsicurl/https://")))
+        pszDir = strchr(pszFilename + strlen("/vsicurl/https://"), '/');
     else
         pszDir = strchr(pszFilename + strlen("/vsicurl/ftp://"), '/');
     if (pszDir == NULL)
@@ -1346,7 +1348,8 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszFilename, int* pbGot
 
     /* Try to recognize HTML pages that list the content of a directory */
     /* Currently this supports what Apache and shttpd can return */
-    else if (strncmp(pszFilename, "/vsicurl/http://", strlen("/vsicurl/http://")) == 0)
+    else if (strncmp(pszFilename, "/vsicurl/http://", strlen("/vsicurl/http://")) == 0 ||
+             strncmp(pszFilename, "/vsicurl/https://", strlen("/vsicurl/https://")) == 0)
     {
         WriteFuncStruct sWriteFuncData;
 
