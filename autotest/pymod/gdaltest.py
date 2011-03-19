@@ -309,7 +309,8 @@ class GDALTest:
                     return 'fail'
 
         oBand = ds.GetRasterBand(self.band)
-        chksum = oBand.Checksum(self.xoff, self.yoff, self.xsize, self.ysize)
+        if skip_checksum is None:
+            chksum = oBand.Checksum(self.xoff, self.yoff, self.xsize, self.ysize)
 
         # Do we need to check approximate statistics?
         if check_approx_stat:
