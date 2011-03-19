@@ -1222,6 +1222,35 @@ int OGRLIBKMLDataSource::OpenDir (
 
 ******************************************************************************/
 
+static int CheckIsKMZ(const char *pszFilename)
+{
+    char** papszFiles = VSIReadDir(pszFilename);
+    char** papszIter = papszFiles;
+    int bFoundKML = FALSE;
+    while(papszIter && *papszIter)
+    {
+        if (EQUAL(CPLGetExtension(*papszIter), "kml"))
+        {
+            bFoundKML = TRUE;
+            break;
+        }
+        else
+        {
+            CPLString osFilename(pszFilename);
+            osFilename += "/";
+            osFilename += *papszIter;
+            if (CheckIsKMZ(osFilename))
+            {
+                bFoundKML = TRUE;
+                break;
+            }
+        }
+        papszIter ++;
+    }
+    CSLDestroy(papszFiles);
+    return bFoundKML;
+}
+
 int OGRLIBKMLDataSource::Open (
     const char *pszFilename,
     int bUpdate )
@@ -1263,7 +1292,14 @@ int OGRLIBKMLDataSource::Open (
         if (nRead == 1024 &&
             szBuffer[0] == 0x50 && szBuffer[1] == 0x4B &&
             szBuffer[2] == 0x03  && szBuffer[3] == 0x04)
+        {
+            CPLString osFilename("/vsizip/");
+            osFilename += pszFilename;
+            if (!CheckIsKMZ(osFilename))
+                return FALSE;
+
             return OpenKmz ( pszFilename, bUpdate );
+        }
 
         if (strstr(szBuffer, "<kml>") || strstr(szBuffer, "<kml xmlns="))
             return OpenKml ( pszFilename, bUpdate );
