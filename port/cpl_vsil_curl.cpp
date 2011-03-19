@@ -315,6 +315,7 @@ static void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
 #endif
 
     curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 0);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 1); 
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 0);
 
 /* 7.16.4 */
@@ -441,6 +442,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
     VSICurlSetOptions(hCurlHandle, pszURL);
     curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 0); 
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 1);
 
     /* Bug with older curl versions (<=7.16.4) and FTP. See http://curl.haxx.se/mail/lib-2007-08/0312.html */
