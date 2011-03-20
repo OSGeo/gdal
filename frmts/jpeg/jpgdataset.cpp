@@ -149,6 +149,7 @@ class JPGDataset : public GDALPamDataset
     int    bIsSubfile;
     int    bHasTriedLoadWorldFileOrTab;
     void   LoadWorldFileOrTab();
+    CPLString osWldFilename;
 
   public:
                  JPGDataset();
@@ -168,6 +169,7 @@ class JPGDataset : public GDALPamDataset
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );
 
+    virtual char **GetFileList(void);
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -1899,11 +1901,13 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 void JPGDataset::LoadWorldFileOrTab()
 {
-    if (!bIsSubfile)
+    if (bIsSubfile)
         return;
     if (bHasTriedLoadWorldFileOrTab)
         return;
     bHasTriedLoadWorldFileOrTab = TRUE;
+
+    char* pszWldFilename = NULL;
 
     /* TIROS3 JPEG files have a .wld extension, so don't look for .wld as */
     /* as worldfile ! */
@@ -1911,22 +1915,52 @@ void JPGDataset::LoadWorldFileOrTab()
                         EQUAL( GetDescription() + strlen(GetDescription()) - 4, ".wld");
     bGeoTransformValid =
         GDALReadWorldFile2( GetDescription(), NULL,
-                            adfGeoTransform, oOvManager.GetSiblingFiles() )
+                            adfGeoTransform,
+                            oOvManager.GetSiblingFiles(), &pszWldFilename )
         || GDALReadWorldFile2( GetDescription(), ".jpw",
-                                adfGeoTransform, oOvManager.GetSiblingFiles() )
+                                adfGeoTransform,
+                               oOvManager.GetSiblingFiles(), &pszWldFilename )
         || ( !bEndsWithWld && GDALReadWorldFile2( GetDescription(), ".wld",
-                                adfGeoTransform, oOvManager.GetSiblingFiles() ));
+                                adfGeoTransform,
+                                oOvManager.GetSiblingFiles(), &pszWldFilename ));
 
     if( !bGeoTransformValid )
     {
         int bTabFileOK =
             GDALReadTabFile2( GetDescription(), adfGeoTransform,
-                                &pszProjection,
-                                &nGCPCount, &pasGCPList, oOvManager.GetSiblingFiles() );
+                              &pszProjection,
+                              &nGCPCount, &pasGCPList,
+                              oOvManager.GetSiblingFiles(), &pszWldFilename );
 
         if( bTabFileOK && nGCPCount == 0 )
             bGeoTransformValid = TRUE;
     }
+
+    if (pszWldFilename)
+    {
+        osWldFilename = pszWldFilename;
+        CPLFree(pszWldFilename);
+    }
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **JPGDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    LoadWorldFileOrTab();
+
+    if (osWldFilename.size() != 0 &&
+        CSLFindString(papszFileList, osWldFilename) == -1)
+    {
+        papszFileList = CSLAddString( papszFileList, osWldFilename );
+    }
+
+    return papszFileList;
 }
 
 /************************************************************************/
