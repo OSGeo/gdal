@@ -324,6 +324,9 @@ OGRFieldDefnH OGR_FD_GetFieldDefn( OGRFeatureDefnH hDefn, int iField )
 /**
  * \brief Add a new field definition.
  *
+ * To add a new field definition to a layer definition, do not use this
+ * function directly, but use OGRLayer::CreateField() instead.
+ *
  * This method should only be called while there are no OGRFeature
  * objects in existance based on this OGRFeatureDefn.  The OGRFieldDefn
  * passed in is copied, and remains the responsibility of the caller.
@@ -350,11 +353,14 @@ void OGRFeatureDefn::AddFieldDefn( OGRFieldDefn * poNewDefn )
 /**
  * \brief Add a new field definition to the passed feature definition.
  *
+ * To add a new field definition to a layer definition, do not use this
+ * function directly, but use OGR_L_CreateField() instead.
+ *
  * This function  should only be called while there are no OGRFeature
  * objects in existance based on this OGRFeatureDefn.  The OGRFieldDefn
  * passed in is copied, and remains the responsibility of the caller.
  *
- * This function is the same as the C++ method OGRFeatureDefn::AddFieldDefn.
+ * This function is the same as the C++ method OGRFeatureDefn::AddFieldDefn().
  *
  * @param hDefn handle to the feature definition to add the field definition
  * to.
