@@ -487,6 +487,7 @@ def wms_13():
     return 'success'
 
 
+
 ###############################################################################
 # Test reading Virtual Earth layer
 
@@ -538,6 +539,52 @@ def wms_14():
     return 'success'
 
 ###############################################################################
+# Test reading ArcGIS MapServer JSon definition
+
+def wms_15():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+    ds = gdal.Open( "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true")
+    if ds is None:
+        return' fail'
+
+    if ds.RasterXSize != 134217728 \
+       or ds.RasterYSize != 134217728 \
+       or ds.RasterCount != 3:
+        gdaltest.post_reason( 'wrong size or bands' )
+        return 'fail'
+
+    wkt = ds.GetProjectionRef()
+    if wkt.find('PROJCS["WGS 84 / Pseudo-Mercator"') != 0:
+        gdaltest.post_reason( 'Got wrong SRS: ' + wkt )
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    if abs(gt[0]- -20037508.342787001) > 0.00001 \
+       or abs(gt[3]- 20037508.342787001) > 0.00001 \
+       or abs(gt[1] - 0.298582141697407) > 0.00001 \
+       or abs(gt[2] - 0) > 0.00001 \
+       or abs(gt[5] - -0.298582141697407) > 0.00001 \
+       or abs(gt[4] - 0) > 0.00001:
+        gdaltest.post_reason( 'wrong geotransform' )
+        print(gt)
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverviewCount() != 19:
+        gdaltest.post_reason( 'bad overview count' )
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+
+    (block_xsize, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
+    if block_xsize != 256 or block_ysize != 256:
+        gdaltest.post_reason( 'bad block size' )
+        print("(%d, %d)" % (block_xsize, block_ysize))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def wms_cleanup():
 
     gdaltest.wms_ds = None
@@ -560,6 +607,7 @@ gdaltest_list = [
     wms_12,
     wms_13,
     wms_14,
+    wms_15,
     wms_cleanup ]
 
 if __name__ == '__main__':
