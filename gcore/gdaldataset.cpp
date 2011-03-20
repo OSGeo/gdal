@@ -2034,8 +2034,14 @@ char **GDALDataset::GetFileList()
             szDerivedExtension[2] = 'w';
             szDerivedExtension[3] = '\0';
             CPLString osWorldFilename = CPLResetExtension( osMainFilename, szDerivedExtension );
-            
-            if( VSIStatExL( osWorldFilename, &sStat, VSI_STAT_EXISTS_FLAG ) == 0 )
+
+            if (oOvManager.papszInitSiblingFiles)
+            {
+                if (CSLFindString(oOvManager.papszInitSiblingFiles,
+                                  CPLGetFilename(osWorldFilename)) >= 0)
+                    papszList = CSLAddString( papszList, osWorldFilename );
+            }
+            else if( VSIStatExL( osWorldFilename, &sStat, VSI_STAT_EXISTS_FLAG ) == 0 )
                 papszList = CSLAddString( papszList, osWorldFilename );
         }
     }
@@ -2186,11 +2192,18 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
 GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
                                const char* const * papszAllowedDrivers)
 {
-    VALIDATE_POINTER1( pszFilename, "GDALOpen", NULL );
+    GDALOpenInfo oOpenInfo( pszFilename, eAccess );
+    return GDALOpenInternal(oOpenInfo, papszAllowedDrivers);
+}
+
+GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
+                               const char* const * papszAllowedDrivers)
+{
+
+    VALIDATE_POINTER1( oOpenInfo.pszFilename, "GDALOpen", NULL );
 
     int         iDriver;
     GDALDriverManager *poDM = GetGDALDriverManager();
-    GDALOpenInfo oOpenInfo( pszFilename, eAccess );
     CPLLocaleC  oLocaleForcer;
 
     CPLErrorReset();
@@ -2220,11 +2233,11 @@ GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
 
             if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
                 CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
-                          pszFilename, poDS, poDriver->GetDescription(),
+                          oOpenInfo.pszFilename, poDS, poDriver->GetDescription(),
                           (int)CPLGetPID(), (int)GDALGetResponsiblePIDForCurrentThread() );
             else
                 CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s.",
-                          pszFilename, poDS, poDriver->GetDescription() );
+                          oOpenInfo.pszFilename, poDS, poDriver->GetDescription() );
 
             return (GDALDatasetH) poDS;
         }
@@ -2236,12 +2249,12 @@ GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
     if( oOpenInfo.bStatOK )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "`%s' not recognised as a supported file format.\n",
-                  pszFilename );
+                  oOpenInfo.pszFilename );
     else
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "`%s' does not exist in the file system,\n"
                   "and is not recognised as a supported dataset name.\n",
-                  pszFilename );
+                  oOpenInfo.pszFilename );
 
     return NULL;
 }
