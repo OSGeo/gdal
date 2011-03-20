@@ -115,6 +115,9 @@ class PNGDataset : public GDALPamDataset
     CPLErr      LoadInterlacedChunk( int );
     void        Restart();
 
+    int         bHasTriedLoadWorldFile;
+    void        LoadWorldFile();
+
   public:
                  PNGDataset();
                  ~PNGDataset();
@@ -418,6 +421,8 @@ PNGDataset::PNGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    bHasTriedLoadWorldFile = FALSE;
 }
 
 /************************************************************************/
@@ -446,6 +451,7 @@ PNGDataset::~PNGDataset()
 CPLErr PNGDataset::GetGeoTransform( double * padfTransform )
 
 {
+    LoadWorldFile();
 
     if( bGeoTransformValid )
     {
@@ -968,7 +974,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML();
+    poDS->TryLoadXML( poOpenInfo->papszSiblingFiles );
 
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
@@ -976,19 +982,27 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
                                  poOpenInfo->papszSiblingFiles );
 
-/* -------------------------------------------------------------------- */
-/*      Check for world file.                                           */
-/* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
-                           poDS->adfGeoTransform );
-
-    if( !poDS->bGeoTransformValid )
-        poDS->bGeoTransformValid = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                               poDS->adfGeoTransform );
-
     return poDS;
+}
+
+/************************************************************************/
+/*                        LoadWorldFile()                               */
+/************************************************************************/
+
+void PNGDataset::LoadWorldFile()
+{
+    if (bHasTriedLoadWorldFile)
+        return;
+    bHasTriedLoadWorldFile = TRUE;
+
+    bGeoTransformValid =
+        GDALReadWorldFile2( GetDescription(), NULL,
+                           adfGeoTransform, oOvManager.GetSiblingFiles() );
+
+    if( !bGeoTransformValid )
+        bGeoTransformValid =
+            GDALReadWorldFile2( GetDescription(), ".wld",
+                               adfGeoTransform, oOvManager.GetSiblingFiles() );
 }
 
 /************************************************************************/
