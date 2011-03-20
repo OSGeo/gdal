@@ -749,6 +749,10 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
         {
             int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
             int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
+
+            if (!papoSources[iSource]->IsSimpleSource())
+                continue;
+
             VRTSimpleSource *poSrc = (VRTSimpleSource *) papoSources[iSource];
 
             if( !poSrc->GetSrcDstWindow( iPixel, iLine, 1, 1, 1, 1,

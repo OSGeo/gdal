@@ -86,6 +86,8 @@ public:
     
     virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
                                int *pnMaxSize, CPLHashSet* hSetFiles);
+
+    virtual int    IsSimpleSource() { return FALSE; }
 };
 
 typedef VRTSource *(*VRTSourceParser)(CPLXMLNode *, const char *);
@@ -118,6 +120,9 @@ class CPL_DLL VRTDataset : public GDALDataset
     char          *pszVRTPath;
 
     VRTRasterBand *poMaskBand;
+
+    int            bCompatibleForDatasetIO;
+    int            CheckCompatibleForDatasetIO();
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -153,6 +158,13 @@ class CPL_DLL VRTDataset : public GDALDataset
                             char **papszOptions=NULL );
                             
     virtual char      **GetFileList();
+
+    virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               int nBandCount, int *panBandMap,
+                               int nPixelSpace, int nLineSpace, int nBandSpace);
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
@@ -311,6 +323,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     CPLErr UnsetNoDataValue();
 
     virtual int         CloseDependentDatasets();
+
+    virtual int         IsSourcedRasterBand() { return FALSE; }
 };
 
 /************************************************************************/
@@ -388,6 +402,8 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                                int *pnMaxSize, CPLHashSet* hSetFiles);
 
     virtual int         CloseDependentDatasets();
+
+    virtual int         IsSourcedRasterBand() { return TRUE; }
 };
 
 /************************************************************************/
@@ -562,6 +578,18 @@ public:
     
     virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
                                int *pnMaxSize, CPLHashSet* hSetFiles);
+
+    virtual int    IsSimpleSource() { return TRUE; }
+    virtual const char* GetType() { return "SimpleSource"; }
+
+    GDALRasterBand* GetBand();
+    int             IsSameExceptBandNumber(VRTSimpleSource* poOtherSource);
+    CPLErr          DatasetRasterIO(
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               int nBandCount, int *panBandMap,
+                               int nPixelSpace, int nLineSpace, int nBandSpace);
 };
 
 /************************************************************************/
@@ -577,6 +605,7 @@ public:
                               GDALDataType eBufType, 
                               int nPixelSpace, int nLineSpace );
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
+    virtual const char* GetType() { return "AveragedSource"; }
 };
 
 /************************************************************************/
@@ -595,6 +624,8 @@ public:
                              int nPixelSpace, int nLineSpace );
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr XMLInit( CPLXMLNode *, const char * );
+    virtual const char* GetType() { return "ComplexSource"; }
+
     double  LookupValue( double dfInput );
 
     int            bDoScaling;
