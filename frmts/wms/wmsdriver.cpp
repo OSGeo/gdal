@@ -317,6 +317,164 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
 }
 
 /************************************************************************/
+/*             GDALWMSDatasetGetConfigFromArcGISJSON()                  */
+/************************************************************************/
+
+static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
+                                                         const char* pszContent)
+{
+    /* TODO : use JSONC library to parse. But we don't really need it */
+    CPLString osTmpFilename(CPLSPrintf("/vsimem/WMSArcGISJSON%p", pszURL));
+    VSILFILE* fp = VSIFileFromMemBuffer( osTmpFilename,
+                                         (GByte*)pszContent,
+                                         strlen(pszContent),
+                                         FALSE);
+    const char* pszLine;
+    int nTileWidth = -1, nTileHeight = -1;
+    int nWKID = -1;
+    double dfMinX = 0, dfMaxY = 0;
+    int bHasMinX = FALSE, bHasMaxY = FALSE;
+    int nExpectedLevel = 0;
+    double dfBaseResolution = 0;
+    while((pszLine = CPLReadLine2L(fp, 4096, NULL)) != NULL)
+    {
+        const char* pszPtr;
+        if ((pszPtr = strstr(pszLine, "\"rows\" : ")) != NULL)
+            nTileHeight = atoi(pszPtr + strlen("\"rows\" : "));
+        else if ((pszPtr = strstr(pszLine, "\"cols\" : ")) != NULL)
+            nTileWidth = atoi(pszPtr + strlen("\"cols\" : "));
+        else if ((pszPtr = strstr(pszLine, "\"wkid\" : ")) != NULL)
+        {
+            int nVal = atoi(pszPtr + strlen("\"wkid\" : "));
+            if (nWKID < 0)
+                nWKID = nVal;
+            else if (nWKID != nVal)
+            {
+                CPLDebug("WMS", "Inconsisant WKID values : %d, %d", nVal, nWKID);
+                VSIFCloseL(fp);
+                return NULL;
+            }
+        }
+        else if ((pszPtr = strstr(pszLine, "\"x\" : ")) != NULL)
+        {
+            bHasMinX = TRUE;
+            dfMinX = CPLAtofM(pszPtr + strlen("\"x\" : "));
+        }
+        else if ((pszPtr = strstr(pszLine, "\"y\" : ")) != NULL)
+        {
+            bHasMaxY = TRUE;
+            dfMaxY = CPLAtofM(pszPtr + strlen("\"y\" : "));
+        }
+        else if ((pszPtr = strstr(pszLine, "\"level\" : ")) != NULL)
+        {
+            int nLevel = atoi(pszPtr + strlen("\"level\" : "));
+            if (nLevel != nExpectedLevel)
+            {
+                CPLDebug("WMS", "Expected level : %d, got : %d", nExpectedLevel, nLevel);
+                VSIFCloseL(fp);
+                return NULL;
+            }
+
+            if ((pszPtr = strstr(pszLine, "\"resolution\" : ")) != NULL)
+            {
+                double dfResolution = CPLAtofM(pszPtr + strlen("\"resolution\" : "));
+                if (nLevel == 0)
+                    dfBaseResolution = dfResolution;
+            }
+            else
+            {
+                CPLDebug("WMS", "Did not get resolution");
+                VSIFCloseL(fp);
+                return NULL;
+            }
+            nExpectedLevel ++;
+        }
+    }
+    VSIFCloseL(fp);
+
+    int nLevelCount = nExpectedLevel - 1;
+    if (nLevelCount < 1)
+    {
+        CPLDebug("WMS", "Did not get levels");
+        return NULL;
+    }
+
+    if (nTileWidth <= 0)
+    {
+        CPLDebug("WMS", "Did not get tile width");
+        return NULL;
+    }
+    if (nTileHeight <= 0)
+    {
+        CPLDebug("WMS", "Did not get tile height");
+        return NULL;
+    }
+    if (nWKID <= 0)
+    {
+        CPLDebug("WMS", "Did not get WKID");
+        return NULL;
+    }
+    if (!bHasMinX)
+    {
+        CPLDebug("WMS", "Did not get min x");
+        return NULL;
+    }
+    if (!bHasMaxY)
+    {
+        CPLDebug("WMS", "Did not get max y");
+        return NULL;
+    }
+    
+    if (nWKID == 102100)
+        nWKID = 3857;
+
+    const char* pszEndURL = strstr(pszURL, "/MapServer?f=json");
+    CPLAssert(pszEndURL);
+    CPLString osURL(pszURL);
+    osURL.resize(pszEndURL - pszURL);
+
+    double dfMaxX = dfMinX + dfBaseResolution * nTileWidth;
+    double dfMinY = dfMaxY - dfBaseResolution * nTileHeight;
+
+    int nTileCountX = 1;
+    if (fabs(dfMinX - -180) < 1e-4 && fabs(dfMaxY - 90) < 1e-4 &&
+        fabs(dfMinY - -90) < 1e-4)
+    {
+        nTileCountX = 2;
+        dfMaxX = 180;
+    }
+
+    CPLString osXML = CPLSPrintf(
+            "<GDAL_WMS>\n"
+            "  <Service name=\"TMS\">\n"
+            "    <ServerUrl>%s/MapServer/tile/${z}/${y}/${x}</ServerUrl>\n"
+            "  </Service>\n"
+            "  <DataWindow>\n"
+            "    <UpperLeftX>%.8f</UpperLeftX>\n"
+            "    <UpperLeftY>%.8f</UpperLeftY>\n"
+            "    <LowerRightX>%.8f</LowerRightX>\n"
+            "    <LowerRightY>%.8f</LowerRightY>\n"
+            "    <TileLevel>%d</TileLevel>\n"
+            "    <TileCountX>%d</TileCountX>\n"
+            "    <YOrigin>top</YOrigin>\n"
+            "  </DataWindow>\n"
+            "  <Projection>EPSG:%d</Projection>\n"
+            "  <BlockSizeX>%d</BlockSizeX>\n"
+            "  <BlockSizeY>%d</BlockSizeY>\n"
+            "  <Cache/>\n"
+            "</GDAL_WMS>\n",
+            osURL.c_str(),
+            dfMinX, dfMaxY, dfMaxX, dfMinY,
+            nLevelCount,
+            nTileCountX,
+            nWKID,
+            nTileWidth, nTileHeight);
+    CPLDebug("WMS", "Opening TMS :\n%s", osXML.c_str());
+
+    return CPLParseXMLString(osXML);
+}
+
+/************************************************************************/
 /*                             Identify()                               */
 /************************************************************************/
 
@@ -361,6 +519,12 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
     {
         return TRUE;
     }
+    else if (poOpenInfo->nHeaderBytes == 0 &&
+             EQUALN(pszFilename, "http", 4) &&
+             strstr(pszFilename, "/MapServer?f=json") != NULL)
+    {
+        return TRUE;
+    }
     else
         return FALSE;
 }
@@ -387,6 +551,29 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         config = CPLParseXMLFile(pszFilename);
     }
+    else if (poOpenInfo->nHeaderBytes == 0 &&
+             (EQUALN(pszFilename, "WMS:http", 8) ||
+              EQUALN(pszFilename, "http", 4)) &&
+             strstr(pszFilename, "/MapServer?f=json") != NULL)
+    {
+        if (EQUALN(pszFilename, "WMS:http", 8))
+            pszFilename += 4;
+        CPLString osURL(pszFilename);
+        if (strstr(pszFilename, "&pretty=true") == NULL)
+            osURL += "&pretty=true";
+        CPLHTTPResult *psResult = CPLHTTPFetch(osURL.c_str(), NULL);
+        if (psResult == NULL)
+            return NULL;
+        if (psResult->pabyData == NULL)
+        {
+            CPLHTTPDestroyResult(psResult);
+            return NULL;
+        }
+        config = GDALWMSDatasetGetConfigFromArcGISJSON(osURL,
+                                                       (const char*)psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+    }
+
     else if (poOpenInfo->nHeaderBytes == 0 &&
              (EQUALN(pszFilename, "WMS:", 4) ||
               CPLString(pszFilename).ifind("SERVICE=WMS") != std::string::npos))
