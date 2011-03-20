@@ -117,6 +117,7 @@ class PNGDataset : public GDALPamDataset
 
     int         bHasTriedLoadWorldFile;
     void        LoadWorldFile();
+    CPLString   osWldFilename;
 
   public:
                  PNGDataset();
@@ -129,6 +130,8 @@ class PNGDataset : public GDALPamDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
+
+    virtual char **GetFileList(void);
 
     virtual CPLErr GetGeoTransform( double * );
     virtual void FlushCache( void );
@@ -995,14 +998,43 @@ void PNGDataset::LoadWorldFile()
         return;
     bHasTriedLoadWorldFile = TRUE;
 
+    char* pszWldFilename = NULL;
     bGeoTransformValid =
         GDALReadWorldFile2( GetDescription(), NULL,
-                           adfGeoTransform, oOvManager.GetSiblingFiles() );
+                            adfGeoTransform, oOvManager.GetSiblingFiles(),
+                            &pszWldFilename);
 
     if( !bGeoTransformValid )
         bGeoTransformValid =
             GDALReadWorldFile2( GetDescription(), ".wld",
-                               adfGeoTransform, oOvManager.GetSiblingFiles() );
+                                adfGeoTransform, oOvManager.GetSiblingFiles(),
+                                &pszWldFilename);
+
+    if (pszWldFilename)
+    {
+        osWldFilename = pszWldFilename;
+        CPLFree(pszWldFilename);
+    }
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **PNGDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    LoadWorldFile();
+
+    if (osWldFilename.size() != 0 &&
+        CSLFindString(papszFileList, osWldFilename) == -1)
+    {
+        papszFileList = CSLAddString( papszFileList, osWldFilename );
+    }
+
+    return papszFileList;
 }
 
 /************************************************************************/

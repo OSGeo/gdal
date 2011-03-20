@@ -1442,18 +1442,21 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
 
 {
     return GDALReadTabFile2(pszBaseFilename, padfGeoTransform,
-                                       ppszWKT, pnGCPCount, ppasGCPs,
-                                       NULL);
+                            ppszWKT, pnGCPCount, ppasGCPs,
+                            NULL, NULL);
 }
 
 
 int GDALReadTabFile2( const char * pszBaseFilename,
-                                 double *padfGeoTransform, char **ppszWKT,
-                                 int *pnGCPCount, GDAL_GCP **ppasGCPs,
-                                 char** papszSiblingFiles )
+                      double *padfGeoTransform, char **ppszWKT,
+                      int *pnGCPCount, GDAL_GCP **ppasGCPs,
+                      char** papszSiblingFiles, char** ppszTabFileNameOut )
 {
     const char	*pszTAB;
     VSILFILE	*fpTAB;
+
+    if (ppszTabFileNameOut)
+        *ppszTabFileNameOut = NULL;
 
     pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
 
@@ -1464,8 +1467,13 @@ int GDALReadTabFile2( const char * pszBaseFilename,
         {
             CPLString osTabFilename = CPLFormFilename(CPLGetPath(pszBaseFilename),
                                             papszSiblingFiles[iSibling], NULL);
-            return GDALLoadTabFile(osTabFilename, padfGeoTransform, ppszWKT,
-                                   pnGCPCount, ppasGCPs );
+            if ( GDALLoadTabFile(osTabFilename, padfGeoTransform, ppszWKT,
+                                 pnGCPCount, ppasGCPs ) )
+            {
+                if (ppszTabFileNameOut)
+                    *ppszTabFileNameOut = CPLStrdup(osTabFilename);
+                return TRUE;
+            }
         }
         return FALSE;
     }
@@ -1490,8 +1498,14 @@ int GDALReadTabFile2( const char * pszBaseFilename,
 /* -------------------------------------------------------------------- */
 /*      We found the file, now load and parse it.                       */
 /* -------------------------------------------------------------------- */
-    return GDALLoadTabFile( pszTAB, padfGeoTransform, ppszWKT,
-                            pnGCPCount, ppasGCPs );
+    if (GDALLoadTabFile( pszTAB, padfGeoTransform, ppszWKT,
+                         pnGCPCount, ppasGCPs ) )
+    {
+        if (ppszTabFileNameOut)
+            *ppszTabFileNameOut = CPLStrdup(pszTAB);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /************************************************************************/
@@ -1623,11 +1637,12 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
 
 {
     return GDALReadWorldFile2(pszBaseFilename, pszExtension,
-                                         padfGeoTransform, NULL);
+                              padfGeoTransform, NULL, NULL);
 }
 
 int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
-                                   double *padfGeoTransform, char** papszSiblingFiles )
+                        double *padfGeoTransform, char** papszSiblingFiles,
+                        char** ppszWorldFileNameOut )
 {
     const char  *pszTFW;
     char        szExtUpper[32], szExtLower[32];
@@ -1635,6 +1650,9 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
 
     VALIDATE_POINTER1( pszBaseFilename, "GDALReadWorldFile", FALSE );
     VALIDATE_POINTER1( padfGeoTransform, "GDALReadWorldFile", FALSE );
+
+    if (ppszWorldFileNameOut)
+        *ppszWorldFileNameOut = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't given an extension, try both the unix and          */
@@ -1655,7 +1673,8 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
         szDerivedExtension[3] = '\0';
         
         if( GDALReadWorldFile2( pszBaseFilename, szDerivedExtension,
-                               padfGeoTransform, papszSiblingFiles ) )
+                                padfGeoTransform, papszSiblingFiles,
+                                ppszWorldFileNameOut ) )
             return TRUE;
 
         // unix version - extension + 'w'
@@ -1665,7 +1684,8 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
         strcpy( szDerivedExtension, oBaseExt.c_str() );
         strcat( szDerivedExtension, "w" );
         return GDALReadWorldFile2( pszBaseFilename, szDerivedExtension,
-                                  padfGeoTransform, papszSiblingFiles );
+                                  padfGeoTransform, papszSiblingFiles,
+                                  ppszWorldFileNameOut );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1698,10 +1718,14 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
         {
             CPLString osTFWFilename = CPLFormFilename(CPLGetPath(pszBaseFilename),
                                                 papszSiblingFiles[iSibling], NULL);
-            return GDALLoadWorldFile( osTFWFilename, padfGeoTransform );
+            if (GDALLoadWorldFile( osTFWFilename, padfGeoTransform ))
+            {
+                if (ppszWorldFileNameOut)
+                    *ppszWorldFileNameOut = CPLStrdup(osTFWFilename);
+                return TRUE;
+            }
         }
-        else
-            return FALSE;
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1722,7 +1746,13 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
 /* -------------------------------------------------------------------- */
 /*      We found the file, now load and parse it.                       */
 /* -------------------------------------------------------------------- */
-    return GDALLoadWorldFile( pszTFW, padfGeoTransform );
+    if (GDALLoadWorldFile( pszTFW, padfGeoTransform ))
+    {
+        if (ppszWorldFileNameOut)
+            *ppszWorldFileNameOut = CPLStrdup(pszTFW);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /************************************************************************/
