@@ -539,13 +539,16 @@ def wms_14():
     return 'success'
 
 ###############################################################################
-# Test reading ArcGIS MapServer JSon definition
+# Test reading ArcGIS MapServer JSon definition and CreateCopy()
 
 def wms_15():
 
     if gdaltest.wms_drv is None:
         return 'skip'
-    ds = gdal.Open( "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true")
+    src_ds = gdal.Open( "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true")
+    ds = gdal.GetDriverByName("WMS").CreateCopy("/vsimem/wms.xml", src_ds)
+    src_ds = None
+
     if ds is None:
         return' fail'
 
@@ -581,6 +584,9 @@ def wms_15():
         gdaltest.post_reason( 'bad block size' )
         print("(%d, %d)" % (block_xsize, block_ysize))
         return 'fail'
+
+    ds = None
+    gdal.Unlink("/vsimem/wms.xml")
 
     return 'success'
 
