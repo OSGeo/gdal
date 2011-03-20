@@ -203,7 +203,9 @@ void GDALDefaultOverviews::OverviewScan()
 
         if( bExists )
         {
-            poODS = (GDALDataset*) GDALOpen( osOvrFilename, poDS->GetAccess() );
+            GDALOpenInfo oOpenInfo(osOvrFilename, poDS->GetAccess(),
+                                   papszInitSiblingFiles);
+            poODS = (GDALDataset*) GDALOpenInternal( oOpenInfo, NULL );
         }
     }
 
@@ -217,8 +219,28 @@ void GDALDefaultOverviews::OverviewScan()
 /* -------------------------------------------------------------------- */
     if( !poODS && !EQUAL(pszInitName,":::VIRTUAL:::") )
     {
-        poODS = GDALFindAssociatedAuxFile( pszInitName, poDS->GetAccess(),
-                                           poDS );
+        int bTryFindAssociatedAuxFile = TRUE;
+        if( papszInitSiblingFiles )
+        {
+            CPLString osAuxFilename = CPLResetExtension( pszInitName, "aux");
+            int iSibling = CSLFindString( papszInitSiblingFiles,
+                                        CPLGetFilename(osAuxFilename) );
+            if( iSibling < 0 )
+            {
+                osAuxFilename = pszInitName;
+                osAuxFilename += ".aux";
+                iSibling = CSLFindString( papszInitSiblingFiles,
+                                        CPLGetFilename(osAuxFilename) );
+                if( iSibling < 0 )
+                    bTryFindAssociatedAuxFile = FALSE;
+            }
+        }
+
+        if (bTryFindAssociatedAuxFile)
+        {
+            poODS = GDALFindAssociatedAuxFile( pszInitName, poDS->GetAccess(),
+                                            poDS );
+        }
 
         if( poODS )
         {
@@ -992,7 +1014,9 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    poMaskDS = (GDALDataset *) GDALOpen( osMskFilename, poDS->GetAccess() );
+    GDALOpenInfo oOpenInfo(osMskFilename, poDS->GetAccess(),
+                           papszInitSiblingFiles);
+    poMaskDS = (GDALDataset *) GDALOpenInternal( oOpenInfo, NULL );
     CPLAssert( poMaskDS != poDS );
 
     if( poMaskDS == NULL )

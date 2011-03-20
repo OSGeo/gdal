@@ -203,6 +203,35 @@ class CPL_DLL GDALDefaultOverviews
     int        HaveMaskFile( char **papszSiblings = NULL, 
                              const char *pszBasename = NULL );
 
+    char**     GetSiblingFiles() { return papszInitSiblingFiles; }
+};
+
+/* ******************************************************************** */
+/*                             GDALOpenInfo                             */
+/*                                                                      */
+/*      Structure of data about dataset for open functions.             */
+/* ******************************************************************** */
+
+class CPL_DLL GDALOpenInfo
+{
+  public:
+                GDALOpenInfo( const char * pszFile, GDALAccess eAccessIn,
+                              char **papszSiblingFiles = NULL );
+                ~GDALOpenInfo( void );
+
+    char        *pszFilename;
+    char        **papszSiblingFiles;
+
+    GDALAccess  eAccess;
+
+    int         bStatOK;
+    int         bIsDirectory;
+
+    FILE        *fp;
+
+    int         nHeaderBytes;
+    GByte       *pabyHeader;
+
 };
 
 /* ******************************************************************** */
@@ -211,6 +240,8 @@ class CPL_DLL GDALDefaultOverviews
 
 /* Internal method for now. Might be subject to later revisions */
 GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
+                               const char* const * papszAllowedDrivers);
+GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
                                const char* const * papszAllowedDrivers);
 
 //! A set of associated raster bands, usually from one file.
@@ -222,6 +253,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     /* Internal method for now. Might be subject to later revisions */
     friend GDALDatasetH GDALOpenInternal( const char *, GDALAccess, const char* const * papszAllowedDrivers);
+    friend GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
+                                          const char* const * papszAllowedDrivers);
 
     friend class GDALDriver;
     friend class GDALDefaultOverviews;
@@ -621,34 +654,6 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
 };
 
 /* ******************************************************************** */
-/*                             GDALOpenInfo                             */
-/*                                                                      */
-/*      Structure of data about dataset for open functions.             */
-/* ******************************************************************** */
-
-class CPL_DLL GDALOpenInfo
-{
-  public:
-                GDALOpenInfo( const char * pszFile, GDALAccess eAccessIn,
-                              char **papszSiblingFiles = NULL );
-                ~GDALOpenInfo( void );
-    
-    char        *pszFilename;
-    char        **papszSiblingFiles;
-
-    GDALAccess  eAccess;
-
-    int         bStatOK;
-    int         bIsDirectory;
-
-    FILE        *fp;
-
-    int         nHeaderBytes;
-    GByte       *pabyHeader;
-
-};
-
-/* ******************************************************************** */
 /*                              GDALDriver                              */
 /* ******************************************************************** */
 
@@ -906,6 +911,13 @@ int CPL_DLL GDALCheckBandCount( int nBands, int bIsZeroAllowed );
 #define EQUAL_TO_NODATA(dfValue, dfNoDataValue) \
  (dfValue == dfNoDataValue || (dfNoDataValue != 0 && fabs(1 - dfValue / dfNoDataValue) < 1e-10 ))
 
+/* Internal use only */
+int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
+                                   double *padfGeoTransform, char** papszSiblingFiles );
+int GDALReadTabFile2( const char * pszBaseFilename,
+                                 double *padfGeoTransform, char **ppszWKT,
+                                 int *pnGCPCount, GDAL_GCP **ppasGCPs,
+                                 char** papszSiblingFiles );
 
 CPL_C_END
 
