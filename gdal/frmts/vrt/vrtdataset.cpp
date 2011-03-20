@@ -66,6 +66,8 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
     
     GDALRegister_VRT();
     poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
+
+    bCompatibleForDatasetIO = -1;
 }
 
 /************************************************************************/
@@ -1139,4 +1141,131 @@ int VRTDataset::CloseDependentDatasets()
                                                 CloseDependentDatasets();
     }
     return bHasDroppedRef;
+}
+
+/************************************************************************/
+/*                      CheckCompatibleForDatasetIO()                   */
+/************************************************************************/
+
+/* We will return TRUE only if all the bands are VRTSourcedRasterBands */
+/* made of identical sources, that are strictly VRTSimpleSource, and that */
+/* the band number of each source is the band number of the VRTSouredRasterBand */
+
+int VRTDataset::CheckCompatibleForDatasetIO()
+{
+    int iBand;
+    int nSources = 0;
+    VRTSource    **papoSources = NULL;
+    for(iBand = 0; iBand < nBands; iBand++)
+    {
+        if (!((VRTRasterBand *) papoBands[iBand])->IsSourcedRasterBand())
+            return FALSE;
+
+        VRTSourcedRasterBand* poBand = (VRTSourcedRasterBand* )papoBands[iBand];
+
+        /* If there are overviews, let's VRTSourcedRasterBand::IRasterIO() */
+        /* do the job */
+        if (poBand->GetOverviewCount() != 0)
+            return FALSE;
+
+        if (iBand == 0)
+        {
+            nSources = poBand->nSources;
+            papoSources = poBand->papoSources;
+            for(int iSource = 0; iSource < nSources; iSource++)
+            {
+                if (!papoSources[iSource]->IsSimpleSource())
+                    return FALSE;
+
+                VRTSimpleSource* poSource = (VRTSimpleSource* )papoSources[iSource];
+                if (!EQUAL(poSource->GetType(), "SimpleSource"))
+                    return FALSE;
+                if (poSource->GetBand() == NULL)
+                    return FALSE;
+                if (poSource->GetBand()->GetBand() != iBand + 1)
+                    return FALSE;
+            }
+        }
+        else if (nSources != poBand->nSources)
+        {
+            return FALSE;
+        }
+        else
+        {
+            for(int iSource = 0; iSource < nSources; iSource++)
+            {
+                VRTSimpleSource* poRefSource = (VRTSimpleSource* )papoSources[iSource];
+                VRTSimpleSource* poSource = (VRTSimpleSource* )poBand->papoSources[iSource];
+                if (!EQUAL(poSource->GetType(), "SimpleSource"))
+                    return FALSE;
+                if (!poSource->IsSameExceptBandNumber(poRefSource))
+                    return FALSE;
+                if (poSource->GetBand() == NULL)
+                    return FALSE;
+                if (poSource->GetBand()->GetBand() != iBand + 1)
+                    return FALSE;
+            }
+        }
+    }
+
+    return nSources != 0;
+}
+
+/************************************************************************/
+/*                              IRasterIO()                             */
+/************************************************************************/
+
+CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               int nBandCount, int *panBandMap,
+                               int nPixelSpace, int nLineSpace, int nBandSpace)
+{
+    if (bCompatibleForDatasetIO < 0)
+    {
+        bCompatibleForDatasetIO = CheckCompatibleForDatasetIO();
+    }
+    if (bCompatibleForDatasetIO && eRWFlag == GF_Read && nBandCount > 1)
+    {
+        for(int iBandIndex=0; iBandIndex<nBandCount; iBandIndex++)
+        {
+            VRTSourcedRasterBand* poBand =
+                    (VRTSourcedRasterBand*)GetRasterBand(panBandMap[iBandIndex]);
+
+            /* Dirty little trick to initialize the buffer without doing */
+            /* any real I/O */
+            int nSavedSources = poBand->nSources;
+            poBand->nSources = 0;
+
+            GByte *pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
+            poBand->IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
+                                pabyBandData, nBufXSize, nBufYSize,
+                                eBufType,
+                                nPixelSpace, nLineSpace);
+
+            poBand->nSources = nSavedSources;
+        }
+
+        CPLErr eErr = CE_None;
+        /* Use the last band, because when sources reference a GDALProxyDataset, they */
+        /* don't necessary instanciate all underlying rasterbands */
+        VRTSourcedRasterBand* poBand = (VRTSourcedRasterBand* )papoBands[nBands - 1];
+        for(int iSource = 0; eErr == CE_None && iSource < poBand->nSources; iSource++)
+        {
+            VRTSimpleSource* poSource = (VRTSimpleSource* )poBand->papoSources[iSource];
+            eErr = poSource->DatasetRasterIO( nXOff, nYOff, nXSize, nYSize,
+                                              pData, nBufXSize, nBufYSize,
+                                              eBufType,
+                                              nBandCount, panBandMap,
+                                              nPixelSpace, nLineSpace, nBandSpace);
+        }
+        return eErr;
+    }
+
+    return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                  pData, nBufXSize, nBufYSize,
+                                  eBufType,
+                                  nBandCount, panBandMap,
+                                  nPixelSpace, nLineSpace, nBandSpace);
 }
