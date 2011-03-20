@@ -72,6 +72,7 @@ VRTSimpleSource::VRTSimpleSource()
     poRasterBand = NULL;
     poMaskBandMainBand = NULL;
     bNoDataSet = FALSE;
+    dfNoDataValue = VRT_NODATA_UNSET;
 }
 
 /************************************************************************/
@@ -506,6 +507,38 @@ void VRTSimpleSource::GetFileList(char*** ppapszFileList, int *pnSize,
 }
 
 /************************************************************************/
+/*                             GetBand()                                */
+/************************************************************************/
+
+GDALRasterBand* VRTSimpleSource::GetBand()
+{
+    return poMaskBandMainBand ? NULL : poRasterBand;
+}
+
+/************************************************************************/
+/*                       IsSameExceptBandNumber()                       */
+/************************************************************************/
+
+int VRTSimpleSource::IsSameExceptBandNumber(VRTSimpleSource* poOtherSource)
+{
+    return nSrcXOff == poOtherSource->nSrcXOff &&
+           nSrcYOff == poOtherSource->nSrcYOff &&
+           nSrcXSize == poOtherSource->nSrcXSize &&
+           nSrcYSize == poOtherSource->nSrcYSize &&
+           nDstXOff == poOtherSource->nDstXOff &&
+           nDstYOff == poOtherSource->nDstYOff &&
+           nDstXSize == poOtherSource->nDstXSize &&
+           nDstYSize == poOtherSource->nDstYSize &&
+           bNoDataSet == poOtherSource->bNoDataSet &&
+           dfNoDataValue == poOtherSource->dfNoDataValue &&
+           GetBand() != NULL && poOtherSource->GetBand() != NULL &&
+           GetBand()->GetDataset() != NULL &&
+           poOtherSource->GetBand()->GetDataset() != NULL &&
+           EQUAL(GetBand()->GetDataset()->GetDescription(),
+                 poOtherSource->GetBand()->GetDataset()->GetDescription());
+}
+
+/************************************************************************/
 /*                              SrcToDst()                              */
 /*                                                                      */
 /*      Note: this is a no-op if the dst window is -1,-1,-1,-1.         */
@@ -771,6 +804,52 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                 eBufType, nPixelSpace, nLineSpace );
 
     return eErr;
+}
+
+/************************************************************************/
+/*                          DatasetRasterIO()                           */
+/************************************************************************/
+
+CPLErr VRTSimpleSource::DatasetRasterIO(
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               int nBandCount, int *panBandMap,
+                               int nPixelSpace, int nLineSpace, int nBandSpace)
+{
+    if (!EQUAL(GetType(), "SimpleSource"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "DatasetRasterIO() not implemented for %s", GetType());
+        return CE_Failure;
+    }
+
+    // The window we will actually request from the source raster band.
+    int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
+
+    // The window we will actual set _within_ the pData buffer.
+    int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
+
+    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize,
+                          nBufXSize, nBufYSize,
+                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
+    {
+        return CE_None;
+    }
+
+    GDALDataset* poDS = poRasterBand->GetDataset();
+    if (poDS == NULL)
+        return CE_Failure;
+
+    return poDS->RasterIO( GF_Read,
+                           nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                           ((unsigned char *) pData)
+                           + nOutXOff * nPixelSpace
+                           + nOutYOff * nLineSpace,
+                           nOutXSize, nOutYSize,
+                           eBufType, nBandCount, panBandMap,
+                           nPixelSpace, nLineSpace, nBandSpace );
 }
 
 /************************************************************************/
