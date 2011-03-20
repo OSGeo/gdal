@@ -1441,13 +1441,38 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
 
 
 {
+    return GDALReadTabFile2(pszBaseFilename, padfGeoTransform,
+                                       ppszWKT, pnGCPCount, ppasGCPs,
+                                       NULL);
+}
+
+
+int GDALReadTabFile2( const char * pszBaseFilename,
+                                 double *padfGeoTransform, char **ppszWKT,
+                                 int *pnGCPCount, GDAL_GCP **ppasGCPs,
+                                 char** papszSiblingFiles )
+{
     const char	*pszTAB;
     VSILFILE	*fpTAB;
+
+    pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
+
+    if (papszSiblingFiles)
+    {
+        int iSibling = CSLFindString(papszSiblingFiles, CPLGetFilename(pszTAB));
+        if (iSibling >= 0)
+        {
+            CPLString osTabFilename = CPLFormFilename(CPLGetPath(pszBaseFilename),
+                                            papszSiblingFiles[iSibling], NULL);
+            return GDALLoadTabFile(osTabFilename, padfGeoTransform, ppszWKT,
+                                   pnGCPCount, ppasGCPs );
+        }
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try lower case, then upper case.                                */
 /* -------------------------------------------------------------------- */
-    pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
 
     fpTAB = VSIFOpenL( pszTAB, "rt" );
 
@@ -1597,6 +1622,13 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
                    double *padfGeoTransform )
 
 {
+    return GDALReadWorldFile2(pszBaseFilename, pszExtension,
+                                         padfGeoTransform, NULL);
+}
+
+int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
+                                   double *padfGeoTransform, char** papszSiblingFiles )
+{
     const char  *pszTFW;
     char        szExtUpper[32], szExtLower[32];
     int         i;
@@ -1622,8 +1654,8 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
         szDerivedExtension[2] = 'w';
         szDerivedExtension[3] = '\0';
         
-        if( GDALReadWorldFile( pszBaseFilename, szDerivedExtension, 
-                               padfGeoTransform ) )
+        if( GDALReadWorldFile2( pszBaseFilename, szDerivedExtension,
+                               padfGeoTransform, papszSiblingFiles ) )
             return TRUE;
 
         // unix version - extension + 'w'
@@ -1632,8 +1664,8 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
 
         strcpy( szDerivedExtension, oBaseExt.c_str() );
         strcat( szDerivedExtension, "w" );
-        return GDALReadWorldFile( pszBaseFilename, szDerivedExtension, 
-                                  padfGeoTransform );
+        return GDALReadWorldFile2( pszBaseFilename, szDerivedExtension,
+                                  padfGeoTransform, papszSiblingFiles );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1654,13 +1686,27 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
         szExtLower[i] = (char) tolower(szExtLower[i]);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try lower case, then upper case.                                */
-/* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
     int bGotTFW;
 
     pszTFW = CPLResetExtension( pszBaseFilename, szExtLower );
+
+    if (papszSiblingFiles)
+    {
+        int iSibling = CSLFindString(papszSiblingFiles, CPLGetFilename(pszTFW));
+        if (iSibling >= 0)
+        {
+            CPLString osTFWFilename = CPLFormFilename(CPLGetPath(pszBaseFilename),
+                                                papszSiblingFiles[iSibling], NULL);
+            return GDALLoadWorldFile( osTFWFilename, padfGeoTransform );
+        }
+        else
+            return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try lower case, then upper case.                                */
+/* -------------------------------------------------------------------- */
 
     bGotTFW = VSIStatExL( pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0;
 
