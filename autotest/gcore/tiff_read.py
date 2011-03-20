@@ -566,7 +566,13 @@ Definition Table
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('tmp/tiff_read_from_tab.tif')
-    os.remove('tmp/tiff_read_from_tab.tab')
+
+    try:
+        os.stat('tmp/tiff_read_from_tab.tab')
+        gdaltest.post_reason('did not expect to find .tab file at that point')
+        return 'fail'
+    except:
+        pass
 
     if gt != (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0):
         gdaltest.post_reason('did not get expected geotransform')
