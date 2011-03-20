@@ -326,12 +326,11 @@ class GTiffDataset : public GDALPamDataset
     int           bClipWarn;
 
     CPLString     osRPBFile;
-    int           FindRPBFile(char** papszSiblingFiles);
+    int           FindRPBFile();
     CPLString     osRPCFile;
-    int           FindRPCFile(char** papszSiblingFiles);
+    int           FindRPCFile();
     CPLString     osIMDFile;
-    int           FindIMDFile(char** papszSiblingFiles);
-    int           bSiblingFilesAreNull; /* set to true if no sibling file list is provided to Open() */
+    int           FindIMDFile();
     int           bHasSearchedRPC;
     void          LoadRPCRPB();
     int           bHasSearchedIMD;
@@ -2811,7 +2810,6 @@ GTiffDataset::GTiffDataset()
     bIsFinalized = FALSE;
     bIgnoreReadErrors = CSLTestBoolean(CPLGetConfigOption("GTIFF_IGNORE_READ_ERRORS", "NO"));
 
-    bSiblingFilesAreNull = FALSE;
     bHasSearchedRPC = FALSE;
     bHasSearchedIMD = FALSE;
 }
@@ -5182,7 +5180,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->TryLoadXML();
+    poDS->TryLoadXML( poOpenInfo->papszSiblingFiles);
     poDS->ApplyPamInfo();
 
     int i;
@@ -5210,7 +5208,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, pszFilename );
+    poDS->oOvManager.Initialize( poDS, pszFilename, poOpenInfo->papszSiblingFiles );
     
     return poDS;
 }
@@ -5580,8 +5578,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     bBase = bBaseIn;
 
     this->eAccess = eAccess;
-
-    bSiblingFilesAreNull = (papszSiblingFiles == NULL);
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -5957,20 +5953,23 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
         else
         {
-            bGeoTransformValid = 
-                GDALReadWorldFile( osFilename, NULL, adfGeoTransform );
+            bGeoTransformValid =
+                GDALReadWorldFile2( osFilename, NULL, adfGeoTransform,
+                                    papszSiblingFiles);
 
             if( !bGeoTransformValid )
             {
-                bGeoTransformValid = 
-                    GDALReadWorldFile( osFilename, "wld", adfGeoTransform );
+                bGeoTransformValid =
+                    GDALReadWorldFile2( osFilename, "wld", adfGeoTransform,
+                                        papszSiblingFiles);
             }
 
             if( !bGeoTransformValid )
             {
-                int bTabFileOK = 
-                    GDALReadTabFile( osFilename, adfGeoTransform, 
-                                     &pszTabWKT, &nGCPCount, &pasGCPList );
+                int bTabFileOK =
+                    GDALReadTabFile2( osFilename, adfGeoTransform,
+                                      &pszTabWKT, &nGCPCount, &pasGCPList,
+                                      papszSiblingFiles );
 
                 if( bTabFileOK && nGCPCount == 0 )
                     bGeoTransformValid = TRUE;
@@ -6237,19 +6236,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     }
 
     bMetadataChanged = FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      If we have a sibling file list, try to detect the presence      */
-/*      of RPB/RPC/IMD files, but don't load them for now. Just memorize*/
-/*      the filenames. If the sibling file list is not provided, the    */
-/*      look-up will be done only when they are needed                  */
-/* -------------------------------------------------------------------- */
-    if( bBaseIn && papszSiblingFiles != NULL)
-    {
-        FindRPBFile(papszSiblingFiles);
-        FindRPCFile(papszSiblingFiles);
-        FindIMDFile(papszSiblingFiles);
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Check for NODATA                                                */
@@ -8340,10 +8326,11 @@ void *GTiffDataset::GetInternalHandle( const char * /* pszHandleName */ )
 /*                           FindRPBFile()                             */
 /************************************************************************/
 
-int GTiffDataset::FindRPBFile(char** papszSiblingFiles)
+int GTiffDataset::FindRPBFile()
 {
     CPLString osTarget = CPLResetExtension( osFilename, "RPB" );
 
+    char** papszSiblingFiles = oOvManager.GetSiblingFiles();
     if( papszSiblingFiles == NULL )
     {
         VSIStatBufL sStatBuf;
@@ -8376,7 +8363,7 @@ int GTiffDataset::FindRPBFile(char** papszSiblingFiles)
 /*                           FindRPCFile()                             */
 /************************************************************************/
 
-int GTiffDataset::FindRPCFile(char** papszSiblingFiles)
+int GTiffDataset::FindRPCFile()
 {
     CPLString osSrcPath = osFilename;
     CPLString soPt(".");
@@ -8386,6 +8373,7 @@ int GTiffDataset::FindRPCFile(char** papszSiblingFiles)
     osSrcPath.replace (found, osSrcPath.size() - found, "_rpc.txt");
     CPLString osTarget = osSrcPath; 
 
+    char** papszSiblingFiles = oOvManager.GetSiblingFiles();
     if( papszSiblingFiles == NULL )
     {
         VSIStatBufL sStatBuf;
@@ -8428,10 +8416,11 @@ int GTiffDataset::FindRPCFile(char** papszSiblingFiles)
 /*                           FindIMDFile()                             */
 /************************************************************************/
 
-int GTiffDataset::FindIMDFile(char** papszSiblingFiles)
+int GTiffDataset::FindIMDFile()
 {
     CPLString osTarget = CPLResetExtension( osFilename, "IMD" );
 
+    char** papszSiblingFiles = oOvManager.GetSiblingFiles();
     if( papszSiblingFiles == NULL )
     {
         VSIStatBufL sStatBuf;
@@ -8472,12 +8461,11 @@ void GTiffDataset::LoadRPCRPB()
 
     char **papszRPCMD = NULL;
     /* Read Digital Globe .RPB file */
-    if (osRPBFile.size() != 0 || (bSiblingFilesAreNull && FindRPBFile(NULL)))
+    if (FindRPBFile())
         papszRPCMD = GDALLoadRPBFile( osRPBFile.c_str(), NULL );
 
     /* Read GeoEye _rpc.txt file */
-    if(papszRPCMD == NULL &&
-        (osRPCFile.size() != 0 || (bSiblingFilesAreNull && FindRPCFile(NULL))))
+    if(papszRPCMD == NULL && FindRPCFile())
         papszRPCMD = GDALLoadRPCFile( osRPCFile.c_str(), NULL );
 
     if( papszRPCMD != NULL )
@@ -8500,7 +8488,7 @@ void GTiffDataset::LoadIMD()
 
     bHasSearchedIMD = TRUE;
 
-    if (osIMDFile.size() != 0 || (bSiblingFilesAreNull && FindIMDFile(NULL)))
+    if (FindIMDFile())
     {
         char **papszIMDMD = GDALLoadIMDFile( osIMDFile.c_str(), NULL );
 
@@ -8521,13 +8509,8 @@ char **GTiffDataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    /* If GDAL_DISABLE_READDIR_ON_OPEN has been set, we potentially haven't */
-    /* looked for the presence of RPC/RPB/IMD files, so we have to do it now */
-    if (bSiblingFilesAreNull)
-    {
-        LoadRPCRPB();
-        LoadIMD();
-    }
+    LoadRPCRPB();
+    LoadIMD();
 
     if (osIMDFile.size() != 0)
         papszFileList = CSLAddString( papszFileList, osIMDFile );
