@@ -635,7 +635,7 @@ const char *GDALPamDataset::BuildPamFilename()
 /*                             TryLoadXML()                             */
 /************************************************************************/
 
-CPLErr GDALPamDataset::TryLoadXML()
+CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
 
 {
     CPLXMLNode *psTree = NULL;
@@ -660,6 +660,19 @@ CPLErr GDALPamDataset::TryLoadXML()
 
     VSIStatBufL sStatBuf;
 
+    if (papszSiblingFiles != NULL)
+    {
+        int iSibling = CSLFindString( papszSiblingFiles,
+                                      CPLGetFilename(psPam->pszPamFilename) );
+        if( iSibling >= 0 )
+        {
+            CPLErrorReset();
+            CPLPushErrorHandler( CPLQuietErrorHandler );
+            psTree = CPLParseXMLFile( psPam->pszPamFilename );
+            CPLPopErrorHandler();
+        }
+    }
+    else
     if( VSIStatExL( psPam->pszPamFilename, &sStatBuf,
                     VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0
         && VSI_ISREG( sStatBuf.st_mode ) )
@@ -705,7 +718,7 @@ CPLErr GDALPamDataset::TryLoadXML()
 /*      If we fail, try .aux.                                           */
 /* -------------------------------------------------------------------- */
     if( psTree == NULL )
-        return TryLoadAux();
+        return TryLoadAux(papszSiblingFiles);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize ourselves from this XML tree.                        */
@@ -1002,18 +1015,29 @@ char **GDALPamDataset::GetFileList()
     VSIStatBufL sStatBuf;
     char **papszFileList = GDALDataset::GetFileList();
 
-    if( psPam && psPam->osPhysicalFilename.size() > 0 
+    if( psPam && psPam->osPhysicalFilename.size() > 0
         && CSLFindString( papszFileList, psPam->osPhysicalFilename ) == -1 )
     {
         papszFileList = CSLInsertString( papszFileList, 0, 
                                          psPam->osPhysicalFilename );
     }
 
-    if( psPam && psPam->pszPamFilename 
-        && (nPamFlags & GPF_DIRTY 
-            || VSIStatExL( psPam->pszPamFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0) )
+    if( psPam && psPam->pszPamFilename )
     {
-        papszFileList = CSLAddString( papszFileList, psPam->pszPamFilename );
+        int bAddPamFile = (nPamFlags & GPF_DIRTY);
+        if (!bAddPamFile)
+        {
+            if (oOvManager.GetSiblingFiles() != NULL)
+                bAddPamFile = CSLFindString(oOvManager.GetSiblingFiles(),
+                                  CPLGetFilename(psPam->pszPamFilename)) >= 0;
+            else
+                bAddPamFile = VSIStatExL( psPam->pszPamFilename, &sStatBuf,
+                                          VSI_STAT_EXISTS_FLAG ) == 0;
+        }
+        if (bAddPamFile)
+        {
+            papszFileList = CSLAddString( papszFileList, psPam->pszPamFilename );
+        }
     }
 
     if( psPam && psPam->osAuxFilename.size() > 0 &&
@@ -1321,7 +1345,7 @@ char **GDALPamDataset::GetMetadata( const char *pszDomain )
 /*                             TryLoadAux()                             */
 /************************************************************************/
 
-CPLErr GDALPamDataset::TryLoadAux()
+CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
 
 {
 /* -------------------------------------------------------------------- */
@@ -1343,10 +1367,26 @@ CPLErr GDALPamDataset::TryLoadAux()
     if( strlen(pszPhysicalFile) == 0 )
         return CE_None;
 
+    if( papszSiblingFiles )
+    {
+        CPLString osAuxFilename = CPLResetExtension( pszPhysicalFile, "aux");
+        int iSibling = CSLFindString( papszSiblingFiles,
+                                      CPLGetFilename(osAuxFilename) );
+        if( iSibling < 0 )
+        {
+            osAuxFilename = pszPhysicalFile;
+            osAuxFilename += ".aux";
+            iSibling = CSLFindString( papszSiblingFiles,
+                                      CPLGetFilename(osAuxFilename) );
+            if( iSibling < 0 )
+                return CE_None;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try to open .aux file.                                          */
 /* -------------------------------------------------------------------- */
-    GDALDataset *poAuxDS = GDALFindAssociatedAuxFile( pszPhysicalFile, 
+    GDALDataset *poAuxDS = GDALFindAssociatedAuxFile( pszPhysicalFile,
                                                       GA_ReadOnly, this );
 
     if( poAuxDS == NULL )
