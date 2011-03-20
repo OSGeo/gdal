@@ -663,6 +663,42 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     return ds;
 }
+/************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+GDALDataset *GDALWMSDataset::CreateCopy( const char * pszFilename,
+                                         GDALDataset *poSrcDS,
+                                         int bStrict, char ** papszOptions,
+                                         GDALProgressFunc pfnProgress,
+                                         void * pProgressData )
+{
+    if (poSrcDS->GetDriver() == NULL ||
+        !EQUAL(poSrcDS->GetDriver()->GetDescription(), "WMS"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Source dataset must be a WMS dataset");
+        return NULL;
+    }
+
+    const char* pszXML = poSrcDS->GetMetadataItem("XML", "WMS");
+    if (pszXML == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot get XML definition of source WMS dataset");
+        return NULL;
+    }
+
+    VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
+    if (fp == NULL)
+        return NULL;
+
+    VSIFWriteL(pszXML, 1, strlen(pszXML), fp);
+    VSIFCloseL(fp);
+
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    return Open(&oOpenInfo);
+}
 
 /************************************************************************/
 /*                         GDALDeregister_WMS()                         */
@@ -689,6 +725,7 @@ void GDALRegister_WMS() {
         driver->pfnOpen = GDALWMSDataset::Open;
         driver->pfnIdentify = GDALWMSDataset::Identify;
         driver->pfnUnloadDriver = GDALDeregister_WMS;
+        driver->pfnCreateCopy = GDALWMSDataset::CreateCopy;
         GetGDALDriverManager()->RegisterDriver(driver);
 
         GDALWMSMiniDriverManager *const mdm = GetGDALWMSMiniDriverManager();
