@@ -61,6 +61,13 @@ GDALWMSDataset::~GDALWMSDataset() {
 CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;
 
+    char* pszXML = CPLSerializeXMLTree( config );
+    if (pszXML)
+    {
+        m_osXML = pszXML;
+        CPLFree(pszXML);
+    }
+
     // Initialize the minidriver, which can set parameters for the dataset using member functions
     CPLXMLNode *service_node = CPLGetXMLNode(config, "Service");
     if (service_node != NULL) {
@@ -521,4 +528,16 @@ CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx, int b
     GDALRasterBand *band = GetRasterBand(1);
     if (band == NULL) return CE_Failure;
     return band->AdviseRead(x0, y0, sx, sy, bsx, bsy, bdt, options);
+}
+
+const char *GDALWMSDataset::GetMetadataItem( const char * pszName,
+                                             const char * pszDomain )
+{
+    if( pszName != NULL && EQUAL(pszName, "XML") &&
+        pszDomain != NULL && EQUAL(pszDomain, "WMS") )
+    {
+        return (m_osXML.size()) ? m_osXML.c_str() : NULL;
+    }
+
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
