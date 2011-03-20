@@ -146,6 +146,10 @@ class JPGDataset : public GDALPamDataset
     J_COLOR_SPACE eGDALColorSpace;   /* color space exposed by GDAL. Not necessarily the in_color_space nor */
                                      /* the out_color_space of JPEG library */
 
+    int    bIsSubfile;
+    int    bHasTriedLoadWorldFileOrTab;
+    void   LoadWorldFileOrTab();
+
   public:
                  JPGDataset();
                  ~JPGDataset();
@@ -1109,6 +1113,9 @@ JPGDataset::JPGDataset()
     eGDALColorSpace = JCS_UNKNOWN;
 
     sDInfo.data_precision = 8;
+
+    bIsSubfile = FALSE;
+    bHasTriedLoadWorldFileOrTab = FALSE;
 }
 
 /************************************************************************/
@@ -1422,6 +1429,8 @@ void JPGDataset::Restart()
 CPLErr JPGDataset::GetGeoTransform( double * padfTransform )
 
 {
+    LoadWorldFileOrTab();
+
     if( bGeoTransformValid )
     {
         memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
@@ -1439,6 +1448,8 @@ CPLErr JPGDataset::GetGeoTransform( double * padfTransform )
 int JPGDataset::GetGCPCount()
 
 {
+    LoadWorldFileOrTab();
+
     return nGCPCount;
 }
 
@@ -1449,6 +1460,8 @@ int JPGDataset::GetGCPCount()
 const char *JPGDataset::GetGCPProjection()
 
 {
+    LoadWorldFileOrTab();
+
     if( pszProjection && nGCPCount > 0 )
         return pszProjection;
     else
@@ -1462,6 +1475,8 @@ const char *JPGDataset::GetGCPProjection()
 const GDAL_GCP *JPGDataset::GetGCPs()
 
 {
+    LoadWorldFileOrTab();
+
     return pasGCPList;
 }
 
@@ -1864,43 +1879,54 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetDescription( poOpenInfo->pszFilename );
     
     if( !bIsSubfile )
-        poDS->TryLoadXML();
+        poDS->TryLoadXML( poOpenInfo->papszSiblingFiles );
     else
         poDS->nPamFlags |= GPF_NOSAVE;
 
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, real_filename );
+    poDS->oOvManager.Initialize( poDS, real_filename, poOpenInfo->papszSiblingFiles );
 
-/* -------------------------------------------------------------------- */
-/*      Check for world file.                                           */
-/* -------------------------------------------------------------------- */
-    if( !bIsSubfile )
-    {
-        int bEndsWithWld = strlen(poOpenInfo->pszFilename) > 4 &&
-                           EQUAL( poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 4, ".wld");
-        poDS->bGeoTransformValid = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
-                               poDS->adfGeoTransform )
-            || GDALReadWorldFile( poOpenInfo->pszFilename, ".jpw", 
-                                  poDS->adfGeoTransform )
-            || ( !bEndsWithWld && GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
-                                  poDS->adfGeoTransform ));
-
-        if( !poDS->bGeoTransformValid )
-        {
-            int bTabFileOK =
-                GDALReadTabFile( poOpenInfo->pszFilename, poDS->adfGeoTransform,
-                                 &poDS->pszProjection,
-                                 &poDS->nGCPCount, &poDS->pasGCPList );
-            
-            if( bTabFileOK && poDS->nGCPCount == 0 )
-                poDS->bGeoTransformValid = TRUE;
-        }
-    }
+    poDS->bIsSubfile = bIsSubfile;
 
     return poDS;
+}
+
+/************************************************************************/
+/*                       LoadWorldFileOrTab()                           */
+/************************************************************************/
+
+void JPGDataset::LoadWorldFileOrTab()
+{
+    if (!bIsSubfile)
+        return;
+    if (bHasTriedLoadWorldFileOrTab)
+        return;
+    bHasTriedLoadWorldFileOrTab = TRUE;
+
+    /* TIROS3 JPEG files have a .wld extension, so don't look for .wld as */
+    /* as worldfile ! */
+    int bEndsWithWld = strlen(GetDescription()) > 4 &&
+                        EQUAL( GetDescription() + strlen(GetDescription()) - 4, ".wld");
+    bGeoTransformValid =
+        GDALReadWorldFile2( GetDescription(), NULL,
+                            adfGeoTransform, oOvManager.GetSiblingFiles() )
+        || GDALReadWorldFile2( GetDescription(), ".jpw",
+                                adfGeoTransform, oOvManager.GetSiblingFiles() )
+        || ( !bEndsWithWld && GDALReadWorldFile2( GetDescription(), ".wld",
+                                adfGeoTransform, oOvManager.GetSiblingFiles() ));
+
+    if( !bGeoTransformValid )
+    {
+        int bTabFileOK =
+            GDALReadTabFile2( GetDescription(), adfGeoTransform,
+                                &pszProjection,
+                                &nGCPCount, &pasGCPList, oOvManager.GetSiblingFiles() );
+
+        if( bTabFileOK && nGCPCount == 0 )
+            bGeoTransformValid = TRUE;
+    }
 }
 
 /************************************************************************/
