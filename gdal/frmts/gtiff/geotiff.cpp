@@ -358,6 +358,8 @@ class GTiffDataset : public GDALPamDataset
 
     int           bIgnoreReadErrors;
 
+    CPLString     osWldFilename;
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -5953,15 +5955,17 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
         else
         {
+            char* pszWldFilename = NULL;
+
             bGeoTransformValid =
                 GDALReadWorldFile2( osFilename, NULL, adfGeoTransform,
-                                    papszSiblingFiles);
+                                    papszSiblingFiles, &pszWldFilename);
 
             if( !bGeoTransformValid )
             {
                 bGeoTransformValid =
                     GDALReadWorldFile2( osFilename, "wld", adfGeoTransform,
-                                        papszSiblingFiles);
+                                        papszSiblingFiles, &pszWldFilename);
             }
 
             if( !bGeoTransformValid )
@@ -5969,10 +5973,16 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                 int bTabFileOK =
                     GDALReadTabFile2( osFilename, adfGeoTransform,
                                       &pszTabWKT, &nGCPCount, &pasGCPList,
-                                      papszSiblingFiles );
+                                      papszSiblingFiles, &pszWldFilename );
 
                 if( bTabFileOK && nGCPCount == 0 )
                     bGeoTransformValid = TRUE;
+            }
+
+            if (pszWldFilename)
+            {
+                osWldFilename = pszWldFilename;
+                CPLFree(pszWldFilename);
             }
         }
 
@@ -8518,6 +8528,12 @@ char **GTiffDataset::GetFileList()
         papszFileList = CSLAddString( papszFileList, osRPBFile );
     if (osRPCFile.size() != 0)
         papszFileList = CSLAddString( papszFileList, osRPCFile );
+
+    if (osWldFilename.size() != 0 &&
+        CSLFindString(papszFileList, osWldFilename) == -1)
+    {
+        papszFileList = CSLAddString( papszFileList, osWldFilename );
+    }
 
     return papszFileList;
 }

@@ -55,6 +55,8 @@ def jpeg_2():
 
     md = ds.GetMetadata()
 
+    ds.GetFileList()
+
     try:
         if md['EXIF_GPSLatitudeRef'] != 'N' \
            or md['EXIF_GPSLatitude'] != '(41) (1) (22.91)' \
@@ -97,10 +99,11 @@ def jpeg_3():
     ds = gdal.Open('data/byte.tif')
 
     options = ['PROGRESSIVE=YES',
-               'QUALITY=50']
+               'QUALITY=50',
+               'WORLDFILE=YES']
     ds = gdal.GetDriverByName('JPEG').CreateCopy( 'tmp/byte.jpg', ds,
                                                   options = options )
-                                                  
+
     if ds.GetRasterBand(1).Checksum() != 4794:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
@@ -111,9 +114,47 @@ def jpeg_3():
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
+    expected_gt = [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+    gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-6:
+            gdaltest.post_reason('did not get expected geotransform from PAM')
+            print(gt)
+            return 'fail'
+
     ds = None
+
+    os.unlink( 'tmp/byte.jpg.aux.xml' )
+
+    try:
+        os.stat('tmp/byte.wld')
+    except:
+        gdaltest.post_reason('should have .wld file at that point')
+        return 'fail'
+
+    ds = gdal.Open('tmp/byte.jpg')
+    expected_gt = [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+    gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-6:
+            gdaltest.post_reason('did not get expected geotransform from .wld')
+            print(gt)
+            return 'fail'
+    ds = None
+
+    ds = gdal.Open('tmp/byte.jpg')
+    ds.GetFileList()
+    ds = None
+
     gdal.GetDriverByName('JPEG').Delete( 'tmp/byte.jpg' )
-    
+
+    try:
+        os.stat('tmp/byte.wld')
+        gdaltest.post_reason('did not expect to find .wld file at that point')
+        return 'fail'
+    except:
+        pass
+
     return 'success'
     
 ###############################################################################

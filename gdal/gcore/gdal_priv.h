@@ -913,11 +913,12 @@ int CPL_DLL GDALCheckBandCount( int nBands, int bIsZeroAllowed );
 
 /* Internal use only */
 int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
-                                   double *padfGeoTransform, char** papszSiblingFiles );
+                        double *padfGeoTransform, char** papszSiblingFiles,
+                        char** ppszWorldFileNameOut);
 int GDALReadTabFile2( const char * pszBaseFilename,
-                                 double *padfGeoTransform, char **ppszWKT,
-                                 int *pnGCPCount, GDAL_GCP **ppasGCPs,
-                                 char** papszSiblingFiles );
+                      double *padfGeoTransform, char **ppszWKT,
+                      int *pnGCPCount, GDAL_GCP **ppasGCPs,
+                      char** papszSiblingFiles, char** ppszTabFileNameOut );
 
 CPL_C_END
 
