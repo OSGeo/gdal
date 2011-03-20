@@ -163,8 +163,13 @@ retry:
     }
     else if( bStatOK && !bIsDirectory )
     {
-        if( CSLTestBoolean( 
-                CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" )) )
+        const char* pszOptionVal =
+            CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
+        if (EQUAL(pszOptionVal, "EMPTY_DIR"))
+        {
+            papszSiblingFiles = CSLAddString( NULL, CPLGetFilename(pszFilename) );
+        }
+        else if( CSLTestBoolean(pszOptionVal) )
         {
             /* skip reading the directory */
             papszSiblingFiles = NULL;
