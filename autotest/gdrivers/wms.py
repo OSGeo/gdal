@@ -355,6 +355,9 @@ def wms_9():
     ds = gdal.Open( tms )
 
     if ds is None:
+        srv = 'http://onearth.jpl.nasa.gov/wms.cgi?'
+        if gdaltest.gdalurlopen(srv) is None:
+            return 'skip'
         gdaltest.post_reason( 'open failed.' )
         return 'fail'
 
@@ -381,6 +384,9 @@ def wms_10():
     name = "WMS:http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?"
     ds = gdal.Open( name )
     if ds is None:
+        srv = 'http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?'
+        if gdaltest.gdalurlopen(srv) is None:
+            return 'skip'
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
 
@@ -413,6 +419,9 @@ def wms_11():
     name = "WMS:http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService"
     ds = gdal.Open( name )
     if ds is None:
+        srv = 'http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService'
+        if gdaltest.gdalurlopen(srv) is None:
+            return 'skip'
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
 
@@ -481,6 +490,9 @@ def wms_13():
 
     ds = gdal.Open( "data/DNEC_250K.vrt" )
     if ds.ReadRaster(0, 0, 1024, 682) is None:
+        srv = 'http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GeCapabilities'
+        if gdaltest.gdalurlopen(srv) is None:
+            return 'skip'
         return 'fail'
     ds = None
 
@@ -546,6 +558,11 @@ def wms_15():
     if gdaltest.wms_drv is None:
         return 'skip'
     src_ds = gdal.Open( "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true")
+    if src_ds is None:
+        srv = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true'
+        if gdaltest.gdalurlopen(srv) is None:
+            return 'skip'
+        return 'fail'
     ds = gdal.GetDriverByName("WMS").CreateCopy("/vsimem/wms.xml", src_ds)
     src_ds = None
 
