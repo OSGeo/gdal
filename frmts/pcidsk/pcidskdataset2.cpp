@@ -911,26 +911,35 @@ char **PCIDSK2Dataset::GetFileList()
     char **papszFileList = GDALPamDataset::GetFileList();
     CPLString osBaseDir = CPLGetPath( GetDescription() );
 
-    for( int nChan = 1; nChan <= nBands; nChan++ )
+    try 
     {
-        PCIDSKChannel *poChannel = poFile->GetChannel( nChan );
-        CPLString osChanFilename;
-        uint64 image_offset, pixel_offset, line_offset;
-        bool little_endian;
-
-        poChannel->GetChanInfo( osChanFilename, image_offset, 
-                                pixel_offset, line_offset, little_endian );
-
-        if( osChanFilename != "" )
+        for( int nChan = 1; nChan <= poFile->GetChannels(); nChan++ )
         {
-            papszFileList = 
-                CSLAddString( papszFileList, 
-                              CPLProjectRelativeFilename( osBaseDir, 
-                                                          osChanFilename ) );
+            PCIDSKChannel *poChannel = poFile->GetChannel( nChan );
+            CPLString osChanFilename;
+            uint64 image_offset, pixel_offset, line_offset;
+            bool little_endian;
+
+            poChannel->GetChanInfo( osChanFilename, image_offset, 
+                                    pixel_offset, line_offset, little_endian );
+
+            if( osChanFilename != "" )
+            {
+                papszFileList = 
+                    CSLAddString( papszFileList, 
+                                  CPLProjectRelativeFilename( osBaseDir, 
+                                                              osChanFilename ) );
+            }
         }
-    }
     
-    return papszFileList;
+        return papszFileList;
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return papszFileList;
+    }
 }
 
 /************************************************************************/
