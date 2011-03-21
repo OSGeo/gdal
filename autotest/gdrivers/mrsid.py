@@ -266,20 +266,22 @@ def mrsid_7():
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/int16.tif' )
+    ds = gdal.Open( 'data/int16.jp2' )
     ds_ref = gdal.Open( 'data/int16.tif' )
     
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
 
-    ds = None
-    ds_ref = None
-    
-    # Perfect match theoritically
-    if maxdiff > 1:
+    if maxdiff > 5:
+        gdaltest.post_reason('Image too different from reference')
         print(ds.GetRasterBand(1).Checksum())
         print(ds_ref.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Image too different from reference')
+
+        ds = None
+        ds_ref = None
         return 'fail'
+
+    ds = None
+    ds_ref = None
 
     return 'success'
 
@@ -326,6 +328,54 @@ def mrsid_8():
 
     gdal.GetDriverByName('MrSID').Delete( 'tmp/mercator.sid' )
 
+    return 'success'
+
+###############################################################################
+# Test VSI*L IO with .sid
+
+def mrsid_9():
+
+    if gdaltest.mrsid_drv is None:
+        return 'skip'
+
+    f = open('data/mercator.sid', 'rb')
+    data = f.read()
+    f.close()
+
+    f = gdal.VSIFOpenL('/vsimem/mrsid_9.sid', 'wb')
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open('/vsimem/mrsid_9.sid')
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/mrsid_9.sid')
+    return 'success'
+
+###############################################################################
+# Test VSI*L IO with .jp2
+
+def mrsid_10():
+
+    if gdaltest.jp2mrsid_drv is None:
+        return 'skip'
+
+    f = open('data/int16.jp2', 'rb')
+    data = f.read()
+    f.close()
+
+    f = gdal.VSIFOpenL('/vsimem/mrsid_10.jp2', 'wb')
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open('/vsimem/mrsid_10.jp2')
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/mrsid_10.jp2')
     return 'success'
 
 ###############################################################################
@@ -447,6 +497,7 @@ def mrsid_online_4():
         return 'fail'
 
     return 'success'
+
 ###############################################################################
 # Cleanup.
 
@@ -471,6 +522,8 @@ gdaltest_list = [
     mrsid_6,
     mrsid_7,
     mrsid_8,
+    mrsid_9,
+    mrsid_10,
     mrsid_online_1,
     mrsid_online_2,
     mrsid_online_3,
