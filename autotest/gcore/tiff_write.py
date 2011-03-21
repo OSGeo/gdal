@@ -2028,7 +2028,9 @@ def tiff_write_60():
         gdaltest.tiff_drv.Delete( 'tmp/tiff_write_60.tif' )
         
         try:
-            os.remove( tuple[1] )
+            os.stat( tuple[1] )
+            gdaltest.post_reason( '%s should have been deleted' % tuple[1])
+            return 'fail'
         except:
             pass
     
@@ -2047,9 +2049,11 @@ def tiff_write_60():
     
         ds = None
         gdaltest.tiff_drv.Delete( 'tmp/tiff_write_60.tif' )
-
+        
         try:
-            os.remove( tuple[1] )
+            os.stat( tuple[1] )
+            gdaltest.post_reason( '%s should have been deleted' % tuple[1])
+            return 'fail'
         except:
             pass
 
