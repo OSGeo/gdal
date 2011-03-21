@@ -257,7 +257,15 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
         if ((psRequest->pszError == NULL) && (psRequest->m_curl_error != NULL) && (psRequest->m_curl_error[0] != '\0')) {
             psRequest->pszError = CPLStrdup(psRequest->m_curl_error);
         }
-        
+
+        /* In the case of a file:// URL, curl will return a status == 0, so if there's no */
+        /* error returned, patch the status code to be 200, as it would be for http:// */
+        if (strncmp(psRequest->pszURL, "file://", 7) == 0 && psRequest->nStatus == 0 &&
+            psRequest->pszError == NULL)
+        {
+            psRequest->nStatus = 200;
+        }
+
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",
                  i, psRequest->pszURL, psRequest->nStatus,
                  (psRequest->pszContentType) ? psRequest->pszContentType : "(null)",
