@@ -778,8 +778,6 @@ MrSIDDataset::~MrSIDDataset()
         delete poImageWriter;
 #endif
 
-    if ( poStream )
-        delete poStream;
     if ( poBuffer )
         delete poBuffer;
     if ( poMetadata )
@@ -795,6 +793,8 @@ MrSIDDataset::~MrSIDDataset()
 #else
         delete poImageReader;
 #endif
+    if ( poStream )
+        delete poStream;
 
     if ( pszProjection )
         CPLFree( pszProjection );
