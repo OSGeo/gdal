@@ -47,6 +47,7 @@
 #include "gdal_csv.h"
 #include "gt_wkt_srs.h"
 #include "tifvsi.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -8772,7 +8773,8 @@ int GTiffOneTimeInit()
 {
     static int bInitIsOk = TRUE;
     static int bOneTimeInitDone = FALSE;
-    
+    static void* hMutex = NULL;
+    CPLMutexHolder oHolder( &hMutex);
     if( bOneTimeInitDone )
         return bInitIsOk;
 
