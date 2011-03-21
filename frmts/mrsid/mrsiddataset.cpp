@@ -1505,6 +1505,10 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
     LTIOFileStream *ltiofs = new LTIOFileStream();
     poDS->poStream = ltiofs;
     eStat = ltiofs->initialize( poOpenInfo->pszFilename, "rb" );
+
+    if ( LT_SUCCESS(eStat) )
+        eStat = poDS->poStream->open();
+
     if ( !LT_SUCCESS(eStat) )
     {
         LTIVSIStream *ltivsi = new LTIVSIStream();
@@ -1520,9 +1524,18 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
             delete poDS;
             return NULL;
         }
-    }
 
-    poDS->poStream->open();
+        eStat = poDS->poStream->open();
+        if ( !LT_SUCCESS(eStat) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "LTIVSIStream::open(): "
+                      "failed to open file \"%s\".\n%s",
+                      poOpenInfo->pszFilename, getLastStatusString( eStat ) );
+            delete poDS;
+            return NULL;
+        }
+    }
 
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
 
@@ -1537,7 +1550,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 #endif /* MRSID_J2K */
     {
         MrSIDImageReader    *reader = MrSIDImageReader::create();
-	eStat = reader->initialize( poDS->poStream, NULL );
+        eStat = reader->initialize( poDS->poStream, NULL );
         poDS->poImageReader = reader;           
     }
 
