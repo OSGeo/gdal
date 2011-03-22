@@ -474,6 +474,16 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
     }
+    else  
+    { 
+        // Check underlying raster for SRS. We have cases where 
+        // HORIZONTAL_CS_CODE is empty and the underlying raster 
+        // is georeferenced (rprinceley).
+        if ( poDS->poImageDS->GetProjectionRef() ) 
+        { 
+            poDS->osProjection = poDS->poImageDS->GetProjectionRef(); 
+        } 
+    } 
 
 /* -------------------------------------------------------------------- */
 /*      Translate other metadata of interest.                           */
@@ -528,7 +538,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     CPLXMLNode *psImageInterpretationNode = 
-            CPLGetXMLNode( psDoc, "Image_Interpretation" );
+        CPLGetXMLNode( psDoc, "Image_Interpretation" );
     if (psImageInterpretationNode != NULL)
     {
         CPLXMLNode *psSpectralBandInfoNode = psImageInterpretationNode->psChild;
@@ -558,7 +568,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
                         else if (nBandIndex >= 1)
                         {
                             poDS->GetRasterBand(nBandIndex)->SetMetadataItem(
-                                    psTag->pszValue, psTag->psChild->pszValue);
+                                psTag->pszValue, psTag->psChild->pszValue);
                         }
                     }
                     psTag = psTag->psNext;
