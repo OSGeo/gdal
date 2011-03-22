@@ -90,8 +90,8 @@ creation of similar blocks. <p>
 Normally DXF files are in the ANSI_1252 / Win1252 encoding.  GDAL/OGR attempts 
 to translate this to UTF-8 when reading and back into ANSI_1252 when writing.
 DXF files can also have a header field ($DWGCODEPAGE) indicating the 
-encoding of the file.  In GDAL 1.8.0 and earlier this was ignored but from
-GDAL 1.8.1 and later an attempt is made to use this to recode other 
+encoding of the file.  In GDAL 1.8.x and earlier this was ignored but from
+GDAL 1.9.0 and later an attempt is made to use this to recode other 
 code pages to UTF-8.  Whether this works will depend on the code page naming
 and whether GDAL/OGR is built against the iconv library for character recoding.
 <p>
