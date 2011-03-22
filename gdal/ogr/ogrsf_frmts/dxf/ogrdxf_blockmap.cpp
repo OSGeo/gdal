@@ -45,6 +45,8 @@ void OGRDXFDataSource::ReadBlocksSection()
     char szLineBuf[257];
     int  nCode;
     OGRDXFLayer *poReaderLayer = (OGRDXFLayer *) GetLayerByName( "Entities" );
+    int bMergeBlockGeometries = CSLTestBoolean(
+        CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
 
     iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
 
@@ -82,8 +84,9 @@ void OGRDXFDataSource::ReadBlocksSection()
 
         while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != NULL )
         {
-            if( poFeature->GetStyleString() != NULL
-                && strstr(poFeature->GetStyleString(),"LABEL") != NULL )
+            if( (poFeature->GetStyleString() != NULL
+                 && strstr(poFeature->GetStyleString(),"LABEL") != NULL)
+                || !bMergeBlockGeometries )
             {
                 apoFeatures.push_back( poFeature );
             }
