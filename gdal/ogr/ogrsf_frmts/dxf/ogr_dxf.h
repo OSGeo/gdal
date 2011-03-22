@@ -121,7 +121,7 @@ class OGRDXFLayer : public OGRLayer
     void                FormatDimension( CPLString &osText, double dfValue );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
 
-    static CPLString    TextUnescape( const char * );
+    CPLString           TextUnescape( const char * );
 
   public:
     OGRDXFLayer( OGRDXFDataSource *poDS );
@@ -184,6 +184,8 @@ class OGRDXFDataSource : public OGRDataSource
     std::map<CPLString,DXFBlockDefinition> oBlockMap;
     std::map<CPLString,CPLString> oHeaderVariables;
 
+    CPLString           osEncoding;
+
     // indexed by layer name, then by property name.
     std::map< CPLString, std::map<CPLString,CPLString> > 
                         oLayerTable;
@@ -230,6 +232,8 @@ class OGRDXFDataSource : public OGRDataSource
     void                ReadHeaderSection();
     const char         *GetVariable(const char *pszName, 
                                     const char *pszDefault=NULL );
+
+    const char         *GetEncoding() { return osEncoding; }
 
     // reader related.
     int  ReadValue( char *pszValueBuffer, int nValueBufferSize = 81 )
