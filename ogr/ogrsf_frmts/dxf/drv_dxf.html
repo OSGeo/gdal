@@ -82,7 +82,27 @@ have a point geometry for the insertion point.
 
 The intention is that with DXF_INLINE_BLOCKS disabled, the block references
 will remain as references and the original block definitions will be
-available via the blocks layer.  On export this configuration 
+available via the blocks layer.  On export this configuration will result in the
+creation of similar blocks. <p>
+
+<h2>Character Encodings</h2>
+
+Normally DXF files are in the ANSI_1252 / Win1252 encoding.  GDAL/OGR attempts 
+to translate this to UTF-8 when reading and back into ANSI_1252 when writing.
+DXF files can also have a header field ($DWGCODEPAGE) indicating the 
+encoding of the file.  In GDAL 1.8.0 and earlier this was ignored but from
+GDAL 1.8.1 and later an attempt is made to use this to recode other 
+code pages to UTF-8.  Whether this works will depend on the code page naming
+and whether GDAL/OGR is built against the iconv library for character recoding.
+<p>
+
+In some cases the $DWGCODEPAGE setting in a DXF file will be wrong, or
+unrecognised by OGR.  It could be edited manually, or the DXF_ENCODING 
+configuration variable can be used to override what id will be used by 
+OGR in transcoding.  The value of DXF_ENCODING should be an encoding name
+supported by CPLRecode() (ie. an iconv name), not a DXF $DWGCODEPAGE name.
+Using a DXF_ENCODING name of "UTF-8" will avoid any attempt to recode the 
+text as it is read.<p>
 
 <hr>
 <h2>Creation Issues</h2>

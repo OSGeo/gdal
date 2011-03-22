@@ -391,7 +391,7 @@ CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
 /*      to be consulting the $DWGCODEPAGE header variable which         */
 /*      defaults to ANSI_1252 if not set.                               */
 /* -------------------------------------------------------------------- */
-    osInput.Recode( CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
+    osInput.Recode( poDS->GetEncoding(), CPL_ENC_UTF8 );
     pszInput = osInput.c_str();
 
 /* -------------------------------------------------------------------- */
@@ -686,7 +686,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 /*      Translate text from Win-1252 to UTF8.  We approximate this      */
 /*      by treating Win-1252 as Latin-1.                                */
 /* -------------------------------------------------------------------- */
-    osText.Recode( CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
+    osText.Recode( poDS->GetEncoding(), CPL_ENC_UTF8 );
 
     poFeature->SetField( "Text", osText );
 

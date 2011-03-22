@@ -103,6 +103,8 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
     if( !EQUAL(CPLGetExtension(pszFilename),"dxf") )
         return FALSE;
 
+    osEncoding = CPL_ENC_ISO8859_1;
+
     osName = pszFilename;
 
     bInlineBlocks = CSLTestBoolean(
@@ -419,6 +421,33 @@ void OGRDXFDataSource::ReadHeaderSection()
 
     CPLDebug( "DXF", "Read %d header variables.", 
               (int) oHeaderVariables.size() );
+
+/* -------------------------------------------------------------------- */
+/*      Decide on what CPLRecode() name to use for the files            */
+/*      encoding or allow the encoding to be overridden.                */
+/* -------------------------------------------------------------------- */
+    CPLString osCodepage = GetVariable( "$DWGCODEPAGE", "ANSI_1252" );
+
+    // not strictly accurate but works even without iconv.
+    if( osCodepage == "ANSI_1252" )
+        osEncoding = CPL_ENC_ISO8859_1; 
+    else if( EQUALN(osCodepage,"ANSI_",5) )
+    {
+        osEncoding = "CP";
+        osEncoding += osCodepage + 5;
+    }
+    else
+    {
+        // fallback to the default 
+        osEncoding = CPL_ENC_ISO8859_1;
+    }
+                                       
+    if( CPLGetConfigOption( "DXF_ENCODING", NULL ) != NULL )
+        osEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
+
+    if( osEncoding != CPL_ENC_ISO8859_1 )
+        CPLDebug( "DXF", "Treating DXF as encoding '%s', $DWGCODEPAGE='%s'", 
+                  osEncoding, osCodepage );
 }
 
 /************************************************************************/
