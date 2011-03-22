@@ -41,7 +41,8 @@ arc into line segments.
 <li> INSERT: An attempt is made to insert the block definition as defined
 in the insert.  Linework blocks are aggregated into a single feature with
 a geometry collection for the geometry.  Text blocks are returned as one or
-more text features. 
+more text features.  To avoid merging blocks into a geometry collection the 
+DXF_MERGE_BLOCK_GEOMETRIES config option may be set to FALSE.
 <li> DIMENSION: This element is exploded into a feature with arrows and
 leaders, and a feature with the dimension label.
 <li> HATCH: Line and arc boundaries are collected as a polygon geometry, but 
