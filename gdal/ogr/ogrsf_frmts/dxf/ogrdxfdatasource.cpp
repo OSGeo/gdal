@@ -447,7 +447,7 @@ void OGRDXFDataSource::ReadHeaderSection()
 
     if( osEncoding != CPL_ENC_ISO8859_1 )
         CPLDebug( "DXF", "Treating DXF as encoding '%s', $DWGCODEPAGE='%s'", 
-                  osEncoding, osCodepage );
+                  osEncoding.c_str(), osCodepage.c_str() );
 }
 
 /************************************************************************/
