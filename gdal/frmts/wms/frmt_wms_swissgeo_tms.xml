@@ -4,27 +4,31 @@
      Some overviews levels are not exactly at half resolution of the neighbouring overview level, and
      the extent might also be slightly different... -->
 
+<!-- Do not open this file as such in a GUI like QGIS since the smallest overview for now is 48000x32000 !,
+     which means that it would need to fetch thousands and thousands of tiles...
+     or alter the <OverviewCount> to be 8. But in which case the above warning will apply. -->
+
 <!-- Data is subject to term of use detailed at http://www.geo.admin.ch/internet/geoportal/en/home/geoadmin/contact.html#copyright -->
 
     <Service name="TMS">
-        <ServerUrl>http://tile8.geo.admin.ch/geoadmin/ch.swisstopo.pixelkarte-farbe/${z}/000/000/${03x}/000/000/${03y}.jpeg</ServerUrl>
+        <ServerUrl>http://tile8.geo.admin.ch/geoadmin/ch.swisstopo.pixelkarte-farbe/${z}/${xxx}/${yyy}.jpeg</ServerUrl>
     </Service>
     <DataWindow>
         <UpperLeftX>420000</UpperLeftX>
-        <UpperLeftY>357680</UpperLeftY>
-        <LowerRightX>911520</LowerRightX>
+        <UpperLeftY>350000</UpperLeftY>
+        <LowerRightX>900000</LowerRightX>
         <LowerRightY>30000</LowerRightY>
-        <SizeX>196608</SizeX>
-        <SizeY>131072</SizeY>
+        <SizeX>192000</SizeX>
+        <SizeY>128000</SizeY>
         <TileLevel>22</TileLevel>
         <YOrigin>bottom</YOrigin>
     </DataWindow>
-    <Projection>+proj=somerc +lat_0=46.952405555556 +lon_0=7.4395833333333 +ellps=bessel +x_0=600000 +y_0=200000 +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs</Projection>
-    <OverviewCount>8</OverviewCount>
+    <Projection>EPSG:21781</Projection>
+    <OverviewCount>2</OverviewCount>
     <BlockSizeX>256</BlockSizeX>
     <BlockSizeY>256</BlockSizeY>
     <BandsCount>3</BandsCount>
     <Cache />
-    <UserAgent>Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.2.13) Gecko/20110103 Gentoo Firefox/3.6.13</UserAgent>
+    <UserAgent>Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.2.15) Gecko/20110312 Gentoo Firefox/3.6.15</UserAgent>
     <Referer>http://map.geo.admin.ch/?lang=en</Referer>
 </GDAL_WMS>
