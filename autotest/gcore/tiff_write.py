@@ -3700,6 +3700,7 @@ def tiff_write_94():
 
     if cs != 3:
         print(cs)
+        gdaltest.post_reason( 'wrong checksum' )
         return 'fail'
 
     return 'success'

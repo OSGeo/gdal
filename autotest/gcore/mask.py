@@ -622,7 +622,7 @@ def mask_14():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 0:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the the mask (1)' )
         return 'fail'
 
     ds.GetRasterBand(1).GetMaskBand().Fill(1)
@@ -630,7 +630,7 @@ def mask_14():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the the mask (2)' )
         return 'fail'
 
     ds = None
@@ -653,7 +653,7 @@ def mask_14():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the the mask (3)' )
         return 'fail'
 
     ds = None
