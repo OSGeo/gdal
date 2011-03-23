@@ -1200,7 +1200,14 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 
     if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
         nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
-        
+
+    /* Should we turn layers with None geometry type as Unknown/GEOMETRY */
+    /* so they are still recorded in geometry_columns table ? (#4012) */
+    int bNoneAsUnknown = CSLTestBoolean(CSLFetchNameValueDef(
+                                    papszOptions, "NONE_AS_UNKNOWN", "NO"));
+    if (bNoneAsUnknown && eType == wkbNone)
+        eType = wkbUnknown;
+
     /* Postgres Schema handling:
        Extract schema name from input layer name or passed with -lco SCHEMA.
        Set layer name to "schema.table" or to "table" if schema == current_schema()
@@ -1251,18 +1258,29 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     int iLayer;
 
+    FlushSoftTransaction();
+
+    CPLString osSQLLayerName;
+    if (pszSchemaName == NULL || (strlen(osCurrentSchema) > 0 && EQUAL(pszSchemaName, osCurrentSchema.c_str())))
+        osSQLLayerName = pszTableName;
+    else
+    {
+        osSQLLayerName = pszSchemaName;
+        osSQLLayerName += ".";
+        osSQLLayerName += pszTableName;
+    }
+
+    /* GetLayerByName() can instanciate layers that would have been */
+    /* 'hidden' otherwise, for example, non-spatial tables in a */
+    /* Postgis-enabled database, so this apparently useless command is */
+    /* not useless... (#4012) */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    GetLayerByName(osSQLLayerName);
+    CPLPopErrorHandler();
+    CPLErrorReset();
+
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        CPLString osSQLLayerName;
-        if (pszSchemaName == NULL || (strlen(osCurrentSchema) > 0 && EQUAL(pszSchemaName, osCurrentSchema.c_str())))
-            osSQLLayerName = pszTableName;
-        else
-        {
-            osSQLLayerName = pszSchemaName;
-            osSQLLayerName += ".";
-            osSQLLayerName += pszTableName;
-        }
-
         if( EQUAL(osSQLLayerName.c_str(),papoLayers[iLayer]->GetName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
