@@ -600,8 +600,6 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
                 else
                     eBandInterp = GCI_Undefined;
             }
-            else if( nBand == 4 )
-                eBandInterp = GCI_AlphaBand;
             else
                 eBandInterp = GCI_Undefined;
         }
@@ -626,8 +624,6 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
                 else
                     eBandInterp = GCI_Undefined;
             }
-            else if( nBand == 4 )
-                eBandInterp = GCI_AlphaBand;
             else
                 eBandInterp = GCI_Undefined;
         }
