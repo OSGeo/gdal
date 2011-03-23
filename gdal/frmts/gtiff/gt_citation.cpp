@@ -422,6 +422,8 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
 {
     OGRBoolean ret = FALSE;
     char* lUnitName = NULL;
+    double      dfLinearUOM = poSRS->GetLinearUnits( &lUnitName );
+
     if(!lUnitName || strlen(lUnitName) == 0  || EQUAL(lUnitName, "unknown"))
         *linearUnitIsSet = FALSE;
     else
@@ -486,7 +488,6 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
     }
 
     return ret;
-
 }
 
 /************************************************************************/
