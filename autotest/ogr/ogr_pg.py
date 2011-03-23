@@ -2559,9 +2559,67 @@ def ogr_pg_53():
     lyr.CreateFeature(feat)
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+
+    if gdaltest.pg_has_postgis is True and ogr_pg_check_layer_in_list(ds, 'no_geometry_table') is True:
+        gdaltest.post_reason('did not expected no_geometry_table to be listed at that point')
+        return 'fail'
+
     lyr = ds.GetLayerByName('no_geometry_table')
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 'bar':
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = ds.CreateLayer( 'no_geometry_table', geom_type = ogr.wkbNone)
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('layer creation should have failed')
+        return 'fail'
+
+    lyr = ds.CreateLayer( 'no_geometry_table', geom_type = ogr.wkbNone, options = ['OVERWRITE=YES'] )
+    field_defn = ogr.FieldDefn('baz')
+    lyr.CreateField(field_defn)
+
+    ds = None
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+
+    lyr = ds.CreateLayer( 'no_geometry_table', geom_type = ogr.wkbNone, options = ['OVERWRITE=YES'] )
+    field_defn = ogr.FieldDefn('bar')
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('baz')
+    lyr.CreateField(field_defn)
+    if lyr is None:
+        return 'fail'
+
+    ds = None
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('no_geometry_table')
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Check that we can overwrite a non-spatial geometry table (#4012)
+
+def ogr_pg_53_bis():
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/no_geometry_table.csv', 'wb')
+    f.write('foo,bar\n')
+    f.write('"baz","foo"\n')
+    f.close()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" tmp/no_geometry_table.csv -overwrite')
+
+    os.unlink('tmp/no_geometry_table.csv')
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('no_geometry_table')
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != 'baz':
         return 'fail'
 
     return 'success'
@@ -2737,6 +2795,7 @@ gdaltest_list_internal = [
     ogr_pg_51,
     ogr_pg_52,
     ogr_pg_53,
+    ogr_pg_53_bis,
     ogr_pg_54,
     ogr_pg_55,
     ogr_pg_cleanup ]
