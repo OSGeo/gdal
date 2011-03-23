@@ -90,6 +90,48 @@ def tiff_read_off():
 
 
 ###############################################################################
+# Confirm we interprete bands as alpha when we should, and not when we
+# should not.
+
+def tiff_check_alpha():
+
+    # Grey + alpha
+    
+    ds = gdal.Open('data/stefan_full_greyalpha.tif')
+
+    if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_AlphaBand:
+        gdaltest.post_reason( 'Wrong color interpretation (stefan_full_greyalpha).')
+        print(ds.GetRasterBand(2).GetRasterColorInterpretation())
+        return 'fail'
+
+    ds = None
+
+    # RGB + alpha
+    
+    ds = gdal.Open('data/stefan_full_rgba.tif')
+
+    if ds.GetRasterBand(4).GetRasterColorInterpretation()!= gdal.GCI_AlphaBand:
+        gdaltest.post_reason( 'Wrong color interpretation (stefan_full_rgba).')
+        print(ds.GetRasterBand(4).GetRasterColorInterpretation())
+        return 'fail'
+
+    ds = None
+
+    # RGB + undefined
+    
+    ds = gdal.Open('data/stefan_full_rgba_photometric_rgb.tif')
+
+    if ds.GetRasterBand(4).GetRasterColorInterpretation()!= gdal.GCI_Undefined:
+        gdaltest.post_reason( 'Wrong color interpretation (stefan_full_rgba_photometric_rgb).')
+        print(ds.GetRasterBand(4).GetRasterColorInterpretation())
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+   
+    
+###############################################################################
 # Test reading a CMYK tiff as RGBA image
 
 def tiff_read_cmyk_rgba():
@@ -104,6 +146,11 @@ def tiff_read_cmyk_rgba():
     if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_RedBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
+        return 'fail'
+
+    if ds.GetRasterBand(4).GetRasterColorInterpretation()!= gdal.GCI_AlphaBand:
+        gdaltest.post_reason( 'Wrong color interpretation (alpha).')
+        print(ds.GetRasterBand(4).GetRasterColorInterpretation())
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 23303:
@@ -744,6 +791,7 @@ for item in init_list:
         sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
 gdaltest_list.append( (tiff_read_off) )
+gdaltest_list.append( (tiff_check_alpha) )
 gdaltest_list.append( (tiff_read_cmyk_rgba) )
 gdaltest_list.append( (tiff_read_cmyk_raw) )
 gdaltest_list.append( (tiff_read_ojpeg) )
