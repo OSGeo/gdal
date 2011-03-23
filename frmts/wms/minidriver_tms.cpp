@@ -95,10 +95,9 @@ void GDALWMSMiniDriver_TMS::TiledImageRequest(CPLString *url, const GDALWMSImage
     URLSearchAndReplace(url, "${y}", "%d", tms_y);
     URLSearchAndReplace(url, "${z}", "%d", tiri.m_level);
 
-    /* Hack for some TMS like servers that require tile numbers to have exactly */
-    /* 3 characters, like http://tile8.geo.admin.ch/geoadmin/ch.swisstopo.pixelkarte-farbe */
-    /* Could be made more general if there's a need */
-    URLSearchAndReplace(url, "${03x}", "%03d", tiri.m_x);
-    URLSearchAndReplace(url, "${03y}", "%03d", tms_y);
+    /* Hack for some TMS like servers that require tile numbers split into 3 groups of */
+    /* 3 digits, like http://tile8.geo.admin.ch/geoadmin/ch.swisstopo.pixelkarte-farbe */
+    URLSearchAndReplace(url, "${xxx}", "%03d/%03d/%03d", tiri.m_x / 1000000, (tiri.m_x / 1000) % 1000, tiri.m_x % 1000);
+    URLSearchAndReplace(url, "${yyy}", "%03d/%03d/%03d", tms_y / 1000000, (tms_y / 1000) % 1000, tms_y % 1000);
 
 }
