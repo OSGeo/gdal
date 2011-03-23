@@ -1664,6 +1664,15 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     int iLayer = -1;
     poDstLayer = NULL;
 
+    /* GetLayerByName() can instanciate layers that would have been */
+    /* 'hidden' otherwise, for example, non-spatial tables in a */
+    /* Postgis-enabled database, so this apparently useless command is */
+    /* not useless... (#4012) */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    poDstDS->GetLayerByName(pszNewLayerName);
+    CPLPopErrorHandler();
+    CPLErrorReset();
+
     for( iLayer = 0; iLayer < poDstDS->GetLayerCount(); iLayer++ )
     {
         OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);

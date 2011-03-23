@@ -970,6 +970,15 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
     iLayer = -1
     poDstLayer = None
 
+    #/* GetLayerByName() can instanciate layers that would have been */
+    #*/ 'hidden' otherwise, for example, non-spatial tables in a */
+    #*/ Postgis-enabled database, so this apparently useless command is */
+    #/* not useless... (#4012) */
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    poDstDS.GetLayerByName(pszNewLayerName)
+    gdal.PopErrorHandler()
+    gdal.ErrorReset()
+
     for iLayer in range(poDstDS.GetLayerCount()):
         poLayer = poDstDS.GetLayer(iLayer)
 

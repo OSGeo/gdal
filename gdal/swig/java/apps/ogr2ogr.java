@@ -1143,7 +1143,16 @@ public class ogr2ogr
     /* -------------------------------------------------------------------- */
         int iLayer = -1;
         poDstLayer = null;
-    
+
+        /* GetLayerByName() can instanciate layers that would have been */
+        /* 'hidden' otherwise, for example, non-spatial tables in a */
+        /* Postgis-enabled database, so this apparently useless command is */
+        /* not useless... (#4012) */
+        gdal.PushErrorHandler("CPLQuietErrorHandler");
+        poDstDS.GetLayerByName(pszNewLayerName);
+        gdal.PopErrorHandler();
+        gdal.ErrorReset();
+
         for( iLayer = 0; iLayer < poDstDS.GetLayerCount(); iLayer++ )
         {
             Layer        poLayer = poDstDS.GetLayer(iLayer);
