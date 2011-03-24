@@ -63,7 +63,12 @@ class GDALWMSMetaDataset : public GDALPamDataset
 
     void                ExploreLayer(CPLXMLNode* psXML,
                                      CPLString osFormat,
-                                     CPLString osTransparent);
+                                     CPLString osTransparent,
+                                     const char* pszSRS = NULL,
+                                     const char* pszMinX = NULL,
+                                     const char* pszMinY = NULL,
+                                     const char* pszMaxX = NULL,
+                                     const char* pszMaxY = NULL);
 
     void                AddTiledSubDataset(const char* pszTiledGroupName,
                                            const char* pszTitle);
