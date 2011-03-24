@@ -269,46 +269,67 @@ void GDALWMSMetaDataset::AddSubDataset( const char* pszLayerName,
 /************************************************************************/
 
 void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
-                                        CPLString osFormat,
-                                        CPLString osTransparent)
+                                      CPLString osFormat,
+                                      CPLString osTransparent,
+                                      const char* pszSRS,
+                                      const char* pszMinX,
+                                      const char* pszMinY,
+                                      const char* pszMaxX,
+                                      const char* pszMaxY)
 {
     const char* pszName = CPLGetXMLValue(psXML, "Name", NULL);
     const char* pszTitle = CPLGetXMLValue(psXML, "Title", NULL);
     const char* pszAbstract = CPLGetXMLValue(psXML, "Abstract", NULL);
 
-    if (pszName != NULL)
+    const char* pszSRSLocal = NULL;
+    const char* pszMinXLocal = NULL;
+    const char* pszMinYLocal = NULL;
+    const char* pszMaxXLocal = NULL;
+    const char* pszMaxYLocal = NULL;
+
+    /* Use local bounding box if available, otherwise use the one */
+    /* that comes from an upper layer */
+    /* such as in http://neowms.sci.gsfc.nasa.gov/wms/wms */
+    CPLXMLNode* psSRS = CPLGetXMLNode( psXML, "BoundingBox" );
+    if (psSRS == NULL)
     {
-        const char* pszSRS;
-        CPLXMLNode* psSRS = CPLGetXMLNode( psXML, "BoundingBox" );
-        if (psSRS == NULL)
-        {
-            psSRS = CPLGetXMLNode( psXML, "LatLonBoundingBox" );
-            if (psSRS)
-                pszSRS = "EPSG:4326";
-        }
-        else
-            pszSRS = CPLGetXMLValue(psSRS, "SRS", NULL);
-
+        psSRS = CPLGetXMLNode( psXML, "LatLonBoundingBox" );
         if (psSRS)
+            pszSRSLocal = "EPSG:4326";
+    }
+    else
+        pszSRSLocal = CPLGetXMLValue(psSRS, "SRS", NULL);
+
+    if (pszSRSLocal != NULL && psSRS != NULL)
+    {
+        pszMinXLocal = CPLGetXMLValue(psSRS, "minx", NULL);
+        pszMinYLocal = CPLGetXMLValue(psSRS, "miny", NULL);
+        pszMaxXLocal = CPLGetXMLValue(psSRS, "maxx", NULL);
+        pszMaxYLocal = CPLGetXMLValue(psSRS, "maxy", NULL);
+
+        if (pszMinXLocal && pszMinYLocal && pszMaxXLocal && pszMaxYLocal)
         {
-            const char* pszMinX = CPLGetXMLValue(psSRS, "minx", NULL);
-            const char* pszMinY = CPLGetXMLValue(psSRS, "miny", NULL);
-            const char* pszMaxX = CPLGetXMLValue(psSRS, "maxx", NULL);
-            const char* pszMaxY = CPLGetXMLValue(psSRS, "maxy", NULL);
-
-            CPLString osLocalTransparent(osTransparent);
-            if (osLocalTransparent.size() == 0)
-            {
-                const char* pszOpaque = CPLGetXMLValue(psXML, "opaque", "0");
-                if (EQUAL(pszOpaque, "1"))
-                    osLocalTransparent = "FALSE";
-            }
-
-            if (pszSRS && pszMinX && pszMinY && pszMaxX && pszMaxY)
-                AddSubDataset(pszName, pszTitle, pszAbstract,
-                              pszSRS, pszMinX, pszMinY,
-                              pszMaxX, pszMaxY, osFormat, osLocalTransparent);
+            pszSRS = pszSRSLocal;
+            pszMinX = pszMinXLocal;
+            pszMinY = pszMinYLocal;
+            pszMaxX = pszMaxXLocal;
+            pszMaxY = pszMaxYLocal;
         }
+    }
+
+    if (pszName != NULL && pszSRS && pszMinX && pszMinY && pszMaxX && pszMaxY)
+    {
+        CPLString osLocalTransparent(osTransparent);
+        if (osLocalTransparent.size() == 0)
+        {
+            const char* pszOpaque = CPLGetXMLValue(psXML, "opaque", "0");
+            if (EQUAL(pszOpaque, "1"))
+                osLocalTransparent = "FALSE";
+        }
+
+        AddSubDataset(pszName, pszTitle, pszAbstract,
+                      pszSRS, pszMinX, pszMinY,
+                      pszMaxX, pszMaxY, osFormat, osLocalTransparent);
     }
 
     CPLXMLNode* psIter = psXML->psChild;
@@ -317,7 +338,8 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
         if (psIter->eType == CXT_Element)
         {
             if (EQUAL(psIter->pszValue, "Layer"))
-                ExploreLayer(psIter, osFormat, osTransparent);
+                ExploreLayer(psIter, osFormat, osTransparent,
+                             pszSRS, pszMinX, pszMinY, pszMaxX, pszMaxY);
         }
     }
 }
