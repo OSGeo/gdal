@@ -48,7 +48,10 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     CPLString osBBOX = CPLURLGetValue(pszBaseURL, "BBOX");
     CPLString osFormat = CPLURLGetValue(pszBaseURL, "FORMAT");
     CPLString osTransparent = CPLURLGetValue(pszBaseURL, "TRANSPARENT");
+
+    /* GDAL specific extensions to alter the default settings */
     CPLString osOverviewCount = CPLURLGetValue(pszBaseURL, "OVERVIEWCOUNT");
+    CPLString osTileSize = CPLURLGetValue(pszBaseURL, "TILESIZE");
 
     CPLString osBaseURL = pszBaseURL;
     /* Remove all keywords to get base URL */
@@ -63,7 +66,9 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     osBaseURL = CPLURLAddKVP(osBaseURL, "STYLES", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "WIDTH", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "HEIGHT", NULL);
+
     osBaseURL = CPLURLAddKVP(osBaseURL, "OVERVIEWCOUNT", NULL);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "TILESIZE", NULL);
 
     if (osVersion.size() == 0)
         osVersion = "1.1.1";
@@ -94,16 +99,20 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
         return NULL;
     }
 
+    int nTileSize = atoi(osTileSize);
+    if (nTileSize <= 128 || nTileSize > 2048)
+        nTileSize = 1024;
+
     double dfRatio = (dfMaxX - dfMinX) / (dfMaxY - dfMinY);
     int nXSize, nYSize;
     if (dfRatio > 1)
     {
-        nXSize = 1024;
+        nXSize = nTileSize;
         nYSize = nXSize / dfRatio;
     }
     else
     {
-        nYSize = 1024;
+        nYSize = nTileSize;
         nXSize = nYSize * dfRatio;
     }
 
@@ -146,6 +155,8 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             "    <SizeY>%d</SizeY>\n"
             "  </DataWindow>\n"
             "  <BandsCount>%d</BandsCount>\n"
+            "  <BlockSizeX>%d</BlockSizeX>\n"
+            "  <BlockSizeY>%d</BlockSizeY>\n"
             "  <OverviewCount>%d</OverviewCount>\n"
             "</GDAL_WMS>\n",
             osVersion.c_str(),
@@ -157,6 +168,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             pszMinX, pszMaxY, pszMaxX, pszMinY,
             nXSize, nYSize,
             (bTransparent) ? 4 : 3,
+            nTileSize, nTileSize,
             nOverviewCount);
 
     CSLDestroy(papszTokens);
