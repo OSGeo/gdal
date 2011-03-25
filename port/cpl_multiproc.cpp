@@ -457,7 +457,6 @@ void CPLCleanupTLS()
 #  define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
 #endif
 
-
 /************************************************************************/
 /*                        CPLGetThreadingModel()                        */
 /************************************************************************/
@@ -475,11 +474,24 @@ const char *CPLGetThreadingModel()
 void *CPLCreateMutex()
 
 {
+#ifdef USE_WIN32_MUTEX
     HANDLE hMutex;
 
     hMutex = CreateMutex( NULL, TRUE, NULL );
 
     return (void *) hMutex;
+#else
+    CRITICAL_SECTION *pcs;
+
+    pcs = (CRITICAL_SECTION *)CPLMalloc(sizeof(*pcs));
+    if( pcs )
+    {
+      InitializeCriticalSectionAndSpinCount(pcs, 4000);
+      EnterCriticalSection(pcs);
+    }
+
+    return (void *) pcs;
+#endif
 }
 
 /************************************************************************/
@@ -489,12 +501,25 @@ void *CPLCreateMutex()
 int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
 
 {
+#ifdef USE_WIN32_MUTEX
     HANDLE hMutex = (HANDLE) hMutexIn;
     DWORD  hr;
 
     hr = WaitForSingleObject( hMutex, (int) (dfWaitInSeconds * 1000) );
     
     return hr != WAIT_TIMEOUT;
+#else
+    CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
+    BOOL ret;
+
+    while( !(ret = TryEnterCriticalSection(pcs)) && dfWaitInSeconds > 0.0 )
+    {
+        CPLSleep( MIN(dfWaitInSeconds,0.125) );
+        dfWaitInSeconds -= 0.125;
+    }
+    
+    return ret;
+#endif
 }
 
 /************************************************************************/
@@ -504,9 +529,15 @@ int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
 void CPLReleaseMutex( void *hMutexIn )
 
 {
+#ifdef USE_WIN32_MUTEX
     HANDLE hMutex = (HANDLE) hMutexIn;
 
     ReleaseMutex( hMutex );
+#else
+    CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
+
+    LeaveCriticalSection(pcs);
+#endif
 }
 
 /************************************************************************/
@@ -516,9 +547,16 @@ void CPLReleaseMutex( void *hMutexIn )
 void CPLDestroyMutex( void *hMutexIn )
 
 {
+#ifdef USE_WIN32_MUTEX
     HANDLE hMutex = (HANDLE) hMutexIn;
 
     CloseHandle( hMutex );
+#else
+    CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
+
+    DeleteCriticalSection( pcs );
+    CPLFree( pcs );
+#endif
 }
 
 /************************************************************************/
