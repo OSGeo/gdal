@@ -491,6 +491,10 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_e00grid
     GDALRegister_E00GRID();
 #endif
+
+#ifdef FRMT_webp
+    GDALRegister_WEBP();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
