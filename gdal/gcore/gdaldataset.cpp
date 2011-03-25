@@ -2037,9 +2037,15 @@ char **GDALDataset::GetFileList()
 
             if (oOvManager.papszInitSiblingFiles)
             {
-                if (CSLFindString(oOvManager.papszInitSiblingFiles,
-                                  CPLGetFilename(osWorldFilename)) >= 0)
+                int iSibling = CSLFindString(oOvManager.papszInitSiblingFiles,
+                                             CPLGetFilename(osWorldFilename));
+                if (iSibling >= 0)
+                {
+                    osWorldFilename.resize(strlen(osWorldFilename) -
+                                           strlen(oOvManager.papszInitSiblingFiles[iSibling]));
+                    osWorldFilename += oOvManager.papszInitSiblingFiles[iSibling];
                     papszList = CSLAddString( papszList, osWorldFilename );
+                }
             }
             else if( VSIStatExL( osWorldFilename, &sStat, VSI_STAT_EXISTS_FLAG ) == 0 )
                 papszList = CSLAddString( papszList, osWorldFilename );
