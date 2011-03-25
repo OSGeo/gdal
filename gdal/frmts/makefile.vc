@@ -155,6 +155,10 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_rasterlite
 EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_pdf
 !ENDIF
 
+!IFDEF WEBP_ENABLED
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_webp
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
 list:

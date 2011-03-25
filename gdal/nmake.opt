@@ -462,6 +462,11 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #LZMA_CFLAGS = -IC:/gdal_trunk/xz-5.0.0-windows/include
 #LZMA_LIBS = C:/gdal_trunk/xz-5.0.0-windows/bin_i486/liblzma.lib
 
+# Uncomment for WEBP support
+#WEBP_ENABLED = YES
+#WEBP_CFLAGS = -IE:/libwebp-0.1-windows/dev/Include
+#WEBP_LIBS = e:/libwebp-0.1-windows/dev/lib/libwebp_a.lib
+
 # Any extra libraries needed on this platform?
 ADD_LIBS	= 
 
@@ -582,7 +587,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS) $(LZMA_LIBS) \
-	$(LIBICONV_LIBRARY)
+	$(LIBICONV_LIBRARY) $(WEBP_LIBS)
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
