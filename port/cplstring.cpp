@@ -265,7 +265,7 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
 
 {
     const char *pszHaystack = c_str();
-    char chFirst = (char) tolower( s[0] );
+    char chFirst = (char) ::tolower( s[0] );
     int nTargetLen = strlen(s);
 
     if( nPos > size() )
@@ -275,7 +275,7 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
 
     while( *pszHaystack != '\0' )
     {
-        if( chFirst == tolower(*pszHaystack) )
+        if( chFirst == ::tolower(*pszHaystack) )
         {
             if( EQUALN(pszHaystack,s,nTargetLen) )
                 return nPos;
@@ -286,6 +286,44 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
     }
 
     return std::string::npos;
+}
+
+/************************************************************************/
+/*                              toupper()                               */
+/************************************************************************/
+
+/**
+ * Convert to upper case in place.
+ */
+
+CPLString &CPLString::toupper()
+
+{
+    size_t i;
+
+    for( i = 0; i < size(); i++ )
+        (*this)[i] = ::toupper( (*this)[i] );
+
+    return *this;
+}
+
+/************************************************************************/
+/*                              tolower()                               */
+/************************************************************************/
+
+/**
+ * Convert to lower case in place.
+ */
+
+CPLString &CPLString::tolower()
+
+{
+    size_t i;
+
+    for( i = 0; i < size(); i++ )
+        (*this)[i] = ::tolower( (*this)[i] );
+
+    return *this;
 }
 
 /************************************************************************/
