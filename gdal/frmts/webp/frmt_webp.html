@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>WEBP - WEBP</title>
+</head>
+
+<body>
+
+<h1>WEBP - WEBP</h1>
+
+<p>Starting with GDAL 1.9.0, GDAL can read and write WebP images through the WebP library.</p>
+
+<p>WebP is a new image format that provides lossy compression for photographic images.
+A WebP file consists of VP8 image data, and a container based on RIFF.</p>
+
+<p>The driver rely on the Open Source WebP library (BSD licenced). The WebP library (at least in its
+version 0.1) only offers compression and decompression of whole images, so RAM might be a limitation
+when dealing with big images.</p>
+
+<p>The WEBP driver only supports 3 bands (RGB) images</p>
+
+<p>The WEBP driver can be used as the internal format used by the <a href="frmt_rasterlite.html">Rasterlite</a> driver.</p>
+
+<h2>Creation options</h2>
+
+<ul>
+<li><p><b>QUALITY=n</b> By default the quality flag is set to 80, but this
+option can be used to select other values.  Values must be in the
+range 1-100.  Low values result in higher compression ratios, but poorer
+image quality. <p></li>
+</ul>
+
+<p>See Also:</p>
+
+<ul>
+<li><a href="http://code.google.com/intl/fr/speed/webp/">WebP home page</a></li>
+</ul>
+
+</body>
+</html>

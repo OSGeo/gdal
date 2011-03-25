@@ -165,6 +165,7 @@ void CPL_DLL GDALRegister_ACE2(void);
 void CPL_DLL GDALRegister_CTG(void);
 void CPL_DLL GDALRegister_E00GRID(void);
 void CPL_DLL GDALRegister_SNODAS(void);
+void CPL_DLL GDALRegister_WEBP(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
