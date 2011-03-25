@@ -1084,7 +1084,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
 /*      Do we have metadata.                                            */
 /* -------------------------------------------------------------------- */
     char **papszCSEXRA_MD;
+    char **papszCSDIDA_MD;
     char **papszMergedMD;
+    char **papszPIAIMC_MD;
     char **papszUSE00A_MD;
 
     // File and Image level metadata.
@@ -1140,6 +1142,16 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
                                  psImage->szIMAG );
         }
 
+        // CSDIDA
+        papszCSDIDA_MD = NITFReadCSDIDA( psFile );
+        if( papszCSDIDA_MD != NULL )
+        {
+            papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                              CSLCount( papszCSDIDA_MD ),
+                                              papszCSDIDA_MD );
+            CSLDestroy( papszCSDIDA_MD );
+        }
+
         // CSEXRA
         papszCSEXRA_MD = NITFReadCSEXRA( psImage );
         if( papszCSEXRA_MD != NULL )
@@ -1148,6 +1160,16 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
                                               CSLCount( papszCSEXRA_MD ),
                                               papszCSEXRA_MD );
             CSLDestroy( papszCSEXRA_MD );
+        }
+
+        // PIAIMC
+        papszPIAIMC_MD = NITFReadPIAIMC( psImage );
+        if( papszPIAIMC_MD != NULL )
+        {
+            papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                              CSLCount( papszPIAIMC_MD ),
+                                              papszPIAIMC_MD );
+            CSLDestroy( papszPIAIMC_MD );
         }
 
         // USE00A 
