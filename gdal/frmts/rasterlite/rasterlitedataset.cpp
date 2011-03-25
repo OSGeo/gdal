@@ -1347,7 +1347,7 @@ void GDALRegister_Rasterlite()
 "   <Option name='BLOCKYSIZE' type='int' default='256' description='Tile Height'/>"
 "   <Option name='DRIVER' type='string' default='GTiff' description='GDAL driver to use for storing tiles' default='GTiff'/>"
 "   <Option name='COMPRESS' type='string' default='(GTiff driver) Compression method' default='NONE'/>"
-"   <Option name='QUALITY' type='int' description='(GTiff / JPEG drivers) JPEG quality 1-100' default='75'/>"
+"   <Option name='QUALITY' type='int' description='(JPEG-compressed GTiff, JPEG and WEBP drivers) JPEG/WEBP Quality 1-100' default='75'/>"
 "   <Option name='PHOTOMETRIC' type='string-select' description='(GTiff driver) Photometric interpretation'>"
 "       <Value>MINISBLACK</Value>"
 "       <Value>MINISWHITE</Value>"
