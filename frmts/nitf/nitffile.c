@@ -1916,3 +1916,100 @@ int NITFReconcileAttachments( NITFFile *psFile )
     else
         return NITFReconcileAttachments( psFile );
 }
+
+/************************************************************************/
+/*                           NITFReadCSDIDA()                           */
+/*                                                                      */
+/*      Read NITF file header TRE CSDIDA and return contents as         */
+/*      metadata strings.                                               */
+/************************************************************************/
+
+char **NITFReadCSDIDA( NITFFile *psFile )
+{
+    const char *pachTRE = NULL;
+    int  nTRESize;
+    char **papszMD = NULL;
+    int nRemainingBytes;
+
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the TRE?                                             */
+/* -------------------------------------------------------------------- */
+    if( psFile != NULL )
+        pachTRE = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes, "CSDIDA", &nTRESize);
+
+    if( pachTRE == NULL )
+        return NULL;
+
+    if( nTRESize != 70 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "CSDIDA TRE wrong size, ignoring." );
+        return NULL;
+    }
+
+    nRemainingBytes = psFile->nTREBytes - (pachTRE - psFile->pachTRE);
+
+    if (nRemainingBytes < 70)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot read CSDIDA TRE. Not enough bytes");
+        return FALSE;
+    }
+/* -------------------------------------------------------------------- */
+/*      Parse out field values.                                         */
+/* -------------------------------------------------------------------- */
+
+    NITFExtractMetadata( &papszMD, pachTRE,   0,   2, 
+                         "NITF_CSDIDA_DAY" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   2,   3, 
+                         "NITF_CSDIDA_MONTH" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   5,   4, 
+                         "NITF_CSDIDA_YEAR" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   9,   2, 
+                         "NITF_CSDIDA_PLATFORM_CODE" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   11,   2, 
+                         "NITF_CSDIDA_VEHICLE_ID" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   13,   2, 
+                         "NITF_CSDIDA_PASS" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   15,   3, 
+                         "NITF_CSDIDA_OPERATION" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   18,   2, 
+                         "NITF_CSDIDA_SENSOR_ID" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   20,   2, 
+                         "NITF_CSDIDA_PRODUCT_ID" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   22,   4, 
+                         "NITF_CSDIDA_RESERVED_0" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   26,   14, 
+                         "NITF_CSDIDA_TIME" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   40,   14, 
+                         "NITF_CSDIDA_PROCESS_TIME" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   54,   2, 
+                         "NITF_CSDIDA_RESERVED_1" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   56,   2, 
+                         "NITF_CSDIDA_RESERVED_2" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   58,   1, 
+                         "NITF_CSDIDA_RESERVED_3" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   59,   1, 
+                         "NITF_CSDIDA_RESERVED_4" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   60,   10, 
+                         "NITF_CSDIDA_SOFTWARE_VERSION_NUMBER" );
+
+    return papszMD;
+}
