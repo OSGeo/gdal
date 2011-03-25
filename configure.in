@@ -2423,6 +2423,41 @@ if test "$EPSILON_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if webp library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(webp,[  --with-webp[=ARG]    Include WEBP support (ARG=no, yes or libwebp install root path)],,)
+
+WEBP_SETTING=no
+
+if test "$with_webp" = "yes" ; then
+
+  AC_CHECK_LIB(webp,WebPDecodeRGB,WEBP_SETTING=yes,WEBP_SETTING=no,)
+
+  if test "$WEBP_SETTING" = "yes" ; then
+    LIBS="-lwebp $LIBS"
+  else
+    echo "libwebp not found - WEBP support disabled"
+  fi
+
+elif test "$with_webp" != "no" -a "$with_webp" != ""; then
+
+  AC_CHECK_LIB(webp,WebPDecodeRGB,WEBP_SETTING=yes,WEBP_SETTING=no,-L$with_webp/lib -lwebp)
+
+  if test "$WEBP_SETTING" = "yes" ; then
+    LIBS="-L$with_webp/lib -lwebp $LIBS"
+    EXTRA_INCLUDES="-I$with_webp/include $EXTRA_INCLUDES"
+  else
+    echo "libwebp not found - WEBP support disabled"
+  fi
+
+fi
+
+if test "$WEBP_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="webp $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -3105,6 +3140,7 @@ LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
 LOC_MSG([  MSG support:               ${HAVE_MSG}])
 LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
 LOC_MSG([  EPSILON support:           ${EPSILON_SETTING}])
+LOC_MSG([  WebP support:              ${WEBP_SETTING}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
