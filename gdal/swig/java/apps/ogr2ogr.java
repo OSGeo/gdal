@@ -707,7 +707,7 @@ public class ogr2ogr
                                     poSourceSRS, papszSelFields, bAppend, eGType,
                                     bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
                                     nCountLayerFeatures, poClipSrc, poClipDst, bExplodeCollections,
-                                    pszZField, pfnProgress ))
+                                    pszZField, pszWHERE, pfnProgress ))
                 {
                     System.err.println(
                             "Terminating translation prematurely after failed\n" +
@@ -842,7 +842,7 @@ public class ogr2ogr
                                     poSourceSRS, papszSelFields, bAppend, eGType,
                                     bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
                                     panLayerCountFeatures[iLayer], poClipSrc, poClipDst, bExplodeCollections,
-                                    pszZField, pfnProgress) 
+                                    pszZField, pszWHERE, pfnProgress) 
                     && !bSkipFailures )
                 {
                     System.err.println(
@@ -1093,6 +1093,7 @@ public class ogr2ogr
                             Geometry poClipDst,
                             boolean bExplodeCollections,
                             String pszZField,
+                            String pszWHERE,
                             ProgressCallback pfnProgress)
     
     {
@@ -1351,7 +1352,11 @@ public class ogr2ogr
             /* -------------------------------------------------------------------- */
             /* Use SetIgnoredFields() on source layer if available                  */
             /* -------------------------------------------------------------------- */
-            if (poSrcLayer.TestCapability(ogr.OLCIgnoreFields))
+
+            /* Here we differ from the ogr2ogr.cpp implementation since the OGRFeatureQuery */
+            /* isn't mapped to swig. So in that case just don't use SetIgnoredFields() */
+            /* to avoid issue raised in #4015 */
+            if (poSrcLayer.TestCapability(ogr.OLCIgnoreFields) && pszWHERE == null)
             {
                 int iSrcField;
                 Vector papszIgnoredFields = new Vector();

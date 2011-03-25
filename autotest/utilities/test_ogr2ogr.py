@@ -1336,6 +1336,34 @@ def test_ogr2ogr_37():
 
     return 'success'
 
+###############################################################################
+# Test that we take into account the fields by the where clause when combining
+# -select and -where (#4015)
+
+def test_ogr2ogr_38():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_38.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_38.shp')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_38.shp ../ogr/data/poly.shp -select AREA -where "EAS_ID = 170"')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_38.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_38.shp')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1373,7 +1401,8 @@ gdaltest_list = [
     test_ogr2ogr_34,
     test_ogr2ogr_35,
     test_ogr2ogr_36,
-    test_ogr2ogr_37 ]
+    test_ogr2ogr_37,
+    test_ogr2ogr_38 ]
     
 if __name__ == '__main__':
 
