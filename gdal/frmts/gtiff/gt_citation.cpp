@@ -558,12 +558,18 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
     OGRBoolean hasUnits = FALSE;
     if( GTIFKeyGet( hGTIF, GTCitationGeoKey, szCTString, 0, sizeof(szCTString) ) )
     {
-        if( strstr(szCTString, "us") && strstr(szCTString, "survey")
-            && (strstr(szCTString, "feet") || strstr(szCTString, "foot")))
+        CPLString osLCCT = szCTString;
+
+        osLCCT.tolower();
+
+        if( strstr(osLCCT,"us") && strstr(osLCCT,"survey")
+            && (strstr(osLCCT,"feet") || strstr(osLCCT,"foot")) )
             strcpy(units, "us_survey_feet");
-        else if(strstr(szCTString, "feet") || strstr(szCTString, "foot"))
+        else if(strstr(osLCCT, "linear_feet")  
+                || strstr(osLCCT, "linear_foot") 
+                || strstr(osLCCT, "international"))
             strcpy(units, "international_feet");
-        else if(strstr(szCTString, "meter"))
+        else if( strstr(osLCCT,"meter") )
             strcpy(units, "meters");
 
         if (strlen(units) > 0)
@@ -586,20 +592,22 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
       
                     if( poUnit != NULL && poUnit->GetChildCount() >= 2 )
                     {
-                        const char* unitName = poUnit->GetChild(0)->GetValue();
+                        CPLString unitName = poUnit->GetChild(0)->GetValue();
+                        unitName.tolower();
+
                         if (strstr(units, "us_survey_feet"))
                         {              
-                            if (strstr(unitName, "us_survey_feet") || strstr(unitName, "Foot_US") || strstr(unitName, "foot_US"))
+                            if (strstr(unitName, "us_survey_feet") || strstr(unitName, "foot_us") )
                                 done = TRUE;
                         }
                         else if (strstr(units, "international_feet"))
                         {
-                            if (strstr(unitName, "international_feet") || strstr(unitName, "Foot") || strstr(unitName, "foot"))
+                            if (strstr(unitName, "feet") || strstr(unitName, "foot"))
                                 done = TRUE;
                         }
                         else if (strstr(units, "meters"))
                         {
-                            if (strstr(unitName, "meter") || strstr(unitName, "Meter"))
+                            if (strstr(unitName, "meter") )
                                 done = TRUE;
                         }
                     }
@@ -615,14 +623,16 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
         GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszUnitsName, NULL );
         if( pszUnitsName && strlen(pszUnitsName) > 0 )
         {
-            strcpy( szCTString, pszUnitsName );
+            CPLString osLCCT = pszUnitsName;
             GTIFFreeMemory( pszUnitsName );
-            if( strstr(szCTString, "us") && strstr(szCTString, "survey")
-                && (strstr(szCTString, "feet") || strstr(szCTString, "foot")))
+            osLCCT.tolower();
+
+            if( strstr(osLCCT, "us") && strstr(osLCCT, "survey")
+                && (strstr(osLCCT, "feet") || strstr(osLCCT, "foot")))
                 strcpy(units, "us_survey_feet");
-            else if(strstr(szCTString, "feet") || strstr(szCTString, "foot"))
+            else if(strstr(osLCCT, "feet") || strstr(osLCCT, "foot"))
                 strcpy(units, "international_feet");
-            else if(strstr(szCTString, "meter"))
+            else if(strstr(osLCCT, "meter"))
                 strcpy(units, "meters");
             hasUnits = TRUE;
         }

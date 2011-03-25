@@ -362,6 +362,23 @@ def tiff_grads():
     return 'success'
 
 ###############################################################################
+# Check Erdas Citation Parsing for coordinate system.
+
+def tiff_citation():
+
+    ds = gdal.Open('data/citation_mixedcase.tif')
+    wkt = ds.GetProjectionRef()
+
+    expected_wkt = """PROJCS["NAD_1983_HARN_StatePlane_Oregon_North_FIPS_3601_Feet_Intl",GEOGCS["GCS_North_American_1983_HARN",DATUM["NAD83_High_Accuracy_Regional_Network",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["False_Easting",8202099.737532808],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-120.5],PARAMETER["Standard_Parallel_1",44.33333333333334],PARAMETER["Standard_Parallel_2",46.0],PARAMETER["Latitude_Of_Origin",43.66666666666666],UNIT["Foot",0.3048]]"""
+
+    if wkt != expected_wkt:
+        print('got: ', wkt)
+        gdaltest.post_reason( 'Erdas citation processing failing?' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test GTiffSplitBitmapBand to treat one row 1bit files as scanline blocks (#2622)
 
 def tiff_g4_split():
@@ -708,8 +725,15 @@ def tiff_read_geomatrix():
 
 def tiff_read_corrupted_gtiff():
 
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('data/corrupted_gtiff_tags.tif')
+    gdal.PopErrorHandler()
     ds = None
+
+    err_msg = gdal.GetLastErrorMsg()
+    if string.find(err_msg,'IO error during') == -1:
+        gdaltest.post_reason( 'did not get expected error message' )
+        return 'fail'
 
     return 'success'
 
@@ -806,6 +830,7 @@ gdaltest_list.append( (tiff_read_tar_2) )
 gdaltest_list.append( (tiff_read_tgz_1) )
 gdaltest_list.append( (tiff_read_tgz_2) )
 gdaltest_list.append( (tiff_grads) )
+gdaltest_list.append( (tiff_citation) )
 gdaltest_list.append( (tiff_g4_split) )
 gdaltest_list.append( (tiff_multi_images) )
 gdaltest_list.append( (tiff_vsimem) )

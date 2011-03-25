@@ -259,6 +259,8 @@ public:
     /* case insensitive find alternates */
     size_t    ifind( const std::string & str, size_t pos = 0 ) const;
     size_t    ifind( const char * s, size_t pos = 0 ) const;
+    CPLString &toupper( void );
+    CPLString &tolower( void );
 
 };
 
