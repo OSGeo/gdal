@@ -2256,6 +2256,109 @@ char **NITFReadCSEXRA( NITFImage *psImage )
 }
 
 /************************************************************************/
+/*                           NITFReadPIAIMC()                           */
+/*                                                                      */
+/*      Read a PIAIMC TRE and return contents as metadata strings.      */
+/************************************************************************/
+
+char **NITFReadPIAIMC( NITFImage *psImage )
+
+{
+    const char *pachTRE;
+    int  nTRESize;
+    char **papszMD = NULL;
+    int nRemainingBytes;
+
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the TRE?                                             */
+/* -------------------------------------------------------------------- */
+    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
+                           "PIAIMC", &nTRESize );
+
+    if( pachTRE == NULL )
+        return NULL;
+
+    if( nTRESize != 362 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "PIAIMC TRE wrong size, ignoring." );
+        return NULL;
+    }
+
+    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
+
+    if (nRemainingBytes < 362)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot read PIAIMC TRE. Not enough bytes");
+        return FALSE;
+    }
+/* -------------------------------------------------------------------- */
+/*      Parse out field values.                                         */
+/* -------------------------------------------------------------------- */
+
+    NITFExtractMetadata( &papszMD, pachTRE,   0,   3, 
+                         "NITF_PIAIMC_CLOUDCVR" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   3,   1, 
+                         "NITF_PIAIMC_SRP" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   4,   12, 
+                         "NITF_PIAIMC_SENSMODE" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   16,  18, 
+                         "NITF_PIAIMC_SENSNAME" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   34,  255, 
+                         "NITF_PIAIMC_SOURCE" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   289,   2, 
+                         "NITF_PIAIMC_COMGEN" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   291,   1, 
+                         "NITF_PIAIMC_SUBQUAL" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   292,   7, 
+                         "NITF_PIAIMC_PIAMSNNUM" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   299,   32, 
+                         "NITF_PIAIMC_CAMSPECS" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   331,   2, 
+                         "NITF_PIAIMC_PROJID" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   333,   1, 
+                         "NITF_PIAIMC_GENERATION" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   334,   1, 
+                         "NITF_PIAIMC_ESD" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   335,   2, 
+                         "NITF_PIAIMC_OTHERCOND" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   337,   7, 
+                         "NITF_PIAIMC_MEANGSD" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   344,   3, 
+                         "NITF_PIAIMC_IDATUM" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   347,   3, 
+                         "NITF_PIAIMC_IELLIP" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   350,   2, 
+                         "NITF_PIAIMC_PREPROC" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   352,   2, 
+                         "NITF_PIAIMC_IPROJ" );
+
+    NITFExtractMetadata( &papszMD, pachTRE,   354,   8, 
+                         "NITF_PIAIMC_SATTRACK" );
+
+    return papszMD;
+}
+
+/************************************************************************/
 /*                           NITFReadRPC00B()                           */
 /*                                                                      */
 /*      Read an RPC00A or RPC00B structure if the TRE is available.     */

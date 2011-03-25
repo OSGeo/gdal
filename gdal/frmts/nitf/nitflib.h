@@ -91,6 +91,7 @@ const char CPL_DLL *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
 
 int CPL_DLL NITFCollectAttachments( NITFFile *psFile );
 int CPL_DLL NITFReconcileAttachments( NITFFile *psFile );
+char CPL_DLL **NITFReadCSDIDA( NITFFile *psFile );
 
 /* -------------------------------------------------------------------- */
 /*      Image level access.                                             */
@@ -215,6 +216,7 @@ int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
                                     double dfLRX, double dfLRY,
                                     double dfLLX, double dfLLY );
 char      CPL_DLL **NITFReadCSEXRA( NITFImage *psImage );
+char      CPL_DLL **NITFReadPIAIMC( NITFImage *psImage );
 char      CPL_DLL **NITFReadUSE00A( NITFImage *psImage );
 char      CPL_DLL **NITFReadSTDIDC( NITFImage *psImage );
 char      CPL_DLL **NITFReadBLOCKA( NITFImage *psImage );
