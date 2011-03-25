@@ -85,7 +85,7 @@ static char** RasterliteGetTileDriverOptions(char** papszOptions)
             papszTileDriverOptions =
                 CSLSetNameValue(papszTileDriverOptions, "JPEG_QUALITY", pszQuality);
         }
-        else if (EQUAL(pszDriverName, "JPEG"))
+        else if (EQUAL(pszDriverName, "JPEG") || EQUAL(pszDriverName, "WEBP"))
         {
             papszTileDriverOptions =
                 CSLSetNameValue(papszTileDriverOptions, "QUALITY", pszQuality);
