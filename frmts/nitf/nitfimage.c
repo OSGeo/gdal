@@ -2267,8 +2267,6 @@ char **NITFReadPIAIMC( NITFImage *psImage )
     const char *pachTRE;
     int  nTRESize;
     char **papszMD = NULL;
-    int nRemainingBytes;
-
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -2286,14 +2284,6 @@ char **NITFReadPIAIMC( NITFImage *psImage )
         return NULL;
     }
 
-    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
-
-    if (nRemainingBytes < 362)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot read PIAIMC TRE. Not enough bytes");
-        return FALSE;
-    }
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
@@ -4041,27 +4031,19 @@ int NITFReadIMRFCA( NITFImage *psImage, NITFRPC00BInfo *psRPC )
     const char *pachTreIMRFCA   = NULL;
     double      dfTolerance     = 1.0e-10;
     int         count           = 0;
-    int         nNotEnoughBytes = 0;
-    int         nRemainingBytes = 0;
+    int         nTreIMASDASize  = 0;
+    int         nTreIMRFCASize = 0;
 
     if( (psImage == NULL) || (psRPC == NULL) ) return FALSE;
 
     /* Check to see if we have the IMASDA and IMRFCA tag (DPPDB data). */
 
-    pachTreIMASDA = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, "IMASDA", NULL );
-    pachTreIMRFCA = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, "IMRFCA", NULL );
+    pachTreIMASDA = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, "IMASDA", &nTreIMASDASize );
+    pachTreIMRFCA = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, "IMRFCA", &nTreIMRFCASize );
 
     if ( (pachTreIMASDA == NULL) || (pachTreIMRFCA == NULL) ) return FALSE;
 
-    nRemainingBytes = psImage->nTREBytes - ( pachTreIMASDA-psImage->pachTRE );
-
-    if( nRemainingBytes < 242 ) nNotEnoughBytes += 1;
-
-    nRemainingBytes = psImage->nTREBytes - ( pachTreIMRFCA-psImage->pachTRE );
-
-    if( nRemainingBytes < 1760 ) nNotEnoughBytes += 1;
-
-    if( nNotEnoughBytes > 0 )
+    if( nTreIMASDASize < 242 || nTreIMRFCASize < 1760 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Cannot read DPPDB IMASDA/IMRFCA TREs; not enough bytes." );
 
