@@ -1486,6 +1486,51 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
     VSIFree($5);
 }
 
+
+/***************************************************
+ * Typemaps for Gemetry.GetPoints()
+ ***************************************************/
+%typemap(in,numinputs=0) (int* pnCount, double** ppadfXY, double** ppadfZ) ( int nPoints = 0, double* padfXY = NULL, double* padfZ = NULL )
+{
+  /* %typemap(in,numinputs=0) (int* pnCount, double** ppadfXY, double** ppadfZ) */
+  $1 = &nPoints;
+  $2 = &padfXY;
+  $3 = &padfZ;
+}
+
+%typemap(argout)  (int* pnCount, double** ppadfXY, double** ppadfZ)
+{
+  /* %typemap(argout)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
+  Py_DECREF($result);
+  int nPointCount = *($1);
+  if (nPointCount == 0)
+  {
+    $result = Py_None;
+  }
+  else
+  {
+    PyObject *xyz = PyList_New( nPointCount );
+    int nDimensions = (*$3 != NULL) ? 3 : 2;
+    for( int i=0; i< nPointCount; i++ ) {
+        PyObject *tuple = PyTuple_New( nDimensions );
+        PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( (*$2)[2*i] ) );
+        PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( (*$2)[2*i+1] ) );
+        if (nDimensions == 3)
+            PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( (*$3)[i] ) );
+        PyList_SetItem( xyz, i, tuple );
+    }
+    $result = xyz;
+  }
+}
+
+%typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ)
+{
+    /* %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
+    VSIFree(*$2);
+    VSIFree(*$3);
+}
+
+
 %typemap(in) (const char *utf8_path) (int bToFree = 0)
 {
     /* %typemap(in) (const char *utf8_path) */

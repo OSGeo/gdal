@@ -207,6 +207,61 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
 }
 
 /************************************************************************/
+/*                          OGR_G_GetPoints()                           */
+/************************************************************************/
+
+/**
+ * \brief Returns all points of a point or a line string.
+ *
+ * This method copies all points into user list. This list must be at
+ * least 2 * sizeof(double) * OGR_G_GetPoints() bytes in size.
+ * The x,y coordinates are interleaved.
+ * It also copies all Z coordinates if padfZOut is not NULL.
+ *
+ * Only wkbPoint[25D] or wkbLineString[25D] may return a non null value.
+ *
+ * @param hGeom handle to the geometry from which to get the coordinates.
+ * @param padfXYOut a buffer into which the x,y coordinates are written.
+ * @param padfZOut the Z values that go with the points (optional, may be NULL).
+ *
+ * @return the number of points
+ *
+ * @since OGR 1.9.0
+ */
+
+int OGR_G_GetPoints( OGRGeometryH hGeom, double* padfXYOut, double * padfZOut )
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_GetPoints" );
+    VALIDATE_POINTER0( padfXYOut, "OGR_G_GetPoints" );
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+        padfXYOut[0] = ((OGRPoint *)hGeom)->getX();
+        padfXYOut[1] = ((OGRPoint *)hGeom)->getY();
+        if( padfZOut != NULL )
+            *padfZOut = ((OGRPoint *)hGeom)->getZ();
+        return 1;
+      }
+      break;
+
+      case wkbLineString:
+      {
+          OGRLineString* poLS = (OGRLineString *) hGeom;
+          poLS->getPoints((OGRRawPoint*)padfXYOut, padfZOut);
+          return poLS->getNumPoints();
+      }
+      break;
+
+      default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        return 0;
+        break;
+    }
+}
+
+/************************************************************************/
 /*                           OGR_G_GetPoint()                           */
 /************************************************************************/
 

@@ -1611,7 +1611,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     return $jnicall;
   }
 
-
 /***************************************************
  * Typemaps for ( int *panSuccess )
  ***************************************************/
@@ -1649,5 +1648,62 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(jstype) ( int *panSuccess ) "int[]"
 %typemap(javain) ( int *panSuccess ) "$javainput"
 %typemap(javaout) ( int *panSuccess ) {
+    return $jnicall;
+  }
+
+/***************************************************
+ * Typemaps for Gemetry.GetPoints()
+ ***************************************************/
+
+%typemap(in,numinputs=0) (int* pnCount, double** ppadfXY, double** ppadfZ) ( int nPoints = 0, double* padfXY = NULL, double* padfZ = NULL)
+{
+  /* %typemap(in,numinputs=0) (int* pnCount, double** ppadfXY, double** ppadfZ) */
+  $1 = &nPoints;
+  $2 = &padfXY;
+  $3 = &padfZ;
+}
+
+%typemap(argout)  (int* pnCount, double** ppadfXY, double** ppadfZ)
+{
+  /* %typemap(out)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
+
+  int nPointCount = *($1);
+  if (nPointCount == 0)
+  {
+    $result = 0;
+  }
+  else
+  {
+    int nDimensions = (*$3 != NULL) ? 3 : 2;
+    $result = jenv->NewObjectArray(nPointCount, jenv->FindClass("java/lang/Object"), NULL);
+    for( int i=0; i< nPointCount; i++ )
+    {
+        jdoubleArray dblArray = jenv->NewDoubleArray(nDimensions);
+        jenv->SetDoubleArrayRegion(dblArray, 0, 2, &( (*$2)[2*i] ));
+        if (nDimensions == 3)
+            jenv->SetDoubleArrayRegion(dblArray, 2, 1, &( (*$3)[i] ));
+        jenv->SetObjectArrayElement($result, (jsize)i, dblArray);
+        jenv->DeleteLocalRef(dblArray);
+    }
+  }
+}
+
+%typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ)
+{
+    /* %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
+    VSIFree(*$2);
+    VSIFree(*$3);
+}
+
+%typemap(argout)  (retGetPoints*)
+{
+    /* foo */
+}
+
+%typemap(jni) ( retGetPoints* ) "jobjectArray"
+%typemap(jtype) ( retGetPoints* ) "double[][]"
+%typemap(jstype) ( retGetPoints* ) "double[][]"
+%typemap(javain) ( retGetPoints* ) "$javainput"
+%typemap(javaout) ( retGetPoints* ) {
     return $jnicall;
   }
