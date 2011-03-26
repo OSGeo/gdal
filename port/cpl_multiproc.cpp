@@ -486,7 +486,9 @@ void *CPLCreateMutex()
 #else
     CRITICAL_SECTION *pcs;
 
-    pcs = (CRITICAL_SECTION *)CPLMalloc(sizeof(*pcs));
+	/* Do not use CPLMalloc() since its debugging infrastructure */
+	/* can call the CPL*Mutex functions... */
+    pcs = (CRITICAL_SECTION *)malloc(sizeof(*pcs));
     if( pcs )
     {
       InitializeCriticalSectionAndSpinCount(pcs, 4000);
@@ -558,7 +560,7 @@ void CPLDestroyMutex( void *hMutexIn )
     CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
 
     DeleteCriticalSection( pcs );
-    CPLFree( pcs );
+    free( pcs );
 #endif
 }
 
