@@ -363,7 +363,6 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
-    int  nQuality = 80;
 
 /* -------------------------------------------------------------------- */
 /*      WEBP library initialization                                     */
@@ -376,20 +375,22 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    WebPConfig sConfig;
-    if (!WebPConfigInit(&sConfig))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "WebPConfigInit() failed");
-        return NULL;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
+
+    if( nXSize > 16383 || nYSize > 16383 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "WEBP maximum image dimensions are 16383 x 16383.");
+
+        return NULL;
+    }
+
     if( nBands != 3 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "WEBP driver doesn't support %d bands. Must be 3 (RGB) bands.\n",
+                  "WEBP driver doesn't support %d bands. Must be 3 (RGB) bands.",
                   nBands );
 
         return NULL;
@@ -401,7 +402,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "WEBP driver doesn't support data type %s. "
-                  "Only eight bit byte bands supported.\n",
+                  "Only eight bit byte bands supported.",
                   GDALGetDataTypeName(
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
@@ -412,16 +413,94 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      What options has the user selected?                             */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszOptions,"QUALITY") != NULL )
+    float fQuality = 75.0f;
+    const char* pszQUALITY = CSLFetchNameValue(papszOptions, "QUALITY"); 
+    if( pszQUALITY != NULL )
     {
-        nQuality = atoi(CSLFetchNameValue(papszOptions,"QUALITY"));
-        if( nQuality < 1 || nQuality > 100 )
+        fQuality = (float) atof(pszQUALITY);
+        if( fQuality < 0.0f || fQuality > 100.0f )
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
-                      "QUALITY=%s is not a legal value in the range 1-100.",
-                      CSLFetchNameValue(papszOptions,"QUALITY") );
+                      "%s=%s is not a legal value.", "QUALITY", pszQUALITY);
             return NULL;
         }
+    }
+
+    WebPPreset nPreset = WEBP_PRESET_DEFAULT;
+    const char* pszPRESET = CSLFetchNameValueDef(papszOptions, "PRESET", "DEFAULT");
+    if (EQUAL(pszPRESET, "DEFAULT"))
+        nPreset = WEBP_PRESET_DEFAULT;
+    else if (EQUAL(pszPRESET, "PICTURE"))
+        nPreset = WEBP_PRESET_PICTURE;
+    else if (EQUAL(pszPRESET, "PHOTO"))
+        nPreset = WEBP_PRESET_PHOTO;
+    else if (EQUAL(pszPRESET, "PICTURE"))
+        nPreset = WEBP_PRESET_PICTURE;
+    else if (EQUAL(pszPRESET, "DRAWING"))
+        nPreset = WEBP_PRESET_DRAWING;
+    else if (EQUAL(pszPRESET, "ICON"))
+        nPreset = WEBP_PRESET_ICON;
+    else if (EQUAL(pszPRESET, "TEXT"))
+        nPreset = WEBP_PRESET_TEXT;
+    else
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "%s=%s is not a legal value.", "PRESET", pszPRESET );
+        return NULL;
+    }
+
+    WebPConfig sConfig;
+    if (!WebPConfigInitInternal(&sConfig, nPreset, fQuality, WEBP_ENCODER_ABI_VERSION))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "WebPConfigInit() failed");
+        return NULL;
+    }
+
+
+#define FETCH_AND_SET_OPTION_INT(name, fieldname, minval, maxval) \
+{ \
+    const char* pszVal = CSLFetchNameValue(papszOptions, name); \
+    if (pszVal != NULL) \
+    { \
+        sConfig.fieldname = atoi(pszVal); \
+        if (sConfig.fieldname < minval || sConfig.fieldname > maxval) \
+        { \
+            CPLError( CE_Failure, CPLE_IllegalArg, \
+                      "%s=%s is not a legal value.", name, pszVal ); \
+            return NULL; \
+        } \
+    } \
+}
+
+    FETCH_AND_SET_OPTION_INT("TARGETSIZE", target_size, 0, INT_MAX);
+
+    const char* pszPSNR = CSLFetchNameValue(papszOptions, "PSNR");
+    if (pszPSNR)
+    {
+        sConfig.target_PSNR = atof(pszPSNR);
+        if (sConfig.target_PSNR < 0)
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "PSNR=%s is not a legal value.", pszPSNR );
+            return NULL;
+        }
+    }
+
+    FETCH_AND_SET_OPTION_INT("METHOD", method, 0, 6);
+    FETCH_AND_SET_OPTION_INT("SEGMENTS", segments, 1, 4);
+    FETCH_AND_SET_OPTION_INT("SNS_STRENGTH", sns_strength, 0, 100);
+    FETCH_AND_SET_OPTION_INT("FILTER_STRENGTH", filter_strength, 0, 100);
+    FETCH_AND_SET_OPTION_INT("FILTER_SHARPNESS", filter_sharpness, 0, 7);
+    FETCH_AND_SET_OPTION_INT("FILTER_TYPE", filter_type, 0, 1);
+    FETCH_AND_SET_OPTION_INT("AUTOFILTER", autofilter, 0, 1);
+    FETCH_AND_SET_OPTION_INT("PASS", pass, 1, 10);
+    FETCH_AND_SET_OPTION_INT("PREPROCESSING", preprocessing, 0, 1);
+    FETCH_AND_SET_OPTION_INT("PARTITIONS", partitions, 0, 3);
+
+    if (!WebPValidateConfig(&sConfig))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "WebPValidateConfig() failed");
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -466,8 +545,6 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         VSIFCloseL( fpImage );
         return NULL;
     }
-
-    sConfig.quality = nQuality;
 
 /* -------------------------------------------------------------------- */
 /*      Acquire source imagery.                                         */
@@ -555,7 +632,27 @@ void GDALRegister_WEBP()
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
-"   <Option name='QUALITY' type='int' description='good=100, bad=0, default=80'/>\n"
+"   <Option name='QUALITY' type='float' description='good=100, bad=0' default='75'/>\n"
+"   <Option name='PRESET' type='string-select' description='kind of image' default='DEFAULT'>\n"
+"       <Value>DEFAULT</Value>\n"
+"       <Value>PICTURE</Value>\n"
+"       <Value>PHOTO</Value>\n"
+"       <Value>DRAWING</Value>\n"
+"       <Value>ICON</Value>\n"
+"       <Value>TEXT</Value>\n"
+"   </Option>\n"
+"   <Option name='TARGETSIZE' type='int' description='if non-zero, desired target size in bytes. Has precedence over QUALITY'/>\n"
+"   <Option name='PSNR' type='float' description='if non-zero, minimal distortion to to achieve. Has precedence over TARGETSIZE'/>\n"
+"   <Option name='METHOD' type='int' description='quality/speed trade-off. fast=0, slower-better=6' default='4'/>\n"
+"   <Option name='SEGMENTS' type='int' description='maximum number of segments [1-4]' default='4'/>\n"
+"   <Option name='SNS_STRENGTH' type='int' description='Spatial Noise Shaping. off=0, maximum=100' default='50'/>\n"
+"   <Option name='FILTER_STRENGTH' type='int' description='Filter strength. off=0, strongest=100' default='20'/>\n"
+"   <Option name='FILTER_SHARPNESS' type='int' description='Filter sharpness. off=0, least sharp=7' default='0'/>\n"
+"   <Option name='FILTER_TYPE' type='int' description='Filtering type. simple=0, strong=1' default='0'/>\n"
+"   <Option name='AUTOFILTER' type='int' description=\"Auto adjust filter's strength. off=0, on=1\" default='0'/>\n"
+"   <Option name='PASS' type='int' description='Number of entropy analysis passes [1-10]' default='1'/>\n"
+"   <Option name='PREPROCESSING' type='int' description='Preprocessing filter. none=0, segment-smooth=1' default='0'/>\n"
+"   <Option name='PARTITIONS' type='int' description='log2(number of token partitions) in [0..3]' default='0'/>\n"
 "</CreationOptionList>\n" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
