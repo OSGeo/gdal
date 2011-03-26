@@ -231,8 +231,8 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
 
 int OGR_G_GetPoints( OGRGeometryH hGeom, double* padfXYOut, double * padfZOut )
 {
-    VALIDATE_POINTER0( hGeom, "OGR_G_GetPoints" );
-    VALIDATE_POINTER0( padfXYOut, "OGR_G_GetPoints" );
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetPoints", 0 );
+    VALIDATE_POINTER1( padfXYOut, "OGR_G_GetPoints", 0 );
 
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
