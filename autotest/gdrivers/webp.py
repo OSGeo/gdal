@@ -68,7 +68,7 @@ def webp_3():
     if gdaltest.webp_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'WEBP', 'rgbsmall.tif', 1, 21498 )
+    tst = gdaltest.GDALTest( 'WEBP', 'rgbsmall.tif', 1, 21498, options = ['QUALITY=80'] )
     return tst.testCreateCopy( vsimem = 1, check_minmax = False )
 
 gdaltest_list = [
