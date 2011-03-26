@@ -679,6 +679,62 @@ def ogr_geom_length_geometrycollection():
     return 'success'
 
 ###############################################################################
+# Test Geometry.GetPoints() (#4016)
+
+def ogr_geom_getpoints():
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 1,2 3)')
+    points = geom.GetPoints()
+    if points != [(0.0, 1.0), (2.0, 3.0)]:
+        gdaltest.post_reason('did not get expected points (1)')
+        print(points)
+        return 'fail'
+    points = geom.GetPoints(nCoordDimension = 3)
+    if points != [(0.0, 1.0, 0.0), (2.0, 3.0, 0.0)]:
+        gdaltest.post_reason('did not get expected points (2)')
+        print(points)
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 1 2,3 4 5)')
+    points = geom.GetPoints()
+    if points != [(0.0, 1.0, 2.0), (3.0, 4.0, 5.0)]:
+        gdaltest.post_reason('did not get expected points (3)')
+        print(points)
+        return 'fail'
+    points = geom.GetPoints(nCoordDimension = 2)
+    if points != [(0.0, 1.0), (3.0, 4.0)]:
+        gdaltest.post_reason('did not get expected points (4)')
+        print(points)
+        return 'fail'
+
+
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
+    points = geom.GetPoints()
+    if points != [(0.0, 1.0)]:
+        gdaltest.post_reason('did not get expected points (5)')
+        print(points)
+        return 'fail'
+    points = geom.GetPoints(nCoordDimension = 3)
+    if points != [(0.0, 1.0, 0.0)]:
+        gdaltest.post_reason('did not get expected points (6)')
+        print(points)
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1 2)')
+    points = geom.GetPoints()
+    if points != [(0.0, 1.0, 2.0)]:
+        gdaltest.post_reason('did not get expected points (7)')
+        print(points)
+        return 'fail'
+    points = geom.GetPoints(nCoordDimension = 2)
+    if points != [(0.0, 1.0)]:
+        gdaltest.post_reason('did not get expected points (8)')
+        print(points)
+        return 'fail'
+        
+    return 'success'
+
+###############################################################################
 # Test OGRGeometry::empty()
 
 def ogr_geom_empty():
@@ -727,6 +783,7 @@ gdaltest_list = [
     ogr_geom_length_multilinestring,
     ogr_geom_length_geometrycollection,
     ogr_geom_empty,
+    ogr_geom_getpoints,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
