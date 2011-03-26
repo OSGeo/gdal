@@ -1929,8 +1929,6 @@ char **NITFReadCSDIDA( NITFFile *psFile )
     const char *pachTRE = NULL;
     int  nTRESize;
     char **papszMD = NULL;
-    int nRemainingBytes;
-
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -1948,14 +1946,6 @@ char **NITFReadCSDIDA( NITFFile *psFile )
         return NULL;
     }
 
-    nRemainingBytes = psFile->nTREBytes - (pachTRE - psFile->pachTRE);
-
-    if (nRemainingBytes < 70)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot read CSDIDA TRE. Not enough bytes");
-        return FALSE;
-    }
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
