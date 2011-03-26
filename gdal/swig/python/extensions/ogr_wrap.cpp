@@ -3993,6 +3993,26 @@ SWIGINTERN double OGRGeometryShadow_GetArea(OGRGeometryShadow *self){
 SWIGINTERN int OGRGeometryShadow_GetPointCount(OGRGeometryShadow *self){
     return OGR_G_GetPointCount(self);
   }
+SWIGINTERN void OGRGeometryShadow_GetPoints(OGRGeometryShadow *self,int *pnCount,double **ppadfXY,double **ppadfZ,int nCoordDimension=0){
+    int nPoints = OGR_G_GetPointCount(self);
+    *pnCount = nPoints;
+    if (nPoints == 0)
+    {
+        *ppadfXY = NULL;
+        *ppadfZ = NULL;
+    }
+    *ppadfXY = (double*)VSIMalloc(2 * sizeof(double) * nPoints);
+    if (*ppadfXY == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate resulting array");
+        *pnCount = 0;
+        return;
+    }
+    if (nCoordDimension <= 0)
+        nCoordDimension = OGR_G_GetCoordinateDimension(self);
+    *ppadfZ = (nCoordDimension == 3) ? (double*)VSIMalloc(sizeof(double) * nPoints) : NULL;
+    OGR_G_GetPoints(self, *ppadfXY, *ppadfZ);
+  }
 SWIGINTERN double OGRGeometryShadow_GetX(OGRGeometryShadow *self,int point=0){
     return OGR_G_GetX(self, point);
   }
@@ -12793,6 +12813,97 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_GetPoints(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  int *arg2 = (int *) 0 ;
+  double **arg3 = (double **) 0 ;
+  double **arg4 = (double **) 0 ;
+  int arg5 = (int) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int nPoints2 = 0 ;
+  double *padfXY2 = NULL ;
+  double *padfZ2 = NULL ;
+  int val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "nCoordDimension", NULL 
+  };
+  
+  {
+    /* %typemap(in,numinputs=0) (int* pnCount, double** ppadfXY, double** ppadfZ) */
+    arg2 = &nPoints2;
+    arg3 = &padfXY2;
+    arg4 = &padfZ2;
+  }
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:Geometry_GetPoints",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetPoints" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  if (obj1) {
+    ecode5 = SWIG_AsVal_int(obj1, &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Geometry_GetPoints" "', argument " "5"" of type '" "int""'");
+    } 
+    arg5 = static_cast< int >(val5);
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    OGRGeometryShadow_GetPoints(arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
+    Py_DECREF(resultobj);
+    int nPointCount = *(arg2);
+    if (nPointCount == 0)
+    {
+      resultobj = Py_None;
+    }
+    else
+    {
+      PyObject *xyz = PyList_New( nPointCount );
+      int nDimensions = (*arg4 != NULL) ? 3 : 2;
+      for( int i=0; i< nPointCount; i++ ) {
+        PyObject *tuple = PyTuple_New( nDimensions );
+        PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( (*arg3)[2*i] ) );
+        PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( (*arg3)[2*i+1] ) );
+        if (nDimensions == 3)
+        PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( (*arg4)[i] ) );
+        PyList_SetItem( xyz, i, tuple );
+      }
+      resultobj = xyz;
+    }
+  }
+  {
+    /* %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
+    VSIFree(*arg3);
+    VSIFree(*arg4);
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
+    VSIFree(*arg3);
+    VSIFree(*arg4);
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_GetX(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -17991,6 +18102,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_Area", _wrap_Geometry_Area, METH_VARARGS, (char *)"Geometry_Area(Geometry self) -> double"},
 	 { (char *)"Geometry_GetArea", _wrap_Geometry_GetArea, METH_VARARGS, (char *)"Geometry_GetArea(Geometry self) -> double"},
 	 { (char *)"Geometry_GetPointCount", _wrap_Geometry_GetPointCount, METH_VARARGS, (char *)"Geometry_GetPointCount(Geometry self) -> int"},
+	 { (char *)"Geometry_GetPoints", (PyCFunction) _wrap_Geometry_GetPoints, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetPoints(Geometry self, int nCoordDimension = 0)"},
 	 { (char *)"Geometry_GetX", (PyCFunction) _wrap_Geometry_GetX, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetX(Geometry self, int point = 0) -> double"},
 	 { (char *)"Geometry_GetY", (PyCFunction) _wrap_Geometry_GetY, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetY(Geometry self, int point = 0) -> double"},
 	 { (char *)"Geometry_GetZ", (PyCFunction) _wrap_Geometry_GetZ, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetZ(Geometry self, int point = 0) -> double"},

@@ -8126,6 +8126,38 @@ public class Geometry:public double[] GetPoint_2D(int iPoint)
 public class Geometry:public int GetPointCount()
 
 /**
+ * Returns all points of a point or a line string.
+ * <p>
+ * This method returns an array of tuples with the [x,y] or [x,y,z] coordinates pair or triplets.
+ * <p>
+ * Only wkbPoint[25D] or wkbLineString[25D] may return a valid value.
+ * Other geometry types will return null.
+ *
+ * @param nCoordinateDimension if nCoordinateDimension == 0 then the number of coordinates per tuple
+ * will reflect the coordinate dimension of the geometry. If nCoordinateDimension == 2,
+ * the number of coordinates per tuple will be 2. If nCoordinateDimension == 3, the number of
+ * coordinates per tuple will be 3.
+ *
+ * @return the coordinates
+ *
+ * @since OGR 1.9.0
+ */
+public class Geometry:public double[][] GetPoints(int nCoordinateDimension)
+
+/**
+ * Returns all points of a point or a line string.
+ * <p>
+ * Same as below with nCoordinateDimension == 0
+ *
+ * @return the coordinates
+ *
+ * @since OGR 1.9.0
+ *
+ * @see #GetPoints(int)
+ */
+public class Geometry:public double[][] GetPoints()
+
+/**
  * Returns spatial reference system for object.
  * <p>
  * This method relates to the SFCOM IGeometry::get_SpatialReference() method.

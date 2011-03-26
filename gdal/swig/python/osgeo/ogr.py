@@ -3410,6 +3410,10 @@ class Geometry(_object):
         """GetPointCount(self) -> int"""
         return _ogr.Geometry_GetPointCount(self, *args)
 
+    def GetPoints(self, *args, **kwargs):
+        """GetPoints(self, int nCoordDimension = 0)"""
+        return _ogr.Geometry_GetPoints(self, *args, **kwargs)
+
     def GetX(self, *args, **kwargs):
         """GetX(self, int point = 0) -> double"""
         return _ogr.Geometry_GetX(self, *args, **kwargs)
