@@ -162,7 +162,7 @@ GSBGRasterBand::GSBGRasterBand( GSBGDataset *poDS, int nBand ) :
 
 {
     this->poDS = poDS;
-    nBand = nBand;
+    this->nBand = nBand;
     
     eDataType = GDT_Float32;
 
