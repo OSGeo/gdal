@@ -199,9 +199,9 @@ class OGRSplitListFieldLayer : public OGRLayer
     virtual void                 ResetReading() { poSrcLayer->ResetReading(); }
     virtual int                  TestCapability(const char*) { return FALSE; }
 
-    virtual int                  GetFeatureCount()
+    virtual int                  GetFeatureCount( int bForce = TRUE )
     {
-        return poSrcLayer->GetFeatureCount();
+        return poSrcLayer->GetFeatureCount(bForce);
     }
 
     virtual OGRSpatialReference *GetSpatialRef()
