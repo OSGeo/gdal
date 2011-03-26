@@ -214,7 +214,7 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
  * \brief Returns all points of a point or a line string.
  *
  * This method copies all points into user list. This list must be at
- * least 2 * sizeof(double) * OGR_G_GetPoints() bytes in size.
+ * least 2 * sizeof(double) * OGR_G_GetPointCount() bytes in size.
  * The x,y coordinates are interleaved.
  * It also copies all Z coordinates if padfZOut is not NULL.
  *
