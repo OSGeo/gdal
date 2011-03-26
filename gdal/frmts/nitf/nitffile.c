@@ -1927,7 +1927,7 @@ int NITFReconcileAttachments( NITFFile *psFile )
 char **NITFReadCSDIDA( NITFFile *psFile )
 {
     const char *pachTRE = NULL;
-    int  nTRESize;
+    int  nTRESize = 0;
     char **papszMD = NULL;
 
 /* -------------------------------------------------------------------- */
