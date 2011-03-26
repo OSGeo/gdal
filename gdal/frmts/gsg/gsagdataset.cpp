@@ -171,7 +171,7 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
 
 {
     this->poDS = poDS;
-    nBand = nBand;
+    this->nBand = nBand;
     
     eDataType = GDT_Float64;
 
