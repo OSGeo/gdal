@@ -51,6 +51,10 @@ class OGRGFTLayer : public OGRLayer
     int                nNextFID;
     int                nFeatureCount;
 
+    int                iGeometryField;
+    int                iLatitude;
+    int                iLongitude;
+
     OGRFeature *       GetNextRawFeature();
 
     int                FetchDescribe();
@@ -61,17 +65,29 @@ class OGRGFTLayer : public OGRLayer
 
     std::vector<CPLString> aosRows;
 
+    int                bHasTriedCreateTable;
+    void               CreateTableIfNecessary();
+
+    CPLString          osTransaction;
+    int                bInTransaction;
+
+    CPLString           osWHERE;
+    CPLString           osQuery;
+
+    void                BuildWhere(void);
+
   public:
                         OGRGFTLayer(OGRGFTDataSource* poDS,
                                     const char* pszTableName,
-                                    const char* pszTableId);
+                                    const char* pszTableId = "");
                         ~OGRGFTLayer();
 
     virtual const char *        GetName() { return osTableName.c_str(); }
-    virtual OGRwkbGeometryType GetGeomType() { return wkbPoint; }
+    //virtual OGRwkbGeometryType GetGeomType() { return wkbUnknown; }
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
+    virtual OGRFeature *        GetFeature( long nFID );
 
     virtual OGRFeatureDefn *    GetLayerDefn();
 
@@ -81,6 +97,18 @@ class OGRGFTLayer : public OGRLayer
 
     virtual int         GetFeatureCount( int bForce = TRUE );
 
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+    OGRErr              CreateFeature( OGRFeature *poFeature );
+
+    virtual OGRErr      StartTransaction();
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
+
+    virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual OGRErr      SetAttributeFilter( const char * );
+
+    const CPLString&            GetTableId() const { return osTableId; }
 };
 
 /************************************************************************/
@@ -94,8 +122,13 @@ class OGRGFTDataSource : public OGRDataSource
     OGRLayer**          papoLayers;
     int                 nLayers;
 
+    int                 bReadWrite;
+
+    int                 bUseHTTPS;
     CPLString           osAuth;
     int                 FetchAuth(const char* pszEmail, const char* pszPassword);
+
+    void                DeleteLayer( const char *pszLayerName );
 
   public:
                         OGRGFTDataSource();
@@ -111,7 +144,16 @@ class OGRGFTDataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 
+    virtual OGRLayer   *CreateLayer( const char *pszName,
+                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRwkbGeometryType eGType = wkbUnknown,
+                                     char ** papszOptions = NULL );
+    virtual OGRErr      DeleteLayer(int);
+
     const CPLString&            GetAuth() const { return osAuth; }
+    const char*                 GetAPIURL() const;
+    int                         IsReadWrite() const { return bReadWrite; }
+    char**                      AddHTTPOptions(char** papszOptions = NULL);
 };
 
 /************************************************************************/

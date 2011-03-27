@@ -30,7 +30,7 @@
 #include "ogr_gft.h"
 #include "cpl_conv.h"
 
-// g++ -g -Wall -fPIC -shared -o ogr_GFT.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gft ogr/ogrsf_frmts/gft/*.c*
+// g++ -g -Wall -fPIC -shared -o ogr_GFT.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gft ogr/ogrsf_frmts/gft/*.c* -L. -lgdal
 
 /* http://code.google.com/intl/fr/apis/fusiontables/docs/developers_reference.html */
 
