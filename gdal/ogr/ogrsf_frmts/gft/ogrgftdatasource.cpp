@@ -45,6 +45,9 @@ OGRGFTDataSource::OGRGFTDataSource()
     nLayers = 0;
 
     pszName = NULL;
+
+    bReadWrite = FALSE;
+    bUseHTTPS = FALSE;
 }
 
 /************************************************************************/
@@ -58,6 +61,10 @@ OGRGFTDataSource::~OGRGFTDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
+    char** papszOptions = CSLAddString(NULL, CPLSPrintf("CLOSE_PERSISTENT=GFT:%p", this));
+    CPLHTTPFetch( GetAPIURL(), papszOptions);
+    CSLDestroy(papszOptions);
+
     CPLFree( pszName );
 }
 
@@ -68,7 +75,12 @@ OGRGFTDataSource::~OGRGFTDataSource()
 int OGRGFTDataSource::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( bReadWrite && EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else if( bReadWrite && EQUAL(pszCap,ODsCDeleteLayer) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
@@ -146,33 +158,51 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     if (!EQUALN(pszFilename, "GFT:", 4))
         return FALSE;
 
+    bReadWrite = bUpdateIn;
+
     pszName = CPLStrdup( pszFilename );
 
     const char* pszEmail = CPLGetConfigOption("GFT_EMAIL", NULL);
     const char* pszPassword = CPLGetConfigOption("GFT_PASSWORD", NULL);
+    const char* pszTables = strstr(pszFilename, "tables=");
 
-    if (pszEmail == NULL)
+    bUseHTTPS = strstr(pszFilename, "protocol=https") != NULL;
+
+    if (pszEmail == NULL || pszPassword == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "GFT needs a Google account email to be specified with GFT_EMAIL configuration option");
+        if (pszTables == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Unauthenticated access requires explicit tables= parameter");
+            return FALSE;
+        }
+    }
+    else if (!FetchAuth(pszEmail, pszPassword))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Authentication failed");
         return FALSE;
     }
 
-    if (pszPassword == NULL)
+    if (pszTables)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "GFT needs a Google account password to be specified with GFT_PASSWORD configuration option");
-        return FALSE;
-    }
+        CPLString osTables(pszTables + 7);
+        const char* pszSpace = strchr(pszTables + 7, ' ');
+        if (pszSpace)
+            osTables.resize(pszSpace - (pszTables + 7));
 
-    if (!FetchAuth(pszEmail, pszPassword))
-        return FALSE;
+        char** papszTables = CSLTokenizeString2(osTables, ",", 0);
+        for(int i=0;papszTables && papszTables[i];i++)
+        {
+            papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+            papoLayers[nLayers ++] = new OGRGFTLayer(this, papszTables[i], papszTables[i]);
+        }
+        CSLDestroy(papszTables);
+        return TRUE;
+    }
 
     /* Get list of tables */
-    char** papszOptions = NULL;
-    papszOptions = CSLAddString(papszOptions, CPLSPrintf("HEADERS=Authorization: GoogleLogin auth=%s", osAuth.c_str()));
-    papszOptions = CSLAddString(papszOptions, "POSTFIELDS=sql=SHOW TABLES");
-    CPLHTTPResult * psResult = CPLHTTPFetch( "https://www.google.com/fusiontables/api/query", papszOptions);
+    char** papszOptions = CSLAddString(AddHTTPOptions(), "POSTFIELDS=sql=SHOW TABLES");
+    CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
     CSLDestroy(papszOptions);
     papszOptions = NULL;
 
@@ -198,8 +228,20 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
         char** papszTokens = CSLTokenizeString2(pszLine, ",", 0);
         if (CSLCount(papszTokens) == 2)
         {
+            CPLString osTableId(papszTokens[0]);
+            CPLString osLayerName(papszTokens[1]);
+            for(int i=0;i<nLayers;i++)
+            {
+                if (strcmp(papoLayers[i]->GetName(), osLayerName) == 0)
+                {
+                    osLayerName += " (";
+                    osLayerName += osTableId;
+                    osLayerName += ")";
+                    break;
+                }
+            }
             papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
-            papoLayers[nLayers ++] = new OGRGFTLayer(this, papszTokens[1], papszTokens[0]);
+            papoLayers[nLayers ++] = new OGRGFTLayer(this, osLayerName, osTableId);
         }
         CSLDestroy(papszTokens);
 
@@ -209,4 +251,183 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     CPLHTTPDestroyResult(psResult);
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                            GetAPIURL()                               */
+/************************************************************************/
+
+const char*  OGRGFTDataSource::GetAPIURL() const
+{
+    if (bUseHTTPS)
+        return "https://www.google.com/fusiontables/api/query";
+    else
+        return "http://www.google.com/fusiontables/api/query";
+}
+
+/************************************************************************/
+/*                           CreateLayer()                              */
+/************************************************************************/
+
+OGRLayer   *OGRGFTDataSource::CreateLayer( const char *pszName,
+                                           OGRSpatialReference *poSpatialRef,
+                                           OGRwkbGeometryType eGType,
+                                           char ** papszOptions )
+{
+    if (!bReadWrite)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in read-only mode");
+        return NULL;
+    }
+
+    if (osAuth.size() == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in unauthenticated mode");
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have this layer?  If so, should we blow it        */
+/*      away?                                                           */
+/* -------------------------------------------------------------------- */
+    int iLayer;
+
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszName,papoLayers[iLayer]->GetName()) )
+        {
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            {
+                DeleteLayer( pszName );
+                break;
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Layer %s already exists, CreateLayer failed.\n"
+                          "Use the layer creation option OVERWRITE=YES to "
+                          "replace it.",
+                          pszName );
+                return NULL;
+            }
+        }
+    }
+
+    OGRLayer* poLayer = new OGRGFTLayer(this, pszName);
+    papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+    papoLayers[nLayers ++] = poLayer;
+    return poLayer;
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+void OGRGFTDataSource::DeleteLayer( const char *pszLayerName )
+
+{
+    int iLayer;
+
+/* -------------------------------------------------------------------- */
+/*      Try to find layer.                                              */
+/* -------------------------------------------------------------------- */
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetName()) )
+            break;
+    }
+
+    if( iLayer == nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to delete layer '%s', but this layer is not known to OGR.",
+                  pszLayerName );
+        return;
+    }
+
+    DeleteLayer(iLayer);
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
+{
+    if (!bReadWrite)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
+    if (osAuth.size() == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in unauthenticated mode");
+        return OGRERR_FAILURE;
+    }
+
+    if( iLayer < 0 || iLayer >= nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Layer %d not in legal range of 0 to %d.",
+                  iLayer, nLayers-1 );
+        return OGRERR_FAILURE;
+    }
+
+    CPLString osTableId = ((OGRGFTLayer*)papoLayers[iLayer])->GetTableId();
+    CPLString osLayerName = GetLayer(iLayer)->GetName();
+
+/* -------------------------------------------------------------------- */
+/*      Blow away our OGR structures related to the layer.  This is     */
+/*      pretty dangerous if anything has a reference to this layer!     */
+/* -------------------------------------------------------------------- */
+    CPLDebug( "GFT", "DeleteLayer(%s)", osLayerName.c_str() );
+
+    delete papoLayers[iLayer];
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
+             sizeof(void *) * (nLayers - iLayer - 1) );
+    nLayers--;
+
+/* -------------------------------------------------------------------- */
+/*      Remove from the database.                                       */
+/* -------------------------------------------------------------------- */
+
+    CPLString osPOST("POSTFIELDS=sql=DROP TABLE ");
+    osPOST += osTableId;
+
+    char** papszOptions = CSLAddString(AddHTTPOptions(), osPOST);
+    CPLHTTPResult* psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
+    CSLDestroy(papszOptions);
+    papszOptions = NULL;
+
+    if (psResult == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Table deletion failed");
+        return OGRERR_FAILURE;
+    }
+
+    char* pszLine = (char*) psResult->pabyData;
+    if (pszLine == NULL ||
+        !EQUALN(pszLine, "OK", 2) ||
+        psResult->pszErrBuf != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Table deletion failed");
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    CPLHTTPDestroyResult(psResult);
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          AddHTTPOptions()                            */
+/************************************************************************/
+
+char** OGRGFTDataSource::AddHTTPOptions(char** papszOptions)
+{
+    papszOptions = CSLAddString(papszOptions, CPLSPrintf("HEADERS=Authorization: GoogleLogin auth=%s", osAuth.c_str()));
+    return CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=GFT:%p", this));
 }
