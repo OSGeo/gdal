@@ -167,6 +167,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     CURL *http_handle = NULL;
 
     const char *pszPersistent = CSLFetchNameValue( papszOptions, "PERSISTENT" );
+    const char *pszClosePersistent = CSLFetchNameValue( papszOptions, "CLOSE_PERSISTENT" );
     if (pszPersistent)
     {
         CPLString osSessionName = pszPersistent;
@@ -180,6 +181,30 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         }
 
         http_handle = oSessionMap[osSessionName];
+    }
+/* -------------------------------------------------------------------- */
+/*      Are we requested to close a persistent named session?          */
+/* -------------------------------------------------------------------- */
+    else if (pszClosePersistent)
+    {
+        CPLString osSessionName = pszClosePersistent;
+        CPLMutexHolder oHolder( &hSessionMapMutex );
+
+        std::map<CPLString,CURL*>::iterator oIter = oSessionMap.find( osSessionName );
+        if( oIter != oSessionMap.end() )
+        {
+            curl_easy_cleanup(oIter->second);
+            oSessionMap.erase(oIter);
+            CPLDebug( "HTTP", "Ended persistent session named '%s'.",
+                      osSessionName.c_str() );
+        }
+        else
+        {
+            CPLDebug( "HTTP", "Could not find persistent session named '%s'.",
+                      osSessionName.c_str() );
+        }
+
+        return NULL;
     }
     else
         http_handle = curl_easy_init();
@@ -197,6 +222,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
+    if (CSLTestBoolean(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")))
+        curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
 
     const char *pszHttpVersion = CSLFetchNameValue( papszOptions, "HTTP_VERSION");
     if( pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0 )
