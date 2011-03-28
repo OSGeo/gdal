@@ -8335,36 +8335,23 @@ void *GTiffDataset::GetInternalHandle( const char * /* pszHandleName */ )
 
 int GTiffDataset::FindRPBFile()
 {
-    CPLString osTarget = CPLResetExtension( osFilename, "RPB" );
+    osRPBFile = GDALFindAssociatedFile( osFilename, "RPB", 
+                                        oOvManager.GetSiblingFiles(), 0 );
 
-    char** papszSiblingFiles = oOvManager.GetSiblingFiles();
-    if( papszSiblingFiles == NULL )
-    {
-        VSIStatBufL sStatBuf;
-
-        if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
-        {
-            osTarget = CPLResetExtension( osFilename, "rpb" );
-
-            if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
-                return FALSE;
-        }
-    }
-    else
-    {
-        int iSibling = CSLFindString( papszSiblingFiles, 
-                                      CPLGetFilename(osTarget) );
-        if( iSibling < 0 )
-            return FALSE;
-
-        osTarget.resize(osTarget.size() - strlen(papszSiblingFiles[iSibling]));
-        osTarget += papszSiblingFiles[iSibling];
-    }
-
-    osRPBFile = osTarget;
-    return TRUE;
+    return osRPBFile != "";
 }
 
+/************************************************************************/
+/*                           FindIMDFile()                             */
+/************************************************************************/
+
+int GTiffDataset::FindIMDFile()
+{
+    osIMDFile = GDALFindAssociatedFile( osFilename, "IMD", 
+                                        oOvManager.GetSiblingFiles(), 0 );
+
+    return osIMDFile != "";
+}
 
 /************************************************************************/
 /*                           FindRPCFile()                             */
@@ -8416,42 +8403,6 @@ int GTiffDataset::FindRPCFile()
     }
 
     osRPCFile = osTarget;
-    return TRUE;
-}
-
-/************************************************************************/
-/*                           FindIMDFile()                             */
-/************************************************************************/
-
-int GTiffDataset::FindIMDFile()
-{
-    CPLString osTarget = CPLResetExtension( osFilename, "IMD" );
-
-    char** papszSiblingFiles = oOvManager.GetSiblingFiles();
-    if( papszSiblingFiles == NULL )
-    {
-        VSIStatBufL sStatBuf;
-
-        if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
-        {
-            osTarget = CPLResetExtension( osFilename, "imd" );
-
-            if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
-                return FALSE;
-        }
-    }
-    else
-    {
-        int iSibling = CSLFindString( papszSiblingFiles, 
-                                      CPLGetFilename(osTarget) );
-        if( iSibling < 0 )
-            return FALSE;
-
-        osTarget.resize(osTarget.size() - strlen(papszSiblingFiles[iSibling]));
-        osTarget += papszSiblingFiles[iSibling];
-    }
-
-    osIMDFile = osTarget;
     return TRUE;
 }
 
