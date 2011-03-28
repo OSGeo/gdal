@@ -920,6 +920,9 @@ int GDALReadTabFile2( const char * pszBaseFilename,
                       int *pnGCPCount, GDAL_GCP **ppasGCPs,
                       char** papszSiblingFiles, char** ppszTabFileNameOut );
 
+CPLString GDALFindAssociatedFile( const char *pszBasename, const char *pszExt,
+                                  char **papszSiblingFiles, int nFlags );
+
 CPL_C_END
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */
