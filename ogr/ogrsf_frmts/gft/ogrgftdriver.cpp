@@ -6,7 +6,7 @@
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines dash paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at mines dash paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -75,6 +75,26 @@ OGRDataSource *OGRGFTDriver::Open( const char * pszFilename, int bUpdate )
     return poDS;
 }
 
+
+/************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRGFTDriver::CreateDataSource( const char * pszName,
+                                               char **papszOptions )
+
+{
+    OGRGFTDataSource   *poDS = new OGRGFTDataSource();
+
+    if( !poDS->Open( pszName, TRUE ) )
+    {
+        delete poDS;
+        poDS = NULL;
+    }
+
+    return poDS;
+}
+
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
@@ -82,6 +102,9 @@ OGRDataSource *OGRGFTDriver::Open( const char * pszFilename, int bUpdate )
 int OGRGFTDriver::TestCapability( const char * pszCap )
 
 {
+    if (EQUAL(pszCap, ODrCCreateDataSource))
+        return TRUE;
+
     return FALSE;
 }
 
