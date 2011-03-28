@@ -1,4 +1,7 @@
 
+#ifndef INCLUDED_CPL_CONFIG_EXTRAS
+#define INCLUDED_CPL_CONFIG_EXTRAS
+
 #if defined(__APPLE__)
 
 #ifdef __BIG_ENDIAN__
@@ -32,4 +35,6 @@
 #define VSI_STAT64 stat
 #define VSI_STAT64_T stat
 
-#endif
+#endif // APPLE
+
+#endif //INCLUDED_CPL_CONFIG_EXTRAS
