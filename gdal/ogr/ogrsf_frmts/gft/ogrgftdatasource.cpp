@@ -6,7 +6,7 @@
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines dash paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at mines dash paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,6 +48,8 @@ OGRGFTDataSource::OGRGFTDataSource()
 
     bReadWrite = FALSE;
     bUseHTTPS = FALSE;
+
+    bMustCleanPersistant = FALSE;
 }
 
 /************************************************************************/
@@ -61,9 +63,12 @@ OGRGFTDataSource::~OGRGFTDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    char** papszOptions = CSLAddString(NULL, CPLSPrintf("CLOSE_PERSISTENT=GFT:%p", this));
-    CPLHTTPFetch( GetAPIURL(), papszOptions);
-    CSLDestroy(papszOptions);
+    if (bMustCleanPersistant)
+    {
+        char** papszOptions = CSLAddString(NULL, CPLSPrintf("CLOSE_PERSISTENT=GFT:%p", this));
+        CPLHTTPFetch( GetAPIURL(), papszOptions);
+        CSLDestroy(papszOptions);
+    }
 
     CPLFree( pszName );
 }
@@ -97,6 +102,27 @@ OGRLayer *OGRGFTDataSource::GetLayer( int iLayer )
 }
 
 /************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
+
+OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
+{
+    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszLayerName);
+    if (poLayer)
+        return poLayer;
+
+    poLayer = new OGRGFTTableLayer(this, pszLayerName, pszLayerName);
+    if (poLayer->GetLayerDefn()->GetFieldCount() == 0)
+    {
+        delete poLayer;
+        return NULL;
+    }
+    papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+    papoLayers[nLayers ++] = poLayer;
+    return poLayer;
+}
+
+/************************************************************************/
 /*                             FetchAuth()                              */
 /************************************************************************/
 
@@ -105,9 +131,13 @@ int OGRGFTDataSource::FetchAuth(const char* pszEmail, const char* pszPassword)
 
     char** papszOptions = NULL;
 
+    const char* pszAuthURL = CPLGetConfigOption("GFT_AUTH_URL", NULL);
+    if (pszAuthURL == NULL)
+        pszAuthURL = "https://www.google.com/accounts/ClientLogin";
+
     papszOptions = CSLAddString(papszOptions, "HEADERS=Content-Type: application/x-www-form-urlencoded");
     papszOptions = CSLAddString(papszOptions, CPLSPrintf("POSTFIELDS=Email=%s&Passwd=%s&service=fusiontables", pszEmail, pszPassword));
-    CPLHTTPResult * psResult = CPLHTTPFetch( "https://www.google.com/accounts/ClientLogin", papszOptions);
+    CPLHTTPResult * psResult = CPLHTTPFetch( pszAuthURL, papszOptions);
     CSLDestroy(papszOptions);
     papszOptions = NULL;
 
@@ -149,6 +179,26 @@ static char* OGRGFTDataSourceGotoNextLine(char* pszData)
 }
 
 /************************************************************************/
+/*                      OGRGFTGetOptionValue()                          */
+/************************************************************************/
+
+CPLString OGRGFTGetOptionValue(const char* pszFilename,
+                               const char* pszOptionName)
+{
+    CPLString osOptionName(pszOptionName);
+    osOptionName += "=";
+    const char* pszOptionValue = strstr(pszFilename, osOptionName);
+    if (!pszOptionValue)
+        return "";
+
+    CPLString osOptionValue(pszOptionValue + strlen(osOptionName));
+    const char* pszSpace = strchr(osOptionValue.c_str(), ' ');
+    if (pszSpace)
+        osOptionValue.resize(pszSpace - osOptionValue.c_str());
+    return osOptionValue;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -163,38 +213,46 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     pszName = CPLStrdup( pszFilename );
 
     const char* pszEmail = CPLGetConfigOption("GFT_EMAIL", NULL);
+    CPLString osEmail = OGRGFTGetOptionValue(pszFilename, "email");
+    if (osEmail.size() != 0)
+        pszEmail = osEmail.c_str();
+
     const char* pszPassword = CPLGetConfigOption("GFT_PASSWORD", NULL);
-    const char* pszTables = strstr(pszFilename, "tables=");
+    CPLString osPassword = OGRGFTGetOptionValue(pszFilename, "password");
+    if (osPassword.size() != 0)
+        pszPassword = osPassword.c_str();
+
+    const char* pszAuth = CPLGetConfigOption("GFT_AUTH", NULL);
+    osAuth = OGRGFTGetOptionValue(pszFilename, "auth");
+    if (osAuth.size() == 0 && pszAuth != NULL)
+        osAuth = pszAuth;
+
+    CPLString osTables = OGRGFTGetOptionValue(pszFilename, "tables");
 
     bUseHTTPS = strstr(pszFilename, "protocol=https") != NULL;
 
-    if (pszEmail == NULL || pszPassword == NULL)
+    if (osAuth.size() == 0 && (pszEmail == NULL || pszPassword == NULL))
     {
-        if (pszTables == NULL)
+        if (osTables.size() == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Unauthenticated access requires explicit tables= parameter");
             return FALSE;
         }
     }
-    else if (!FetchAuth(pszEmail, pszPassword))
+    else if (osAuth.size() == 0 && !FetchAuth(pszEmail, pszPassword))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Authentication failed");
         return FALSE;
     }
 
-    if (pszTables)
+    if (osTables.size() != 0)
     {
-        CPLString osTables(pszTables + 7);
-        const char* pszSpace = strchr(pszTables + 7, ' ');
-        if (pszSpace)
-            osTables.resize(pszSpace - (pszTables + 7));
-
         char** papszTables = CSLTokenizeString2(osTables, ",", 0);
         for(int i=0;papszTables && papszTables[i];i++)
         {
             papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
-            papoLayers[nLayers ++] = new OGRGFTLayer(this, papszTables[i], papszTables[i]);
+            papoLayers[nLayers ++] = new OGRGFTTableLayer(this, papszTables[i], papszTables[i]);
         }
         CSLDestroy(papszTables);
         return TRUE;
@@ -241,7 +299,7 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
                 }
             }
             papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
-            papoLayers[nLayers ++] = new OGRGFTLayer(this, osLayerName, osTableId);
+            papoLayers[nLayers ++] = new OGRGFTTableLayer(this, osLayerName, osTableId);
         }
         CSLDestroy(papszTokens);
 
@@ -259,7 +317,10 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 const char*  OGRGFTDataSource::GetAPIURL() const
 {
-    if (bUseHTTPS)
+    const char* pszAPIURL = CPLGetConfigOption("GFT_API_URL", NULL);
+    if (pszAPIURL)
+        return pszAPIURL;
+    else if (bUseHTTPS)
         return "https://www.google.com/fusiontables/api/query";
     else
         return "http://www.google.com/fusiontables/api/query";
@@ -314,7 +375,7 @@ OGRLayer   *OGRGFTDataSource::CreateLayer( const char *pszName,
         }
     }
 
-    OGRLayer* poLayer = new OGRGFTLayer(this, pszName);
+    OGRLayer* poLayer = new OGRGFTTableLayer(this, pszName);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;
     return poLayer;
@@ -357,13 +418,15 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
 {
     if (!bReadWrite)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in read-only mode");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in read-only mode");
         return OGRERR_FAILURE;
     }
 
     if (osAuth.size() == 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in unauthenticated mode");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in unauthenticated mode");
         return OGRERR_FAILURE;
     }
 
@@ -375,7 +438,7 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
         return OGRERR_FAILURE;
     }
 
-    CPLString osTableId = ((OGRGFTLayer*)papoLayers[iLayer])->GetTableId();
+    CPLString osTableId = ((OGRGFTTableLayer*)papoLayers[iLayer])->GetTableId();
     CPLString osLayerName = GetLayer(iLayer)->GetName();
 
 /* -------------------------------------------------------------------- */
@@ -428,6 +491,92 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
 
 char** OGRGFTDataSource::AddHTTPOptions(char** papszOptions)
 {
-    papszOptions = CSLAddString(papszOptions, CPLSPrintf("HEADERS=Authorization: GoogleLogin auth=%s", osAuth.c_str()));
+    bMustCleanPersistant = TRUE;
+    papszOptions = CSLAddString(papszOptions,
+        CPLSPrintf("HEADERS=Authorization: GoogleLogin auth=%s", osAuth.c_str()));
     return CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=GFT:%p", this));
+}
+
+/************************************************************************/
+/*                               RunSQL()                               */
+/************************************************************************/
+
+CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszSQL)
+{
+    CPLString osSQL("POSTFIELDS=sql=");
+    osSQL += pszSQL;
+    char** papszOptions = CSLAddString(AddHTTPOptions(), osSQL);
+    CPLDebug("GFT", "Run %s", pszSQL);
+    CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
+    CSLDestroy(papszOptions);
+    return psResult;
+}
+
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
+
+OGRLayer * OGRGFTDataSource::ExecuteSQL( const char *pszSQLCommand,
+                                          OGRGeometry *poSpatialFilter,
+                                          const char *pszDialect )
+
+{
+    if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
+                                          pszDialect );
+
+/* -------------------------------------------------------------------- */
+/*      Special case DELLAYER: command.                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    {
+        const char *pszLayerName = pszSQLCommand + 9;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        DeleteLayer( pszLayerName );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create layer.                                                   */
+/* -------------------------------------------------------------------- */
+    OGRGFTResultLayer *poLayer = NULL;
+
+    CPLString osSQL = pszSQLCommand;
+    poLayer = new OGRGFTResultLayer( this, osSQL );
+    if (!poLayer->RunSQL())
+    {
+        delete poLayer;
+        return NULL;
+    }
+
+    if( poSpatialFilter != NULL )
+        poLayer->SetSpatialFilter( poSpatialFilter );
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+void OGRGFTDataSource::ReleaseResultSet( OGRLayer * poLayer )
+
+{
+    delete poLayer;
+}
+
+/************************************************************************/
+/*                      OGRGFTGotoNextLine()                            */
+/************************************************************************/
+
+char* OGRGFTGotoNextLine(char* pszData)
+{
+    char* pszNextLine = strchr(pszData, '\n');
+    if (pszNextLine)
+        return pszNextLine + 1;
+    return NULL;
 }
