@@ -1029,6 +1029,79 @@ GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
 
     return pasReturn;
 }
+
+/************************************************************************/
+/*                       GDALFindAssociatedFile()                       */
+/************************************************************************/
+
+/**
+ * Find file with alternate extension.
+ *
+ * Finds the file with the indicated extension, substituting it in place
+ * of the extension of the base filename.  Generally used to search for 
+ * associated files like world files .RPB files, etc.  If necessary, the
+ * extension will be tried in both upper and lower case.  If a sibling file
+ * list is available it will be used instead of doing VSIStatExL() calls to 
+ * probe the file system.  
+ *
+ * Note that the result is a dynamic CPLString so this method should not 
+ * be used in a situation where there could be cross heap issues.  It is
+ * generally imprudent for application built on GDAL to use this function
+ * unless they are sure they will always use the same runtime heap as GDAL.
+ *
+ * @param pszBaseFilename the filename relative to which to search.
+ * @param pszExt the target extension in either upper or lower case.
+ * @param papszSiblingFiles the list of files in the same directory as 
+ * pszBaseFilename or NULL if they are not known. 
+ * @param nFlags special options controlling search.  None defined yet, just 
+ * pass 0.
+ * 
+ * @return an empty string if the target is not found, otherwise the target
+ * file with similar path style as the pszBaseFilename. 
+ */
+
+CPLString GDALFindAssociatedFile( const char *pszBaseFilename, 
+                                  const char *pszExt,
+                                  char **papszSiblingFiles, 
+                                  int nFlags )
+
+{
+    (void) nFlags;
+
+    CPLString osTarget = CPLResetExtension( pszBaseFilename, pszExt );
+
+    if( papszSiblingFiles == NULL )
+    {
+        VSIStatBufL sStatBuf;
+
+        if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
+        {
+            CPLString osAltExt = pszExt;
+
+            if( islower( pszExt[0] ) )
+                osAltExt.toupper();
+            else
+                osAltExt.tolower();
+
+            osTarget = CPLResetExtension( pszBaseFilename, osAltExt );
+
+            if( VSIStatExL( osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
+                return "";
+        }
+    }
+    else
+    {
+        int iSibling = CSLFindString( papszSiblingFiles, 
+                                      CPLGetFilename(osTarget) );
+        if( iSibling < 0 )
+            return "";
+
+        osTarget.resize(osTarget.size() - strlen(papszSiblingFiles[iSibling]));
+        osTarget += papszSiblingFiles[iSibling];
+    }
+
+    return osTarget;
+}
                              
 /************************************************************************/
 /*                         GDALLoadOziMapFile()                         */
