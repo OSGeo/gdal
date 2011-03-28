@@ -6,7 +6,7 @@
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines dash paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at mines dash paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,8 +31,11 @@
 #define _OGR_GFT_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include "cpl_http.h"
 
 #include <vector>
+
+#define MAX_FEATURES_FETCH  500
 
 /************************************************************************/
 /*                             OGRGFTLayer                              */
@@ -41,61 +44,94 @@ class OGRGFTDataSource;
 
 class OGRGFTLayer : public OGRLayer
 {
+protected:
     OGRGFTDataSource* poDS;
-    CPLString         osTableName;
-    CPLString         osTableId;
 
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
 
-    int                nNextFID;
-    int                nFeatureCount;
+    int                nNextInSeq;
 
     int                iGeometryField;
-    int                iLatitude;
-    int                iLongitude;
+    int                iLatitudeField;
+    int                iLongitudeField;
 
     OGRFeature *       GetNextRawFeature();
 
-    int                FetchDescribe();
-
     int                nOffset;
     int                bEOF;
-    int                FetchNextRows();
+    virtual int                FetchNextRows() = 0;
 
     std::vector<CPLString> aosRows;
 
+    int                 bFirstTokenIsFID;
+    OGRFeature*         BuildFeatureFromSQL(const char* pszLine);
+
+  public:
+                         OGRGFTLayer(OGRGFTDataSource* poDS);
+                        ~OGRGFTLayer();
+
+    virtual void                ResetReading();
+    virtual OGRFeature *        GetNextFeature();
+
+    virtual OGRFeatureDefn *    GetLayerDefn();
+
+    virtual int                 TestCapability( const char * );
+
+    virtual OGRSpatialReference*GetSpatialRef() { return poSRS; }
+
+    virtual const char *        GetGeometryColumn();
+
+    static int                  ParseCSVResponse(char* pszLine,
+                                                 std::vector<CPLString>& aosRes);
+    static CPLString            PatchSQL(const char* pszSQL);
+
+    int                         GetGeometryFieldIndex() { return iGeometryField; }
+    int                         GetLatitudeFieldIndex() { return iLatitudeField; }
+    int                         GetLongitudeFieldIndex() { return iLongitudeField; }
+};
+
+/************************************************************************/
+/*                         OGRGFTTableLayer                             */
+/************************************************************************/
+
+class OGRGFTTableLayer : public OGRGFTLayer
+{
+    CPLString         osTableName;
+    CPLString         osTableId;
+
     int                bHasTriedCreateTable;
     void               CreateTableIfNecessary();
-
-    CPLString          osTransaction;
-    int                bInTransaction;
 
     CPLString           osWHERE;
     CPLString           osQuery;
 
     void                BuildWhere(void);
 
-  public:
-                        OGRGFTLayer(OGRGFTDataSource* poDS,
-                                    const char* pszTableName,
-                                    const char* pszTableId = "");
-                        ~OGRGFTLayer();
+    CPLString          osTransaction;
+    int                bInTransaction;
+    int                nFeaturesInTransaction;
 
-    virtual const char *        GetName() { return osTableName.c_str(); }
-    //virtual OGRwkbGeometryType GetGeomType() { return wkbUnknown; }
+    int                FetchDescribe();
+    virtual int                FetchNextRows();
+
+    public:
+            OGRGFTTableLayer(OGRGFTDataSource* poDS,
+                             const char* pszTableName,
+                             const char* pszTableId = "");
+            ~OGRGFTTableLayer();
 
     virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
-    virtual OGRFeature *        GetFeature( long nFID );
 
     virtual OGRFeatureDefn *    GetLayerDefn();
 
-    virtual int                 TestCapability( const char * );
-
-    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
-
+    virtual const char *        GetName() { return osTableName.c_str(); }
     virtual int         GetFeatureCount( int bForce = TRUE );
+
+    virtual OGRFeature *        GetFeature( long nFID );
+
+    virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
@@ -105,10 +141,30 @@ class OGRGFTLayer : public OGRLayer
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
 
-    virtual void        SetSpatialFilter( OGRGeometry * );
-    virtual OGRErr      SetAttributeFilter( const char * );
-
     const CPLString&            GetTableId() const { return osTableId; }
+
+    virtual int                 TestCapability( const char * );
+};
+
+/************************************************************************/
+/*                        OGRGFTResultLayer                             */
+/************************************************************************/
+
+class OGRGFTResultLayer : public OGRGFTLayer
+{
+    CPLString   osSQL;
+    int         bGotAllRows;
+
+    virtual int                FetchNextRows();
+
+    public:
+            OGRGFTResultLayer(OGRGFTDataSource* poDS,
+                              const char* pszSQL);
+            ~OGRGFTResultLayer();
+
+    virtual void                ResetReading();
+
+    int     RunSQL();
 };
 
 /************************************************************************/
@@ -130,6 +186,8 @@ class OGRGFTDataSource : public OGRDataSource
 
     void                DeleteLayer( const char *pszLayerName );
 
+    int                 bMustCleanPersistant;
+
   public:
                         OGRGFTDataSource();
                         ~OGRGFTDataSource();
@@ -137,12 +195,13 @@ class OGRGFTDataSource : public OGRDataSource
     int                 Open( const char * pszFilename,
                               int bUpdate );
 
-    virtual const char*         GetName() { return pszName; }
+    virtual const char* GetName() { return pszName; }
 
-    virtual int                 GetLayerCount() { return nLayers; }
-    virtual OGRLayer*           GetLayer( int );
+    virtual int         GetLayerCount() { return nLayers; }
+    virtual OGRLayer*   GetLayer( int );
+    virtual OGRLayer    *GetLayerByName(const char *);
 
-    virtual int                 TestCapability( const char * );
+    virtual int         TestCapability( const char * );
 
     virtual OGRLayer   *CreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
@@ -150,10 +209,16 @@ class OGRGFTDataSource : public OGRDataSource
                                      char ** papszOptions = NULL );
     virtual OGRErr      DeleteLayer(int);
 
+    virtual OGRLayer*  ExecuteSQL( const char *pszSQLCommand,
+                                   OGRGeometry *poSpatialFilter,
+                                   const char *pszDialect );
+    virtual void       ReleaseResultSet( OGRLayer * poLayer );
+
     const CPLString&            GetAuth() const { return osAuth; }
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }
     char**                      AddHTTPOptions(char** papszOptions = NULL);
+    CPLHTTPResult*              RunSQL(const char* pszSQL);
 };
 
 /************************************************************************/
@@ -167,8 +232,11 @@ class OGRGFTDriver : public OGRSFDriver
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );
+    virtual OGRDataSource*      CreateDataSource( const char * pszName,
+                                                  char **papszOptions );
     virtual int                 TestCapability( const char * );
 };
 
+char* OGRGFTGotoNextLine(char* pszData);
 
 #endif /* ndef _OGR_GFT_H_INCLUDED */
