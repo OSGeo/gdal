@@ -211,6 +211,8 @@ class MrSIDDataset : public GDALPamDataset
     friend class MrSIDRasterBand;
 
     LTIOStreamInf       *poStream;
+    LTIOFileStream      oLTIStream;
+    LTIVSIStream        oVSIStream;
 
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
     LTIImageFilter      *poImageReader;
@@ -793,8 +795,8 @@ MrSIDDataset::~MrSIDDataset()
 #else
         delete poImageReader;
 #endif
-    if ( poStream )
-        delete poStream;
+    // points to another member, don't delete
+    poStream = NULL;
 
     if ( pszProjection )
         CPLFree( pszProjection );
@@ -1502,19 +1504,20 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
     LT_STATUS       eStat;
 
     poDS = new MrSIDDataset(bIsJP2);
-    LTIOFileStream *ltiofs = new LTIOFileStream();
-    poDS->poStream = ltiofs;
-    eStat = ltiofs->initialize( poOpenInfo->pszFilename, "rb" );
 
+    // try the LTIOFileStream first, since it uses filesystem caching
+    eStat = poDS->oLTIStream.initialize( poOpenInfo->pszFilename, "rb" );
     if ( LT_SUCCESS(eStat) )
-        eStat = poDS->poStream->open();
-
-    if ( !LT_SUCCESS(eStat) )
     {
-        LTIVSIStream *ltivsi = new LTIVSIStream();
-        delete poDS->poStream;
-        poDS->poStream = ltivsi;
-        eStat = ltivsi->initialize( poOpenInfo->pszFilename, "rb" );
+        eStat = poDS->oLTIStream.open();
+        if ( LT_SUCCESS(eStat) )
+            poDS->poStream = &(poDS->oLTIStream);
+    }
+
+    // fall back on VSI for non-files
+    if ( !LT_SUCCESS(eStat) || !poDS->poStream )
+    {
+        eStat = poDS->oVSIStream.initialize( poOpenInfo->pszFilename, "rb" );
         if ( !LT_SUCCESS(eStat) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -1525,7 +1528,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
             return NULL;
         }
 
-        eStat = poDS->poStream->open();
+        eStat = poDS->oVSIStream.open();
         if ( !LT_SUCCESS(eStat) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -1535,6 +1538,8 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
             delete poDS;
             return NULL;
         }
+
+        poDS->poStream = &(poDS->oVSIStream);
     }
 
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
