@@ -44,8 +44,23 @@ def til_1():
     tst = gdaltest.GDALTest( 'TIL', 'testtil.til', 1, 4672 )
     return tst.testOpen()
 
+###############################################################################
+# Check GetFileList() result (#4018)
+
+def til_2():
+
+    ds = gdal.Open( 'data/testtil.til' )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 3:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
-    til_1 ]
+    til_1,
+    til_2 ]
 
 if __name__ == '__main__':
 
