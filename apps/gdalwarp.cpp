@@ -169,7 +169,7 @@ cutline datasource.</dd>
 <dt> <b>-cwhere</b> <em>expression</em>:</dt><dd>Restrict desired cutline features based on attribute query.</dd>
 <dt> <b>-csql</b> <em>query</em>:</dt><dd>Select cutline features using an SQL query instead of from a layer with -cl.</dd>
 <dt> <b>-cblend</b> <em>distance</em>:</dt><dd>Set a blend distance to use to blend over cutlines (in pixels).</dd>
-<dt> <b>-crop_to_cutline</b>:</dt><dd>Crop the extent of the target dataset to the extent of the cutline.</dd>
+<dt> <b>-crop_to_cutline</b>:</dt><dd>(GDAL >= 1.8.0) Crop the extent of the target dataset to the extent of the cutline.</dd>
 <dt> <b>-overwrite</b>:</dt><dd>(GDAL >= 1.8.0) Overwrite the target dataset if it already exists.</dd>
 
 <dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
