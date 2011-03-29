@@ -355,6 +355,7 @@ void CPL_DLL RegisterOGRAeronavFAA();
 void CPL_DLL RegisterOGRGeomedia();
 void CPL_DLL RegisterOGRMDB();
 void CPL_DLL RegisterOGREDIGEO();
+void CPL_DLL RegisterOGRGFT();
 CPL_C_END
 
 

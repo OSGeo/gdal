@@ -28,9 +28,6 @@
  ****************************************************************************/
 
 #include "ogr_gft.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "cpl_http.h"
 
 CPL_CVSID("$Id$");
 
@@ -159,7 +156,7 @@ int OGRGFTDataSource::FetchAuth(const char* pszEmail, const char* pszPassword)
           (osAuth[osAuth.size()-1] == 13 || osAuth[osAuth.size()-1] == 10))
         osAuth.resize(osAuth.size()-1);
 
-    CPLDebug("GFT", "Auth=%s", osAuth.c_str());
+    CPLDebug("GFT", "Auth key : %s", osAuth.c_str());
 
     CPLHTTPDestroyResult(psResult);
 
@@ -501,12 +498,20 @@ char** OGRGFTDataSource::AddHTTPOptions(char** papszOptions)
 /*                               RunSQL()                               */
 /************************************************************************/
 
-CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszSQL)
+CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszUnescapedSQL)
 {
     CPLString osSQL("POSTFIELDS=sql=");
-    osSQL += pszSQL;
+    /* Do post escaping */
+    for(int i=0;pszUnescapedSQL[i] != 0;i++)
+    {
+        const int ch = ((unsigned char*)pszUnescapedSQL)[i];
+        if (ch != '&' && ch >= 32 && ch < 128)
+            osSQL += ch;
+        else
+            osSQL += CPLSPrintf("%%%02X", ch);
+    }
     char** papszOptions = CSLAddString(AddHTTPOptions(), osSQL);
-    CPLDebug("GFT", "Run %s", pszSQL);
+    CPLDebug("GFT", "Run %s", pszUnescapedSQL);
     CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
     CSLDestroy(papszOptions);
     return psResult;
