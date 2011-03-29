@@ -453,13 +453,10 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
 
-    CPLString osPOST("POSTFIELDS=sql=DROP TABLE ");
-    osPOST += osTableId;
+    CPLString osSQL("DROP TABLE ");
+    osSQL += osTableId;
 
-    char** papszOptions = CSLAddString(AddHTTPOptions(), osPOST);
-    CPLHTTPResult* psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
-    CSLDestroy(papszOptions);
-    papszOptions = NULL;
+    CPLHTTPResult* psResult = RunSQL( osSQL );
 
     if (psResult == NULL)
     {
