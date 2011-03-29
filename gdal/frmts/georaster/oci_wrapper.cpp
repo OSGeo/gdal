@@ -223,11 +223,11 @@ OWConnection::OWConnection( const char* pszUserIn,
         (size_t) 0,
         (dvoid**) NULL ), hError );
 
-    hNumArrayTDO    = DescribeType( (char*) SDO_NUMBER_ARRAY );
-    hGeometryTDO    = DescribeType( (char*) SDO_GEOMETRY );
-    hGeoRasterTDO   = DescribeType( (char*) SDO_GEORASTER );
-    hElemArrayTDO   = DescribeType( (char*) SDO_ELEM_INFO_ARRAY);
-    hOrdnArrayTDO   = DescribeType( (char*) SDO_ORDINATE_ARRAY);
+    hNumArrayTDO    = DescribeType( SDO_NUMBER_ARRAY );
+    hGeometryTDO    = DescribeType( SDO_GEOMETRY );
+    hGeoRasterTDO   = DescribeType( SDO_GEORASTER );
+    hElemArrayTDO   = DescribeType( SDO_ELEM_INFO_ARRAY);
+    hOrdnArrayTDO   = DescribeType( SDO_ORDINATE_ARRAY);
 
     if( nVersion > 10 )
     {
@@ -258,7 +258,7 @@ OWConnection::~OWConnection()
         OCIHandleFree((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION);
 }
 
-OCIType* OWConnection::DescribeType( char *pszTypeName )
+OCIType* OWConnection::DescribeType( const char *pszTypeName )
 {
     OCIParam* hParam    = NULL;
     OCIRef*   hRef      = NULL;
