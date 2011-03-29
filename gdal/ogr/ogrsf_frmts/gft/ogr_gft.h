@@ -55,6 +55,7 @@ protected:
     int                iGeometryField;
     int                iLatitudeField;
     int                iLongitudeField;
+    int                bHiddenGeometryField;
 
     OGRFeature *       GetNextRawFeature();
 
