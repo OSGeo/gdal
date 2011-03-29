@@ -116,8 +116,6 @@ def ogr_gft_write():
     lyr.CreateField(ogr.FieldDefn('strcol', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('numcol', ogr.OFTReal))
 
-    # Now that we fetch the layer defn, the table will be effectively created
-    # on the server
     feat = ogr.Feature(lyr.GetLayerDefn())
 
     feat.SetField('strcol', 'foo')
