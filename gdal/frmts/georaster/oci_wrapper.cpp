@@ -148,7 +148,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     }
 
     if( CheckError( OCIAttrSet((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION,
-        (dvoid *) pszUserId, (ub4) strlen((char *) pszUserId),
+        (dvoid *) pszUserId, (ub4) strlen( pszUserId),
         (ub4) OCI_ATTR_USERNAME, hError), hError ) )
     {
         return;
@@ -231,7 +231,7 @@ OWConnection::OWConnection( const char* pszUserIn,
 
     if( nVersion > 10 )
     {
-        hPCTDO      = DescribeType( (char*) SDO_PC );
+        hPCTDO      = DescribeType( SDO_PC );
     }
 }
 
@@ -938,8 +938,6 @@ void OWStatement::Define( OCILobLocator** pphLocator )
 
 void OWStatement::WriteCLob( OCILobLocator** pphLocator, char* pszData )
 {
-    OCIDefine*  hDefine = NULL;
-
     nNextCol++;
 
     CheckError( OCIDescriptorAlloc(
@@ -978,7 +976,7 @@ void OWStatement::WriteCLob( OCILobLocator** pphLocator, char* pszData )
         (ub1) SQLCS_IMPLICIT ),
         hError );
 
-    CPLDebug("GEOR","Clob = %d = %d", nAmont, strlen(pszData));
+    CPLDebug("GEOR","Clob = %d = %d", nAmont, static_cast<int>(strlen(pszData)));
 }
 
 void OWStatement::Define( OCIArray** pphData )
@@ -1803,7 +1801,7 @@ bool CheckError( sword nStatus, OCIError* hError )
         }
 
         CPLError( CE_Failure, CPLE_AppDefined, "%.*s",
-            sizeof(szMsg), szMsg );
+            static_cast<int>(sizeof(szMsg)), szMsg );
         break;
 
     default:
@@ -1819,7 +1817,7 @@ bool CheckError( sword nStatus, OCIError* hError )
                 (ub4) sizeof(szMsg), OCI_HTYPE_ERROR);
 
             CPLError( CE_Failure, CPLE_AppDefined, "%.*s",
-                sizeof(szMsg), szMsg );
+                static_cast<int>(sizeof(szMsg)), szMsg );
             break;
 
     }
