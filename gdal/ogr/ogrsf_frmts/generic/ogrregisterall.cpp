@@ -210,4 +210,7 @@ void OGRRegisterAll()
 #ifdef EDIGEO_ENABLED
     RegisterOGREDIGEO();
 #endif
+#ifdef GFT_ENABLED
+    RegisterOGRGFT();
+#endif
 } /* OGRRegisterAll */

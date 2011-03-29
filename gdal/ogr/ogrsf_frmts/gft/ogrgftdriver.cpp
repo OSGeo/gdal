@@ -28,7 +28,6 @@
  ****************************************************************************/
 
 #include "ogr_gft.h"
-#include "cpl_conv.h"
 
 // g++ -g -Wall -fPIC -shared -o ogr_GFT.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gft ogr/ogrsf_frmts/gft/*.c* -L. -lgdal
 

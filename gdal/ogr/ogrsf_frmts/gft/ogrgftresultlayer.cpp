@@ -28,10 +28,6 @@
  ****************************************************************************/
 
 #include "ogr_gft.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogr_p.h"
-#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -200,7 +196,8 @@ int OGRGFTResultLayer::RunSQL()
         pszFROM = NULL;
 
         poTableLayer = (OGRGFTTableLayer*) poDS->GetLayerByName(osTableId);
-        poTableDefn = poTableLayer->GetLayerDefn();
+        if (poTableLayer != NULL)
+            poTableDefn = poTableLayer->GetLayerDefn();
 
         if (poTableLayer != NULL &&
             poTableLayer->GetTableId().size() &&
