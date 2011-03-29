@@ -1,0 +1,156 @@
+<html>
+<head>
+<title>GFT - Google Fusion Tables</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GFT - Google Fusion Tables</h1>
+
+(GDAL/OGR >= 1.9.0)<p>
+
+This driver can connect to the Google Fusion Tables service. GDAL/OGR must be built with Curl support in order to the
+GFT driver to be compiled.<p>
+
+The driver supports read and write operations.<p>
+
+<h2>Dataset name syntax</h2>
+
+The minimal syntax to open a GFT datasource is : <pre>GFT:</pre><p>
+
+Additionnal optional parameters can be specified after the ':' sign such as :<p>
+
+<ul>
+<li> <b>tables=table_id1[,table_id2]*</b>: A list of table IDs. This is necessary when you need to access to public tables for example.
+If you want the table ID of a public table, or any other table that is not owned by the authenticated user, you have to visit the table
+in the Google Fusion Tables website and note the number at the end of the URL.
+<li> <b>protocol=https</b>: To use HTTPS protocol for all operations. By default, HTTP is used, except for the authentication operation
+where HTTPS is always used.
+<li> <b>email=john.doe@example.com</b>: The email of the Google account used for authentication.
+<li> <b>password=your_secret_password</b>: The password of the Google account used for authentication.
+</ul>
+
+If several parameters are specified, they must be separated by a space.
+
+<h2>Authentication</h2>
+
+Most operations, in particular write operations, require a valid Google account to provide authentication
+information to the driver. The only exception is read-only access to public tables.<p>
+
+The authentication information can be provided by different means :
+<ul>
+<li>specifying the email and password parameters in the dataset name, as described above.</li>
+<li>specifying them with the GFT_EMAIL and GFT_PASSWORD configuration options/environment variables.</li>
+<li>specifying them with the GFT_AUTH value. This value is a key returned by the server when using the email + password method,
+and that can re-used for later authentication. You can fetch this key by running a first time ogrinfo with CPL_DEBUG set to ON
+and authenticating with another method. The value will be displayed after the "Auth key : " string.
+This method has the advantage of not exposing your plain password.</li>
+</ul>
+
+<h2>Geometry</h2>
+
+Geometries in GFT tables must be expressed in the geodetic WGS84 SRS. GFT allows them to be encoded in different forms :
+<ul>
+<li>A single column with a "lat lon" string, where lat et lon are expressed in decimal degrees.</li>
+<li>A single column with a KML string that is the representation of a Point, a LineString or a Polygon.</li>
+<li>Two columns, one with the latitude and the other one with the longitude, both values expressed in decimal degrees.</li>
+<li>A single column with an address known by the geocoding service of Google Maps.</li>
+</ul>
+
+Only the first 3 are supported by OGR, not the last one.<p>
+
+<h2>Filtering</h2>
+
+The driver will forward any spatial filter set with SetSpatialFilter() to the server. It also makes the same for attribute
+filters set with SetAttributeFilter().<p>
+
+<h2>Paging</h2>
+
+Features are retrieved from the server by chunks of 500.<p>
+
+<h2>Write support</h2>
+
+Table creation and deletion is possible. Note that fields can only be added to a table in which there are no features created yet.<p>
+
+Write support is only enabled when the datasource is opened in update mode.<p>
+
+The mapping between the operations of the GFT service and the OGR concepts is the following :
+<ul>
+<li>OGRFeature::CreateFeature() &lt;==&gt; INSERT operation</li>
+<li>OGRFeature::SetFeature() &lt;==&gt; UPDATE operation</li>
+<li>OGRFeature::DeleteFeature() &lt;==&gt; DELETE operation</li>
+<li>OGRDataSource::CreateLayer() &lt;==&gt; CREATE TABLE operation</li>
+<li>OGRDataSource::DeleteLayer() &lt;==&gt; DROP TABLE operation</li>
+</ul>
+
+When inserting a new feature with CreateFeature(), and if the command is successfull, OGR will fetch the
+returned rowid and use it as the OGR FID. OGR will also automatically reproject its geometry into the
+geodetic WGS84 SRS if needed (provided that the original SRS is attached to the geometry).<p>
+
+<h2>Write support and OGR transactions</h2>
+
+The above operations are by default issued to the server synchronously with the OGR API call. This however
+can cause performance penalties when issuing a lot of commands due to many client/server exchanges.<p>
+
+It is possible to surround the CreateFeature() oepration between OGRLayer::StartTransaction() and OGRLayer::CommitTransaction().
+The operations will be stored into memory and only executed at the time CommitTransaction() is called. Note that
+the GFT service only supports up to 500 INSERTs and up to 1MB of content per transaction.<p>
+
+Note : only CreateFeature() makes use of OGR transaction mechanism. SetFeature() and DeleteFeature()
+will still be issued immediately.
+
+<h2>SQL</h2>
+
+SQL command run provided to the OGRDataSource::ExecuteSQL() call are executed on the server side.
+The subset of SQL supported by the GFT service is described in the links at the end of this page.<p>
+
+The SQL supported by the server understands only natively table id, and not the table names returned by OGR.
+For conveniency, OGR will "patch" your SQL command to replace the table name by the table id however.
+
+<h2>Examples</h2>
+
+<li>
+Listing the tables and views owned by the authenticated user:
+<pre>
+ogrinfo -ro "GFT:email=john.doe@example.com password=secret_password"
+</pre>
+<p>
+
+<li>
+Creating and populating a table from a shapefile:
+<pre>
+ogr2ogr -f GFT "GFT:email=john.doe@example.com password=secret_password" shapefile.shp
+</pre>
+<p>
+
+<li>
+Displaying the content of a public table with a spatial and attribue filters:
+<pre>
+ogrinfo -ro "GFT:tables=224453" -al -spat 67 31.5 67.5 32 -where "'Attack on' = 'ENEMY'"
+</pre>
+<p>
+
+<li>
+Getting the auth key:
+<pre>
+ogrinfo --config CPL_DEBUG ON "GFT:email=john.doe@example.com password=secret_password"
+</pre>
+
+returns:
+<pre>
+HTTP: Fetch(https://www.google.com/accounts/ClientLogin)
+HTTP: These HTTP headers were set: Content-Type: application/x-www-form-urlencoded
+GFT: Auth key : A_HUGE_STRING_WITH_ALPHANUMERIC_AND_SPECIAL_CHARACTERS
+</pre>
+
+Now, you can set the GFT_AUTH environment variable to that value and simply use "GFT:" as the DSN.
+
+<h2>See Also</h2>
+
+<ul>
+<li> <a href="http://code.google.com/intl/fr/apis/fusiontables/docs/developers_guide.html">Google Fusion Tables Developer's Guide</a><p>
+<li> <a href="http://code.google.com/intl/fr/apis/fusiontables/docs/developers_reference.html">Google Fusion Tables Developer's Reference</a><p>
+</ul>
+
+</body>
+</html>

@@ -28,11 +28,6 @@
  ****************************************************************************/
 
 #include "ogr_gft.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogr_p.h"
-#include "ogr_srs_api.h"
-#include "cpl_http.h"
 
 CPL_CVSID("$Id$");
 
@@ -87,7 +82,8 @@ int OGRGFTTableLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCSequentialWrite)
-             /*|| EQUAL(pszCap,OLCRandomWrite)  */)
+             || EQUAL(pszCap,OLCRandomWrite)
+             || EQUAL(pszCap,OLCDeleteFeature) )
         return poDS->IsReadWrite();
 
     else if( EQUAL(pszCap,OLCCreateField) )
@@ -96,7 +92,7 @@ int OGRGFTTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap, OLCTransactions) )
         return poDS->IsReadWrite();
 
-    return FALSE;
+    return OGRGFTLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -121,7 +117,8 @@ int OGRGFTTableLayer::FetchDescribe()
         char* pszLine = (char*) psResult->pabyData;
         if (pszLine == NULL ||
             psResult->pszErrBuf != NULL ||
-            strncmp(pszLine, "column id,name,type", strlen("column id,name,type")) != 0)
+            strncmp(pszLine, "column id,name,type",
+                    strlen("column id,name,type")) != 0)
         {
             CPLHTTPDestroyResult(psResult);
             return FALSE;
@@ -205,10 +202,33 @@ int OGRGFTTableLayer::FetchDescribe()
     if (iLatitudeField >= 0 && iLongitudeField >= 0)
     {
         iGeometryField = iLatitudeField;
+        poFeatureDefn->GetFieldDefn(iGeometryField)->SetType(OFTReal);
         poFeatureDefn->SetGeomType( wkbPoint );
     }
+    else if (iGeometryField < 0)
+        poFeatureDefn->SetGeomType( wkbNone );
+    else
+        poFeatureDefn->SetGeomType( wkbUnknown );
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                            EscapeQuote()                             */
+/************************************************************************/
+
+static CPLString EscapeQuote(const char* pszStr)
+{
+    CPLString osRes;
+    while(*pszStr)
+    {
+        if (*pszStr == '\'')
+            osRes += "\\\'";
+        else
+            osRes += *pszStr;
+        pszStr ++;
+    }
+    return osRes;
 }
 
 /************************************************************************/
@@ -222,8 +242,15 @@ int OGRGFTTableLayer::FetchNextRows()
     CPLString osSQL("SELECT ROWID");
     for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
-        osSQL += ",'";
-        osSQL += poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        osSQL += ",";
+
+        const char* pszFieldName =
+            poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        osSQL += "'";
+        if (strchr(pszFieldName, '\''))
+            osSQL += EscapeQuote(pszFieldName);
+        else
+            osSQL += pszFieldName;
         osSQL += "'";
     }
     osSQL += " FROM ";
@@ -340,6 +367,8 @@ OGRFeatureDefn * OGRGFTTableLayer::GetLayerDefn()
 
 int OGRGFTTableLayer::GetFeatureCount(int bForce)
 {
+    GetLayerDefn();
+
     CPLString osSQL("SELECT COUNT() FROM ");
     osSQL += osTableId;
     if (osWHERE.size())
@@ -415,7 +444,6 @@ OGRErr OGRGFTTableLayer::CreateField( OGRFieldDefn *poField,
     {
         poFeatureDefn = new OGRFeatureDefn( osTableName );
         poFeatureDefn->Reference();
-        poFeatureDefn->SetGeomType( wkbUnknown );
     }
 
     poFeatureDefn->AddFieldDefn(poField);
@@ -450,9 +478,18 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
     }
 
     if (iLatitudeField >= 0 && iLongitudeField >= 0)
+    {
         iGeometryField = iLatitudeField;
-    if (iGeometryField < 0)
+        poFeatureDefn->SetGeomType( wkbPoint );
+    }
+    else if (iGeometryField < 0)
+    {
         iGeometryField = poFeatureDefn->GetFieldIndex("geometry");
+        if (iGeometryField < 0)
+            poFeatureDefn->SetGeomType( wkbNone );
+        else
+            poFeatureDefn->SetGeomType( wkbUnknown );
+    }
 
     for(i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
@@ -527,24 +564,6 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
 }
 
 /************************************************************************/
-/*                            EscapeQuote()                             */
-/************************************************************************/
-
-static CPLString EscapeQuote(const char* pszStr)
-{
-    CPLString osRes;
-    while(*pszStr)
-    {
-        if (*pszStr == '\'')
-            osRes += "\\\'";
-        else
-            osRes += *pszStr;
-        pszStr ++;
-    }
-    return osRes;
-}
-
-/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -588,7 +607,15 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
     {
         if (iField > 0)
             osCommand += ", ";
-        osCommand += poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+
+        const char* pszFieldName =
+            poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+        osCommand += "'";
+        if (strchr(pszFieldName, '\''))
+            osCommand += EscapeQuote(pszFieldName);
+        else
+            osCommand += pszFieldName;
+        osCommand += "'";
     }
     osCommand += ") VALUES (";
     for(iField = 0; iField < nFieldCount; iField++)
@@ -633,14 +660,40 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
         {
             OGRFieldType eType = poFeatureDefn->GetFieldDefn(iField)->GetType();
             if (eType != OFTInteger && eType != OFTReal)
+            {
+                CPLString osTmp;
+                const char* pszVal = poFeature->GetFieldAsString(iField);
+
+                if (!CPLIsUTF8(pszVal, -1))
+                {
+                    static int bFirstTime = TRUE;
+                    if (bFirstTime)
+                    {
+                        bFirstTime = FALSE;
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                "%s is not a valid UTF-8 string. Forcing it to ASCII.\n"
+                                "This warning won't be issued anymore", pszVal);
+                    }
+                    else
+                    {
+                        CPLDebug("OGR", "%s is not a valid UTF-8 string. Forcing it to ASCII",
+                                pszVal);
+                    }
+                    char* pszEscaped = CPLForceToASCII(pszVal, -1, '?');
+                    osTmp = pszEscaped;
+                    CPLFree(pszEscaped);
+                    pszVal = osTmp.c_str();
+                }
+
                 osCommand += "'";
-            const char* pszVal = poFeature->GetFieldAsString(iField);
-            if (strchr(pszVal, '\''))
-                osCommand += EscapeQuote(pszVal);
+                if (strchr(pszVal, '\''))
+                    osCommand += EscapeQuote(pszVal);
+                else
+                    osCommand += pszVal;
+                osCommand += "'";
+            }
             else
-                osCommand += pszVal;
-            if (eType != OFTInteger && eType != OFTReal)
-                osCommand += "'";
+                osCommand += poFeature->GetFieldAsString(iField);
         }
     }
 
@@ -688,6 +741,233 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
 
     CPLDebug("GFT", "Feature id = %s",  pszLine);
 
+    int nFID = atoi(pszLine);
+    if (strcmp(CPLSPrintf("%d", nFID), pszLine) == 0)
+        poFeature->SetFID(nFID);
+
+    CPLHTTPDestroyResult(psResult);
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           SetFeature()                               */
+/************************************************************************/
+
+OGRErr      OGRGFTTableLayer::SetFeature( OGRFeature *poFeature )
+{
+    GetLayerDefn();
+
+    if (!poDS->IsReadWrite())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
+    if (osTableId.size() == 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "Cannot add field to non-created table");
+        return OGRERR_FAILURE;
+    }
+
+    if (poDS->GetAuth().size() == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in unauthenticated mode");
+        return OGRERR_FAILURE;
+    }
+
+    if (poFeature->GetFID() == OGRNullFID)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "FID required on features given to SetFeature()." );
+        return OGRERR_FAILURE;
+    }
+
+    CPLString      osCommand;
+
+    osCommand += "UPDATE ";
+    osCommand += osTableId;
+    osCommand += " SET ";
+
+    int iField;
+    int nFieldCount = poFeatureDefn->GetFieldCount();
+    for(iField = 0; iField < nFieldCount; iField++)
+    {
+        if (iField > 0)
+            osCommand += ", ";
+
+        const char* pszFieldName =
+            poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+        osCommand += "'";
+        if (strchr(pszFieldName, '\''))
+            osCommand += EscapeQuote(pszFieldName);
+        else
+            osCommand += pszFieldName;
+        osCommand += "'";
+
+        osCommand += " = ";
+
+        if (iGeometryField != iLatitudeField && iField == iGeometryField &&
+            !poFeature->IsFieldSet( iField ))
+        {
+            OGRGeometry* poGeom = poFeature->GetGeometryRef();
+            if (poGeom == NULL)
+                osCommand += "''";
+            else
+            {
+                char* pszKML;
+                if (poGeom->getSpatialReference() != NULL &&
+                    !poGeom->getSpatialReference()->IsSame(poSRS))
+                {
+                    OGRGeometry* poGeom4326 = poGeom->clone();
+                    poGeom4326->transformTo(poSRS);
+                    pszKML = poGeom4326->exportToKML();
+                    delete poGeom4326;
+                }
+                else
+                {
+                    pszKML = poGeom->exportToKML();
+                }
+                osCommand += "'";
+                osCommand += pszKML;
+                osCommand += "'";
+                CPLFree(pszKML);
+            }
+            continue;
+        }
+
+        if( !poFeature->IsFieldSet( iField ) )
+        {
+            osCommand += "''";
+        }
+        else
+        {
+            OGRFieldType eType = poFeatureDefn->GetFieldDefn(iField)->GetType();
+            if (eType != OFTInteger && eType != OFTReal)
+            {
+                CPLString osTmp;
+                const char* pszVal = poFeature->GetFieldAsString(iField);
+
+                if (!CPLIsUTF8(pszVal, -1))
+                {
+                    static int bFirstTime = TRUE;
+                    if (bFirstTime)
+                    {
+                        bFirstTime = FALSE;
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                "%s is not a valid UTF-8 string. Forcing it to ASCII.\n"
+                                "This warning won't be issued anymore", pszVal);
+                    }
+                    else
+                    {
+                        CPLDebug("OGR", "%s is not a valid UTF-8 string. Forcing it to ASCII",
+                                pszVal);
+                    }
+                    char* pszEscaped = CPLForceToASCII(pszVal, -1, '?');
+                    osTmp = pszEscaped;
+                    CPLFree(pszEscaped);
+                    pszVal = osTmp.c_str();
+                }
+
+                osCommand += "'";
+                if (strchr(pszVal, '\''))
+                    osCommand += EscapeQuote(pszVal);
+                else
+                    osCommand += pszVal;
+                osCommand += "'";
+            }
+            else
+                osCommand += poFeature->GetFieldAsString(iField);
+        }
+    }
+
+    osCommand += " WHERE ROWID = '";
+    osCommand += CPLSPrintf("%ld", poFeature->GetFID());
+    osCommand += "'";
+
+    //CPLDebug("GFT", "%s",  osCommand.c_str());
+
+    CPLHTTPResult * psResult = poDS->RunSQL(osCommand);
+    if (psResult == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Feature update failed");
+        return OGRERR_FAILURE;
+    }
+
+    char* pszLine = (char*) psResult->pabyData;
+    if (pszLine == NULL ||
+        strncmp(pszLine, "OK", 2) != 0 ||
+        psResult->pszErrBuf != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Feature update failed");
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
+    CPLHTTPDestroyResult(psResult);
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          DeleteFeature()                             */
+/************************************************************************/
+
+OGRErr OGRGFTTableLayer::DeleteFeature( long nFID )
+{
+    GetLayerDefn();
+
+    if (!poDS->IsReadWrite())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
+    if (osTableId.size() == 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "Cannot add field to non-created table");
+        return OGRERR_FAILURE;
+    }
+
+    if (poDS->GetAuth().size() == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in unauthenticated mode");
+        return OGRERR_FAILURE;
+    }
+
+    CPLString      osCommand;
+
+    osCommand += "DELETE FROM ";
+    osCommand += osTableId;
+    osCommand += " WHERE ROWID = '";
+    osCommand += CPLSPrintf("%ld", nFID);
+    osCommand += "'";
+
+    //CPLDebug("GFT", "%s",  osCommand.c_str());
+
+    CPLHTTPResult * psResult = poDS->RunSQL(osCommand);
+    if (psResult == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Feature deletion failed");
+        return OGRERR_FAILURE;
+    }
+
+    char* pszLine = (char*) psResult->pabyData;
+    if (pszLine == NULL ||
+        strncmp(pszLine, "OK", 2) != 0 ||
+        psResult->pszErrBuf != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Feature deletion failed");
+        CPLHTTPDestroyResult(psResult);
+        return OGRERR_FAILURE;
+    }
+
     CPLHTTPDestroyResult(psResult);
 
     return OGRERR_NONE;
@@ -699,6 +979,8 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
 
 OGRErr OGRGFTTableLayer::StartTransaction()
 {
+    GetLayerDefn();
+
     if (bInTransaction)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Already in transaction");
@@ -743,6 +1025,8 @@ OGRErr OGRGFTTableLayer::StartTransaction()
 
 OGRErr OGRGFTTableLayer::CommitTransaction()
 {
+    GetLayerDefn();
+
     if (!bInTransaction)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Should be in transaction");
@@ -800,6 +1084,8 @@ OGRErr OGRGFTTableLayer::CommitTransaction()
 
 OGRErr OGRGFTTableLayer::RollbackTransaction()
 {
+    GetLayerDefn();
+
     if (!bInTransaction)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Should be in transaction");
@@ -818,6 +1104,8 @@ OGRErr OGRGFTTableLayer::RollbackTransaction()
 OGRErr OGRGFTTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
+    GetLayerDefn();
+
     if( pszQuery == NULL )
         osQuery = "";
     else
@@ -840,6 +1128,8 @@ OGRErr OGRGFTTableLayer::SetAttributeFilter( const char *pszQuery )
 void OGRGFTTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
+    GetLayerDefn();
+
     if( InstallFilter( poGeomIn ) )
     {
         BuildWhere();
