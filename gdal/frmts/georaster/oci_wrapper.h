@@ -315,7 +315,7 @@ public:
     void                DestroyType( sdo_geometry** pphData );
     void                CreateType( OCIArray** phData , OCIType* type);
     void                DestroyType( OCIArray** phData );
-    OCIType*            DescribeType( char *pszTypeName );
+    OCIType*            DescribeType( const char *pszTypeName );
 
     bool                Succeeded() { return bSuceeeded; };
 
