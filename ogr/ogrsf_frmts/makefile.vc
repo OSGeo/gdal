@@ -7,7 +7,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
 			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
-			$(PCIDSK_DIR) $(LIBKMLDIR) $(WFSDIR) $(SOSIDIR)
+			$(PCIDSK_DIR) $(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) 
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -112,6 +112,12 @@ SOSIDIR = sosi
 SOSI_OBJ = sosi\*.obj
 !ENDIF
 
+!IFDEF CURL_LIB
+GFTDIR = gft
+GFT_OBJ = gft\*.obj
+!ENDIF
+
+
 default:
 	for %d in ( $(DIRLIST) ) do \
 		cd %d \
@@ -133,7 +139,7 @@ default:
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
 				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(PCIDSKOBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
-				$(SOSI_OBJ)
+				$(SOSI_OBJ) $(GFT_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \

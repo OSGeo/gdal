@@ -78,7 +78,7 @@ protected:
 
     virtual int                 TestCapability( const char * );
 
-    virtual OGRSpatialReference*GetSpatialRef() { return poSRS; }
+    virtual OGRSpatialReference*GetSpatialRef();
 
     virtual const char *        GetGeometryColumn();
 
@@ -135,7 +135,9 @@ class OGRGFTTableLayer : public OGRGFTLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      SetFeature( OGRFeature *poFeature );
+    virtual OGRErr      DeleteFeature( long nFID );
 
     virtual OGRErr      StartTransaction();
     virtual OGRErr      CommitTransaction();
@@ -218,7 +220,7 @@ class OGRGFTDataSource : public OGRDataSource
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }
     char**                      AddHTTPOptions(char** papszOptions = NULL);
-    CPLHTTPResult*              RunSQL(const char* pszSQL);
+    CPLHTTPResult*              RunSQL(const char* pszUnescapedSQL);
 };
 
 /************************************************************************/

@@ -28,11 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_gft.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogr_p.h"
-#include "ogr_srs_api.h"
-#include "cpl_http.h"
+#include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");
 
@@ -212,7 +208,111 @@ static char **OGRGFTCSVSplitLine( const char *pszString, char chDelimiter )
 
     return papszRetList;
 }
+/************************************************************************/
+/*                           ParseKMLGeometry()                         */
+/************************************************************************/
 
+static void ParseLineString(OGRLineString* poLS,
+                            const char* pszCoordinates)
+{
+    char** papszTuples = CSLTokenizeString2(pszCoordinates, " ", 0);
+    for(int iTuple = 0; papszTuples && papszTuples[iTuple]; iTuple++)
+    {
+        char** papszTokens = CSLTokenizeString2(papszTuples[iTuple], ",", 0);
+        if (CSLCount(papszTokens) == 2)
+            poLS->addPoint(atof(papszTokens[0]), atof(papszTokens[1]));
+        else if (CSLCount(papszTokens) == 3)
+            poLS->addPoint(atof(papszTokens[0]), atof(papszTokens[1]),
+                            atof(papszTokens[2]));
+        CSLDestroy(papszTokens);
+    }
+    CSLDestroy(papszTuples);
+}
+
+/* Could be moved somewhere else */
+static OGRGeometry* ParseKMLGeometry(const char* pszKML)
+{
+    CPLXMLNode* psXML = CPLParseXMLString(pszKML);
+    if (psXML == NULL)
+        return NULL;
+
+    if (psXML->eType != CXT_Element)
+    {
+        CPLDestroyXMLNode(psXML);
+        return NULL;
+    }
+
+    OGRGeometry* poGeom = NULL;
+    const char* pszGeomType = psXML->pszValue;
+    if (strcmp(pszGeomType, "Point") == 0)
+    {
+        const char* pszCoordinates = CPLGetXMLValue(psXML, "coordinates", NULL);
+        if (pszCoordinates)
+        {
+            char** papszTokens = CSLTokenizeString2(pszCoordinates, ",", 0);
+            if (CSLCount(papszTokens) == 2)
+                poGeom = new OGRPoint(atof(papszTokens[0]), atof(papszTokens[1]));
+            else if (CSLCount(papszTokens) == 3)
+                poGeom = new OGRPoint(atof(papszTokens[0]), atof(papszTokens[1]),
+                                      atof(papszTokens[2]));
+            CSLDestroy(papszTokens);
+        }
+    }
+    else if (strcmp(pszGeomType, "LineString") == 0)
+    {
+        const char* pszCoordinates = CPLGetXMLValue(psXML, "coordinates", NULL);
+        if (pszCoordinates)
+        {
+            OGRLineString* poLS = new OGRLineString();
+            ParseLineString(poLS, pszCoordinates);
+            poGeom = poLS;
+        }
+    }
+    else if (strcmp(pszGeomType, "Polygon") == 0)
+    {
+        OGRPolygon* poPoly = NULL;
+        CPLXMLNode* psOuterBoundary = CPLGetXMLNode(psXML, "outerBoundaryIs");
+        if (psOuterBoundary)
+        {
+            CPLXMLNode* psLinearRing = CPLGetXMLNode(psOuterBoundary, "LinearRing");
+            const char* pszCoordinates = CPLGetXMLValue(
+                psLinearRing ? psLinearRing : psOuterBoundary, "coordinates", NULL);
+            if (pszCoordinates)
+            {
+                OGRLinearRing* poLS = new OGRLinearRing();
+                ParseLineString(poLS, pszCoordinates);
+                poPoly = new OGRPolygon();
+                poPoly->addRingDirectly(poLS);
+                poGeom = poPoly;
+            }
+
+            if (poPoly)
+            {
+                CPLXMLNode* psIter = psXML->psChild;
+                while(psIter)
+                {
+                    if (psIter->eType == CXT_Element &&
+                        strcmp(psIter->pszValue, "innerBoundaryIs") == 0)
+                    {
+                        CPLXMLNode* psLinearRing = CPLGetXMLNode(psIter, "LinearRing");
+                        const char* pszCoordinates = CPLGetXMLValue(
+                            psLinearRing ? psLinearRing : psIter, "coordinates", NULL);
+                        if (pszCoordinates)
+                        {
+                            OGRLinearRing* poLS = new OGRLinearRing();
+                            ParseLineString(poLS, pszCoordinates);
+                            poPoly->addRingDirectly(poLS);
+                        }
+                    }
+                    psIter = psIter->psNext;
+                }
+            }
+        }
+    }
+
+    CPLDestroyXMLNode(psXML);
+    return poGeom;
+}
 
 /************************************************************************/
 /*                         BuildFeatureFromSQL()                        */
@@ -263,9 +363,16 @@ OGRFeature *OGRGFTLayer::BuildFeatureFromSQL(const char* pszLine)
                         }
                         CSLDestroy(papszLatLon);
                     }
-                    else
+                    else if (strstr(pszVal, "<Point>") ||
+                             strstr(pszVal, "<LineString>") ||
+                             strstr(pszVal, "<Polygon>"))
                     {
-                        /* TODO : parse KML */
+                        OGRGeometry* poGeom = ParseKMLGeometry(pszVal);
+                        if (poGeom)
+                        {
+                            poGeom->assignSpatialReference(poSRS);
+                            poFeature->SetGeometryDirectly(poGeom);
+                        }
                     }
                 }
                 else if (i == iROWID)
@@ -323,6 +430,8 @@ OGRFeature *OGRGFTLayer::GetNextRawFeature()
 int OGRGFTLayer::TestCapability( const char * pszCap )
 
 {
+    if ( EQUAL(pszCap, OLCStringsAsUTF8) )
+        return TRUE;
     return FALSE;
 }
 
@@ -441,4 +550,18 @@ CPLString OGRGFTLayer::PatchSQL(const char* pszSQL)
         }
     }
     return osSQL;
+}
+
+/************************************************************************/
+/*                          GetSpatialRef()                             */
+/************************************************************************/
+
+OGRSpatialReference* OGRGFTLayer::GetSpatialRef()
+{
+    GetLayerDefn();
+
+    if (iGeometryField < 0)
+        return NULL;
+
+    return poSRS;
 }
