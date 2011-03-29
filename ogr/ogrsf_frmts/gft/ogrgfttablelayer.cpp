@@ -351,12 +351,10 @@ OGRFeature * OGRGFTTableLayer::GetFeature( long nFID )
 
 OGRFeatureDefn * OGRGFTTableLayer::GetLayerDefn()
 {
+    CreateTableIfNecessary();
+
     if (poFeatureDefn == NULL)
-    {
-        if (osTableId.size() == 0)
-            return NULL;
         FetchDescribe();
-    }
 
     return poFeatureDefn;
 }
@@ -468,6 +466,12 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
 
     int i;
 
+    if (poFeatureDefn == NULL)
+    {
+        poFeatureDefn = new OGRFeatureDefn( osTableName );
+        poFeatureDefn->Reference();
+    }
+
     for(i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
         const char* pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
@@ -485,18 +489,21 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
     else if (iGeometryField < 0)
     {
         iGeometryField = poFeatureDefn->GetFieldIndex("geometry");
-        if (iGeometryField < 0)
-            poFeatureDefn->SetGeomType( wkbNone );
-        else
-            poFeatureDefn->SetGeomType( wkbUnknown );
+        poFeatureDefn->SetGeomType( wkbUnknown );
     }
 
     for(i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
         if (i > 0)
             osSQL += ", ";
+
+        const char* pszFieldName =
+            poFeatureDefn->GetFieldDefn(i)->GetNameRef();
         osSQL += "'";
-        osSQL += poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        if (strchr(pszFieldName, '\''))
+            osSQL += EscapeQuote(pszFieldName);
+        else
+            osSQL += pszFieldName;
         osSQL += "': ";
 
         if (iGeometryField == i)
@@ -570,6 +577,13 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
 OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
 
 {
+    if (poFeatureDefn == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The passed feature does not use the layer feature definition");
+        return OGRERR_FAILURE;
+    }
+
     if (!poDS->IsReadWrite())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -579,13 +593,9 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
 
     if (osTableId.size() == 0)
     {
-        CreateTableIfNecessary();
-        if (osTableId.size() == 0)
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                    "Cannot add field to non-created table");
-            return OGRERR_FAILURE;
-        }
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "Cannot add feature to non-created table");
+        return OGRERR_FAILURE;
     }
 
     if (poDS->GetAuth().size() == 0)
@@ -768,7 +778,7 @@ OGRErr      OGRGFTTableLayer::SetFeature( OGRFeature *poFeature )
     if (osTableId.size() == 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                "Cannot add field to non-created table");
+                "Cannot set feature to non-created table");
         return OGRERR_FAILURE;
     }
 
@@ -930,7 +940,7 @@ OGRErr OGRGFTTableLayer::DeleteFeature( long nFID )
     if (osTableId.size() == 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                "Cannot add field to non-created table");
+                "Cannot delete feature in non-created table");
         return OGRERR_FAILURE;
     }
 
@@ -996,13 +1006,9 @@ OGRErr OGRGFTTableLayer::StartTransaction()
 
     if (osTableId.size() == 0)
     {
-        CreateTableIfNecessary();
-        if (osTableId.size() == 0)
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                    "Cannot add field to non-created table");
-            return OGRERR_FAILURE;
-        }
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "Cannot add feature to non-created table");
+        return OGRERR_FAILURE;
     }
 
     if (poDS->GetAuth().size() == 0)
