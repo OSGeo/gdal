@@ -430,7 +430,17 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
         for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
              psXMLGCP = psXMLGCP->psNext )
             nGCPMax++;
-         
+        
+        // Make sure any previous GCPs, perhaps from an .aux file, are cleared
+        // if we have new ones.
+        if( psPam->nGCPCount > 0 )
+        {
+            GDALDeinitGCPs( psPam->nGCPCount, psPam->pasGCPList );
+            CPLFree( psPam->pasGCPList );
+            psPam->nGCPCount = 0;
+            psPam->pasGCPList = 0;
+        }
+
         psPam->pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPMax);
          
         for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
