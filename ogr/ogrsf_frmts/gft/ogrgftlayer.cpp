@@ -52,6 +52,7 @@ OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDS)
 
     iLatitudeField = iLongitudeField = -1;
     iGeometryField = -1;
+    bHiddenGeometryField = FALSE;
 
     bFirstTokenIsFID = FALSE;
 }
@@ -340,14 +341,16 @@ OGRFeature *OGRGFTLayer::BuildFeatureFromSQL(const char* pszLine)
             iROWID = poFeatureDefn->GetFieldIndex("ROWID");
     }
 
-    if (nTokens == poFeatureDefn->GetFieldCount() + nAttrOffset)
+    int nFieldCount = poFeatureDefn->GetFieldCount();
+    if (nTokens == nFieldCount + bHiddenGeometryField + nAttrOffset)
     {
-        for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
+        for(int i=0;i<nFieldCount+bHiddenGeometryField;i++)
         {
             const char* pszVal = papszTokens[i+nAttrOffset];
             if (pszVal[0])
             {
-                poFeature->SetField(i, pszVal);
+                if (i<nFieldCount)
+                    poFeature->SetField(i, pszVal);
 
                 if (i == iGeometryField && i != iLatitudeField)
                 {
@@ -444,6 +447,12 @@ const char *OGRGFTLayer::GetGeometryColumn()
     GetLayerDefn();
     if (iGeometryField < 0)
         return "";
+
+    if (iGeometryField == poFeatureDefn->GetFieldCount())
+    {
+        CPLAssert(bHiddenGeometryField);
+        return "geometry";
+    }
 
     return poFeatureDefn->GetFieldDefn(iGeometryField)->GetNameRef();
 }

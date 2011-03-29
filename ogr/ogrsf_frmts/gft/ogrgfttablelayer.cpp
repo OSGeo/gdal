@@ -253,6 +253,10 @@ int OGRGFTTableLayer::FetchNextRows()
             osSQL += pszFieldName;
         osSQL += "'";
     }
+    if (bHiddenGeometryField)
+    {
+        osSQL += ",geometry";
+    }
     osSQL += " FROM ";
     osSQL += osTableId;
     if (osWHERE.size())
@@ -312,6 +316,10 @@ OGRFeature * OGRGFTTableLayer::GetFeature( long nFID )
         osSQL += poFeatureDefn->GetFieldDefn(i)->GetNameRef();
         osSQL += "'";
     }
+    if (bHiddenGeometryField)
+    {
+        osSQL += ",geometry";
+    }
     osSQL += " FROM ";
     osSQL += osTableId;
     osSQL += CPLSPrintf(" WHERE ROWID='%ld'", nFID);
@@ -351,10 +359,12 @@ OGRFeature * OGRGFTTableLayer::GetFeature( long nFID )
 
 OGRFeatureDefn * OGRGFTTableLayer::GetLayerDefn()
 {
-    CreateTableIfNecessary();
-
     if (poFeatureDefn == NULL)
+    {
+        if (osTableId.size() == 0)
+            return NULL;
         FetchDescribe();
+    }
 
     return poFeatureDefn;
 }
@@ -530,8 +540,7 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
         osSQL += "geometry: LOCATION";
 
         iGeometryField = poFeatureDefn->GetFieldCount();
-        OGRFieldDefn oFieldDefn("geometry", OFTString);
-        poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        bHiddenGeometryField = TRUE;
     }
     osSQL += ")";
 
@@ -577,13 +586,6 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
 OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    if (poFeatureDefn == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "The passed feature does not use the layer feature definition");
-        return OGRERR_FAILURE;
-    }
-
     if (!poDS->IsReadWrite())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -593,9 +595,13 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
 
     if (osTableId.size() == 0)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                "Cannot add feature to non-created table");
-        return OGRERR_FAILURE;
+        CreateTableIfNecessary();
+        if (osTableId.size() == 0)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "Cannot add feature to non-created table");
+            return OGRERR_FAILURE;
+        }
     }
 
     if (poDS->GetAuth().size() == 0)
@@ -627,14 +633,20 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
             osCommand += pszFieldName;
         osCommand += "'";
     }
+    if (bHiddenGeometryField)
+    {
+        if (iField > 0)
+            osCommand += ", ";
+        osCommand += "geometry";
+    }
     osCommand += ") VALUES (";
-    for(iField = 0; iField < nFieldCount; iField++)
+    for(iField = 0; iField < nFieldCount + bHiddenGeometryField; iField++)
     {
         if (iField > 0)
             osCommand += ", ";
 
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            !poFeature->IsFieldSet( iField ))
+            (iField == nFieldCount || !poFeature->IsFieldSet( iField )))
         {
             OGRGeometry* poGeom = poFeature->GetGeometryRef();
             if (poGeom == NULL)
@@ -804,24 +816,31 @@ OGRErr      OGRGFTTableLayer::SetFeature( OGRFeature *poFeature )
 
     int iField;
     int nFieldCount = poFeatureDefn->GetFieldCount();
-    for(iField = 0; iField < nFieldCount; iField++)
+    for(iField = 0; iField < nFieldCount + bHiddenGeometryField; iField++)
     {
         if (iField > 0)
             osCommand += ", ";
 
-        const char* pszFieldName =
-            poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
-        osCommand += "'";
-        if (strchr(pszFieldName, '\''))
-            osCommand += EscapeQuote(pszFieldName);
+        if (iField == nFieldCount)
+        {
+            osCommand += "'geometry'";
+        }
         else
-            osCommand += pszFieldName;
-        osCommand += "'";
+        {
+            const char* pszFieldName =
+                poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+            osCommand += "'";
+            if (strchr(pszFieldName, '\''))
+                osCommand += EscapeQuote(pszFieldName);
+            else
+                osCommand += pszFieldName;
+            osCommand += "'";
+        }
 
         osCommand += " = ";
 
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            !poFeature->IsFieldSet( iField ))
+            (iField == nFieldCount || !poFeature->IsFieldSet( iField )))
         {
             OGRGeometry* poGeom = poFeature->GetGeometryRef();
             if (poGeom == NULL)
@@ -1006,9 +1025,13 @@ OGRErr OGRGFTTableLayer::StartTransaction()
 
     if (osTableId.size() == 0)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                "Cannot add feature to non-created table");
-        return OGRERR_FAILURE;
+        CreateTableIfNecessary();
+        if (osTableId.size() == 0)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "Cannot add feature to non-created table");
+            return OGRERR_FAILURE;
+        }
     }
 
     if (poDS->GetAuth().size() == 0)
@@ -1162,7 +1185,7 @@ void OGRGFTTableLayer::BuildWhere()
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
         osWHERE.Printf("WHERE ST_INTERSECTS('%s', RECTANGLE(LATLNG(%.12f, %.12f), LATLNG(%.12f, %.12f)))",
-                       poFeatureDefn->GetFieldDefn(iGeometryField)->GetNameRef(),
+                       (bHiddenGeometryField) ? "geometry" : poFeatureDefn->GetFieldDefn(iGeometryField)->GetNameRef(),
                        sEnvelope.MinY - 1e-11, sEnvelope.MinX - 1e-11,
                        sEnvelope.MaxY + 1e-11, sEnvelope.MaxX + 1e-11);
     }
