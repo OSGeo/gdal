@@ -106,11 +106,13 @@ def ogr_gft_write():
 
     ds = ogr.Open('GFT:auth=%s' % ogrtest.gft_auth_key, update = 1)
     if ds is None:
+        ogrtest.gft_can_write = False
         return 'fail'
+    ogrtest.gft_can_write = True
 
     import random
-    rand_val = random.randint(0,2147000000)
-    table_name = "test_%d" % rand_val
+    ogrtest.gft_rand_val = random.randint(0,2147000000)
+    table_name = "test_%d" % ogrtest.gft_rand_val
 
     lyr = ds.CreateLayer(table_name)
     lyr.CreateField(ogr.FieldDefn('strcol', ogr.OFTString))
@@ -165,10 +167,146 @@ def ogr_gft_write():
 
     return 'success'
 
+###############################################################################
+# ogr2ogr test to create a non-spatial GFT table
+
+def ogr_gft_ogr2ogr_non_spatial():
+    if ogrtest.gft_drv is None:
+        return 'skip'
+
+    if not ogrtest.gft_can_write:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    layer_name = 'no_geometry_table_%d' % ogrtest.gft_rand_val
+
+    f = open('tmp/no_geometry_table.csv', 'wt')
+    f.write('foo,bar\n')
+    f.write('"baz","foo"\n')
+    f.write('"baz2","foo2"\n')
+    f.write('"baz\'3","foo3"\n')
+    f.close()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:auth=' + ogrtest.gft_auth_key + '" tmp/no_geometry_table.csv -nln ' + layer_name + ' -overwrite')
+
+    os.unlink('tmp/no_geometry_table.csv')
+
+    ds = ogr.Open('GFT:auth=%s' % ogrtest.gft_auth_key, update = 1)
+    lyr = ds.GetLayerByName(layer_name)
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('did not get expected field count')
+        ds.ExecuteSQL('DELLAYER:' + layer_name)
+        return 'fail'
+
+    if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('did not get expected layer geometry type')
+        ds.ExecuteSQL('DELLAYER:' + layer_name)
+        return 'fail'
+
+    if lyr.GetFeatureCount() != 3:
+        gdaltest.post_reason('did not get expected feature count')
+        ds.ExecuteSQL('DELLAYER:' + layer_name)
+        return 'fail'
+
+    ds.ExecuteSQL('DELLAYER:' + layer_name)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# ogr2ogr test to create a spatial GFT table
+
+def ogr_gft_ogr2ogr_spatial():
+    if ogrtest.gft_drv is None:
+        return 'skip'
+
+    if not ogrtest.gft_can_write:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    layer_name = 'geometry_table_%d' % ogrtest.gft_rand_val
+    copied_layer_name = 'copied_geometry_table_%d' % ogrtest.gft_rand_val
+
+    f = open('tmp/geometry_table.csv', 'wt')
+    f.write('foo,bar,WKT\n')
+    f.write('"baz",2,"POINT (0 1)"\n')
+    f.write('"baz2",4,"POINT (2 3)"\n')
+    f.write('"baz\'3",6,"POINT (4 5)"\n')
+    f.close()
+    f = open('tmp/geometry_table.csvt', 'wt')
+    f.write('String,Integer,String\n')
+    f.close()
+
+    # Create a first table
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:auth=' + ogrtest.gft_auth_key + '" tmp/geometry_table.csv -nln ' + layer_name + ' -select foo,bar -overwrite')
+
+    # Test round-tripping
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:auth=' + ogrtest.gft_auth_key + '" "GFT:auth=' + ogrtest.gft_auth_key + '" ' + layer_name + ' -nln ' + copied_layer_name + ' -overwrite')
+
+    os.unlink('tmp/geometry_table.csv')
+    os.unlink('tmp/geometry_table.csvt')
+
+    ds = ogr.Open('GFT:auth=%s' % ogrtest.gft_auth_key, update = 1)
+
+    for name in [layer_name, copied_layer_name]:
+        lyr = ds.GetLayerByName(name)
+
+        if lyr.GetGeometryColumn() != 'geometry':
+            gdaltest.post_reason('layer %s: did not get expected geometry column' % name)
+            ds.ExecuteSQL('DELLAYER:' + layer_name)
+            ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
+            return 'fail'
+
+        if lyr.GetLayerDefn().GetFieldCount() != 3:
+            gdaltest.post_reason('layer %s: did not get expected field count' % name)
+            ds.ExecuteSQL('DELLAYER:' + layer_name)
+            ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
+            return 'fail'
+
+        if lyr.GetGeomType() != ogr.wkbUnknown:
+            gdaltest.post_reason('layer %s: did not get expected layer geometry type' % name)
+            ds.ExecuteSQL('DELLAYER:' + layer_name)
+            ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
+            return 'fail'
+
+        if lyr.GetFeatureCount() != 3:
+            gdaltest.post_reason('layer %s: did not get expected feature count' % name)
+            ds.ExecuteSQL('DELLAYER:' + layer_name)
+            ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
+            return 'fail'
+
+        feat = lyr.GetNextFeature()
+        if feat.GetGeometryRef().ExportToWkt() != "POINT (0 1)":
+            gdaltest.post_reason('layer %s: did not get expected geometry' % name)
+            ds.ExecuteSQL('DELLAYER:' + layer_name)
+            ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
+            return 'fail'
+
+        if feat.GetFieldAsInteger('bar') != 2:
+            gdaltest.post_reason('layer %s: did not get expected field value' % name)
+            ds.ExecuteSQL('DELLAYER:' + layer_name)
+            ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
+            return 'fail'
+
+    ds.ExecuteSQL('DELLAYER:' + layer_name)
+    ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
+
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_gft_init,
     ogr_gft_read,
     ogr_gft_write,
+    ogr_gft_ogr2ogr_non_spatial,
+    ogr_gft_ogr2ogr_spatial,
     ]
 
 if __name__ == '__main__':
