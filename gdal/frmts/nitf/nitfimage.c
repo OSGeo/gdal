@@ -2948,8 +2948,6 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
         {
             nASSOffset = psImage->pasLocations[i].nLocOffset;
             nASSSize = psImage->pasLocations[i].nLocSize;
-            if (i + 1 < psImage->nLocCount)
-                nNextOffset = psImage->pasLocations[i + 1].nLocOffset;
         }
     }
 
@@ -2965,6 +2963,9 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
     CPL_MSBPTR16( &nAttrCount );
 
     
+/* -------------------------------------------------------------------- */
+/*      nASSSize Hack                                                   */
+/* -------------------------------------------------------------------- */
     /* OK, now, as often with RPF/CADRG, here is the necessary dirty hack */
     /* -- Begin of lengthy explanation -- */
     /* A lot of CADRG files have a nASSSize value that reports a size */
@@ -2981,11 +2982,24 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
     /* I have observed that nowhere in the NITF driver we make use of the .nLocSize field */
     /* -- End of lengthy explanation -- */
 
+    for( i = 0; i < psImage->nLocCount; i++ )
+    {
+        if( psImage->pasLocations[i].nLocOffset > nASSOffset )
+        {
+            if( nNextOffset == 0 
+                || nNextOffset > psImage->pasLocations[i].nLocOffset )
+                nNextOffset = psImage->pasLocations[i].nLocOffset;
+        }
+    }
+
     if (nNextOffset > 0 && nNextOffset - nASSOffset > nASSSize)
         nASSSize = nNextOffset - nASSOffset;
 
-    /* Be sure that the attribute subsection is large enough to hold the */
-    /* offset table (otherwise NITFFetchAttribute coud read out of the buffer) */
+/* -------------------------------------------------------------------- */
+/*      Be sure that the attribute subsection is large enough to        */
+/*      hold the offset table (otherwise NITFFetchAttribute coud        */
+/*      read out of the buffer)                                         */
+/* -------------------------------------------------------------------- */
     if (nASSSize < 8 * nAttrCount)
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -3005,7 +3019,7 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
                   nASSSize );
         return;
     }
-
+    
     VSIFSeekL( psImage->psFile->fp, nASSOffset, SEEK_SET );
     VSIFReadL( pabyAttributeSubsection, nASSSize, 1, psImage->psFile->fp );
 
