@@ -372,7 +372,8 @@ OGRLayer   *OGRGFTDataSource::CreateLayer( const char *pszName,
         }
     }
 
-    OGRLayer* poLayer = new OGRGFTTableLayer(this, pszName);
+    OGRGFTTableLayer* poLayer = new OGRGFTTableLayer(this, pszName);
+    poLayer->SetGeometryType(eGType);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;
     return poLayer;

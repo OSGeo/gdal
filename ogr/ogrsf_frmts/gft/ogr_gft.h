@@ -83,6 +83,8 @@ protected:
 
     virtual const char *        GetGeometryColumn();
 
+    const char *        GetDefaultGeometryColumnName() { return "geometry"; }
+
     static int                  ParseCSVResponse(char* pszLine,
                                                  std::vector<CPLString>& aosRes);
     static CPLString            PatchSQL(const char* pszSQL);
@@ -116,6 +118,8 @@ class OGRGFTTableLayer : public OGRGFTLayer
     int                FetchDescribe();
     virtual int                FetchNextRows();
 
+    OGRwkbGeometryType eGTypeForCreation;
+
     public:
             OGRGFTTableLayer(OGRGFTDataSource* poDS,
                              const char* pszTableName,
@@ -147,6 +151,8 @@ class OGRGFTTableLayer : public OGRGFTLayer
     const CPLString&            GetTableId() const { return osTableId; }
 
     virtual int                 TestCapability( const char * );
+
+    void                SetGeometryType(OGRwkbGeometryType eGType);
 };
 
 /************************************************************************/

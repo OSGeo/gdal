@@ -451,7 +451,7 @@ const char *OGRGFTLayer::GetGeometryColumn()
     if (iGeometryField == poFeatureDefn->GetFieldCount())
     {
         CPLAssert(bHiddenGeometryField);
-        return "geometry";
+        return GetDefaultGeometryColumnName();
     }
 
     return poFeatureDefn->GetFieldDefn(iGeometryField)->GetNameRef();
