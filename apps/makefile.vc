@@ -12,7 +12,7 @@ XTRAFLAGS =	-I..\frmts -I..\alg -I..\ogr -I..\ogr\ogrsf_frmts
 !IFDEF INCLUDE_OGR_FRMTS
 OGR_PROGRAMS =	gdal_contour.exe gdaltindex.exe gdal_rasterize.exe \
 		gdal_grid.exe ogrinfo.exe ogr2ogr.exe ogrtindex.exe \
-		gdalbuildvrt.exe
+		gdalbuildvrt.exe testepsg.exe
 !ENDIF
 
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
