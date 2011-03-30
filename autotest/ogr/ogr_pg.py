@@ -2608,7 +2608,7 @@ def ogr_pg_53_bis():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
-    f = open('tmp/no_geometry_table.csv', 'wb')
+    f = open('tmp/no_geometry_table.csv', 'wt')
     f.write('foo,bar\n')
     f.write('"baz","foo"\n')
     f.close()
