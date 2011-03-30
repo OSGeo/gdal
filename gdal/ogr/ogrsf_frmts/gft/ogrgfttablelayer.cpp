@@ -48,6 +48,7 @@ OGRGFTTableLayer::OGRGFTTableLayer(OGRGFTDataSource* poDS,
     nFeaturesInTransaction = 0;
 
     bFirstTokenIsFID = TRUE;
+    eGTypeForCreation = wkbUnknown;
 }
 
 /************************************************************************/
@@ -214,20 +215,22 @@ int OGRGFTTableLayer::FetchDescribe()
 }
 
 /************************************************************************/
-/*                            EscapeQuote()                             */
+/*                         EscapeAndQuote()                             */
 /************************************************************************/
 
-static CPLString EscapeQuote(const char* pszStr)
+static CPLString EscapeAndQuote(const char* pszStr)
 {
-    CPLString osRes;
-    while(*pszStr)
+    char ch;
+    CPLString osRes("'");
+    while((ch = *pszStr) != 0)
     {
-        if (*pszStr == '\'')
+        if (ch == '\'')
             osRes += "\\\'";
         else
-            osRes += *pszStr;
+            osRes += ch;
         pszStr ++;
     }
+    osRes += "'";
     return osRes;
 }
 
@@ -246,16 +249,12 @@ int OGRGFTTableLayer::FetchNextRows()
 
         const char* pszFieldName =
             poFeatureDefn->GetFieldDefn(i)->GetNameRef();
-        osSQL += "'";
-        if (strchr(pszFieldName, '\''))
-            osSQL += EscapeQuote(pszFieldName);
-        else
-            osSQL += pszFieldName;
-        osSQL += "'";
+        osSQL += EscapeAndQuote(pszFieldName);
     }
     if (bHiddenGeometryField)
     {
-        osSQL += ",geometry";
+        osSQL += ",";
+        osSQL += EscapeAndQuote(GetGeometryColumn());
     }
     osSQL += " FROM ";
     osSQL += osTableId;
@@ -312,13 +311,16 @@ OGRFeature * OGRGFTTableLayer::GetFeature( long nFID )
     CPLString osSQL("SELECT ROWID");
     for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
-        osSQL += ",'";
-        osSQL += poFeatureDefn->GetFieldDefn(i)->GetNameRef();
-        osSQL += "'";
+        osSQL += ",";
+
+        const char* pszFieldName =
+            poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        osSQL += EscapeAndQuote(pszFieldName);
     }
     if (bHiddenGeometryField)
     {
-        osSQL += ",geometry";
+        osSQL += ",";
+        osSQL += EscapeAndQuote(GetGeometryColumn());
     }
     osSQL += " FROM ";
     osSQL += osTableId;
@@ -478,10 +480,13 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
 
     if (poFeatureDefn == NULL)
     {
+        /* In case CreateField() hasn't yet been called */
         poFeatureDefn = new OGRFeatureDefn( osTableName );
         poFeatureDefn->Reference();
     }
 
+    /* If there are longitude and latitude fields, use the latitude */
+    /* field as the LOCATION field */
     for(i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
         const char* pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
@@ -496,10 +501,18 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
         iGeometryField = iLatitudeField;
         poFeatureDefn->SetGeomType( wkbPoint );
     }
-    else if (iGeometryField < 0)
+    /* If no longitude/latitude field exist, let's look at a column */
+    /* named 'geometry' and use it as the LOCATION column if the layer */
+    /* hasn't been created with a none geometry type */
+    else if (iGeometryField < 0 && eGTypeForCreation != wkbNone)
     {
-        iGeometryField = poFeatureDefn->GetFieldIndex("geometry");
-        poFeatureDefn->SetGeomType( wkbUnknown );
+        iGeometryField = poFeatureDefn->GetFieldIndex(GetDefaultGeometryColumnName());
+        poFeatureDefn->SetGeomType( eGTypeForCreation );
+    }
+    /* The user doesn't want geometries, so don't create one */
+    else if (eGTypeForCreation == wkbNone)
+    {
+        poFeatureDefn->SetGeomType( eGTypeForCreation );
     }
 
     for(i=0;i<poFeatureDefn->GetFieldCount();i++)
@@ -509,12 +522,8 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
 
         const char* pszFieldName =
             poFeatureDefn->GetFieldDefn(i)->GetNameRef();
-        osSQL += "'";
-        if (strchr(pszFieldName, '\''))
-            osSQL += EscapeQuote(pszFieldName);
-        else
-            osSQL += pszFieldName;
-        osSQL += "': ";
+        osSQL += EscapeAndQuote(pszFieldName);
+        osSQL += ": ";
 
         if (iGeometryField == i)
         {
@@ -533,11 +542,19 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
             }
         }
     }
-    if (iGeometryField < 0)
+
+    /* If there's not yet a geometry field and the user didn't forbid */
+    /* the creation of one, then let's add it to the CREATE TABLE, but */
+    /* DO NOT add it to the feature defn as a feature might already have */
+    /* been created with it, so it is not safe to alter it at that point. */
+    /* So we set the bHiddenGeometryField flag to be able to fetch/set this */
+    /* column but not try to get/set a related feature field */
+    if (iGeometryField < 0 && eGTypeForCreation != wkbNone)
     {
         if (i > 0)
             osSQL += ", ";
-        osSQL += "geometry: LOCATION";
+        osSQL += EscapeAndQuote(GetDefaultGeometryColumnName());
+        osSQL += ": LOCATION";
 
         iGeometryField = poFeatureDefn->GetFieldCount();
         bHiddenGeometryField = TRUE;
@@ -626,18 +643,13 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
 
         const char* pszFieldName =
             poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
-        osCommand += "'";
-        if (strchr(pszFieldName, '\''))
-            osCommand += EscapeQuote(pszFieldName);
-        else
-            osCommand += pszFieldName;
-        osCommand += "'";
+        osCommand += EscapeAndQuote(pszFieldName);
     }
     if (bHiddenGeometryField)
     {
         if (iField > 0)
             osCommand += ", ";
-        osCommand += "geometry";
+        osCommand += EscapeAndQuote(GetGeometryColumn());
     }
     osCommand += ") VALUES (";
     for(iField = 0; iField < nFieldCount + bHiddenGeometryField; iField++)
@@ -645,10 +657,12 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
         if (iField > 0)
             osCommand += ", ";
 
+        OGRGeometry* poGeom = poFeature->GetGeometryRef();
+        /* If there's a geometry, let's use it in priority over the textual */
+        /* content of the field. */
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            (iField == nFieldCount || !poFeature->IsFieldSet( iField )))
+            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSet( iField )))
         {
-            OGRGeometry* poGeom = poFeature->GetGeometryRef();
             if (poGeom == NULL)
                 osCommand += "''";
             else
@@ -707,12 +721,7 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
                     pszVal = osTmp.c_str();
                 }
 
-                osCommand += "'";
-                if (strchr(pszVal, '\''))
-                    osCommand += EscapeQuote(pszVal);
-                else
-                    osCommand += pszVal;
-                osCommand += "'";
+                osCommand += EscapeAndQuote(pszVal);
             }
             else
                 osCommand += poFeature->GetFieldAsString(iField);
@@ -823,26 +832,21 @@ OGRErr      OGRGFTTableLayer::SetFeature( OGRFeature *poFeature )
 
         if (iField == nFieldCount)
         {
-            osCommand += "'geometry'";
+            osCommand += EscapeAndQuote(GetGeometryColumn());
         }
         else
         {
             const char* pszFieldName =
                 poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
-            osCommand += "'";
-            if (strchr(pszFieldName, '\''))
-                osCommand += EscapeQuote(pszFieldName);
-            else
-                osCommand += pszFieldName;
-            osCommand += "'";
+            osCommand += EscapeAndQuote(pszFieldName);
         }
 
         osCommand += " = ";
 
+        OGRGeometry* poGeom = poFeature->GetGeometryRef();
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            (iField == nFieldCount || !poFeature->IsFieldSet( iField )))
+            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSet( iField )))
         {
-            OGRGeometry* poGeom = poFeature->GetGeometryRef();
             if (poGeom == NULL)
                 osCommand += "''";
             else
@@ -901,12 +905,7 @@ OGRErr      OGRGFTTableLayer::SetFeature( OGRFeature *poFeature )
                     pszVal = osTmp.c_str();
                 }
 
-                osCommand += "'";
-                if (strchr(pszVal, '\''))
-                    osCommand += EscapeQuote(pszVal);
-                else
-                    osCommand += pszVal;
-                osCommand += "'";
+                osCommand += EscapeAndQuote(pszVal);
             }
             else
                 osCommand += poFeature->GetFieldAsString(iField);
@@ -1184,8 +1183,11 @@ void OGRGFTTableLayer::BuildWhere()
         OGREnvelope  sEnvelope;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
-        osWHERE.Printf("WHERE ST_INTERSECTS('%s', RECTANGLE(LATLNG(%.12f, %.12f), LATLNG(%.12f, %.12f)))",
-                       (bHiddenGeometryField) ? "geometry" : poFeatureDefn->GetFieldDefn(iGeometryField)->GetNameRef(),
+
+        CPLString osQuotedGeomColumn(EscapeAndQuote(GetGeometryColumn()));
+
+        osWHERE.Printf("WHERE ST_INTERSECTS(%s, RECTANGLE(LATLNG(%.12f, %.12f), LATLNG(%.12f, %.12f)))",
+                       osQuotedGeomColumn.c_str(),
                        sEnvelope.MinY - 1e-11, sEnvelope.MinX - 1e-11,
                        sEnvelope.MaxY + 1e-11, sEnvelope.MaxX + 1e-11);
     }
@@ -1198,4 +1200,13 @@ void OGRGFTTableLayer::BuildWhere()
             osWHERE += " AND ";
         osWHERE += osQuery;
     }
+}
+
+/************************************************************************/
+/*                          SetGeometryType()                           */
+/************************************************************************/
+
+void OGRGFTTableLayer::SetGeometryType(OGRwkbGeometryType eGType)
+{
+    eGTypeForCreation = eGType;
 }
