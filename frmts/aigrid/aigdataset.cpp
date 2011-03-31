@@ -281,7 +281,7 @@ GDALColorInterp AIGRasterBand::GetColorInterpretation()
     if( poODS->poCT != NULL )
         return GCI_PaletteIndex;
     else
-        return GCI_Undefined;
+        return GDALPamRasterBand::GetColorInterpretation();
 }
 
 /************************************************************************/
@@ -293,7 +293,10 @@ GDALColorTable *AIGRasterBand::GetColorTable()
 {
     AIGDataset	*poODS = (AIGDataset *) poDS;
 
-    return poODS->poCT;
+    if( poODS->poCT != NULL )
+        return poODS->poCT;
+    else
+        return GDALPamRasterBand::GetColorTable();
 }
 
 /************************************************************************/
