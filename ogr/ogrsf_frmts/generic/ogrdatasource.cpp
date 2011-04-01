@@ -918,7 +918,8 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 
     poResults = new OGRGenSQLResultsLayer( this, psSelectInfo, 
                                            poSpatialFilter,
-                                           pszWHERE );
+                                           pszWHERE,
+                                           pszDialect );
 
     CPLFree( pszWHERE );
 
