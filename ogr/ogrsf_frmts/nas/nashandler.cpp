@@ -73,6 +73,7 @@ void NASHandler::startElement(const XMLCh* const    uri,
 {
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
+    const char *pszLast = NULL;
 
     tr_strcpy( szElementName, localname );
 
@@ -148,6 +149,57 @@ void NASHandler::startElement(const XMLCh* const    uri,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Is this the ogc:Filter element in a wfs:Delete operation?       */
+/*      If so we translate it as a specialized sort of feature.         */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(szElementName,"Filter") 
+             && (pszLast = m_poReader->GetState()->GetLastComponent()) != NULL
+             && EQUAL(pszLast,"Delete") )
+    {
+        const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
+        if ( pszFilteredClassName != NULL &&
+             strcmp("Delete", pszFilteredClassName) != 0 )
+        {
+            m_bIgnoreFeature = TRUE;
+            m_nDepthFeature = m_nDepth;
+            m_nDepth ++;
+
+            return;
+        }
+
+        m_bIgnoreFeature = FALSE;
+
+        m_poReader->PushFeature( "Delete", attrs );
+
+        m_nDepthFeature = m_nDepth;
+        m_nDepth ++;
+            
+        m_poReader->SetFeatureProperty( "typeName", m_osLastTypeName );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If it is the wfs:Delete element, then remember the typeName     */
+/*      attribute so we can assign it to the feature that will be       */
+/*      produced when we process the Filter element.                    */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(szElementName,"Delete") )
+    {
+        int nIndex;
+        XMLCh  Name[100];
+
+        tr_strcpy( Name, "typeName" );
+        nIndex = attrs.getIndex( Name );
+        
+        if( nIndex != -1 )
+        {
+            char *pszTypeName = tr_strdup( attrs.getValue( nIndex ) );
+            m_osLastTypeName = pszTypeName;
+            CPLFree( pszTypeName );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If it is (or at least potentially is) a simple attribute,       */
 /*      then start collecting it.                                       */
 /* -------------------------------------------------------------------- */
@@ -158,6 +210,11 @@ void NASHandler::startElement(const XMLCh* const    uri,
 
         // Capture href as OB property.
         m_poReader->CheckForRelations( szElementName, attrs );
+
+        // Capture "fid" attribute as part of the property value - 
+        // primarily this is for wfs:Delete operation's FeatureId attribute.
+        if( EQUAL(szElementName,"FeatureId") )
+            m_poReader->CheckForFID( attrs, &m_pszCurField );
     }
 
 /* -------------------------------------------------------------------- */
@@ -251,6 +308,20 @@ void NASHandler::endElement(const   XMLCh* const    uri,
     if( m_nDepth == m_nDepthFeature && poState->m_poFeature != NULL
         && EQUAL(szElementName,
                  poState->m_poFeature->GetClass()->GetElementName()) )
+    {
+        m_nDepthFeature = 0;
+        m_poReader->PopState();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Ends of a wfs:Delete should be triggered on the close of the    */
+/*      <Filter> element.                                               */
+/* -------------------------------------------------------------------- */
+    else if( m_nDepth == m_nDepthFeature 
+             && poState->m_poFeature != NULL
+             && EQUAL(szElementName,"Filter") 
+             && EQUAL(poState->m_poFeature->GetClass()->GetElementName(),
+                      "Delete") )
     {
         m_nDepthFeature = 0;
         m_poReader->PopState();
