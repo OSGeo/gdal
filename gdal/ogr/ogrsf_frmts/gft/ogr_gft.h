@@ -35,8 +35,6 @@
 
 #include <vector>
 
-#define MAX_FEATURES_FETCH  500
-
 /************************************************************************/
 /*                             OGRGFTLayer                              */
 /************************************************************************/
@@ -92,6 +90,8 @@ protected:
     int                         GetGeometryFieldIndex() { return iGeometryField; }
     int                         GetLatitudeFieldIndex() { return iLatitudeField; }
     int                         GetLongitudeFieldIndex() { return iLongitudeField; }
+
+    int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("GFT_PAGE_SIZE", "500")); }
 };
 
 /************************************************************************/
