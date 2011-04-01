@@ -110,11 +110,20 @@ OGRGeoconceptDataSource::~OGRGeoconceptDataSource()
 int OGRGeoconceptDataSource::Open( const char* pszName, int bTestOpen, int bUpdate )
 
 {
-    VSIStatBuf  stat;
+/* -------------------------------------------------------------------- */
+/*      We will only consider .gxt and .txt files.                      */
+/* -------------------------------------------------------------------- */
+    const char* pszExtension = CPLGetExtension(pszName);
+    if( !EQUAL(pszExtension,"gxt") && !EQUAL(pszExtension,"txt") )
+    {
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
+    VSIStatBuf  stat;
+
     if( CPLStat( pszName, &stat ) != 0
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
@@ -170,10 +179,6 @@ int OGRGeoconceptDataSource::LoadFile( const char *pszMode )
     if( _pszExt == NULL)
     {
       const char* pszExtension = CPLGetExtension(_pszName);
-      if( !EQUAL(pszExtension,"gxt") && !EQUAL(pszExtension,"txt") )
-      {
-        return FALSE;
-      }
       _pszExt = CPLStrdup(pszExtension);
     }
     CPLStrlwr( _pszExt );
