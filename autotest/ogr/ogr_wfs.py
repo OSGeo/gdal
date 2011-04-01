@@ -173,6 +173,11 @@ def ogr_wfs_geoserver():
 
     feat_count = lyr.GetFeatureCount()
     if feat_count < 14000:
+        if gdal.GetLastErrorMsg().find('The connection attempt failed') != -1:
+            print('server probably in a broken state')
+            # Disable it for wfs-t test
+            gdaltest.geoserver_wfs = False
+            return 'skip'
         gdaltest.post_reason('did not get expected feature count')
         print(feat_count)
         return 'fail'
