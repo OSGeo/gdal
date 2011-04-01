@@ -30,6 +30,7 @@
 #include "gmlreader.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "gmlutils.h"
 
 #define SUPPORT_GEOMETRY
 
@@ -803,6 +804,13 @@ int NASReader::PrescanForSchema( int bGetExtents )
                 OGREnvelope sEnvelope;
                 OGRwkbGeometryType eGType = (OGRwkbGeometryType) 
                     poClass->GetGeometryType();
+
+                // Merge SRSName into layer.
+                char* pszSRSName = GML_ExtractSrsNameFromGeometry(poFeature->GetGeometryList());
+//                if (pszSRSName != NULL)
+//                    m_bCanUseGlobalSRSName = FALSE;
+                poClass->MergeSRSName(pszSRSName);
+                CPLFree(pszSRSName);
 
                 // Merge geometry type into layer.
                 if( poClass->GetFeatureCount() == 1 && eGType == wkbUnknown )
