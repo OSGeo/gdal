@@ -1191,7 +1191,8 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         psResult->pabyData = NULL;
     }
 
-    if (strstr(pabyData, "<ServiceExceptionReport") != NULL)
+    if (strstr(pabyData, "<ServiceExceptionReport") != NULL ||
+        strstr(pabyData, "<ows:ExceptionReport") != NULL)
     {
         if (poDS->IsOldDeegree(pabyData))
         {
