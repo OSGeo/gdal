@@ -160,9 +160,90 @@ def ogr_nas_2():
 
     return 'success'
 
+###############################################################################
+# Test that we can open and read empty files successfully.
+#
+
+def ogr_nas_3():
+
+    try:
+        drv = ogr.GetDriverByName('NAS')
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/empty_nas.xml')
+    if ds is None:
+        gdaltest.post_reason('could not open dataset')
+        return 'fail'
+
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('did not get expected layer count')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test that we can read files with wfs:Delete transactions in them properly.
+#
+
+def ogr_nas_4():
+
+    try:
+        drv = ogr.GetDriverByName('NAS')
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    try:
+        os.remove( 'tmp/delete_nas.gfs' )
+    except:
+        pass
+
+    ds = ogr.Open('data/delete_nas.xml')
+    if ds is None:
+        gdaltest.post_reason('could not open dataset')
+        return 'fail'
+
+    if ds.GetLayerCount() != 2:
+        gdaltest.post_reason('did not get expected layer count')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    del_lyr = ds.GetLayerByName( 'Delete' )
+
+    if del_lyr.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'did not get expected number of features' )
+        return 'fail'
+
+    del_lyr.ResetReading()
+    feat = del_lyr.GetNextFeature()
+
+    if feat.GetField('typeName') != 'AX_Namensnummer':
+        gdaltest.post_reason( 'did not get expected typeName' )
+        return 'fail'
+
+    if feat.GetField('FeatureId') != 'DENW44AL00000HJU20100730T092847Z':
+        gdaltest.post_reason( 'did not get expected FeatureId' )
+        return 'fail'
+
+    del_lyr = None
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_nas_1,
-    ogr_nas_2 ]
+    ogr_nas_2,
+    ogr_nas_3,
+    ogr_nas_4 ]
 
 if __name__ == '__main__':
 
