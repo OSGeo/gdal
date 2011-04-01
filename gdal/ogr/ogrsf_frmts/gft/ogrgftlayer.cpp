@@ -140,7 +140,7 @@ OGRFeature *OGRGFTLayer::GetNextFeature()
 /*      semantics.                                                      */
 /************************************************************************/
 
-static char **OGRGFTCSVSplitLine( const char *pszString, char chDelimiter )
+char **OGRGFTCSVSplitLine( const char *pszString, char chDelimiter )
 
 {
     char        **papszRetList = NULL;
