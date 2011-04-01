@@ -90,6 +90,8 @@ public:
 #endif
 
     void fatalError(const SAXParseException&);
+
+    CPLString GetAttributes( const Attributes* attr );
 };
 
 /************************************************************************/
