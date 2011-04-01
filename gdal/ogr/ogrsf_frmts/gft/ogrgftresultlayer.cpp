@@ -92,7 +92,7 @@ int OGRGFTResultLayer::FetchNextRows()
         strstr(osSQL.c_str(), " limit ") == NULL )
     {
         osChangedSQL += CPLSPrintf(" OFFSET %d LIMIT %d",
-                                   nOffset, MAX_FEATURES_FETCH);
+                                   nOffset, GetFeaturesToFetch());
     }
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -127,7 +127,7 @@ int OGRGFTResultLayer::FetchNextRows()
 
     CPLHTTPDestroyResult(psResult);
 
-    bEOF = aosRows.size() < MAX_FEATURES_FETCH;
+    bEOF = (int)aosRows.size() < GetFeaturesToFetch();
 
     return TRUE;
 }
@@ -213,12 +213,14 @@ int OGRGFTResultLayer::RunSQL()
                      osTableId.c_str(), poTableLayer->GetTableId().c_str());
         }
 
+        int nFeaturesToFetch = GetFeaturesToFetch();
         if (strstr(osSQL.c_str(), " OFFSET ") == NULL &&
             strstr(osSQL.c_str(), " offset ") == NULL &&
             strstr(osSQL.c_str(), " LIMIT ") == NULL &&
-            strstr(osSQL.c_str(), " limit ") == NULL )
+            strstr(osSQL.c_str(), " limit ") == NULL &&
+            nFeaturesToFetch > 0)
         {
-            osChangedSQL += CPLSPrintf(" LIMIT %d", MAX_FEATURES_FETCH);
+            osChangedSQL += CPLSPrintf(" LIMIT %d", nFeaturesToFetch);
             bHasSetLimit = TRUE;
         }
     }
@@ -285,7 +287,7 @@ int OGRGFTResultLayer::RunSQL()
         }
 
         if (bHasSetLimit)
-            bGotAllRows = bEOF = aosRows.size() < MAX_FEATURES_FETCH;
+            bGotAllRows = bEOF = (int)aosRows.size() < GetFeaturesToFetch();
         else
             bGotAllRows = bEOF = TRUE;
     }
