@@ -106,7 +106,7 @@ int OGRGFTTableLayer::FetchDescribe()
     poFeatureDefn->Reference();
 
     const CPLString& osAuth = poDS->GetAuth();
-    std::vector<CPLString> aosFirstDataLine;
+    std::vector<CPLString> aosHeaderAndFirstDataLine;
     if (osAuth.size())
     {
         CPLString osSQL("DESCRIBE ");
@@ -127,13 +127,12 @@ int OGRGFTTableLayer::FetchDescribe()
         }
 
         pszLine = OGRGFTGotoNextLine(pszLine);
-        while(pszLine != NULL && *pszLine != 0)
-        {
-            char* pszNextLine = OGRGFTGotoNextLine(pszLine);
-            if (pszNextLine)
-                pszNextLine[-1] = 0;
 
-            char** papszTokens = CSLTokenizeString2(pszLine, ",", 0);
+        std::vector<CPLString> aosLines;
+        ParseCSVResponse(pszLine, aosLines);
+        for(int i=0;i<(int)aosLines.size();i++)
+        {
+            char** papszTokens = OGRGFTCSVSplitLine(aosLines[i], ',');
             if (CSLCount(papszTokens) == 3)
             {
                 //CPLDebug("GFT", "%s %s %s", papszTokens[0], papszTokens[1], papszTokens[2]);
@@ -151,8 +150,6 @@ int OGRGFTTableLayer::FetchDescribe()
                 poFeatureDefn->AddFieldDefn(&oFieldDefn);
             }
             CSLDestroy(papszTokens);
-
-            pszLine = pszNextLine;
         }
 
         CPLHTTPDestroyResult(psResult);
@@ -177,20 +174,17 @@ int OGRGFTTableLayer::FetchDescribe()
             return FALSE;
         }
 
-        char* pszNextLine = OGRGFTGotoNextLine(pszLine);
-        if (pszNextLine)
-            pszNextLine[-1] = 0;
-
-        char** papszTokens = CSLTokenizeString2(pszLine, ",", 0);
-        for(int i=0;papszTokens && papszTokens[i];i++)
+        ParseCSVResponse(pszLine, aosHeaderAndFirstDataLine);
+        if (aosHeaderAndFirstDataLine.size() > 0)
         {
-            OGRFieldDefn oFieldDefn(papszTokens[i], OFTString);
-            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+            char** papszTokens = OGRGFTCSVSplitLine(aosHeaderAndFirstDataLine[0], ',');
+            for(int i=0;papszTokens && papszTokens[i];i++)
+            {
+                OGRFieldDefn oFieldDefn(papszTokens[i], OFTString);
+                poFeatureDefn->AddFieldDefn(&oFieldDefn);
+            }
+            CSLDestroy(papszTokens);
         }
-        CSLDestroy(papszTokens);
-
-        if (pszNextLine)
-            ParseCSVResponse(pszNextLine, aosFirstDataLine);
 
         CPLHTTPDestroyResult(psResult);
     }
@@ -215,9 +209,9 @@ int OGRGFTTableLayer::FetchDescribe()
     {
         /* In the unauthentified case, we try to parse the first record to */
         /* autodetect the geometry field */
-        if (aosFirstDataLine.size() == 1)
+        if (aosHeaderAndFirstDataLine.size() == 2)
         {
-            char** papszTokens = OGRGFTCSVSplitLine(aosFirstDataLine[0], ',');
+            char** papszTokens = OGRGFTCSVSplitLine(aosHeaderAndFirstDataLine[1], ',');
             if (CSLCount(papszTokens) == poFeatureDefn->GetFieldCount())
             {
                 for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
