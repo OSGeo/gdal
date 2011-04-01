@@ -357,7 +357,9 @@ OGRFeature *OGRGFTLayer::BuildFeatureFromSQL(const char* pszLine)
                     if (pszVal[0] == '-' || (pszVal[0] >= '0' && pszVal[0] <= '9'))
                     {
                         char** papszLatLon = CSLTokenizeString2(pszVal, " ,", 0);
-                        if (CSLCount(papszLatLon) == 2)
+                        if (CSLCount(papszLatLon) == 2 &&
+                            CPLGetValueType(papszLatLon[0]) != CPL_VALUE_STRING &&
+                            CPLGetValueType(papszLatLon[1]) != CPL_VALUE_STRING)
                         {
                             OGRPoint* poPoint = new OGRPoint(atof( papszLatLon[1]),
                                                             atof( papszLatLon[0]));
@@ -385,14 +387,18 @@ OGRFeature *OGRGFTLayer::BuildFeatureFromSQL(const char* pszLine)
             }
         }
 
-        if (iLatitudeField >= 0 && iLongitudeField >= 0 &&
-            papszTokens[iLatitudeField+nAttrOffset][0] &&
-            papszTokens[iLongitudeField+nAttrOffset][0])
+        if (iLatitudeField >= 0 && iLongitudeField >= 0)
         {
-            OGRPoint* poPoint = new OGRPoint(atof( papszTokens[iLongitudeField+nAttrOffset] ),
-                                             atof( papszTokens[iLatitudeField+nAttrOffset] ));
-            poPoint->assignSpatialReference(poSRS);
-            poFeature->SetGeometryDirectly(poPoint);
+            const char* pszLat = papszTokens[iLatitudeField+nAttrOffset];
+            const char* pszLong = papszTokens[iLongitudeField+nAttrOffset];
+            if (pszLat[0] != 0 && pszLong[0] != 0 &&
+                CPLGetValueType(pszLat) != CPL_VALUE_STRING &&
+                CPLGetValueType(pszLong) != CPL_VALUE_STRING)
+            {
+                OGRPoint* poPoint = new OGRPoint(atof(pszLong), atof(pszLat));
+                poPoint->assignSpatialReference(poSRS);
+                poFeature->SetGeometryDirectly(poPoint);
+            }
         }
     }
     else
