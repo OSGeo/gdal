@@ -33,6 +33,7 @@
 #include "gmlreader.h"
 #include "gmlreaderp.h"
 #include "ogr_api.h"
+#include "cpl_string.h"
 
 IGMLReader *CreateNASReader();
 
@@ -62,6 +63,8 @@ class NASHandler : public DefaultHandler
     int        m_nDepth;
     int        m_nDepthFeature;
     int        m_bIgnoreFeature;
+
+    CPLString  m_osLastTypeName;
 
 public:
     NASHandler( NASReader *poReader );
@@ -198,6 +201,7 @@ public:
 
     int         HasStoppedParsing() { return FALSE; }
 
+    void        CheckForFID( const Attributes &attrs, char **ppszCurField );
     void        CheckForRelations( const char *pszElement, 
                                    const Attributes &attrs );
 
