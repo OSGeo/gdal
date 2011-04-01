@@ -141,12 +141,13 @@ static CPLString OGRGFTExtractTableID(const char* pszTableID,
 {
     CPLString osTableId(pszTableID);
     if (osTableId.size() > 1 &&
-        osTableId[0] == '"')
+        (osTableId[0] == '"' || osTableId[0] == '\''))
     {
+        char chFirstChar = osTableId[0];
         osTableId.erase(0, 1);
         for(int i=0;i<(int)osTableId.size();i++)
         {
-            if (osTableId[i] == '"')
+            if (osTableId[i] == chFirstChar)
             {
                 osReminder = osTableId.substr(i+1);
                 osTableId.resize(i);
@@ -245,43 +246,43 @@ int OGRGFTResultLayer::RunSQL()
         EQUAL(osSQL.c_str(), "SHOW TABLES") ||
         EQUALN(osSQL.c_str(), "DESCRIBE", 8))
     {
-        char* pszNextLine = OGRGFTGotoNextLine(pszLine);
-        if (pszNextLine)
-            pszNextLine[-1] = 0;
-
-        char** papszTokens = CSLTokenizeString2(pszLine, ",", 0);
-        for(int i=0;papszTokens && papszTokens[i];i++)
+        ParseCSVResponse(pszLine, aosRows);
+        if (aosRows.size() > 0)
         {
-            const char* pszFieldName = papszTokens[i];
-            int iIndex = (poTableDefn) ? poTableDefn->GetFieldIndex(pszFieldName) : -1;
-            if (iIndex >= 0)
+            char** papszTokens = OGRGFTCSVSplitLine(aosRows[0], ',');
+            for(int i=0;papszTokens && papszTokens[i];i++)
             {
-                poFeatureDefn->AddFieldDefn(poTableDefn->GetFieldDefn(iIndex));
-                if (iIndex == poTableLayer->GetGeometryFieldIndex())
-                    iGeometryField = i;
-                if (iIndex == poTableLayer->GetLatitudeFieldIndex())
-                    iLatitudeField = i;
-                if (iIndex == poTableLayer->GetLongitudeFieldIndex())
-                    iLongitudeField = i;
+                const char* pszFieldName = papszTokens[i];
+                int iIndex = (poTableDefn) ? poTableDefn->GetFieldIndex(pszFieldName) : -1;
+                if (iIndex >= 0)
+                {
+                    poFeatureDefn->AddFieldDefn(poTableDefn->GetFieldDefn(iIndex));
+                    if (iIndex == poTableLayer->GetGeometryFieldIndex())
+                        iGeometryField = i;
+                    if (iIndex == poTableLayer->GetLatitudeFieldIndex())
+                        iLatitudeField = i;
+                    if (iIndex == poTableLayer->GetLongitudeFieldIndex())
+                        iLongitudeField = i;
+                }
+                else
+                {
+                    OGRFieldType eType = OFTString;
+                    if (EQUAL(pszFieldName, "COUNT()"))
+                        eType = OFTInteger;
+                    OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                    poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                }
             }
-            else
-            {
-                OGRFieldType eType = OFTString;
-                if (EQUAL(pszFieldName, "COUNT()"))
-                    eType = OFTInteger;
-                OGRFieldDefn oFieldDefn(pszFieldName, eType);
-                poFeatureDefn->AddFieldDefn(&oFieldDefn);
-            }
+            CSLDestroy(papszTokens);
+
+            aosRows.erase(aosRows.begin());
         }
-        CSLDestroy(papszTokens);
 
         if (iLatitudeField >= 0 && iLongitudeField >= 0)
         {
             iGeometryField = iLatitudeField;
             poFeatureDefn->SetGeomType( wkbPoint );
         }
-
-        ParseCSVResponse(pszNextLine, aosRows);
 
         if (bHasSetLimit)
             bGotAllRows = bEOF = aosRows.size() < MAX_FEATURES_FETCH;
