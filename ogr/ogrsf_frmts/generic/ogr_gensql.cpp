@@ -42,7 +42,8 @@ CPL_CVSID("$Id$");
 OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
                                               void *pSelectInfo, 
                                               OGRGeometry *poSpatFilter,
-                                              const char *pszWHERE )
+                                              const char *pszWHERE,
+                                              const char *pszDialect )
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
@@ -57,7 +58,12 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     nExtraDSCount = 0;
     papoExtraDS = NULL;
 
-    if( pszWHERE )
+/* -------------------------------------------------------------------- */
+/*      If the user has explicitely requested a OGRSQL dialect, then    */
+/*      we should avoid to forward the where clause to the source layer */
+/*      (#4022)                                                         */
+/* -------------------------------------------------------------------- */
+    if( pszWHERE && !(pszDialect != NULL && EQUAL(pszDialect, "OGRSQL")) )
         this->pszWHERE = CPLStrdup(pszWHERE);
     else
         this->pszWHERE = NULL;
@@ -262,6 +268,14 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     ResetReading();
 
     SetIgnoredFields();
+
+/* -------------------------------------------------------------------- */
+/*      If the user has explicitely requested a OGRSQL dialect, then    */
+/*      we should avoid to forward the where clause to the source layer */
+/*      (#4022)                                                         */
+/* -------------------------------------------------------------------- */
+    if( pszWHERE && pszDialect != NULL && EQUAL(pszDialect, "OGRSQL") )
+        SetAttributeFilter( pszWHERE );
 }
 
 /************************************************************************/
