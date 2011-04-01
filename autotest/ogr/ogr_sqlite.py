@@ -1092,6 +1092,77 @@ def ogr_sqlite_23():
     return 'success'
 
 ###############################################################################
+# Test that ExecuteSQL() with OGRSQL dialect doesn't forward the where clause to sqlite (#4022)
+
+def ogr_sqlite_24():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    try:
+        os.remove('tmp/test24.sqlite')
+    except:
+        pass
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/test24.sqlite')
+    lyr = ds.CreateLayer('test')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2 3)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((4 5,6 7))'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    ds = ogr.Open('tmp/test24.sqlite')
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = ds.ExecuteSQL('select OGR_GEOMETRY from test')
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('this should not work (1)')
+        ds.ReleaseResultSet(lyr)
+        return 'fail'
+
+    lyr = ds.ExecuteSQL('select * from test')
+    lyr.SetAttributeFilter("OGR_GEOMETRY = 'POLYGON'")
+    feat = lyr.GetNextFeature()
+    ds.ReleaseResultSet(lyr)
+    if feat is None:
+        gdaltest.post_reason('a feature was expected (2)')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('test')
+    lyr.SetAttributeFilter("OGR_GEOMETRY = 'POLYGON'")
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    feat = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if feat is not None:
+        gdaltest.post_reason('a feature was not expected (3)')
+        return 'fail'
+
+    lyr = ds.ExecuteSQL('select OGR_GEOMETRY from test', dialect = 'OGRSQL')
+    lyr.SetAttributeFilter("OGR_GEOMETRY = 'POLYGON'")
+    feat = lyr.GetNextFeature()
+    ds.ReleaseResultSet(lyr)
+    if feat is None:
+        gdaltest.post_reason('a feature was expected (4)')
+        return 'fail'
+
+    lyr = ds.ExecuteSQL("select OGR_GEOMETRY from test WHERE OGR_GEOMETRY = 'POLYGON'", dialect = 'OGRSQL')
+    feat = lyr.GetNextFeature()
+    ds.ReleaseResultSet(lyr)
+    if feat is None:
+        gdaltest.post_reason('a feature was expected (5)')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test if SpatiaLite is available
 
 def ogr_spatialite_1():
@@ -1331,6 +1402,10 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/test24.sqlite' )
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [ 
@@ -1357,6 +1432,7 @@ gdaltest_list = [
     ogr_sqlite_21,
     ogr_sqlite_22,
     ogr_sqlite_23,
+    ogr_sqlite_24,
     ogr_spatialite_1,
     ogr_spatialite_2,
     ogr_spatialite_3,
