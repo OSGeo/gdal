@@ -183,7 +183,10 @@ int OGRNASDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      will have mechanisms for remembering the schema and related     */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema && !poReader->PrescanForSchema( TRUE ) )
+    CPLErrorReset();
+    if( !bHaveSchema 
+        && !poReader->PrescanForSchema( TRUE ) 
+        && CPLGetLastErrorType() == CE_Failure )
     {
         // we assume an errors have been reported.
         return FALSE;
@@ -193,7 +196,7 @@ int OGRNASDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Save the schema file if possible.  Don't make a fuss if we      */
 /*      can't ... could be read-only directory or something.            */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema )
+    if( !bHaveSchema && poReader->GetClassCount() > 0 )
     {
         FILE    *fp = NULL;
 
