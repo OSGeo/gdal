@@ -82,7 +82,8 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
                 OGRGenSQLResultsLayer( OGRDataSource *poSrcDS, 
                                        void *pSelectInfo, 
                                        OGRGeometry *poSpatFilter,
-                                       const char *pszWHERE );
+                                       const char *pszWHERE,
+                                       const char *pszDialect );
     virtual     ~OGRGenSQLResultsLayer();
 
     virtual OGRGeometry *GetSpatialFilter();
