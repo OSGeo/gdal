@@ -60,6 +60,30 @@ NASHandler::~NASHandler()
     CPLFree( m_pszGeometry );
 }
 
+/************************************************************************/
+/*                        GetAttributes()                               */
+/************************************************************************/
+
+CPLString NASHandler::GetAttributes(const Attributes* attrs)
+{
+    CPLString osRes;
+    char *pszString;
+
+    for(unsigned int i=0; i < attrs->getLength(); i++)
+    {
+        osRes += " ";
+        pszString = tr_strdup(attrs->getQName(i));
+        osRes += pszString;
+        CPLFree( pszString );
+        osRes += "=\"";
+        pszString = tr_strdup(attrs->getValue(i));
+        osRes += pszString;
+        CPLFree( pszString );
+        osRes += "\"";
+    }
+    return osRes;
+}
+
 
 /************************************************************************/
 /*                            startElement()                            */
@@ -103,6 +127,7 @@ void NASHandler::startElement(const XMLCh* const    uri,
         || IsGeometryElement( szElementName ) )
     {
         int nLNLen = tr_strlen( localname );
+        CPLString osAttributes = GetAttributes( &attrs );
 
         /* should save attributes too! */
 
@@ -111,14 +136,21 @@ void NASHandler::startElement(const XMLCh* const    uri,
         
         if( m_nGeomLen + nLNLen + 4 > m_nGeomAlloc )
         {
-            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLen + 1000);
+            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLen + osAttributes.size() + 1000);
             m_pszGeometry = (char *) 
                 CPLRealloc( m_pszGeometry, m_nGeomAlloc);
         }
 
         strcpy( m_pszGeometry+m_nGeomLen, "<" );
         tr_strcpy( m_pszGeometry+m_nGeomLen+1, localname );
-        strcat( m_pszGeometry+m_nGeomLen+nLNLen+1, ">" );
+        
+        if( osAttributes.size() > 0 )
+        {
+            strcat( m_pszGeometry+m_nGeomLen, " " );
+            strcat( m_pszGeometry+m_nGeomLen, osAttributes );
+        }
+
+        strcat( m_pszGeometry+m_nGeomLen, ">" );
         m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
     }
     

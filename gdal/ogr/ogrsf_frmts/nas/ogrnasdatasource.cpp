@@ -33,6 +33,14 @@
 
 CPL_CVSID("$Id: ogrgmldatasource.cpp 12743 2007-11-13 13:59:37Z dron $");
 
+static const char *apszURNNames[] = 
+{ 
+    "DE_DHDN_3GK2_NW177", "EPSG:31466",
+    "DE_DHDN_3GK3_BW100", "EPSG:31467", 
+    "ETRS89_UTM32", "EPSG:25832",
+    NULL, NULL 
+};
+
 /************************************************************************/
 /*                         OGRNASDataSource()                         */
 /************************************************************************/
@@ -249,9 +257,40 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
         eGType = wkbUnknown;
 
 /* -------------------------------------------------------------------- */
+/*      Translate SRS.                                                  */
+/* -------------------------------------------------------------------- */
+    const char* pszSRSName = poClass->GetSRSName();
+    OGRSpatialReference* poSRS = NULL;
+    if (pszSRSName)
+    {
+        int i;
+
+        poSRS = new OGRSpatialReference();
+        
+        const char *pszHandle = strrchr( pszSRSName, ':' );
+        if( pszHandle != NULL )
+            pszHandle += 1;
+
+        for( i = 0; apszURNNames[i*2+0] != NULL; i++ )
+        {
+            if( EQUAL(apszURNNames[i*2+0],pszHandle) )
+                pszSRSName = apszURNNames[i*2+1];
+        }
+        
+        if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
+        {
+            CPLDebug( "NAS", "Failed to translate srsName='%s'", 
+                      pszSRSName );
+            delete poSRS;
+            poSRS = NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create an empty layer.                                          */
 /* -------------------------------------------------------------------- */
-    poLayer = new OGRNASLayer( poClass->GetName(), NULL, eGType, this );
+    poLayer = new OGRNASLayer( poClass->GetName(), poSRS, eGType, this );
+    delete poSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */
