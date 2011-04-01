@@ -861,6 +861,39 @@ void NASReader::ResetReading()
 }
 
 /************************************************************************/
+/*                            CheckForFID()                             */
+/*                                                                      */
+/*      Merge the fid attribute into the current field text.            */
+/************************************************************************/
+
+void NASReader::CheckForFID( const Attributes &attrs,
+                             char **ppszCurField )
+
+{
+    GMLFeature *poFeature = GetState()->m_poFeature;
+
+    CPLAssert( poFeature  != NULL );
+
+    int nIndex;
+    XMLCh  Name[100];
+
+    tr_strcpy( Name, "fid" );
+    nIndex = attrs.getIndex( Name );
+
+    if( nIndex != -1 )
+    {
+        char *pszFID = tr_strdup( attrs.getValue( nIndex ) );
+        CPLString osCurField = *ppszCurField;
+
+        osCurField += pszFID;
+        CPLFree( pszFID );
+
+        CPLFree( *ppszCurField );
+        *ppszCurField = CPLStrdup(osCurField);
+    }
+}
+
+/************************************************************************/
 /*                         CheckForRelations()                          */
 /************************************************************************/
 
