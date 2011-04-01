@@ -246,6 +246,7 @@ class OGRGFTDriver : public OGRSFDriver
     virtual int                 TestCapability( const char * );
 };
 
+char **OGRGFTCSVSplitLine( const char *pszString, char chDelimiter );
 char* OGRGFTGotoNextLine(char* pszData);
 
 #endif /* ndef _OGR_GFT_H_INCLUDED */
