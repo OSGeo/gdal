@@ -288,7 +288,10 @@ int OGRGFTTableLayer::FetchNextRows()
         osSQL += " ";
         osSQL += osWHERE;
     }
-    osSQL += CPLSPrintf(" OFFSET %d LIMIT %d", nOffset, MAX_FEATURES_FETCH);
+
+    int nFeaturesToFetch = GetFeaturesToFetch();
+    if (nFeaturesToFetch > 0)
+        osSQL += CPLSPrintf(" OFFSET %d LIMIT %d", nOffset, nFeaturesToFetch);
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
     CPLHTTPResult * psResult = poDS->RunSQL(osSQL);
@@ -319,7 +322,10 @@ int OGRGFTTableLayer::FetchNextRows()
 
     ParseCSVResponse(pszLine, aosRows);
 
-    bEOF = aosRows.size() < MAX_FEATURES_FETCH;
+    if (nFeaturesToFetch > 0)
+        bEOF = (int)aosRows.size() < GetFeaturesToFetch();
+    else
+        bEOF = TRUE;
 
     CPLHTTPDestroyResult(psResult);
 
