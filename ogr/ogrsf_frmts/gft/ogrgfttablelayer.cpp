@@ -106,6 +106,7 @@ int OGRGFTTableLayer::FetchDescribe()
     poFeatureDefn->Reference();
 
     const CPLString& osAuth = poDS->GetAuth();
+    std::vector<CPLString> aosFirstDataLine;
     if (osAuth.size())
     {
         CPLString osSQL("DESCRIBE ");
@@ -188,6 +189,9 @@ int OGRGFTTableLayer::FetchDescribe()
         }
         CSLDestroy(papszTokens);
 
+        if (pszNextLine)
+            ParseCSVResponse(pszNextLine, aosFirstDataLine);
+
         CPLHTTPDestroyResult(psResult);
     }
 
@@ -208,9 +212,35 @@ int OGRGFTTableLayer::FetchDescribe()
         poFeatureDefn->SetGeomType( wkbPoint );
     }
     else if (iGeometryField < 0)
-        poFeatureDefn->SetGeomType( wkbNone );
-    else
-        poFeatureDefn->SetGeomType( wkbUnknown );
+    {
+        /* In the unauthentified case, we try to parse the first record to */
+        /* autodetect the geometry field */
+        if (aosFirstDataLine.size() == 1)
+        {
+            char** papszTokens = OGRGFTCSVSplitLine(aosFirstDataLine[0], ',');
+            if (CSLCount(papszTokens) == poFeatureDefn->GetFieldCount())
+            {
+                for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
+                {
+                    const char* pszVal = papszTokens[i];
+                    if (pszVal != NULL &&
+                        (strncmp(pszVal, "<Point>", 7) == 0 ||
+                         strncmp(pszVal, "<LineString>", 12) == 0 ||
+                         strncmp(pszVal, "<Polygon>", 9) == 0))
+                    {
+                        iGeometryField = i;
+                        break;
+                    }
+                }
+            }
+            CSLDestroy(papszTokens);
+        }
+        
+        if (iGeometryField < 0)
+            poFeatureDefn->SetGeomType( wkbNone );
+        else
+            poFeatureDefn->SetGeomType( wkbUnknown );
+    }
 
     return TRUE;
 }
