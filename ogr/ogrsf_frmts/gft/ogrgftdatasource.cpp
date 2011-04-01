@@ -256,10 +256,7 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
     /* Get list of tables */
-    char** papszOptions = CSLAddString(AddHTTPOptions(), "POSTFIELDS=sql=SHOW TABLES");
-    CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
-    CSLDestroy(papszOptions);
-    papszOptions = NULL;
+    CPLHTTPResult * psResult = RunSQL("SHOW TABLES");
 
     if (psResult == NULL)
         return FALSE;
@@ -512,6 +509,13 @@ CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszUnescapedSQL)
     CPLDebug("GFT", "Run %s", pszUnescapedSQL);
     CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
     CSLDestroy(papszOptions);
+    if (psResult && psResult->pszContentType &&
+        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "HTML error page returned by server");
+        CPLHTTPDestroyResult(psResult);
+        psResult = NULL;
+    }
     return psResult;
 }
 
