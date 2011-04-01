@@ -203,7 +203,8 @@ int OGRGFTTableLayer::FetchDescribe()
     if (iLatitudeField >= 0 && iLongitudeField >= 0)
     {
         iGeometryField = iLatitudeField;
-        poFeatureDefn->GetFieldDefn(iGeometryField)->SetType(OFTReal);
+        poFeatureDefn->GetFieldDefn(iLatitudeField)->SetType(OFTReal);
+        poFeatureDefn->GetFieldDefn(iLongitudeField)->SetType(OFTReal);
         poFeatureDefn->SetGeomType( wkbPoint );
     }
     else if (iGeometryField < 0)
