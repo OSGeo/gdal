@@ -216,7 +216,10 @@ const GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
         poODS->bHasReadRat = TRUE;
     }
 
-    return poODS->poRAT;
+    if( poODS->poRAT )
+        return poODS->poRAT;
+    else
+        return GDALPamRasterBand::GetDefaultRAT();
 }
 
 /************************************************************************/
