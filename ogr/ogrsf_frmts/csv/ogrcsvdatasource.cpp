@@ -116,7 +116,8 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
     pszFilename = NULL;
 
     int bIgnoreExtension = EQUALN(osFilename, "CSV:", 4);
-    int bGeonamesFile = FALSE;
+    int bUSGeonamesFile = FALSE;
+    int bGeonamesOrgFile = FALSE;
     if (bIgnoreExtension)
     {
         osFilename = osFilename + 4;
@@ -150,7 +151,21 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         if (bUpdateIn)
             return FALSE;
         bIgnoreExtension = TRUE;
-        bGeonamesFile = TRUE;
+        bUSGeonamesFile = TRUE;
+
+        if (EQUAL(osExt, "zip") &&
+            strstr(osFilename, "/vsizip/") == NULL )
+        {
+            osFilename = "/vsizip/" + osFilename;
+        }
+    }
+    else if (EQUAL(osBaseFilename, "allCountries.txt") ||
+             EQUAL(osBaseFilename, "allCountries.zip"))
+    {
+        if (bUpdateIn)
+            return FALSE;
+        bIgnoreExtension = TRUE;
+        bGeonamesOrgFile = TRUE;
 
         if (EQUAL(osExt, "zip") &&
             strstr(osFilename, "/vsizip/") == NULL )
@@ -185,7 +200,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
             OpenTable( osFilename, "ReciprocalEndDisplaced");
             return nLayers != 0;
         }
-        else if (bGeonamesFile)
+        else if (bUSGeonamesFile)
         {
             /* GNIS specific */
             if (EQUALN(osBaseFilename, "NationalFedCodes_", 17) ||
