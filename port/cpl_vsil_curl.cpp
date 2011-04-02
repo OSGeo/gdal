@@ -438,6 +438,11 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
     bHastComputedFileSize = TRUE;
 
+#if LIBCURL_VERSION_NUM < 0x070B00
+    /* Curl 7.10.X doesn't manage to unset the CURLOPT_RANGE that would have been */
+    /* previously set, so we have to reinit the connection handle */
+    poFS->GetCurlHandleFor("");
+#endif
     CURL* hCurlHandle = poFS->GetCurlHandleFor(pszURL);
 
     VSICurlSetOptions(hCurlHandle, pszURL);
