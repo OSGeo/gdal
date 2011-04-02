@@ -1540,7 +1540,7 @@ int GDALReadTabFile2( const char * pszBaseFilename,
         {
             CPLString osTabFilename = pszBaseFilename;
             osTabFilename.resize(strlen(pszBaseFilename) -
-                                 strlen(papszSiblingFiles[iSibling]));
+                                 strlen(CPLGetFilename(pszBaseFilename)));
             osTabFilename += papszSiblingFiles[iSibling];
             if ( GDALLoadTabFile(osTabFilename, padfGeoTransform, ppszWKT,
                                  pnGCPCount, ppasGCPs ) )
@@ -1793,7 +1793,7 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
         {
             CPLString osTFWFilename = pszBaseFilename;
             osTFWFilename.resize(strlen(pszBaseFilename) -
-                                 strlen(papszSiblingFiles[iSibling]));
+                                 strlen(CPLGetFilename(pszBaseFilename)));
             osTFWFilename += papszSiblingFiles[iSibling];
             if (GDALLoadWorldFile( osTFWFilename, padfGeoTransform ))
             {
