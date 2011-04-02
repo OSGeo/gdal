@@ -297,6 +297,61 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     if( !bNew && !bHasFieldNames )
         VSIRewindL( fpCSV );
 
+/* -------------------------------------------------------------------- */
+/*      Check for geonames.org tables                                   */
+/* -------------------------------------------------------------------- */
+    if( !bHasFieldNames && nFieldCount == 19 )
+    {
+        if (CPLGetValueType(papszTokens[0]) == CPL_VALUE_INTEGER &&
+            CPLGetValueType(papszTokens[4]) == CPL_VALUE_REAL &&
+            CPLGetValueType(papszTokens[5]) == CPL_VALUE_REAL &&
+            CPLAtof(papszTokens[4]) >= -90 && CPLAtof(papszTokens[4]) <= 90 &&
+            CPLAtof(papszTokens[5]) >= -180 && CPLAtof(papszTokens[4]) <= 180)
+        {
+            bHasFieldNames = TRUE;
+            CSLDestroy(papszTokens);
+            papszTokens = NULL;
+
+            static const struct {
+                const char* pszName;
+                OGRFieldType eType;
+            }
+            asGeonamesFieldDesc[] =
+            {
+                { "GEONAMEID", OFTString },
+                { "NAME", OFTString },
+                { "ASCIINAME", OFTString },
+                { "ALTNAMES", OFTString },
+                { "LATITUDE", OFTReal },
+                { "LONGITUDE", OFTReal },
+                { "FEATCLASS", OFTString },
+                { "FEATCODE", OFTString },
+                { "COUNTRY", OFTString },
+                { "CC2", OFTString },
+                { "ADMIN1", OFTString },
+                { "ADMIN2", OFTString },
+                { "ADMIN3", OFTString },
+                { "ADMIN4", OFTString },
+                { "POPULATION", OFTReal },
+                { "ELEVATION", OFTInteger },
+                { "GTOPO30", OFTInteger },
+                { "TIMEZONE", OFTString },
+                { "MODDATE", OFTString }
+            };
+            for(iField = 0; iField < nFieldCount; iField++)
+            {
+                OGRFieldDefn oFieldDefn(asGeonamesFieldDesc[iField].pszName,
+                                        asGeonamesFieldDesc[iField].eType);
+                poFeatureDefn->AddFieldDefn(&oFieldDefn);
+            }
+
+            iLatitudeField = 4;
+            iLongitudeField = 5;
+
+            nFieldCount = 0;
+        }
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Search a csvt file for types                                */
