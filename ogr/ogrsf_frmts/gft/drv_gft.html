@@ -101,15 +101,15 @@ The operations will be stored into memory and only executed at the time CommitTr
 the GFT service only supports up to 500 INSERTs and up to 1MB of content per transaction.<p>
 
 Note : only CreateFeature() makes use of OGR transaction mechanism. SetFeature() and DeleteFeature()
-will still be issued immediately.
+will still be issued immediately.<p>
 
 <h2>SQL</h2>
 
-SQL command run provided to the OGRDataSource::ExecuteSQL() call are executed on the server side.
-The subset of SQL supported by the GFT service is described in the links at the end of this page.<p>
+SQL commands provided to the OGRDataSource::ExecuteSQL() call are executed on the server side, unless the OGRSQL
+dialect is specified. The subset of SQL supported by the GFT service is described in the links at the end of this page.<p>
 
 The SQL supported by the server understands only natively table id, and not the table names returned by OGR.
-For conveniency, OGR will "patch" your SQL command to replace the table name by the table id however.
+For conveniency, OGR will "patch" your SQL command to replace the table name by the table id however.<p>
 
 <h2>Examples</h2>
 
