@@ -571,9 +571,9 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
         }
         nWithoutEventCounter ++;
     } while (!nDone && nFeatureTabLength == 0 && !bStopParsing &&
-             nWithoutEventCounter < 10);
+             nWithoutEventCounter < 1000);
 
-    if (nWithoutEventCounter == 10)
+    if (nWithoutEventCounter == 1000)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too much data inside one element. File probably corrupted");
@@ -688,9 +688,9 @@ void OGRSVGLayer::LoadSchema()
             break;
         }
         nWithoutEventCounter ++;
-    } while (!nDone && !bStopParsing && nWithoutEventCounter < 10);
+    } while (!nDone && !bStopParsing && nWithoutEventCounter < 1000);
 
-    if (nWithoutEventCounter == 10)
+    if (nWithoutEventCounter == 1000)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too much data inside one element. File probably corrupted");
