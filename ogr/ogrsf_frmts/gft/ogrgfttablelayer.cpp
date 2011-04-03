@@ -192,15 +192,18 @@ int OGRGFTTableLayer::FetchDescribe()
     for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
         const char* pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
-        if (EQUAL(pszName, "latitude") || EQUAL(pszName, "lat"))
+        if (EQUAL(pszName, "latitude") || EQUAL(pszName, "lat") ||
+            EQUAL(pszName, "latdec"))
             iLatitudeField = i;
-        else if (EQUAL(pszName, "longitude") || EQUAL(pszName, "lon") || EQUAL(pszName, "long"))
+        else if (EQUAL(pszName, "longitude") || EQUAL(pszName, "lon") ||
+                 EQUAL(pszName, "londec") || EQUAL(pszName, "long"))
             iLongitudeField = i;
     }
 
     if (iLatitudeField >= 0 && iLongitudeField >= 0)
     {
-        iGeometryField = iLatitudeField;
+        if (iGeometryField < 0)
+            iGeometryField = iLatitudeField;
         poFeatureDefn->GetFieldDefn(iLatitudeField)->SetType(OFTReal);
         poFeatureDefn->GetFieldDefn(iLongitudeField)->SetType(OFTReal);
         poFeatureDefn->SetGeomType( wkbPoint );
@@ -209,6 +212,7 @@ int OGRGFTTableLayer::FetchDescribe()
     {
         /* In the unauthentified case, we try to parse the first record to */
         /* autodetect the geometry field */
+        OGRwkbGeometryType eType = wkbUnknown;
         if (aosHeaderAndFirstDataLine.size() == 2)
         {
             char** papszTokens = OGRGFTCSVSplitLine(aosHeaderAndFirstDataLine[1], ',');
@@ -225,6 +229,21 @@ int OGRGFTTableLayer::FetchDescribe()
                         iGeometryField = i;
                         break;
                     }
+                    else if (pszVal)
+                    {
+                        /* http://www.google.com/fusiontables/DataSource?dsrcid=423292 */
+                        char** papszTokens2 = CSLTokenizeString2(pszVal, " ", 0);
+                        if (CSLCount(papszTokens2) == 2 &&
+                            CPLGetValueType(papszTokens2[0]) == CPL_VALUE_REAL &&
+                            CPLGetValueType(papszTokens2[1]) == CPL_VALUE_REAL &&
+                            fabs(CPLAtof(papszTokens2[0])) <= 90 &&
+                            fabs(CPLAtof(papszTokens2[1])) <= 180 )
+                        {
+                            iGeometryField = i;
+                            eType = wkbPoint;
+                        }
+                        CSLDestroy(papszTokens2);
+                    }
                 }
             }
             CSLDestroy(papszTokens);
@@ -233,7 +252,7 @@ int OGRGFTTableLayer::FetchDescribe()
         if (iGeometryField < 0)
             poFeatureDefn->SetGeomType( wkbNone );
         else
-            poFeatureDefn->SetGeomType( wkbUnknown );
+            poFeatureDefn->SetGeomType( eType );
     }
 
     return TRUE;
@@ -521,9 +540,11 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
     for(i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
         const char* pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
-        if (EQUAL(pszName, "latitude") || EQUAL(pszName, "lat"))
+        if (EQUAL(pszName, "latitude") || EQUAL(pszName, "lat") ||
+            EQUAL(pszName, "latdec"))
             iLatitudeField = i;
-        else if (EQUAL(pszName, "longitude") || EQUAL(pszName, "lon") || EQUAL(pszName, "long"))
+        else if (EQUAL(pszName, "longitude") || EQUAL(pszName, "lon") ||
+                 EQUAL(pszName, "londec") || EQUAL(pszName, "long"))
             iLongitudeField = i;
     }
 
