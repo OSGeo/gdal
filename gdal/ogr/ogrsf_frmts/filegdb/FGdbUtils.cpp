@@ -41,11 +41,17 @@ std::wstring StringToWString(const std::string& s)
 
 std::string WStringToString(const std::wstring& s)
 {
-  //TODO: Need to handle codepage / multi-byte chars / charset issues
+  //TODO: Need to see if this works on *nix port - write a more efficient - unnecessary mem copied around
 
-  std::string temp(s.length(), ' ');
-  std::copy(s.begin(), s.end(), temp.begin());
-  return temp; 
+  char *tempString = new char[(s.size() * 2) + 1];
+
+  sprintf(tempString,"%ls",s.c_str());
+
+  string returnMe = tempString;
+
+  delete [] tempString;
+
+  return returnMe; 
 }
 
 
