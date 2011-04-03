@@ -213,4 +213,7 @@ void OGRRegisterAll()
 #ifdef GFT_ENABLED
     RegisterOGRGFT();
 #endif
+#ifdef SVG_ENABLED
+    RegisterOGRSVG();
+#endif
 } /* OGRRegisterAll */
