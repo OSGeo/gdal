@@ -232,7 +232,7 @@ int OGRGFTTableLayer::FetchDescribe()
                     else if (pszVal)
                     {
                         /* http://www.google.com/fusiontables/DataSource?dsrcid=423292 */
-                        char** papszTokens2 = CSLTokenizeString2(pszVal, " ", 0);
+                        char** papszTokens2 = CSLTokenizeString2(pszVal, " ,", 0);
                         if (CSLCount(papszTokens2) == 2 &&
                             CPLGetValueType(papszTokens2[0]) == CPL_VALUE_REAL &&
                             CPLGetValueType(papszTokens2[1]) == CPL_VALUE_REAL &&
