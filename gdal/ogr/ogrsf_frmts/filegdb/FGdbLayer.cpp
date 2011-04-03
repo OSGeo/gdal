@@ -519,7 +519,7 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
   // Translate OID
   //
 
-  long oid = -1;
+  int32 oid = -1;
   if (FAILED(hr = pRow->GetOID(oid)))
   {
     //this should never happen
@@ -587,7 +587,7 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
 
     case OFTInteger:
       {
-        long val;
+        int32 val;
 
         if (FAILED(hr = pRow->GetInteger(wstrFieldName, val)))
         {
@@ -697,10 +697,10 @@ OGRFeature* FGdbLayer::GetNextFeature()
 
     if (!OGRFeatureFromGdbRow(&row,  &pOGRFeature))
     {
-      long oid = -1;
+      int32 oid = -1;
       row.GetOID(oid);
 
-      GDBErr(hr, CPLSPrintf("Failed translating ArcObjects row [%ld] to OGR Feature", oid));
+      GDBErr(hr, CPLSPrintf("Failed translating ArcObjects row [%d] to OGR Feature", oid));
 
       //return NULL;
       continue; //skip feature
@@ -763,7 +763,7 @@ int FGdbLayer::GetFeatureCount( int bForce )
   // at least minimize impact by only fetching oids
 
   long           hr;
-  long           rowCount = 0;
+  int32          rowCount = 0;
 
   if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0)
       return OGRLayer::GetFeatureCount(bForce);
