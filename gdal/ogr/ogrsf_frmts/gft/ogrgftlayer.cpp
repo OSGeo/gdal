@@ -580,3 +580,21 @@ OGRSpatialReference* OGRGFTLayer::GetSpatialRef()
 
     return poSRS;
 }
+
+/************************************************************************/
+/*                         LaunderColName()                             */
+/************************************************************************/
+
+CPLString OGRGFTLayer::LaunderColName(const char* pszColName)
+{
+    CPLString osLaunderedColName;
+
+    for(int i=0;pszColName[i];i++)
+    {
+        if (pszColName[i] == '\n')
+            osLaunderedColName += "\\n";
+        else
+            osLaunderedColName += pszColName[i];
+    }
+    return osLaunderedColName;
+}

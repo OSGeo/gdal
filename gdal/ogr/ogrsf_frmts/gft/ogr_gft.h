@@ -66,6 +66,8 @@ protected:
     int                 bFirstTokenIsFID;
     OGRFeature*         BuildFeatureFromSQL(const char* pszLine);
 
+    static CPLString    LaunderColName(const char* pszColName);
+
   public:
                          OGRGFTLayer(OGRGFTDataSource* poDS);
                         ~OGRGFTLayer();
@@ -119,6 +121,8 @@ class OGRGFTTableLayer : public OGRGFTLayer
     virtual int                FetchNextRows();
 
     OGRwkbGeometryType eGTypeForCreation;
+
+    std::vector<CPLString>  aosColumnInternalName;
 
     public:
             OGRGFTTableLayer(OGRGFTDataSource* poDS,
