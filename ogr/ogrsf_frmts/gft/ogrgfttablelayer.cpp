@@ -135,6 +135,8 @@ int OGRGFTTableLayer::FetchDescribe()
             char** papszTokens = OGRGFTCSVSplitLine(aosLines[i], ',');
             if (CSLCount(papszTokens) == 3)
             {
+                aosColumnInternalName.push_back(papszTokens[0]);
+
                 //CPLDebug("GFT", "%s %s %s", papszTokens[0], papszTokens[1], papszTokens[2]);
                 OGRFieldType eType = OFTString;
                 if (EQUAL(papszTokens[2], "number"))
@@ -146,7 +148,9 @@ int OGRGFTTableLayer::FetchDescribe()
                 {
                     iGeometryField = poFeatureDefn->GetFieldCount();
                 }
-                OGRFieldDefn oFieldDefn(papszTokens[1], eType);
+
+                CPLString osLaunderedColName(LaunderColName(papszTokens[1]));
+                OGRFieldDefn oFieldDefn(osLaunderedColName, eType);
                 poFeatureDefn->AddFieldDefn(&oFieldDefn);
             }
             CSLDestroy(papszTokens);
@@ -180,7 +184,8 @@ int OGRGFTTableLayer::FetchDescribe()
             char** papszTokens = OGRGFTCSVSplitLine(aosHeaderAndFirstDataLine[0], ',');
             for(int i=0;papszTokens && papszTokens[i];i++)
             {
-                OGRFieldDefn oFieldDefn(papszTokens[i], OFTString);
+                CPLString osLaunderedColName(LaunderColName(papszTokens[i]));
+                OGRFieldDefn oFieldDefn(osLaunderedColName, OFTString);
                 poFeatureDefn->AddFieldDefn(&oFieldDefn);
             }
             CSLDestroy(papszTokens);
@@ -291,9 +296,14 @@ int OGRGFTTableLayer::FetchNextRows()
     {
         osSQL += ",";
 
-        const char* pszFieldName =
-            poFeatureDefn->GetFieldDefn(i)->GetNameRef();
-        osSQL += EscapeAndQuote(pszFieldName);
+        if (i < (int)aosColumnInternalName.size())
+            osSQL += aosColumnInternalName[i];
+        else
+        {
+            const char* pszFieldName =
+                poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+            osSQL += EscapeAndQuote(pszFieldName);
+        }
     }
     if (bHiddenGeometryField)
     {
@@ -331,15 +341,10 @@ int OGRGFTTableLayer::FetchNextRows()
         return FALSE;
     }
 
-    pszLine = OGRGFTGotoNextLine(pszLine);
-    if (pszLine == NULL)
-    {
-        CPLHTTPDestroyResult(psResult);
-        bEOF = TRUE;
-        return FALSE;
-    }
-
     ParseCSVResponse(pszLine, aosRows);
+
+    if (aosRows.size() > 0)
+        aosRows.erase(aosRows.begin());
 
     if (nFeaturesToFetch > 0)
         bEOF = (int)aosRows.size() < GetFeaturesToFetch();

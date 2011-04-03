@@ -254,8 +254,8 @@ int OGRGFTResultLayer::RunSQL()
             char** papszTokens = OGRGFTCSVSplitLine(aosRows[0], ',');
             for(int i=0;papszTokens && papszTokens[i];i++)
             {
-                const char* pszFieldName = papszTokens[i];
-                int iIndex = (poTableDefn) ? poTableDefn->GetFieldIndex(pszFieldName) : -1;
+                CPLString osLaunderedColName(LaunderColName(papszTokens[i]));
+                int iIndex = (poTableDefn) ? poTableDefn->GetFieldIndex(osLaunderedColName) : -1;
                 if (iIndex >= 0)
                 {
                     poFeatureDefn->AddFieldDefn(poTableDefn->GetFieldDefn(iIndex));
@@ -269,9 +269,9 @@ int OGRGFTResultLayer::RunSQL()
                 else
                 {
                     OGRFieldType eType = OFTString;
-                    if (EQUAL(pszFieldName, "COUNT()"))
+                    if (EQUAL(osLaunderedColName, "COUNT()"))
                         eType = OFTInteger;
-                    OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                    OGRFieldDefn oFieldDefn(osLaunderedColName, eType);
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
             }
