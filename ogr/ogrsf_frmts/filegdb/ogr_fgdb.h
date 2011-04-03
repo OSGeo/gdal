@@ -29,15 +29,6 @@
 #ifndef _OGR_FGDB_H_INCLUDED
 #define _OGR_FGDB_H_INCLUDED
 
-#ifdef WIN32
-#define EXT_FILEGDB_API _declspec(dllimport)
-#else
-#define LINUX_FILEGDB_API
-#define EXT_FILEGDB_API
-#include <wctype.h>
-#define FAILED(hr) ((hr) < 0)
-#endif
-
 #include "ogrsf_frmts.h"
 
 #include <vector>
@@ -49,7 +40,12 @@
 //#include <atlctl.h>
 //#include <atlstr.h> //CString
 
-//using namespace ATL;
+#ifndef WIN32
+#define LINUX_FILEGDB_API
+#define EXT_FILEGDB_API
+#include <wctype.h>
+#define FAILED(hr) ((hr) < 0)
+#endif
 
 
 #include "Table.h"

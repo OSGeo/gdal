@@ -157,7 +157,7 @@ int FGdbDriver::TestCapability( const char * pszCap )
 *                           RegisterOGRGdb()                                 *
 ************************************************************************/
 
-void RegisterOGRFileGDB()
+void RegisterOGRfilegdb()
 
 {
   if (! GDAL_CHECK_VERSION("OGR FGDB"))
