@@ -356,6 +356,7 @@ void CPL_DLL RegisterOGRGeomedia();
 void CPL_DLL RegisterOGRMDB();
 void CPL_DLL RegisterOGREDIGEO();
 void CPL_DLL RegisterOGRGFT();
+void CPL_DLL RegisterOGRSVG();
 CPL_C_END
 
 
