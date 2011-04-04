@@ -6376,7 +6376,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                     }
                 }
             }
-            else if( nSubType == 0 ) {
+            else if( nSubType == 0 || nSubType == FILETYPE_PAGE ) {
                 CPLString osName, osDesc;
                 uint32	nXSize, nYSize;
                 uint16  nSPP;
