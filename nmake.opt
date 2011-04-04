@@ -403,7 +403,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 
 #FGDB_ENABLED = YES
 #FGDB_PLUGIN = YES
-#FGDB_SDK = C:\Users\rburhum\Desktop\FileGDB_API_1_0beta1
+#FGDB_SDK = C:\Users\rburhum\Desktop\FileGDB_API_VS2008_1_0beta3
 #FGDB_INC = $(FGDB_SDK)\include 
 #FGDB_LIB = $(FGDB_SDK)\lib\FileGDBAPI.lib
 

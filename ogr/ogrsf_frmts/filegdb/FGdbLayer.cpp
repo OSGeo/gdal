@@ -542,7 +542,7 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
 
   OGRGeometry* pOGRGeo = NULL;
 
-  if ((!GhettoGDBGeometryToOGRGeometry(m_forceMulti, &gdbGeometry, m_pSRS, &pOGRGeo)) || pOGRGeo == NULL)
+  if ((!GDBGeometryToOGRGeometry(m_forceMulti, &gdbGeometry, m_pSRS, &pOGRGeo)) || pOGRGeo == NULL)
   {
     delete pOutFeature;
     return GDBErr(hr, "Failed to translate FileGDB Geometry to OGR Geometry for row " + string(CPLSPrintf("%d", (int)oid)));
@@ -759,8 +759,6 @@ OGRFeature *FGdbLayer::GetFeature( long oid )
 
 int FGdbLayer::GetFeatureCount( int bForce )
 {
-  // this is horrible, but we have no other option in beta1
-  // at least minimize impact by only fetching oids
 
   long           hr;
   int32          rowCount = 0;
