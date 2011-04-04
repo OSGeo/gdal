@@ -42,7 +42,6 @@
 
 #ifndef WIN32
 #define LINUX_FILEGDB_API
-#define EXT_FILEGDB_API
 #include <wctype.h>
 #define FAILED(hr) ((hr) < 0)
 #endif
