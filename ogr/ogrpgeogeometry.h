@@ -58,7 +58,7 @@
 #define SHPT_MULTIPATCH   32
 
 
-OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
+OGRErr CPL_DLL OGRCreateFromShapeBin( GByte *pabyShape,
                               OGRGeometry **ppoGeom,
                               int nBytes );
 
