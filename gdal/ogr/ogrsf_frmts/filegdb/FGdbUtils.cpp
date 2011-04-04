@@ -29,6 +29,8 @@
 #include "FGdbUtils.h"
 #include <algorithm>
 
+#include "ogrpgeogeometry.h"
+
 using std::string;
 
 std::wstring StringToWString(const std::string& s)
@@ -197,6 +199,7 @@ bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut)
 // TODO: this is the temporary version - we need to do a full binary import to make it work for other geometries
 // only works for points - temporary
 //
+/*
 bool GhettoGDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeometry, OGRSpatialReference* pOGRSR, OGRGeometry** ppOutGeometry)
 {
   OGRGeometry* pOGRGeometry = NULL;
@@ -248,6 +251,54 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
     {
       pOGRGeometry = OGRGeometryFactory::forceToMultiPoint(pOGRGeometry);
     } 
+  }
+
+
+  *ppOutGeometry = pOGRGeometry;
+
+  return true;
+}
+*/
+
+bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeometry, OGRSpatialReference* pOGRSR, OGRGeometry** ppOutGeometry)
+{
+
+  OGRGeometry* pOGRGeometry = NULL;
+
+  OGRErr eErr = OGRCreateFromShapeBin( pGdbGeometry->shapeBuffer,
+                              &pOGRGeometry,
+                              pGdbGeometry->inUseLength);
+
+  //OGRErr eErr = OGRGeometryFactory::createFromWkb(pGdbGeometry->shapeBuffer, pOGRSR, &pOGRGeometry, pGdbGeometry->inUseLength );
+  
+  if (eErr != OGRERR_NONE)
+  {
+    CPLError( CE_Failure, CPLE_AppDefined, "Failed attempting to import GDB WKB Geometry. OGRGeometryFactory err:%d", eErr);
+    return false;
+  }
+
+  if( pOGRGeometry != NULL )
+  {
+    pOGRGeometry->assignSpatialReference( pOGRSR );
+  
+    // force geometries to multi if requested
+
+    // If it is a polygon, force to MultiPolygon since we always produce multipolygons
+    if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbPolygon)
+    {
+      pOGRGeometry = OGRGeometryFactory::forceToMultiPolygon(pOGRGeometry);
+    }
+    else if (forceMulti)
+    {
+      if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbLineString)
+      {
+        pOGRGeometry = OGRGeometryFactory::forceToMultiLineString(pOGRGeometry);
+      }
+      else if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbPoint)
+      {
+        pOGRGeometry = OGRGeometryFactory::forceToMultiPoint(pOGRGeometry);
+      } 
+    }
   }
 
 
