@@ -129,6 +129,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
     char           **papszRow;
+    OGRwkbGeometryType eForcedGeomType = wkbUnknown;
 
     poDefn->Reference();
 
@@ -275,10 +276,20 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             oField.SetType( OFTString );
             oField.SetWidth( 10 );
         }
-        else if( EQUAL(pszType, "geometry") ) 
+        else if( EQUAL(pszType, "geometry") ||
+                 OGRFromOGCGeomType(pszType) != wkbUnknown)
         {
             if (pszGeomColumn == NULL)
+            {
                 pszGeomColumn = CPLStrdup(papszRow[0]);
+                eForcedGeomType = OGRFromOGCGeomType(pszType);
+            }
+            else
+            {
+                CPLDebug("MYSQL",
+                         "Ignoring %s as geometry column. Another one(%s) has already been found before",
+                         papszRow[0], pszGeomColumn);
+            }
             continue;
         }
         // Is this an integer primary key field?
@@ -341,7 +352,9 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
             poDefn->SetGeomType( nGeomType );
 
-        } 
+        }
+        else if (eForcedGeomType != wkbUnknown)
+            poDefn->SetGeomType(eForcedGeomType);
 
         if( hResult != NULL )
             mysql_free_result( hResult );   //Free our query results for finding type.
