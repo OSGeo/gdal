@@ -137,20 +137,23 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
     {
         const char      *pszType;
         OGRFieldDefn    oField( papszRow[0], OFTString);
+        int             nLenType;
 
         pszType = papszRow[1];
 
         if( pszType == NULL )
             continue;
 
+        nLenType = (int)strlen(pszType);
+
         if( EQUAL(pszType,"varbinary")
-            || (strlen(pszType)>3 && EQUAL(pszType+strlen(pszType)-4,"blob")))
+            || (nLenType>=4 && EQUAL(pszType+nLenType-4,"blob")))
         {
             oField.SetType( OFTBinary );
         }
         else if( EQUAL(pszType,"varchar") 
-                 || EQUAL(pszType+strlen(pszType)-4,"enum") 
-                 || EQUAL(pszType+strlen(pszType)-4,"set") )
+                 || (nLenType>=4 && EQUAL(pszType+nLenType-4,"enum"))
+                 || (nLenType>=3 && EQUAL(pszType+nLenType-3,"set")) )
         {
             oField.SetType( OFTString );
 
@@ -161,16 +164,18 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             char ** papszTokens;
 
             papszTokens = CSLTokenizeString2(pszType,"(),",0);
-            
-            /* width is the second */
-            oField.SetWidth(atoi(papszTokens[1]));
+            if (CSLCount(papszTokens) >= 2)
+            {
+                /* width is the second */
+                oField.SetWidth(atoi(papszTokens[1]));
+            }
 
             CSLDestroy( papszTokens );
             oField.SetType( OFTString );
 
         }
         
-        if(strlen(pszType)>3 && EQUAL(pszType+strlen(pszType)-4,"text"))
+        if(nLenType>=4 && EQUAL(pszType+nLenType-4,"text"))
         {
             oField.SetType( OFTString );            
         }
@@ -185,9 +190,11 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             char ** papszTokens;
 
             papszTokens = CSLTokenizeString2(pszType,"(),",0);
-            
-            /* width is the second */
-            oField.SetWidth(atoi(papszTokens[1]));
+            if (CSLCount(papszTokens) >= 2)
+            {
+                /* width is the second */
+                oField.SetWidth(atoi(papszTokens[1]));
+            }
 
             CSLDestroy( papszTokens );
             oField.SetType( OFTString );
@@ -222,10 +229,12 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             char ** papszTokens;
 
             papszTokens = CSLTokenizeString2(pszType,"(),",0);
-            
-            /* width is the second and precision is the third */
-            oField.SetWidth(atoi(papszTokens[1]));
-            oField.SetPrecision(atoi(papszTokens[2]));
+            if (CSLCount(papszTokens) >= 3)
+            {
+                /* width is the second and precision is the third */
+                oField.SetWidth(atoi(papszTokens[1]));
+                oField.SetPrecision(atoi(papszTokens[2]));
+            }
             CSLDestroy( papszTokens );
 
 
@@ -247,9 +256,12 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             
             char ** papszTokens=NULL;
             papszTokens = CSLTokenizeString2(pszType,"(),",0);
-            /* width is the second and precision is the third */
-            oField.SetWidth(atoi(papszTokens[1]));
-            oField.SetPrecision(atoi(papszTokens[2]));
+            if (CSLCount(papszTokens) >= 3)
+            {
+                /* width is the second and precision is the third */
+                oField.SetWidth(atoi(papszTokens[1]));
+                oField.SetPrecision(atoi(papszTokens[2]));
+            }
             CSLDestroy( papszTokens );  
 
             oField.SetType( OFTReal );
