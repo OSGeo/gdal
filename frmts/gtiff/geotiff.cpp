@@ -7772,13 +7772,20 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
          nBand <= MIN(poDS->GetRasterCount(), poSrcDS->GetRasterCount()) ;
          nBand++ )
     {
-        char **papszSRC_MD = poSrcDS->GetRasterBand(nBand)->GetMetadata();
-        char **papszDST_MD = CSLDuplicate(poDS->GetRasterBand(nBand)->GetMetadata());
+        GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand(nBand);
+        GDALRasterBand* poDstBand = poDS->GetRasterBand(nBand);
+        char **papszSRC_MD = poSrcBand->GetMetadata();
+        char **papszDST_MD = CSLDuplicate(poDstBand->GetMetadata());
 
         papszDST_MD = CSLMerge( papszDST_MD, papszSRC_MD );
 
-        poDS->GetRasterBand(nBand)->SetMetadata( papszDST_MD );
+        poDstBand->SetMetadata( papszDST_MD );
         CSLDestroy( papszDST_MD );
+
+        char** papszCatNames;
+        papszCatNames = poSrcBand->GetCategoryNames();
+        if (NULL != papszCatNames)
+            poDstBand->SetCategoryNames( papszCatNames );
     }
 
     hTIFF = (TIFF*) poDS->GetInternalHandle(NULL);
