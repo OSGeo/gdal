@@ -330,7 +330,29 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
     if (!bIsSQLLayer)
     {
         CPLString osSQL;
-        osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", poLayer->GetName());
+        const char* pszLayerName = poLayer->GetName();
+        int i;
+        char ch;
+        for(i=0;(ch = pszLayerName[i]) != 0;i++)
+        {
+            if (ch >= '0' && ch <= '9')
+            {
+                if (i == 0)
+                    break;
+            }
+            else if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')))
+                break;
+        }
+        /* Only quote if needed. Quoting conventions depend on the driver... */
+        if (ch == 0)
+            osSQL.Printf("SELECT COUNT(*) FROM %s", pszLayerName);
+        else
+        {
+            if (EQUAL(poDS->GetDriver()->GetName(), "MYSQL"))
+                osSQL.Printf("SELECT COUNT(*) FROM `%s`", pszLayerName);
+            else
+                osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", pszLayerName);
+        }
         OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
         if (poSQLLyr)
         {
