@@ -118,7 +118,11 @@ class OGRLIBKMLLayer:public OGRLayer
     ElementPtr                GetKmlLayerRoot () { return m_poKmlLayerRoot; };
     SchemaPtr                 GetKmlSchema () { return m_poKmlSchema; };
     const char               *GetFileName (  ) { return m_pszFileName; };
-    };
+
+
+    static CPLString          LaunderFieldNames(CPLString osName);
+
+};
 
 /******************************************************************************
   datasource class
