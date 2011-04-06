@@ -37,6 +37,7 @@ using kmldom::ExtendedDataPtr;
 using kmldom::SchemaPtr;
 using kmldom::SchemaDataPtr;
 using kmldom::SimpleDataPtr;
+using kmldom::DataPtr;
 
 using kmldom::TimeStampPtr;
 using kmldom::TimeSpanPtr;
@@ -1205,6 +1206,28 @@ void kml2field (
                 }
             }
         }
+
+        if (nSchemaData == 0 &&  poKmlExtendedData->get_data_array_size() > 0 )
+        {
+            int bLaunderFieldNames =
+                        CSLTestBoolean(CPLGetConfigOption("LIBKML_LAUNDER_FIELD_NAMES", "YES"));
+            size_t nDataArraySize = poKmlExtendedData->get_data_array_size();
+            for(size_t i=0; i < nDataArraySize; i++)
+            {
+                const DataPtr& data = poKmlExtendedData->get_data_array_at(i);
+                if (data->has_name() && data->has_value())
+                {
+                    CPLString osName = data->get_name();
+                    if (bLaunderFieldNames)
+                        osName = OGRLIBKMLLayer::LaunderFieldNames(osName);
+                    int iField = poOgrFeat->GetFieldIndex ( osName );
+                    if (iField >= 0)
+                    {
+                        poOgrFeat->SetField ( iField, data->get_value().c_str() );
+                    }
+                }
+            }
+        }
     }
 
 }
@@ -1311,13 +1334,19 @@ void kml2FeatureDef (
             pszType = oType.c_str (  );
         }
 
-        if ( poKmlSimpleField->has_displayname (  ) ) {
+        /* FIXME? We cannot set displayname as the field name because in kml2field() we make the */
+        /* lookup on fields based on their name. We would need some map if we really */
+        /* want to use displayname, but that might not be a good idea because displayname */
+        /* may have HTML formatting, which makes it impractical when converting to other */
+        /* drivers or to make requests */
+        /* Example: http://www.jasonbirch.com/files/newt_combined.kml */
+        /*if ( poKmlSimpleField->has_displayname (  ) ) {
             const string oName = poKmlSimpleField->get_displayname (  );
 
             pszName = oName.c_str (  );
         }
 
-        else if ( poKmlSimpleField->has_name (  ) ) {
+        else*/ if ( poKmlSimpleField->has_name (  ) ) {
             const string oName = poKmlSimpleField->get_name (  );
 
             pszName = oName.c_str (  );
