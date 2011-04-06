@@ -231,18 +231,9 @@ static void ParseLineString(OGRLineString* poLS,
 }
 
 /* Could be moved somewhere else */
-static OGRGeometry* ParseKMLGeometry(const char* pszKML)
+
+static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
 {
-    CPLXMLNode* psXML = CPLParseXMLString(pszKML);
-    if (psXML == NULL)
-        return NULL;
-
-    if (psXML->eType != CXT_Element)
-    {
-        CPLDestroyXMLNode(psXML);
-        return NULL;
-    }
-
     OGRGeometry* poGeom = NULL;
     const char* pszGeomType = psXML->pszValue;
     if (strcmp(pszGeomType, "Point") == 0)
@@ -310,10 +301,82 @@ static OGRGeometry* ParseKMLGeometry(const char* pszKML)
             }
         }
     }
+    else if (strcmp(pszGeomType, "MultiGeometry") == 0)
+    {
+        CPLXMLNode* psIter;
+        OGRwkbGeometryType eType = wkbUnknown;
+        for(psIter = psXML->psChild; psIter; psIter = psIter->psNext)
+        {
+            if (psIter->eType == CXT_Element)
+            {
+                OGRwkbGeometryType eNewType = wkbUnknown;
+                if (strcmp(psIter->pszValue, "Point") == 0)
+                {
+                    eNewType = wkbPoint;
+                }
+                else if (strcmp(psIter->pszValue, "LineString") == 0)
+                {
+                    eNewType = wkbLineString;
+                }
+                else if (strcmp(psIter->pszValue, "Polygon") == 0)
+                {
+                    eNewType = wkbPolygon;
+                }
+                else
+                    break;
+                if (eType == wkbUnknown)
+                    eType = eNewType;
+                else if (eType != eNewType)
+                    break;
+            }
+        }
+        OGRGeometryCollection* poColl = NULL;
+        if (psIter != NULL)
+            poColl = new OGRGeometryCollection();
+        else if (eType == wkbPoint)
+            poColl = new OGRMultiPoint();
+        else if (eType == wkbLineString)
+            poColl = new OGRMultiLineString();
+        else if (eType == wkbPolygon)
+            poColl = new OGRMultiPolygon();
+        else
+            CPLAssert(0);
+
+        psIter = psXML->psChild;
+        for(psIter = psXML->psChild; psIter; psIter = psIter->psNext)
+        {
+            if (psIter->eType == CXT_Element)
+            {
+                OGRGeometry* poSubGeom = ParseKMLGeometry(psIter);
+                if (poSubGeom)
+                    poColl->addGeometryDirectly(poSubGeom);
+            }
+        }
+
+        poGeom = poColl;
+    }
+
+    return poGeom;
+}
+
+static OGRGeometry* ParseKMLGeometry(const char* pszKML)
+{
+    CPLXMLNode* psXML = CPLParseXMLString(pszKML);
+    if (psXML == NULL)
+        return NULL;
+
+    if (psXML->eType != CXT_Element)
+    {
+        CPLDestroyXMLNode(psXML);
+        return NULL;
+    }
+
+    OGRGeometry* poGeom = ParseKMLGeometry(psXML);
 
     CPLDestroyXMLNode(psXML);
     return poGeom;
 }
+
 
 /************************************************************************/
 /*                         BuildFeatureFromSQL()                        */
