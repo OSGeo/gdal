@@ -229,7 +229,8 @@ int OGRGFTTableLayer::FetchDescribe()
                     if (pszVal != NULL &&
                         (strncmp(pszVal, "<Point>", 7) == 0 ||
                          strncmp(pszVal, "<LineString>", 12) == 0 ||
-                         strncmp(pszVal, "<Polygon>", 9) == 0))
+                         strncmp(pszVal, "<Polygon>", 9) == 0 ||
+                         strncmp(pszVal, "<MultiGeometry>", 15) == 0))
                     {
                         iGeometryField = i;
                         break;
