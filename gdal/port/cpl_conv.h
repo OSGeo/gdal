@@ -229,7 +229,7 @@ CPL_C_END
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
-class CPLLocaleC
+class CPL_DLL CPLLocaleC
 {
 public:
     CPLLocaleC();
