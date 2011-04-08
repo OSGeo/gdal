@@ -4562,6 +4562,10 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                     TIFFSetField( hTIFF, TIFFTAG_YRESOLUTION, CPLAtof(pszItemValue) );
                 else if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") )
                     TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, atoi(pszItemValue) );
+                else if( EQUAL(pszItemName,"TIFFTAG_MINSAMPLEVALUE") )
+                    TIFFSetField( hTIFF, TIFFTAG_MINSAMPLEVALUE, atoi(pszItemValue) );
+                else if( EQUAL(pszItemName,"TIFFTAG_MAXSAMPLEVALUE") )
+                    TIFFSetField( hTIFF, TIFFTAG_MAXSAMPLEVALUE, atoi(pszItemValue) );
                 else
                     CPLError(CE_Warning, CPLE_NotSupported,
                              "%s metadata item is unhandled and will not be written",
