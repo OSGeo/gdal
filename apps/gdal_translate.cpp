@@ -875,7 +875,26 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Transfer generally applicable metadata.                         */
 /* -------------------------------------------------------------------- */
-    poVDS->SetMetadata( ((GDALDataset*)hDataset)->GetMetadata() );
+    char** papszMetadata = CSLDuplicate(((GDALDataset*)hDataset)->GetMetadata());
+    if ( bScale || bUnscale || eOutputType != GDT_Unknown )
+    {
+        /* Remove TIFFTAG_MINSAMPLEVALUE and TIFFTAG_MAXSAMPLEVALUE */
+        /* if the data range may change because of options */
+        char** papszIter = papszMetadata;
+        while(papszIter && *papszIter)
+        {
+            if (EQUALN(*papszIter, "TIFFTAG_MINSAMPLEVALUE=", 23) ||
+                EQUALN(*papszIter, "TIFFTAG_MAXSAMPLEVALUE=", 23))
+            {
+                CPLFree(*papszIter);
+                memmove(papszIter, papszIter+1, sizeof(char*) * (CSLCount(papszIter+1)+1));
+            }
+            else
+                papszIter++;
+        }
+    }
+    poVDS->SetMetadata( papszMetadata );
+    CSLDestroy( papszMetadata );
     AttachMetadata( (GDALDatasetH) poVDS, papszMetadataOptions );
 
     const char* pszInterleave = GDALGetMetadataItem(hDataset, "INTERLEAVE", "IMAGE_STRUCTURE");
