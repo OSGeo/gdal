@@ -99,7 +99,7 @@ OGRLayer *OGRGFTDataSource::GetLayer( int iLayer )
 }
 
 /************************************************************************/
-/*                              GetLayer()                              */
+/*                          GetLayerByName()                            */
 /************************************************************************/
 
 OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
@@ -107,8 +107,33 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
     OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszLayerName);
     if (poLayer)
         return poLayer;
+        
+    char* pszGeomColumnName = NULL;
+    char* pszName = CPLStrdup(pszLayerName);
+    char *pszLeftParenthesis = strchr(pszName, '(');
+    if( pszLeftParenthesis != NULL )
+    {
+        *pszLeftParenthesis = '\0';
+        pszGeomColumnName = CPLStrdup(pszLeftParenthesis+1);
+        int len = strlen(pszGeomColumnName);
+        if (len > 0 && pszGeomColumnName[len - 1] == ')')
+            pszGeomColumnName[len - 1] = '\0';
+    }
+    
+    CPLString osTableId(pszName);
+    for(int i=0;i<nLayers;i++)
+    {
+        if( strcmp(papoLayers[i]->GetName(), pszName) == 0)
+        {
+            osTableId = ((OGRGFTTableLayer*)papoLayers[i])->GetTableId();
+            break;
+        }
+    }
 
-    poLayer = new OGRGFTTableLayer(this, pszLayerName, pszLayerName);
+    poLayer = new OGRGFTTableLayer(this, pszLayerName, osTableId,
+                                   pszGeomColumnName);
+    CPLFree(pszName);
+    CPLFree(pszGeomColumnName);
     if (poLayer->GetLayerDefn()->GetFieldCount() == 0)
     {
         delete poLayer;
@@ -161,18 +186,6 @@ int OGRGFTDataSource::FetchAuth(const char* pszEmail, const char* pszPassword)
     CPLHTTPDestroyResult(psResult);
 
     return TRUE;
-}
-
-/************************************************************************/
-/*                         GotoNextLine()                               */
-/************************************************************************/
-
-static char* OGRGFTDataSourceGotoNextLine(char* pszData)
-{
-    char* pszNextLine = strchr(pszData, '\n');
-    if (pszNextLine)
-        return pszNextLine + 1;
-    return NULL;
 }
 
 /************************************************************************/
@@ -270,10 +283,10 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
-    pszLine = OGRGFTDataSourceGotoNextLine(pszLine);
+    pszLine = OGRGFTGotoNextLine(pszLine);
     while(pszLine != NULL && *pszLine != 0)
     {
-        char* pszNextLine = OGRGFTDataSourceGotoNextLine(pszLine);
+        char* pszNextLine = OGRGFTGotoNextLine(pszLine);
         if (pszNextLine)
             pszNextLine[-1] = 0;
 
@@ -501,7 +514,7 @@ CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszUnescapedSQL)
     {
         const int ch = ((unsigned char*)pszUnescapedSQL)[i];
         if (ch != '&' && ch >= 32 && ch < 128)
-            osSQL += ch;
+            osSQL += (char)ch;
         else
             osSQL += CPLSPrintf("%%%02X", ch);
     }
