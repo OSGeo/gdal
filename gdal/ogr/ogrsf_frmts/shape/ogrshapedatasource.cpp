@@ -631,6 +631,7 @@ OGRLayer *OGRShapeDataSource::GetLayer( int iLayer )
 /*        CREATE SPATIAL INDEX ON layer_name [DEPTH n]                  */
 /*        DROP SPATIAL INDEX ON layer_name                              */
 /*        REPACK layer_name                                             */
+/*        RECOMPUTE EXTENT ON layer_name                                */
 /************************************************************************/
 
 OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
@@ -653,6 +654,25 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "No such layer as '%s' in REPACK.", 
                       pszStatement + 7 );
+        }
+        return NULL;
+    }
+    
+/* ==================================================================== */
+/*      Handle command to recompute extent                             */
+/* ==================================================================== */
+    if( EQUALN(pszStatement, "RECOMPUTE EXTENT ON ", 20) )
+    {
+        OGRShapeLayer *poLayer = (OGRShapeLayer *) 
+            GetLayerByName( pszStatement + 20 );
+
+        if( poLayer != NULL )
+            poLayer->RecomputeExtent();
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "No such layer as '%s' in RECOMPUTE EXTENT.", 
+                      pszStatement + 20 );
         }
         return NULL;
     }
