@@ -104,6 +104,7 @@ class OGRGFTTableLayer : public OGRGFTLayer
 {
     CPLString         osTableName;
     CPLString         osTableId;
+    CPLString         osGeomColumnName;
 
     int                bHasTriedCreateTable;
     void               CreateTableIfNecessary();
@@ -127,7 +128,8 @@ class OGRGFTTableLayer : public OGRGFTLayer
     public:
             OGRGFTTableLayer(OGRGFTDataSource* poDS,
                              const char* pszTableName,
-                             const char* pszTableId = "");
+                             const char* pszTableId = "",
+                             const char* pszGeomColumnName = "");
             ~OGRGFTTableLayer();
 
     virtual void                ResetReading();
