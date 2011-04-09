@@ -1948,6 +1948,45 @@ def ogr_shape_47():
     return 'success'
 
 ###############################################################################
+# Test RECOMPUTE EXTENT ON (#4027)
+
+def ogr_shape_48():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_48.shp')
+    lyr = ds.CreateLayer('ogr_shape_48')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2)'))
+    lyr.CreateFeature(feat)
+
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(3 4)'))
+    lyr.SetFeature(feat)
+    extent = lyr.GetExtent()
+    if extent != (1,3,2,4):
+        gdaltest.post_reason('did not get expected extent (1)')
+        print(lyr.GetExtent())
+        return 'fail'
+    ds.ExecuteSQL('RECOMPUTE EXTENT ON ogr_shape_48')
+    extent = lyr.GetExtent()
+    if extent != (3,3,4,4):
+        gdaltest.post_reason('did not get expected extent (2)')
+        print(lyr.GetExtent())
+        return 'fail'
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_shape_48.shp')
+    lyr = ds.GetLayer(0)
+    extent = lyr.GetExtent()
+    if extent != (3,3,4,4):
+        gdaltest.post_reason('did not get expected extent (3)')
+        print(lyr.GetExtent())
+        return 'fail'
+    ds = None
+    
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_48.shp')
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -2017,8 +2056,9 @@ gdaltest_list = [
     ogr_shape_45,
     ogr_shape_46,
     ogr_shape_47,
+    ogr_shape_48,
     ogr_shape_cleanup ]
- 
+
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'ogr_shape' )
