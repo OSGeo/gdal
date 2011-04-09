@@ -54,13 +54,18 @@ This method has the advantage of not exposing your plain password.</li>
 
 Geometries in GFT tables must be expressed in the geodetic WGS84 SRS. GFT allows them to be encoded in different forms :
 <ul>
-<li>A single column with a "lat lon" string, where lat et lon are expressed in decimal degrees.</li>
+<li>A single column with a "lat lon" or "lat,lon" string, where lat et lon are expressed in decimal degrees.</li>
 <li>A single column with a KML string that is the representation of a Point, a LineString or a Polygon.</li>
 <li>Two columns, one with the latitude and the other one with the longitude, both values expressed in decimal degrees.</li>
 <li>A single column with an address known by the geocoding service of Google Maps.</li>
 </ul>
 
-Only the first 3 are supported by OGR, not the last one.<p>
+Only the first 3 types are supported by OGR, not the last one.<p>
+
+Fusion tables can have multiple geometry columns per table. By default, OGR
+will use the first geometry column it finds. It is possible to select another
+column as the geometry column by specifying <i>table_name(geometry_column_name)</i>
+as the layer name passed to GetLayerByName().<p>
 
 <h2>Filtering</h2>
 

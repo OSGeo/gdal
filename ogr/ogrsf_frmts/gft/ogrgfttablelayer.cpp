@@ -37,11 +37,13 @@ CPL_CVSID("$Id$");
 
 OGRGFTTableLayer::OGRGFTTableLayer(OGRGFTDataSource* poDS,
                          const char* pszTableName,
-                         const char* pszTableId) : OGRGFTLayer(poDS)
+                         const char* pszTableId,
+                         const char* pszGeomColumnName) : OGRGFTLayer(poDS)
 
 {
     osTableName = pszTableName;
     osTableId = pszTableId;
+    osGeomColumnName = pszGeomColumnName ? pszGeomColumnName : "";
 
     bHasTriedCreateTable = FALSE;
     bInTransaction = FALSE;
@@ -144,9 +146,13 @@ int OGRGFTTableLayer::FetchDescribe()
                 else if (EQUAL(papszTokens[2], "datetime"))
                     eType = OFTDateTime;
 
-                if (EQUAL(papszTokens[2], "location"))
+                if (EQUAL(papszTokens[2], "location") && osGeomColumnName.size() == 0)
                 {
-                    iGeometryField = poFeatureDefn->GetFieldCount();
+                    if (iGeometryField < 0)
+                        iGeometryField = poFeatureDefn->GetFieldCount();
+                    else
+                        CPLDebug("GFT", "Multiple geometry fields detected. "
+                                         "Only first encountered one is handled");
                 }
 
                 CPLString osLaunderedColName(LaunderColName(papszTokens[1]));
@@ -193,6 +199,16 @@ int OGRGFTTableLayer::FetchDescribe()
 
         CPLHTTPDestroyResult(psResult);
     }
+    
+    if (osGeomColumnName.size() > 0)
+    {
+        iGeometryField = poFeatureDefn->GetFieldIndex(osGeomColumnName);
+        if (iGeometryField < 0)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Cannot find column called %s", osGeomColumnName.c_str());
+        }
+    }
 
     for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
@@ -213,7 +229,7 @@ int OGRGFTTableLayer::FetchDescribe()
         poFeatureDefn->GetFieldDefn(iLongitudeField)->SetType(OFTReal);
         poFeatureDefn->SetGeomType( wkbPoint );
     }
-    else if (iGeometryField < 0)
+    else if (iGeometryField < 0 && osGeomColumnName.size() == 0)
     {
         /* In the unauthentified case, we try to parse the first record to */
         /* autodetect the geometry field */
@@ -232,8 +248,15 @@ int OGRGFTTableLayer::FetchDescribe()
                          strncmp(pszVal, "<Polygon>", 9) == 0 ||
                          strncmp(pszVal, "<MultiGeometry>", 15) == 0))
                     {
-                        iGeometryField = i;
-                        break;
+                        if (iGeometryField < 0)
+                        {
+                            iGeometryField = i;
+                        }
+                        else
+                        {
+                            CPLDebug("GFT", "Multiple geometry fields detected. "
+                                     "Only first encountered one is handled");
+                        }
                     }
                     else if (pszVal)
                     {
@@ -245,8 +268,16 @@ int OGRGFTTableLayer::FetchDescribe()
                             fabs(CPLAtof(papszTokens2[0])) <= 90 &&
                             fabs(CPLAtof(papszTokens2[1])) <= 180 )
                         {
-                            iGeometryField = i;
-                            eType = wkbPoint;
+                            if (iGeometryField < 0)
+                            {
+                                iGeometryField = i;
+                                eType = wkbPoint;
+                            }
+                            else
+                            {
+                                CPLDebug("GFT", "Multiple geometry fields detected. "
+                                         "Only first encountered one is handled");
+                            }
                         }
                         CSLDestroy(papszTokens2);
                     }
