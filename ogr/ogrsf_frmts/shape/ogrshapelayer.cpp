@@ -1381,3 +1381,78 @@ OGRErr OGRShapeLayer::Repack()
 
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                        RecomputeExtent()                             */
+/*                                                                      */
+/*      Force recomputation of the extent of the .SHP file              */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::RecomputeExtent()
+{
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The RECOMPUTE EXTENT operation is not permitted on a read-only shapefile." );
+        return OGRERR_FAILURE;
+    }
+    
+    if( hSHP == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The RECOMPUTE EXTENT operation is not permitted on a layer without .SHP file." );
+        return OGRERR_FAILURE;
+    }
+    
+    double adBoundsMin[4] = { 0.0, 0.0, 0.0, 0.0 };
+    double adBoundsMax[4] = { 0.0, 0.0, 0.0, 0.0 };
+
+    int bHasBeenInit = FALSE;
+
+    for( int iShape = 0; 
+         iShape < nTotalShapeCount; 
+         iShape++ )
+    {
+        if( hDBF == NULL || !DBFIsRecordDeleted( hDBF, iShape ) )
+        {
+            SHPObject *psObject = SHPReadObject( hSHP, iShape );
+            if ( psObject != NULL &&
+                 psObject->nSHPType != SHPT_NULL &&
+                 psObject->nVertices != 0 )
+            {
+                if( !bHasBeenInit )
+                {
+                    bHasBeenInit = TRUE;
+                    adBoundsMin[0] = adBoundsMax[0] = psObject->padfX[0];
+                    adBoundsMin[1] = adBoundsMax[1] = psObject->padfY[0];
+                    adBoundsMin[2] = adBoundsMax[2] = psObject->padfZ[0];
+                    adBoundsMin[3] = adBoundsMax[3] = psObject->padfM[0];
+                }
+
+                for( int i = 0; i < psObject->nVertices; i++ )
+                {
+                    adBoundsMin[0] = MIN(adBoundsMin[0],psObject->padfX[i]);
+                    adBoundsMin[1] = MIN(adBoundsMin[1],psObject->padfY[i]);
+                    adBoundsMin[2] = MIN(adBoundsMin[2],psObject->padfZ[i]);
+                    adBoundsMin[3] = MIN(adBoundsMin[3],psObject->padfM[i]);
+                    adBoundsMax[0] = MAX(adBoundsMax[0],psObject->padfX[i]);
+                    adBoundsMax[1] = MAX(adBoundsMax[1],psObject->padfY[i]);
+                    adBoundsMax[2] = MAX(adBoundsMax[2],psObject->padfZ[i]);
+                    adBoundsMax[3] = MAX(adBoundsMax[3],psObject->padfM[i]);
+                }
+            }
+            SHPDestroyObject(psObject);
+        }
+    }
+
+    if( memcmp(hSHP->adBoundsMin, adBoundsMin, 4*sizeof(double)) != 0 ||
+        memcmp(hSHP->adBoundsMax, adBoundsMax, 4*sizeof(double)) != 0 )
+    {
+        bHeaderDirty = TRUE;
+        hSHP->bUpdated = TRUE;
+        memcpy(hSHP->adBoundsMin, adBoundsMin, 4*sizeof(double));
+        memcpy(hSHP->adBoundsMax, adBoundsMax, 4*sizeof(double));
+    }
+    
+    return OGRERR_NONE;
+}
