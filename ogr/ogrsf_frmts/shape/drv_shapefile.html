@@ -147,6 +147,18 @@ the .dbf file, and then ignored by OGR.  To actually remove them permanently
 (resulting in renumbering of FIDs) invoke the SQL 'REPACK &lt;tablename&gt;' via
 the datasource ExecuteSQL() method.</p>
 
+<h2>Spatial extent</h2>
+
+<p>Shapefiles store the layer spatial extent in the .SHP file. The layer spatial extent
+is automatically updated when inserting a new feature in a shapefile. However when
+updating an existing feature, if its previous shape was touching the bounding box of the
+layer extent but the updated shape does not touch the new extent, the computed extent
+will not be correct. It is then necessary to force a recomputation by invoking the
+SQL 'RECOMPUTE EXTENT ON &lt;tablename&gt;' via the datasource ExecuteSQL() method. The
+same applies for the deletion of a shape.</p>
+
+<p>Note: RECOMPUTE EXTENT ON is available in OGR >= 1.9.0.</p>
+
 <h2>Size Issues</h2>
 
 <p>Geometry: The Shapefile format explicitly uses 32bit offsets and so cannot

@@ -87,6 +87,7 @@ class OGRShapeLayer : public OGRLayer
     OGRErr              CreateSpatialIndex( int nMaxDepth );
     OGRErr              DropSpatialIndex();
     OGRErr              Repack();
+    OGRErr              RecomputeExtent();
 
     const char         *GetFullName() { return pszFullName; }
 
