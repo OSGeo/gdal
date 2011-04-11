@@ -1,4 +1,4 @@
-/* $Id: tif_strip.c,v 1.33 2010-07-01 15:33:28 dron Exp $ */
+/* $Id: tif_strip.c,v 1.34 2011-04-02 20:54:09 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -152,7 +152,7 @@ TIFFRawStripSize64(TIFF* tif, uint32 strip)
 
 	if (bytecount == 0)
 	{
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 		TIFFErrorExt(tif->tif_clientdata, module,
 			     "%I64u: Invalid strip byte count, strip %lu",
 			     (unsigned __int64) bytecount,
