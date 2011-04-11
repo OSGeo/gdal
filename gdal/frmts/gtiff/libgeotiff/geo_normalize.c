@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 1983 2011-03-10 02:10:00Z warmerdam $
+ * $Id: geo_normalize.c 1992 2011-04-11 14:27:48Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -67,6 +67,11 @@
 #define EPSGSphericalOriginLong  8829
 #define EPSGInitialLongitude     8830
 #define EPSGZoneWidth            8831
+#define EPSGLatOfStdParallel     8832
+#define EPSGOriginLong           8833
+#define EPSGTopocentricOriginLat 8834
+#define EPSGTopocentricOriginLong 8835
+#define EPSGTopocentricOriginHeight 8836
 
 /************************************************************************/
 /*                           GTIFGetPCSInfo()                           */
@@ -1006,6 +1011,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
         return( CT_ObliqueStereographic );
 
       case 9810:
+        /* case 9829: variant B not quite the same */ 
         return( CT_PolarStereographic );
 
       case 9811:
@@ -1090,8 +1096,8 @@ static int SetGTParmIds( int nCTProjection,
         panEPSGCodes[2] = EPSGAzimuth;
         panEPSGCodes[3] = EPSGAngleRectifiedToSkewedGrid;
         panEPSGCodes[4] = EPSGInitialLineScaleFactor;
-        panEPSGCodes[5] = EPSGProjCenterEasting;
-        panEPSGCodes[6] = EPSGProjCenterNorthing;
+        panEPSGCodes[5] = EPSGProjCenterEasting; /* EPSG proj method 9812 uses EPSGFalseEasting, but 9815 uses EPSGProjCenterEasting */
+        panEPSGCodes[6] = EPSGProjCenterNorthing; /* EPSG proj method 9812 uses EPSGFalseNorthing, but 9815 uses EPSGProjCenterNorthing */
         return TRUE;
 
       case CT_ObliqueMercator_Laborde:
@@ -1316,7 +1322,29 @@ int GTIFGetProjTRFInfo( /* COORD_OP_CODE from coordinate_operation.csv */
 
         /* not found, accept the default */
         if( iEPSG == 7 )
-            continue;
+        {
+            /* for CT_ObliqueMercator try alternate parameter codes first */
+            /* because EPSG proj method 9812 uses EPSGFalseXXXXX, but 9815 uses EPSGProjCenterXXXXX */
+            if ( nCTProjMethod == CT_ObliqueMercator && nEPSGCode == EPSGProjCenterEasting )
+                nEPSGCode = EPSGFalseEasting;
+            else if ( nCTProjMethod == CT_ObliqueMercator && nEPSGCode == EPSGProjCenterNorthing )
+                nEPSGCode = EPSGFalseNorthing;
+            else
+                continue;
+                
+            for( iEPSG = 0; iEPSG < 7; iEPSG++ )
+            {
+                sprintf( szParamCodeID, "PARAMETER_CODE_%d", iEPSG+1 );
+
+                if( atoi(CSVGetField( pszFilename,
+                                      "COORD_OP_CODE", szTRFCode, CC_Integer, 
+                                      szParamCodeID )) == nEPSGCode )
+                    break;
+            }
+            
+            if( iEPSG == 7 )
+                continue;
+        }
 
         /* Get the value, and UOM */
         sprintf( szParamUOMID, "PARAMETER_UOM_%d", iEPSG+1 );
