@@ -32,6 +32,7 @@ import os
 import sys
 import string
 import array
+import shutil
 from osgeo import gdal
 
 sys.path.append( '../pymod' )
@@ -653,6 +654,68 @@ def ecw_21():
     return 'success'
 
 ###############################################################################
+# This tests reading of georeferencing and coordinate system from within an
+# ECW file.
+
+def ecw_22():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/spif83.ecw' )
+
+    expected_wkt = """PROJCS["L2CAL6M",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",32.78333330780953],PARAMETER["standard_parallel_2",33.88333332087654],PARAMETER["latitude_of_origin",32.16666668243202],PARAMETER["central_meridian",-116.2499999745946],PARAMETER["false_easting",2000000],PARAMETER["false_northing",500000],UNIT["Meter",1]]"""
+    wkt = ds.GetProjectionRef()
+
+    if wkt != expected_wkt:
+        print(wkt)
+        gdaltest.post_reason( 'did not get expected SRS.' )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+# This tests overriding the coordinate system from an .aux.xml file, while
+# preserving the ecw derived georeferencing.
+
+def ecw_23():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    shutil.copyfile( 'data/spif83.ecw', 'tmp/spif83.ecw' )
+    shutil.copyfile( 'data/spif83_hidden.ecw.aux.xml', 'tmp/spif83.ecw.aux.xml')
+    
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'tmp/spif83.ecw' )
+
+    expected_wkt = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],AUTHORITY["EPSG","27700"],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
+    wkt = ds.GetProjectionRef()
+
+    if wkt != expected_wkt:
+        print(wkt)
+        gdaltest.post_reason( 'did not get expected SRS.' )
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (6138559.5576418638, 195.5116973254697, 0.0, 2274798.7836679211, 0.0, -198.32414964918371)
+    if gt != expected_gt:
+        print(gt)
+        gdaltest.post_reason( 'did not get expected geotransform.' )
+        return 'fail'
+
+    try:
+        os.remove( 'tmp/spif83.ecw' )
+        os.remove( 'tmp/spif83.ecw.aux.xml' )
+    except:
+        pass
+    
+    return 'success'
+
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -867,6 +930,8 @@ gdaltest_list = [
     ecw_19,
     ecw_20,
     ecw_21,
+    ecw_22,
+    ecw_23,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,
