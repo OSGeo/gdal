@@ -190,6 +190,8 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
         pszLayerName = CPLStrdup( pszLayerNameIn );
     
     int bCreateTable = CSLFetchBoolean(papszOptions,"CREATE_TABLE", TRUE);
+    int bCreateSchema = CSLFetchBoolean(papszOptions,"CREATE_SCHEMA", TRUE);
+    const char* pszDropTable = CSLFetchNameValueDef(papszOptions,"DROP_TABLE", "YES");
 
     if (eType == wkbNone)
         bHavePostGIS = FALSE;
@@ -228,8 +230,11 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
     {
         CPLFree(pszSchemaName);
         pszSchemaName = CPLStrdup(CSLFetchNameValue( papszOptions, "SCHEMA" ));
-        osCommand.Printf("CREATE SCHEMA \"%s\"", pszSchemaName);
-        Log(osCommand);
+        if (bCreateSchema)
+        {
+            osCommand.Printf("CREATE SCHEMA \"%s\"", pszSchemaName);
+            Log(osCommand);
+        }
     }
 
     if ( pszSchemaName == NULL)
@@ -256,9 +261,15 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
     }
 
 
-    if (bCreateTable)
+    if (bCreateTable && (EQUAL(pszDropTable, "YES") ||
+                         EQUAL(pszDropTable, "ON") ||
+                         EQUAL(pszDropTable, "TRUE") ||
+                         EQUAL(pszDropTable, "IF_EXISTS")))
     {
-        osCommand.Printf("DROP TABLE \"%s\".\"%s\" CASCADE", pszSchemaName, pszTableName );
+        if (EQUAL(pszDropTable, "IF_EXISTS"))
+            osCommand.Printf("DROP TABLE IF EXISTS \"%s\".\"%s\" CASCADE", pszSchemaName, pszTableName );
+        else
+            osCommand.Printf("DROP TABLE \"%s\".\"%s\" CASCADE", pszSchemaName, pszTableName );
         Log(osCommand);
     }
     
