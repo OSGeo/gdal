@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.34 2010-03-10 18:56:48 bfriesen Exp $ */
+/* $Id: tif_luv.c,v 1.35 2011-04-02 20:54:09 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -224,7 +224,7 @@ LogL16Decode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 					tp[i++] |= (int16)*bp++ << shft;
 			}
 		if (i != npixels) {
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			TIFFErrorExt(tif->tif_clientdata, module,
 			    "Not enough data at row %lu (short %I64d pixels)",
 				     (unsigned long) tif->tif_row,
@@ -282,7 +282,7 @@ LogLuvDecode24(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	tif->tif_rawcp = (uint8*) bp;
 	tif->tif_rawcc = cc;
 	if (i != npixels) {
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 		TIFFErrorExt(tif->tif_clientdata, module,
 			"Not enough data at row %lu (short %I64d pixels)",
 			     (unsigned long) tif->tif_row,
@@ -347,7 +347,7 @@ LogLuvDecode32(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 					tp[i++] |= (uint32)*bp++ << shft;
 			}
 		if (i != npixels) {
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			TIFFErrorExt(tif->tif_clientdata, module,
 			"Not enough data at row %lu (short %I64d pixels)",
 				     (unsigned long) tif->tif_row,
