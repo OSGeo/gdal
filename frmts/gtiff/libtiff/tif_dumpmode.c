@@ -1,4 +1,4 @@
-/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_dumpmode.c,v 1.13 2010-03-10 18:56:48 bfriesen Exp $ */
+/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_dumpmode.c,v 1.14 2011-04-02 20:54:09 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -80,7 +80,7 @@ DumpModeDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 	static const char module[] = "DumpModeDecode";
 	(void) s;
 	if (tif->tif_rawcc < cc) {
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 		TIFFErrorExt(tif->tif_clientdata, module,
 "Not enough data for scanline %lu, expected a request for at most %I64d bytes, got a request for %I64d bytes",
 		             (unsigned long) tif->tif_row,
