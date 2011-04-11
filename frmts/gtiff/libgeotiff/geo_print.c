@@ -121,6 +121,9 @@ static void PrintTag(int tag, int nrows, double *dptr, int ncols,
 		{
 			sprintf(message,FMT_DOUBLE,*data++);
 			print(message,aux);
+
+                        if( j < ncols-1 )
+                            print(" ",aux);
 		}
 		print("\n",aux);
 	}
