@@ -154,6 +154,7 @@ class JP2OpenJPEGDataset : public GDALPamDataset
 
     int         bLoadingOtherBands;
     int         bIs420;
+    OPJ_BYTE *  pFullBuffer;
 
   public:
                 JP2OpenJPEGDataset();
@@ -286,6 +287,15 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     int nWidthToRead = MIN(nBlockXSize, poGDS->nRasterXSize - nBlockXOff * nBlockXSize);
     int nHeightToRead = MIN(nBlockYSize, poGDS->nRasterYSize - nBlockYOff * nBlockYSize);
+
+    if (poGDS->pFullBuffer)
+    {
+        CopySrcToDst(nWidthToRead, nHeightToRead, poGDS->pFullBuffer,
+                     nBlockXSize, nBlockYSize, nDataTypeSize, pImage,
+                     nBand, poGDS->bIs420);
+        return CE_None;
+    }
+
     if (nWidthToRead != nBlockXSize || nHeightToRead != nBlockYSize)
     {
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
@@ -423,7 +433,8 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                  nBand, poGDS->bIs420);
 
     /* Let's cache other bands */
-    if( poGDS->nBands != 1 && !poGDS->bLoadingOtherBands)
+    if( poGDS->nBands != 1 && !poGDS->bLoadingOtherBands &&
+        poGDS->nBands * nWidthToRead * nHeightToRead * nDataTypeSize <= GDALGetCacheMax64())
     {
         int iOtherBand;
 
@@ -457,7 +468,15 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         poGDS->bLoadingOtherBands = FALSE;
     }
 
-    CPLFree(pTempBuffer);
+    if (nBlockXSize == nRasterXSize && nBlockYSize == nRasterYSize &&
+        poGDS->nBands * nWidthToRead * nHeightToRead * nDataTypeSize > GDALGetCacheMax64())
+    {
+        poGDS->pFullBuffer = pTempBuffer;
+    }
+    else
+    {
+        CPLFree(pTempBuffer);
+    }
 
     opj_end_decompress(pCodec,pStream);
     opj_stream_destroy(pStream);
@@ -525,6 +544,7 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     eCodecFormat = CODEC_UNKNOWN;
     eColorSpace = CLRSPC_UNKNOWN;
     bIs420 = FALSE;
+    pFullBuffer = NULL;
 }
 
 /************************************************************************/
@@ -545,6 +565,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
     }
     if( fp != NULL )
         VSIFCloseL( fp );
+    VSIFree(pFullBuffer);
 }
 
 /************************************************************************/
