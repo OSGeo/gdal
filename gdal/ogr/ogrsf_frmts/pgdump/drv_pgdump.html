@@ -56,13 +56,17 @@ on the geometry dimension during loading.<p>
 <li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
 omitted it defaults to <i>wkb_geometry</i> for GEOM_TYPE=geometry, or <i>the_geog</i> for GEOM_TYPE=geography.<p>
 <li> <b>SCHEMA</b>: Set name of schema for new table.
-Using the same layer name in different schemas is supported, but not in the public schema and others..<p>
+Using the same layer name in different schemas is supported, but not in the public schema and others.<p>
+<li> <b>CREATE_SCHEMA</b>: (OGR >= 1.9.0) To be used in combination with SCHEMA. Set to ON by default so that
+the CREATE SCHEMA instruction is emitted. Turn to OFF to prevent CREATE SCHEMA from being emitted.<p>
 <li> <b>SPATIAL_INDEX</b>:  Set to ON by default. Creates a spatial index on the geometry column
 to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is available).<p>
 <li> <b>TEMPORARY</b>: Set to OFF by default. Creates a temporary table instead of a permanent one.<p>
 <li> <b>WRITE_EWKT_GEOM</b>: Set to OFF by default. Turn to ON to write EWKT geometries instead of HEX geometries.
 This option will have no effect if PG_USE_COPY environment variable is to YES.<p>
 <li> <b>CREATE_TABLE</b>: Set to ON by default so that tables are recreated if necessary. Turn to OFF to disable this and use existing table structure.<p>
+<li> <b>DROP_TABLE</b>: (OGR >= 1.9.0) Set to ON by default so that tables are destroyed before being recreated.
+Set to OFF to prevent DROP TABLE from being emitted. Set to IF_EXISTS in order DROP TABLE IF EXISTS to be emitted (needs PostgreSQL >= 8.2)<p>
 <li> <b>SRID</b>: Set the SRID of the geometry. Defaults to -1, unless a SRS is associated with the layer. In the case, if the EPSG code is mentionned, it will be used as the SRID. (Note: the spatial_ref_sys table must be correctly populated with the specified SRID) <p>
 </ul>
 
