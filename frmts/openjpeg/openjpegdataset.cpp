@@ -575,7 +575,10 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 const char *JP2OpenJPEGDataset::GetProjectionRef()
 
 {
-    return( pszProjection );
+    if ( pszProjection && pszProjection[0] != 0 )
+        return( pszProjection );
+    else
+        return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -590,7 +593,7 @@ CPLErr JP2OpenJPEGDataset::GetGeoTransform( double * padfTransform )
         return CE_None;
     }
     else
-        return CE_Failure;
+        return GDALPamDataset::GetGeoTransform(padfTransform);
 }
 
 /************************************************************************/
@@ -600,7 +603,10 @@ CPLErr JP2OpenJPEGDataset::GetGeoTransform( double * padfTransform )
 int JP2OpenJPEGDataset::GetGCPCount()
 
 {
-    return nGCPCount;
+    if( nGCPCount > 0 )
+        return nGCPCount;
+    else
+        return GDALPamDataset::GetGCPCount();
 }
 
 /************************************************************************/
@@ -613,7 +619,7 @@ const char *JP2OpenJPEGDataset::GetGCPProjection()
     if( nGCPCount > 0 )
         return pszProjection;
     else
-        return "";
+        return GDALPamDataset::GetGCPProjection();
 }
 
 /************************************************************************/
@@ -623,7 +629,10 @@ const char *JP2OpenJPEGDataset::GetGCPProjection()
 const GDAL_GCP *JP2OpenJPEGDataset::GetGCPs()
 
 {
-    return pasGCPList;
+    if( nGCPCount > 0 )
+        return pasGCPList;
+    else
+        return GDALPamDataset::GetGCPs();
 }
 
 /************************************************************************/
