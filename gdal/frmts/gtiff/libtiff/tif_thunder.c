@@ -1,4 +1,4 @@
-/* $Id: tif_thunder.c,v 1.10 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tif_thunder.c,v 1.12 2011-04-02 20:54:09 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -68,6 +68,23 @@ static const int threebitdeltas[8] = { 0, 1, 2, 3, 0, -3, -2, -1 };
 }
 
 static int
+ThunderSetupDecode(TIFF* tif)
+{
+	static const char module[] = "ThunderSetupDecode";
+
+        if( tif->tif_dir.td_bitspersample != 4 )
+        {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                             "Wrong bitspersample value (%d), Thunder decoder only supports 4bits per sample.",
+                             (int) tif->tif_dir.td_bitspersample );
+                return 0;
+        }
+        
+
+	return (1);
+}
+
+static int
 ThunderDecode(TIFF* tif, uint8* op, tmsize_t maxpixels)
 {
 	static const char module[] = "ThunderDecode";
@@ -75,7 +92,6 @@ ThunderDecode(TIFF* tif, uint8* op, tmsize_t maxpixels)
 	register tmsize_t cc;
 	unsigned int lastpixel;
 	tmsize_t npixels;
-        uint8* op_original = op;
 
 	bp = (unsigned char *)tif->tif_rawcp;
 	cc = tif->tif_rawcc;
@@ -127,7 +143,7 @@ ThunderDecode(TIFF* tif, uint8* op, tmsize_t maxpixels)
 	tif->tif_rawcp = (uint8*) bp;
 	tif->tif_rawcc = cc;
 	if (npixels != maxpixels) {
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 		TIFFErrorExt(tif->tif_clientdata, module,
 			     "%s data at scanline %lu (%I64u != %I64u)",
 			     npixels < maxpixels ? "Not enough" : "Too much",
@@ -172,17 +188,9 @@ ThunderDecodeRow(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 int
 TIFFInitThunderScan(TIFF* tif, int scheme)
 {
-	static const char module[] = "TIFFInitThunderScan";
-
 	(void) scheme;
-        if( tif->tif_dir.td_bitspersample != 4 )
-        {
-                TIFFErrorExt(tif->tif_clientdata, module,
-                             "Wrong bitspersample value (%d), Thunder decoder only supports 4bits per sample.",
-                             (int) tif->tif_dir.td_bitspersample );
-                return 0;
-        }
-        
+
+        tif->tif_setupdecode = ThunderSetupDecode;
 	tif->tif_decoderow = ThunderDecodeRow;
 	tif->tif_decodestrip = ThunderDecodeRow; 
 	return (1);

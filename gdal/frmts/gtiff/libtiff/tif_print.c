@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.53 2011-02-18 20:53:04 fwarmerdam Exp $ */
+/* $Id: tif_print.c,v 1.54 2011-04-02 20:54:09 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -93,7 +93,7 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
 			|| fip->field_type == TIFF_FLOAT)
 			fprintf(fd, "%f", ((float *) raw_data)[j]);
 		else if(fip->field_type == TIFF_LONG8)
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			fprintf(fd, "%I64u",
 			    (unsigned __int64)((uint64 *) raw_data)[j]);
 #else
@@ -101,13 +101,13 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
 			    (unsigned long long)((uint64 *) raw_data)[j]);
 #endif
 		else if(fip->field_type == TIFF_SLONG8)
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			fprintf(fd, "%I64d", (__int64)((int64 *) raw_data)[j]);
 #else
 			fprintf(fd, "%lld", (long long)((int64 *) raw_data)[j]);
 #endif
 		else if(fip->field_type == TIFF_IFD8)
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			fprintf(fd, "0x%I64x",
 				(unsigned __int64)((uint64 *) raw_data)[j]);
 #else
@@ -212,7 +212,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	uint16 i;
 	long l, n;
 
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 	fprintf(fd, "TIFF Directory at offset 0x%I64x (%I64u)\n",
 		(unsigned __int64) tif->tif_diroff,
 		(unsigned __int64) tif->tif_diroff);
@@ -518,7 +518,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	if (TIFFFieldSet(tif, FIELD_SUBIFD) && (td->td_subifd)) {
 		fprintf(fd, "  SubIFD Offsets:");
 		for (i = 0; i < td->td_nsubifd; i++)
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			fprintf(fd, " %5I64u",
 				(unsigned __int64) td->td_subifd[i]);
 #else
@@ -631,7 +631,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		    (long) td->td_nstrips,
 		    isTiled(tif) ? "Tiles" : "Strips");
 		for (s = 0; s < td->td_nstrips; s++)
-#if defined(__WIN32__) && defined(_MSC_VER)
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			fprintf(fd, "    %3lu: [%8I64u, %8I64u]\n",
 			    (unsigned long) s,
 			    (unsigned __int64) td->td_stripoffset[s],
