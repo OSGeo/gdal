@@ -116,6 +116,8 @@ BAGRasterBand::BAGRasterBand( BAGDataset *poDS, int nBand )
     this->nBand      = nBand;
     
     hDatasetID = -1;
+    dataspace = -1;
+    native = -1;
     bMinMaxSet = false;
 }
 
@@ -125,6 +127,14 @@ BAGRasterBand::BAGRasterBand( BAGDataset *poDS, int nBand )
 
 BAGRasterBand::~BAGRasterBand()
 {
+  if( dataspace > 0 )
+    H5Sclose(dataspace);
+
+  if( native > 0 )
+    H5Tclose( native );
+
+  if( hDatasetID > 0 )
+    H5Dclose( hDatasetID );
 }
 
 /************************************************************************/
@@ -533,6 +543,7 @@ void BAGDataset::LoadMetadata()
 
     H5Dread( hMDDS, native, H5S_ALL, dataspace, H5P_DEFAULT, pszXMLMetadata );
 
+    H5Tclose( native );
     H5Sclose( dataspace );
     H5Tclose( datatype );
     H5Dclose( hMDDS );
