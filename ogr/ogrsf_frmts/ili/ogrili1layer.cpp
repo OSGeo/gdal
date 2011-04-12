@@ -522,7 +522,12 @@ void OGRILI1Layer::PolygonizeAreaLayer()
     poAreaReferenceLayer->ResetReading();
     while (OGRFeature *feature = poAreaReferenceLayer->GetNextFeatureRef())
     {
-        GEOSGeom point = (GEOSGeom)feature->GetGeometryRef()->exportToGEOS();
+        OGRGeometry* geomRef = feature->GetGeometryRef();
+        if( !geomRef )
+        {
+            continue;
+        }
+        GEOSGeom point = (GEOSGeom)(geomRef->exportToGEOS());
         for (i = 0; i < polys->getNumGeometries(); i++ )
         {
             if (ahInGeoms[i] && GEOSWithin(point, ahInGeoms[i]))
