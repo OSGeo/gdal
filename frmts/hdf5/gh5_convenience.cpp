@@ -79,6 +79,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
         retVal = false;
     }
 
+    H5Tclose( hAttrNativeType );
     H5Tclose( hAttrTypeID );
     H5Aclose( hAttr );
     return retVal;
@@ -128,6 +129,8 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
                       "Attempt to read attribute %s failed, count=%d, not 1.",
                       pszAttrName, nAttrElements );
 
+        H5Sclose( hAttrSpace );
+        H5Tclose( hAttrNativeType );
         H5Tclose( hAttrTypeID );
         H5Aclose( hAttr );
         return false;
@@ -156,6 +159,8 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
                       pszAttrName );
         CPLFree( buf );
 
+        H5Sclose( hAttrSpace );
+        H5Tclose( hAttrNativeType );
         H5Tclose( hAttrTypeID );
         H5Aclose( hAttr );
 
@@ -164,6 +169,8 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
 
     CPLFree( buf );
 
+    H5Sclose( hAttrSpace );
+    H5Tclose( hAttrNativeType );
     H5Tclose( hAttrTypeID );
     H5Aclose( hAttr );
     return true;
