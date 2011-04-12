@@ -76,8 +76,8 @@ public:
 
   // virtual const char *GetName();
 
-  const char* GetFIDFieldName() const { return m_strOIDFieldName.c_str(); }
-  const char* GetShapeFieldName() const { return m_strShapeFieldName.c_str(); }
+  virtual const char* GetFIDColumn() { return m_strOIDFieldName.c_str(); }
+  virtual const char* GetGeometryColumn() { return m_strShapeFieldName.c_str(); }
 
   virtual void        ResetReading();
   virtual OGRFeature* GetNextFeature();
