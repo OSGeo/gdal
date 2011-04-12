@@ -104,6 +104,8 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std
   if (FAILED(hr = m_pTable->GetDefinition(tableDef)))
     return GDBErr(hr, "Failed at getting table definition for " + WStringToString(wstrTablePath));
 
+  //CPLDebug("FGDB", "Table definition = %s", tableDef.c_str() );
+
   bool abort = false;
 
   // extract schema information from table
@@ -152,6 +154,9 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std
         }
       }
     }
+
+    if (m_strShapeFieldName.size() == 0)
+        m_pFeatureDefn->SetGeomType(wkbNone);
   }
   else
   {
@@ -159,13 +164,6 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std
     return false;
   }
   CPLDestroyXMLNode( psRoot );
-
-  if (m_strShapeFieldName.length() <= 0)
-  {
-    CPLError( CE_Failure, CPLE_AppDefined, "%s", "Attempting to open non-spatial table");
-    
-    return false;
-  }
 
   if (abort)
     return false;
@@ -314,6 +312,8 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
       CPLXMLNode* psFieldItemNode;
       std::string fieldName;
       std::string fieldType;
+      int nLength = 0;
+      int nPrecision = 0;
 
       // loop through all items in Field element
       //
@@ -341,6 +341,14 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
           {
             if (!ParseGeometryDef(psFieldItemNode))
               return false; // if we failed parsing the GeometryDef, we are done!
+          }
+          else if (EQUAL(psFieldItemNode->pszValue,"Length") )
+          {
+            nLength = atoi(psFieldItemNode->psChild->pszValue);
+          }
+          else if (EQUAL(psFieldItemNode->pszValue,"Precision") )
+          {
+            nPrecision = atoi(psFieldItemNode->psChild->pszValue);
           }
         }
       }
@@ -376,6 +384,8 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
       //TODO: Optimization - modify m_wstrSubFields so it only fetches fields that are mapped
 
       OGRFieldDefn fieldTemplate( fieldName.c_str(), ogrType);
+      //fieldTemplate.SetWidth(nLength);
+      //fieldTemplate.SetPrecision(nPrecision);
       m_pFeatureDefn->AddFieldDefn( &fieldTemplate );
 
       m_vOGRFieldToESRIField.push_back(StringToWString(fieldName));
@@ -534,21 +544,18 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
   //
 
   ShapeBuffer gdbGeometry;
-  if (FAILED(hr = pRow->GetGeometry(gdbGeometry)))
+  if (!FAILED(hr = pRow->GetGeometry(gdbGeometry)))
   {
-    delete pOutFeature;
-    return GDBErr(hr, "Failed retrieving shape for row " + string(CPLSPrintf("%d", (int)oid)));
+    OGRGeometry* pOGRGeo = NULL;
+
+    if ((!GDBGeometryToOGRGeometry(m_forceMulti, &gdbGeometry, m_pSRS, &pOGRGeo)) || pOGRGeo == NULL)
+    {
+        delete pOutFeature;
+        return GDBErr(hr, "Failed to translate FileGDB Geometry to OGR Geometry for row " + string(CPLSPrintf("%d", (int)oid)));
+    }
+
+    pOutFeature->SetGeometryDirectly(pOGRGeo);
   }
-
-  OGRGeometry* pOGRGeo = NULL;
-
-  if ((!GDBGeometryToOGRGeometry(m_forceMulti, &gdbGeometry, m_pSRS, &pOGRGeo)) || pOGRGeo == NULL)
-  {
-    delete pOutFeature;
-    return GDBErr(hr, "Failed to translate FileGDB Geometry to OGR Geometry for row " + string(CPLSPrintf("%d", (int)oid)));
-  }
-
-  pOutFeature->SetGeometryDirectly(pOGRGeo);
 
 
   //////////////////////////////////////////////////////////
@@ -635,12 +642,24 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
       
       }
       break;
+      */
+      
       case OFTDateTime:
       {
+          struct tm val;
+
+          if (FAILED(hr = pRow->GetDate(wstrFieldName, val)))
+          {
+            GDBErr(hr, "Failed to determine value for column " + WStringToString(wstrFieldName));
+            foundBadColumn = true;
+            continue;
+          }
+
+          pOutFeature->SetField(i, val.tm_year + 1900, val.tm_mon + 1, val.tm_mday, val.tm_hour, val.tm_min, val.tm_sec);
       // Examine test data to figure out how to extract that
       }
       break;
-      */
+
     default:
       {
         if (!m_supressColumnMappingError)
@@ -803,7 +822,8 @@ int FGdbLayer::GetFeatureCount( int bForce )
 
 OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
 {
-  if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0)
+  if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0 ||
+      m_strShapeFieldName.size() == 0)
       return OGRLayer::GetExtent(psExtent, bForce);
 
   long hr;

@@ -279,8 +279,6 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
 
   if( pOGRGeometry != NULL )
   {
-    pOGRGeometry->assignSpatialReference( pOGRSR );
-  
     // force geometries to multi if requested
 
     // If it is a polygon, force to MultiPolygon since we always produce multipolygons
@@ -299,6 +297,9 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
         pOGRGeometry = OGRGeometryFactory::forceToMultiPoint(pOGRGeometry);
       } 
     }
+
+    if (pOGRGeometry)
+        pOGRGeometry->assignSpatialReference( pOGRSR );
   }
 
 
