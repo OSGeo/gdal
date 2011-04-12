@@ -476,7 +476,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 
         int bHasZ = (nSHPType == SHPT_POINTZ || nSHPType == SHPT_POINTZM);
 
-        if (nBytes < 4 + 8 + 8 + ((nSHPType == SHPT_POINTZ) ? 8 : 0))
+        if (nBytes < 4 + 8 + 8 + ((bHasZ) ? 8 : 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Corrupted Shape : nBytes=%d, nSHPType=%d", nBytes, nSHPType);
