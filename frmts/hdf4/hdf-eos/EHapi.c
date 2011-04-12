@@ -3365,7 +3365,7 @@ EHinquire(char *filename, char *type, char *objectlist, int32 * strbufsize)
     int32           nobj = 0;	/* Number of HDFEOS objects in file */
     int32           slen;	/* String length */
 
-    char            name[80];	/* Object name */
+    char            name[512];	/* Object name */
     char            class[80];	/* Object class */
 
 
