@@ -284,7 +284,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     /* Set POST mode */
     const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
-    if( pszPost != NULL && CSLTestBoolean(pszPost) )
+    if( pszPost != NULL )
     {
         curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
         curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
@@ -307,7 +307,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         headers = curl_slist_append(headers, pszHeaders);
         curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
     }
-                         
+
     /* NOSIGNAL should be set to true for timeout to work in multithread
      * environments on Unix, requires libcurl 7.10 or more recent.
      * (this force avoiding the use of sgnal handlers)
@@ -334,7 +334,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
         bHasCheckVersion = TRUE;
     }
-    if (bSupportGZip)
+    if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
         curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
 
 /* -------------------------------------------------------------------- */
