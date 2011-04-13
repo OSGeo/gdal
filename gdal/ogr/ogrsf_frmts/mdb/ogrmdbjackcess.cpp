@@ -721,7 +721,7 @@ void OGRMDBTable::DumpTable()
 }
 
 /************************************************************************/
-/*                              DumpTable()                             */
+/*                            GetColumnIndex()                          */
 /************************************************************************/
 
 int OGRMDBTable::GetColumnIndex(const char* pszColName, int bEmitErrorIfNotFound)
