@@ -44,7 +44,6 @@ import ogr
 
 def ogr_gft_init():
 
-    ogrtest.gft_auth_key = """DQAAALAAAABVidHwAv07_rffxcF-uHLY7btNP-rWkoRaaxqB4aht62gtwNDVsE2cOoi2x57H6I2jLLHOQjTQAD3Tv4MYZ9Qqxf7ElmuDu7SKmANcbWN9BogKNeYWRhuXo6QRLCbfKc3tI8Y0wvfnP5T88MPun2IKyDlJIS9jGxat9usjyLkhZlVO4vuXcXHZZmDMKsq8C9dMHTRErJRaNHJywxIFYKKzqYn0VGnMYSERJ8HCExfFTg"""
     ogrtest.gft_drv = None
 
     try:
@@ -56,9 +55,23 @@ def ogr_gft_init():
         return 'skip'
 
     if gdaltest.gdalurlopen('http://www.google.com') is None:
-        print('cannot open URL')
+        print('cannot open http://www.google.com')
         ogrtest.gft_drv = None
         return 'skip'
+
+    # Authentication keys are invalidated after a few days, so instead of modifying this
+    # file each time, I will try to update the key regularly on the below site instead.
+    handle = gdaltest.gdalurlopen('http://even.rouault.free.fr/ogr_gft_auth_key.txt')
+    if handle is None:
+        print('cannot retrieve authentication key. only read-only test are possibles')
+        ogrtest.gft_auth_key = None
+    else:
+        ogrtest.gft_auth_key = handle.read()
+        from sys import version_info
+        if version_info >= (3,0,0):
+            ogrtest.gft_auth_key = str(ogrtest.gft_auth_key, 'ascii')
+        if ogrtest.gft_auth_key[-1] == '\n':
+            ogrtest.gft_auth_key = ogrtest.gft_auth_key[0:-1]
 
     return 'success'
 
@@ -102,6 +115,10 @@ def ogr_gft_read():
 
 def ogr_gft_write():
     if ogrtest.gft_drv is None:
+        return 'skip'
+
+    if ogrtest.gft_auth_key is None:
+        ogrtest.gft_can_write = False
         return 'skip'
 
     ds = ogr.Open('GFT:auth=%s' % ogrtest.gft_auth_key, update = 1)
