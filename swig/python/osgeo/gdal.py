@@ -207,7 +207,7 @@ def GetConfigOption(*args):
   return _gdal.GetConfigOption(*args)
 
 def CPLBinaryToHex(*args):
-  """CPLBinaryToHex(int nBytes, GByte pabyData) -> char"""
+  """CPLBinaryToHex(int nBytes) -> retStringAndCPLFree"""
   return _gdal.CPLBinaryToHex(*args)
 
 def CPLHexToBinary(*args):
@@ -255,7 +255,7 @@ def VSIFTellL(*args):
   return _gdal.VSIFTellL(*args)
 
 def VSIFWriteL(*args):
-  """VSIFWriteL(char arg0, int arg1, int arg2, VSILFILE arg3) -> int"""
+  """VSIFWriteL(int nLen, int size, int memb, VSILFILE f) -> int"""
   return _gdal.VSIFWriteL(*args)
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class"""
