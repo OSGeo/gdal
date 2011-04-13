@@ -3412,6 +3412,17 @@ int wrapper_HasThreadSupport()
     return strcmp(CPLGetThreadingModel(), "stub") != 0;
 }
 
+
+int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE * f)
+{
+    if (nLen < size * memb)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Inconsistant buffer size with 'size' and 'memb' values");
+        return 0;
+    }
+    return VSIFWriteL(pBuf, size, memb, f);
+}
+
 SWIGINTERN char const *GDALMajorObjectShadow_GetDescription(GDALMajorObjectShadow *self){
     return GDALGetDescription( self );
   }
@@ -5865,30 +5876,55 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject *resultobj = 0;
   int arg1 ;
   GByte *arg2 = (GByte *) 0 ;
-  int val1 ;
-  int ecode1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
+  int alloc1 = 0 ;
   PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  char *result = 0 ;
+  retStringAndCPLFree *result = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO:CPLBinaryToHex",&obj0,&obj1)) SWIG_fail;
-  ecode1 = SWIG_AsVal_int(obj0, &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "CPLBinaryToHex" "', argument " "1"" of type '" "int""'");
-  } 
-  arg1 = static_cast< int >(val1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GByte, 0 |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "CPLBinaryToHex" "', argument " "2"" of type '" "GByte const *""'"); 
+  if (!PyArg_ParseTuple(args,(char *)"O:CPLBinaryToHex",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+#if PY_VERSION_HEX>=0x03000000
+    if (PyUnicode_Check(obj0))
+    {
+      size_t safeLen = 0;
+      int ret = SWIG_AsCharPtrAndSize(obj0, (char**) &arg2, &safeLen, &alloc1);
+      if (!SWIG_IsOK(ret)) {
+        SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+      }
+      
+      if (safeLen) safeLen--;
+      arg1 = (int) safeLen;
+    }
+    else if (PyBytes_Check(obj0))
+    {
+      Py_ssize_t safeLen = 0;
+      PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      arg1 = (int) safeLen;
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      SWIG_fail;
+    }
+#else
+    if (PyString_Check(obj0))
+    {
+      Py_ssize_t safeLen = 0;
+      PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      arg1 = (int) safeLen;
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a string");
+      SWIG_fail;
+    }
+#endif
   }
-  arg2 = reinterpret_cast< GByte * >(argp2);
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)CPLBinaryToHex(arg1,(GByte const *)arg2);
+    result = (retStringAndCPLFree *)CPLBinaryToHex(arg1,(GByte const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -5896,9 +5932,28 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
       }
     }
   }
-  resultobj = SWIG_FromCharPtr((const char *)result);
+  {
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if(result)
+    {
+      resultobj = GDALPythonObjectFromCStr( (const char *)result);
+      CPLFree(result);
+    }
+  }
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc1 == SWIG_NEWOBJ ) {
+      delete[] arg2;
+    }
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc1 == SWIG_NEWOBJ ) {
+      delete[] arg2;
+    }
+  }
   return NULL;
 }
 
@@ -6424,18 +6479,17 @@ fail:
 
 SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
-  char *arg1 = (char *) 0 ;
-  int arg2 ;
+  int arg1 ;
+  char *arg2 = (char *) 0 ;
   int arg3 ;
-  VSILFILE *arg4 = (VSILFILE *) 0 ;
-  int res1 ;
-  char *buf1 = 0 ;
+  int arg4 ;
+  VSILFILE *arg5 = (VSILFILE *) 0 ;
   int alloc1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
   int val3 ;
   int ecode3 = 0 ;
-  int res4 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  int res5 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -6443,30 +6497,64 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"OOOO:VSIFWriteL",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
-  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFWriteL" "', argument " "1"" of type '" "char const *""'");
+  {
+    /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+#if PY_VERSION_HEX>=0x03000000
+    if (PyUnicode_Check(obj0))
+    {
+      size_t safeLen = 0;
+      int ret = SWIG_AsCharPtrAndSize(obj0, (char**) &arg2, &safeLen, &alloc1);
+      if (!SWIG_IsOK(ret)) {
+        SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+      }
+      
+      if (safeLen) safeLen--;
+      arg1 = (int) safeLen;
+    }
+    else if (PyBytes_Check(obj0))
+    {
+      Py_ssize_t safeLen = 0;
+      PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      arg1 = (int) safeLen;
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      SWIG_fail;
+    }
+#else
+    if (PyString_Check(obj0))
+    {
+      Py_ssize_t safeLen = 0;
+      PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      arg1 = (int) safeLen;
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a string");
+      SWIG_fail;
+    }
+#endif
   }
-  arg1 = reinterpret_cast< char * >(buf1);
-  ecode2 = SWIG_AsVal_int(obj1, &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VSIFWriteL" "', argument " "2"" of type '" "int""'");
-  } 
-  arg2 = static_cast< int >(val2);
-  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  ecode3 = SWIG_AsVal_int(obj1, &val3);
   if (!SWIG_IsOK(ecode3)) {
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VSIFWriteL" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast< int >(val3);
-  res4 = SWIG_ConvertPtr(obj3,SWIG_as_voidptrptr(&arg4), 0, 0);
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "VSIFWriteL" "', argument " "4"" of type '" "VSILFILE *""'"); 
+  ecode4 = SWIG_AsVal_int(obj2, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "VSIFWriteL" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  res5 = SWIG_ConvertPtr(obj3,SWIG_as_voidptrptr(&arg5), 0, 0);
+  if (!SWIG_IsOK(res5)) {
+    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "VSIFWriteL" "', argument " "5"" of type '" "VSILFILE *""'"); 
   }
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)VSIFWriteL((char const *)arg1,arg2,arg3,arg4);
+    result = (int)wrapper_VSIFWriteL(arg1,arg2,arg3,arg4,arg5);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -6475,10 +6563,20 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc1 == SWIG_NEWOBJ ) {
+      delete[] arg2;
+    }
+  }
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc1 == SWIG_NEWOBJ ) {
+      delete[] arg2;
+    }
+  }
   return NULL;
 }
 
@@ -20464,7 +20562,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"ReadDir", _wrap_ReadDir, METH_VARARGS, (char *)"ReadDir(char utf8_path) -> char"},
 	 { (char *)"SetConfigOption", _wrap_SetConfigOption, METH_VARARGS, (char *)"SetConfigOption(char pszKey, char pszValue)"},
 	 { (char *)"GetConfigOption", _wrap_GetConfigOption, METH_VARARGS, (char *)"GetConfigOption(char pszKey, char pszDefault = None) -> char"},
-	 { (char *)"CPLBinaryToHex", _wrap_CPLBinaryToHex, METH_VARARGS, (char *)"CPLBinaryToHex(int nBytes, GByte pabyData) -> char"},
+	 { (char *)"CPLBinaryToHex", _wrap_CPLBinaryToHex, METH_VARARGS, (char *)"CPLBinaryToHex(int nBytes) -> retStringAndCPLFree"},
 	 { (char *)"CPLHexToBinary", _wrap_CPLHexToBinary, METH_VARARGS, (char *)"CPLHexToBinary(char pszHex, int pnBytes) -> GByte"},
 	 { (char *)"FileFromMemBuffer", _wrap_FileFromMemBuffer, METH_VARARGS, (char *)"FileFromMemBuffer(char utf8_path, int nBytes)"},
 	 { (char *)"Unlink", _wrap_Unlink, METH_VARARGS, (char *)"Unlink(char pszFilename) -> int"},
@@ -20476,7 +20574,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"VSIFCloseL", _wrap_VSIFCloseL, METH_VARARGS, (char *)"VSIFCloseL(VSILFILE arg0)"},
 	 { (char *)"VSIFSeekL", _wrap_VSIFSeekL, METH_VARARGS, (char *)"VSIFSeekL(VSILFILE arg0, long arg1, int arg2) -> int"},
 	 { (char *)"VSIFTellL", _wrap_VSIFTellL, METH_VARARGS, (char *)"VSIFTellL(VSILFILE arg0) -> long"},
-	 { (char *)"VSIFWriteL", _wrap_VSIFWriteL, METH_VARARGS, (char *)"VSIFWriteL(char arg0, int arg1, int arg2, VSILFILE arg3) -> int"},
+	 { (char *)"VSIFWriteL", _wrap_VSIFWriteL, METH_VARARGS, (char *)"VSIFWriteL(int nLen, int size, int memb, VSILFILE f) -> int"},
 	 { (char *)"MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_VARARGS, (char *)"MajorObject_GetDescription(MajorObject self) -> char"},
 	 { (char *)"MajorObject_SetDescription", _wrap_MajorObject_SetDescription, METH_VARARGS, (char *)"MajorObject_SetDescription(MajorObject self, char pszNewDesc)"},
 	 { (char *)"MajorObject_GetMetadata_Dict", _wrap_MajorObject_GetMetadata_Dict, METH_VARARGS, (char *)"MajorObject_GetMetadata_Dict(MajorObject self, char pszDomain = \"\") -> char"},
