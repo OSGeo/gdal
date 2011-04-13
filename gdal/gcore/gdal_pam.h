@@ -67,6 +67,7 @@ class GDALPamRasterBand;
                                  GCIF_BAND_DESCRIPTION) 
 
 /* GDAL PAM Flags */
+/* ERO 2011/04/13 : GPF_AUXMODE seems to be unimplemented */
 #define GPF_DIRTY		0x01  // .pam file needs to be written on close
 #define GPF_TRIED_READ_FAILED   0x02  // no need to keep trying to read .pam.
 #define GPF_DISABLED            0x04  // do not try any PAM stuff. 
