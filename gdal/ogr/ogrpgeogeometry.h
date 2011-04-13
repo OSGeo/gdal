@@ -58,6 +58,16 @@
 #define SHPT_MULTIPATCH   32
 
 
+/* The following are layers geometry type */
+/* They are different from the above shape types */
+#define ESRI_LAYERGEOMTYPE_NULL          0
+#define ESRI_LAYERGEOMTYPE_POINT         1
+#define ESRI_LAYERGEOMTYPE_MULTIPOINT    2
+#define ESRI_LAYERGEOMTYPE_POLYLINE      3
+#define ESRI_LAYERGEOMTYPE_POLYGON       4
+#define ESRI_LAYERGEOMTYPE_MULTIPATCH    9
+
+
 OGRErr CPL_DLL OGRCreateFromShapeBin( GByte *pabyShape,
                               OGRGeometry **ppoGeom,
                               int nBytes );

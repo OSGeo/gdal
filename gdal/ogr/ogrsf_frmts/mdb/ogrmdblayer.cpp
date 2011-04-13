@@ -524,6 +524,45 @@ CPLErr OGRMDBLayer::Initialize( const char *pszTableName,
     if( eErr != CE_None )
         return eErr;
 
+/* -------------------------------------------------------------------- */
+/*      Setup geometry type.                                            */
+/* -------------------------------------------------------------------- */
+    OGRwkbGeometryType  eOGRType;
+
+    switch( nShapeType )
+    {
+        case ESRI_LAYERGEOMTYPE_NULL:
+            eOGRType = wkbNone;
+            break;
+
+        case ESRI_LAYERGEOMTYPE_POINT:
+            eOGRType = wkbPoint;
+            break;
+
+        case ESRI_LAYERGEOMTYPE_MULTIPOINT:
+            eOGRType = wkbMultiPoint;
+            break;
+
+        case ESRI_LAYERGEOMTYPE_POLYLINE:
+            eOGRType = wkbLineString;
+            break;
+
+        case ESRI_LAYERGEOMTYPE_POLYGON:
+        case ESRI_LAYERGEOMTYPE_MULTIPATCH:
+            eOGRType = wkbPolygon;
+            break;
+
+        default:
+            CPLDebug("MDB", "Unexpected value for shape type : %d", nShapeType);
+            eOGRType = wkbUnknown;
+            break;
+    }
+
+    if( eOGRType != wkbUnknown && eOGRType != wkbNone && bHasZ )
+        eOGRType = (OGRwkbGeometryType)(((int) eOGRType) | wkb25DBit);
+
+    poFeatureDefn->SetGeomType(eOGRType);
+
     return CE_None;
 }
 
