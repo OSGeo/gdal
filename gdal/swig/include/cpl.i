@@ -248,6 +248,10 @@ retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
 %clear ( int nBytes, const GByte *pabyData );
 #elif defined(SWIGCSHARP)
 retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
+#elif defined(SWIGPYTHON)
+%apply (int nLen, char *pBuf) {( int nBytes, const GByte *pabyData )};
+retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
+%clear ( int nBytes, const GByte *pabyData );
 #else
 /* FIXME : wrong typemap. The string should be freed */
 char * CPLBinaryToHex( int nBytes, const GByte *pabyData );
@@ -325,7 +329,23 @@ VSILFILE   *VSIFOpenL( const char *utf8_path, const char *pszMode );
 void    VSIFCloseL( VSILFILE * );
 int     VSIFSeekL( VSILFILE *, long, int );
 long    VSIFTellL( VSILFILE * );
+
+#if defined(SWIGPYTHON)
+%rename (VSIFWriteL) wrapper_VSIFWriteL;
+%inline {
+int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE * f)
+{
+    if (nLen < size * memb)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Inconsistant buffer size with 'size' and 'memb' values");
+        return 0;
+    }
+    return VSIFWriteL(pBuf, size, memb, f);
+}
+}
+#else
 int     VSIFWriteL( const char *, int, int, VSILFILE * );
+#endif
 
 /* VSIFReadL() handled specially in python/gdal_python.i */
 
