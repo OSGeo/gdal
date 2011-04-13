@@ -4293,48 +4293,48 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /*      Write the transform.  If we have a normal north-up image we     */
 /*      use the tiepoint plus pixelscale otherwise we use a matrix.     */
 /* -------------------------------------------------------------------- */
-	if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 
-            && adfGeoTransform[5] < 0.0 )
-	{
-	    double	adfPixelScale[3], adfTiePoints[6];
+        if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0
+                && adfGeoTransform[5] < 0.0 )
+        {
+            double	adfPixelScale[3], adfTiePoints[6];
 
-	    adfPixelScale[0] = adfGeoTransform[1];
-	    adfPixelScale[1] = fabs(adfGeoTransform[5]);
-	    adfPixelScale[2] = 0.0;
+            adfPixelScale[0] = adfGeoTransform[1];
+            adfPixelScale[1] = fabs(adfGeoTransform[5]);
+            adfPixelScale[2] = 0.0;
 
             if( !EQUAL(osProfile,"BASELINE") )
                 TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
-	    
-	    adfTiePoints[0] = 0.0;
-	    adfTiePoints[1] = 0.0;
-	    adfTiePoints[2] = 0.0;
-	    adfTiePoints[3] = adfGeoTransform[0];
-	    adfTiePoints[4] = adfGeoTransform[3];
-	    adfTiePoints[5] = 0.0;
+
+            adfTiePoints[0] = 0.0;
+            adfTiePoints[1] = 0.0;
+            adfTiePoints[2] = 0.0;
+            adfTiePoints[3] = adfGeoTransform[0];
+            adfTiePoints[4] = adfGeoTransform[3];
+            adfTiePoints[5] = 0.0;
 
             if( bPixelIsPoint && !bPointGeoIgnore )
             {
                 adfTiePoints[3] += adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5;
                 adfTiePoints[4] += adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5;
             }
-	    
+
             if( !EQUAL(osProfile,"BASELINE") )
                 TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
-	}
-	else
-	{
-	    double	adfMatrix[16];
-	    
-	    memset(adfMatrix,0,sizeof(double) * 16);
-	    
-	    adfMatrix[0] = adfGeoTransform[1];
-	    adfMatrix[1] = adfGeoTransform[2];
-	    adfMatrix[3] = adfGeoTransform[0];
-	    adfMatrix[4] = adfGeoTransform[4];
-	    adfMatrix[5] = adfGeoTransform[5];
-	    adfMatrix[7] = adfGeoTransform[3];
-	    adfMatrix[15] = 1.0;
-	    
+        }
+        else
+        {
+            double	adfMatrix[16];
+
+            memset(adfMatrix,0,sizeof(double) * 16);
+
+            adfMatrix[0] = adfGeoTransform[1];
+            adfMatrix[1] = adfGeoTransform[2];
+            adfMatrix[3] = adfGeoTransform[0];
+            adfMatrix[4] = adfGeoTransform[4];
+            adfMatrix[5] = adfGeoTransform[5];
+            adfMatrix[7] = adfGeoTransform[3];
+            adfMatrix[15] = 1.0;
+
             if( bPixelIsPoint && !bPointGeoIgnore )
             {
                 adfMatrix[3] += adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5;
@@ -4343,7 +4343,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
 
             if( !EQUAL(osProfile,"BASELINE") )
                 TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
-	}
+        }
 
         // Do we need a world file?
         if( CSLFetchBoolean( papszCreationOptions, "TFW", FALSE ) )
@@ -4353,34 +4353,35 @@ void GTiffDataset::WriteGeoTIFFInfo()
     }
     else if( GetGCPCount() > 0 )
     {
-	double	*padfTiePoints;
-	int		iGCP;
+        double	*padfTiePoints;
+        int		iGCP;
+
         bNeedsRewrite = TRUE;
-	
-	padfTiePoints = (double *) 
-	    CPLMalloc( 6 * sizeof(double) * GetGCPCount() );
 
-	for( iGCP = 0; iGCP < GetGCPCount(); iGCP++ )
-	{
+        padfTiePoints = (double *)
+            CPLMalloc( 6 * sizeof(double) * GetGCPCount() );
 
-	    padfTiePoints[iGCP*6+0] = pasGCPList[iGCP].dfGCPPixel;
-	    padfTiePoints[iGCP*6+1] = pasGCPList[iGCP].dfGCPLine;
-	    padfTiePoints[iGCP*6+2] = 0;
-	    padfTiePoints[iGCP*6+3] = pasGCPList[iGCP].dfGCPX;
-	    padfTiePoints[iGCP*6+4] = pasGCPList[iGCP].dfGCPY;
-	    padfTiePoints[iGCP*6+5] = pasGCPList[iGCP].dfGCPZ;
+        for( iGCP = 0; iGCP < GetGCPCount(); iGCP++ )
+        {
+
+            padfTiePoints[iGCP*6+0] = pasGCPList[iGCP].dfGCPPixel;
+            padfTiePoints[iGCP*6+1] = pasGCPList[iGCP].dfGCPLine;
+            padfTiePoints[iGCP*6+2] = 0;
+            padfTiePoints[iGCP*6+3] = pasGCPList[iGCP].dfGCPX;
+            padfTiePoints[iGCP*6+4] = pasGCPList[iGCP].dfGCPY;
+            padfTiePoints[iGCP*6+5] = pasGCPList[iGCP].dfGCPZ;
 
             if( bPixelIsPoint && !bPointGeoIgnore )
             {
                 padfTiePoints[iGCP*6+0] += 0.5;
                 padfTiePoints[iGCP*6+1] += 0.5;
             }
-	}
+        }
 
         if( !EQUAL(osProfile,"BASELINE") )
             TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 
                           6 * GetGCPCount(), padfTiePoints );
-	CPLFree( padfTiePoints );
+        CPLFree( padfTiePoints );
     }
 
 /* -------------------------------------------------------------------- */
