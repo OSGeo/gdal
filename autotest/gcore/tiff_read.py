@@ -731,8 +731,10 @@ def tiff_read_corrupted_gtiff():
     ds = None
 
     err_msg = gdal.GetLastErrorMsg()
-    if string.find(err_msg,'IO error during') == -1:
+    if err_msg.find('IO error during') == -1 and \
+       err_msg.find('Error fetching data for field') == -1:
         gdaltest.post_reason( 'did not get expected error message' )
+        print(err_msg)
         return 'fail'
 
     return 'success'
