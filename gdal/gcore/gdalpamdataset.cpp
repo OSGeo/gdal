@@ -311,6 +311,7 @@ void GDALPamDataset::PamInitialize()
         return;
     }
 
+    /* ERO 2011/04/13 : GPF_AUXMODE seems to be unimplemented */
     if( EQUAL( CPLGetConfigOption( "GDAL_PAM_MODE", "PAM" ), "AUX") )
         nPamFlags |= GPF_AUXMODE;
 
