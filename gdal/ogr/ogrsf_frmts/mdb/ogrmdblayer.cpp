@@ -142,6 +142,10 @@ CPLErr OGRMDBLayer::BuildFeatureDefn()
         switch( poMDBTable->GetColumnType(iCol) )
         {
           case MDB_Boolean:
+            oField.SetType( OFTInteger );
+            oField.SetWidth(1);
+            break;
+
           case MDB_Byte:
           case MDB_Short:
           case MDB_Int:
@@ -255,10 +259,11 @@ OGRFeature *OGRMDBLayer::GetNextRawFeature()
     {
         int iSrcField = panFieldOrdinals[iField]-1;
         char *pszValue = poMDBTable->GetColumnAsString( iSrcField );
+        OGRFieldType eType = poFeature->GetFieldDefnRef(iField)->GetType();
 
         if( pszValue == NULL )
             /* no value */;
-        else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
+        else if( eType == OFTBinary )
         {
             int nBytes = 0;
             GByte* pData = poMDBTable->GetColumnAsBinary( iSrcField, &nBytes);
@@ -267,8 +272,14 @@ OGRFeature *OGRMDBLayer::GetNextRawFeature()
                                  pData );
             CPLFree(pData);
         }
+        else if ( eType == OFTInteger && EQUAL(pszValue, "true"))
+        {
+           poFeature->SetField( iField, 1 );
+        }
         else
-            poFeature->SetField( iField, pszValue );
+        {
+           poFeature->SetField( iField, pszValue );
+        }
 
         CPLFree(pszValue);
     }
