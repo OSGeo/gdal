@@ -256,14 +256,14 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
     int southWestLon = atoi(pszLatLonValueString);
 
     if(pszBasename[2] == 'N' || pszBasename[2] == 'n')
-        southWestLat = southWestLat;
+        /*southWestLat = southWestLat*/;
     else if(pszBasename[2] == 'S' || pszBasename[2] == 's')
         southWestLat = southWestLat * -1;
     else
         return NULL;
 
     if(pszBasename[6] == 'E' || pszBasename[6] == 'e')
-        southWestLon = southWestLon;
+        /*southWestLon = southWestLon*/;
     else if(pszBasename[6] == 'W' || pszBasename[6] == 'w')
         southWestLon = southWestLon * -1;
     else
