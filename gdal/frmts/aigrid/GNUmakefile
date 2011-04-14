@@ -17,6 +17,8 @@ aitest$(EXE):	aitest.$(OBJ_EXT)
 aigrid2tif$(EXE):	aigrid2tif.$(OBJ_EXT)
 	$(LD) $(LDFLAGS) aigrid2tif.$(OBJ_EXT) $(CONFIG_LIBS) -o aigrid2tif$(EXE)
 
+$(OBJ) $(O_OBJ):	aigrid.h
+
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 aitest-dist:
