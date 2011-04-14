@@ -1437,7 +1437,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     osCommand += ") VALUES (";
 
     /* Set the geometry */
-    bNeedComma = poGeom != NULL;
+    bNeedComma = FALSE;
     if( (bHasPostGISGeometry || bHasPostGISGeography) && poGeom != NULL)
     {
         char    *pszWKT = NULL;
@@ -1467,6 +1467,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         }
         else
             osCommand += "''";
+            
+        bNeedComma = TRUE;
     }
     else if( bHasWkb && !bWkbAsOid && poGeom != NULL )
     {
@@ -1479,6 +1481,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         }
         else
             osCommand += "''";
+            
+        bNeedComma = TRUE;
     }
     else if( bHasWkb && bWkbAsOid && poGeom != NULL )
     {
@@ -1490,6 +1494,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         }
         else
             osCommand += "''";
+            
+        bNeedComma = TRUE;
     }
 
     /* REMOVE ME ? */
@@ -1636,7 +1642,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         const char *pszStrValue = poFeature->GetFieldAsString(i);
         char *pszNeedToFree = NULL;
 
-        if (osCommand.size() > 0)
+        if (i > 0 || osCommand.size() > 0)
             osCommand += "\t";
             
         if( !poFeature->IsFieldSet( i ) )

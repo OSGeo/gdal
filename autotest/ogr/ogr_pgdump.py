@@ -203,7 +203,8 @@ def ogr_pgdump_3():
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def( lyr,
-                                    [ ('AREA', ogr.OFTReal),
+                                    [ ('EMPTYCHAR', ogr.OFTString),
+                                      ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
                                       ('SHORTNAME', ogr.OFTString, 8) ] )
@@ -217,12 +218,22 @@ def ogr_pgdump_3():
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
+
+    i = 0
     
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
 
         dst_feat.SetFrom( feat )
+        if i == 0:
+            # Be perverse and test the case where a feature has a geometry
+            # even if it's a wkbNone layer ! (#4040)
+            dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
+        elif i == 1:
+            # Field with 0 character (not empty!) (#4040)
+            dst_feat.SetField(0, '')
+        i = i + 1
         lyr.CreateFeature( dst_feat )
 
         feat = shp_lyr.GetNextFeature()
@@ -246,8 +257,9 @@ def ogr_pgdump_3():
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "eas_id" INTEGER;""") == -1 or \
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;""") == -1 or \
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" CHAR(8);""") == -1 or \
-       sql.find("""COPY "another_schema"."tpoly" ("area", "eas_id", "prfedea", "shortname") FROM STDIN;""") == -1 or \
-       sql.find("5268.813	170	35043413	\\N") == -1 or \
+       sql.find("""COPY "another_schema"."tpoly" ("emptychar", "area", "eas_id", "prfedea", "shortname") FROM STDIN;""") == -1 or \
+       sql.find("""\N	215229.266	168	35043411	\\N""") == -1 or \
+       sql.find("""	5268.813	170	35043413	\\N""") == -1 or \
        sql.find("""\.""") == -1 or \
        sql.find("""COMMIT;""") == -1 :
         print(sql)
