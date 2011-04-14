@@ -1749,6 +1749,7 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
  * WGS84 or WGS72. 
  * <li> WKT (directly or in a file) in ESRI format should be prefixed with
  * ESRI:: to trigger an automatic morphFromESRI().
+ * <li> "IGNF:xxx" - "+init=IGNF:xxx" passed on to importFromProj4().
  * </ol>
  *
  * It is expected that this method will be extended in the future to support
@@ -1881,6 +1882,17 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
     if( strstr(pszDefinition,"+proj") != NULL 
              || strstr(pszDefinition,"+init") != NULL )
         return importFromProj4( pszDefinition );
+
+    if( EQUALN(pszDefinition,"IGNF:", 5) )
+    {
+        char* pszProj4Str = (char*) CPLMalloc(6 + strlen(pszDefinition) + 1);
+        strcpy(pszProj4Str, "+init=");
+        strcat(pszProj4Str, pszDefinition);
+        err = importFromProj4( pszProj4Str );
+        CPLFree(pszProj4Str);
+
+        return err;
+    }
 
     if( EQUALN(pszDefinition,"http://",7) )
     {
