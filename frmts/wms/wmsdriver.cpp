@@ -512,7 +512,8 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
              (strstr(pabyHeader, "<WMT_MS_Capabilities") != NULL ||
-              strstr(pabyHeader, "<WMS_Capabilities") != NULL))
+              strstr(pabyHeader, "<WMS_Capabilities") != NULL ||
+              strstr(pabyHeader, "<!DOCTYPE WMT_MS_Capabilities") != NULL))
     {
         return TRUE;
     }
@@ -601,7 +602,8 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
              (strstr(pabyHeader, "<WMT_MS_Capabilities") != NULL ||
-              strstr(pabyHeader, "<WMS_Capabilities") != NULL))
+              strstr(pabyHeader, "<WMS_Capabilities") != NULL ||
+              strstr(pabyHeader, "<!DOCTYPE WMT_MS_Capabilities") != NULL))
     {
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
         if (psXML == NULL)
