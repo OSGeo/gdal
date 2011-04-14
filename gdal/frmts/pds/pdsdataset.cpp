@@ -902,7 +902,6 @@ int PDSDataset::ParseImage( CPLString osPrefix )
 /* -------------------------------------------------------------------- */
     int i;
 
-    nBands = nBands;;
     for( i = 0; i < nBands; i++ )
     {
         RawRasterBand	*poBand;
