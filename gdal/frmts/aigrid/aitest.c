@@ -56,7 +56,7 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
         VSIFSeekL( psTInfo->fpGrid, psTInfo->panBlockOffset[i], SEEK_SET );
         VSIFReadL( abyBlockSize, 2, 1, psTInfo->fpGrid );
 
-        if( psInfo->nCellType == AIG_CELLTYPE_INT )
+        if( psInfo->nCellType == AIG_CELLTYPE_INT && psInfo->bCompressed )
         {
             VSIFReadL( &byMagic, 1, 1, psTInfo->fpGrid );
 
@@ -113,7 +113,7 @@ int main( int argc, char ** argv )
 
 {
     AIGInfo_t	*psInfo;
-    GUInt32 	*panRaster;
+    GInt32 	*panRaster;
     int		i, j;
     int		bMagic = FALSE, bSupressMagic = FALSE;
     int         iTestTileX = 0, iTestTileY = 0;
@@ -166,10 +166,12 @@ int main( int argc, char ** argv )
             psInfo->dfURY );
 
     if( psInfo->nCellType == AIG_CELLTYPE_INT )
-        printf( "Integer coverage, %dx%d blocks.\n",
+        printf( "%s Integer coverage, %dx%d blocks.\n",
+                psInfo->bCompressed ? "Compressed" : "Uncompressed",
                 psInfo->nBlockXSize, psInfo->nBlockYSize );
     else
-        printf( "Floating point coverage, %dx%d blocks.\n",
+        printf( "%s Floating point coverage, %dx%d blocks.\n",
+                psInfo->bCompressed ? "Compressed" : "Uncompressed",
                 psInfo->nBlockXSize, psInfo->nBlockYSize );
 
     printf( "Stats - Min=%f, Max=%f, Mean=%f, StdDev=%f\n",
@@ -188,7 +190,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Read a block, and report it's contents.                         */
 /* -------------------------------------------------------------------- */
-    panRaster = (GUInt32 *)
+    panRaster = (GInt32 *)
         CPLMalloc(psInfo->nBlockXSize * psInfo->nBlockYSize * 4);
     
     while( argc > 2 && (atoi(argv[2]) > 0 || argv[2][0] == '0') )
@@ -204,7 +206,7 @@ int main( int argc, char ** argv )
                              psTInfo->panBlockOffset[nBlock],
                              psTInfo->panBlockSize[nBlock],
                              psInfo->nBlockXSize, psInfo->nBlockYSize,
-                             panRaster, psInfo->nCellType );
+                             panRaster, psInfo->nCellType, psInfo->bCompressed);
 
         printf( "\nBlock %d:\n", nBlock );
 
