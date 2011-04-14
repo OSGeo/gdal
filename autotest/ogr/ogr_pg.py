@@ -2678,6 +2678,95 @@ def ogr_pg_55():
     return 'success'
 
 ###############################################################################
+# Test insertion of features with first field being a 0-charachter string in a
+# non-spatial table and without FID in COPY mode (#4040)
+
+def ogr_pg_56():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdaltest.pg_ds.ExecuteSQL('CREATE TABLE ogr_pg_56 ( bar varchar, baz varchar ) WITH (OIDS=FALSE)')
+
+    gdal.SetConfigOption( 'PG_USE_COPY', 'YES' )
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('ogr_pg_56')
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, '')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(1, '')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, '')
+    feat.SetField(1, '')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'bar')
+    feat.SetField(1, '')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, '')
+    feat.SetField(1, 'baz')
+    lyr.CreateFeature(feat)
+
+    gdal.SetConfigOption( 'PG_USE_COPY', None )
+
+    ds = None
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('ogr_pg_56')
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != None or feat.GetField(1) != None:
+        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '' or feat.GetField(1) != None:
+        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != None or feat.GetField(1) != '':
+        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '' or feat.GetField(1) != '':
+        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != 'bar' or feat.GetField(1) != '':
+        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '' or feat.GetField(1) != 'baz':
+        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2711,6 +2800,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:no_pk_table' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:no_geometry_table' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_55' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_56' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -2798,6 +2888,7 @@ gdaltest_list_internal = [
     ogr_pg_53_bis,
     ogr_pg_54,
     ogr_pg_55,
+    ogr_pg_56,
     ogr_pg_cleanup ]
 
 ###############################################################################

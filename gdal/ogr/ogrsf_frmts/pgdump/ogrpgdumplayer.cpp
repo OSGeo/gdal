@@ -243,7 +243,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     osCommand.Printf( "INSERT INTO %s (", pszSqlTableName );
 
-    if( poFeature->GetGeometryRef() != NULL )
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    if( poGeom != NULL && pszGeomColumn != NULL )
     {
         osCommand = osCommand + "\"" + pszGeomColumn + "\" ";
         bNeedComma = TRUE;
@@ -275,9 +276,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     osCommand += ") VALUES (";
 
     /* Set the geometry */
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
-    bNeedComma = poGeom != NULL;
-    if(  poGeom != NULL)
+    bNeedComma = FALSE;
+    if( poGeom != NULL && pszGeomColumn != NULL )
     {
         char    *pszWKT = NULL;
 
@@ -307,6 +307,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             else
                 osCommand += "''";
         }
+
+        bNeedComma = TRUE;
     }
 
     /* Set the FID */
@@ -407,7 +409,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         const char *pszStrValue = poFeature->GetFieldAsString(i);
         char *pszNeedToFree = NULL;
 
-        if (osCommand.size() > 0)
+        if (i > 0 || osCommand.size() > 0)
             osCommand += "\t";
             
         if( !poFeature->IsFieldSet( i ) )
