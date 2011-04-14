@@ -307,7 +307,7 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
                          psTInfo->panBlockOffset[nBlockID],
                          psTInfo->panBlockSize[nBlockID],
                          psInfo->nBlockXSize, psInfo->nBlockYSize,
-                         panData, psInfo->nCellType );
+                         panData, psInfo->nCellType, psInfo->bCompressed );
 
 /* -------------------------------------------------------------------- */
 /*      Apply floating point post-processing.                           */
@@ -397,7 +397,8 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
                          psTInfo->panBlockOffset[nBlockID],
                          psTInfo->panBlockSize[nBlockID],
                          psInfo->nBlockXSize, psInfo->nBlockYSize,
-                         (GInt32 *) pafData, psInfo->nCellType );
+                         (GInt32 *) pafData, psInfo->nCellType, 
+                         psInfo->bCompressed );
 
 /* -------------------------------------------------------------------- */
 /*      Perform integer post processing.                                */
