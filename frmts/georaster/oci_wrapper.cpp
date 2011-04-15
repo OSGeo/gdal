@@ -88,7 +88,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     }
 
     // ------------------------------------------------------
-    //  Initialize Environment handler                                  */
+    //  Initialize Environment handler
     // ------------------------------------------------------
 
     if( OCIEnvCreate( &hEnv,

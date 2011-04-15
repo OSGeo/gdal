@@ -61,7 +61,6 @@ GeoRasterDataset::GeoRasterDataset()
     pasGCPList          = NULL;
     poMaskBand          = NULL;
     bApplyNoDataArray   = false;
-    poDriver            = (GDALDriver *) GDALGetDriverByName( "GEORASTER" );
 }
 
 //  ---------------------------------------------------------------------------
@@ -1838,14 +1837,14 @@ CPLErr GeoRasterDataset::CreateMaskBand( int nFlags )
 
 void CPL_DLL GDALRegister_GEOR()
 {
-    GeoRasterDriver* poDriver;
+    GDALDriver* poDriver;
 
     if (! GDAL_CHECK_VERSION("GeoRaster driver"))
         return;
 
     if( GDALGetDriverByName( "GeoRaster" ) == NULL )
     {
-        poDriver = new GeoRasterDriver();
+        poDriver = new GDALDriver();
 
         poDriver->SetDescription(  "GeoRaster" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
