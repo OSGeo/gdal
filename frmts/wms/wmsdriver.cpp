@@ -213,14 +213,14 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     if (pszSRS == NULL)
         return NULL;
 
-    CPLXMLNode* psSRS = CPLGetXMLNode( psRoot, "BoundingBox" );
-    if (psSRS == NULL)
+    CPLXMLNode* psBoundingBox = CPLGetXMLNode( psRoot, "BoundingBox" );
+    if (psBoundingBox == NULL)
         return NULL;
 
-    const char* pszMinX = CPLGetXMLValue(psSRS, "minx", NULL);
-    const char* pszMinY = CPLGetXMLValue(psSRS, "miny", NULL);
-    const char* pszMaxX = CPLGetXMLValue(psSRS, "maxx", NULL);
-    const char* pszMaxY = CPLGetXMLValue(psSRS, "maxy", NULL);
+    const char* pszMinX = CPLGetXMLValue(psBoundingBox, "minx", NULL);
+    const char* pszMinY = CPLGetXMLValue(psBoundingBox, "miny", NULL);
+    const char* pszMaxX = CPLGetXMLValue(psBoundingBox, "maxx", NULL);
+    const char* pszMaxY = CPLGetXMLValue(psBoundingBox, "maxy", NULL);
     if (pszMinX == NULL || pszMinY == NULL || pszMaxX == NULL || pszMaxY == NULL)
         return NULL;
 
