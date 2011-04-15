@@ -51,7 +51,16 @@ CPLString ProjToWKT(const CPLString &proj) {
     OGRSpatialReference sr;
     CPLString srs;
 
-    if (sr.SetFromUserInput(proj.c_str()) != OGRERR_NONE) return srs;
+    /* We could of course recognize OSGEO:41001 to SetFromUserInput(), but this hackish SRS */
+    /* is almost only used in the context of WMS */
+    if (strcmp(proj.c_str(),"OSGEO:41001") == 0)
+    {
+        if (sr.SetFromUserInput("EPSG:3857") != OGRERR_NONE) return srs;
+    }
+    else
+    {
+        if (sr.SetFromUserInput(proj.c_str()) != OGRERR_NONE) return srs;
+    }
     sr.exportToWkt(&wkt);
     srs = wkt;
     OGRFree(wkt);
