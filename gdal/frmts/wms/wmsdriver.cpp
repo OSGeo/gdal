@@ -194,20 +194,24 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
         return NULL;
 
     const char* pszURL = CPLGetXMLValue(psRoot, "tilemapservice", NULL);
-    if (pszURL == NULL)
-        return NULL;
-    CPLString osURL = pszURL;
-    /* Special hack for http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/ */
+
     int bCanChangeURL = TRUE;
-    if (strlen(pszURL) > 10 &&
-        strncmp(pszURL, "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/",
-                        strlen("http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/")) == 0 &&
-        strcmp(pszURL + strlen(pszURL) - strlen("1.0.0/"), "1.0.0/") == 0)
+
+    CPLString osURL;
+    if (pszURL)
     {
-        osURL.resize(strlen(pszURL) - strlen("1.0.0/"));
-        bCanChangeURL = FALSE;
+        osURL = pszURL;
+        /* Special hack for http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/ */
+        if (strlen(pszURL) > 10 &&
+            strncmp(pszURL, "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/",
+                            strlen("http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/")) == 0 &&
+            strcmp(pszURL + strlen(pszURL) - strlen("1.0.0/"), "1.0.0/") == 0)
+        {
+            osURL.resize(strlen(pszURL) - strlen("1.0.0/"));
+            bCanChangeURL = FALSE;
+        }
+        osURL += "${z}/${x}/${y}.${format}";
     }
-    osURL += "${z}/${x}/${y}.${format}";
 
     const char* pszSRS = CPLGetXMLValue(psRoot, "SRS", NULL);
     if (pszSRS == NULL)
@@ -290,7 +294,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
         }
     }
 
-    if (nLevelCount == 0)
+    if (nLevelCount == 0 || osURL.size() == 0)
         return NULL;
 
     int nTileCountX = (int)((dfMaxX - dfMinX) / dfPixelSize / nTileWidth + 0.1);
@@ -523,7 +527,7 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<TileMap version=\"1.0.0\" tilemapservice=") != NULL)
+             strstr(pabyHeader, "<TileMap version=\"1.0.0\"") != NULL)
     {
         return TRUE;
     }
@@ -623,7 +627,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         return poRet;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<TileMap version=\"1.0.0\" tilemapservice=") != NULL)
+             strstr(pabyHeader, "<TileMap version=\"1.0.0\"") != NULL)
     {
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
         if (psXML == NULL)
