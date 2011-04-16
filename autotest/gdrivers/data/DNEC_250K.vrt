@@ -38,15 +38,4 @@
       <DstRect xOff="0" yOff="0" xSize="1024" ySize="682" />
     </SimpleSource>
   </VRTRasterBand>
-  <VRTRasterBand dataType="Byte" band="4">
-    <Metadata />
-    <ColorInterp>Alpha</ColorInterp>
-    <SimpleSource>
-      <SourceFilename relativeToVRT="0">WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;LAYERS=DNEC_250K:ELEVATION/ELEVATION&amp;SRS=EPSG:42304&amp;BBOX=-3000000,-1500000,6000000,4500000</SourceFilename>
-      <SourceBand>4</SourceBand>
-      <SourceProperties RasterXSize="1073741824" RasterYSize="715128832" DataType="Byte" BlockXSize="1024" BlockYSize="1024" />
-      <SrcRect xOff="0" yOff="0" xSize="1073741824" ySize="715128832" />
-      <DstRect xOff="0" yOff="0" xSize="1024" ySize="682" />
-    </SimpleSource>
-  </VRTRasterBand>
 </VRTDataset>

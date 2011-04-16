@@ -52,6 +52,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     /* GDAL specific extensions to alter the default settings */
     CPLString osOverviewCount = CPLURLGetValue(pszBaseURL, "OVERVIEWCOUNT");
     CPLString osTileSize = CPLURLGetValue(pszBaseURL, "TILESIZE");
+    CPLString osMinResolution = CPLURLGetValue(pszBaseURL, "MINRESOLUTION");
 
     CPLString osBaseURL = pszBaseURL;
     /* Remove all keywords to get base URL */
@@ -69,6 +70,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 
     osBaseURL = CPLURLAddKVP(osBaseURL, "OVERVIEWCOUNT", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "TILESIZE", NULL);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "MINRESOLUTION", NULL);
 
     if (osVersion.size() == 0)
         osVersion = "1.1.1";
@@ -103,26 +105,45 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     if (nTileSize <= 128 || nTileSize > 2048)
         nTileSize = 1024;
 
-    double dfRatio = (dfMaxX - dfMinX) / (dfMaxY - dfMinY);
     int nXSize, nYSize;
-    if (dfRatio > 1)
+
+    int nOverviewCount = (osOverviewCount.size()) ? atoi(osOverviewCount) : 20;
+
+    if (osMinResolution.size() != 0)
     {
-        nXSize = nTileSize;
-        nYSize = nXSize / dfRatio;
+        double dfMinResolution = CPLAtofM(osMinResolution);
+
+        while (nOverviewCount > 20)
+        {
+            nOverviewCount --;
+            dfMinResolution *= 2;
+        }
+
+        nXSize = (int) ((dfMaxX - dfMinX) / dfMinResolution + 0.5);
+        nYSize = (int) ((dfMaxY - dfMinY) / dfMinResolution + 0.5);
     }
     else
     {
-        nYSize = nTileSize;
-        nXSize = nYSize * dfRatio;
+        double dfRatio = (dfMaxX - dfMinX) / (dfMaxY - dfMinY);
+        if (dfRatio > 1)
+        {
+            nXSize = nTileSize;
+            nYSize = nXSize / dfRatio;
+        }
+        else
+        {
+            nYSize = nTileSize;
+            nXSize = nYSize * dfRatio;
+        }
+
+        if (nOverviewCount < 0 || nOverviewCount > 20)
+            nOverviewCount = 20;
+
+        nXSize = nXSize * (1 << nOverviewCount);
+        nYSize = nYSize * (1 << nOverviewCount);
     }
 
-    int nOverviewCount = (osOverviewCount.size()) ? atoi(osOverviewCount) : 20;
-    if (nOverviewCount < 0 || nOverviewCount > 20)
-        nOverviewCount = 20;
-    nXSize = nXSize * (1 << nOverviewCount);
-    nYSize = nYSize * (1 << nOverviewCount);
-
-    int bTransparent = CSLTestBoolean(osTransparent);
+    int bTransparent = osTransparent.size() ? CSLTestBoolean(osTransparent) : FALSE;
 
     if (osFormat.size() == 0)
     {

@@ -33,6 +33,21 @@
 #include "gdal_pam.h"
 #include "cpl_string.h"
 #include "cpl_http.h"
+#include <map>
+
+class WMSCTileSetDesc
+{
+    public:
+        CPLString osLayers;
+        CPLString osSRS;
+        CPLString osMinX, osMinY, osMaxX, osMaxY;
+        double    dfMinX, dfMinY, dfMaxX, dfMaxY;
+        int       nResolutions;
+        double    dfMinResolution;
+        CPLString osFormat;
+        CPLString osStyle;
+        int       nTileWidth, nTileHeight;
+};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -46,6 +61,9 @@ class GDALWMSMetaDataset : public GDALPamDataset
     CPLString osGetURL;
     CPLString osXMLEncoding;
     char** papszSubDatasets;
+
+    typedef std::pair<CPLString, CPLString> WMSCKeyType;
+    std::map<WMSCKeyType, WMSCTileSetDesc> osMapWMSCTileSet;
 
     void                AddSubDataset(const char* pszName,
                                       const char* pszDesc);
@@ -72,6 +90,12 @@ class GDALWMSMetaDataset : public GDALPamDataset
 
     void                AddTiledSubDataset(const char* pszTiledGroupName,
                                            const char* pszTitle);
+
+    void                AddWMSCSubDataset(WMSCTileSetDesc& oWMSCTileSetDesc,
+                                          const char* pszTitle,
+                                          CPLString osTransparent);
+
+    void                ParseWMSCTileSets(CPLXMLNode* psXML);
 
   public:
         GDALWMSMetaDataset();
