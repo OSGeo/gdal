@@ -291,26 +291,25 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
                 CPLDebug("WMS", "Expected order=%d, got %s", nLevelCount, pszOrder);
                 return NULL;
             }
-            if (nLevelCount == 0)
+
+            const char* pszHref =
+                CPLGetXMLValue(psIter, "href", NULL);
+            if (nLevelCount == 0 && pszHref != NULL)
             {
-                const char* pszHref =
-                    CPLGetXMLValue(psIter, "href", NULL);
-                if (pszHref != NULL)
+                if (bCanChangeURL && strlen(pszHref) > 10 &&
+                    strcmp(pszHref + strlen(pszHref) - strlen("/0"), "/0") == 0)
                 {
-                    if (bCanChangeURL && strlen(pszHref) > 10 &&
-                        strcmp(pszHref + strlen(pszHref) - strlen("/0"), "/0") == 0)
-                    {
-                        osURL = pszHref;
-                        osURL.resize(strlen(pszHref) - strlen("/0"));
-                        osURL += "/${z}/${x}/${y}.${format}";
-                    }
+                    osURL = pszHref;
+                    osURL.resize(strlen(pszHref) - strlen("/0"));
+                    osURL += "/${z}/${x}/${y}.${format}";
                 }
-                const char* pszUnitsPerPixel =
-                    CPLGetXMLValue(psIter, "units-per-pixel", NULL);
-                if (pszUnitsPerPixel == NULL)
-                    return NULL;
-                dfPixelSize = CPLAtofM(pszUnitsPerPixel);
             }
+            const char* pszUnitsPerPixel =
+                CPLGetXMLValue(psIter, "units-per-pixel", NULL);
+            if (pszUnitsPerPixel == NULL)
+                return NULL;
+            dfPixelSize = CPLAtofM(pszUnitsPerPixel);
+
             nLevelCount++;
         }
     }
@@ -318,8 +317,8 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     if (nLevelCount == 0 || osURL.size() == 0)
         return NULL;
 
-    int nTileCountX = (int)((dfMaxX - dfMinX) / dfPixelSize / nTileWidth + 0.1);
-    int nTileCountY = (int)((dfMaxY - dfMinY) / dfPixelSize / nTileHeight + 0.1);
+    int nXSize = (int)((dfMaxX - dfMinX) / dfPixelSize + 0.5);
+    int nYSize = (int)((dfMaxY - dfMinY) / dfPixelSize + 0.5);
 
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
@@ -333,8 +332,8 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
             "    <LowerRightX>%s</LowerRightX>\n"
             "    <LowerRightY>%s</LowerRightY>\n"
             "    <TileLevel>%d</TileLevel>\n"
-            "    <TileCountX>%d</TileCountX>\n"
-            "    <TileCountY>%d</TileCountY>\n"
+            "    <SizeX>%d</SizeX>\n"
+            "    <SizeY>%d</SizeY>\n"
             "  </DataWindow>\n"
             "  <Projection>%s</Projection>\n"
             "  <BlockSizeX>%d</BlockSizeX>\n"
@@ -345,7 +344,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
             pszTileFormat,
             pszMinX, pszMaxY, pszMaxX, pszMinY,
             nLevelCount - 1,
-            nTileCountX, nTileCountY,
+            nXSize, nYSize,
             pszSRS,
             nTileWidth, nTileHeight, 3);
     CPLDebug("WMS", "Opening TMS :\n%s", osXML.c_str());
@@ -553,7 +552,7 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<TileMapService version=\"1.0.0\">") != NULL)
+             strstr(pabyHeader, "<TileMapService version=\"1.0.0\"") != NULL)
     {
         return TRUE;
     }
@@ -657,7 +656,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLDestroyXMLNode( psXML );
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<TileMapService version=\"1.0.0\">") != NULL)
+             strstr(pabyHeader, "<TileMapService version=\"1.0.0\"") != NULL)
     {
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
         if (psXML == NULL)
