@@ -32,7 +32,9 @@ http://210.69.84.29:80/liteview6.5/servlet/MapGuideLiteView?SERVICE=WMS         
 http://geodata.epa.gov:80/wmsconnector/com.esri.wms.Esrimap/WasteWaterImage?SERVICE=WMS                     # EPSG:NONE
 http://map.ngdc.noaa.gov:80/wmsconnector/com.esri.wms.Esrimap/basicworld?SERVICE=WMS                        # EPSG:NONE
 http://neowms.sci.gsfc.nasa.gov/wms/wms?SERVICE=WMS                                                         # SRS only defined in top layer
+http://www.cubewerx.com/demo/cubeserv/cubeserv.cgi?SERVICE=WMS
 
 WMTS:
 http://maps.opengeo.org/geowebcache/service/wmts?REQUEST=getcapabilities
 http://v2.suite.opengeo.org/geoserver/gwc/service/wmts?REQUEST=getcapabilities
+http://www.cubewerx.com/demo/cubeserv/cubeserv.cgi?SERVICE=WMTS&REQUEST=getcapabilities
