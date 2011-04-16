@@ -42,6 +42,14 @@ analysis based on topological relationships of the parts of the polygons so
 that the resulting polygons are correctly
 defined in the OGC Simple Feature convention. </p>
 
+<p>An attempt is made to read the LDID/codepage setting from the .dbf file 
+and use it to translate string fields to UTF-8 on read, and back when writing.
+LDID "87 / 0x57" is treated as ISO8859_1 which may not be appropriate.  
+The SHAPE_ENCODING <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">
+configuration option</a> may be used to override the encoding interpretation
+of the shapefile with any encoding supported by CPLRecode or to "" to avoid
+any recoding. (Recoding support is new for GDAL/OGR 1.9.0)</p>
+
 <h2>Spatial and Attribute Indexing</h2>
 
 <p>The OGR Shapefile driver supports spatial indexing and a limited form of
@@ -181,6 +189,10 @@ NULL for a simple .dbf file with no .shp file,
  POINT, ARC, POLYGON or MULTIPOINT for 2D, or 
 POINTZ, ARCZ, POLYGONZ or MULTIPOINTZ for 3D.  Shapefiles with <i>measure</i>
 values are not supported, nor are MULTIPATCH files.</li>
+
+<li> <b>ENCODING=</b><i>value</i>: set the encoding value in the DBF file. The
+default value is "LDID/87".  It is not clear what other values may be
+appropriate.</li>
 </ul>
 
 <h3>Examples</h3>

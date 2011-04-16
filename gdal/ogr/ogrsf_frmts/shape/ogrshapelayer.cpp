@@ -76,6 +76,22 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
                                            hSHP, hDBF );
 
     eRequestedGeomType = eReqType;
+
+    
+    if( hDBF != NULL && hDBF->pszCodePage != NULL )
+    {
+        CPLDebug( "Shape", "DBF Codepage = %s for %s", 
+                  hDBF->pszCodePage, pszName );
+
+        // Not too sure about this, but it seems like better than nothing.
+        osEncoding = ConvertCodePage( hDBF->pszCodePage );
+    }
+    
+    if( CPLGetConfigOption( "SHAPE_ENCODING", NULL ) != NULL )
+        osEncoding = CPLGetConfigOption( "SHAPE_ENCODING", "" );
+
+    if( osEncoding != "" )
+        CPLDebug( "Shape", "Treating as encoding '%s'.", osEncoding.c_str() );
 }
 
 /************************************************************************/
@@ -111,6 +127,103 @@ OGRShapeLayer::~OGRShapeLayer()
 
     if( fpQIX != NULL )
         VSIFClose( fpQIX );
+}
+
+/************************************************************************/
+/*                          ConvertCodePage()                           */
+/************************************************************************/
+
+CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
+
+{
+    CPLString osEncoding;
+
+    if( pszCodePage == NULL )
+        return osEncoding;
+
+    if( EQUALN(pszCodePage,"LDID/",5) )
+    {
+        int nCP = -1; // windows code page. 
+
+        //http://www.autopark.ru/ASBProgrammerGuide/DBFSTRUC.HTM
+        switch( atoi(pszCodePage+5) )
+        {
+          case 1: nCP = 437;      break;
+          case 2: nCP = 850;      break;
+          case 3: nCP = 1252;     break;
+          case 4: nCP = 10000;    break;
+          case 8: nCP = 865;      break;
+          case 10: nCP = 850;     break;
+          case 11: nCP = 437;     break;
+          case 13: nCP = 437;     break;
+          case 14: nCP = 850;     break;
+          case 15: nCP = 437;     break;
+          case 16: nCP = 850;     break;
+          case 17: nCP = 437;     break;
+          case 18: nCP = 850;     break;
+          case 19: nCP = 932;     break;
+          case 20: nCP = 850;     break;
+          case 21: nCP = 437;     break;
+          case 22: nCP = 850;     break;
+          case 23: nCP = 865;     break;
+          case 24: nCP = 437;     break;
+          case 25: nCP = 437;     break;
+          case 26: nCP = 850;     break;
+          case 27: nCP = 437;     break;
+          case 28: nCP = 863;     break;
+          case 29: nCP = 850;     break;
+          case 31: nCP = 852;     break;
+          case 34: nCP = 852;     break;
+          case 35: nCP = 852;     break;
+          case 36: nCP = 860;     break;
+          case 37: nCP = 850;     break;
+          case 38: nCP = 866;     break;
+          case 55: nCP = 850;     break;
+          case 64: nCP = 852;     break;
+          case 77: nCP = 936;     break;
+          case 78: nCP = 949;     break;
+          case 79: nCP = 950;     break;
+          case 80: nCP = 874;     break;
+          case 87: return CPL_ENC_ISO8859_1;
+          case 88: nCP = 1252;     break;
+          case 89: nCP = 1252;     break;
+          case 100: nCP = 852;     break;
+          case 101: nCP = 866;     break;
+          case 102: nCP = 865;     break;
+          case 103: nCP = 861;     break;
+          case 104: nCP = 895;     break;
+          case 105: nCP = 620;     break;
+          case 106: nCP = 737;     break;
+          case 107: nCP = 857;     break;
+          case 108: nCP = 863;     break;
+          case 120: nCP = 950;     break;
+          case 121: nCP = 949;     break;
+          case 122: nCP = 936;     break;
+          case 123: nCP = 932;     break;
+          case 124: nCP = 874;     break;
+          case 134: nCP = 737;     break;
+          case 135: nCP = 852;     break;
+          case 136: nCP = 857;     break;
+          case 150: nCP = 10007;   break;
+          case 151: nCP = 10029;   break;
+          case 200: nCP = 1250;    break;
+          case 201: nCP = 1251;    break;
+          case 202: nCP = 1254;    break;
+          case 203: nCP = 1253;    break;
+          case 204: nCP = 1257;    break;
+          default: break;
+        }
+
+        if( nCP != -1 )
+        {
+            osEncoding.Printf( "CP%d", nCP );
+            return osEncoding;
+        }
+    }
+
+    // What values will we see in CPG files?
+
+    return osEncoding;
 }
 
 /************************************************************************/
@@ -295,7 +408,7 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
             || psShape->nSHPType == SHPT_NULL )
         {
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                           iShapeId, psShape );
+                                           iShapeId, psShape, osEncoding );
         }
         else if( m_sFilterEnvelope.MaxX < psShape->dfXMin 
                  || m_sFilterEnvelope.MaxY < psShape->dfYMin
@@ -308,13 +421,13 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
         else 
         {
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                           iShapeId, psShape );
+                                           iShapeId, psShape, osEncoding );
         }                
     } 
     else 
     {
         poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                       iShapeId, NULL );
+                                       iShapeId, NULL, osEncoding );
     }    
     
     return poFeature;
@@ -409,7 +522,8 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 
 {
     OGRFeature *poFeature = NULL;
-    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId, NULL);
+    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId, NULL,
+                                   osEncoding );
 
     if( poFeature != NULL )
     {
@@ -433,22 +547,23 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 /*                             SetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
+    OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 
-{
-    if( !bUpdateAccess )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-            "The SetFeature() operation is not permitted on a read-only shapefile." );
-        return OGRERR_FAILURE;
+        if( !bUpdateAccess )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "The SetFeature() operation is not permitted on a read-only shapefile." );
+            return OGRERR_FAILURE;
+        }
+
+        bHeaderDirty = TRUE;
+        if( CheckForQIX() )
+            DropSpatialIndex();
+
+        return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
+                                   osEncoding );
     }
-
-    bHeaderDirty = TRUE;
-    if( CheckForQIX() )
-        DropSpatialIndex();
-
-    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
-}
 
 /************************************************************************/
 /*                           DeleteFeature()                            */
@@ -460,7 +575,7 @@ OGRErr OGRShapeLayer::DeleteFeature( long nFID )
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-            "The DeleteFeature() operation is not permitted on a read-only shapefile." );
+                  "The DeleteFeature() operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
 
@@ -513,7 +628,7 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-            "The CreateFeature() operation is not permitted on a read-only shapefile." );
+                  "The CreateFeature() operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
 
@@ -587,7 +702,8 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
         }
     }
     
-    eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
+    eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature, 
+                               osEncoding );
 
     if( hSHP != NULL )
         nTotalShapeCount = hSHP->nRecords;
@@ -713,7 +829,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     size_t nNameSize = strlen( poFieldDefn->GetNameRef() );
     pszTmp = CPLScanString( poFieldDefn->GetNameRef(),
-                                     MIN( nNameSize, 10) , TRUE, TRUE);
+                            MIN( nNameSize, 10) , TRUE, TRUE);
     strncpy(szNewFieldName, pszTmp, 10);
     szNewFieldName[10] = '\0';
 
@@ -1111,7 +1227,7 @@ OGRErr OGRShapeLayer::Repack()
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-            "The REPACK operation is not permitted on a read-only shapefile." );
+                  "The REPACK operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
     
@@ -1393,14 +1509,14 @@ OGRErr OGRShapeLayer::RecomputeExtent()
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-            "The RECOMPUTE EXTENT operation is not permitted on a read-only shapefile." );
+                  "The RECOMPUTE EXTENT operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
     
     if( hSHP == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-            "The RECOMPUTE EXTENT operation is not permitted on a layer without .SHP file." );
+                  "The RECOMPUTE EXTENT operation is not permitted on a layer without .SHP file." );
         return OGRERR_FAILURE;
     }
     

@@ -34,9 +34,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-import ogr
-import osr
-import gdal
+from osgeo import ogr, osr, gdal
 
 ###############################################################################
 # Open Shapefile 
@@ -1987,6 +1985,31 @@ def ogr_shape_48():
     return 'success'
     
 ###############################################################################
+# Test that we can read at an LDID/87 file and recode to UTF-8.
+
+def ogr_shape_49():
+
+    ds = ogr.Open( 'data/facility_surface_dd.dbf')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetFeature( 91 )
+
+    name = feat.GetField('NAME')
+
+    # Setup the utf-8 string.
+    if sys.version_info >= (3,0,0):
+        gdaltest.exp_name = 'OSEBERG S\u00D8R'
+    else:
+        exec("gdaltest.exp_name =  u'OSEBERG S\u00D8R'")
+        gdaltest.exp_name = gdaltest.exp_name.encode('utf-8')
+
+    if name != gdaltest.exp_name:
+        gdaltest.post_reason( 'Did not get expected name, encoding problems?' )
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -2057,7 +2080,10 @@ gdaltest_list = [
     ogr_shape_46,
     ogr_shape_47,
     ogr_shape_48,
+    ogr_shape_49,
     ogr_shape_cleanup ]
+
+gdaltest_list = [ogr_shape_49]
 
 if __name__ == '__main__':
 

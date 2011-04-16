@@ -954,7 +954,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
 
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                OGRFeatureDefn * poDefn, int iShape,
-                               SHPObject *psShape )
+                               SHPObject *psShape, const char *pszSHPEncoding )
 
 {
     if( iShape < 0 
@@ -1013,10 +1013,20 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         switch( poDefn->GetFieldDefn(iField)->GetType() )
         {
           case OFTString:
-            poFeature->SetField( iField,
-                                 DBFReadStringAttribute( hDBF, iShape,
-                                                         iField ) );
-            break;
+          {
+              const char *pszFieldVal = 
+                  DBFReadStringAttribute( hDBF, iShape, iField );
+              if( strlen(pszSHPEncoding) > 0 )
+              {
+                  char *pszUTF8Field = CPLRecode( pszFieldVal, 
+                                                  pszSHPEncoding, CPL_ENC_UTF8);
+                  poFeature->SetField( iField, pszUTF8Field );
+                  CPLFree( pszUTF8Field );
+              }
+              else
+                  poFeature->SetField( iField, pszFieldVal );
+          }
+          break;
 
           case OFTInteger:
             poFeature->SetField( iField,
@@ -1077,7 +1087,8 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn * poDefn, 
-                           OGRFeature * poFeature )
+                           OGRFeature * poFeature,
+                           const char *pszSHPEncoding )
 
 {
 #ifdef notdef
@@ -1163,9 +1174,21 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         switch( poDefn->GetFieldDefn(iField)->GetType() )
         {
           case OFTString:
-            DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField, 
-                                     poFeature->GetFieldAsString( iField ));
-            break;
+          {
+              const char *pszStr = poFeature->GetFieldAsString(iField);
+              if( strlen(pszSHPEncoding) > 0 )
+              {
+                  char *pszEncoded = 
+                      CPLRecode( pszStr, CPL_ENC_UTF8, pszSHPEncoding );
+                  DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField,
+                                           pszEncoded );
+                  CPLFree( pszEncoded );
+              }
+              else
+                  DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField, 
+                                           pszStr );
+          }
+          break;
 
           case OFTInteger:
             DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
