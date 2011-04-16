@@ -1491,6 +1491,12 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
         GDALRasterBand *poBand = GetRasterBand(panBandMap[iBandIndex]);
         GByte *pabyBandData;
 
+        if (poBand == NULL)
+        {
+            eErr = CE_Failure;
+            break;
+        }
+
         pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
         
         eErr = poBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
