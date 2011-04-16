@@ -451,6 +451,8 @@ void GDALWMSMetaDataset::ParseWMSCTileSets(CPLXMLNode* psXML)
             const char* pszFormat = CPLGetXMLValue( psIter, "Format", NULL );
             if (pszFormat == NULL)
                 continue;
+            if (strstr(pszFormat, "kml"))
+                continue;
 
             const char* pszTileWidth = CPLGetXMLValue(psIter, "Width", NULL);
             const char* pszTileHeight = CPLGetXMLValue(psIter, "Height", NULL);
@@ -485,6 +487,14 @@ void GDALWMSMetaDataset::ParseWMSCTileSets(CPLXMLNode* psXML)
 
             const char* pszStyles = CPLGetXMLValue(psIter, "Styles", "");
 
+            /* http://demo.opengeo.org/geoserver/gwc/service/wms?tiled=TRUE&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities */
+            /* has different variations of formats for the same (formats, SRS) tuple, so just */
+            /* keep the first one which is a png format */
+            WMSCKeyType oWMSCKey(pszLayers, pszSRS);
+            std::map<WMSCKeyType, WMSCTileSetDesc>::iterator oIter = osMapWMSCTileSet.find(oWMSCKey);
+            if (oIter != osMapWMSCTileSet.end())
+                continue;
+
             WMSCTileSetDesc oWMSCTileSet;
             oWMSCTileSet.osLayers = pszLayers;
             oWMSCTileSet.osSRS = pszSRS;
@@ -503,7 +513,7 @@ void GDALWMSMetaDataset::ParseWMSCTileSets(CPLXMLNode* psXML)
             oWMSCTileSet.nTileWidth = nTileWidth;
             oWMSCTileSet.nTileHeight = nTileHeight;
 
-            osMapWMSCTileSet[ WMSCKeyType(pszLayers, pszSRS) ] = oWMSCTileSet;
+            osMapWMSCTileSet[oWMSCKey] = oWMSCTileSet;
         }
     }
 }
