@@ -527,11 +527,19 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         hSHP = NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Has a specific LDID been specified by the caller?               */
+/* -------------------------------------------------------------------- */
+    const char *pszLDID = CSLFetchNameValue( papszOptions, "ENCODING" );
+
+/* -------------------------------------------------------------------- */
 /*      Create a DBF file.                                              */
 /* -------------------------------------------------------------------- */
     pszFilename = CPLStrdup(CPLFormFilename( NULL, pszBasename, "dbf" ));
-    
-    hDBF = DBFCreate( pszFilename );
+
+    if( pszLDID != NULL )
+        hDBF = DBFCreateEx( pszFilename, pszLDID );
+    else
+        hDBF = DBFCreate( pszFilename );
 
     if( hDBF == NULL )
     {
