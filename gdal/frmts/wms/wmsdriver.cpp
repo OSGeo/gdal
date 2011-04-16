@@ -157,6 +157,8 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
         }
     }
 
+    char* pszEscapedURL = CPLEscapeString(osBaseURL.c_str(), -1, CPLES_XML);
+
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
             "  <Service name=\"WMS\">\n"
@@ -181,7 +183,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             "  <OverviewCount>%d</OverviewCount>\n"
             "</GDAL_WMS>\n",
             osVersion.c_str(),
-            osBaseURL.c_str(),
+            pszEscapedURL,
             osLayer.c_str(),
             osSRS.c_str(),
             osFormat.c_str(),
@@ -191,6 +193,8 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             (bTransparent) ? 4 : 3,
             nTileSize, nTileSize,
             nOverviewCount);
+
+    CPLFree(pszEscapedURL);
 
     CSLDestroy(papszTokens);
 
@@ -320,6 +324,8 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     int nXSize = (int)((dfMaxX - dfMinX) / dfPixelSize + 0.5);
     int nYSize = (int)((dfMaxY - dfMinY) / dfPixelSize + 0.5);
 
+    char* pszEscapedURL = CPLEscapeString(osURL.c_str(), -1, CPLES_XML);
+    
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
             "  <Service name=\"TMS\">\n"
@@ -340,7 +346,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
             "  <BlockSizeY>%d</BlockSizeY>\n"
             "  <BandsCount>%d</BandsCount>\n"
             "</GDAL_WMS>\n",
-            osURL.c_str(),
+            pszEscapedURL,
             pszTileFormat,
             pszMinX, pszMaxY, pszMaxX, pszMinY,
             nLevelCount - 1,
@@ -348,6 +354,8 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
             pszSRS,
             nTileWidth, nTileHeight, 3);
     CPLDebug("WMS", "Opening TMS :\n%s", osXML.c_str());
+
+    CPLFree(pszEscapedURL);
 
     return CPLParseXMLString(osXML);
 }
