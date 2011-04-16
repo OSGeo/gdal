@@ -178,12 +178,15 @@ cutline datasource.</dd>
 
 Mosaicing into an existing output file is supported if the output file 
 already exists. The spatial extent of the existing file will not
-be modified to accomodate new data, so you may have to remove it in that case.
+be modified to accomodate new data, so you may have to remove it in that case, or
+use the -overwrite option.
 
-Polygon cutlines may be used to restrict the the area of the destination file 
+Polygon cutlines may be used as a mask to restrict the area of the destination file
 that may be updated, including blending.  If the OGR layer containing the cutline
 features has no explicit SRS, the cutline features must be in the georeferenced
-units of the destination file.
+units of the destination file. When outputing to a not yet existing target dataset,
+its extent will be the one of the original raster unless -te or -crop_to_cutline are
+specified.
 
 <p>
 \section wexample EXAMPLE
@@ -226,7 +229,7 @@ static void Usage()
         "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n" 
         "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-cutline datasource] [-cl layer] [-cwhere expression]\n"
-        "    [-csql statement] [-cblend dist_in_pixels]\n"
+        "    [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* [-overwrite]\n"
         "    srcfile* dstfile\n"
         "\n"
