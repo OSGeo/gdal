@@ -356,8 +356,9 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
     if (psSRS == NULL)
     {
         psSRS = CPLGetXMLNode( psXML, "LatLonBoundingBox" );
-        if (psSRS)
-            pszSRSLocal = "EPSG:4326";
+        pszSRSLocal = CPLGetXMLValue(psXML, "SRS", NULL);
+        if (pszSRSLocal == NULL)
+            pszSRSLocal = "EPSG:NONE";
     }
     else
         pszSRSLocal = CPLGetXMLValue(psSRS, "SRS", NULL);
