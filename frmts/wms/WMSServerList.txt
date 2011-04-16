@@ -1,0 +1,19 @@
+TMS:
+http://maps.opengeo.org/geowebcache/service/tms/1.0.0
+http://demo.opengeo.org/geoserver/gwc/service/tms/1.0.0
+http://apps.esdi-humboldt.cz/cgi-bin/tilecache/tilecache.cgi/1.0.0
+http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0
+
+WMS-C:
+http://maps.opengeo.org/geowebcache/service/wms?SERVICE=WMS&TILED=true
+http://demo.opengeo.org/geoserver/gwc/service/wms?SERVICE=WMS&TILED=true
+http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0?SERVICE=WMS
+http://wmsc1.terrapages.net/getpngmap?SERVICE=WMS
+
+Regular WMS:
+http://maps.opengeo.org/geowebcache/service/wms?SERVICE=WMS
+http://demo.opengeo.org/geoserver/gwc/service/wms?SERVICE=WMS
+http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS
+
+WMTS:
+http://maps.opengeo.org/geowebcache/service/wmts?REQUEST=getcapabilities
