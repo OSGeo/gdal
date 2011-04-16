@@ -264,6 +264,68 @@ void GDALWMSMetaDataset::AddSubDataset( const char* pszLayerName,
     }
 }
 
+
+/************************************************************************/
+/*                         AddWMSCSubDataset()                          */
+/************************************************************************/
+
+void GDALWMSMetaDataset::AddWMSCSubDataset(WMSCTileSetDesc& oWMSCTileSetDesc,
+                                          const char* pszTitle,
+                                          CPLString osTransparent)
+{
+    CPLString osSubdatasetName = "WMS:";
+    osSubdatasetName += osGetURL;
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SERVICE", "WMS");
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "VERSION", "1.1.1");
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "REQUEST", "GetMap");
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "LAYERS", oWMSCTileSetDesc.osLayers);
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SRS", oWMSCTileSetDesc.osSRS);
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "BBOX",
+             CPLSPrintf("%s,%s,%s,%s", oWMSCTileSetDesc.osMinX.c_str(),
+                                       oWMSCTileSetDesc.osMinY.c_str(),
+                                       oWMSCTileSetDesc.osMaxX.c_str(),
+                                       oWMSCTileSetDesc.osMaxY.c_str()));
+
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "FORMAT", oWMSCTileSetDesc.osFormat);
+    if (osTransparent.size() != 0)
+        osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "TRANSPARENT",
+                                        osTransparent);
+    if (oWMSCTileSetDesc.nTileWidth != oWMSCTileSetDesc.nTileHeight)
+        CPLDebug("WMS", "Weird: nTileWidth != nTileHeight for %s",
+                 oWMSCTileSetDesc.osLayers.c_str());
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "TILESIZE",
+                                    CPLSPrintf("%d", oWMSCTileSetDesc.nTileWidth));
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "OVERVIEWCOUNT",
+                                    CPLSPrintf("%d", oWMSCTileSetDesc.nResolutions - 1));
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "MINRESOLUTION",
+                                    CPLSPrintf("%.16f", oWMSCTileSetDesc.dfMinResolution));
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "TILED", "true");
+
+    if (pszTitle)
+    {
+        if (osXMLEncoding.size() != 0 &&
+            osXMLEncoding != "utf-8" &&
+            osXMLEncoding != "UTF-8")
+        {
+            char* pszRecodedTitle = CPLRecode(pszTitle, osXMLEncoding.c_str(),
+                                              CPL_ENC_UTF8);
+            if (pszRecodedTitle)
+                AddSubDataset(osSubdatasetName, pszRecodedTitle);
+            else
+                AddSubDataset(osSubdatasetName, pszTitle);
+            CPLFree(pszRecodedTitle);
+        }
+        else
+        {
+            AddSubDataset(osSubdatasetName, pszTitle);
+        }
+    }
+    else
+    {
+        AddSubDataset(osSubdatasetName, oWMSCTileSetDesc.osLayers);
+    }
+}
+
 /************************************************************************/
 /*                             ExploreLayer()                           */
 /************************************************************************/
@@ -327,9 +389,18 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
                 osLocalTransparent = "FALSE";
         }
 
-        AddSubDataset(pszName, pszTitle, pszAbstract,
-                      pszSRS, pszMinX, pszMinY,
-                      pszMaxX, pszMaxY, osFormat, osLocalTransparent);
+        WMSCKeyType oWMSCKey(pszName, pszSRS);
+        std::map<WMSCKeyType, WMSCTileSetDesc>::iterator oIter = osMapWMSCTileSet.find(oWMSCKey);
+        if (oIter != osMapWMSCTileSet.end())
+        {
+            AddWMSCSubDataset(oIter->second, pszTitle, osLocalTransparent);
+        }
+        else
+        {
+            AddSubDataset(pszName, pszTitle, pszAbstract,
+                          pszSRS, pszMinX, pszMinY,
+                          pszMaxX, pszMaxY, osFormat, osLocalTransparent);
+        }
     }
 
     CPLXMLNode* psIter = psXML->psChild;
@@ -340,6 +411,99 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
             if (EQUAL(psIter->pszValue, "Layer"))
                 ExploreLayer(psIter, osFormat, osTransparent,
                              pszSRS, pszMinX, pszMinY, pszMaxX, pszMaxY);
+        }
+    }
+}
+
+/************************************************************************/
+/*                         ParseWMSCTileSets()                          */
+/************************************************************************/
+
+void GDALWMSMetaDataset::ParseWMSCTileSets(CPLXMLNode* psXML)
+{
+    CPLXMLNode* psIter = psXML->psChild;
+    for(;psIter;psIter = psIter->psNext)
+    {
+        if (psIter->eType == CXT_Element && EQUAL(psIter->pszValue, "TileSet"))
+        {
+            const char* pszSRS = CPLGetXMLValue(psIter, "SRS", NULL);
+            if (pszSRS == NULL)
+                continue;
+
+            CPLXMLNode* psBoundingBox = CPLGetXMLNode( psIter, "BoundingBox" );
+            if (psBoundingBox == NULL)
+                continue;
+
+            const char* pszMinX = CPLGetXMLValue(psBoundingBox, "minx", NULL);
+            const char* pszMinY = CPLGetXMLValue(psBoundingBox, "miny", NULL);
+            const char* pszMaxX = CPLGetXMLValue(psBoundingBox, "maxx", NULL);
+            const char* pszMaxY = CPLGetXMLValue(psBoundingBox, "maxy", NULL);
+            if (pszMinX == NULL || pszMinY == NULL || pszMaxX == NULL || pszMaxY == NULL)
+                continue;
+
+            double dfMinX = CPLAtofM(pszMinX);
+            double dfMinY = CPLAtofM(pszMinY);
+            double dfMaxX = CPLAtofM(pszMaxX);
+            double dfMaxY = CPLAtofM(pszMaxY);
+            if (dfMaxY <= dfMinY || dfMaxX <= dfMinX)
+                continue;
+
+            const char* pszFormat = CPLGetXMLValue( psIter, "Format", NULL );
+            if (pszFormat == NULL)
+                continue;
+
+            const char* pszTileWidth = CPLGetXMLValue(psIter, "Width", NULL);
+            const char* pszTileHeight = CPLGetXMLValue(psIter, "Height", NULL);
+            if (pszTileWidth == NULL || pszTileHeight == NULL)
+                continue;
+
+            int nTileWidth = atoi(pszTileWidth);
+            int nTileHeight = atoi(pszTileHeight);
+            if (nTileWidth < 128 || nTileHeight < 128)
+                continue;
+
+            const char* pszLayers = CPLGetXMLValue(psIter, "Layers", NULL);
+            if (pszLayers == NULL)
+                continue;
+
+            const char* pszResolutions = CPLGetXMLValue(psIter, "Resolutions", NULL);
+            if (pszResolutions == NULL)
+                continue;
+            char** papszTokens = CSLTokenizeStringComplex(pszResolutions, " ", 0, 0);
+            double dfMinResolution = 0;
+            int i;
+            for(i=0; papszTokens && papszTokens[i]; i++)
+            {
+                double dfResolution = CPLAtofM(papszTokens[i]);
+                if (i==0 || dfResolution < dfMinResolution)
+                    dfMinResolution = dfResolution;
+            }
+            CSLDestroy(papszTokens);
+            int nResolutions = i;
+            if (nResolutions == 0)
+                continue;
+
+            const char* pszStyles = CPLGetXMLValue(psIter, "Styles", "");
+
+            WMSCTileSetDesc oWMSCTileSet;
+            oWMSCTileSet.osLayers = pszLayers;
+            oWMSCTileSet.osSRS = pszSRS;
+            oWMSCTileSet.osMinX = pszMinX;
+            oWMSCTileSet.osMinY = pszMinY;
+            oWMSCTileSet.osMaxX = pszMaxX;
+            oWMSCTileSet.osMaxY = pszMaxY;
+            oWMSCTileSet.dfMinX = dfMinX;
+            oWMSCTileSet.dfMinY = dfMinY;
+            oWMSCTileSet.dfMaxX = dfMaxX;
+            oWMSCTileSet.dfMaxY = dfMaxY;
+            oWMSCTileSet.nResolutions = nResolutions;
+            oWMSCTileSet.dfMinResolution = dfMinResolution;
+            oWMSCTileSet.osFormat = pszFormat;
+            oWMSCTileSet.osStyle = pszStyles;
+            oWMSCTileSet.nTileWidth = nTileWidth;
+            oWMSCTileSet.nTileHeight = nTileHeight;
+
+            osMapWMSCTileSet[ WMSCKeyType(pszLayers, pszSRS) ] = oWMSCTileSet;
         }
     }
 }
@@ -378,9 +542,14 @@ GDALDataset* GDALWMSMetaDataset::AnalyzeGetCapabilities(CPLXMLNode* psXML,
     if (psLayer == NULL)
         return NULL;
 
+    CPLXMLNode* psVendorSpecificCapabilities =
+        CPLGetXMLNode(psCapability, "VendorSpecificCapabilities");
+
     GDALWMSMetaDataset* poDS = new GDALWMSMetaDataset();
     poDS->osGetURL = pszGetURL;
     poDS->osXMLEncoding = pszEncoding ? pszEncoding : "";
+    if (psVendorSpecificCapabilities)
+        poDS->ParseWMSCTileSets(psVendorSpecificCapabilities);
     poDS->ExploreLayer(psLayer, osFormat, osTransparent);
 
     return poDS;
