@@ -252,9 +252,11 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                 do
                 {
                     chNext = ReadChar( psContext );
+                    if (chNext == ']')
+                        break;
                     AddToToken( psContext, chNext );
                 }
-                while( chNext != ']' && chNext != '\0'
+                while( chNext != '\0'
                     && !EQUALN(psContext->pszInput+psContext->nInputOffset,"]>", 2) );
                     
                 if (chNext == '\0')
@@ -266,11 +268,14 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                     break;
                 }
 
-                chNext = ReadChar( psContext );
-                AddToToken( psContext, chNext );
+                if (chNext != ']')
+                {
+                    chNext = ReadChar( psContext );
+                    AddToToken( psContext, chNext );
 
-                // Skip ">" character, will be consumed below
-                chNext = ReadChar( psContext );
+                    // Skip ">" character, will be consumed below
+                    chNext = ReadChar( psContext );
+                }
             }
 
 
