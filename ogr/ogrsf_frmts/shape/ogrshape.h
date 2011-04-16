@@ -39,13 +39,13 @@
 /* ==================================================================== */
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                OGRFeatureDefn * poDefn, int iShape, 
-                               SHPObject *psShape );
+                               SHPObject *psShape, const char *pszSHPEncoding );
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape );
 OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF );
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn *poFeatureDefn,
-                           OGRFeature *poFeature );
+                           OGRFeature *poFeature, const char *pszSHPEncoding );
 
 /************************************************************************/
 /*                            OGRShapeLayer                             */
@@ -82,6 +82,9 @@ class OGRShapeLayer : public OGRLayer
     int                 CheckForQIX();
 
     int                 bSbnSbxDeleted;
+
+    CPLString           ConvertCodePage( const char * );
+    CPLString           osEncoding;
 
   public:
     OGRErr              CreateSpatialIndex( int nMaxDepth );
