@@ -350,6 +350,18 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
         {
             if (EQUAL(poDS->GetDriver()->GetName(), "MYSQL"))
                 osSQL.Printf("SELECT COUNT(*) FROM `%s`", pszLayerName);
+            else if (EQUAL(poDS->GetDriver()->GetName(), "PostgreSQL") &&
+                     strchr(pszLayerName, '.'))
+            {
+                char** papszTokens = CSLTokenizeStringComplex(pszLayerName, ".", 0, 0);
+                if (CSLCount(papszTokens) == 2)
+                {
+                    osSQL.Printf("SELECT COUNT(*) FROM \"%s\".\"%s\"", papszTokens[0], papszTokens[1]);
+                }
+                else
+                    osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", pszLayerName);
+                CSLDestroy(papszTokens);
+            }
             else
                 osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", pszLayerName);
         }
@@ -425,6 +437,8 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
                 "       have returned a different feature than sequential\n"
                 "       reading indicates should have happened.\n",
                 papoFeatures[1]->GetFID() );
+        poFeature->DumpReadable(stdout);
+        papoFeatures[1]->DumpReadable(stdout);
 
         goto end;
     }
@@ -854,7 +868,7 @@ static int TestSpatialFilter( OGRLayer *poLayer )
 /*      filter that doesn't include this feature, and test again.       */
 /************************************************************************/
 
-static int TestAttributeFilter( OGRLayer *poLayer )
+static int TestAttributeFilter( OGRDataSource* poDS, OGRLayer *poLayer )
 
 {
     int bRet = TRUE;
@@ -903,7 +917,14 @@ static int TestAttributeFilter( OGRLayer *poLayer )
 /*      Construct inclusive filter.                                     */
 /* -------------------------------------------------------------------- */
 
-    if (strchr(pszFieldName, ' '))
+    if (EQUAL(poDS->GetDriver()->GetName(), "PostgreSQL") &&
+        (strchr(pszFieldName, '_') || strchr(pszFieldName, ' ')))
+    {
+        osAttributeFilter = "\"";
+        osAttributeFilter += pszFieldName;
+        osAttributeFilter += "\"";
+    }
+    else if (strchr(pszFieldName, ' '))
     {
         osAttributeFilter = "'";
         osAttributeFilter += pszFieldName;
@@ -954,7 +975,14 @@ static int TestAttributeFilter( OGRLayer *poLayer )
 /* -------------------------------------------------------------------- */
 /*      Construct exclusive filter.                                     */
 /* -------------------------------------------------------------------- */
-    if (strchr(pszFieldName, ' '))
+    if (EQUAL(poDS->GetDriver()->GetName(), "PostgreSQL") &&
+        (strchr(pszFieldName, '_') || strchr(pszFieldName, ' ')))
+    {
+        osAttributeFilter = "\"";
+        osAttributeFilter += pszFieldName;
+        osAttributeFilter += "\"";
+    }
+    else if (strchr(pszFieldName, ' '))
     {
         osAttributeFilter = "'";
         osAttributeFilter += pszFieldName;
@@ -1160,7 +1188,7 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
 /* -------------------------------------------------------------------- */
 /*      Test attribute filtering                                        */
 /* -------------------------------------------------------------------- */
-    bRet &= TestAttributeFilter( poLayer );
+    bRet &= TestAttributeFilter( poDS, poLayer );
 
 /* -------------------------------------------------------------------- */
 /*      Test random reading.                                            */
