@@ -1391,6 +1391,69 @@ void CPLVerifyConfiguration()
                   "CPLVerifyConfiguration(): byte order set wrong.\n" );
 }
 
+/* Uncomment to get list of options that have been fetched and set */
+//#define DEBUG_CONFIG_OPTIONS
+
+#ifdef DEBUG_CONFIG_OPTIONS
+
+#include <set>
+#include "cpl_multiproc.h"
+
+static void* hRegisterConfigurationOptionMutex = 0;
+static std::set<CPLString>* paoGetKeys = NULL;
+static std::set<CPLString>* paoSetKeys = NULL;
+
+/************************************************************************/
+/*                      CPLShowAccessedOptions()                        */
+/************************************************************************/
+
+static void CPLShowAccessedOptions()
+{
+    std::set<CPLString>::iterator aoIter;
+
+    printf("Configuration options accessed in reading : "),
+    aoIter = paoGetKeys->begin();
+    while(aoIter != paoGetKeys->end())
+    {
+        printf("%s, ", (*aoIter).c_str());
+        aoIter ++;
+    }
+    printf("\n");
+
+    printf("Configuration options accessed in writing : "),
+    aoIter = paoSetKeys->begin();
+    while(aoIter != paoSetKeys->end())
+    {
+        printf("%s, ", (*aoIter).c_str());
+        aoIter ++;
+    }
+    printf("\n");
+
+    delete paoGetKeys;
+    delete paoSetKeys;
+    paoGetKeys = paoSetKeys = NULL;
+}
+
+/************************************************************************/
+/*                       CPLAccessConfigOption()                        */
+/************************************************************************/
+
+static void CPLAccessConfigOption(const char* pszKey, int bGet)
+{
+    CPLMutexHolderD(&hRegisterConfigurationOptionMutex);
+    if (paoGetKeys == NULL)
+    {
+        paoGetKeys = new std::set<CPLString>;
+        paoSetKeys = new std::set<CPLString>;
+        atexit(CPLShowAccessedOptions);
+    }
+    if (bGet)
+        paoGetKeys->insert(pszKey);
+    else
+        paoSetKeys->insert(pszKey);
+}
+#endif
+
 /************************************************************************/
 /*                         CPLGetConfigOption()                         */
 /************************************************************************/
@@ -1412,6 +1475,10 @@ const char * CPL_STDCALL
 CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 
 {
+#ifdef DEBUG_CONFIG_OPTIONS
+    CPLAccessConfigOption(pszKey, TRUE);
+#endif
+
     const char *pszResult = NULL;
 
     char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
@@ -1466,6 +1533,9 @@ void CPL_STDCALL
 CPLSetConfigOption( const char *pszKey, const char *pszValue )
 
 {
+#ifdef DEBUG_CONFIG_OPTIONS
+    CPLAccessConfigOption(pszKey, FALSE);
+#endif
     CPLMutexHolderD( &hConfigMutex );
 
     papszConfigOptions = (volatile char **) 
@@ -1494,6 +1564,10 @@ void CPL_STDCALL
 CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
 
 {
+#ifdef DEBUG_CONFIG_OPTIONS
+    CPLAccessConfigOption(pszKey, FALSE);
+#endif
+
     char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
 
     papszTLConfigOptions = 
