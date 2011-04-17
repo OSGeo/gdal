@@ -903,7 +903,14 @@ static int TestAttributeFilter( OGRLayer *poLayer )
 /*      Construct inclusive filter.                                     */
 /* -------------------------------------------------------------------- */
 
-    osAttributeFilter = pszFieldName;
+    if (strchr(pszFieldName, ' '))
+    {
+        osAttributeFilter = "'";
+        osAttributeFilter += pszFieldName;
+        osAttributeFilter += "'";
+    }
+    else
+        osAttributeFilter = pszFieldName;
     osAttributeFilter += " = ";
     if (eType == OFTString)
         osAttributeFilter += "'";
@@ -947,7 +954,14 @@ static int TestAttributeFilter( OGRLayer *poLayer )
 /* -------------------------------------------------------------------- */
 /*      Construct exclusive filter.                                     */
 /* -------------------------------------------------------------------- */
-    osAttributeFilter = pszFieldName;
+    if (strchr(pszFieldName, ' '))
+    {
+        osAttributeFilter = "'";
+        osAttributeFilter += pszFieldName;
+        osAttributeFilter += "'";
+    }
+    else
+        osAttributeFilter = pszFieldName;
     osAttributeFilter += " <> ";
     if (eType == OFTString)
         osAttributeFilter += "'";
