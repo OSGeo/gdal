@@ -33,6 +33,7 @@
 #include "cpl_minixml.h"
 #include "cpl_http.h"
 #include "gmlutils.h"
+#include "parsexsd.h"
 
 CPL_CVSID("$Id$");
 
@@ -148,6 +149,8 @@ OGRWFSDataSource::OGRWFSDataSource()
     }
 
     bIsGEOSERVER = FALSE;
+
+    bLoadMultipleLayerDefn = CSLTestBoolean(CPLGetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "TRUE"));
 }
 
 /************************************************************************/
@@ -417,7 +420,16 @@ CPLString OGRWFSDataSource::DetectRequiredOutputFormat(CPLXMLNode* psRoot)
 
 CPLString OGRWFSDataSource::GetPostTransactionURL()
 {
-    return osPostTransactionURL.size() ? osPostTransactionURL : osBaseURL;
+    if (osPostTransactionURL.size())
+        return osPostTransactionURL;
+
+    osPostTransactionURL = osBaseURL;
+    const char* pszPostTransactionURL = osPostTransactionURL.c_str();
+    const char* pszEsperluet = strchr(pszPostTransactionURL, '?');
+    if (pszEsperluet)
+        osPostTransactionURL.resize(pszEsperluet - pszPostTransactionURL);
+
+    return osPostTransactionURL;
 }
 
 /************************************************************************/
@@ -645,9 +657,6 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             pszBaseURL += 4;
 
         osBaseURL = pszBaseURL;
-        const char* pszEsperluet = strchr(pszBaseURL, '?');
-        if (pszEsperluet)
-            osBaseURL.resize(pszEsperluet - pszBaseURL);
 
         if (strncmp(pszBaseURL, "http://", 7) != 0 &&
             strncmp(pszBaseURL, "https://", 8) != 0)
@@ -716,6 +725,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             CPLDestroyXMLNode( psXML );
             return FALSE;
         }
+        osBaseURL = pszBaseURL;
 
 /* -------------------------------------------------------------------- */
 /*      Capture other parameters.                                       */
@@ -852,6 +862,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             CPLDestroyXMLNode( psStrippedXML );
             return FALSE;
         }
+
+        osBaseURL = pszBaseURL;
     }
 
     if (osVersion.size() == 0)
@@ -880,7 +892,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 EQUAL(psKeyword->pszValue, "Keyword") &&
                 psKeyword->psChild != NULL &&
                 psKeyword->psChild->pszValue != NULL &&
-                EQUAL(psKeyword->psChild->pszValue, "GEOSERVER"))
+                EQUALN(psKeyword->psChild->pszValue, "GEOSERVER", 9))
             {
                 bIsGEOSERVER = TRUE;
                 break;
@@ -1154,6 +1166,301 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     CPLDestroyXMLNode( psStrippedXML );
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                       LoadMultipleLayerDefn()                        */
+/************************************************************************/
+
+/* TinyOWS doesn't support POST, but MapServer, GeoServer and Deegree do */
+#define USE_GET_FOR_DESCRIBE_FEATURE_TYPE 1
+
+void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
+                                             char* pszNS, char* pszNSVal)
+{
+    /*if (!bIsGEOSERVER)
+        return;*/
+
+    if (!bLoadMultipleLayerDefn)
+        return;
+
+    if (aoSetAlreadyTriedLayers.find(pszLayerName) != aoSetAlreadyTriedLayers.end())
+        return;
+
+    char* pszPrefix = CPLStrdup(pszLayerName);
+    char* pszColumn = strchr(pszPrefix, ':');
+    if (pszColumn)
+        *pszColumn = 0;
+    else
+        *pszPrefix = 0;
+
+#if USE_GET_FOR_DESCRIBE_FEATURE_TYPE == 1
+    CPLString osLayerToFetch(pszLayerName);
+#else
+    CPLString osTypeNameToPost;
+    osTypeNameToPost += "  <TypeName>";
+    osTypeNameToPost += pszLayerName;
+    osTypeNameToPost += "</TypeName>\n";
+#endif
+
+    int nLayersToFetch = 1;
+    aoSetAlreadyTriedLayers.insert(pszLayerName);
+
+    for(int i=0;i<nLayers;i++)
+    {
+        if (!papoLayers[i]->HasLayerDefn())
+        {
+            /* We must be careful to requests only layers with the same prefix/namespace */
+            const char* pszName = papoLayers[i]->GetName();
+            if ((pszPrefix[0] == 0 && strchr(pszName, ':') == NULL) ||
+                (pszPrefix[0] != 0 && strncmp(pszName, pszPrefix, strlen(pszPrefix)) == 0 &&
+                 pszName[strlen(pszPrefix)] == ':'))
+            {
+                if (aoSetAlreadyTriedLayers.find(pszName) != aoSetAlreadyTriedLayers.end())
+                    continue;
+                aoSetAlreadyTriedLayers.insert(pszName);
+
+#if USE_GET_FOR_DESCRIBE_FEATURE_TYPE == 1
+                if (nLayersToFetch > 0)
+                    osLayerToFetch += ",";
+                osLayerToFetch += papoLayers[i]->GetName();
+#else
+                osTypeNameToPost += "  <TypeName>";
+                osTypeNameToPost += pszName;
+                osTypeNameToPost += "</TypeName>\n";
+#endif
+                nLayersToFetch ++;
+
+                /* Avoid fetching to many layer definition at a time */
+                if (nLayersToFetch >= 50)
+                    break;
+            }
+        }
+    }
+
+    CPLFree(pszPrefix);
+    pszPrefix = NULL;
+
+#if USE_GET_FOR_DESCRIBE_FEATURE_TYPE == 1
+    CPLString osURL(osBaseURL);
+    osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
+    osURL = CPLURLAddKVP(osURL, "VERSION", GetVersion());
+    osURL = CPLURLAddKVP(osURL, "REQUEST", "DescribeFeatureType");
+    osURL = CPLURLAddKVP(osURL, "TYPENAME", osLayerToFetch);
+    osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
+    osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
+    osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
+    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", GetRequiredOutputFormat());
+
+    CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
+#else
+    CPLString osPost;
+    osPost += "<?xml version=\"1.0\"?>\n";
+    osPost += "<wfs:DescribeFeatureType xmlns:wfs=\"http://www.opengis.net/wfs\"\n";
+    osPost += "                 xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n";
+    osPost += "                 service=\"WFS\" version=\""; osPost += GetVersion(); osPost += "\"\n";
+    osPost += "                 xmlns:gml=\"http://www.opengis.net/gml\"\n";
+    osPost += "                 xmlns:ogc=\"http://www.opengis.net/ogc\"\n";
+    if (pszNS && pszNSVal)
+    {
+        osPost += "                 xmlns:";
+        osPost += pszNS;
+        osPost += "=\"";
+        osPost += pszNSVal;
+        osPost += "\"\n";
+    }
+    osPost += "                 xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/";
+    osPost += GetVersion();
+    osPost += "/wfs.xsd\"";
+    if (osRequiredOutputFormat.size())
+    {
+        osPost += "\n";
+        osPost += "                 outputFormat=\"";
+        osPost += osRequiredOutputFormat;
+        osPost += "\"";
+    }
+    osPost += ">\n";
+    osPost += osTypeNameToPost;
+    osPost += "</wfs:DescribeFeatureType>\n";
+
+    //CPLDebug("WFS", "%s", osPost.c_str());
+
+    char** papszOptions = NULL;
+    papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", osPost.c_str());
+    papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
+                                   "Content-Type: application/xml; charset=UTF-8");
+
+    CPLHTTPResult* psResult = HTTPFetch(GetPostTransactionURL(), papszOptions);
+    CSLDestroy(papszOptions);
+#endif
+
+    if (psResult == NULL)
+    {
+        bLoadMultipleLayerDefn = FALSE;
+        return;
+    }
+
+    if (strstr((const char*)psResult->pabyData, "<ServiceExceptionReport") != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        bLoadMultipleLayerDefn = FALSE;
+        return;
+    }
+
+    CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
+    if (psXML == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
+                psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        bLoadMultipleLayerDefn = FALSE;
+        return;
+    }
+    CPLHTTPDestroyResult(psResult);
+
+    CPLXMLNode* psSchema = WFSFindNode(psXML, "schema");
+    if (psSchema == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find <Schema>");
+        CPLDestroyXMLNode( psXML );
+        bLoadMultipleLayerDefn = FALSE;
+        return;
+    }
+
+    CPLString osTmpFileName;
+
+    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+    CPLSerializeXMLTreeToFile(psSchema, osTmpFileName);
+
+    std::vector<GMLFeatureClass*> aosClasses;
+    GMLParseXSD( osTmpFileName, aosClasses );
+
+    if ((int)aosClasses.size() == nLayersToFetch)
+    {
+        std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
+        std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
+        while (iter != eiter)
+        {
+            GMLFeatureClass* poClass = *iter;
+            iter ++;
+
+            OGRWFSLayer* poLayer = (OGRWFSLayer* )GetLayerByName(poClass->GetName());
+            if (poLayer)
+            {
+                if (!poLayer->HasLayerDefn())
+                {
+                    CPLXMLNode* psSchemaForLayer = CPLCloneXMLTree(psSchema);
+                    CPLStripXMLNamespace( psSchemaForLayer, NULL, TRUE );
+                    CPLXMLNode* psIter = psSchemaForLayer->psChild;
+                    int bHasAlreadyImportedGML = FALSE;
+                    int bFoundComplexType = FALSE;
+                    int bFoundElement = FALSE;
+                    while(psIter != NULL)
+                    {
+                        CPLXMLNode* psIterNext = psIter->psNext;
+                        if (psIter->eType == CXT_Element &&
+                            strcmp(psIter->pszValue,"complexType") == 0)
+                        {
+                            const char* pszName = CPLGetXMLValue(psIter, "name", "");
+                            CPLString osExpectedName(poLayer->GetShortName());
+                            osExpectedName += "Type";
+                            CPLString osExpectedName2(poLayer->GetShortName());
+                            osExpectedName2 += "_Type";
+                            if (strcmp(pszName, osExpectedName) == 0 ||
+                                strcmp(pszName, osExpectedName2) == 0 ||
+                                strcmp(pszName, poLayer->GetShortName()) == 0)
+                            {
+                                bFoundComplexType = TRUE;
+                            }
+                            else
+                            {
+                                CPLRemoveXMLChild( psSchemaForLayer, psIter );
+                                CPLDestroyXMLNode(psIter);
+                            }
+                        }
+                        else if (psIter->eType == CXT_Element &&
+                                strcmp(psIter->pszValue,"element") == 0)
+                        {
+                            const char* pszType = CPLGetXMLValue(psIter, "type", "");
+                            CPLString osExpectedType(poLayer->GetName());
+                            osExpectedType += "Type";
+                            CPLString osExpectedType2(poLayer->GetName());
+                            osExpectedType2 += "_Type";
+                            if (strcmp(pszType, osExpectedType) == 0 ||
+                                strcmp(pszType, osExpectedType2) == 0 ||
+                                strcmp(pszType, poLayer->GetName()) == 0 ||
+                                (strchr(pszType, ':') &&
+                                 (strcmp(strchr(pszType, ':') + 1, osExpectedType) == 0 ||
+                                  strcmp(strchr(pszType, ':') + 1, osExpectedType2) == 0)))
+                            {
+                                bFoundElement = TRUE;
+                            }
+                            else
+                            {
+                                CPLRemoveXMLChild( psSchemaForLayer, psIter );
+                                CPLDestroyXMLNode(psIter);
+                            }
+                        }
+                        else if (psIter->eType == CXT_Element &&
+                                strcmp(psIter->pszValue,"import") == 0 &&
+                                strcmp(CPLGetXMLValue(psIter, "namespace", ""),
+                                        "http://www.opengis.net/gml") == 0)
+                        {
+                            if (bHasAlreadyImportedGML)
+                            {
+                                CPLRemoveXMLChild( psSchemaForLayer, psIter );
+                                CPLDestroyXMLNode(psIter);
+                            }
+                            else
+                                bHasAlreadyImportedGML = TRUE;
+                        }
+                        psIter = psIterNext;
+                    }
+
+                    if (bFoundComplexType && bFoundElement)
+                    {
+                        poLayer->BuildLayerDefn(psSchemaForLayer);
+                        SaveLayerSchema(poLayer->GetName(), psSchemaForLayer);
+                    }
+
+                    CPLDestroyXMLNode(psSchemaForLayer);
+                }
+                else
+                {
+                    CPLDebug("WFS", "Found several time schema for layer %s in server response. Shouldn't happen",
+                             poClass->GetName());
+                }
+            }
+            else
+            {
+                CPLDebug("WFS", "Cannot find layer %s. Shouldn't happen",
+                            poClass->GetName());
+            }
+            delete poClass;
+        }
+    }
+    else if (aosClasses.size() > 0)
+    {
+        std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
+        std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
+        while (iter != eiter)
+        {
+            GMLFeatureClass* poClass = *iter;
+            iter ++;
+            delete poClass;
+        }
+    }
+    else
+    {
+        CPLDebug("WFS", "Turn off loading of multiple layer definitions at a single time");
+        bLoadMultipleLayerDefn = FALSE;
+    }
+
+    VSIUnlink(osTmpFileName);
+
+    CPLDestroyXMLNode( psXML );
 }
 
 /************************************************************************/

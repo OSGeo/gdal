@@ -471,7 +471,9 @@ def ogr_wfs_fake_wfs_server():
     if port == 0:
         return 'skip'
 
+    gdal.SetConfigOption('OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN', 'NO')
     ds = ogr.Open("WFS:http://127.0.0.1:%d/fakewfs" % port)
+    gdal.SetConfigOption('OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN', None)
     if ds is None:
         gdaltest.post_reason('did not managed to open WFS datastore')
         webserver.server_stop(process, port)
@@ -775,6 +777,63 @@ def ogr_wfs_deegree_gml321():
 
     return 'success'
 
+###############################################################################
+def ogr_wfs_get_multiple_layer_defn(url):
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    ds = ogr.Open('WFS:' + url)
+    if ds is None:
+        return 'fail'
+
+    # This should be slow only for the first layer
+    for i in range(0, ds.GetLayerCount()):
+        lyr = ds.GetLayer(i)
+        print('Layer %s has %d fields' % (lyr.GetName(), lyr.GetLayerDefn().GetFieldCount()))
+
+    return 'success'
+
+###############################################################################
+# Test a ESRI server
+
+def ogr_wfs_esri():
+    return ogr_wfs_get_multiple_layer_defn('http://map.ngdc.noaa.gov/wfsconnector/com.esri.wfs.Esrimap/dart_atlantic_f')
+
+###############################################################################
+# Test a ESRI server
+
+def ogr_wfs_esri_2():
+    return ogr_wfs_get_multiple_layer_defn('http://sentinel.ga.gov.au/wfsconnector/com.esri.wfs.Esrimap')
+
+###############################################################################
+# Test a CubeWerx server
+
+def ogr_wfs_cubewerx():
+    return ogr_wfs_get_multiple_layer_defn('http://portal.cubewerx.com/cubewerx/cubeserv/cubeserv.cgi?CONFIG=haiti_vgi&DATASTORE=vgi')
+
+###############################################################################
+# Test a TinyOWS server
+
+def ogr_wfs_tinyows():
+    return ogr_wfs_get_multiple_layer_defn('http://www.tinyows.org/cgi-bin/tinyows')
+
+###############################################################################
+# Test a ERDAS Apollo server
+
+def ogr_wfs_erdas_apollo():
+    return ogr_wfs_get_multiple_layer_defn('http://apollo.erdas.com/erdas-apollo/vector/Cherokee')
+
+###############################################################################
+# Test a Integraph server
+
+def ogr_wfs_intergraph():
+    return ogr_wfs_get_multiple_layer_defn('http://ideg.xunta.es/WFS_POL/request.aspx')
+
 gdaltest_list = [ 
     ogr_wfs_init,
     ogr_wfs_mapserver,
@@ -790,6 +849,12 @@ gdaltest_list = [
     ogr_wfs_ionic_sql,
     ogr_wfs_xmldescriptionfile,
     ogr_wfs_deegree_gml321,
+    ogr_wfs_esri,
+    ogr_wfs_esri_2,
+    ogr_wfs_cubewerx,
+    ogr_wfs_tinyows,
+    ogr_wfs_erdas_apollo,
+    ogr_wfs_intergraph
     ]
 
 if __name__ == '__main__':
