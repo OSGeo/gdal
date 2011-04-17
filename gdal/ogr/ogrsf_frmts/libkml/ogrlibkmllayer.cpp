@@ -656,18 +656,20 @@ int OGRLIBKMLLayer::TestCapability (
 
     if ( EQUAL ( pszCap, OLCRandomRead ) )
         result = FALSE;
-    if ( EQUAL ( pszCap, OLCSequentialWrite ) )
+    else if ( EQUAL ( pszCap, OLCSequentialWrite ) )
         result = bUpdate;
-    if ( EQUAL ( pszCap, OLCRandomWrite ) )
+    else if ( EQUAL ( pszCap, OLCRandomWrite ) )
         result = FALSE;
-    if ( EQUAL ( pszCap, OLCFastFeatureCount ) )
+    else if ( EQUAL ( pszCap, OLCFastFeatureCount ) )
         result = FALSE;
-    if ( EQUAL ( pszCap, OLCFastSetNextByIndex ) )
+    else if ( EQUAL ( pszCap, OLCFastSetNextByIndex ) )
         result = FALSE;
-    if ( EQUAL ( pszCap, OLCCreateField ) )
+    else if ( EQUAL ( pszCap, OLCCreateField ) )
         result = bUpdate;
-    if ( EQUAL ( pszCap, OLCDeleteFeature ) )
+    else if ( EQUAL ( pszCap, OLCDeleteFeature ) )
         result = FALSE;
+    else if ( EQUAL(pszCap, OLCStringsAsUTF8) )
+        result = TRUE;
 
     return result;
 }
