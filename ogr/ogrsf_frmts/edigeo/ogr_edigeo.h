@@ -202,6 +202,8 @@ class OGREDIGEODataSource : public OGRDataSource
     std::map< CPLString, CPLString>                   mapFEA_FEA; /* Map Attribut_TEX{X}_id_Objet_{Y} to Objet_Y */
 
     int                 bRecodeToUTF8;
+    int                 bHasUTF8ContentOnly;
+
     int                 ReadVEC(const char* pszVECName);
 
     OGRFeature*         CreateFeature(const CPLString& osFEA);
@@ -237,6 +239,8 @@ class OGREDIGEODataSource : public OGRDataSource
     virtual OGRLayer*           GetLayer( int );
 
     virtual int                 TestCapability( const char * );
+
+    int                         HasUTF8ContentOnly() { return bHasUTF8ContentOnly; }
 };
 
 /************************************************************************/
