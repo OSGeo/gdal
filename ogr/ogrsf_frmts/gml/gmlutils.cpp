@@ -35,7 +35,8 @@
 /*                GML_ExtractSrsNameFromGeometry()                      */
 /************************************************************************/
 
-char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList)
+char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList,
+                                     int bConsiderEPSGAsURN)
 {
     if (papszGeometryList != NULL &&
         *papszGeometryList != NULL &&
@@ -48,7 +49,7 @@ char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList)
 
             char* pszRet;
             if (strncmp(pszSRSName, "EPSG:", 5) == 0 &&
-                CSLTestBoolean(CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "NO")))
+                bConsiderEPSGAsURN)
             {
                 pszRet = CPLStrdup(CPLSPrintf("urn:ogc:def:crs:EPSG::%s", pszSRSName+5));
             }
@@ -108,7 +109,8 @@ int GML_IsSRSLatLongOrder(const char* pszSRSName)
 OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                                           int bTryToMakeMultipolygons,
                                           int bInvertAxisOrderIfLatLong,
-                                          const char* pszDefaultSRSName)
+                                          const char* pszDefaultSRSName,
+                                          int bConsiderEPSGAsURN)
 {
     OGRGeometry* poGeom = NULL;
     if( papszGeometryList != NULL )
@@ -163,7 +165,8 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                             delete poSubGeom;
                             return GML_BuildOGRGeometryFromList(papszGeometryList, FALSE,
                                                                 bInvertAxisOrderIfLatLong,
-                                                                pszDefaultSRSName);
+                                                                pszDefaultSRSName,
+                                                                bConsiderEPSGAsURN);
                         }
                         else
                         {
@@ -184,7 +187,8 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
 
     if ( poGeom != NULL && bInvertAxisOrderIfLatLong )
     {
-        char* pszSRSName = GML_ExtractSrsNameFromGeometry(papszGeometryList);
+        char* pszSRSName = GML_ExtractSrsNameFromGeometry(papszGeometryList,
+                                                          bConsiderEPSGAsURN);
         if (GML_IsSRSLatLongOrder(pszSRSName ? pszSRSName : pszDefaultSRSName))
             poGeom->swapXY();
         CPLFree(pszSRSName);
