@@ -32,14 +32,16 @@
 
 #include "ogr_geometry.h"
 
-char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList);
+char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList,
+                                     int bConsiderEPSGAsURN);
 
 int GML_IsSRSLatLongOrder(const char* pszSRSName);
 
 OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                                           int bTryToMakeMultipolygons,
                                           int bInvertAxisOrderIfLatLong,
-                                          const char* pszDefaultSRSName);
+                                          const char* pszDefaultSRSName,
+                                          int bConsiderEPSGAsURN);
 
 char* GML_GetSRSName(const OGRSpatialReference* poSRS, int bLongSRS, int *pbCoordSwap);
 

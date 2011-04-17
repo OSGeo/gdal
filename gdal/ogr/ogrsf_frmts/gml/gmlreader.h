@@ -250,7 +250,7 @@ public:
     virtual const char* GetFilteredClassName() = 0;
 };
 
-IGMLReader *CreateGMLReader();
+IGMLReader *CreateGMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN);
 
 
 #endif /* _GMLREADER_H_INCLUDED */

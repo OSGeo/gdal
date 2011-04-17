@@ -490,14 +490,6 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         if ( strcmp(pszName, "Envelope") == 0 )
         {
             char* pszGlobalSRSName = GetAttributeValue(attr, "srsName");
-            if (pszGlobalSRSName != NULL &&
-                strncmp(pszGlobalSRSName, "EPSG:", 5) == 0 &&
-                CSLTestBoolean(CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "NO")))
-            {
-                char* pszNew = CPLStrdup(CPLSPrintf("urn:ogc:def:crs:EPSG::%s", pszGlobalSRSName+5));
-                CPLFree(pszGlobalSRSName);
-                pszGlobalSRSName = pszNew;
-            }
             m_poReader->SetGlobalSRSName(pszGlobalSRSName);
             CPLFree(pszGlobalSRSName);
         }
