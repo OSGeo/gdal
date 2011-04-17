@@ -72,9 +72,6 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
     else 
         nTotalShapeCount = hDBF->nRecords;
     
-    poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszName), 
-                                           hSHP, hDBF );
-
     eRequestedGeomType = eReqType;
 
     
@@ -92,6 +89,10 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
 
     if( osEncoding != "" )
         CPLDebug( "Shape", "Treating as encoding '%s'.", osEncoding.c_str() );
+
+    poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszName),
+                                           hSHP, hDBF, osEncoding );
+
 }
 
 /************************************************************************/

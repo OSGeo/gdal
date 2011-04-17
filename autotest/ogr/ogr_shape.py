@@ -2008,7 +2008,27 @@ def ogr_shape_49():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test that we can read encoded file names
+
+def ogr_shape_50():
+
+    ds = ogr.Open( '/vsizip/vsicurl/http://jira.codehaus.org/secure/attachment/37994/test1.zip')
+    lyr = ds.GetLayer(0)
+
+    # Setup the utf-8 string.
+    if sys.version_info >= (3,0,0):
+        gdaltest.fieldname = '\u540d\u79f0'
+    else:
+        exec("gdaltest.fieldname =  u'\u540d\u79f0'")
+        gdaltest.fieldname = gdaltest.fieldname.encode('utf-8')
+
+    if lyr.GetLayerDefn().GetFieldIndex(gdaltest.fieldname) != 1:
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -2081,9 +2101,8 @@ gdaltest_list = [
     ogr_shape_47,
     ogr_shape_48,
     ogr_shape_49,
+    ogr_shape_50,
     ogr_shape_cleanup ]
-
-gdaltest_list = [ogr_shape_49]
 
 if __name__ == '__main__':
 

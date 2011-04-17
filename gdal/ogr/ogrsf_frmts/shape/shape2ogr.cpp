@@ -852,7 +852,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
 /************************************************************************/
 
 OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
-                                       SHPHandle hSHP, DBFHandle hDBF )
+                                       SHPHandle hSHP, DBFHandle hDBF,
+                                       const char* pszSHPEncoding )
 
 {
     OGRFeatureDefn      *poDefn = new OGRFeatureDefn( pszName );
@@ -874,7 +875,16 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         eDBFType = DBFGetFieldInfo( hDBF, iField, szFieldName,
                                     &nWidth, &nPrecision );
 
-        oField.SetName( szFieldName );
+        if( strlen(pszSHPEncoding) > 0 )
+        {
+            char *pszUTF8Field = CPLRecode( szFieldName,
+                                            pszSHPEncoding, CPL_ENC_UTF8);
+            oField.SetName( pszUTF8Field );
+            CPLFree( pszUTF8Field );
+        }
+        else
+            oField.SetName( szFieldName );
+
         oField.SetWidth( nWidth );
         oField.SetPrecision( nPrecision );
 
