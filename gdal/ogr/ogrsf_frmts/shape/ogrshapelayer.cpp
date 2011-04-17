@@ -813,6 +813,9 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCIgnoreFields) )
         return TRUE;
 
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return strlen(osEncoding) > 0; /* if encoding is defined, we are able to convert to UTF-8 */
+
     else 
         return FALSE;
 }
