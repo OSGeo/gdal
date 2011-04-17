@@ -1897,8 +1897,6 @@ OGRSpatialReference *OGRPGLayer::GetSpatialRef()
         poSRS = poDS->FetchSRS( nSRSId );
         if( poSRS != NULL )
             poSRS->Reference();
-        else
-            nSRSId = -1;
     }
 
     return poSRS;
