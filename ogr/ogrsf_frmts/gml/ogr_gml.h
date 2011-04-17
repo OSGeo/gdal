@@ -56,8 +56,6 @@ class OGRGMLLayer : public OGRLayer
 
     GMLFeatureClass     *poFClass;
 
-    int                 m_bInvertAxisOrderIfLatLong;
-
   public:
                         OGRGMLLayer( const char * pszName, 
                                      OGRSpatialReference *poSRS, 
@@ -125,6 +123,9 @@ class OGRGMLDataSource : public OGRDataSource
 
     OGRSpatialReference* poGlobalSRS;
 
+    int           m_bInvertAxisOrderIfLatLong;
+    int           m_bConsiderEPSGAsURN;
+
   public:
                         OGRGMLDataSource();
                         ~OGRGMLDataSource();
@@ -156,6 +157,9 @@ class OGRGMLDataSource : public OGRDataSource
     int                 IsLongSRSRequired() { return bIsLongSRSRequired; }
     int                 WriteSpaceIndentation() { return bWriteSpaceIndentation; }
     const char         *GetGlobalSRSName();
+
+    int                 GetInvertAxisOrderIfLatLong() { return m_bInvertAxisOrderIfLatLong; }
+    int                 GetConsiderEPSGAsURN() { return m_bConsiderEPSGAsURN; }
 };
 
 /************************************************************************/

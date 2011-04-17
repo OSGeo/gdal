@@ -806,7 +806,7 @@ int NASReader::PrescanForSchema( int bGetExtents )
                     poClass->GetGeometryType();
 
                 // Merge SRSName into layer.
-                char* pszSRSName = GML_ExtractSrsNameFromGeometry(poFeature->GetGeometryList());
+                char* pszSRSName = GML_ExtractSrsNameFromGeometry(poFeature->GetGeometryList(), FALSE);
 //                if (pszSRSName != NULL)
 //                    m_bCanUseGlobalSRSName = FALSE;
                 poClass->MergeSRSName(pszSRSName);
