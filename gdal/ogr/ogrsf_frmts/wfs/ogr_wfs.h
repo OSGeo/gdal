@@ -31,6 +31,7 @@
 #define _OGR_WFS_H_INCLUDED
 
 #include <vector>
+#include <set>
 
 #include "cpl_minixml.h"
 #include "ogrsf_frmts.h"
@@ -92,7 +93,6 @@ class OGRWFSLayer : public OGRLayer
     CPLString           osSQLWhere;
     CPLString           osWFSWhere;
 
-    const char         *GetShortName();
     CPLString           osTargetNamespace;
     CPLString           GetDescribeFeatureTypeURL(int bWithNS);
 
@@ -112,6 +112,8 @@ class OGRWFSLayer : public OGRLayer
     int                 nPagingStartIndex;
     int                 nFeatureRead;
     int                 nFeatureCountRequested;
+
+    OGRFeatureDefn*     BuildLayerDefnFromFeatureClass(GMLFeatureClass* poClass);
 
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
@@ -154,11 +156,15 @@ class OGRWFSLayer : public OGRLayer
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
 
+    int                 HasLayerDefn() { return poFeatureDefn != NULL; }
+
     OGRFeatureDefn*     BuildLayerDefn(CPLXMLNode* psSchema = NULL);
 
     OGRErr              DeleteFromFilter( CPLString osOGCFilter );
 
     const std::vector<CPLString>& GetLastInsertedFIDList() { return aosFIDList; }
+
+    const char         *GetShortName();
 };
 
 /************************************************************************/
@@ -205,6 +211,9 @@ class OGRWFSDataSource : public OGRDataSource
     int                 nPageSize;
 
     int                 bIsGEOSERVER;
+
+    int                 bLoadMultipleLayerDefn;
+    std::set<CPLString> aoSetAlreadyTriedLayers;
 
   public:
                         OGRWFSDataSource();
@@ -253,6 +262,9 @@ class OGRWFSDataSource : public OGRDataSource
     int                         GetPageSize() { return nPageSize; }
 
     const char*                 GetRequiredOutputFormat() { return (osRequiredOutputFormat.size() != 0) ? osRequiredOutputFormat.c_str() : NULL; }
+
+    void                        LoadMultipleLayerDefn(const char* pszLayerName,
+                                                      char* pszNS, char* pszNSVal);
 };
 
 /************************************************************************/

@@ -259,55 +259,7 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
 
     if (bHaveSchema && aosClasses.size() == 1)
     {
-        poGMLFeatureClass = aosClasses[0];
-
-        OGRFeatureDefn* poFDefn = new OGRFeatureDefn(poGMLFeatureClass->GetName());
-        poFDefn->SetGeomType( (OGRwkbGeometryType)poGMLFeatureClass->GetGeometryType() );
-
-    /* -------------------------------------------------------------------- */
-    /*      Added attributes (properties).                                  */
-    /* -------------------------------------------------------------------- */
-        OGRFieldDefn oField( "gml_id", OFTString );
-        poFDefn->AddFieldDefn( &oField );
-
-        for( int iField = 0; iField < poGMLFeatureClass->GetPropertyCount(); iField++ )
-        {
-            GMLPropertyDefn *poProperty = poGMLFeatureClass->GetProperty( iField );
-            OGRFieldType eFType;
-
-            if( poProperty->GetType() == GMLPT_Untyped )
-                eFType = OFTString;
-            else if( poProperty->GetType() == GMLPT_String )
-                eFType = OFTString;
-            else if( poProperty->GetType() == GMLPT_Integer )
-                eFType = OFTInteger;
-            else if( poProperty->GetType() == GMLPT_Real )
-                eFType = OFTReal;
-            else if( poProperty->GetType() == GMLPT_StringList )
-                eFType = OFTStringList;
-            else if( poProperty->GetType() == GMLPT_IntegerList )
-                eFType = OFTIntegerList;
-            else if( poProperty->GetType() == GMLPT_RealList )
-                eFType = OFTRealList;
-            else
-                eFType = OFTString;
-
-            OGRFieldDefn oField( poProperty->GetName(), eFType );
-            if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
-                oField.SetName(poProperty->GetName()+4);
-            if( poProperty->GetWidth() > 0 )
-                oField.SetWidth( poProperty->GetWidth() );
-            if( poProperty->GetPrecision() > 0 )
-                oField.SetPrecision( poProperty->GetPrecision() );
-
-            poFDefn->AddFieldDefn( &oField );
-        }
-
-        const char* pszGeometryColumnName = poGMLFeatureClass->GetGeometryElement();
-        if (pszGeometryColumnName)
-            osGeometryColumnName = pszGeometryColumnName;
-
-        return poFDefn;
+        return BuildLayerDefnFromFeatureClass(aosClasses[0]);
     }
     else if (bHaveSchema)
     {
@@ -324,6 +276,62 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
     VSIUnlink(osTmpFileName);
 
     return NULL;
+}
+/************************************************************************/
+/*                   BuildLayerDefnFromFeatureClass()                   */
+/************************************************************************/
+
+OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poClass)
+{
+    this->poGMLFeatureClass = poClass;
+
+    OGRFeatureDefn* poFDefn = new OGRFeatureDefn(poGMLFeatureClass->GetName());
+    poFDefn->SetGeomType( (OGRwkbGeometryType)poGMLFeatureClass->GetGeometryType() );
+
+/* -------------------------------------------------------------------- */
+/*      Added attributes (properties).                                  */
+/* -------------------------------------------------------------------- */
+    OGRFieldDefn oField( "gml_id", OFTString );
+    poFDefn->AddFieldDefn( &oField );
+
+    for( int iField = 0; iField < poGMLFeatureClass->GetPropertyCount(); iField++ )
+    {
+        GMLPropertyDefn *poProperty = poGMLFeatureClass->GetProperty( iField );
+        OGRFieldType eFType;
+
+        if( poProperty->GetType() == GMLPT_Untyped )
+            eFType = OFTString;
+        else if( poProperty->GetType() == GMLPT_String )
+            eFType = OFTString;
+        else if( poProperty->GetType() == GMLPT_Integer )
+            eFType = OFTInteger;
+        else if( poProperty->GetType() == GMLPT_Real )
+            eFType = OFTReal;
+        else if( poProperty->GetType() == GMLPT_StringList )
+            eFType = OFTStringList;
+        else if( poProperty->GetType() == GMLPT_IntegerList )
+            eFType = OFTIntegerList;
+        else if( poProperty->GetType() == GMLPT_RealList )
+            eFType = OFTRealList;
+        else
+            eFType = OFTString;
+
+        OGRFieldDefn oField( poProperty->GetName(), eFType );
+        if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
+            oField.SetName(poProperty->GetName()+4);
+        if( poProperty->GetWidth() > 0 )
+            oField.SetWidth( poProperty->GetWidth() );
+        if( poProperty->GetPrecision() > 0 )
+            oField.SetPrecision( poProperty->GetPrecision() );
+
+        poFDefn->AddFieldDefn( &oField );
+    }
+
+    const char* pszGeometryColumnName = poGMLFeatureClass->GetGeometryElement();
+    if (pszGeometryColumnName)
+        osGeometryColumnName = pszGeometryColumnName;
+
+    return poFDefn;
 }
 
 /************************************************************************/
@@ -779,6 +787,11 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
 
 OGRFeatureDefn * OGRWFSLayer::GetLayerDefn()
 {
+    if (poFeatureDefn)
+        return poFeatureDefn;
+
+    poDS->LoadMultipleLayerDefn(GetName(), pszNS, pszNSVal);
+
     if (poFeatureDefn)
         return poFeatureDefn;
 
