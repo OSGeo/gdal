@@ -547,7 +547,7 @@ static int FindComparisonOperator(CPLXMLNode* psNode, const char* pszVal)
 CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
 {
     VSILFILE *fp;
-    char achHeader[18];
+    char achHeader[1024];
 
     VSIStatBufL sStatBuf;
     if (VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0 ||
@@ -559,13 +559,16 @@ CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
     if( fp == NULL )
         return NULL;
 
-    if( VSIFReadL( achHeader, sizeof(achHeader), 1, fp ) != 1 )
+    int nRead;
+    if( (nRead = VSIFReadL( achHeader, 1, sizeof(achHeader) - 1, fp )) == 0 )
     {
         VSIFCloseL( fp );
         return NULL;
     }
+    achHeader[nRead] = 0;
 
-    if( !EQUALN(achHeader,"<OGRWFSDataSource>",18) )
+    if( !EQUALN(achHeader,"<OGRWFSDataSource>",18) &&
+        strstr(achHeader,"<wfs:WFS_Capabilities") == NULL)
     {
         VSIFCloseL( fp );
         return NULL;
@@ -688,6 +691,11 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
         CPLHTTPDestroyResult(psResult);
     }
+    else if ( WFSFindNode( psXML, "OGRWFSDataSource" ) == NULL &&
+              WFSFindNode( psXML, "WFS_Capabilities" ) != NULL )
+    {
+        /* This is directly the Capabilities document */
+    }
     else
     {
         CPLXMLNode* psRoot = WFSFindNode( psXML, "OGRWFSDataSource" );
@@ -709,7 +717,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
 
 /* -------------------------------------------------------------------- */
-/*      Captureother parameters.                                        */
+/*      Capture other parameters.                                       */
 /* -------------------------------------------------------------------- */
         const char  *pszParm;
 
@@ -827,6 +835,19 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         if (!psFileXML) CPLDestroyXMLNode( psXML );
         CPLDestroyXMLNode( psStrippedXML );
         return FALSE;
+    }
+
+    if (pszBaseURL == NULL)
+    {
+        /* This is directly the Capabilities document */
+        pszBaseURL = CPLGetXMLValue( psWFSCapabilities, "OperationsMetadata.Operation.DCP.HTTP.Get.href", NULL );
+        if (pszBaseURL == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Cannot find base URL");
+            CPLDestroyXMLNode( psStrippedXML );
+            return FALSE;
+        }
     }
 
     if (osVersion.size() == 0)
