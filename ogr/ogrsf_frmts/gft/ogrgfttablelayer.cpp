@@ -435,6 +435,10 @@ OGRFeature * OGRGFTTableLayer::GetFeature( long nFID )
         return NULL;
     }
 
+    int nLen = (int)strlen(pszLine);
+    if (nLen > 0 && pszLine[nLen-1] == '\n')
+        pszLine[nLen-1] = '\0';
+
     OGRFeature* poFeature = BuildFeatureFromSQL(pszLine);
 
     CPLHTTPDestroyResult(psResult);
