@@ -568,6 +568,7 @@ CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
     achHeader[nRead] = 0;
 
     if( !EQUALN(achHeader,"<OGRWFSDataSource>",18) &&
+        strstr(achHeader,"<WFS_Capabilities") == NULL &&
         strstr(achHeader,"<wfs:WFS_Capabilities") == NULL)
     {
         VSIFCloseL( fp );
@@ -841,6 +842,9 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         /* This is directly the Capabilities document */
         pszBaseURL = CPLGetXMLValue( psWFSCapabilities, "OperationsMetadata.Operation.DCP.HTTP.Get.href", NULL );
+        if (pszBaseURL == NULL) /* WFS 1.0.0 variant */
+            pszBaseURL = CPLGetXMLValue( psWFSCapabilities, "Capability.Request.GetCapabilities.DCPType.HTTP.Get.onlineResource", NULL );
+
         if (pszBaseURL == NULL)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
