@@ -802,17 +802,14 @@ OGRFeatureDefn * OGRWFSLayer::GetLayerDefn()
 /*                          BuildLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(CPLXMLNode* psSchema)
+OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
 {
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
 
     OGRDataSource* poDS = NULL;
 
-    OGRFeatureDefn* poSrcFDefn = NULL;
-    if (psSchema)
-        poSrcFDefn = ParseSchema(psSchema);
-    else
+    if (poSrcFDefn == NULL)
         poSrcFDefn = DescribeFeatureType();
     if (poSrcFDefn == NULL)
     {

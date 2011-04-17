@@ -28,8 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_wfs.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
+#include "ogr_api.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
 #include "gmlutils.h"
@@ -151,6 +150,9 @@ OGRWFSDataSource::OGRWFSDataSource()
     bIsGEOSERVER = FALSE;
 
     bLoadMultipleLayerDefn = CSLTestBoolean(CPLGetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "TRUE"));
+
+    poLayerMetadataDS = NULL;
+    poLayerMetadataLayer = NULL;
 }
 
 /************************************************************************/
@@ -173,6 +175,9 @@ OGRWFSDataSource::~OGRWFSDataSource()
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
+    if (osLayerMetadataTmpFileName.size() != 0)
+        VSIUnlink(osLayerMetadataTmpFileName);
+    delete poLayerMetadataDS;
 
     CPLFree( pszName );
     CSLDestroy( papszIdGenMethods );
@@ -213,6 +218,24 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
 
     int  i;
     int  bHasFoundLayerWithColon = FALSE;
+
+    if (EQUAL(pszName, "WFSLayerMetadata"))
+    {
+        if (osLayerMetadataTmpFileName.size() != 0)
+            return poLayerMetadataLayer;
+
+        osLayerMetadataTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p/WFSLayerMetadata.csv", this);
+        osLayerMetadataCSV = "layer_name,title,abstract\n" + osLayerMetadataCSV;
+
+        VSIFCloseL(VSIFileFromMemBuffer(osLayerMetadataTmpFileName,
+                                        (GByte*) osLayerMetadataCSV.c_str(),
+                                        osLayerMetadataCSV.size(), FALSE));
+        poLayerMetadataDS = (OGRDataSource*) OGROpen(osLayerMetadataTmpFileName,
+                                                     FALSE, NULL);
+        if (poLayerMetadataDS)
+            poLayerMetadataLayer = poLayerMetadataDS->GetLayer(0);
+        return poLayerMetadataLayer;
+    }
 
     /* first a case sensitive check */
     for( i = 0; i < nLayers; i++ )
@@ -978,6 +1001,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             }
 
             const char* pszName = CPLGetXMLValue(psChildIter, "Name", NULL);
+            const char* pszTitle = CPLGetXMLValue(psChildIter, "Title", NULL);
+            const char* pszAbstract = CPLGetXMLValue(psChildIter, "Abstract", NULL);
             if (pszName != NULL &&
                 (osTypeName.size() == 0 ||
                     strcmp(osTypeName.c_str(), pszName) == 0))
@@ -1067,6 +1092,25 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                     }
                 }
 
+                osLayerMetadataCSV += "\"";
+                osLayerMetadataCSV += pszName;
+                osLayerMetadataCSV += "\"";
+                osLayerMetadataCSV += ",";
+                if (pszTitle)
+                {
+                    osLayerMetadataCSV += "\"";
+                    osLayerMetadataCSV += pszTitle;
+                    osLayerMetadataCSV += "\"";
+                }
+                osLayerMetadataCSV += ",";
+                if (pszAbstract)
+                {
+                    osLayerMetadataCSV += "\"";
+                    osLayerMetadataCSV += pszAbstract;
+                    osLayerMetadataCSV += "\"";
+                }
+                osLayerMetadataCSV += "\n";
+
                 OGRWFSLayer* poLayer = new OGRWFSLayer(
                             this, poSRS, bAxisOrderAlreadyInverted,
                             pszBaseURL, pszName, pszNS, pszNSVal);
@@ -1152,7 +1196,11 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                         {
                             CPLXMLNode* psSchema = WFSFindNode( psIter->psChild, "schema" );
                             if (psSchema)
-                                poLayer->BuildLayerDefn(psSchema);
+                            {
+                                OGRFeatureDefn* poSrcFDefn = poLayer->ParseSchema(psSchema);
+                                if (poSrcFDefn)
+                                    poLayer->BuildLayerDefn(poSrcFDefn);
+                            }
                             break;
                         }
                         psIter = psIter->psNext;
@@ -1421,8 +1469,12 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
 
                     if (bFoundComplexType && bFoundElement)
                     {
-                        poLayer->BuildLayerDefn(psSchemaForLayer);
-                        SaveLayerSchema(poLayer->GetName(), psSchemaForLayer);
+                        OGRFeatureDefn* poSrcFDefn = poLayer->ParseSchema(psSchemaForLayer);
+                        if (poSrcFDefn)
+                        {
+                            poLayer->BuildLayerDefn(poSrcFDefn);
+                            SaveLayerSchema(poLayer->GetName(), psSchemaForLayer);
+                        }
                     }
 
                     CPLDestroyXMLNode(psSchemaForLayer);
