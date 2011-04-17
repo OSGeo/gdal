@@ -125,6 +125,16 @@ Currently, any other SQL command will be processed by the generic layer, meaning
 Server side spatial and attribute filtering must be done through the SetSpatialFilter() and SetAttributeFilter()
 interfaces.<p>
 
+<h2>Layer metadata</h2>
+
+<p>(OGR >= 1.9.0)</p>
+
+<p>A "hidden" layer called "WFSLayerMetadata" is filled with records with metadata for each WFS layer.</p>
+
+<p>Each record contains a "layer_name", "title" and "abstract" field, from the document returned by GetCapabilities.</p>
+
+<p>That layer is returned through GetLayerByName("WFSLayerMetadata").</p>
+
 <h2>Examples</h2>
 
 <li>
@@ -151,6 +161,12 @@ ogrinfo -ro WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap popplace -spat 0 0
 Retrieving the features of gml:id "world.2" and "world.3" from the tows:world layer :
 <pre>
 ogrinfo "WFS:http://www.tinyows.org/cgi-bin/tinyows" tows:world -ro -al -where "gml_id='world.2' or gml_id='world.3'"
+</pre>
+
+<li>
+Display layer metadata (OGR >= 1.9.0):
+<pre>
+ogrinfo -ro -al "WFS:http://v2.suite.opengeo.org/geoserver/ows" WFSLayerMetadata
 </pre>
 
 <p>
