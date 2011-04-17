@@ -222,9 +222,25 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
         }
     }
 
-    // What values will we see in CPG files?
+    // From the CPG file
+    // http://resources.arcgis.com/fr/content/kbase?fa=articleShow&d=21106
+    
+    if( (atoi(pszCodePage) >= 437 && atoi(pszCodePage) <= 950)
+        || (atoi(pszCodePage) >= 1250 && atoi(pszCodePage) <= 1258) )
+    {
+        osEncoding.Printf( "CP%d", atoi(pszCodePage) );
+        return osEncoding;
+    }
+    if( EQUALN(pszCodePage,"8859",4) )
+    {
+        osEncoding.Printf( "ISO%s", pszCodePage );
+        return osEncoding;
+    }
+    if( EQUALN(pszCodePage,"UTF-8",5) )
+        return CPL_ENC_UTF8;
 
-    return osEncoding;
+    // try just using the CPG value directly.  Works for stuff like Big5.
+    return pszCodePage;
 }
 
 /************************************************************************/
