@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shptree.c,v 1.12 2008/11/12 15:39:50 fwarmerdam Exp $
+ * $Id: shptree.c,v 1.14 2010-08-27 23:43:27 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of quadtree building and searching functions.
@@ -34,7 +34,13 @@
  ******************************************************************************
  *
  * $Log: shptree.c,v $
- * Revision 1.12  2008/11/12 15:39:50  fwarmerdam
+ * Revision 1.14  2010-08-27 23:43:27  fwarmerdam
+ * add SHPAPI_CALL attribute in code
+ *
+ * Revision 1.13  2010-06-29 05:50:15  fwarmerdam
+ * fix sign of Z/M comparisons in SHPCheckObjectContained (#2223)
+ *
+ * Revision 1.12  2008-11-12 15:39:50  fwarmerdam
  * improve safety in face of buggy .shp file.
  *
  * Revision 1.11  2007/10/27 03:31:14  fwarmerdam
@@ -82,7 +88,7 @@
 #include <cpl_error.h>
 #endif
 
-SHP_CVSID("$Id: shptree.c,v 1.12 2008/11/12 15:39:50 fwarmerdam Exp $")
+SHP_CVSID("$Id: shptree.c,v 1.14 2010-08-27 23:43:27 fwarmerdam Exp $")
 
 #ifndef TRUE
 #  define TRUE 1
@@ -367,14 +373,14 @@ static int SHPCheckObjectContained( SHPObject * psObject, int nDimension,
         return TRUE;
     
     if( psObject->dfZMin < padfBoundsMin[2]
-        || psObject->dfZMax < padfBoundsMax[2] )
+        || psObject->dfZMax > padfBoundsMax[2] )
         return FALSE;
         
     if( nDimension == 3 )
         return TRUE;
 
     if( psObject->dfMMin < padfBoundsMin[3]
-        || psObject->dfMMax < padfBoundsMax[3] )
+        || psObject->dfMMax > padfBoundsMax[3] )
         return FALSE;
 
     return TRUE;
@@ -985,7 +991,7 @@ static void SHPWriteTreeNode( FILE *fp, SHPTreeNode *node)
 /*                            SHPWriteTree()                            */
 /************************************************************************/
 
-int SHPWriteTree(SHPTree *tree, const char *filename )
+int SHPAPI_CALL SHPWriteTree(SHPTree *tree, const char *filename )
 {
     char		signature[4] = "SQT";
     int		        i;
