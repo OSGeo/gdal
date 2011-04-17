@@ -1011,6 +1011,110 @@ static int TestAttributeFilter( OGRLayer *poLayer )
 }
 
 /************************************************************************/
+/*                         TestOGRLayerUTF8()                           */
+/************************************************************************/
+
+static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
+{
+    int bRet = TRUE;
+
+    poLayer->SetSpatialFilter( NULL );
+    poLayer->SetAttributeFilter( NULL );
+    poLayer->ResetReading();
+
+    int bIsAdvertizedAsUTF8 = poLayer->TestCapability( OLCStringsAsUTF8 );
+    int nFields = poLayer->GetLayerDefn()->GetFieldCount();
+    int bFoundString = FALSE;
+    int bFoundNonASCII = FALSE;
+    int bFoundUTF8 = FALSE;
+    int bCanAdvertizeUTF8 = TRUE;
+
+    OGRFeature* poFeature = NULL;
+    while( bRet && (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        for(int i = 0; i<nFields; i++)
+        {
+            if (!poFeature->IsFieldSet(i))
+                continue;
+            if (poFeature->GetFieldDefnRef(i)->GetType() == OFTString)
+            {
+                const char* pszVal = poFeature->GetFieldAsString(i);
+                if (pszVal[0] != 0)
+                {
+                    bFoundString = TRUE;
+                    const GByte* pszIter = (const GByte*) pszVal;
+                    int bIsASCII = TRUE;
+                    while(*pszIter)
+                    {
+                        if (*pszIter >= 128)
+                        {
+                            bFoundNonASCII = TRUE;
+                            bIsASCII = FALSE;
+                            break;
+                        }
+                        pszIter ++;
+                    }
+                    int bIsUTF8 = CPLIsUTF8(pszVal, -1);
+                    if (bIsUTF8 && !bIsASCII)
+                        bFoundUTF8 = TRUE;
+                    if (bIsAdvertizedAsUTF8)
+                    {
+                        if (!bIsUTF8)
+                        {
+                            printf( "ERROR: Found non-UTF8 content at field %d of feature %ld, but layer is advertized as UTF-8.\n",
+                                    i, poFeature->GetFID() );
+                            bRet = FALSE;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (!bIsUTF8)
+                            bCanAdvertizeUTF8 = FALSE;
+                    }
+                }
+            }
+        }
+        OGRFeature::DestroyFeature(poFeature);
+    }
+
+    if (!bFoundString)
+    {
+    }
+    else if (bCanAdvertizeUTF8)
+    {
+        if (bIsAdvertizedAsUTF8)
+        {
+            if (bFoundUTF8)
+            {
+                printf( "INFO: Layer has UTF-8 content and is consistently declared as having UTF-8 content.\n" );
+            }
+            else if (!bFoundNonASCII)
+            {
+                printf( "INFO: Layer has ASCII only content and is consistently declared as having UTF-8 content.\n" );
+            }
+        }
+        else
+        {
+            if (bFoundUTF8)
+            {
+                printf( "INFO: Layer could perhaps be advertized as UTF-8 compatible (and it has non-ASCII UTF-8 content).\n" );
+            }
+            else if (!bFoundNonASCII)
+            {
+                printf( "INFO: Layer could perhaps be advertized as UTF-8 compatible (it has only ASCII content).\n" );
+            }
+        }
+    }
+    else
+    {
+        printf( "INFO: Layer has non UTF-8 content (and is consistently declared as not being UTF-8 compatible).\n" );
+    }
+
+    return bRet;
+}
+
+/************************************************************************/
 /*                            TestOGRLayer()                            */
 /************************************************************************/
 
@@ -1067,6 +1171,8 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
     {
         bRet &= TestOGRLayerRandomWrite( poLayer );
     }
+
+    bRet &= TestOGRLayerUTF8( poLayer );
 
     return bRet;
 }
