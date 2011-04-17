@@ -104,8 +104,6 @@ class OGRWFSLayer : public OGRLayer
 
     CPLString           GetPostHeader();
 
-    OGRFeatureDefn*     ParseSchema(CPLXMLNode* psSchema);
-
     int                 bUseFeatureIdAtLayerLevel;
 
     int                 bPagingActive;
@@ -158,7 +156,8 @@ class OGRWFSLayer : public OGRLayer
 
     int                 HasLayerDefn() { return poFeatureDefn != NULL; }
 
-    OGRFeatureDefn*     BuildLayerDefn(CPLXMLNode* psSchema = NULL);
+    OGRFeatureDefn*     ParseSchema(CPLXMLNode* psSchema);
+    OGRFeatureDefn*     BuildLayerDefn(OGRFeatureDefn* poSrcFDefn = NULL);
 
     OGRErr              DeleteFromFilter( CPLString osOGCFilter );
 
@@ -214,6 +213,11 @@ class OGRWFSDataSource : public OGRDataSource
 
     int                 bLoadMultipleLayerDefn;
     std::set<CPLString> aoSetAlreadyTriedLayers;
+
+    CPLString           osLayerMetadataCSV;
+    CPLString           osLayerMetadataTmpFileName;
+    OGRDataSource      *poLayerMetadataDS;
+    OGRLayer           *poLayerMetadataLayer;
 
   public:
                         OGRWFSDataSource();
