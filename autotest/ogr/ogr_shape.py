@@ -2017,6 +2017,10 @@ def ogr_shape_50():
     ds = ogr.Open( '/vsizip/vsicurl/http://jira.codehaus.org/secure/attachment/37994/test1.zip')
     lyr = ds.GetLayer(0)
 
+    if gdal.GetLastErrorMsg().find('Recode from CP936 to UTF-8 not supported, treated as ISO8859-1 to UTF-8.') != -1:
+        gdaltest.post_reason( 'skipping test: iconv support needed' )
+        return 'skip'
+
     # Setup the utf-8 string.
     if sys.version_info >= (3,0,0):
         gdaltest.fieldname = '\u540d\u79f0'
