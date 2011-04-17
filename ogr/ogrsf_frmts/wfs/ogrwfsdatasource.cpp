@@ -146,6 +146,8 @@ OGRWFSDataSource::OGRWFSDataSource()
         if (nPageSize <= 0)
             nPageSize = 100;
     }
+
+    bIsGEOSERVER = FALSE;
 }
 
 /************************************************************************/
@@ -841,6 +843,26 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     DetectTransactionSupport(psWFSCapabilities);
 
+    /* Detect if server is GEOSERVER */
+    CPLXMLNode* psKeywords = CPLGetXMLNode(psWFSCapabilities, "ServiceIdentification.Keywords");
+    if (psKeywords)
+    {
+        CPLXMLNode* psKeyword = psKeywords->psChild;
+        for(;psKeyword != NULL;psKeyword=psKeyword->psNext)
+        {
+            if (psKeyword->eType == CXT_Element &&
+                psKeyword->pszValue != NULL &&
+                EQUAL(psKeyword->pszValue, "Keyword") &&
+                psKeyword->psChild != NULL &&
+                psKeyword->psChild->pszValue != NULL &&
+                EQUAL(psKeyword->psChild->pszValue, "GEOSERVER"))
+            {
+                bIsGEOSERVER = TRUE;
+                break;
+            }
+        }
+    }
+
     if (bUpdate && !bTransactionSupport)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1017,7 +1039,12 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                     char* pszProj4 = NULL;
                     if (poSRS->exportToProj4(&pszProj4) == OGRERR_NONE)
                     {
-                        if (strcmp(pszProj4, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ") == 0)
+                        /* See http://trac.osgeo.org/gdal/ticket/4041 */
+                        /* For now, we restrict to GEOSERVER as apparently the order is always longitude,latitude */
+                        /* other servers might also qualify, so this should be relaxed */
+                        if (bIsGEOSERVER &&
+                            (strcmp(pszProj4, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ") == 0 ||
+                             strcmp(pszProj4, "+proj=longlat +datum=WGS84 +no_defs ") == 0))
                         {
                             poLayer->SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
                         }

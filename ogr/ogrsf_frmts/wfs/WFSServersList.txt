@@ -5,6 +5,8 @@ http://sigma.openplans.org/geoserver/ows
 http://demo.opengeo.org/geoserver/wfs (WFS-T with write permissions)
 http://giswebservices.massgis.state.ma.us/geoserver/wfs
 http://gem.demo.opengeo.org/geoserver/wfs
+http://geohub.jrc.ec.europa.eu/effis/ows
+http://v2.suite.opengeo.org/geoserver/ows
 
 MapServer:
 http://www.bsc-eoc.org/cgi-bin/bsc_ows.asp (4.8.1)
