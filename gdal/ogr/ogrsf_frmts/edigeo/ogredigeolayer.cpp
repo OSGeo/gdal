@@ -151,6 +151,9 @@ int OGREDIGEOLayer::TestCapability( const char * pszCap )
     else if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;
 
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
+        return poDS->HasUTF8ContentOnly();
+
     return FALSE;
 }
 

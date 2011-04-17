@@ -67,6 +67,7 @@ OGREDIGEODataSource::OGREDIGEODataSource()
 
     bRecodeToUTF8 = CSLTestBoolean(CPLGetConfigOption(
                                         "OGR_EDIGEO_RECODE_TO_UTF8", "YES"));
+    bHasUTF8ContentOnly = TRUE;
 }
 
 /************************************************************************/
@@ -850,6 +851,10 @@ skip_read_next_line:
                                             CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
                 osAttVal = pszNewVal;
                 CPLFree(pszNewVal);
+            }
+            else if (bHasUTF8ContentOnly)
+            {
+                bHasUTF8ContentOnly = CPLIsUTF8(osAttVal.c_str(), -1);
             }
             if (osAttId.size() != 0)
                 aosAttIdVal.push_back( strstrType (osAttId, osAttVal) );
