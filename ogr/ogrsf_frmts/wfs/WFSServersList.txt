@@ -16,6 +16,7 @@ http://devgeo.cciw.ca/cgi-bin/mapserv/carts
 http://map.ns.ec.gc.ca/MapServer/mapserv.exe?map=/mapserver/services/envdat/config.map (4.8.3)
 http://nsidc.org/cgi-bin/acap.pl
 http://sdmdataaccess.nrcs.usda.gov/Spatial/SDMNAD83Geographic.wfs
+http://demo.mapserver.org/cgi-bin/wfs?
 
 Deegree:
 http://www.nokis.org/deegree2/ogcwebservice
@@ -49,7 +50,7 @@ http://sentinel.ga.gov.au/wfsconnector/com.esri.wfs.Esrimap (works)
 http://sima.gencat.cat/wfsconnector/com.esri.wfs.Esrimap/SIMA_WFS (returns invalid XML in GetFeature)
 http://egisws01.nos.noaa.gov/wfsconnector/com.esri.wfs.Esrimap/nosdataexplorer_wfs (Mark invalid error in GetFeature)
 http://services.nationalmap.gov/ArcGIS/services/geonames/MapServer/WFSServer
-http://129.116.104.176/ArcGIS/services/Climate/CFSRMonthly/MapServer/WFSServer
+http://129.116.104.176/ArcGIS/services/Climate/CFSRMonthly/MapServer/WFSServer (offline)
 
 Microimages ?:
 http://publicatlas.microimages.com/tntgateway/tntgateway.cgi
@@ -60,7 +61,7 @@ http://webservices.ionicsoft.com/gazetteer/wfs/GNS_GAZ
 http://demo.ionicsoft.com/agiRSW/wfs/PYLONS
 
 Safe Software:
-http://142.176.62.103:8194/servlet/WFS_NS_NAMES
+http://142.176.62.103:8194/servlet/WFS_NS_NAMES (offline)
 
 ERDAS Apollo:
 http://apollo.erdas.com/erdas-apollo/vector/Cherokee
