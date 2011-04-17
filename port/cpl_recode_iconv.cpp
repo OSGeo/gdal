@@ -91,7 +91,16 @@ char *CPLRecodeIconv( const char *pszSource,
         {
             if ( errno == EILSEQ )
             {
-                // Silently skip the invalid sequence in the input string.
+                // Skip the invalid sequence in the input string.
+                static int bHasWarned = FALSE;
+                if (!bHasWarned)
+                {
+                    bHasWarned = TRUE;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "One or several characters couldn't be converted correctly from %s to %s.\n"
+                            "This warning will not be emitted anymore",
+                             pszSrcEncoding, pszDstEncoding);
+                }
                 nSrcLen--, pszSrcBuf++;
                 continue;
             }
@@ -199,9 +208,18 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
         {
             if ( errno == EILSEQ )
             {
-                // Silently skip the invalid sequence in the input string.
+                // Skip the invalid sequence in the input string.
                 nSrcLen--;
                 pszSrcBuf += sizeof(wchar_t);
+                static int bHasWarned = FALSE;
+                if (!bHasWarned)
+                {
+                    bHasWarned = TRUE;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "One or several characters couldn't be converted correctly from %s to %s.\n"
+                            "This warning will not be emitted anymore",
+                             pszSrcEncoding, pszDstEncoding);
+                }
                 continue;
             }
 
