@@ -806,7 +806,18 @@ static unsigned utf8toa(const char* src, unsigned srclen,
       int len; unsigned ucs = utf8decode(p,e,&len);
       p += len;
       if (ucs < 0x100) dst[count] = (char)ucs;
-      else dst[count] = '?';
+      else
+      {
+          static int bHasWarned = FALSE;
+          if (!bHasWarned)
+          {
+              bHasWarned = TRUE;
+              CPLError(CE_Warning, CPLE_AppDefined,
+                       "One or several characters couldn't be converted correctly from UTF-8 to ISO-8859-1.\n"
+                       "This warning will not be emitted anymore");
+          }
+          dst[count] = '?';
+      }
     }
     if (++count >= dstlen) {dst[count-1] = 0; break;}
   }
