@@ -37,6 +37,12 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
+ * Revision 1.49  2011-04-16 14:38:21  fwarmerdam
+ * avoid warnings with gcc on SHP_CVSID
+ *
+ * Revision 1.48  2010-08-27 23:42:52  fwarmerdam
+ * add SHPAPI_CALL attribute in code
+ *
  * Revision 1.47  2010-01-28 11:34:34  fwarmerdam
  * handle the shape file length limits more gracefully (#3236)
  *
@@ -209,8 +215,12 @@ extern "C" {
 /*      as unreferenced variables resulting in lots of warnings.        */
 /* -------------------------------------------------------------------- */
 #ifndef DISABLE_CVSID
-#  define SHP_CVSID(string)     static char cpl_cvsid[] = string; \
+#  if defined(__GNUC__) && __GNUC__ >= 4
+#    define SHP_CVSID(string)     static char cpl_cvsid[] __attribute__((used)) = string;
+#  else
+#    define SHP_CVSID(string)     static char cpl_cvsid[] = string; \
 static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
+#  endif
 #else
 #  define SHP_CVSID(string)
 #endif
@@ -444,8 +454,6 @@ void    SHPAPI_CALL
 
 int	SHPAPI_CALL
       SHPWriteTree( SHPTree *hTree, const char * pszFilename );
-SHPTree SHPAPI_CALL
-      SHPReadTree( const char * pszFilename );
 
 int	SHPAPI_CALL
       SHPTreeAddObject( SHPTree * hTree, SHPObject * psObject );
