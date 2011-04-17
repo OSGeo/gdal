@@ -204,6 +204,8 @@ class OGRWFSDataSource : public OGRDataSource
     int                 bPagingAllowed;
     int                 nPageSize;
 
+    int                 bIsGEOSERVER;
+
   public:
                         OGRWFSDataSource();
                         ~OGRWFSDataSource();
