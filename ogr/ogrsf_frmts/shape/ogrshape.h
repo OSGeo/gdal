@@ -42,7 +42,8 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                SHPObject *psShape, const char *pszSHPEncoding );
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape );
 OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
-                                       SHPHandle hSHP, DBFHandle hDBF );
+                                       SHPHandle hSHP, DBFHandle hDBF,
+                                       const char *pszSHPEncoding );
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn *poFeatureDefn,
                            OGRFeature *poFeature, const char *pszSHPEncoding );
