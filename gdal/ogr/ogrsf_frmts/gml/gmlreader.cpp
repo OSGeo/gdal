@@ -58,7 +58,7 @@ IGMLReader::~IGMLReader()
 /*                          CreateGMLReader()                           */
 /************************************************************************/
 
-IGMLReader *CreateGMLReader()
+IGMLReader *CreateGMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN)
 
 {
     CPLError( CE_Failure, CPLE_AppDefined,
@@ -81,10 +81,10 @@ IGMLReader *CreateGMLReader()
 /*                          CreateGMLReader()                           */
 /************************************************************************/
 
-IGMLReader *CreateGMLReader()
+IGMLReader *CreateGMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN)
 
 {
-    return new GMLReader();
+    return new GMLReader(bInvertAxisOrderIfLatLong, bConsiderEPSGAsURN);
 }
 
 int GMLReader::m_bXercesInitialized = FALSE;
@@ -94,7 +94,7 @@ int GMLReader::m_nInstanceCount = 0;
 /*                             GMLReader()                              */
 /************************************************************************/
 
-GMLReader::GMLReader()
+GMLReader::GMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN)
 
 {
     m_nInstanceCount++;
@@ -126,7 +126,8 @@ GMLReader::GMLReader()
     /* A bit experimental. Not publicly advertized. See commented doc in drv_gml.html */
     m_bFetchAllGeometries = CSLTestBoolean(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"));
 
-    m_bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
+    m_bInvertAxisOrderIfLatLong = bInvertAxisOrderIfLatLong;
+    m_bConsiderEPSGAsURN = bConsiderEPSGAsURN;
 
     m_pszGlobalSRSName = NULL;
     m_bCanUseGlobalSRSName = FALSE;
@@ -1124,7 +1125,7 @@ int GMLReader::PrescanForSchema( int bGetExtents )
         if( bGetExtents )
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
-                poFeature->GetGeometryList(), TRUE, m_bInvertAxisOrderIfLatLong, NULL);
+                poFeature->GetGeometryList(), TRUE, m_bInvertAxisOrderIfLatLong, NULL, m_bConsiderEPSGAsURN);
 
             if( poGeometry != NULL )
             {
@@ -1133,7 +1134,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
                 OGRwkbGeometryType eGType = (OGRwkbGeometryType) 
                     poClass->GetGeometryType();
 
-                char* pszSRSName = GML_ExtractSrsNameFromGeometry(poFeature->GetGeometryList());
+                char* pszSRSName = GML_ExtractSrsNameFromGeometry(poFeature->GetGeometryList(),
+                                                                  m_bConsiderEPSGAsURN);
                 if (pszSRSName != NULL)
                     m_bCanUseGlobalSRSName = FALSE;
                 poClass->MergeSRSName(pszSRSName);
@@ -1237,7 +1239,18 @@ void GMLReader::ResetReading()
 void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
 {
     if (m_pszGlobalSRSName == NULL && pszGlobalSRSName != NULL)
-        m_pszGlobalSRSName = CPLStrdup(pszGlobalSRSName);
+    {
+        if (strncmp(pszGlobalSRSName, "EPSG:", 5) == 0 &&
+            m_bConsiderEPSGAsURN)
+        {
+            m_pszGlobalSRSName = CPLStrdup(CPLSPrintf("urn:ogc:def:crs:EPSG::%s",
+                                                      pszGlobalSRSName+5));
+        }
+        else
+        {
+            m_pszGlobalSRSName = CPLStrdup(pszGlobalSRSName);
+        }
+    }
 }
 
 /************************************************************************/

@@ -278,8 +278,11 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      GMLReader on it.                                                */
 /* -------------------------------------------------------------------- */
     VSIFCloseL( fp );
-    
-    poReader = CreateGMLReader();
+
+    m_bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
+    m_bConsiderEPSGAsURN = CSLTestBoolean(CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "NO"));
+
+    poReader = CreateGMLReader(m_bInvertAxisOrderIfLatLong, m_bConsiderEPSGAsURN);
     if( poReader == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 

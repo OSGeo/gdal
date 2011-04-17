@@ -295,6 +295,7 @@ private:
     int           m_bFetchAllGeometries;
 
     int           m_bInvertAxisOrderIfLatLong;
+    int           m_bConsiderEPSGAsURN;
 
     int           ParseFeatureType(CPLXMLNode *psSchemaNode,
                                 const char* pszName,
@@ -305,8 +306,9 @@ private:
 
     char         *m_pszFilteredClassName;
 
+
 public:
-                GMLReader();
+                GMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN);
     virtual     ~GMLReader();
 
     int              IsClassListLocked() const { return m_bClassListLocked; }
