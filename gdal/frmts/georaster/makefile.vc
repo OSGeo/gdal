@@ -4,7 +4,6 @@ GDAL_ROOT = ..\..
 
 OBJ = oci_wrapper.obj \
       georaster_dataset.obj \
-      georaster_driver.obj \
       georaster_rasterband.obj \
       georaster_wrapper.obj
 
