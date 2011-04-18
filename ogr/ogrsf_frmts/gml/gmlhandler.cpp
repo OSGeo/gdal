@@ -32,7 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-#if HAVE_XERCES == 1
+#ifdef HAVE_XERCES
 
 /* Must be a multiple of 4 */
 #define MAX_TOKEN_SIZE  1000
@@ -252,8 +252,9 @@ char* GMLXercesHandler::GetAttributeValue(void* attr, const char* pszAttributeNa
     return NULL;
 }
 
-#else
+#endif
 
+#ifdef HAVE_EXPAT
 
 /************************************************************************/
 /*                            GMLExpatHandler()                         */

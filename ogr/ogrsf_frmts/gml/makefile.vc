@@ -1,6 +1,7 @@
 
 LL_OBJ	=	gmlpropertydefn.obj gmlfeatureclass.obj gmlfeature.obj \
-		gmlreader.obj parsexsd.obj resolvexlinks.obj gmlutils.obj $(X_OBJ)
+		gmlreader.obj parsexsd.obj resolvexlinks.obj gmlutils.obj \
+		gmlreadstate.obj gmlhandler.obj trstring.obj
 OGR_OBJ	=	ogrgmldriver.obj ogrgmldatasource.obj ogrgmllayer.obj
 
 OBJ	=	$(LL_OBJ) $(OGR_OBJ)
@@ -9,24 +10,20 @@ GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
+EXTRAFLAGS = 	-I.. -I..\.. $(XERCES_EXTRAFLAGS) $(EXPAT_EXTRAFLAGS)
+
 # By default, XML validation is disabled.  Uncomment the following line to
 # enable XML schema validation in the parser.
 #OGR_GML_VALIDATION = -DOGR_GML_VALIDATION=1
 
 !IFDEF XERCES_DIR
-X_OBJ =		gmlreadstate.obj gmlhandler.obj trstring.obj
-EXTRAFLAGS =	-I.. -I..\.. $(XERCES_INCLUDE) -DHAVE_XERCES=1 \
-                $(OGR_GML_VALIDATION)
-!ELSE
+XERCES_EXTRAFLAGS =	$(XERCES_INCLUDE) -DHAVE_XERCES $(OGR_GML_VALIDATION)
+!ENDIF
 
 !IFDEF EXPAT_DIR
-X_OBJ =		gmlreadstate.obj gmlhandler.obj
-EXTRAFLAGS =    -I.. -I..\.. -DHAVE_XERCES=0 $(EXPAT_INCLUDE) -DHAVE_EXPAT=1 
-!ELSE
-EXTRAFLAGS =    -I.. -I..\.. -DHAVE_XERCES=0
+EXPAT_EXTRAFLAGS =    $(EXPAT_INCLUDE) -DHAVE_EXPAT
 !ENDIF
 
-!ENDIF
 
 # By default, XML validation is disabled.  Uncomment the following line to
 # enable XML schema validation in the parser.

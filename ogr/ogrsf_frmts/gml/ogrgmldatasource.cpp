@@ -195,6 +195,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         return FALSE;
     }
 
+    int bIsUTF8 = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      If we aren't sure it is GML, load a header chunk and check      */
 /*      for signs it is GML                                             */
@@ -225,6 +227,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             szPtr += 3;
         }
+
+        bIsUTF8 = strstr(szPtr, "encoding='UTF-8'") != NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Here, we expect the opening chevrons of GML tree root element   */
@@ -282,7 +286,22 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     m_bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
     m_bConsiderEPSGAsURN = CSLTestBoolean(CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "NO"));
 
-    poReader = CreateGMLReader(m_bInvertAxisOrderIfLatLong, m_bConsiderEPSGAsURN);
+    /* EXPAT is faster than Xerces, so when it is safe to use it, use it ! */
+    /* The only interest of Xerces is for rare encodings that Expat doesn't handle */
+    /* but UTF-8 is well handled by Expat */
+    int bUseExpatParserPreferably = bIsUTF8;
+
+    /* Override default choice */
+    const char* pszGMLParser = CPLGetConfigOption("GML_PARSER", NULL);
+    if (pszGMLParser)
+    {
+        if (EQUAL(pszGMLParser, "EXPAT"))
+            bUseExpatParserPreferably = TRUE;
+        else if (EQUAL(pszGMLParser, "XERCES"))
+            bUseExpatParserPreferably = FALSE;
+    }
+
+    poReader = CreateGMLReader( bUseExpatParserPreferably, m_bInvertAxisOrderIfLatLong, m_bConsiderEPSGAsURN);
     if( poReader == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
