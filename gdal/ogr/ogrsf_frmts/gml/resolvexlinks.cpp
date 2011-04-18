@@ -32,8 +32,6 @@
 
 CPL_CVSID("$Id$");
 
-#if HAVE_XERCES != 0 || defined(HAVE_EXPAT)
-
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -629,5 +627,3 @@ int GMLReader::ResolveXlinks( const char *pszFile,
 
     return bReturn;
 }
-
-#endif /* HAVE_XERCES == 1  || defined(HAVE_EXPAT) */
