@@ -217,18 +217,9 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     //  Get a connection with Oracle server
     //  ---------------------------------------------------------------
 
-    GeoRasterDriver* poDriver = NULL;
-
-    poDriver = (GeoRasterDriver*) GDALGetDriverByName( "GeoRaster" );
-
-    if( ! poDriver )
-    {
-        return NULL;
-    }
-
-    poGRW->poConnection = poDriver->GetConnection( papszParam[0],
-                                                   papszParam[1],
-                                                   papszParam[2] );
+    poGRW->poConnection = new OWConnection( papszParam[0],
+                                            papszParam[1],
+                                            papszParam[2] );
 
     if( ! poGRW->poConnection->Succeeded() )
     {
@@ -943,6 +934,8 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "       AND  T.%s.RASTERID = :2'\n"
             "      INTO  :metadata\n"
             "     USING  :rdt, :rid;\n"
+            "\n"
+            "  COMMIT;\n"
             "\n"
             "END;\n",
                 sTable.c_str(),
@@ -2020,11 +2013,11 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
             return false;
         }
     }
-
+/**
     CPLDebug( "GEOR", "Level, Block, Band, YOffset, XOffset = "
                       "%4d, %4ld, %4d, %4d, %4d",
                       nLevel, nBlock, nBand, nYOffset, nXOffset );
-
+**/
     //  --------------------------------------------------------------------
     //  Prepare interleaved block
     //  --------------------------------------------------------------------
@@ -2161,7 +2154,8 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
     //  Write BLOB
     //  --------------------------------------------------------------------
 
-    CPLDebug( "GEOR", "FlushBlock = %ld; Size = %ld", nCacheBlock, nFlushBlockSize );
+    CPLDebug( "GEOR", "FlushBlock = %ld; Size = %ld; where = %s", 
+              nCacheBlock, nFlushBlockSize, sWhere.c_str() );
 
     if( ! poBlockStmt->WriteBlob( pahLocator[nCacheBlock],
                                   pabyFlushBuffer,
