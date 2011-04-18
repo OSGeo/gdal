@@ -85,7 +85,7 @@ public:
 };
 
 
-#if HAVE_XERCES == 1
+#if defined(HAVE_XERCES)
 
 // This works around problems with math.h on some platforms #defining INFINITY
 #ifdef INFINITY
@@ -193,7 +193,10 @@ public:
     virtual char*       GetAttributeValue(void* attr, const char* pszAttributeName);
 };
 
-#elif defined(HAVE_EXPAT)
+#endif
+
+
+#if defined(HAVE_EXPAT)
 
 #include "ogr_expat.h"
 
@@ -269,19 +272,28 @@ private:
 
     char          *m_pszFilename;
 
-#if HAVE_XERCES == 1
-    GMLXercesHandler    *m_poGMLHandler;
+    int            bUseExpatReader;
+
+    GMLHandler    *m_poGMLHandler;
+
+#if defined(HAVE_XERCES)
     SAX2XMLReader *m_poSAXReader;
     XMLPScanToken m_oToFill;
     GMLFeature   *m_poCompleteFeature;
     GMLInputSource *m_GMLInputSource;
-#else
-    GMLExpatHandler    *m_poGMLHandler;
+    int           SetupParserXerces();
+    GMLFeature   *NextFeatureXerces();
+#endif
+
+#if defined(HAVE_EXPAT)
     XML_Parser    oParser;
     GMLFeature ** ppoFeatureTab;
     int           nFeatureTabLength;
     int           nFeatureTabIndex;
+    int           SetupParserExpat();
+    GMLFeature   *NextFeatureExpat();
 #endif
+
     VSILFILE*     fpGML;
     int           m_bReadStarted;
 
@@ -308,7 +320,7 @@ private:
 
 
 public:
-                GMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN);
+                GMLReader(int bExpatReader, int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN);
     virtual     ~GMLReader();
 
     int              IsClassListLocked() const { return m_bClassListLocked; }
