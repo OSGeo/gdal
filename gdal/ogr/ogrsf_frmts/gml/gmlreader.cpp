@@ -31,6 +31,8 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "gmlutils.h"
+#include "gmlreaderp.h"
+#include "cpl_conv.h"
 
 #define SUPPORT_GEOMETRY
 
@@ -52,13 +54,15 @@ IGMLReader::~IGMLReader()
 /*                  No XERCES or EXPAT Library                          */
 /* ==================================================================== */
 /************************************************************************/
-#if HAVE_XERCES == 0 && !defined(HAVE_EXPAT)
+#if !defined(HAVE_XERCES) && !defined(HAVE_EXPAT)
 
 /************************************************************************/
 /*                          CreateGMLReader()                           */
 /************************************************************************/
 
-IGMLReader *CreateGMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN)
+IGMLReader *CreateGMLReader(int bUseExpatParserPreferably,
+                            int bInvertAxisOrderIfLatLong,
+                            int bConsiderEPSGAsURN)
 
 {
     CPLError( CE_Failure, CPLE_AppDefined,
@@ -72,20 +76,23 @@ IGMLReader *CreateGMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsUR
 /*                  With XERCES or EXPAT Library                        */
 /* ==================================================================== */
 /************************************************************************/
-#else /* HAVE_XERCES == 1 or HAVE_EXPAT */
-
-#include "gmlreaderp.h"
-#include "cpl_conv.h"
+#else /* defined(HAVE_XERCES) || defined(HAVE_EXPAT) */
 
 /************************************************************************/
 /*                          CreateGMLReader()                           */
 /************************************************************************/
 
-IGMLReader *CreateGMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN)
+IGMLReader *CreateGMLReader(int bUseExpatParserPreferably,
+                            int bInvertAxisOrderIfLatLong,
+                            int bConsiderEPSGAsURN)
 
 {
-    return new GMLReader(bInvertAxisOrderIfLatLong, bConsiderEPSGAsURN);
+    return new GMLReader(bUseExpatParserPreferably,
+                         bInvertAxisOrderIfLatLong,
+                         bConsiderEPSGAsURN);
 }
+
+#endif
 
 int GMLReader::m_bXercesInitialized = FALSE;
 int GMLReader::m_nInstanceCount = 0;
@@ -94,9 +101,22 @@ int GMLReader::m_nInstanceCount = 0;
 /*                             GMLReader()                              */
 /************************************************************************/
 
-GMLReader::GMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN)
+GMLReader::GMLReader(int bUseExpatParserPreferably, int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN)
 
 {
+    bUseExpatReader = FALSE;
+#ifdef HAVE_EXPAT
+    if(bUseExpatParserPreferably)
+        bUseExpatReader = TRUE;
+#endif
+
+#if defined(HAVE_EXPAT) && defined(HAVE_XERCES)
+    if (bUseExpatReader)
+        CPLDebug("GML", "Using Expat reader");
+    else
+        CPLDebug("GML", "Using Xerces reader");
+#endif
+
     m_nInstanceCount++;
     m_nClassCount = 0;
     m_papoClass = NULL;
@@ -104,11 +124,12 @@ GMLReader::GMLReader(int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN)
     m_bClassListLocked = FALSE;
 
     m_poGMLHandler = NULL;
-#if HAVE_XERCES == 1
+#ifdef HAVE_XERCES
     m_poSAXReader = NULL;
     m_poCompleteFeature = NULL;
     m_GMLInputSource = NULL;
-#else
+#endif
+#ifdef HAVE_EXPAT
     oParser = NULL;
     ppoFeatureTab = NULL;
     nFeatureTabIndex = 0;
@@ -149,7 +170,7 @@ GMLReader::~GMLReader()
     CleanupParser();
 
     --m_nInstanceCount;
-#if HAVE_XERCES == 1
+#ifdef HAVE_XERCES
     if( m_nInstanceCount == 0 && m_bXercesInitialized )
     {
         XMLPlatformUtils::Terminate();
@@ -219,8 +240,40 @@ int GMLReader::SetupParser()
     if (fpGML != NULL)
         VSIFSeekL( fpGML, 0, SEEK_SET );
 
-#if HAVE_XERCES == 1
+    int bRet = -1;
+#ifdef HAVE_EXPAT
+    if (bUseExpatReader)
+        bRet = SetupParserExpat();
+#endif
 
+#ifdef HAVE_XERCES
+    if (!bUseExpatReader)
+        bRet = SetupParserXerces();
+#endif
+    if (bRet < 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "SetupParser(): shouldn't happen");
+        return FALSE;
+    }
+
+    if (!bRet)
+        return FALSE;
+
+    m_bReadStarted = FALSE;
+
+    // Push an empty state.
+    PushState( new GMLReadState() );
+
+    return TRUE;
+}
+
+#ifdef HAVE_XERCES
+/************************************************************************/
+/*                        SetupParserXerces()                           */
+/************************************************************************/
+
+int GMLReader::SetupParserXerces()
+{
     if( !m_bXercesInitialized )
     {
         try
@@ -249,13 +302,14 @@ int GMLReader::SetupParser()
     try{
         m_poSAXReader = XMLReaderFactory::createXMLReader();
     
-        m_poGMLHandler = new GMLXercesHandler( this );
+        GMLXercesHandler* poXercesHandler = new GMLXercesHandler( this );
+        m_poGMLHandler = poXercesHandler;
 
-        m_poSAXReader->setContentHandler( m_poGMLHandler );
-        m_poSAXReader->setErrorHandler( m_poGMLHandler );
-        m_poSAXReader->setLexicalHandler( m_poGMLHandler );
-        m_poSAXReader->setEntityResolver( m_poGMLHandler );
-        m_poSAXReader->setDTDHandler( m_poGMLHandler );
+        m_poSAXReader->setContentHandler( poXercesHandler );
+        m_poSAXReader->setErrorHandler( poXercesHandler );
+        m_poSAXReader->setLexicalHandler( poXercesHandler );
+        m_poSAXReader->setEntityResolver( poXercesHandler );
+        m_poSAXReader->setDTDHandler( poXercesHandler );
 
         xmlUriValid = XMLString::transcode("http://xml.org/sax/features/validation");
         xmlUriNS = XMLString::transcode("http://xml.org/sax/features/namespaces");
@@ -294,7 +348,18 @@ int GMLReader::SetupParser()
 
     if (m_GMLInputSource == NULL && fpGML != NULL)
         m_GMLInputSource = new GMLInputSource(fpGML);
-#else
+
+    return TRUE;
+}
+#endif
+
+/************************************************************************/
+/*                        SetupParserExpat()                            */
+/************************************************************************/
+
+#ifdef HAVE_EXPAT
+int GMLReader::SetupParserExpat()
+{
     // Cleanup any old parser.
     if( oParser != NULL )
         CleanupParser();
@@ -305,15 +370,9 @@ int GMLReader::SetupParser()
     XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
     XML_SetUserData(oParser, m_poGMLHandler);
-#endif
-
-    m_bReadStarted = FALSE;
-
-    // Push an empty state.
-    PushState( new GMLReadState() );
-
     return TRUE;
 }
+#endif
 
 /************************************************************************/
 /*                           CleanupParser()                            */
@@ -322,25 +381,29 @@ int GMLReader::SetupParser()
 void GMLReader::CleanupParser()
 
 {
-#if HAVE_XERCES == 1
-    if( m_poSAXReader == NULL )
+#ifdef HAVE_XERCES
+    if( !bUseExpatReader && m_poSAXReader == NULL )
         return;
-#else
-    if (oParser == NULL )
+#endif
+
+#ifdef HAVE_EXPAT
+    if ( bUseExpatReader && oParser == NULL )
         return;
 #endif
 
     while( m_poState )
         PopState();
 
-#if HAVE_XERCES == 1
+#ifdef HAVE_XERCES
     delete m_poSAXReader;
     m_poSAXReader = NULL;
     delete m_GMLInputSource;
     m_GMLInputSource = NULL;
     delete m_poCompleteFeature;
     m_poCompleteFeature = NULL;
-#else
+#endif
+
+#ifdef HAVE_EXPAT
     if (oParser)
         XML_ParserFree(oParser);
     oParser = NULL;
@@ -361,7 +424,7 @@ void GMLReader::CleanupParser()
     m_bReadStarted = FALSE;
 }
 
-#if HAVE_XERCES == 1
+#ifdef HAVE_XERCES
 
 GMLBinInputStream::GMLBinInputStream(VSILFILE* fp)
 {
@@ -414,14 +477,14 @@ BinInputStream* GMLInputSource::makeStream() const
     return binInputStream;
 }
 
-#endif
+#endif // HAVE_XERCES
 
 /************************************************************************/
-/*                            NextFeature()                             */
+/*                        NextFeatureXerces()                           */
 /************************************************************************/
 
-#if HAVE_XERCES == 1
-GMLFeature *GMLReader::NextFeature()
+#ifdef HAVE_XERCES
+GMLFeature *GMLReader::NextFeatureXerces()
 
 {
     GMLFeature *poReturn = NULL;
@@ -469,8 +532,10 @@ GMLFeature *GMLReader::NextFeature()
 
     return poReturn;
 }
-#else
-GMLFeature *GMLReader::NextFeature()
+#endif
+
+#ifdef HAVE_EXPAT
+GMLFeature *GMLReader::NextFeatureExpat()
 
 {
     if (!m_bReadStarted)
@@ -502,7 +567,7 @@ GMLFeature *GMLReader::NextFeature()
     int nDone;
     do
     {
-        m_poGMLHandler->ResetDataHandlerCounter();
+        ((GMLExpatHandler*)m_poGMLHandler)->ResetDataHandlerCounter();
 
         unsigned int nLen =
                 (unsigned int)VSIFReadL( aBuf, 1, sizeof(aBuf), fpGML );
@@ -518,13 +583,29 @@ GMLFeature *GMLReader::NextFeature()
             m_bStopParsing = TRUE;
         }
         if (!m_bStopParsing)
-            m_bStopParsing = m_poGMLHandler->HasStoppedParsing();
+            m_bStopParsing = ((GMLExpatHandler*)m_poGMLHandler)->HasStoppedParsing();
 
     } while (!nDone && !m_bStopParsing && nFeatureTabLength == 0);
 
     return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
 }
 #endif
+
+GMLFeature *GMLReader::NextFeature()
+{
+#ifdef HAVE_EXPAT
+    if (bUseExpatReader)
+        return NextFeatureExpat();
+#endif
+
+#ifdef HAVE_XERCES
+    if (!bUseExpatReader)
+        return NextFeatureXerces();
+#endif
+
+    CPLError(CE_Failure, CPLE_AppDefined, "NextFeature(): Should not happen");
+    return NULL;
+}
 
 /************************************************************************/
 /*                            PushFeature()                             */
@@ -737,13 +818,15 @@ void GMLReader::PopState()
 {
     if( m_poState != NULL )
     {
-#if HAVE_XERCES == 1
+#ifdef HAVE_XERCES
         if( m_poState->m_poFeature != NULL && m_poCompleteFeature == NULL )
         {
             m_poCompleteFeature = m_poState->m_poFeature;
             m_poState->m_poFeature = NULL;
         }
-#else
+#endif
+
+#ifdef HAVE_EXPAT
         if ( m_poState->m_poFeature != NULL )
         {
             ppoFeatureTab = (GMLFeature**)
@@ -1263,6 +1346,3 @@ int GMLReader::SetFilteredClassName(const char* pszClassName)
     m_pszFilteredClassName = (pszClassName) ? CPLStrdup(pszClassName) : NULL;
     return TRUE;
 }
-
-#endif /* HAVE_XERCES == 1 or HAVE_EXPAT */
-

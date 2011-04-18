@@ -30,6 +30,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifdef HAVE_XERCES
+
 #include "gmlreaderp.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
@@ -230,3 +232,5 @@ char *tr_strdup( const XMLCh *panXMLString )
     tr_strcpy( pszResult, panXMLString );
     return pszResult;
 }
+
+#endif // HAVE_XERCES
