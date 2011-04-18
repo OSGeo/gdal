@@ -2015,6 +2015,8 @@ def ogr_shape_49():
 def ogr_shape_50():
 
     ds = ogr.Open( '/vsizip/vsicurl/http://jira.codehaus.org/secure/attachment/37994/test1.zip')
+    if ds is None:
+        return 'skip'
     lyr = ds.GetLayer(0)
 
     if gdal.GetLastErrorMsg().find('Recode from CP936 to UTF-8 not supported, treated as ISO8859-1 to UTF-8.') != -1:
