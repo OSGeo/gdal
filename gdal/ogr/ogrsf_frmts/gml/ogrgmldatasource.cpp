@@ -181,6 +181,9 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     VSILFILE   *fp;
     char        szHeader[2048];
     int         nNumberOfFeatures = 0;
+    CPLString   osWithVsiGzip;
+
+    pszName = CPLStrdup( pszNewName );
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
@@ -211,6 +214,31 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             return FALSE;
         }
         szHeader[MIN(nRead, sizeof(szHeader))-1] = '\0';
+
+        /* Might be a OS-Mastermap gzipped GML, so let be nice and try to open */
+        /* it transparently with /vsigzip/ */
+        if ( ((GByte*)szHeader)[0] == 0x1f && ((GByte*)szHeader)[1] == 0x8b &&
+             EQUAL(CPLGetExtension(pszNewName), "gz") &&
+             strncmp(pszNewName, "/vsigzip/", strlen("/vsigzip/")) != 0 )
+        {
+            VSIFCloseL( fp );
+            osWithVsiGzip = "/vsigzip/";
+            osWithVsiGzip += pszNewName;
+
+            pszNewName = osWithVsiGzip;
+
+            fp = VSIFOpenL( pszNewName, "r" );
+            if( fp == NULL )
+                return FALSE;
+
+            nRead = VSIFReadL( szHeader, 1, sizeof(szHeader), fp );
+            if (nRead <= 0)
+            {
+                VSIFCloseL( fp );
+                return FALSE;
+            }
+            szHeader[MIN(nRead, sizeof(szHeader))-1] = '\0';
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Check for a UTF-8 BOM and skip if found                         */
@@ -397,8 +425,6 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     CPLFree( pszXlinkResolvedFilename );
     CSLDestroy( papszSkip );
 
-    pszName = CPLStrdup( pszNewName );
-
 /* -------------------------------------------------------------------- */
 /*      Can we find a GML Feature Schema (.gfs) for the input file?     */
 /* -------------------------------------------------------------------- */
@@ -407,6 +433,9 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     int        bHaveSchema = FALSE;
 
     pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+    if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
+        pszGFSFilename += strlen("/vsigzip/");
+
     if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
     {
         VSIStatL( pszNewName, &sGMLStatBuf );
@@ -471,13 +500,17 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema && !poReader->HasStoppedParsing() &&
         !EQUALN(pszNewName, "/vsitar/", strlen("/vsitar/")) &&
-        !EQUALN(pszNewName, "/vsigzip/", strlen("/vsigzip/")) &&
         !EQUALN(pszNewName, "/vsizip/", strlen("/vsizip/")) &&
+        !EQUALN(pszNewName, "/vsigzip/vsi", strlen("/vsigzip/vsi")) &&
+        !EQUALN(pszNewName, "/vsigzip//vsi", strlen("/vsigzip//vsi")) &&
         !EQUALN(pszNewName, "/vsicurl/", strlen("/vsicurl/")))
     {
         VSILFILE    *fp = NULL;
 
         pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+        if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
+            pszGFSFilename += strlen("/vsigzip/");
+
         if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) != 0 
             && (fp = VSIFOpenL( pszGFSFilename, "wt" )) != NULL )
         {
