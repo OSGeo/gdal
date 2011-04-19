@@ -175,6 +175,23 @@ parameter value in the XML header.<br>
 
 When writing a GML file, the driver expects UTF-8 content to be passed in.<p>
 
+<h2>Feature id (fid / gml:id)</h2>
+
+Starting with OGR 1.8.0, the driver exposes the content of the gml:id attribute
+as a string field called <i>gml_id</i>, when reading GML WFS documents. When creating
+a GML3 document, if a field is called <i>gml_id</i>, its content will also be used to
+write the content of the gml:id attribute of the created feature.<p>
+
+Starting with OGR 1.9.0, the driver autodetects the presence of a fid (GML2)
+(resp. gml:id (GML3)) attribute at the beginning of the file, and, if found,
+exposes it by default as a <i>fid</i> (resp. <i>gml_id</i>) field. The autodetection
+can be overriden by specifying the <b>GML_EXPOSE_FID</b> or <b>GML_EXPOSE_GML_ID</b> configuration
+option to <b>YES</b> or <b>NO</b>.<p>
+
+Starting with OGR 1.9.0, when creating a GML2 document, if a field is called
+<i>fid</i>, its content will also be used to write the content of the fid attribute of the
+created feature.<p>
+
 <h2>Creation Issues</h2>
 
 On export all layers are written to a single GML file all in a single

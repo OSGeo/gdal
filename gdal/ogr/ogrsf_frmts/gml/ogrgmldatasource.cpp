@@ -61,6 +61,7 @@ OGRGMLDataSource::OGRGMLDataSource()
     bOutIsTempFile = FALSE;
 
     bExposeGMLId = FALSE;
+    bExposeFid = FALSE;
     nSchemaInsertLocation = -1;
     nBoundedByLocation = -1;
 
@@ -274,6 +275,19 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             /* always expose the gml:id to avoid later crashes */
             bExposeGMLId = TRUE;
             bIsWFS = TRUE;
+        }
+        else
+        {
+            bExposeGMLId = strstr(szPtr, " gml:id=\"") != NULL;
+            bExposeFid = strstr(szPtr, " fid=\"") != NULL;
+            
+            const char* pszExposeGMLId = CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL);
+            if (pszExposeGMLId)
+                bExposeGMLId = CSLTestBoolean(pszExposeGMLId);
+
+            const char* pszExposeFid = CPLGetConfigOption("GML_EXPOSE_FID", NULL);
+            if (pszExposeFid)
+                bExposeFid = CSLTestBoolean(pszExposeFid);
         }
     }
     
@@ -548,6 +562,11 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
     if (bExposeGMLId)
     {
         OGRFieldDefn oField( "gml_id", OFTString );
+        poLayer->GetLayerDefn()->AddFieldDefn( &oField );
+    }
+    else if (bExposeFid)
+    {
+        OGRFieldDefn oField( "fid", OFTString );
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
 
