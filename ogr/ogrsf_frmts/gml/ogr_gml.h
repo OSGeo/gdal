@@ -119,6 +119,7 @@ class OGRGMLDataSource : public OGRDataSource
     void                InsertHeader();
 
     int                 bExposeGMLId;
+    int                 bExposeFid;
     int                 bIsWFS;
 
     OGRSpatialReference* poGlobalSRS;
@@ -149,7 +150,7 @@ class OGRGMLDataSource : public OGRDataSource
 
     void                GrowExtents( OGREnvelope *psGeomBounds );
 
-    int                 ExposeGMLId() { return bExposeGMLId; }
+    int                 ExposeId() { return bExposeGMLId || bExposeFid; }
 
     static void         PrintLine(VSILFILE* fp, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
 
