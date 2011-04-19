@@ -104,10 +104,14 @@ int GMLReader::m_nInstanceCount = 0;
 GMLReader::GMLReader(int bUseExpatParserPreferably, int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN)
 
 {
+#ifndef HAVE_XERCES
+    bUseExpatReader = TRUE;
+#else
     bUseExpatReader = FALSE;
 #ifdef HAVE_EXPAT
     if(bUseExpatParserPreferably)
         bUseExpatReader = TRUE;
+#endif
 #endif
 
 #if defined(HAVE_EXPAT) && defined(HAVE_XERCES)
