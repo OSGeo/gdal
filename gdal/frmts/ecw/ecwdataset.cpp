@@ -1261,7 +1261,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
 
-    if( oJP2Geo.ReadAndParse( osFilename ) )
+    if( bIsJPEG2000 && oJP2Geo.ReadAndParse( osFilename ) )
     {
         poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
         poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
