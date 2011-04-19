@@ -259,7 +259,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
 
         poOGRFeature->SetFID( nFID );
-        if (poDS->ExposeGMLId())
+        if (poDS->ExposeId())
         {
             if (pszGML_FID)
                 poOGRFeature->SetField( iDstField, pszGML_FID );
@@ -433,9 +433,17 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
                     poFeature->GetFID() );
     }
     else
-        poDS->PrintLine( fp, "<ogr:%s fid=\"F%ld\">",
+    {
+        nGMLIdIndex = poFeatureDefn->GetFieldIndex("fid");
+        if (nGMLIdIndex >= 0 && poFeature->IsFieldSet( nGMLIdIndex ) )
+            poDS->PrintLine( fp, "<ogr:%s fid=\"%s\">",
                 poFeatureDefn->GetName(),
-                poFeature->GetFID() );
+                poFeature->GetFieldAsString(nGMLIdIndex) );
+        else
+            poDS->PrintLine( fp, "<ogr:%s fid=\"F%ld\">",
+                    poFeatureDefn->GetName(),
+                    poFeature->GetFID() );
+    }
 
     // Write out Geometry - for now it isn't indented properly.
     /* GML geometries don't like very much the concept of empty geometry */
