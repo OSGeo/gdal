@@ -260,7 +260,9 @@ def ogr_gml_7():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
+    gdal.SetConfigOption('GML_EXPOSE_FID', 'FALSE')
     gml_ds = ogr.Open( 'data/test_point.gml' )
+    gdal.SetConfigOption('GML_EXPOSE_FID', None)
     lyr = gml_ds.GetLayer()
     ldefn = lyr.GetLayerDefn()
 
