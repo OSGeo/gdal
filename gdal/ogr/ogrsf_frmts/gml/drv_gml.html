@@ -8,7 +8,7 @@
 <h1>GML - Geography Markup Language</h1>
 
 OGR has limited support for GML reading and writing. Update of existing
-files is not currently supported.<p>
+files is not supported.<p>
 
 Supported GML flavors :
 <table border>
@@ -21,11 +21,21 @@ Supported GML flavors :
 </table>
 <p>
 
+<h2>Parsers</h2>
+
 The reading part of the driver only
-works if OGR is built with Xerces linked in. Starting with GDAL 1.7.0, when
+works if OGR is built with Xerces linked in. Starting with OGR 1.7.0, when
 Xerces is unavailable, read support also works if OGR is built with Expat linked in.
 XML validation is disabled by default.
 GML writing is always supported, even without Xerces or Expat.<p>
+
+Note: starting with OGR 1.9.0, if both Xerces and Expat are available at build time,
+the GML driver will preferentially select at runtime the Expat parser for cases where it is possible
+(GML file in a compatible encoding), and default back to Xerces parser in other cases.
+However, the choice of the parser can be overriden by specifying the <b>GML_PARSER</b>
+configuration option to <b>EXPAT</b> or <b>XERCES</b>.<p>
+
+<h2>CRS support</h2>
 
 Since OGR 1.8.0, the GML driver has coordinate system support. This is
 only reported when all the geometries of a layer have a srsName attribute,
@@ -44,6 +54,8 @@ the coordinates in the file are in (latitude, longitude) order. By default, OGR 
 not consider the EPSG axis order and will report the coordinates in (latitude,longitude)
 order. However, if you set the configuration option <b>GML_CONSIDER_EPSG_AS_URN</b> to
 <b>YES</b>, the rules explained in the previous paragraph will be applied.<p>
+
+<h2>Schema</h2>
 
 In contrast to most GML readers, the OGR GML reader does not require
 the presence of an XML Schema definition of the feature classes (file with .xsd
@@ -155,9 +167,10 @@ ISO-8859-1 might work in some cases).<p>
 The content returned by OGR will be encoded in UTF-8, after the conversion from the
 encoding mentionned in the file header is.<p>
 
-If your GML file is not encoded in one of the previous encodings, it will not be parsed by the
-GML driver. You may convert it into one of the supported encoding with the <i>iconv</i> utility
-for example and change accordingly the <i>encoding</i> parameter value in the XML header.<br>
+If the GML file is not encoded in one of the previous encodings and the only parser available
+is Expat, it will not be parsed by the GML driver. You may convert it into one of the supported
+encodings with the <i>iconv</i> utility for example and change accordingly the <i>encoding</i>
+parameter value in the XML header.<br>
 <p>
 
 When writing a GML file, the driver expects UTF-8 content to be passed in.<p>
