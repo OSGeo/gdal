@@ -278,8 +278,10 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         }
         else
         {
-            bExposeGMLId = strstr(szPtr, " gml:id=\"") != NULL;
-            bExposeFid = strstr(szPtr, " fid=\"") != NULL;
+            bExposeGMLId = strstr(szPtr, " gml:id=\"") != NULL ||
+                           strstr(szPtr, " gml:id='") != NULL;
+            bExposeFid = strstr(szPtr, " fid=\"") != NULL ||
+                         strstr(szPtr, " fid='") != NULL;
             
             const char* pszExposeGMLId = CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL);
             if (pszExposeGMLId)
