@@ -1409,7 +1409,7 @@ try_again:
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
 
-    if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
+    if( bIsJPEG2000 && oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
     {
         poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
         poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
