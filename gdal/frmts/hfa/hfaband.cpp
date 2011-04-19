@@ -974,15 +974,24 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 void HFABand::NullBlock( void *pData )
 
 {
+    int nChunkSize = MAX(1,HFAGetDataTypeBits(nDataType)/8);
+    int nWords = nBlockXSize * nBlockYSize;
+
     if( !bNoDataSet )
-        memset( pData, 0, 
-                HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+    {
+#ifdef ESRI_BUILD
+        // We want special defaulting for 1 bit data in ArcGIS.
+        if ( nDataType >= EPT_u2 )
+            memset( pData,   0, nChunkSize*nWords );
+        else
+            memset( pData, 255, nChunkSize*nWords );
+#else
+        memset( pData,   0, nChunkSize*nWords );
+#endif
+    }
     else
-            
     {
         double adfND[2];
-        int nChunkSize = MAX(1,HFAGetDataTypeBits(nDataType)/8);
-        int nWords = nBlockXSize * nBlockYSize;
         int i;
 
         switch( nDataType )
