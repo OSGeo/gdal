@@ -1727,7 +1727,7 @@ bool GeoRasterWrapper::InitializeIO( void )
     // Allocate buffer for one raster block
     // --------------------------------------------------------------------
 
-    int nMaxBufferSize = MAX( nBlockBytes, nGDALBlockBytes );
+    long nMaxBufferSize = MAX( nBlockBytes, nGDALBlockBytes );
 
     pabyBlockBuf = (GByte*) VSIMalloc( sizeof(GByte) * nMaxBufferSize );
 
