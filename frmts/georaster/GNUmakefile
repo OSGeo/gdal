@@ -6,13 +6,12 @@ else
 	XTRA_OPT =
 endif
 
-OBJ		=	georaster_driver.o \
-			georaster_dataset.o \
+OBJ		=	georaster_dataset.o \
 			georaster_rasterband.o \
 			oci_wrapper.o \
 			georaster_wrapper.o
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS) -fPIC
 
 PLUGIN_SO	= gdal_GEOR.so
 
@@ -27,7 +26,7 @@ endif
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
-	rm -f *.o $(O_OBJ) *.so
+	rm -f *.o $(O_OBJ) *.so *.lo
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
