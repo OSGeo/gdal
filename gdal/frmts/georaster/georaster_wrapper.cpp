@@ -1063,6 +1063,8 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         " T.%s.RasterDataTable = :rdt AND"
         " T.%s.RasterId = :rid;\n"
         "\n"
+        "  COMMIT;\n"
+        "\n"
         "END;",
             sOwner.c_str(),
             szCreateBlank,
