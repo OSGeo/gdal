@@ -446,6 +446,13 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 /*      Test feature 2.                                                 */
 /* -------------------------------------------------------------------- */
     poFeature = poLayer->GetFeature( papoFeatures[1]->GetFID() );
+    if (poFeature == NULL)
+    {
+        printf( "ERROR: Cannot fetch feature %ld.\n",
+                 papoFeatures[1]->GetFID() );
+        goto end;
+    }
+
     if( !poFeature->Equal( papoFeatures[1] ) )
     {
         bRet = FALSE;
