@@ -369,7 +369,12 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
         if (poSQLLyr)
         {
             OGRFeature* poFeatCount = poSQLLyr->GetNextFeature();
-            if (nClaimedFC != poFeatCount->GetFieldAsInteger(0))
+            if (poFeatCount == NULL)
+            {
+                bRet = FALSE;
+                printf( "ERROR: '%s' failed.\n", osSQL.c_str() );
+            }
+            else if (nClaimedFC != poFeatCount->GetFieldAsInteger(0))
             {
                 bRet = FALSE;
                 printf( "ERROR: Claimed feature count %d doesn't match '%s' one, %d.\n",
@@ -400,7 +405,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 
 {
     int bRet = TRUE;
-    OGRFeature  *papoFeatures[5], *poFeature;
+    OGRFeature  *papoFeatures[5], *poFeature = NULL;
     int         iFeature;
 
     poLayer->SetSpatialFilter( NULL );
@@ -422,8 +427,19 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
     
     for( iFeature = 0; iFeature < 5; iFeature++ )
     {
+        papoFeatures[iFeature] = NULL;
+    }
+    for( iFeature = 0; iFeature < 5; iFeature++ )
+    {
         papoFeatures[iFeature] = poLayer->GetNextFeature();
-        CPLAssert( papoFeatures[iFeature] != NULL );
+        if( papoFeatures[iFeature] == NULL )
+        {
+            if( bVerbose )
+                printf( "INFO: Only %d features on layer,"
+                        "skipping random read test.\n",
+                        iFeature );
+            goto end;
+        }
     }
 
 /* -------------------------------------------------------------------- */
