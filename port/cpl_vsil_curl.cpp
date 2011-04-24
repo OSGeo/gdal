@@ -1134,10 +1134,15 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
         return NULL;
     }
 
+    const char* pszOptionVal =
+        CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
+    int bSkipReadDir = EQUAL(pszOptionVal, "EMPTY_DIR") ||
+                       CSLTestBoolean(pszOptionVal);
+
     CPLString osFilename(pszFilename);
     int bGotFileList = TRUE;
     if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
-        strncmp(CPLGetExtension(osFilename), "zip", 3) != 0)
+        strncmp(CPLGetExtension(osFilename), "zip", 3) != 0 && !bSkipReadDir)
     {
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
         int bFound = (CSLFindStringSensitive(papszFileList, CPLGetFilename(osFilename)) != -1);
@@ -1399,9 +1404,14 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
     
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
+    const char* pszOptionVal =
+        CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
+    int bSkipReadDir = EQUAL(pszOptionVal, "EMPTY_DIR") ||
+                       CSLTestBoolean(pszOptionVal);
+
     /* Does it look like a FTP directory ? */
     if (strncmp(osFilename, "/vsicurl/ftp", strlen("/vsicurl/ftp")) == 0 &&
-        pszFilename[strlen(osFilename) - 1] == '/')
+        pszFilename[strlen(osFilename) - 1] == '/' && !bSkipReadDir)
     {
         char** papszFileList = ReadDir(osFilename);
         if (papszFileList)
@@ -1416,7 +1426,8 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
         return -1;
     }
     else if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
-             strncmp(CPLGetExtension(osFilename), "zip", 3) != 0)
+             strncmp(CPLGetExtension(osFilename), "zip", 3) != 0 &&
+             !bSkipReadDir)
     {
         int bGotFileList;
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
