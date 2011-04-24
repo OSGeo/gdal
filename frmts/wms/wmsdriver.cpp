@@ -321,8 +321,23 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     if (nLevelCount == 0 || osURL.size() == 0)
         return NULL;
 
-    int nXSize = (int)((dfMaxX - dfMinX) / dfPixelSize + 0.5);
-    int nYSize = (int)((dfMaxY - dfMinY) / dfPixelSize + 0.5);
+    int nXSize = 0;
+    int nYSize = 0;
+
+    while(nLevelCount > 0)
+    {
+        GIntBig nXSizeBig = (GIntBig)((dfMaxX - dfMinX) / dfPixelSize + 0.5);
+        GIntBig nYSizeBig = (GIntBig)((dfMaxY - dfMinY) / dfPixelSize + 0.5);
+        if (nXSizeBig < INT_MAX && nYSizeBig < INT_MAX)
+        {
+            nXSize = (int)nXSizeBig;
+            nYSize = (int)nYSizeBig;
+            break;
+        }
+        CPLDebug("WMS", "Dropping one overview level so raster size fits into 32bit...");
+        dfPixelSize *= 2;
+        nLevelCount --;
+    }
 
     char* pszEscapedURL = CPLEscapeString(osURL.c_str(), -1, CPLES_XML);
     
