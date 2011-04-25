@@ -556,7 +556,11 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
             poFieldDefn = poFeature->GetFieldDefnRef(nField);
             CPLAssert( NULL != poFieldDefn );
 
-            if( OFTInteger == poFieldDefn->GetType() )
+            if( it.val == NULL)
+            {
+                /* nothing to do */
+            }
+            else if( OFTInteger == poFieldDefn->GetType() )
 			{
                 poFeature->SetField( nField, json_object_get_int(it.val) );
 				
