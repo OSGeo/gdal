@@ -947,7 +947,7 @@ static int TestAttributeFilter( OGRDataSource* poDS, OGRLayer *poLayer )
         osAttributeFilter += pszFieldName;
         osAttributeFilter += "\"";
     }
-    else if (strchr(pszFieldName, ' '))
+    else if (strchr(pszFieldName, ' ') || pszFieldName[0] == '_')
     {
         osAttributeFilter = "'";
         osAttributeFilter += pszFieldName;
@@ -1005,7 +1005,7 @@ static int TestAttributeFilter( OGRDataSource* poDS, OGRLayer *poLayer )
         osAttributeFilter += pszFieldName;
         osAttributeFilter += "\"";
     }
-    else if (strchr(pszFieldName, ' '))
+    else if (strchr(pszFieldName, ' ') || pszFieldName[0] == '_')
     {
         osAttributeFilter = "'";
         osAttributeFilter += pszFieldName;
