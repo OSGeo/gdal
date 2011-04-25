@@ -385,9 +385,18 @@ int OGRCouchDBTableLayer::HasFilterOnFieldOrCreateIfNecessary(const char* pszFie
         json_object* poViews = json_object_new_object();
         json_object* poFilter = json_object_new_object();
 
-        CPLString osMap(CPLSPrintf("function(doc) { if (doc && doc.properties && doc.properties.%s) emit(doc.properties.%s, null); }",
-                                    pszFieldName,
-                                    pszFieldName));
+        CPLString osMap;
+
+        if (bGeoJSONDocument)
+        {
+            osMap = CPLSPrintf("function(doc) { if (doc && doc.properties && doc.properties.%s) emit(doc.properties.%s, null); }",
+                               pszFieldName, pszFieldName);
+        }
+        else
+        {
+            osMap = CPLSPrintf("function(doc) { if (doc && doc.%s) emit(doc.%s, null); }",
+                               pszFieldName, pszFieldName);
+        }
 
         json_object_object_add(poDoc, "views", poViews);
         json_object_object_add(poViews, "filter", poFilter);
@@ -933,15 +942,32 @@ OGRFeatureDefn * OGRCouchDBTableLayer::GetLayerDefn()
     /* -------------------------------------------------------------------- */
         json_object* poObjProps = json_object_object_get( poDoc,
                                                           "properties" );
+        json_object_iter it;
+        it.key = NULL;
+        it.val = NULL;
+        it.entry = NULL;
         if( NULL != poObjProps )
         {
-            json_object_iter it;
-            it.key = NULL;
-            it.val = NULL;
-            it.entry = NULL;
             json_object_object_foreachC( poObjProps, it )
             {
                 if( -1 == poFeatureDefn->GetFieldIndex( it.key ) )
+                {
+                    OGRFieldDefn fldDefn( it.key,
+                        GeoJSONPropertyToFieldType( it.val ) );
+                    poFeatureDefn->AddFieldDefn( &fldDefn );
+                }
+            }
+        }
+        else
+        {
+            bGeoJSONDocument = FALSE;
+
+            json_object_object_foreachC( poDoc, it )
+            {
+                if( strcmp(it.key, "_id") != 0 &&
+                    strcmp(it.key, "_rev") != 0 &&
+                    strcmp(it.key, "geometry") != 0 &&
+                    -1 == poFeatureDefn->GetFieldIndex( it.key ) )
                 {
                     OGRFieldDefn fldDefn( it.key,
                         GeoJSONPropertyToFieldType( it.val ) );
@@ -1073,7 +1099,8 @@ OGRErr OGRCouchDBTableLayer::CreateField( OGRFieldDefn *poField,
 /************************************************************************/
 
 static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
-                                            OGRwkbGeometryType eGeomType )
+                                            OGRwkbGeometryType eGeomType,
+                                            int bGeoJSONDocument)
 {
     CPLAssert( NULL != poFeature );
 
@@ -1108,8 +1135,11 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
                                 json_object_new_string(pszRev) );
     }
 
-    json_object_object_add( poObj, "type",
-                            json_object_new_string("Feature") );
+    if (bGeoJSONDocument)
+    {
+        json_object_object_add( poObj, "type",
+                                json_object_new_string("Feature") );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write feature attributes to GeoJSON "properties" object.        */
@@ -1122,7 +1152,23 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
         json_object_object_del(poObjProps, "_id");
         json_object_object_del(poObjProps, "_rev");
     }
-    json_object_object_add( poObj, "properties", poObjProps );
+
+    if (bGeoJSONDocument)
+    {
+        json_object_object_add( poObj, "properties", poObjProps );
+    }
+    else
+    {
+        json_object_iter it;
+        it.key = NULL;
+        it.val = NULL;
+        it.entry = NULL;
+        json_object_object_foreachC( poObjProps, it )
+        {
+            json_object_object_add( poObj, it.key, json_object_get(it.val) );
+        }
+        json_object_put(poObjProps);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write feature geometry to GeoJSON "geometry" object.            */
@@ -1300,7 +1346,7 @@ OGRErr OGRCouchDBTableLayer::CreateFeature( OGRFeature *poFeature )
         osFID = pszId;
     }
 
-    json_object* poObj = OGRCouchDBWriteFeature(poFeature, eGeomType);
+    json_object* poObj = OGRCouchDBWriteFeature(poFeature, eGeomType, bGeoJSONDocument);
 
     if (bInTransaction)
     {
@@ -1377,7 +1423,7 @@ OGRErr      OGRCouchDBTableLayer::SetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    json_object* poObj = OGRCouchDBWriteFeature(poFeature, eGeomType);
+    json_object* poObj = OGRCouchDBWriteFeature(poFeature, eGeomType, bGeoJSONDocument);
 
     const char* pszJson = json_object_to_json_string( poObj );
     CPLString osURI("/");
@@ -1669,7 +1715,8 @@ void OGRCouchDBTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 void OGRCouchDBTableLayer::SetInfoAfterCreation(OGRwkbGeometryType eGType,
                                                 OGRSpatialReference* poSRSIn,
-                                                int nUpdateSeqIn)
+                                                int nUpdateSeqIn,
+                                                int bGeoJSONDocumentIn)
 {
     eGeomType = eGType;
     nNextFIDForCreate = 0;
@@ -1677,6 +1724,7 @@ void OGRCouchDBTableLayer::SetInfoAfterCreation(OGRwkbGeometryType eGType,
     bExtentValid = TRUE;
     bHasLoadedMetadata = TRUE;
     nUpdateSeq = nUpdateSeqIn;
+    bGeoJSONDocument = bGeoJSONDocumentIn;
 
     CPLAssert(poSRS == NULL);
     poSRS = poSRSIn;
@@ -1809,6 +1857,10 @@ void OGRCouchDBTableLayer::LoadMetadata()
         }
     }
 
+    json_object* poGeoJSON = json_object_object_get(poAnswerObj, "geojson_documents");
+    if (poGeoJSON && json_object_is_type(poGeoJSON, json_type_boolean))
+        bGeoJSONDocument = json_object_get_boolean(poGeoJSON);
+
     json_object* poFields = json_object_object_get(poAnswerObj, "fields");
     if (poFields && json_object_is_type(poFields, json_type_array))
     {
@@ -1929,8 +1981,12 @@ void OGRCouchDBTableLayer::WriteMetadata()
                                json_object_new_string("NONE"));
     }
 
+    json_object_object_add(poDoc, "geojson_documents",
+                           json_object_new_boolean(bGeoJSONDocument));
+
     json_object* poFields = json_object_new_array();
     json_object_object_add(poDoc, "fields", poFields);
+
 
     for(int i=FIRST_FIELD;i<poFeatureDefn->GetFieldCount();i++)
     {
