@@ -59,6 +59,21 @@ can cause performance penalties when issuing a lot of commands due to many clien
 It is possible to surround the CreateFeature()/SetFeature() operations between OGRLayer::StartTransaction() and OGRLayer::CommitTransaction().
 The operations will be stored into memory and only executed at the time CommitTransaction() is called.<p>
 
+<h2>Layer creation options</h2>
+
+The following layer creation options are supported:
+<ul>
+<li><b>UPDATE_PERMISSIONS</b> = LOGGED_USER|ALL|ADMIN|function(...)|DEFAULT : Update permissions for the new layer.
+<ul>
+<li>If set to LOGGED_USER (the default), only logged users will be able to make changes in the layer.</li>
+<li>If set to ALL, all users will be able to make changes in the layer.</li>
+<li>If set to ADMIN, only administrators will be able to make changes in the layer.</li>
+<li>If beginning with "function(", the value of the creation option will be used as the content of the <a href="http://guide.couchdb.org/draft/validation.html">validate_doc_update function</a>.</li>
+<li>Otherwise, all users will be allowed to make changes in non-design documents.</li>
+</ul>
+</li>
+</ul>
+
 <h2>Examples</h2>
 
 <li>
@@ -80,6 +95,7 @@ ogr2ogr -f couchdb "couchdb:http://some_account.some_couchdb_server.com" shapefi
 <ul>
 <li> <a href="http://wiki.apache.org/couchdb/Reference">CouchDB reference</a><p>
 <li> <a href="http://github.com/couchbase/geocouch">GeoCouch source code repository</a><p>
+<li> <a href="http://guide.couchdb.org/draft/validation.html">Documentation for 'validate_doc_update' function</a><p>
 </ul>
 
 </body>
