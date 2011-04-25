@@ -98,25 +98,58 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature )
         json_object* poObjProp;
         OGRFieldDefn* poFieldDefn = poDefn->GetFieldDefn( nField );
         CPLAssert( NULL != poFieldDefn );
+        OGRFieldType eType = poFieldDefn->GetType();
 
         if( !poFeature->IsFieldSet(nField) )
         {
             poObjProp = NULL;
         }
-        else if( OFTInteger == poFieldDefn->GetType() )
+        else if( OFTInteger == eType )
         {
             poObjProp = json_object_new_int( 
                 poFeature->GetFieldAsInteger( nField ) );
         }
-        else if( OFTReal == poFieldDefn->GetType() )
+        else if( OFTReal == eType )
         {
             poObjProp = json_object_new_double( 
                 poFeature->GetFieldAsDouble(nField) );
         }
-        else if( OFTString == poFieldDefn->GetType() )
+        else if( OFTString == eType )
         {
             poObjProp = json_object_new_string( 
                 poFeature->GetFieldAsString(nField) );
+        }
+        else if( OFTIntegerList == eType )
+        {
+            int nSize = 0;
+            const int* panList = poFeature->GetFieldAsIntegerList(nField, &nSize);
+            poObjProp = json_object_new_array();
+            for(int i=0;i<nSize;i++)
+            {
+                json_object_array_add(poObjProp,
+                            json_object_new_int(panList[i]));
+            }
+        }
+        else if( OFTRealList == eType )
+        {
+            int nSize = 0;
+            const double* padfList = poFeature->GetFieldAsDoubleList(nField, &nSize);
+            poObjProp = json_object_new_array();
+            for(int i=0;i<nSize;i++)
+            {
+                json_object_array_add(poObjProp,
+                            json_object_new_double(padfList[i]));
+            }
+        }
+        else if( OFTStringList == eType )
+        {
+            char** papszStringList = poFeature->GetFieldAsStringList(nField);
+            poObjProp = json_object_new_array();
+            for(int i=0; papszStringList && papszStringList[i]; i++)
+            {
+                json_object_array_add(poObjProp,
+                            json_object_new_string(papszStringList[i]));
+            }
         }
         else
         {
