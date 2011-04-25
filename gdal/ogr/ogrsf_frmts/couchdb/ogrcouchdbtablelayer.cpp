@@ -862,7 +862,7 @@ OGRFeatureDefn * OGRCouchDBTableLayer::GetLayerDefn()
 
         CPLString osURI("/");
         osURI += osName;
-        osURI += "/_all_docs?limit=1&include_docs=true";
+        osURI += "/_all_docs?limit=10&include_docs=true";
         json_object* poAnswerObj = poDS->GET(osURI);
         if (poAnswerObj == NULL)
             return poFeatureDefn;
@@ -884,7 +884,7 @@ OGRFeatureDefn * OGRCouchDBTableLayer::GetLayerDefn()
         json_object* poRows = json_object_object_get(poAnswerObj, "rows");
         if (poRows == NULL ||
             !json_object_is_type(poRows, json_type_array) ||
-            json_object_array_length(poRows) != 1)
+            json_object_array_length(poRows) == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Layer definition creation failed");
@@ -892,7 +892,23 @@ OGRFeatureDefn * OGRCouchDBTableLayer::GetLayerDefn()
             return poFeatureDefn;
         }
 
-        json_object* poRow = json_object_array_get_idx(poRows, 0);
+        json_object* poRow = NULL;
+        for(int i=0;i<json_object_array_length(poRows);i++)
+        {
+            json_object* poTmpRow = json_object_array_get_idx(poRows, i);
+            if (poTmpRow != NULL &&
+                json_object_is_type(poTmpRow, json_type_object))
+            {
+                json_object* poId = json_object_object_get(poTmpRow, "id");
+                const char* pszId = json_object_get_string(poId);
+                if (pszId != NULL && pszId[0] != '_')
+                {
+                    poRow = poTmpRow;
+                    break;
+                }
+            }
+        }
+
         if ( poRow == NULL ||
              !json_object_is_type(poRow, json_type_object) )
         {
