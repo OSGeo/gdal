@@ -357,6 +357,7 @@ void CPL_DLL RegisterOGRMDB();
 void CPL_DLL RegisterOGREDIGEO();
 void CPL_DLL RegisterOGRGFT();
 void CPL_DLL RegisterOGRSVG();
+void CPL_DLL RegisterOGRCouchDB();
 CPL_C_END
 
 
