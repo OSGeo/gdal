@@ -219,6 +219,14 @@ int OGRCouchDBTableLayer::FetchNextRowsSpatialFilter()
 
         aosIdsToFetch.resize(0);
 
+        const char* pszSpatialFilter = NULL;
+        if (bHasOGRSpatial < 0 || bHasOGRSpatial == FALSE)
+        {
+            pszSpatialFilter = CPLGetConfigOption("COUCHDB_SPATIAL_FILTER" , NULL);
+            if (pszSpatialFilter)
+                bHasOGRSpatial = FALSE;
+        }
+
         if (bHasOGRSpatial < 0)
         {
             CPLString osURI("/");
@@ -242,9 +250,14 @@ int OGRCouchDBTableLayer::FetchNextRowsSpatialFilter()
         OGREnvelope sEnvelope;
         m_poFilterGeom->getEnvelope( &sEnvelope );
 
+        if (bHasOGRSpatial)
+            pszSpatialFilter = "_design/ogr_spatial/_spatial/spatial";
+
         CPLString osURI("/");
         osURI += osName;
-        osURI += "/_design/ogr_spatial/_spatial/spatial?bbox=";
+        osURI += "/";
+        osURI += pszSpatialFilter;
+        osURI += "?bbox=";
         osURI += CPLSPrintf("%.9f,%.9f,%.9f,%.9f",
                             sEnvelope.MinX, sEnvelope.MinY,
                             sEnvelope.MaxX, sEnvelope.MaxY);
