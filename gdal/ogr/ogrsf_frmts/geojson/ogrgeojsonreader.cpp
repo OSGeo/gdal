@@ -555,12 +555,13 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
             nField = poFeature->GetFieldIndex(it.key);
             poFieldDefn = poFeature->GetFieldDefnRef(nField);
             CPLAssert( NULL != poFieldDefn );
+            OGRFieldType eType = poFieldDefn->GetType();
 
             if( it.val == NULL)
             {
                 /* nothing to do */
             }
-            else if( OFTInteger == poFieldDefn->GetType() )
+            else if( OFTInteger == eType )
 			{
                 poFeature->SetField( nField, json_object_get_int(it.val) );
 				
@@ -568,10 +569,60 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
 				if( EQUAL( it.key, poLayer_->GetFIDColumn() ) )
 					poFeature->SetFID( json_object_get_int(it.val) );
 			}
-            else if( OFTReal == poFieldDefn->GetType() )
+            else if( OFTReal == eType )
 			{
                 poFeature->SetField( nField, json_object_get_double(it.val) );
 			}
+            else if( OFTIntegerList == eType )
+            {
+                if ( json_object_get_type(it.val) == json_type_array )
+                {
+                    int nLength = json_object_array_length(it.val);
+                    int* panVal = (int*)CPLMalloc(sizeof(int) * nLength);
+                    for(int i=0;i<nLength;i++)
+                    {
+                        json_object* poRow = json_object_array_get_idx(it.val, i);
+                        panVal[i] = json_object_get_int(poRow);
+                    }
+                    poFeature->SetField( nField, nLength, panVal );
+                    CPLFree(panVal);
+                }
+            }
+            else if( OFTRealList == eType )
+            {
+                if ( json_object_get_type(it.val) == json_type_array )
+                {
+                    int nLength = json_object_array_length(it.val);
+                    double* padfVal = (double*)CPLMalloc(sizeof(double) * nLength);
+                    for(int i=0;i<nLength;i++)
+                    {
+                        json_object* poRow = json_object_array_get_idx(it.val, i);
+                        padfVal[i] = json_object_get_double(poRow);
+                    }
+                    poFeature->SetField( nField, nLength, padfVal );
+                    CPLFree(padfVal);
+                }
+            }
+            else if( OFTStringList == eType )
+            {
+                if ( json_object_get_type(it.val) == json_type_array )
+                {
+                    int nLength = json_object_array_length(it.val);
+                    char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
+                    int i;
+                    for(i=0;i<nLength;i++)
+                    {
+                        json_object* poRow = json_object_array_get_idx(it.val, i);
+                        const char* pszVal = json_object_get_string(poRow);
+                        if (pszVal == NULL)
+                            break;
+                        papszVal[i] = CPLStrdup(pszVal);
+                    }
+                    papszVal[i] = NULL;
+                    poFeature->SetField( nField, papszVal );
+                    CSLDestroy(papszVal);
+                }
+            }
             else
 			{
                 poFeature->SetField( nField, json_object_get_string(it.val) );

@@ -122,7 +122,25 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
     else if( json_type_string == type )
         return OFTString;
     else if( json_type_array == type )
-        return OFTStringList; /* string or JSON-string */
+    {
+        int nSize = json_object_array_length(poObject);
+        if (nSize == 0)
+            return OFTStringList; /* we don't know, so let's assume it's a string list */
+        OGRFieldType eType = OFTIntegerList;
+        for(int i=0;i<nSize;i++)
+        {
+            json_object* poRow = json_object_array_get_idx(poObject, i);
+            if (poRow != NULL)
+            {
+                type = json_object_get_type( poRow );
+                if (type == json_type_string)
+                    return OFTStringList;
+                if (type == json_type_double)
+                    eType = OFTRealList;
+            }
+        }
+        return eType;
+    }
     else
         return OFTString; /* null, object */
 }
