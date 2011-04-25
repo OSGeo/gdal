@@ -115,7 +115,9 @@ int OGRGeoJSONDataSource::Open( const char* pszName )
 /*      Construct OGR layer and feature objects from                    */
 /*      GeoJSON text tree.                                              */
 /* -------------------------------------------------------------------- */
-    if( NULL == pszGeoData_ )
+    if( NULL == pszGeoData_ ||
+        strncmp(pszGeoData_, "{\"couchdb\":\"Welcome\"", strlen("{\"couchdb\":\"Welcome\"")) == 0 ||
+        strncmp(pszGeoData_, "{\"db_name\":\"", strlen("{\"db_name\":\"")) == 0)
     {
         Clear();
         return FALSE;
