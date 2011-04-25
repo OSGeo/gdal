@@ -352,6 +352,45 @@ OGRLayer   *OGRCouchDBDataSource::CreateLayer( const char *pszName,
         json_object_put(poAnswerObj);
     }
 
+
+/* -------------------------------------------------------------------- */
+/*      Create validation function                                      */
+/* -------------------------------------------------------------------- */
+    const char* pszUpdatePermissions = CSLFetchNameValueDef(papszOptions, "UPDATE_PERMISSIONS", "LOGGED_USER");
+    CPLString osValidation;
+    if (EQUAL(pszUpdatePermissions, "LOGGED_USER"))
+    {
+        osValidation = "{\"validate_doc_update\": \"function(new_doc, old_doc, userCtx) { if(!userCtx.name) { throw({forbidden: \\\"Please log in first.\\\"}); } }\" }";
+    }
+    else if (EQUAL(pszUpdatePermissions, "ALL"))
+    {
+        osValidation = "{\"validate_doc_update\": \"function(new_doc, old_doc, userCtx) {  }\" }";
+    }
+    else if (EQUAL(pszUpdatePermissions, "ADMIN"))
+    {
+        osValidation = "{\"validate_doc_update\": \"function(new_doc, old_doc, userCtx) {if (userCtx.roles.indexOf('_admin') === -1) { throw({forbidden: \\\"No changes allowed except by admin.\\\"}); } }\" }";
+    }
+    else if (strncmp(pszUpdatePermissions, "function(", 9) == 0)
+    {
+        osValidation = "{\"validate_doc_update\": \"";
+        osValidation += pszUpdatePermissions;
+        osValidation += "\"}";
+    }
+
+    if (osValidation.size())
+    {
+        osURI = "/";
+        osURI += pszName;
+        osURI += "/_design/ogr_validation";
+
+        poAnswerObj = PUT(osURI, osValidation);
+
+        if (IsOK(poAnswerObj, "Validation function creation failed"))
+            nUpdateSeq ++;
+
+        json_object_put(poAnswerObj);
+    }
+
     OGRCouchDBTableLayer* poLayer = new OGRCouchDBTableLayer(this, pszName);
     poLayer->SetInfoAfterCreation(eGType, poSpatialRef, nUpdateSeq);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
