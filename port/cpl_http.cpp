@@ -132,7 +132,8 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  *                     with a POST request.
  * <li>PROXY=val, to make requests go through a proxy server, where val is of the
  *                form proxy.server.com:port_number
- * <li>PROXYUSERPWD=val, where val is of the form username:password 
+ * <li>PROXYUSERPWD=val, where val is of the form username:password
+ * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the PROXY and 
@@ -217,7 +218,21 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     CPLHTTPResult *psResult;
     struct curl_slist *headers=NULL; 
 
-    CPLDebug( "HTTP", "Fetch(%s)", pszURL );
+    const char* pszArobase = strchr(pszURL, '@');
+    const char* pszSlash = strchr(pszURL, '/');
+    const char* pszColon = (pszSlash) ? strchr(pszSlash, ':') : NULL;
+    if (pszArobase != NULL && pszColon != NULL && pszArobase - pszColon > 0)
+    {
+        /* http://user:password@www.example.com */
+        char* pszSanitizedURL = CPLStrdup(pszURL);
+        pszSanitizedURL[pszColon-pszURL] = 0;
+        CPLDebug( "HTTP", "Fetch(%s:#password#%s)", pszSanitizedURL, pszArobase );
+        CPLFree(pszSanitizedURL);
+    }
+    else
+    {
+        CPLDebug( "HTTP", "Fetch(%s)", pszURL );
+    }
 
     psResult = (CPLHTTPResult *) CPLCalloc(1,sizeof(CPLHTTPResult));
 
@@ -288,6 +303,12 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     {
         curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
         curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
+    }
+
+    const char* pszCustomRequest = CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
+    if( pszCustomRequest != NULL )
+    {
+        curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
     }
 
     /* Enable following redirections.  Requires libcurl 7.10.1 at least */
