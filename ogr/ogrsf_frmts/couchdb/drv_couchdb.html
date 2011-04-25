@@ -35,7 +35,12 @@ The driver will forward any spatial filter set with SetSpatialFilter() to the se
 is available. It also makes the same for (very simple) attribute filters set with SetAttributeFilter(). When
 server-side filtering fails, it will default back to client-side filtering.<p>
 
-Note that the first time a request is issued, it might require write rights to create a new view.<p>
+By default, the driver will try the following spatial filter function "_design/ogr_spatial/_spatial/spatial",
+which is the valid spatial filter function for layers created by OGR. If that filter function does not exist,
+but another one exists, you can specify it with the COUCHDB_SPATIAL_FILTER configuration option.<p>
+
+Note that the first time an attribute request is issued, it might require write permissions in the database
+to create a new index view.<p>
 
 <h2>Paging</h2>
 
