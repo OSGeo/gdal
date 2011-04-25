@@ -63,8 +63,13 @@ protected:
 
     OGRFeature*                 GetNextRawFeature();
     OGRFeature*                 TranslateFeature( json_object* poObj );
+    void                        ParseFieldValue(OGRFeature* poFeature,
+                                                const char* pszKey,
+                                                json_object* poValue);
 
    virtual int                  FetchNextRows() = 0;
+
+   int                          bGeoJSONDocument;
 
   public:
                          OGRCouchDBLayer(OGRCouchDBDataSource* poDS);
@@ -164,7 +169,8 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
     void                        SetInfoAfterCreation(OGRwkbGeometryType eGType,
                                              OGRSpatialReference* poSRSIn,
-                                             int nUpdateSeqIn);
+                                             int nUpdateSeqIn,
+                                             int bGeoJSONDocumentIn);
 
     void                        SetUpdateSeq(int nUpdateSeqIn) { nUpdateSeq = nUpdateSeqIn; };
 

@@ -52,6 +52,8 @@ OGRCouchDBLayer::OGRCouchDBLayer(OGRCouchDBDataSource* poDS)
     bEOF = FALSE;
 
     poFeatures = NULL;
+
+    bGeoJSONDocument = TRUE;
 }
 
 /************************************************************************/
@@ -201,93 +203,27 @@ OGRFeature* OGRCouchDBLayer::TranslateFeature( json_object* poObj )
 /*      Translate GeoJSON "properties" object to feature attributes.    */
 /* -------------------------------------------------------------------- */
 
+    json_object_iter it;
+    it.key = NULL;
+    it.val = NULL;
+    it.entry = NULL;
     json_object* poObjProps = json_object_object_get( poObj, "properties" );
-    if( NULL != poObjProps )
+    if( bGeoJSONDocument && NULL != poObjProps )
     {
-        int nField = -1;
-        OGRFieldDefn* poFieldDefn = NULL;
-        json_object_iter it;
-        it.key = NULL;
-        it.val = NULL;
-        it.entry = NULL;
         json_object_object_foreachC( poObjProps, it )
         {
-            nField = poFeature->GetFieldIndex(it.key);
-            if (nField < 0)
+            ParseFieldValue(poFeature, it.key, it.val);
+        }
+    }
+    else if ( !bGeoJSONDocument && poObjProps == NULL )
+    {
+        json_object_object_foreachC( poObj, it )
+        {
+            if( strcmp(it.key, "_id") != 0 &&
+                strcmp(it.key, "_rev") != 0 &&
+                strcmp(it.key, "geometry") != 0 )
             {
-                CPLDebug("CouchDB",
-                         "Found field '%s' which is not in the layer definition. "
-                         "Ignoring its value",
-                         it.key);
-            }
-            else if (it.val != NULL)
-            {
-                poFieldDefn = poFeature->GetFieldDefnRef(nField);
-                CPLAssert(poFieldDefn != NULL);
-                OGRFieldType eType = poFieldDefn->GetType();
-
-                if( OFTInteger == eType )
-                {
-                    poFeature->SetField( nField, json_object_get_int(it.val) );
-                }
-                else if( OFTReal == eType )
-                {
-                    poFeature->SetField( nField, json_object_get_double(it.val) );
-                }
-                else if( OFTIntegerList == eType )
-                {
-                    if ( json_object_get_type(it.val) == json_type_array )
-                    {
-                        int nLength = json_object_array_length(it.val);
-                        int* panVal = (int*)CPLMalloc(sizeof(int) * nLength);
-                        for(int i=0;i<nLength;i++)
-                        {
-                            json_object* poRow = json_object_array_get_idx(it.val, i);
-                            panVal[i] = json_object_get_int(poRow);
-                        }
-                        poFeature->SetField( nField, nLength, panVal );
-                        CPLFree(panVal);
-                    }
-                }
-                else if( OFTRealList == eType )
-                {
-                    if ( json_object_get_type(it.val) == json_type_array )
-                    {
-                        int nLength = json_object_array_length(it.val);
-                        double* padfVal = (double*)CPLMalloc(sizeof(double) * nLength);
-                        for(int i=0;i<nLength;i++)
-                        {
-                            json_object* poRow = json_object_array_get_idx(it.val, i);
-                            padfVal[i] = json_object_get_double(poRow);
-                        }
-                        poFeature->SetField( nField, nLength, padfVal );
-                        CPLFree(padfVal);
-                    }
-                }
-                else if( OFTStringList == eType )
-                {
-                    if ( json_object_get_type(it.val) == json_type_array )
-                    {
-                        int nLength = json_object_array_length(it.val);
-                        char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
-                        int i;
-                        for(i=0;i<nLength;i++)
-                        {
-                            json_object* poRow = json_object_array_get_idx(it.val, i);
-                            const char* pszVal = json_object_get_string(poRow);
-                            if (pszVal == NULL)
-                                break;
-                            papszVal[i] = CPLStrdup(pszVal);
-                        }
-                        papszVal[i] = NULL;
-                        poFeature->SetField( nField, papszVal );
-                        CSLDestroy(papszVal);
-                    }
-                }
-                else
-                {
-                    poFeature->SetField( nField, json_object_get_string(it.val) );
-                }
+                ParseFieldValue(poFeature, it.key, it.val);
             }
         }
     }
@@ -309,4 +245,91 @@ OGRFeature* OGRCouchDBLayer::TranslateFeature( json_object* poObj )
     }
 
     return poFeature;
+}
+
+/************************************************************************/
+/*                         ParseFieldValue()                            */
+/************************************************************************/
+
+void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
+                                      const char* pszKey,
+                                      json_object* poValue)
+{
+    int nField = poFeature->GetFieldIndex(pszKey);
+    if (nField < 0)
+    {
+        CPLDebug("CouchDB",
+                    "Found field '%s' which is not in the layer definition. "
+                    "Ignoring its value",
+                    pszKey);
+    }
+    else if (poValue != NULL)
+    {
+        OGRFieldDefn* poFieldDefn = poFeature->GetFieldDefnRef(nField);
+        CPLAssert(poFieldDefn != NULL);
+        OGRFieldType eType = poFieldDefn->GetType();
+
+        if( OFTInteger == eType )
+        {
+            poFeature->SetField( nField, json_object_get_int(poValue) );
+        }
+        else if( OFTReal == eType )
+        {
+            poFeature->SetField( nField, json_object_get_double(poValue) );
+        }
+        else if( OFTIntegerList == eType )
+        {
+            if ( json_object_get_type(poValue) == json_type_array )
+            {
+                int nLength = json_object_array_length(poValue);
+                int* panVal = (int*)CPLMalloc(sizeof(int) * nLength);
+                for(int i=0;i<nLength;i++)
+                {
+                    json_object* poRow = json_object_array_get_idx(poValue, i);
+                    panVal[i] = json_object_get_int(poRow);
+                }
+                poFeature->SetField( nField, nLength, panVal );
+                CPLFree(panVal);
+            }
+        }
+        else if( OFTRealList == eType )
+        {
+            if ( json_object_get_type(poValue) == json_type_array )
+            {
+                int nLength = json_object_array_length(poValue);
+                double* padfVal = (double*)CPLMalloc(sizeof(double) * nLength);
+                for(int i=0;i<nLength;i++)
+                {
+                    json_object* poRow = json_object_array_get_idx(poValue, i);
+                    padfVal[i] = json_object_get_double(poRow);
+                }
+                poFeature->SetField( nField, nLength, padfVal );
+                CPLFree(padfVal);
+            }
+        }
+        else if( OFTStringList == eType )
+        {
+            if ( json_object_get_type(poValue) == json_type_array )
+            {
+                int nLength = json_object_array_length(poValue);
+                char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
+                int i;
+                for(i=0;i<nLength;i++)
+                {
+                    json_object* poRow = json_object_array_get_idx(poValue, i);
+                    const char* pszVal = json_object_get_string(poRow);
+                    if (pszVal == NULL)
+                        break;
+                    papszVal[i] = CPLStrdup(pszVal);
+                }
+                papszVal[i] = NULL;
+                poFeature->SetField( nField, papszVal );
+                CSLDestroy(papszVal);
+            }
+        }
+        else
+        {
+            poFeature->SetField( nField, json_object_get_string(poValue) );
+        }
+    }
 }
