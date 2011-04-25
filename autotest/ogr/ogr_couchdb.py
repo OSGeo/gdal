@@ -55,6 +55,7 @@ def ogr_couchdb_init():
         return 'skip'
 
     ogrtest.couchdb_test_db = 'http://gdalautotest.iriscouch.com'
+    ogrtest.couchdb_test_layer = 'poly'
 
     if gdaltest.gdalurlopen(ogrtest.couchdb_test_db) is None:
         print('cannot open %s' % ogrtest.couchdb_test_db)
@@ -70,7 +71,7 @@ def ogr_couchdb_GetFeatureCount():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_db)
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -93,7 +94,7 @@ def ogr_couchdb_GetNextFeature():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_db)
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -119,7 +120,7 @@ def ogr_couchdb_GetFeature():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_db)
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -145,7 +146,7 @@ def ogr_couchdb_GetSpatialRef():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_db)
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -154,6 +155,12 @@ def ogr_couchdb_GetSpatialRef():
         return 'fail'
 
     sr = lyr.GetSpatialRef()
+    if ogrtest.couchdb_test_layer == 'poly_nongeojson':
+        if sr is not None:
+            gdaltest.post_reason('got a srs but did not expect one')
+            return 'fail'
+        return 'success'
+
     if sr is None:
         gdaltest.post_reason('did not get expected srs')
         return 'fail'
@@ -173,7 +180,7 @@ def ogr_couchdb_GetExtent():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_db)
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -200,7 +207,7 @@ def ogr_couchdb_SetSpatialFilter():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_db)
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -244,7 +251,7 @@ def ogr_couchdb_SetAttributeFilter():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_db)
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -281,8 +288,23 @@ def ogr_couchdb_SetAttributeFilter():
 
     return 'success'
 
+###############################################################################
+# ogr_couchdb_changeLayer
+
+def ogr_couchdb_changeLayer():
+    ogrtest.couchdb_test_layer = 'poly_nongeojson'
+    return 'success'
+
 gdaltest_list = [ 
     ogr_couchdb_init,
+    ogr_couchdb_GetFeatureCount,
+    ogr_couchdb_GetNextFeature,
+    ogr_couchdb_GetFeature,
+    ogr_couchdb_GetSpatialRef,
+    ogr_couchdb_GetExtent,
+    ogr_couchdb_SetSpatialFilter,
+    ogr_couchdb_SetAttributeFilter,
+    ogr_couchdb_changeLayer,
     ogr_couchdb_GetFeatureCount,
     ogr_couchdb_GetNextFeature,
     ogr_couchdb_GetFeature,
