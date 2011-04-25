@@ -1292,9 +1292,13 @@ OGRErr OGRCouchDBTableLayer::CreateFeature( OGRFeature *poFeature )
 
     if (poFeature->IsFieldSet(_REV_FIELD))
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "CreateFeature() should be called with an unset _id field");
-        return OGRERR_FAILURE;
+        static int bOnce = FALSE;
+        if (!bOnce)
+        {
+            bOnce = TRUE;
+            CPLDebug("CouchDB", "CreateFeature() should be called with an unset _rev field. Ignoring it");
+        }
+        poFeature->UnsetField(_REV_FIELD);
     }
 
     if (nNextFIDForCreate < 0)
@@ -1334,7 +1338,8 @@ OGRErr OGRCouchDBTableLayer::CreateFeature( OGRFeature *poFeature )
 
     int nFID = nNextFIDForCreate ++;
     CPLString osFID;
-    if (!poFeature->IsFieldSet(_ID_FIELD))
+    if (!poFeature->IsFieldSet(_ID_FIELD) ||
+        !CSLTestBoolean(CPLGetConfigOption("COUCHDB_PRESERVE_ID_ON_INSERT", "FALSE")))
     {
         if (poFeature->GetFID() != OGRNullFID)
         {
@@ -1639,9 +1644,9 @@ OGRErr OGRCouchDBTableLayer::CommitTransaction()
             }
             else if (poRev != NULL)
             {
-                const char* pszRev = json_object_get_string(poRev);
+                /*const char* pszRev = json_object_get_string(poRev);
                 CPLDebug("CouchDB", "id = %s, rev = %s",
-                         pszId ? pszId : "", pszRev ? pszRev : "");
+                         pszId ? pszId : "", pszRev ? pszRev : "");*/
 
                 nUpdateSeq ++;
             }
