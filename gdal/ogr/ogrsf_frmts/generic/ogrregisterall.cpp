@@ -216,4 +216,7 @@ void OGRRegisterAll()
 #ifdef SVG_ENABLED
     RegisterOGRSVG();
 #endif
+#ifdef COUCHDB_ENABLED
+    RegisterOGRCouchDB();
+#endif
 } /* OGRRegisterAll */

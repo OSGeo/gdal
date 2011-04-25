@@ -28,6 +28,7 @@ SUBDIRS-$(HAVE_LIBKML)  += libkml
 SUBDIRS-$(CURL_SETTING) += wfs
 SUBDIRS-$(MDB_ENABLED)  += mdb
 SUBDIRS-$(CURL_SETTING) += gft
+SUBDIRS-$(CURL_SETTING) += couchdb
 
 ifeq ($(PCIDSK_SETTING),internal)
 SUBDIRS-yes  += pcidsk
