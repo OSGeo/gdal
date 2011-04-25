@@ -892,8 +892,7 @@ OGRFeatureDefn * OGRCouchDBTableLayer::GetLayerDefn()
 
         json_object* poRows = json_object_object_get(poAnswerObj, "rows");
         if (poRows == NULL ||
-            !json_object_is_type(poRows, json_type_array) ||
-            json_object_array_length(poRows) == 0)
+            !json_object_is_type(poRows, json_type_array))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Layer definition creation failed");
@@ -901,8 +900,10 @@ OGRFeatureDefn * OGRCouchDBTableLayer::GetLayerDefn()
             return poFeatureDefn;
         }
 
+        int nRows = json_object_array_length(poRows);
+
         json_object* poRow = NULL;
-        for(int i=0;i<json_object_array_length(poRows);i++)
+        for(int i=0;i<nRows;i++)
         {
             json_object* poTmpRow = json_object_array_get_idx(poRows, i);
             if (poTmpRow != NULL &&
@@ -918,11 +919,8 @@ OGRFeatureDefn * OGRCouchDBTableLayer::GetLayerDefn()
             }
         }
 
-        if ( poRow == NULL ||
-             !json_object_is_type(poRow, json_type_object) )
+        if ( poRow == NULL )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Layer definition creation failed");
             json_object_put(poAnswerObj);
             return poFeatureDefn;
         }
