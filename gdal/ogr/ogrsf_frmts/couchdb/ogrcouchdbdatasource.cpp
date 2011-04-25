@@ -256,7 +256,8 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
         if ( json_object_is_type(poAnswerObjDBName, json_type_string) )
         {
             const char* pszDBName = json_object_get_string(poAnswerObjDBName);
-            if ( strcmp(pszDBName, "_users") != 0 )
+            if ( strcmp(pszDBName, "_users") != 0 &&
+                 strcmp(pszDBName, "_replicator") != 0 )
             {
                 papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
                 papoLayers[nLayers ++] = new OGRCouchDBTableLayer(this, pszDBName);
