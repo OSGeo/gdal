@@ -119,6 +119,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     CPLString                 osURIAttributeFilter;
     std::map<CPLString, int>  oMapFilterFields;
     int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
+    CPLString                 BuildAttrQueryURI(int& bOutHasStrictComparisons);
     int                       FetchNextRowsAttributeFilter();
 
     int                       GetTotalFeatureCount();
