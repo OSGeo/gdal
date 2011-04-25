@@ -453,6 +453,35 @@ static const char* OGRCouchDBGetOpStr(int nOperation)
 }
 
 /************************************************************************/
+/*                        OGRCouchDBGetValue()                          */
+/************************************************************************/
+
+static CPLString OGRCouchDBGetValue(swq_field_type eType,
+                                    swq_expr_node* poNode)
+{
+    if (eType == SWQ_STRING)
+    {
+        CPLString osVal("\"");
+        osVal += poNode->string_value;
+        osVal += "\"";
+        return osVal;
+    }
+    else if (eType == SWQ_INTEGER)
+    {
+        return CPLSPrintf("%d", poNode->int_value);
+    }
+    else if (eType == SWQ_FLOAT)
+    {
+        return CPLSPrintf("%.9f", poNode->float_value);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Handled case! File a bug!");
+        return "";
+    }
+}
+
+/************************************************************************/
 /*                   FetchNextRowsAttributeFilter()                     */
 /************************************************************************/
 
@@ -509,16 +538,9 @@ int OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
 
             if (bCanHandleFilter)
             {
-                const char* pszVal = pNode->papoSubExpr[1]->string_value;
-                double dfVal = pNode->papoSubExpr[1]->float_value;
-                int nVal = pNode->papoSubExpr[1]->int_value;
                 const char* pszOp = OGRCouchDBGetOpStr(pNode->nOperation);
-                if (eType == SWQ_STRING)
-                    CPLDebug("CouchDB", "Evaluating %s %s '%s'", pszFieldName, pszOp, pszVal);
-                else if (eType == SWQ_INTEGER)
-                    CPLDebug("CouchDB", "Evaluating %s %s %d", pszFieldName, pszOp, nVal);
-                else if (eType == SWQ_FLOAT)
-                    CPLDebug("CouchDB", "Evaluating %s %s %.9f", pszFieldName, pszOp, dfVal);
+                CPLString osVal = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]);
+                CPLDebug("CouchDB", "Evaluating %s %s %s", pszFieldName, pszOp, osVal.c_str());
 
                 if (pNode->nOperation == SWQ_EQ)
                 {
@@ -534,20 +556,7 @@ int OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
                 {
                     osURIAttributeFilter += "endkey=";
                 }
-                if (eType == SWQ_STRING)
-                {
-                    osURIAttributeFilter += "\"";
-                    osURIAttributeFilter += pszVal;
-                    osURIAttributeFilter += "\"";
-                }
-                else if (eType == SWQ_INTEGER)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%d", nVal);
-                }
-                else if (eType == SWQ_FLOAT)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%.9f", dfVal);
-                }
+                osURIAttributeFilter += osVal;
             }
         }
         else if (pNode->eNodeType == SNT_OPERATION &&
@@ -605,30 +614,18 @@ int OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
             if (bCanHandleFilter)
             {
                 swq_field_type eType = eType0;
-                const char* pszVal0 = pNode->papoSubExpr[0]->papoSubExpr[1]->string_value;
-                double dfVal0 = pNode->papoSubExpr[0]->papoSubExpr[1]->float_value;
-                int nVal0 = pNode->papoSubExpr[0]->papoSubExpr[1]->int_value;
-                const char* pszVal1 = pNode->papoSubExpr[1]->papoSubExpr[1]->string_value;
-                double dfVal1 = pNode->papoSubExpr[1]->papoSubExpr[1]->float_value;
-                int nVal1 = pNode->papoSubExpr[1]->papoSubExpr[1]->int_value;
+                CPLString osVal0 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[0]->papoSubExpr[1]);
+                CPLString osVal1 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]->papoSubExpr[1]);
+
                 int nOperation0 = pNode->papoSubExpr[0]->nOperation;
                 int nOperation1 = pNode->papoSubExpr[1]->nOperation;
 
                 const char* pszOp0 = OGRCouchDBGetOpStr(nOperation0);
                 const char* pszOp1 = OGRCouchDBGetOpStr(nOperation1);
 
-                if (eType == SWQ_STRING)
-                    CPLDebug("CouchDB", "Evaluating %s %s '%s' AND %s %s '%s'",
-                             pszFieldName, pszOp0, pszVal0,
-                             pszFieldName, pszOp1, pszVal1);
-                else if (eType == SWQ_INTEGER)
-                    CPLDebug("CouchDB", "Evaluating %s %s %d AND %s %s %d",
-                             pszFieldName, pszOp0, nVal0,
-                             pszFieldName, pszOp1, nVal1);
-                else if (eType == SWQ_FLOAT)
-                    CPLDebug("CouchDB", "Evaluating %s %s %.9f AND %s %s %.9f",
-                             pszFieldName, pszOp0, dfVal0,
-                             pszFieldName, pszOp1, dfVal1);
+                CPLDebug("CouchDB", "Evaluating %s %s %s AND %s %s %s",
+                             pszFieldName, pszOp0, osVal0.c_str(),
+                             pszFieldName, pszOp1, osVal1.c_str());
 
                 if (nOperation0 == SWQ_GE ||
                     nOperation0 == SWQ_GT)
@@ -640,20 +637,7 @@ int OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
                 {
                     osURIAttributeFilter += "endkey=";
                 }
-                if (eType == SWQ_STRING)
-                {
-                    osURIAttributeFilter += "\"";
-                    osURIAttributeFilter += pszVal0;
-                    osURIAttributeFilter += "\"";
-                }
-                else if (eType == SWQ_INTEGER)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%d", nVal0);
-                }
-                else if (eType == SWQ_FLOAT)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%.9f", dfVal0);
-                }
+                osURIAttributeFilter += osVal0;
                 osURIAttributeFilter += "&";
                 if (nOperation1 == SWQ_GE ||
                     nOperation1 == SWQ_GT)
@@ -665,20 +649,7 @@ int OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
                 {
                     osURIAttributeFilter += "endkey=";
                 }
-                if (eType == SWQ_STRING)
-                {
-                    osURIAttributeFilter += "\"";
-                    osURIAttributeFilter += pszVal1;
-                    osURIAttributeFilter += "\"";
-                }
-                else if (eType == SWQ_INTEGER)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%d", nVal1);
-                }
-                else if (eType == SWQ_FLOAT)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%.9f", dfVal1);
-                }
+                osURIAttributeFilter += osVal1;
             }
         }
         else if (pNode->eNodeType == SNT_OPERATION &&
@@ -718,54 +689,17 @@ int OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
 
             if (bCanHandleFilter)
             {
-                const char* pszVal0 = pNode->papoSubExpr[1]->string_value;
-                double dfVal0 = pNode->papoSubExpr[1]->float_value;
-                int nVal0 = pNode->papoSubExpr[1]->int_value;
-                const char* pszVal1 = pNode->papoSubExpr[2]->string_value;
-                double dfVal1 = pNode->papoSubExpr[2]->float_value;
-                int nVal1 = pNode->papoSubExpr[2]->int_value;
+                CPLString osVal0 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]);
+                CPLString osVal1 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[2]);
 
-                if (eType == SWQ_STRING)
-                    CPLDebug("CouchDB", "Evaluating %s BETWEEN '%s' AND '%s'",
-                             pszFieldName, pszVal0, pszVal1);
-                else if (eType == SWQ_INTEGER)
-                    CPLDebug("CouchDB", "Evaluating %s BETWEEN %d AND %d",
-                             pszFieldName, nVal0, nVal1);
-                else if (eType == SWQ_FLOAT)
-                    CPLDebug("CouchDB", "Evaluating %s BETWEEN %.9f AND %.9f",
-                             pszFieldName, dfVal0, dfVal1);
+                CPLDebug("CouchDB", "Evaluating %s BETWEEN %s AND %s",
+                         pszFieldName, osVal0.c_str(), osVal1.c_str());
 
                 osURIAttributeFilter += "startkey=";
-                if (eType == SWQ_STRING)
-                {
-                    osURIAttributeFilter += "\"";
-                    osURIAttributeFilter += pszVal0;
-                    osURIAttributeFilter += "\"";
-                }
-                else if (eType == SWQ_INTEGER)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%d", nVal0);
-                }
-                else if (eType == SWQ_FLOAT)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%.9f", dfVal0);
-                }
+                osURIAttributeFilter += osVal0;
                 osURIAttributeFilter += "&";
                 osURIAttributeFilter += "endkey=";
-                if (eType == SWQ_STRING)
-                {
-                    osURIAttributeFilter += "\"";
-                    osURIAttributeFilter += pszVal1;
-                    osURIAttributeFilter += "\"";
-                }
-                else if (eType == SWQ_INTEGER)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%d", nVal1);
-                }
-                else if (eType == SWQ_FLOAT)
-                {
-                    osURIAttributeFilter += CPLSPrintf("%.9f", dfVal1);
-                }
+                osURIAttributeFilter += osVal1;
             }
         }
 
