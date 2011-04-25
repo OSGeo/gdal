@@ -95,11 +95,15 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature )
     OGRFeatureDefn* poDefn = poFeature->GetDefnRef();
     for( int nField = 0; nField < poDefn->GetFieldCount(); ++nField )
     {
-        json_object* poObjProp = NULL;
+        json_object* poObjProp;
         OGRFieldDefn* poFieldDefn = poDefn->GetFieldDefn( nField );
         CPLAssert( NULL != poFieldDefn );
 
-        if( OFTInteger == poFieldDefn->GetType() )
+        if( !poFeature->IsFieldSet(nField) )
+        {
+            poObjProp = NULL;
+        }
+        else if( OFTInteger == poFieldDefn->GetType() )
         {
             poObjProp = json_object_new_int( 
                 poFeature->GetFieldAsInteger( nField ) );
