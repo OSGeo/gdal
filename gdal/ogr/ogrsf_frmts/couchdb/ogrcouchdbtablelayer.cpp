@@ -415,7 +415,7 @@ int OGRCouchDBTableLayer::HasFilterOnFieldOrCreateIfNecessary(const char* pszFie
         json_object_object_add(poViews, "filter", poFilter);
         json_object_object_add(poFilter, "map", json_object_new_string(osMap));
 
-        const char* pszReduce = "function(keys, values) { return keys ? keys.length : values.length; }";
+        const char* pszReduce = "function(keys, values) { return keys ? keys.length : sum(values); }";
         json_object_object_add(poFilter, "reduce", json_object_new_string(pszReduce));
 
         json_object* poAnswerObj = poDS->PUT(osURI,
