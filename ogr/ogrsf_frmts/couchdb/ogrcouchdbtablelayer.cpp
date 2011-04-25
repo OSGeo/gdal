@@ -415,6 +415,9 @@ int OGRCouchDBTableLayer::HasFilterOnFieldOrCreateIfNecessary(const char* pszFie
         json_object_object_add(poViews, "filter", poFilter);
         json_object_object_add(poFilter, "map", json_object_new_string(osMap));
 
+        const char* pszReduce = "function(keys, values) { return keys ? keys.length : values.length; }";
+        json_object_object_add(poFilter, "reduce", json_object_new_string(pszReduce));
+
         json_object* poAnswerObj = poDS->PUT(osURI,
                                             json_object_to_json_string(poDoc));
 
@@ -439,15 +442,18 @@ int OGRCouchDBTableLayer::HasFilterOnFieldOrCreateIfNecessary(const char* pszFie
 /*                         OGRCouchDBGetOpStr()                         */
 /************************************************************************/
 
-static const char* OGRCouchDBGetOpStr(int nOperation)
+static const char* OGRCouchDBGetOpStr(int nOperation,
+                                      int& bOutHasStrictComparisons)
 {
+    bOutHasStrictComparisons = FALSE;
+
     switch(nOperation)
     {
         case SWQ_EQ: return "=";
         case SWQ_GE: return ">=";
         case SWQ_LE: return "<=";
-        case SWQ_GT: return ">";
-        case SWQ_LT: return "<";
+        case SWQ_GT: bOutHasStrictComparisons = TRUE; return ">";
+        case SWQ_LT: bOutHasStrictComparisons = TRUE; return "<";
         default:     return "unknown op";
     }
 }
@@ -482,6 +488,228 @@ static CPLString OGRCouchDBGetValue(swq_field_type eType,
 }
 
 /************************************************************************/
+/*                         BuildAttrQueryURI()                          */
+/************************************************************************/
+
+CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
+{
+    CPLString osURI = "";
+
+    bOutHasStrictComparisons = FALSE;
+
+    int bCanHandleFilter = FALSE;
+
+    swq_expr_node * pNode = (swq_expr_node *) m_poAttrQuery->GetSWGExpr();
+    if (pNode->eNodeType == SNT_OPERATION &&
+        (pNode->nOperation == SWQ_EQ ||
+            pNode->nOperation == SWQ_GE ||
+            pNode->nOperation == SWQ_LE ||
+            pNode->nOperation == SWQ_GT ||
+            pNode->nOperation == SWQ_LT) &&
+        pNode->nSubExprCount == 2 &&
+        pNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+        pNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT)
+    {
+        int nIndex = pNode->papoSubExpr[0]->field_index;
+        swq_field_type eType = pNode->papoSubExpr[1]->field_type;
+        const char* pszFieldName = poFeatureDefn->GetFieldDefn(nIndex)->GetNameRef();
+
+        if (pNode->nOperation == SWQ_EQ &&
+            nIndex == _ID_FIELD && eType == SWQ_STRING)
+        {
+            bCanHandleFilter = TRUE;
+
+            osURI = "/";
+            osURI += osName;
+            osURI += "/_all_docs?";
+        }
+        else if (nIndex >= FIRST_FIELD &&
+            (eType == SWQ_STRING || eType == SWQ_INTEGER || eType == SWQ_FLOAT))
+        {
+            int bFoundFilter = HasFilterOnFieldOrCreateIfNecessary(pszFieldName);
+            if (bFoundFilter)
+            {
+                bCanHandleFilter = TRUE;
+
+                osURI = "/";
+                osURI += osName;
+                osURI += "/_design/ogr_filter_";
+                osURI += pszFieldName;
+                osURI += "/_view/filter?";
+            }
+        }
+
+        if (bCanHandleFilter)
+        {
+            const char* pszOp = OGRCouchDBGetOpStr(pNode->nOperation, bOutHasStrictComparisons);
+            CPLString osVal = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]);
+            CPLDebug("CouchDB", "Evaluating %s %s %s", pszFieldName, pszOp, osVal.c_str());
+
+            if (pNode->nOperation == SWQ_EQ)
+            {
+                osURI += "key=";
+            }
+            else if (pNode->nOperation == SWQ_GE ||
+                        pNode->nOperation == SWQ_GT)
+            {
+                osURI += "startkey=";
+            }
+            else if (pNode->nOperation == SWQ_LE ||
+                        pNode->nOperation == SWQ_LT)
+            {
+                osURI += "endkey=";
+            }
+            osURI += osVal;
+        }
+    }
+    else if (pNode->eNodeType == SNT_OPERATION &&
+                pNode->nOperation == SWQ_AND &&
+                pNode->nSubExprCount == 2 &&
+                pNode->papoSubExpr[0]->eNodeType == SNT_OPERATION &&
+                pNode->papoSubExpr[1]->eNodeType == SNT_OPERATION &&
+                (((pNode->papoSubExpr[0]->nOperation == SWQ_GE ||
+                pNode->papoSubExpr[0]->nOperation == SWQ_GT) &&
+                (pNode->papoSubExpr[1]->nOperation == SWQ_LE ||
+                pNode->papoSubExpr[1]->nOperation == SWQ_LT)) ||
+                ((pNode->papoSubExpr[0]->nOperation == SWQ_LE ||
+                pNode->papoSubExpr[0]->nOperation == SWQ_LT) &&
+                (pNode->papoSubExpr[1]->nOperation == SWQ_GE ||
+                pNode->papoSubExpr[1]->nOperation == SWQ_GT))) &&
+            pNode->papoSubExpr[0]->nSubExprCount == 2 &&
+            pNode->papoSubExpr[1]->nSubExprCount == 2 &&
+            pNode->papoSubExpr[0]->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+            pNode->papoSubExpr[0]->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
+            pNode->papoSubExpr[1]->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+            pNode->papoSubExpr[1]->papoSubExpr[1]->eNodeType == SNT_CONSTANT)
+    {
+        int nIndex0 = pNode->papoSubExpr[0]->papoSubExpr[0]->field_index;
+        swq_field_type eType0 = pNode->papoSubExpr[0]->papoSubExpr[1]->field_type;
+        int nIndex1 = pNode->papoSubExpr[1]->papoSubExpr[0]->field_index;
+        swq_field_type eType1 = pNode->papoSubExpr[1]->papoSubExpr[1]->field_type;
+        const char* pszFieldName = poFeatureDefn->GetFieldDefn(nIndex0)->GetNameRef();
+
+        if (nIndex0 == nIndex1 && eType0 == eType1 &&
+            nIndex0 == _ID_FIELD && eType0 == SWQ_STRING)
+        {
+            bCanHandleFilter = TRUE;
+
+            osURI = "/";
+            osURI += osName;
+            osURI += "/_all_docs?";
+        }
+        else if (nIndex0 == nIndex1 && eType0 == eType1 &&
+            nIndex0 >= FIRST_FIELD &&
+            (eType0 == SWQ_STRING || eType0 == SWQ_INTEGER || eType0 == SWQ_FLOAT))
+        {
+            int bFoundFilter = HasFilterOnFieldOrCreateIfNecessary(pszFieldName);
+            if (bFoundFilter)
+            {
+                bCanHandleFilter = TRUE;
+
+                osURI = "/";
+                osURI += osName;
+                osURI += "/_design/ogr_filter_";
+                osURI += pszFieldName;
+                osURI += "/_view/filter?";
+            }
+        }
+
+        if (bCanHandleFilter)
+        {
+            swq_field_type eType = eType0;
+            CPLString osVal0 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[0]->papoSubExpr[1]);
+            CPLString osVal1 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]->papoSubExpr[1]);
+
+            int nOperation0 = pNode->papoSubExpr[0]->nOperation;
+            int nOperation1 = pNode->papoSubExpr[1]->nOperation;
+
+            const char* pszOp0 = OGRCouchDBGetOpStr(nOperation0, bOutHasStrictComparisons);
+            const char* pszOp1 = OGRCouchDBGetOpStr(nOperation1, bOutHasStrictComparisons);
+
+            CPLDebug("CouchDB", "Evaluating %s %s %s AND %s %s %s",
+                            pszFieldName, pszOp0, osVal0.c_str(),
+                            pszFieldName, pszOp1, osVal1.c_str());
+
+            if (nOperation0 == SWQ_GE ||
+                nOperation0 == SWQ_GT)
+            {
+                osURI += "startkey=";
+            }
+            else if (nOperation0 == SWQ_LE ||
+                        nOperation0 == SWQ_LT)
+            {
+                osURI += "endkey=";
+            }
+            osURI += osVal0;
+            osURI += "&";
+            if (nOperation1 == SWQ_GE ||
+                nOperation1 == SWQ_GT)
+            {
+                osURI += "startkey=";
+            }
+            else if (nOperation1 == SWQ_LE ||
+                        nOperation1 == SWQ_LT)
+            {
+                osURI += "endkey=";
+            }
+            osURI += osVal1;
+        }
+    }
+    else if (pNode->eNodeType == SNT_OPERATION &&
+                pNode->nOperation == SWQ_BETWEEN &&
+                pNode->nSubExprCount == 3 &&
+                pNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+                pNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
+                pNode->papoSubExpr[2]->eNodeType == SNT_CONSTANT)
+    {
+        int nIndex = pNode->papoSubExpr[0]->field_index;
+        swq_field_type eType = pNode->papoSubExpr[0]->field_type;
+        const char* pszFieldName = poFeatureDefn->GetFieldDefn(nIndex)->GetNameRef();
+
+        if (nIndex == _ID_FIELD && eType == SWQ_STRING)
+        {
+            bCanHandleFilter = TRUE;
+
+            osURI = "/";
+            osURI += osName;
+            osURI += "/_all_docs?";
+        }
+        else if (nIndex >= FIRST_FIELD &&
+            (eType == SWQ_STRING || eType == SWQ_INTEGER || eType == SWQ_FLOAT))
+        {
+            int bFoundFilter = HasFilterOnFieldOrCreateIfNecessary(pszFieldName);
+            if (bFoundFilter)
+            {
+                bCanHandleFilter = TRUE;
+
+                osURI = "/";
+                osURI += osName;
+                osURI += "/_design/ogr_filter_";
+                osURI += pszFieldName;
+                osURI += "/_view/filter?";
+            }
+        }
+
+        if (bCanHandleFilter)
+        {
+            CPLString osVal0 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]);
+            CPLString osVal1 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[2]);
+
+            CPLDebug("CouchDB", "Evaluating %s BETWEEN %s AND %s",
+                        pszFieldName, osVal0.c_str(), osVal1.c_str());
+
+            osURI += "startkey=";
+            osURI += osVal0;
+            osURI += "&";
+            osURI += "endkey=";
+            osURI += osVal1;
+        }
+    }
+
+    return osURI;
+}
+
+/************************************************************************/
 /*                   FetchNextRowsAttributeFilter()                     */
 /************************************************************************/
 
@@ -489,221 +717,14 @@ int OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
 {
     if (bHasInstalledAttributeFilter)
     {
-        osURIAttributeFilter = "";
         bHasInstalledAttributeFilter = FALSE;
 
         CPLAssert(nOffset == 0);
 
-        int bCanHandleFilter = FALSE;
+        int bOutHasStrictComparisons = FALSE;
+        osURIAttributeFilter = BuildAttrQueryURI(bOutHasStrictComparisons);
 
-        swq_expr_node * pNode = (swq_expr_node *) m_poAttrQuery->GetSWGExpr();
-        if (pNode->eNodeType == SNT_OPERATION &&
-            (pNode->nOperation == SWQ_EQ ||
-             pNode->nOperation == SWQ_GE ||
-             pNode->nOperation == SWQ_LE ||
-             pNode->nOperation == SWQ_GT ||
-             pNode->nOperation == SWQ_LT) &&
-            pNode->nSubExprCount == 2 &&
-            pNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
-            pNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT)
-        {
-            int nIndex = pNode->papoSubExpr[0]->field_index;
-            swq_field_type eType = pNode->papoSubExpr[1]->field_type;
-            const char* pszFieldName = poFeatureDefn->GetFieldDefn(nIndex)->GetNameRef();
-
-            if (pNode->nOperation == SWQ_EQ &&
-                nIndex == _ID_FIELD && eType == SWQ_STRING)
-            {
-                bCanHandleFilter = TRUE;
-
-                osURIAttributeFilter = "/";
-                osURIAttributeFilter += osName;
-                osURIAttributeFilter += "/_all_docs?";
-            }
-            else if (nIndex >= FIRST_FIELD &&
-                (eType == SWQ_STRING || eType == SWQ_INTEGER || eType == SWQ_FLOAT))
-            {
-                int bFoundFilter = HasFilterOnFieldOrCreateIfNecessary(pszFieldName);
-                if (bFoundFilter)
-                {
-                    bCanHandleFilter = TRUE;
-
-                    osURIAttributeFilter = "/";
-                    osURIAttributeFilter += osName;
-                    osURIAttributeFilter += "/_design/ogr_filter_";
-                    osURIAttributeFilter += pszFieldName;
-                    osURIAttributeFilter += "/_view/filter?";
-                }
-            }
-
-            if (bCanHandleFilter)
-            {
-                const char* pszOp = OGRCouchDBGetOpStr(pNode->nOperation);
-                CPLString osVal = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]);
-                CPLDebug("CouchDB", "Evaluating %s %s %s", pszFieldName, pszOp, osVal.c_str());
-
-                if (pNode->nOperation == SWQ_EQ)
-                {
-                    osURIAttributeFilter += "key=";
-                }
-                else if (pNode->nOperation == SWQ_GE ||
-                            pNode->nOperation == SWQ_GT)
-                {
-                    osURIAttributeFilter += "startkey=";
-                }
-                else if (pNode->nOperation == SWQ_LE ||
-                            pNode->nOperation == SWQ_LT)
-                {
-                    osURIAttributeFilter += "endkey=";
-                }
-                osURIAttributeFilter += osVal;
-            }
-        }
-        else if (pNode->eNodeType == SNT_OPERATION &&
-                 pNode->nOperation == SWQ_AND &&
-                 pNode->nSubExprCount == 2 &&
-                 pNode->papoSubExpr[0]->eNodeType == SNT_OPERATION &&
-                 pNode->papoSubExpr[1]->eNodeType == SNT_OPERATION &&
-                 (((pNode->papoSubExpr[0]->nOperation == SWQ_GE ||
-                    pNode->papoSubExpr[0]->nOperation == SWQ_GT) &&
-                   (pNode->papoSubExpr[1]->nOperation == SWQ_LE ||
-                    pNode->papoSubExpr[1]->nOperation == SWQ_LT)) ||
-                  ((pNode->papoSubExpr[0]->nOperation == SWQ_LE ||
-                    pNode->papoSubExpr[0]->nOperation == SWQ_LT) &&
-                   (pNode->papoSubExpr[1]->nOperation == SWQ_GE ||
-                    pNode->papoSubExpr[1]->nOperation == SWQ_GT))) &&
-                pNode->papoSubExpr[0]->nSubExprCount == 2 &&
-                pNode->papoSubExpr[1]->nSubExprCount == 2 &&
-                pNode->papoSubExpr[0]->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
-                pNode->papoSubExpr[0]->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
-                pNode->papoSubExpr[1]->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
-                pNode->papoSubExpr[1]->papoSubExpr[1]->eNodeType == SNT_CONSTANT)
-        {
-            int nIndex0 = pNode->papoSubExpr[0]->papoSubExpr[0]->field_index;
-            swq_field_type eType0 = pNode->papoSubExpr[0]->papoSubExpr[1]->field_type;
-            int nIndex1 = pNode->papoSubExpr[1]->papoSubExpr[0]->field_index;
-            swq_field_type eType1 = pNode->papoSubExpr[1]->papoSubExpr[1]->field_type;
-            const char* pszFieldName = poFeatureDefn->GetFieldDefn(nIndex0)->GetNameRef();
-
-            if (nIndex0 == nIndex1 && eType0 == eType1 &&
-                nIndex0 == _ID_FIELD && eType0 == SWQ_STRING)
-            {
-                bCanHandleFilter = TRUE;
-
-                osURIAttributeFilter = "/";
-                osURIAttributeFilter += osName;
-                osURIAttributeFilter += "/_all_docs?";
-            }
-            else if (nIndex0 == nIndex1 && eType0 == eType1 &&
-                nIndex0 >= FIRST_FIELD &&
-                (eType0 == SWQ_STRING || eType0 == SWQ_INTEGER || eType0 == SWQ_FLOAT))
-            {
-                int bFoundFilter = HasFilterOnFieldOrCreateIfNecessary(pszFieldName);
-                if (bFoundFilter)
-                {
-                    bCanHandleFilter = TRUE;
-
-                    osURIAttributeFilter = "/";
-                    osURIAttributeFilter += osName;
-                    osURIAttributeFilter += "/_design/ogr_filter_";
-                    osURIAttributeFilter += pszFieldName;
-                    osURIAttributeFilter += "/_view/filter?";
-                }
-            }
-
-            if (bCanHandleFilter)
-            {
-                swq_field_type eType = eType0;
-                CPLString osVal0 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[0]->papoSubExpr[1]);
-                CPLString osVal1 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]->papoSubExpr[1]);
-
-                int nOperation0 = pNode->papoSubExpr[0]->nOperation;
-                int nOperation1 = pNode->papoSubExpr[1]->nOperation;
-
-                const char* pszOp0 = OGRCouchDBGetOpStr(nOperation0);
-                const char* pszOp1 = OGRCouchDBGetOpStr(nOperation1);
-
-                CPLDebug("CouchDB", "Evaluating %s %s %s AND %s %s %s",
-                             pszFieldName, pszOp0, osVal0.c_str(),
-                             pszFieldName, pszOp1, osVal1.c_str());
-
-                if (nOperation0 == SWQ_GE ||
-                    nOperation0 == SWQ_GT)
-                {
-                    osURIAttributeFilter += "startkey=";
-                }
-                else if (nOperation0 == SWQ_LE ||
-                            nOperation0 == SWQ_LT)
-                {
-                    osURIAttributeFilter += "endkey=";
-                }
-                osURIAttributeFilter += osVal0;
-                osURIAttributeFilter += "&";
-                if (nOperation1 == SWQ_GE ||
-                    nOperation1 == SWQ_GT)
-                {
-                    osURIAttributeFilter += "startkey=";
-                }
-                else if (nOperation1 == SWQ_LE ||
-                            nOperation1 == SWQ_LT)
-                {
-                    osURIAttributeFilter += "endkey=";
-                }
-                osURIAttributeFilter += osVal1;
-            }
-        }
-        else if (pNode->eNodeType == SNT_OPERATION &&
-                 pNode->nOperation == SWQ_BETWEEN &&
-                 pNode->nSubExprCount == 3 &&
-                 pNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
-                 pNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
-                 pNode->papoSubExpr[2]->eNodeType == SNT_CONSTANT)
-        {
-            int nIndex = pNode->papoSubExpr[0]->field_index;
-            swq_field_type eType = pNode->papoSubExpr[0]->field_type;
-            const char* pszFieldName = poFeatureDefn->GetFieldDefn(nIndex)->GetNameRef();
-
-            if (nIndex == _ID_FIELD && eType == SWQ_STRING)
-            {
-                bCanHandleFilter = TRUE;
-
-                osURIAttributeFilter = "/";
-                osURIAttributeFilter += osName;
-                osURIAttributeFilter += "/_all_docs?";
-            }
-            else if (nIndex >= FIRST_FIELD &&
-                (eType == SWQ_STRING || eType == SWQ_INTEGER || eType == SWQ_FLOAT))
-            {
-                int bFoundFilter = HasFilterOnFieldOrCreateIfNecessary(pszFieldName);
-                if (bFoundFilter)
-                {
-                    bCanHandleFilter = TRUE;
-
-                    osURIAttributeFilter = "/";
-                    osURIAttributeFilter += osName;
-                    osURIAttributeFilter += "/_design/ogr_filter_";
-                    osURIAttributeFilter += pszFieldName;
-                    osURIAttributeFilter += "/_view/filter?";
-                }
-            }
-
-            if (bCanHandleFilter)
-            {
-                CPLString osVal0 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]);
-                CPLString osVal1 = OGRCouchDBGetValue(eType, pNode->papoSubExpr[2]);
-
-                CPLDebug("CouchDB", "Evaluating %s BETWEEN %s AND %s",
-                         pszFieldName, osVal0.c_str(), osVal1.c_str());
-
-                osURIAttributeFilter += "startkey=";
-                osURIAttributeFilter += osVal0;
-                osURIAttributeFilter += "&";
-                osURIAttributeFilter += "endkey=";
-                osURIAttributeFilter += osVal1;
-            }
-        }
-
-        if (!bCanHandleFilter)
+        if (osURIAttributeFilter.size() == 0)
         {
             CPLDebug("CouchDB",
                      "Turning to client-side attribute filtering");
@@ -713,7 +734,7 @@ int OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
     }
 
     CPLString osURI(osURIAttributeFilter);
-    osURI += CPLSPrintf("&limit=%d&skip=%d&include_docs=true",
+    osURI += CPLSPrintf("&limit=%d&skip=%d&include_docs=true&reduce=false",
                         GetFeaturesToFetch(), nOffset);
     json_object* poAnswerObj = poDS->GET(osURI);
     return FetchNextRowsAnalyseDocs(poAnswerObj);
@@ -940,6 +961,45 @@ OGRFeatureDefn * OGRCouchDBTableLayer::GetLayerDefn()
 int OGRCouchDBTableLayer::GetFeatureCount(int bForce)
 {
     GetLayerDefn();
+
+    if (m_poFilterGeom == NULL && m_poAttrQuery != NULL)
+    {
+        int bOutHasStrictComparisons = FALSE;
+        CPLString osURI = BuildAttrQueryURI(bOutHasStrictComparisons);
+        if (!bOutHasStrictComparisons && osURI.size() != 0)
+        {
+            osURI += "&reduce=true";
+            json_object* poAnswerObj = poDS->GET(osURI);
+            json_object* poRows = NULL;
+            if (poAnswerObj != NULL &&
+                json_object_is_type(poAnswerObj, json_type_object) &&
+                (poRows = json_object_object_get(poAnswerObj, "rows")) != NULL &&
+                json_object_is_type(poRows, json_type_array))
+            {
+                int nLength = json_object_array_length(poRows);
+                if (nLength == 0)
+                {
+                    json_object_put(poAnswerObj);
+                    return 0;
+                }
+                else if (nLength == 1)
+                {
+                    json_object* poRow = json_object_array_get_idx(poRows, 0);
+                    if (poRow && json_object_is_type(poRow, json_type_object))
+                    {
+                        json_object* poValue = json_object_object_get(poRow, "value");
+                        if (poValue != NULL && json_object_is_type(poValue, json_type_int))
+                        {
+                            int nVal = json_object_get_int(poValue);
+                            json_object_put(poAnswerObj);
+                            return nVal;
+                        }
+                    }
+                }
+            }
+            json_object_put(poAnswerObj);
+        }
+    }
 
     if (m_poFilterGeom != NULL || m_poAttrQuery != NULL)
         return OGRCouchDBLayer::GetFeatureCount(bForce);
