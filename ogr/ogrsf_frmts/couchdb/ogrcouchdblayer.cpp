@@ -104,18 +104,18 @@ OGRFeature *OGRCouchDBLayer::GetNextFeature()
 
     GetLayerDefn();
 
-    if (nNextInSeq >= nOffset + (int)aoFeatures.size())
-    {
-        if (bEOF)
-            return NULL;
-
-        nOffset += aoFeatures.size();
-        if (!FetchNextRows())
-            return NULL;
-    }
-
     while(TRUE)
     {
+        if (nNextInSeq >= nOffset + (int)aoFeatures.size())
+        {
+            if (bEOF)
+                return NULL;
+
+            nOffset += aoFeatures.size();
+            if (!FetchNextRows())
+                return NULL;
+        }
+
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
