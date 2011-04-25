@@ -103,18 +103,18 @@ OGRFeature *OGRGFTLayer::GetNextFeature()
 
     GetLayerDefn();
 
-    if (nNextInSeq >= nOffset + (int)aosRows.size())
-    {
-        if (bEOF)
-            return NULL;
-
-        nOffset += aosRows.size();
-        if (!FetchNextRows())
-            return NULL;
-    }
-
     while(TRUE)
     {
+        if (nNextInSeq >= nOffset + (int)aosRows.size())
+        {
+            if (bEOF)
+                return NULL;
+
+            nOffset += aosRows.size();
+            if (!FetchNextRows())
+                return NULL;
+        }
+
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
