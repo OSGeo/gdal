@@ -392,8 +392,10 @@ OGRLayer   *OGRCouchDBDataSource::CreateLayer( const char *pszName,
         json_object_put(poAnswerObj);
     }
 
+    int bGeoJSONDocument = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
+
     OGRCouchDBTableLayer* poLayer = new OGRCouchDBTableLayer(this, pszName);
-    poLayer->SetInfoAfterCreation(eGType, poSpatialRef, nUpdateSeq);
+    poLayer->SetInfoAfterCreation(eGType, poSpatialRef, nUpdateSeq, bGeoJSONDocument);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;
     return poLayer;
