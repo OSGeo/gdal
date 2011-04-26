@@ -734,8 +734,10 @@ int OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
     }
 
     CPLString osURI(osURIAttributeFilter);
-    osURI += CPLSPrintf("&limit=%d&skip=%d&include_docs=true&reduce=false",
+    osURI += CPLSPrintf("&limit=%d&skip=%d&include_docs=true",
                         GetFeaturesToFetch(), nOffset);
+    if (strstr(osURI, "/_all_docs?") == NULL)
+        osURI += "&reduce=false";
     json_object* poAnswerObj = poDS->GET(osURI);
     return FetchNextRowsAnalyseDocs(poAnswerObj);
 }
@@ -966,7 +968,8 @@ int OGRCouchDBTableLayer::GetFeatureCount(int bForce)
     {
         int bOutHasStrictComparisons = FALSE;
         CPLString osURI = BuildAttrQueryURI(bOutHasStrictComparisons);
-        if (!bOutHasStrictComparisons && osURI.size() != 0)
+        if (!bOutHasStrictComparisons && osURI.size() != 0 &&
+            strstr(osURI, "/_all_docs?") == NULL)
         {
             osURI += "&reduce=true";
             json_object* poAnswerObj = poDS->GET(osURI);
