@@ -216,8 +216,11 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         else if( poSrcFDefn != NULL )
         {
             oFDefn.SetType( poSrcFDefn->GetType() );
-            oFDefn.SetWidth( poSrcFDefn->GetWidth() );
-            oFDefn.SetPrecision( poSrcFDefn->GetPrecision() );
+            if( psColDef->col_func != SWQCF_AVG )
+            {
+                oFDefn.SetWidth( poSrcFDefn->GetWidth() );
+                oFDefn.SetPrecision( poSrcFDefn->GetPrecision() );
+            }
         }
         else if ( psColDef->field_index >= iFIDFieldIndex )
         {
