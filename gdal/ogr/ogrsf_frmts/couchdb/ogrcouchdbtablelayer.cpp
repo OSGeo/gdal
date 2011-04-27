@@ -65,6 +65,7 @@ OGRCouchDBTableLayer::OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
     bHasInstalledAttributeFilter = FALSE;
 
     nUpdateSeq = -1;
+    bAlwaysValid = FALSE;
 
     bExtentValid = FALSE;
     bExtentSet = FALSE;
@@ -400,23 +401,67 @@ int OGRCouchDBTableLayer::HasFilterOnFieldOrCreateIfNecessary(const char* pszFie
 
         CPLString osMap;
 
+        OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(
+                            poFeatureDefn->GetFieldIndex(pszFieldName));
+        CPLAssert(poFieldDefn);
+        int bIsNumeric = poFieldDefn->GetType() == OFTInteger ||
+                         poFieldDefn->GetType() == OFTReal;
+
         if (bGeoJSONDocument)
         {
-            osMap = CPLSPrintf("function(doc) { if (doc && doc.properties && doc.properties.%s) emit(doc.properties.%s, null); }",
-                               pszFieldName, pszFieldName);
+            osMap = "function(doc) { if (doc.properties && doc.properties.";
+            osMap += pszFieldName;
+            if (bIsNumeric)
+            {
+                osMap += " && typeof doc.properties.";
+                osMap += pszFieldName;
+                osMap += " == \"number\"";
+            }
+            osMap += ") emit(";
+            osMap += "doc.properties.";
+            osMap += pszFieldName;
+            osMap +=", ";
+            if (bIsNumeric)
+            {
+                osMap += "doc.properties.";
+                osMap += pszFieldName;
+            }
+            else
+                osMap +="null";
+            osMap += "); }";
         }
         else
         {
-            osMap = CPLSPrintf("function(doc) { if (doc && doc.%s) emit(doc.%s, null); }",
-                               pszFieldName, pszFieldName);
+            osMap = "function(doc) { if (doc.";
+            osMap += pszFieldName;
+            if (bIsNumeric)
+            {
+                osMap += " && typeof doc.";
+                osMap += pszFieldName;
+                osMap += " == \"number\"";
+            }
+            osMap += ") emit(";
+            osMap += "doc.";
+            osMap += pszFieldName;
+            osMap +=", ";
+            if (bIsNumeric)
+            {
+                osMap += "doc.";
+                osMap += pszFieldName;
+            }
+            else
+                osMap +="null";
+            osMap += "); }";
         }
 
         json_object_object_add(poDoc, "views", poViews);
         json_object_object_add(poViews, "filter", poFilter);
         json_object_object_add(poFilter, "map", json_object_new_string(osMap));
 
-        const char* pszReduce = "function(keys, values) { return keys ? keys.length : sum(values); }";
-        json_object_object_add(poFilter, "reduce", json_object_new_string(pszReduce));
+        if (bIsNumeric)
+            json_object_object_add(poFilter, "reduce", json_object_new_string("_stats"));
+        else
+            json_object_object_add(poFilter, "reduce", json_object_new_string("_count"));
 
         json_object* poAnswerObj = poDS->PUT(osURI,
                                             json_object_to_json_string(poDoc));
@@ -426,7 +471,8 @@ int OGRCouchDBTableLayer::HasFilterOnFieldOrCreateIfNecessary(const char* pszFie
         if (poDS->IsOK(poAnswerObj, "Filter creation failed"))
         {
             bFoundFilter = TRUE;
-            bMustWriteMetadata = TRUE;
+            if (!bAlwaysValid)
+                bMustWriteMetadata = TRUE;
             nUpdateSeq++;
         }
 
@@ -488,6 +534,32 @@ static CPLString OGRCouchDBGetValue(swq_field_type eType,
 }
 
 /************************************************************************/
+/*                        OGRCouchDBGetKeyName()                          */
+/************************************************************************/
+
+static const char* OGRCouchDBGetKeyName(int nOperation)
+{
+    if (nOperation == SWQ_EQ)
+    {
+        return "key";
+    }
+    else if (nOperation == SWQ_GE ||
+             nOperation == SWQ_GT)
+    {
+        return "startkey";
+    }
+    else if (nOperation == SWQ_LE ||
+             nOperation == SWQ_LT)
+    {
+        return "endkey";
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Handled case! File a bug!");
+        return "";
+    }
+}
+/************************************************************************/
 /*                         BuildAttrQueryURI()                          */
 /************************************************************************/
 
@@ -545,20 +617,8 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
             CPLString osVal = OGRCouchDBGetValue(eType, pNode->papoSubExpr[1]);
             CPLDebug("CouchDB", "Evaluating %s %s %s", pszFieldName, pszOp, osVal.c_str());
 
-            if (pNode->nOperation == SWQ_EQ)
-            {
-                osURI += "key=";
-            }
-            else if (pNode->nOperation == SWQ_GE ||
-                        pNode->nOperation == SWQ_GT)
-            {
-                osURI += "startkey=";
-            }
-            else if (pNode->nOperation == SWQ_LE ||
-                        pNode->nOperation == SWQ_LT)
-            {
-                osURI += "endkey=";
-            }
+            osURI += OGRCouchDBGetKeyName(pNode->nOperation);
+            osURI += "=";
             osURI += osVal;
         }
     }
@@ -630,28 +690,12 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
                             pszFieldName, pszOp0, osVal0.c_str(),
                             pszFieldName, pszOp1, osVal1.c_str());
 
-            if (nOperation0 == SWQ_GE ||
-                nOperation0 == SWQ_GT)
-            {
-                osURI += "startkey=";
-            }
-            else if (nOperation0 == SWQ_LE ||
-                        nOperation0 == SWQ_LT)
-            {
-                osURI += "endkey=";
-            }
+            osURI += OGRCouchDBGetKeyName(nOperation0);
+            osURI += "=";
             osURI += osVal0;
             osURI += "&";
-            if (nOperation1 == SWQ_GE ||
-                nOperation1 == SWQ_GT)
-            {
-                osURI += "startkey=";
-            }
-            else if (nOperation1 == SWQ_LE ||
-                        nOperation1 == SWQ_LT)
-            {
-                osURI += "endkey=";
-            }
+            osURI += OGRCouchDBGetKeyName(nOperation1);
+            osURI += "=";
             osURI += osVal1;
         }
     }
@@ -698,10 +742,12 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
             CPLDebug("CouchDB", "Evaluating %s BETWEEN %s AND %s",
                         pszFieldName, osVal0.c_str(), osVal1.c_str());
 
-            osURI += "startkey=";
+            osURI += OGRCouchDBGetKeyName(SWQ_GE);
+            osURI += "=";
             osURI += osVal0;
             osURI += "&";
-            osURI += "endkey=";
+            osURI += OGRCouchDBGetKeyName(SWQ_LE);
+            osURI += "=";
             osURI += osVal1;
         }
     }
@@ -990,12 +1036,24 @@ int OGRCouchDBTableLayer::GetFeatureCount(int bForce)
                     json_object* poRow = json_object_array_get_idx(poRows, 0);
                     if (poRow && json_object_is_type(poRow, json_type_object))
                     {
+                        /* for string fields */
                         json_object* poValue = json_object_object_get(poRow, "value");
                         if (poValue != NULL && json_object_is_type(poValue, json_type_int))
                         {
                             int nVal = json_object_get_int(poValue);
                             json_object_put(poAnswerObj);
                             return nVal;
+                        }
+                        else if (poValue != NULL && json_object_is_type(poValue, json_type_object))
+                        {
+                            /* for numeric fields */
+                            json_object* poCount = json_object_object_get(poValue, "count");
+                            if (poCount != NULL && json_object_is_type(poCount, json_type_int))
+                            {
+                                int nVal = json_object_get_int(poCount);
+                                json_object_put(poAnswerObj);
+                                return nVal;
+                            }
                         }
                     }
                 }
@@ -1838,14 +1896,21 @@ void OGRCouchDBTableLayer::LoadMetadata()
                 if (poUpdateSeq && json_object_get_type(poUpdateSeq) == json_type_int)
                 {
                     int nValidityUpdateSeq = json_object_get_int(poUpdateSeq);
-                    if (nUpdateSeq < 0)
-                        nUpdateSeq = FetchUpdateSeq();
-                    if (nUpdateSeq != nValidityUpdateSeq)
+                    if (nValidityUpdateSeq <= 0)
                     {
-                        CPLDebug("CouchDB",
-                                 "_design/ogr_metadata.extent.validity_update_seq "
-                                 "doesn't match database update_seq --> ignoring stored extent");
-                        poUpdateSeq = NULL;
+                        bAlwaysValid = TRUE;
+                    }
+                    else
+                    {
+                        if (nUpdateSeq < 0)
+                            nUpdateSeq = FetchUpdateSeq();
+                        if (nUpdateSeq != nValidityUpdateSeq)
+                        {
+                            CPLDebug("CouchDB",
+                                    "_design/ogr_metadata.extent.validity_update_seq "
+                                    "doesn't match database update_seq --> ignoring stored extent");
+                            poUpdateSeq = NULL;
+                        }
                     }
                 }
                 else
@@ -1978,7 +2043,7 @@ void OGRCouchDBTableLayer::WriteMetadata()
             json_object_object_add(poDoc, "extent", poExtent);
 
             json_object_object_add(poExtent, "validity_update_seq",
-                                   json_object_new_int(nUpdateSeq + 1));
+                                   json_object_new_int((bAlwaysValid) ? -1 : nUpdateSeq + 1));
 
             json_object* poBbox = json_object_new_array();
             json_object_object_add(poExtent, "bbox", poBbox);

@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_couchdb.h"
+#include "swq.h"
 
 CPL_CVSID("$Id$");
 
@@ -515,9 +516,372 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Special case 'COMPACT ON ' command.                             */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"COMPACT ON ",11) )
+    {
+        const char *pszLayerName = pszSQLCommand + 11;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        CPLString osURI("/");
+        osURI += pszLayerName;
+        osURI += "/_compact";
+
+        json_object* poAnswerObj = POST(osURI, NULL);
+        IsError(poAnswerObj, "Database compaction failed");
+        json_object_put(poAnswerObj);
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case 'VIEW CLEANUP ON ' command.                        */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"VIEW CLEANUP ON ",16) )
+    {
+        const char *pszLayerName = pszSQLCommand + 16;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        CPLString osURI("/");
+        osURI += pszLayerName;
+        osURI += "/_view_cleanup";
+
+        json_object* poAnswerObj = POST(osURI, NULL);
+        IsError(poAnswerObj, "View cleanup failed");
+        json_object_put(poAnswerObj);
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try an optimized implementation when doing only stats           */
+/* -------------------------------------------------------------------- */
+    if (poSpatialFilter == NULL)
+    {
+        OGRLayer* poRet = ExecuteSQLStats(pszSQLCommand);
+        if (poRet)
+            return poRet;
+    }
+
     return OGRDataSource::ExecuteSQL( pszSQLCommand,
                                         poSpatialFilter,
                                         pszDialect );
+}
+
+/************************************************************************/
+/*                         ExecuteSQLStats()                            */
+/************************************************************************/
+
+class PointerAutoFree
+{
+        void ** m_pp;
+    public:
+        PointerAutoFree(void** pp) { m_pp = pp; }
+        ~PointerAutoFree() { CPLFree(*m_pp); }
+};
+
+class OGRCouchDBOneLineLayer : public OGRLayer
+{
+    public:
+        OGRFeature* poFeature;
+        OGRFeatureDefn* poFeatureDefn;
+        int bEnd;
+
+        OGRCouchDBOneLineLayer() { poFeature = NULL; poFeatureDefn = NULL; bEnd = FALSE; }
+        ~OGRCouchDBOneLineLayer()
+        {
+            delete poFeature;
+            if( poFeatureDefn != NULL )
+                poFeatureDefn->Release();
+        }
+
+        virtual void        ResetReading() { bEnd = FALSE;}
+        virtual OGRFeature *GetNextFeature()
+        {
+            if (bEnd) return NULL;
+            bEnd = TRUE;
+            return poFeature->Clone();
+        }
+        virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
+        virtual int         TestCapability( const char * ) { return FALSE; }
+};
+
+OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
+{
+    swq_select sSelectInfo;
+    if( sSelectInfo.preparse( pszSQLCommand ) != CPLE_None )
+    {
+        return NULL;
+    }
+
+    if (sSelectInfo.table_count != 1)
+    {
+        return NULL;
+    }
+
+    swq_table_def *psTableDef = &sSelectInfo.table_defs[0];
+    if( psTableDef->data_source != NULL )
+    {
+        return NULL;
+    }
+
+    OGRCouchDBTableLayer* poSrcLayer =
+        (OGRCouchDBTableLayer* )GetLayerByName( psTableDef->table_name );
+    if (poSrcLayer == NULL)
+    {
+        return NULL;
+    }
+
+    int nFieldCount = poSrcLayer->GetLayerDefn()->GetFieldCount();
+
+    swq_field_list sFieldList;
+    memset( &sFieldList, 0, sizeof(sFieldList) );
+    sFieldList.table_count = sSelectInfo.table_count;
+    sFieldList.table_defs = sSelectInfo.table_defs;
+
+    sFieldList.count = 0;
+    sFieldList.names = (char **) CPLMalloc( sizeof(char *) * nFieldCount );
+    sFieldList.types = (swq_field_type *)
+        CPLMalloc( sizeof(swq_field_type) * nFieldCount );
+    sFieldList.table_ids = (int *)
+        CPLMalloc( sizeof(int) * nFieldCount );
+    sFieldList.ids = (int *)
+        CPLMalloc( sizeof(int) * nFieldCount );
+
+    PointerAutoFree((void**)&(sFieldList.names));
+    PointerAutoFree((void**)&(sFieldList.types));
+    PointerAutoFree((void**)&(sFieldList.table_ids));
+    PointerAutoFree((void**)&(sFieldList.ids));
+
+    int iField;
+    for( iField = 0;
+         iField < poSrcLayer->GetLayerDefn()->GetFieldCount();
+         iField++ )
+    {
+        OGRFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetFieldDefn(iField);
+        int iOutField = sFieldList.count++;
+        sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
+        if( poFDefn->GetType() == OFTInteger )
+            sFieldList.types[iOutField] = SWQ_INTEGER;
+        else if( poFDefn->GetType() == OFTReal )
+            sFieldList.types[iOutField] = SWQ_FLOAT;
+        else if( poFDefn->GetType() == OFTString )
+            sFieldList.types[iOutField] = SWQ_STRING;
+        else
+            sFieldList.types[iOutField] = SWQ_OTHER;
+
+        sFieldList.table_ids[iOutField] = 0;
+        sFieldList.ids[iOutField] = iField;
+    }
+
+    CPLString osLastFieldName;
+    for( iField = 0; iField < sSelectInfo.result_columns; iField++ )
+    {
+        swq_col_def *psColDef = sSelectInfo.column_defs + iField;
+        if (psColDef->field_name == NULL)
+            return NULL;
+
+        if (strcmp(psColDef->field_name, "*") != 0)
+        {
+            if (osLastFieldName.size() == 0)
+                osLastFieldName = psColDef->field_name;
+            else if (strcmp(osLastFieldName, psColDef->field_name) != 0)
+                return NULL;
+
+            if (poSrcLayer->GetLayerDefn()->GetFieldIndex(psColDef->field_name) == -1)
+                return NULL;
+        }
+
+        if (!(psColDef->col_func == SWQCF_AVG ||
+              psColDef->col_func == SWQCF_MIN ||
+              psColDef->col_func == SWQCF_MAX ||
+              psColDef->col_func == SWQCF_COUNT ||
+              psColDef->col_func == SWQCF_SUM))
+            return NULL;
+
+        if (psColDef->distinct_flag) /* TODO: could perhaps be relaxed */
+            return NULL;
+    }
+
+    if (osLastFieldName.size() == 0)
+        return NULL;
+
+    /* Normalize field name */
+    int nIndex = poSrcLayer->GetLayerDefn()->GetFieldIndex(osLastFieldName);
+    osLastFieldName = poSrcLayer->GetLayerDefn()->GetFieldDefn(nIndex)->GetNameRef();
+
+/* -------------------------------------------------------------------- */
+/*      Finish the parse operation.                                     */
+/* -------------------------------------------------------------------- */
+
+    if( sSelectInfo.parse( &sFieldList, 0 ) != CE_None )
+    {
+        return NULL;
+    }
+
+    if (sSelectInfo.join_defs != NULL ||
+        sSelectInfo.where_expr != NULL ||
+        sSelectInfo.order_defs != NULL ||
+        sSelectInfo.query_mode != SWQM_SUMMARY_RECORD)
+    {
+        return NULL;
+    }
+
+    for( iField = 0; iField < sSelectInfo.result_columns; iField++ )
+    {
+        swq_col_def *psColDef = sSelectInfo.column_defs + iField;
+        if (psColDef->field_index == -1)
+        {
+            if (psColDef->col_func == SWQCF_COUNT)
+                continue;
+
+            return NULL;
+        }
+        if (psColDef->field_type != SWQ_INTEGER &&
+            psColDef->field_type != SWQ_FLOAT)
+        {
+            return NULL;
+        }
+    }
+
+    int bFoundFilter = poSrcLayer->HasFilterOnFieldOrCreateIfNecessary(osLastFieldName);
+    if (!bFoundFilter)
+        return NULL;
+
+    CPLString osURI = "/";
+    osURI += poSrcLayer->GetName();
+    osURI += "/_design/ogr_filter_";
+    osURI += osLastFieldName;
+    osURI += "/_view/filter?reduce=true";
+
+    json_object* poAnswerObj = GET(osURI);
+    json_object* poRows = NULL;
+    if (!(poAnswerObj != NULL &&
+          json_object_is_type(poAnswerObj, json_type_object) &&
+          (poRows = json_object_object_get(poAnswerObj, "rows")) != NULL &&
+          json_object_is_type(poRows, json_type_array)))
+    {
+        json_object_put(poAnswerObj);
+        return NULL;
+    }
+
+    int nLength = json_object_array_length(poRows);
+    if (nLength != 1)
+    {
+        json_object_put(poAnswerObj);
+        return NULL;
+    }
+
+    json_object* poRow = json_object_array_get_idx(poRows, 0);
+    if (!(poRow && json_object_is_type(poRow, json_type_object)))
+    {
+        json_object_put(poAnswerObj);
+        return NULL;
+    }
+
+    json_object* poValue = json_object_object_get(poRow, "value");
+    if (!(poValue != NULL && json_object_is_type(poValue, json_type_object)))
+    {
+        json_object_put(poAnswerObj);
+        return NULL;
+    }
+
+    json_object* poSum = json_object_object_get(poValue, "sum");
+    json_object* poCount = json_object_object_get(poValue, "count");
+    json_object* poMin = json_object_object_get(poValue, "min");
+    json_object* poMax = json_object_object_get(poValue, "max");
+    if (poSum != NULL && (json_object_is_type(poSum, json_type_int) ||
+                            json_object_is_type(poSum, json_type_double)) &&
+        poCount != NULL && (json_object_is_type(poCount, json_type_int) ||
+                            json_object_is_type(poCount, json_type_double)) &&
+        poMin != NULL && (json_object_is_type(poMin, json_type_int) ||
+                            json_object_is_type(poMin, json_type_double)) &&
+        poMax != NULL && (json_object_is_type(poMax, json_type_int) ||
+                            json_object_is_type(poMax, json_type_double)) )
+    {
+        double dfSum = json_object_get_double(poSum);
+        int nCount = json_object_get_int(poCount);
+        double dfMin = json_object_get_double(poMin);
+        double dfMax = json_object_get_double(poMax);
+        json_object_put(poAnswerObj);
+
+        //CPLDebug("CouchDB", "sum=%f, count=%d, min=%f, max=%f",
+        //         dfSum, nCount, dfMin, dfMax);
+
+        OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(poSrcLayer->GetName());
+        poFeatureDefn->Reference();
+
+        for( iField = 0; iField < sSelectInfo.result_columns; iField++ )
+        {
+            swq_col_def *psColDef = sSelectInfo.column_defs + iField;
+            OGRFieldDefn oFDefn( "", OFTInteger );
+
+            if( psColDef->field_alias != NULL )
+            {
+                oFDefn.SetName(psColDef->field_alias);
+            }
+            else
+            {
+                const swq_operation *op = swq_op_registrar::GetOperator(
+                    (swq_op) psColDef->col_func );
+                oFDefn.SetName( CPLSPrintf( "%s_%s",
+                                            op->osName.c_str(),
+                                            psColDef->field_name ) );
+            }
+
+            if( psColDef->col_func == SWQCF_COUNT )
+                oFDefn.SetType( OFTInteger );
+            else if (psColDef->field_type == SWQ_INTEGER)
+                oFDefn.SetType( OFTInteger );
+            else if (psColDef->field_type == SWQ_FLOAT)
+                oFDefn.SetType( OFTReal );
+
+            poFeatureDefn->AddFieldDefn(&oFDefn);
+        }
+
+        OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+
+        for( iField = 0; iField < sSelectInfo.result_columns; iField++ )
+        {
+            swq_col_def *psColDef = sSelectInfo.column_defs + iField;
+            switch(psColDef->col_func)
+            {
+                case SWQCF_AVG:
+                    if (nCount)
+                        poFeature->SetField(iField, dfSum / nCount);
+                    break;
+                case SWQCF_MIN:
+                    poFeature->SetField(iField, dfMin);
+                    break;
+                case SWQCF_MAX:
+                    poFeature->SetField(iField, dfMax);
+                    break;
+                case SWQCF_COUNT:
+                    poFeature->SetField(iField, nCount);
+                    break;
+                case SWQCF_SUM:
+                    poFeature->SetField(iField, dfSum);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        poFeature->SetFID(0);
+
+        OGRCouchDBOneLineLayer* poAnswerLayer = new OGRCouchDBOneLineLayer();
+        poAnswerLayer->poFeatureDefn = poFeatureDefn;
+        poAnswerLayer->poFeature = poFeature;
+        return poAnswerLayer;
+    }
+    json_object_put(poAnswerObj);
+
+    return NULL;
 }
 
 /************************************************************************/

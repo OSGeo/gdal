@@ -289,6 +289,31 @@ def ogr_couchdb_SetAttributeFilter():
     return 'success'
 
 ###############################################################################
+# Test ExecuteSQLStats()
+
+def ogr_couchdb_ExecuteSQLStats():
+    if ogrtest.couchdb_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.ExecuteSQL('SELECT MIN(EAS_ID), MAX(EAS_ID), AVG(EAS_ID), SUM(EAS_ID), COUNT(*) FROM POLY')
+    feat = lyr.GetNextFeature()
+    if feat.GetField('MIN_EAS_ID') != 158 or \
+       feat.GetField('MAX_EAS_ID') != 179 or \
+       feat.GetField('AVG_EAS_ID') != 169.1 or \
+       feat.GetField('SUM_EAS_ID') != 1691 or \
+       feat.GetField('COUNT_*') != 10:
+        gdaltest.post_reason('did not get expected values')
+        feat.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(lyr)
+
+    return 'success'
+
+###############################################################################
 # ogr_couchdb_changeLayer
 
 def ogr_couchdb_changeLayer():
@@ -304,6 +329,7 @@ gdaltest_list = [
     ogr_couchdb_GetExtent,
     ogr_couchdb_SetSpatialFilter,
     ogr_couchdb_SetAttributeFilter,
+    ogr_couchdb_ExecuteSQLStats,
     ogr_couchdb_changeLayer,
     ogr_couchdb_GetFeatureCount,
     ogr_couchdb_GetNextFeature,
