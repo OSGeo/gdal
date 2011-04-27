@@ -35,6 +35,34 @@
 
 CPL_CVSID("$Id$");
 
+
+/************************************************************************/
+/*               OGRGenSQLResultsLayerHasSpecialField()                 */
+/************************************************************************/
+
+static
+int OGRGenSQLResultsLayerHasSpecialField(swq_expr_node* expr,
+                                         int nMinIndexForSpecialField)
+{
+    if (expr->eNodeType == SNT_COLUMN)
+    {
+        if (expr->table_index == 0)
+        {
+            return expr->field_index >= nMinIndexForSpecialField;
+        }
+    }
+    else if (expr->eNodeType == SNT_OPERATION)
+    {
+        for( int i = 0; i < expr->nSubExprCount; i++ )
+        {
+            if (OGRGenSQLResultsLayerHasSpecialField(expr->papoSubExpr[i],
+                                                     nMinIndexForSpecialField))
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 /************************************************************************/
 /*                       OGRGenSQLResultsLayer()                        */
 /************************************************************************/
@@ -57,16 +85,6 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     nNextIndexFID = 0;
     nExtraDSCount = 0;
     papoExtraDS = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      If the user has explicitely requested a OGRSQL dialect, then    */
-/*      we should avoid to forward the where clause to the source layer */
-/*      (#4022)                                                         */
-/* -------------------------------------------------------------------- */
-    if( pszWHERE && !(pszDialect != NULL && EQUAL(pszDialect, "OGRSQL")) )
-        this->pszWHERE = CPLStrdup(pszWHERE);
-    else
-        this->pszWHERE = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Identify all the layers involved in the SELECT.                 */
@@ -113,6 +131,29 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     }
     
     poSrcLayer = papoTableLayers[0];
+
+/* -------------------------------------------------------------------- */
+/*      If the user has explicitely requested a OGRSQL dialect, then    */
+/*      we should avoid to forward the where clause to the source layer */
+/*      when there is a risk it cannot understand it (#4022)            */
+/* -------------------------------------------------------------------- */
+    int bForwardWhereToSourceLayer = TRUE;
+    if( pszWHERE )
+    {
+        if( psSelectInfo->where_expr && pszDialect != NULL &&
+            EQUAL(pszDialect, "OGRSQL") )
+        {
+            int nMinIndexForSpecialField = poSrcLayer->GetLayerDefn()->GetFieldCount();
+            bForwardWhereToSourceLayer = !OGRGenSQLResultsLayerHasSpecialField
+                            (psSelectInfo->where_expr, nMinIndexForSpecialField);
+        }
+        if (bForwardWhereToSourceLayer)
+            this->pszWHERE = CPLStrdup(pszWHERE);
+        else
+            this->pszWHERE = NULL;
+    }
+    else
+        this->pszWHERE = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Now that we have poSrcLayer, we can install a spatial filter    */
@@ -269,12 +310,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 
     SetIgnoredFields();
 
-/* -------------------------------------------------------------------- */
-/*      If the user has explicitely requested a OGRSQL dialect, then    */
-/*      we should avoid to forward the where clause to the source layer */
-/*      (#4022)                                                         */
-/* -------------------------------------------------------------------- */
-    if( pszWHERE && pszDialect != NULL && EQUAL(pszDialect, "OGRSQL") )
+    if( !bForwardWhereToSourceLayer )
         SetAttributeFilter( pszWHERE );
 }
 

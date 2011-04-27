@@ -885,6 +885,51 @@ def ogr_sql_30():
     else:
         return 'fail'
 
+###############################################################################
+# Regression test for #4022
+
+def ogr_sql_31():
+
+    gdal.ErrorReset()
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( 'select min(eas_id) from poly where area = 0' )
+
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetField(0)
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    
+    if gdal.GetLastErrorMsg() != '':
+        return 'fail'
+    
+    if val is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Regression test for #4022 (same as above, but with dialect = 'OGRSQL')
+
+def ogr_sql_32():
+
+    gdal.ErrorReset()
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( 'select min(eas_id) from poly where area = 0',
+                                      dialect = 'OGRSQL' )
+
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetField(0)
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    
+    if gdal.GetLastErrorMsg() != '':
+        return 'fail'
+    
+    if val is None:
+        return 'success'
+    else:
+        return 'fail'
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -924,6 +969,8 @@ gdaltest_list = [
     ogr_sql_28,
     ogr_sql_29,
     ogr_sql_30,
+    ogr_sql_31,
+    ogr_sql_32,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
