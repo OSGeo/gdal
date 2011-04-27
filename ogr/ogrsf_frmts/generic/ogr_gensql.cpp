@@ -562,11 +562,11 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
-            /* Leave COUNT(), not distinct, columns for after */
             if (psColDef->col_func == SWQCF_COUNT && !psColDef->distinct_flag)
-                continue;
-
-            pszError = swq_select_summarize( psSelectInfo, iField, 
+                /* psColDef->field_index can be -1 in the case of a COUNT(*) */
+                pszError = swq_select_summarize( psSelectInfo, iField, "" );
+            else
+                pszError = swq_select_summarize( psSelectInfo, iField, 
                                           poSrcFeature->GetFieldAsString( 
                                               psColDef->field_index ) );
             
@@ -581,20 +581,6 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         }
 
         delete poSrcFeature;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Special case for COUNT() columns that have been left before     */
-/* -------------------------------------------------------------------- */
-    for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
-    {
-        swq_col_def *psColDef = psSelectInfo->column_defs + iField;
-
-        if (psColDef->col_func == SWQCF_COUNT && !psColDef->distinct_flag)
-        {
-            swq_summary *psSummary = psSelectInfo->column_summary + iField;
-            psSummary->count = poSrcLayer->GetFeatureCount( TRUE );
-        }
     }
 
     pszError = swq_select_finish_summarize( psSelectInfo );
