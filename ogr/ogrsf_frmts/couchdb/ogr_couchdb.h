@@ -118,7 +118,6 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     int                       bServerSideAttributeFilteringWorks;
     CPLString                 osURIAttributeFilter;
     std::map<CPLString, int>  oMapFilterFields;
-    int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
     CPLString                 BuildAttrQueryURI(int& bOutHasStrictComparisons);
     int                       FetchNextRowsAttributeFilter();
 
@@ -126,6 +125,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     int                       GetMaximumId();
 
     int                       nUpdateSeq;
+    int                       bAlwaysValid;
     int                       FetchUpdateSeq();
 
     int                       bExtentValid;
@@ -176,6 +176,8 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     void                        SetUpdateSeq(int nUpdateSeqIn) { nUpdateSeq = nUpdateSeqIn; };
 
     int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("COUCHDB_PAGE_SIZE", "500")); }
+
+    int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
 };
 
 /************************************************************************/
@@ -202,6 +204,8 @@ class OGRCouchDBDataSource : public OGRDataSource
 
     OGRLayer*           OpenDatabase(const char* pszLayerName = NULL);
     void                DeleteLayer( const char *pszLayerName );
+
+    OGRLayer *          ExecuteSQLStats( const char *pszSQLCommand );
 
   public:
                         OGRCouchDBDataSource();
