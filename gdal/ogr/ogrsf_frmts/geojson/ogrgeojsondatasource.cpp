@@ -117,7 +117,9 @@ int OGRGeoJSONDataSource::Open( const char* pszName )
 /* -------------------------------------------------------------------- */
     if( NULL == pszGeoData_ ||
         strncmp(pszGeoData_, "{\"couchdb\":\"Welcome\"", strlen("{\"couchdb\":\"Welcome\"")) == 0 ||
-        strncmp(pszGeoData_, "{\"db_name\":\"", strlen("{\"db_name\":\"")) == 0)
+        strncmp(pszGeoData_, "{\"db_name\":\"", strlen("{\"db_name\":\"")) == 0 ||
+        strncmp(pszGeoData_, "{\"total_rows\":", strlen("{\"total_rows\":")) == 0 ||
+        strncmp(pszGeoData_, "{\"rows\":[", strlen("{\"rows\":[")) == 0)
     {
         Clear();
         return FALSE;

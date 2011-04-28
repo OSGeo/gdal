@@ -2,7 +2,7 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogrcouchdbdriver.o ogrcouchdbdatasource.o ogrcouchdblayer.o ogrcouchdbtablelayer.o
+OBJ	=	ogrcouchdbdriver.o ogrcouchdbdatasource.o ogrcouchdblayer.o ogrcouchdbtablelayer.o ogrcouchdbrowslayer.o
 
 CPPFLAGS	:=	-I.. -I../.. -I../geojson -I../geojson/jsonc $(GDAL_INCLUDE) $(CPPFLAGS)
 
