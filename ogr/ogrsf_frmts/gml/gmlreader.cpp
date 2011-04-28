@@ -823,7 +823,8 @@ void GMLReader::PopState()
     if( m_poState != NULL )
     {
 #ifdef HAVE_XERCES
-        if( m_poState->m_poFeature != NULL && m_poCompleteFeature == NULL )
+        if( !bUseExpatReader && m_poState->m_poFeature != NULL &&
+            m_poCompleteFeature == NULL )
         {
             m_poCompleteFeature = m_poState->m_poFeature;
             m_poState->m_poFeature = NULL;
@@ -831,7 +832,7 @@ void GMLReader::PopState()
 #endif
 
 #ifdef HAVE_EXPAT
-        if ( m_poState->m_poFeature != NULL )
+        if ( bUseExpatReader && m_poState->m_poFeature != NULL )
         {
             ppoFeatureTab = (GMLFeature**)
                     CPLRealloc(ppoFeatureTab,
