@@ -41,6 +41,12 @@
 #define _REV_FIELD      1
 #define FIRST_FIELD     2
 
+typedef enum
+{
+    COUCHDB_TABLE_LAYER,
+    COUCHDB_ROWS_LAYER
+} CouchDBLayerType;
+
 /************************************************************************/
 /*                           OGRCouchDBLayer                            */
 /************************************************************************/
@@ -67,9 +73,15 @@ protected:
                                                 const char* pszKey,
                                                 json_object* poValue);
 
+    int                         FetchNextRowsAnalyseDocs(json_object* poAnswerObj);
    virtual int                  FetchNextRows() = 0;
 
    int                          bGeoJSONDocument;
+
+   void                         BuildFeatureDefnFromDoc(json_object* poDoc);
+   int                          BuildFeatureDefnFromRows(json_object* poAnswerObj);
+
+    int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("COUCHDB_PAGE_SIZE", "500")); }
 
   public:
                          OGRCouchDBLayer(OGRCouchDBDataSource* poDS);
@@ -83,6 +95,8 @@ protected:
     virtual int                 TestCapability( const char * );
 
     virtual OGRSpatialReference*GetSpatialRef();
+
+    virtual CouchDBLayerType    GetLayerType() = 0;
 };
 
 /************************************************************************/
@@ -105,7 +119,6 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     void                      LoadMetadata();
     void                      WriteMetadata();
 
-    int                       FetchNextRowsAnalyseDocs(json_object* poAnswerObj);
     virtual int               FetchNextRows();
 
     int                       bHasOGRSpatial;
@@ -175,9 +188,30 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
     void                        SetUpdateSeq(int nUpdateSeqIn) { nUpdateSeq = nUpdateSeqIn; };
 
-    int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("COUCHDB_PAGE_SIZE", "500")); }
-
     int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
+
+    virtual CouchDBLayerType    GetLayerType() { return COUCHDB_TABLE_LAYER; }
+};
+
+/************************************************************************/
+/*                       OGRCouchDBRowsLayer                            */
+/************************************************************************/
+
+class OGRCouchDBRowsLayer : public OGRCouchDBLayer
+{
+    int                       bAllInOne;
+
+    virtual int               FetchNextRows();
+
+    public:
+            OGRCouchDBRowsLayer(OGRCouchDBDataSource* poDS);
+            ~OGRCouchDBRowsLayer();
+
+    virtual void                ResetReading();
+
+    int                         BuildFeatureDefn();
+
+    virtual CouchDBLayerType    GetLayerType() { return COUCHDB_TABLE_LAYER; }
 };
 
 /************************************************************************/
@@ -203,6 +237,7 @@ class OGRCouchDBDataSource : public OGRDataSource
                                 const char* pszData);
 
     OGRLayer*           OpenDatabase(const char* pszLayerName = NULL);
+    OGRLayer*           OpenView();
     void                DeleteLayer( const char *pszLayerName );
 
     OGRLayer *          ExecuteSQLStats( const char *pszSQLCommand );
@@ -239,6 +274,8 @@ class OGRCouchDBDataSource : public OGRDataSource
     json_object*                PUT(const char* pszURI, const char* pszData);
     json_object*                POST(const char* pszURI, const char* pszData);
     json_object*                DELETE(const char* pszURI);
+
+    const CPLString&            GetURL() const { return osURL; }
 
     static int                  IsError(json_object* poAnswerObj,
                                         const char* pszErrorMsg);
