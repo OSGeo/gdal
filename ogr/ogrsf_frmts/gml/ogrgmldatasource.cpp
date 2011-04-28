@@ -257,7 +257,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             szPtr += 3;
         }
 
-        bIsUTF8 = strstr(szPtr, "encoding='UTF-8'") != NULL;
+        bIsUTF8 = strstr(szPtr, "encoding='UTF-8'") != NULL ||
+                  strstr(szPtr, "encoding=\"UTF-8\"") != NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Here, we expect the opening chevrons of GML tree root element   */
