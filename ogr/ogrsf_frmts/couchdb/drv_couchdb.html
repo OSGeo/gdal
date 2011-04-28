@@ -22,7 +22,10 @@ OGR handles preferably CouchDB documents following the GeoJSON specification.<p>
 <h2>Dataset name syntax</h2>
 
 The syntax to open a CouchDB datasource is : <pre>couchdb:http://example.com[/layername]</pre> where
-http://example.com points to the root of a CouchDB repository.
+http://example.com points to the root of a CouchDB repository and, optionaly, layername is the name of a CouchDB database.<p>
+
+It is also possible to directly open a view : <pre>couchdb:http://example.com/layername/_design/adesigndoc/_view/aview[?include_docs=true]</pre>
+The include_docs=true might be needed depending on the value returned by the emit() call in the map() function.<p>
 
 <h2>Authentication</h2>
 

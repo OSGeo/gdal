@@ -173,6 +173,25 @@ OGRLayer* OGRCouchDBDataSource::OpenDatabase(const char* pszLayerName)
 }
 
 /************************************************************************/
+/*                               OpenView()                             */
+/************************************************************************/
+
+OGRLayer* OGRCouchDBDataSource::OpenView()
+{
+    OGRCouchDBRowsLayer* poLayer = new OGRCouchDBRowsLayer(this);
+    if (!poLayer->BuildFeatureDefn())
+    {
+        delete poLayer;
+        return NULL;
+    }
+
+    papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+    papoLayers[nLayers ++] = poLayer;
+
+    return poLayer;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -200,6 +219,12 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
     const char* pszUserPwd = CPLGetConfigOption("COUCHDB_USERPWD", NULL);
     if (pszUserPwd)
         osUserPwd = pszUserPwd;
+
+
+    if (strstr(osURL, "/_design/") && strstr(osURL, "/_view/"))
+    {
+        return OpenView() != NULL;
+    }
 
     /* If passed with http://useraccount.knownprovider.com/database, do not */
     /* try to issue /all_dbs, but directly open the database */
@@ -630,12 +655,16 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
         return NULL;
     }
 
-    OGRCouchDBTableLayer* poSrcLayer =
-        (OGRCouchDBTableLayer* )GetLayerByName( psTableDef->table_name );
-    if (poSrcLayer == NULL)
+    OGRCouchDBLayer* _poSrcLayer =
+        (OGRCouchDBLayer* )GetLayerByName( psTableDef->table_name );
+    if (_poSrcLayer == NULL)
     {
         return NULL;
     }
+    if (_poSrcLayer->GetLayerType() != COUCHDB_TABLE_LAYER)
+        return NULL;
+
+    OGRCouchDBTableLayer* poSrcLayer = (OGRCouchDBTableLayer* ) _poSrcLayer;
 
     int nFieldCount = poSrcLayer->GetLayerDefn()->GetFieldCount();
 
