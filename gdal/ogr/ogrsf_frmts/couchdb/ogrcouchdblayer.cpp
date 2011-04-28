@@ -30,6 +30,7 @@
 #include "ogr_couchdb.h"
 #include "json_object_private.h" // json_object_iter, complete type required
 #include "ogrgeojsonreader.h"
+#include "ogrgeojsonutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -332,4 +333,197 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
             poFeature->SetField( nField, json_object_get_string(poValue) );
         }
     }
+}
+
+
+/************************************************************************/
+/*                      BuildFeatureDefnFromDoc()                       */
+/************************************************************************/
+
+void OGRCouchDBLayer::BuildFeatureDefnFromDoc(json_object* poDoc)
+{
+/* -------------------------------------------------------------------- */
+/*      Read collection of properties.                                  */
+/* -------------------------------------------------------------------- */
+    json_object* poObjProps = json_object_object_get( poDoc,
+                                                        "properties" );
+    json_object_iter it;
+    it.key = NULL;
+    it.val = NULL;
+    it.entry = NULL;
+    if( NULL != poObjProps )
+    {
+        json_object_object_foreachC( poObjProps, it )
+        {
+            if( -1 == poFeatureDefn->GetFieldIndex( it.key ) )
+            {
+                OGRFieldDefn fldDefn( it.key,
+                    GeoJSONPropertyToFieldType( it.val ) );
+                poFeatureDefn->AddFieldDefn( &fldDefn );
+            }
+        }
+    }
+    else
+    {
+        bGeoJSONDocument = FALSE;
+
+        json_object_object_foreachC( poDoc, it )
+        {
+            if( strcmp(it.key, "_id") != 0 &&
+                strcmp(it.key, "_rev") != 0 &&
+                strcmp(it.key, "geometry") != 0 &&
+                -1 == poFeatureDefn->GetFieldIndex( it.key ) )
+            {
+                OGRFieldDefn fldDefn( it.key,
+                    GeoJSONPropertyToFieldType( it.val ) );
+                poFeatureDefn->AddFieldDefn( &fldDefn );
+            }
+        }
+    }
+
+    if( json_object_object_get( poDoc, "geometry" ) == NULL )
+    {
+        poFeatureDefn->SetGeomType(wkbNone);
+    }
+}
+
+
+/************************************************************************/
+/*                      BuildFeatureDefnFromRows()                      */
+/************************************************************************/
+
+int OGRCouchDBLayer::BuildFeatureDefnFromRows(json_object* poAnswerObj)
+{
+    if ( !json_object_is_type(poAnswerObj, json_type_object) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Layer definition creation failed");
+        return FALSE;
+    }
+
+    if (poDS->IsError(poAnswerObj, "Layer definition creation failed"))
+    {
+        return FALSE;
+    }
+
+    json_object* poRows = json_object_object_get(poAnswerObj, "rows");
+    if (poRows == NULL ||
+        !json_object_is_type(poRows, json_type_array))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Layer definition creation failed");
+        return FALSE;
+    }
+
+    int nRows = json_object_array_length(poRows);
+
+    json_object* poRow = NULL;
+    for(int i=0;i<nRows;i++)
+    {
+        json_object* poTmpRow = json_object_array_get_idx(poRows, i);
+        if (poTmpRow != NULL &&
+            json_object_is_type(poTmpRow, json_type_object))
+        {
+            json_object* poId = json_object_object_get(poTmpRow, "id");
+            const char* pszId = json_object_get_string(poId);
+            if (pszId != NULL && pszId[0] != '_')
+            {
+                poRow = poTmpRow;
+                break;
+            }
+        }
+    }
+
+    if ( poRow == NULL )
+    {
+        return FALSE;
+    }
+
+    json_object* poDoc = json_object_object_get(poRow, "doc");
+    if ( poDoc == NULL )
+        poDoc = json_object_object_get(poRow, "value");
+    if ( poDoc == NULL ||
+            !json_object_is_type(poDoc, json_type_object) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Layer definition creation failed");
+        return FALSE;
+    }
+
+    BuildFeatureDefnFromDoc(poDoc);
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                   FetchNextRowsAnalyseDocs()                         */
+/************************************************************************/
+
+int OGRCouchDBLayer::FetchNextRowsAnalyseDocs(json_object* poAnswerObj)
+{
+    if (poAnswerObj == NULL)
+        return FALSE;
+
+    if ( !json_object_is_type(poAnswerObj, json_type_object) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "FetchNextRowsAnalyseDocs() failed");
+        json_object_put(poAnswerObj);
+        return FALSE;
+    }
+
+    if (poDS->IsError(poAnswerObj, "FetchNextRowsAnalyseDocs() failed"))
+    {
+        json_object_put(poAnswerObj);
+        return FALSE;
+    }
+
+    json_object* poRows = json_object_object_get(poAnswerObj, "rows");
+    if (poRows == NULL ||
+        !json_object_is_type(poRows, json_type_array))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "FetchNextRowsAnalyseDocs() failed");
+        json_object_put(poAnswerObj);
+        return FALSE;
+    }
+
+    int nRows = json_object_array_length(poRows);
+    for(int i=0;i<nRows;i++)
+    {
+        json_object* poRow = json_object_array_get_idx(poRows, i);
+        if ( poRow == NULL ||
+             !json_object_is_type(poRow, json_type_object) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "FetchNextRowsAnalyseDocs() failed");
+            json_object_put(poAnswerObj);
+            return FALSE;
+        }
+
+        json_object* poDoc = json_object_object_get(poRow, "doc");
+        if ( poDoc == NULL )
+            poDoc = json_object_object_get(poRow, "value");
+        if ( poDoc == NULL ||
+             !json_object_is_type(poDoc, json_type_object) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "FetchNextRowsAnalyseDocs() failed");
+            json_object_put(poAnswerObj);
+            return FALSE;
+        }
+
+        json_object* poId = json_object_object_get(poDoc, "_id");
+        const char* pszId = json_object_get_string(poId);
+        if (pszId != NULL && strncmp(pszId, "_design/", 8) != 0)
+        {
+            aoFeatures.push_back(poDoc);
+        }
+    }
+
+    bEOF = nRows < GetFeaturesToFetch();
+
+    poFeatures = poAnswerObj;
+
+    return TRUE;
 }

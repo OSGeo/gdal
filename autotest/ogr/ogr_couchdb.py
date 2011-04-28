@@ -314,6 +314,32 @@ def ogr_couchdb_ExecuteSQLStats():
     return 'success'
 
 ###############################################################################
+# Test a row layer()
+
+def ogr_couchdb_RowLayer():
+    if ogrtest.couchdb_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('couchdb:%s/poly/_design/ogr_filter_EAS_ID/_view/filter?include_docs=true' % ogrtest.couchdb_test_db)
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    if lyr is None:
+        return 'fail'
+
+    feat = lyr.GetFeature(0)
+    if feat is None:
+        gdaltest.post_reason('did not get expected feature')
+        return 'fail'
+    if feat.GetField('EAS_ID') != 168:
+        gdaltest.post_reason('did not get expected feature')
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # ogr_couchdb_changeLayer
 
 def ogr_couchdb_changeLayer():
@@ -330,6 +356,7 @@ gdaltest_list = [
     ogr_couchdb_SetSpatialFilter,
     ogr_couchdb_SetAttributeFilter,
     ogr_couchdb_ExecuteSQLStats,
+    ogr_couchdb_RowLayer,
     ogr_couchdb_changeLayer,
     ogr_couchdb_GetFeatureCount,
     ogr_couchdb_GetNextFeature,
