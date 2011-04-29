@@ -2345,6 +2345,11 @@ elif test -n "$with_sde" -a "$with_sde" != "no" ; then
       AC_MSG_ERROR("Could not find sdetype.h or libsde$SDE_VERSION.a/libsde$SDE_VERSION.so in $SDE_DIR.")
   fi
 
+  if test "`arch`" = "x86_64" ; then
+    AC_MSG_RESULT([        Adding -DSDE64 for 64bit platform.])
+    SDE_INC="$SDE_INC -DSDE64"
+  fi
+
   SDE_ENABLED=yes
   OPT_GDAL_FORMATS="sde $OPT_GDAL_FORMATS"
   AC_MSG_RESULT([        using ESRI SDE from $SDE_DIR.])
