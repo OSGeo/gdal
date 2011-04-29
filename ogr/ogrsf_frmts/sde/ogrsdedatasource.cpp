@@ -71,7 +71,8 @@ OGRSDEDataSource::~OGRSDEDataSource()
     
     // Commit our transactions if we were opened for update
     if (bDSUpdate && bDSUseVersionEdits && (nNextState != -2 && nState != SE_DEFAULT_STATE_ID )  ) {
-        CPLDebug("OGR_SDE", "Moving states from %ld to %ld", nState, nNextState);
+        CPLDebug("OGR_SDE", "Moving states from %ld to %ld", 
+                 (long) nState, (long) nNextState);
 
         SE_connection_commit_transaction(hConnection);
         nSDEErr = SE_state_close(hConnection, nNextState);
@@ -554,8 +555,8 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
 
     
     if (bDSUpdate && bDSUseVersionEdits) {
-        LONG nLockCount;
-        SE_VERSION_LOCK* pahLocks;
+        LONG nLockCount = 0;
+        SE_VERSION_LOCK* pahLocks = NULL;
         nSDEErr = SE_version_get_locks(hConnection, pszVersionName, &nLockCount, &pahLocks);
     
         if( nSDEErr != SE_SUCCESS )
@@ -844,7 +845,6 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-
         if( EQUAL(pszLayerName,
                   papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
@@ -1262,7 +1262,9 @@ void OGRSDEDataSource::EnumerateSpatialTables()
         return;
     }
 
-    CPLDebug( "OGR_SDE", "SDE::EnumerateSpatialTables() found %ld tables.", nTableListCount );
+    CPLDebug( "OGR_SDE", 
+              "SDE::EnumerateSpatialTables() found %d tables.", 
+              (int) nTableListCount );
 
 /* -------------------------------------------------------------------- */
 /*      Process the tables, turning any appropriate ones into layers.   */

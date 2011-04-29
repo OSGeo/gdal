@@ -215,16 +215,12 @@ int OGRSDELayer::Initialize( const char *pszTableName,
 #ifdef SE_UUID_TYPE
           case SE_UUID_TYPE:
 #endif
+#ifdef SE_NSTRING_TYPE
+          case SE_NSTRING_TYPE:
+#endif
             eOGRType = OFTString;
             nWidth = asColumnDefs[iCol].size;
             break;
-
-#ifdef SE_NSTRING_TYPE
-          case SE_NSTRING_TYPE:
-            eOGRType = OFTWideString;
-            nWidth = asColumnDefs[iCol].size;
-            break;
-#endif
 
           case SE_BLOB_TYPE:
             eOGRType = OFTBinary;
@@ -359,7 +355,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
         return wkbUnknown;
 
     int nSDEErr;
-    long nShapeTypeMask = 0;
+    LONG nShapeTypeMask = 0;
   
 /* -------------------------------------------------------------------- */
 /*      Check layerinfo flags to establish what geometry types may      */
@@ -1673,7 +1669,7 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
       {
           CPLError( CE_Warning, CPLE_NotSupported, 
                     "Unsupported geometry type: %d", 
-                    nSDEGeomType );
+                    (int) nSDEGeomType );
       }
     }
 
@@ -1771,23 +1767,34 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           break;
 
           case SE_STRING_TYPE:
+          case SE_NSTRING_TYPE:
           {
-              char *pszTempString = (char *)
-                  CPLMalloc(poFieldDef->GetWidth()+1);
+              SE_WCHAR * pszTempStringUTF16 = (SE_WCHAR *) 
+                  CPLMalloc ((SE_QUALIFIED_COLUMN_LEN+1) * sizeof(SE_WCHAR ));
 
-              nSDEErr = SE_stream_get_string( hStream, anFieldMap[i]+1, 
-                                              pszTempString );
-              if( nSDEErr == SE_SUCCESS )
-                  poFeat->SetField( i, pszTempString );
+              CPLAssert( poFieldDef->GetWidth() < SE_QUALIFIED_COLUMN_LEN );
+
+              nSDEErr = SE_stream_get_nstring( hStream, anFieldMap[i]+1, 
+                                               pszTempStringUTF16 );
+
+              if( nSDEErr == SE_SUCCESS ) 
+              {
+                  char* pszUTF8 = CPLRecodeFromWChar((const wchar_t*)pszTempStringUTF16, CPL_ENC_UTF16, CPL_ENC_UTF8);
+
+                  poFeat->SetField( i, pszUTF8 );
+                  CPLFree( pszUTF8 );
+
+              } 
               else if( nSDEErr != SE_NULL_VALUE )
               {
-                  poDS->IssueSDEError( nSDEErr, "SE_stream_get_string" );
+                  poDS->IssueSDEError( nSDEErr, "SE_stream_get_nstring" );
+                  CPLFree( pszTempStringUTF16 );
+
                   return NULL;
               }
-              CPLFree( pszTempString );
+              CPLFree( pszTempStringUTF16 );
           }
           break;
-
 
 #ifdef SE_UUID_TYPE
           case SE_UUID_TYPE:
@@ -2410,7 +2417,8 @@ OGRErr OGRSDELayer::DeleteFeature( long nFID )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Layer \"%s\": Tried to delete a feature by FID, but no "
-                  "rows were deleted!" );
+                  "rows were deleted!",
+                  poFeatureDefn->GetName() );
     }
     else if( nSDEErr != SE_SUCCESS )
     {
