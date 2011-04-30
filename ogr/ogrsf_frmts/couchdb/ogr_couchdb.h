@@ -123,8 +123,9 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
     int                       bHasOGRSpatial;
     int                       bServerSideSpatialFilteringWorks;
-    int                       bHasInstalledSpatialFilter;
+    int                       bMustRunSpatialFilter;
     std::vector<CPLString>    aosIdsToFetch;
+    int                       RunSpatialFilterQueryIfNecessary();
     int                       FetchNextRowsSpatialFilter();
 
     int                       bHasInstalledAttributeFilter;
