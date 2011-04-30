@@ -47,6 +47,9 @@ OGRCouchDBTableLayer::OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
 
 {
     osName = pszName;
+    char* pszEscapedName = CPLEscapeString(pszName, -1, CPLES_URL);
+    osEscapedName = pszEscapedName;
+    CPLFree(pszEscapedName);
 
     bInTransaction = FALSE;
 
@@ -163,7 +166,7 @@ int OGRCouchDBTableLayer::RunSpatialFilterQueryIfNecessary()
     if (bHasOGRSpatial < 0)
     {
         CPLString osURI("/");
-        osURI += osName;
+        osURI += osEscapedName;
         osURI += "/_design/ogr_spatial";
 
         json_object* poAnswerObj = poDS->GET(osURI);
@@ -187,7 +190,7 @@ int OGRCouchDBTableLayer::RunSpatialFilterQueryIfNecessary()
         pszSpatialFilter = "_design/ogr_spatial/_spatial/spatial";
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/";
     osURI += pszSpatialFilter;
     osURI += "?bbox=";
@@ -304,7 +307,7 @@ int OGRCouchDBTableLayer::FetchNextRowsSpatialFilter()
     osContent += "]}";
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/_all_docs?include_docs=true";
     json_object* poAnswerObj = poDS->POST(osURI, osContent);
     return FetchNextRowsAnalyseDocs(poAnswerObj);
@@ -321,7 +324,7 @@ int OGRCouchDBTableLayer::HasFilterOnFieldOrCreateIfNecessary(const char* pszFie
         return oIter->second;
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/_design/ogr_filter_";
     osURI += pszFieldName;
 
@@ -535,7 +538,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
             bCanHandleFilter = TRUE;
 
             osURI = "/";
-            osURI += osName;
+            osURI += osEscapedName;
             osURI += "/_all_docs?";
         }
         else if (nIndex >= FIRST_FIELD &&
@@ -547,7 +550,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
                 bCanHandleFilter = TRUE;
 
                 osURI = "/";
-                osURI += osName;
+                osURI += osEscapedName;
                 osURI += "/_design/ogr_filter_";
                 osURI += pszFieldName;
                 osURI += "/_view/filter?";
@@ -597,7 +600,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
             bCanHandleFilter = TRUE;
 
             osURI = "/";
-            osURI += osName;
+            osURI += osEscapedName;
             osURI += "/_all_docs?";
         }
         else if (nIndex0 == nIndex1 && eType0 == eType1 &&
@@ -610,7 +613,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
                 bCanHandleFilter = TRUE;
 
                 osURI = "/";
-                osURI += osName;
+                osURI += osEscapedName;
                 osURI += "/_design/ogr_filter_";
                 osURI += pszFieldName;
                 osURI += "/_view/filter?";
@@ -658,7 +661,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
             bCanHandleFilter = TRUE;
 
             osURI = "/";
-            osURI += osName;
+            osURI += osEscapedName;
             osURI += "/_all_docs?";
         }
         else if (nIndex >= FIRST_FIELD &&
@@ -670,7 +673,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
                 bCanHandleFilter = TRUE;
 
                 osURI = "/";
-                osURI += osName;
+                osURI += osEscapedName;
                 osURI += "/_design/ogr_filter_";
                 osURI += pszFieldName;
                 osURI += "/_view/filter?";
@@ -756,7 +759,7 @@ int OGRCouchDBTableLayer::FetchNextRows()
     }
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += CPLSPrintf("/_all_docs?limit=%d&skip=%d&include_docs=true",
                         GetFeaturesToFetch(), nOffset);
     json_object* poAnswerObj = poDS->GET(osURI);
@@ -784,7 +787,7 @@ OGRFeature * OGRCouchDBTableLayer::GetFeature( const char* pszId )
     GetLayerDefn();
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/";
     osURI += pszId;
     json_object* poAnswerObj = poDS->GET(osURI);
@@ -840,7 +843,7 @@ OGRFeatureDefn * OGRCouchDBTableLayer::GetLayerDefn()
         }
 
         CPLString osURI("/");
-        osURI += osName;
+        osURI += osEscapedName;
         osURI += "/_all_docs?limit=10&include_docs=true";
         json_object* poAnswerObj = poDS->GET(osURI);
         if (poAnswerObj == NULL)
@@ -945,7 +948,7 @@ int OGRCouchDBTableLayer::GetTotalFeatureCount()
     int nTotalRows = -1;
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/_all_docs?startkey_docid=_&endkey_docid=_zzzzzzzzzzzzzzz";
     json_object* poAnswerObj = poDS->GET(osURI);
     if (poAnswerObj == NULL)
@@ -1145,7 +1148,7 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
 int OGRCouchDBTableLayer::GetMaximumId()
 {
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/_all_docs?startkey_docid=999999999&endkey_docid=000000000&descending=true&limit=1";
     json_object* poAnswerObj = poDS->GET(osURI);
     if (poAnswerObj == NULL)
@@ -1296,7 +1299,7 @@ OGRErr OGRCouchDBTableLayer::CreateFeature( OGRFeature *poFeature )
 
     const char* pszJson = json_object_to_json_string( poObj );
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/";
     osURI += osFID;
     json_object* poAnswerObj = poDS->PUT(osURI, pszJson);
@@ -1366,7 +1369,7 @@ OGRErr      OGRCouchDBTableLayer::SetFeature( OGRFeature *poFeature )
 
     const char* pszJson = json_object_to_json_string( poObj );
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/";
     osURI += poFeature->GetFieldAsString(_ID_FIELD);
     json_object* poAnswerObj = poDS->PUT(osURI, pszJson);
@@ -1458,7 +1461,7 @@ OGRErr OGRCouchDBTableLayer::DeleteFeature( OGRFeature* poFeature )
     const char* pszRev = poFeature->GetFieldAsString(_REV_FIELD);
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/";
     osURI += CPLSPrintf("%s?rev=%s", pszId, pszRev);
 
@@ -1556,7 +1559,7 @@ OGRErr OGRCouchDBTableLayer::CommitTransaction()
     aoTransactionFeatures.resize(0);
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/_bulk_docs";
     json_object* poAnswerObj = poDS->POST(osURI, osPost);
 
@@ -1727,7 +1730,7 @@ void OGRCouchDBTableLayer::LoadMetadata()
     bHasLoadedMetadata = TRUE;
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/_design/ogr_metadata";
     json_object* poAnswerObj = poDS->GET(osURI);
     if (poAnswerObj == NULL)
@@ -1905,7 +1908,7 @@ void OGRCouchDBTableLayer::WriteMetadata()
 
     CPLString osURI;
     osURI = "/";
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/_design/ogr_metadata";
 
     json_object* poDoc = json_object_new_object();
@@ -2046,7 +2049,7 @@ int OGRCouchDBTableLayer::FetchUpdateSeq()
         return nUpdateSeq;
 
     CPLString osURI("/");
-    osURI += osName;
+    osURI += osEscapedName;
     osURI += "/";
 
     json_object* poAnswerObj = poDS->GET(osURI);
