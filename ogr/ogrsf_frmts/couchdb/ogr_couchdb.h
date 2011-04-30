@@ -97,6 +97,8 @@ protected:
     virtual OGRSpatialReference*GetSpatialRef();
 
     virtual CouchDBLayerType    GetLayerType() = 0;
+
+    virtual OGRErr              SetNextByIndex( long nIndex );
 };
 
 /************************************************************************/
