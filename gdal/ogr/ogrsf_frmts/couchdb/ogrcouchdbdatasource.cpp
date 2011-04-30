@@ -221,7 +221,8 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
         osUserPwd = pszUserPwd;
 
 
-    if (strstr(osURL, "/_design/") && strstr(osURL, "/_view/"))
+    if ((strstr(osURL, "/_design/") && strstr(osURL, "/_view/")) ||
+        strstr(osURL, "/_all_docs"))
     {
         return OpenView() != NULL;
     }
