@@ -108,6 +108,7 @@ protected:
 class OGRCouchDBTableLayer : public OGRCouchDBLayer
 {
     CPLString                 osName;
+    CPLString                 osEscapedName;
 
     int                       nNextFIDForCreate;
     int                       bInTransaction;
