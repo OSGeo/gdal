@@ -508,9 +508,13 @@ OGRErr OGRCouchDBDataSource::DeleteLayer(int iLayer)
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
 
+    char* pszEscapedName = CPLEscapeString(osLayerName, -1, CPLES_URL);
+    CPLString osEscapedName = pszEscapedName;
+    CPLFree(pszEscapedName);
+
     CPLString osURI;
     osURI = "/";
-    osURI += osLayerName;
+    osURI += osEscapedName;
     json_object* poAnswerObj = DELETE(osURI);
 
     if (poAnswerObj == NULL)
