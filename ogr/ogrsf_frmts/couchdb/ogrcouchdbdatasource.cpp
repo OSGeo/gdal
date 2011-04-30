@@ -119,9 +119,13 @@ OGRLayer *OGRCouchDBDataSource::GetLayerByName(const char * pszLayerName)
 OGRLayer* OGRCouchDBDataSource::OpenDatabase(const char* pszLayerName)
 {
     CPLString osTableName;
+    CPLString osEscapedName;
     if (pszLayerName)
     {
         osTableName = pszLayerName;
+        char* pszEscapedName = CPLEscapeString(pszLayerName, -1, CPLES_URL);
+        osEscapedName = pszEscapedName;
+        CPLFree(pszEscapedName);
     }
     else
     {
@@ -129,7 +133,10 @@ OGRLayer* OGRCouchDBDataSource::OpenDatabase(const char* pszLayerName)
         char* pszLastSlash = strrchr(pszURL, '/');
         if (pszLastSlash)
         {
-            osTableName = pszLastSlash + 1;
+            osEscapedName = pszLastSlash + 1;
+            char* pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
+            osTableName = pszName;
+            CPLFree(pszName);
             *pszLastSlash = 0;
         }
         osURL = pszURL;
@@ -141,7 +148,7 @@ OGRLayer* OGRCouchDBDataSource::OpenDatabase(const char* pszLayerName)
     }
 
     CPLString osURI("/");
-    osURI += osTableName;
+    osURI += osEscapedName;
 
     json_object* poAnswerObj = GET(osURI);
     if (poAnswerObj == NULL)
@@ -343,12 +350,16 @@ OGRLayer   *OGRCouchDBDataSource::CreateLayer( const char *pszName,
         }
     }
 
+    char* pszEscapedName = CPLEscapeString(pszName, -1, CPLES_URL);
+    CPLString osEscapedName = pszEscapedName;
+    CPLFree(pszEscapedName);
+
 /* -------------------------------------------------------------------- */
 /*      Create "database"                                               */
 /* -------------------------------------------------------------------- */
     CPLString osURI;
     osURI = "/";
-    osURI += pszName;
+    osURI += osEscapedName;
     json_object* poAnswerObj = PUT(osURI, NULL);
 
     if (poAnswerObj == NULL)
@@ -369,7 +380,7 @@ OGRLayer   *OGRCouchDBDataSource::CreateLayer( const char *pszName,
     if (eGType != wkbNone)
     {
         osURI = "/";
-        osURI += pszName;
+        osURI += osEscapedName;
         osURI += "/_design/ogr_spatial";
 
         CPLString osContent("{ \"spatial\": { \"spatial\" : \"function(doc) { if (doc.geometry && doc.geometry.coordinates && doc.geometry.coordinates.length != 0) { emit(doc.geometry, null); } } \" } }");
@@ -410,7 +421,7 @@ OGRLayer   *OGRCouchDBDataSource::CreateLayer( const char *pszName,
     if (osValidation.size())
     {
         osURI = "/";
-        osURI += pszName;
+        osURI += osEscapedName;
         osURI += "/_design/ogr_validation";
 
         poAnswerObj = PUT(osURI, osValidation);
