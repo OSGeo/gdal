@@ -1255,6 +1255,9 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     poLayer->SetFIDColType( SE_REGISTRATION_ROW_ID_COLUMN_TYPE_SDE );
 
+    poLayer->SetUseNSTRING( 
+        CSLFetchBoolean( papszOptions, "USE_NSTRING", FALSE ) );
+
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */

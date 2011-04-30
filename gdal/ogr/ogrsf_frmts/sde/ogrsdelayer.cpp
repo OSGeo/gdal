@@ -60,6 +60,7 @@ OGRSDELayer::OGRSDELayer( OGRSDEDataSource *poDSIn, int bUpdate )
     hCoordRef = NULL;
     papszAllColumns = NULL;
     bHaveLayerInfo = FALSE;
+    bUseNSTRING = FALSE;
 }
 
 /************************************************************************/
@@ -956,6 +957,26 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
             }
         }
         
+        else if( poFieldDefn->GetType() == OFTString 
+                 && anFieldTypeMap[iFieldDefnIdx] == SE_NSTRING_TYPE )
+        {
+            SE_WCHAR *pszUTF16 = (SE_WCHAR *) 
+                CPLRecodeToWChar( poField->String, CPL_ENC_UTF8, 
+                                  CPL_ENC_UTF16 );
+
+            nSDEErr = SE_stream_set_nstring( hStream, iCurColNum++,
+                                             pszUTF16 );
+            CPLFree( pszUTF16 );
+
+            if( nSDEErr != SE_SUCCESS )
+            {
+                poDS->IssueSDEError( nSDEErr, "SE_stream_set_nstring" );
+                CSLDestroy( papszInsertCols );
+                CPLFree( paiColToDefMap );
+                return OGRERR_FAILURE;
+            }
+        }
+        
         else if( poFieldDefn->GetType() == OFTString )
         {
             nSDEErr = SE_stream_set_string( hStream, iCurColNum++,
@@ -1767,12 +1788,27 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           break;
 
           case SE_STRING_TYPE:
+          {
+              char *pszTempString = (char *)
+                  CPLMalloc(poFieldDef->GetWidth()+1);
+
+              nSDEErr = SE_stream_get_string( hStream, anFieldMap[i]+1, 
+                                              pszTempString );
+              if( nSDEErr == SE_SUCCESS )
+                  poFeat->SetField( i, pszTempString );
+              else if( nSDEErr != SE_NULL_VALUE )
+              {
+                  poDS->IssueSDEError( nSDEErr, "SE_stream_get_string" );
+                  return NULL;
+              }
+              CPLFree( pszTempString );
+          }
+          break;
+
           case SE_NSTRING_TYPE:
           {
               SE_WCHAR * pszTempStringUTF16 = (SE_WCHAR *) 
-                  CPLMalloc ((SE_QUALIFIED_COLUMN_LEN+1) * sizeof(SE_WCHAR ));
-
-              CPLAssert( poFieldDef->GetWidth() < SE_QUALIFIED_COLUMN_LEN );
+                  CPLMalloc ((poFieldDef->GetWidth()+1) * sizeof(SE_WCHAR ));
 
               nSDEErr = SE_stream_get_nstring( hStream, anFieldMap[i]+1, 
                                                pszTempStringUTF16 );
@@ -2203,8 +2239,15 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         sColumnDef.sde_type = SE_DOUBLE_TYPE;
 
     else if( oField.GetType() == OFTString )
-        sColumnDef.sde_type = SE_STRING_TYPE;
+    {
+        const char *pszUseNSTRING = 
+            CPLGetConfigOption( "OGR_SDE_USE_NSTRING", "FALSE" );
 
+        if( bUseNSTRING || CSLTestBoolean( pszUseNSTRING ) )
+            sColumnDef.sde_type = SE_NSTRING_TYPE;
+        else
+            sColumnDef.sde_type = SE_STRING_TYPE;
+    }
     else if(    oField.GetType() == OFTDate
              || oField.GetType() == OFTTime
              || oField.GetType() == OFTDateTime
@@ -2279,6 +2322,7 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     }
 
     poFeatureDefn->AddFieldDefn( &oField );
+    anFieldTypeMap.push_back( sColumnDef.sde_type );
     
     return OGRERR_NONE;
 }
