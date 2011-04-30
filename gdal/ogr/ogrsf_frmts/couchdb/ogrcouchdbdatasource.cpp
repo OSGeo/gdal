@@ -264,6 +264,8 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
                 json_object_put(poAnswerObj);
                 poAnswerObj = NULL;
 
+                CPLErrorReset();
+
                 return OpenDatabase() != NULL;
             }
         }
