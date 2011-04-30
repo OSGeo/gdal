@@ -837,19 +837,21 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
     int iLayer;
+    CPLString osFullName = pszLayerName;
 
-
-    // TODO: This is deficient. You can open a layer as 'tablename', but it
-    // will be known as 'SDE.tablename' or whatever fully-qualified name.
-    // This won't match in that case.
+    if( strchr(pszLayerName,'.') == NULL )
+        osFullName = "SDE." + osFullName;
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszLayerName,
-                  papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+        // We look for an exact match or for SDE.layername which is how
+        // the layer will be known after reading back. 
+        if( EQUAL(osFullName,
+                  papoLayers[iLayer]->GetLayerDefn()->GetName())
+            || EQUAL(pszLayerName, 
+                     papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
-            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
-                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            if( CSLFetchBoolean( papszOptions, "OVERWRITE", FALSE ) )
             {
                 DeleteLayer( iLayer );
             }
@@ -864,6 +866,51 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
             }
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Sometimes there are residual layers left around and we need     */
+/*      to blow them away.                                              */
+/* -------------------------------------------------------------------- */
+    SE_REGINFO *ahTableList;
+    LONG nTableListCount;
+    int iTable;
+
+    nSDEErr = SE_registration_get_info_list( hConnection, &ahTableList,
+                                             &nTableListCount );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_registration_get_info_list" );
+        return NULL;
+    }
+
+    for( iTable = 0; iTable < nTableListCount; iTable++ )
+    {
+        char szTableName[SE_QUALIFIED_TABLE_NAME+1];
+        szTableName[0] = '\0';
+
+        SE_reginfo_get_table_name( ahTableList[iTable], szTableName );
+        if( EQUAL(szTableName,pszLayerName) 
+            || EQUAL(szTableName,osFullName) )
+        {
+            if( !CSLFetchBoolean( papszOptions, "OVERWRITE", FALSE ) )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Registration informatin for  %s already exists, CreateLayer failed.\n"
+                          "Use the layer creation option OVERWRITE=YES to pre-clear it.",
+                          pszLayerName );
+                return NULL;
+            }
+
+            CPLDebug( "SDE", "sde_layer_delete(%s) - hidden/residual layer.",
+                      osFullName.c_str() );
+
+            SE_layer_delete( hConnection, szTableName, "SHAPE");
+            SE_registration_delete( hConnection, szTableName );
+            SE_table_delete( hConnection, szTableName );
+        }
+    }
+
+    SE_registration_free_info_list( nTableListCount, ahTableList );
 
 /* -------------------------------------------------------------------- */
 /*      Get various layer creation options.                             */
@@ -1036,7 +1083,12 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
             return NULL;
         }
     }
-    
+
+    CPLDebug( "SDE", "Creating layer with envelope (%g,%g) to (%g,%g)",
+              sLayerEnvelope.minx,
+              sLayerEnvelope.miny,
+              sLayerEnvelope.maxx,
+              sLayerEnvelope.maxy );
     nSDEErr = SE_layerinfo_set_envelope( hLayerInfo, &sLayerEnvelope );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -1320,15 +1372,21 @@ void OGRSDEDataSource::CreateLayerFromRegInfo( SE_REGINFO& reginfo )
     LONG nFIDColType;
     LONG nSDEErr;
 
-    // Ignore non-spatial, or hidden tables. 
-    if( !SE_reginfo_has_layer( reginfo ) || SE_reginfo_is_hidden( reginfo ) )
-    {
-        return;
-    }
-
     nSDEErr = SE_reginfo_get_table_name( reginfo, szTableName );
     if( nSDEErr != SE_SUCCESS )
     {
+        CPLDebug( "SDE", 
+                  "Ignoring reginfo '%p', no table name.",
+                  reginfo );
+        return;
+    }
+
+    // Ignore non-spatial, or hidden tables. 
+    if( !SE_reginfo_has_layer( reginfo ) || SE_reginfo_is_hidden( reginfo ) )
+    {
+        CPLDebug( "SDE", 
+                  "Ignoring layer '%s' as it is hidden or does not have a reginfo layer.", 
+                  szTableName );
         return;
     }
 
@@ -1410,7 +1468,20 @@ OGRErr OGRSDEDataSource::ConvertOSRtoSDESpatRef( OGRSpatialReference *poSRS,
     if( SE_coordref_set_by_description( *psCoordRef, pszWkt ) != SE_SUCCESS )
         return OGRERR_FAILURE;
     
+    {
+        SE_ENVELOPE     sGenericEnvelope;
+        SE_coordref_get_xy_envelope( *psCoordRef, &sGenericEnvelope );
+
+        CPLDebug( "SDE", 
+                  "Created coordref '%s' with envelope (%g,%g) to (%g,%g)",
+                  pszWkt,
+                  sGenericEnvelope.minx,
+                  sGenericEnvelope.miny,
+                  sGenericEnvelope.maxx,
+                  sGenericEnvelope.maxy );
+    }
+
     CPLFree( pszWkt );
-    
+
     return OGRERR_NONE;
 }
