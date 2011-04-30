@@ -767,11 +767,13 @@ OGRErr OGRDataSource::ProcessSQLDropTable( const char *pszSQLCommand )
     if( i >= GetLayerCount() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "CREATE INDEX ON failed, no such layer as `%s'.",
-                  papszTokens[3] );
+                  "DROP TABLE failed, no such layer as `%s'.",
+                  papszTokens[2] );
         CSLDestroy( papszTokens );
         return OGRERR_FAILURE;
     }
+
+    CSLDestroy( papszTokens );
 
 /* -------------------------------------------------------------------- */
 /*      Delete it.                                                      */
