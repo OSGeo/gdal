@@ -88,6 +88,8 @@ class OGRSDELayer : public OGRLayer
 
     int                 iShapeColumn;
 
+    int                 bUseNSTRING; 
+
 
     char              **papszAllColumns;
     std::vector<int>    anFieldMap;     // SDE index of OGR field.
@@ -146,6 +148,8 @@ class OGRSDELayer : public OGRLayer
                                 { nFIDColumnType = nType; }
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
+    void                SetUseNSTRING( int bFlag )
+                                { bUseNSTRING = bFlag; }
 };
 
 /************************************************************************/
