@@ -133,12 +133,13 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
             if (poRow != NULL)
             {
                 type = json_object_get_type( poRow );
-                if (type == json_type_object)
-                    return OFTString;
                 if (type == json_type_string)
                     return OFTStringList;
-                if (type == json_type_double)
+                else if (type == json_type_double)
                     eType = OFTRealList;
+                else if (type != json_type_int &&
+                         type != json_type_boolean)
+                    return OFTString;
             }
         }
         return eType;
