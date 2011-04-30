@@ -107,7 +107,8 @@ OGRFeature *OGRCouchDBLayer::GetNextFeature()
 
     while(TRUE)
     {
-        if (nNextInSeq >= nOffset + (int)aoFeatures.size())
+        if (nNextInSeq < nOffset ||
+            nNextInSeq >= nOffset + (int)aoFeatures.size())
         {
             if (bEOF)
                 return NULL;
@@ -139,7 +140,8 @@ OGRFeature *OGRCouchDBLayer::GetNextFeature()
 
 OGRFeature *OGRCouchDBLayer::GetNextRawFeature()
 {
-    if (nNextInSeq - nOffset >= (int)aoFeatures.size())
+    if (nNextInSeq < nOffset ||
+        nNextInSeq - nOffset >= (int)aoFeatures.size())
         return NULL;
 
     OGRFeature* poFeature = TranslateFeature(aoFeatures[nNextInSeq - nOffset]);
@@ -152,6 +154,18 @@ OGRFeature *OGRCouchDBLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
+/*                          SetNextByIndex()                            */
+/************************************************************************/
+
+OGRErr OGRCouchDBLayer::SetNextByIndex( long nIndex )
+{
+    if (nIndex < 0)
+        return OGRERR_FAILURE;
+    nNextInSeq = nIndex;
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -159,6 +173,8 @@ int OGRCouchDBLayer::TestCapability( const char * pszCap )
 
 {
     if ( EQUAL(pszCap, OLCStringsAsUTF8) )
+        return TRUE;
+    else if ( EQUAL(pszCap, OLCFastSetNextByIndex) )
         return TRUE;
     return FALSE;
 }
