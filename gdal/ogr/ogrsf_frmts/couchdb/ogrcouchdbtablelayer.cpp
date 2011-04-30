@@ -56,7 +56,7 @@ OGRCouchDBTableLayer::OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
     bHasLoadedMetadata = FALSE;
     bMustWriteMetadata = FALSE;
 
-    bHasInstalledSpatialFilter = FALSE;
+    bMustRunSpatialFilter = FALSE;
     bServerSideSpatialFilteringWorks = TRUE;
     bHasOGRSpatial = -1;
 
@@ -102,6 +102,9 @@ void OGRCouchDBTableLayer::ResetReading()
     json_object_put(poFeatures);
     poFeatures = NULL;
     aoFeatures.resize(0);
+
+    bMustRunSpatialFilter = m_poFilterGeom != NULL;
+    aosIdsToFetch.resize(0);
 }
 
 /************************************************************************/
@@ -135,146 +138,158 @@ int OGRCouchDBTableLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
+/*                   RunSpatialFilterQueryIfNecessary()                 */
+/************************************************************************/
+
+int OGRCouchDBTableLayer::RunSpatialFilterQueryIfNecessary()
+{
+    if (!bMustRunSpatialFilter)
+        return TRUE;
+
+    bMustRunSpatialFilter = FALSE;
+
+    CPLAssert(nOffset == 0);
+
+    aosIdsToFetch.resize(0);
+
+    const char* pszSpatialFilter = NULL;
+    if (bHasOGRSpatial < 0 || bHasOGRSpatial == FALSE)
+    {
+        pszSpatialFilter = CPLGetConfigOption("COUCHDB_SPATIAL_FILTER" , NULL);
+        if (pszSpatialFilter)
+            bHasOGRSpatial = FALSE;
+    }
+
+    if (bHasOGRSpatial < 0)
+    {
+        CPLString osURI("/");
+        osURI += osName;
+        osURI += "/_design/ogr_spatial";
+
+        json_object* poAnswerObj = poDS->GET(osURI);
+        bHasOGRSpatial = (poAnswerObj != NULL &&
+            json_object_is_type(poAnswerObj, json_type_object) &&
+            json_object_object_get(poAnswerObj, "spatial") != NULL);
+        json_object_put(poAnswerObj);
+        if (!bHasOGRSpatial)
+        {
+            CPLDebug("CouchDB",
+                        "Geocouch not working --> client-side spatial filtering");
+            bServerSideSpatialFilteringWorks = FALSE;
+            return FALSE;
+        }
+    }
+
+    OGREnvelope sEnvelope;
+    m_poFilterGeom->getEnvelope( &sEnvelope );
+
+    if (bHasOGRSpatial)
+        pszSpatialFilter = "_design/ogr_spatial/_spatial/spatial";
+
+    CPLString osURI("/");
+    osURI += osName;
+    osURI += "/";
+    osURI += pszSpatialFilter;
+    osURI += "?bbox=";
+    osURI += CPLSPrintf("%.9f,%.9f,%.9f,%.9f",
+                        sEnvelope.MinX, sEnvelope.MinY,
+                        sEnvelope.MaxX, sEnvelope.MaxY);
+
+    json_object* poAnswerObj = poDS->GET(osURI);
+    if (poAnswerObj == NULL)
+    {
+        CPLDebug("CouchDB",
+                    "Geocouch not working --> client-side spatial filtering");
+        bServerSideSpatialFilteringWorks = FALSE;
+        return FALSE;
+    }
+
+    if ( !json_object_is_type(poAnswerObj, json_type_object) )
+    {
+        CPLDebug("CouchDB",
+                    "Geocouch not working --> client-side spatial filtering");
+        bServerSideSpatialFilteringWorks = FALSE;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "FetchNextRowsSpatialFilter() failed");
+        json_object_put(poAnswerObj);
+        return FALSE;
+    }
+
+    /* Catch error for a non geocouch database */
+    json_object* poError = json_object_object_get(poAnswerObj, "error");
+    json_object* poReason = json_object_object_get(poAnswerObj, "reason");
+
+    const char* pszError = json_object_get_string(poError);
+    const char* pszReason = json_object_get_string(poReason);
+
+    if (pszError && pszReason && strcmp(pszError, "not_found") == 0 &&
+        strcmp(pszReason, "Document is missing attachment") == 0)
+    {
+        CPLDebug("CouchDB",
+                    "Geocouch not working --> client-side spatial filtering");
+        bServerSideSpatialFilteringWorks = FALSE;
+        json_object_put(poAnswerObj);
+        return FALSE;
+    }
+
+    if (poDS->IsError(poAnswerObj, "FetchNextRowsSpatialFilter() failed"))
+    {
+        CPLDebug("CouchDB",
+                    "Geocouch not working --> client-side spatial filtering");
+        bServerSideSpatialFilteringWorks = FALSE;
+        json_object_put(poAnswerObj);
+        return FALSE;
+    }
+
+    json_object* poRows = json_object_object_get(poAnswerObj, "rows");
+    if (poRows == NULL ||
+        !json_object_is_type(poRows, json_type_array))
+    {
+        CPLDebug("CouchDB",
+                    "Geocouch not working --> client-side spatial filtering");
+        bServerSideSpatialFilteringWorks = FALSE;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "FetchNextRowsSpatialFilter() failed");
+        json_object_put(poAnswerObj);
+        return FALSE;
+    }
+
+    int nRows = json_object_array_length(poRows);
+    for(int i=0;i<nRows;i++)
+    {
+        json_object* poRow = json_object_array_get_idx(poRows, i);
+        if ( poRow == NULL ||
+            !json_object_is_type(poRow, json_type_object) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "FetchNextRowsSpatialFilter() failed");
+            json_object_put(poAnswerObj);
+            return FALSE;
+        }
+
+        json_object* poId = json_object_object_get(poRow, "id");
+        const char* pszId = json_object_get_string(poId);
+        if (pszId != NULL)
+        {
+            aosIdsToFetch.push_back(pszId);
+        }
+    }
+
+    std::sort(aosIdsToFetch.begin(), aosIdsToFetch.end());
+
+    json_object_put(poAnswerObj);
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                   FetchNextRowsSpatialFilter()                       */
 /************************************************************************/
 
 int OGRCouchDBTableLayer::FetchNextRowsSpatialFilter()
 {
-    if (bHasInstalledSpatialFilter)
-    {
-        bHasInstalledSpatialFilter = FALSE;
-
-        CPLAssert(nOffset == 0);
-
-        aosIdsToFetch.resize(0);
-
-        const char* pszSpatialFilter = NULL;
-        if (bHasOGRSpatial < 0 || bHasOGRSpatial == FALSE)
-        {
-            pszSpatialFilter = CPLGetConfigOption("COUCHDB_SPATIAL_FILTER" , NULL);
-            if (pszSpatialFilter)
-                bHasOGRSpatial = FALSE;
-        }
-
-        if (bHasOGRSpatial < 0)
-        {
-            CPLString osURI("/");
-            osURI += osName;
-            osURI += "/_design/ogr_spatial";
-
-            json_object* poAnswerObj = poDS->GET(osURI);
-            bHasOGRSpatial = (poAnswerObj != NULL &&
-                json_object_is_type(poAnswerObj, json_type_object) &&
-                json_object_object_get(poAnswerObj, "spatial") != NULL);
-            json_object_put(poAnswerObj);
-            if (!bHasOGRSpatial)
-            {
-                CPLDebug("CouchDB",
-                         "Geocouch not working --> client-side spatial filtering");
-                bServerSideSpatialFilteringWorks = FALSE;
-                return FALSE;
-            }
-        }
-
-        OGREnvelope sEnvelope;
-        m_poFilterGeom->getEnvelope( &sEnvelope );
-
-        if (bHasOGRSpatial)
-            pszSpatialFilter = "_design/ogr_spatial/_spatial/spatial";
-
-        CPLString osURI("/");
-        osURI += osName;
-        osURI += "/";
-        osURI += pszSpatialFilter;
-        osURI += "?bbox=";
-        osURI += CPLSPrintf("%.9f,%.9f,%.9f,%.9f",
-                            sEnvelope.MinX, sEnvelope.MinY,
-                            sEnvelope.MaxX, sEnvelope.MaxY);
-
-        json_object* poAnswerObj = poDS->GET(osURI);
-        if (poAnswerObj == NULL)
-        {
-            CPLDebug("CouchDB",
-                     "Geocouch not working --> client-side spatial filtering");
-            bServerSideSpatialFilteringWorks = FALSE;
-            return FALSE;
-        }
-
-        if ( !json_object_is_type(poAnswerObj, json_type_object) )
-        {
-            CPLDebug("CouchDB",
-                     "Geocouch not working --> client-side spatial filtering");
-            bServerSideSpatialFilteringWorks = FALSE;
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "FetchNextRowsSpatialFilter() failed");
-            json_object_put(poAnswerObj);
-            return FALSE;
-        }
-
-        /* Catch error for a non geocouch database */
-        json_object* poError = json_object_object_get(poAnswerObj, "error");
-        json_object* poReason = json_object_object_get(poAnswerObj, "reason");
-
-        const char* pszError = json_object_get_string(poError);
-        const char* pszReason = json_object_get_string(poReason);
-
-        if (pszError && pszReason && strcmp(pszError, "not_found") == 0 &&
-            strcmp(pszReason, "Document is missing attachment") == 0)
-        {
-            CPLDebug("CouchDB",
-                     "Geocouch not working --> client-side spatial filtering");
-            bServerSideSpatialFilteringWorks = FALSE;
-            json_object_put(poAnswerObj);
-            return FALSE;
-        }
-
-        if (poDS->IsError(poAnswerObj, "FetchNextRowsSpatialFilter() failed"))
-        {
-            CPLDebug("CouchDB",
-                     "Geocouch not working --> client-side spatial filtering");
-            bServerSideSpatialFilteringWorks = FALSE;
-            json_object_put(poAnswerObj);
-            return FALSE;
-        }
-
-        json_object* poRows = json_object_object_get(poAnswerObj, "rows");
-        if (poRows == NULL ||
-            !json_object_is_type(poRows, json_type_array))
-        {
-            CPLDebug("CouchDB",
-                     "Geocouch not working --> client-side spatial filtering");
-            bServerSideSpatialFilteringWorks = FALSE;
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "FetchNextRowsSpatialFilter() failed");
-            json_object_put(poAnswerObj);
-            return FALSE;
-        }
-
-        int nRows = json_object_array_length(poRows);
-        for(int i=0;i<nRows;i++)
-        {
-            json_object* poRow = json_object_array_get_idx(poRows, i);
-            if ( poRow == NULL ||
-                !json_object_is_type(poRow, json_type_object) )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "FetchNextRowsSpatialFilter() failed");
-                json_object_put(poAnswerObj);
-                return FALSE;
-            }
-
-            json_object* poId = json_object_object_get(poRow, "id");
-            const char* pszId = json_object_get_string(poId);
-            if (pszId != NULL)
-            {
-                aosIdsToFetch.push_back(pszId);
-            }
-        }
-
-        std::sort(aosIdsToFetch.begin(), aosIdsToFetch.end());
-
-        json_object_put(poAnswerObj);
-    }
+    if (!RunSpatialFilterQueryIfNecessary())
+        return FALSE;
 
     CPLString osContent("{\"keys\":[");
     int nLimit = MIN(nOffset + GetFeaturesToFetch(), (int)aosIdsToFetch.size());
@@ -887,6 +902,20 @@ int OGRCouchDBTableLayer::GetFeatureCount(int bForce)
                 }
             }
             json_object_put(poAnswerObj);
+        }
+    }
+
+    if (m_poFilterGeom != NULL && m_poAttrQuery == NULL &&
+        wkbFlatten(eGeomType) == wkbPoint)
+    {
+        /* Only optimize for wkbPoint case. Otherwise the result might be higher */
+        /* than the real value since the intersection of the bounding box of the */
+        /* geometry of a feature does not necessary mean the intersection of the */
+        /* geometry itself */
+        RunSpatialFilterQueryIfNecessary();
+        if (bServerSideSpatialFilteringWorks)
+        {
+            return (int)aosIdsToFetch.size();
         }
     }
 
@@ -1602,7 +1631,7 @@ void OGRCouchDBTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
     if( InstallFilter( poGeomIn ) )
     {
-        bHasInstalledSpatialFilter = TRUE;
+        bMustRunSpatialFilter = TRUE;
 
         ResetReading();
     }
