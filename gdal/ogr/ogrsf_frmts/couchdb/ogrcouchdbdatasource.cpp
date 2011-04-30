@@ -668,7 +668,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Try an optimized implementation when doing only stats           */
 /* -------------------------------------------------------------------- */
-    if (poSpatialFilter == NULL)
+    if (poSpatialFilter == NULL && EQUALN(pszSQLCommand, "SELECT", 6))
     {
         OGRLayer* poRet = ExecuteSQLStats(pszSQLCommand);
         if (poRet)
