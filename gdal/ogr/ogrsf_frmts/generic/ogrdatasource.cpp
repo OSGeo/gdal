@@ -721,6 +721,66 @@ OGRErr OGRDataSource::ProcessSQLDropIndex( const char *pszSQLCommand )
 }
 
 /************************************************************************/
+/*                        ProcessSQLDropTable()                         */
+/*                                                                      */
+/*      The correct syntax for dropping a table (layer) in the OGR SQL  */
+/*      dialect is:                                                     */
+/*                                                                      */
+/*          DROP TABLE <layername>                                      */
+/************************************************************************/
+
+OGRErr OGRDataSource::ProcessSQLDropTable( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(papszTokens) != 3
+        || !EQUAL(papszTokens[0],"DROP")
+        || !EQUAL(papszTokens[1],"TABLE") )
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Syntax error in DROP TABLE command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'DROP TABLE <table>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    int  i;
+    OGRLayer *poLayer=NULL;
+
+    for( i = 0; i < GetLayerCount(); i++ )
+    {
+        poLayer = GetLayer(i);
+        
+        if( EQUAL(poLayer->GetName(),papszTokens[2]) )
+            break;
+    }
+    
+    if( i >= GetLayerCount() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "CREATE INDEX ON failed, no such layer as `%s'.",
+                  papszTokens[3] );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Delete it.                                                      */
+/* -------------------------------------------------------------------- */
+
+    return DeleteLayer( i );
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
@@ -755,6 +815,15 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
     if( EQUALN(pszStatement,"DROP INDEX",10) )
     {
         ProcessSQLDropIndex( pszStatement );
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Handle DROP TABLE statements specially.                         */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszStatement,"DROP TABLE",10) )
+    {
+        ProcessSQLDropTable( pszStatement );
         return NULL;
     }
     
