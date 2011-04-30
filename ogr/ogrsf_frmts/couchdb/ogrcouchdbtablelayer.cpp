@@ -772,23 +772,34 @@ OGRFeature * OGRCouchDBTableLayer::GetFeature( long nFID )
 {
     GetLayerDefn();
 
+    return GetFeature(CPLSPrintf("%09d", (int)nFID));
+}
+
+/************************************************************************/
+/*                            GetFeature()                              */
+/************************************************************************/
+
+OGRFeature * OGRCouchDBTableLayer::GetFeature( const char* pszId )
+{
+    GetLayerDefn();
+
     CPLString osURI("/");
     osURI += osName;
     osURI += "/";
-    osURI += CPLSPrintf("%09d", (int)nFID);
+    osURI += pszId;
     json_object* poAnswerObj = poDS->GET(osURI);
     if (poAnswerObj == NULL)
         return NULL;
 
     if ( !json_object_is_type(poAnswerObj, json_type_object) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GetFeature(%ld) failed",
-                 nFID);
+        CPLError(CE_Failure, CPLE_AppDefined, "GetFeature(%s) failed",
+                 pszId);
         json_object_put(poAnswerObj);
         return NULL;
     }
 
-    if ( poDS->IsError(poAnswerObj, CPLSPrintf("GetFeature(%ld) failed", nFID)) )
+    if ( poDS->IsError(poAnswerObj, CPLSPrintf("GetFeature(%s) failed", pszId)) )
     {
         json_object_put(poAnswerObj);
         return NULL;
@@ -1405,18 +1416,51 @@ OGRErr OGRCouchDBTableLayer::DeleteFeature( long nFID )
     if (poFeature == NULL)
         return OGRERR_FAILURE;
 
-    if (!poFeature->IsFieldSet(_REV_FIELD))
+    return DeleteFeature(poFeature);
+}
+
+/************************************************************************/
+/*                          DeleteFeature()                             */
+/************************************************************************/
+
+OGRErr OGRCouchDBTableLayer::DeleteFeature( const char* pszId )
+{
+    GetLayerDefn();
+
+    if (!poDS->IsReadWrite())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
+    OGRFeature* poFeature = GetFeature(pszId);
+    if (poFeature == NULL)
+        return OGRERR_FAILURE;
+
+    return DeleteFeature(poFeature);
+}
+
+/************************************************************************/
+/*                          DeleteFeature()                             */
+/************************************************************************/
+
+OGRErr OGRCouchDBTableLayer::DeleteFeature( OGRFeature* poFeature )
+{
+    if (!poFeature->IsFieldSet(_ID_FIELD) ||
+        !poFeature->IsFieldSet(_REV_FIELD))
     {
         delete poFeature;
         return OGRERR_FAILURE;
     }
 
+    const char* pszId = poFeature->GetFieldAsString(_ID_FIELD);
     const char* pszRev = poFeature->GetFieldAsString(_REV_FIELD);
 
     CPLString osURI("/");
     osURI += osName;
     osURI += "/";
-    osURI += CPLSPrintf("%09d?rev=%s", (int)nFID, pszRev);
+    osURI += CPLSPrintf("%s?rev=%s", pszId, pszRev);
 
     if (bExtentValid && eGeomType != wkbNone)
         bMustWriteMetadata = TRUE;
