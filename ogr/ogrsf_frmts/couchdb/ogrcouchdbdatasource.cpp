@@ -587,6 +587,74 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Deal with "DELETE FROM layer_name WHERE expression" statement   */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand, "DELETE FROM ", 12) )
+    {
+        const char* pszIter = pszSQLCommand + 12;
+        while(*pszIter && *pszIter != ' ')
+            pszIter ++;
+        if (*pszIter == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid statement");
+            return NULL;
+        }
+
+        CPLString osName = pszSQLCommand + 12;
+        osName.resize(pszIter - (pszSQLCommand + 12));
+        OGRCouchDBLayer* poLayer = (OGRCouchDBLayer*)GetLayerByName(osName);
+        if (poLayer == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unknown layer : %s", osName.c_str());
+            return NULL;
+        }
+        if (poLayer->GetLayerType() != COUCHDB_TABLE_LAYER)
+            return NULL;
+        OGRCouchDBTableLayer* poTableLayer = (OGRCouchDBTableLayer*)poLayer;
+
+        while(*pszIter && *pszIter == ' ')
+            pszIter ++;
+        if (!EQUALN(pszIter, "WHERE ", 5))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "WHERE clause missing");
+            return NULL;
+        }
+        pszIter += 5;
+
+        const char* pszQuery = pszIter;
+
+        /* Check with the generic SQL engine that this is a valid WHERE clause */
+        OGRFeatureQuery oQuery;
+        OGRErr eErr = oQuery.Compile( poLayer->GetLayerDefn(), pszQuery );
+        if( eErr != OGRERR_NONE )
+        {
+            return NULL;
+        }
+
+        swq_expr_node * pNode = (swq_expr_node *) oQuery.GetSWGExpr();
+        if (pNode->eNodeType == SNT_OPERATION &&
+            pNode->nOperation == SWQ_EQ &&
+            pNode->nSubExprCount == 2 &&
+            pNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+            pNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
+            pNode->papoSubExpr[0]->field_index == _ID_FIELD &&
+            pNode->papoSubExpr[1]->field_type == SWQ_STRING)
+        {
+            poTableLayer->DeleteFeature(pNode->papoSubExpr[1]->string_value);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid WHERE clause. Expecting '_id' = 'a_value'");
+            return NULL;
+        }
+
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Try an optimized implementation when doing only stats           */
 /* -------------------------------------------------------------------- */
     if (poSpatialFilter == NULL)

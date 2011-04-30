@@ -151,6 +151,9 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     double                    dfMaxX;
     double                    dfMaxY;
 
+    OGRFeature*               GetFeature( const char* pszId );
+    OGRErr                    DeleteFeature( OGRFeature* poFeature );
+
     public:
             OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
                                  const char* pszName);
@@ -194,6 +197,8 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
 
     virtual CouchDBLayerType    GetLayerType() { return COUCHDB_TABLE_LAYER; }
+
+    OGRErr            DeleteFeature( const char* pszId );
 };
 
 /************************************************************************/
