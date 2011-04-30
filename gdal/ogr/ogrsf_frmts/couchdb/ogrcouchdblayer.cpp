@@ -161,6 +161,7 @@ OGRErr OGRCouchDBLayer::SetNextByIndex( long nIndex )
 {
     if (nIndex < 0)
         return OGRERR_FAILURE;
+    bEOF = FALSE;
     nNextInSeq = nIndex;
     return OGRERR_NONE;
 }
