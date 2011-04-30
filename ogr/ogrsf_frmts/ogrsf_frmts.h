@@ -201,6 +201,7 @@ class CPL_DLL OGRDataSource
 
     OGRErr              ProcessSQLCreateIndex( const char * );
     OGRErr              ProcessSQLDropIndex( const char * );
+    OGRErr              ProcessSQLDropTable( const char * );
 
     OGRStyleTable      *m_poStyleTable;
     int                 m_nRefCount;
