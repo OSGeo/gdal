@@ -231,6 +231,8 @@ int OGRGFTTableLayer::FetchDescribe()
     }
     else if (iGeometryField < 0 && osGeomColumnName.size() == 0)
     {
+        iLatitudeField = iLongitudeField = -1;
+
         /* In the unauthentified case, we try to parse the first record to */
         /* autodetect the geometry field */
         OGRwkbGeometryType eType = wkbUnknown;
