@@ -105,7 +105,8 @@ OGRFeature *OGRGFTLayer::GetNextFeature()
 
     while(TRUE)
     {
-        if (nNextInSeq >= nOffset + (int)aosRows.size())
+        if (nNextInSeq < nOffset ||
+            nNextInSeq >= nOffset + (int)aosRows.size())
         {
             if (bEOF)
                 return NULL;
@@ -485,7 +486,8 @@ OGRFeature *OGRGFTLayer::BuildFeatureFromSQL(const char* pszLine)
 
 OGRFeature *OGRGFTLayer::GetNextRawFeature()
 {
-    if (nNextInSeq - nOffset >= (int)aosRows.size())
+    if (nNextInSeq < nOffset ||
+        nNextInSeq - nOffset >= (int)aosRows.size())
         return NULL;
 
     OGRFeature* poFeature = BuildFeatureFromSQL(aosRows[nNextInSeq - nOffset]);
@@ -496,6 +498,19 @@ OGRFeature *OGRGFTLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
+/*                          SetNextByIndex()                            */
+/************************************************************************/
+
+OGRErr OGRGFTLayer::SetNextByIndex( long nIndex )
+{
+    if (nIndex < 0)
+        return OGRERR_FAILURE;
+    bEOF = FALSE;
+    nNextInSeq = nIndex;
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -503,6 +518,8 @@ int OGRGFTLayer::TestCapability( const char * pszCap )
 
 {
     if ( EQUAL(pszCap, OLCStringsAsUTF8) )
+        return TRUE;
+    else if ( EQUAL(pszCap, OLCFastSetNextByIndex) )
         return TRUE;
     return FALSE;
 }

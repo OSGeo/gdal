@@ -83,6 +83,8 @@ protected:
 
     virtual const char *        GetGeometryColumn();
 
+    virtual OGRErr              SetNextByIndex( long nIndex );
+
     const char *        GetDefaultGeometryColumnName() { return "geometry"; }
 
     static int                  ParseCSVResponse(char* pszLine,
