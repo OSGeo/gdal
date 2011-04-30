@@ -1481,6 +1481,25 @@ OGRErr OGRSDEDataSource::ConvertOSRtoSDESpatRef( OGRSpatialReference *poSRS,
                   sGenericEnvelope.maxy );
     }
 
+    if( poSRS && poSRS->IsGeographic() )
+    {
+        SE_ENVELOPE     sGenericEnvelope;
+        LONG nSDEErr;
+
+        sGenericEnvelope.minx = -180;
+        sGenericEnvelope.miny = -90;
+        sGenericEnvelope.maxx =  180;
+        sGenericEnvelope.maxy =  90;
+
+        CPLDebug( "SDE", "Force geographic envelope" );
+        nSDEErr = SE_coordref_set_xy_by_envelope( *psCoordRef, 
+                                                  &sGenericEnvelope);
+        if( nSDEErr != SE_SUCCESS ) 
+        {
+            IssueSDEError( nSDEErr, "SE_coordref_set_xy_envelope" );
+        }
+    }
+
     CPLFree( pszWkt );
 
     return OGRERR_NONE;
