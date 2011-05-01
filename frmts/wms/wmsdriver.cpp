@@ -578,6 +578,12 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
+             strstr(pabyHeader, "<Services") != NULL &&
+             strstr(pabyHeader, "<TileMapService version=\"1.0") != NULL)
+    {
+        return TRUE;
+    }
+    else if (poOpenInfo->nHeaderBytes != 0 &&
              strstr(pabyHeader, "<TileMapService version=\"1.0.0\"") != NULL)
     {
         return TRUE;
@@ -680,6 +686,30 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
             return NULL;
         config = GDALWMSDatasetGetConfigFromTileMap(psXML);
         CPLDestroyXMLNode( psXML );
+    }
+    else if (poOpenInfo->nHeaderBytes != 0 &&
+             strstr(pabyHeader, "<Services") != NULL &&
+             strstr(pabyHeader, "<TileMapService version=\"1.0") != NULL)
+    {
+        CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
+        if (psXML == NULL)
+            return NULL;
+        CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=Services" );
+        GDALDataset* poRet = NULL;
+        if (psRoot)
+        {
+            CPLXMLNode* psTileMapService = CPLGetXMLNode(psRoot, "TileMapService");
+            if (psTileMapService)
+            {
+                const char* pszHref = CPLGetXMLValue(psTileMapService, "href", NULL);
+                if (pszHref)
+                {
+                    poRet = (GDALDataset*) GDALOpen(pszHref, GA_ReadOnly);
+                }
+            }
+        }
+        CPLDestroyXMLNode( psXML );
+        return poRet;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
              strstr(pabyHeader, "<TileMapService version=\"1.0.0\"") != NULL)
