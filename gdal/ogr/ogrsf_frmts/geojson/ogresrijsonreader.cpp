@@ -125,7 +125,11 @@ OGRGeoJSONLayer* OGRESRIJSONReader::ReadLayer( const char* pszName,
 
     OGRGeoJSONLayer* poThisLayer = NULL;
     poThisLayer = ReadFeatureCollection( poGJObject_ );
-    CPLAssert( poLayer_ == poThisLayer );
+    if (poThisLayer == NULL)
+    {
+        delete poLayer_;
+        return NULL;
+    }
 
     OGRSpatialReference* poSRS = NULL;
     poSRS = OGRESRIJSONReadSpatialReference( poGJObject_ );
