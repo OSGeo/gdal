@@ -56,7 +56,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 
     CPLString osBaseURL = pszBaseURL;
     /* Remove all keywords to get base URL */
-    osBaseURL = CPLURLAddKVP(osBaseURL, "SERVICE", NULL);
+
     osBaseURL = CPLURLAddKVP(osBaseURL, "VERSION", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "REQUEST", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "LAYERS", NULL);
@@ -71,6 +71,9 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     osBaseURL = CPLURLAddKVP(osBaseURL, "OVERVIEWCOUNT", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "TILESIZE", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "MINRESOLUTION", NULL);
+
+    if (osBaseURL.size() > 0 && osBaseURL[osBaseURL.size() - 1] == '&')
+        osBaseURL.resize(osBaseURL.size() - 1);
 
     if (osVersion.size() == 0)
         osVersion = "1.1.1";
