@@ -422,7 +422,8 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( json_object* poObj )
 /* -------------------------------------------------------------------- */
     json_object* poObjProps = NULL;
     poObjProps = OGRGeoJSONFindMemberByName( poObj, "properties" );
-    if( NULL != poObjProps )
+    if( NULL != poObjProps &&
+        json_object_get_type(poObjProps) == json_type_object )
     {
         json_object_iter it;
         it.key = NULL;
@@ -542,7 +543,8 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
 
     json_object* poObjProps = NULL;
     poObjProps = OGRGeoJSONFindMemberByName( poObj, "properties" );
-    if( !bAttributesSkip_ && NULL != poObjProps )
+    if( !bAttributesSkip_ && NULL != poObjProps &&
+        json_object_get_type(poObjProps) == json_type_object )
     {
         int nField = -1;
         OGRFieldDefn* poFieldDefn = NULL;
