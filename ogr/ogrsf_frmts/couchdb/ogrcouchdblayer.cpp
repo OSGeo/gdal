@@ -225,15 +225,19 @@ OGRFeature* OGRCouchDBLayer::TranslateFeature( json_object* poObj )
     it.key = NULL;
     it.val = NULL;
     it.entry = NULL;
-    json_object* poObjProps = json_object_object_get( poObj, "properties" );
-    if( bGeoJSONDocument && NULL != poObjProps )
+    if( bGeoJSONDocument )
     {
-        json_object_object_foreachC( poObjProps, it )
+        json_object* poObjProps = json_object_object_get( poObj, "properties" );
+        if ( NULL != poObjProps &&
+             json_object_get_type(poObjProps ) == json_type_object )
         {
-            ParseFieldValue(poFeature, it.key, it.val);
+            json_object_object_foreachC( poObjProps, it )
+            {
+                ParseFieldValue(poFeature, it.key, it.val);
+            }
         }
     }
-    else if ( !bGeoJSONDocument && poObjProps == NULL )
+    else
     {
         json_object_object_foreachC( poObj, it )
         {
@@ -368,7 +372,7 @@ void OGRCouchDBLayer::BuildFeatureDefnFromDoc(json_object* poDoc)
     it.key = NULL;
     it.val = NULL;
     it.entry = NULL;
-    if( NULL != poObjProps )
+    if( NULL != poObjProps && json_object_get_type(poObjProps) == json_type_object )
     {
         json_object_object_foreachC( poObjProps, it )
         {
