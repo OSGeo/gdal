@@ -57,6 +57,11 @@
 #define SHPT_MULTIPATCHM  31
 #define SHPT_MULTIPATCH   32
 
+#define SHPT_GENERALPOLYLINE    50
+#define SHPT_GENERALPOLYGON     51
+#define SHPT_GENERALPOINT       52
+#define SHPT_GENERALMULTIPOINT  53
+#define SHPT_GENERALMULTIPATCH  54
 
 /* The following are layers geometry type */
 /* They are different from the above shape types */
