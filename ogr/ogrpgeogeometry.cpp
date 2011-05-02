@@ -29,9 +29,216 @@
 
 #include "ogrpgeogeometry.h"
 #include "cpl_string.h"
+#include "zlib.h"
 
 CPL_CVSID("$Id$");
 
+#define SHPP_TRISTRIP   0
+#define SHPP_TRIFAN     1
+#define SHPP_OUTERRING  2
+#define SHPP_INNERRING  3
+#define SHPP_FIRSTRING  4
+#define SHPP_RING       5
+#define SHPP_TRIANGLES  6 /* Multipatch 9.0 specific */
+
+
+/************************************************************************/
+/*                     OGRCreateFromMultiPatch()                        */
+/*                                                                      */
+/*      Translate a multipatch representation to an OGR geometry        */
+/*      Mostly copied from shape2ogr.cpp                                */
+/************************************************************************/
+
+static OGRGeometry* OGRCreateFromMultiPatch(int nParts,
+                                            GInt32* panPartStart,
+                                            GInt32* panPartType,
+                                            int nPoints,
+                                            double* padfX,
+                                            double* padfY,
+                                            double* padfZ)
+{
+    OGRMultiPolygon *poMP = new OGRMultiPolygon();
+    int iPart;
+    OGRPolygon *poLastPoly = NULL;
+
+    for( iPart = 0; iPart < nParts; iPart++ )
+    {
+        int nPartPoints, nPartStart;
+
+        // Figure out details about this part's vertex list.
+        if( panPartStart == NULL )
+        {
+            nPartPoints = nPoints;
+            nPartStart = 0;
+        }
+        else
+        {
+
+            if( iPart == nParts - 1 )
+                nPartPoints =
+                    nPoints - panPartStart[iPart];
+            else
+                nPartPoints = panPartStart[iPart+1]
+                    - panPartStart[iPart];
+            nPartStart = panPartStart[iPart];
+        }
+
+        panPartType[iPart] &= 0xf;
+
+        if( panPartType[iPart] == SHPP_TRISTRIP )
+        {
+            int iBaseVert;
+
+            if( poLastPoly != NULL )
+            {
+                poMP->addGeometryDirectly( poLastPoly );
+                poLastPoly = NULL;
+            }
+
+            for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
+            {
+                OGRPolygon *poPoly = new OGRPolygon();
+                OGRLinearRing *poRing = new OGRLinearRing();
+                int iSrcVert = iBaseVert + nPartStart;
+
+                poRing->setPoint( 0,
+                                padfX[iSrcVert],
+                                padfY[iSrcVert],
+                                padfZ[iSrcVert] );
+                poRing->setPoint( 1,
+                                padfX[iSrcVert+1],
+                                padfY[iSrcVert+1],
+                                padfZ[iSrcVert+1] );
+
+                poRing->setPoint( 2,
+                                padfX[iSrcVert+2],
+                                padfY[iSrcVert+2],
+                                padfZ[iSrcVert+2] );
+                poRing->setPoint( 3,
+                                padfX[iSrcVert],
+                                padfY[iSrcVert],
+                                padfZ[iSrcVert] );
+
+                poPoly->addRingDirectly( poRing );
+                poMP->addGeometryDirectly( poPoly );
+            }
+        }
+        else if( panPartType[iPart] == SHPP_TRIFAN )
+        {
+            int iBaseVert;
+
+            if( poLastPoly != NULL )
+            {
+                poMP->addGeometryDirectly( poLastPoly );
+                poLastPoly = NULL;
+            }
+
+            for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
+            {
+                OGRPolygon *poPoly = new OGRPolygon();
+                OGRLinearRing *poRing = new OGRLinearRing();
+                int iSrcVert = iBaseVert + nPartStart;
+
+                poRing->setPoint( 0,
+                                padfX[0],
+                                padfY[0],
+                                padfZ[0] );
+                poRing->setPoint( 1,
+                                padfX[iSrcVert+1],
+                                padfY[iSrcVert+1],
+                                padfZ[iSrcVert+1] );
+
+                poRing->setPoint( 2,
+                                padfX[iSrcVert+2],
+                                padfY[iSrcVert+2],
+                                padfZ[iSrcVert+2] );
+                poRing->setPoint( 3,
+                                padfX[0],
+                                padfY[0],
+                                padfZ[0] );
+
+                poPoly->addRingDirectly( poRing );
+                poMP->addGeometryDirectly( poPoly );
+            }
+        }
+        else if( panPartType[iPart] == SHPP_OUTERRING
+                || panPartType[iPart] == SHPP_INNERRING
+                || panPartType[iPart] == SHPP_FIRSTRING
+                || panPartType[iPart] == SHPP_RING )
+        {
+            if( poLastPoly != NULL
+                && (panPartType[iPart] == SHPP_OUTERRING
+                    || panPartType[iPart] == SHPP_FIRSTRING) )
+            {
+                poMP->addGeometryDirectly( poLastPoly );
+                poLastPoly = NULL;
+            }
+
+            if( poLastPoly == NULL )
+                poLastPoly = new OGRPolygon();
+
+            OGRLinearRing *poRing = new OGRLinearRing;
+
+            poRing->setPoints( nPartPoints,
+                                padfX + nPartStart,
+                                padfY + nPartStart,
+                                padfZ + nPartStart );
+
+            poRing->closeRings();
+
+            poLastPoly->addRingDirectly( poRing );
+        }
+        else if ( panPartType[iPart] == SHPP_TRIANGLES )
+        {
+            int iBaseVert;
+
+            if( poLastPoly != NULL )
+            {
+                poMP->addGeometryDirectly( poLastPoly );
+                poLastPoly = NULL;
+            }
+
+            for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert+=3 )
+            {
+                OGRPolygon *poPoly = new OGRPolygon();
+                OGRLinearRing *poRing = new OGRLinearRing();
+                int iSrcVert = iBaseVert + nPartStart;
+
+                poRing->setPoint( 0,
+                                padfX[iSrcVert],
+                                padfY[iSrcVert],
+                                padfZ[iSrcVert] );
+                poRing->setPoint( 1,
+                                padfX[iSrcVert+1],
+                                padfY[iSrcVert+1],
+                                padfZ[iSrcVert+1] );
+
+                poRing->setPoint( 2,
+                                padfX[iSrcVert+2],
+                                padfY[iSrcVert+2],
+                                padfZ[iSrcVert+2] );
+                poRing->setPoint( 3,
+                                padfX[iSrcVert],
+                                padfY[iSrcVert],
+                                padfZ[iSrcVert] );
+
+                poPoly->addRingDirectly( poRing );
+                poMP->addGeometryDirectly( poPoly );
+            }
+        }
+        else
+            CPLDebug( "OGR", "Unrecognised parttype %d, ignored.",
+                    panPartType[iPart] );
+    }
+
+    if( poLastPoly != NULL )
+    {
+        poMP->addGeometryDirectly( poLastPoly );
+        poLastPoly = NULL;
+    }
+
+    return poMP;
+}
 
 /************************************************************************/
 /*                      OGRCreateFromShapeBin()                         */
@@ -47,8 +254,80 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 {
     *ppoGeom = NULL;
 
-    if( nBytes < 1 )
+    if( nBytes < 4 )
         return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*  Detect zlib compressed shapes and uncompress buffer if necessary    */
+/*  NOTE: this seems to be an undocumented feature, even in the         */
+/*  extended_shapefile_format.pdf found in the FileGDB API documentation*/
+/* -------------------------------------------------------------------- */
+    if( nBytes >= 14 &&
+        pabyShape[12] == 0x78 && pabyShape[13] == 0xDA /* zlib marker */)
+    {
+        GInt32 nUncompressedSize, nCompressedSize;
+        memcpy( &nUncompressedSize, pabyShape + 4, 4 );
+        memcpy( &nCompressedSize, pabyShape + 8, 4 );
+        CPL_LSBPTR32( &nUncompressedSize );
+        CPL_LSBPTR32( &nCompressedSize );
+        if (nCompressedSize + 12 == nBytes &&
+            nUncompressedSize > 0)
+        {
+            GByte* pabyUncompressedBuffer = (GByte*)VSIMalloc(nUncompressedSize);
+            if (pabyUncompressedBuffer == NULL)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate %d bytes to uncompress zlib buffer",
+                         nUncompressedSize);
+                return OGRERR_FAILURE;
+            }
+
+            z_stream      stream;
+            stream.zalloc = (alloc_func)0;
+            stream.zfree = (free_func)0;
+            stream.opaque = (voidpf)0;
+            stream.next_in = pabyShape + 12;
+            stream.next_out = pabyUncompressedBuffer;
+            stream.avail_in = nCompressedSize;
+            stream.avail_out = nUncompressedSize;
+            int err;
+            if ( (err = inflateInit(&stream)) != Z_OK )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "inflateInit() failed : err code = %d", err);
+                VSIFree(pabyUncompressedBuffer);
+                return OGRERR_FAILURE;
+            }
+            if ( (err = inflate(&stream, Z_NO_FLUSH)) != Z_STREAM_END )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "inflate() failed : err code = %d", err);
+                VSIFree(pabyUncompressedBuffer);
+                inflateEnd(&stream);
+                return OGRERR_FAILURE;
+            }
+            if (stream.avail_in != 0)
+            {
+                CPLDebug("OGR", "%d remaining in bytes after zlib uncompression",
+                         stream.avail_in);
+            }
+            if (stream.avail_out != 0)
+            {
+                CPLDebug("OGR", "%d remaining out bytes after zlib uncompression",
+                         stream.avail_out);
+            }
+
+            inflateEnd(&stream);
+
+            OGRErr eErr = OGRCreateFromShapeBin(pabyUncompressedBuffer,
+                                                ppoGeom,
+                                                nUncompressedSize - stream.avail_out);
+
+            VSIFree(pabyUncompressedBuffer);
+
+            return eErr;
+        }
+    }
 
     int nSHPType = pabyShape[0];
 
@@ -58,27 +337,26 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 //              nSHPType );
 
 /* -------------------------------------------------------------------- */
-/*      type 50 appears to just be an alias for normal line             */
-/*      strings. (#1484)                                                */
-/*      Type 51 appears to just be an alias for normal polygon. (#3100) */
 /*      TODO: These types include additional attributes including       */
 /*      non-linear segments and such. They should be handled.           */
+/*      This is documented in the extended_shapefile_format.pdf         */
+/*      from the FileGDB API                                            */
 /* -------------------------------------------------------------------- */
     switch( nSHPType )
     {
-      case 50:
+      case SHPT_GENERALPOLYLINE:
         nSHPType = SHPT_ARC;
         break;
-      case 51:
+      case SHPT_GENERALPOLYGON:
         nSHPType = SHPT_POLYGON;
         break;
-      case 52:
+      case SHPT_GENERALPOINT:
         nSHPType = SHPT_POINT;
         break;
-      case 53:
+      case SHPT_GENERALMULTIPOINT:
         nSHPType = SHPT_MULTIPOINT;
         break;
-      case 54:
+      case SHPT_GENERALMULTIPATCH:
         nSHPType = SHPT_MULTIPATCH;
     }
 
@@ -99,6 +377,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         GInt32         nPoints, nParts;
         int            i, nOffset;
         GInt32         *panPartStart;
+        GInt32         *panPartType = NULL;
 
         if (nBytes < 44)
         {
@@ -111,11 +390,11 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /*      Extract part/point count, and build vertex and part arrays      */
 /*      to proper size.                                                 */
 /* -------------------------------------------------------------------- */
-    memcpy( &nPoints, pabyShape + 40, 4 );
-    memcpy( &nParts, pabyShape + 36, 4 );
+        memcpy( &nPoints, pabyShape + 40, 4 );
+        memcpy( &nParts, pabyShape + 36, 4 );
 
-    CPL_LSBPTR32( &nPoints );
-    CPL_LSBPTR32( &nParts );
+        CPL_LSBPTR32( &nPoints );
+        CPL_LSBPTR32( &nParts );
 
         if (nPoints < 0 || nParts < 0 ||
             nPoints > 50 * 1000 * 1000 || nParts > 10 * 1000 * 1000)
@@ -165,9 +444,9 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
 /*      Copy out the part array from the record.                        */
 /* -------------------------------------------------------------------- */
-    memcpy( panPartStart, pabyShape + 44, 4 * nParts );
-    for( i = 0; i < nParts; i++ )
-    {
+        memcpy( panPartStart, pabyShape + 44, 4 * nParts );
+        for( i = 0; i < nParts; i++ )
+        {
             CPL_LSBPTR32( panPartStart + i );
 
             /* We check that the offset is inside the vertex array */
@@ -175,29 +454,44 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                 panPartStart[i] >= nPoints)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Corrupted Shape : panPartStart[%d] = %d, nPoints = %d",
-                         i, panPartStart[i], nPoints);
+                        "Corrupted Shape : panPartStart[%d] = %d, nPoints = %d",
+                        i, panPartStart[i], nPoints);
                 CPLFree(panPartStart);
                 return OGRERR_FAILURE;
             }
             if (i > 0 && panPartStart[i] <= panPartStart[i-1])
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Corrupted Shape : panPartStart[%d] = %d, panPartStart[%d] = %d",
-                         i, panPartStart[i], i - 1, panPartStart[i - 1]);
+                        "Corrupted Shape : panPartStart[%d] = %d, panPartStart[%d] = %d",
+                        i, panPartStart[i], i - 1, panPartStart[i - 1]);
                 CPLFree(panPartStart);
                 return OGRERR_FAILURE;
             }
-    }
+        }
 
-    nOffset = 44 + 4*nParts;
+        nOffset = 44 + 4*nParts;
 
 /* -------------------------------------------------------------------- */
-/*      If this is a multipatch, we will also have parts types.  For    */
-/*      now we ignore and skip past them.                               */
+/*      If this is a multipatch, we will also have parts types.         */
 /* -------------------------------------------------------------------- */
         if( bIsMultiPatch )
+        {
+            panPartType = (GInt32 *) VSICalloc(nParts,sizeof(GInt32));
+            if (panPartType == NULL)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                        "Not enough memory for panPartType for shape (nPoints=%d, nParts=%d)", nPoints, nParts);
+                CPLFree(panPartStart);
+                return OGRERR_FAILURE;
+            }
+
+            memcpy( panPartType, pabyShape + nOffset, 4*nParts );
+            for( i = 0; i < nParts; i++ )
+            {
+                CPL_LSBPTR32( panPartType + i );
+            }
             nOffset += 4*nParts;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Copy out the vertices from the record.                          */
@@ -208,6 +502,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         if (padfX == NULL || padfY == NULL || padfZ == NULL)
         {
             CPLFree( panPartStart );
+            CPLFree( panPartType );
             CPLFree( padfX );
             CPLFree( padfY );
             CPLFree( padfZ );
@@ -216,13 +511,13 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
             return OGRERR_FAILURE;
         }
 
-    for( i = 0; i < nPoints; i++ )
-    {
-        memcpy(padfX + i, pabyShape + nOffset + i * 16, 8 );
-        memcpy(padfY + i, pabyShape + nOffset + i * 16 + 8, 8 );
+        for( i = 0; i < nPoints; i++ )
+        {
+            memcpy(padfX + i, pabyShape + nOffset + i * 16, 8 );
+            memcpy(padfY + i, pabyShape + nOffset + i * 16 + 8, 8 );
             CPL_LSBPTR64( padfX + i );
             CPL_LSBPTR64( padfY + i );
-    }
+        }
 
         nOffset += 16*nPoints;
 
@@ -359,10 +654,17 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
         else if( bIsMultiPatch )
         {
-            /* return to this later */
+            *ppoGeom = OGRCreateFromMultiPatch( nParts,
+                                                panPartStart,
+                                                panPartType,
+                                                nPoints,
+                                                padfX,
+                                                padfY,
+                                                padfZ );
         }
 
         CPLFree( panPartStart );
+        CPLFree( panPartType );
         CPLFree( padfX );
         CPLFree( padfY );
         CPLFree( padfZ );
