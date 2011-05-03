@@ -92,6 +92,11 @@ to <b>always</b> use fully-qualified table names. <p>
         time.  By default, multiversion tables are created when layers are created 
         on an SDE datasource.
     </li>
+    <li>
+        <b>USE_NSTRING</b>: If this option is set to "TRUE" then string fields
+        will be created as type NSTRING.  This option was added for GDAL/OGR 
+        1.9.0.
+    </li>
 </ul>
 
 
@@ -113,6 +118,14 @@ to <b>always</b> use fully-qualified table names. <p>
     does nothing to reconsile any edits that existed on that version before 
     doing so and essentially throws them away.
 </li>
+<li>
+    <b>OGR_SDE_USE_NSTRING</b>: If this option is set to "TRUE" then string 
+    fields will be created as type NSTRING.  This option was added for 
+    GDAL/OGR 1.9.0.  
+</li>
+
+<li> 
+   
 
 </ul>
 
