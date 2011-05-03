@@ -2502,6 +2502,14 @@ int OGRSDELayer::TestCapability( const char * pszCap )
              || EQUAL(pszCap,OLCRandomWrite) )
         return bUpdateAccess;
     
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    {
+        // We always treat NSTRING fields by translating to UTF8, but
+        // we don't do anything to regular string fields so this is a
+        // bit hard to answer simply.  Also, whether writes support UTF8
+        // depend on whether the field(s) were created as NSTRING fields. 
+        return TRUE;
+    }
     else 
         return FALSE;
 }
