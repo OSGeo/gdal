@@ -181,7 +181,7 @@ void EnvisatDataset::ScanForGCPs_ASAR()
 /*      Collect the first GCP set from each record.			*/
 /* -------------------------------------------------------------------- */
     GByte	abyRecord[521];
-    int  	nRange=0, nSample, iGCP;
+    int  	nRange=0, nSample, iGCP, nRangeOffset=0;
     GUInt32 	unValue;
 
     nGCPCount = 0;
@@ -194,7 +194,15 @@ void EnvisatDataset::ScanForGCPs_ASAR()
             continue;
 
         memcpy( &unValue, abyRecord + 13, 4 );
-        nRange = CPL_MSBWORD32( unValue );
+        nRange = CPL_MSBWORD32( unValue ) + nRangeOffset;
+
+        if((iRecord>1) && (int(pasGCPList[nGCPCount-1].dfGCPLine+0.5) > nRange))
+        {
+            int delta = pasGCPList[nGCPCount-1].dfGCPLine -
+                        pasGCPList[nGCPCount-12].dfGCPLine;
+            nRange = int(pasGCPList[nGCPCount-1].dfGCPLine+0.5) + delta;
+            nRangeOffset = nRange-1;
+        }
 
         for( iGCP = 0; iGCP < 11; iGCP++ )
         {
