@@ -24,6 +24,11 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
+# changes 29Apr2011
+# if the input image is a multi-band one, use all 
+# the channels in building the stack
+# anssi.pekkarinen@fao.org
+
 
 try:
     from osgeo import gdal
@@ -65,7 +70,7 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     t_band = t_fh.GetRasterBand( t_band_n )
 
     data = s_band.ReadRaster( s_xoff, s_yoff, s_xsize, s_ysize,
-                              t_xsize, t_ysize, t_band.DataType )
+                             t_xsize, t_ysize, t_band.DataType )
     t_band.WriteRaster( t_xoff, t_yoff, t_xsize, t_ysize,
                         data, t_xsize, t_ysize, t_band.DataType )
         
@@ -419,10 +424,15 @@ def main( argv=None ):
         xsize = int((lrx - ulx) / geotransform[1] + 0.5)
         ysize = int((lry - uly) / geotransform[5] + 0.5)
 
+
         if separate != 0:
-            bands = len(file_infos)
+            bands=0
+
+            for fi in file_infos:
+                bands=bands + fi.bands
         else:
             bands = file_infos[0].bands
+
 
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
                               band_type, create_options )
@@ -437,9 +447,11 @@ def main( argv=None ):
             t_fh.GetRasterBand(1).SetRasterColorTable(file_infos[0].ct)
     else:
         if separate != 0:
-            bands = len(file_infos)
+            bands=0
+            for fi in file_infos:
+                bands=bands + fi.bands            
             if t_fh.RasterCount < bands :
-                print('Existing output file has less bands than the number of input files. You should delete it before. Terminating gdal_merge.')
+                print('Existing output file has less bands than the input files. You should delete it before. Terminating gdal_merge.')
                 sys.exit( 1 )
         else:
             bands = min(file_infos[0].bands,t_fh.RasterCount)
@@ -475,8 +487,9 @@ def main( argv=None ):
             for band in range(1, bands+1):
                 fi.copy_into( t_fh, band, band, nodata )
         else:
-            fi.copy_into( t_fh, 1, t_band, nodata )
-            t_band = t_band+1
+            for band in range(1, fi.bands+1):
+                fi.copy_into( t_fh, band, t_band, nodata )
+                t_band = t_band+1
             
         fi_processed = fi_processed+1
         if quiet == 0 and verbose == 0:
