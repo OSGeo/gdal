@@ -3186,6 +3186,7 @@ LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
+LOC_MSG([  enable POSIX iconv support:${am_cv_func_iconv}])
 LOC_MSG([  hide internal symbols:     ${HAVE_HIDE_INTERNAL_SYMBOLS}])
 LOC_MSG()
 
