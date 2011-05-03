@@ -240,23 +240,26 @@ CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
          iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
-        GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
 
         int nMaskFlags = poSrcBand->GetMaskFlags();
         if( eErr == CE_None
             && !(nMaskFlags & (GMF_ALL_VALID|GMF_PER_DATASET|GMF_ALPHA|GMF_NODATA) ) )
         {
-            eErr = poDstBand->CreateMaskBand( nMaskFlags );
-            if( eErr == CE_None )
+            GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
+            if (poDstBand != NULL)
             {
-                eErr = GDALRasterBandCopyWholeRaster(
-                    poSrcBand->GetMaskBand(),
-                    poDstBand->GetMaskBand(),
-                    (char**)papszOptions,
-                    GDALDummyProgress, NULL);
+                eErr = poDstBand->CreateMaskBand( nMaskFlags );
+                if( eErr == CE_None )
+                {
+                    eErr = GDALRasterBandCopyWholeRaster(
+                        poSrcBand->GetMaskBand(),
+                        poDstBand->GetMaskBand(),
+                        (char**)papszOptions,
+                        GDALDummyProgress, NULL);
+                }
+                else if( !bStrict )
+                    eErr = CE_None;
             }
-            else if( !bStrict )
-                eErr = CE_None;
         }
     }
 
