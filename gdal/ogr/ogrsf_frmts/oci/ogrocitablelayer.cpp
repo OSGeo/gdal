@@ -1500,17 +1500,14 @@ int OGROCITableLayer::AllocAndBindForWrite(int eType)
     oCmdBuf.Append( "INSERT INTO " );
     oCmdBuf.Append( poFeatureDefn->GetName() );
 
+    if (eType == wkbNone)
+        oCmdBuf.Append( " VALUES ( :fid" );
+    else
+        oCmdBuf.Append( " VALUES ( :fid, :geometry" );
+
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( i == 0 )
-	{
-            if (eType == wkbNone)
-	      oCmdBuf.Append( " VALUES ( :fid, " );
-	    else
-	      oCmdBuf.Append( " VALUES ( :fid, :geometry, " );
-	}
-        else
-            oCmdBuf.Append( ", " );
+        oCmdBuf.Append( ", " );
 
         oCmdBuf.Appendf( 20, " :field_%d", i );
     }
