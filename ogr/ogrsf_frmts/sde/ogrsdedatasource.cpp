@@ -1009,8 +1009,6 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     else if( wkbFlatten(eType) == wkbPolygon )
     {
         nLayerShapeTypes |= SE_AREA_TYPE_MASK;
-        if( wkbFlatten(eType) == wkbMultiPolygon )
-            nLayerShapeTypes |= SE_MULTIPART_TYPE_MASK;
     }
     else if( wkbFlatten(eType) == wkbMultiPolygon )
     {
