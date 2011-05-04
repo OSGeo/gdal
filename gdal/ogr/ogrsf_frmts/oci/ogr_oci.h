@@ -510,6 +510,7 @@ class OGROCIDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
+    virtual OGRErr      DeleteLayer(int);
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
