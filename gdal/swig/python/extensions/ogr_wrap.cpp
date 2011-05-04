@@ -3345,6 +3345,9 @@ OGRErrMessages( int rc ) {
   }
 }
 
+SWIGINTERN OGRErr OGRDataSourceShadow_SyncToDisk(OGRDataSourceShadow *self){
+    return OGR_DS_SyncToDisk(self);
+  }
 SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_CreateLayer(OGRDataSourceShadow *self,char const *name,OSRSpatialReferenceShadow *srs=NULL,OGRwkbGeometryType geom_type=wkbUnknown,char **options=0){
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
 								  name,
@@ -5071,6 +5074,55 @@ SWIGINTERN PyObject *_wrap_DataSource_DeleteLayer(PyObject *SWIGUNUSEDPARM(self)
       CPLErrorReset();
     }
     result = (OGRErr)OGRDataSourceShadow_DeleteLayer(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DataSource_SyncToDisk(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DataSource_SyncToDisk",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_SyncToDisk" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRErr)OGRDataSourceShadow_SyncToDisk(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -15825,6 +15877,40 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting\n"
 		"layers is not supported for this datasource. \n"
+		""},
+	 { (char *)"DataSource_SyncToDisk", _wrap_DataSource_SyncToDisk, METH_VARARGS, (char *)"\n"
+		"DataSource_SyncToDisk(DataSource self) -> OGRErr\n"
+		"\n"
+		"OGRErr\n"
+		"OGR_DS_SyncToDisk(OGRDataSourceH hDS)\n"
+		"\n"
+		"Flush pending changes to disk.\n"
+		"\n"
+		"This call is intended to force the datasource to flush any pending\n"
+		"writes to disk, and leave the disk file in a consistent state. It\n"
+		"would not normally have any effect on read-only datasources.\n"
+		"\n"
+		"Some data sources do not implement this method, and will still return\n"
+		"OGRERR_NONE. An error is only returned if an error occurs while\n"
+		"attempting to flush to disk.\n"
+		"\n"
+		"The default implementation of this method just calls the SyncToDisk()\n"
+		"method on each of the layers. Conceptionally, calling SyncToDisk() on\n"
+		"a datasource should include any work that might be accomplished by\n"
+		"calling SyncToDisk() on layers in that data source.\n"
+		"\n"
+		"In any event, you should always close any opened datasource with\n"
+		"OGR_DS_Destroy() that will ensure all data is correctly flushed.\n"
+		"\n"
+		"This method is the same as the C++ method OGRDataSource::SyncToDisk()\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hDS:  handle to the data source\n"
+		"\n"
+		"OGRERR_NONE if no error occurs (even if nothing is done) or an error\n"
+		"code. \n"
 		""},
 	 { (char *)"DataSource_CreateLayer", (PyCFunction) _wrap_DataSource_CreateLayer, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"DataSource_CreateLayer(DataSource self, char name, SpatialReference srs = None, \n"

@@ -432,6 +432,10 @@ public:
     return OGR_DS_DeleteLayer(self, index);
   }
 
+  OGRErr SyncToDisk() {
+    return OGR_DS_SyncToDisk(self);
+  }
+  
   /* Note that datasources own their layers */
 #ifndef SWIGJAVA
   %feature( "kwargs" ) CreateLayer;
