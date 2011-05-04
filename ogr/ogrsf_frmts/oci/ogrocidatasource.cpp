@@ -351,7 +351,52 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
 }
 
 /************************************************************************/
-/*                            DeleteLayer()                             */
+/*                           DeleteLayer(int)                           */
+/************************************************************************/
+
+OGRErr OGROCIDataSource::DeleteLayer( int iLayer )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Blow away our OGR structures related to the layer.  This is     */
+/*      pretty dangerous if anything has a reference to this layer!     */
+/* -------------------------------------------------------------------- */
+    CPLString osLayerName = 
+        papoLayers[iLayer]->GetLayerDefn()->GetName();
+
+    CPLDebug( "OCI", "DeleteLayer(%s)", osLayerName.c_str() );
+
+    delete papoLayers[iLayer];
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
+             sizeof(void *) * (nLayers - iLayer - 1) );
+    nLayers--;
+
+/* -------------------------------------------------------------------- */
+/*      Remove from the database.                                       */
+/* -------------------------------------------------------------------- */
+    OGROCIStatement oCommand( poSession );
+    CPLString       osCommand;
+    int             nFailures = 0;
+
+    osCommand.Printf( "DROP TABLE \"%s\"", osLayerName.c_str() );
+    if( oCommand.Execute( osCommand ) != CE_None )
+        nFailures++;
+
+    osCommand.Printf( 
+        "DELETE FROM USER_SDO_GEOM_METADATA WHERE TABLE_NAME = UPPER('%s')",
+        osLayerName.c_str() );
+
+    if( oCommand.Execute( osCommand ) != CE_None )
+        nFailures++;
+
+    if( nFailures == 0 )
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                      DeleteLayer(const char *)                       */
 /************************************************************************/
 
 void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
@@ -378,32 +423,7 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
         return;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Blow away our OGR structures related to the layer.  This is     */
-/*      pretty dangerous if anything has a reference to this layer!     */
-/* -------------------------------------------------------------------- */
-    CPLDebug( "OCI", "DeleteLayer(%s)", pszLayerName );
-
-    delete papoLayers[iLayer];
-    memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
-             sizeof(void *) * (nLayers - iLayer - 1) );
-    nLayers--;
-
-/* -------------------------------------------------------------------- */
-/*      Remove from the database.                                       */
-/* -------------------------------------------------------------------- */
-    OGROCIStatement oCommand( poSession );
-    char            szCommand[1024];
-
-    sprintf( szCommand, "DROP TABLE \"%s\"", pszLayerName );
-    oCommand.Execute( szCommand );
-
-    sprintf( szCommand, 
-             "DELETE FROM USER_SDO_GEOM_METADATA WHERE TABLE_NAME = UPPER('%s')",
-             pszLayerName );
-    oCommand.Execute( szCommand );
-
-    CPLFree( (char *) pszLayerName );
+    DeleteLayer( iLayer );
 }
 
 /************************************************************************/
@@ -423,10 +443,10 @@ void OGROCIDataSource::TruncateLayer( const char *pszLayerName )
 /*      Truncate the layer in the database.                             */
 /* -------------------------------------------------------------------- */
     OGROCIStatement oCommand( poSession );
-    char            szCommand[1024];
+    CPLString       osCommand;
 
-    sprintf( szCommand, "TRUNCATE TABLE \"%s\"", pszLayerName );
-    oCommand.Execute( szCommand );
+    osCommand.Printf( "TRUNCATE TABLE \"%s\"", pszLayerName );
+    oCommand.Execute( osCommand );
 }
 
 /************************************************************************/
@@ -592,6 +612,8 @@ int OGROCIDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) && bDSUpdate )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCDeleteLayer) && bDSUpdate )
         return TRUE;
     else
         return FALSE;
