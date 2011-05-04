@@ -469,6 +469,43 @@ class DataSource(_object):
         """
         return _ogr.DataSource_DeleteLayer(self, *args)
 
+    def SyncToDisk(self, *args):
+        """
+        SyncToDisk(self) -> OGRErr
+
+        OGRErr
+        OGR_DS_SyncToDisk(OGRDataSourceH hDS)
+
+        Flush pending changes to disk.
+
+        This call is intended to force the datasource to flush any pending
+        writes to disk, and leave the disk file in a consistent state. It
+        would not normally have any effect on read-only datasources.
+
+        Some data sources do not implement this method, and will still return
+        OGRERR_NONE. An error is only returned if an error occurs while
+        attempting to flush to disk.
+
+        The default implementation of this method just calls the SyncToDisk()
+        method on each of the layers. Conceptionally, calling SyncToDisk() on
+        a datasource should include any work that might be accomplished by
+        calling SyncToDisk() on layers in that data source.
+
+        In any event, you should always close any opened datasource with
+        OGR_DS_Destroy() that will ensure all data is correctly flushed.
+
+        This method is the same as the C++ method OGRDataSource::SyncToDisk()
+
+        Parameters:
+        -----------
+
+        hDS:  handle to the data source
+
+        OGRERR_NONE if no error occurs (even if nothing is done) or an error
+        code. 
+        """
+        return _ogr.DataSource_SyncToDisk(self, *args)
+
     def CreateLayer(self, *args, **kwargs):
         """
         CreateLayer(self, char name, SpatialReference srs = None, OGRwkbGeometryType geom_type = wkbUnknown, 
