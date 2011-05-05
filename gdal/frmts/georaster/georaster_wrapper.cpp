@@ -1862,8 +1862,6 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
                                             pabyBlockBuf,
                                             nBlockBytes );
 
-        CPLDebug( "GEOR", "Read Block = %ld; Size = %ld", nBlock, nBytesRead );
-
         if( nBytesRead == 0 )
         {
             memset( pData, 0, nGDALBlockBytes );
@@ -1958,10 +1956,6 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         }
     }
 
-    CPLDebug( "GEOR", "Level, Block, Band, YOffset, XOffset = "
-                      "%4d, %4ld, %4d, %4d, %4d",
-                      nLevel, nBlock, nBand, nYOffset, nXOffset );
-
     return true;
 }
 
@@ -2015,11 +2009,7 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
             return false;
         }
     }
-/**
-    CPLDebug( "GEOR", "Level, Block, Band, YOffset, XOffset = "
-                      "%4d, %4ld, %4d, %4d, %4d",
-                      nLevel, nBlock, nBand, nYOffset, nXOffset );
-**/
+
     //  --------------------------------------------------------------------
     //  Prepare interleaved block
     //  --------------------------------------------------------------------
@@ -2031,8 +2021,6 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
         //  ----------------------------------------------------------------
         //  Load pre-stored data block to combine with the current one
         //  ----------------------------------------------------------------
-
-        CPLDebug( "GEOR", "Reloading block %ld", nBlock );
 
         unsigned long nBytesRead = 0;
 
@@ -2155,9 +2143,6 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
     //  --------------------------------------------------------------------
     //  Write BLOB
     //  --------------------------------------------------------------------
-
-    CPLDebug( "GEOR", "FlushBlock = %ld; Size = %ld; where = %s", 
-              nCacheBlock, nFlushBlockSize, sWhere.c_str() );
 
     if( ! poBlockStmt->WriteBlob( pahLocator[nCacheBlock],
                                   pabyFlushBuffer,
@@ -2387,7 +2372,8 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
         return false;
     }
 
-    OCILobLocator* phLocator = NULL;
+    OCILobLocator* phLocatorR = NULL;
+    OCILobLocator* phLocatorW = NULL;
     
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
@@ -2406,6 +2392,8 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
         "     WHERE  T.%s.RASTERDATATABLE = UPPER(:1)\n"
         "       AND  T.%s.RASTERID = :2'\n"
         "    INTO :metadata USING :rdt, :rid;\n"
+        "\n"
+        "  COMMIT;\n"
         "END;",
             sColumn.c_str(), sSchema.c_str(), sTable.c_str(), sWhere.c_str(),
             sSchema.c_str(), sTable.c_str(), sColumn.c_str(), sWhere.c_str(),
@@ -2413,11 +2401,12 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
             sColumn.c_str(),
             sColumn.c_str() ) );
 
-    poStmt->WriteCLob( &phLocator, pszMetadata );
+    poStmt->WriteCLob( &phLocatorW, pszMetadata );
 
-    poStmt->Bind( &phLocator );
+    poStmt->Bind( &phLocatorW );
     poStmt->Bind( &nLayer );
     poStmt->Bind( szNoData );
+    poStmt->BindName( ":metadata", &phLocatorR );
     poStmt->BindName( ":rdt", szRDT );
     poStmt->BindName( ":rid", &nRID );
 
@@ -2425,27 +2414,28 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
 
     if( ! poStmt->Execute() )
     {
-        OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
+        OCIDescriptorFree( phLocatorR, OCI_DTYPE_LOB );
+        OCIDescriptorFree( phLocatorW, OCI_DTYPE_LOB );
         delete poStmt;
         return false;
     }
 
-    OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
+    OCIDescriptorFree( phLocatorW, OCI_DTYPE_LOB );
 
     // ------------------------------------------------------------
     //  Read the XML metadata from db to memory with nodata updates
     // ------------------------------------------------------------
 
-    char* pszXML = poStmt->ReadCLob( phLocator );
+    char* pszXML = poStmt->ReadCLob( phLocatorR );
 
     if( pszXML )
     {
         CPLDestroyXMLNode( phMetadata );
-        
         phMetadata = CPLParseXMLString( pszXML );
-
         CPLFree( pszXML );
     }
+
+    OCIDescriptorFree( phLocatorR, OCI_DTYPE_LOB );
 
     bFlushMetadata = true;
     delete poStmt;
