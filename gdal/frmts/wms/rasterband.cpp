@@ -244,7 +244,14 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer) {
         }
     }
 
-    return ReadBlocks(x, y, buffer, bx0, by0, bx1, by1, 0);
+    CPLErr eErr = ReadBlocks(x, y, buffer, bx0, by0, bx1, by1, 0);
+
+    if ((m_parent_dataset->m_hint.m_valid) && (m_parent_dataset->m_hint.m_overview == m_overview))
+    {
+        m_parent_dataset->m_hint.m_valid = false;
+    }
+
+    return eErr;
 }
 
 CPLErr GDALWMSRasterBand::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space) {
