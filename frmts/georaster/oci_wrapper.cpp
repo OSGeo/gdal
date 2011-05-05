@@ -975,8 +975,6 @@ void OWStatement::WriteCLob( OCILobLocator** pphLocator, char* pszData )
         (ub2) 0,
         (ub1) SQLCS_IMPLICIT ),
         hError );
-
-    CPLDebug("GEOR","Clob = %d = %d", nAmont, static_cast<int>(strlen(pszData)));
 }
 
 void OWStatement::Define( OCIArray** pphData )
