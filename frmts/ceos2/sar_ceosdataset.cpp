@@ -1678,9 +1678,14 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 char szThisExtension[32];
 
-                sprintf( szThisExtension, "%s%s", 
-                         CeosExtension[e][iFile], 
-                         pszExtension+3 );
+                if( strlen(pszExtension) > 3 )
+                    sprintf( szThisExtension, "%s%s", 
+                             CeosExtension[e][iFile], 
+                             pszExtension+3 );
+                else
+                    sprintf( szThisExtension, "%s", 
+                             CeosExtension[e][iFile] );
+
                 pszFilename = CPLStrdup(
                     CPLFormFilename(pszPath,pszBasename,szThisExtension));
             }
