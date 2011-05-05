@@ -132,7 +132,22 @@ def envi_5():
         AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","27700"]]"""
 
-    return tst.testSetProjection( prj = prj )
+    # now it goes through ESRI WKT processing.
+    expected_prj = """PROJCS["OSGB_1936_British_National_Grid",
+    GEOGCS["GCS_OSGB 1936",
+        DATUM["OSGB_1936",
+            SPHEROID["Airy_1830",6377563.396,299.3249646]],
+        PRIMEM["Greenwich",0],
+        UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",49],
+    PARAMETER["central_meridian",-2],
+    PARAMETER["scale_factor",0.9996012717],
+    PARAMETER["false_easting",400000],
+    PARAMETER["false_northing",-100000],
+    UNIT["Meter",1]]"""
+
+    return tst.testSetProjection( prj = prj, expected_prj = expected_prj )
 
 ###############################################################################
 # Test LAEA Projection.

@@ -619,7 +619,7 @@ class GDALTest:
 
         return 'success'
 
-    def testSetProjection(self, prj = None ):
+    def testSetProjection(self, prj = None, expected_prj = None ):
         if self.testDriver() == 'fail':
             return 'skip'
 
@@ -656,14 +656,20 @@ class GDALTest:
             post_reason( 'Failed to open dataset: ' + new_filename )
             return 'fail'
 
+        expected_osr = osr.SpatialReference()
+        if expected_prj is None:
+            expected_osr = src_osr
+        else:
+            expected_osr.ImportFromWkt( expected_prj )
+            
         new_osr = osr.SpatialReference()
         new_osr.ImportFromWkt(new_ds.GetProjection())
-        if not new_osr.IsSame(src_osr):
+        if not new_osr.IsSame(expected_osr):
             post_reason( 'Did not get expected projection reference.' )
             print('Got: ')
             print(new_osr.ExportToPrettyWkt())
             print('Expected:')
-            print(src_osr.ExportToPrettyWkt())
+            print(expected_osr.ExportToPrettyWkt())
             return 'fail'
 
         new_ds = None
