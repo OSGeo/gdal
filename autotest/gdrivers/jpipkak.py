@@ -41,6 +41,8 @@ import gdaltest
 
 def jpipkak_1():
 
+    return 'skip'
+
     gdaltest.jpipkak_drv = gdal.GetDriverByName( 'JPIPKAK' )
     if gdaltest.jpipkak_drv is None:
         return 'skip'
@@ -65,6 +67,8 @@ def jpipkak_1():
 # 
 
 def jpipkak_2():
+
+    return 'skip'
 
     if gdaltest.jpipkak_drv is None:
         return 'skip'
@@ -97,6 +101,8 @@ def jpipkak_2():
 
 def jpipkak_3():
 
+    return 'skip'
+
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 
@@ -122,6 +128,8 @@ def jpipkak_3():
 
 def jpipkak_4():
 
+    return 'skip'
+
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 
@@ -146,6 +154,8 @@ def jpipkak_4():
 # Test an overview level that will result in multiple fetches with subwindows.
 
 def jpipkak_5():
+
+    return 'skip'
 
     if gdaltest.jpipkak_drv is None:
         return 'skip'
