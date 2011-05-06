@@ -32,7 +32,7 @@ import string
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
+from osgeo import gdal, osr
 
 ###############################################################################
 # When imported build a list of units based on the files available.
@@ -376,6 +376,52 @@ def tiff_citation():
         gdaltest.post_reason( 'Erdas citation processing failing?' )
         return 'fail'
 
+    return 'success'
+
+###############################################################################
+# Check that we can read linear projection parameters properly (#3901)
+
+def tiff_linearparmunits():
+
+    # Test the file with the correct formulation.
+    
+    ds = gdal.Open('data/spaf27_correct.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    srs = osr.SpatialReference( wkt )
+    
+    fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
+    if abs(fe-2000000.0) > 0.001:
+        gdaltest.post_reason( 'did not get expected false easting (1)' )
+        return 'fail'
+    
+    # Test the file with the old (broken) GDAL formulation.
+    
+    ds = gdal.Open('data/spaf27_brokengdal.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    srs = osr.SpatialReference( wkt )
+    
+    fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
+    if abs(fe-609601.219202438) > 0.001:
+        gdaltest.post_reason( 'did not get expected false easting (2)' )
+        return 'fail'
+    
+    # Test the file when using an EPSG code.
+    
+    ds = gdal.Open('data/spaf27_epsg.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    srs = osr.SpatialReference( wkt )
+    
+    fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
+    if abs(fe-2000000.0) > 0.001:
+        gdaltest.post_reason( 'did not get expected false easting (3)' )
+        return 'fail'
+    
     return 'success'
 
 ###############################################################################
@@ -833,6 +879,7 @@ gdaltest_list.append( (tiff_read_tgz_1) )
 gdaltest_list.append( (tiff_read_tgz_2) )
 gdaltest_list.append( (tiff_grads) )
 gdaltest_list.append( (tiff_citation) )
+gdaltest_list.append( (tiff_linearparmunits) )
 gdaltest_list.append( (tiff_g4_split) )
 gdaltest_list.append( (tiff_multi_images) )
 gdaltest_list.append( (tiff_vsimem) )
