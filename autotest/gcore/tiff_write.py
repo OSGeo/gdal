@@ -4102,6 +4102,33 @@ def tiff_write_103():
 
     return 'success'
 
+
+###############################################################################
+# Confirm as best we can that we can write geotiff files with detailed
+# projection parameters with the correct linear units set.  (#3901)
+
+def tiff_write_104():
+
+    src_ds = gdal.Open( 'data/spaf27_correct.tif' )
+    dst_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_104.tif', src_ds )
+
+    src_ds = None
+    dst_ds = None
+
+    ds = gdal.Open( 'tmp/test_104.tif' )
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    srs = osr.SpatialReference( wkt )
+    fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
+    if abs(fe-2000000.0) > 0.001:
+        gdaltest.post_reason( 'did not get expected false easting' )
+        return 'fail'
+    
+    gdaltest.tiff_drv.Delete( 'tmp/test_104.tif' )
+
+    return 'success'
+
 ###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -4218,6 +4245,7 @@ gdaltest_list = [
     tiff_write_101,
     tiff_write_102,
     tiff_write_103,
+    tiff_write_104,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
