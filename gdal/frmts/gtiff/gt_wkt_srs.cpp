@@ -2177,8 +2177,16 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     {
         if( adfTOWGS84[3] == 0.0 && adfTOWGS84[4] == 0.0
             && adfTOWGS84[5] == 0.0 && adfTOWGS84[6] == 0.0 )
-            GTIFKeySet( psGTIF, GeogTOWGS84GeoKey, TYPE_DOUBLE, 3, 
-                        adfTOWGS84 );
+        {
+            if( nGCS == GCS_WGS_84 && adfTOWGS84[0] == 0.0
+                && adfTOWGS84[1] == 0.0 && adfTOWGS84[2] == 0.0 )
+            {
+                ; /* do nothing */
+            }
+            else
+                GTIFKeySet( psGTIF, GeogTOWGS84GeoKey, TYPE_DOUBLE, 3,
+                            adfTOWGS84 );
+        }
         else
             GTIFKeySet( psGTIF, GeogTOWGS84GeoKey, TYPE_DOUBLE, 7, 
                         adfTOWGS84 );
