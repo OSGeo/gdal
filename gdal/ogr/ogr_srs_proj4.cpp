@@ -718,6 +718,11 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
+    else if( EQUAL(pszProj,"igh") )
+    {
+        SetIGH();
+    }
+
     else if( EQUAL(pszProj,"geos") )
     {
         SetGEOS( OSR_GDV( papszNV, "lon_0", 0.0 ), 
@@ -1621,6 +1626,11 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_IGH) )
+    {
+        sprintf( szProj4+strlen(szProj4), "+proj=igh " );
     }
 
     else if( EQUAL(pszProjection,SRS_PT_GEOSTATIONARY_SATELLITE) )
