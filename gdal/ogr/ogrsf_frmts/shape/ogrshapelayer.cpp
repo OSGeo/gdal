@@ -839,6 +839,23 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     }
 
+    int bDBFJustCreated = FALSE;
+    if( hDBF == NULL )
+    {
+        CPLString osFilename = CPLResetExtension( pszFullName, "dbf" );
+        hDBF = DBFCreate( osFilename );
+
+        if( hDBF == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to create DBF file `%s'.\n",
+                      osFilename.c_str() );
+            return OGRERR_FAILURE;
+        }
+
+        bDBFJustCreated = TRUE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Normalize field name                                            */
 /* -------------------------------------------------------------------- */
@@ -966,6 +983,14 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     if( iNewField != -1 )
     {
+        if( bDBFJustCreated )
+        {
+            for(int i=0;i<nTotalShapeCount;i++)
+            {
+                DBFWriteNULLAttribute( hDBF, i, 0 );
+            }
+        }
+
         return OGRERR_NONE;
     }
     else        
