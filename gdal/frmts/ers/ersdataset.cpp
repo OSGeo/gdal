@@ -891,20 +891,19 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Look for the geotransform.                                      */
 /* -------------------------------------------------------------------- */
-    if( poHeader->Find( "RasterInfo.RegistrationCoord.Eastings", NULL )
-        && poHeader->Find( "RasterInfo.CellInfo.Xdimension", NULL ) )
+    if( poHeader->Find( "RasterInfo.RegistrationCoord.Eastings", NULL ) )
     {
         poDS->bGotTransform = TRUE;
         poDS->adfGeoTransform[0] = CPLAtof( 
             poHeader->Find( "RasterInfo.RegistrationCoord.Eastings", "" ));
         poDS->adfGeoTransform[1] = CPLAtof( 
-            poHeader->Find( "RasterInfo.CellInfo.Xdimension", "" ));
+            poHeader->Find( "RasterInfo.CellInfo.Xdimension", "1.0" ));
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = CPLAtof( 
             poHeader->Find( "RasterInfo.RegistrationCoord.Northings", "" ));
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = -CPLAtof( 
-            poHeader->Find( "RasterInfo.CellInfo.Ydimension", "" ));
+            poHeader->Find( "RasterInfo.CellInfo.Ydimension", "1.0" ));
     }
     else if( poHeader->Find( "RasterInfo.RegistrationCoord.Latitude", NULL )
              && poHeader->Find( "RasterInfo.CellInfo.Xdimension", NULL ) )
