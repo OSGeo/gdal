@@ -3667,10 +3667,22 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
     int i;
 
     if( GetAccess() == GA_ReadOnly )
+    {
+        for( i = 0; i < nListBands; i++ )
+        {
+            if (HFAGetOverviewCount(hHFA, panBandList[i]) > 0)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "Cannot add external overviews when there are already internal overviews");
+                return CE_Failure;
+            }
+        }
+
         return GDALDataset::IBuildOverviews( pszResampling, 
                                              nOverviews, panOverviewList, 
                                              nListBands, panBandList, 
                                              pfnProgress, pProgressData );
+    }
 
     for( i = 0; i < nListBands; i++ )
     {
