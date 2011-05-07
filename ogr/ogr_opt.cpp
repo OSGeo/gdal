@@ -210,6 +210,10 @@ static const char *papszProjectionDefinitions[] = {
     SRS_PP_FALSE_NORTHING,
 
     "*",
+    SRS_PT_IGH,
+    "Interrupted Goode Homolosine",
+
+    "*",
     SRS_PT_GEOSTATIONARY_SATELLITE,
     "Geostationary Satellite",
     SRS_PP_CENTRAL_MERIDIAN, 

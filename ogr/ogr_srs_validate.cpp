@@ -125,6 +125,8 @@ static const char *papszProjectionSupported[] =
     SRS_PT_GAUSSSCHREIBERTMERCATOR,
     SRS_PT_KROVAK,
     SRS_PT_CYLINDRICAL_EQUAL_AREA,
+    SRS_PT_GOODE_HOMOLOSINE, 
+    SRS_PT_IGH,
     NULL
 };
 
@@ -471,6 +473,15 @@ static const char *papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
+    NULL,
+
+    SRS_PT_GOODE_HOMOLOSINE,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
+    NULL,
+
+    SRS_PT_IGH,
     NULL,
 
     NULL
