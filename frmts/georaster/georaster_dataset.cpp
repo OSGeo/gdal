@@ -468,8 +468,12 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     pszFetched = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
 
+    bool bInterleve_ind = false;
+
     if( pszFetched )
     {
+        bInterleve_ind = true;
+
         if( EQUAL( pszFetched, "BAND" ) ||  EQUAL( pszFetched, "BSQ" ) )
         {
             poGRW->sInterleaving = "BSQ";
@@ -504,6 +508,12 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         {
             poGRW->nBandBlockSize = nBands;
         }
+    }
+
+    if( bInterleve_ind == false && 
+      ( poGRW->nBandBlockSize == 3 || poGRW->nBandBlockSize == 4 ) ) 
+    {
+      poGRW->sInterleaving = "BIP";
     }
 
     pszFetched = CSLFetchNameValue( papszOptions, "BLOCKING" );
