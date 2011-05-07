@@ -2036,6 +2036,48 @@ def ogr_shape_50():
     return 'success'
 
 ###############################################################################
+# Test that we can add a field when there's no dbf file initialy
+
+def ogr_shape_51():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_51.shp')
+    lyr = ds.CreateLayer('ogr_shape_51')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_shape_51.dbf')
+
+    ds = ogr.Open('/vsimem/ogr_shape_51.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    feat = lyr.GetNextFeature()
+    feat.SetField(0, 'bar')
+    lyr.SetFeature(feat)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_51.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    value = feat.GetFieldAsString(0)
+    field_count = lyr.GetLayerDefn().GetFieldCount()
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( '/vsimem/ogr_shape_51.shp' )
+
+    if field_count != 1:
+        gdaltest.post_reason('did not get expected field count')
+        print(field_count)
+        return 'fail'
+
+    if value != 'bar':
+        gdaltest.post_reason('did not get expected value')
+        print(value)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -2108,6 +2150,7 @@ gdaltest_list = [
     ogr_shape_48,
     ogr_shape_49,
     ogr_shape_50,
+    ogr_shape_51,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
