@@ -1265,6 +1265,8 @@ color table.
 <dt> <b>-n</b> <i>nodata_value</i>:</dt><dd> 
 Ignore pixels from files being merged in with this pixel value. 
 </dd>
+<dt> <b>-a_nodata</b> <i>output_nodata_value</i>:</dt><dd>
+(GDAL >= 1.9.0) Assign a specified nodata value to output bands.</dd>
 <dt> <b>-init</b> <i>"value(s)"</i>:</dt><dd> 
 Pre-initialize the output image bands with these values.  However, it is not
 marked as the nodata value in the output file.  If only one value is given, the
