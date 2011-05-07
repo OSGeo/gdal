@@ -59,6 +59,7 @@ static const char *apszDatumMap[] = {
     "NAD83", "North_American_Datum_1983",
     "WGS 84", "WGS_1984",
     "WGS 1972", "WGS_1972",
+    "GDA94", "Geocentric_Datum_of_Australia_1994",
     NULL, NULL
 };
 
@@ -2009,6 +2010,8 @@ CPLErr HFADataset::WriteProjection()
             sDatum.datumname = (char*) "NAD27";
         if( nGCS == 4269 )
             sDatum.datumname = (char*) "NAD83";
+        if( nGCS == 4283 )
+            sDatum.datumname = (char*) "GDA94";
             
         if( poGeogSRS->GetTOWGS84( sDatum.params ) == OGRERR_NONE )
             sDatum.type = EPRJ_DATUM_PARAMETRIC;
