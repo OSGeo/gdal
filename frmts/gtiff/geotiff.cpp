@@ -3847,6 +3847,7 @@ CPLErr GTiffDataset::IBuildOverviews(
     CPLErr       eErr = CE_None;
     int          i;
     GTiffDataset *poODS;
+    int          bUseGenericHandling = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If RRD or external OVR overviews requested, then invoke         */
@@ -3855,9 +3856,7 @@ CPLErr GTiffDataset::IBuildOverviews(
     if( CSLTestBoolean(CPLGetConfigOption( "USE_RRD", "NO" )) 
         || CSLTestBoolean(CPLGetConfigOption( "TIFF_USE_OVR", "NO" )) )
     {
-        return GDALDataset::IBuildOverviews( 
-            pszResampling, nOverviews, panOverviewList, 
-            nBands, panBandList, pfnProgress, pProgressData );
+        bUseGenericHandling = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3870,8 +3869,20 @@ CPLErr GTiffDataset::IBuildOverviews(
                   "File open for read-only accessing, "
                   "creating overviews externally." );
 
-        return GDALDataset::IBuildOverviews( 
-            pszResampling, nOverviews, panOverviewList, 
+        bUseGenericHandling = TRUE;
+    }
+
+    if( bUseGenericHandling )
+    {
+        if (nOverviewCount != 0)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Cannot add external overviews when there are already internal overviews");
+            return CE_Failure;
+        }
+
+        return GDALDataset::IBuildOverviews(
+            pszResampling, nOverviews, panOverviewList,
             nBands, panBandList, pfnProgress, pProgressData );
     }
 
