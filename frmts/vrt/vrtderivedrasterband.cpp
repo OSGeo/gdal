@@ -359,17 +359,35 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     pBuffers = (void **) CPLMalloc(sizeof(void *) * nSources);
     for (iSource = 0; iSource < nSources; iSource++) {
         pBuffers[iSource] = (void *) 
-	    malloc(sourcesize * nBufXSize * nBufYSize);
-        if (pBuffers[iSource] == NULL) {
+            VSIMalloc(sourcesize * nBufXSize * nBufYSize);
+        if (pBuffers[iSource] == NULL)
+        {
             for (ii = 0; ii < iSource; ii++) {
-                free(pBuffers[iSource]);
-	    }
-	    CPLError( CE_Failure, CPLE_OutOfMemory, 
-		      "VRTDerivedRasterBand::IRasterIO:" \
-		      "Out of memory allocating %d bytes.\n",
-		      nPixelSpace * nBufXSize * nBufYSize);
-	    return CE_Failure;
-	}
+                VSIFree(pBuffers[iSource]);
+            }
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                "VRTDerivedRasterBand::IRasterIO:" \
+                "Out of memory allocating %d bytes.\n",
+                nPixelSpace * nBufXSize * nBufYSize);
+            return CE_Failure;
+        }
+
+        /* ------------------------------------------------------------ */
+        /* #4045: Initialize the newly allocated buffers before handing */
+        /* them off to the sources. These buffers are packed, so we     */
+        /* don't need any special line-by-line handling when a nonzero  */
+        /* nodata value is set.                                         */
+        /* ------------------------------------------------------------ */
+        if ( !bNoDataValueSet || dfNoDataValue == 0 )
+        {
+            memset( pBuffers[iSource], 0, sourcesize * nBufXSize * nBufYSize );
+        }
+        else
+        {
+            GDALCopyWords( &dfNoDataValue, GDT_Float64, 0,
+                           (GByte *) pBuffers[iSource], eSrcType, sourcesize,
+                           nBufXSize * nBufYSize);
+        }
     }
 
     /* ---- Load values for sources into packed buffers ---- */
@@ -390,7 +408,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 
     /* ---- Release buffers ---- */
     for (iSource = 0; iSource < nSources; iSource++) {
-        free(pBuffers[iSource]);
+        VSIFree(pBuffers[iSource]);
     }
     CPLFree(pBuffers);
 
