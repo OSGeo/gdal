@@ -351,6 +351,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetGH( double dfCentralMeridian, 
                        double dfFalseEasting, double dfFalseNorthing );
 
+    /** Interrupted Goode Homolosine */
+    OGRErr      SetIGH();
+
     /** Gall Stereograpic */
     OGRErr      SetGS( double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
