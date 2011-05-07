@@ -3804,6 +3804,30 @@ OGRErr OSRSetGH( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                              SetIGH()                                */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetIGH()
+
+{
+    SetProjection( SRS_PT_IGH );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              OSRSetIGH()                             */
+/************************************************************************/
+
+OGRErr OSRSetIGH( OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetIGH", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->SetIGH();
+}
+
+/************************************************************************/
 /*                              SetGEOS()                               */
 /************************************************************************/
 

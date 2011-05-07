@@ -115,6 +115,7 @@ typedef enum {
 #define SRS_PT_GEOSTATIONARY_SATELLITE                                  \
                                 "Geostationary_Satellite"
 #define SRS_PT_GOODE_HOMOLOSINE "Goode_Homolosine"
+#define SRS_PT_IGH              "Interrupted_Goode_Homolosine"
 #define SRS_PT_GNOMONIC         "Gnomonic"
 #define SRS_PT_HOTINE_OBLIQUE_MERCATOR                                  \
                                 "Hotine_Oblique_Mercator"
@@ -461,6 +462,9 @@ OGRErr CPL_DLL OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
 /** Goode Homolosine */
 OGRErr CPL_DLL OSRSetGH( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                          double dfFalseEasting, double dfFalseNorthing );
+
+/** Interrupted Goode Homolosine */
+OGRErr CPL_DLL OSRSetIGH( OGRSpatialReferenceH hSRS );
     
 /** GEOS - Geostationary Satellite View */
 OGRErr CPL_DLL OSRSetGEOS( OGRSpatialReferenceH hSRS, 
