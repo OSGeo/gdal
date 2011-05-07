@@ -100,7 +100,7 @@ def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
 
     nodata_test = Numeric.equal(data_src,nodata)
     to_write = Numeric.choose( nodata_test, (data_src, data_dst) )
-                               
+
     t_band.WriteArray( to_write, t_xoff, t_yoff )
 
     return 0
@@ -246,7 +246,8 @@ class file_info:
 def Usage():
     print('Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*')
     print('                     [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]')
-    print('                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init "value [value...]"]')
+    print('                     [-ul_lr ulx uly lrx lry] [-init "value [value...]"]')
+    print('                     [-n nodata_value] [-a_nodata output_nodata_value]')
     print('                     [-ot datatype] [-createonly] input_files')
     print('                     [--help-general]')
     print('')
@@ -270,6 +271,7 @@ def main( argv=None ):
     separate = 0
     copy_pct = 0
     nodata = None
+    a_nodata = None
     create_options = []
     pre_init = []
     band_type = None
@@ -326,6 +328,10 @@ def main( argv=None ):
         elif arg == '-n':
             i = i + 1
             nodata = float(argv[i])
+
+        elif arg == '-a_nodata':
+            i = i + 1
+            a_nodata = float(argv[i])
 
         elif arg == '-f':
             # for backward compatibility.
@@ -455,6 +461,11 @@ def main( argv=None ):
                 sys.exit( 1 )
         else:
             bands = min(file_infos[0].bands,t_fh.RasterCount)
+
+    # Do we need to set nodata value ?
+    if a_nodata is not None:
+        for i in range(t_fh.RasterCount):
+            t_fh.GetRasterBand(i+1).SetNoDataValue(a_nodata)
 
     # Do we need to pre-initialize the whole mosaic file to some value?
     if pre_init is not None:
