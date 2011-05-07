@@ -463,6 +463,10 @@ public:
               double fe, double fn ) {
     return OSRSetGH( self, cm, fe, fn );
   }
+
+  OGRErr SetIGH() {
+    return OSRSetIGH( self );
+  }
     
 %feature( "kwargs" ) SetGEOS;
   OGRErr SetGEOS( double cm, double satelliteheight,

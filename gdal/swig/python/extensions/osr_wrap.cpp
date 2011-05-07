@@ -3525,6 +3525,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGS(OSRSpatialReferenceShadow *sel
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGH(OSRSpatialReferenceShadow *self,double cm,double fe,double fn){
     return OSRSetGH( self, cm, fe, fn );
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetIGH(OSRSpatialReferenceShadow *self){
+    return OSRSetIGH( self );
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGEOS(OSRSpatialReferenceShadow *self,double cm,double satelliteheight,double fe,double fn){
     return OSRSetGEOS( self, cm, satelliteheight,
                        fe, fn );
@@ -6867,6 +6870,55 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGH(PyObject *SWIGUNUSEDPARM(self)
       CPLErrorReset();
     }
     result = (OGRErr)OSRSpatialReferenceShadow_SetGH(arg1,arg2,arg3,arg4);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetIGH(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_SetIGH",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetIGH" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRErr)OSRSpatialReferenceShadow_SetIGH(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -12348,6 +12400,7 @@ static PyMethodDef SwigMethods[] = {
 		""},
 	 { (char *)"SpatialReference_SetGS", (PyCFunction) _wrap_SpatialReference_SetGS, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetGS(SpatialReference self, double cm, double fe, double fn) -> OGRErr"},
 	 { (char *)"SpatialReference_SetGH", (PyCFunction) _wrap_SpatialReference_SetGH, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetGH(SpatialReference self, double cm, double fe, double fn) -> OGRErr"},
+	 { (char *)"SpatialReference_SetIGH", _wrap_SpatialReference_SetIGH, METH_VARARGS, (char *)"SpatialReference_SetIGH(SpatialReference self) -> OGRErr"},
 	 { (char *)"SpatialReference_SetGEOS", (PyCFunction) _wrap_SpatialReference_SetGEOS, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"SpatialReference_SetGEOS(SpatialReference self, double cm, double satelliteheight, \n"
 		"    double fe, double fn) -> OGRErr\n"
@@ -13160,6 +13213,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "SRS_PT_GAUSSSCHREIBERTMERCATOR",SWIG_FromCharPtr("Gauss_Schreiber_Transverse_Mercator"));
   SWIG_Python_SetConstant(d, "SRS_PT_GEOSTATIONARY_SATELLITE",SWIG_FromCharPtr("Geostationary_Satellite"));
   SWIG_Python_SetConstant(d, "SRS_PT_GOODE_HOMOLOSINE",SWIG_FromCharPtr("Goode_Homolosine"));
+  SWIG_Python_SetConstant(d, "SRS_PT_IGH",SWIG_FromCharPtr("Interrupted_Goode_Homolosine"));
   SWIG_Python_SetConstant(d, "SRS_PT_GNOMONIC",SWIG_FromCharPtr("Gnomonic"));
   SWIG_Python_SetConstant(d, "SRS_PT_HOTINE_OBLIQUE_MERCATOR",SWIG_FromCharPtr("Hotine_Oblique_Mercator"));
   SWIG_Python_SetConstant(d, "SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN",SWIG_FromCharPtr("Hotine_Oblique_Mercator_Two_Point_Natural_Origin"));
