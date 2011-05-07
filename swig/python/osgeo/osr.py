@@ -84,6 +84,7 @@ SRS_PT_GALL_STEREOGRAPHIC = _osr.SRS_PT_GALL_STEREOGRAPHIC
 SRS_PT_GAUSSSCHREIBERTMERCATOR = _osr.SRS_PT_GAUSSSCHREIBERTMERCATOR
 SRS_PT_GEOSTATIONARY_SATELLITE = _osr.SRS_PT_GEOSTATIONARY_SATELLITE
 SRS_PT_GOODE_HOMOLOSINE = _osr.SRS_PT_GOODE_HOMOLOSINE
+SRS_PT_IGH = _osr.SRS_PT_IGH
 SRS_PT_GNOMONIC = _osr.SRS_PT_GNOMONIC
 SRS_PT_HOTINE_OBLIQUE_MERCATOR = _osr.SRS_PT_HOTINE_OBLIQUE_MERCATOR
 SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN = _osr.SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN
@@ -396,6 +397,10 @@ class SpatialReference(_object):
     def SetGH(self, *args, **kwargs):
         """SetGH(self, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetGH(self, *args, **kwargs)
+
+    def SetIGH(self, *args):
+        """SetIGH(self) -> OGRErr"""
+        return _osr.SpatialReference_SetIGH(self, *args)
 
     def SetGEOS(self, *args, **kwargs):
         """SetGEOS(self, double cm, double satelliteheight, double fe, double fn) -> OGRErr"""
