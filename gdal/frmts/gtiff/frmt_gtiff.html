@@ -245,6 +245,37 @@ otherwise libtiff will fail to compress the data.</p>
 <p>
 Note also that the dimensions of the tiles or strips must be a multiple of 8 for PHOTOMETRIC=RGB or 16 for PHOTOMETRIC=YCBCR</p>
 
+<h3>Configuration options</h3>
+
+<p>
+
+This paragraph lists the configuration options that can be set to alter the default behaviour of the GTiff driver.
+
+<ul>
+<!-- debug/autotest option : GTIFF_DONT_WRITE_BLOCKS -->
+<li>GTIFF_IGNORE_READ_ERRORS : (GDAL >= 1.9.0) Can be set to TRUE to avoid turning libtiff errors into GDAL errors.
+Can help reading partially corrupted TIFF files</li>
+<li>ESRI_XML_PAM: Can be set to TRUE to force metadata in the xml:ESRI domain to be written to PAM.</li>
+<li>JPEG_QUALITY_OVERVIEW: Integer between 0 and 100. Default value : 75. Quality of JPEG compressed overviews, either internal or external.</li>
+<li>GDAL_TIFF_INTERNAL_MASK: See <a href="#internal_mask"><i>Internal nodata masks</i> section</a>. Default value : FALSE.</li>
+<li>GDAL_TIFF_INTERNAL_MASK_TO_8BIT: See <a href="#internal_mask"><i>Internal nodata masks</i> section</a>. Default value : TRUE</li>
+<li>USE_RRD: Can be set to TRUE to force external overviews in the RRD format. Default value : FALSE</li>
+<li>TIFF_USE_OVR: Can be set to TRUE to force external overviews in the GeoTIFF (.ovr) format. Default value : FALSE</li>
+<li>GTIFF_POINT_GEO_IGNORE: Can be set to TRUE to revert back to the behaviour of GDAL &lt; 1.8.0
+regarding how PixelIsPoint is interprated w.r.t geotransform. See <a href="http://trac.osgeo.org/gdal/wiki/rfc33_gtiff_pixelispoint">
+RFC 33: GTiff - Fixing PixelIsPoint Interpretation</a> for more details. Default value : FALSE</li>
+<li>GTIFF_REPORT_COMPD_CS: (GDAL >= 1.9.0). Can be set to TRUE to avoid stripping the vertical CS of compound CS. Default value : FALSE</li>
+<li>GDAL_ENABLE_TIFF_SPLIT : Can be set to FALSE to avoid all-in-one-strip files being presented as having. Default value : TRUE</li>
+<!-- debug option : <li>GDAL_TIFF_ENDIANNESS : Possible values : LITTLE, BIG, INVERTED, NATIVE. Default value : NATIVE</li> -->
+<!-- not sure it is wise to advertize this one. I doubt it works correctly if set to NO. CONVERT_YCBCR_TO_RGB -->
+<!-- debug/autotest option : GTIFF_DELETE_ON_ERROR -->
+<li>GDAL_TIFF_OVR_BLOCKSIZE : See <a href="#overviews"><i>Overviews</i> section</a>.
+<li> GTIFF_LINEAR_UNITS: Can be set to BROKEN to read GeoTIFF files that 
+have false easting/northing improperly set in meters when it ought to be in
+coordinate system linear units.  (<a href="http://trac.osgeo.org/gdal/ticket/3901">Ticket #3901</a>). 
+</ul>
+</p>
+
 <hr>
 
 <p>See Also:</p>
