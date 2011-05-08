@@ -607,8 +607,16 @@ void NASReader::SetFeatureProperty( const char *pszElement,
 /* -------------------------------------------------------------------- */
     if( !poClass->IsSchemaLocked() )
     {
-        poClass->GetProperty(iProperty)->AnalysePropertyValue(
-                             poFeature->GetProperty(iProperty));
+        // Special handling for punktkennung per NAS #12
+        if( strcmp(poClass->GetProperty(iProperty)->GetName(),
+                   "punktkennung") == 0)
+        {
+            poClass->GetProperty(iProperty)->SetWidth( 15 );
+            poClass->GetProperty(iProperty)->SetType( GMLPT_String );
+        }
+        else
+            poClass->GetProperty(iProperty)->AnalysePropertyValue(
+                poFeature->GetProperty(iProperty));
     }
 }
 
