@@ -63,6 +63,8 @@ class PCIDSK2Dataset : public GDALPamDataset
 
     static int           Identify( GDALOpenInfo * );
     static GDALDataset  *Open( GDALOpenInfo * );
+    static GDALDataset  *LLOpen( const char *pszFilename, PCIDSK::PCIDSKFile *,
+                                 GDALAccess eAccess );
     static GDALDataset  *Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType,
@@ -1730,7 +1732,39 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
                       poOpenInfo->pszFilename );
             return NULL;
         }
-                               
+
+        return LLOpen( poOpenInfo->pszFilename, poFile, poOpenInfo->eAccess );
+    }
+/* -------------------------------------------------------------------- */
+/*      Trap exceptions.                                                */
+/* -------------------------------------------------------------------- */
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return NULL;
+    }
+    catch( ... )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "PCIDSK::Create() failed, unexpected exception." );
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                               LLOpen()                               */
+/*                                                                      */
+/*      Low level variant of open that takes the preexisting            */
+/*      PCIDSKFile.                                                     */
+/************************************************************************/
+
+GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename, 
+                                     PCIDSK::PCIDSKFile *poFile,
+                                     GDALAccess eAccess )
+
+{
+    try {
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
@@ -1739,7 +1773,7 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS = new PCIDSK2Dataset();
 
         poDS->poFile = poFile;
-        poDS->eAccess = poOpenInfo->eAccess;
+        poDS->eAccess = eAccess;
         poDS->nRasterXSize = poFile->GetWidth();
         poDS->nRasterYSize = poFile->GetHeight();
 
@@ -1792,13 +1826,13 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-        poDS->SetDescription( poOpenInfo->pszFilename );
+        poDS->SetDescription( pszFilename );
         poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
-        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+        poDS->oOvManager.Initialize( poDS, pszFilename );
         
         return( poDS );
     }
@@ -1903,11 +1937,7 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
             }
         }
 
-        // TODO: should we ensure this driver gets used?
-
-        delete poFile;
-
-        return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+        return LLOpen( pszFilename, poFile, GA_Update );
     }
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions.                                                */
