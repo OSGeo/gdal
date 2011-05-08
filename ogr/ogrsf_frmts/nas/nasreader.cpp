@@ -573,6 +573,31 @@ void NASReader::SetFeatureProperty( const char *pszElement,
     }
 
 /* -------------------------------------------------------------------- */
+/*      We want to handle <lage> specially to ensure it is zero         */
+/*      filled, and treated as a string depspite the numeric            */
+/*      content. https://trac.wheregroup.com/PostNAS/ticket/9           */
+/* -------------------------------------------------------------------- */
+    if( strcmp(poClass->GetProperty(iProperty)->GetName(),"lage") == 0 )
+    {
+        if( strlen(pszValue) < 5 )
+        {
+            CPLString osValue = "00000";
+            osValue += pszValue;
+            poFeature->SetProperty( iProperty, osValue + osValue.size() - 5 );
+        }
+        else
+            poFeature->SetProperty( iProperty, pszValue );
+
+        
+        if( !poClass->IsSchemaLocked() )
+        {
+            poClass->GetProperty(iProperty)->SetWidth( 5 );
+            poClass->GetProperty(iProperty)->SetType( GMLPT_String );
+        }
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Set the property                                                */
 /* -------------------------------------------------------------------- */
     poFeature->SetProperty( iProperty, pszValue );
