@@ -544,6 +544,8 @@ char **OPTGetParameterList( const char *pszProjectionMethod,
                                           papszProjectionDefinitions[i] );
                 i++;
             }
+            if( papszList == NULL) /* IGH has no parameter, so return an empty list instead of NULL */
+                papszList = (char**) CPLCalloc(1, sizeof(char*));
             return papszList;
         }
     }
