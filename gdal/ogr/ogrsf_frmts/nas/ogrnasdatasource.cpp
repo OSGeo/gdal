@@ -35,9 +35,9 @@ CPL_CVSID("$Id: ogrgmldatasource.cpp 12743 2007-11-13 13:59:37Z dron $");
 
 static const char *apszURNNames[] = 
 { 
-    "DE_DHDN_3GK2_NW177", "EPSG:31466",
-    "DE_DHDN_3GK3_BW100", "EPSG:31467", 
-    "ETRS89_UTM32", "EPSG:25832",
+    "DE_DHDN_3GK2_*", "EPSG:31466", 
+    "DE_DHDN_3GK3_*", "EPSG:31467", 
+    "ETRS89_UTM32", "EPSG:25832", 
     NULL, NULL 
 };
 
@@ -273,8 +273,20 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
 
         for( i = 0; apszURNNames[i*2+0] != NULL; i++ )
         {
-            if( EQUAL(apszURNNames[i*2+0],pszHandle) )
-                pszSRSName = apszURNNames[i*2+1];
+            const char *pszTarget = apszURNNames[i*2+0];
+            int nTLen = strlen(pszTarget);
+
+            // Are we just looking for a prefix match?
+            if( pszTarget[nTLen-1] == '*' )
+            {
+                if( EQUALN(pszTarget,pszHandle,nTLen-1) )
+                    pszSRSName = apszURNNames[i*2+1];
+            }
+            else
+            {
+                if( EQUAL(pszTarget,pszHandle) )
+                    pszSRSName = apszURNNames[i*2+1];
+            }
         }
         
         if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
