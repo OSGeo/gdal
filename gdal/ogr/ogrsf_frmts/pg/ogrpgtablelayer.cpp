@@ -316,7 +316,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
         pszType = PQgetvalue(hResult, iRecord, 1 );
         pszFormatType = PQgetvalue(hResult,iRecord,3);
 
-        /* TODO: Add detection of other primary key to use as FID */
         if( EQUAL(oField.GetNameRef(),osPrimaryKey) )
         {
             bHasFid = TRUE;
