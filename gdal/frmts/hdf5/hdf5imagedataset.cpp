@@ -650,7 +650,10 @@ CPLErr HDF5ImageDataset::CreateProjections()
 const char *HDF5ImageDataset::GetProjectionRef( )
     
 {
-    return pszProjection;
+    if( pszProjection )
+        return pszProjection;
+    else
+        return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
