@@ -2767,6 +2767,25 @@ def ogr_pg_56():
     return 'success'
 
 ###############################################################################
+# Test inserting an empty feature
+
+def ogr_pg_57():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_57')
+    lyr.CreateField(ogr.FieldDefn('acolumn', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.CreateFeature(feat)
+    feat = None
+
+    if ret != 0:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2801,6 +2820,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:no_geometry_table' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_55' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_56' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_57' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -2889,6 +2909,7 @@ gdaltest_list_internal = [
     ogr_pg_54,
     ogr_pg_55,
     ogr_pg_56,
+    ogr_pg_57,
     ogr_pg_cleanup ]
 
 ###############################################################################
