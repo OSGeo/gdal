@@ -1388,6 +1388,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         return eErr;
     }
 
+    int bEmptyInsert = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
@@ -1433,6 +1435,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         osCommand = osCommand 
             + "\"" + poFeatureDefn->GetFieldDefn(i)->GetNameRef() + "\"";
     }
+
+    if (!bNeedComma)
+        bEmptyInsert = TRUE;
 
     osCommand += ") VALUES (";
 
@@ -1526,6 +1531,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     }
 
     osCommand += ")";
+
+    if (bEmptyInsert)
+        osCommand.Printf( "INSERT INTO %s DEFAULT VALUES", pszSqlTableName );
 
     int bReturnRequested = FALSE;
     /* RETURNING is only available since Postgres 8.2 */
