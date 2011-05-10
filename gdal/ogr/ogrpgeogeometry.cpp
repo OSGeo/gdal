@@ -140,9 +140,9 @@ static OGRGeometry* OGRCreateFromMultiPatch(int nParts,
                 int iSrcVert = iBaseVert + nPartStart;
 
                 poRing->setPoint( 0,
-                                padfX[0],
-                                padfY[0],
-                                padfZ[0] );
+                                padfX[nPartStart],
+                                padfY[nPartStart],
+                                padfZ[nPartStart] );
                 poRing->setPoint( 1,
                                 padfX[iSrcVert+1],
                                 padfY[iSrcVert+1],
@@ -153,9 +153,9 @@ static OGRGeometry* OGRCreateFromMultiPatch(int nParts,
                                 padfY[iSrcVert+2],
                                 padfZ[iSrcVert+2] );
                 poRing->setPoint( 3,
-                                padfX[0],
-                                padfY[0],
-                                padfZ[0] );
+                                padfX[nPartStart],
+                                padfY[nPartStart],
+                                padfZ[nPartStart] );
 
                 poPoly->addRingDirectly( poRing );
                 poMP->addGeometryDirectly( poPoly );
