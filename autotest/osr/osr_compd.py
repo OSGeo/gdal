@@ -62,7 +62,7 @@ def osr_compd_1():
         gdaltest.post_reason( 'projected COMPD_CS misrecognised as local.')
         return 'fail'
 
-    expected_proj4 = '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.999601272 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=375,-111,431,0,0,0,0 +units=m +no_defs '
+    expected_proj4 = '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.999601272 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=375,-111,431,0,0,0,0 +units=m +vunits=m +no_defs '
     got_proj4 = srs.ExportToProj4()
 
     if expected_proj4 != got_proj4:
@@ -224,7 +224,53 @@ def osr_compd_5():
         gdaltest.post_reason( 'Did not get PROJ4_GRIDS EXTENSION node' )
         return 'fail'
 
-    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +no_defs '
+    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=m +no_defs '
+    proj4 = srs.ExportToProj4()
+    if proj4 != exp_proj4:
+        gdaltest.post_reason( 'Did not get expected proj.4 string, got:' + proj4 )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+# Test conversion from PROJ.4 to WKT including vertical units.
+
+def osr_compd_6():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs ' )
+
+    exp_wkt = """COMPD_CS["UTM Zone 11, Northern Hemisphere + Unnamed Vertical Datum",
+    PROJCS["UTM Zone 11, Northern Hemisphere",
+        GEOGCS["GRS 1980(IUGG, 1980)",
+            DATUM["unknown",
+                SPHEROID["GRS80",6378137,298.257222101],
+                TOWGS84[0,0,0,0,0,0,0]],
+            PRIMEM["Greenwich",0],
+            UNIT["degree",0.0174532925199433]],
+        PROJECTION["Transverse_Mercator"],
+        PARAMETER["latitude_of_origin",0],
+        PARAMETER["central_meridian",-117],
+        PARAMETER["scale_factor",0.9996],
+        PARAMETER["false_easting",500000],
+        PARAMETER["false_northing",0],
+        UNIT["Meter",1]],
+    VERT_CS["Unnamed",
+        VERT_DATUM["Unnamed",2005,
+            EXTENSION["PROJ4_GRIDS","g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx"]],
+        AXIS["Up",UP],
+        UNIT["Foot_US",0.3048006096012192]]]"""
+            
+    wkt = srs.ExportToPrettyWkt() 
+
+    if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
+        return 'fail'
+
+    if wkt.find('g2003conus.gtx') == -1:
+        gdaltest.post_reason( 'Did not get PROJ4_GRIDS EXTENSION node' )
+        return 'fail'
+
+    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs '
     proj4 = srs.ExportToProj4()
     if proj4 != exp_proj4:
         gdaltest.post_reason( 'Did not get expected proj.4 string, got:' + proj4 )
@@ -238,6 +284,7 @@ gdaltest_list = [
     osr_compd_3,
     osr_compd_4,
     osr_compd_5,
+    osr_compd_6,
     None ]
 
 if __name__ == '__main__':

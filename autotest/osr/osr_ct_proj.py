@@ -199,9 +199,9 @@ transform_list = [ \
      'EPSG:4328', (-3748031.46884168,-3144971.82314589,4077985.57220038), 0.1,
      'Geocentric', None, None),
 
-    # Test Vertical Datum Shift
+    # Test Vertical Datum Shift with a change of horizontal and vert units.
     ('+proj=utm +zone=11 +datum=WGS84', (100000.0,3500000.0,0.0), 0.1,
-     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx', (100000.0,3500000.0,41.41686), 0.01,
+     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467,11482916.6665952,135.881817690812), 0.01,
      'EGM 96 Conversion', None, "GRID:egm96_15.gtx" )
 
     ]
