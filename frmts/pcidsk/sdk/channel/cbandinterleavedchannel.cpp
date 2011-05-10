@@ -359,4 +359,16 @@ void CBandInterleavedChannel
     else
         byte_order = 'N';
 
+/* -------------------------------------------------------------------- */
+/*      Determine if we need byte swapping.                             */
+/* -------------------------------------------------------------------- */
+    unsigned short test_value = 1;
+
+    if( ((uint8 *) &test_value)[0] == 1 )
+        needs_swap = (byte_order != 'S');
+    else
+        needs_swap = (byte_order == 'S');
+    
+    if( pixel_type == CHN_8U )
+        needs_swap = 0;
 }

@@ -58,6 +58,7 @@ namespace PCIDSK
             ( uint8 *src_data, int src_bytes, uint8 *dst_data, int &dst_bytes,
               int xsize, int ysize, eChanType pixel_type, int quality );
 
+        void              (*Debug)( const char * );
     };
 } // end namespace PCIDSK
 

@@ -74,18 +74,13 @@ namespace PCIDSK
         
     private:
         int                      image;
-
-        mutable SysVirtualFile          *vfile;
-
-        mutable std::string              compression;
-
-        mutable std::vector<uint64>      tile_offsets;
-        mutable std::vector<int>         tile_sizes;
-        mutable bool                     tile_info_loaded;
-        mutable bool                     tile_info_dirty;
-
+        mutable int              tile_count;
+        mutable int              tiles_per_row;
+        mutable int              tiles_per_col;
+        mutable SysVirtualFile  *vfile;
+        mutable std::string      compression;
+        
         void                     EstablishAccess() const;
-        void                     EstablishTileAccess() const;
         void                     RLEDecompressBlock( PCIDSKBuffer &oCompressed,
                                                      PCIDSKBuffer &oDecompressed );
         void                     RLECompressBlock( PCIDSKBuffer &oUncompressed,
@@ -97,6 +92,18 @@ namespace PCIDSK
 
         bool                     IsTileEmpty(void* buffer) const;
 
+        // managed paged list of tile offsets and sizes.
+        void                     GetTileInfo( int tile_index,
+                                              uint64 &offset, int &size );
+        void                     SetTileInfo( int tile_index,
+                                              uint64 offset, int size );
+        void                     LoadTileInfoBlock( int tile_info_block );
+        void                     SaveTileInfoBlock( int tile_info_block );
+
+        static const int                           tile_block_size = 4096;
+        mutable std::vector< std::vector<uint64> > tile_offsets;
+        mutable std::vector< std::vector<int> >    tile_sizes;
+        mutable std::vector<bool>                  tile_info_dirty;
     };
 } // end namespace PCIDSK
 
