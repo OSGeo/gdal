@@ -35,6 +35,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cmath>
+#include <iostream>
 
 using namespace PCIDSK;
 
@@ -549,4 +550,135 @@ std::string PCIDSK::MergeRelativePath( const PCIDSK::IOInterfaces *io_interfaces
     {
         return src_filename;
     }
+}
+
+
+/************************************************************************/
+/*                            DefaultDebug()                            */
+/*                                                                      */
+/*      Default implementation of the Debug() output interface.         */
+/************************************************************************/
+
+void PCIDSK::DefaultDebug( const char * message )
+
+{
+    static bool initialized = false;
+    static bool enabled = false;
+    
+    if( !initialized )
+    {
+        if( getenv( "PCIDSK_DEBUG" ) != NULL )
+            enabled = true;
+
+        initialized = true;
+    }
+
+    if( enabled )
+        std::cerr << message;
+}
+
+/************************************************************************/
+/*                               vDebug()                               */
+/*                                                                      */
+/*      Helper function for Debug().                                    */
+/************************************************************************/
+
+static void vDebug( void (*pfnDebug)(const char *),
+                    const char *fmt, std::va_list args )
+
+{
+    std::string message;
+
+/* -------------------------------------------------------------------- */
+/*      This implementation for platforms without vsnprintf() will      */
+/*      just plain fail if the formatted contents are too large.        */
+/* -------------------------------------------------------------------- */
+#if defined(MISSING_VSNPRINTF)
+    char *pszBuffer = (char *) malloc(30000);
+    if( vsprintf( pszBuffer, fmt, args) > 29998 )
+    {
+        message = "PCIDSK::Debug() ... buffer overrun.";
+    }
+    else
+        message = pszBuffer;
+
+    free( pszBuffer );
+
+/* -------------------------------------------------------------------- */
+/*      This should grow a big enough buffer to hold any formatted      */
+/*      result.                                                         */
+/* -------------------------------------------------------------------- */
+#else
+    char szModestBuffer[500];
+    int nPR;
+    va_list wrk_args;
+
+#ifdef va_copy
+    va_copy( wrk_args, args );
+#else
+    wrk_args = args;
+#endif
+    
+    nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), fmt, 
+                     wrk_args );
+    if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
+    {
+        int nWorkBufferSize = 2000;
+        char *pszWorkBuffer = (char *) malloc(nWorkBufferSize);
+
+#ifdef va_copy
+        va_end( wrk_args );
+        va_copy( wrk_args, args );
+#else
+        wrk_args = args;
+#endif
+        while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, fmt, wrk_args))
+               >= nWorkBufferSize-1 
+               || nPR == -1 )
+        {
+            nWorkBufferSize *= 4;
+            pszWorkBuffer = (char *) realloc(pszWorkBuffer, 
+                                             nWorkBufferSize );
+#ifdef va_copy
+            va_end( wrk_args );
+            va_copy( wrk_args, args );
+#else
+            wrk_args = args;
+#endif
+        }
+        message = pszWorkBuffer;
+        free( pszWorkBuffer );
+    }
+    else
+    {
+        message = szModestBuffer;
+    }
+    va_end( wrk_args );
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Forward the message.                                            */
+/* -------------------------------------------------------------------- */
+    pfnDebug( message.c_str() );
+}
+
+/************************************************************************/
+/*                               Debug()                                */
+/*                                                                      */
+/*      Function to write output to a debug stream if one is            */
+/*      enabled.  This is intended to be widely called in the           */
+/*      library.                                                        */
+/************************************************************************/
+
+void PCIDSK::Debug( void (*pfnDebug)(const char *), const char *fmt, ... )
+
+{
+    if( pfnDebug == NULL )
+        return;
+
+    std::va_list args;
+
+    va_start( args, fmt );
+    vDebug( pfnDebug, fmt, args );
+    va_end( args );
 }
