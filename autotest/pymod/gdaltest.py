@@ -830,8 +830,8 @@ def equal_srs_from_wkt( expected_wkt, got_wkt ):
     if got_srs.IsSame( expected_srs ):
         return 1
     else:
-        print('Expected:', expected_wkt)
-        print('Got:     ', got_wkt)
+        print('Expected:\n%s' % expected_wkt)
+        print('Got:     \n%s' % got_wkt)
         
         post_reason( 'SRS differs from expected.' )
         return 0
