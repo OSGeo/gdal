@@ -361,9 +361,9 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                     int iSrcVert = iBaseVert + nPartStart;
 
                     poRing->setPoint( 0, 
-                                      psShape->padfX[0], 
-                                      psShape->padfY[0], 
-                                      psShape->padfZ[0] );
+                                      psShape->padfX[nPartStart], 
+                                      psShape->padfY[nPartStart],
+                                      psShape->padfZ[nPartStart] );
                     poRing->setPoint( 1, 
                                       psShape->padfX[iSrcVert+1], 
                                       psShape->padfY[iSrcVert+1], 
@@ -374,9 +374,9 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                                       psShape->padfY[iSrcVert+2], 
                                       psShape->padfZ[iSrcVert+2] );
                     poRing->setPoint( 3, 
-                                      psShape->padfX[0], 
-                                      psShape->padfY[0], 
-                                      psShape->padfZ[0] );
+                                      psShape->padfX[nPartStart], 
+                                      psShape->padfY[nPartStart], 
+                                      psShape->padfZ[nPartStart] );
                         
                     poPoly->addRingDirectly( poRing );
                     poMP->addGeometryDirectly( poPoly );
