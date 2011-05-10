@@ -884,12 +884,14 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 
 
 #define COPY_MEM(target,type,count)					\
-   if( (psSrcOptions->target) != NULL && (count) != 0 ) 		\
+   do { if( (psSrcOptions->target) != NULL && (count) != 0 ) 		\
    { 									\
-       (psDstOptions->target) = (type *) CPLMalloc(sizeof(type)*count); \
+       (psDstOptions->target) = (type *) CPLMalloc(sizeof(type)*(count)); \
        memcpy( (psDstOptions->target), (psSrcOptions->target),		\
- 	       sizeof(type) * count ); 	        			\
-   }
+ 	       sizeof(type) * (count) ); 	        			\
+   } \
+   else \
+       (psDstOptions->target) = NULL; } while(0)
 
 /************************************************************************/
 /*                        GDALCloneWarpOptions()                        */
@@ -915,6 +917,7 @@ GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
     COPY_MEM( padfDstNoDataImag, double, psSrcOptions->nBandCount );
     COPY_MEM( papfnSrcPerBandValidityMaskFunc, GDALMaskFunc, 
               psSrcOptions->nBandCount );
+    psDstOptions->papSrcPerBandValidityMaskFuncArg = NULL;
 
     if( psSrcOptions->hCutline != NULL )
         psDstOptions->hCutline = 
