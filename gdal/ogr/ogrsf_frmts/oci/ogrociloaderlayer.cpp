@@ -494,7 +494,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
     char szLength[9]; 
     size_t  nStringLen = strlen(oLine.GetString());
 
-    sprintf( szLength, "%08d", nStringLen-8 );
+    sprintf( szLength, "%08d", (int) (nStringLen-8) );
     strncpy( oLine.GetString(), szLength, 8 );
 
     if( VSIFWrite( oLine.GetString(), 1, nStringLen, fpData ) != nStringLen )

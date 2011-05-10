@@ -625,6 +625,115 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
         return 'fail'
         
 ###############################################################################
+# Test deleting an existing layer.
+
+def ogr_oci_16():
+
+    if gdaltest.oci_ds is None:
+        return 'skip'
+
+    target_index = -1
+    lc = gdaltest.oci_ds.GetLayerCount()
+    
+    for i in range(lc):
+        lyr = gdaltest.oci_ds.GetLayer( i )
+        if lyr.GetName() == 'TESTSRS2':
+            target_index = i
+            break
+
+    lyr = None
+
+    if target_index == -1:
+        gdaltest.post_reason( 'did not find testsrs2 layer' )
+        return 'fail'
+    
+    result = gdaltest.oci_ds.DeleteLayer( target_index )
+    if result != 0:
+        gdaltest.post_reason( 'DeleteLayer() failed.' )
+        return 'fail'
+    
+    lyr = gdaltest.oci_ds.GetLayerByName( 'testsrs2' )
+    if lyr is not None:
+        gdaltest.post_reason( 'apparently failed to remove testsrs2 layer' )
+        return 'fail'
+        
+    return 'success'
+        
+###############################################################################
+# Test that synctodisk actually sets the layer bounds metadata. 
+
+def ogr_oci_17():
+
+    if gdaltest.oci_ds is None:
+        return 'skip'
+    
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:xpoly' )
+    
+    ######################################################
+    # Create Oracle Layer
+    gdaltest.oci_lyr = gdaltest.oci_ds.CreateLayer( 'xpoly' )
+
+    ######################################################
+    # Setup Schema
+    ogrtest.quick_create_layer_def( gdaltest.oci_lyr,
+                                    [ ('AREA', ogr.OFTReal),
+                                      ('EAS_ID', ogr.OFTInteger),
+                                      ('PRFEDEA', ogr.OFTString) ] )
+    
+    ######################################################
+    # Copy in poly.shp
+
+    dst_feat = ogr.Feature( feature_def = gdaltest.oci_lyr.GetLayerDefn() )
+
+    shp_ds = ogr.Open( 'data/poly.shp' )
+    gdaltest.shp_ds = shp_ds
+    shp_lyr = shp_ds.GetLayer(0)
+    
+    feat = shp_lyr.GetNextFeature()
+    gdaltest.poly_feat = []
+    
+    while feat is not None:
+
+        gdaltest.poly_feat.append( feat )
+
+        dst_feat.SetFrom( feat )
+        gdaltest.oci_lyr.CreateFeature( dst_feat )
+
+        feat = shp_lyr.GetNextFeature()
+
+    dst_feat.Destroy()
+
+    ######################################################
+    # Create a distinct connection to the same database to monitor the
+    # metadata table.
+
+    oci_ds2 = ogr.Open( os.environ['OCI_DSNAME'] )
+    
+    sql_lyr = oci_ds2.ExecuteSQL( "select column_name from user_sdo_geom_metadata where table_name = 'XPOLY'" )
+    if sql_lyr.GetFeatureCount() > 0:
+        gdaltest.post_reason( 'user_sdo_geom_metadata already populated!' )
+        return 'fail'
+
+    oci_ds2.ReleaseResultSet( sql_lyr )
+
+    result = gdaltest.oci_ds.SyncToDisk()
+    if result != 0:
+        gdaltest.post_reason( 'SyncToDisk() failed.' )
+        return 'fail'
+
+    sql_lyr = oci_ds2.ExecuteSQL( "select column_name from user_sdo_geom_metadata where table_name = 'XPOLY'" )
+    if sql_lyr.GetFeatureCount() == 0:
+        gdaltest.post_reason( 'user_sdo_geom_metadata still not populated!' )
+        return 'fail'
+
+    oci_ds2.ReleaseResultSet( sql_lyr )
+
+    oci_ds2 = None
+    
+    return 'success'
+   
+
+###############################################################################
 # 
 
 def ogr_oci_cleanup():
@@ -633,6 +742,7 @@ def ogr_oci_cleanup():
         return 'skip'
 
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:tpoly' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:xpoly' )
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:testsrs' )
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:testsrs2' )
     gdaltest.oci_ds.ExecuteSQL( 'drop table geom_test' )
@@ -658,6 +768,8 @@ gdaltest_list = [
     ogr_oci_13,
     ogr_oci_14,
     ogr_oci_15,
+    ogr_oci_16,
+    ogr_oci_17,
     ogr_oci_cleanup ]
 
 if __name__ == '__main__':

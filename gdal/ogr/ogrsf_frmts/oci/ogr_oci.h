@@ -388,6 +388,8 @@ class OGROCITableLayer : public OGROCIWritableLayer
     int                 bUpdateAccess;
     int                 bNewLayer;
     OGREnvelope         sExtent;
+    bool                bExtentUpdated;
+
     int                 iNextFIDToWrite;
     int                 bHaveSpatialIndex;
 
@@ -402,9 +404,13 @@ class OGROCITableLayer : public OGROCIWritableLayer
 
     int                 bValidTable;
 
+    CPLString           osTableName;
+    CPLString           osOwner;
+
     OCIArray           *hOrdVARRAY;
     OCIArray           *hElemInfoVARRAY;
 
+    void                UpdateLayerExtents();
     void                FinalizeNewLayer();
 
     void                TestForSpatialIndex( const char * );
