@@ -16,6 +16,8 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ)
 
+$(O_OBJ):	ogr_oci.h 
+
 fastload:	fastload.cpp
 	$(CXX) $(CPPFLAGS) $(CFLAGS) fastload.cpp -L../../.. -lgdal.1.1 \
 		-o fastload
