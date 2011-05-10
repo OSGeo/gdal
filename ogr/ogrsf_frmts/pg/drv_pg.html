@@ -118,6 +118,7 @@ to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is ava
 <li> <b>NONE_AS_UNKNOWN</b>: (From GDAL 1.8.1) Can bet set to TRUE to force non-spatial layers (wkbNone) to be created as
 spatial tables of type GEOMETRY (wkbUnknown), which was the behaviour prior to GDAL 1.8.0. Defaults to NO, in which case
 a regular table is created and not recorded in the PostGIS geometry_columns table.<p>
+<li> <b>FID</b>: (From GDAL 1.9.0) Name of the FID column to create. Defaults to 'ogc_fid'.<p>
 </ul>
 
 <h3>Configuration Options</h3>
@@ -129,7 +130,8 @@ Options</a> which help control the behavior of this driver.<p>
 <ul>
 <li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
 COPY is less robust than INSERT, but significantly faster.</li><p>
-<li><b>PGSQL_OGR_FID</b>: Set name of primary key instead of 'ogc_fid' (read-only, ignored by CreateLayer()).</li><p>
+<li><b>PGSQL_OGR_FID</b>: Set name of primary key instead of 'ogc_fid'. Only used when opening a layer whose primary key cannot be autodetected.
+Ignored by CreateLayer() that uses the FID creation option.</li><p>
 <!-- Little interest to advertize PG_USE_TEXT... Just to keep it mind it exists for example for debugging -->
 <!-- <li><b>PG_USE_TEXT</b>: (GDAL >= 1.8.0) If set to "YES", geometries will be fetched as text instead of their default HEXEWKB form.</li></p> -->
 <li><b>PG_USE_BASE64</b>: (GDAL >= 1.8.0) If set to "YES", geometries will be fetched as BASE64 encoded EWKB instead of canonical HEX encoded EWKB.

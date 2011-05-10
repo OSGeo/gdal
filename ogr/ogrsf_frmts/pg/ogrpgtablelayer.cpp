@@ -1544,7 +1544,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     {
         bReturnRequested = TRUE;
         osCommand += " RETURNING ";
+        osCommand += "\"";
         osCommand += pszFIDColumn;
+        osCommand += "\"";
     }
 
 /* -------------------------------------------------------------------- */
