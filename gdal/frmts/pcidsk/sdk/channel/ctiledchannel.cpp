@@ -56,9 +56,6 @@ CTiledChannel::CTiledChannel( PCIDSKBuffer &image_header,
         : CPCIDSKChannel( image_header, ih_offset, file, pixel_type, channelnum)
 
 {
-    tile_info_dirty = false;
-    tile_info_loaded = false;
-
 /* -------------------------------------------------------------------- */
 /*      Establish the virtual file we will be accessing.                */
 /* -------------------------------------------------------------------- */
@@ -141,6 +138,23 @@ void CTiledChannel::EstablishAccess() const
     }
 
 /* -------------------------------------------------------------------- */
+/*      Compute information on the tiles.                               */
+/* -------------------------------------------------------------------- */
+    tiles_per_row = (width + block_width - 1) / block_width;
+    tiles_per_col = (height + block_height - 1) / block_height;
+    tile_count = tiles_per_row * tiles_per_col;
+
+/* -------------------------------------------------------------------- */
+/*      Resize our tile info cache.                                     */
+/* -------------------------------------------------------------------- */
+    int tile_block_info_count = 
+        (tile_count + tile_block_size - 1) / tile_block_size;
+
+    tile_offsets.resize( tile_block_info_count );
+    tile_sizes.resize( tile_block_info_count );
+    tile_info_dirty.resize( tile_block_info_count, false );
+
+/* -------------------------------------------------------------------- */
 /*      Establish byte swapping.  Tiled data files are always big       */
 /*      endian, regardless of what the headers might imply.             */
 /* -------------------------------------------------------------------- */
@@ -153,40 +167,136 @@ void CTiledChannel::EstablishAccess() const
 }
 
 /************************************************************************/
-/*                        EstablishTileAccess()                         */
+/*                         LoadTileInfoBlock()                          */
 /************************************************************************/
 
-void CTiledChannel::EstablishTileAccess() const
+void CTiledChannel::LoadTileInfoBlock( int block )
 
 {
-    if( tile_info_loaded )
-        return;
-
-    EstablishAccess();
+    assert( tile_offsets[block].size() == 0 );
 
 /* -------------------------------------------------------------------- */
-/*      Extract the tile map                                            */
+/*      How many tiles in this block?                                   */
 /* -------------------------------------------------------------------- */
-    int tiles_per_row = (width + block_width - 1) / block_width;
-    int tiles_per_col = (height + block_height - 1) / block_height;
-    int tile_count = tiles_per_row * tiles_per_col;
-    int i;
+    int tiles_in_block = tile_block_size;
 
-    tile_offsets.resize( tile_count );
-    tile_sizes.resize( tile_count );
+    if( block * tile_block_size + tiles_in_block > tile_count )
+        tiles_in_block = tile_count - block * tile_block_size;
 
-    PCIDSKBuffer tmap( tile_count * 20 );
+/* -------------------------------------------------------------------- */
+/*      Resize the vectors for this block.                              */
+/* -------------------------------------------------------------------- */
+    tile_offsets[block].resize( tiles_in_block );
+    tile_sizes[block].resize( tiles_in_block );
 
-    vfile->ReadFromFile( tmap.buffer, 128, tile_count*20 );
+/* -------------------------------------------------------------------- */
+/*      Read the offset and size data from disk.                        */
+/* -------------------------------------------------------------------- */
+    PCIDSKBuffer offset_map( tiles_in_block * 12 + 1 );
+    PCIDSKBuffer size_map( tiles_in_block * 8 + 1 );
+
+    vfile->ReadFromFile( offset_map.buffer, 
+                         128 + block * tile_block_size * 12, 
+                         tiles_in_block * 12 );
+    vfile->ReadFromFile( size_map.buffer, 
+                         128 + tile_count * 12 + block * tile_block_size * 8,
+                         tiles_in_block * 8 );
     
-    for( i = 0; i < tile_count; i++ )
+    for( int i = 0; i < tiles_in_block; i++ )
     {
-        tile_offsets[i] = tmap.GetUInt64( i*12 + 0, 12 );
-        tile_sizes[i] = tmap.GetInt( tile_count*12 + i*8, 8 );
+        char chSaved;
+        char *target = offset_map.buffer + i*12;
+
+        chSaved = target[12];
+        target[12] = '\0';
+        tile_offsets[block][i] = atouint64(target);
+        target[12] = chSaved;
+
+        target = size_map.buffer + i*8;
+        chSaved = target[8];
+        target[8] = '\0';
+        tile_sizes[block][i] = atoi(target);
+        target[8] = chSaved;
+    }
+}
+
+/************************************************************************/
+/*                         SaveTileInfoBlock()                          */
+/************************************************************************/
+
+void CTiledChannel::SaveTileInfoBlock( int block )
+
+{
+    assert( tile_offsets[block].size() != 0 );
+    int tiles_in_block = tile_offsets[block].size();
+
+/* -------------------------------------------------------------------- */
+/*      Write the offset and size data to disk.                         */
+/* -------------------------------------------------------------------- */
+    PCIDSKBuffer offset_map( tiles_in_block * 12 + 1 );
+    PCIDSKBuffer size_map( tiles_in_block * 8 + 1 );
+
+    for( int i = 0; i < tiles_in_block; i++ )
+    {
+        if( tile_offsets[block][i] == (uint64) -1 
+            || tile_offsets[block][i] == 0 )
+            offset_map.Put( -1, i*12, 12 );
+        else
+            offset_map.Put( tile_offsets[block][i], i*12, 12 );
+
+        size_map.Put( tile_sizes[block][i], i*8, 8 );
     }
 
-    tile_info_loaded = true;
-    tile_info_dirty = false;
+    vfile->WriteToFile( offset_map.buffer, 
+                        128 + block * tile_block_size * 12, 
+                        tiles_in_block * 12 );
+    vfile->WriteToFile( size_map.buffer, 
+                        128 + tile_count * 12 + block * tile_block_size * 8,
+                        tiles_in_block * 8 );
+
+    tile_info_dirty[block] = false;
+}
+
+/************************************************************************/
+/*                            GetTileInfo()                             */
+/*                                                                      */
+/*      Fetch the tile offset and size for the indicated tile.          */
+/************************************************************************/
+
+void CTiledChannel::GetTileInfo( int tile_index, uint64 &offset, int &size )
+
+{
+    int block = tile_index / tile_block_size;
+    int index_within_block = tile_index - block * tile_block_size;
+
+    if( tile_offsets[block].size() == 0 )
+        LoadTileInfoBlock( block );
+
+    offset = tile_offsets[block][index_within_block];
+    size = tile_sizes[block][index_within_block];
+}
+
+/************************************************************************/
+/*                            SetTileInfo()                             */
+/************************************************************************/
+
+void CTiledChannel::SetTileInfo( int tile_index, uint64 offset, int size )
+
+{
+    int block = tile_index / tile_block_size;
+    int index_within_block = tile_index - block * tile_block_size;
+
+    if( tile_offsets[block].size() == 0 )
+        LoadTileInfoBlock( block );
+
+    if( offset != tile_offsets[block][index_within_block]
+        || size != tile_sizes[block][index_within_block] )
+    {
+        tile_offsets[block][index_within_block] = offset;
+        tile_sizes[block][index_within_block] = size;
+        
+        tile_info_dirty[block] = true;
+    }
 }
 
 /************************************************************************/
@@ -198,26 +308,17 @@ void CTiledChannel::EstablishTileAccess() const
 void CTiledChannel::Synchronize()
 
 {
-    if( !tile_info_dirty )
+    if( tile_info_dirty.size() == 0 )
         return;
 
-    int tiles_per_row = (width + block_width - 1) / block_width;
-    int tiles_per_col = (height + block_height - 1) / block_height;
-    int tile_count = tiles_per_row * tiles_per_col;
     int i;
 
-    PCIDSKBuffer tmap( tile_count * 20 );
-
-    for( i = 0; i < tile_count; i++ )
+    for( i = 0; i < (int) tile_info_dirty.size(); i++ )
     {
-        if( tile_offsets[i] == (uint64) -1 || tile_offsets[i] == 0 )
-            tmap.Put( -1, i*12 + 0, 12 );
-        else
-            tmap.Put( tile_offsets[i], i*12 + 0, 12 );
-        tmap.Put( tile_sizes[i], tile_count*12 + i*8, 8 );
+        if( tile_info_dirty[i] )
+            SaveTileInfoBlock( i );
     }
 
-    vfile->WriteToFile( tmap.buffer, 128, tile_count*20 );
     vfile->Synchronize();
 }
 
@@ -230,9 +331,6 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
                               int xsize, int ysize )
 
 {
-    if( !tile_info_loaded )
-        EstablishTileAccess();
-
     int pixel_size = DataTypeSize(GetType());
 
 /* -------------------------------------------------------------------- */
@@ -257,7 +355,7 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
             xoff, yoff, xsize, ysize );
     }
 
-    if( block_index < 0 || block_index >= (int) tile_offsets.size() )
+    if( block_index < 0 || block_index >= tile_count )
     {
         ThrowPCIDSKException( "Requested non-existant block (%d)", 
                               block_index );
@@ -266,7 +364,12 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
 /* -------------------------------------------------------------------- */
 /*      Does this tile exist?  If not return a zeroed buffer.           */
 /* -------------------------------------------------------------------- */
-    if( tile_sizes[block_index] == 0 )
+    uint64 tile_offset;
+    int    tile_size;
+
+    GetTileInfo( block_index, tile_offset, tile_size );
+
+    if( tile_size == 0 )
     {
         memset( buffer, 0, GetBlockWidth() * GetBlockHeight() * pixel_size );
         return 1;
@@ -278,12 +381,11 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
 /* -------------------------------------------------------------------- */
     if( xoff == 0 && xsize == GetBlockWidth() 
         && yoff == 0 && ysize == GetBlockHeight() 
-        && tile_sizes[block_index] == xsize * ysize * pixel_size 
+        && tile_size == xsize * ysize * pixel_size 
         && compression == "NONE" )
     {
-        vfile->ReadFromFile( buffer, 
-                             tile_offsets[block_index], 
-                             tile_sizes[block_index] );
+        vfile->ReadFromFile( buffer, tile_offset, tile_size );
+
         // Do byte swapping if needed.
         if( needs_swap )
             SwapPixels( buffer, pixel_type, xsize * ysize );
@@ -303,7 +405,7 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
         {
             vfile->ReadFromFile( ((uint8 *) buffer) 
                                  + iy * xsize * pixel_size,
-                                 tile_offsets[block_index] 
+                                 tile_offset 
                                  + ((iy+yoff)*block_width + xoff) * pixel_size,
                                  xsize * pixel_size );
         }
@@ -318,12 +420,10 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
 /* -------------------------------------------------------------------- */
 /*      Load the whole compressed data into a working buffer.           */
 /* -------------------------------------------------------------------- */
-    PCIDSKBuffer oCompressedData( tile_sizes[block_index] );
+    PCIDSKBuffer oCompressedData( tile_size );
     PCIDSKBuffer oUncompressedData( pixel_size * block_width * block_height );
 
-    vfile->ReadFromFile( oCompressedData.buffer, 
-                         tile_offsets[block_index], 
-                         tile_sizes[block_index] );
+    vfile->ReadFromFile( oCompressedData.buffer, tile_offset, tile_size );
     
 /* -------------------------------------------------------------------- */
 /*      Handle decompression.                                           */
@@ -405,9 +505,6 @@ bool CTiledChannel::IsTileEmpty(void *buffer) const
 int CTiledChannel::WriteBlock( int block_index, void *buffer )
 
 {
-    if( !tile_info_loaded )
-        EstablishTileAccess();
-
     if( !file->GetUpdatable() )
         throw PCIDSKException( "File not open for update in WriteBlock()" );
 
@@ -416,26 +513,32 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
     int pixel_size = DataTypeSize(GetType());
     int pixel_count = GetBlockWidth() * GetBlockHeight();
 
-    if( block_index < 0 || block_index >= (int) tile_offsets.size() )
+    if( block_index < 0 || block_index >= tile_count )
     {
         ThrowPCIDSKException( "Requested non-existant block (%d)", 
                               block_index );
     }
 
 /* -------------------------------------------------------------------- */
+/*      Fetch existing tile offset and size.                            */
+/* -------------------------------------------------------------------- */
+    uint64 tile_offset;
+    int    tile_size;
+
+    GetTileInfo( block_index, tile_offset, tile_size );
+
+/* -------------------------------------------------------------------- */
 /*      The simpliest case it an uncompressed direct and complete       */
 /*      tile read into the destination buffer.                          */
 /* -------------------------------------------------------------------- */
     if( compression == "NONE" 
-        && tile_sizes[block_index] == pixel_count * pixel_size )
+        && tile_size == pixel_count * pixel_size )
     {
         // Do byte swapping if needed.
         if( needs_swap )
             SwapPixels( buffer, pixel_type, pixel_count );
 
-        vfile->WriteToFile( buffer, 
-                            tile_offsets[block_index], 
-                            tile_sizes[block_index] );
+        vfile->WriteToFile( buffer, tile_offset, tile_size );
 
         if( needs_swap )
             SwapPixels( buffer, pixel_type, pixel_count );
@@ -443,7 +546,7 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
         return 1;
     }
 
-    if ((int)tile_offsets[block_index] == -1)
+    if ((int64)tile_offset == -1)
     {
         // Check if the tile is empty. If it is, we can skip writing it,
         // unless the tile is already dirty.
@@ -491,12 +594,12 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
 /* -------------------------------------------------------------------- */
 /*      If this fits in the existing space, just write it directly.     */
 /* -------------------------------------------------------------------- */
-    if( oCompressedData.buffer_size <= tile_sizes[block_index] )
+    if( oCompressedData.buffer_size <= tile_size )
     {
-        vfile->WriteToFile( oCompressedData.buffer,
-                            tile_offsets[block_index], 
-                            oCompressedData.buffer_size );
-        tile_sizes[block_index] = oCompressedData.buffer_size;
+        vfile->WriteToFile( oCompressedData.buffer, tile_offset, tile_size );
+
+        tile_size = oCompressedData.buffer_size;
+        SetTileInfo( block_index, tile_offset, tile_size );
     }
 
 /* -------------------------------------------------------------------- */
@@ -509,12 +612,8 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
         vfile->WriteToFile( oCompressedData.buffer, 
                             new_offset, oCompressedData.buffer_size );
 
-        tile_offsets[block_index] = new_offset;
-        tile_sizes[block_index] = oCompressedData.buffer_size;
-
+        SetTileInfo( block_index, new_offset, oCompressedData.buffer_size );
     }
-
-    tile_info_dirty = true;
 
     return 1;
 }
