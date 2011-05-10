@@ -42,6 +42,7 @@
 #include <cassert>
 #include <vector>
 #include <cstring>
+#include <cstdlib>
 
 using namespace PCIDSK;
 
@@ -522,19 +523,29 @@ int SysBlockMap::GetNextBlockMapEntry( int bm_index,
 /*      Otherwise we read from disk and hope the io level buffering     */
 /*      is pretty good.                                                 */
 /* -------------------------------------------------------------------- */
-    PCIDSKBuffer bm_entry( 28 );
+    char bm_entry[29];
 
     if( full_loaded )
     {
-        memcpy( bm_entry.buffer, blockmap_data.buffer + bm_index * 28, 28 );
+        memcpy( bm_entry, blockmap_data.buffer + bm_index * 28, 28 );
     }
     else
     {
-        ReadFromFile( bm_entry.buffer, bm_index * 28 + 512, 28 );
+        ReadFromFile( bm_entry, bm_index * 28 + 512, 28 );
     }
     
-    segment = (uint16) bm_entry.GetInt( 0, 4 );
-    block_in_segment = bm_entry.GetInt( 4, 8 );
+/* -------------------------------------------------------------------- */
+/*      Parse the values as efficiently as we can.                      */
+/* -------------------------------------------------------------------- */
+    bm_entry[28] = '\0';
+
+    int next_block = atoi( bm_entry+20 );
+
+    bm_entry[12] = '\0';
+    block_in_segment = atoi(bm_entry+4);
+
+    bm_entry[4] = '\0';
+    segment = atoi(bm_entry);
     
-    return bm_entry.GetInt( 20, 8 );
+    return next_block;
 }

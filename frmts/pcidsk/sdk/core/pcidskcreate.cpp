@@ -429,11 +429,25 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
     if( strncmp(options.c_str(),"TILED",5) == 0 )
     {
-        file->SetMetadataValue( "_DBLayout", options );
+        file->SetMetadataValue( "_DBLayout", options ); 
 
+        // For sizing the SysBMDir we want an approximate size of the
+        // the imagery.
+        uint64 rough_image_size = 
+            (channels[0] + // CHN_8U
+             channels[1] * DataTypeSize(CHN_16U) + 
+             channels[2] * DataTypeSize(CHN_16S) + 
+             channels[3] * DataTypeSize(CHN_32R) +
+             channels[4] * DataTypeSize(CHN_C16U) +
+             channels[5] * DataTypeSize(CHN_C16S) +
+             channels[6] * DataTypeSize(CHN_C32R)) 
+            * (pixels * (uint64) lines);
+        uint64 sysbmdir_size = ((rough_image_size / 8192) * 28) / 512;
+
+        sysbmdir_size = (int) (sysbmdir_size * 1.1 + 100);
         int segment = file->CreateSegment( "SysBMDir", 
                                            "System Block Map Directory - Do not modify.",
-                                           SEG_SYS, 0 );
+                                           SEG_SYS, sysbmdir_size );
         
         SysBlockMap *bm = 
             dynamic_cast<SysBlockMap *>(file->GetSegment( segment ));
