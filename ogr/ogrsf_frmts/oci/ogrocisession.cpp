@@ -384,7 +384,7 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Column length (%d) longer than column name buffer (%d) in\n"
                   "OGROCISession::GetParmInfo()", 
-                  nColLen, sizeof(szTermColName) );
+                  nColLen, (int) sizeof(szTermColName) );
         return CE_Failure;
     }
 
