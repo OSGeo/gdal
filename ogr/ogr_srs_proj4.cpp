@@ -1133,6 +1133,83 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Handle vertical units.                                          */
+/* -------------------------------------------------------------------- */
+    if( GetRoot()->GetNode( "VERT_CS" ) != NULL )
+    {
+        const char *pszUnitName = NULL;
+        const char *pszUnitConv = NULL;
+
+        pszValue = CSLFetchNameValue(papszNV, "vto_meter");
+
+        if( pszValue != NULL && CPLAtofM(pszValue) > 0.0 )
+        {
+            double dfValue = CPLAtofM(pszValue);
+
+            if( fabs(dfValue - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
+            {
+                pszUnitName = SRS_UL_US_FOOT;
+                pszUnitConv = SRS_UL_US_FOOT_CONV;
+            }
+            else if( fabs(dfValue - CPLAtof(SRS_UL_FOOT_CONV)) < 0.00000001 )
+            {
+                pszUnitName = SRS_UL_FOOT;
+                pszUnitConv = SRS_UL_FOOT_CONV;
+            }
+            else if( dfValue == 1.0 )
+            {
+                pszUnitName = SRS_UL_METER;
+                pszUnitConv = "1.0";
+            }
+            else
+            {
+                pszUnitName = "unknown";
+                pszUnitConv = pszValue;
+            }
+        }
+        else if( (pszValue = CSLFetchNameValue(papszNV, "vunits")) != NULL )
+        {
+            if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") )
+            {
+                pszUnitName = SRS_UL_METER;
+                pszUnitConv = "1.0";
+            }
+            else if( EQUAL(pszValue,"us-ft" ) )
+            {
+                pszUnitName = SRS_UL_US_FOOT;
+                pszUnitConv = SRS_UL_US_FOOT_CONV;
+            }
+            else if( EQUAL(pszValue,"ft" ) )
+            {
+                pszUnitName = SRS_UL_FOOT;
+                pszUnitConv = SRS_UL_FOOT_CONV;
+            }
+            else if( EQUAL(pszValue,"yd" ) )
+            {
+                pszUnitName = "Yard";
+                pszUnitConv = "0.9144";
+            }
+            else if( EQUAL(pszValue,"us-yd" ) )
+            {
+                pszUnitName = "US Yard";
+                pszUnitConv = "0.914401828803658";
+            }
+        }
+
+        if( pszUnitName != NULL )
+        {
+            OGR_SRSNode *poVERT_CS = GetRoot()->GetNode( "VERT_CS" );
+            OGR_SRSNode *poUnits; 
+
+            poUnits = new OGR_SRSNode( "UNIT" );
+            poUnits->AddChild( new OGR_SRSNode( pszUnitName ) );
+            poUnits->AddChild( new OGR_SRSNode( pszUnitConv ) );
+            
+            poVERT_CS->AddChild( poUnits );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      do we want to insert a PROJ.4 EXTENSION item?                   */
 /* -------------------------------------------------------------------- */
     if( strstr(pszProj4,"wktext") != NULL )
@@ -1141,6 +1218,50 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     CSLDestroy( papszNV );
     
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           LinearToProj4()                            */
+/************************************************************************/
+
+static const char *LinearToProj4( double dfLinearConv, 
+                                  const char *pszLinearUnits )
+
+{
+    if( dfLinearConv == 1.0 )
+        return "m";
+
+    else if( dfLinearConv == 1000.0 )
+        return "km";
+    
+    else if( dfLinearConv == 0.0254 )
+        return "in";
+    
+    else if( EQUAL(pszLinearUnits,SRS_UL_FOOT) 
+             || fabs(dfLinearConv - atof(SRS_UL_FOOT_CONV)) < 0.000000001 )
+        return "ft";
+    
+    else if( EQUAL(pszLinearUnits,"IYARD") || dfLinearConv == 0.9144 )
+        return "yd";
+    
+    else if( dfLinearConv == 0.001 )
+        return "mm";
+    
+    else if( dfLinearConv == 0.01 )
+        return "cm";
+
+    else if( EQUAL(pszLinearUnits,SRS_UL_US_FOOT) 
+             || fabs(dfLinearConv - atof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
+        return "us-ft";
+
+    else if( EQUAL(pszLinearUnits,SRS_UL_NAUTICAL_MILE) )
+        return "kmi";
+
+    else if( EQUAL(pszLinearUnits,"Mile") 
+             || EQUAL(pszLinearUnits,"IMILE") )
+        return "mi";
+    else
+        return NULL;
 }
 
 
@@ -2130,47 +2251,18 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         
     if( strstr(szProj4,"longlat") != NULL )
         pszPROJ4Units = NULL;
-    
-    else if( dfLinearConv == 1.0 )
-        pszPROJ4Units = "m";
-
-    else if( dfLinearConv == 1000.0 )
-        pszPROJ4Units = "km";
-    
-    else if( dfLinearConv == 0.0254 )
-        pszPROJ4Units = "in";
-    
-    else if( EQUAL(pszLinearUnits,SRS_UL_FOOT) 
-             || fabs(dfLinearConv - atof(SRS_UL_FOOT_CONV)) < 0.000000001 )
-        pszPROJ4Units = "ft";
-    
-    else if( EQUAL(pszLinearUnits,"IYARD") || dfLinearConv == 0.9144 )
-        pszPROJ4Units = "yd";
-    
-    else if( dfLinearConv == 0.001 )
-        pszPROJ4Units = "mm";
-    
-    else if( dfLinearConv == 0.01 )
-        pszPROJ4Units = "cm";
-
-    else if( EQUAL(pszLinearUnits,SRS_UL_US_FOOT) 
-             || fabs(dfLinearConv - atof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
-        pszPROJ4Units = "us-ft";
-
-    else if( EQUAL(pszLinearUnits,SRS_UL_NAUTICAL_MILE) )
-        pszPROJ4Units = "kmi";
-
-    else if( EQUAL(pszLinearUnits,"Mile") 
-             || EQUAL(pszLinearUnits,"IMILE") )
-        pszPROJ4Units = "mi";
-
-    else
+    else 
     {
-        char szLinearConv[128];
-        sprintf( szLinearConv, "%.16g", dfLinearConv );
-        SAFE_PROJ4_STRCAT( "+to_meter=" );
-        SAFE_PROJ4_STRCAT( szLinearConv );
-        SAFE_PROJ4_STRCAT( " " );
+        pszPROJ4Units = LinearToProj4( dfLinearConv, pszLinearUnits );
+
+        if( pszPROJ4Units == NULL )
+        {
+            char szLinearConv[128];
+            sprintf( szLinearConv, "%.16g", dfLinearConv );
+            SAFE_PROJ4_STRCAT( "+to_meter=" );
+            SAFE_PROJ4_STRCAT( szLinearConv );
+            SAFE_PROJ4_STRCAT( " " );
+        }
     }
 
     if( pszPROJ4Units != NULL )
@@ -2191,6 +2283,40 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         SAFE_PROJ4_STRCAT( pszProj4Geoids );
         SAFE_PROJ4_STRCAT(  " " );
     }    
+
+/* -------------------------------------------------------------------- */
+/*      Handle vertical units, but only if we have them.                */
+/* -------------------------------------------------------------------- */
+    const OGR_SRSNode *poVERT_CS = GetRoot()->GetNode( "VERT_CS" );
+    const OGR_SRSNode *poVUNITS = NULL;
+
+    if( poVERT_CS != NULL )
+        poVUNITS = poVERT_CS->GetNode( "UNIT" );
+
+    if( poVUNITS != NULL && poVUNITS->GetChildCount() >= 2 )
+    {
+        pszPROJ4Units = NULL;
+
+        dfLinearConv = CPLAtof( poVUNITS->GetChild(1)->GetValue() );
+        
+        pszPROJ4Units = LinearToProj4( dfLinearConv,
+                                       poVUNITS->GetChild(0)->GetValue() );
+            
+        if( pszPROJ4Units == NULL )
+        {
+            char szLinearConv[128];
+            sprintf( szLinearConv, "%.16g", dfLinearConv );
+            SAFE_PROJ4_STRCAT( "+vto_meter=" );
+            SAFE_PROJ4_STRCAT( szLinearConv );
+            SAFE_PROJ4_STRCAT( " " );
+        }
+        else
+        {
+            SAFE_PROJ4_STRCAT( "+vunits=");
+            SAFE_PROJ4_STRCAT( pszPROJ4Units );
+            SAFE_PROJ4_STRCAT( " " );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add the no_defs flag to ensure that no values from              */
