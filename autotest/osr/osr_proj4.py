@@ -340,7 +340,6 @@ def osr_proj4_10():
     
     return 'success'
 
-
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
