@@ -708,11 +708,20 @@ void GDALDriverManager::AutoLoadDrivers()
                 CPLFormFilename( osABISpecificDir, 
                                  papszFiles[iFile], NULL );
 
+            CPLErrorReset();
+            CPLPushErrorHandler(CPLQuietErrorHandler);
             pRegister = CPLGetSymbol( pszFilename, pszFuncName );
+            CPLPopErrorHandler();
             if( pRegister == NULL )
             {
+                CPLString osLastErrorMsg(CPLGetLastErrorMsg());
                 strcpy( pszFuncName, "GDALRegisterMe" );
                 pRegister = CPLGetSymbol( pszFilename, pszFuncName );
+                if( pRegister == NULL )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "%s", osLastErrorMsg.c_str() );
+                }
             }
             
             if( pRegister != NULL )
