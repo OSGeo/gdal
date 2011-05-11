@@ -431,11 +431,23 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( json_object* poObj )
         it.entry = NULL;
         json_object_object_foreachC( poObjProps, it )
         {
-            if( -1 == poDefn->GetFieldIndex( it.key ) )
+            int nFldIndex = poDefn->GetFieldIndex( it.key );
+            if( -1 == nFldIndex )
             {
                 OGRFieldDefn fldDefn( it.key,
                     GeoJSONPropertyToFieldType( it.val ) );
                 poDefn->AddFieldDefn( &fldDefn );
+            }
+            else
+            {
+                OGRFieldDefn* poFDefn = poDefn->GetFieldDefn(nFldIndex);
+                OGRFieldType eType = poFDefn->GetType();
+                if( eType == OFTInteger )
+                {
+                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val );
+                    if( eNewType == OFTReal )
+                        poFDefn->SetType(OFTReal);
+                }
             }
         }
 
