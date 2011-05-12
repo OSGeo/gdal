@@ -425,6 +425,56 @@ def tiff_linearparmunits():
     return 'success'
 
 ###############################################################################
+# Check that the GTIFF_LINEAR_UNITS handling works properly (#3901)
+
+def tiff_linearparmunits2():
+
+    gdal.SetConfigOption( 'GTIFF_LINEAR_UNITS', 'BROKEN' )
+    
+    # Test the file with the correct formulation.
+    
+    ds = gdal.Open('data/spaf27_correct.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    srs = osr.SpatialReference( wkt )
+    
+    fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
+    if abs(fe-6561666.66667) > 0.001:
+        gdaltest.post_reason( 'did not get expected false easting (1)' )
+        return 'fail'
+    
+    # Test the file with the correct formulation that is marked as correct.
+    
+    ds = gdal.Open('data/spaf27_markedcorrect.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    srs = osr.SpatialReference( wkt )
+    
+    fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
+    if abs(fe-2000000.0) > 0.001:
+        gdaltest.post_reason( 'did not get expected false easting (2)' )
+        return 'fail'
+    
+    # Test the file with the old (broken) GDAL formulation.
+    
+    ds = gdal.Open('data/spaf27_brokengdal.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    srs = osr.SpatialReference( wkt )
+    
+    fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
+    if abs(fe-2000000.0) > 0.001:
+        gdaltest.post_reason( 'did not get expected false easting (3)' )
+        return 'fail'
+    
+    gdal.SetConfigOption( 'GTIFF_LINEAR_UNITS', 'DEFAULT' )
+    
+    return 'success'
+
+###############################################################################
 # Test GTiffSplitBitmapBand to treat one row 1bit files as scanline blocks (#2622)
 
 def tiff_g4_split():
@@ -880,6 +930,7 @@ gdaltest_list.append( (tiff_read_tgz_2) )
 gdaltest_list.append( (tiff_grads) )
 gdaltest_list.append( (tiff_citation) )
 gdaltest_list.append( (tiff_linearparmunits) )
+gdaltest_list.append( (tiff_linearparmunits2) )
 gdaltest_list.append( (tiff_g4_split) )
 gdaltest_list.append( (tiff_multi_images) )
 gdaltest_list.append( (tiff_vsimem) )
