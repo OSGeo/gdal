@@ -48,6 +48,13 @@ typedef struct
     vsi_l_offset offset;
 } BlockDesc;
 
+#ifdef I_WANT_COMPATIBILITY_WITH_EPSILON_0_8_1
+#define GET_FIELD(hdr, field) \
+    (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.field : hdr.tc.field
+#else
+#define GET_FIELD(hdr, field) \
+    (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.hdr_data.gs.field : hdr.hdr_data.tc.field
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -237,8 +244,8 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
         return CE_Failure;
     }
     
-    int w = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.w : hdr.tc.w;
-    int h = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.h : hdr.tc.h;
+    int w = GET_FIELD(hdr, w);
+    int h = GET_FIELD(hdr, h);
     int i;
 
     if (poGDS->nBands == 1)
@@ -505,12 +512,12 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
             continue;
         }
         
-        int W = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.W : hdr.tc.W;
-        int H = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.H : hdr.tc.H;
-        int x = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.x : hdr.tc.x;
-        int y = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.y : hdr.tc.y;
-        int w = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.w : hdr.tc.w;
-        int h = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.h : hdr.tc.h;
+        int W = GET_FIELD(hdr, W);
+        int H = GET_FIELD(hdr, H);
+        int x = GET_FIELD(hdr, x);
+        int y = GET_FIELD(hdr, y);
+        int w = GET_FIELD(hdr, w);
+        int h = GET_FIELD(hdr, h);
 
         //CPLDebug("EPSILON", "W=%d,H=%d,x=%d,y=%d,w=%d,h=%d,offset=" CPL_FRMT_GUIB,
         //                    W, H, x, y, w, h, nStartBlockFileOff);
