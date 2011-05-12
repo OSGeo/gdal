@@ -46,6 +46,9 @@
 
 CPL_CVSID("$Id$")
 
+#define ProjLinearUnitsInterpCorrectGeoKey   3059
+
+
 CPL_C_START
 #ifndef CPL_SERV_H_INTERNAL
 /* Make VSIL_STRICT_ENFORCE active in DEBUG builds */
@@ -406,7 +409,14 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 /*      libgeotiff to meters (or above) to simulate the old             */
 /*      behavior.                                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszLinearUnits,"BROKEN") && psDefn->Projection == KvUserDefined )
+    short bLinearUnitsMarkedCorrect = FALSE;
+    
+    GTIFKeyGet(hGTIF, (geokey_t) ProjLinearUnitsInterpCorrectGeoKey, 
+               &bLinearUnitsMarkedCorrect, 0, 1);
+
+    if( EQUAL(pszLinearUnits,"BROKEN") 
+        && psDefn->Projection == KvUserDefined 
+        && !bLinearUnitsMarkedCorrect )
     {
         for( iParm = 0; iParm < psDefn->nParms; iParm++ )
         {
@@ -2023,6 +2033,23 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
                    KvUserDefined );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Is there a false easting/northing set?  If so, write out a      */
+/*      special geokey tag to indicate that GDAL has written these      */
+/*      with the proper interpretation of the linear units.             */
+/* -------------------------------------------------------------------- */
+    double dfFE = 0.0, dfFN = 0.0;
+
+    if( (GTIFKeyGet(psGTIF, ProjFalseEastingGeoKey, &dfFE, 0, 1)
+         || GTIFKeyGet(psGTIF, ProjFalseNorthingGeoKey, &dfFN, 0, 1)
+         || GTIFKeyGet(psGTIF, ProjFalseOriginEastingGeoKey, &dfFE, 0, 1)
+         || GTIFKeyGet(psGTIF, ProjFalseOriginNorthingGeoKey, &dfFN, 0, 1))
+        && (dfFE != 0.0 || dfFN != 0.0) )
+    {
+        GTIFKeySet(psGTIF, (geokey_t) ProjLinearUnitsInterpCorrectGeoKey, 
+                   TYPE_SHORT, 1, (short) 1 );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Write linear units information.                                 */
 /* -------------------------------------------------------------------- */
