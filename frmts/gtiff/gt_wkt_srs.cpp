@@ -2044,7 +2044,8 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
          || GTIFKeyGet(psGTIF, ProjFalseNorthingGeoKey, &dfFN, 0, 1)
          || GTIFKeyGet(psGTIF, ProjFalseOriginEastingGeoKey, &dfFE, 0, 1)
          || GTIFKeyGet(psGTIF, ProjFalseOriginNorthingGeoKey, &dfFN, 0, 1))
-        && (dfFE != 0.0 || dfFN != 0.0) )
+        && (dfFE != 0.0 || dfFN != 0.0) 
+        && nUOMLengthCode != 9001 )
     {
         GTIFKeySet(psGTIF, (geokey_t) ProjLinearUnitsInterpCorrectGeoKey, 
                    TYPE_SHORT, 1, (short) 1 );
