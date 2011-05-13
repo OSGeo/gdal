@@ -141,6 +141,8 @@ class CPL_DLL OGRFeatureDefn
     int         GetFieldIndex( const char * );
 
     void        AddFieldDefn( OGRFieldDefn * );
+    OGRErr      DeleteFieldDefn( int iField );
+    OGRErr      ReorderFieldDefns( int* panMap );
 
     OGRwkbGeometryType GetGeomType() { return eGeomType; }
     void        SetGeomType( OGRwkbGeometryType );
