@@ -95,6 +95,9 @@ class CPL_DLL OGRLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
+    virtual OGRErr      DeleteField( int iField );
+    virtual OGRErr      ReorderFields( int* panMap );
+    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
 
     virtual OGRErr      SyncToDisk();
 
@@ -117,7 +120,10 @@ class CPL_DLL OGRLayer
     int                 GetRefCount() const;
 
     GIntBig             GetFeaturesRead();
-    
+
+    /* non virtual : conveniency wrapper for ReorderFields() */
+    OGRErr              ReorderField( int iOldFieldPos, int iNewFieldPos );
+
     /* consider these private */
     OGRErr               InitializeIndexSupport( const char * );
     OGRLayerAttrIndex   *GetIndex() { return m_poAttrIndex; }
