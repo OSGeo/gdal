@@ -220,6 +220,11 @@ typedef enum
 #  define DB2_V72_UNFIX_BYTE_ORDER(x) (x)
 #endif
 
+#define ALTER_NAME_FLAG            0x1
+#define ALTER_TYPE_FLAG            0x2
+#define ALTER_WIDTH_PRECISION_FLAG 0x4
+#define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG)
+
 /************************************************************************/
 /*                  ogr_feature.h related definitions.                  */
 /************************************************************************/
@@ -324,6 +329,9 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCFastFeatureCount    "FastFeatureCount"
 #define OLCFastGetExtent       "FastGetExtent"
 #define OLCCreateField         "CreateField"
+#define OLCDeleteField         "DeleteField"
+#define OLCReorderFields       "ReorderFields"
+#define OLCAlterFieldDefn      "AlterFieldDefn"
 #define OLCTransactions        "Transactions"
 #define OLCDeleteFeature       "DeleteFeature"
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
