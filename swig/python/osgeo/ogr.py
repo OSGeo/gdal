@@ -103,6 +103,10 @@ OJRight = _ogr.OJRight
 wkbXDR = _ogr.wkbXDR
 wkbNDR = _ogr.wkbNDR
 NullFID = _ogr.NullFID
+ALTER_NAME_FLAG = _ogr.ALTER_NAME_FLAG
+ALTER_TYPE_FLAG = _ogr.ALTER_TYPE_FLAG
+ALTER_WIDTH_PRECISION_FLAG = _ogr.ALTER_WIDTH_PRECISION_FLAG
+ALTER_ALL_FLAG = _ogr.ALTER_ALL_FLAG
 OLCRandomRead = _ogr.OLCRandomRead
 OLCSequentialWrite = _ogr.OLCSequentialWrite
 OLCRandomWrite = _ogr.OLCRandomWrite
@@ -110,6 +114,9 @@ OLCFastSpatialFilter = _ogr.OLCFastSpatialFilter
 OLCFastFeatureCount = _ogr.OLCFastFeatureCount
 OLCFastGetExtent = _ogr.OLCFastGetExtent
 OLCCreateField = _ogr.OLCCreateField
+OLCDeleteField = _ogr.OLCDeleteField
+OLCReorderFields = _ogr.OLCReorderFields
+OLCAlterFieldDefn = _ogr.OLCAlterFieldDefn
 OLCTransactions = _ogr.OLCTransactions
 OLCDeleteFeature = _ogr.OLCDeleteFeature
 OLCFastSetNextByIndex = _ogr.OLCFastSetNextByIndex
@@ -1509,6 +1516,22 @@ class Layer(_object):
         OGRERR_NONE on success. 
         """
         return _ogr.Layer_CreateField(self, *args, **kwargs)
+
+    def DeleteField(self, *args):
+        """DeleteField(self, int iField) -> OGRErr"""
+        return _ogr.Layer_DeleteField(self, *args)
+
+    def ReorderField(self, *args):
+        """ReorderField(self, int iOldFieldPos, int iNewFieldPos) -> OGRErr"""
+        return _ogr.Layer_ReorderField(self, *args)
+
+    def ReorderFields(self, *args):
+        """ReorderFields(self, int nList) -> OGRErr"""
+        return _ogr.Layer_ReorderFields(self, *args)
+
+    def AlterFieldDefn(self, *args):
+        """AlterFieldDefn(self, int iField, FieldDefn field_def, int nFlags) -> OGRErr"""
+        return _ogr.Layer_AlterFieldDefn(self, *args)
 
     def StartTransaction(self, *args):
         """
