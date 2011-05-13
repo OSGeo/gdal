@@ -37,6 +37,9 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
+ * Revision 1.50  2011-05-13 17:35:17  fwarmerdam
+ * added DBFReorderFields() and DBFAlterFields() functions (from Even)
+ *
  * Revision 1.49  2011-04-16 14:38:21  fwarmerdam
  * avoid warnings with gcc on SHP_CVSID
  *
@@ -554,6 +557,13 @@ int	SHPAPI_CALL
 
 int	SHPAPI_CALL
       DBFDeleteField( DBFHandle hDBF, int iField );
+
+int SHPAPI_CALL
+      DBFReorderFields( DBFHandle psDBF, int* panMap );
+
+int SHPAPI_CALL
+      DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
+                         char chType, int nWidth, int nDecimals );
 
 DBFFieldType SHPAPI_CALL
       DBFGetFieldInfo( DBFHandle psDBF, int iField, 
