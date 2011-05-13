@@ -208,6 +208,11 @@ typedef void retGetPoints;
 
 %constant NullFID = -1;
 
+%constant ALTER_NAME_FLAG = 1;
+%constant ALTER_TYPE_FLAG = 2;
+%constant ALTER_WIDTH_PRECISION_FLAG = 4;
+%constant ALTER_ALL_FLAG = 1 + 2 + 4;
+
 %constant char *OLCRandomRead          = "RandomRead";
 %constant char *OLCSequentialWrite     = "SequentialWrite";
 %constant char *OLCRandomWrite         = "RandomWrite";
@@ -215,6 +220,9 @@ typedef void retGetPoints;
 %constant char *OLCFastFeatureCount    = "FastFeatureCount";
 %constant char *OLCFastGetExtent       = "FastGetExtent";
 %constant char *OLCCreateField         = "CreateField";
+%constant char *OLCDeleteField         = "DeleteField";
+%constant char *OLCReorderFields       = "ReorderFields";
+%constant char *OLCAlterFieldDefn      = "AlterFieldDefn";
 %constant char *OLCTransactions        = "Transactions";
 %constant char *OLCDeleteFeature       = "DeleteFeature";
 %constant char *OLCFastSetNextByIndex  = "FastSetNextByIndex";
@@ -242,6 +250,9 @@ typedef int OGRErr;
 #define OLCFastFeatureCount    "FastFeatureCount"
 #define OLCFastGetExtent       "FastGetExtent"
 #define OLCCreateField         "CreateField"
+#define OLCDeleteField         "DeleteField"
+#define OLCReorderFields       "ReorderFields"
+#define OLCAlterFieldDefn      "AlterFieldDefn"
 #define OLCTransactions        "Transactions"
 #define OLCDeleteFeature       "DeleteFeature"
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
@@ -633,7 +644,36 @@ public:
     return OGR_L_CreateField(self, field_def, approx_ok);
   }
 %clear OGRFieldDefnShadow *field_def;
-  
+
+  OGRErr DeleteField(int iField)
+  {
+    return OGR_L_DeleteField(self, iField);
+  }
+
+  OGRErr ReorderField(int iOldFieldPos, int iNewFieldPos)
+  {
+    return OGR_L_ReorderField(self, iOldFieldPos, iNewFieldPos);
+  }
+
+  OGRErr ReorderFields(int nList, int *pList)
+  {
+    if (nList != OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(self)))
+    {
+      CPLError(CE_Failure, CPLE_IllegalArg,
+               "List should have %d elements",
+               OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(self)));
+      return OGRERR_FAILURE;
+    }
+    return OGR_L_ReorderFields(self, pList);
+  }
+
+%apply Pointer NONNULL {OGRFieldDefnShadow *field_def};
+  OGRErr AlterFieldDefn(int iField, OGRFieldDefnShadow* field_def, int nFlags)
+  {
+    return OGR_L_AlterFieldDefn(self, iField, field_def, nFlags);
+  }
+%clear OGRFieldDefnShadow *field_def;
+
   OGRErr StartTransaction() {
     return OGR_L_StartTransaction(self);
   }

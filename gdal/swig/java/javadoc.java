@@ -6334,6 +6334,14 @@ You must use this to create new fields
 on a real layer. Internally the FeatureDefn for the layer will be updated
 to reflect the new field.  Applications should never modify the FeatureDefn
 used by a layer directly.
+<p>
+This method should not be called while there are feature objects in existance that
+were obtained or created with the previous layer definition.
+<p>
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCCreateField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existings features of the
+backing file/database should be updated accordingly.
 
 @param field_def field definition to write to disk. 
 @param approx_ok If 1, the field may be created in a slightly different
@@ -6352,6 +6360,124 @@ public class Layer:public int CreateField(FieldDefn field_def, int approx_ok)
   */
 public class Layer:public int CreateField(FieldDefn field_def)
 
+
+/**
+Delete an existing field on a layer.
+<p>
+You must use this to delete existing fields
+on a real layer. Internally the FeatureDefn for the layer will be updated
+to reflect the deleted field.  Applications should never modify the FeatureDefn
+used by a layer directly.
+<p>
+This method should not be called while there are feature objects in existance that
+were obtained or created with the previous layer definition.
+<p>
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCDeleteField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existings features of the
+backing file/database should be updated accordingly.
+
+@param iField index of the field to delete.
+
+@return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+
+@since OGR 1.9.0
+*/
+public class Layer:public int DeleteField( int iField )
+
+/**
+Reorder all the fields of a layer.
+<p>
+You must use this to reorder existing fields
+on a real layer. Internally the FeatureDefn for the layer will be updated
+to reflect the reordering of the fields.  Applications should never modify the FeatureDefn
+used by a layer directly.
+<p>
+This method should not be called while there are feature objects in existance that
+were obtained or created with the previous layer definition.
+<p>
+panMap is such that,for each field definition at position i after reordering,
+its position before reordering was panMap[i].
+<p>
+For example, let suppose the fields were "0","1","2","3","4" initially.
+ReorderFields(new Integer[]{0,2,3,1,4}) will reorder them as "0","2","3","1","4".
+<p>
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCReorderFields capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existings features of the
+backing file/database should be updated accordingly.
+
+@param panMap an array of GetLayerDefn().GetFieldCount() elements which
+is a permutation of [0, GetLayerDefn().GetFieldCount()-1].
+
+@return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+
+@since OGR 1.9.0
+*/
+public class Layer:public int ReorderFields( int[] panMap )
+
+/**
+Reorder an existing field on a layer.
+<p>
+This method is a conveniency wrapper of ReorderFields() dedicated to move a single field.
+It is a non-virtual method, so drivers should implement ReorderFields() instead.
+<p>
+You must use this to reorder existing fields
+on a real layer. Internally the FeatureDefn for the layer will be updated
+to reflect the reordering of the fields.  Applications should never modify the FeatureDefn
+used by a layer directly.
+<p>
+This method should not be called while there are feature objects in existance that
+were obtained or created with the previous layer definition.
+<p>
+The field definition that was at initial position iOldFieldPos will be moved at
+position iNewFieldPos, and elements between will be shuffled accordingly.
+<p>
+For example, let suppose the fields were "0","1","2","3","4" initially.
+ReorderField(1, 3) will reorder them as "0","2","3","1","4".
+<p>
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCReorderFields capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existings features of the
+backing file/database should be updated accordingly.
+
+@param iOldFieldPos previous position of the field to move. Must be in the range [0,GetFieldCount()-1].
+@param iNewFieldPos new position of the field to move. Must be in the range [0,GetFieldCount()-1].
+
+@return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+
+@since OGR 1.9.0
+*/
+public class Layer:public int ReorderField( int iOldFieldPos, int iNewFieldPos )
+
+/**
+Alter the definition of an existing field on a layer.
+<p>
+You must use this to alter the definition of an existing field of a real layer.
+Internally the FeatureDefn for the layer will be updated
+to reflect the altered field.  Applications should never modify the FeatureDefn
+used by a layer directly.
+<p>
+This method should not be called while there are feature objects in existance that
+were obtained or created with the previous layer definition.
+<p>
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCAlterFieldDefn capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existings features of the
+backing file/database should be updated accordingly. Some drivers might also not support
+all update flags.
+
+@param iField index of the field whose definition must be altered.
+@param newFieldDefn new field definition
+@param nFlags combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG and ALTER_WIDTH_PRECISION_FLAG
+to indicate which of the name and/or type and/or width and precision fields from the new field
+definition must be taken into account.
+
+@return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+
+@since OGR 1.9.0
+*/
+public class Layer:public int AlterFieldDefn( int iField, FieldDefn newFieldDefn, int nFlags )
 
 /**
  Fetch the extent of this layer.
@@ -6826,6 +6952,15 @@ false.<p>
 
  <li> <b>OLCCreateField</b> / "CreateField": true if this layer can create 
 new fields on the current layer using CreateField(), otherwise false.<p>
+
+ <li> <b>OLCDeleteField</b> / "DeleteField": TRUE if this layer can delete
+existing fields on the current layer using DeleteField(), otherwise false.<p>
+
+ <li> <b>OLCReorderFields</b> / "ReorderFields": TRUE if this layer can reorder
+existing fields on the current layer using ReorderField() or ReorderFields(), otherwise false.<p>
+
+ <li> <b>OLCAlterFieldDefn</b> / "AlterFieldDefn": TRUE if this layer can alter
+the definition of an existing field on the current layer using AlterFieldDefn(), otherwise false.<p>
 
  <li> <b>OLCDeleteFeature</b> / "DeleteFeature": true if the DeleteFeature()
 method is supported on this layer, otherwise false.<p>

@@ -3469,6 +3469,25 @@ SWIGINTERN bool OGRLayerShadow_TestCapability(OGRLayerShadow *self,char const *c
 SWIGINTERN OGRErr OGRLayerShadow_CreateField(OGRLayerShadow *self,OGRFieldDefnShadow *field_def,int approx_ok=1){
     return OGR_L_CreateField(self, field_def, approx_ok);
   }
+SWIGINTERN OGRErr OGRLayerShadow_DeleteField(OGRLayerShadow *self,int iField){
+    return OGR_L_DeleteField(self, iField);
+  }
+SWIGINTERN OGRErr OGRLayerShadow_ReorderField(OGRLayerShadow *self,int iOldFieldPos,int iNewFieldPos){
+    return OGR_L_ReorderField(self, iOldFieldPos, iNewFieldPos);
+  }
+SWIGINTERN OGRErr OGRLayerShadow_ReorderFields(OGRLayerShadow *self,int nList,int *pList){
+    if (nList != OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(self)))
+    {
+      CPLError(CE_Failure, CPLE_IllegalArg,
+               "List should have %d elements",
+               OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(self)));
+      return OGRERR_FAILURE;
+    }
+    return OGR_L_ReorderFields(self, pList);
+  }
+SWIGINTERN OGRErr OGRLayerShadow_AlterFieldDefn(OGRLayerShadow *self,int iField,OGRFieldDefnShadow *field_def,int nFlags){
+    return OGR_L_AlterFieldDefn(self, iField, field_def, nFlags);
+  }
 SWIGINTERN OGRErr OGRLayerShadow_StartTransaction(OGRLayerShadow *self){
     return OGR_L_StartTransaction(self);
   }
@@ -6674,6 +6693,295 @@ SWIGINTERN PyObject *_wrap_Layer_CreateField(PyObject *SWIGUNUSEDPARM(self), PyO
       CPLErrorReset();
     }
     result = (OGRErr)OGRLayerShadow_CreateField(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_DeleteField(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Layer_DeleteField",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_DeleteField" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer_DeleteField" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRErr)OGRLayerShadow_DeleteField(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_ReorderField(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Layer_ReorderField",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_ReorderField" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer_ReorderField" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Layer_ReorderField" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRErr)OGRLayerShadow_ReorderField(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_ReorderFields(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  int arg2 ;
+  int *arg3 = (int *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Layer_ReorderFields",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_ReorderFields" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  {
+    /* %typemap(in,numinputs=1) (int nList, int* pList)*/
+    /* check if is List */
+    if ( !PySequence_Check(obj1) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg2 = PySequence_Size(obj1);
+    arg3 = (int*) malloc(arg2*sizeof(int));
+    for( int i = 0; i<arg2; i++ ) {
+      PyObject *o = PySequence_GetItem(obj1,i);
+      if ( !PyArg_Parse(o,"i",&arg3[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        SWIG_fail;
+      }
+      Py_DECREF(o);
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRErr)OGRLayerShadow_ReorderFields(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg3) {
+      free((void*) arg3);
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg3) {
+      free((void*) arg3);
+    }
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_AlterFieldDefn(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  int arg2 ;
+  OGRFieldDefnShadow *arg3 = (OGRFieldDefnShadow *) 0 ;
+  int arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:Layer_AlterFieldDefn",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_AlterFieldDefn" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer_AlterFieldDefn" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Layer_AlterFieldDefn" "', argument " "3"" of type '" "OGRFieldDefnShadow *""'"); 
+  }
+  arg3 = reinterpret_cast< OGRFieldDefnShadow * >(argp3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Layer_AlterFieldDefn" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  {
+    if (!arg3) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRErr)OGRLayerShadow_AlterFieldDefn(arg1,arg2,arg3,arg4);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -16753,6 +17061,10 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OGRERR_NONE on success. \n"
 		""},
+	 { (char *)"Layer_DeleteField", _wrap_Layer_DeleteField, METH_VARARGS, (char *)"Layer_DeleteField(Layer self, int iField) -> OGRErr"},
+	 { (char *)"Layer_ReorderField", _wrap_Layer_ReorderField, METH_VARARGS, (char *)"Layer_ReorderField(Layer self, int iOldFieldPos, int iNewFieldPos) -> OGRErr"},
+	 { (char *)"Layer_ReorderFields", _wrap_Layer_ReorderFields, METH_VARARGS, (char *)"Layer_ReorderFields(Layer self, int nList) -> OGRErr"},
+	 { (char *)"Layer_AlterFieldDefn", _wrap_Layer_AlterFieldDefn, METH_VARARGS, (char *)"Layer_AlterFieldDefn(Layer self, int iField, FieldDefn field_def, int nFlags) -> OGRErr"},
 	 { (char *)"Layer_StartTransaction", _wrap_Layer_StartTransaction, METH_VARARGS, (char *)"\n"
 		"Layer_StartTransaction(Layer self) -> OGRErr\n"
 		"\n"
@@ -19838,6 +20150,10 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "wkbXDR",SWIG_From_int(static_cast< int >(0)));
   SWIG_Python_SetConstant(d, "wkbNDR",SWIG_From_int(static_cast< int >(1)));
   SWIG_Python_SetConstant(d, "NullFID",SWIG_From_int(static_cast< int >(-1)));
+  SWIG_Python_SetConstant(d, "ALTER_NAME_FLAG",SWIG_From_int(static_cast< int >(1)));
+  SWIG_Python_SetConstant(d, "ALTER_TYPE_FLAG",SWIG_From_int(static_cast< int >(2)));
+  SWIG_Python_SetConstant(d, "ALTER_WIDTH_PRECISION_FLAG",SWIG_From_int(static_cast< int >(4)));
+  SWIG_Python_SetConstant(d, "ALTER_ALL_FLAG",SWIG_From_int(static_cast< int >(1+2+4)));
   SWIG_Python_SetConstant(d, "OLCRandomRead",SWIG_FromCharPtr("RandomRead"));
   SWIG_Python_SetConstant(d, "OLCSequentialWrite",SWIG_FromCharPtr("SequentialWrite"));
   SWIG_Python_SetConstant(d, "OLCRandomWrite",SWIG_FromCharPtr("RandomWrite"));
@@ -19845,6 +20161,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OLCFastFeatureCount",SWIG_FromCharPtr("FastFeatureCount"));
   SWIG_Python_SetConstant(d, "OLCFastGetExtent",SWIG_FromCharPtr("FastGetExtent"));
   SWIG_Python_SetConstant(d, "OLCCreateField",SWIG_FromCharPtr("CreateField"));
+  SWIG_Python_SetConstant(d, "OLCDeleteField",SWIG_FromCharPtr("DeleteField"));
+  SWIG_Python_SetConstant(d, "OLCReorderFields",SWIG_FromCharPtr("ReorderFields"));
+  SWIG_Python_SetConstant(d, "OLCAlterFieldDefn",SWIG_FromCharPtr("AlterFieldDefn"));
   SWIG_Python_SetConstant(d, "OLCTransactions",SWIG_FromCharPtr("Transactions"));
   SWIG_Python_SetConstant(d, "OLCDeleteFeature",SWIG_FromCharPtr("DeleteFeature"));
   SWIG_Python_SetConstant(d, "OLCFastSetNextByIndex",SWIG_FromCharPtr("FastSetNextByIndex"));
