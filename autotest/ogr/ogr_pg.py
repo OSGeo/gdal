@@ -2786,6 +2786,63 @@ def ogr_pg_57():
     return 'success'
 
 ###############################################################################
+# Test RFC35
+
+def ogr_pg_58():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_58')
+    lyr.CreateField(ogr.FieldDefn('strcolumn', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('aintcolumn', ogr.OFTInteger))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('aintcolumn', 12345)
+    lyr.CreateFeature(feat)
+    feat = None
+
+    if lyr.TestCapability(ogr.OLCReorderFields) != 0:
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCAlterFieldDefn) != 1:
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCDeleteField) != 1:
+        return 'fail'
+
+    fd = ogr.FieldDefn('anotherstrcolumn', ogr.OFTString)
+    fd.SetWidth(5)
+    lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('aintcolumn'), fd, ogr.ALTER_ALL_FLAG)
+
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat.GetField('anotherstrcolumn') != '12345':
+        gdaltest.post_reason('failed (1)')
+        return 'fail'
+
+    gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = gdaltest.pg_ds.GetLayer('ogr_pg_58')
+
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat.GetField('anotherstrcolumn') != '12345':
+        gdaltest.post_reason('failed (2)')
+        return 'fail'
+
+    if lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('anotherstrcolumn')) != 0:
+        gdaltest.post_reason('failed (3)')
+        return 'fail'
+
+    gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = gdaltest.pg_ds.GetLayer('ogr_pg_58')
+
+    if lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('failed (4)')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2821,6 +2878,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_55' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_56' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_57' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_58' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -2910,6 +2968,7 @@ gdaltest_list_internal = [
     ogr_pg_55,
     ogr_pg_56,
     ogr_pg_57,
+    ogr_pg_58,
     ogr_pg_cleanup ]
 
 ###############################################################################
