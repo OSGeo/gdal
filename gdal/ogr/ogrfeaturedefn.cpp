@@ -374,6 +374,148 @@ void OGR_FD_AddFieldDefn( OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField )
 }
 
 /************************************************************************/
+/*                           DeleteFieldDefn()                          */
+/************************************************************************/
+
+/**
+ * \brief Delete an existing field definition.
+ *
+ * To delete an existing field definition from a layer definition, do not use this
+ * function directly, but use OGRLayer::DeleteField() instead.
+ *
+ * This method should only be called while there are no OGRFeature
+ * objects in existance based on this OGRFeatureDefn.
+ *
+ * This method is the same as the C function OGR_FD_DeleteFieldDefn().
+ *
+ * @param iField the index of the field defintion.
+ * @return OGRERR_NONE in case of success.
+ * @since OGR 1.9.0
+ */
+
+OGRErr OGRFeatureDefn::DeleteFieldDefn( int iField )
+
+{
+    if (iField < 0 || iField >= nFieldCount)
+        return OGRERR_FAILURE;
+
+    if (iField < nFieldCount - 1)
+    {
+        memmove(papoFieldDefn + iField,
+                papoFieldDefn + iField + 1,
+                (nFieldCount - 1 - iField) * sizeof(void*));
+    }
+
+    nFieldCount--;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                       OGR_FD_DeleteFieldDefn()                       */
+/************************************************************************/
+
+/**
+ * \brief Delete an existing field definition.
+ *
+ * To delete an existing field definition from a layer definition, do not use this
+ * function directly, but use OGR_L_DeleteField() instead.
+ *
+ * This method should only be called while there are no OGRFeature
+ * objects in existance based on this OGRFeatureDefn.
+ *
+ * This method is the same as the C++ method OGRFeatureDefn::DeleteFieldDefn().
+ *
+ * @param hDefn handle to the feature definition.
+ * @param iField the index of the field defintion.
+ * @return OGRERR_NONE in case of success.
+ * @since OGR 1.9.0
+ */
+
+OGRErr OGR_FD_DeleteFieldDefn( OGRFeatureDefnH hDefn, int iField )
+
+{
+    return ((OGRFeatureDefn *) hDefn)->DeleteFieldDefn( iField );
+}
+
+/************************************************************************/
+/*                         ReorderFieldDefns()                          */
+/************************************************************************/
+
+/**
+ * \brief Reorder the field definitions in the array of the feature definition
+ *
+ * To reorder the field definitions in a layer definition, do not use this
+ * function directly, but use OGR_L_ReorderFields() instead.
+ *
+ * This method should only be called while there are no OGRFeature
+ * objects in existance based on this OGRFeatureDefn.
+ *
+ * This method is the same as the C function OGR_FD_ReorderFieldDefns().
+ *
+ * @param panMap an array of GetFieldCount() elements which
+ * is a permutation of [0, GetFieldCount()-1]. panMap is such that,
+ * for each field definition at position i after reordering,
+ * its position before reordering was panMap[i].
+ * @return OGRERR_NONE in case of success.
+ * @since OGR 1.9.0
+ */
+
+OGRErr OGRFeatureDefn::ReorderFieldDefns( int* panMap )
+
+{
+    if (nFieldCount == 0)
+        return OGRERR_NONE;
+
+    OGRErr eErr = OGRCheckPermutation(panMap, nFieldCount);
+    if (eErr != OGRERR_NONE)
+        return eErr;
+
+    OGRFieldDefn** papoFieldDefnNew = (OGRFieldDefn**)
+        CPLMalloc(sizeof(OGRFieldDefn*) * nFieldCount);
+
+    for(int i=0;i<nFieldCount;i++)
+    {
+        papoFieldDefnNew[i] = papoFieldDefn[panMap[i]];
+    }
+
+    CPLFree(papoFieldDefn);
+    papoFieldDefn = papoFieldDefnNew;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                     OGR_FD_ReorderFieldDefns()                       */
+/************************************************************************/
+
+/**
+ * \brief Reorder the field definitions in the array of the feature definition
+ *
+ * To reorder the field definitions in a layer definition, do not use this
+ * function directly, but use OGR_L_ReorderFields() instead.
+ *
+ * This method should only be called while there are no OGRFeature
+ * objects in existance based on this OGRFeatureDefn.
+ *
+ * This method is the same as the C++ method OGRFeatureDefn::ReorderFieldDefns().
+ *
+ * @param hDefn handle to the feature definition.
+ * @param panMap an array of GetFieldCount() elements which
+ * is a permutation of [0, GetFieldCount()-1]. panMap is such that,
+ * for each field definition at position i after reordering,
+ * its position before reordering was panMap[i].
+ * @return OGRERR_NONE in case of success.
+ * @since OGR 1.9.0
+ */
+
+OGRErr OGR_FD_ReorderFieldDefn( OGRFeatureDefnH hDefn, int* panMap )
+
+{
+    return ((OGRFeatureDefn *) hDefn)->ReorderFieldDefns( panMap );
+}
+
+/************************************************************************/
 /*                            GetGeomType()                             */
 /************************************************************************/
 

@@ -1350,3 +1350,38 @@ double OGRFastAtof(const char* pszStr)
         }
     }
 }
+
+/**
+ * Check that panPermutation is a permutation of [0,nSize-1].
+ * @param panPermutation an array of nSize elements.
+ * @param nSize size of the array.
+ * @return OGRERR_NONE if panPermutation is a permutation of [0,nSize-1].
+ * @since OGR 1.9.0
+ */
+OGRErr OGRCheckPermutation(int* panPermutation, int nSize)
+{
+    OGRErr eErr = OGRERR_NONE;
+    int* panCheck = (int*)CPLCalloc(nSize, sizeof(int));
+    int i;
+    for(i=0;i<nSize;i++)
+    {
+        if (panPermutation[i] < 0 || panPermutation[i] >= nSize)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Bad value for element %d", i);
+            eErr = OGRERR_FAILURE;
+            break;
+        }
+        if (panCheck[panPermutation[i]] != 0)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Array is not a permutation of [0,%d]",
+                     nSize - 1);
+            eErr = OGRERR_FAILURE;
+            break;
+        }
+        panCheck[panPermutation[i]] = 1;
+    }
+    CPLFree(panCheck);
+    return eErr;
+}
