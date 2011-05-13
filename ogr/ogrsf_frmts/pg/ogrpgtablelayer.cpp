@@ -66,6 +66,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     bGeometryInformationSet = FALSE;
 
     bLaunderColumnNames = TRUE;
+    bPreservePrecision = TRUE;
     bCopyActive = FALSE;
     bUseCopy = USE_COPY_UNSET;  // unknown
 
@@ -1838,7 +1839,10 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
 
     if ( bUpdateAccess )
     {
-        if( EQUAL(pszCap,OLCSequentialWrite) || EQUAL(pszCap,OLCCreateField) )
+        if( EQUAL(pszCap,OLCSequentialWrite) ||
+            EQUAL(pszCap,OLCCreateField) ||
+            EQUAL(pszCap,OLCDeleteField) ||
+            EQUAL(pszCap,OLCAlterFieldDefn) )
             return TRUE;
 
         else if( EQUAL(pszCap,OLCRandomWrite) )
@@ -1869,38 +1873,14 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                            CreateField()                             */
+/*                        OGRPGTableLayerGetType()                      */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
-
+static CPLString OGRPGTableLayerGetType(OGRFieldDefn& oField,
+                                        int bPreservePrecision,
+                                        int bApproxOK)
 {
-    PGconn              *hPGConn = poDS->GetPGConn();
-    PGresult            *hResult = NULL;
-    CPLString           osCommand;
     char                szFieldType[256];
-    OGRFieldDefn        oField( poFieldIn );
-
-    GetLayerDefn();
-
-/* -------------------------------------------------------------------- */
-/*      Do we want to "launder" the column names into Postgres          */
-/*      friendly format?                                                */
-/* -------------------------------------------------------------------- */
-    if( bLaunderColumnNames )
-    {
-        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
-
-        oField.SetName( pszSafeName );
-        CPLFree( pszSafeName );
-
-        if( EQUAL(oField.GetNameRef(),"oid") )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Renaming field 'oid' to 'oid_' to avoid conflict with internal oid field." );
-            oField.SetName( "oid_" );
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Work out the PostgreSQL type.                                   */
@@ -1970,9 +1950,49 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
                   "Can't create field %s with type %s on PostgreSQL layers.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-
-        return OGRERR_FAILURE;
+        strcpy( szFieldType, "");
     }
+
+    return szFieldType;
+}
+
+/************************************************************************/
+/*                            CreateField()                             */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
+
+{
+    PGconn              *hPGConn = poDS->GetPGConn();
+    PGresult            *hResult = NULL;
+    CPLString           osCommand;
+    CPLString           osFieldType;
+    OGRFieldDefn        oField( poFieldIn );
+
+    GetLayerDefn();
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to "launder" the column names into Postgres          */
+/*      friendly format?                                                */
+/* -------------------------------------------------------------------- */
+    if( bLaunderColumnNames )
+    {
+        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+
+        oField.SetName( pszSafeName );
+        CPLFree( pszSafeName );
+
+        if( EQUAL(oField.GetNameRef(),"oid") )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Renaming field 'oid' to 'oid_' to avoid conflict with internal oid field." );
+            oField.SetName( "oid_" );
+        }
+    }
+
+    osFieldType = OGRPGTableLayerGetType(oField, bPreservePrecision, bApproxOK);
+    if (osFieldType.size() == 0)
+        return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
@@ -1982,7 +2002,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     OGRPGClearResult( hResult );
 
     osCommand.Printf( "ALTER TABLE %s ADD COLUMN \"%s\" %s",
-                      pszSqlTableName, oField.GetNameRef(), szFieldType );
+                      pszSqlTableName, oField.GetNameRef(), osFieldType.c_str() );
     hResult = PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -2007,6 +2027,202 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     poFeatureDefn->AddFieldDefn( &oField );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            DeleteField()                             */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::DeleteField( int iField )
+{
+    PGconn              *hPGConn = poDS->GetPGConn();
+    PGresult            *hResult = NULL;
+    CPLString           osCommand;
+
+    GetLayerDefn();
+
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't delete fields on a read-only datasource.");
+        return OGRERR_FAILURE;
+    }
+
+    if (iField < 0 || iField >= poFeatureDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    poDS->FlushSoftTransaction();
+
+    hResult = PQexec(hPGConn, "BEGIN");
+    OGRPGClearResult( hResult );
+
+    osCommand.Printf( "ALTER TABLE %s DROP COLUMN \"%s\"",
+                      pszSqlTableName,
+                      poFeatureDefn->GetFieldDefn(iField)->GetNameRef() );
+    hResult = PQexec(hPGConn, osCommand);
+    if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s\n%s",
+                  osCommand.c_str(),
+                  PQerrorMessage(hPGConn) );
+
+        OGRPGClearResult( hResult );
+
+        hResult = PQexec( hPGConn, "ROLLBACK" );
+        OGRPGClearResult( hResult );
+
+        return OGRERR_FAILURE;
+    }
+
+    OGRPGClearResult( hResult );
+
+    hResult = PQexec(hPGConn, "COMMIT");
+    OGRPGClearResult( hResult );
+
+    return poFeatureDefn->DeleteFieldDefn( iField );
+}
+
+/************************************************************************/
+/*                           AlterFieldDefn()                           */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+{
+    PGconn              *hPGConn = poDS->GetPGConn();
+    PGresult            *hResult = NULL;
+    CPLString           osCommand;
+
+    GetLayerDefn();
+
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't alter field definition on a read-only datasource.");
+        return OGRERR_FAILURE;
+    }
+
+    if (iField < 0 || iField >= poFeatureDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    OGRFieldDefn       *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+    OGRFieldDefn        oField( poNewFieldDefn );
+
+    poDS->FlushSoftTransaction();
+
+    hResult = PQexec(hPGConn, "BEGIN");
+    OGRPGClearResult( hResult );
+
+    if (!(nFlags & ALTER_TYPE_FLAG))
+        oField.SetType(poFieldDefn->GetType());
+
+    if (!(nFlags & ALTER_WIDTH_PRECISION_FLAG))
+    {
+        oField.SetWidth(poFieldDefn->GetWidth());
+        oField.SetPrecision(poFieldDefn->GetPrecision());
+    }
+
+    if ((nFlags & ALTER_TYPE_FLAG) ||
+        (nFlags & ALTER_WIDTH_PRECISION_FLAG))
+    {
+        CPLString osFieldType = OGRPGTableLayerGetType(oField,
+                                                       bPreservePrecision,
+                                                       TRUE);
+        if (osFieldType.size() == 0)
+        {
+            hResult = PQexec( hPGConn, "ROLLBACK" );
+            OGRPGClearResult( hResult );
+
+            return OGRERR_FAILURE;
+        }
+
+        osCommand.Printf( "ALTER TABLE %s ALTER COLUMN \"%s\" TYPE %s",
+                        pszSqlTableName,
+                        poFieldDefn->GetNameRef(),
+                        osFieldType.c_str() );
+        hResult = PQexec(hPGConn, osCommand);
+        if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s\n%s",
+                    osCommand.c_str(),
+                    PQerrorMessage(hPGConn) );
+
+            OGRPGClearResult( hResult );
+
+            hResult = PQexec( hPGConn, "ROLLBACK" );
+            OGRPGClearResult( hResult );
+
+            return OGRERR_FAILURE;
+        }
+        OGRPGClearResult( hResult );
+    }
+
+
+    if( (nFlags & ALTER_NAME_FLAG) )
+    {
+        if (bLaunderColumnNames)
+        {
+            char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+            oField.SetName( pszSafeName );
+            CPLFree( pszSafeName );
+        }
+
+        if( EQUAL(oField.GetNameRef(),"oid") )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Renaming field 'oid' to 'oid_' to avoid conflict with internal oid field." );
+            oField.SetName( "oid_" );
+        }
+
+        if ( strcmp(poFieldDefn->GetNameRef(), oField.GetNameRef()) != 0 )
+        {
+            osCommand.Printf( "ALTER TABLE %s RENAME COLUMN \"%s\" TO \"%s\"",
+                            pszSqlTableName,
+                            poFieldDefn->GetNameRef(),
+                            oField.GetNameRef() );
+            hResult = PQexec(hPGConn, osCommand);
+            if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "%s\n%s",
+                        osCommand.c_str(),
+                        PQerrorMessage(hPGConn) );
+
+                OGRPGClearResult( hResult );
+
+                hResult = PQexec( hPGConn, "ROLLBACK" );
+                OGRPGClearResult( hResult );
+
+                return OGRERR_FAILURE;
+            }
+            OGRPGClearResult( hResult );
+        }
+    }
+
+    hResult = PQexec(hPGConn, "COMMIT");
+    OGRPGClearResult( hResult );
+
+    if (nFlags & ALTER_NAME_FLAG)
+        poFieldDefn->SetName(oField.GetNameRef());
+    if (nFlags & ALTER_TYPE_FLAG)
+        poFieldDefn->SetType(oField.GetType());
+    if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+    {
+        poFieldDefn->SetWidth(oField.GetWidth());
+        poFieldDefn->SetPrecision(oField.GetPrecision());
+    }
+
+    return OGRERR_NONE;
+
 }
 
 /************************************************************************/

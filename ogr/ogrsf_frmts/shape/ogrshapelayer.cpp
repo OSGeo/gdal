@@ -30,6 +30,7 @@
 #include "ogrshape.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_p.h"
 
 #if defined(_WIN32_WCE)
 #  include <wce_errno.h>
@@ -809,7 +810,16 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return bUpdateAccess;
-    
+
+    else if( EQUAL(pszCap,OLCDeleteField) )
+        return bUpdateAccess;
+
+    else if( EQUAL(pszCap,OLCReorderFields) )
+        return bUpdateAccess;
+
+    else if( EQUAL(pszCap,OLCAlterFieldDefn) )
+        return bUpdateAccess;
+
     else if( EQUAL(pszCap,OLCIgnoreFields) )
         return TRUE;
 
@@ -1001,6 +1011,136 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
         return OGRERR_FAILURE;
     }
+}
+
+/************************************************************************/
+/*                            DeleteField()                             */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::DeleteField( int iField )
+{
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't delete fields on a read-only shapefile layer.");
+        return OGRERR_FAILURE;
+    }
+
+    if (iField < 0 || iField >= poFeatureDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    if ( DBFDeleteField( hDBF, iField ) )
+    {
+        return poFeatureDefn->DeleteFieldDefn( iField );
+    }
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           ReorderFields()                            */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::ReorderFields( int* panMap )
+{
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't reorder fields on a read-only shapefile layer.");
+        return OGRERR_FAILURE;
+    }
+
+    if (poFeatureDefn->GetFieldCount() == 0)
+        return OGRERR_NONE;
+
+    OGRErr eErr = OGRCheckPermutation(panMap, poFeatureDefn->GetFieldCount());
+    if (eErr != OGRERR_NONE)
+        return eErr;
+
+    if ( DBFReorderFields( hDBF, panMap ) )
+    {
+        return poFeatureDefn->ReorderFieldDefns( panMap );
+    }
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           AlterFieldDefn()                           */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+{
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't alter field definition on a read-only shapefile layer.");
+        return OGRERR_FAILURE;
+    }
+
+    if (iField < 0 || iField >= poFeatureDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+
+    char chNativeType;
+    char            szFieldName[20];
+    int             nWidth, nPrecision;
+    OGRFieldType    eType = poFieldDefn->GetType();
+    DBFFieldType    eDBFType;
+
+    chNativeType = DBFGetNativeFieldType( hDBF, iField );
+    eDBFType = DBFGetFieldInfo( hDBF, iField, szFieldName,
+                                &nWidth, &nPrecision );
+
+    if ((nFlags & ALTER_TYPE_FLAG) &&
+        poNewFieldDefn->GetType() != poFieldDefn->GetType())
+    {
+        if (poNewFieldDefn->GetType() != OFTString)
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "Can only convert to OFTString");
+            return OGRERR_FAILURE;
+        }
+        else
+        {
+            chNativeType = 'C';
+            eType = poNewFieldDefn->GetType();
+        }
+    }
+
+    if (nFlags & ALTER_NAME_FLAG)
+        strncpy(szFieldName, poNewFieldDefn->GetNameRef(), 10);
+    if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+    {
+        nWidth = poNewFieldDefn->GetWidth();
+        nPrecision = poNewFieldDefn->GetPrecision();
+    }
+
+    if ( DBFAlterFieldDefn( hDBF, iField, szFieldName,
+                            chNativeType, nWidth, nPrecision) )
+    {
+        if (nFlags & ALTER_TYPE_FLAG)
+            poFieldDefn->SetType(eType);
+        if (nFlags & ALTER_NAME_FLAG)
+            poFieldDefn->SetName(szFieldName);
+        if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+        {
+            poFieldDefn->SetWidth(nWidth);
+            poFieldDefn->SetPrecision(nPrecision);
+        }
+        return OGRERR_NONE;
+    }
+    else
+        return OGRERR_FAILURE;
 }
 
 /************************************************************************/
