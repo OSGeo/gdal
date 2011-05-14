@@ -1433,7 +1433,15 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
             {
                 if (poGeom->getSpatialReference() == NULL)
                     poGeom->assignSpatialReference(poSRS);
-                char* pszGML = OGR_G_ExportToGML((OGRGeometryH)poGeom);
+                char* pszGML;
+                if (strcmp(poDS->GetVersion(), "1.1.0") == 0)
+                {
+                    char** papszOptions = CSLAddString(NULL, "FORMAT=GML3");
+                    pszGML = OGR_G_ExportToGMLEx((OGRGeometryH)poGeom, papszOptions);
+                    CSLDestroy(papszOptions);
+                }
+                else
+                    pszGML = OGR_G_ExportToGML((OGRGeometryH)poGeom);
                 osPost += "      <feature:"; osPost += osGeometryColumnName; osPost += ">";
                 osPost += pszGML;
                 osPost += "</feature:"; osPost += osGeometryColumnName; osPost += ">\n";
@@ -1667,7 +1675,15 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
         {
             if (poGeom->getSpatialReference() == NULL)
                 poGeom->assignSpatialReference(poSRS);
-            char* pszGML = OGR_G_ExportToGML((OGRGeometryH)poGeom);
+            char* pszGML;
+            if (strcmp(poDS->GetVersion(), "1.1.0") == 0)
+            {
+                char** papszOptions = CSLAddString(NULL, "FORMAT=GML3");
+                pszGML = OGR_G_ExportToGMLEx((OGRGeometryH)poGeom, papszOptions);
+                CSLDestroy(papszOptions);
+            }
+            else
+                pszGML = OGR_G_ExportToGML((OGRGeometryH)poGeom);
             osPost += "      <wfs:Value>";
             osPost += pszGML;
             osPost += "</wfs:Value>\n";
