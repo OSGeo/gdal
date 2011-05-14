@@ -699,6 +699,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         $1 = CSLAddNameValue( $1, nm, val );
         Py_DECREF(it);
       }
+      Py_DECREF(item_list);
     }
   }
   else {
