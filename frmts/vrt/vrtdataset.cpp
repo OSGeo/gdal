@@ -921,10 +921,40 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 	/* ---- Check for our sourced band 'derived' subclass ---- */
         if(pszSubClass != NULL && EQUAL(pszSubClass,"VRTDerivedRasterBand")) {
-	    poBand = new VRTDerivedRasterBand
-		(this, GetRasterCount() + 1, eType, 
-		 GetRasterXSize(), GetRasterYSize());
-	}
+
+            /* We'll need a pointer to the subclass in case we need */
+            /* to set the new band's pixel function below. */
+            VRTDerivedRasterBand* poDerivedBand;
+
+            poDerivedBand = new VRTDerivedRasterBand
+                (this, GetRasterCount() + 1, eType,
+                 GetRasterXSize(), GetRasterYSize());
+
+            /* Set the pixel function options it provided. */
+            const char* pszFuncName =
+                CSLFetchNameValue(papszOptions, "PixelFunctionType");
+            if (pszFuncName != NULL)
+                poDerivedBand->SetPixelFunctionName(pszFuncName);
+
+            const char* pszTransferTypeName =
+                CSLFetchNameValue(papszOptions, "SourceTransferType");
+            if (pszTransferTypeName != NULL) {
+                GDALDataType eTransferType =
+                    GDALGetDataTypeByName(pszTransferTypeName);
+                if (eTransferType == GDT_Unknown) {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "invalid SourceTransferType: \"%s\".",
+                              pszTransferTypeName);
+                    delete poDerivedBand;
+                    return CE_Failure;
+                }
+                poDerivedBand->SetSourceTransferType(eTransferType);
+            }
+
+            /* We're done with the derived band specific stuff, so */
+            /* we can assigned the base class pointer now. */
+            poBand = poDerivedBand;
+        }
 	else {
 
 	    /* ---- Standard sourced band ---- */
