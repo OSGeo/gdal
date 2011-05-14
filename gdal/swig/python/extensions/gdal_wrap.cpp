@@ -6850,6 +6850,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
           arg2 = CSLAddNameValue( arg2, nm, val );
           Py_DECREF(it);
         }
+        Py_DECREF(item_list);
       }
     }
     else {
