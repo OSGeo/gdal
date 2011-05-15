@@ -202,6 +202,32 @@ def test_nearblack_6():
     return 'success'
 
 ###############################################################################
+# Test -color
+
+def test_nearblack_7():
+    if test_cli_utilities.get_nearblack_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' data/whiteblackred.tif -o tmp/nearblack7.tif -color 0,0,0 -color 255,255,255 -of GTiff')
+
+    ds = gdal.Open('tmp/nearblack7.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 418 or \
+       ds.GetRasterBand(2).Checksum() != 0 or \
+       ds.GetRasterBand(3).Checksum() != 0 :
+        print(ds.GetRasterBand(1).Checksum())
+        print(ds.GetRasterBand(2).Checksum())
+        print(ds.GetRasterBand(3).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_nearblack_cleanup():
@@ -241,6 +267,10 @@ def test_nearblack_cleanup():
         os.remove('tmp/nearblack6.tif.msk')
     except:
         pass
+    try:
+        os.remove('tmp/nearblack7.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -250,6 +280,7 @@ gdaltest_list = [
     test_nearblack_4,
     test_nearblack_5,
     test_nearblack_6,
+    test_nearblack_7,
     test_nearblack_cleanup
     ]
 
