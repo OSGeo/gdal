@@ -1142,14 +1142,14 @@ convert nearly black/white borders to black
 \section msynopsis SYNOPSIS
 
 \verbatim
-nearblack [-of format] [-white] [-near dist] [-nb non_black_pixels]
+nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_black_pixels]
           [-setalpha] [-setmask] [-o outfile] [-q]  [-co "NAME=VALUE"]* infile
 \endverbatim
 
 \section mdescription DESCRIPTION
 
-This utility will scan an image and try to set all pixels that are nearly
-black (or nearly white) around the collar to exactly black (or white).  This
+This utility will scan an image and try to set all pixels that are nearly or exactly
+black, white or one or more custom colors around the collar to black or white.  This
 is often used to "fix up" lossy compressed airphotos so that color pixels
 can be treated as transparent when mosaicing. 
 
@@ -1165,8 +1165,12 @@ specific documentation for legal creation options for each format. Only valid wh
 <dt> <b>-white</b>:</dt><dd> 
 Search for nearly white (255) pixels instead of nearly black pixels.
 </dd>
+<dt> <b>-color</b> <i>c1,c2,c3...cn</i>:</b>:</dt><dd> (GDAL >= 1.9.0)
+Search for pixels near the specified color. May be specified multiple times.
+When -color is specified, the pixels that are considered as the collar are set to 0.
+</dd>
 <dt> <b>-near</b> <i>dist</i>:</dt><dd> 
-Select how far from black (or white) the pixel values can be and still considered near black (white).  Defaults to 15. 
+Select how far from black, white or custom colors the pixel values can be and still considered near black, white or custom color.  Defaults to 15. 
 </dd>
 <dt> <b>-nb</b> <i>non_black_pixels</i>:</dt><dd> 
 number of non-black pixels that can be encountered before the giving up search inwards. Defaults to 2. 
@@ -1191,10 +1195,10 @@ Byte bands.
 </dl>
 
 The algorithm processes the image one scanline at a time.  A scan "in" is done 
-from either end setting pixels to black (white) until at least 
+from either end setting pixels to black or white until at least 
 "non_black_pixels" pixels that are more than "dist" gray levels away from 
-black (white) have been encountered at which point the scan stops.  The nearly
-black (white) pixels are set to black (white). The algorithm also scans from
+black, white or custom colors have been encountered at which point the scan stops.  The nearly
+black, white or custom color pixels are set to black or white. The algorithm also scans from
 top to bottom and from bottom to top to identify indentations in the top or bottom.
 
 The processing is all done in 8bit (Bytes).
