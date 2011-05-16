@@ -1695,6 +1695,15 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     {
         GUInt32 i;
 
+        if ( poDS->sHeader.nBitDepth > 8 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Cannot create color table of RSW with nBitDepth = %d. Retry with MTW ?",
+                      poDS->sHeader.nBitDepth );
+            delete poDS;
+            return NULL;
+        }
+
         poDS->sHeader.nClrTblOffset = nCurPtr;
         poDS->nColorTableSize = 1 << poDS->sHeader.nBitDepth;
         poDS->sHeader.nClrTblSize = poDS->nColorTableSize * 4;

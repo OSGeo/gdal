@@ -320,7 +320,9 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                 const int nXError = nDeltaY << 1;
                 const int nYError = nXError - (nDeltaX << 1);
                 int nError = nXError - nDeltaX;
-                double dfDeltaVariant = (dfVariant1 - dfVariant) /
+                /* == 0 makes clang -fcatch-undefined-behavior -ftrapv happy, but if */
+                /* it is == 0, dfDeltaVariant is not really used, so any value is OK */
+                double dfDeltaVariant = (nDeltaX == 0) ? 0 : (dfVariant1 - dfVariant) /
                                                            (double)nDeltaX;
 
                 while ( nDeltaX-- >= 0 )
@@ -345,7 +347,9 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                 const int nXError = nDeltaX << 1;
                 const int nYError = nXError - (nDeltaY << 1);
                 int nError = nXError - nDeltaY;
-                double dfDeltaVariant = (dfVariant1 - dfVariant) /
+                /* == 0 makes clang -fcatch-undefined-behavior -ftrapv happy, but if */
+                /* it is == 0, dfDeltaVariant is not really used, so any value is OK */
+                double dfDeltaVariant = (nDeltaY == 0) ? 0 : (dfVariant1 - dfVariant) /
                                                            (double)nDeltaY;
 
                 while ( nDeltaY-- >= 0 )
