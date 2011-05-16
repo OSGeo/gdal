@@ -145,7 +145,7 @@ def test_nearblack_4():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(4).Checksum() != 24643:
+    if ds.GetRasterBand(4).Checksum() != 23975:
         print(ds.GetRasterBand(4).Checksum())
         gdaltest.post_reason('Bad checksum band 0')
         return 'fail'
