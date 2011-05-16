@@ -437,7 +437,6 @@ public:
     bool                bUniqueFound;
     
     int                 eModelCoordLocation;
-    int                 eForceCoordLocation;
     unsigned int        anULTCoordinate[3];
 };
 

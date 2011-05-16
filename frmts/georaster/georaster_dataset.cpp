@@ -702,11 +702,11 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     {
         if( EQUAL( pszFetched, "CENTER" ) )
         {
-            poGRD->poGeoRaster->eForceCoordLocation = MCL_CENTER;
+            poGRD->poGeoRaster->eModelCoordLocation = MCL_CENTER;
         }
         else if( EQUAL( pszFetched, "UPPERLEFT" ) )
         {
-            poGRD->poGeoRaster->eForceCoordLocation = MCL_UPPERLEFT;
+            poGRD->poGeoRaster->eModelCoordLocation = MCL_UPPERLEFT;
         }
         else 
         {
@@ -1801,18 +1801,15 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
         //  Load band's overviews
         //  -------------------------------------------------------
 
-        for( j = 0; j < poBand->nOverviewCount; j++ )
-        {
-            eErr = GDALRegenerateOverviews(
-                (GDALRasterBandH) poBand,
-                poBand->nOverviewCount,
-                (GDALRasterBandH*) poBand->papoOverviews,
-                pszResampling,
-                GDALScaledProgress,
-                pScaledProgressData);
+        eErr = GDALRegenerateOverviews(
+            (GDALRasterBandH) poBand,
+            poBand->nOverviewCount,
+            (GDALRasterBandH*) poBand->papoOverviews,
+            pszResampling,
+            GDALScaledProgress,
+            pScaledProgressData);
 
-            GDALDestroyScaledProgress( pScaledProgressData );
-        }
+        GDALDestroyScaledProgress( pScaledProgressData );
     }
 
     return eErr;
