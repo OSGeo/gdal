@@ -44,15 +44,15 @@ void SpheroidItem :: SetValuesByRadii(const char *spheroidname, double eq_radius
     spheroid_name = CPLStrdup(spheroidname);
     equitorial_radius=eq_radius;
     polar_radius=p_radius;
-    inverse_flattening=eq_radius/(eq_radius - polar_radius);
+    inverse_flattening=(eq_radius == polar_radius) ? 0 : eq_radius/(eq_radius - polar_radius);
 }
 
 void SpheroidItem :: SetValuesByEqRadiusAndInvFlattening(const char *spheroidname, double eq_radius, double inverseflattening)
 {
     spheroid_name = CPLStrdup(spheroidname);
     equitorial_radius=eq_radius;
-    polar_radius=eq_radius*(1.0 - (1.0/inverse_flattening));
     inverse_flattening=inverseflattening;
+    polar_radius=(inverse_flattening == 0) ? eq_radius : eq_radius*(1.0 - (1.0/inverse_flattening));
 }
 SpheroidItem :: SpheroidItem()
 {
