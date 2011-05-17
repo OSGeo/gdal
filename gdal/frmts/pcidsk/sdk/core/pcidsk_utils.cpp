@@ -39,6 +39,10 @@
 
 using namespace PCIDSK;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1500)
+#  define vsnprintf _vsnprintf
+#endif
+
 /************************************************************************/
 /*                         GetCurrentDateTime()                         */
 /************************************************************************/
