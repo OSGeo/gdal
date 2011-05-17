@@ -451,7 +451,8 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     
     GDALDatasetH hYDS;
     GDALRasterBandH hYBand;
-    static const char *apszOptions[] = { "COMPRESS=LZW", NULL };
+    static const char *apszOptions[] = { "COMPRESS=LZW", "BIGTIFF=IF_SAFER", 
+                                         NULL };
     CPLString osTmpFile = CPLGenerateTempFilename("");
     CPLString osYTmpFile = osTmpFile + "fill_y_work.tif";
     
