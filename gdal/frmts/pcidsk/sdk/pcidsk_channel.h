@@ -74,13 +74,21 @@ namespace PCIDSK
         virtual void PushHistory(const std::string &app,
                                  const std::string &message) = 0;
 
-        // Only applicable to FILE interleaved channels.
+        // Only applicable to FILE interleaved raw channels.
         virtual void GetChanInfo( std::string &filename, uint64 &image_offset, 
                                   uint64 &pixel_offset, uint64 &line_offset, 
                                   bool &little_endian ) const = 0;
         virtual void SetChanInfo( std::string filename, uint64 image_offset, 
                                   uint64 pixel_offset, uint64 line_offset, 
                                   bool little_endian ) = 0;
+
+        // Only applicable to CExternalChannels
+        virtual void GetEChanInfo( std::string &filename, int &echannel,
+                                   int &exoff, int &eyoff, 
+                                   int &exsize, int &eysize ) const = 0;
+        virtual void SetEChanInfo( std::string filename, int echannel,
+                                   int exoff, int eyoff, 
+                                   int exsize, int eysize ) = 0;
     };
 } // end namespace PCIDSK
 
