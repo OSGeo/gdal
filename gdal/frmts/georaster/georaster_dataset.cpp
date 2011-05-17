@@ -468,8 +468,12 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     pszFetched = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
 
+    bool bInterleve_ind = false;
+
     if( pszFetched )
     {
+        bInterleve_ind = true;
+
         if( EQUAL( pszFetched, "BAND" ) ||  EQUAL( pszFetched, "BSQ" ) )
         {
             poGRW->sInterleaving = "BSQ";
@@ -504,6 +508,12 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         {
             poGRW->nBandBlockSize = nBands;
         }
+    }
+
+    if( bInterleve_ind == false && 
+      ( poGRW->nBandBlockSize == 3 || poGRW->nBandBlockSize == 4 ) ) 
+    {
+      poGRW->sInterleaving = "BIP";
     }
 
     pszFetched = CSLFetchNameValue( papszOptions, "BLOCKING" );
@@ -692,11 +702,11 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     {
         if( EQUAL( pszFetched, "CENTER" ) )
         {
-            poGRD->poGeoRaster->eForceCoordLocation = MCL_CENTER;
+            poGRD->poGeoRaster->eModelCoordLocation = MCL_CENTER;
         }
         else if( EQUAL( pszFetched, "UPPERLEFT" ) )
         {
-            poGRD->poGeoRaster->eForceCoordLocation = MCL_UPPERLEFT;
+            poGRD->poGeoRaster->eModelCoordLocation = MCL_UPPERLEFT;
         }
         else 
         {
@@ -1791,18 +1801,15 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
         //  Load band's overviews
         //  -------------------------------------------------------
 
-        for( j = 0; j < poBand->nOverviewCount; j++ )
-        {
-            eErr = GDALRegenerateOverviews(
-                (GDALRasterBandH) poBand,
-                poBand->nOverviewCount,
-                (GDALRasterBandH*) poBand->papoOverviews,
-                pszResampling,
-                GDALScaledProgress,
-                pScaledProgressData);
+        eErr = GDALRegenerateOverviews(
+            (GDALRasterBandH) poBand,
+            poBand->nOverviewCount,
+            (GDALRasterBandH*) poBand->papoOverviews,
+            pszResampling,
+            GDALScaledProgress,
+            pScaledProgressData);
 
-            GDALDestroyScaledProgress( pScaledProgressData );
-        }
+        GDALDestroyScaledProgress( pScaledProgressData );
     }
 
     return eErr;
