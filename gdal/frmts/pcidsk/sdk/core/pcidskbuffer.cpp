@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <sstream>
 
 using namespace PCIDSK;
 
@@ -193,14 +194,20 @@ double PCIDSKBuffer::GetDouble( int offset, int size ) const
             value_str[i] = 'E';
     }
 
-    return atof(value_str.c_str());
+    std::stringstream oStream;
+    oStream << value_str;
+    double dValue = 0.0;
+    oStream >> dValue;
+
+    return dValue;
+//    return atof(value_str.c_str());
 }
 
 /************************************************************************/
 /*                                Put()                                 */
 /************************************************************************/
 
-void PCIDSKBuffer::Put( const char *value, int offset, int size )
+void PCIDSKBuffer::Put( const char *value, int offset, int size, bool null_term )
 
 {
     if( offset + size > buffer_size )
@@ -214,6 +221,21 @@ void PCIDSKBuffer::Put( const char *value, int offset, int size )
         memset( buffer + offset, ' ', size );
 
     memcpy( buffer + offset, value, v_size );
+
+    if (null_term)
+    {
+        *(buffer + offset + v_size) = '\0';
+    }
+}
+
+/************************************************************************/
+/*                            PutBin(double)                            */
+/************************************************************************/
+
+void PCIDSKBuffer::PutBin(double value, int offset)
+{
+    const char* pszValue = (const char*)&value;
+    memcpy( buffer + offset, pszValue, 8 );
 }
 
 /************************************************************************/

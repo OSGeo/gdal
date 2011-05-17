@@ -42,7 +42,8 @@ struct CPCIDSKGCP2Segment::PCIDSKGCP2SegInfo
     unsigned int num_gcps;
     PCIDSKBuffer seg_data;
     
-    std::string map_units;
+    std::string map_units;   ///< PCI mapunits string
+    std::string proj_parms;  ///< Additional projection parameters
     unsigned int num_proj;
     bool changed;
 };
@@ -70,7 +71,7 @@ void CPCIDSKGCP2Segment::Load()
     
     // Read the the segment in. The first block has information about
     // the structure of the GCP segment (how many, the projection, etc.)
-    pimpl_->seg_data.SetSize( (int) (data_size - 1024) );
+    pimpl_->seg_data.SetSize(data_size - 1024);
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
     
     // check for 'GCP2    ' in the first 8 bytes
@@ -79,6 +80,7 @@ void CPCIDSKGCP2Segment::Load()
         // write it out and return
         pimpl_->changed = true;
         pimpl_->map_units = "LAT/LONG D000";
+        pimpl_->proj_parms = "";
         pimpl_->num_gcps = 0;
         loaded_ = true;
         return;
@@ -98,6 +100,9 @@ void CPCIDSKGCP2Segment::Load()
     
     // Extract the map units string:
     pimpl_->map_units = std::string(pimpl_->seg_data.buffer + 24, 16);
+    
+    // Extract the projection parameters string
+    pimpl_->proj_parms = std::string(pimpl_->seg_data.buffer + 256, 256);
     
     // Get the number of alternative projections (should be 0!)
     pimpl_->num_proj = pimpl_->seg_data.GetInt(40, 8);
@@ -133,10 +138,11 @@ void CPCIDSKGCP2Segment::Load()
         double x_err = pimpl_->seg_data.GetDouble(offset + 122, 14);
         double y_err = pimpl_->seg_data.GetDouble(offset + 136, 14);
         
-        std::string gcp_id(pimpl_->seg_data.buffer + 192, 64);
+        std::string gcp_id(pimpl_->seg_data.buffer + offset + 192, 64);
         
         PCIDSK::GCP gcp(x, y, elev,
                         line, pixel, gcp_id, pimpl_->map_units, 
+                        pimpl_->proj_parms,
                         x_err, y_err, elev_err,
                         line_err, pix_err);
         gcp.SetElevationUnit(elev_unit);
@@ -182,12 +188,12 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
     int num_blocks = (pimpl_->num_gcps + 1) / 2;
     
     // This will have to change when we have proper projections support
-    if (pimpl_->gcps.size() > 0 &&
-        pimpl_->map_units != pimpl_->gcps[0].GetMapUnits()) {
-        pimpl_->map_units = pimpl_->gcps[0].GetMapUnits();
+
+    if (pimpl_->gcps.size() > 0)
+    {
+        pimpl_->gcps[0].GetMapUnits(pimpl_->map_units, 
+            pimpl_->proj_parms);
     }
-    
-    data_size = num_blocks * 512 + 1024;
     
     pimpl_->seg_data.SetSize(num_blocks * 512 + 512);
     
@@ -197,6 +203,7 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
     pimpl_->seg_data.Put((int)pimpl_->gcps.size(), 16, 8);
     pimpl_->seg_data.Put(pimpl_->map_units.c_str(), 24, 16);
     pimpl_->seg_data.Put((int)0, 40, 8);
+    pimpl_->seg_data.Put(pimpl_->proj_parms.c_str(), 256, 256);
     
     // Time to write GCPs out:
     std::vector<PCIDSK::GCP>::const_iterator iter =
@@ -215,9 +222,9 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
         pimpl_->seg_data.Put("0", offset + 1, 5);
         
         // Start writing out the GCP values
-        pimpl_->seg_data.Put((*iter).GetPixel(), offset + 6, 14);
-        pimpl_->seg_data.Put((*iter).GetLine(), offset + 20, 14);
-        pimpl_->seg_data.Put((*iter).GetZ(), offset + 34, 12);
+        pimpl_->seg_data.Put((*iter).GetPixel(), offset + 6, 14, "%14.4f");
+        pimpl_->seg_data.Put((*iter).GetLine(), offset + 20, 14, "%14.4f");
+        pimpl_->seg_data.Put((*iter).GetZ(), offset + 34, 12, "%12.4f");
         
         GCP::EElevationUnit unit;
         GCP::EElevationDatum datum;
@@ -250,10 +257,7 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
             datum_c[0] = 'M';
             break;
         }
-
-		unit_c[1] = '\0';
-		datum_c[1] = '\0';
-        
+      
         unit_c[1] = '\0';
         datum_c[1] = '\0';
         
@@ -261,14 +265,14 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
         pimpl_->seg_data.Put(unit_c, offset + 46, 1);
         pimpl_->seg_data.Put(datum_c, offset + 47, 1);
         
-        pimpl_->seg_data.Put((*iter).GetX(), offset + 48, 22);
-        pimpl_->seg_data.Put((*iter).GetY(), offset + 70, 22);
-        pimpl_->seg_data.Put((*iter).GetPixelErr(), offset + 92, 10);
-        pimpl_->seg_data.Put((*iter).GetLineErr(), offset + 102, 10);
-        pimpl_->seg_data.Put((*iter).GetZErr(), offset + 112, 10);
-        pimpl_->seg_data.Put((*iter).GetXErr(), offset + 122, 14);
-        pimpl_->seg_data.Put((*iter).GetYErr(), offset + 136, 14);
-        pimpl_->seg_data.Put((*iter).GetIDString(), offset + 192, 64);
+        pimpl_->seg_data.Put((*iter).GetX(), offset + 48, 22, "%22.14e");
+        pimpl_->seg_data.Put((*iter).GetY(), offset + 70, 22, "%22.14e");
+        pimpl_->seg_data.Put((*iter).GetPixelErr(), offset + 92, 10, "%10.4f");
+        pimpl_->seg_data.Put((*iter).GetLineErr(), offset + 102, 10, "%10.4f");
+        pimpl_->seg_data.Put((*iter).GetZErr(), offset + 112, 10, "%10.4f");
+        pimpl_->seg_data.Put((*iter).GetXErr(), offset + 122, 14, "%14.4e");
+        pimpl_->seg_data.Put((*iter).GetYErr(), offset + 136, 14, "%14.4e");
+        pimpl_->seg_data.Put((*iter).GetIDString(), offset + 192, 64, true );
         
         id++;
         iter++;

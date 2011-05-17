@@ -91,6 +91,12 @@ namespace PCIDSK
         virtual void SetChanInfo( std::string filename, uint64 image_offset, 
                                   uint64 pixel_offset, uint64 line_offset, 
                                   bool little_endian );
+        virtual void GetEChanInfo( std::string &filename, int &echannel,
+                                   int &exoff, int &eyoff, 
+                                   int &exsize, int &eysize ) const;
+        virtual void SetEChanInfo( std::string filename, int echannel,
+                                   int exoff, int eyoff, 
+                                   int exsize, int eysize );
 
     private:
         bool      loaded;

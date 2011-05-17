@@ -42,6 +42,7 @@
 #include "pcidsk_utils.h"
 #include "core/sysvirtualfile.h"
 #include "core/cpcidskfile.h"
+#include "core/mutexholder.h"
 #include "segment/sysblockmap.h"
 #include <cassert>
 #include <cstring>
@@ -64,6 +65,9 @@ SysVirtualFile::SysVirtualFile( CPCIDSKFile *file, int start_block,
                                 int image_index )
 
 {
+    io_handle = NULL;
+    io_mutex = NULL;
+
     file_length = image_length;
     this->file = file;
     this->sysblockmap = sysblockmap;
@@ -214,6 +218,11 @@ SysVirtualFile::WriteToFile( const void *buffer, uint64 offset, uint64 size )
 {
     uint64 buffer_offset = 0;
 
+    if(io_handle == NULL || io_mutex == NULL)
+        file->GetIODetails( &io_handle, &io_mutex );
+
+    MutexHolder oMutex(*io_mutex);
+
     while( buffer_offset < size )
     {
         int request_block = (int) ((offset + buffer_offset) / block_size);
@@ -257,6 +266,11 @@ SysVirtualFile::WriteToFile( const void *buffer, uint64 offset, uint64 size )
 void SysVirtualFile::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
 {
+    if(io_handle == NULL || io_mutex == NULL)
+        file->GetIODetails( &io_handle, &io_mutex );
+
+    MutexHolder oMutex(*io_mutex);
+
     uint64 buffer_offset = 0;
 #if 0
     printf("Requesting region at %llu of size %llu\n", offset, size);
@@ -348,6 +362,11 @@ void SysVirtualFile::LoadBlock( int requested_block )
 void SysVirtualFile::FlushDirtyBlock(void)
 {
     if (loaded_block_dirty) {
+        if(io_handle == NULL || io_mutex == NULL)
+            file->GetIODetails( &io_handle, &io_mutex );
+
+        MutexHolder oMutex(*io_mutex);
+
         PCIDSKSegment *data_seg_obj =
             file->GetSegment( GetBlockSegment( loaded_block ) );
         
@@ -367,6 +386,11 @@ void SysVirtualFile::GrowVirtualFile(std::ptrdiff_t requested_block)
 
     if( requested_block == blocks_loaded )
     {
+        if(io_handle == NULL || io_mutex == NULL)
+            file->GetIODetails( &io_handle, &io_mutex );
+
+        MutexHolder oMutex(*io_mutex);
+
         int new_seg;
         int offset;
 
@@ -389,6 +413,11 @@ void SysVirtualFile::WriteBlocks(int first_block,
                                  int block_count,
                                  void* const buffer)
 {
+    if(io_handle == NULL || io_mutex == NULL)
+        file->GetIODetails( &io_handle, &io_mutex );
+
+    MutexHolder oMutex(*io_mutex);
+
     FlushDirtyBlock();
     // Iterate through all the blocks to be written, first, then
     // grow the virtual file
@@ -454,7 +483,13 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
                                 int requested_block_count,
                                 void* const buffer)
 {
+    if(io_handle == NULL || io_mutex == NULL)
+        file->GetIODetails( &io_handle, &io_mutex );
+
+    MutexHolder oMutex(*io_mutex);
+
     FlushDirtyBlock();
+
     unsigned int blocks_read = 0;
     unsigned int current_start = requested_block_start;
     

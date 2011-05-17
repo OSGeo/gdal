@@ -52,7 +52,7 @@ using namespace PCIDSK;
  * @param channel_count the number of channels to create.
  * @param channel_types an array of types for all the channels, or NULL for
  * all CHN_8U channels.
- * @param option creation options (interleaving, etc)
+ * @param options creation options (interleaving, etc)
  * @param interfaces Either NULL to use default interfaces, or a pointer
  * to a populated interfaces object. 
  *
@@ -90,6 +90,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     std::string compression = "NONE";
     bool nozero = false;
     bool nocreate = false;
+    bool externallink = false;
     int  blocksize = 127;
 
     UCaseStr( options );
@@ -107,6 +108,11 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     {
         if( strncmp(options.c_str(),"FILENOCREATE",12) == 0 )
             nocreate = true;
+        else if( strncmp(options.c_str(),"FILELINK",8) == 0 )
+        {
+            nocreate = true;
+            externallink = true;
+        }
         interleaving = "FILE";
     }
     else
@@ -347,6 +353,15 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     if( strncmp(interleaving,"FILE",4) == 0 )
         ih.Put( "<unintialized>", 64, 64 );
     
+    if( externallink )
+    {
+        // IHi.6.7 - IHi.6.10
+        ih.Put( 0, 250, 8 ); 
+        ih.Put( 0, 258, 8 );
+        ih.Put( pixels, 266, 8 );
+        ih.Put( lines, 274, 8 );
+    }
+
     // IHi.3 - Creation time and date.
     ih.Put( current_time, 128, 16 );
 

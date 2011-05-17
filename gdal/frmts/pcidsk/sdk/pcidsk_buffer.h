@@ -61,11 +61,15 @@ namespace PCIDSK
         int64       GetInt64( int offset, int size ) const;
         uint64      GetUInt64( int offset, int size ) const;
 
-        void        Put( const char *value,  int offset, int size );
+        void        Put( const char *value,  int offset, int size, bool null_term = false );
         void        Put( uint64 value, int offset, int size );
         void        Put( double value, int offset, int size, const char *fmt=NULL );
         void        Put( int value, int offset, int size ) 
             { Put( (uint64) value, offset, size ); }
+        void        Put( unsigned int value, int offset, int size ) 
+            { Put( (uint64) value, offset, size ); }
+
+        void        PutBin(double value, int offset);
 
         void        SetSize( int size );
         

@@ -39,7 +39,7 @@ namespace PCIDSK
 /*                            PCIDSKSegment                             */
 /************************************************************************/
 
-//! Public tnterface for the PCIDSK Segment Type
+//! Public interface for the PCIDSK Segment Type
 
     class PCIDSKSegment 
     {
