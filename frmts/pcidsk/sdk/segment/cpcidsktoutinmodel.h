@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Purpose:  Primary include file for PCIDSK SDK.
+ * Purpose: Support for reading and manipulating PCIDSK Toutin Segments
  * 
  ******************************************************************************
  * Copyright (c) 2009
@@ -24,62 +24,45 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-
-#ifndef PCIDSK_CONFIG_H_INCLUDED
-#define PCIDSK_CONFIG_H_INCLUDED
+#ifndef __INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H
+#define __INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H
+ 
+#include "pcidsk_toutin.h"
+#include "segment/cpcidsksegment.h"
+#include "segment/cpcidskephemerissegment.h"
 
 namespace PCIDSK {
+    class PCIDSKFile;
 
-    typedef unsigned char  uint8;
+    class CPCIDSKToutinModelSegment : public PCIDSKToutinSegment,
+                                      public CPCIDSKEphemerisSegment
+    {
+    public:
+        CPCIDSKToutinModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
+        ~CPCIDSKToutinModelSegment();
 
-#ifndef _PCI_TYPES
-    typedef int            int32;
-    typedef unsigned int   uint32;
-    typedef short          int16;
-    typedef unsigned short uint16;
-    
-#if defined(_MSC_VER)  
-    typedef __int64          int64;
-    typedef unsigned __int64 uint64;
-#else
-    typedef long long          int64;
-    typedef unsigned long long uint64;
-#endif
+        SRITInfo_t GetInfo() const;
+        void SetInfo(const SRITInfo_t& poInfo);
 
-#endif // _PCI_TYPES
+        //synchronize the segment on disk.
+        void Synchronize();
+    private:
+        
+        // Helper housekeeping functions
+        void Load();
+        void Write();
 
+    //functions to read/write binary information
+    private:
+        //Toutin informations.
+        SRITInfo_t* mpoInfo;
+
+        SRITInfo_t *BinaryToSRITInfo();
+        void SRITInfoToBinary( SRITInfo_t *SRITModel);
+
+        int GetSensor( EphemerisSeg_t *OrbitPtr);
+        int GetModel( int nSensor );
+    };
 }
 
-#ifdef _MSC_VER
-# ifdef LIBPCIDSK_EXPORTS
-#  define PCIDSK_DLL     __declspec(dllexport)
-# else
-#  define PCIDSK_DLL
-# endif
-#else
-#  define PCIDSK_DLL
-#endif
-
-#if defined(__MSVCRT__) || defined(_MSC_VER)
-  #define PCIDSK_FRMT_64_WITHOUT_PREFIX     "I64"
-#else
-  #define PCIDSK_FRMT_64_WITHOUT_PREFIX     "ll"
-#endif
-
-// #define MISSING_VSNPRINTF
-
-/**
- * Versioning in the PCIDSK SDK
- * The version number for the PCIDSK SDK is to be used as follows:
- *  <ul>
- *  <li> If minor changes to the underlying fundamental classes are made,
- *          but no linkage-breaking changes are made, increment the minor
- *          number.
- *  <li> If major changes are made to the underlying interfaces that will
- *          break linkage, increment the major number.
- *  </ul>
- */
-#define PCIDSK_SDK_MAJOR_VERSION    0
-#define PCIDSK_SDK_MINOR_VERSION    1
-
-#endif // PCIDSK_CONFIG_H_INCLUDED
+#endif // __INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H

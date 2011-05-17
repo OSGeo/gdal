@@ -39,6 +39,7 @@
 #define __INCLUDE_CORE_SYSVIRTUALFILE_H
 
 #include "pcidsk_buffer.h"
+#include "pcidsk_mutex.h"
 
 #include <vector>
 
@@ -70,6 +71,9 @@ namespace PCIDSK
     
     private:
         CPCIDSKFile           *file;
+        void                 **io_handle;
+        Mutex                **io_mutex;
+
         SysBlockMap           *sysblockmap;
         int                    image_index;
 

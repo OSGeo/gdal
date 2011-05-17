@@ -505,3 +505,31 @@ void CPCIDSKBitmap::SetChanInfo( std::string filename, uint64 image_offset,
 {
     ThrowPCIDSKException( "Attempt to SetChanInfo() on a bitmap." );
 }
+
+/************************************************************************/
+/*                            GetEChanInfo()                            */
+/************************************************************************/
+void CPCIDSKBitmap::GetEChanInfo( std::string &filename, int &echannel,
+                                  int &exoff, int &eyoff, 
+                                  int &exsize, int &eysize ) const
+    
+{
+    echannel = 0;
+    exoff = 0;
+    eyoff = 0;
+    exsize = 0;
+    eysize = 0;
+    filename = "";
+}
+
+/************************************************************************/
+/*                            SetEChanInfo()                            */
+/************************************************************************/
+
+void CPCIDSKBitmap::SetEChanInfo( std::string filename, int echannel,
+                                  int exoff, int eyoff, 
+                                  int exsize, int eysize )
+
+{
+    ThrowPCIDSKException( "Attempt to SetEChanInfo() on a bitmap." );
+}

@@ -1,3 +1,30 @@
+/******************************************************************************
+ *
+ * Purpose: Declaration of the PCIDSK::GCP class.
+ * 
+ ******************************************************************************
+ * Copyright (c) 2009
+ * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
 #ifndef __INCLUDE_PCIDSK_SRC_GCP_H
 #define __INCLUDE_PCIDSK_SRC_GCP_H
 
@@ -22,7 +49,8 @@ namespace PCIDSK {
         GCP(double x, double y, double z,
             double line, double pix,
             std::string const& gcp_id,
-            std::string const& map_units, // TODO: Add ProjParms?
+            std::string const& map_units, 
+            std::string const& proj_parms = "",
             double xerr = 0.0, double yerr = 0.0, double zerr = 0.0,
             double line_err = 0.0, double pix_err = 0.0)
         {
@@ -39,12 +67,15 @@ namespace PCIDSK {
             
             raster_error_[1] = line_err;
             raster_error_[0] = pix_err;
+
+            std::memset(gcp_id_, ' ', 64);
             
             std::strncpy(gcp_id_, gcp_id.c_str(),
                          gcp_id.size() > 64 ? 64 : gcp_id.size());
-            gcp_id_[64] = '\0';
+            gcp_id_[gcp_id.size() > 64 ? 64 : gcp_id.size()] = '\0';
             
             this->map_units_ = map_units;
+            this->proj_parms_ = proj_parms;
             
             elevation_unit_ = EMetres;
             elevation_datum_ = EEllipsoidal;
@@ -114,8 +145,11 @@ namespace PCIDSK {
         double GetLine() const { return raster_point_[1]; }
         double GetLineErr() const { return raster_error_[1]; }
         
-        std::string const& GetMapUnits(void) const { return map_units_; }
-        void SetMapUnits(std::string const& map_units) { map_units_ = map_units; }
+        void GetMapUnits(std::string& map_units, std::string& proj_parms) const 
+        { map_units = map_units_; proj_parms = proj_parms_;}
+        void SetMapUnits(std::string const& map_units,
+            std::string const& proj_parms) { map_units_ = map_units; 
+                                             proj_parms_ = proj_parms;}
         
         const char* GetIDString(void) const { return gcp_id_; }
     private:
@@ -136,6 +170,7 @@ namespace PCIDSK {
             raster_error_[1] = gcp.raster_error_[1];
             
             this->map_units_ = gcp.map_units_;
+            this->proj_parms_ = gcp.proj_parms_;
             this->iscp_ = gcp.iscp_;
             
             std::strncpy(this->gcp_id_, gcp.gcp_id_, 64);
@@ -160,7 +195,8 @@ namespace PCIDSK {
         
         char gcp_id_[65];
         
-        std::string map_units_;
+        std::string map_units_; ///< PCI mapunits string
+        std::string proj_parms_;  ///< PCI projection parameters string
     };
 } // end namespace PCIDSK
 

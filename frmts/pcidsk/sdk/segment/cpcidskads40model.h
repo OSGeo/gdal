@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Purpose:  Primary include file for PCIDSK SDK.
+ * Purpose: Support for reading and manipulating PCIDSK ADS40 Segments
  * 
  ******************************************************************************
  * Copyright (c) 2009
@@ -24,62 +24,39 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-
-#ifndef PCIDSK_CONFIG_H_INCLUDED
-#define PCIDSK_CONFIG_H_INCLUDED
-
+#ifndef __INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
+#define __INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
+ 
+#include "pcidsk_ads40.h"
+#include "segment/cpcidsksegment.h"
+ 
 namespace PCIDSK {
-
-    typedef unsigned char  uint8;
-
-#ifndef _PCI_TYPES
-    typedef int            int32;
-    typedef unsigned int   uint32;
-    typedef short          int16;
-    typedef unsigned short uint16;
+    class PCIDSKFile;
     
-#if defined(_MSC_VER)  
-    typedef __int64          int64;
-    typedef unsigned __int64 uint64;
-#else
-    typedef long long          int64;
-    typedef unsigned long long uint64;
-#endif
+    class CPCIDSKADS40ModelSegment : public PCIDSKADS40Segment,
+                                     public CPCIDSKSegment
+    {
+    public:
+        CPCIDSKADS40ModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
+        ~CPCIDSKADS40ModelSegment();
+        
+        // Get path
+        std::string GetPath(void) const;
+        // Set path
+        void SetPath(const std::string& oPath);
 
-#endif // _PCI_TYPES
-
+        //synchronize the segment on disk.
+        void Synchronize();
+    private:
+        // Helper housekeeping functions
+        void Load();
+        void Write();
+        
+        struct PCIDSKADS40Info;
+        PCIDSKADS40Info *pimpl_;
+        bool loaded_;
+        bool mbModified;
+    };
 }
 
-#ifdef _MSC_VER
-# ifdef LIBPCIDSK_EXPORTS
-#  define PCIDSK_DLL     __declspec(dllexport)
-# else
-#  define PCIDSK_DLL
-# endif
-#else
-#  define PCIDSK_DLL
-#endif
-
-#if defined(__MSVCRT__) || defined(_MSC_VER)
-  #define PCIDSK_FRMT_64_WITHOUT_PREFIX     "I64"
-#else
-  #define PCIDSK_FRMT_64_WITHOUT_PREFIX     "ll"
-#endif
-
-// #define MISSING_VSNPRINTF
-
-/**
- * Versioning in the PCIDSK SDK
- * The version number for the PCIDSK SDK is to be used as follows:
- *  <ul>
- *  <li> If minor changes to the underlying fundamental classes are made,
- *          but no linkage-breaking changes are made, increment the minor
- *          number.
- *  <li> If major changes are made to the underlying interfaces that will
- *          break linkage, increment the major number.
- *  </ul>
- */
-#define PCIDSK_SDK_MAJOR_VERSION    0
-#define PCIDSK_SDK_MINOR_VERSION    1
-
-#endif // PCIDSK_CONFIG_H_INCLUDED
+#endif // __INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
