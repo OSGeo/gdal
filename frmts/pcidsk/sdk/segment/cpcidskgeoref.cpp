@@ -155,6 +155,8 @@ void CPCIDSKGeoref::Load()
         ThrowPCIDSKException( "Unexpected GEO segment type: %s", 
                               seg_data.Get(0,16) );
     }
+
+    loaded = true;
 }
 
 /************************************************************************/

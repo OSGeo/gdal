@@ -98,6 +98,10 @@ namespace PCIDSK {
         // Set the number of lines/pixels
         virtual void SetRasterSize(const unsigned int lines, const unsigned int pixels) = 0;
         
+        // Set/get the downsample factor
+        virtual void SetDownsample(const unsigned int downsample) = 0;
+        virtual unsigned int GetDownsample(void) const = 0;
+
         // TODO: Setting/getting detailed projection params (just GCTP params?)
 
         // Virtual destructor

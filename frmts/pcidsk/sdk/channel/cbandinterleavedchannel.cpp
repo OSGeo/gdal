@@ -37,10 +37,12 @@
 #include "pcidsk_file.h"
 #include "core/pcidsk_utils.h"
 #include "core/cpcidskfile.h"
+#include "core/clinksegment.h"
 #include "channel/cbandinterleavedchannel.h"
 #include <cassert>
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 
 using namespace PCIDSK;
 
@@ -81,6 +83,8 @@ CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
 /*      Establish the file we will be accessing.                        */
 /* -------------------------------------------------------------------- */
     image_header.Get(64,64,filename);
+
+    filename = MassageLink( filename );
 
     if( filename.length() == 0 )
         file->GetIODetails( &io_handle_p, &io_mutex_p );
@@ -283,7 +287,7 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
 /*                            GetChanInfo()                             */
 /************************************************************************/
 void CBandInterleavedChannel
-::GetChanInfo( std::string &filename, uint64 &image_offset, 
+::GetChanInfo( std::string &filename_ret, uint64 &image_offset, 
                uint64 &pixel_offset, uint64 &line_offset, 
                bool &little_endian ) const
 
@@ -300,7 +304,8 @@ void CBandInterleavedChannel
     PCIDSKBuffer ih(64);
     file->ReadFromFile( ih.buffer, ih_offset+64, 64 );
 
-    ih.Get(0,64,filename);
+    ih.Get(0,64,filename_ret);
+    filename_ret = MassageLink( filename_ret );
 }
 
 /************************************************************************/
@@ -315,16 +320,77 @@ void CBandInterleavedChannel
 {
     if( ih_offset == 0 )
         ThrowPCIDSKException( "No Image Header available for this channel." );
-        
+
 /* -------------------------------------------------------------------- */
-/*      Update the image header.                                        */
+/*      Fetch the existing image header.                                */
 /* -------------------------------------------------------------------- */
     PCIDSKBuffer ih(1024);
 
     file->ReadFromFile( ih.buffer, ih_offset, 1024 );
 
+/* -------------------------------------------------------------------- */
+/*      If the linked filename is too long to fit in the 64             */
+/*      character IHi.2 field, then we need to use a link segment to    */
+/*      store the filename.                                             */
+/* -------------------------------------------------------------------- */
+    std::string IHi2_filename;
+    
+    if( filename.size() > 64 )
+    {
+        int link_segment;
+        
+        ih.Get( 64, 64, IHi2_filename );
+                
+        if( IHi2_filename.substr(0,3) == "LNK" )
+        {
+            link_segment = std::atoi( IHi2_filename.c_str() + 4 );
+        }
+        else
+        {
+            char link_filename[64];
+           
+            link_segment = 
+                file->CreateSegment( "Link    ", 
+                                     "Long external channel filename link.", 
+                                     SEG_SYS, 1 );
+
+            sprintf( link_filename, "LNK %4d", link_segment );
+            IHi2_filename = link_filename;
+        }
+
+        CLinkSegment *link = 
+            dynamic_cast<CLinkSegment*>( file->GetSegment( link_segment ) );
+        
+        if( link != NULL )
+        {
+            link->SetPath( filename );
+            link->Synchronize();
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      If we used to have a link segment but no longer need it, we     */
+/*      need to delete the link segment.                                */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        ih.Get( 64, 64, IHi2_filename );
+                
+        if( IHi2_filename.substr(0,3) == "LNK" )
+        {
+            int link_segment = std::atoi( IHi2_filename.c_str() + 4 );
+
+            file->DeleteSegment( link_segment );
+        }
+        
+        IHi2_filename = filename;
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Update the image header.                                        */
+/* -------------------------------------------------------------------- */
     // IHi.2
-    ih.Put( filename.c_str(), 64, 64 );
+    ih.Put( IHi2_filename.c_str(), 64, 64 );
 
     // IHi.6.1
     ih.Put( image_offset, 168, 16 );
@@ -372,3 +438,38 @@ void CBandInterleavedChannel
     if( pixel_type == CHN_8U )
         needs_swap = 0;
 }
+
+/************************************************************************/
+/*                            MassageLink()                             */
+/*                                                                      */
+/*      Return the filename after applying translation of long          */
+/*      linked filenames using a link segment.                          */
+/************************************************************************/
+
+std::string CBandInterleavedChannel::MassageLink( std::string filename_in ) const
+
+{
+    if (filename_in.find("LNK") == 0)
+    {
+        std::string seg_str(filename_in, 4, 4);
+        unsigned int seg_num = std::atoi(seg_str.c_str());
+        
+        if (seg_num == 0)
+        {
+            throw PCIDSKException("Unable to find link segment. Link name: %s",
+                                  filename_in.c_str());
+        }
+        
+        CLinkSegment* link_seg = 
+            dynamic_cast<CLinkSegment*>(file->GetSegment(seg_num));
+        if (link_seg == NULL)
+        {
+            throw PCIDSKException("Failed to get Link Information Segment.");
+        }
+        
+        filename_in = link_seg->GetPath();
+    }
+
+    return filename_in;
+}
+

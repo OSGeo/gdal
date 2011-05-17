@@ -46,7 +46,13 @@ SDKOBJ 	=	\
 	cpcidskgcp2segment.o \
 	cpcidskbitmap.o \
 	cpcidsk_tex.o \
-	cpcidskapmodel.o
+	cpcidskapmodel.o \
+	clinksegment.o \
+	cpcidsktoutinmodel.o \
+	cpcidskbinarysegment.o \
+	cpcidsk_array.o \
+	cpcidskephemerissegment.o \
+	cpcidskads40model.o 
 
 else
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(PCIDSK_INCLUDE) $(CPPFLAGS)

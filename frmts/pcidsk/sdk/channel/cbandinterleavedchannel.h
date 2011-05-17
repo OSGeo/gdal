@@ -81,6 +81,8 @@ namespace PCIDSK
 
         void     **io_handle_p;
         Mutex    **io_mutex_p;
+
+        std::string MassageLink( std::string ) const;
     };
 } // end namespace PCIDSK
 

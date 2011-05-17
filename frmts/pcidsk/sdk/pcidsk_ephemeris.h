@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Purpose:  Primary include file for PCIDSK SDK.
+ * Purpose: Interface representing access to a PCIDSK Ephemeris segment
  * 
  ******************************************************************************
  * Copyright (c) 2009
@@ -24,62 +24,25 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+#ifndef __INCLUDE_PCIDSK_PCIDSK_EPHEMERIS_H
+#define __INCLUDE_PCIDSK_PCIDSK_EPHEMERIS_H
 
-#ifndef PCIDSK_CONFIG_H_INCLUDED
-#define PCIDSK_CONFIG_H_INCLUDED
+#include <vector>
+#include <string>
+#include "segment/orbitstructures.h"
 
 namespace PCIDSK {
+//! Interface to PCIDSK RPC segment.
+    class PCIDSKEphemerisSegment 
+    {
+    public:
+ 
+        // Virtual destructor
+        virtual ~PCIDSKEphemerisSegment() {}
 
-    typedef unsigned char  uint8;
-
-#ifndef _PCI_TYPES
-    typedef int            int32;
-    typedef unsigned int   uint32;
-    typedef short          int16;
-    typedef unsigned short uint16;
-    
-#if defined(_MSC_VER)  
-    typedef __int64          int64;
-    typedef unsigned __int64 uint64;
-#else
-    typedef long long          int64;
-    typedef unsigned long long uint64;
-#endif
-
-#endif // _PCI_TYPES
-
+        virtual const EphemerisSeg_t& GetEphemeris() const=0;
+        virtual void SetEphemeris(const EphemerisSeg_t& oEph) =0;
+    };
 }
 
-#ifdef _MSC_VER
-# ifdef LIBPCIDSK_EXPORTS
-#  define PCIDSK_DLL     __declspec(dllexport)
-# else
-#  define PCIDSK_DLL
-# endif
-#else
-#  define PCIDSK_DLL
-#endif
-
-#if defined(__MSVCRT__) || defined(_MSC_VER)
-  #define PCIDSK_FRMT_64_WITHOUT_PREFIX     "I64"
-#else
-  #define PCIDSK_FRMT_64_WITHOUT_PREFIX     "ll"
-#endif
-
-// #define MISSING_VSNPRINTF
-
-/**
- * Versioning in the PCIDSK SDK
- * The version number for the PCIDSK SDK is to be used as follows:
- *  <ul>
- *  <li> If minor changes to the underlying fundamental classes are made,
- *          but no linkage-breaking changes are made, increment the minor
- *          number.
- *  <li> If major changes are made to the underlying interfaces that will
- *          break linkage, increment the major number.
- *  </ul>
- */
-#define PCIDSK_SDK_MAJOR_VERSION    0
-#define PCIDSK_SDK_MINOR_VERSION    1
-
-#endif // PCIDSK_CONFIG_H_INCLUDED
+#endif // __INCLUDE_PCIDSK_PCIDSK_EPHEMERIS_H

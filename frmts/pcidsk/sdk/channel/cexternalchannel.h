@@ -65,6 +65,12 @@ namespace PCIDSK
             int xsize=-1, int ysize=-1 );
         virtual int WriteBlock( int block_index, void *buffer );
 
+        virtual void GetEChanInfo( std::string &filename, int &echannel,
+                                   int &exoff, int &eyoff, 
+                                   int &exsize, int &eysize ) const;
+        virtual void SetEChanInfo( std::string filename, int echannel,
+                                   int exoff, int eyoff, 
+                                   int exsize, int eysize );
     private:
         int      exoff;
         int      eyoff;
@@ -81,7 +87,7 @@ namespace PCIDSK
 
         void     AccessDB() const;
 
-        std::string filename;
+        mutable std::string filename;
     };
 } // end namespace PCIDSK
 
