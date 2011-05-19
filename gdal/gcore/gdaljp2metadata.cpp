@@ -58,6 +58,7 @@ GDALJP2Metadata::GDALJP2Metadata()
     pasGCPList = NULL;
 
     papszGMLMetadata = NULL;
+    papszMetadata = NULL;
 
     nGeoTIFFSize = 0;
     pabyGeoTIFFData = NULL;
@@ -91,6 +92,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
     CPLFree( pabyGeoTIFFData );
     CPLFree( pabyMSIGData );
     CSLDestroy( papszGMLMetadata );
+    CSLDestroy( papszMetadata );
 }
 
 /************************************************************************/
@@ -265,6 +267,65 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             papszGMLMetadata = CSLSetNameValue( papszGMLMetadata, 
                                                 osBoxName, pszXML );
             CPLFree( pszXML );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Check for a resd box in jp2h.                                   */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(oBox.GetType(),"jp2h") )
+        {
+            GDALJP2Box oSubBox( fpVSIL );
+
+            for( oSubBox.ReadFirstChild( &oBox );
+                 strlen(oSubBox.GetType()) > 0;
+                 oSubBox.ReadNextChild( &oBox ) )
+            {
+                if( EQUAL(oSubBox.GetType(),"res ") )
+                {
+                    GDALJP2Box oResBox( fpVSIL );
+
+                    oResBox.ReadFirstChild( &oSubBox );
+                    
+                    // we will use either the resd or resc box, which ever
+                    // happens to be first.  Should we prefer resd?
+                    if( oResBox.GetDataLength() == 10 )
+                    {
+                        unsigned char *pabyResData = oResBox.ReadBoxData();
+                        int nVertNum, nVertDen, nVertExp;
+                        int nHorzNum, nHorzDen, nHorzExp;
+                        
+                        nVertNum = pabyResData[0] * 256 + pabyResData[1];
+                        nVertDen = pabyResData[2] * 256 + pabyResData[3];
+                        nHorzNum = pabyResData[4] * 256 + pabyResData[5];
+                        nHorzDen = pabyResData[6] * 256 + pabyResData[7];
+                        nVertExp = pabyResData[8];
+                        nHorzExp = pabyResData[9];
+                        
+                        // compute in pixels/cm 
+                        double dfVertRes = 
+                            (nVertNum/(double)nVertDen) * pow(10,nVertExp)/100;
+                        double dfHorzRes = 
+                            (nHorzNum/(double)nHorzDen) * pow(10,nHorzExp)/100;
+                        CPLString osFormatter;
+
+                        papszMetadata = CSLSetNameValue( 
+                            papszMetadata, 
+                            "TIFFTAG_XRESOLUTION",
+                            osFormatter.Printf("%g",dfHorzRes) );
+                        
+                        papszMetadata = CSLSetNameValue( 
+                            papszMetadata, 
+                            "TIFFTAG_YRESOLUTION",
+                            osFormatter.Printf("%g",dfVertRes) );
+                        papszMetadata = CSLSetNameValue( 
+                            papszMetadata, 
+                            "TIFFTAG_RESOLUTIONUNIT", 
+                            "3 (pixels/cm)" );
+                        
+                        CPLFree( pabyResData );
+                    }
+                }
+            }
         }
 
         oBox.ReadNext();
