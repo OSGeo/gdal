@@ -317,11 +317,11 @@ void EnvisatDataset::ScanForGCPs_MERIS()
     nTPPerLine = (GetRasterXSize() + nSamplesPerTiePoint - 1) 
         / nSamplesPerTiePoint;
 
-    if( (GetRasterXSize() + nSamplesPerTiePoint - 1) 
-        / nSamplesPerTiePoint  != nTPPerColumn )
+    if( (GetRasterYSize() + nLinesPerTiePoint - 1) 
+        / nLinesPerTiePoint != nTPPerColumn )
     {
         CPLDebug( "EnvisatDataset", "Got %d instead of %d nTPPerColumn.", 
-                  (GetRasterXSize()+nSamplesPerTiePoint-1)/nSamplesPerTiePoint,
+                  (GetRasterYSize()+nLinesPerTiePoint-1)/nLinesPerTiePoint,
                   nTPPerColumn );
         return;
     }
