@@ -112,15 +112,17 @@ private:
     GByte  *pabyMSIGData;
 
 public:
-    char   **papszGMLMetadata;
+    char  **papszGMLMetadata;
     
     int     bHaveGeoTransform;
     double  adfGeoTransform[6];
 
-    char    *pszProjection;
+    char   *pszProjection;
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
+
+    char  **papszMetadata;
 
 public:
             GDALJP2Metadata();
