@@ -1283,8 +1283,8 @@ void OGRGFTTableLayer::BuildWhere()
 
         osWHERE.Printf("WHERE ST_INTERSECTS(%s, RECTANGLE(LATLNG(%.12f, %.12f), LATLNG(%.12f, %.12f)))",
                        osQuotedGeomColumn.c_str(),
-                       sEnvelope.MinY - 1e-11, sEnvelope.MinX - 1e-11,
-                       sEnvelope.MaxY + 1e-11, sEnvelope.MaxX + 1e-11);
+                       MAX(-90.,sEnvelope.MinY - 1e-11), MAX(-180., sEnvelope.MinX - 1e-11),
+                       MIN(90.,sEnvelope.MaxY + 1e-11), MIN(180.,sEnvelope.MaxX + 1e-11));
     }
 
     if( strlen(osQuery) > 0 )
