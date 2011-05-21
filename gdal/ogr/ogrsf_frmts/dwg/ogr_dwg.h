@@ -143,6 +143,7 @@ class OGRDWGLayer : public OGRLayer
 //    OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
 
     CPLString           TextUnescape( OdString );
+    double              AngleCorrect( double dfAngle, double dfRatio );
 
     OdDbBlockTableRecordPtr poBlock;
     OdDbObjectIteratorPtr   poEntIter;
