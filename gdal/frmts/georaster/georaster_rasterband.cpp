@@ -70,7 +70,7 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
 
     if( nLevel == 0 && poGeoRaster->nPyramidMaxLevel > 0 )
     {
-        nOverviewCount      = poGeoRaster->nPyramidMaxLevel;
+        nOverviewCount  = poGeoRaster->nPyramidMaxLevel;
         papoOverviews   = (GeoRasterRasterBand**) VSIMalloc(
                 sizeof(GeoRasterRasterBand*) * nOverviewCount );
         for( int i = 0; i < nOverviewCount; i++ )

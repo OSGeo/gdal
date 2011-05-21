@@ -67,9 +67,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     pabyCompressBuf     = NULL;
     bIsReferenced       = false;
     poBlockStmt         = NULL;
-    nCurrentBlock       = -1;
-    nCacheBlockIn       = -1;
-    nCacheBlockOut      = -1;
+    nCacheBlockId       = -1;
     nCurrentLevel       = -1;
     pahLevels           = NULL;
     nLevelOffset        = 0L;
@@ -86,6 +84,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     bHasBitmapMask      = false;
     nBlockBytes         = 0L;
     bFlushBlock         = false;
+    nFlushBlockSize     = 0L;
     bUniqueFound        = false;
     sValueAttributeTab  = "";
     psNoDataList        = NULL;
@@ -1166,9 +1165,7 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     sCompressionType    = "NONE";
     nCompressQuality    = 75;
     bIsReferenced       = false;
-    nCurrentBlock       = -1;
-    nCacheBlockIn       = -1;
-    nCacheBlockOut      = -1;
+    nCacheBlockId       = -1;
     nCurrentLevel       = -1;
     pahLevels           = NULL;
     nLevelOffset        = 0L;
@@ -1186,6 +1183,8 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     bBlocking           = true;
     bAutoBlocking       = false;
     eModelCoordLocation = MCL_DEFAULT;
+    bFlushBlock         = false;
+    nFlushBlockSize     = 0L;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1888,9 +1887,21 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
     
     long nBlock = GetBlockNumber( nBand, nXOffset, nYOffset );
 
-    if( nCacheBlockIn != nBlock )
+    CPLDebug( "Read  ", 
+              "Block = %4ld Size = %7ld Band = %d Level = %d X = %d Y = %d", 
+              nBlock, nBlockBytes, nBand, nLevel, nXOffset, nYOffset );
+
+    if( nCacheBlockId != nBlock )
     {
-        nCacheBlockIn = nBlock;
+        if ( bFlushBlock )       
+        {
+            if( ! FlushBlock( nCacheBlockId ) )
+            {
+                return false;
+            }
+        }
+
+        nCacheBlockId = nBlock;
 
         unsigned long nBytesRead = 0;
 
@@ -1898,30 +1909,30 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
                                             pabyBlockBuf,
                                             nBlockBytes );
 
+        CPLDebug( "Load  ", "Block = %4ld Size = %7ld", nBlock, nBlockBytes );
+
         if( nBytesRead == 0 )
         {
             memset( pData, 0, nGDALBlockBytes );
-
             return true;
         }
 
-        if( nBytesRead < nBlockBytes && EQUAL( sCompressionType.c_str(), "NONE") )
+        if( nBytesRead < nBlockBytes && 
+            EQUAL( sCompressionType.c_str(), "NONE") )
         {
-            CPLDebug("GEOR", "BLOB size (%ld) is smaller than expected (%ld) !",
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                "BLOB size (%ld) is smaller than expected (%ld) !", 
                 nBytesRead,  nBlockBytes );
-
             memset( pData, 0, nGDALBlockBytes );
-
             return true;
         }
 
         if( nBytesRead > nBlockBytes )
         {
-            CPLDebug("GEOR", "BLOB size (%ld) is bigger than expected (%ld) !",
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                "BLOB size (%ld) is bigger than expected (%ld) !",
                 nBytesRead,  nBlockBytes );
-
             memset( pData, 0, nGDALBlockBytes );
-
             return true;
         }
 
@@ -1958,7 +1969,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
     }
 
     //  --------------------------------------------------------------------
-    //  Uninterleaving
+    //  Uninterleaving, extract band from block buffer
     //  --------------------------------------------------------------------
 
     int nStart = ( nBand - 1 ) % nBandBlockSize;
@@ -2029,40 +2040,38 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
     long nBlock = GetBlockNumber( nBand, nXOffset, nYOffset );
 
-    if( nCacheBlockOut == -1 ) // reset initial value of cache block index
-    {
-        nCacheBlockOut = nBlock;
-    }
+    CPLDebug( "Write ", 
+              "Block = %4ld Size = %7ld Band = %d Level = %d X = %d Y = %d", 
+              nBlock, nBlockBytes, nBand, nLevel, nXOffset, nYOffset );
 
     //  --------------------------------------------------------------------
     //  Flush previous block
     //  --------------------------------------------------------------------
 
-    if( nCacheBlockOut != nBlock )
+    if( nCacheBlockId != nBlock && bFlushBlock )
     {
-        if( ! FlushBlock( nCacheBlockOut ) )
+        if( ! FlushBlock( nCacheBlockId ) )
         {
             return false;
         }
     }
 
     //  --------------------------------------------------------------------
-    //  Prepare interleaved block
+    //  Re-load interleaved block
     //  --------------------------------------------------------------------
 
-    if( nBandBlockSize > 1 && bWriteOnly == false && nCurrentBlock != nBlock )
+    if( nBandBlockSize > 1 && bWriteOnly == false && nCacheBlockId != nBlock )
     {
-        nCurrentBlock = nBlock;
-
-        //  ----------------------------------------------------------------
-        //  Load pre-stored data block to combine with the current one
-        //  ----------------------------------------------------------------
+        nCacheBlockId = nBlock;
 
         unsigned long nBytesRead = 0;
 
         nBytesRead = poBlockStmt->ReadBlob( pahLocator[nBlock],
                                             pabyBlockBuf,
                                             nBlockBytes );
+
+        CPLDebug( "Reload", "Block = %4ld Size = %7ld", nBlock, nBlockBytes );
+
         if( nBytesRead == 0 )
         {
             memset( pabyBlockBuf, 0, nBlockBytes );
@@ -2132,9 +2141,9 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
     //  Flag the flush block
     //  --------------------------------------------------------------------
 
-    nCacheBlockOut = nBlock;
-
-    bFlushBlock = true; // There is a block to be written
+    nCacheBlockId   = nBlock;
+    bFlushBlock     = true;
+    nFlushBlockSize = nBlockBytes;
 
     return true;
 }
@@ -2145,8 +2154,6 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
 bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
 {
-    unsigned long nFlushBlockSize = nBlockBytes;
-
     GByte* pabyFlushBuffer = (GByte *) pabyBlockBuf;
 
     //  --------------------------------------------------------------------
@@ -2180,6 +2187,9 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
     //  Write BLOB
     //  --------------------------------------------------------------------
 
+    CPLDebug( "Flush ", "Block = %4ld Size = %7ld", nCacheBlock, 
+              nFlushBlockSize );
+
     if( ! poBlockStmt->WriteBlob( pahLocator[nCacheBlock],
                                   pabyFlushBuffer,
                                   nFlushBlockSize ) )
@@ -2187,9 +2197,9 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
         return false;
     }
 
-    bFlushBlock = false; // There is no block to be written
-
-    bFlushMetadata = true;
+    bFlushBlock     = false;
+    bFlushMetadata  = true;
+    nFlushBlockSize = nBlockBytes;
 
     return true;
 }
@@ -2572,7 +2582,7 @@ bool GeoRasterWrapper::FlushMetadata()
 
     if( bFlushBlock ) // Flush the block in cache
     {
-        FlushBlock( nCacheBlockOut );
+        FlushBlock( nCacheBlockId );
     }
 
     bFlushMetadata = false;
@@ -2878,6 +2888,7 @@ bool GeoRasterWrapper::GeneratePyramid( int nLevels,
         "      END LOOP;\n"
         "    END LOOP;\n"
         "  END LOOP;\n"
+        "  COMMIT;\n"
         "END;" );
 
     const char* pszDataTable = sDataTable.c_str();
