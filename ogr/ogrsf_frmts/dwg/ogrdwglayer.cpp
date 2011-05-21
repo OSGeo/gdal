@@ -981,6 +981,38 @@ OGRFeature *OGRDWGLayer::TranslateCIRCLE()
 #endif
 
 /************************************************************************/
+/*                            AngleCorrect()                            */
+/*                                                                      */
+/*      Convert from a "true" angle on the ellipse as returned by       */
+/*      the DWG API to an angle of rotation on the ellipse as if the    */
+/*      ellipse were actually circular.                                 */
+/************************************************************************/
+
+double OGRDWGLayer::AngleCorrect( double dfTrueAngle, double dfRatio )
+
+{
+    double dfRotAngle;
+    double dfDeltaX, dfDeltaY;
+
+    dfTrueAngle *= (PI / 180); // convert to radians.
+
+    dfDeltaX = cos(dfTrueAngle);
+    dfDeltaY = sin(dfTrueAngle);
+
+    dfRotAngle = atan2( dfDeltaY, dfDeltaX * dfRatio);
+
+    dfRotAngle *= (180 / PI); // convert to degrees.
+
+    if( dfTrueAngle < 0 && dfRotAngle > 0 )
+        dfRotAngle -= 360.0;
+    
+    if( dfTrueAngle > 360 && dfRotAngle < 360 )
+        dfRotAngle += 360.0;
+
+    return dfRotAngle;
+}
+
+/************************************************************************/
 /*                          TranslateELLIPSE()                          */
 /************************************************************************/
 
@@ -999,11 +1031,31 @@ OGRFeature *OGRDWGLayer::TranslateELLIPSE( OdDbEntityPtr poEntity )
     OdGePoint3d oCenter;
     OdGeVector3d oMajorAxis, oUnitNormal;
 
+    // note we reverse start and end angles to account for ogr orientation.
     poEE->get( oCenter, oUnitNormal, oMajorAxis, 
-               dfRatio, dfStartAngle, dfEndAngle );
+               dfRatio, dfEndAngle, dfStartAngle ); 
 
-    dfStartAngle = dfStartAngle * 180 / PI;
-    dfEndAngle = dfEndAngle * 180 / PI;
+    dfStartAngle = -1 * dfStartAngle * 180 / PI;
+    dfEndAngle   = -1 * dfEndAngle * 180 / PI;
+
+    printf( "Start Angle = %g, End Angle = %g\n", dfStartAngle, dfEndAngle );
+
+/* -------------------------------------------------------------------- */
+/*      The DWG SDK expresses the angles as the angle to a real         */
+/*      point on the ellipse while DXF and the OGR "arc angles" API     */
+/*      work in terms of an angle of rotation on the ellipse as if      */
+/*      the ellipse were actually circular.  So we need to "correct"    */
+/*      for the ratio.                                                  */
+/* -------------------------------------------------------------------- */
+    printf( "Before Start Angle = %g, End Angle = %g\n", dfStartAngle, dfEndAngle );
+
+    dfStartAngle = AngleCorrect( dfStartAngle, dfRatio );
+    dfEndAngle = AngleCorrect( dfEndAngle, dfRatio );
+    
+    printf( "After Start Angle = %g, End Angle = %g\n", dfStartAngle, dfEndAngle );
+
+    if( dfStartAngle > dfEndAngle )
+        dfEndAngle += 360.0;
 
 /* -------------------------------------------------------------------- */
 /*      Compute primary and secondary axis lengths, and the angle of    */
@@ -1011,9 +1063,6 @@ OGRFeature *OGRDWGLayer::TranslateELLIPSE( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
     double dfPrimaryRadius, dfSecondaryRadius;
     double dfRotation;
-
-    if( dfStartAngle > dfEndAngle )
-        dfEndAngle += 360.0;
 
     dfPrimaryRadius = sqrt( oMajorAxis.x * oMajorAxis.x
                             + oMajorAxis.y * oMajorAxis.y
@@ -1057,8 +1106,8 @@ OGRFeature *OGRDWGLayer::TranslateARC( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
 /*      Collect parameters.                                             */
 /* -------------------------------------------------------------------- */
-    dfStartAngle = poAE->startAngle() * 180 / PI;
-    dfEndAngle = poAE->endAngle() * 180 / PI;
+    dfEndAngle = -1 * poAE->startAngle() * 180 / PI;
+    dfStartAngle = -1 * poAE->endAngle() * 180 / PI;
     dfRadius = poAE->radius();
     oCenter = poAE->center();
     
