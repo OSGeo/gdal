@@ -612,6 +612,64 @@ void OGRLineString::getPoints( OGRRawPoint * paoPointsOut, double * padfZ ) cons
 
 
 /************************************************************************/
+/*                          getPoints()                                 */
+/************************************************************************/
+
+/**
+ * \brief Returns all points of line string.
+ *
+ * This method copies all points into user arrays. The user provides the
+ * stride between 2 consecutives elements of the array.
+ *
+ * On some CPU architectures, care must be taken so that the arrays are properly aligned.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param pabyX a buffer of at least (sizeof(double) * nXStride * nPointCount) bytes, may be NULL.
+ * @param nXStride the number of bytes between 2 elements of pabyX.
+ * @param pabyY a buffer of at least (sizeof(double) * nYStride * nPointCount) bytes, may be NULL.
+ * @param nYStride the number of bytes between 2 elements of pabyY.
+ * @param pabyZ a buffer of at last size (sizeof(double) * nZStride * nPointCount) bytes, may be NULL.
+ * @param nZStride the number of bytes between 2 elements of pabyZ.
+ *
+ * @since OGR 1.9.0
+ */
+
+void OGRLineString::getPoints( void* pabyX, int nXStride,
+                               void* pabyY, int nYStride,
+                               void* pabyZ, int nZStride)  const
+{
+    int i;
+    if (pabyX != NULL && nXStride == 0)
+        return;
+    if (pabyY != NULL && nYStride == 0)
+        return;
+    if (pabyZ != NULL && nZStride == 0)
+        return;
+    if (nXStride == 2 * sizeof(double) &&
+        nYStride == 2 * sizeof(double) &&
+        (char*)pabyY == (char*)pabyX + sizeof(double) &&
+        (pabyZ == NULL || nZStride == sizeof(double)))
+    {
+        getPoints((OGRRawPoint *)pabyX, (double*)pabyZ);
+        return;
+    }
+    for(i=0;i<nPointCount;i++)
+    {
+        if (pabyX) *(double*)((char*)pabyX + i * nXStride) = paoPoints[i].x;
+        if (pabyY) *(double*)((char*)pabyY + i * nYStride) = paoPoints[i].y;
+    }
+
+    if (pabyZ)
+    {
+        for(i=0;i<nPointCount;i++)
+        {
+            *(double*)((char*)pabyZ + i * nZStride) = (padfZ) ? padfZ[i] : 0.0;
+        }
+    }
+}
+
+/************************************************************************/
 /*                          addSubLineString()                          */
 /************************************************************************/
 
