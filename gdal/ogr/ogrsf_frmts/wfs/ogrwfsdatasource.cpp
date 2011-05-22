@@ -1431,6 +1431,12 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
                         else if (psIter->eType == CXT_Element &&
                                 strcmp(psIter->pszValue,"element") == 0)
                         {
+                            const char* pszName = CPLGetXMLValue(psIter, "name", "");
+                            CPLString osExpectedName(poLayer->GetShortName());
+                            osExpectedName += "Type";
+                            CPLString osExpectedName2(poLayer->GetShortName());
+                            osExpectedName2 += "_Type";
+
                             const char* pszType = CPLGetXMLValue(psIter, "type", "");
                             CPLString osExpectedType(poLayer->GetName());
                             osExpectedType += "Type";
@@ -1444,6 +1450,15 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
                                   strcmp(strchr(pszType, ':') + 1, osExpectedType2) == 0)))
                             {
                                 bFoundElement = TRUE;
+                            }
+                            else if (*pszType == '\0' &&
+                                     CPLGetXMLNode(psIter, "complexType") != NULL &&
+                                     (strcmp(pszName, osExpectedName) == 0 ||
+                                      strcmp(pszName, osExpectedName2) == 0 ||
+                                      strcmp(pszName, poLayer->GetShortName()) == 0) )
+                            {
+                                bFoundElement = TRUE;
+                                bFoundComplexType = TRUE;
                             }
                             else
                             {
