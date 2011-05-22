@@ -207,6 +207,7 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
     if( psCoordinates != NULL )
     {
         const char *pszCoordString = GetElementText( psCoordinates );
+        char chCS = ',';
 
         if( pszCoordString == NULL )
         {
@@ -227,42 +228,20 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
                    && !isspace((unsigned char)*pszCoordString) )
                 pszCoordString++;
 
-            if( *pszCoordString == '\0' || isspace((unsigned char)*pszCoordString) )
+            if( *pszCoordString == '\0' )
             {
-                /* In theory, the coordinates inside a 2 or 3 tuple should be */
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Corrupt <coordinates> value." );
+                return FALSE;
+            }
+            else if( chCS == ',' && isspace((unsigned char)*pszCoordString) )
+            {
+                /* In theory, the coordinates inside a coordinate tuple should be */
                 /* separated by a comma. However it has been found in the wild */
-                /* that for <gml:Point>, the coordinates are in rare cases separated by a space */
+                /* that the coordinates are in rare cases separated by a space, and the tuples by a comma */
                 /* See https://52north.org/twiki/bin/view/Processing/WPS-IDWExtension-ObservationCollectionExample */
                 /* or http://agisdemo.faa.gov/aixmServices/getAllFeaturesByLocatorId?locatorId=DFW */
-                if ( poGeometry->getGeometryType() == wkbPoint )
-                {
-                    char **papszTokens = CSLTokenizeStringComplex(
-                        GetElementText( psCoordinates ), " ,", FALSE, FALSE );
-                    int bSuccess = FALSE;
-
-                    if( CSLCount( papszTokens ) == 3 )
-                    {
-                        bSuccess = AddPoint( poGeometry,
-                                            OGRFastAtof(papszTokens[0]),
-                                            OGRFastAtof(papszTokens[1]),
-                                            OGRFastAtof(papszTokens[2]), 3 );
-                    }
-                    else if( CSLCount( papszTokens ) == 2 )
-                    {
-                        bSuccess = AddPoint( poGeometry,
-                                            OGRFastAtof(papszTokens[0]),
-                                            OGRFastAtof(papszTokens[1]),
-                                            0.0, 2 );
-                    }
-
-                    CSLDestroy(papszTokens);
-                    if (bSuccess)
-                        return TRUE;
-                }
-
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Corrupt <coordinates> value." );
-                return FALSE;
+                chCS = ' ';
             }
 
             pszCoordString++;
@@ -272,7 +251,7 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
                    && !isspace((unsigned char)*pszCoordString) )
                 pszCoordString++;
 
-            if( *pszCoordString == ',' )
+            if( *pszCoordString == chCS )
             {
                 pszCoordString++;
                 dfZ = OGRFastAtof( pszCoordString );
@@ -280,6 +259,11 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
                 while( *pszCoordString != '\0' 
                        && *pszCoordString != ','
                        && !isspace((unsigned char)*pszCoordString) )
+                pszCoordString++;
+            }
+
+            if ( chCS == ' ' && *pszCoordString == ',' )
+            {
                 pszCoordString++;
             }
 
