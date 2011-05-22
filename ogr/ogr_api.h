@@ -174,7 +174,10 @@ OGRGeometryH CPL_DLL OGR_G_GetBoundary( OGRGeometryH );
 
 /* Methods for getting/setting vertices in points, line strings and rings */
 int    CPL_DLL OGR_G_GetPointCount( OGRGeometryH );
-int    CPL_DLL OGR_G_GetPoints( OGRGeometryH hGeom, double* padfXYOut, double * padfZOut );
+int    CPL_DLL OGR_G_GetPoints( OGRGeometryH hGeom,
+                                void* pabyX, int nXStride,
+                                void* pabyY, int nYStride,
+                                void* pabyZ, int nZStride);
 double CPL_DLL OGR_G_GetX( OGRGeometryH, int );
 double CPL_DLL OGR_G_GetY( OGRGeometryH, int );
 double CPL_DLL OGR_G_GetZ( OGRGeometryH, int );
