@@ -1038,8 +1038,6 @@ OGRFeature *OGRDWGLayer::TranslateELLIPSE( OdDbEntityPtr poEntity )
     dfStartAngle = -1 * dfStartAngle * 180 / PI;
     dfEndAngle   = -1 * dfEndAngle * 180 / PI;
 
-    printf( "Start Angle = %g, End Angle = %g\n", dfStartAngle, dfEndAngle );
-
 /* -------------------------------------------------------------------- */
 /*      The DWG SDK expresses the angles as the angle to a real         */
 /*      point on the ellipse while DXF and the OGR "arc angles" API     */
@@ -1047,13 +1045,9 @@ OGRFeature *OGRDWGLayer::TranslateELLIPSE( OdDbEntityPtr poEntity )
 /*      the ellipse were actually circular.  So we need to "correct"    */
 /*      for the ratio.                                                  */
 /* -------------------------------------------------------------------- */
-    printf( "Before Start Angle = %g, End Angle = %g\n", dfStartAngle, dfEndAngle );
-
     dfStartAngle = AngleCorrect( dfStartAngle, dfRatio );
     dfEndAngle = AngleCorrect( dfEndAngle, dfRatio );
     
-    printf( "After Start Angle = %g, End Angle = %g\n", dfStartAngle, dfEndAngle );
-
     if( dfStartAngle > dfEndAngle )
         dfEndAngle += 360.0;
 
@@ -1505,6 +1499,11 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateMTEXT( poEntity );
         }
+        else if( EQUAL(pszEntityClassName,"AcDbAlignedDimension") 
+                 || EQUAL(pszEntityClassName,"AcDbRotatedDimension") )
+        {
+            poFeature = TranslateDIMENSION( poEntity );
+        }
 #ifdef notdef
         else if( EQUAL(pszEntityClassName,"LWPOLYLINE") )
         {
@@ -1525,10 +1524,6 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         else if( EQUAL(pszEntityClassName,"INSERT") )
         {
             poFeature = TranslateINSERT();
-        }
-        else if( EQUAL(pszEntityClassName,"DIMENSION") )
-        {
-            poFeature = TranslateDIMENSION();
         }
         else if( EQUAL(pszEntityClassName,"HATCH") )
         {
