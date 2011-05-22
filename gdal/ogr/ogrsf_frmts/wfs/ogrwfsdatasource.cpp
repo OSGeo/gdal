@@ -131,6 +131,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     papszIdGenMethods = NULL;
     bUseFeatureId = FALSE; /* CubeWerx doesn't like GmlObjectId */
     bGmlObjectIdNeedsGMLPrefix = FALSE;
+    bRequiresEnvelopeSpatialFilter = FALSE;
 
     bRewriteFile = FALSE;
     psFileXML = NULL;
@@ -435,6 +436,40 @@ CPLString OGRWFSDataSource::DetectRequiredOutputFormat(CPLXMLNode* psRoot)
         return pszValue;
 
     return "";
+}
+
+
+/************************************************************************/
+/*                   DetectRequiresEnvelopeSpatialFilter()              */
+/************************************************************************/
+
+int OGRWFSDataSource::DetectRequiresEnvelopeSpatialFilter(CPLXMLNode* psRoot)
+{
+    /* This is a heuristic to detect Deegree 3 servers, such as */
+    /* http://deegree3-demo.deegree.org:80/deegree-utah-demo/services */
+    /* that are very GML3 strict, and don't like <gml:Box> in a <Filter><BBOX> */
+    /* request, but requires instead <gml:Envelope>, but some servers (such as MapServer) */
+    /* don't like <gml:Envelope> so we are obliged to detect the kind of server */
+
+    int nCount;
+    CPLXMLNode* psChild;
+
+    CPLXMLNode* psGeometryOperands =
+        CPLGetXMLNode(psRoot, "Filter_Capabilities.Spatial_Capabilities.GeometryOperands");
+    if (!psGeometryOperands)
+    {
+        return FALSE;
+    }
+
+    nCount = 0;
+    psChild = psGeometryOperands->psChild;
+    while(psChild)
+    {
+        nCount ++;
+        psChild = psChild->psNext;
+    }
+    /* Magic number... Might be fragile */
+    return (nCount == 19);
 }
 
 /************************************************************************/
@@ -899,6 +934,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         /* is no way to advertisze this */
         bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
         osRequiredOutputFormat = DetectRequiredOutputFormat(psWFSCapabilities);
+        bRequiresEnvelopeSpatialFilter = DetectRequiresEnvelopeSpatialFilter(psWFSCapabilities);
     }
 
     DetectTransactionSupport(psWFSCapabilities);
