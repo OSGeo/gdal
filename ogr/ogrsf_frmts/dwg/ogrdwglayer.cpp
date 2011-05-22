@@ -31,11 +31,14 @@
 #include "cpl_conv.h"
 
 #include "DbPolyline.h"
+#include "Db2dPolyline.h"
 #include "DbLine.h"
 #include "DbPoint.h"
 #include "DbEllipse.h"
 #include "DbArc.h"
 #include "DbMText.h"
+#include "DbCircle.h"
+#include "DbSpline.h"
 
 CPL_CVSID("$Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $");
 
@@ -852,10 +855,10 @@ OGRFeature *OGRDWGLayer::TranslateLWPOLYLINE()
 #endif
 
 /************************************************************************/
-/*                         TranslatePOLYLINE()                          */
+/*                        TranslateLWPOLYLINE()                         */
 /************************************************************************/
 
-OGRFeature *OGRDWGLayer::TranslatePOLYLINE( OdDbEntityPtr poEntity )
+OGRFeature *OGRDWGLayer::TranslateLWPOLYLINE( OdDbEntityPtr poEntity )
 
 {
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
@@ -874,6 +877,39 @@ OGRFeature *OGRDWGLayer::TranslatePOLYLINE( OdDbEntityPtr poEntity )
         poPL->getPointAt( i, oPoint );
      
         poLS->addPoint( oPoint.x, oPoint.y, oPoint.z );
+    }
+
+    poFeature->SetGeometryDirectly( poLS );
+
+    //PrepareLineStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                        Translate2DPOLYLINE()                         */
+/************************************************************************/
+
+OGRFeature *OGRDWGLayer::Translate2DPOLYLINE( OdDbEntityPtr poEntity )
+
+{
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OdDb2dPolylinePtr poPL = OdDb2dPolyline::cast( poEntity );
+
+    TranslateGenericProperties( poFeature, poEntity );
+
+/* -------------------------------------------------------------------- */
+/*      Create a polyline geometry from the vertices.                   */
+/* -------------------------------------------------------------------- */
+    OGRLineString *poLS = new OGRLineString();
+    OdDbObjectIteratorPtr poIter = poPL->vertexIterator();
+
+    while( !poIter->done() )
+    {
+        OdDb2dVertexPtr poVertex = poIter->entity();
+        OdGePoint3d oPoint = poPL->vertexPosition( *poVertex );
+        poLS->addPoint( oPoint.x, oPoint.y, oPoint.z );
+        poIter->step();
     }
 
     poFeature->SetGeometryDirectly( poLS );
@@ -914,71 +950,37 @@ OGRFeature *OGRDWGLayer::TranslateLINE( OdDbEntityPtr poEntity )
     return poFeature;
 }
 
-#ifdef notdef
 /************************************************************************/
 /*                          TranslateCIRCLE()                           */
 /************************************************************************/
 
-OGRFeature *OGRDWGLayer::TranslateCIRCLE()
+OGRFeature *OGRDWGLayer::TranslateCIRCLE( OdDbEntityPtr poEntity )
 
 {
-    char szLineBuf[257];
-    int nCode;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
-    double dfX1 = 0.0, dfY1 = 0.0, dfZ1 = 0.0, dfRadius = 0.0;
-    int bHaveZ = FALSE;
+    OdDbCirclePtr poC = OdDbCircle::cast( poEntity );
+
+    TranslateGenericProperties( poFeature, poEntity );
 
 /* -------------------------------------------------------------------- */
-/*      Process values.                                                 */
+/*      Get geometry information.                                       */
 /* -------------------------------------------------------------------- */
-    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
-    {
-        switch( nCode )
-        {
-          case 10:
-            dfX1 = CPLAtof(szLineBuf);
-            break;
-
-          case 20:
-            dfY1 = CPLAtof(szLineBuf);
-            break;
-
-          case 30:
-            dfZ1 = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
-            break;
-
-          case 40:
-            dfRadius = CPLAtof(szLineBuf);
-            break;
-
-          default:
-            TranslateGenericProperty( poFeature, nCode, szLineBuf );
-            break;
-        }
-    }
-
-    if( nCode == 0 )
-        poDS->UnreadValue();
+    OdGePoint3d oCenter = poC->center();
+    double dfRadius = poC->radius();
 
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
     OGRGeometry *poCircle = 
-        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
-                                                  dfRadius, dfRadius, 0.0,
-                                                  0.0, 360.0, 
-                                                  0.0 );
-
-    if( !bHaveZ )
-        poCircle->flattenTo2D();
+        OGRGeometryFactory::approximateArcAngles( 
+            oCenter.x, oCenter.y, oCenter.z,
+            dfRadius, dfRadius, 0.0, 0.0, 360.0, 0.0 );
 
     poFeature->SetGeometryDirectly( poCircle );
     PrepareLineStyle( poFeature );
 
     return poFeature;
 }
-#endif
 
 /************************************************************************/
 /*                            AngleCorrect()                            */
@@ -1127,56 +1129,43 @@ OGRFeature *OGRDWGLayer::TranslateARC( OdDbEntityPtr poEntity )
 /*                          TranslateSPLINE()                           */
 /************************************************************************/
 
-#ifdef notdef
 void rbspline(int npts,int k,int p1,double b[],double h[], double p[]);
 void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[]);
 
-OGRFeature *OGRDWGLayer::TranslateSPLINE()
+OGRFeature *OGRDWGLayer::TranslateSPLINE( OdDbEntityPtr poEntity )
 
 {
-    char szLineBuf[257];
-    int nCode, nDegree = -1, nFlags = -1, bClosed = FALSE, i;
+    OdDbSplinePtr poSpline = OdDbSpline::cast( poEntity );
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     std::vector<double> adfControlPoints;
+    int nDegree, i;
 
-    adfControlPoints.push_back(0.0);
+    TranslateGenericProperties( poFeature, poEntity );
+
+    nDegree = poSpline->degree();
+
+/* -------------------------------------------------------------------- */
+/*      Collect the control points in our vector.                       */
+/* -------------------------------------------------------------------- */
+    int nControlPoints = poSpline->numControlPoints();
+
+    adfControlPoints.push_back( 0.0 ); // some sort of control info.
+    
+    for( i = 0; i < nControlPoints; i++ )
+    {
+        OdGePoint3d oCP;
+
+        poSpline->getControlPointAt( i, oCP );
+
+        adfControlPoints.push_back( oCP.x );
+        adfControlPoints.push_back( oCP.y );
+        adfControlPoints.push_back( 0.0 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
 /* -------------------------------------------------------------------- */
-    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
-    {
-        switch( nCode )
-        {
-          case 10:
-            adfControlPoints.push_back( CPLAtof(szLineBuf) );
-            break;
-
-          case 20:
-            adfControlPoints.push_back( CPLAtof(szLineBuf) );
-            adfControlPoints.push_back( 0.0 );
-            break;
-
-          case 70:
-            nFlags = atoi(szLineBuf);
-            if( nFlags & 1 )
-                bClosed = TRUE;
-            break;
-
-          case 71:
-            nDegree = atoi(szLineBuf);
-            break;
-
-          default:
-            TranslateGenericProperty( poFeature, nCode, szLineBuf );
-            break;
-        }
-    }
-
-    if( nCode == 0 )
-        poDS->UnreadValue();
-
-    if( bClosed )
+    if( poSpline->isClosed() )
     {
         for( i = 0; i < nDegree; i++ )
         {
@@ -1189,7 +1178,6 @@ OGRFeature *OGRDWGLayer::TranslateSPLINE()
 /* -------------------------------------------------------------------- */
 /*      Interpolate spline                                              */
 /* -------------------------------------------------------------------- */
-    int nControlPoints = adfControlPoints.size() / 3;
     std::vector<double> h, p;
 
     h.push_back(1.0);
@@ -1204,7 +1192,7 @@ OGRFeature *OGRDWGLayer::TranslateSPLINE()
     for( i = 0; i < 3*p1; i++ )
         p.push_back( 0.0 );
 
-    if( bClosed )
+    if( poSpline->isClosed() )
         rbsplinu( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]), 
                   &(h[0]), &(p[0]) );
     else
@@ -1231,6 +1219,8 @@ OGRFeature *OGRDWGLayer::TranslateSPLINE()
 /*                      GeometryInsertTransformer                       */
 /************************************************************************/
 
+
+#ifdef notdef
 class GeometryInsertTransformer : public OGRCoordinateTransformation
 {
 public:
@@ -1485,7 +1475,11 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         }
         else if( EQUAL(pszEntityClassName,"AcDbPolyline") )
         {
-            poFeature = TranslatePOLYLINE( poEntity );
+            poFeature = TranslateLWPOLYLINE( poEntity );
+        }
+        else if( EQUAL(pszEntityClassName,"AcDb2dPolyline") )
+        {
+            poFeature = Translate2DPOLYLINE( poEntity );
         }
         else if( EQUAL(pszEntityClassName,"AcDbEllipse") )
         {
@@ -1504,22 +1498,18 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateDIMENSION( poEntity );
         }
-#ifdef notdef
-        else if( EQUAL(pszEntityClassName,"LWPOLYLINE") )
+        else if( EQUAL(pszEntityClassName,"AcDbCircle") )
         {
-            poFeature = TranslateLWPOLYLINE();
+            poFeature = TranslateCIRCLE( poEntity );
         }
+        else if( EQUAL(pszEntityClassName,"AcDbSpline") )
+        {
+            poFeature = TranslateSPLINE( poEntity );
+        }
+#ifdef notdef
         else if( EQUAL(pszEntityClassName,"TEXT") )
         {
             poFeature = TranslateTEXT();
-        }
-        else if( EQUAL(pszEntityClassName,"CIRCLE") )
-        {
-            poFeature = TranslateCIRCLE();
-        }
-        else if( EQUAL(pszEntityClassName,"SPLINE") )
-        {
-            poFeature = TranslateSPLINE();
         }
         else if( EQUAL(pszEntityClassName,"INSERT") )
         {

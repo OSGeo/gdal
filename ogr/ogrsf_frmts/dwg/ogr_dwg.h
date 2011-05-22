@@ -126,15 +126,15 @@ class OGRDWGLayer : public OGRLayer
 
     OGRFeature *        TranslatePOINT( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateLINE( OdDbEntityPtr poEntity );
-    OGRFeature *        TranslatePOLYLINE( OdDbEntityPtr poEntity );
+    OGRFeature *        TranslateLWPOLYLINE( OdDbEntityPtr poEntity );
+    OGRFeature *        Translate2DPOLYLINE( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateELLIPSE( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateARC( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateMTEXT( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateDIMENSION( OdDbEntityPtr poEntity );
+    OGRFeature *        TranslateCIRCLE( OdDbEntityPtr poEntity );
+    OGRFeature *        TranslateSPLINE( OdDbEntityPtr poEntity );
 
-//    OGRFeature *        TranslateLWPOLYLINE();
-//    OGRFeature *        TranslateCIRCLE();
-//    OGRFeature *        TranslateSPLINE();
 //    OGRFeature *        TranslateINSERT();
 //    OGRFeature *        TranslateTEXT();
 //    OGRFeature *        TranslateHATCH();
