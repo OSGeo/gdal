@@ -130,16 +130,16 @@ class OGRDWGLayer : public OGRLayer
     OGRFeature *        TranslateELLIPSE( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateARC( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateMTEXT( OdDbEntityPtr poEntity );
+    OGRFeature *        TranslateDIMENSION( OdDbEntityPtr poEntity );
 
 //    OGRFeature *        TranslateLWPOLYLINE();
 //    OGRFeature *        TranslateCIRCLE();
 //    OGRFeature *        TranslateSPLINE();
 //    OGRFeature *        TranslateINSERT();
 //    OGRFeature *        TranslateTEXT();
-//    OGRFeature *        TranslateDIMENSION();
 //    OGRFeature *        TranslateHATCH();
 
-//    void                FormatDimension( CPLString &osText, double dfValue );
+    void                FormatDimension( CPLString &osText, double dfValue );
 //    OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
 
     CPLString           TextUnescape( OdString );
