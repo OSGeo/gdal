@@ -211,37 +211,40 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
 /************************************************************************/
 
 /**
- * \brief Returns all points of a point or a line string.
+ * \brief Returns all points of line string.
  *
- * This method copies all points into user list. This list must be at
- * least 2 * sizeof(double) * OGR_G_GetPointCount() bytes in size.
- * The x,y coordinates are interleaved.
- * It also copies all Z coordinates if padfZOut is not NULL.
+ * This method copies all points into user arrays. The user provides the
+ * stride between 2 consecutives elements of the array.
  *
- * Only wkbPoint[25D] or wkbLineString[25D] may return a non null value.
+ * On some CPU architectures, care must be taken so that the arrays are properly aligned.
  *
  * @param hGeom handle to the geometry from which to get the coordinates.
- * @param padfXYOut a buffer into which the x,y coordinates are written.
- * @param padfZOut the Z values that go with the points (optional, may be NULL).
+ * @param pabyX a buffer of at least (sizeof(double) * nXStride * nPointCount) bytes, may be NULL.
+ * @param nXStride the number of bytes between 2 elements of pabyX.
+ * @param pabyY a buffer of at least (sizeof(double) * nYStride * nPointCount) bytes, may be NULL.
+ * @param nYStride the number of bytes between 2 elements of pabyY.
+ * @param pabyZ a buffer of at last size (sizeof(double) * nZStride * nPointCount) bytes, may be NULL.
+ * @param nZStride the number of bytes between 2 elements of pabyZ.
  *
  * @return the number of points
  *
  * @since OGR 1.9.0
  */
 
-int OGR_G_GetPoints( OGRGeometryH hGeom, double* padfXYOut, double * padfZOut )
+int OGR_G_GetPoints( OGRGeometryH hGeom,
+                     void* pabyX, int nXStride,
+                     void* pabyY, int nYStride,
+                     void* pabyZ, int nZStride)
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetPoints", 0 );
-    VALIDATE_POINTER1( padfXYOut, "OGR_G_GetPoints", 0 );
 
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
       {
-        padfXYOut[0] = ((OGRPoint *)hGeom)->getX();
-        padfXYOut[1] = ((OGRPoint *)hGeom)->getY();
-        if( padfZOut != NULL )
-            *padfZOut = ((OGRPoint *)hGeom)->getZ();
+        if (pabyX) *((double*)pabyX) = ((OGRPoint *)hGeom)->getX();
+        if (pabyY) *((double*)pabyY) = ((OGRPoint *)hGeom)->getY();
+        if (pabyZ) *((double*)pabyZ) = ((OGRPoint *)hGeom)->getZ();
         return 1;
       }
       break;
@@ -249,7 +252,7 @@ int OGR_G_GetPoints( OGRGeometryH hGeom, double* padfXYOut, double * padfZOut )
       case wkbLineString:
       {
           OGRLineString* poLS = (OGRLineString *) hGeom;
-          poLS->getPoints((OGRRawPoint*)padfXYOut, padfZOut);
+          poLS->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride);
           return poLS->getNumPoints();
       }
       break;
@@ -260,6 +263,7 @@ int OGR_G_GetPoints( OGRGeometryH hGeom, double* padfXYOut, double * padfZOut )
         break;
     }
 }
+
 
 /************************************************************************/
 /*                           OGR_G_GetPoint()                           */

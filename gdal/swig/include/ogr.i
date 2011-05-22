@@ -1660,7 +1660,10 @@ public:
     if (nCoordDimension <= 0)
         nCoordDimension = OGR_G_GetCoordinateDimension(self);
     *ppadfZ = (nCoordDimension == 3) ? (double*)VSIMalloc(sizeof(double) * nPoints) : NULL;
-    OGR_G_GetPoints(self, *ppadfXY, *ppadfZ);
+    OGR_G_GetPoints(self,
+                    *ppadfXY, 2 * sizeof(double),
+                    (*ppadfXY) + 1, 2 * sizeof(double),
+                    *ppadfZ, sizeof(double));
     return NULL;
   }
 #else
@@ -1684,7 +1687,10 @@ public:
     if (nCoordDimension <= 0)
         nCoordDimension = OGR_G_GetCoordinateDimension(self);
     *ppadfZ = (nCoordDimension == 3) ? (double*)VSIMalloc(sizeof(double) * nPoints) : NULL;
-    OGR_G_GetPoints(self, *ppadfXY, *ppadfZ);
+    OGR_G_GetPoints(self,
+                    *ppadfXY, 2 * sizeof(double),
+                    (*ppadfXY) + 1, 2 * sizeof(double),
+                    *ppadfZ, sizeof(double));
   }
 #endif
 #endif

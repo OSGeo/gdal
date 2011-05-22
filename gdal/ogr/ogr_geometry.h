@@ -307,6 +307,9 @@ class CPL_DLL OGRLineString : public OGRCurve
     void        addPoint( double, double, double );
 
     void        getPoints( OGRRawPoint *, double * = NULL ) const;
+    void        getPoints( void* pabyX, int nXStride,
+                           void* pabyY, int nYStride,
+                           void* pabyZ = NULL, int nZStride = 0 ) const;
 
     void        addSubLineString( const OGRLineString *, 
                                   int nStartVertex = 0, int nEndVertex = -1 );
