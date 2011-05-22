@@ -408,29 +408,49 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         }
         osGeomFilter += osGeometryColumnName;
         osGeomFilter += "</PropertyName>";
-        osGeomFilter += "<gml:Box>";
-        osGeomFilter += "<gml:coordinates>";
-        if (bAxisOrderAlreadyInverted)
+        if ( poDS->RequiresEnvelopeSpatialFilter() )
         {
-            /* We can go here in WFS 1.1 with geographic coordinate systems */
-            /* that are natively return in lat,long order, but as we have */
-            /* presented long,lat order to the user, we must switch back */
-            /* for the server... */
-            osGeomFilter += CPLSPrintf("%.16f,%.16f %.16f,%.16f", oEnvelope.MinY, oEnvelope.MinX, oEnvelope.MaxY, oEnvelope.MaxX);
+            osGeomFilter += "<Envelope xmlns=\"http://www.opengis.net/gml\">";
+            if (bAxisOrderAlreadyInverted)
+            {
+                /* We can go here in WFS 1.1 with geographic coordinate systems */
+                /* that are natively return in lat,long order, but as we have */
+                /* presented long,lat order to the user, we must switch back */
+                /* for the server... */
+                osGeomFilter += CPLSPrintf("<coord><X>%.16f</X><Y>%.16f</Y></coord><coord><X>%.16f</X><Y>%.16f</Y></coord>",
+                                        oEnvelope.MinY, oEnvelope.MinX, oEnvelope.MaxY, oEnvelope.MaxX);
+            }
+            else
+                osGeomFilter += CPLSPrintf("<coord><X>%.16f</X><Y>%.16f</Y></coord><coord><X>%.16f</X><Y>%.16f</Y></coord>",
+                                        oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX, oEnvelope.MaxY);
+            osGeomFilter += "</Envelope>";
         }
         else
-            osGeomFilter += CPLSPrintf("%.16f,%.16f %.16f,%.16f", oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX, oEnvelope.MaxY);
-        osGeomFilter += "</gml:coordinates>";
-        osGeomFilter += "</gml:Box>";
+        {
+            osGeomFilter += "<gml:Box>";
+            osGeomFilter += "<gml:coordinates>";
+            if (bAxisOrderAlreadyInverted)
+            {
+                /* We can go here in WFS 1.1 with geographic coordinate systems */
+                /* that are natively return in lat,long order, but as we have */
+                /* presented long,lat order to the user, we must switch back */
+                /* for the server... */
+                osGeomFilter += CPLSPrintf("%.16f,%.16f %.16f,%.16f", oEnvelope.MinY, oEnvelope.MinX, oEnvelope.MaxY, oEnvelope.MaxX);
+            }
+            else
+                osGeomFilter += CPLSPrintf("%.16f,%.16f %.16f,%.16f", oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX, oEnvelope.MaxY);
+            osGeomFilter += "</gml:coordinates>";
+            osGeomFilter += "</gml:Box>";
+        }
         osGeomFilter += "</BBOX>";
     }
 
     if (osGeomFilter.size() != 0 || osWFSWhere.size() != 0)
     {
-        CPLString osFilter = "<Filter ";
+        CPLString osFilter = "<Filter xmlns=\"http://www.opengis.net/ogc\"";
         if (pszNS)
         {
-            osFilter += "xmlns:";
+            osFilter += " xmlns:";
             osFilter += pszNS;
             osFilter += "=\"";
             osFilter += pszNSVal;

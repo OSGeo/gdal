@@ -189,6 +189,8 @@ class OGRWFSDataSource : public OGRDataSource
     int                 bPropertyIsNotEqualToSupported;
     int                 bUseFeatureId;
     int                 bGmlObjectIdNeedsGMLPrefix;
+    int                 bRequiresEnvelopeSpatialFilter;
+    int                 DetectRequiresEnvelopeSpatialFilter(CPLXMLNode* psRoot);
 
     int                 bTransactionSupport;
     char**              papszIdGenMethods;
@@ -250,6 +252,7 @@ class OGRWFSDataSource : public OGRDataSource
     int                         HasMinOperators() { return bHasMinOperators; }
     int                         HasNullCheck() { return bHasNullCheck; }
     int                         UseFeatureId() { return bUseFeatureId; }
+    int                         RequiresEnvelopeSpatialFilter() { return bRequiresEnvelopeSpatialFilter; }
     void                        SetGmlObjectIdNeedsGMLPrefix() { bGmlObjectIdNeedsGMLPrefix = TRUE; }
     int                         DoesGmlObjectIdNeedGMLPrefix() { return bGmlObjectIdNeedsGMLPrefix; }
 
