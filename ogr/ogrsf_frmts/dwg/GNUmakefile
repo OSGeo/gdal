@@ -31,7 +31,8 @@ TD_LIBS =	$(TDLIB_ROOT)/libModelerGeometry.a \
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogrdwgdriver.o ogrdwgdatasource.o ogrdwglayer.o
+OBJ	=	ogrdwgdriver.o ogrdwgdatasource.o ogrdwglayer.o \
+		ogrdwg_dimension.o 
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(TDXXFLAGS) $(CPPFLAGS)
 
