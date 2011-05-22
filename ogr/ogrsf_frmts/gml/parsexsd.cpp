@@ -165,6 +165,11 @@ static const AssocNameType apsPropertyTypes [] =
 
 static
 GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
+                                     const char* pszName,
+                                     CPLXMLNode *psThis);
+
+static
+GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                 const char* pszName,
                                 const char *pszType)
 {
@@ -182,11 +187,21 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
     if (psThis == NULL)
         return NULL;
 
+    return GMLParseFeatureType(psSchemaNode, pszName, psThis);
+}
+
+
+static
+GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
+                                     const char* pszName,
+                                     CPLXMLNode *psComplexType)
+{
+
 /* -------------------------------------------------------------------- */
 /*      Grab the sequence of extensions greatgrandchild.                */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psAttrSeq =
-        CPLGetXMLNode( psThis,
+        CPLGetXMLNode( psComplexType,
                         "complexContent.extension.sequence" );
 
     if( psAttrSeq == NULL )
@@ -449,7 +464,17 @@ int GMLParseXSD( const char *pszFile,
 
         pszType = CPLGetXMLValue( psThis, "type", NULL );
         if (pszType == NULL)
+        {
+            CPLXMLNode *psComplexType = CPLGetXMLNode( psThis, "complexType" );
+            if (psComplexType)
+            {
+                GMLFeatureClass* poClass =
+                        GMLParseFeatureType(psSchemaNode, pszName, psComplexType);
+                if (poClass)
+                    aosClasses.push_back(poClass);
+            }
             continue;
+        }
         if( strstr( pszType, ":" ) != NULL )
             pszType = strstr( pszType, ":" ) + 1;
         if( EQUAL(pszType, pszName) )
