@@ -1,6 +1,12 @@
 coord_sys_code,coord_axis_name_code,coord_axis_orientation,coord_axis_abbreviation,uom_code,coord_axis_order
 1024,9906,east,M,9001,1
 1024,9907,north,P,9001,2
+1025,9906,North along 130°W,X,9001,1
+1025,9907,North along 140°E,Y,9001,2
+1026,9906,South along 90°E,E,9001,1
+1026,9907,South along 180°E,N,9001,2
+1027,9906,North along 90°E,E,9001,1
+1027,9907,North along 0°E,N,9001,2
 4400,9906,east,E,9001,1
 4400,9907,north,N,9001,2
 4401,9906,east,E,9062,1

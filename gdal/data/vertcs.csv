@@ -1,8 +1,14 @@
 "COORD_REF_SYS_CODE","COORD_REF_SYS_NAME","DATUM_CODE","DATUM_NAME","UOM_CODE","SHOW_CRS","DEPRECATED","COORD_SYS_CODE","COORD_OP_METHOD_CODE_1","PARM_1_1"
 3855,EGM2008 geoid height,1027,EGM2008 geoid,9001,1,0,6499,9665,"egm08_25.gtx"
 3886,Fao 1979 height,1028,Fao 1979,9001,1,0,6499,,
+3900,N2000 height,1030,N2000,9001,1,0,6499,,
 4440,NZVD2009 height,1039,New Zealand Vertical Datum 2009,9001,1,0,6499,,
 4458,Dunedin-Bluff 1960 height,1040,Dunedin-Bluff 1960,9001,1,0,6499,,
+5193,Incheon height,1049,Incheon,9001,1,0,6499,,
+5195,Trieste height,1050,Trieste,9001,1,0,6499,,
+5214,Genoa height,1051,Genoa,9001,1,0,6499,,
+5237,SLVD height,1054,Sri Lanka Vertical Datum,9001,1,0,6499,,
+5317,FVR09 height,1059,Faroe Islands Vertical Reference 2009,9001,1,0,6499,,
 5600,NGPF height,5195,Nivellement General de Polynesie Francaise,9001,1,0,6499,,
 5601,IGN 1966 height,5196,IGN 1966,9001,1,0,6499,,
 5602,Moorea SAU 1981 height,5197,Moorea SAU 1981,9001,1,0,6499,,
