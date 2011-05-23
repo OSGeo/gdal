@@ -102,7 +102,7 @@ static const oNetcdfSRS poNetcdfSRS[] = {
     {"albers_conical_equal_area", SRS_PT_ALBERS_CONIC_EQUAL_AREA },
     {"azimuthal_equidistant", SRS_PT_AZIMUTHAL_EQUIDISTANT },
     {"cassini_soldner", SRS_PT_CASSINI_SOLDNER },
-    {"cylindrical_equal_area", SRS_PT_CYLINDRICAL_EQUAL_AREA },
+    {"lambert_cylindrical_equal_area", SRS_PT_CYLINDRICAL_EQUAL_AREA },
     {"eckert_iv", SRS_PT_ECKERT_IV },      
     {"eckert_vi", SRS_PT_ECKERT_VI },  
     {"equidistant_conic", SRS_PT_EQUIDISTANT_CONIC },
