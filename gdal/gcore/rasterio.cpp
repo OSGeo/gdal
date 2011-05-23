@@ -1072,7 +1072,8 @@ void GDALReplicateWord(void *pSrcData, GDALDataType eSrcType,
         {
             if (nDstPixelOffset == 1)
             {
-                memset(pabyDstWord, *(GByte*)pDstData, nWordCount - 1);
+                if (nWordCount > 0)
+                    memset(pabyDstWord, *(GByte*)pDstData, nWordCount);
             }
             else
             {
