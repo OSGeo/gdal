@@ -1010,6 +1010,9 @@ retry:
         OGRFieldDefn *poDstDefn = poFeatureDefn->GetFieldDefn( iVRTField );
         OGRFieldDefn *poSrcDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( anSrcField[iVRTField] );
 
+        if( !poSrcFeat->IsFieldSet( anSrcField[iVRTField] ) )
+            continue;
+
         if( abDirectCopy[iVRTField] 
             && poDstDefn->GetType() == poSrcDefn->GetType() )
         {
