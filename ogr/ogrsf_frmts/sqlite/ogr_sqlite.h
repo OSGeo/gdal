@@ -55,6 +55,74 @@ enum OGRSQLiteGeomFormat
 };
 
 /************************************************************************/
+/*      SpatiaLite's own Geometry type IDs.                             */
+/************************************************************************/
+
+enum OGRSpatialiteGeomType
+{
+// 2D [XY]
+    OGRSplitePointXY                     = 1,
+    OGRSpliteLineStringXY                = 2,
+    OGRSplitePolygonXY                   = 3,
+    OGRSpliteMultiPointXY                = 4,
+    OGRSpliteMultiLineStringXY           = 5,
+    OGRSpliteMultiPolygonXY              = 6,
+    OGRSpliteGeometryCollectionXY        = 7,
+// 3D [XYZ]
+    OGRSplitePointXYZ                    = 1001,
+    OGRSpliteLineStringXYZ               = 1002,
+    OGRSplitePolygonXYZ                  = 1003,
+    OGRSpliteMultiPointXYZ               = 1004,
+    OGRSpliteMultiLineStringXYZ          = 1005,
+    OGRSpliteMultiPolygonXYZ             = 1006,
+    OGRSpliteGeometryCollectionXYZ       = 1007,
+// 2D with Measure [XYM] 
+    OGRSplitePointXYM                    = 2001,
+    OGRSpliteLineStringXYM               = 2002,
+    OGRSplitePolygonXYM                  = 2003,
+    OGRSpliteMultiPointXYM               = 2004,
+    OGRSpliteMultiLineStringXYM          = 2005,
+    OGRSpliteMultiPolygonXYM             = 2006,
+    OGRSpliteGeometryCollectionXYM       = 2007,
+// 3D with Measure [XYZM]
+    OGRSplitePointXYZM                   = 3001,
+    OGRSpliteLineStringXYZM              = 3002,
+    OGRSplitePolygonXYZM                 = 3003,
+    OGRSpliteMultiPointXYZM              = 3004,
+    OGRSpliteMultiLineStringXYZM         = 3005,
+    OGRSpliteMultiPolygonXYZM            = 3006,
+    OGRSpliteGeometryCollectionXYZM      = 3007,
+// COMPRESSED: 2D [XY]
+    OGRSpliteComprLineStringXY           = 1000002,
+    OGRSpliteComprPolygonXY              = 1000003,
+    OGRSpliteComprMultiPointXY           = 1000004,
+    OGRSpliteComprMultiLineStringXY      = 1000005,
+    OGRSpliteComprMultiPolygonXY         = 1000006,
+    OGRSpliteComprGeometryCollectionXY   = 1000007,
+// COMPRESSED: 3D [XYZ]
+    OGRSpliteComprLineStringXYZ          = 1001002,
+    OGRSpliteComprPolygonXYZ             = 1001003,
+    OGRSpliteComprMultiPointXYZ          = 1001004,
+    OGRSpliteComprMultiLineStringXYZ     = 1001005,
+    OGRSpliteComprMultiPolygonXYZ        = 1001006,
+    OGRSpliteComprGeometryCollectionXYZ  = 1001007,
+// COMPRESSED: 2D with Measure [XYM]
+    OGRSpliteComprLineStringXYM          = 1002002,
+    OGRSpliteComprPolygonXYM             = 1002003,
+    OGRSpliteComprMultiPointXYM          = 1002004,
+    OGRSpliteComprMultiLineStringXYM     = 1002005,
+    OGRSpliteComprMultiPolygonXYM        = 1002006,
+    OGRSpliteComprGeometryCollectionXYM  = 1002007,
+// COMPRESSED: 3D with Measure [XYZM]
+    OGRSpliteComprLineStringXYZM         = 1003002,
+    OGRSpliteComprPolygonXYZM            = 1003003,
+    OGRSpliteComprMultiPointXYZM         = 1003004,
+    OGRSpliteComprMultiLineStringXYZM    = 1003005,
+    OGRSpliteComprMultiPolygonXYZM       = 1003006,
+    OGRSpliteComprGeometryCollectionXYZM = 1003007
+};
+
+/************************************************************************/
 /*                            OGRSQLiteLayer                            */
 /************************************************************************/
 
@@ -69,10 +137,12 @@ class OGRSQLiteLayer : public OGRLayer
                                                      OGRwkbByteOrder eByteOrder,
                                                      int* pnBytesConsumed);
 
-    static int          ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry);
+    static int          ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
+                                                      int bHasM );
     static int          ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeometry,
                                                         OGRwkbByteOrder eByteOrder,
-                                                        GByte* pabyData);
+                                                        int bHasM,
+                                                        GByte* pabyData );
 
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -95,6 +165,10 @@ class OGRSQLiteLayer : public OGRLayer
 
     int                *panFieldOrdinals;
     int                 bHasSpatialIndex;
+    int                 bHasM;
+    int                 bSpatialiteReadOnly;
+    int                 bSpatialiteLoaded;
+    int                 iSpatialiteVersion;
 
     CPLErr              BuildFeatureDefn( const char *pszLayerName, 
                                           sqlite3_stmt *hStmt );
@@ -106,7 +180,7 @@ class OGRSQLiteLayer : public OGRLayer
                                                   OGRGeometry ** );
     static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
                                                   GInt32, OGRwkbByteOrder,
-                                                  GByte **, int * );
+                                                  int, GByte **, int * );
 
   public:
                         OGRSQLiteLayer();
@@ -158,7 +232,11 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     const char *pszGeomFormat,
                                     OGRSpatialReference *poSRS,
                                     int nSRSId = -1,
-                                    int bHasSpatialIndex = FALSE);
+                                    int bHasSpatialIndex = FALSE,
+                                    int bHasM = FALSE,
+                                    int bSpatialiteReadOnly = FALSE,
+                                    int bSpatialiteLoaded = FALSE,
+                                    int iSpatialiteVersion = -1 );
 
     virtual int         GetFeatureCount( int );
 
@@ -256,7 +334,11 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    const char *pszGeomFormat = NULL,
                                    OGRSpatialReference *poSRS = NULL,
                                    int nSRID = -1,
-                                   int bHasSpatialIndex = FALSE);
+                                   int bHasSpatialIndex = FALSE,
+                                   int bHasM = FALSE,
+                                   int bSpatialiteReadOnly = FALSE,
+                                   int bSpatialiteLoaded = FALSE,
+                                   int iSpatialiteVersion = -1 );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }

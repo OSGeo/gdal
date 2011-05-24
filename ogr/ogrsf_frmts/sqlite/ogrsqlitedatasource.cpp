@@ -243,7 +243,20 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
             char **papszRow = papszResult + iRow * 6 + 6;
             OGRwkbGeometryType eGeomType;
             int nSRID = 0;
+            int bHasM = FALSE;
+            int bSpatialiteReadOnly = TRUE;
+            int iSpatialiteVersion = -1;
             int bHasSpatialIndex = FALSE;
+			
+#ifdef HAVE_SPATIALITE
+            /* Only enables write-mode if linked against SpatiaLite */
+            if( bSpatialiteLoaded == TRUE )
+            {
+                double v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
+                iSpatialiteVersion = v;
+                bSpatialiteReadOnly = FALSE;
+            }
+#endif
 
             if (papszRow[0] == NULL ||
                 papszRow[1] == NULL ||
@@ -253,8 +266,15 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
             eGeomType = OGRFromOGCGeomType(papszRow[2]);
 
-            if( atoi(papszRow[3]) > 2 )
+            if( strcmp ( papszRow[3], "XYZ" ) == 0 || 
+                strcmp ( papszRow[3], "XYZM" ) == 0 || 
+                strcmp ( papszRow[3], "3" ) == 0) // SpatiaLite's own 3D geometries 
                 eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | wkb25DBit);
+
+            if( strcmp ( papszRow[3], "XYM" ) == 0 || 
+                strcmp ( papszRow[3], "XYZM" ) == 0 ) // M coordinate declared 
+                bHasM = TRUE;
+
 
             if( papszRow[4] != NULL )
                 nSRID = atoi(papszRow[4]);
@@ -264,7 +284,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
                 bHasSpatialIndex = atoi(papszRow[5]);
 
             OpenTable( papszRow[0], papszRow[1], eGeomType, "SpatiaLite",
-                       FetchSRS( nSRID ), nSRID, bHasSpatialIndex );
+                       FetchSRS( nSRID ), nSRID, bHasSpatialIndex, bHasM, 
+                       bSpatialiteReadOnly, bSpatialiteLoaded,
+                       iSpatialiteVersion );
                        
             if (bListAllTables)
                 CPLHashSetInsert(hSet, CPLStrdup(papszRow[0]));
@@ -361,7 +383,10 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
                                     OGRwkbGeometryType eGeomType,
                                     const char *pszGeomFormat,
                                     OGRSpatialReference *poSRS, int nSRID,
-                                    int bHasSpatialIndex)
+                                    int bHasSpatialIndex, int bHasM, 
+                                    int bSpatialiteReadOnly,
+                                    int bSpatialiteLoaded,
+                                    int iSpatialiteVersion )
 
 {
 /* -------------------------------------------------------------------- */
@@ -373,7 +398,10 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
 
     if( poLayer->Initialize( pszNewName, pszGeomCol, 
                              eGeomType, pszGeomFormat,
-                             poSRS, nSRID, bHasSpatialIndex ) != CE_None )
+                             poSRS, nSRID, bHasSpatialIndex, 
+                             bHasM, bSpatialiteReadOnly,
+                             bSpatialiteLoaded,
+                             iSpatialiteVersion ) != CE_None )
     {
         delete poLayer;
         return FALSE;
@@ -711,9 +739,9 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "INSERT INTO geometry_columns "
                     "(f_table_name, f_geometry_column, type, "
                     "coord_dimension, srid, spatial_index_enabled) "
-                    "VALUES ('%s','%s', '%s', %d, %d, 0)", 
+                    "VALUES ('%s','%s', '%s', '%s', %d, 0)",
                     pszLayerName, pszGeomCol, OGRToOGCGeomType(eType),
-                    nCoordDim, nSRSId );
+                    nCoordDim == 3 ? "XYZ" : "2" /* FIXME ? */, nSRSId );
             else
                 osCommand.Printf(
                     "INSERT INTO geometry_columns "
