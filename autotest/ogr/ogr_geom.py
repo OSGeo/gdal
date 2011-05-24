@@ -751,6 +751,31 @@ def ogr_geom_empty():
     return 'success'
 
 ###############################################################################
+# Test parsing WKT made of 2D and 3D parts
+
+def ogr_geom_mixed_coordinate_dimension():
+
+    # first part is 3D, second part is 2D of same length
+    wkt = 'MULTIPOLYGON (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2,-1 -3,-2 -3,-2 -2,-1 -2,50 60)))'
+    expected_wkt = 'MULTIPOLYGON (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2 0,-1 -3 0,-2 -3 0,-2 -2 0,-1 -2 0,50 60 0)))'
+    g = ogr.CreateGeometryFromWkt(wkt)
+    got_wkt = g.ExportToWkt()
+    if got_wkt != expected_wkt:
+        gdaltest.post_reason('for %s: got %s, expected %s' % (wkt, got_wkt, expected_wkt))
+        return 'fail'
+
+    # first part is 3D, second part is 2D of same length, except the last point which is 3D
+    wkt = 'MULTIPOLYGON (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2,-1 -3,-2 -3,-2 -2,-1 -2,50 60 7)))'
+    expected_wkt = 'MULTIPOLYGON (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2 0,-1 -3 0,-2 -3 0,-2 -2 0,-1 -2 0,50 60 7)))'
+    g = ogr.CreateGeometryFromWkt(wkt)
+    got_wkt = g.ExportToWkt()
+    if got_wkt != expected_wkt:
+        gdaltest.post_reason('for %s: got %s, expected %s' % (wkt, got_wkt, expected_wkt))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -784,6 +809,7 @@ gdaltest_list = [
     ogr_geom_length_geometrycollection,
     ogr_geom_empty,
     ogr_geom_getpoints,
+    ogr_geom_mixed_coordinate_dimension,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
