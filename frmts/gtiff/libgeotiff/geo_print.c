@@ -266,10 +266,10 @@ int GTIFImport(GTIF *gtif, GTIFReadMethod scan,void *aux)
     scan(message,aux);
     if (strncmp(message,FMT_GEOTIFF,8)) return 0; 
     scan(message,aux);
-    if (!sscanf(message,FMT_VERSION,&gtif->gt_version)) return 0;
+    if (!sscanf(message,FMT_VERSION,(short int*)&gtif->gt_version)) return 0;
     scan(message,aux);
-    if (sscanf(message,FMT_REV,&gtif->gt_rev_major,
-               &gtif->gt_rev_minor) !=2) return 0;
+    if (sscanf(message,FMT_REV,(short int*)&gtif->gt_rev_major,
+               (short int*)&gtif->gt_rev_minor) !=2) return 0;
 
     scan(message,aux);
     if (strncmp(message,FMT_TAGS,8)) return 0;
