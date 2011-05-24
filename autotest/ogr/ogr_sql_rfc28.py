@@ -490,7 +490,41 @@ def ogr_rfc28_23():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Verify that NULL works
+
+def ogr_rfc28_24():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "select *, NULL, NULL as nullstrfield, CAST(null as integer) as nullintfield from poly where NULL IS NULL" )
+
+    feat = sql_lyr.GetNextFeature()
+
+    if feat.IsFieldSet('FIELD_4'):
+        feat.DumpReadable()
+        gdaltest.ds.ReleaseResultSet( sql_lyr )
+        return 'fail'
+
+    if feat.IsFieldSet('nullstrfield'):
+        feat.DumpReadable()
+        gdaltest.ds.ReleaseResultSet( sql_lyr )
+        return 'fail'
+
+    if feat.IsFieldSet('nullintfield'):
+        feat.DumpReadable()
+        gdaltest.ds.ReleaseResultSet( sql_lyr )
+        return 'fail'
+
+    count = sql_lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if count != 10:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting %d' % (count, 10) )
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
@@ -524,6 +558,7 @@ gdaltest_list = [
     ogr_rfc28_21,
     ogr_rfc28_22,
     ogr_rfc28_23,
+    ogr_rfc28_24,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

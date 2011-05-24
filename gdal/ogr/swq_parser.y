@@ -351,6 +351,11 @@ value_expr:
 			$$ = $2;
 		}
 
+    | SWQT_NULL
+        {
+            $$ = new swq_expr_node((const char*)NULL);
+        }
+
     | '-' value_expr %prec SWQT_UMINUS
         {
             if ($2->eNodeType == SNT_CONSTANT)
