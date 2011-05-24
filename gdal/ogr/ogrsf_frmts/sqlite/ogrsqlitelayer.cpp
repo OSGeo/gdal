@@ -7,6 +7,14 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
+ *
+ * Contributor: Alessandro Furieri, a.furieri@lqt.it
+ * Portions of this module supporting SpatiaLite's own 3D geometries
+ * [XY, XYM, XYZ and XYZM] available since v.2.4.0
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
+ *
+ ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -59,6 +67,10 @@ OGRSQLiteLayer::OGRSQLiteLayer()
 
     bTriedAsSpatiaLite = FALSE;
     bHasSpatialIndex = FALSE;
+    bHasM = FALSE;
+    bSpatialiteReadOnly = FALSE;
+    bSpatialiteLoaded = FALSE;
+    iSpatialiteVersion = -1;
 }
 
 /************************************************************************/
@@ -519,6 +531,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
     OGRErr      eErr = OGRERR_NONE;
     OGRGeometry *poGeom = NULL;
     GInt32       nGType;
+    GInt32       compressedSize;
 
     *ppoReturn = NULL;
 
@@ -532,13 +545,30 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
     if (NEED_SWAP_SPATIALITE())
         CPL_SWAP32PTR( &nGType );
 
-    if( nGType < 1 || nGType > 7 )
+    if( ( nGType >= OGRSplitePointXY && 
+          nGType <= OGRSpliteGeometryCollectionXY ) ||       // XY types
+        ( nGType >= OGRSplitePointXYZ && 
+          nGType <= OGRSpliteGeometryCollectionXYZ ) ||      // XYZ types
+        ( nGType >= OGRSplitePointXYM && 
+          nGType <= OGRSpliteGeometryCollectionXYM ) ||      // XYM types
+        ( nGType >= OGRSplitePointXYZM && 
+          nGType <= OGRSpliteGeometryCollectionXYZM ) ||     // XYZM types
+        ( nGType >= OGRSpliteComprLineStringXY && 
+          nGType <= OGRSpliteComprGeometryCollectionXY ) ||  // XY compressed
+        ( nGType >= OGRSpliteComprLineStringXYZ && 
+          nGType <= OGRSpliteComprGeometryCollectionXYZ ) || // XYZ compressed
+        ( nGType >= OGRSpliteComprLineStringXYM && 
+          nGType <= OGRSpliteComprGeometryCollectionXYM ) || // XYM compressed
+        ( nGType >= OGRSpliteComprLineStringXYZM && 
+          nGType <= OGRSpliteComprGeometryCollectionXYZM ) ) // XYZM compressed
+        ;
+    else
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
 /* -------------------------------------------------------------------- */
-/*      Point                                                           */
+/*      Point [XY]                                                      */
 /* -------------------------------------------------------------------- */
-    if( nGType == 1 )
+    if( nGType == OGRSplitePointXY )
     {
         double  adfTuple[2];
 
@@ -557,11 +587,83 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if( pnBytesConsumed )
             *pnBytesConsumed = 4 + 2 * 8;
     }
+/* -------------------------------------------------------------------- */
+/*      Point [XYZ]                                                     */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSplitePointXYZ )
+    {
+        double  adfTuple[3];
+
+        if( nBytes < 4 + 3 * 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( adfTuple, pabyData + 4, 3*8 );
+        if (NEED_SWAP_SPATIALITE())
+        {
+            CPL_SWAP64PTR( adfTuple );
+            CPL_SWAP64PTR( adfTuple + 1 );
+            CPL_SWAP64PTR( adfTuple + 2 );
+        }
+
+        poGeom = new OGRPoint( adfTuple[0], adfTuple[1], adfTuple[2] );
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = 4 + 3 * 8;
+    }
 
 /* -------------------------------------------------------------------- */
-/*      LineString                                                      */
+/*      Point [XYM]                                                     */
 /* -------------------------------------------------------------------- */
-    else if( nGType == 2 )
+    else if( nGType == OGRSplitePointXYM )
+    {
+        double  adfTuple[3];
+
+        if( nBytes < 4 + 3 * 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( adfTuple, pabyData + 4, 3*8 );
+        if (NEED_SWAP_SPATIALITE())
+        {
+            CPL_SWAP64PTR( adfTuple );
+            CPL_SWAP64PTR( adfTuple + 1 );
+            CPL_SWAP64PTR( adfTuple + 2 );
+        }
+
+        poGeom = new OGRPoint( adfTuple[0], adfTuple[1] );
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = 4 + 3 * 8;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Point [XYZM]                                                    */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSplitePointXYZM )
+    {
+        double  adfTuple[4];
+
+        if( nBytes < 4 + 4 * 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( adfTuple, pabyData + 4, 4*8 );
+        if (NEED_SWAP_SPATIALITE())
+        {
+            CPL_SWAP64PTR( adfTuple );
+            CPL_SWAP64PTR( adfTuple + 1 );
+            CPL_SWAP64PTR( adfTuple + 2 );
+            CPL_SWAP64PTR( adfTuple + 3 );
+        }
+
+        poGeom = new OGRPoint( adfTuple[0], adfTuple[1], adfTuple[2] );
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = 4 + 4 * 8;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LineString [XY]                                                 */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteLineStringXY )
     {
         double adfTuple[2];
         GInt32 nPointCount;
@@ -601,9 +703,441 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Polygon                                                         */
+/*      LineString [XYZ]                                                */
 /* -------------------------------------------------------------------- */
-    else if( nGType == 3 )
+    else if( nGType == OGRSpliteLineStringXYZ )
+    {
+        double adfTuple[3];
+        GInt32 nPointCount;
+        int    iPoint;
+        OGRLineString *poLS;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nPointCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nPointCount );
+
+        if( nPointCount < 0 || nPointCount > INT_MAX / (3 * 8))
+            return OGRERR_CORRUPT_DATA;
+
+        if (nBytes - 8 < 3 * 8 * nPointCount )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        poGeom = poLS = new OGRLineString();
+        poLS->setNumPoints( nPointCount );
+
+        for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+        {
+            memcpy( adfTuple, pabyData + 8 + 3*8*iPoint, 3*8 );
+            if (NEED_SWAP_SPATIALITE())
+            {
+                CPL_SWAP64PTR( adfTuple );
+                CPL_SWAP64PTR( adfTuple + 1 );
+                CPL_SWAP64PTR( adfTuple + 2 );
+            }
+
+            poLS->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = 8 + 3 * 8 * nPointCount;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LineString [XYM]                                                */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteLineStringXYM )
+    {
+        double adfTuple[3];
+        GInt32 nPointCount;
+        int    iPoint;
+        OGRLineString *poLS;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nPointCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nPointCount );
+
+        if( nPointCount < 0 || nPointCount > INT_MAX / (3 * 8))
+            return OGRERR_CORRUPT_DATA;
+
+        if (nBytes - 8 < 3 * 8 * nPointCount )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        poGeom = poLS = new OGRLineString();
+        poLS->setNumPoints( nPointCount );
+
+        for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+        {
+            memcpy( adfTuple, pabyData + 8 + 3*8*iPoint, 3*8 );
+            if (NEED_SWAP_SPATIALITE())
+            {
+                CPL_SWAP64PTR( adfTuple );
+                CPL_SWAP64PTR( adfTuple + 1 );
+                CPL_SWAP64PTR( adfTuple + 2 );
+            }
+
+            poLS->setPoint( iPoint, adfTuple[0], adfTuple[1] );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = 8 + 3 * 8 * nPointCount;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LineString [XYZM]                                               */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteLineStringXYZM )
+    {
+        double adfTuple[4];
+        GInt32 nPointCount;
+        int    iPoint;
+        OGRLineString *poLS;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nPointCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nPointCount );
+
+        if( nPointCount < 0 || nPointCount > INT_MAX / (4 * 8))
+            return OGRERR_CORRUPT_DATA;
+
+        if (nBytes - 8 < 4 * 8 * nPointCount )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        poGeom = poLS = new OGRLineString();
+        poLS->setNumPoints( nPointCount );
+
+        for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+        {
+            memcpy( adfTuple, pabyData + 8 + 4*8*iPoint, 4*8 );
+            if (NEED_SWAP_SPATIALITE())
+            {
+                CPL_SWAP64PTR( adfTuple );
+                CPL_SWAP64PTR( adfTuple + 1 );
+                CPL_SWAP64PTR( adfTuple + 2 );
+                CPL_SWAP64PTR( adfTuple + 3 );
+            }
+
+            poLS->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = 8 + 4 * 8 * nPointCount;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LineString [XY] Compressed                                      */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteComprLineStringXY )
+    {
+        double adfTuple[2];
+        double adfTupleBase[2];
+        float asfTuple[2];
+        GInt32 nPointCount;
+        int    iPoint;
+        OGRLineString *poLS;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nPointCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nPointCount );
+
+        compressedSize = 16 * 2;                  // first and last Points 
+        compressedSize += 8 * (nPointCount - 2);  // intermediate Points
+        if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+            return OGRERR_CORRUPT_DATA;
+
+        if (nBytes - 8 < compressedSize )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        poGeom = poLS = new OGRLineString();
+        poLS->setNumPoints( nPointCount );
+
+        nNextByte = 8;
+        adfTupleBase[0] = 0.0;
+        adfTupleBase[1] = 0.0;
+		
+        for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+        {
+            if ( iPoint == 0 || iPoint == (nPointCount - 1 ) )
+            {
+                // first and last Points are uncompressed 
+                memcpy( adfTuple, pabyData + nNextByte, 2*8 );
+                nNextByte += 2 * 8;
+			
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP64PTR( adfTuple );
+                    CPL_SWAP64PTR( adfTuple + 1 );
+                }
+            }
+            else
+            {
+                // any other intermediate Point is compressed
+                memcpy( asfTuple, pabyData + nNextByte, 2*4 );
+                nNextByte += 2 * 4;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP32PTR( asfTuple );
+                    CPL_SWAP32PTR( asfTuple + 1 );
+                }
+                adfTuple[0] = asfTuple[0] + adfTupleBase[0];
+                adfTuple[1] = asfTuple[1] + adfTupleBase[1];
+            }
+
+            poLS->setPoint( iPoint, adfTuple[0], adfTuple[1] );
+            adfTupleBase[0] = adfTuple[0];
+            adfTupleBase[1] = adfTuple[1];
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LineString [XYZ] Compressed                                     */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteComprLineStringXYZ )
+    {
+        double adfTuple[3];
+        double adfTupleBase[3];
+        float asfTuple[3];
+        GInt32 nPointCount;
+        int    iPoint;
+        OGRLineString *poLS;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nPointCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nPointCount );
+
+        compressedSize = 24 * 2;                   // first and last Points 
+        compressedSize += 12 * (nPointCount - 2);  // intermediate Points
+        if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+            return OGRERR_CORRUPT_DATA;
+
+        if (nBytes - 8 < compressedSize )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        poGeom = poLS = new OGRLineString();
+        poLS->setNumPoints( nPointCount );
+
+        nNextByte = 8;
+        adfTupleBase[0] = 0.0;
+        adfTupleBase[1] = 0.0;
+        adfTupleBase[2] = 0.0;
+		
+        for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+        {
+            if ( iPoint == 0 || iPoint == (nPointCount - 1 ) )
+            {
+                // first and last Points are uncompressed 
+                memcpy( adfTuple, pabyData + nNextByte, 3*8 );
+                nNextByte += 3 * 8;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP64PTR( adfTuple );
+                    CPL_SWAP64PTR( adfTuple + 1 );
+                    CPL_SWAP64PTR( adfTuple + 2 );
+                }
+            }
+            else
+            {
+                // any other intermediate Point is compressed 
+                memcpy( asfTuple, pabyData + nNextByte, 3*4 );
+                nNextByte += 3 * 4;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP32PTR( asfTuple );
+                    CPL_SWAP32PTR( asfTuple + 1 );
+                    CPL_SWAP32PTR( asfTuple + 2 );
+                }
+                adfTuple[0] = asfTuple[0] + adfTupleBase[0];
+                adfTuple[1] = asfTuple[1] + adfTupleBase[1];
+                adfTuple[2] = asfTuple[2] + adfTupleBase[2];
+            }
+
+            poLS->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+            adfTupleBase[0] = adfTuple[0];
+            adfTupleBase[1] = adfTuple[1];
+            adfTupleBase[2] = adfTuple[2];
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LineString [XYM] Compressed                                     */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteComprLineStringXYM )
+    {
+        double adfTuple[2];
+        double adfTupleBase[2];
+        float asfTuple[2];
+        GInt32 nPointCount;
+        int    iPoint;
+        OGRLineString *poLS;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nPointCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nPointCount );
+
+        compressedSize = 24 * 2;                   // first and last Points 
+        compressedSize += 16 * (nPointCount - 2);  // intermediate Points
+        if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+            return OGRERR_CORRUPT_DATA;
+
+        if (nBytes - 8 < compressedSize )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        poGeom = poLS = new OGRLineString();
+        poLS->setNumPoints( nPointCount );
+
+        nNextByte = 8;
+        adfTupleBase[0] = 0.0;
+        adfTupleBase[1] = 0.0;
+		
+        for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+        {
+            if ( iPoint == 0 || iPoint == (nPointCount - 1 ) )
+            {
+                // first and last Points are uncompressed 
+                memcpy( adfTuple, pabyData + nNextByte, 2*8 );
+                nNextByte += 3 * 8;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP64PTR( adfTuple );
+                    CPL_SWAP64PTR( adfTuple + 1 );
+                }
+            }
+            else
+            {
+                // any other intermediate Point is compressed
+                memcpy( asfTuple, pabyData + nNextByte, 2*4 );
+                nNextByte += 2 * 4 + 8;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP32PTR( asfTuple );
+                    CPL_SWAP32PTR( asfTuple + 1 );
+                }
+                adfTuple[0] = asfTuple[0] + adfTupleBase[0];
+                adfTuple[1] = asfTuple[1] + adfTupleBase[1];
+            }
+
+            poLS->setPoint( iPoint, adfTuple[0], adfTuple[1] );
+            adfTupleBase[0] = adfTuple[0];
+            adfTupleBase[1] = adfTuple[1];
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LineString [XYZM] Compressed                                    */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteComprLineStringXYZM )
+    {
+        double adfTuple[3];
+        double adfTupleBase[3];
+        float asfTuple[3];
+        GInt32 nPointCount;
+        int    iPoint;
+        OGRLineString *poLS;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nPointCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nPointCount );
+
+        compressedSize = 32 * 2;                   // first and last Points 
+        compressedSize += 20 * (nPointCount - 2);  // intermediate Points
+        if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+            return OGRERR_CORRUPT_DATA;
+
+        if (nBytes - 8 < compressedSize )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        poGeom = poLS = new OGRLineString();
+        poLS->setNumPoints( nPointCount );
+
+        nNextByte = 8;
+        adfTupleBase[0] = 0.0;
+        adfTupleBase[1] = 0.0;
+        adfTupleBase[2] = 0.0;
+		
+        for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+        {
+            if ( iPoint == 0 || iPoint == (nPointCount - 1 ) )
+            {
+                // first and last Points are uncompressed
+                memcpy( adfTuple, pabyData + nNextByte, 3*8 );
+                nNextByte += 4 * 8;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP64PTR( adfTuple );
+                    CPL_SWAP64PTR( adfTuple + 1 );
+                    CPL_SWAP64PTR( adfTuple + 2 );
+                }
+            }
+            else
+            {
+                // any other intermediate Point is compressed
+                memcpy( asfTuple, pabyData + nNextByte, 3*4 );
+                nNextByte += 3 * 4 + 8;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP32PTR( asfTuple );
+                    CPL_SWAP32PTR( asfTuple + 1 );
+                    CPL_SWAP32PTR( asfTuple + 2 );
+                }
+                adfTuple[0] = asfTuple[0] + adfTupleBase[0];
+                adfTuple[1] = asfTuple[1] + adfTupleBase[1];
+                adfTuple[2] = asfTuple[2] + adfTupleBase[2];
+            }
+
+            poLS->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+            adfTupleBase[0] = adfTuple[0];
+            adfTupleBase[1] = adfTuple[1];
+            adfTupleBase[2] = adfTuple[2];
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygon [XY]                                                    */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSplitePolygonXY )
     {
         double adfTuple[2];
         GInt32 nPointCount;
@@ -620,10 +1154,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
-        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
+        if (nRingCount < 0)
             return OGRERR_CORRUPT_DATA;
 
-        /* Each ring has a minimum of 4 bytes */
+        // Each ring has a minimum of 4 bytes 
         if (nBytes - 8 < nRingCount * 4)
             return OGRERR_NOT_ENOUGH_DATA;
 
@@ -640,7 +1174,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
-            if (nPointCount < 0 || nPointCount > INT_MAX / (2 * 8))
+            if( nPointCount < 0 || nPointCount > INT_MAX / (2 * 8))
                 return OGRERR_CORRUPT_DATA;
 
             nNextByte += 4;
@@ -673,26 +1207,691 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Polygon [XYZ]                                                   */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSplitePolygonXYZ )
+    {
+        double adfTuple[3];
+        GInt32 nPointCount;
+        GInt32 nRingCount;
+        int    iPoint, iRing;
+        OGRLinearRing *poLR;
+        OGRPolygon *poPoly;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nRingCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nRingCount );
+
+        if (nRingCount < 0)
+            return OGRERR_CORRUPT_DATA;
+
+        // Each ring has a minimum of 4 bytes
+        if (nBytes - 8 < nRingCount * 4)
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        nNextByte = 8;
+        
+        poGeom = poPoly = new OGRPolygon();
+
+        for( iRing = 0; iRing < nRingCount; iRing++ )
+        {
+            if( nBytes - nNextByte < 4 )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            memcpy( &nPointCount, pabyData + nNextByte, 4 );
+            if (NEED_SWAP_SPATIALITE())
+                CPL_SWAP32PTR( &nPointCount );
+
+            if( nPointCount < 0 || nPointCount > INT_MAX / (3 * 8))
+                return OGRERR_CORRUPT_DATA;
+
+            nNextByte += 4;
+
+            if( nBytes - nNextByte < 3 * 8 * nPointCount )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            poLR = new OGRLinearRing();
+            poLR->setNumPoints( nPointCount );
+            
+            for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+            {
+                memcpy( adfTuple, pabyData + nNextByte, 3*8 );
+                nNextByte += 3 * 8;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP64PTR( adfTuple );
+                    CPL_SWAP64PTR( adfTuple + 1 );
+                    CPL_SWAP64PTR( adfTuple + 2 );
+                }
+
+                poLR->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+            }
+
+            poPoly->addRingDirectly( poLR );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygon [XYM]                                                   */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSplitePolygonXYM )
+    {
+        double adfTuple[3];
+        GInt32 nPointCount;
+        GInt32 nRingCount;
+        int    iPoint, iRing;
+        OGRLinearRing *poLR;
+        OGRPolygon *poPoly;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nRingCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nRingCount );
+
+        if (nRingCount < 0)
+            return OGRERR_CORRUPT_DATA;
+
+        // Each ring has a minimum of 4 bytes 
+        if (nBytes - 8 < nRingCount * 4)
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        nNextByte = 8;
+        
+        poGeom = poPoly = new OGRPolygon();
+
+        for( iRing = 0; iRing < nRingCount; iRing++ )
+        {
+            if( nBytes - nNextByte < 4 )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            memcpy( &nPointCount, pabyData + nNextByte, 4 );
+            if (NEED_SWAP_SPATIALITE())
+                CPL_SWAP32PTR( &nPointCount );
+
+            if( nPointCount < 0 || nPointCount > INT_MAX / (3 * 8))
+                return OGRERR_CORRUPT_DATA;
+
+            nNextByte += 4;
+
+            if( nBytes - nNextByte < 3 * 8 * nPointCount )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            poLR = new OGRLinearRing();
+            poLR->setNumPoints( nPointCount );
+            
+            for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+            {
+                memcpy( adfTuple, pabyData + nNextByte, 3*8 );
+                nNextByte += 3 * 8;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP64PTR( adfTuple );
+                    CPL_SWAP64PTR( adfTuple + 1 );
+                    CPL_SWAP64PTR( adfTuple + 2 );
+                }
+
+                poLR->setPoint( iPoint, adfTuple[0], adfTuple[1] );
+            }
+
+            poPoly->addRingDirectly( poLR );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygon [XYZM]                                                  */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSplitePolygonXYZM )
+    {
+        double adfTuple[4];
+        GInt32 nPointCount;
+        GInt32 nRingCount;
+        int    iPoint, iRing;
+        OGRLinearRing *poLR;
+        OGRPolygon *poPoly;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nRingCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nRingCount );
+
+        if (nRingCount < 0)
+            return OGRERR_CORRUPT_DATA;
+
+        // Each ring has a minimum of 4 bytes 
+        if (nBytes - 8 < nRingCount * 4)
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        nNextByte = 8;
+        
+        poGeom = poPoly = new OGRPolygon();
+
+        for( iRing = 0; iRing < nRingCount; iRing++ )
+        {
+            if( nBytes - nNextByte < 4 )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            memcpy( &nPointCount, pabyData + nNextByte, 4 );
+            if (NEED_SWAP_SPATIALITE())
+                CPL_SWAP32PTR( &nPointCount );
+
+            if( nPointCount < 0 || nPointCount > INT_MAX / (4 * 8))
+                return OGRERR_CORRUPT_DATA;
+
+            nNextByte += 4;
+
+            if( nBytes - nNextByte < 4 * 8 * nPointCount )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            poLR = new OGRLinearRing();
+            poLR->setNumPoints( nPointCount );
+            
+            for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+            {
+                memcpy( adfTuple, pabyData + nNextByte, 4*8 );
+                nNextByte += 4 * 8;
+
+                if (NEED_SWAP_SPATIALITE())
+                {
+                    CPL_SWAP64PTR( adfTuple );
+                    CPL_SWAP64PTR( adfTuple + 1 );
+                    CPL_SWAP64PTR( adfTuple + 2 );
+                    CPL_SWAP64PTR( adfTuple + 3 );
+                }
+
+                poLR->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+            }
+
+            poPoly->addRingDirectly( poLR );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygon [XY] Compressed                                         */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteComprPolygonXY  )
+    {
+        double adfTuple[2];
+        double adfTupleBase[2];
+        float asfTuple[2];
+        GInt32 nPointCount;
+        GInt32 nRingCount;
+        int    iPoint, iRing;
+        OGRLinearRing *poLR;
+        OGRPolygon *poPoly;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nRingCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nRingCount );
+
+        if (nRingCount < 0)
+            return OGRERR_CORRUPT_DATA;
+
+        // Each ring has a minimum of 4 bytes
+        if (nBytes - 8 < nRingCount * 4)
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        nNextByte = 8;
+        
+        poGeom = poPoly = new OGRPolygon();
+
+        for( iRing = 0; iRing < nRingCount; iRing++ )
+        {
+            if( nBytes - nNextByte < 4 )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            memcpy( &nPointCount, pabyData + nNextByte, 4 );
+            if (NEED_SWAP_SPATIALITE())
+                CPL_SWAP32PTR( &nPointCount );
+
+            compressedSize = 16 * 2;                  // first and last Points
+            compressedSize += 8 * (nPointCount - 2);  // intermediate Points
+            if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+                return OGRERR_CORRUPT_DATA;
+
+            nNextByte += 4;
+            adfTupleBase[0] = 0.0;
+            adfTupleBase[1] = 0.0;
+
+            if (nBytes - nNextByte < compressedSize )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            poLR = new OGRLinearRing();
+            poLR->setNumPoints( nPointCount );
+            
+            for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+            {
+                if ( iPoint == 0 || iPoint == (nPointCount - 1 ) )
+                {
+                    // first and last Points are uncompressed 
+                    memcpy( adfTuple, pabyData + nNextByte, 2*8 );
+                    nNextByte += 2 * 8;
+
+                    if (NEED_SWAP_SPATIALITE())
+                    {
+                        CPL_SWAP64PTR( adfTuple );
+                        CPL_SWAP64PTR( adfTuple + 1 );
+                    }
+                }
+                else
+                {
+                    // any other intermediate Point is compressed
+                    memcpy( asfTuple, pabyData + nNextByte, 2*4 );
+                    nNextByte += 2 * 4;
+
+                    if (NEED_SWAP_SPATIALITE())
+                    {
+                        CPL_SWAP32PTR( asfTuple );
+                        CPL_SWAP32PTR( asfTuple + 1 );
+                    }
+                    adfTuple[0] = asfTuple[0] + adfTupleBase[0];
+                    adfTuple[1] = asfTuple[1] + adfTupleBase[1];
+                }
+
+                poLR->setPoint( iPoint, adfTuple[0], adfTuple[1] );
+                adfTupleBase[0] = adfTuple[0];
+                adfTupleBase[1] = adfTuple[1];
+            }
+
+            poPoly->addRingDirectly( poLR );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygon [XYZ] Compressed                                        */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteComprPolygonXYZ )
+    {
+        double adfTuple[3];
+        double adfTupleBase[3];
+        float asfTuple[3];
+        GInt32 nPointCount;
+        GInt32 nRingCount;
+        int    iPoint, iRing;
+        OGRLinearRing *poLR;
+        OGRPolygon *poPoly;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nRingCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nRingCount );
+
+        if (nRingCount < 0)
+            return OGRERR_CORRUPT_DATA;
+
+        // Each ring has a minimum of 4 bytes
+        if (nBytes - 8 < nRingCount * 4)
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        nNextByte = 8;
+        
+        poGeom = poPoly = new OGRPolygon();
+
+        for( iRing = 0; iRing < nRingCount; iRing++ )
+        {
+            if( nBytes - nNextByte < 4 )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            memcpy( &nPointCount, pabyData + nNextByte, 4 );
+            if (NEED_SWAP_SPATIALITE())
+                CPL_SWAP32PTR( &nPointCount );
+
+            compressedSize = 24 * 2;                  	// first and last Points
+            compressedSize += 12 * (nPointCount - 2);  // intermediate Points
+            if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+                return OGRERR_CORRUPT_DATA;
+
+            nNextByte += 4;
+            adfTupleBase[0] = 0.0;
+            adfTupleBase[1] = 0.0;
+            adfTupleBase[2] = 0.0;
+
+            if (nBytes - nNextByte < compressedSize )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            poLR = new OGRLinearRing();
+            poLR->setNumPoints( nPointCount );
+            
+            for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+            {
+                if ( iPoint == 0 || iPoint == (nPointCount - 1 ) )
+                {
+                    // first and last Points are uncompressed 
+                    memcpy( adfTuple, pabyData + nNextByte, 3*8 );
+                    nNextByte += 3 * 8;
+
+                    if (NEED_SWAP_SPATIALITE())
+                    {
+                        CPL_SWAP64PTR( adfTuple );
+                        CPL_SWAP64PTR( adfTuple + 1 );
+                        CPL_SWAP64PTR( adfTuple + 2 );
+                    }
+                }
+                else
+                {
+                    // any other intermediate Point is compressed
+                    memcpy( asfTuple, pabyData + nNextByte, 3*4 );
+                    nNextByte += 3 * 4;
+
+                    if (NEED_SWAP_SPATIALITE())
+                    {
+                        CPL_SWAP32PTR( asfTuple );
+                        CPL_SWAP32PTR( asfTuple + 1 );
+                        CPL_SWAP32PTR( asfTuple + 2 );
+                    }
+                    adfTuple[0] = asfTuple[0] + adfTupleBase[0];
+                    adfTuple[1] = asfTuple[1] + adfTupleBase[1];
+                    adfTuple[2] = asfTuple[2] + adfTupleBase[2];
+                }
+
+                poLR->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+                adfTupleBase[0] = adfTuple[0];
+                adfTupleBase[1] = adfTuple[1];
+                adfTupleBase[2] = adfTuple[2];
+            }
+
+            poPoly->addRingDirectly( poLR );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygon [XYM] Compressed                                        */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteComprPolygonXYM )
+    {
+        double adfTuple[2];
+        double adfTupleBase[3];
+        float asfTuple[2];
+        GInt32 nPointCount;
+        GInt32 nRingCount;
+        int    iPoint, iRing;
+        OGRLinearRing *poLR;
+        OGRPolygon *poPoly;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nRingCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nRingCount );
+
+        if (nRingCount < 0)
+            return OGRERR_CORRUPT_DATA;
+
+        // Each ring has a minimum of 4 bytes
+        if (nBytes - 8 < nRingCount * 4)
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        nNextByte = 8;
+        
+        poGeom = poPoly = new OGRPolygon();
+
+        for( iRing = 0; iRing < nRingCount; iRing++ )
+        {
+            if( nBytes - nNextByte < 4 )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            memcpy( &nPointCount, pabyData + nNextByte, 4 );
+            if (NEED_SWAP_SPATIALITE())
+                CPL_SWAP32PTR( &nPointCount );
+
+            compressedSize = 24 * 2;                   // first and last Points
+            compressedSize += 16 * (nPointCount - 2);  // intermediate Points
+            if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+                return OGRERR_CORRUPT_DATA;
+
+            nNextByte += 4;
+			adfTupleBase[0] = 0.0;
+			adfTupleBase[1] = 0.0;
+
+            if (nBytes - nNextByte < compressedSize )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            poLR = new OGRLinearRing();
+            poLR->setNumPoints( nPointCount );
+            
+            for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+            {
+                if ( iPoint == 0 || iPoint == (nPointCount - 1 ) )
+                {
+                    // first and last Points are uncompressed 
+                    memcpy( adfTuple, pabyData + nNextByte, 2*8 );
+                    nNextByte += 2 * 8;
+
+                    if (NEED_SWAP_SPATIALITE())
+                    {
+                        CPL_SWAP64PTR( adfTuple );
+                        CPL_SWAP64PTR( adfTuple + 1 );
+                    }
+                }
+                else
+                {
+                    // any other intermediate Point is compressed
+                    memcpy( asfTuple, pabyData + nNextByte, 2*4 );
+                    nNextByte += 2 * 4 + 8;
+
+                    if (NEED_SWAP_SPATIALITE())
+                    {
+                        CPL_SWAP32PTR( asfTuple );
+                        CPL_SWAP32PTR( asfTuple + 1 );
+                    }
+                    adfTuple[0] = asfTuple[0] + adfTupleBase[0];
+                    adfTuple[1] = asfTuple[1] + adfTupleBase[1];
+                }
+
+                poLR->setPoint( iPoint, adfTuple[0], adfTuple[1] );
+                adfTupleBase[0] = adfTuple[0];
+                adfTupleBase[1] = adfTuple[1];
+            }
+
+            poPoly->addRingDirectly( poLR );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygon [XYZM] Compressed                                       */
+/* -------------------------------------------------------------------- */
+    else if( nGType == OGRSpliteComprPolygonXYZM )
+    {
+        double adfTuple[3];
+        double adfTupleBase[3];
+        float asfTuple[3];
+        GInt32 nPointCount;
+        GInt32 nRingCount;
+        int    iPoint, iRing;
+        OGRLinearRing *poLR;
+        OGRPolygon *poPoly;
+        int    nNextByte;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nRingCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nRingCount );
+
+        if (nRingCount < 0)
+            return OGRERR_CORRUPT_DATA;
+
+        // Each ring has a minimum of 4 bytes 
+        if (nBytes - 8 < nRingCount * 4)
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        nNextByte = 8;
+        
+        poGeom = poPoly = new OGRPolygon();
+
+        for( iRing = 0; iRing < nRingCount; iRing++ )
+        {
+            if( nBytes - nNextByte < 4 )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            memcpy( &nPointCount, pabyData + nNextByte, 4 );
+            if (NEED_SWAP_SPATIALITE())
+                CPL_SWAP32PTR( &nPointCount );
+
+            compressedSize = 32 * 2;                   // first and last Points
+            compressedSize += 20 * (nPointCount - 2);  // intermediate Points
+            if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+                return OGRERR_CORRUPT_DATA;
+
+            nNextByte += 4;
+            adfTupleBase[0] = 0.0;
+            adfTupleBase[1] = 0.0;
+            adfTupleBase[2] = 0.0;
+
+            if (nBytes - nNextByte < compressedSize )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            poLR = new OGRLinearRing();
+            poLR->setNumPoints( nPointCount );
+            
+            for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+            {
+                if ( iPoint == 0 || iPoint == (nPointCount - 1 ) )
+                {
+                    // first and last Points are uncompressed
+                    memcpy( adfTuple, pabyData + nNextByte, 3*8 );
+                    nNextByte += 4 * 8;
+
+                    if (NEED_SWAP_SPATIALITE())
+                    {
+                        CPL_SWAP64PTR( adfTuple );
+                        CPL_SWAP64PTR( adfTuple + 1 );
+                        CPL_SWAP64PTR( adfTuple + 2 );
+                    }
+                }
+                else
+                {
+                    // any other intermediate Point is compressed 
+                    memcpy( asfTuple, pabyData + nNextByte, 3*4 );
+                    nNextByte += 3 * 4 + 8;
+
+                    if (NEED_SWAP_SPATIALITE())
+                    {
+                        CPL_SWAP32PTR( asfTuple );
+                        CPL_SWAP32PTR( asfTuple + 1 );
+                        CPL_SWAP32PTR( asfTuple + 2 );
+                    }
+                    adfTuple[0] = asfTuple[0] + adfTupleBase[0];
+                    adfTuple[1] = asfTuple[1] + adfTupleBase[1];
+                    adfTuple[2] = asfTuple[2] + adfTupleBase[2];
+                }
+
+                poLR->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+                adfTupleBase[0] = adfTuple[0];
+                adfTupleBase[1] = adfTuple[1];
+                adfTupleBase[2] = adfTuple[2];
+            }
+
+            poPoly->addRingDirectly( poLR );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      GeometryCollections of various kinds.                           */
 /* -------------------------------------------------------------------- */
-    else if( nGType == 4         // MultiPoint
-             || nGType == 5      // MultiLineString
-             || nGType == 6      // MultiPolygon
-             || nGType == 7 )    // MultiGeometry
+    else if( ( nGType >= OGRSpliteMultiPointXY &&
+               nGType <= OGRSpliteGeometryCollectionXY ) ||       // XY types
+             ( nGType >= OGRSpliteMultiPointXYZ &&
+               nGType <= OGRSpliteGeometryCollectionXYZ ) ||      // XYZ types
+             ( nGType >= OGRSpliteMultiPointXYM &&
+               nGType <= OGRSpliteGeometryCollectionXYM ) ||      // XYM types 
+             ( nGType >= OGRSpliteMultiPointXYZM &&
+               nGType <= OGRSpliteGeometryCollectionXYZM ) ||     // XYZM types
+             ( nGType >= OGRSpliteComprMultiLineStringXY &&
+               nGType <= OGRSpliteComprGeometryCollectionXY ) ||  // XY compressed
+             ( nGType >= OGRSpliteComprMultiLineStringXYZ &&
+               nGType <= OGRSpliteComprGeometryCollectionXYZ ) || // XYZ compressed
+             ( nGType >= OGRSpliteComprMultiLineStringXYM &&
+               nGType <= OGRSpliteComprGeometryCollectionXYM ) || // XYM compressed
+             ( nGType >= OGRSpliteComprMultiLineStringXYZM &&
+               nGType <= OGRSpliteComprGeometryCollectionXYZM ) ) // XYZM compressed
     {
         OGRGeometryCollection *poGC = NULL;
         GInt32 nGeomCount = 0;
         int iGeom = 0;
         int nBytesUsed = 0;
 
-        if( nGType == 4 )
-            poGC = new OGRMultiPoint();
-        else if( nGType == 5 )
-            poGC = new OGRMultiLineString();
-        else if( nGType == 6 )
-            poGC = new OGRMultiPolygon();
-        else if( nGType == 7 )
-            poGC = new OGRGeometryCollection();
+        switch ( nGType )
+        {
+            case OGRSpliteMultiPointXY:
+            case OGRSpliteMultiPointXYZ: 
+            case OGRSpliteMultiPointXYM: 
+            case OGRSpliteMultiPointXYZM:
+                poGC = new OGRMultiPoint();
+                break;
+            case OGRSpliteMultiLineStringXY: 
+            case OGRSpliteMultiLineStringXYZ: 
+            case OGRSpliteMultiLineStringXYM: 
+            case OGRSpliteMultiLineStringXYZM:
+            case OGRSpliteComprMultiLineStringXY: 
+            case OGRSpliteComprMultiLineStringXYZ: 
+            case OGRSpliteComprMultiLineStringXYM: 
+            case OGRSpliteComprMultiLineStringXYZM:
+                poGC = new OGRMultiLineString();
+                break;
+            case OGRSpliteMultiPolygonXY: 
+            case OGRSpliteMultiPolygonXYZ: 
+            case OGRSpliteMultiPolygonXYM: 
+            case OGRSpliteMultiPolygonXYZM:
+            case OGRSpliteComprMultiPolygonXY: 
+            case OGRSpliteComprMultiPolygonXYZ: 
+            case OGRSpliteComprMultiPolygonXYM: 
+            case OGRSpliteComprMultiPolygonXYZM:
+                poGC = new OGRMultiPolygon();
+                break;
+            case OGRSpliteGeometryCollectionXY: 
+            case OGRSpliteGeometryCollectionXYZ: 
+            case OGRSpliteGeometryCollectionXYM: 
+            case OGRSpliteGeometryCollectionXYZM:
+            case OGRSpliteComprGeometryCollectionXY: 
+            case OGRSpliteComprGeometryCollectionXYZ: 
+            case OGRSpliteComprGeometryCollectionXYM: 
+            case OGRSpliteComprGeometryCollectionXYZM:
+                poGC = new OGRGeometryCollection();
+                break;
+        }
 
         assert(NULL != poGC);
 
@@ -703,10 +1902,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nGeomCount );
 
-        if (nGeomCount < 0 || nGeomCount > INT_MAX / 9)
+        if (nGeomCount < 0)
             return OGRERR_CORRUPT_DATA;
 
-        /* Each sub geometry takes at least 9 bytes */
+        // Each sub geometry takes at least 9 bytes
         if (nBytes - 8 < nGeomCount * 9)
             return OGRERR_NOT_ENOUGH_DATA;
 
@@ -800,16 +1999,43 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
 /*                  ComputeSpatiaLiteGeometrySize()                     */
 /************************************************************************/
 
-int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry)
+int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
+                                                  int bHasM )
 {
     switch (wkbFlatten(poGeometry->getGeometryType()))
     {
         case wkbPoint:
-            return 16;
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    return 32;
+                else
+                    return 24;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    return 24;
+                else
+                    return 16;
+            }
 
         case wkbLineString:
         case wkbLinearRing:
-            return 4 + 16 * ((OGRLineString*)poGeometry)->getNumPoints();
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    return 4 + 32 * ((OGRLineString*)poGeometry)->getNumPoints();
+                else
+                    return 4 + 24 * ((OGRLineString*)poGeometry)->getNumPoints();
+            }
+            else
+            {
+                if (bHasM == TRUE)				
+                    return 4 + 24 * ((OGRLineString*)poGeometry)->getNumPoints();
+                else
+                    return 4 + 16 * ((OGRLineString*)poGeometry)->getNumPoints();
+            }
 
         case wkbPolygon:
         {
@@ -817,11 +2043,13 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry)
             OGRPolygon* poPoly = (OGRPolygon*) poGeometry;
             if (poPoly->getExteriorRing() != NULL)
             {
-                nSize += ComputeSpatiaLiteGeometrySize(poPoly->getExteriorRing());
+                nSize += ComputeSpatiaLiteGeometrySize(poPoly->getExteriorRing(),
+                                                       bHasM );
 
                 int nInteriorRingCount = poPoly->getNumInteriorRings();
                 for(int i=0;i<nInteriorRingCount;i++)
-                    nSize += ComputeSpatiaLiteGeometrySize(poPoly->getInteriorRing(i));
+                    nSize += ComputeSpatiaLiteGeometrySize(poPoly->getInteriorRing(i),
+                                                           bHasM );
             }
             return nSize;
         }
@@ -835,7 +2063,8 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry)
             OGRGeometryCollection* poGeomCollection = (OGRGeometryCollection*) poGeometry;
             int nParts = poGeomCollection->getNumGeometries();
             for(int i=0;i<nParts;i++)
-                nSize += 5 + ComputeSpatiaLiteGeometrySize(poGeomCollection->getGeometryRef(i));
+                nSize += 5 + ComputeSpatiaLiteGeometrySize(poGeomCollection->getGeometryRef(i),
+                                                           bHasM );
             return nSize;
         }
 
@@ -851,7 +2080,8 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry)
 
 int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeometry,
                                                      OGRwkbByteOrder eByteOrder,
-                                                     GByte* pabyData)
+                                                     int bHasM,
+                                                     GByte* pabyData )
 {
     switch (wkbFlatten(poGeometry->getGeometryType()))
     {
@@ -867,7 +2097,36 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                 CPL_SWAP64PTR( pabyData );
                 CPL_SWAP64PTR( pabyData + 8 );
             }
-            return 16;
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                double z = poPoint->getZ();
+                memcpy(pabyData + 16, &z, 8);
+                if (NEED_SWAP_SPATIALITE())
+                    CPL_SWAP64PTR( pabyData + 16 );
+                if (bHasM == TRUE)
+                {
+                    double m = 0.0;
+                    memcpy(pabyData + 24, &m, 8);
+                    if (NEED_SWAP_SPATIALITE())
+                        CPL_SWAP64PTR( pabyData + 24 );
+                    return 32;
+                }
+                else
+                    return 24;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                {
+                    double m = 0.0;
+                    memcpy(pabyData + 16, &m, 8);
+                    if (NEED_SWAP_SPATIALITE())
+                        CPL_SWAP64PTR( pabyData + 16 );
+                    return 24;
+                }
+                else
+                    return 16;
+            }
         }
 
         case wkbLineString:
@@ -890,7 +2149,36 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                     CPL_SWAP64PTR( pabyData + nTotalSize );
                     CPL_SWAP64PTR( pabyData + nTotalSize + 8 );
                 }
-                nTotalSize += 16;
+                if (poGeometry->getCoordinateDimension() == 3)
+                {
+                    double z = poLineString->getZ(i);
+                    memcpy(pabyData + nTotalSize + 16, &z, 8);
+                    if (NEED_SWAP_SPATIALITE())
+                        CPL_SWAP64PTR( pabyData + nTotalSize + 16 );
+                    if (bHasM == TRUE)
+                    {
+                        double m = 0.0;
+                        memcpy(pabyData + nTotalSize + 24, &m, 8);
+                        if (NEED_SWAP_SPATIALITE())
+                            CPL_SWAP64PTR( pabyData + nTotalSize + 24 );
+                        nTotalSize += 32;
+                    }
+                    else
+                        nTotalSize += 24;
+                }
+                else
+                {
+                    if (bHasM == TRUE)
+                    {
+                        double m = 0.0;
+                        memcpy(pabyData + nTotalSize + 16, &m, 8);
+                        if (NEED_SWAP_SPATIALITE())
+                            CPL_SWAP64PTR( pabyData + nTotalSize + 16 );
+                        nTotalSize += 24;
+                    }
+                    else
+                        nTotalSize += 16;
+                }
             }
             return nTotalSize;
         }
@@ -909,12 +2197,16 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                     CPL_SWAP32PTR( pabyData );
 
                 nTotalSize += ExportSpatiaLiteGeometryInternal(poPoly->getExteriorRing(),
-                                                              eByteOrder, pabyData + nTotalSize);
+                                                              eByteOrder,
+                                                              bHasM,
+                                                              pabyData + nTotalSize);
 
                 for(int i=0;i<nInteriorRingCount;i++)
                 {
                     nTotalSize += ExportSpatiaLiteGeometryInternal(poPoly->getInteriorRing(i),
-                                                                   eByteOrder, pabyData + nTotalSize);
+                                                                   eByteOrder,
+                                                                   bHasM,
+                                                                   pabyData + nTotalSize);
                 }
             }
             else
@@ -943,17 +2235,67 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                 int nCode;
                 switch (wkbFlatten(poGeomCollection->getGeometryRef(i)->getGeometryType()))
                 {
-                    case wkbPoint: nCode = 1; break;
-                    case wkbLineString: nCode = 2; break;
-                    case wkbPolygon: nCode = 3; break;
-                    default: CPLError(CE_Failure, CPLE_AppDefined, "Unexpected geometry type"); return 0;
+                    case wkbPoint:
+                        if (poGeometry->getCoordinateDimension() == 3)
+                        {
+                            if (bHasM == TRUE)
+                                nCode = OGRSplitePointXYZM;
+                            else
+                                nCode = OGRSplitePointXYZ;
+                        }
+                        else
+                        {
+                            if (bHasM == TRUE)
+                                nCode = OGRSplitePointXYM;
+                            else
+                                nCode = OGRSplitePointXY; 
+                        }
+                        break;
+                    case wkbLineString:
+                        if (poGeometry->getCoordinateDimension() == 3)
+                        {
+                            if (bHasM == TRUE)
+                                nCode = OGRSpliteLineStringXYZM;
+                            else
+                                nCode = OGRSpliteLineStringXYZ;
+                        }
+                        else
+                        {
+                            if (bHasM == TRUE)
+                                nCode = OGRSpliteLineStringXYM;
+                            else
+                                nCode = OGRSpliteLineStringXY;
+                        }
+                        break;
+                    case wkbPolygon: 
+                        if (poGeometry->getCoordinateDimension() == 3) 
+                        {
+                            if (bHasM == TRUE)
+                                nCode = OGRSplitePolygonXYZM;
+                            else
+                                nCode = OGRSplitePolygonXYZ;
+                        }
+                        else
+                        {
+                            if (bHasM == TRUE)
+                                nCode = OGRSplitePolygonXYM;
+                            else
+                                nCode = OGRSplitePolygonXY;
+                        }
+                        break;
+                    default: 
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Unexpected geometry type"); 
+                        return 0;
                 }
                 memcpy(pabyData + nTotalSize, &nCode, 4);
                 if (NEED_SWAP_SPATIALITE())
                     CPL_SWAP32PTR( pabyData + nTotalSize );
                 nTotalSize += 4;
                 nTotalSize += ExportSpatiaLiteGeometryInternal(poGeomCollection->getGeometryRef(i),
-                                                               eByteOrder, pabyData + nTotalSize);
+                                                               eByteOrder,
+                                                               bHasM,
+                                                               pabyData + nTotalSize);
             }
             return nTotalSize;
         }
@@ -967,11 +2309,12 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
 OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
                                                  GInt32 nSRID,
                                                  OGRwkbByteOrder eByteOrder,
+                                                 int bHasM,
                                                  GByte **ppabyData,
                                                  int *pnDataLenght )
 
 {
-    int     nDataLen = 44 + ComputeSpatiaLiteGeometrySize(poGeometry);
+    int     nDataLen = 44 + ComputeSpatiaLiteGeometrySize(poGeometry, bHasM);
     OGREnvelope sEnvelope;
 
     *ppabyData =  (GByte *) CPLMalloc( nDataLen );
@@ -995,32 +2338,124 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
     switch (wkbFlatten(poGeometry->getGeometryType()))
     {
         case wkbPoint:
-            nCode = 1;
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSplitePointXYZM;
+                else
+                    nCode = OGRSplitePointXYZ;
+             }
+             else
+             {
+                if (bHasM == TRUE)
+                    nCode = OGRSplitePointXYM;
+                else
+                    nCode = OGRSplitePointXY;
+            }
             break;
 
         case wkbLineString:
         case wkbLinearRing:
-            nCode = 2;
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteLineStringXYZM;
+                else
+                    nCode = OGRSpliteLineStringXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteLineStringXYM;
+                else
+                    nCode = OGRSpliteLineStringXY;
+            }
             break;
 
         case wkbPolygon:
-            nCode = 3;
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSplitePolygonXYZM;
+                else
+                    nCode = OGRSplitePolygonXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSplitePolygonXYM;
+                else
+                    nCode = OGRSplitePolygonXY;
+            }
             break;
 
         case wkbMultiPoint:
-            nCode = 4;
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteMultiPointXYZM;
+                else
+                    nCode = OGRSpliteMultiPointXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteMultiPointXYM;
+                else
+                    nCode = OGRSpliteMultiPointXY;
+            }
             break;
 
         case wkbMultiLineString:
-            nCode = 5;
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteMultiLineStringXYZM;
+                else
+                    nCode = OGRSpliteMultiLineStringXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteMultiLineStringXYM;
+                else
+                    nCode = OGRSpliteMultiLineStringXY;
+            }
             break;
 
         case wkbMultiPolygon:
-            nCode = 6;
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteMultiPolygonXYZM;
+                else
+                    nCode = OGRSpliteMultiPolygonXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteMultiPolygonXYM;
+                else
+                    nCode = OGRSpliteMultiPolygonXY;
+            }
             break;
 
+
         case wkbGeometryCollection:
-            nCode = 7;
+            if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteGeometryCollectionXYZM;
+                else
+                    nCode = OGRSpliteGeometryCollectionXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    nCode = OGRSpliteGeometryCollectionXYM;
+                else
+                    nCode = OGRSpliteGeometryCollectionXY;
+            }
             break;
 
         default:
@@ -1032,7 +2467,10 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
     }
     memcpy( *ppabyData + 39, &nCode, 4 );
 
-    int nWritten = ExportSpatiaLiteGeometryInternal(poGeometry, eByteOrder, *ppabyData + 43);
+    int nWritten = ExportSpatiaLiteGeometryInternal(poGeometry, 
+                                                    eByteOrder, 
+                                                    bHasM,
+                                                    *ppabyData + 43);
     if (nWritten == 0)
     {
         CPLFree(*ppabyData);

@@ -72,7 +72,11 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
                                         const char *pszGeomFormat,
                                         OGRSpatialReference *poSRS,
                                         int nSRSId,
-                                        int bHasSpatialIndex)
+                                        int bHasSpatialIndex,
+                                        int bHasM, 
+                                        int bSpatialiteReadOnly,
+                                        int bSpatialiteLoaded,
+                                        int iSpatialiteVersion )
 
 {
     int rc;
@@ -101,16 +105,48 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     this->poSRS = poSRS;
     this->nSRSId = nSRSId;
     this->bHasSpatialIndex = bHasSpatialIndex;
+    this->bHasM = bHasM;
+    this->bSpatialiteReadOnly = bSpatialiteReadOnly;
+    this->bSpatialiteLoaded = bSpatialiteLoaded;
+    this->iSpatialiteVersion = iSpatialiteVersion;
+	
+    CPLErr eErr;
+    sqlite3_stmt *hColStmt = NULL;
+    const char *pszSQL;
+	
+    if ( eGeomFormat == OSGF_SpatiaLite && 
+         bSpatialiteLoaded == TRUE && 
+         iSpatialiteVersion < 24 )
+    {
+    // we need to test version required by Spatialite TRIGGERs 
+        hColStmt = NULL;
+        pszSQL = CPLSPrintf( "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND tbl_name = '%s' AND sql LIKE '%%RTreeAlign%%'",
+            pszTableName );
 
+        int nRowTriggerCount, nColTriggerCount;
+        char **papszTriggerResult, *pszErrMsg;
+
+        rc = sqlite3_get_table( hDB, pszSQL, &papszTriggerResult,
+            &nRowTriggerCount, &nColTriggerCount, &pszErrMsg );
+        if( nRowTriggerCount >= 1 )
+        {
+        // obsolete library version not supporting new triggers
+        // enforcing ReadOnly mode
+            CPLDebug("SQLITE", "Enforcing ReadOnly mode : obsolete library version not supporting new triggers");
+            this->bSpatialiteReadOnly = TRUE;
+        }
+
+        sqlite3_free_table( papszTriggerResult );
+    }
+	
     if( poSRS )
         poSRS->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr;
-    sqlite3_stmt *hColStmt = NULL;
-    const char *pszSQL = CPLSPrintf( "SELECT _rowid_, * FROM '%s' LIMIT 1",
+    hColStmt = NULL;
+    pszSQL = CPLSPrintf( "SELECT _rowid_, * FROM '%s' LIMIT 1",
                                      pszTableName );
 
     rc = sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL ); 
@@ -344,7 +380,11 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCSequentialWrite) 
              || EQUAL(pszCap,OLCRandomWrite) )
+    {
+        if ( bSpatialiteReadOnly == TRUE)
+            return FALSE;
         return bUpdateAccess;
+    }
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return bUpdateAccess;
@@ -847,7 +887,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
             int     nBLOBLen;
             GByte   *pabySLBLOB;
 
-            ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR,
+            ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR, bHasM,
                                       &pabySLBLOB, &nBLOBLen );
             rc = sqlite3_bind_blob( hInsertStmt, nBindField++, pabySLBLOB, nBLOBLen, CPLFree );
         }
