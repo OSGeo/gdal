@@ -110,7 +110,8 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 
         if( sub_node_values[0]->field_type == SWQ_INTEGER )
             sub_node_values[0]->float_value = sub_node_values[0]->int_value;
-        if( sub_node_values[1]->field_type == SWQ_INTEGER )
+        if( node->nSubExprCount > 1 &&
+            sub_node_values[1]->field_type == SWQ_INTEGER )
             sub_node_values[1]->float_value = sub_node_values[1]->int_value;
 
         switch( (swq_op) node->nOperation )
