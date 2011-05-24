@@ -77,7 +77,8 @@ swq_expr_node::swq_expr_node( const char *pszValueIn )
     Initialize();
 
     field_type = SWQ_STRING;
-    string_value = CPLStrdup(pszValueIn);
+    string_value = CPLStrdup( pszValueIn ? pszValueIn : "" );
+    is_null = pszValueIn == NULL;
 }
 
 /************************************************************************/
@@ -336,6 +337,9 @@ char *swq_expr_node::Unparse( swq_field_list *field_list )
 /* -------------------------------------------------------------------- */
     if( eNodeType == SNT_CONSTANT )
     {
+        if (is_null)
+            return CPLStrdup("NULL");
+
         if( field_type == SWQ_INTEGER || field_type == SWQ_BOOLEAN )
             osExpr.Printf( "%d", int_value );
         else if( field_type == SWQ_FLOAT )
@@ -494,6 +498,8 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
             poRetNode->string_value = CPLStrdup(string_value);
         else
             poRetNode->string_value = NULL;
+
+        poRetNode->is_null = is_null;
 
         return poRetNode;
     }

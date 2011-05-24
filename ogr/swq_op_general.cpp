@@ -425,6 +425,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                   osResult += sub_node_values[i]->string_value;
               
               poRet->string_value = CPLStrdup(osResult);
+              poRet->is_null = sub_node_values[0]->is_null;
               break;
           }
             
@@ -463,6 +464,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                   osResult.resize( nSize );
               
               poRet->string_value = CPLStrdup(osResult);
+              poRet->is_null = sub_node_values[0]->is_null;
               break;
           }
 
@@ -732,6 +734,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
         case SWQ_INTEGER:
         {
             poRetNode = new swq_expr_node( 0 );
+            poRetNode->is_null = poSrcNode->is_null;
 
             switch( poSrcNode->field_type )
             {
@@ -754,6 +757,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
         case SWQ_FLOAT:
         {
             poRetNode = new swq_expr_node( 0.0 );
+            poRetNode->is_null = poSrcNode->is_null;
 
             switch( poSrcNode->field_type )
             {
@@ -804,6 +808,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
             }
 
             poRetNode = new swq_expr_node( osRet.c_str() );
+            poRetNode->is_null = poSrcNode->is_null;
         }
     }
 
