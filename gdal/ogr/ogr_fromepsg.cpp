@@ -880,7 +880,9 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
         else /* really we should consider looking up other scaling factors */
         {
             if( nUOM != 9201 )
-                CPLDebug( "OGR", "Non-unity scale factor units!" );
+                CPLDebug( "OGR", 
+                          "Non-unity scale factor units! (UOM=%d, PCS=%d)",
+                          nUOM, nPCS );
             adfProjParms[i] = CPLAtof(pszValue);
         }
 
@@ -1583,14 +1585,15 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
       break;
 
       case 9820:
+      case 1027: /* used by EPSG:2163, 3408, 3409, 3973 and 3974 */
         poSRS->SetLAEA( OGR_FP( NatOriginLat ), OGR_FP( NatOriginLong ),
                         OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
         break;
 
-      case 9821: /* this is the spherical form, and really needs different
+      case 9821: /* DEPREACTED : this is the spherical form, and really needs different
                     equations which give different results but PROJ.4 doesn't
                     seem to support the spherical form. */
-        poSRS->SetLAEA( OGR_FP( SphericalOriginLat ), 
+        poSRS->SetLAEA( OGR_FP( SphericalOriginLat ),
                         OGR_FP( SphericalOriginLong ),
                         OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
         break;
