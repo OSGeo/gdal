@@ -388,9 +388,11 @@ const char * OGRWktReadPoints( const char * pszInput,
             }
 
             (*ppadfZ)[*pnPointsRead] = CPLAtof(szDelim);
-            
+
             pszInput = OGRWktReadToken( pszInput, szDelim );
         }
+        else if ( *ppadfZ != NULL )
+            (*ppadfZ)[*pnPointsRead] = 0.0;
         
         (*pnPointsRead)++;
 
