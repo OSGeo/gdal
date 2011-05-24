@@ -1361,6 +1361,69 @@ def ogr_spatialite_4():
     return 'success'
 
 ###############################################################################
+# Test writing and reading back spatialite geometries (#4092)
+
+def ogr_spatialite_5():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    try:
+        os.remove('tmp/ogr_spatialite_5.sqlite')
+    except:
+        pass
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_5.sqlite', options = ['SPATIALITE=YES'])
+
+    geometries = [
+        'POINT (1 2)',
+        'POINT (1 2 3)',
+        'LINESTRING (1 2,3 4)',
+        'LINESTRING (1 2 3,4 5 6)',
+        'POLYGON ((1 2,1 3,2 3,2 2,1 2))',
+        'POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10))',
+        'POLYGON ((1 2,1 3,2 3,2 2,1 2),(1.25 2.25,1.25 2.75,1.75 2.75,1.75 2.25,1.25 2.25))',
+        'POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10))',
+        'MULTIPOINT (1 2,3 4)',
+        'MULTIPOINT (1 2 3,4 5 6)',
+        'MULTILINESTRING ((1 2,3 4),(5 6,7 8))',
+        'MULTILINESTRING ((1 2 3,4 5 6),(7 8 9,10 11 12))',
+        'MULTIPOLYGON (((1 2,1 3,2 3,2 2,1 2)),((-1 -2,-1 -3,-2 -3,-2 -2,-1 -2)))',
+        'MULTIPOLYGON (((1 2,1 3,2 3,2 2,1 2),(1.25 2.25,1.25 2.75,1.75 2.75,1.75 2.25,1.25 2.25)),((-1 -2,-1 -3,-2 -3,-2 -2,-1 -2)))',
+        'MULTIPOLYGON (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2 0,-1 -3 0,-2 -3 0,-2 -2 0,-1 -2 0)))',
+        'GEOMETRYCOLLECTION (POINT (1 2),LINESTRING (1 2,3 4),POLYGON ((1 2,1 3,2 3,2 2,1 2)))',
+        'GEOMETRYCOLLECTION (POINT (1 2 3),LINESTRING (1 2 3,4 5 6),POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10)))',
+    ]
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4326 )
+
+    num_layer = 0
+    for wkt in geometries:
+        geom = ogr.CreateGeometryFromWkt(wkt)
+        lyr = ds.CreateLayer('test%d' % num_layer, geom_type = geom.GetGeometryType(), srs = srs)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
+        num_layer = num_layer + 1
+
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_spatialite_5.sqlite')
+    num_layer = 0
+    for wkt in geometries:
+        lyr = ds.GetLayer(num_layer)
+        feat = lyr.GetNextFeature()
+        got_wkt = feat.GetGeometryRef().ExportToWkt()
+        if got_wkt != wkt:
+            gdaltest.post_reason('got %s, expected %s' % (got_wkt, wkt))
+            return 'fail'
+
+        num_layer = num_layer + 1
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -1401,11 +1464,16 @@ def ogr_sqlite_cleanup():
         os.remove( 'tmp/non_spatialite_test_with_epsg.db' )
     except:
         pass
-
     try:
         os.remove( 'tmp/test24.sqlite' )
     except:
         pass
+
+    try:
+        os.remove( 'tmp/ogr_spatialite_5.sqlite' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
@@ -1437,6 +1505,14 @@ gdaltest_list = [
     ogr_spatialite_2,
     ogr_spatialite_3,
     ogr_spatialite_4,
+    ogr_spatialite_5,
+    ogr_sqlite_cleanup ]
+
+small_gdaltest_list = [
+    ogr_sqlite_1,
+    ogr_sqlite_17,
+    ogr_spatialite_1,
+    ogr_spatialite_5,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
