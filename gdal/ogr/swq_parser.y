@@ -313,14 +313,14 @@ field_value:
 		{
 		        $$ = $1;  // validation deferred.
 			$$->eNodeType = SNT_COLUMN;
-			$$->field_index = -1; 
+			$$->field_index = $$->table_index = -1;
 		}
 
 	| SWQT_IDENTIFIER '.' SWQT_IDENTIFIER
 		{
 		        $$ = $1;  // validation deferred.
 			$$->eNodeType = SNT_COLUMN;
-			$$->field_index = -1; 
+			$$->field_index = $$->table_index = -1;
 			$$->string_value = (char *) 
                             CPLRealloc( $$->string_value, 
                                         strlen($$->string_value) 
