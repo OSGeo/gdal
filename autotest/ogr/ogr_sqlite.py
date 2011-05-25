@@ -1179,6 +1179,7 @@ def ogr_spatialite_1():
     else:
         feat = sql_lyr.GetNextFeature()
         print('Spatialite : %s' % feat.GetFieldAsString(0))
+        gdaltest.spatialite_version = feat.GetFieldAsString(0)
         gdaltest.has_spatialite = True
         ds.ReleaseResultSet(sql_lyr)
         res = 'success'
@@ -1400,6 +1401,8 @@ def ogr_spatialite_5():
     num_layer = 0
     for wkt in geometries:
         geom = ogr.CreateGeometryFromWkt(wkt)
+        if gdaltest.spatialite_version == '2.3.1' and (geom.GetGeometryType() & ogr.wkb25DBit) != 0:
+            continue
         lyr = ds.CreateLayer('test%d' % num_layer, geom_type = geom.GetGeometryType(), srs = srs)
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetGeometry(geom)
@@ -1411,6 +1414,9 @@ def ogr_spatialite_5():
     ds = ogr.Open('tmp/ogr_spatialite_5.sqlite')
     num_layer = 0
     for wkt in geometries:
+        geom = ogr.CreateGeometryFromWkt(wkt)
+        if gdaltest.spatialite_version == '2.3.1' and (geom.GetGeometryType() & ogr.wkb25DBit) != 0:
+            continue
         lyr = ds.GetLayer(num_layer)
         feat = lyr.GetNextFeature()
         got_wkt = feat.GetGeometryRef().ExportToWkt()
