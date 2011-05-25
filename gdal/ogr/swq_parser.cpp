@@ -1970,7 +1970,7 @@ yyreduce:
     {
 		        (yyval) = (yyvsp[(1) - (1)]);  // validation deferred.
 			(yyval)->eNodeType = SNT_COLUMN;
-			(yyval)->field_index = -1; 
+			(yyval)->field_index = (yyval)->table_index = -1;
 		;}
     break;
 
@@ -1981,7 +1981,7 @@ yyreduce:
     {
 		        (yyval) = (yyvsp[(1) - (3)]);  // validation deferred.
 			(yyval)->eNodeType = SNT_COLUMN;
-			(yyval)->field_index = -1; 
+			(yyval)->field_index = (yyval)->table_index = -1;
 			(yyval)->string_value = (char *) 
                             CPLRealloc( (yyval)->string_value, 
                                         strlen((yyval)->string_value) 
