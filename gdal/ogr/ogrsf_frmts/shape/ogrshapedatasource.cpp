@@ -291,7 +291,29 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     if( hSHP != NULL || EQUAL(CPLGetExtension(pszNewName),"dbf") )
     {
         if( bUpdate )
+        {
             hDBF = DBFOpen( pszNewName, "r+" );
+            if( hSHP != NULL && hDBF == NULL )
+            {
+                VSIStatBufL sStat;
+                const char* pszDBFName = CPLResetExtension(pszNewName, "dbf");
+                if( VSIStatExL( pszDBFName, &sStat, VSI_STAT_EXISTS_FLAG) == 0 )
+                {
+                    CPLError( CE_Failure, CPLE_OpenFailed,
+                              "%s exists, but cannot be opened in update mode",
+                              pszDBFName );
+                    return FALSE;
+                }
+                pszDBFName = CPLResetExtension(pszNewName, "DBF");
+                if( VSIStatExL( pszDBFName, &sStat, VSI_STAT_EXISTS_FLAG) == 0 )
+                {
+                    CPLError( CE_Failure, CPLE_OpenFailed,
+                              "%s exists, but cannot be opened in update mode",
+                              pszDBFName );
+                    return FALSE;
+                }
+            }
+        }
         else
             hDBF = DBFOpen( pszNewName, "r" );
     }
