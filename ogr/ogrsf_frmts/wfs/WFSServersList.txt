@@ -19,7 +19,8 @@ http://sdmdataaccess.nrcs.usda.gov/Spatial/SDMNAD83Geographic.wfs
 http://demo.mapserver.org/cgi-bin/wfs?
 
 Deegree:
-http://www.nokis.org/deegree2/ogcwebservice
+http://www.nokis.org/deegree2/ogcwebservice (not responding, requires namespace to be passed)
+http://www.idee.es/IDEE-WFS/ogcwebservice (responding, requires namespace to be passed)
 http://demo.deegree.org/deegree-wfs/services
 http://testing.deegree.org/deegree-wfs/services (WFS-T, but permission denied)
 http://lkee-xplanung2.lat-lon.de/xplan-wfs/services (with complex schema that we cannot understand with the XSD parser)
