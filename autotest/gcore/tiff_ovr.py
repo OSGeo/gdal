@@ -382,7 +382,7 @@ def tiff_ovr_9():
     gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', '')
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 5700
+    exp_cs = 5562
 
     ds = None
 
@@ -395,7 +395,7 @@ def tiff_ovr_9():
     ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 5700
+    exp_cs = 5562
 
     ds = None
 
@@ -434,7 +434,7 @@ def tiff_ovr_10():
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 5700
+    exp_cs = 5562
 
     ds = None
 
@@ -1623,7 +1623,7 @@ def tiff_ovr_43():
         gdaltest.post_reason('did not get expected NBITS')
         return 'fail'
 
-    if cs != 642:
+    if cs != 354:
         print(cs)
         gdaltest.post_reason('did not get expected checksum')
         return 'fail'
