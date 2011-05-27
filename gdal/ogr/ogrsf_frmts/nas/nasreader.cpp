@@ -357,7 +357,8 @@ int NASReader::IsFeatureElement( const char *pszElement )
     // -- either a wfs:Insert or a gml:featureMember. 
 
     if( (nLen < 6 || !EQUAL(pszLast+nLen-6,"Insert")) 
-        && (nLen < 13 || !EQUAL(pszLast+nLen-13,"featureMember")) )
+        && (nLen < 13 || !EQUAL(pszLast+nLen-13,"featureMember"))
+        && (nLen < 6 || !EQUAL(pszLast+nLen-7,"Replace")) )
         return FALSE;
 
     // If the class list isn't locked, any element that is a featureMember
