@@ -155,38 +155,12 @@ void NASHandler::startElement(const XMLCh* const    uri,
     }
     
 /* -------------------------------------------------------------------- */
-/*      Is it a feature?  If so push a whole new state, and return.     */
-/* -------------------------------------------------------------------- */
-    else if( m_poReader->IsFeatureElement( szElementName ) )
-    {
-        const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
-        if ( pszFilteredClassName != NULL &&
-             strcmp(szElementName, pszFilteredClassName) != 0 )
-        {
-            m_bIgnoreFeature = TRUE;
-            m_nDepthFeature = m_nDepth;
-            m_nDepth ++;
-
-            return;
-        }
-
-        m_bIgnoreFeature = FALSE;
-
-        m_poReader->PushFeature( szElementName, attrs );
-
-        m_nDepthFeature = m_nDepth;
-        m_nDepth ++;
-
-        return;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Is this the ogc:Filter element in a wfs:Delete operation?       */
 /*      If so we translate it as a specialized sort of feature.         */
 /* -------------------------------------------------------------------- */
     else if( EQUAL(szElementName,"Filter") 
              && (pszLast = m_poReader->GetState()->GetLastComponent()) != NULL
-             && EQUAL(pszLast,"Delete") )
+             && (EQUAL(pszLast,"Delete") || EQUAL(pszLast,"Replace")) )
     {
         const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
         if ( pszFilteredClassName != NULL &&
@@ -207,6 +181,35 @@ void NASHandler::startElement(const XMLCh* const    uri,
         m_nDepth ++;
             
         m_poReader->SetFeatureProperty( "typeName", m_osLastTypeName );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is it a feature?  If so push a whole new state, and return.     */
+/* -------------------------------------------------------------------- */
+    else if( m_poReader->IsFeatureElement( szElementName ) )
+    {
+        m_osLastTypeName = szElementName;
+
+        const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
+
+        if ( pszFilteredClassName != NULL &&
+             strcmp(szElementName, pszFilteredClassName) != 0 )
+        {
+            m_bIgnoreFeature = TRUE;
+            m_nDepthFeature = m_nDepth;
+            m_nDepth ++;
+
+            return;
+        }
+
+        m_bIgnoreFeature = FALSE;
+
+        m_poReader->PushFeature( szElementName, attrs );
+
+        m_nDepthFeature = m_nDepth;
+        m_nDepth ++;
+
         return;
     }
 
