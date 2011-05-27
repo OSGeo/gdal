@@ -423,7 +423,7 @@ def tiff_write_13():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
 
-    ut = gdaltest.GDALTest( 'GTiff', 'sasha.tif', 3, 17255,
+    ut = gdaltest.GDALTest( 'GTiff', 'sasha.tif', 3, 17347,
                             options = [ 'TILED=YES',
                                         'COMPRESS=JPEG',
                                         'PHOTOMETRIC=YCBCR',
