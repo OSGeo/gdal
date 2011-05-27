@@ -36,8 +36,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-import ogr
-import osr
+from osgeo import ogr, osr
 
 # Other test data :
 # http://www.lv-bw.de/alkis.info/nas-bsp.html
@@ -203,7 +202,7 @@ def ogr_nas_4():
         return 'skip'
 
     try:
-        os.remove( 'tmp/delete_nas.gfs' )
+        os.remove( 'data/delete_nas.gfs' )
     except:
         pass
 
@@ -237,13 +236,99 @@ def ogr_nas_4():
     del_lyr = None
     ds = None
 
+    try:
+        os.remove( 'data/delete_nas.gfs' )
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Test that we can read files with wfsext:Replace transactions properly
+#
+
+def ogr_nas_5():
+
+    try:
+        drv = ogr.GetDriverByName('NAS')
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    try:
+        os.remove( 'data/replace_nas.gfs' )
+    except:
+        pass
+
+    ds = ogr.Open('data/replace_nas.xml')
+    if ds is None:
+        gdaltest.post_reason('could not open dataset')
+        return 'fail'
+
+    if ds.GetLayerCount() != 3:
+        gdaltest.post_reason('did not get expected layer count')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    # Check the delete operation created for the replace
+    
+    del_lyr = ds.GetLayerByName( 'Delete' )
+
+    if del_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'did not get expected number of features' )
+        return 'fail'
+
+    del_lyr.ResetReading()
+    feat = del_lyr.GetNextFeature()
+
+    if feat.GetField('typeName') != 'AX_Flurstueck':
+        gdaltest.post_reason( 'did not get expected typeName' )
+        return 'fail'
+
+    if feat.GetField('FeatureId') != 'DENW44AL00003IkM20100809T071726Z':
+        gdaltest.post_reason( 'did not get expected FeatureId' )
+        return 'fail'
+
+    del_lyr = None
+
+    # Check also the feature created by the Replace
+    
+    lyr = ds.GetLayerByName( 'AX_Flurstueck' )
+
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'did not get expected number of features' )
+        return 'fail'
+
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+
+    if feat.GetField('gml_id') != 'DENW44AL00003IkM20110429T070635Z':
+        gdaltest.post_reason( 'did not get expected gml_id' )
+        return 'fail'
+
+    if feat.GetField('stelle') != 5212:
+        gdaltest.post_reason( 'did not get expected stelle' )
+        return 'fail'
+
+    lyr = None
+    
+    ds = None
+
+    try:
+        os.remove( 'data/replace_nas.gfs' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
     ogr_nas_1,
     ogr_nas_2,
     ogr_nas_3,
-    ogr_nas_4 ]
+    ogr_nas_4,
+    ogr_nas_5 ]
 
 if __name__ == '__main__':
 
