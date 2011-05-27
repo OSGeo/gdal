@@ -1336,6 +1336,18 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
     osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", GetRequiredOutputFormat());
 
+    if (pszNS && GetNeedNAMESPACE())
+    {
+        /* Older Deegree version require NAMESPACE */
+        /* This has been now corrected */
+        CPLString osValue("xmlns(");
+        osValue += pszNS;
+        osValue += "=";
+        osValue += pszNSVal;
+        osValue += ")";
+        osURL = CPLURLAddKVP(osURL, "NAMESPACE", osValue);
+    }
+
     CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
 #else
     CPLString osPost;
@@ -1386,8 +1398,15 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
 
     if (strstr((const char*)psResult->pabyData, "<ServiceExceptionReport") != NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                psResult->pabyData);
+        if (IsOldDeegree((const char*)psResult->pabyData))
+        {
+            /* just silently forgive */
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                    psResult->pabyData);
+        }
         CPLHTTPDestroyResult(psResult);
         bLoadMultipleLayerDefn = FALSE;
         return;

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  WFS Translator
- * Purpose:  Definition of classes for OGR .sua driver.
+ * Purpose:  Definition of classes for OGR WFS driver.
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
