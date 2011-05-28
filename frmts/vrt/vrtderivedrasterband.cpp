@@ -30,16 +30,15 @@
 #include "vrtdataset.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include <map>
+
+static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
 
 /************************************************************************/
 /* ==================================================================== */
 /*                          VRTDerivedRasterBand                        */
 /* ==================================================================== */
 /************************************************************************/
-
-static int nFunctions = 0;
-static GDALDerivedPixelFunc *papfnPixelFunctions = NULL;
-static char **papszNames = NULL;
 
 /************************************************************************/
 /*                        VRTDerivedRasterBand()                        */
@@ -103,31 +102,14 @@ VRTDerivedRasterBand::~VRTDerivedRasterBand()
 CPLErr CPL_STDCALL GDALAddDerivedBandPixelFunc
 (const char *pszFuncName, GDALDerivedPixelFunc pfnNewFunction)
 {
-    int ii;
-
     /* ---- Init ---- */
-    if ((pszFuncName == NULL) || (pfnNewFunction == NULL)) {
-	return CE_None;
+    if ((pszFuncName == NULL) || (pszFuncName[0] == '\0') ||
+        (pfnNewFunction == NULL))
+    {
+      return CE_None;
     }
 
-    /* ---- Check for match with fn already on list, and replace ---- */
-    for (ii = 0; ii < nFunctions; ii++) {
-	if (strcmp(pszFuncName, papszNames[ii]) == 0) {
-	    papfnPixelFunctions[ii] = pfnNewFunction;
-	    return CE_None;
-	}
-    }
-
-    /* ---- Increment pixel function counter and add name/fn to lists ---- */
-    nFunctions++;
-
-    papfnPixelFunctions = (GDALDerivedPixelFunc *) 
-        CPLRealloc(papfnPixelFunctions, sizeof(void*) * nFunctions);
-    papfnPixelFunctions[nFunctions - 1] = pfnNewFunction;
-
-    papszNames = (char **)
-	CPLRealloc(papszNames, sizeof(void*) * nFunctions);
-    papszNames[nFunctions - 1] = (char *)pszFuncName;
+    osMapPixelFunction[pszFuncName] = pfnNewFunction;
 
     return CE_None;
 }
@@ -166,19 +148,19 @@ CPLErr VRTDerivedRasterBand::AddPixelFunction
 GDALDerivedPixelFunc VRTDerivedRasterBand::GetPixelFunction
 (const char *pszFuncName)
 {
-    int ii;
-
     /* ---- Init ---- */
-    if ((pszFuncName == NULL) || (pszFuncName[0] == '\0')) return NULL;
-
-    /* ---- Check for match with fn added with AddPixelFunction ---- */
-    for (ii = 0; ii < nFunctions; ii++) {
-	if (strcmp(pszFuncName, papszNames[ii]) == 0) {
-	    return papfnPixelFunctions[ii];
-	}
+    if ((pszFuncName == NULL) || (pszFuncName[0] == '\0'))
+    {
+        return NULL;
     }
 
-    return NULL;
+    std::map<CPLString, GDALDerivedPixelFunc>::iterator oIter =
+        osMapPixelFunction.find(pszFuncName);
+
+    if( oIter == osMapPixelFunction.end())
+        return NULL;
+
+    return oIter->second;
 }
 
 /************************************************************************/
