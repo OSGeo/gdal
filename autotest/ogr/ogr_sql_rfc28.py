@@ -526,6 +526,24 @@ def ogr_rfc28_24():
     return 'success'
 
 ###############################################################################
+# Verify that LIKE pattern ESCAPE escape_char works
+
+def ogr_rfc28_25():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "select * from poly where prfedea LIKE 'x35043408' ESCAPE 'x'" )
+
+    count = sql_lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if count != 1:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 1' % count )
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -559,6 +577,7 @@ gdaltest_list = [
     ogr_rfc28_22,
     ogr_rfc28_23,
     ogr_rfc28_24,
+    ogr_rfc28_25,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

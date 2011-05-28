@@ -202,7 +202,9 @@ case insensitive, but the <b>&lt;</b>, <b>&gt;</b>, <b>&lt;=</b> and <b>&gt;=</b
 
 The value argument to the <b>LIKE</b> operator is a pattern against which
 the value string is matched.  In this pattern percent (%) matches any number of
-characters, and underscore ( _ ) matches any one character.
+characters, and underscore ( _ ) matches any one character. An optional ESCAPE escape_char
+clause can be added so that the percent or underscore characters can be searched
+as regular characters, by being preceded with the escape_char.
 
 \code
     String             Pattern       Matches?
@@ -532,8 +534,9 @@ All OGR drivers for database systems: <a href="/ogr/drv_mysql.html">MySQL</a>,
 PostgreSQL and PostGIS (<a href="/ogr/drv_pg.html">PG</a>), 
 Oracle (<a href="/ogr/drv_oci.html">OCI</a>), 
 <a href="/ogr/drv_sqlite.html">SQLite</a>, 
-<a href="/ogr/drv_odbc.html">ODBC</a> 
-and ESRI Personal Geodatabase (<a href="/ogr/drv_pgeo.html">PGeo</a>) 
+<a href="/ogr/drv_odbc.html">ODBC</a>,
+ESRI Personal Geodatabase (<a href="/ogr/drv_pgeo.html">PGeo</a>) and
+MS SQL Spatial (<a href="/ogr/drv_mssqlspatial.html">MSSQLSpatial</a>),
 override the OGRDataSource::ExecuteSQL() function with dedicated implementation 
 and, by default, pass the SQL statements directly to the underlying RDBMS. 
 In these cases the SQL syntax varies in some particulars from OGR SQL.
