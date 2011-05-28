@@ -413,11 +413,13 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
       case SWQ_MULTIPLY:
       case SWQ_DIVIDE:
       case SWQ_MODULUS:
-        CPLAssert( nSubExprCount == 2 );
+        CPLAssert( nSubExprCount >= 2 );
         osExpr.Printf( "(%s) %s (%s)", 
                        apszSubExpr[0],
                        poOp->osName.c_str(),
                        apszSubExpr[1] );
+        if( nOperation == SWQ_LIKE && nSubExprCount == 3 )
+            osExpr += CPLSPrintf( " ESCAPE (%s)", apszSubExpr[2] );
         break;
 
       case SWQ_NOT:
