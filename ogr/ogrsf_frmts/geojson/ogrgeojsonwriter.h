@@ -51,7 +51,7 @@ class OGRGeometryCollection;
 /*                 GeoJSON Geometry Translators                         */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature );
+json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature, int bWriteBBOX );
 json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature );
 json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry );
 json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint );

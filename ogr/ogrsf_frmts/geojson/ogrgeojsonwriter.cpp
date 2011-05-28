@@ -36,7 +36,7 @@
 /*                           OGRGeoJSONWriteFeature                     */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature )
+json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature, int bWriteBBOX )
 {
     CPLAssert( NULL != poFeature );
 
@@ -73,7 +73,30 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature )
     if ( NULL != poGeometry )
     {
         poObjGeom = OGRGeoJSONWriteGeometry( poGeometry );
-        CPLAssert( NULL != poObjGeom );
+
+        if ( bWriteBBOX && !poGeometry->IsEmpty() )
+        {
+            OGREnvelope3D sEnvelope;
+            poGeometry->getEnvelope(&sEnvelope);
+
+            json_object* poObjBBOX = json_object_new_array();
+            json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelope.MinX));
+            json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelope.MinY));
+            if (poGeometry->getCoordinateDimension() == 3)
+                json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelope.MinZ));
+            json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelope.MaxX));
+            json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelope.MaxY));
+            if (poGeometry->getCoordinateDimension() == 3)
+                json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelope.MaxZ));
+
+            json_object_object_add( poObj, "bbox", poObjBBOX );
+        }
     }
     
     json_object_object_add( poObj, "geometry", poObjGeom );
