@@ -447,7 +447,10 @@ json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine )
     const int nCount = poLine->getNumPoints();
     for( int i = 0; i < nCount; ++i )
     {
-        poObjPoint = OGRGeoJSONWriteCoords( poLine->getX(i), poLine->getY(i) );
+        if( poLine->getCoordinateDimension() == 2 )
+            poObjPoint = OGRGeoJSONWriteCoords( poLine->getX(i), poLine->getY(i) );
+        else
+            poObjPoint = OGRGeoJSONWriteCoords( poLine->getX(i), poLine->getY(i), poLine->getZ(i) );
         json_object_array_add( poObjCoords, poObjPoint );
     }
     
