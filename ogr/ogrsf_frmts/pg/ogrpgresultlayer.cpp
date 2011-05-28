@@ -30,10 +30,10 @@
 
 #include "cpl_conv.h"
 #include "ogr_pg.h"
-#include "ogrpgutility.h"
 
 CPL_CVSID("$Id$");
 
+#define PQexec this_is_an_error
 
 /************************************************************************/
 /*                          OGRPGResultLayer()                          */
@@ -66,7 +66,7 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
         osGetSRID += pszRawStatement;
         osGetSRID += ") AS ogrpggetsrid LIMIT 1";
 
-        PGresult* hSRSIdResult = PQexec(poDS->GetPGConn(), osGetSRID );
+        PGresult* hSRSIdResult = OGRPG_PQexec(poDS->GetPGConn(), osGetSRID );
 
         if( hSRSIdResult && PQresultStatus(hSRSIdResult) == PGRES_TUPLES_OK)
         {
@@ -340,7 +340,7 @@ int OGRPGResultLayer::GetFeatureCount( int bForce )
         "SELECT count(*) FROM (%s) AS ogrpgcount",
         pszQueryStatement );
 
-    hResult = PQexec(hPGConn, osCommand);
+    hResult = OGRPG_PQexec(hPGConn, osCommand);
     if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         nCount = atoi(PQgetvalue(hResult,0,0));
     else
