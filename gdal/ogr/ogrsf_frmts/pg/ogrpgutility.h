@@ -32,6 +32,9 @@
 
 #include "libpq-fe.h"
 
+PGresult *OGRPG_PQexec(PGconn *conn, const char *query,
+                       int bMultipleCommandAllowed = FALSE);
+
 /************************************************************************/
 /*                            OGRPGClearResult                          */
 /*                                                                      */

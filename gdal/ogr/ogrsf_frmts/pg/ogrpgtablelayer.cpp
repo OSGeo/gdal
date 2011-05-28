@@ -28,10 +28,11 @@
  ****************************************************************************/
 
 #include "ogr_pg.h"
-#include "ogrpgutility.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_error.h"
+
+#define PQexec this_is_an_error
 
 CPL_CVSID("$Id$");
 
@@ -215,7 +216,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
               "OR i.indkey[9]=a.attnum) %s ORDER BY a.attnum",
               pszTypnameEqualsAnyClause, pszTableName, osSchemaClause.c_str() );
      
-    hResult = PQexec(hPGConn, osCommand.c_str() );
+    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
     if ( hResult && PGRES_TUPLES_OK == PQresultStatus(hResult) )
     {
@@ -248,7 +249,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
 /* -------------------------------------------------------------------- */
 /*      Fire off commands to get back the columns of the table.          */
 /* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, "BEGIN");
+    hResult = OGRPG_PQexec(hPGConn, "BEGIN");
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
@@ -266,13 +267,13 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
                  "%s",
                  pszTableName, osSchemaClause.c_str());
 
-        hResult = PQexec(hPGConn, osCommand.c_str() );
+        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
     }
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
         OGRPGClearResult( hResult );
-        hResult = PQexec(hPGConn, "FETCH ALL in mycursor" );
+        hResult = OGRPG_PQexec(hPGConn, "FETCH ALL in mycursor" );
     }
 
     if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
@@ -288,10 +289,10 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
     {
         OGRPGClearResult( hResult );
 
-        hResult = PQexec(hPGConn, "CLOSE mycursor");
+        hResult = OGRPG_PQexec(hPGConn, "CLOSE mycursor");
         OGRPGClearResult( hResult );
 
-        hResult = PQexec(hPGConn, "COMMIT");
+        hResult = OGRPG_PQexec(hPGConn, "COMMIT");
         OGRPGClearResult( hResult );
 
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -461,10 +462,10 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
 
     OGRPGClearResult( hResult );
 
-    hResult = PQexec(hPGConn, "CLOSE mycursor");
+    hResult = OGRPG_PQexec(hPGConn, "CLOSE mycursor");
     OGRPGClearResult( hResult );
 
-    hResult = PQexec(hPGConn, "COMMIT");
+    hResult = OGRPG_PQexec(hPGConn, "COMMIT");
     OGRPGClearResult( hResult );
 
     /* If geometry type, SRID, etc... have always been set by SetGeometryInformation() */
@@ -498,7 +499,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
             osCommand += CPLString().Printf(" AND f_table_schema='%s'", pszSchemaName);
         }
 
-        hResult = PQexec(hPGConn,osCommand);
+        hResult = OGRPG_PQexec(hPGConn,osCommand);
 
         if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
         {
@@ -533,7 +534,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
             }
 
             OGRPGClearResult( hResult );
-            hResult = PQexec(hPGConn, osCommand.c_str() );
+            hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
             if ( hResult && PQntuples( hResult ) == 1 && !PQgetisnull( hResult,0,0 ) )
             {
@@ -889,7 +890,7 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    hResult = PQexec(hPGConn, osCommand);
+    hResult = OGRPG_PQexec(hPGConn, osCommand);
 
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -1203,7 +1204,7 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Execute the update.                                             */
 /* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, osCommand);
+    hResult = OGRPG_PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1553,7 +1554,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
 /* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, osCommand);
+    hResult = OGRPG_PQexec(hPGConn, osCommand);
     if (bReturnRequested && PQresultStatus(hResult) == PGRES_TUPLES_OK &&
         PQntuples(hResult) == 1 && PQnfields(hResult) == 1 )
     {
@@ -1998,12 +1999,12 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
     poDS->FlushSoftTransaction();
-    hResult = PQexec(hPGConn, "BEGIN");
+    hResult = OGRPG_PQexec(hPGConn, "BEGIN");
     OGRPGClearResult( hResult );
 
     osCommand.Printf( "ALTER TABLE %s ADD COLUMN \"%s\" %s",
                       pszSqlTableName, oField.GetNameRef(), osFieldType.c_str() );
-    hResult = PQexec(hPGConn, osCommand);
+    hResult = OGRPG_PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -2013,7 +2014,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
         OGRPGClearResult( hResult );
 
-        hResult = PQexec( hPGConn, "ROLLBACK" );
+        hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
         OGRPGClearResult( hResult );
 
         return OGRERR_FAILURE;
@@ -2021,7 +2022,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     OGRPGClearResult( hResult );
 
-    hResult = PQexec(hPGConn, "COMMIT");
+    hResult = OGRPG_PQexec(hPGConn, "COMMIT");
     OGRPGClearResult( hResult );
 
     poFeatureDefn->AddFieldDefn( &oField );
@@ -2057,13 +2058,13 @@ OGRErr OGRPGTableLayer::DeleteField( int iField )
 
     poDS->FlushSoftTransaction();
 
-    hResult = PQexec(hPGConn, "BEGIN");
+    hResult = OGRPG_PQexec(hPGConn, "BEGIN");
     OGRPGClearResult( hResult );
 
     osCommand.Printf( "ALTER TABLE %s DROP COLUMN \"%s\"",
                       pszSqlTableName,
                       poFeatureDefn->GetFieldDefn(iField)->GetNameRef() );
-    hResult = PQexec(hPGConn, osCommand);
+    hResult = OGRPG_PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -2073,7 +2074,7 @@ OGRErr OGRPGTableLayer::DeleteField( int iField )
 
         OGRPGClearResult( hResult );
 
-        hResult = PQexec( hPGConn, "ROLLBACK" );
+        hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
         OGRPGClearResult( hResult );
 
         return OGRERR_FAILURE;
@@ -2081,7 +2082,7 @@ OGRErr OGRPGTableLayer::DeleteField( int iField )
 
     OGRPGClearResult( hResult );
 
-    hResult = PQexec(hPGConn, "COMMIT");
+    hResult = OGRPG_PQexec(hPGConn, "COMMIT");
     OGRPGClearResult( hResult );
 
     return poFeatureDefn->DeleteFieldDefn( iField );
@@ -2118,7 +2119,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
 
     poDS->FlushSoftTransaction();
 
-    hResult = PQexec(hPGConn, "BEGIN");
+    hResult = OGRPG_PQexec(hPGConn, "BEGIN");
     OGRPGClearResult( hResult );
 
     if (!(nFlags & ALTER_TYPE_FLAG))
@@ -2138,7 +2139,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
                                                        TRUE);
         if (osFieldType.size() == 0)
         {
-            hResult = PQexec( hPGConn, "ROLLBACK" );
+            hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
             OGRPGClearResult( hResult );
 
             return OGRERR_FAILURE;
@@ -2148,7 +2149,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
                         pszSqlTableName,
                         poFieldDefn->GetNameRef(),
                         osFieldType.c_str() );
-        hResult = PQexec(hPGConn, osCommand);
+        hResult = OGRPG_PQexec(hPGConn, osCommand);
         if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -2158,7 +2159,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
 
             OGRPGClearResult( hResult );
 
-            hResult = PQexec( hPGConn, "ROLLBACK" );
+            hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
             OGRPGClearResult( hResult );
 
             return OGRERR_FAILURE;
@@ -2189,7 +2190,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
                             pszSqlTableName,
                             poFieldDefn->GetNameRef(),
                             oField.GetNameRef() );
-            hResult = PQexec(hPGConn, osCommand);
+            hResult = OGRPG_PQexec(hPGConn, osCommand);
             if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -2199,7 +2200,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
 
                 OGRPGClearResult( hResult );
 
-                hResult = PQexec( hPGConn, "ROLLBACK" );
+                hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
                 OGRPGClearResult( hResult );
 
                 return OGRERR_FAILURE;
@@ -2208,7 +2209,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         }
     }
 
-    hResult = PQexec(hPGConn, "COMMIT");
+    hResult = OGRPG_PQexec(hPGConn, "COMMIT");
     OGRPGClearResult( hResult );
 
     if (nFlags & ALTER_NAME_FLAG)
@@ -2261,13 +2262,13 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
              osFieldList.c_str(), pszSqlTableName, pszFIDColumn,
              nFeatureId );
 
-    hResult = PQexec(hPGConn, osCommand.c_str() );
+    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
         OGRPGClearResult( hResult );
 
-        hResult = PQexec(hPGConn, "FETCH ALL in getfeaturecursor" );
+        hResult = OGRPG_PQexec(hPGConn, "FETCH ALL in getfeaturecursor" );
 
         if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         {
@@ -2299,7 +2300,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
     OGRPGClearResult( hResult );
 
-    hResult = PQexec(hPGConn, "CLOSE getfeaturecursor");
+    hResult = OGRPG_PQexec(hPGConn, "CLOSE getfeaturecursor");
     OGRPGClearResult( hResult );
 
     poDS->FlushSoftTransaction();
@@ -2334,7 +2335,7 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
         "SELECT count(*) FROM %s %s",
         pszSqlTableName, osWHERE.c_str() );
 
-    hResult = PQexec(hPGConn, osCommand);
+    hResult = OGRPG_PQexec(hPGConn, osCommand);
     if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         nCount = atoi(PQgetvalue(hResult,0,0));
     else
@@ -2380,7 +2381,7 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
             osCommand += CPLString().Printf(" AND f_table_schema = '%s'", pszSchemaName);
         }
 
-        hResult = PQexec(hPGConn, osCommand.c_str() );
+        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
         if( hResult
             && PQresultStatus(hResult) == PGRES_TUPLES_OK
@@ -2447,7 +2448,7 @@ OGRErr OGRPGTableLayer::StartCopy()
              pszSqlTableName, osFields.c_str() );
 
     PGconn *hPGConn = poDS->GetPGConn();
-    PGresult *hResult = PQexec(hPGConn, pszCommand);
+    PGresult *hResult = OGRPG_PQexec(hPGConn, pszCommand);
 
     if ( !hResult || (PQresultStatus(hResult) != PGRES_COPY_IN))
     {

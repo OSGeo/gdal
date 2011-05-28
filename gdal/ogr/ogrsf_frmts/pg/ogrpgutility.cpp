@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Debug infrastructure
+ * Purpose:  Utility methods
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -27,23 +27,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* Do NOT include ogr_pg.h, otherwise the above PQexec call will expand to the */
-/* OGRPG_PQexec_dbg function */
-#include "libpq-fe.h"
+#include "ogr_pg.h"
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                         OGRPG_PQexec_dbg()                           */
+/*                         OGRPG_PQexec()                               */
 /************************************************************************/
-#ifdef DEBUG
-PGresult *OGRPG_PQexec_dbg(PGconn *conn, const char *query);
 
-
-PGresult *OGRPG_PQexec_dbg(PGconn *conn, const char *query)
+PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllowed)
 {
-    PGresult* hResult = PQexec(conn, query);
+    PGresult* hResult;
+    if (bMultipleCommandAllowed)
+        hResult = PQexec(conn, query);
+    else
+        hResult = PQexecParams(conn, query, 0, NULL, NULL, NULL, NULL, 0);
+
+#ifdef DEBUG
     const char* pszRetCode = "UNKNOWN";
     char szNTuples[32];
     szNTuples[0] = '\0';
@@ -67,7 +68,11 @@ PGresult *OGRPG_PQexec_dbg(PGconn *conn, const char *query)
             default: break;
         }
     }
-    CPLDebug("PG", "PQexec(%s) = %s%s", query, pszRetCode, szNTuples);
+    if (bMultipleCommandAllowed)
+        CPLDebug("PG", "PQexec(%s) = %s%s", query, pszRetCode, szNTuples);
+    else
+        CPLDebug("PG", "PQexecParams(%s) = %s%s", query, pszRetCode, szNTuples);
+#endif
+
     return hResult;
 }
-#endif

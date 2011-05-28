@@ -58,10 +58,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
 #include "ogr_pg.h"
-#include "ogrpgutility.h"
 #include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+#define PQexec this_is_an_error
 
 CPL_CVSID("$Id$");
 
@@ -169,7 +170,7 @@ void OGRPGLayer::ResetReading()
         {
             osCommand.Printf("CLOSE %s", pszCursorName );
 
-            hCursorResult = PQexec(hPGConn, osCommand.c_str());
+            hCursorResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
             OGRPGClearResult( hCursorResult );
         }
 
@@ -1319,11 +1320,11 @@ void OGRPGLayer::SetInitialQueryCursor()
         osCommand.Printf( "DECLARE %s CURSOR for %s",
                             pszCursorName, pszQueryStatement );
 
-    hCursorResult = PQexec(hPGConn, osCommand );
+    hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
     OGRPGClearResult( hCursorResult );
 
     osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
-    hCursorResult = PQexec(hPGConn, osCommand );
+    hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
 
     bCursorActive = TRUE;
 
@@ -1374,7 +1375,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         OGRPGClearResult( hCursorResult );
         
         osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
-        hCursorResult = PQexec(hPGConn, osCommand );
+        hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
 
         nResultOffset = 0;
     }
@@ -1391,7 +1392,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         {
             osCommand.Printf( "CLOSE %s", pszCursorName );
 
-            hCursorResult = PQexec(hPGConn, osCommand);
+            hCursorResult = OGRPG_PQexec(hPGConn, osCommand);
             OGRPGClearResult( hCursorResult );
         }
 
@@ -1457,7 +1458,7 @@ OGRErr OGRPGLayer::SetNextByIndex( long nIndex )
     OGRPGClearResult( hCursorResult );
     
     osCommand.Printf( "FETCH ABSOLUTE %ld in %s", nIndex+1, pszCursorName );
-    hCursorResult = PQexec(hPGConn, osCommand );
+    hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
     
     if (PQresultStatus(hCursorResult) != PGRES_TUPLES_OK ||
         PQntuples(hCursorResult) != 1)
@@ -1471,7 +1472,7 @@ OGRErr OGRPGLayer::SetNextByIndex( long nIndex )
         {
             osCommand.Printf( "CLOSE %s", pszCursorName );
 
-            hCursorResult = PQexec(hPGConn, osCommand);
+            hCursorResult = OGRPG_PQexec(hPGConn, osCommand);
             OGRPGClearResult( hCursorResult );
         }
 
@@ -1947,7 +1948,7 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
         PGconn      *hPGConn = poDS->GetPGConn();
         PGresult    *hResult = NULL;
 
-        hResult = PQexec( hPGConn, osCommand );
+        hResult = OGRPG_PQexec( hPGConn, osCommand );
         if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
         {
             OGRPGClearResult( hResult );
