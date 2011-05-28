@@ -55,7 +55,8 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRGeoJSONDataSource* poDS )
     : iterCurrent_( seqFeatures_.end() ), poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), poSRS_( NULL ), nOutCounter_( 0 )
 {
-    UNREFERENCED_PARAM(papszOptions);
+    bWriteBBOX = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
+    bBBOX3D = FALSE;
 
     CPLAssert( NULL != poDS_ );
     CPLAssert( NULL != poFeatureDefn_ );
@@ -78,7 +79,32 @@ OGRGeoJSONLayer::~OGRGeoJSONLayer()
     VSILFILE* fp = poDS_->GetOutputFile();
     if( NULL != fp )
     {
-        VSIFPrintfL( fp, "\n]\n}\n" );
+        VSIFPrintfL( fp, "\n]" );
+
+        if( bWriteBBOX && sEnvelopeLayer.IsInit() )
+        {
+            json_object* poObjBBOX = json_object_new_array();
+            json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelopeLayer.MinX));
+            json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelopeLayer.MinY));
+            if( bBBOX3D )
+                json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelopeLayer.MinZ));
+            json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelopeLayer.MaxX));
+            json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelopeLayer.MaxY));
+            if( bBBOX3D )
+                json_object_array_add(poObjBBOX,
+                            json_object_new_double(sEnvelopeLayer.MaxZ));
+
+            VSIFPrintfL( fp, ",\n\"bbox\" : %s", json_object_to_json_string( poObjBBOX ) );
+
+            json_object_put( poObjBBOX );
+        }
+
+        VSIFPrintfL( fp, "\n}\n" );
     }
 
     std::for_each(seqFeatures_.begin(), seqFeatures_.end(),
@@ -215,7 +241,7 @@ OGRErr OGRGeoJSONLayer::CreateFeature( OGRFeature* poFeature )
         return OGRERR_INVALID_HANDLE;
     }
 
-    json_object* poObj = OGRGeoJSONWriteFeature( poFeature );
+    json_object* poObj = OGRGeoJSONWriteFeature( poFeature, bWriteBBOX );
     CPLAssert( NULL != poObj );
 
     if( nOutCounter_ > 0 )
@@ -228,6 +254,18 @@ OGRErr OGRGeoJSONLayer::CreateFeature( OGRFeature* poFeature )
     json_object_put( poObj );
 
     ++nOutCounter_;
+
+    OGRGeometry* poGeometry = poFeature->GetGeometryRef();
+    if ( bWriteBBOX && !poGeometry->IsEmpty() )
+    {
+        OGREnvelope3D sEnvelope;
+        poGeometry->getEnvelope(&sEnvelope);
+
+        if( poGeometry->getCoordinateDimension() == 3 )
+            bBBOX3D = TRUE;
+
+        sEnvelopeLayer.Merge(sEnvelope);
+    }
 
     return OGRERR_NONE;
 }
