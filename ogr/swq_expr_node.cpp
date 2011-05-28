@@ -303,22 +303,25 @@ void swq_expr_node::Dump( FILE * fp, int depth )
 /*      Add quoting necessary to unparse a string.                      */
 /************************************************************************/
 
-void swq_expr_node::Quote( CPLString &osTarget )
+void swq_expr_node::Quote( CPLString &osTarget, char chQuote )
 
 {
     CPLString osNew;
     int i;
 
-    osNew = "'";
+    osNew += chQuote;
 
     for( i = 0; i < (int) osTarget.size(); i++ )
     {
-        if( osTarget[i] == '\'' )
-            osNew += "''";
+        if( osTarget[i] == chQuote )
+        {
+            osNew += chQuote;
+            osNew += chQuote;
+        }
         else
             osNew += osTarget[i];
     }
-    osNew += "'";
+    osNew += chQuote;
 
     osTarget = osNew;
 }
@@ -327,7 +330,7 @@ void swq_expr_node::Quote( CPLString &osTarget )
 /*                              Unparse()                               */
 /************************************************************************/
 
-char *swq_expr_node::Unparse( swq_field_list *field_list )
+char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
 
 {
     CPLString osExpr;
@@ -367,7 +370,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list )
         else if( field_index != -1 )
             osExpr.Printf( "%s", field_list->names[field_index] );
 
-        Quote( osExpr );
+        Quote( osExpr, chColumnQuote );
 
         return CPLStrdup(osExpr.c_str());
     }
@@ -379,7 +382,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list )
     int i;
 
     for( i = 0; i < nSubExprCount; i++ )
-        apszSubExpr.push_back( papoSubExpr[i]->Unparse(field_list) );
+        apszSubExpr.push_back( papoSubExpr[i]->Unparse(field_list, chColumnQuote) );
 
 /* -------------------------------------------------------------------- */
 /*      Put things together in a fashion depending on the operator.     */

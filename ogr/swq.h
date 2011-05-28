@@ -91,7 +91,7 @@ typedef swq_expr_node *(*swq_op_evaluator)(swq_expr_node *op,
 typedef swq_field_type (*swq_op_checker)( swq_expr_node *op );
 
 class swq_expr_node {
-    static void   Quote( CPLString & );
+    static void   Quote( CPLString &, char chQuote = '\'' );
 public:
     swq_expr_node();
 
@@ -103,7 +103,7 @@ public:
     ~swq_expr_node();
 
     void           Initialize();
-    char          *Unparse( swq_field_list * );
+    char          *Unparse( swq_field_list *, char chColumnQuote );
     void           Dump( FILE *fp, int depth );
     swq_field_type Check( swq_field_list * );
     swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher, 
