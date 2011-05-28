@@ -37,8 +37,11 @@
 #include "DbEllipse.h"
 #include "DbArc.h"
 #include "DbMText.h"
+#include "DbText.h"
 #include "DbCircle.h"
 #include "DbSpline.h"
+#include "DbBlockReference.h"
+#include "Ge/GeScale3d.h"
 
 CPL_CVSID("$Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $");
 
@@ -109,6 +112,23 @@ OGRDWGLayer::~OGRDWGLayer()
     if( poFeatureDefn )
         poFeatureDefn->Release();
 }
+
+/************************************************************************/
+/*                           SetBlockTable()                            */
+/*                                                                      */
+/*      Set what block table to read features from.  This layer         */
+/*      object is used to read blocks features as well as generic       */
+/*      entities.                                                       */
+/************************************************************************/
+
+void OGRDWGLayer::SetBlockTable( OdDbBlockTableRecordPtr poNewBlock )
+
+{
+    poBlock = poNewBlock;
+
+    ResetReading();
+}
+
 
 /************************************************************************/
 /*                        ClearPendingFeatures()                        */
@@ -612,74 +632,57 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 /*                           TranslateTEXT()                            */
 /************************************************************************/
 
-#ifdef notdef
-OGRFeature *OGRDWGLayer::TranslateTEXT()
+OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
 
 {
-    char szLineBuf[257];
-    int nCode;
+    OdDbTextPtr poText = OdDbText::cast( poEntity );
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
-    double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
-    double dfAngle = 0.0;
-    double dfHeight = 0.0;
-    CPLString osText;
-    int bHaveZ = FALSE;
 
-    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
-    {
-        switch( nCode )
-        {
-          case 10:
-            dfX = CPLAtof(szLineBuf);
-            break;
-
-          case 20:
-            dfY = CPLAtof(szLineBuf);
-            break;
-
-          case 30:
-            dfZ = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
-            break;
-
-          case 40:
-            dfHeight = CPLAtof(szLineBuf);
-            break;
-
-          case 1:
-          case 3:
-            osText += szLineBuf;
-            break;
-
-          case 50:
-            dfAngle = CPLAtof(szLineBuf);
-            break;
-
-          default:
-            TranslateGenericProperty( poFeature, nCode, szLineBuf );
-            break;
-        }
-    }
-
-    if( nCode == 0 )
-        poDS->UnreadValue();
-
-    if( bHaveZ )
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
-    else
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
+    TranslateGenericProperties( poFeature, poEntity );
 
 /* -------------------------------------------------------------------- */
-/*      Translate text from Win-1252 to UTF8.  We approximate this      */
-/*      by treating Win-1252 as Latin-1.                                */
+/*      Set the location.                                               */
 /* -------------------------------------------------------------------- */
-    osText.Recode( poDS->GetEncoding(), CPL_ENC_UTF8 );
+    OdGePoint3d oLocation = poText->position();
+
+    poFeature->SetGeometryDirectly( 
+        new OGRPoint( oLocation.x, oLocation.y, oLocation.z ) );
+
+/* -------------------------------------------------------------------- */
+/*      Apply text after stripping off any extra terminating newline.   */
+/* -------------------------------------------------------------------- */
+    CPLString osText = TextUnescape( poText->textString() );
+
+    if( osText != "" && osText[osText.size()-1] == '\n' )
+        osText.resize( osText.size() - 1 );
 
     poFeature->SetField( "Text", osText );
 
 /* -------------------------------------------------------------------- */
+/*      We need to escape double quotes with backslashes before they    */
+/*      can be inserted in the style string.                            */
+/* -------------------------------------------------------------------- */
+    if( strchr( osText, '"') != NULL )
+    {
+        CPLString osEscaped;
+        size_t iC;
+
+        for( iC = 0; iC < osText.size(); iC++ )
+        {
+            if( osText[iC] == '"' )
+                osEscaped += "\\\"";
+            else
+                osEscaped += osText[iC];
+        }
+        osText = osEscaped;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Prepare style string.                                           */
 /* -------------------------------------------------------------------- */
+    double dfAngle = poText->rotation() * 180 / PI;
+    double dfHeight = poText->height();
+
     CPLString osStyle;
     char szBuffer[64];
     char* pszComma;
@@ -712,7 +715,6 @@ OGRFeature *OGRDWGLayer::TranslateTEXT()
 
     return poFeature;
 }
-#endif
 
 /************************************************************************/
 /*                           TranslatePOINT()                           */
@@ -732,127 +734,6 @@ OGRFeature *OGRDWGLayer::TranslatePOINT( OdDbEntityPtr poEntity )
 
     return poFeature;
 }
-
-#ifdef notdef
-/************************************************************************/
-/*                         TranslateLWPOLYLINE()                        */
-/************************************************************************/
-OGRFeature *OGRDWGLayer::TranslateLWPOLYLINE()
-
-{
-    // Collect vertices and attributes into a smooth polyline.
-    // If there are no bulges, then we are a straight-line polyline.
-    // Single-vertex polylines become points.
-    // Group code 30 (vertex Z) is not part of this entity.
-
-    char                szLineBuf[257];
-    int                 nCode;
-    int                 nPolylineFlag = 0;
-
-
-    OGRFeature          *poFeature = new OGRFeature( poFeatureDefn );
-    double              dfX = 0.0, dfY = 0.0, dfZ = 0.0;
-    int                 bHaveX = FALSE;
-    int                 bHaveY = FALSE;
-
-    int                 nNumVertices = 1;   // use 1 based index
-    int                 npolyarcVertexCount = 1;
-    double              dfBulge = 0.0;
-    DWGSmoothPolyline   smoothPolyline;
-
-    smoothPolyline.setCoordinateDimension(2);
-
-/* -------------------------------------------------------------------- */
-/*      Collect information from the LWPOLYLINE object itself.          */
-/* -------------------------------------------------------------------- */
-    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
-    {
-        if(npolyarcVertexCount > nNumVertices)
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Too many vertices found in LWPOLYLINE." );
-            delete poFeature;
-            return NULL;
-        }
-
-        switch( nCode )
-        {
-          case 38:
-            // Constant elevation.
-            dfZ = CPLAtof(szLineBuf);
-            smoothPolyline.setCoordinateDimension(3);
-            break;
-
-          case 90:
-            nNumVertices = atoi(szLineBuf);
-            break;
-
-          case 70:
-            nPolylineFlag = atoi(szLineBuf);
-            break;
-
-          case 10:
-            if( bHaveX && bHaveY )
-            {
-                smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
-                npolyarcVertexCount++;
-                dfBulge = 0.0;
-                bHaveY = FALSE;
-            }
-            dfX = CPLAtof(szLineBuf);
-            bHaveX = TRUE;
-            break;
-
-          case 20:
-            if( bHaveX && bHaveY )
-            {
-                smoothPolyline.AddPoint( dfX, dfY, dfZ, dfBulge );
-                npolyarcVertexCount++;
-                dfBulge = 0.0;
-                bHaveX = FALSE;
-            }
-            dfY = CPLAtof(szLineBuf);
-            bHaveY = TRUE;
-            break;
-
-          case 42:
-            dfBulge = CPLAtof(szLineBuf);
-            break;
-
-
-          default:
-            TranslateGenericProperty( poFeature, nCode, szLineBuf );
-            break;
-        }
-    }
-
-    poDS->UnreadValue();
-
-    if( bHaveX && bHaveY )
-        smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
-
-    
-    if(smoothPolyline.IsEmpty())
-    {
-        delete poFeature;
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Close polyline if necessary.                                    */
-/* -------------------------------------------------------------------- */
-    if(nPolylineFlag & 0x01)
-        smoothPolyline.Close();
-
-    OGRGeometry* poGeom = smoothPolyline.Tesselate();
-    ApplyOCSTransformer( poGeom );
-    poFeature->SetGeometryDirectly( poGeom );
-
-    PrepareLineStyle( poFeature );
-
-    return poFeature;
-}
-#endif
 
 /************************************************************************/
 /*                        TranslateLWPOLYLINE()                         */
@@ -1220,7 +1101,6 @@ OGRFeature *OGRDWGLayer::TranslateSPLINE( OdDbEntityPtr poEntity )
 /************************************************************************/
 
 
-#ifdef notdef
 class GeometryInsertTransformer : public OGRCoordinateTransformation
 {
 public:
@@ -1277,66 +1157,34 @@ public:
 /*                          TranslateINSERT()                           */
 /************************************************************************/
 
-OGRFeature *OGRDWGLayer::TranslateINSERT()
+OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 
 {
-    char szLineBuf[257];
-    int nCode;
+    OdDbBlockReferencePtr poRef = OdDbBlockReference::cast( poEntity );
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+
+    TranslateGenericProperties( poFeature, poEntity );
+
+/* -------------------------------------------------------------------- */
+/*      Collect parameters from the object.                             */
+/* -------------------------------------------------------------------- */
     GeometryInsertTransformer oTransformer;
     CPLString osBlockName;
-    double dfAngle = 0.0;
+    double dfAngle = poRef->rotation() * 180 / PI;
+    OdGePoint3d oPosition = poRef->position();
+    OdGeScale3d oScale = poRef->scaleFactors();
 
-/* -------------------------------------------------------------------- */
-/*      Process values.                                                 */
-/* -------------------------------------------------------------------- */
-    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
-    {
-        switch( nCode )
-        {
-          case 10:
-            oTransformer.dfXOffset = CPLAtof(szLineBuf);
-            break;
+    oTransformer.dfXOffset = oPosition.x;
+    oTransformer.dfYOffset = oPosition.y;
+    oTransformer.dfZOffset = oPosition.z;
 
-          case 20:
-            oTransformer.dfYOffset = CPLAtof(szLineBuf);
-            break;
+    oTransformer.dfXScale = oScale.sx;    
+    oTransformer.dfYScale = oScale.sy;    
+    oTransformer.dfZScale = oScale.sz;
 
-          case 30:
-            oTransformer.dfZOffset = CPLAtof(szLineBuf);
-            break;
-
-          case 41:
-            oTransformer.dfXScale = CPLAtof(szLineBuf);
-            break;
-
-          case 42:
-            oTransformer.dfYScale = CPLAtof(szLineBuf);
-            break;
-
-          case 43:
-            oTransformer.dfZScale = CPLAtof(szLineBuf);
-            break;
-
-          case 50:
-            dfAngle = CPLAtof(szLineBuf);
-            // We want to transform this to radians. 
-            // It is apparently always in degrees regardless of $AUNITS
-            oTransformer.dfAngle = dfAngle * PI / 180.0;
-            break;
-
-          case 2: 
-            osBlockName = szLineBuf;
-            break;
-            
-          default:
-            TranslateGenericProperty( poFeature, nCode, szLineBuf );
-            break;
-        }
-    }
-
-    if( nCode == 0 )
-        poDS->UnreadValue();
+    OdDbBlockTableRecordPtr poBlockRec = poRef->blockTableRecord().openObject();
+    if (poBlockRec.get())
+        osBlockName = (const char *) poBlockRec->getName();
 
 /* -------------------------------------------------------------------- */
 /*      In the case where we do not inlined blocks we just capture      */
@@ -1418,7 +1266,6 @@ OGRFeature *OGRDWGLayer::TranslateINSERT()
         return poFeature;
     }
 }
-#endif
 
 /************************************************************************/
 /*                      GetNextUnfilteredFeature()                      */
@@ -1493,6 +1340,10 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateMTEXT( poEntity );
         }
+        else if( EQUAL(pszEntityClassName,"AcDbText") )
+        {
+            poFeature = TranslateTEXT( poEntity );
+        }
         else if( EQUAL(pszEntityClassName,"AcDbAlignedDimension") 
                  || EQUAL(pszEntityClassName,"AcDbRotatedDimension") )
         {
@@ -1506,20 +1357,14 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateSPLINE( poEntity );
         }
-#ifdef notdef
-        else if( EQUAL(pszEntityClassName,"TEXT") )
+        else if( EQUAL(pszEntityClassName,"AcDbHatch") )
         {
-            poFeature = TranslateTEXT();
+            poFeature = TranslateHATCH( poEntity );
         }
-        else if( EQUAL(pszEntityClassName,"INSERT") )
+        else if( EQUAL(pszEntityClassName,"AcDbBlockReference") )
         {
-            poFeature = TranslateINSERT();
+            poFeature = TranslateINSERT( poEntity );
         }
-        else if( EQUAL(pszEntityClassName,"HATCH") )
-        {
-            poFeature = TranslateHATCH();
-        }
-#endif
         else
         {
             CPLDebug( "DWG", "Ignoring entity '%s'.", pszEntityClassName );
