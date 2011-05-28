@@ -1,6 +1,6 @@
 
 OBJ	=	ogrpgdriver.obj ogrpgdatasource.obj ogrpglayer.obj \
-		ogrpgtablelayer.obj ogrpgresultlayer.obj ogrpgdebug.obj
+		ogrpgtablelayer.obj ogrpgresultlayer.obj ogrpgutility.obj
 
 GDAL_ROOT	=	..\..\..
 
