@@ -878,6 +878,40 @@ void OGR_G_GetEnvelope( OGRGeometryH hGeom, OGREnvelope *psEnvelope )
 }
 
 /**
+ * \fn void OGRGeometry::getEnvelope(OGREnvelope3D *psEnvelope) const;
+ *
+ * \brief Computes and returns the bounding envelope (3D) for this geometry in the passed psEnvelope structure.
+ *
+ * This method is the same as the C function OGR_G_GetEnvelope3D().
+ *
+ * @param psEnvelope the structure in which to place the results.
+ *
+ * @since OGR 1.9.0
+ */
+
+/************************************************************************/
+/*                        OGR_G_GetEnvelope3D()                         */
+/************************************************************************/
+/**
+ * \brief Computes and returns the bounding envelope (3D) for this geometry in the passed psEnvelope structure.
+ *
+ * This function is the same as the CPP method OGRGeometry::getEnvelope().
+ *
+ * @param hGeom handle of the geometry to get envelope from.
+ * @param psEnvelope the structure in which to place the results.
+ *
+ * @since OGR 1.9.0
+ */
+
+void OGR_G_GetEnvelope3D( OGRGeometryH hGeom, OGREnvelope3D *psEnvelope )
+
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_GetEnvelope3D" );
+
+    ((OGRGeometry *) hGeom)->getEnvelope( psEnvelope );
+}
+
+/**
  * \fn OGRErr OGRGeometry::importFromWkb( unsigned char * pabyData, int nSize);
  *
  * \brief Assign geometry from well known binary data.
