@@ -370,6 +370,22 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 		      nPixelSpace * nBufXSize * nBufYSize);
 	    return CE_Failure;
 	}
+        /* ------------------------------------------------------------ */
+        /* #4045: Initialize the newly allocated buffers before handing */
+        /* them off to the sources. These buffers are packed, so we     */
+        /* don't need any special line-by-line handling when a nonzero  */
+        /* nodata value is set.                                         */
+        /* ------------------------------------------------------------ */
+        if ( !bNoDataValueSet || dfNoDataValue == 0 )
+        {
+            memset( pBuffers[iSource], 0, sourcesize * nBufXSize * nBufYSize );
+        }
+        else
+        {
+            GDALCopyWords( &dfNoDataValue, GDT_Float64, 0,
+                           (GByte *) pBuffers[iSource], eSrcType, sourcesize,
+                           nBufXSize * nBufYSize);
+        }
     }
 
     /* ---- Load values for sources into packed buffers ---- */
