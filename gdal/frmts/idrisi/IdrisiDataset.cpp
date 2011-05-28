@@ -500,6 +500,11 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
     // -------------------------------------------------------------------- 
 
     const char *pszDataType = CSLFetchNameValue( poDS->papszRDC, rdcDATA_TYPE );
+    if( pszDataType == NULL )
+    {
+        delete poDS;
+        return NULL;
+    }
 
     if( EQUAL( pszDataType, rstBYTE ) )
     {
@@ -547,16 +552,24 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
     // -------------------------------------------------------------------- 
 
     const char *pszMinX = CSLFetchNameValue( poDS->papszRDC, rdcMIN_X );
+    const char *pszMaxX = CSLFetchNameValue( poDS->papszRDC, rdcMAX_X );
+    const char *pszMinY = CSLFetchNameValue( poDS->papszRDC, rdcMIN_Y );
+    const char *pszMaxY = CSLFetchNameValue( poDS->papszRDC, rdcMAX_Y );
+    const char *pszUnit = CSLFetchNameValue( poDS->papszRDC, rdcUNIT_DIST );
 
-    if( strlen( pszMinX ) > 0 )
+    if( pszMinX != NULL && strlen( pszMinX ) > 0 &&
+        pszMaxX != NULL && strlen( pszMaxX ) > 0 &&
+        pszMinY != NULL && strlen( pszMinY ) > 0 &&
+        pszMaxY != NULL && strlen( pszMaxY ) > 0 &&
+        pszUnit != NULL && strlen( pszUnit ) > 0 )
     {
         double dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz;
 
-        dfMinX = atof_nz( CSLFetchNameValue( poDS->papszRDC, rdcMIN_X ) );
-        dfMaxX = atof_nz( CSLFetchNameValue( poDS->papszRDC, rdcMAX_X ) );
-        dfMinY = atof_nz( CSLFetchNameValue( poDS->papszRDC, rdcMIN_Y ) );
-        dfMaxY = atof_nz( CSLFetchNameValue( poDS->papszRDC, rdcMAX_Y ) );
-        dfUnit = atof_nz( CSLFetchNameValue( poDS->papszRDC, rdcUNIT_DIST ) );
+        dfMinX = atof_nz( pszMinX );
+        dfMaxX = atof_nz( pszMaxX );
+        dfMinY = atof_nz( pszMinY );
+        dfMaxY = atof_nz( pszMaxY );
+        dfUnit = atof_nz( pszUnit );
 
         dfMinX = dfMinX * dfUnit; 
         dfMaxX = dfMaxX * dfUnit; 
@@ -1189,7 +1202,10 @@ const char *IdrisiDataset::GetProjectionRef( void )
         const char *pszRefSystem = CSLFetchNameValue( papszRDC, rdcREF_SYSTEM );
         const char *pszRefUnit = CSLFetchNameValue( papszRDC, rdcREF_UNITS );
 
-        GeoReference2Wkt( pszRefSystem, pszRefUnit, &pszProjection );
+        if (pszRefSystem != NULL && pszRefUnit != NULL)
+            GeoReference2Wkt( pszRefSystem, pszRefUnit, &pszProjection );
+        else
+            pszProjection = CPLStrdup("");
     }
     return pszProjection;
 }
@@ -1443,6 +1459,9 @@ double IdrisiRasterBand::GetMinimum( int *pbSuccess )
 {      
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
+    if (CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ) == NULL)
+        return GDALPamRasterBand::GetMinimum(pbSuccess);
+
     double adfMinValue[3];
     sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ), "%lf %lf %lf", 
         &adfMinValue[0], &adfMinValue[1], &adfMinValue[2] );
@@ -1462,6 +1481,9 @@ double IdrisiRasterBand::GetMinimum( int *pbSuccess )
 double IdrisiRasterBand::GetMaximum( int *pbSuccess )
 {      
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+    if (CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ) == NULL)
+        return GDALPamRasterBand::GetMinimum(pbSuccess);
 
     double adfMaxValue[3];
     sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ), "%lf %lf %lf", 
@@ -1745,8 +1767,10 @@ CPLErr IdrisiRasterBand::SetStatistics( double dfMin, double dfMax, double dfMea
     double adfMin[3] = {0.0, 0.0, 0.0};
     double adfMax[3] = {0.0, 0.0, 0.0};
 
-    sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ), "%lf %lf %lf", &adfMin[0], &adfMin[1], &adfMin[2] );
-    sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ), "%lf %lf %lf", &adfMax[0], &adfMax[1], &adfMax[2] );
+    if (CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ) != NULL)
+        sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ), "%lf %lf %lf", &adfMin[0], &adfMin[1], &adfMin[2] );
+    if (CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ) != NULL)
+        sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ), "%lf %lf %lf", &adfMax[0], &adfMax[1], &adfMax[2] );
 
     adfMin[nBand - 1] = dfMin;
     adfMax[nBand - 1] = dfMax;
@@ -2240,10 +2264,11 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     CSLSetNameValueSeparator( papszRef, ":" );
 
     char *pszGeorefName;
-    
-    if( EQUAL( CSLFetchNameValue( papszRef, refREF_SYSTEM ), "" ) == FALSE )
+
+    const char* pszREF_SYSTEM = CSLFetchNameValue( papszRef, refREF_SYSTEM );
+    if( pszREF_SYSTEM != NULL && EQUAL( pszREF_SYSTEM, "" ) == FALSE )
     {
-        pszGeorefName           = CPLStrdup( CSLFetchNameValue( papszRef, refREF_SYSTEM ) );
+        pszGeorefName           = CPLStrdup( pszREF_SYSTEM );
     }
     else
     {
@@ -2261,15 +2286,18 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     double dfStdP1              = atof_nz( CSLFetchNameValue( papszRef, refSTANDL_1 ) );
     double dfStdP2              = atof_nz( CSLFetchNameValue( papszRef, refSTANDL_2 ) );
     double dfScale;
-    double adfToWGS84[3];
+    double adfToWGS84[3] = { 0.0, 0.0, 0.0 };
 
-    sscanf( CSLFetchNameValue( papszRef, refDELTA_WGS84 ), "%lf %lf %lf", 
-        &adfToWGS84[0], &adfToWGS84[1], &adfToWGS84[2] );
+    const char* pszToWGS84 = CSLFetchNameValue( papszRef, refDELTA_WGS84 );
+    if (pszToWGS84)
+        sscanf( pszToWGS84, "%lf %lf %lf",
+            &adfToWGS84[0], &adfToWGS84[1], &adfToWGS84[2] );
 
-    if( EQUAL( CSLFetchNameValue( papszRef, refSCALE_FAC ), "na" ) )
+    const char* pszSCALE_FAC = CSLFetchNameValue( papszRef, refSCALE_FAC );
+    if( pszSCALE_FAC == NULL || EQUAL( pszSCALE_FAC, "na" ) )
         dfScale = 1.0;
     else
-        dfScale = atof_nz( CSLFetchNameValue( papszRef, refSCALE_FAC ) );
+        dfScale = atof_nz( pszSCALE_FAC );
 
     CSLDestroy( papszRef );
 
