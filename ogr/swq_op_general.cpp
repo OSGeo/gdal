@@ -37,7 +37,7 @@
 /*      Does input match pattern?                                       */
 /************************************************************************/
 
-int swq_test_like( const char *input, const char *pattern )
+int swq_test_like( const char *input, const char *pattern, char chEscape )
 
 {
     if( input == NULL || pattern == NULL )
@@ -47,6 +47,20 @@ int swq_test_like( const char *input, const char *pattern )
     {
         if( *pattern == '\0' )
             return 0;
+
+        else if( *pattern == chEscape )
+        {
+            pattern++;
+            if( *pattern == '\0' )
+                return 0;
+            if( tolower(*pattern) != tolower(*input) )
+                return 0;
+            else
+            {
+                input++;
+                pattern++;
+            }
+        }
 
         else if( *pattern == '_' )
         {
@@ -63,7 +77,7 @@ int swq_test_like( const char *input, const char *pattern )
             /* try eating varying amounts of the input till we get a positive*/
             for( eat = 0; input[eat] != '\0'; eat++ )
             {
-                if( swq_test_like(input+eat,pattern+1) )
+                if( swq_test_like(input+eat,pattern+1, chEscape) )
                     return 1;
             }
 
@@ -407,9 +421,15 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
 
           case SWQ_LIKE:
+          {
+            char chEscape = '\0';
+            if( node->nSubExprCount == 3 )
+                chEscape = sub_node_values[2]->string_value[0];
             poRet->int_value = swq_test_like(sub_node_values[0]->string_value,
-                                             sub_node_values[1]->string_value);
+                                             sub_node_values[1]->string_value,
+                                             chEscape);
             break;
+          }
 
           case SWQ_ISNULL:
             poRet->int_value = sub_node_values[0]->is_null;
