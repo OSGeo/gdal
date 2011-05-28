@@ -134,13 +134,11 @@ class OGRDWGLayer : public OGRLayer
     OGRFeature *        TranslateDIMENSION( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateCIRCLE( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateSPLINE( OdDbEntityPtr poEntity );
-
-//    OGRFeature *        TranslateINSERT();
-//    OGRFeature *        TranslateTEXT();
-//    OGRFeature *        TranslateHATCH();
+    OGRFeature *        TranslateHATCH( OdDbEntityPtr poEntity );
+    OGRFeature *        TranslateTEXT( OdDbEntityPtr poEntity );
+    OGRFeature *        TranslateINSERT( OdDbEntityPtr poEntity );
 
     void                FormatDimension( CPLString &osText, double dfValue );
-//    OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
 
     CPLString           TextUnescape( OdString );
     double              AngleCorrect( double dfAngle, double dfRatio );
@@ -160,6 +158,9 @@ class OGRDWGLayer : public OGRLayer
     int                 TestCapability( const char * );
 
     OGRFeature *        GetNextUnfilteredFeature();
+
+    // internal
+    void                SetBlockTable( OdDbBlockTableRecordPtr );
 };
 
 /************************************************************************/
