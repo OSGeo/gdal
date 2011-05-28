@@ -60,9 +60,9 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
     if (bHasPostGISGeometry)
     {
         CPLString osGetSRID;
-        osGetSRID += "SELECT getsrid(\"";
-        osGetSRID += pszGeomColumn;
-        osGetSRID += "\") FROM (";
+        osGetSRID += "SELECT getsrid(";
+        osGetSRID += OGRPGEscapeColumnName(pszGeomColumn);
+        osGetSRID += ") FROM (";
         osGetSRID += pszRawStatement;
         osGetSRID += ") AS ogrpggetsrid LIMIT 1";
 
@@ -429,8 +429,8 @@ void OGRPGResultLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
                 snprintf(szBox3D_2, sizeof(szBox3D_2), "%.12f %.12f", sEnvelope.MaxX, sEnvelope.MaxY);
                 while((pszComma = strchr(szBox3D_2, ',')) != NULL)
                     *pszComma = '.';
-                osWHERE.Printf("WHERE \"%s\" && SetSRID('BOX3D(%s, %s)'::box3d,%d) ",
-                            pszGeomColumn, szBox3D_1, szBox3D_2, nSRSId );
+                osWHERE.Printf("WHERE %s && SetSRID('BOX3D(%s, %s)'::box3d,%d) ",
+                            OGRPGEscapeColumnName(pszGeomColumn).c_str(), szBox3D_1, szBox3D_2, nSRSId );
             }
             else
             {
@@ -459,14 +459,16 @@ OGRErr OGRPGResultLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     if ( TestCapability(OLCFastGetExtent) )
     {
         /* Do not take the spatial filter into account */
-        osCommand.Printf( "SELECT Extent(\"%s\") FROM (%s) AS ogrpgextent", 
-                         pszGeomColumn, pszRawStatement );
+        osCommand.Printf( "SELECT Extent(%s) FROM (%s) AS ogrpgextent",
+                          OGRPGEscapeColumnName(pszGeomColumn).c_str(),
+                          pszRawStatement );
     }
     else if ( bHasPostGISGeography )
     {
         /* Probably not very efficient, but more efficient than client-side implementation */
-        osCommand.Printf( "SELECT Extent(ST_GeomFromWKB(ST_AsBinary(\"%s\"))) FROM (%s) AS ogrpgextent", 
-                          pszGeomColumn, pszRawStatement );
+        osCommand.Printf( "SELECT Extent(ST_GeomFromWKB(ST_AsBinary(%s))) FROM (%s) AS ogrpgextent",
+                          OGRPGEscapeColumnName(pszGeomColumn).c_str(),
+                          pszRawStatement );
     }
     
     return RunGetExtentRequest(psExtent, bForce, osCommand);

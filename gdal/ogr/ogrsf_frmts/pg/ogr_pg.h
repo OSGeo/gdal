@@ -73,6 +73,7 @@
 CPLString OGRPGEscapeString(PGconn *hPGConn,
                             const char* pszStrValue, int nMaxLength,
                             const char* pszFieldName);
+CPLString OGRPGEscapeColumnName(const char* pszColumnName);
 
 /************************************************************************/
 /*                            OGRPGLayer                                */
