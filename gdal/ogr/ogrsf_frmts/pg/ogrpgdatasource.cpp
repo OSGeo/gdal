@@ -1196,16 +1196,14 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         osFIDColumnName = "OGC_FID";
     else
     {
-        osFIDColumnName = "\"";
         if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
         {
             char* pszLaunderedFid = LaunderName(pszFIDColumnName);
-            osFIDColumnName += pszLaunderedFid;
+            osFIDColumnName += OGRPGEscapeColumnName(pszLaunderedFid);
             CPLFree(pszLaunderedFid);
         }
         else
-            osFIDColumnName += pszFIDColumnName;
-        osFIDColumnName += "\"";
+            osFIDColumnName += OGRPGEscapeColumnName(pszFIDColumnName);
     }
     pszFIDColumnName = osFIDColumnName.c_str();
 
@@ -1416,16 +1414,16 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         
         if (nSRSId)
             osCommand.Printf(
-                     "%s ( %s SERIAL, \"%s\" geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
+                     "%s ( %s SERIAL, %s geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
                      osCreateTable.c_str(), pszFIDColumnName,
-                     pszGFldName, pszGeometryType,
+                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
                      nDimension == 2 ? "" : "Z", nSRSId, pszTableName,
                      pszFIDColumnName);
         else
             osCommand.Printf(
-                     "%s ( %s SERIAL, \"%s\" geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
+                     "%s ( %s SERIAL, %s geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
                      osCreateTable.c_str(), pszFIDColumnName,
-                     pszGFldName, pszGeometryType,
+                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
                      nDimension == 2 ? "" : "Z", pszTableName,
                      pszFIDColumnName);
     }
@@ -1516,8 +1514,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         {
             osCommand.Printf("CREATE INDEX \"%s_geom_idx\" "
                              "ON \"%s\".\"%s\" "
-                             "USING GIST (\"%s\")",
-                    pszTableName, pszSchemaName, pszTableName, pszGFldName);
+                             "USING GIST (%s)",
+                             pszTableName, pszSchemaName, pszTableName,
+                             OGRPGEscapeColumnName(pszGFldName).c_str());
 
             hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
