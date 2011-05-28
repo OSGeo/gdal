@@ -787,6 +787,54 @@ void OGRGeometryCollection::getEnvelope( OGREnvelope * psEnvelope ) const
 }
 
 /************************************************************************/
+/*                            getEnvelope()                             */
+/************************************************************************/
+
+void OGRGeometryCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
+
+{
+    OGREnvelope3D       oGeomEnv;
+    int                 bExtentSet = FALSE;
+
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    {
+        if (!papoGeoms[iGeom]->IsEmpty())
+        {
+            if (!bExtentSet)
+            {
+                papoGeoms[iGeom]->getEnvelope( psEnvelope );
+                bExtentSet = TRUE;
+            }
+            else
+            {
+                papoGeoms[iGeom]->getEnvelope( &oGeomEnv );
+
+                if( psEnvelope->MinX > oGeomEnv.MinX )
+                    psEnvelope->MinX = oGeomEnv.MinX;
+                if( psEnvelope->MinY > oGeomEnv.MinY )
+                    psEnvelope->MinY = oGeomEnv.MinY;
+                if( psEnvelope->MaxX < oGeomEnv.MaxX )
+                    psEnvelope->MaxX = oGeomEnv.MaxX;
+                if( psEnvelope->MaxY < oGeomEnv.MaxY )
+                    psEnvelope->MaxY = oGeomEnv.MaxY;
+
+                if( psEnvelope->MinZ > oGeomEnv.MinZ )
+                    psEnvelope->MinZ = oGeomEnv.MinZ;
+                if( psEnvelope->MaxZ < oGeomEnv.MaxZ )
+                    psEnvelope->MaxZ = oGeomEnv.MaxZ;
+            }
+        }
+    }
+
+    if (!bExtentSet)
+    {
+        psEnvelope->MinX = psEnvelope->MinY = 0;
+        psEnvelope->MaxX = psEnvelope->MaxY = 0;
+        psEnvelope->MaxZ = psEnvelope->MaxZ = 0;
+    }
+}
+
+/************************************************************************/
 /*                               Equals()                               */
 /************************************************************************/
 

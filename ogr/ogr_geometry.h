@@ -96,6 +96,7 @@ class CPL_DLL OGRGeometry
     virtual void        empty() = 0;
     virtual OGRGeometry *clone() const = 0;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const = 0;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const = 0;
 
     // IWks Interface
     virtual int WkbSize() const = 0;
@@ -194,6 +195,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual OGRGeometry *clone() const;
     virtual void empty();
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
     virtual OGRBoolean  IsEmpty() const;
 
     // IPoint
@@ -275,6 +277,7 @@ class CPL_DLL OGRLineString : public OGRCurve
     virtual OGRGeometry *clone() const;
     virtual void empty();
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
     virtual OGRBoolean  IsEmpty() const;
 
     // ICurve methods
@@ -442,6 +445,7 @@ class CPL_DLL OGRPolygon : public OGRSurface
     // IGeometry
     virtual int getDimension() const;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
 
     // ISpatialRelation
     virtual OGRBoolean  Equals( OGRGeometry * ) const;
@@ -508,6 +512,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     // IGeometry methods
     virtual int getDimension() const;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
 
     // IGeometryCollection
     int         getNumGeometries() const;

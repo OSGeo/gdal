@@ -1290,6 +1290,39 @@ void OGRLineString::getEnvelope( OGREnvelope * psEnvelope ) const
     psEnvelope->MaxY = dfMaxY;
 }
 
+
+/************************************************************************/
+/*                            getEnvelope()                             */
+/************************************************************************/
+
+void OGRLineString::getEnvelope( OGREnvelope3D * psEnvelope ) const
+
+{
+    getEnvelope((OGREnvelope*)psEnvelope);
+
+    double      dfMinZ, dfMaxZ;
+
+    if( nPointCount == 0 || padfZ == NULL )
+    {
+        psEnvelope->MinZ = 0;
+        psEnvelope->MaxZ = 0;
+        return;
+    }
+
+    dfMinZ = dfMaxZ = padfZ[0];
+
+    for( int iPoint = 1; iPoint < nPointCount; iPoint++ )
+    {
+        if( dfMinZ > padfZ[iPoint] )
+            dfMinZ = padfZ[iPoint];
+        if( dfMaxZ < padfZ[iPoint] )
+            dfMaxZ = padfZ[iPoint];
+    }
+
+    psEnvelope->MinZ = dfMinZ;
+    psEnvelope->MaxZ = dfMaxZ;
+}
+
 /************************************************************************/
 /*                               Equals()                                */
 /************************************************************************/
