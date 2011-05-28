@@ -88,6 +88,10 @@ private:
     OGRSpatialReference* poSRS_;
     CPLString sFIDColumn_;
     int nOutCounter_;
+
+    int bWriteBBOX;
+    int bBBOX3D;
+    OGREnvelope3D sEnvelopeLayer;
 };
 
 /************************************************************************/
