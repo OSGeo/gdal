@@ -4420,6 +4420,10 @@ class Geometry(_object):
         """
         return _ogr.Geometry_GetEnvelope(self, *args)
 
+    def GetEnvelope3D(self, *args):
+        """GetEnvelope3D(self)"""
+        return _ogr.Geometry_GetEnvelope3D(self, *args)
+
     def Centroid(self, *args):
         """
         Centroid(self) -> Geometry

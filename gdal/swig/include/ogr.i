@@ -316,6 +316,17 @@ typedef struct
     double      MinY;
     double      MaxY;
 } OGREnvelope;
+
+%rename (Envelope3D) OGREnvelope3D;
+typedef struct
+{
+    double      MinX;
+    double      MaxX;
+    double      MinY;
+    double      MaxY;
+    double      MinZ;
+    double      MaxZ;
+} OGREnvelope3D;
 #endif
 
 #ifndef GDAL_BINDINGS
@@ -1926,9 +1937,17 @@ public:
   void GetEnvelope(OGREnvelope *env) {
     OGR_G_GetEnvelope(self, env);
   }
+
+  void GetEnvelope3D(OGREnvelope3D *env) {
+    OGR_G_GetEnvelope3D(self, env);
+  }
 #else
   void GetEnvelope(double argout[4]) {
     OGR_G_GetEnvelope(self, (OGREnvelope*)argout);
+  }
+
+  void GetEnvelope3D(double argout[6]) {
+    OGR_G_GetEnvelope3D(self, (OGREnvelope3D*)argout);
   }
 #endif  
 

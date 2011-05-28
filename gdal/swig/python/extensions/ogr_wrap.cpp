@@ -4175,6 +4175,9 @@ SWIGINTERN void OGRGeometryShadow_Segmentize(OGRGeometryShadow *self,double dfMa
 SWIGINTERN void OGRGeometryShadow_GetEnvelope(OGRGeometryShadow *self,double argout[4]){
     OGR_G_GetEnvelope(self, (OGREnvelope*)argout);
   }
+SWIGINTERN void OGRGeometryShadow_GetEnvelope3D(OGRGeometryShadow *self,double argout[6]){
+    OGR_G_GetEnvelope3D(self, (OGREnvelope3D*)argout);
+  }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Centroid(OGRGeometryShadow *self){
     OGRGeometryShadow *pt = (OGRGeometryShadow*) OGR_G_CreateGeometry( wkbPoint );
     OGR_G_Centroid( self, pt );
@@ -15220,6 +15223,49 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_GetEnvelope3D(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  double *arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double argout2[6] ;
+  PyObject * obj0 = 0 ;
+  
+  {
+    /* %typemap(in,numinputs=0) (double argout2[ANY]) */
+    arg2 = argout2;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_GetEnvelope3D",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetEnvelope3D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    OGRGeometryShadow_GetEnvelope3D(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout) (double argout[ANY]) */
+    PyObject *out = CreateTupleFromDoubleArray( arg2, 6 );
+    resultobj = t_output_helper(resultobj,out);
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_Centroid(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -19318,6 +19364,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"psEnvelope:  the structure in which to place the results. \n"
 		""},
+	 { (char *)"Geometry_GetEnvelope3D", _wrap_Geometry_GetEnvelope3D, METH_VARARGS, (char *)"Geometry_GetEnvelope3D(Geometry self)"},
 	 { (char *)"Geometry_Centroid", _wrap_Geometry_Centroid, METH_VARARGS, (char *)"\n"
 		"Geometry_Centroid(Geometry self) -> Geometry\n"
 		"\n"

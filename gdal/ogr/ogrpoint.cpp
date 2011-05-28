@@ -487,6 +487,17 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
     psEnvelope->MinY = psEnvelope->MaxY = getY();
 }
 
+/************************************************************************/
+/*                            getEnvelope()                             */
+/************************************************************************/
+
+void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
+
+{
+    psEnvelope->MinX = psEnvelope->MaxX = getX();
+    psEnvelope->MinY = psEnvelope->MaxY = getY();
+    psEnvelope->MinZ = psEnvelope->MaxZ = getZ();
+}
 
 
 /**
