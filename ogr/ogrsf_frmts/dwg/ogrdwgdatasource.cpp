@@ -104,10 +104,6 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServices,
     bInlineBlocks = CSLTestBoolean(
         CPLGetConfigOption( "DWG_INLINE_BLOCKS", "TRUE" ) );
 
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "DWG_HEADER_ONLY", "FALSE" ) ) )
-        bHeaderOnly = TRUE;
-
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
@@ -118,66 +114,11 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServices,
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Confirm we have a header section.                               */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    char szLineBuf[257];
-    int  nCode;
-    int  bEntitiesOnly = FALSE;
-
-    if( ReadValue( szLineBuf ) != 0 || !EQUAL(szLineBuf,"SECTION") )
-        return FALSE;
-
-    if( ReadValue( szLineBuf ) != 2 
-        || (!EQUAL(szLineBuf,"HEADER") && !EQUAL(szLineBuf,"ENTITIES")) )
-        return FALSE;
-
-    if( EQUAL(szLineBuf,"ENTITIES") )
-        bEntitiesOnly = TRUE;
-
-/* -------------------------------------------------------------------- */
 /*      Process the header, picking up a few useful pieces of           */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    if( !bEntitiesOnly )
-    {
-        ReadHeaderSection();
-        ReadValue(szLineBuf);
-
-/* -------------------------------------------------------------------- */
-/*      Process the CLASSES section, if present.                        */
-/* -------------------------------------------------------------------- */
-        if( EQUAL(szLineBuf,"ENDSEC") )
-            ReadValue(szLineBuf);
-
-        if( EQUAL(szLineBuf,"SECTION") )
-            ReadValue(szLineBuf);
-        
-        if( EQUAL(szLineBuf,"CLASSES") )
-        {
-            while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1 
-                   && !EQUAL(szLineBuf,"ENDSEC") )
-            {
-                //printf("C:%d/%s\n", nCode, szLineBuf );
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Process the TABLES section, if present.                         */
-/* -------------------------------------------------------------------- */
-        if( EQUAL(szLineBuf,"ENDSEC") )
-            ReadValue(szLineBuf);
-        
-        if( EQUAL(szLineBuf,"SECTION") )
-            ReadValue(szLineBuf);
-        
-        if( EQUAL(szLineBuf,"TABLES") )
-        {
-            ReadTablesSection();
-            ReadValue(szLineBuf);
-        }
-    }
-#endif
+    ReadHeaderSection();
+    ReadTablesSection();
 
 /* -------------------------------------------------------------------- */
 /*      Create a blocks layer if we are not in inlining mode.           */
@@ -191,42 +132,7 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServices,
 /* -------------------------------------------------------------------- */
     apoLayers.push_back( new OGRDWGLayer( this ) );
 
-#ifdef notdef
-/* -------------------------------------------------------------------- */
-/*      Process the BLOCKS section if present.                          */
-/* -------------------------------------------------------------------- */
-    if( !bEntitiesOnly )
-    {
-        if( EQUAL(szLineBuf,"ENDSEC") )
-            ReadValue(szLineBuf);
-        
-        if( EQUAL(szLineBuf,"SECTION") )
-            ReadValue(szLineBuf);
-        
-        if( EQUAL(szLineBuf,"BLOCKS") )
-        {
-            ReadBlocksSection();
-            ReadValue(szLineBuf);
-        }
-    }
-#endif
-
-    if( bHeaderOnly )
-        return TRUE;
-
-/* -------------------------------------------------------------------- */
-/*      Now we are at the entities section, hopefully.  Confirm.        */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    if( EQUAL(szLineBuf,"SECTION") )
-        ReadValue(szLineBuf);
-
-    if( !EQUAL(szLineBuf,"ENTITIES") )
-        return FALSE;
-
-    iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
-    apoLayers[0]->ResetReading();
-#endif
+    ReadBlocksSection();
 
     return TRUE;
 }
