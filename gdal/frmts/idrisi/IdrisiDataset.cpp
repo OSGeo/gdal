@@ -2354,7 +2354,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
                 pszDatum, 
                 pszEllipsoid, 
                 dfSemiMajor, 
-                ( -1.0 /( dfSemiMinor / dfSemiMajor - 1.0 ) ) );
+                (dfSemiMinor == dfSemiMajor) ? 0.0 : ( -1.0 /( dfSemiMinor / dfSemiMajor - 1.0 ) ) );
         }
 
         // ----------------------------------------------------------------------
