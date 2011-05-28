@@ -47,9 +47,8 @@
 class CPL_DLL OGREnvelope
 {
   public:
-        OGREnvelope()
+        OGREnvelope() : MinX(0.0), MaxX(0.0), MinY(0.0), MaxY(0.0)
         {
-                MinX = MaxX = MinY = MaxY = 0;
         }
     double      MinX;
     double      MaxX;
@@ -136,6 +135,121 @@ typedef struct
     double      MaxY;
 } OGREnvelope;
 #endif
+
+
+/**
+ * Simple container for a bounding region in 3D.
+ */
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+class CPL_DLL OGREnvelope3D : public OGREnvelope
+{
+  public:
+        OGREnvelope3D() : OGREnvelope(), MinZ(0.0), MaxZ(0.0)
+        {
+        }
+
+    double      MinZ;
+    double      MaxZ;
+
+    int  IsInit() const { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0 || MinZ != 0 || MaxZ != 0; }
+    void Merge( OGREnvelope3D const& sOther ) {
+        if( IsInit() )
+        {
+            MinX = MIN(MinX,sOther.MinX);
+            MaxX = MAX(MaxX,sOther.MaxX);
+            MinY = MIN(MinY,sOther.MinY);
+            MaxY = MAX(MaxY,sOther.MaxY);
+            MinZ = MIN(MinZ,sOther.MinZ);
+            MaxZ = MAX(MaxZ,sOther.MaxZ);
+        }
+        else
+        {
+            MinX = sOther.MinX;
+            MaxX = sOther.MaxX;
+            MinY = sOther.MinY;
+            MaxY = sOther.MaxY;
+            MinZ = sOther.MinZ;
+            MaxZ = sOther.MaxZ;
+        }
+    }
+    void Merge( double dfX, double dfY, double dfZ ) {
+        if( IsInit() )
+        {
+            MinX = MIN(MinX,dfX);
+            MaxX = MAX(MaxX,dfX);
+            MinY = MIN(MinY,dfY);
+            MaxY = MAX(MaxY,dfY);
+            MinZ = MIN(MinZ,dfZ);
+            MaxZ = MAX(MaxZ,dfZ);
+        }
+        else
+        {
+            MinX = MaxX = dfX;
+            MinY = MaxY = dfY;
+            MinZ = MaxZ = dfZ;
+        }
+    }
+
+    void Intersect( OGREnvelope3D const& sOther ) {
+        if(Intersects(sOther))
+        {
+            if( IsInit() )
+            {
+                MinX = MAX(MinX,sOther.MinX);
+                MaxX = MIN(MaxX,sOther.MaxX);
+                MinY = MAX(MinY,sOther.MinY);
+                MaxY = MIN(MaxY,sOther.MaxY);
+                MinZ = MAX(MinZ,sOther.MinZ);
+                MaxZ = MIN(MaxZ,sOther.MaxZ);
+            }
+            else
+            {
+                MinX = sOther.MinX;
+                MaxX = sOther.MaxX;
+                MinY = sOther.MinY;
+                MaxY = sOther.MaxY;
+                MinZ = sOther.MinZ;
+                MaxZ = sOther.MaxZ;
+            }
+        }
+        else
+        {
+            MinX = 0;
+            MaxX = 0;
+            MinY = 0;
+            MaxY = 0;
+            MinZ = 0;
+            MaxZ = 0;
+        }
+    }
+
+    int Intersects(OGREnvelope3D const& other) const
+    {
+        return MinX <= other.MaxX && MaxX >= other.MinX &&
+               MinY <= other.MaxY && MaxY >= other.MinY &&
+               MinZ <= other.MaxZ && MaxZ >= other.MinZ;
+    }
+
+    int Contains(OGREnvelope3D const& other) const
+    {
+        return MinX <= other.MinX && MinY <= other.MinY &&
+               MaxX >= other.MaxX && MaxY >= other.MaxY &&
+               MaxZ >= other.MaxZ && MaxZ >= other.MaxZ;
+    }
+};
+#else
+typedef struct
+{
+    double      MinX;
+    double      MaxX;
+    double      MinY;
+    double      MaxY;
+    double      MinZ;
+    double      MaxZ;
+} OGREnvelope3D;
+#endif
+
 
 CPL_C_START
 

@@ -869,7 +869,7 @@ int OGRPolygon::PointOnSurface( OGRPoint *poPoint ) const
 /************************************************************************/
 /*                            getEnvelope()                             */
 /************************************************************************/
- 
+
 void OGRPolygon::getEnvelope( OGREnvelope * psEnvelope ) const
 
 {
@@ -905,6 +905,54 @@ void OGRPolygon::getEnvelope( OGREnvelope * psEnvelope ) const
     {
         psEnvelope->MinX = psEnvelope->MinY = 0;
         psEnvelope->MaxX = psEnvelope->MaxY = 0;
+    }
+}
+
+/************************************************************************/
+/*                            getEnvelope()                             */
+/************************************************************************/
+ 
+void OGRPolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
+
+{
+    OGREnvelope3D       oRingEnv;
+    int                 bExtentSet = FALSE;
+
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
+    {
+        if (!papoRings[iRing]->IsEmpty())
+        {
+            if (!bExtentSet)
+            {
+                papoRings[iRing]->getEnvelope( psEnvelope );
+                bExtentSet = TRUE;
+            }
+            else
+            {
+                papoRings[iRing]->getEnvelope( &oRingEnv );
+
+                if( psEnvelope->MinX > oRingEnv.MinX )
+                    psEnvelope->MinX = oRingEnv.MinX;
+                if( psEnvelope->MinY > oRingEnv.MinY )
+                    psEnvelope->MinY = oRingEnv.MinY;
+                if( psEnvelope->MaxX < oRingEnv.MaxX )
+                    psEnvelope->MaxX = oRingEnv.MaxX;
+                if( psEnvelope->MaxY < oRingEnv.MaxY )
+                    psEnvelope->MaxY = oRingEnv.MaxY;
+
+                if( psEnvelope->MinZ > oRingEnv.MinZ )
+                    psEnvelope->MinZ = oRingEnv.MinZ;
+                if( psEnvelope->MaxZ < oRingEnv.MaxZ )
+                    psEnvelope->MaxZ = oRingEnv.MaxZ;
+            }
+        }
+    }
+
+    if (!bExtentSet)
+    {
+        psEnvelope->MinX = psEnvelope->MinY = 0;
+        psEnvelope->MaxX = psEnvelope->MaxY = 0;
+        psEnvelope->MaxZ = psEnvelope->MaxZ = 0;
     }
 }
 
