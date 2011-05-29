@@ -120,6 +120,7 @@ class OGRDXFLayer : public OGRLayer
 
     void                FormatDimension( CPLString &osText, double dfValue );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
+    OGRErr              CollectPolylinePath( OGRGeometryCollection * );
 
     CPLString           TextUnescape( const char * );
 
