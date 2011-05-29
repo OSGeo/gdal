@@ -8841,10 +8841,8 @@ int GTiffOneTimeInit()
         const char* pszVersion = pfnVersion();
         if (pszVersion && strstr(pszVersion, "Version 3.") != NULL)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "WARNING ! libtiff version mismatch : You're linking against libtiff 3.X but GDAL has been compiled against libtiff >= 4.0.0");
-            bInitIsOk = FALSE;
-            return FALSE;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "libtiff version mismatch : You're linking against libtiff 3.X, but GDAL has been compiled against libtiff >= 4.0.0");
         }
     }
 #endif
