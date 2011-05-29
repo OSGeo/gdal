@@ -49,8 +49,11 @@ OGRDWGDriver::OGRDWGDriver()
 OGRDWGDriver::~OGRDWGDriver()
 
 {
-    bInitialized = FALSE;
-    odUninitialize();
+    if( bInitialized )
+    {
+        bInitialized = FALSE;
+        odUninitialize();
+    }
 }
 
 /************************************************************************/

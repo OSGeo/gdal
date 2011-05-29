@@ -30,6 +30,8 @@
 #include "ogr_dwg.h"
 #include "cpl_conv.h"
 
+#include "ogrdxf_polyline_smooth.h"
+
 #include "DbPolyline.h"
 #include "Db2dPolyline.h"
 #include "DbLine.h"
@@ -196,9 +198,9 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
     while( poClass != NULL )
     {
         if( osSubClasses.size() > 0 )
-            osSubClasses += ":";
+            osSubClasses = ":" + osSubClasses;
         
-        osSubClasses += (const char *) poClass->name();
+        osSubClasses = ((const char *) poClass->name()) + osSubClasses;
         if( EQUAL(poClass->name(),"AcDbEntity") )
             break;
 
@@ -452,6 +454,16 @@ CPLString OGRDWGLayer::TextUnescape( OdString osOdInput )
             CPLFree( pszUTF8Char );
             
             pszInput += 6;
+        }
+        else if( pszInput[0] == '\\'
+                 && (pszInput[1] == 'W' || pszInput[1] == 'T') )
+        {
+            // eg. \W1.073172x;\T1.099;Bonneuil de Verrines
+            // See data/dwg/EP/42002.dwg
+            // Not sure what \W and \T do, but we skip them. 
+            
+            while( *pszInput != ';' && *pszInput != '\0' )
+                pszInput++;
         }
         else if( pszInput[0] == '\\' && pszInput[1] == '\\' )
         {
@@ -710,19 +722,30 @@ OGRFeature *OGRDWGLayer::TranslateLWPOLYLINE( OdDbEntityPtr poEntity )
     TranslateGenericProperties( poFeature, poEntity );
 
 /* -------------------------------------------------------------------- */
-/*      Create a polyline geometry from the vertices.                   */
+/*      Collect polyline details.                                       */
 /* -------------------------------------------------------------------- */
-    OGRLineString *poLS = new OGRLineString();
+    DXFSmoothPolyline   oSmoothPolyline;
 
     for (unsigned int i = 0; i < poPL->numVerts(); i++)
     {
         OdGePoint3d oPoint;
         poPL->getPointAt( i, oPoint );
-     
-        poLS->addPoint( oPoint.x, oPoint.y, oPoint.z );
+
+        oSmoothPolyline.AddPoint( oPoint.x, oPoint.y, 0.0, 
+                                 poPL->getBulgeAt( i ) );
     }
 
-    poFeature->SetGeometryDirectly( poLS );
+    if(oSmoothPolyline.IsEmpty())
+    {
+        delete poFeature;
+        return NULL;
+    }
+
+    if( poPL->isClosed() )
+        oSmoothPolyline.Close();
+
+    poFeature->SetGeometryDirectly( 
+        oSmoothPolyline.Tesselate() );
 
     PrepareLineStyle( poFeature );
 
@@ -1302,7 +1325,8 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateMTEXT( poEntity );
         }
-        else if( EQUAL(pszEntityClassName,"AcDbText") )
+        else if( EQUAL(pszEntityClassName,"AcDbText") 
+                 || EQUAL(pszEntityClassName,"AcDbAttributeDefinition") )
         {
             poFeature = TranslateTEXT( poEntity );
         }

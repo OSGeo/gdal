@@ -141,7 +141,6 @@ class OGRDWGLayer : public OGRLayer
     void                FormatDimension( CPLString &osText, double dfValue );
 
     CPLString           TextUnescape( OdString );
-    double              AngleCorrect( double dfAngle, double dfRatio );
 
     OdDbBlockTableRecordPtr poBlock;
     OdDbObjectIteratorPtr   poEntIter;
@@ -161,6 +160,7 @@ class OGRDWGLayer : public OGRLayer
 
     // internal
     void                SetBlockTable( OdDbBlockTableRecordPtr );
+    static double       AngleCorrect( double dfAngle, double dfRatio );
 };
 
 /************************************************************************/
