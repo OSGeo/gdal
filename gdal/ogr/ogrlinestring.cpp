@@ -963,16 +963,7 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
 
-    if( paoPoints != NULL )
-    {
-        nPointCount = 0;
-
-        CPLFree( paoPoints );
-        paoPoints = NULL;
-        
-        CPLFree( padfZ );
-        padfZ = NULL;
-    }
+    empty();
 
 /* -------------------------------------------------------------------- */
 /*      Read and verify the ``LINESTRING'' keyword token.               */

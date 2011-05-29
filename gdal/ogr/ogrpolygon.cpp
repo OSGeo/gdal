@@ -522,19 +522,11 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 {
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
-    int         iRing;
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing rings.                                           */
 /* -------------------------------------------------------------------- */
-    if( nRingCount > 0 )
-    {
-        for( iRing = 0; iRing < nRingCount; iRing++ )
-            delete papoRings[iRing];
-        
-        nRingCount = 0;
-        CPLFree( papoRings );
-    }
+    empty();
 
 /* -------------------------------------------------------------------- */
 /*      Read and verify the ``POLYGON'' keyword token.                  */
