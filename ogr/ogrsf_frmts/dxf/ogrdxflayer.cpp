@@ -433,6 +433,16 @@ CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
             
             pszInput += 6;
         }
+        else if( pszInput[0] == '\\'
+                 && (pszInput[1] == 'W' || pszInput[1] == 'T') )
+        {
+            // eg. \W1.073172x;\T1.099;Bonneuil de Verrines
+            // See data/dwg/EP/42002.dwg
+            // Not sure what \W and \T do, but we skip them. 
+            
+            while( *pszInput != ';' && *pszInput != '\0' )
+                pszInput++;
+        }
         else if( pszInput[0] == '\\' && pszInput[1] == '\\' )
         {
             osResult += '\\';
