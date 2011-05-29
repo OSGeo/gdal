@@ -113,8 +113,23 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServices,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    OdString f(pszFilename);
-    poDb = poServices->readFile(f.c_str(), true, false, Oda::kShareDenyNo); 
+    try 
+    {
+        OdString f(pszFilename);
+        poDb = poServices->readFile(f.c_str(), true, false, Oda::kShareDenyNo); 
+    }
+    catch( OdError& e )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s",
+                  (const char *) poServices->getErrorDescription(e.code()) );
+    }
+    catch( ... )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "DWG readFile(%s) failed with generic exception.", 
+                  pszFilename );
+    }
 
     if( poDb.isNull() )
         return FALSE;
