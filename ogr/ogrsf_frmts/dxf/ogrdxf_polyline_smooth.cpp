@@ -144,8 +144,13 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
 /* -------------------------------------------------------------------- */
 /*      If polyline is closed, convert linestring to a linear ring      */
+/*                                                                      */
+/*      Actually, on review I'm not convinced this is a good idea.      */
+/*      Note that most (all) "filled polygons" are expressed with       */
+/*      hatches which are now handled fairly well and they tend to      */
+/*      echo linear polylines.                                          */
 /* -------------------------------------------------------------------- */
-
+#ifdef notdef
     if(m_bClosed)
     {
         OGRLinearRing *poLR = new OGRLinearRing();
@@ -158,6 +163,8 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
         return poPoly;
     }
+#endif
+
     return poLS;
 }
 
