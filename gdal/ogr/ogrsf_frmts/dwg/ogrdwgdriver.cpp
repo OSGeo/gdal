@@ -66,6 +66,7 @@ void OGRDWGDriver::Initialize()
     OdGeContext::gErrorFunc = ErrorHandler;
 
     odInitialize(&oServices);
+    oServices.disableOutput( true );
 
     /********************************************************************/
     /* Find the data file and and initialize the character mapper       */
