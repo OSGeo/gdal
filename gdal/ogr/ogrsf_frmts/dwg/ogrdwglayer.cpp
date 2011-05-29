@@ -41,6 +41,7 @@
 #include "DbCircle.h"
 #include "DbSpline.h"
 #include "DbBlockReference.h"
+#include "DbFiler.h"
 #include "Ge/GeScale3d.h"
 
 CPL_CVSID("$Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $");
@@ -179,6 +180,13 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
     OdDbHandle oHandle = poEntity->getDbHandle();
     poFeature->SetField( "EntityHandle", (const char *) oHandle.ascii() );
 
+    
+    if( poEntity->colorIndex() != 256 )
+    {
+        osValue.Printf( "%d", poEntity->colorIndex() );
+        oStyleProperties["Color"] = osValue.c_str();
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Collect the subclasses.                                         */
 /* -------------------------------------------------------------------- */
@@ -199,31 +207,88 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
     
     poFeature->SetField( "SubClasses", osSubClasses.c_str() );
 
-#ifdef notdef
-      case 62:
-        oStyleProperties["Color"] = pszValue;
-        break;
+/* -------------------------------------------------------------------- */
+/*      Collect Xdata.                                                  */
+/* -------------------------------------------------------------------- */
+    OdResBufPtr poResBufBase = poEntity->xData();
+    OdResBuf *poResBuf = poResBufBase;
+    CPLString osFullXData;
 
-        // Extended entity data
-      case 1000:
-      case 1002:
-      case 1004:
-      case 1005:
-      case 1040:
-      case 1041:
-      case 1070:
-      case 1071:
-      {
-          CPLString osAggregate = poFeature->GetFieldAsString("ExtendedEntity");
+    for ( ; poResBuf != NULL; poResBuf = poResBuf->next() )
+    {
+        CPLString osXDataItem;
+    
+        switch (OdDxfCode::_getType(poResBuf->restype()))
+        {
+          case OdDxfCode::Name:
+          case OdDxfCode::String:
+          case OdDxfCode::LayerName:
+            osXDataItem = (const char *) poResBuf->getString();
+            break;
 
-          if( osAggregate.size() > 0 )
-              osAggregate += " ";
-          osAggregate += pszValue;
+          case OdDxfCode::Bool:
+            if( poResBuf->getBool() )
+                osXDataItem = "true";
+            else
+                osXDataItem = "false";
+            break;
             
-          poFeature->SetField( "ExtendedEntity", osAggregate );
-      }
-      break;
+          case OdDxfCode::Integer8:
+            osXDataItem.Printf( "%d", (int) poResBuf->getInt8() );
+            break;
+            
+          case OdDxfCode::Integer16:
+            osXDataItem.Printf( "%d", (int) poResBuf->getInt16() );
+            break;
+            
+          case OdDxfCode::Integer32:
+            osXDataItem.Printf( "%d", (int) poResBuf->getInt32() );
+            break;
+            
+          case OdDxfCode::Double:
+          case OdDxfCode::Angle:
+            osXDataItem.Printf( "%g", poResBuf->getDouble() );
+            break;
+            
+          case OdDxfCode::Point:
+          {
+              OdGePoint3d oPoint = poResBuf->getPoint3d();
+              osXDataItem.Printf( "(%g,%g,%g)", oPoint.x, oPoint.y, oPoint.z );
+          }
+          break;
+          
+          case OdDxfCode::BinaryChunk:
+          {
+              OdBinaryData oBinData = poResBuf->getBinaryChunk();
+              char *pszAsHex = CPLBinaryToHex( oBinData.size(),
+                                               (GByte*) oBinData.asArrayPtr() );
+              osXDataItem = pszAsHex;
+              CPLFree( pszAsHex );
+          }
+          break;
+            
+          case OdDxfCode::ObjectId:
+          case OdDxfCode::SoftPointerId:
+          case OdDxfCode::HardPointerId:
+          case OdDxfCode::SoftOwnershipId:
+          case OdDxfCode::HardOwnershipId:
+          case OdDxfCode::Handle:
+            osXDataItem = (const char *) poResBuf->getHandle().ascii();
+            break;
+            
+          default:
+            break;
+        }
 
+        if( osFullXData.size() > 0 )
+            osFullXData += " ";
+        osFullXData += (const char *) osXDataItem;
+    }
+    
+    poFeature->SetField( "ExtendedEntity", osFullXData );
+
+
+#ifdef notdef
       // OCS vector.
       case 210:
         oStyleProperties["210_N.dX"] = pszValue;
@@ -251,7 +316,6 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
 void OGRDWGLayer::PrepareLineStyle( OGRFeature *poFeature )
 
 {
-#ifdef notdef
     CPLString osLayer = poFeature->GetFieldAsString("Layer");
 
 /* -------------------------------------------------------------------- */
@@ -325,109 +389,7 @@ void OGRDWGLayer::PrepareLineStyle( OGRFeature *poFeature )
     osStyle += ")";
     
     poFeature->SetStyleString( osStyle );
-#endif
 }
-
-#ifdef notdef
-/************************************************************************/
-/*                            OCSTransformer                            */
-/************************************************************************/
-
-class OCSTransformer : public OGRCoordinateTransformation
-{
-private:
-    double adfN[3];
-    double adfAX[3];
-    double adfAY[3];
-    
-public:
-    OCSTransformer( double adfN[3] ) {
-        static const double dSmall = 1.0 / 64.0;
-        static const double adfWZ[3] = {0, 0, 1};
-        static const double adfWY[3] = {0, 1, 0};
-
-        memcpy( this->adfN, adfN, sizeof(double)*3 );
-
-    if ((ABS(adfN[0]) < dSmall) && (ABS(adfN[1]) < dSmall))
-            CrossProduct(adfWY, adfN, adfAX);
-    else
-            CrossProduct(adfWZ, adfN, adfAX);
-
-    Scale2Unit( adfAX );
-    CrossProduct(adfN, adfAX, adfAY);
-    Scale2Unit( adfAY );
-    }
-
-    void CrossProduct(const double *a, const double *b, double *vResult) {
-        vResult[0] = a[1] * b[2] - a[2] * b[1];
-        vResult[1] = a[2] * b[0] - a[0] * b[2];
-        vResult[2] = a[0] * b[1] - a[1] * b[0];
-    }
-
-    void Scale2Unit(double* adfV) {
-    double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
-    if (dfLen != 0)
-    {
-            adfV[0] /= dfLen;
-            adfV[1] /= dfLen;
-            adfV[2] /= dfLen;
-    }
-    }
-    OGRSpatialReference *GetSourceCS() { return NULL; }
-    OGRSpatialReference *GetTargetCS() { return NULL; }
-    int Transform( int nCount, 
-                   double *x, double *y, double *z )
-        { return TransformEx( nCount, x, y, z, NULL ); }
-    
-    int TransformEx( int nCount, 
-                     double *adfX, double *adfY, double *adfZ = NULL,
-                     int *pabSuccess = NULL )
-        {
-            int i;
-            for( i = 0; i < nCount; i++ )
-            {
-                double x = adfX[i], y = adfY[i], z = adfZ[i];
-                
-                adfX[i] = x * adfAX[0] + y * adfAY[0] + z * adfN[0];
-                adfY[i] = x * adfAX[1] + y * adfAY[1] + z * adfN[1];
-                adfZ[i] = x * adfAX[2] + y * adfAY[2] + z * adfN[2];
-
-                if( pabSuccess )
-                    pabSuccess[i] = TRUE;
-            }
-            return TRUE;
-        }
-};
-
-/************************************************************************/
-/*                        ApplyOCSTransformer()                         */
-/*                                                                      */
-/*      Apply a transformation from OCS to world coordinates if an      */
-/*      OCS vector was found in the object.                             */
-/************************************************************************/
-
-void OGRDWGLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
-
-{
-    if( oStyleProperties.count("210_N.dX") == 0
-        || oStyleProperties.count("220_N.dY") == 0
-        || oStyleProperties.count("230_N.dZ") == 0 )
-        return;
-
-    if( poGeometry == NULL )
-        return;
-
-    double adfN[3];
-
-    adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
-    adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
-    adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
-
-    OCSTransformer oTransformer( adfN );
-
-    poGeometry->transform( &oTransformer );
-}
-#endif
 
 /************************************************************************/
 /*                            TextUnescape()                            */
@@ -610,7 +572,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
         osStyle += 
             CPLString().Printf(",p:%d", anAttachmentMap[nAttachmentPoint]);
     }
-#ifdef notdef
+
     if( nColor > 0 && nColor < 256 )
     {
         const unsigned char *pabyDWGColors = OGRDWGDriver::GetDWGColorTable();
@@ -620,7 +582,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
                                 pabyDWGColors[nColor*3+1],
                                 pabyDWGColors[nColor*3+2] );
     }
-#endif
+
     osStyle += ")";
 
     poFeature->SetStyleString( osStyle );
@@ -762,7 +724,7 @@ OGRFeature *OGRDWGLayer::TranslateLWPOLYLINE( OdDbEntityPtr poEntity )
 
     poFeature->SetGeometryDirectly( poLS );
 
-    //PrepareLineStyle( poFeature );
+    PrepareLineStyle( poFeature );
 
     return poFeature;
 }
@@ -795,7 +757,7 @@ OGRFeature *OGRDWGLayer::Translate2DPOLYLINE( OdDbEntityPtr poEntity )
 
     poFeature->SetGeometryDirectly( poLS );
 
-    //PrepareLineStyle( poFeature );
+    PrepareLineStyle( poFeature );
 
     return poFeature;
 }
@@ -826,7 +788,7 @@ OGRFeature *OGRDWGLayer::TranslateLINE( OdDbEntityPtr poEntity )
 
     poFeature->SetGeometryDirectly( poLS );
 
-    //PrepareLineStyle( poFeature );
+    PrepareLineStyle( poFeature );
 
     return poFeature;
 }
@@ -960,7 +922,7 @@ OGRFeature *OGRDWGLayer::TranslateELLIPSE( OdDbEntityPtr poEntity )
 
     poFeature->SetGeometryDirectly( poEllipse );
 
-//    PrepareLineStyle( poFeature );
+    PrepareLineStyle( poFeature );
 
     return poFeature;
 }
@@ -1001,7 +963,7 @@ OGRFeature *OGRDWGLayer::TranslateARC( OdDbEntityPtr poEntity )
 
     poFeature->SetGeometryDirectly( poArc );
 
-//    PrepareLineStyle( poFeature );
+    PrepareLineStyle( poFeature );
 
     return poFeature;
 }
@@ -1364,6 +1326,12 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         else if( EQUAL(pszEntityClassName,"AcDbBlockReference") )
         {
             poFeature = TranslateINSERT( poEntity );
+            if( poFeature == NULL && !apoPendingFeatures.empty() )
+            {
+                poFeature = apoPendingFeatures.front();
+                apoPendingFeatures.pop();
+            }
+               
         }
         else
         {
