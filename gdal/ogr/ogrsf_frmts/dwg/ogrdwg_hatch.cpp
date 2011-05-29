@@ -34,9 +34,12 @@
 
 #include "DbHatch.h"
 
+#include "ogrdxf_polyline_smooth.h"
+
 #include "Ge/GePoint2dArray.h"
 #include "Ge/GeCurve2d.h"
 #include "Ge/GeCircArc2d.h"
+#include "Ge/GeEllipArc2d.h"
 
 CPL_CVSID("$Id: ogrdxf_dimension.cpp 19643 2010-05-08 21:56:18Z rouault $");
 
@@ -87,9 +90,40 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
     poFeature->SetGeometryDirectly( (OGRGeometry *) hFinalGeom );
 
 /* -------------------------------------------------------------------- */
-/*      We ought to try and make some useful translation of the fill    */
-/*      style but I'll leave that for another time.                     */
+/*      Work out the color for this feature.  For now we just assume    */
+/*      solid fill.  We cannot trivially translate the various sorts    */
+/*      of hatching.                                                    */
 /* -------------------------------------------------------------------- */
+    CPLString osLayer = poFeature->GetFieldAsString("Layer");
+
+    int nColor = 256;
+
+    if( oStyleProperties.count("Color") > 0 )
+        nColor = atoi(oStyleProperties["Color"]);
+
+    // Use layer color? 
+    if( nColor < 1 || nColor > 255 )
+    {
+        const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
+        if( pszValue != NULL )
+            nColor = atoi(pszValue);
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Setup the style string.                                         */
+/* -------------------------------------------------------------------- */
+    if( nColor >= 1 && nColor <= 255 )
+    {
+        CPLString osStyle;
+        const unsigned char *pabyDWGColors = OGRDWGDriver::GetDWGColorTable();
+        
+        osStyle.Printf( "BRUSH(fc:#%02x%02x%02x)",
+                        pabyDWGColors[nColor*3+0],
+                        pabyDWGColors[nColor*3+1],
+                        pabyDWGColors[nColor*3+2] );
+        
+        poFeature->SetStyleString( osStyle );
+    }
 
     return poFeature;
 }
@@ -109,22 +143,25 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
 /* -------------------------------------------------------------------- */
     if( poHatch->loopTypeAt( iLoop ) & OdDbHatch::kPolyline )
     {
-        OGRLineString *poLS = new OGRLineString();
+        DXFSmoothPolyline   oSmoothPolyline;
         OdGePoint2dArray vertices;
         OdGeDoubleArray bulges;
+
         poHatch->getLoopAt (iLoop, vertices, bulges);
 
         for (i = 0; i < (int) vertices.size(); i++)
-            poLS->addPoint( vertices[i].x, vertices[i].y );
-
-        // make sure loop is closed.
-        if( vertices[0].x != vertices[vertices.size()-1].x
-            || vertices[0].y  != vertices[vertices.size()-1].y )
         {
-            poLS->addPoint( vertices[0].x, vertices[0].y );
+            if( i >= (int) bulges.size() )
+                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0, 
+                                          0.0 );
+            else
+                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0, 
+                                          bulges[i] );
         }
 
-        poGC->addGeometryDirectly( poLS );
+        oSmoothPolyline.Close();
+
+        poGC->addGeometryDirectly( oSmoothPolyline.Tesselate() );
 
         return OGRERR_NONE;
     }
@@ -161,12 +198,35 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                     -1 * poCircArc->endAng() * 180 / PI,
                     -1 * poCircArc->startAng() * 180 / PI,
                     0.0 ) );
+            // do we need pArc->isClockWise()?
+        }
+        else if( poEdge->type() == OdGe::kEllipArc2d )
+        {
+            OdGeEllipArc2d* poArc = (OdGeEllipArc2d*) poEdge;
+            OdGePoint2d oCenter = poArc->center();
+            double dfRatio = poArc->minorRadius() / poArc->majorRadius();
+            OdGeVector2d oMajorAxis = poArc->majorAxis();
+            double dfRotation;
+            double dfStartAng, dfEndAng;
+
+            dfRotation = -1 * atan2( oMajorAxis.y, oMajorAxis.x ) * 180 / PI;
+
+            dfStartAng = -1 * poArc->endAng()*180/PI;
+            dfEndAng = -1 * poArc->startAng()*180/PI;
+
+            poGC->addGeometryDirectly(
+                OGRGeometryFactory::approximateArcAngles( 
+                    oCenter.x, oCenter.y, 0.0,
+                    poArc->majorRadius(), poArc->minorRadius(), dfRotation,
+                    OGRDWGLayer::AngleCorrect(dfStartAng,dfRatio),
+                    OGRDWGLayer::AngleCorrect(dfEndAng,dfRatio),
+                    0.0 ) );
             // do we need pCircArc->isClockWise()?
         }
         else
-            CPLDebug( "DWG", "Unsupported edge in hatch loop." );
+            CPLDebug( "DWG", "Unsupported edge type (%d) in hatch loop.",
+                      (int) poEdge->type() );
 
-        //case OdGe::kEllipArc2d  : dumpEllipticalArcEdge(indent + 1, pEdge);
         //case OdGe::kNurbCurve2d : dumpNurbCurveEdge(indent + 1, pEdge);    
     }
 
