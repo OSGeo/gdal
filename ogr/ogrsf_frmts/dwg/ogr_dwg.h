@@ -220,9 +220,8 @@ class OGRDWGDataSource : public OGRDataSource
     std::map<CPLString,DWGBlockDefinition> &GetBlockMap() { return oBlockMap; }
 
     // Layer and other Table Handling (ogrdatasource.cpp)
-    void                ReadTablesSection();
-    void                ReadLayerDefinition();
-    void                ReadLineTypeDefinition();
+    void                ReadLayerDefinitions();
+    void                ReadLineTypeDefinitions();
     const char         *LookupLayerProperty( const char *pszLayer, 
                                              const char *pszProperty );
     const char         *LookupLineType( const char *pszName );
@@ -263,6 +262,8 @@ class OGRDWGDriver : public OGRSFDriver
   public:
     OGRDWGDriver();
     ~OGRDWGDriver();
+
+    static const unsigned char *GetDWGColorTable();
 
     OGRDWGServices *GetServices() { return &oServices; }
 

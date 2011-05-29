@@ -31,6 +31,12 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include "DbSymbolTable.h"
+#include "DbLayerTable.h"
+#include "DbLayerTableRecord.h"
+#include "DbLinetypeTable.h"
+#include "DbLinetypeTableRecord.h"
+
 CPL_CVSID("$Id: ogrdxfdatasource.cpp 22009 2011-03-22 20:01:34Z warmerdam $");
 
 /************************************************************************/
@@ -118,7 +124,8 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServices,
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
     ReadHeaderSection();
-    ReadTablesSection();
+    ReadLineTypeDefinitions();
+    ReadLayerDefinitions();
 
 /* -------------------------------------------------------------------- */
 /*      Create a blocks layer if we are not in inlining mode.           */
@@ -138,94 +145,39 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServices,
 }
 
 /************************************************************************/
-/*                         ReadTablesSection()                          */
+/*                        ReadLayerDefinitions()                        */
 /************************************************************************/
 
-void OGRDWGDataSource::ReadTablesSection()
+void OGRDWGDataSource::ReadLayerDefinitions()
 
 {
-#ifdef notdef
-    char szLineBuf[257];
-    int  nCode;
+    OdDbLayerTablePtr poLT = poDb->getLayerTableId().safeOpenObject();
+    OdDbSymbolTableIteratorPtr poIter = poLT->newIterator();
 
-    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1 
-           && !EQUAL(szLineBuf,"ENDSEC") )
+    for (poIter->start(); !poIter->done(); poIter->step())
     {
-        // We are only interested in extracting tables.
-        if( nCode != 0 || !EQUAL(szLineBuf,"TABLE") )
-            continue;
+        CPLString osValue;
+        OdDbLayerTableRecordPtr poLD = poIter->getRecordId().safeOpenObject();
+        std::map<CPLString,CPLString> oLayerProperties;
 
-        // Currently we are only interested in the LAYER table.
-        nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
+        CPLString osLayerName = (const char *) poLD->getName();
+        
+        oLayerProperties["Exists"] = "1";
+        
+        //pRecord->linetypeObjectId()
+        oLayerProperties["Linetype"] = osValue;
 
-        if( nCode != 2 )
-            continue;
-
-        //CPLDebug( "DWG", "Found table %s.", szLineBuf );
-
-        while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
-               && !EQUAL(szLineBuf,"ENDTAB") )
-        {
-            if( nCode == 0 && EQUAL(szLineBuf,"LAYER") )
-                ReadLayerDefinition();
-            if( nCode == 0 && EQUAL(szLineBuf,"LTYPE") )
-                ReadLineTypeDefinition();
-        }
-    }
-
-    CPLDebug( "DWG", "Read %d layer definitions.", (int) oLayerTable.size() );
-#endif
-}
-
-/************************************************************************/
-/*                        ReadLayerDefinition()                         */
-/************************************************************************/
-
-void OGRDWGDataSource::ReadLayerDefinition()
-
-{
-#ifdef notdef
-    char szLineBuf[257];
-    int  nCode;
-    std::map<CPLString,CPLString> oLayerProperties;
-    CPLString osLayerName = "";
-
-    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
-    {
-        switch( nCode )
-        {
-          case 2:
-            osLayerName = szLineBuf;
-            oLayerProperties["Exists"] = "1";
-            break;
-
-          case 6:
-            oLayerProperties["Linetype"] = szLineBuf;
-            break;
+        osValue.Printf( "%d", poLD->colorIndex() );
+        oLayerProperties["Color"] = osValue;
             
-          case 62:
-            oLayerProperties["Color"] = szLineBuf;
-            break;
-            
-          case 70:
-            oLayerProperties["Flags"] = szLineBuf;
-            break;
+        osValue.Printf( "%d", (int) poLD->lineWeight() );
+        oLayerProperties["LineWeight"] = osValue;
 
-          case 370:
-          case 39:
-            oLayerProperties["LineWeight"] = szLineBuf;
-            break;
-
-          default:
-            break;
-        }
-    }
-
-    if( oLayerProperties.size() > 0 )
         oLayerTable[osLayerName] = oLayerProperties;
-    
-    UnreadValue();
-#endif
+    }
+
+    CPLDebug( "DWG", "Read %d layer definitions.", 
+              (int) oLayerTable.size() );
 }
 
 /************************************************************************/
@@ -247,50 +199,43 @@ const char *OGRDWGDataSource::LookupLayerProperty( const char *pszLayer,
 }
 
 /************************************************************************/
-/*                       ReadLineTypeDefinition()                       */
+/*                       ReadLineTypeDefinitions()                      */
 /************************************************************************/
 
-void OGRDWGDataSource::ReadLineTypeDefinition()
+void OGRDWGDataSource::ReadLineTypeDefinitions()
 
 {
-#ifdef notdef
-    char szLineBuf[257];
-    int  nCode;
-    CPLString osLineTypeName;
-    CPLString osLineTypeDef;
-
-    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
+    OdDbLinetypeTablePtr poTable = poDb->getLinetypeTableId().safeOpenObject();
+    OdDbSymbolTableIteratorPtr poIter = poTable->newIterator();
+    
+    for (poIter->start(); !poIter->done(); poIter->step())
     {
-        switch( nCode )
+        CPLString osLineTypeName;
+        CPLString osLineTypeDef;
+        OdDbLinetypeTableRecordPtr poLT = poIter->getRecordId().safeOpenObject();
+
+        osLineTypeName = (const char *) poLT->getName();
+
+        if (poLT->numDashes()) 
         {
-          case 2:
-            osLineTypeName = szLineBuf;
-            break;
+            for (int i=0; i < poLT->numDashes(); i++) 
+            {
+                if( i > 0 )
+                    osLineTypeDef += " ";
 
-          case 49:
-          {
-              if( osLineTypeDef != "" )
-                  osLineTypeDef += " ";
+                CPLString osValue;
+                osValue.Printf( "%g", fabs(poLT->dashLengthAt(i)) );
+                osLineTypeDef += osValue;
 
-              if( szLineBuf[0] == '-' )
-                  osLineTypeDef += szLineBuf+1;
-              else
-                  osLineTypeDef += szLineBuf;
+                osLineTypeDef += "g";
+            }
 
-              osLineTypeDef += "g";
-          }
-          break;
-            
-          default:
-            break;
+            oLineTypeTable[osLineTypeName] = osLineTypeDef;
+            CPLDebug( "DWG", "LineType '%s' = '%s'",
+                       osLineTypeName.c_str(), 
+                       osLineTypeDef.c_str() );
         }
     }
-
-    if( osLineTypeDef != "" )
-        oLineTypeTable[osLineTypeName] = osLineTypeDef;
-    
-    UnreadValue();
-#endif
 }
 
 /************************************************************************/
@@ -313,24 +258,15 @@ const char *OGRDWGDataSource::LookupLineType( const char *pszName )
 void OGRDWGDataSource::ReadHeaderSection()
 
 {
-#ifdef notdef
-    char szLineBuf[257];
-    int  nCode;
+    // using: DWGCODEPAGE, DIMTXT, LUPREC
 
-    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1 
-           && !EQUAL(szLineBuf,"ENDSEC") )
-    {
-        if( nCode != 9 )
-            continue;
+    CPLString osValue;
 
-        CPLString osName = szLineBuf;
+    osValue.Printf( "%d", poDb->getLUPREC() );
+    oHeaderVariables["LUPREC"] = osValue;
 
-        ReadValue( szLineBuf, sizeof(szLineBuf) );
-
-        CPLString osValue = szLineBuf;
-
-        oHeaderVariables[osName] = osValue;
-    }
+    osValue.Printf( "%g", poDb->dimtxt() );
+    oHeaderVariables["DIMTXT"] = osValue;
 
     CPLDebug( "DWG", "Read %d header variables.", 
               (int) oHeaderVariables.size() );
@@ -361,7 +297,6 @@ void OGRDWGDataSource::ReadHeaderSection()
     if( osEncoding != CPL_ENC_ISO8859_1 )
         CPLDebug( "DWG", "Treating DWG as encoding '%s', $DWGCODEPAGE='%s'", 
                   osEncoding.c_str(), osCodepage.c_str() );
-#endif
 }
 
 /************************************************************************/
