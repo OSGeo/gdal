@@ -1687,7 +1687,8 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateMTEXT();
         }
-        else if( EQUAL(szLineBuf,"TEXT") )
+        else if( EQUAL(szLineBuf,"TEXT") 
+                 || EQUAL(szLineBuf,"ATTDEF") )
         {
             poFeature = TranslateTEXT();
         }
