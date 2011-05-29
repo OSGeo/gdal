@@ -241,6 +241,38 @@ def ogr_s57_7():
     return 'success'
 
 ###############################################################################
+# Test decoding of Dutch inland ENCs (#3881).
+
+def ogr_s57_online_1():
+    if gdaltest.s57_ds is None:
+        return 'skip'
+
+    if not gdaltest.download_file('ftp://sdg.ivs90.nl/ENC/1R5MK050.000', '1R5MK050.000'):
+        return 'skip'
+
+    ds = ogr.Open( 'tmp/cache/1R5MK050.000' )
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayerByName('BUISGL')
+    feat = lyr.GetNextFeature()
+
+    if feat is None:
+        gdaltest.post_reason( 'Did not get expected feature at all.' )
+        return 'fail'
+
+    exp_wkt = 'POLYGON ((5.6666667 53.0279027,5.6666667 53.0281667,5.6667012 53.0281685,5.666673 53.0282377,5.666788 53.0282616,5.6669018 53.0281507,5.6668145 53.0281138,5.6668121 53.0280649,5.6666686 53.0280248,5.6666713 53.0279647,5.6667572 53.0279713,5.6667568 53.0279089,5.6666667 53.0279027))'
+
+    if ogrtest.check_feature_geometry( feat, exp_wkt ):
+        return 'fail'
+
+    feat = None
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_s57_cleanup():
@@ -259,6 +291,7 @@ gdaltest_list = [
     ogr_s57_5,
     ogr_s57_6,
     ogr_s57_7,
+    ogr_s57_online_1,
     ogr_s57_cleanup ]
 
 if __name__ == '__main__':
