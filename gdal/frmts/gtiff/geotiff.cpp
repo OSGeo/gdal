@@ -47,6 +47,7 @@
 #include "gdal_csv.h"
 #include "gt_wkt_srs.h"
 #include "tifvsi.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -8657,7 +8658,8 @@ int GTiffOneTimeInit()
 {
     static int bInitIsOk = TRUE;
     static int bOneTimeInitDone = FALSE;
-    
+    static void* hMutex = NULL;
+    CPLMutexHolder oHolder( &hMutex);
     if( bOneTimeInitDone )
         return bInitIsOk;
 
@@ -8679,10 +8681,8 @@ int GTiffOneTimeInit()
         const char* pszVersion = pfnVersion();
         if (pszVersion && strstr(pszVersion, "Version 3.") != NULL)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "WARNING ! libtiff version mismatch : You're linking against libtiff 3.X but GDAL has been compiled against libtiff >= 4.0.0");
-            bInitIsOk = FALSE;
-            return FALSE;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "libtiff version mismatch : You're linking against libtiff 3.X, but GDAL has been compiled against libtiff >= 4.0.0");
         }
     }
 #endif
