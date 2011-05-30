@@ -19,13 +19,13 @@ ifeq ($(HAVE_EXPAT),yes)
 CPPFLAGS 	:=	-DHAVE_EXPAT $(EXPAT_INCLUDE) $(CPPFLAGS)
 endif
 
-CPPFLAGS	:=	-Iogrsf_frmts -I. $(GDAL_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT)
-
 ifeq ($(LIBZ_SETTING),internal)
 ZLIB_XTRA_OPT =      -I../frmts/zlib
 else
 ZLIB_XTRA_OPT =
 endif
+
+CPPFLAGS	:=	-Iogrsf_frmts -I. $(GDAL_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT)
 
 default:	lib
 
