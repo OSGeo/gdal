@@ -93,7 +93,7 @@ char **S57FileCollector( const char * pszDataset );
 /************************************************************************/
 
 #define MAX_CLASSES 23000
-#define MAX_ATTRIBUTES 50000
+#define MAX_ATTRIBUTES 25000
 
 class CPL_DLL S57ClassRegistrar
 {
