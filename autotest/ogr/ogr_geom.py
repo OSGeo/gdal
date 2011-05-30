@@ -774,6 +774,77 @@ def ogr_geom_mixed_coordinate_dimension():
         return 'fail'
 
     return 'success'
+    
+   
+###############################################################################
+# Test GetEnvelope3D()
+ 
+def ogr_geom_getenvelope3d():
+
+    g = ogr.CreateGeometryFromWkt('POINT EMPTY')
+    envelope = g.GetEnvelope3D()
+    expected_envelope = ( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 )
+    if envelope != expected_envelope:
+        gdaltest.post_reason('did not get expected envelope (1)')
+        print(envelope)
+        print(expected_envelope)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('POINT(1 2)')
+    envelope = g.GetEnvelope3D()
+    expected_envelope = ( 1.0, 1.0, 2.0, 2.0, 0.0, 0.0 )
+    if envelope != expected_envelope:
+        gdaltest.post_reason('did not get expected envelope (2)')
+        print(envelope)
+        print(expected_envelope)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('POINT(1 2 3)')
+    envelope = g.GetEnvelope3D()
+    expected_envelope = ( 1.0, 1.0, 2.0, 2.0, 3.0, 3.0 )
+    if envelope != expected_envelope:
+        gdaltest.post_reason('did not get expected envelope (3)')
+        print(envelope)
+        print(expected_envelope)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('POLYGON EMPTY')
+    envelope = g.GetEnvelope3D()
+    expected_envelope = ( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 )
+    if envelope != expected_envelope:
+        gdaltest.post_reason('did not get expected envelope (4)')
+        print(envelope)
+        print(expected_envelope)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('LINESTRING(1 2,3 4)')
+    envelope = g.GetEnvelope3D()
+    expected_envelope = ( 1, 3, 2, 4, 0, 0 )
+    if envelope != expected_envelope:
+        gdaltest.post_reason('did not get expected envelope (5)')
+        print(envelope)
+        print(expected_envelope)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('MULTIPOLYGON(((1 2 3,-1 2 3,-1 -2 3,-1 2 3,1 2 3),(0.1 0.2 0.3,-0.1 0.2 0.3,-0.1 -0.2 0.3,-0.1 0.2 0.3,0.1 0.2 0.3)),((10 20 -30,-10 20 -30,-10 -20 -30,-10 20 -30,10 20 -30)))')
+    envelope = g.GetEnvelope3D()
+    expected_envelope = ( -10, 10, -20, 20, -30, 3.0 )
+    if envelope != expected_envelope:
+        gdaltest.post_reason('did not get expected envelope (6)')
+        print(envelope)
+        print(expected_envelope)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('MULTIPOLYGON EMPTY')
+    envelope = g.GetEnvelope3D()
+    expected_envelope = ( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 )
+    if envelope != expected_envelope:
+        gdaltest.post_reason('did not get expected envelope (7)')
+        print(envelope)
+        print(expected_envelope)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # cleanup
@@ -810,6 +881,7 @@ gdaltest_list = [
     ogr_geom_empty,
     ogr_geom_getpoints,
     ogr_geom_mixed_coordinate_dimension,
+    ogr_geom_getenvelope3d,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
