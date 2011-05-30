@@ -942,9 +942,8 @@ void OGRPolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
     if (!bExtentSet)
     {
-        psEnvelope->MinX = psEnvelope->MinY = 0;
-        psEnvelope->MaxX = psEnvelope->MaxY = 0;
-        psEnvelope->MaxZ = psEnvelope->MaxZ = 0;
+        psEnvelope->MinX = psEnvelope->MinY = psEnvelope->MinZ = 0;
+        psEnvelope->MaxX = psEnvelope->MaxY = psEnvelope->MaxZ = 0;
     }
 }
 
