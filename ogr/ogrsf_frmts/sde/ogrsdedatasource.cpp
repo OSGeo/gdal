@@ -1491,20 +1491,15 @@ OGRErr OGRSDEDataSource::ConvertOSRtoSDESpatRef( OGRSpatialReference *poSRS,
 
     if( poSRS && poSRS->IsGeographic() )
     {
-        SE_ENVELOPE     sGenericEnvelope;
         LONG nSDEErr;
 
-        sGenericEnvelope.minx = -180;
-        sGenericEnvelope.miny = -90;
-        sGenericEnvelope.maxx =  180;
-        sGenericEnvelope.maxy =  90;
+        // Reset the offset and precision to match the ordinary values
+        // for SDE geographic coordinate systems. 
+        nSDEErr = SE_coordref_set_xy( *psCoordRef, -400, -400, 1.11195e9 );
 
-        CPLDebug( "SDE", "Force geographic envelope" );
-        nSDEErr = SE_coordref_set_xy_by_envelope( *psCoordRef, 
-                                                  &sGenericEnvelope);
         if( nSDEErr != SE_SUCCESS ) 
         {
-            IssueSDEError( nSDEErr, "SE_coordref_set_xy_envelope" );
+            IssueSDEError( nSDEErr, "SE_coordref_set_xy()" );
         }
     }
 
