@@ -268,6 +268,7 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRErr              WritePOINT( OGRFeature* );
     OGRErr              WriteTEXT( OGRFeature* );
     OGRErr              WritePOLYLINE( OGRFeature*, OGRGeometry* = NULL );
+    OGRErr              WriteHATCH( OGRFeature*, OGRGeometry* = NULL );
     OGRErr              WriteINSERT( OGRFeature* );
 
     static CPLString    TextEscape( const char * );
