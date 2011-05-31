@@ -485,7 +485,7 @@ def ogr_dxf_13():
         return 'fail'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbPolygon25D:
+    if geom.GetGeometryType() != ogr.wkbLineString25D:
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
@@ -506,15 +506,14 @@ def ogr_dxf_13():
     # only that more points are returned than in the original polyline, and 
     # that the points lie along (or reasonably close to) said path.
 
-    rgeom = geom.GetGeometryRef(0)
-    if rgeom.GetPointCount() != 146:
+    if geom.GetPointCount() != 146:
         gdaltest.post_reason( 'did not get expected number of points, got %d' % (rgeom.GetPointCount()) )
         return 'fail'
     
-    if abs(rgeom.GetX(0)-251297.8179) > 0.001 \
-       or abs(rgeom.GetY(0)-412226.8286) > 0.001:
+    if abs(geom.GetX(0)-251297.8179) > 0.001 \
+       or abs(geom.GetY(0)-412226.8286) > 0.001:
         gdaltest.post_reason( 'first point (%g,%g) not expected location.' \
-                              % (rgeom.GetX(0),rgeom.GetY(0)) )
+                              % (geom.GetX(0),geom.GetY(0)) )
         return 'fail'
 
     # Other possible tests:
@@ -552,7 +551,7 @@ def ogr_dxf_14():
         return 'fail'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbPolygon:
+    if geom.GetGeometryType() != ogr.wkbLineString:
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
@@ -564,15 +563,14 @@ def ogr_dxf_14():
         gdaltest.post_reason( 'envelope area not as expected, got %g.' % area )
         return 'fail'
 
-    rgeom = geom.GetGeometryRef(0)
-    if rgeom.GetPointCount() != 146:
-        gdaltest.post_reason( 'did not get expected number of points, got %d' % (rgeom.GetPointCount()) )
+    if geom.GetPointCount() != 146:
+        gdaltest.post_reason( 'did not get expected number of points, got %d' % (geom.GetPointCount()) )
         return 'fail'
     
-    if abs(rgeom.GetX(0)-251297.8179) > 0.001 \
-       or abs(rgeom.GetY(0)-412226.8286) > 0.001:
+    if abs(geom.GetX(0)-251297.8179) > 0.001 \
+       or abs(geom.GetY(0)-412226.8286) > 0.001:
         gdaltest.post_reason( 'first point (%g,%g) not expected location.' \
-                              % (rgeom.GetX(0),rgeom.GetY(0)) )
+                              % (geom.GetX(0),geom.GetY(0)) )
         return 'fail'
         
     feat.Destroy()
