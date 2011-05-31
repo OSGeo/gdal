@@ -93,7 +93,7 @@ char **S57FileCollector( const char * pszDataset );
 /************************************************************************/
 
 #define MAX_CLASSES 23000
-#define MAX_ATTRIBUTES 25000
+#define MAX_ATTRIBUTES 65535
 
 class CPL_DLL S57ClassRegistrar
 {
@@ -116,7 +116,7 @@ class CPL_DLL S57ClassRegistrar
     char     ***papapszAttrValues;
     char       *pachAttrType;
     char       *pachAttrClass;
-    GInt16     *panAttrIndex; // sorted by acronym.
+    GUInt16    *panAttrIndex; // sorted by acronym.
 
     int         FindFile( const char *pszTarget, const char *pszDirectory,
                           int bReportErr, FILE **fp );
