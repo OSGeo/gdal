@@ -341,6 +341,11 @@ int OGRSDELayer::NeedLayerInfo()
             poSRS = new OGRSpatialReference(szWKT);
             poSRS->morphFromESRI();
         }
+
+	LFLOAT falsex, falsey, xyunits;
+	nSDEErr = SE_coordref_get_xy( hCoordRef, &falsex, &falsey, &xyunits );
+	CPLDebug( "SDE", "SE_coordref_get_xy(%s) = %g/%g/%g",
+		  pszDbTableName, falsex, falsey, xyunits );
     }
 
     return TRUE;
