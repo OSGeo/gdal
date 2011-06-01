@@ -1677,24 +1677,20 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
     if( papszRecord == NULL )
         return OGRERR_UNSUPPORTED_SRS;
 
-/* -------------------------------------------------------------------- */
-/*      Set the VERT_CS node with a name.                               */
-/* -------------------------------------------------------------------- */
-    poSRS->SetNode( "VERT_CS", 
-                    CSLGetField( papszRecord,
-                                 CSVGetFileFieldId(pszFilename,
-                                                   "COORD_REF_SYS_NAME")) );
 
+/* -------------------------------------------------------------------- */
+/*      Setup the basic VERT_CS.                                        */
+/* -------------------------------------------------------------------- */
+    poSRS->SetVertCS( 
+        CSLGetField( papszRecord,
+                     CSVGetFileFieldId(pszFilename,
+                                       "COORD_REF_SYS_NAME")),
+        CSLGetField( papszRecord,
+                     CSVGetFileFieldId(pszFilename,
+                                       "DATUM_NAME")) );
 /* -------------------------------------------------------------------- */
 /*      Setup the VERT_DATUM node.                                      */
 /* -------------------------------------------------------------------- */
-    poSRS->SetNode( "VERT_CS|VERT_DATUM", 
-                    CSLGetField( papszRecord,
-                                 CSVGetFileFieldId(pszFilename,
-                                                   "DATUM_NAME")) );
-    poSRS->GetAttrNode( "VERT_CS|VERT_DATUM" )->
-        AddChild( new OGR_SRSNode( "2005" ) );
-
     poSRS->SetAuthority( "VERT_CS|VERT_DATUM", "EPSG",
                          atoi(CSLGetField( papszRecord,
                                            CSVGetFileFieldId(pszFilename,
@@ -1731,22 +1727,12 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
     }
     else
     {
-        poSRS->SetLinearUnits( pszUOMLengthName, dfInMeters );
+        poSRS->SetTargetLinearUnits( "VERT_CS", pszUOMLengthName, dfInMeters );
         poSRS->SetAuthority( "VERT_CS|UNIT", "EPSG", nUOM_CODE );
 
         CPLFree( pszUOMLengthName );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set axes                                                        */
-/* -------------------------------------------------------------------- */
-    OGR_SRSNode *poAxis = new OGR_SRSNode( "AXIS" );
-
-    poAxis->AddChild( new OGR_SRSNode( "Up" ) );
-    poAxis->AddChild( new OGR_SRSNode( "UP" ) );
-
-    poSRS->GetRoot()->AddChild( poAxis );
-    
 /* -------------------------------------------------------------------- */
 /*      Set overall authority code.                                     */
 /* -------------------------------------------------------------------- */
