@@ -362,6 +362,11 @@ OGRErr CPL_DLL OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszUnits /* = NULL */,
                       double dfConvertToRadians /* = 0.0 */ );
 
+OGRErr CPL_DLL OSRSetVertCS( OGRSpatialReferenceH hSRS,
+                      const char * pszVertCSName,
+                      const char * pszVertDatumName,
+                      int nVertDatumType );
+
 double CPL_DLL OSRGetSemiMajor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
 double CPL_DLL OSRGetSemiMinor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
 double CPL_DLL OSRGetInvFlattening( OGRSpatialReferenceH, OGRErr * /*=NULL*/);
