@@ -90,6 +90,14 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                 void * pProgressArg );
 
 CPLErr CPL_DLL CPL_STDCALL
+GDALFPolygonize( GDALRasterBandH hSrcBand,
+                GDALRasterBandH hMaskBand,
+                OGRLayerH hOutLayer, int iPixValField,
+                char **papszOptions,
+                GDALProgressFunc pfnProgress,
+                void * pProgressArg );
+
+CPLErr CPL_DLL CPL_STDCALL
 GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
                  GDALRasterBandH hDstBand,
                  int nSizeThreshold, int nConnectedness,
