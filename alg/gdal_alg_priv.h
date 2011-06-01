@@ -117,6 +117,40 @@ public:
     void     Clear();
 };
 
+/************************************************************************/
+/*                          Polygon Enumerator                          */
+/*                                                                      */
+/*              Buffers has float values instead og GInt32              */
+/************************************************************************/
+class GDALRasterFPolygonEnumerator
+
+{
+private:
+    void     MergePolygon( int nSrcId, int nDstId );
+    int      NewPolygon( float fValue );
+
+public:  // these are intended to be readonly.
+
+    GInt32   *panPolyIdMap;
+    float    *pafPolyValue;
+
+    int      nNextPolygonId;
+    int      nPolyAlloc;
+
+    int      nConnectedness;
+
+public:
+             GDALRasterFPolygonEnumerator( int nConnectedness=4 );
+            ~GDALRasterFPolygonEnumerator();
+
+    void     ProcessLine( float *pafLastLineVal, float *pafThisLineVal,
+                          GInt32 *panLastLineId,  GInt32 *panThisLineId,
+                          int nXSize );
+
+    void     CompleteMerges();
+
+    void     Clear();
+};
 
 typedef void* (*GDALTransformDeserializeFunc)( CPLXMLNode *psTree );
 
@@ -124,5 +158,19 @@ void* GDALRegisterTransformDeserializer(const char* pszTransformName,
                                        GDALTransformerFunc pfnTransformerFunc,
                                        GDALTransformDeserializeFunc pfnDeserializeFunc);
 void GDALUnregisterTransformDeserializer(void* pData);
+
+/************************************************************************/
+/*      Float comparison function.                                      */
+/************************************************************************/
+
+/**
+ * Units in the Last Place. This specifies how big an error we are willing to
+ * accept in terms of the value of the least significant digit of the floating
+ * point number’s representation. MAX_ULPS can also be interpreted in terms of
+ * how many representable floats we are willing to accept between A and B. 
+ */
+#define MAX_ULPS 10
+
+GBool equals(float A, float B);
 
 #endif /* ndef GDAL_ALG_PRIV_H_INCLUDED */
