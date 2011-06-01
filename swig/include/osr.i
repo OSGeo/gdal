@@ -719,6 +719,12 @@ public:
     return OSRSetGeocCS( self, name );
   }
 
+  OGRErr SetVertCS( const char *VertCSName = "unnamed",
+                    const char *VertDatumName = "unnamed",
+                    int VertDatumType = 0) {
+    return OSRSetVertCS( self, VertCSName, VertDatumName, VertDatumType );
+  }  
+
 %apply (char **ignorechange) { (char **) };
   OGRErr ImportFromWkt( char **ppszInput ) {
     return OSRImportFromWkt( self, ppszInput );
