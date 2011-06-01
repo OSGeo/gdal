@@ -591,6 +591,13 @@ class SpatialReference(_object):
         """SetGeocCS(self, char name = "unnamed") -> OGRErr"""
         return _osr.SpatialReference_SetGeocCS(self, *args)
 
+    def SetVertCS(self, *args):
+        """
+        SetVertCS(self, char VertCSName = "unnamed", char VertDatumName = "unnamed", 
+            int VertDatumType = 0) -> OGRErr
+        """
+        return _osr.SpatialReference_SetVertCS(self, *args)
+
     def ImportFromWkt(self, *args):
         """ImportFromWkt(self, char ppszInput) -> OGRErr"""
         return _osr.SpatialReference_ImportFromWkt(self, *args)
