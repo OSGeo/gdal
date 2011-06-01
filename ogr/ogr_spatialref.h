@@ -65,7 +65,6 @@ class CPL_DLL OGR_SRSNode
 
     int         nChildren;
 
-    void        ClearChildren();
     int         NeedsQuoting() const;
     
   public:
@@ -85,6 +84,7 @@ class CPL_DLL OGR_SRSNode
     void        AddChild( OGR_SRSNode * );
     int         FindChild( const char * ) const;
     void        DestroyChild( int );
+    void        ClearChildren();
     void        StripNodes( const char * );
 
     const char  *GetValue() const { return pszValue; }
@@ -227,7 +227,11 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetLinearUnitsAndUpdateParameters( const char *pszName, 
                                                    double dfInMeters );
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
+    OGRErr      SetTargetLinearUnits( const char *pszTargetKey,
+                                      const char *pszName, double dfInMeters );
     double      GetLinearUnits( char ** = NULL ) const;
+    double      GetTargetLinearUnits( const char *pszTargetKey,
+                                      char ** ppszRetName = NULL ) const;
 
     OGRErr      SetAngularUnits( const char *pszName, double dfInRadians );
     double      GetAngularUnits( char ** = NULL ) const;
@@ -258,6 +262,9 @@ class CPL_DLL OGRSpatialReference
                            double dfConvertToRadians = 0.0 );
     OGRErr      SetWellKnownGeogCS( const char * );
     OGRErr      CopyGeogCSFrom( const OGRSpatialReference * poSrcSRS );
+    OGRErr      SetVertCS( const char *pszVertCSName,
+                           const char *pszVertDatumName, 
+                           int nVertDatumClass = 2005 );
 
     OGRErr      SetFromUserInput( const char * );
 

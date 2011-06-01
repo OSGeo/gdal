@@ -1080,6 +1080,7 @@ OGRErr OSRSetLinearUnitsAndUpdateParameters( OGRSpatialReferenceH hSRS,
     return ((OGRSpatialReference *) hSRS)->
         SetLinearUnitsAndUpdateParameters( pszUnits, dfInMeters );
 }
+
 /************************************************************************/
 /*                           SetLinearUnits()                           */
 /************************************************************************/
@@ -1088,7 +1089,7 @@ OGRErr OSRSetLinearUnitsAndUpdateParameters( OGRSpatialReferenceH hSRS,
  * \brief Set the linear units for the projection.
  *
  * This method creates a UNIT subnode with the specified values as a
- * child of the PROJCS or LOCAL_CS node. 
+ * child of the PROJCS, GEOCCS or LOCAL_CS node. 
  *
  * This method does the same as the C function OSRSetLinearUnits(). 
  *
@@ -1107,19 +1108,77 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
                                             double dfInMeters )
 
 {
+    return SetTargetLinearUnits( NULL, pszUnitsName, dfInMeters );
+}
+
+/************************************************************************/
+/*                         OSRSetLinearUnits()                          */
+/************************************************************************/
+
+/**
+ * \brief Set the linear units for the projection.
+ *
+ * This function is the same as OGRSpatialReference::SetLinearUnits()
+ */
+OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS, 
+                          const char * pszUnits, double dfInMeters )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetLinearUnits", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->SetLinearUnits( pszUnits, 
+                                                           dfInMeters );
+}
+
+/************************************************************************/
+/*                        SetTargetLinearUnits()                        */
+/************************************************************************/
+
+/**
+ * \brief Set the linear units for the projection.
+ *
+ * This method creates a UNIT subnode with the specified values as a
+ * child of the target node. 
+ *
+ * This method does the same as the C function OSRSetTargetLinearUnits(). 
+ *
+ * @param pszTargetKey the keyword to set the linear units for.  ie. "PROJCS" or "VERT_CS"
+ *
+ * @param pszUnitsName the units name to be used.  Some preferred units
+ * names can be found in ogr_srs_api.h such as SRS_UL_METER, SRS_UL_FOOT 
+ * and SRS_UL_US_FOOT. 
+ *
+ * @param dfInMeters the value to multiple by a length in the indicated
+ * units to transform to meters.  Some standard conversion factors can
+ * be found in ogr_srs_api.h. 
+ *
+ * @return OGRERR_NONE on success.
+ */
+
+OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
+                                                  const char * pszUnitsName,
+                                                  double dfInMeters )
+
+{
     OGR_SRSNode *poCS;
     OGR_SRSNode *poUnits;
     char        szValue[128];
 
     bNormInfoSet = FALSE;
 
-    poCS = GetAttrNode( "PROJCS" );
-    if( poCS == NULL )
-        poCS = GetAttrNode( "VERT_CS" );
-    if( poCS == NULL )
-        poCS = GetAttrNode( "LOCAL_CS" );
-    if( poCS == NULL )
-        poCS = GetAttrNode( "GEOCCS" );
+    if( pszTargetKey == NULL )
+    {
+        poCS = GetAttrNode( "PROJCS" );
+
+        if( poCS == NULL )
+            poCS = GetAttrNode( "LOCAL_CS" );
+        if( poCS == NULL )
+            poCS = GetAttrNode( "GEOCCS" );
+        if( poCS == NULL && IsVertical() )
+            poCS = GetAttrNode( "VERT_CS" );
+    }
+    else
+        poCS = GetAttrNode( pszTargetKey );
 
     if( poCS == NULL )
         return OGRERR_FAILURE;
@@ -1156,18 +1215,19 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
 /************************************************************************/
 
 /**
- * \brief Set the linear units for the projection.
+ * \brief Set the linear units for the target node.
  *
- * This function is the same as OGRSpatialReference::SetLinearUnits()
+ * This function is the same as OGRSpatialReference::SetTargetLinearUnits()
  */
-OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS, 
-                          const char * pszUnits, double dfInMeters )
+OGRErr OSRSetTargetLinearUnits( OGRSpatialReferenceH hSRS, 
+                                const char *pszTargetKey,
+                                const char * pszUnits, double dfInMeters )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRSetLinearUnits", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRSetTargetLinearUnits", CE_Failure );
 
-    return ((OGRSpatialReference *) hSRS)->SetLinearUnits( pszUnits, 
-                                                           dfInMeters );
+    return ((OGRSpatialReference *) hSRS)->
+        SetTargetLinearUnits( pszTargetKey, pszUnits, dfInMeters );
 }
 
 /************************************************************************/
@@ -1178,8 +1238,8 @@ OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS,
  * \brief Fetch linear projection units. 
  *
  * If no units are available, a value of "Meters" and 1.0 will be assumed.
- * This method only checks directly under the PROJCS or LOCAL_CS node for 
- * units.
+ * This method only checks directly under the PROJCS, GEOCCS or LOCAL_CS node 
+ * for units.
  *
  * This method does the same thing as the C function OSRGetLinearUnits()/
  *
@@ -1195,10 +1255,66 @@ OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS,
 double OGRSpatialReference::GetLinearUnits( char ** ppszName ) const
 
 {
-    const OGR_SRSNode *poCS = GetAttrNode( "PROJCS" );
+    return GetTargetLinearUnits( NULL, ppszName );
+}
 
-    if( poCS == NULL )
-        poCS = GetAttrNode( "LOCAL_CS" );
+/************************************************************************/
+/*                         OSRGetLinearUnits()                          */
+/************************************************************************/
+
+/**
+ * \brief Fetch linear projection units. 
+ *
+ * This function is the same as OGRSpatialReference::GetLinearUnits()
+ */
+double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
+    
+{
+    VALIDATE_POINTER1( hSRS, "OSRGetLinearUnits", 0 );
+
+    return ((OGRSpatialReference *) hSRS)->GetLinearUnits( ppszName );
+}
+
+/************************************************************************/
+/*                        GetTargetLinearUnits()                        */
+/************************************************************************/
+
+/**
+ * \brief Fetch linear units for target. 
+ *
+ * If no units are available, a value of "Meters" and 1.0 will be assumed.
+ *
+ * This method does the same thing as the C function OSRGetTargetLinearUnits()/
+ *
+ * @param pszTargetKey the key to look on. ie. "PROJCS" or "VERT_CS".
+ * @param ppszName a pointer to be updated with the pointer to the 
+ * units name.  The returned value remains internal to the OGRSpatialReference
+ * and shouldn't be freed, or modified.  It may be invalidated on the next
+ * OGRSpatialReference call. 
+ *
+ * @return the value to multiply by linear distances to transform them to 
+ * meters.
+ */
+
+double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
+                                                  char ** ppszName ) const
+
+{
+    const OGR_SRSNode *poCS = GetAttrNode( pszTargetKey );
+
+    if( pszTargetKey == NULL )
+    {
+        poCS = GetAttrNode( "PROJCS" );
+
+        if( poCS == NULL )
+            poCS = GetAttrNode( "LOCAL_CS" );
+        if( poCS == NULL )
+            poCS = GetAttrNode( "GEOCCS" );
+        if( poCS == NULL && IsVertical() )
+            poCS = GetAttrNode( "VERT_CS" );
+    }
+    else
+        poCS = GetAttrNode( pszTargetKey );
 
     if( ppszName != NULL )
         *ppszName = (char*) "unknown";
@@ -1224,20 +1340,23 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName ) const
 }
 
 /************************************************************************/
-/*                         OSRGetLinearUnits()                          */
+/*                      OSRGetTargetLinearUnits()                       */
 /************************************************************************/
 
 /**
  * \brief Fetch linear projection units. 
  *
- * This function is the same as OGRSpatialReference::GetLinearUnits()
+ * This function is the same as OGRSpatialReference::GetTargetLinearUnits()
  */
-double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
+double OSRGetTargetLinearUnits( OGRSpatialReferenceH hSRS, 
+                                const char *pszTargetKey, 
+                                char ** ppszName )
     
 {
-    VALIDATE_POINTER1( hSRS, "OSRGetLinearUnits", 0 );
+    VALIDATE_POINTER1( hSRS, "OSRGetTargetLinearUnits", 0 );
 
-    return ((OGRSpatialReference *) hSRS)->GetLinearUnits( ppszName );
+    return ((OGRSpatialReference *) hSRS)->GetTargetLinearUnits( pszTargetKey,
+                                                                 ppszName );
 }
 
 /************************************************************************/
@@ -2641,6 +2760,119 @@ OGRErr OSRSetGeocCS( OGRSpatialReferenceH hSRS, const char * pszName )
     VALIDATE_POINTER1( hSRS, "OSRSetGeocCS", CE_Failure );
 
     return ((OGRSpatialReference *) hSRS)->SetGeocCS( pszName );
+}
+
+/************************************************************************/
+/*                             SetVertCS()                              */
+/************************************************************************/
+
+/**
+ * \brief Set the user visible VERT_CS name.
+ *
+ * This method is the same as the C function OSRSetVertCS(). 
+
+ * This method is will ensure a VERT_CS node is created if needed.  If the
+ * existing coordinate system is GEOGCS or PROJCS rooted, then it will be
+ * turned into a COMPD_CS.
+ *
+ * @param pszVertCSName the user visible name of the vertical coordinate
+ * system. Not used as a key.
+ *  
+ * @param pszVertDatumName the user visible name of the vertical datum.  It
+ * is helpful if this matches the EPSG name.
+ * 
+ * @param nVertDatumType the OGC vertical datum type, usually 2005. 
+ * 
+ * @return OGRERR_NONE on success.
+ */
+
+OGRErr OGRSpatialReference::SetVertCS( const char * pszVertCSName,
+                                       const char * pszVertDatumName,
+                                       int nVertDatumType )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Handle the case where we want to make a compound coordinate     */
+/*      system.                                                         */
+/* -------------------------------------------------------------------- */
+    if( IsProjected() || IsGeographic() )
+    {
+        OGR_SRSNode *poNewRoot = new OGR_SRSNode( "COMPD_CS" );
+        poNewRoot->AddChild( poRoot );
+        poRoot = poNewRoot;
+    }
+
+    else if( GetAttrNode( "VERT_CS" ) == NULL )
+        Clear();
+
+/* -------------------------------------------------------------------- */
+/*      If we already have a VERT_CS, wipe and recreate the root        */
+/*      otherwise create the VERT_CS now.                               */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poVertCS = GetAttrNode( "VERT_CS" );
+    
+    if( poVertCS != NULL )
+    {
+        poVertCS->ClearChildren();
+    }
+    else
+    {
+        poVertCS = new OGR_SRSNode( "VERT_CS" );
+        if( poRoot != NULL && EQUAL(poRoot->GetValue(),"COMPD_CS") )
+        {
+            poRoot->AddChild( poVertCS );
+        }
+        else
+            SetRoot( poVertCS );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the name, datumname, and type.                              */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poVertDatum;
+
+    poVertCS->AddChild( new OGR_SRSNode( pszVertCSName ) );
+    
+    poVertDatum = new OGR_SRSNode( "VERT_DATUM" );
+    poVertCS->AddChild( poVertDatum );
+        
+    poVertDatum->AddChild( new OGR_SRSNode( pszVertDatumName ) );
+
+    CPLString osVertDatumType;
+    osVertDatumType.Printf( "%d", nVertDatumType );
+    poVertDatum->AddChild( new OGR_SRSNode( osVertDatumType ) );
+
+    // add default axis node.
+    OGR_SRSNode *poAxis = new OGR_SRSNode( "AXIS" );
+
+    poAxis->AddChild( new OGR_SRSNode( "Up" ) );
+    poAxis->AddChild( new OGR_SRSNode( "UP" ) );
+
+    poVertCS->AddChild( poAxis );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            OSRSetVertCS()                            */
+/************************************************************************/
+
+/**
+ * \brief Setup the vertical coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::SetVertCS()
+ */
+OGRErr OSRSetVertCS( OGRSpatialReferenceH hSRS,
+                     const char * pszVertCSName,
+                     const char * pszVertDatumName,
+                     int nVertDatumType )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetVertCS", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->SetVertCS( pszVertCSName,
+                                                      pszVertDatumName,
+                                                      nVertDatumType );
 }
 
 /************************************************************************/
