@@ -225,6 +225,10 @@ class SpatialReference(_object):
         """IsSameGeogCS(self, SpatialReference rhs) -> int"""
         return _osr.SpatialReference_IsSameGeogCS(self, *args)
 
+    def IsSameVertCS(self, *args):
+        """IsSameVertCS(self, SpatialReference rhs) -> int"""
+        return _osr.SpatialReference_IsSameVertCS(self, *args)
+
     def IsGeographic(self, *args):
         """IsGeographic(self) -> int"""
         return _osr.SpatialReference_IsGeographic(self, *args)
@@ -240,6 +244,10 @@ class SpatialReference(_object):
     def IsLocal(self, *args):
         """IsLocal(self) -> int"""
         return _osr.SpatialReference_IsLocal(self, *args)
+
+    def IsVertical(self, *args):
+        """IsVertical(self) -> int"""
+        return _osr.SpatialReference_IsVertical(self, *args)
 
     def EPSGTreatsAsLatLong(self, *args):
         """EPSGTreatsAsLatLong(self) -> int"""

@@ -3225,6 +3225,9 @@ SWIGINTERN int OSRSpatialReferenceShadow_IsSame(OSRSpatialReferenceShadow *self,
 SWIGINTERN int OSRSpatialReferenceShadow_IsSameGeogCS(OSRSpatialReferenceShadow *self,OSRSpatialReferenceShadow *rhs){
     return OSRIsSameGeogCS( self, rhs );
   }
+SWIGINTERN int OSRSpatialReferenceShadow_IsSameVertCS(OSRSpatialReferenceShadow *self,OSRSpatialReferenceShadow *rhs){
+    return OSRIsSameVertCS( self, rhs );
+  }
 SWIGINTERN int OSRSpatialReferenceShadow_IsGeographic(OSRSpatialReferenceShadow *self){
     return OSRIsGeographic(self);
   }
@@ -3236,6 +3239,9 @@ SWIGINTERN int OSRSpatialReferenceShadow_IsGeocentric(OSRSpatialReferenceShadow 
   }
 SWIGINTERN int OSRSpatialReferenceShadow_IsLocal(OSRSpatialReferenceShadow *self){
     return OSRIsLocal(self);
+  }
+SWIGINTERN int OSRSpatialReferenceShadow_IsVertical(OSRSpatialReferenceShadow *self){
+    return OSRIsVertical(self);
   }
 SWIGINTERN int OSRSpatialReferenceShadow_EPSGTreatsAsLatLong(OSRSpatialReferenceShadow *self){
     return OSREPSGTreatsAsLatLong(self);
@@ -4264,6 +4270,53 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_IsSameVertCS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  OSRSpatialReferenceShadow *arg2 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:SpatialReference_IsSameVertCS",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_IsSameVertCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_IsSameVertCS" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)OSRSpatialReferenceShadow_IsSameVertCS(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_IsGeographic(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -4382,6 +4435,39 @@ SWIGINTERN PyObject *_wrap_SpatialReference_IsLocal(PyObject *SWIGUNUSEDPARM(sel
       CPLErrorReset();
     }
     result = (int)OSRSpatialReferenceShadow_IsLocal(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_IsVertical(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_IsVertical",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_IsVertical" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)OSRSpatialReferenceShadow_IsVertical(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -12417,10 +12503,12 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference___str__", _wrap_SpatialReference___str__, METH_VARARGS, (char *)"SpatialReference___str__(SpatialReference self) -> retStringAndCPLFree"},
 	 { (char *)"SpatialReference_IsSame", _wrap_SpatialReference_IsSame, METH_VARARGS, (char *)"SpatialReference_IsSame(SpatialReference self, SpatialReference rhs) -> int"},
 	 { (char *)"SpatialReference_IsSameGeogCS", _wrap_SpatialReference_IsSameGeogCS, METH_VARARGS, (char *)"SpatialReference_IsSameGeogCS(SpatialReference self, SpatialReference rhs) -> int"},
+	 { (char *)"SpatialReference_IsSameVertCS", _wrap_SpatialReference_IsSameVertCS, METH_VARARGS, (char *)"SpatialReference_IsSameVertCS(SpatialReference self, SpatialReference rhs) -> int"},
 	 { (char *)"SpatialReference_IsGeographic", _wrap_SpatialReference_IsGeographic, METH_VARARGS, (char *)"SpatialReference_IsGeographic(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsProjected", _wrap_SpatialReference_IsProjected, METH_VARARGS, (char *)"SpatialReference_IsProjected(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsGeocentric", _wrap_SpatialReference_IsGeocentric, METH_VARARGS, (char *)"SpatialReference_IsGeocentric(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsLocal", _wrap_SpatialReference_IsLocal, METH_VARARGS, (char *)"SpatialReference_IsLocal(SpatialReference self) -> int"},
+	 { (char *)"SpatialReference_IsVertical", _wrap_SpatialReference_IsVertical, METH_VARARGS, (char *)"SpatialReference_IsVertical(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_EPSGTreatsAsLatLong", _wrap_SpatialReference_EPSGTreatsAsLatLong, METH_VARARGS, (char *)"SpatialReference_EPSGTreatsAsLatLong(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_SetAuthority", _wrap_SpatialReference_SetAuthority, METH_VARARGS, (char *)"\n"
 		"SpatialReference_SetAuthority(SpatialReference self, char pszTargetKey, char pszAuthority, \n"
