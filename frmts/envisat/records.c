@@ -3,7 +3,7 @@
  *
  * Project:  APP ENVISAT Support
  * Purpose:  Low Level Envisat file access (read/write) API.
- * Author:   AntonioV Valentino <antonio.valentino@tiscali.it>
+ * Author:   Antonio Valentino <antonio.valentino@tiscali.it>
  *
  ******************************************************************************
  * Copyright (c) 2011, Antonio Valentino
@@ -31,6 +31,7 @@
 
 CPL_CVSID("$Id$");
 
+/* --- ASAR record descriptors --------------------------------------------- */
 static const EnvisatFieldDescr ASAR_ANTENNA_ELEV_PATT_ADSR[] = {
     {"ZERO_DOPPLER_TIME",                                  0, EDT_MJD,         1},
     {"ATTACH_FLAG",                                       12, EDT_UByte,       1},
@@ -1034,7 +1035,125 @@ static const EnvisatFieldDescr ASAR_WAVE_SQ_ADSR[] = {
     {NULL,                                                 0, EDT_Unknown,     0}
 };
 
-static const EnvisatRecordDescr aASARRecords[] =  {
+/* --- MERIS record descriptors -------------------------------------------- */
+static const EnvisatFieldDescr MERIS_1P_QUALITY_ADSR[] = {
+    {"DSR_TIME",                                           0, EDT_MJD,         1},
+    {"ATTACH_FLAG",                                       12, EDT_UByte,       1},
+    {"RANGE_FLAG",                                        13, EDT_UInt16,      5},
+    {"RANGE_BLIND_FLAG",                                  23, EDT_UInt16,      5},
+    {NULL,                                                 0, EDT_Unknown,     0}
+};
+
+static const EnvisatFieldDescr MERIS_1P_SCALING_FACTOR_GADS[] = {
+    {"SCALING_FACTOR_ALT",                                 0, EDT_Float32,     1},
+    {"SCALING_FACTOR_ROUGH",                               4, EDT_Float32,     1},
+    {"SCALING_FACTOR_ZON_WIND",                            8, EDT_Float32,     1},
+    {"SCALING_FACTOR_MERR_WIND",                          12, EDT_Float32,     1},
+    {"SCALING_FACTOR_ATM_PRES",                           16, EDT_Float32,     1},
+    {"SCALING_FACTOR_OZONE",                              20, EDT_Float32,     1},
+    {"SCALING_FACTOR_REL_HUM",                            24, EDT_Float32,     1},
+    {"SCALING_FACTOR_RAD",                                28, EDT_Float32,    15},
+    {"GAIN_SETTINGS",                                     88, EDT_UByte,      80},
+    {"SAMPLING_RATE",                                    168, EDT_UInt32,      1},
+    {"SUN_SPECTRAL_FLUX",                                172, EDT_Float32,    15},
+    /*{"SPARE_1",                                        232, EDT_UByte,      60},*/
+    {NULL,                                                 0, EDT_Unknown,     0}
+};
+
+static const EnvisatFieldDescr MERIS_2P_QUALITY_ADSR[] = {
+    {"DSR_TIME",                                           0, EDT_MJD,         1},
+    {"ATTACH_FLAG",                                       12, EDT_UByte,       1},
+    {"PERC_WATER_ABS_AERO",                               13, EDT_UByte,       1},
+    {"PERC_WATER",                                        14, EDT_UByte,       1},
+    {"PERC_DDV_LAND",                                     15, EDT_UByte,       1},
+    {"PERC_LAND",                                         16, EDT_UByte,       1},
+    {"PERC_CLOUD",                                        17, EDT_UByte,       1},
+    {"PERC_LOW_POLY_PRESS",                               18, EDT_UByte,       1},
+    {"PERC_LOW_NEURAL_PRESS",                             19, EDT_UByte,       1},
+    {"PERC_OUT_RAN_INP_WVAPOUR",                          20, EDT_UByte,       1},
+    {"PER_OUT_RAN_OUTP_WVAPOUR",                          21, EDT_UByte,       1},
+    {"PERC_OUT_RANGE_INP_CL",                             22, EDT_UByte,       1},
+    {"PERC_OUT_RAN_OUTP_CL",                              23, EDT_UByte,       1},
+    {"PERC_IN_RAN_INP_LAND",                              24, EDT_UByte,       1},
+    {"PERC_OUT_RAN_OUTP_LAND",                            25, EDT_UByte,       1},
+    {"PERC_OUT_RAN_INP_OCEAN",                            26, EDT_UByte,       1},
+    {"PERC_OUT_RAN_OUTP_OCEAN",                           27, EDT_UByte,       1},
+    {"PERC_OUT_RAN_INP_CASE1",                            28, EDT_UByte,       1},
+    {"PERC_OUT_RAN_OUTP_CASE1",                           29, EDT_UByte,       1},
+    {"PERC_OUT_RAN_INP_CASE2",                            30, EDT_UByte,       1},
+    {"PERC_OUT_RAN_OUTP_CASE2",                           31, EDT_UByte,       1},
+    {NULL,                                                 0, EDT_Unknown,     0}
+};
+
+static const EnvisatFieldDescr MERIS_2P_SCALING_FACTOR_GADS[] = {
+    {"SCALING_FACTOR_ALT",                                 0, EDT_Float32,     1},
+    {"SCALING_FACTOR_ROUGH",                               4, EDT_Float32,     1},
+    {"SCALING_FACTOR_ZON_WIND",                            8, EDT_Float32,     1},
+    {"SCALING_FACTOR_MERR_WIND",                          12, EDT_Float32,     1},
+    {"SCALING_FACTOR_ATM_PRES",                           16, EDT_Float32,     1},
+    {"SCALING_FACTOR_OZONE",                              20, EDT_Float32,     1},
+    {"SCALING_FACTOR_REL_HUMID",                          24, EDT_Float32,     1},
+    {"SCALING_FACTOR_REFLEC",                             28, EDT_Float32,    13},
+    {"SCALING_FACTOR_ALGAL_PIG_IND",                      80, EDT_Float32,     1},
+    {"SCALING_FACTOR_YELLOW_SUBS",                        84, EDT_Float32,     1},
+    {"SCALING_FACTOR_SUSP_SED",                           88, EDT_Float32,     1},
+    {"SCALING_FACTOR_AERO_EPSILON",                       92, EDT_Float32,     1},
+    {"SCALING_FACTOR_AER_OPT_THICK",                      96, EDT_Float32,     1},
+    {"SCALING_FACTOR_CL_OPT_THICK",                      100, EDT_Float32,     1},
+    {"SCALING_FACTOR_SURF_PRES",                         104, EDT_Float32,     1},
+    {"SCALING_FACTOR_WVAPOUR",                           108, EDT_Float32,     1},
+    {"SCALING_FACTOR_PHOTOSYN_RAD",                      112, EDT_Float32,     1},
+    {"SCALING_FACTOR_TOA_VEG",                           116, EDT_Float32,     1},
+    {"SCALING_FACTOR_BOA_VEG",                           120, EDT_Float32,     1},
+    {"SCALING_FACTOR_CLOUD_ALBEDO",                      124, EDT_Float32,     1},
+    {"SCALING_FACTOR_CLOUD_TOP_PRESS",                   128, EDT_Float32,     1},
+    {"OFF_REFLEC",                                       132, EDT_Float32,    13},
+    {"OFFSET_ALGAL",                                     184, EDT_Float32,     1},
+    {"OFFSET_YELLOW_SUBS",                               188, EDT_Float32,     1},
+    {"OFFSET_TOTAL_SUSP",                                192, EDT_Float32,     1},
+    {"OFFSET_AERO_EPSILON",                              196, EDT_Float32,     1},
+    {"OFFSET_AER_OPT_THICK",                             200, EDT_Float32,     1},
+    {"OFFSET_CL_OPT_THICK",                              204, EDT_Float32,     1},
+    {"OFFSET_SURF_PRES",                                 208, EDT_Float32,     1},
+    {"OFFSET_WVAPOUR",                                   212, EDT_Float32,     1},
+    {"OFFSET_PHOTOSYN_RAD",                              216, EDT_Float32,     1},
+    {"OFFSET_TOA_VEG",                                   220, EDT_Float32,     1},
+    {"OFFSET_BOA_VEG",                                   224, EDT_Float32,     1},
+    {"OFFSET_CLOUD_ALBEDO",                              228, EDT_Float32,     1},
+    {"OFFSET_CLOUD_TOP_PRESS",                           232, EDT_Float32,     1},
+    {"GAIN_SETTINGS",                                    236, EDT_UByte,      80},
+    {"SAMPLING_RATE",                                    316, EDT_UInt32,      1},
+    {"SUN_SPECTRAL_FLUX",                                320, EDT_Float32,    15},
+    {"SCALING_FACTOR_RECT_REFL_NIR",                     380, EDT_Float32,     1},
+    {"OFFSET_RECT_REFL_NIR",                             384, EDT_Float32,     1},
+    {"SCALING_FACTOR_RECT_REFL_RED",                     388, EDT_Float32,     1},
+    {"OFFSET_RECT_REFL_RED",                             392, EDT_Float32,     1},
+    /*{"SPARE_1",                                        396, EDT_UByte,      44},*/
+    {NULL,                                                 0, EDT_Unknown,     0}
+};
+
+static const EnvisatFieldDescr MERIS_2P_C_SCALING_FACTOR_GADS[] = {
+    {"SCALING_FACTOR_CLOUD_OPT_THICK",                     0, EDT_Float32,     1},
+    {"SCALING_FACTOR_CLOUD_TOP_PRESS",                     4, EDT_Float32,     1},
+    {"SCALING_FACTOR_WVAPOUR",                             8, EDT_Float32,     1},
+    {"OFFSET_CL_OPT_THICK",                               12, EDT_Float32,     1},
+    {"OFFSET_CLOUD_TOP_PRESS",                            16, EDT_Float32,     1},
+    {"OFFSET_WVAPOUR",                                    20, EDT_Float32,     1},
+    /*{"SPARE_1",                                         24, EDT_UByte,      52},*/
+    {NULL,                                                 0, EDT_Unknown,     0}
+};
+
+static const EnvisatFieldDescr MERIS_2P_V_SCALING_FACTOR_GADS[] = {
+    {"SCALING_FACTOR_TOA_VEGETATION_INDEX",                0, EDT_Float32,     1},
+    {"SCALING_FACTOR_BOA_VEGETATION_INDEX",                4, EDT_Float32,     1},
+    {"OFFSET_TOA_VEGETAYION_INDEX",                        8, EDT_Float32,     1},
+    {"OFFSET_BOA_VEGETAYION_INDEX",                       12, EDT_Float32,     1},
+    /*{"SPARE_1",                                         16, EDT_UByte,      60},*/
+    {NULL,                                                 0, EDT_Unknown,     0}
+};
+
+
+static const EnvisatRecordDescr aASAR_Records[] =  {
     {"MDS1 ANTENNA ELEV PATT ADS", ASAR_ANTENNA_ELEV_PATT_ADSR},
     {"MDS2 ANTENNA ELEV PATT ADS", ASAR_ANTENNA_ELEV_PATT_ADSR},
     {"CHIRP PARAMS ADS", ASAR_CHIRP_PARAMS_ADSR},
@@ -1052,20 +1171,52 @@ static const EnvisatRecordDescr aASARRecords[] =  {
     {NULL, NULL}
 };
 
+static const EnvisatRecordDescr aMERIS_1P_Records[] =  {
+    {"Quality ADS", MERIS_1P_QUALITY_ADSR},
+    {"Scaling Factor GADS", MERIS_1P_SCALING_FACTOR_GADS},
+    {NULL, NULL}
+};
 
-const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(const char* pszProduct,
-                                              const char* pszDataset)
+static const EnvisatRecordDescr aMERIS_2P_Records[] =  {
+    {"Quality ADS", MERIS_2P_QUALITY_ADSR},
+    {"Scaling Factor GADS", MERIS_2P_SCALING_FACTOR_GADS},
+    {NULL, NULL}
+};
+
+static const EnvisatRecordDescr aMERIS_2P_C_Records[] =  {
+    {"Quality ADS", MERIS_2P_QUALITY_ADSR},
+    {"Scaling Factor GADS", MERIS_2P_C_SCALING_FACTOR_GADS},
+    {NULL, NULL}
+};
+
+static const EnvisatRecordDescr aMERIS_2P_V_Records[] =  {
+    {"Quality ADS", MERIS_2P_QUALITY_ADSR},
+    {"Scaling Factor GADS", MERIS_2P_V_SCALING_FACTOR_GADS},
+    {NULL, NULL}
+};
+
+const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(
+                        const char* pszProduct, const char* pszDataset)
 {
     const EnvisatRecordDescr *paRecords = NULL;
     const EnvisatRecordDescr *pRecordDescr = NULL;
     int nLen;
 
     if( EQUALN(pszProduct,"ASA",3) )
-        paRecords = aASARRecords;
-    /* @NOTE: probably MERIS requires a more sofisticate dispatching mechanism
+        paRecords = aASAR_Records;
     else if( EQUALN(pszProduct,"MER",3) )
-            paRecords = aMERISRecords;
-    */
+    {
+        if ( EQUALN(pszProduct + 6,"C_2P",4) )
+            paRecords = aMERIS_2P_C_Records;
+        else if ( EQUALN(pszProduct + 6,"V_2P",4) )
+            paRecords = aMERIS_2P_V_Records;
+        else if ( EQUALN(pszProduct + 8,"1P",2) )
+            paRecords = aMERIS_1P_Records;
+        else if ( EQUALN(pszProduct + 8,"2P",2) )
+            paRecords = aMERIS_2P_Records;
+        else
+            return NULL;
+    }
     else
         return NULL;
 
