@@ -160,7 +160,7 @@ def pdf_1():
         return 'fail'
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 17740:
+    if cs != 17740 and cs != 19346:
         gdaltest.post_reason('bad checksum')
         print(cs)
         return 'fail'
