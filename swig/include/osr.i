@@ -227,6 +227,10 @@ public:
     return OSRIsSameGeogCS( self, rhs );
   }
 
+  int IsSameVertCS( OSRSpatialReferenceShadow *rhs ) {
+    return OSRIsSameVertCS( self, rhs );
+  }
+
   int IsGeographic() {
     return OSRIsGeographic(self);
   }
@@ -241,6 +245,10 @@ public:
 
   int IsLocal() {
     return OSRIsLocal(self);
+  }
+
+  int IsVertical() {
+    return OSRIsVertical(self);
   }
 
   int EPSGTreatsAsLatLong() {
