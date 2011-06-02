@@ -220,8 +220,9 @@ CPLErr SAGARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		return CE_Failure;
 
     SAGADataset *poGDS = dynamic_cast<SAGADataset *>(poDS);
+    vsi_l_offset offset = (vsi_l_offset) (m_nBits / 8) * nRasterXSize * (nRasterYSize - nBlockYOff - 1);
 
-    if( VSIFSeekL( poGDS->fp, (m_nBits / 8) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
+    if( VSIFSeekL( poGDS->fp, offset, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
               "Unable to seek to beginning of grid row.\n" );
@@ -258,10 +259,11 @@ CPLErr SAGARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
 		return CE_Failure;
 
+    vsi_l_offset offset = (vsi_l_offset) (m_nBits / 8) * nRasterXSize * (nRasterYSize - nBlockYOff - 1);
     SAGADataset *poGDS = dynamic_cast<SAGADataset *>(poDS);
     assert( poGDS != NULL );
 
-    if( VSIFSeekL( poGDS->fp, (m_nBits / 8) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
+    if( VSIFSeekL( poGDS->fp, offset, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
               "Unable to seek to beginning of grid row.\n" );
