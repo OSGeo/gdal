@@ -3,7 +3,7 @@
  *
  * Project:  APP ENVISAT Support
  * Purpose:  Low Level Envisat file access (read/write) API.
- * Author:   AntonioV Valentino <antonio.valentino@tiscali.it>
+ * Author:   Antonio Valentino <antonio.valentino@tiscali.it>
  *
  ******************************************************************************
  * Copyright (c) 2011, Antonio Valentino
