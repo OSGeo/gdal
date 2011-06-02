@@ -394,6 +394,9 @@ generally giving a good coverage of the dataset.  The GCPs are in WGS84.</p>
 <p>Virtually all key/value pairs from the MPH and SPH (primary and secondary
 headers) are copied through as dataset level metadata. </p>
 
+<p>ASAR parameters contained in the ADS and GADS records (excluded geolocation
+ones) can be retrieved as key/value pairs using the "RECORDS" metadata domain.</p>
+
 <p>NOTE: Implemented as <tt>gdal/frmts/envisat/envisatdataset.cpp</tt>.</p>
 
 <p>See Also: <a href="http://envisat.esa.int/dataproducts/">

@@ -1,5 +1,5 @@
 
-OBJ	=	EnvisatFile.o envisatdataset.o
+OBJ	=	EnvisatFile.o records.o envisatdataset.o
 
 include ../../GDALmake.opt
 

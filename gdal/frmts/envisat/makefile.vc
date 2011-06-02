@@ -1,5 +1,5 @@
 
-OBJ	=	envisatdataset.obj EnvisatFile.obj
+OBJ	=	envisatdataset.obj EnvisatFile.obj records.obj
 
 GDAL_ROOT	=	..\..
 
