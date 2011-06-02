@@ -428,7 +428,10 @@ OGR_SRSNode *OGRSpatialReference::GetAttrNode( const char * pszNodePath )
     papszPathTokens = CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
 
     if( CSLCount( papszPathTokens ) < 1 )
+    {
+        CSLDestroy(papszPathTokens);
         return NULL;
+    }
 
     poNode = GetRoot();
     for( int i = 0; poNode != NULL && papszPathTokens[i] != NULL; i++ )
@@ -1300,7 +1303,7 @@ double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
                                                   char ** ppszName ) const
 
 {
-    const OGR_SRSNode *poCS = GetAttrNode( pszTargetKey );
+    const OGR_SRSNode *poCS;
 
     if( pszTargetKey == NULL )
     {
