@@ -114,6 +114,52 @@ class TestEnvisat:
 
         return 'success'
 
+    def test_envisat_4( self ):
+        # test metadata in RECORDS domain
+
+        if not self.download_file():
+            return 'skip'
+
+        ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
+        if ds is None:
+            return 'fail'
+
+        product = ds.GetMetadataItem('MPH_PRODUCT')
+        record_md = ds.GetMetadata('RECORDS')
+
+        if product.startswith('ASA') and not record_md:
+            gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
+            return 'failure'
+
+        if not product.startswith('ASA') and record_md:
+            gdaltest.post_reason('Unexpected metadata in the "RECORDS" domain.')
+            return 'failure'
+
+        record = 'SQ_ADS' # it is present in all ASAR poducts
+        if product.startswith('ASA_WV'):
+            for field in ('ZERO_DOPPLER_TIME',
+                          'INPUT_MEAN',
+                          'INPUT_STD_DEV',
+                          'PHASE_CROSS_CONF'):
+                key0 = '%s_%s' % (record, field)
+                key1 = '%s_0_%s' % (record, field)
+                if key0 not in record_md and key1 not in record_md:
+                    gdaltest.post_reason('No "%s" or "%s" key in "RECORDS"'
+                                         ' domain.' % (key0, key1))
+                    return 'failure'
+        else:
+            for mds in range(1, ds.RasterCount + 1):
+                for field in ('ZERO_DOPPLER_TIME',
+                              'INPUT_MEAN',
+                              'INPUT_STD_DEV'):
+                    key0 = 'MDS%d_%s_%s' % (mds, record, field)
+                    key1 = 'MDS%d_%s_0_%s' % (mds, record, field)
+                    if key0 not in record_md and key1 not in record_md:
+                        gdaltest.post_reason('No "%s" or "%s" key in "RECORDS"'
+                                             ' domain.' % (key0, key1))
+                        return 'failure'
+
+        return 'success'
 
 ut = TestEnvisat( 'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz', 'ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1', (524, 945), 44998 )
 
@@ -121,6 +167,7 @@ gdaltest_list = [
     ut.test_envisat_1,
     ut.test_envisat_2,
     ut.test_envisat_3,
+    ut.test_envisat_4,
 ]
 
 
