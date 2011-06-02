@@ -1156,6 +1156,8 @@ OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS,
  * be found in ogr_srs_api.h. 
  *
  * @return OGRERR_NONE on success.
+ *
+ * @since OGR 1.9.0
  */
 
 OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
@@ -1221,6 +1223,8 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
  * \brief Set the linear units for the target node.
  *
  * This function is the same as OGRSpatialReference::SetTargetLinearUnits()
+ *
+ * @since OGR 1.9.0
  */
 OGRErr OSRSetTargetLinearUnits( OGRSpatialReferenceH hSRS, 
                                 const char *pszTargetKey,
@@ -1297,6 +1301,8 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
  *
  * @return the value to multiply by linear distances to transform them to 
  * meters.
+ *
+ * @since OGR 1.9.0
  */
 
 double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
@@ -1350,6 +1356,8 @@ double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
  * \brief Fetch linear projection units. 
  *
  * This function is the same as OGRSpatialReference::GetTargetLinearUnits()
+ *
+ * @since OGR 1.9.0
  */
 double OSRGetTargetLinearUnits( OGRSpatialReferenceH hSRS, 
                                 const char *pszTargetKey, 
@@ -2714,6 +2722,8 @@ OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
  * @param pszName the user visible name to assign.  Not used as a key.
  * 
  * @return OGRERR_NONE on success.
+ *
+ * @since OGR 1.9.0
  */
 
 OGRErr OGRSpatialReference::SetGeocCS( const char * pszName )
@@ -2756,6 +2766,8 @@ OGRErr OGRSpatialReference::SetGeocCS( const char * pszName )
  * \brief Set the user visible PROJCS name.
  *
  * This function is the same as OGRSpatialReference::SetGeocCS()
+ *
+ * @since OGR 1.9.0
  */
 OGRErr OSRSetGeocCS( OGRSpatialReferenceH hSRS, const char * pszName )
 
@@ -2787,6 +2799,8 @@ OGRErr OSRSetGeocCS( OGRSpatialReferenceH hSRS, const char * pszName )
  * @param nVertDatumType the OGC vertical datum type, usually 2005. 
  * 
  * @return OGRERR_NONE on success.
+ *
+ * @since OGR 1.9.0
  */
 
 OGRErr OGRSpatialReference::SetVertCS( const char * pszVertCSName,
@@ -2864,6 +2878,8 @@ OGRErr OGRSpatialReference::SetVertCS( const char * pszVertCSName,
  * \brief Setup the vertical coordinate system.
  *
  * This function is the same as OGRSpatialReference::SetVertCS()
+ *
+ * @since OGR 1.9.0
  */
 OGRErr OSRSetVertCS( OGRSpatialReferenceH hSRS,
                      const char * pszVertCSName,
@@ -5492,6 +5508,8 @@ const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
  * portion remains (normally PROJCS, GEOGCS or LOCAL_CS). 
  *
  * If this is not a compound coordinate system then nothing is changed.
+ *
+ * @since OGR 1.8.0
  */
 
 OGRErr OGRSpatialReference::StripVertical()
@@ -5629,7 +5647,9 @@ int OSRIsProjected( OGRSpatialReferenceH hSRS )
  * This method is the same as the C function OSRIsGeocentric().
  *
  * @return TRUE if this contains a GEOCCS node indicating a it is a 
- * geocentric coordinate system. 
+ * geocentric coordinate system.
+ *
+ * @since OGR 1.9.0
  */
 
 int OGRSpatialReference::IsGeocentric() const
@@ -5651,6 +5671,8 @@ int OGRSpatialReference::IsGeocentric() const
  * \brief Check if geocentric coordinate system.
  *
  * This function is the same as OGRSpatialReference::IsGeocentric().
+ *
+ * @since OGR 1.9.0
  */
 int OSRIsGeocentric( OGRSpatialReferenceH hSRS ) 
 
@@ -5752,7 +5774,9 @@ int OSRIsLocal( OGRSpatialReferenceH hSRS )
  * This method is the same as the C function OSRIsVertical().
  *
  * @return TRUE if this contains a VERT_CS node indicating a it is a 
- * vertical coordinate system. 
+ * vertical coordinate system.
+ *
+ * @since OGR 1.8.0
  */
 
 int OGRSpatialReference::IsVertical() const
@@ -5776,6 +5800,8 @@ int OGRSpatialReference::IsVertical() const
  * \brief Check if vertical coordinate system.
  *
  * This function is the same as OGRSpatialReference::IsVertical().
+ *
+ * @since OGR 1.8.0
  */
 int OSRIsVertical( OGRSpatialReferenceH hSRS ) 
 
