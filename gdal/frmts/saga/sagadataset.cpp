@@ -405,13 +405,13 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUALN(papszTokens[0],"CELLCOUNT_Y",strlen("CELLCOUNT_Y")) )
             nRows = atoi(papszTokens[1]);
         else if( EQUALN(papszTokens[0],"POSITION_XMIN",strlen("POSITION_XMIN")) )
-            dXmin = atof(papszTokens[1]);
+            dXmin = CPLAtofM(papszTokens[1]);
         else if( EQUALN(papszTokens[0],"POSITION_YMIN",strlen("POSITION_YMIN")) )
-            dYmin = atof(papszTokens[1]);
+            dYmin = CPLAtofM(papszTokens[1]);
         else if( EQUALN(papszTokens[0],"CELLSIZE",strlen("CELLSIZE")) )
-            dCellsize = atof(papszTokens[1]);
+            dCellsize = CPLAtofM(papszTokens[1]);
         else if( EQUALN(papszTokens[0],"NODATA_VALUE",strlen("NODATA_VALUE")) )
-            dNoData = atof(papszTokens[1]);
+            dNoData = CPLAtofM(papszTokens[1]);
         else if( EQUALN(papszTokens[0],"DATAFORMAT",strlen("DATAFORMAT")) )
             strncpy( szDataFormat, papszTokens[1], sizeof(szDataFormat)-1 );
         else if( EQUALN(papszTokens[0],"BYTEORDER_BIG",strlen("BYTEORDER_BIG")) )
@@ -419,7 +419,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUALN(papszTokens[0],"TOPTOBOTTOM",strlen("TOPTOBOTTOM")) )
             strncpy( szTopToBottom, papszTokens[1], sizeof(szTopToBottom)-1 );
         else if( EQUALN(papszTokens[0],"Z_FACTOR",strlen("Z_FACTOR")) )
-            dZFactor = atof(papszTokens[1]);
+            dZFactor = CPLAtofM(papszTokens[1]);
 
         CSLDestroy( papszTokens );
     }
