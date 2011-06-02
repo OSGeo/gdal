@@ -39,10 +39,15 @@ CPL_CVSID("$Id$");
 PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllowed)
 {
     PGresult* hResult;
+#if defined(PG_PRE74)
+    /* PQexecParams introduced in PG >= 7.4 */
+    hResult = PQexec(conn, query);
+#else
     if (bMultipleCommandAllowed)
         hResult = PQexec(conn, query);
     else
         hResult = PQexecParams(conn, query, 0, NULL, NULL, NULL, NULL, 0);
+#endif
 
 #ifdef DEBUG
     const char* pszRetCode = "UNKNOWN";
