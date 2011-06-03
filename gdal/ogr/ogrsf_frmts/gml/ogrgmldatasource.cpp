@@ -209,6 +209,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     }
 
     int bIsUTF8 = FALSE;
+    int bHas3D = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't sure it is GML, load a header chunk and check      */
@@ -268,6 +269,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 
         bIsUTF8 = strstr(szPtr, "encoding='UTF-8'") != NULL ||
                   strstr(szPtr, "encoding=\"UTF-8\"") != NULL;
+
+        bHas3D = strstr(szPtr, "srsDimension=\"3\"") != NULL || strstr(szPtr, "<gml:Z>") != NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Here, we expect the opening chevrons of GML tree root element   */
@@ -486,13 +489,22 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                 {
                     GMLFeatureClass* poClass = *iter;
                     iter ++;
+
+                    /* We have no way of knowing if the geometry type is 25D */
+                    /* when examining the xsd only, so if there was a hint */
+                    /* it is, we force to 25D */
+                    if (bHas3D)
+                    {
+                        poClass->SetGeometryType(
+                            poClass->GetGeometryType() | wkb25DBit);
+                    }
                     poReader->AddClass( poClass );
                 }
                 poReader->SetClassListLocked( TRUE );
             }
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Force a first pass to establish the schema.  Eventually we      */
 /*      will have mechanisms for remembering the schema and related     */
