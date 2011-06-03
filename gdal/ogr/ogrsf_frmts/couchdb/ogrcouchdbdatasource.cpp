@@ -433,8 +433,11 @@ OGRLayer   *OGRCouchDBDataSource::CreateLayer( const char *pszName,
     }
 
     int bGeoJSONDocument = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
+    int nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 
     OGRCouchDBTableLayer* poLayer = new OGRCouchDBTableLayer(this, pszName);
+    if (nCoordPrecision != -1)
+        poLayer->SetCoordinatePrecision(nCoordPrecision);
     poLayer->SetInfoAfterCreation(eGType, poSpatialRef, nUpdateSeq, bGeoJSONDocument);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;

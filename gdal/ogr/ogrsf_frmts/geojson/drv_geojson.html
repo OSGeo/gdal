@@ -90,6 +90,8 @@ This behavior may be controlled by setting environment variable <strong>GEOMETRY
 <ul>
 <li><b>WRITE_BBOX</b> = YES/NO : (OGR >= 1.9.0) Set to YES to write a bbox property with the bounding box of the geometries at the feature and feature
 collection level. Defaults to NO.</li>
+<li><b>COORDINATE_PRECISION</b> = int_number : (OGR >= 1.9.0) Maximum number of figures after decimal separator to write in coordinates.
+Default to 15. "Smart" truncation will occur to remove trailing zeros.</li>
 </ul>
 
 <h2>Example</h2>
