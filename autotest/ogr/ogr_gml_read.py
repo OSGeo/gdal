@@ -1014,6 +1014,68 @@ def ogr_gml_25():
     return 'success'
 
 ###############################################################################
+# Test writing and reading 3D geoms (GML2)
+
+def ogr_gml_26():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/ogr_gml_26.gml data/poly.shp -zfield eas_id')
+
+    f = open('tmp/ogr_gml_26.gml', 'rt')
+    content = f.read()
+    f.close()
+    if content.find("<gml:coord><gml:X>478315.53125</gml:X><gml:Y>4762880.5</gml:Y><gml:Z>158</gml:Z></gml:coord>") == -1:
+        return 'fail'
+
+    ds = ogr.Open('tmp/ogr_gml_26.gml')
+
+    lyr = ds.GetLayer(0)
+
+    if lyr.GetGeomType() != ogr.wkbPolygon25D:
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test writing and reading 3D geoms (GML3)
+
+def ogr_gml_27():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/ogr_gml_27.gml data/poly.shp -zfield eas_id -dsco FORMAT=GML3')
+
+    f = open('tmp/ogr_gml_27.gml', 'rt')
+    content = f.read()
+    f.close()
+    if content.find("<gml:lowerCorner>478315.53125 4762880.5 158</gml:lowerCorner>") == -1:
+        return 'fail'
+
+    ds = ogr.Open('tmp/ogr_gml_27.gml')
+
+    lyr = ds.GetLayer(0)
+
+    if lyr.GetGeomType() != ogr.wkbPolygon25D:
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -1070,6 +1132,16 @@ def ogr_gml_clean_files():
         os.remove( 'data/curveProperty.gfs' )
     except:
         pass
+    try:
+        os.remove( 'tmp/ogr_gml_26.gml' )
+        os.remove( 'tmp/ogr_gml_26.xsd' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/ogr_gml_27.gml' )
+        os.remove( 'tmp/ogr_gml_27.xsd' )
+    except:
+        pass
 
     files = os.listdir('data')
     for filename in files:
@@ -1105,6 +1177,8 @@ gdaltest_list = [
     ogr_gml_23,
     ogr_gml_24,
     ogr_gml_25,
+    ogr_gml_26,
+    ogr_gml_27,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
