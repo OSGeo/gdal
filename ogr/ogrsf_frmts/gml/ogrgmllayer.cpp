@@ -451,10 +451,12 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     if( poGeom != NULL && !poGeom->IsEmpty())
     {
         char    *pszGeometry;
-        OGREnvelope sGeomBounds;
+        OGREnvelope3D sGeomBounds;
+
+        int nCoordDimension = poGeom->getCoordinateDimension();
 
         poGeom->getEnvelope( &sGeomBounds );
-        poDS->GrowExtents( &sGeomBounds );
+        poDS->GrowExtents( &sGeomBounds, nCoordDimension );
 
         if (bIsGML3Output)
         {
@@ -467,18 +469,18 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
             char szLowerCorner[75], szUpperCorner[75];
             if (bCoordSwap)
             {
-                OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinY, sGeomBounds.MinX, 0, 2);
-                OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxY, sGeomBounds.MaxX, 0, 2);
+                OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinY, sGeomBounds.MinX, sGeomBounds.MinZ, nCoordDimension);
+                OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxY, sGeomBounds.MaxX, sGeomBounds.MaxZ, nCoordDimension);
             }
             else
             {
-                OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinX, sGeomBounds.MinY, 0, 2);
-                OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxX, sGeomBounds.MaxY, 0, 2);
+                OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinX, sGeomBounds.MinY, sGeomBounds.MinZ, nCoordDimension);
+                OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxX, sGeomBounds.MaxY, sGeomBounds.MaxZ, nCoordDimension);
             }
             if (bWriteSpaceIndentation)
                 VSIFPrintfL(fp, "      ");
-            poDS->PrintLine( fp, "<gml:boundedBy><gml:Envelope%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
-                             pszSRSName, szLowerCorner, szUpperCorner);
+            poDS->PrintLine( fp, "<gml:boundedBy><gml:Envelope%s%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
+                             (nCoordDimension == 3) ? " srsDimension=\"3\"" : "",pszSRSName, szLowerCorner, szUpperCorner);
             CPLFree(pszSRSName);
         }
 

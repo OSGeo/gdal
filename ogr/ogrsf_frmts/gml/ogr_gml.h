@@ -104,7 +104,8 @@ class OGRGMLDataSource : public OGRDataSource
     VSILFILE           *fpOutput;
     int                 bFpOutputIsNonSeekable;
     int                 bFpOutputSingleFile;
-    OGREnvelope         sBoundingRect;
+    OGREnvelope3D       sBoundingRect;
+    int                 bBBOX3D;
     int                 nBoundedByLocation;
     
     int                 nSchemaInsertLocation;
@@ -148,7 +149,7 @@ class OGRGMLDataSource : public OGRDataSource
     VSILFILE            *GetOutputFP() { return fpOutput; }
     IGMLReader          *GetReader() { return poReader; }
 
-    void                GrowExtents( OGREnvelope *psGeomBounds );
+    void                GrowExtents( OGREnvelope3D *psGeomBounds, int nCoordDimension );
 
     int                 ExposeId() { return bExposeGMLId || bExposeFid; }
 
