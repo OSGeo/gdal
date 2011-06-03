@@ -1583,8 +1583,11 @@ public:
 #endif
 
 #if defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP) || defined(SWIGPERL)
-  retStringAndCPLFree* ExportToJson() {
-    return (retStringAndCPLFree *) OGR_G_ExportToJson(self);
+#ifndef SWIGJAVA
+  %feature("kwargs") ExportToJson;
+#endif
+  retStringAndCPLFree* ExportToJson(char** options=0) {
+    return (retStringAndCPLFree *) OGR_G_ExportToJsonEx(self, options);
   }
 #else
   /* FIXME : wrong typemap. The string should be freed */

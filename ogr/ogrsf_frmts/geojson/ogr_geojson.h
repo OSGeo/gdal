@@ -92,6 +92,8 @@ private:
     int bWriteBBOX;
     int bBBOX3D;
     OGREnvelope3D sEnvelopeLayer;
+
+    int nCoordPrecision;
 };
 
 /************************************************************************/
