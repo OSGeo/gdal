@@ -1287,6 +1287,10 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
                 if iSrcZField != -1:
                     SetZ(poDstGeometry, poFeature.GetFieldAsDouble(iSrcZField))
+                    # /* This will correct the coordinate dimension to 3 */
+                    poDupGeometry = poDstGeometry.Clone()
+                    poDstFeature.SetGeometryDirectly(poDupGeometry)
+                    poDstGeometry = poDupGeometry
 
                 if poClipSrc is not None:
                     poClipped = poDstGeometry.Intersection(poClipSrc)

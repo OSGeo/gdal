@@ -1553,7 +1553,13 @@ public class ogr2ogr
                     }
 
                     if (iSrcZField != -1)
+                    {
                         SetZ(poDstGeometry, poFeature.GetFieldAsDouble(iSrcZField));
+                        /* This will correct the coordinate dimension to 3 */
+                        Geometry poDupGeometry = poDstGeometry.Clone();
+                        poDstFeature.SetGeometryDirectly(poDupGeometry);
+                        poDstGeometry = poDupGeometry;
+                    }
 
                     if (poClipSrc != null)
                     {
