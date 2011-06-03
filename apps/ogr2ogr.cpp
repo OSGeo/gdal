@@ -2103,7 +2103,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 }
 
                 if (iSrcZField != -1)
+                {
                     SetZ(poDstGeometry, poFeature->GetFieldAsDouble(iSrcZField));
+                    /* This will correct the coordinate dimension to 3 */
+                    OGRGeometry* poDupGeometry = poDstGeometry->clone();
+                    poDstFeature->SetGeometryDirectly(poDupGeometry);
+                    poDstGeometry = poDupGeometry;
+                }
 
                 if (dfMaxSegmentLength > 0)
                     poDstGeometry->segmentize(dfMaxSegmentLength);
