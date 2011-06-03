@@ -2626,6 +2626,67 @@ AC_SUBST(POPPLER_BASE_STREAM_HAS_TWO_ARGS, $POPPLER_BASE_STREAM_HAS_TWO_ARGS)
 AC_SUBST(POPPLER_INC, $POPPLER_INC)
 
 dnl ---------------------------------------------------------------------------
+dnl Check if libpodofo is available
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(podofo,[  --with-podofo[=ARG]    Include podofo(for PDF) support (ARG=no(default), yes or podofo install path)],,)
+
+HAVE_PODOFO=no
+
+AC_MSG_CHECKING([for podofo])
+
+if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
+
+    AC_ARG_WITH(podofo-lib,
+      [  --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...)],,,)
+
+    if test "$HAVE_POPPLER" = "yes"; then
+        AC_MSG_ERROR([--with-podofo and --with-poppler cannot be specified at the same time])
+    fi
+
+    if test "$with_podofo" = "yes" ; then
+        TEST_PODOFO_INC="-I/usr/include -I/usr/include/podofo"
+        PODOFO_LIB="-lpodofo -lfreetype -lfontconfig -lpthread"
+    else
+        TEST_PODOFO_INC="-I$with_podofo/include -I$with_podofo/include/podofo"
+        PODOFO_LIB="-L$with_podofo/lib -lpodofo -lfreetype -lfontconfig -lpthread"
+    fi
+
+    if test "x$with_podofo_lib" != "x" ; then
+        PODOFO_LIB="$with_podofo_lib"
+    fi
+
+    AC_ARG_WITH(podofo-extra-lib-for-test,
+      [  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...)],,,)
+
+    if test "x$with_podofo_extra_lib_for_test" = "x" ; then
+        TEST_PODOFO_LIB="$PODOFO_LIB"
+    else
+        TEST_PODOFO_LIB="$PODOFO_LIB $with_podofo_extra_lib_for_test"
+    fi
+
+    rm -f testpodofo.*
+    echo '#include <podofo.h>' > testpodofo.cpp
+    echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
+    if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>&1`" ; then
+        HAVE_PODOFO=yes
+        LIBS="${PODOFO_LIB} ${LIBS}"
+        OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
+        AC_MSG_RESULT([yes])
+        PODOFO_INC=$TEST_PODOFO_INC
+    else
+        AC_MSG_RESULT([no])
+    fi
+    rm -f testpodofo.*
+    rm -f testpodofo
+else
+    AC_MSG_RESULT([disabled])
+fi
+
+AC_SUBST(HAVE_PODOFO, $HAVE_PODOFO)
+AC_SUBST(PODOFO_INC, $PODOFO_INC)
+
+dnl ---------------------------------------------------------------------------
 dnl PROJ.4 related stuff.
 dnl ---------------------------------------------------------------------------
 
@@ -3170,6 +3231,7 @@ LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
 LOC_MSG([  VFK support:               ${HAVE_VFK}])
 LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
+LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
 LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then

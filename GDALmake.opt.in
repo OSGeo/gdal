@@ -378,6 +378,13 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS = @POPPLER_BASE_STREAM_HAS_TWO_ARGS@
 POPPLER_INC = @POPPLER_INC@
 
 #
+# Podofo stuff
+#
+
+HAVE_PODOFO = @HAVE_PODOFO@
+PODOFO_INC = @PODOFO_INC@
+
+#
 # CharLs stuff
 # Uncomment and adapt paths to enable JPEGLS driver
 #
