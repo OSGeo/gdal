@@ -634,6 +634,8 @@ GDAL_VERSION_MINOR
 GDAL_VERSION_MAJOR
 PROJ_INCLUDE
 PROJ_STATIC
+PODOFO_INC
+HAVE_PODOFO
 POPPLER_INC
 POPPLER_BASE_STREAM_HAS_TWO_ARGS
 POPPLER_HAS_OPTCONTENT
@@ -911,6 +913,9 @@ with_opencl_include
 with_opencl_lib
 with_pam
 with_poppler
+with_podofo
+with_podofo_lib
+with_podofo_extra_lib_for_test
 with_static_proj4
 with_gdal_ver
 with_
@@ -1648,6 +1653,9 @@ Optional Packages:
   --with-opencl-lib=ARG   OpenCL Link Flags (ie. -L/xxx -lOpenCL)
   --without-pam         Disable PAM (.aux.xml) support
   --with-poppler=ARG    Include poppler(for PDF) support (ARG=no(default), yes or poppler install path)
+  --with-podofo=ARG    Include podofo(for PDF) support (ARG=no(default), yes or podofo install path)
+  --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...)
+  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...)
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
@@ -25583,6 +25591,83 @@ POPPLER_INC=$POPPLER_INC
 
 
 
+
+# Check whether --with-podofo was given.
+if test "${with_podofo+set}" = set; then :
+  withval=$with_podofo;
+fi
+
+
+HAVE_PODOFO=no
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for podofo" >&5
+$as_echo_n "checking for podofo... " >&6; }
+
+if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
+
+
+# Check whether --with-podofo-lib was given.
+if test "${with_podofo_lib+set}" = set; then :
+  withval=$with_podofo_lib;
+fi
+
+
+    if test "$HAVE_POPPLER" = "yes"; then
+        as_fn_error $? "--with-podofo and --with-poppler cannot be specified at the same time" "$LINENO" 5
+    fi
+
+    if test "$with_podofo" = "yes" ; then
+        TEST_PODOFO_INC="-I/usr/include -I/usr/include/podofo"
+        PODOFO_LIB="-lpodofo -lfreetype -lfontconfig -lpthread"
+    else
+        TEST_PODOFO_INC="-I$with_podofo/include -I$with_podofo/include/podofo"
+        PODOFO_LIB="-L$with_podofo/lib -lpodofo -lfreetype -lfontconfig -lpthread"
+    fi
+
+    if test "x$with_podofo_lib" != "x" ; then
+        PODOFO_LIB="$with_podofo_lib"
+    fi
+
+
+# Check whether --with-podofo-extra-lib-for-test was given.
+if test "${with_podofo_extra_lib_for_test+set}" = set; then :
+  withval=$with_podofo_extra_lib_for_test;
+fi
+
+
+    if test "x$with_podofo_extra_lib_for_test" = "x" ; then
+        TEST_PODOFO_LIB="$PODOFO_LIB"
+    else
+        TEST_PODOFO_LIB="$PODOFO_LIB $with_podofo_extra_lib_for_test"
+    fi
+
+    rm -f testpodofo.*
+    echo '#include <podofo.h>' > testpodofo.cpp
+    echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
+    if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>&1`" ; then
+        HAVE_PODOFO=yes
+        LIBS="${PODOFO_LIB} ${LIBS}"
+        OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        PODOFO_INC=$TEST_PODOFO_INC
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+    rm -f testpodofo.*
+    rm -f testpodofo
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+fi
+
+HAVE_PODOFO=$HAVE_PODOFO
+
+PODOFO_INC=$PODOFO_INC
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to link PROJ.4 library" >&5
 $as_echo_n "checking how to link PROJ.4 library... " >&6; }
 
@@ -29216,6 +29301,9 @@ echo "  VFK support:               ${HAVE_VFK}"
 echo "  Poppler support:           ${HAVE_POPPLER}"
 
 
+echo "  Podofo support:            ${HAVE_PODOFO}"
+
+
 echo "  OpenCL support:            ${OPENCL_SETTING}"
 
 
@@ -29248,6 +29336,9 @@ echo "  enable OGR building:       ${OGR_ENABLED}"
 
 
 echo "  enable pthread support:    ${PTHREAD_ENABLED}"
+
+
+echo "  enable POSIX iconv support:${am_cv_func_iconv}"
 
 
 echo "  hide internal symbols:     ${HAVE_HIDE_INTERNAL_SYMBOLS}"

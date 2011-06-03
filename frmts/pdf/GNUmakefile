@@ -1,7 +1,11 @@
 
-OBJ	=	pdfdataset.o pdfio.o
+OBJ	=	pdfdataset.o pdfio.o pdfobject.o
 
 include ../../GDALmake.opt
+
+ifeq ($(HAVE_POPPLER),yes)
+CPPFLAGS +=  -DUSE_POPPLER
+endif
 
 ifeq ($(POPPLER_HAS_OPTCONTENT),yes)
 CPPFLAGS +=  -DPOPPLER_HAS_OPTCONTENT
@@ -11,7 +15,7 @@ ifeq ($(POPPLER_BASE_STREAM_HAS_TWO_ARGS),yes)
 CPPFLAGS +=  -DPOPPLER_BASE_STREAM_HAS_TWO_ARGS
 endif
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(POPPLER_INC)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(POPPLER_INC) $(PODOFO_INC)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
