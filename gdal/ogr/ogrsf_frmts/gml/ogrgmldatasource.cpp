@@ -64,6 +64,7 @@ OGRGMLDataSource::OGRGMLDataSource()
     bExposeFid = FALSE;
     nSchemaInsertLocation = -1;
     nBoundedByLocation = -1;
+    bBBOX3D = FALSE;
 
     poGlobalSRS = NULL;
     bIsWFS = FALSE;
@@ -106,18 +107,18 @@ OGRGMLDataSource::~OGRGMLDataSource()
                 char szLowerCorner[75], szUpperCorner[75];
                 if (bCoordSwap)
                 {
-                    OGRMakeWktCoordinate(szLowerCorner, sBoundingRect.MinY, sBoundingRect.MinX, 0, 2);
-                    OGRMakeWktCoordinate(szUpperCorner, sBoundingRect.MaxY, sBoundingRect.MaxX, 0, 2);
+                    OGRMakeWktCoordinate(szLowerCorner, sBoundingRect.MinY, sBoundingRect.MinX, sBoundingRect.MinZ, (bBBOX3D) ? 3 : 2);
+                    OGRMakeWktCoordinate(szUpperCorner, sBoundingRect.MaxY, sBoundingRect.MaxX, sBoundingRect.MaxZ, (bBBOX3D) ? 3 : 2);
                 }
                 else
                 {
-                    OGRMakeWktCoordinate(szLowerCorner, sBoundingRect.MinX, sBoundingRect.MinY, 0, 2);
-                    OGRMakeWktCoordinate(szUpperCorner, sBoundingRect.MaxX, sBoundingRect.MaxY, 0, 2);
+                    OGRMakeWktCoordinate(szLowerCorner, sBoundingRect.MinX, sBoundingRect.MinY, sBoundingRect.MinZ, (bBBOX3D) ? 3 : 2);
+                    OGRMakeWktCoordinate(szUpperCorner, sBoundingRect.MaxX, sBoundingRect.MaxY, sBoundingRect.MaxZ, (bBBOX3D) ? 3 : 2);
                 }
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL( fpOutput, "  ");
-                PrintLine( fpOutput, "<gml:boundedBy><gml:Envelope%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
-                                pszSRSName, szLowerCorner, szUpperCorner);
+                PrintLine( fpOutput, "<gml:boundedBy><gml:Envelope%s%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
+                           (bBBOX3D) ? " srsDimension=\"3\"" : "", pszSRSName, szLowerCorner, szUpperCorner);
                 CPLFree(pszSRSName);
             }
             else
@@ -130,16 +131,24 @@ OGRGMLDataSource::~OGRGMLDataSource()
                 PrintLine( fpOutput, "<gml:Box>" );
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL( fpOutput, "      ");
-                PrintLine( fpOutput,
+                VSIFPrintfL( fpOutput,
                             "<gml:coord><gml:X>%.16g</gml:X>"
-                            "<gml:Y>%.16g</gml:Y></gml:coord>",
+                            "<gml:Y>%.16g</gml:Y>",
                             sBoundingRect.MinX, sBoundingRect.MinY );
+                if (bBBOX3D)
+                    VSIFPrintfL( fpOutput, "<gml:Z>%.16g</gml:Z>",
+                               sBoundingRect.MinZ );
+                PrintLine( fpOutput, "</gml:coord>");
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL( fpOutput, "      ");
-                PrintLine( fpOutput,
+                VSIFPrintfL( fpOutput,
                             "<gml:coord><gml:X>%.16g</gml:X>"
-                            "<gml:Y>%.16g</gml:Y></gml:coord>",
+                            "<gml:Y>%.16g</gml:Y>",
                             sBoundingRect.MaxX, sBoundingRect.MaxY );
+                if (bBBOX3D)
+                    VSIFPrintfL( fpOutput, "<gml:Z>%.16g</gml:Z>",
+                               sBoundingRect.MaxZ );
+                PrintLine( fpOutput, "</gml:coord>");
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL( fpOutput, "    ");
                 PrintLine( fpOutput, "</gml:Box>" );
@@ -762,7 +771,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         nBoundedByLocation = (int) VSIFTellL( fpOutput );
 
         if( nBoundedByLocation != -1 )
-            PrintLine( fpOutput, "%280s", "" );
+            PrintLine( fpOutput, "%350s", "" );
     }
     else
         nBoundedByLocation = -1;
@@ -884,10 +893,12 @@ OGRLayer *OGRGMLDataSource::GetLayer( int iLayer )
 /*                            GrowExtents()                             */
 /************************************************************************/
 
-void OGRGMLDataSource::GrowExtents( OGREnvelope *psGeomBounds )
+void OGRGMLDataSource::GrowExtents( OGREnvelope3D *psGeomBounds, int nCoordDimension )
 
 {
     sBoundingRect.Merge( *psGeomBounds );
+    if (nCoordDimension == 3)
+        bBBOX3D = TRUE;
 }
 
 /************************************************************************/
