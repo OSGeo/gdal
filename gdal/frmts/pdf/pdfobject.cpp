@@ -31,6 +31,7 @@
 /* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
 #define CPL_GBOOL_DEFINED
 
+#include <vector>
 #include "pdfobject.h"
 
 CPL_CVSID("$Id$");
@@ -59,7 +60,6 @@ class GDALPDFDictionaryPoppler: public GDALPDFDictionary
         GDALPDFDictionaryPoppler(Dict* poDict) : m_poDict(poDict) {}
         virtual ~GDALPDFDictionaryPoppler();
 
-        virtual int HasKey(const char* pszKey);
         virtual GDALPDFObject* Get(const char* pszKey);
         virtual std::map<CPLString, GDALPDFObject*>& GetValues();
 };
@@ -178,11 +178,6 @@ GDALPDFDictionaryPoppler::~GDALPDFDictionaryPoppler()
         delete oIter->second;
 }
 
-int GDALPDFDictionaryPoppler::HasKey(const char* pszKey)
-{
-    return m_poDict->hasKey((char*)pszKey);
-}
-
 GDALPDFObject* GDALPDFDictionaryPoppler::Get(const char* pszKey)
 {
     std::map<CPLString, GDALPDFObject*>::iterator oIter = m_map.find(pszKey);
@@ -272,7 +267,6 @@ class GDALPDFDictionaryPodofo: public GDALPDFDictionary
         GDALPDFDictionaryPodofo(PoDoFo::PdfDictionary* poDict, PoDoFo::PdfVecObjects& poObjects) : m_poDict(poDict), m_poObjects(poObjects) {}
         virtual ~GDALPDFDictionaryPodofo();
 
-        virtual int HasKey(const char* pszKey);
         virtual GDALPDFObject* Get(const char* pszKey);
         virtual std::map<CPLString, GDALPDFObject*>& GetValues();
 };
@@ -393,11 +387,6 @@ GDALPDFDictionaryPodofo::~GDALPDFDictionaryPodofo()
     std::map<CPLString, GDALPDFObject*>::iterator oEnd = m_map.end();
     for(; oIter != oEnd; ++oIter)
         delete oIter->second;
-}
-
-int GDALPDFDictionaryPodofo::HasKey(const char* pszKey)
-{
-    return m_poDict->HasKey(pszKey);
 }
 
 GDALPDFObject* GDALPDFDictionaryPodofo::Get(const char* pszKey)
