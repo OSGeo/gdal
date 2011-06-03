@@ -1,3 +1,7 @@
+GDAL modified version:
+  * See svn log -r18532:HEAD http://svn.osgeo.org/gdal/trunk/gdal/ogr/ogrsf_frmts/geojson/jsonc
+
+
 0.9
   * Add README.html README-WIN32.html config.h.win32 to Makefile.am
     Michael Clark, <michael@metaparadigm.com>

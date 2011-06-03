@@ -2597,10 +2597,11 @@ class Feature(_object):
     def geometry(self):
         return self.GetGeometryRef()
 
-    def ExportToJson(self, as_object = False):
+    def ExportToJson(self, as_object = False, options = None):
         """Exports a GeoJSON object which represents the Feature. The
            as_object parameter determines whether the returned value 
-           should be a Python object instead of a string. Defaults to False."""
+           should be a Python object instead of a string. Defaults to False.
+           The options parameter is passed to Geometry.ExportToJson()"""
 
         try:
             import simplejson
@@ -2612,7 +2613,9 @@ class Feature(_object):
 
         geom = self.GetGeometryRef()
         if geom is not None:
-            geom_json_string = geom.ExportToJson()
+            if options is None:
+                options = []
+            geom_json_string = geom.ExportToJson(options = options)
             geom_json_object = simplejson.loads(geom_json_string)
         else:
             geom_json_object = None
@@ -3363,9 +3366,9 @@ class Geometry(_object):
         """ExportToKML(self, char altitude_mode = None) -> retStringAndCPLFree"""
         return _ogr.Geometry_ExportToKML(self, *args)
 
-    def ExportToJson(self, *args):
-        """ExportToJson(self) -> retStringAndCPLFree"""
-        return _ogr.Geometry_ExportToJson(self, *args)
+    def ExportToJson(self, *args, **kwargs):
+        """ExportToJson(self, char options = None) -> retStringAndCPLFree"""
+        return _ogr.Geometry_ExportToJson(self, *args, **kwargs)
 
     def AddPoint(self, *args, **kwargs):
         """AddPoint(self, double x, double y, double z = 0)"""

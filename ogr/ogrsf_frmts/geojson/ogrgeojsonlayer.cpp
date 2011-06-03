@@ -68,6 +68,8 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
     {
         SetSpatialRef( poSRSIn );
     }
+
+    nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 }
 
 /************************************************************************/
@@ -85,19 +87,19 @@ OGRGeoJSONLayer::~OGRGeoJSONLayer()
         {
             json_object* poObjBBOX = json_object_new_array();
             json_object_array_add(poObjBBOX,
-                            json_object_new_double(sEnvelopeLayer.MinX));
+                            json_object_new_double_with_precision(sEnvelopeLayer.MinX, nCoordPrecision));
             json_object_array_add(poObjBBOX,
-                            json_object_new_double(sEnvelopeLayer.MinY));
+                            json_object_new_double_with_precision(sEnvelopeLayer.MinY, nCoordPrecision));
             if( bBBOX3D )
                 json_object_array_add(poObjBBOX,
-                            json_object_new_double(sEnvelopeLayer.MinZ));
+                            json_object_new_double_with_precision(sEnvelopeLayer.MinZ, nCoordPrecision));
             json_object_array_add(poObjBBOX,
-                            json_object_new_double(sEnvelopeLayer.MaxX));
+                            json_object_new_double_with_precision(sEnvelopeLayer.MaxX, nCoordPrecision));
             json_object_array_add(poObjBBOX,
-                            json_object_new_double(sEnvelopeLayer.MaxY));
+                            json_object_new_double_with_precision(sEnvelopeLayer.MaxY, nCoordPrecision));
             if( bBBOX3D )
                 json_object_array_add(poObjBBOX,
-                            json_object_new_double(sEnvelopeLayer.MaxZ));
+                            json_object_new_double_with_precision(sEnvelopeLayer.MaxZ, nCoordPrecision));
 
             VSIFPrintfL( fp, ",\n\"bbox\" : %s", json_object_to_json_string( poObjBBOX ) );
 
@@ -241,7 +243,7 @@ OGRErr OGRGeoJSONLayer::CreateFeature( OGRFeature* poFeature )
         return OGRERR_INVALID_HANDLE;
     }
 
-    json_object* poObj = OGRGeoJSONWriteFeature( poFeature, bWriteBBOX );
+    json_object* poObj = OGRGeoJSONWriteFeature( poFeature, bWriteBBOX, nCoordPrecision );
     CPLAssert( NULL != poObj );
 
     if( nOutCounter_ > 0 )

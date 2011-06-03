@@ -152,6 +152,8 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     double                    dfMaxX;
     double                    dfMaxY;
 
+    int                       nCoordPrecision;
+
     OGRFeature*               GetFeature( const char* pszId );
     OGRErr                    DeleteFeature( OGRFeature* poFeature );
 
@@ -196,6 +198,8 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     void                        SetUpdateSeq(int nUpdateSeqIn) { nUpdateSeq = nUpdateSeqIn; };
 
     int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
+
+    void                        SetCoordinatePrecision(int nCoordPrecision) { this->nCoordPrecision = nCoordPrecision; }
 
     virtual CouchDBLayerType    GetLayerType() { return COUCHDB_TABLE_LAYER; }
 

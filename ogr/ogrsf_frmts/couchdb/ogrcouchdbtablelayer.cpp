@@ -75,6 +75,8 @@ OGRCouchDBTableLayer::OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
     dfMinY = 0;
     dfMaxX = 0;
     dfMaxY = 0;
+
+    nCoordPrecision = atoi(CPLGetConfigOption("OGR_COUCHDB_COORDINATE_PRECISION", "-1"));
 }
 
 /************************************************************************/
@@ -1037,7 +1039,8 @@ OGRErr OGRCouchDBTableLayer::CreateField( OGRFieldDefn *poField,
 
 static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
                                             OGRwkbGeometryType eGeomType,
-                                            int bGeoJSONDocument)
+                                            int bGeoJSONDocument,
+                                            int nCoordPrecision )
 {
     CPLAssert( NULL != poFeature );
 
@@ -1118,7 +1121,7 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
         OGRGeometry* poGeometry = poFeature->GetGeometryRef();
         if ( NULL != poGeometry )
         {
-            poObjGeom = OGRGeoJSONWriteGeometry( poGeometry );
+            poObjGeom = OGRGeoJSONWriteGeometry( poGeometry, nCoordPrecision );
             if ( poObjGeom != NULL &&
                  wkbFlatten(poGeometry->getGeometryType()) != wkbPoint &&
                  !poGeometry->IsEmpty() )
@@ -1127,10 +1130,10 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
                 poGeometry->getEnvelope(&sEnvelope);
 
                 json_object* bbox = json_object_new_array();
-                json_object_array_add(bbox, json_object_new_double(sEnvelope.MinX));
-                json_object_array_add(bbox, json_object_new_double(sEnvelope.MinY));
-                json_object_array_add(bbox, json_object_new_double(sEnvelope.MaxX));
-                json_object_array_add(bbox, json_object_new_double(sEnvelope.MaxY));
+                json_object_array_add(bbox, json_object_new_double_with_precision(sEnvelope.MinX, nCoordPrecision));
+                json_object_array_add(bbox, json_object_new_double_with_precision(sEnvelope.MinY, nCoordPrecision));
+                json_object_array_add(bbox, json_object_new_double_with_precision(sEnvelope.MaxX, nCoordPrecision));
+                json_object_array_add(bbox, json_object_new_double_with_precision(sEnvelope.MaxY, nCoordPrecision));
                 json_object_object_add( poObjGeom, "bbox", bbox );
             }
         }
@@ -1288,7 +1291,9 @@ OGRErr OGRCouchDBTableLayer::CreateFeature( OGRFeature *poFeature )
         osFID = pszId;
     }
 
-    json_object* poObj = OGRCouchDBWriteFeature(poFeature, eGeomType, bGeoJSONDocument);
+    json_object* poObj = OGRCouchDBWriteFeature(poFeature, eGeomType,
+                                                bGeoJSONDocument,
+                                                nCoordPrecision);
 
     if (bInTransaction)
     {
@@ -1365,7 +1370,9 @@ OGRErr      OGRCouchDBTableLayer::SetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    json_object* poObj = OGRCouchDBWriteFeature(poFeature, eGeomType, bGeoJSONDocument);
+    json_object* poObj = OGRCouchDBWriteFeature(poFeature, eGeomType,
+                                                bGeoJSONDocument,
+                                                nCoordPrecision);
 
     const char* pszJson = json_object_to_json_string( poObj );
     CPLString osURI("/");
@@ -1951,10 +1958,10 @@ void OGRCouchDBTableLayer::WriteMetadata()
 
             json_object* poBbox = json_object_new_array();
             json_object_object_add(poExtent, "bbox", poBbox);
-            json_object_array_add(poBbox, json_object_new_double(dfMinX));
-            json_object_array_add(poBbox, json_object_new_double(dfMinY));
-            json_object_array_add(poBbox, json_object_new_double(dfMaxX));
-            json_object_array_add(poBbox, json_object_new_double(dfMaxY));
+            json_object_array_add(poBbox, json_object_new_double_with_precision(dfMinX, nCoordPrecision));
+            json_object_array_add(poBbox, json_object_new_double_with_precision(dfMinY, nCoordPrecision));
+            json_object_array_add(poBbox, json_object_new_double_with_precision(dfMaxX, nCoordPrecision));
+            json_object_array_add(poBbox, json_object_new_double_with_precision(dfMaxY, nCoordPrecision));
         }
     }
     else

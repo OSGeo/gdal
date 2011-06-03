@@ -274,6 +274,15 @@ extern int json_object_get_int(struct json_object *obj);
  */
 extern struct json_object* json_object_new_double(double d);
 
+/* Begin: GDAL addition */
+/** Create a new empty json_object of type json_type_double
+ * @param d the double
+ * @param nPrecision number of significant figures to use when serializing to string
+ * @returns a json_object of type json_type_double
+ */
+extern struct json_object* json_object_new_double_with_precision(double d, int nPrecision);
+/* End: GDAL addition */
+
 /** Get the double value of a json_object
  *
  * The type is coerced to a double if the passed object is not a double.
