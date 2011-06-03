@@ -99,7 +99,6 @@ class GDALPDFDictionary
     public:
         virtual ~GDALPDFDictionary();
 
-        virtual int HasKey(const char* pszKey) = 0;
         virtual GDALPDFObject* Get(const char* pszKey) = 0;
         virtual std::map<CPLString, GDALPDFObject*>& GetValues() = 0;
 
