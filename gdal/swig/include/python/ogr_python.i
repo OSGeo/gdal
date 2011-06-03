@@ -243,10 +243,11 @@ layer[0:4] would return a list of the first four features."""
     def geometry(self):
         return self.GetGeometryRef()
 
-    def ExportToJson(self, as_object = False):
+    def ExportToJson(self, as_object = False, options = None):
         """Exports a GeoJSON object which represents the Feature. The
            as_object parameter determines whether the returned value 
-           should be a Python object instead of a string. Defaults to False."""
+           should be a Python object instead of a string. Defaults to False.
+           The options parameter is passed to Geometry.ExportToJson()"""
 
         try:
             import simplejson
@@ -258,7 +259,9 @@ layer[0:4] would return a list of the first four features."""
 
         geom = self.GetGeometryRef()
         if geom is not None:
-            geom_json_string = geom.ExportToJson()
+            if options is None:
+                options = []
+            geom_json_string = geom.ExportToJson(options = options)
             geom_json_object = simplejson.loads(geom_json_string)
         else:
             geom_json_object = None

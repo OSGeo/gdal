@@ -119,6 +119,7 @@ CPLXMLNode CPL_DLL *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH );
 char   CPL_DLL *OGR_G_ExportToKML( OGRGeometryH, const char* pszAltitudeMode );
 
 char   CPL_DLL *OGR_G_ExportToJson( OGRGeometryH );
+char   CPL_DLL *OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions );
 OGRGeometryH CPL_DLL OGR_G_CreateGeometryFromJson( const char* );
 
 void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH, 
