@@ -35,6 +35,7 @@
 
 CPL_CVSID("$Id$");
 
+#ifdef OGR_ENABLED
 /************************************************************************/
 /*                    GDALRasterFPolygonEnumerator()                     */
 /************************************************************************/
@@ -223,4 +224,4 @@ void GDALRasterFPolygonEnumerator::ProcessLine(
                 NewPolygon( pafThisLineVal[i] );
     }
 }
-
+#endif
