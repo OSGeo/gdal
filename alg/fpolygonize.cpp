@@ -45,22 +45,39 @@ CPL_CVSID("$Id$");
 /* Code from:                                                                 */
 /* http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm  */
 /******************************************************************************/
-GBool equals(float A, float B)
+GBool GDALFloatEquals(float A, float B)
 {
     /**
      * This function will allow maxUlps-1 floats between A and B.
      */
     int maxUlps = MAX_ULPS;
+    int aInt = 0;
 
-    // Make sure maxUlps is non-negative and small enough that the
-    // default NAN won't compare as equal to anything.
+    /**
+     * Make sure maxUlps is non-negative and small enough that the default NAN
+     * won't compare as equal to anything.
+     */
     CPLAssert(maxUlps > 0 && maxUlps < 4 * 1024 * 1024);
-    int aInt = *(int*)&A;
-    // Make aInt lexicographically ordered as a twos-complement int
+
+    /**
+     * This assignation could violate strict aliasing. It causes a warning with
+     * gcc -O2. Use of memcpy preferred. Credits for Even Rouault. Further info
+     * at http://trac.osgeo.org/gdal/ticket/4005#comment:6
+     */
+    //int aInt = *(int*)&A;
+    memcpy(&aInt, &A, 4);
+
+    /**
+     * Make aInt lexicographically ordered as a twos-complement int
+     */
     if (aInt < 0)
         aInt = 0x80000000 - aInt;
-    // Make bInt lexicographically ordered as a twos-complement int
-    int bInt = *(int*)&B;
+    /**
+     * Make bInt lexicographically ordered as a twos-complement int
+     */
+    //int bInt = *(int*)&B;
+    memcpy(&bInt, &B, 4);
+    
     if (bInt < 0)
         bInt = 0x80000000 - bInt;
     int intDiff = abs(aInt - bInt);
@@ -476,9 +493,9 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine, int iY, int nXS
  * labelled with the pixel value in an attribute.  Optionally a mask band
  * can be provided to determine which pixels are eligible for processing.
  *
- * Note that currently the source pixel band values are read into a
- * signed 32bit integer buffer (Int32), so floating point or complex 
- * bands will be implicitly truncated before processing.  
+ * The source pixel band values are read into a 32bit float buffer. If you want
+ * to use a (probably faster) version using signed 32bit integer buffer, see
+ * GDALPolygonize at polygonize.cpp
  *
  * Polygon features will be created on the output layer, with polygon 
  * geometries representing the polygons.  The polygon geometries will be
@@ -730,7 +747,7 @@ GDALFPolygonize( GDALRasterBandH hSrcBand,
                 if( papoPoly[iX] && papoPoly[iX]->nLastLineUpdated < iY-1 )
                 {
                     if( hMaskBand == NULL
-                        || !equals(papoPoly[iX]->fPolyValue, GP_NODATA_MARKER) )
+                        || !GDALFloatEquals(papoPoly[iX]->fPolyValue, GP_NODATA_MARKER) )
                     {
                         eErr = 
                             EmitPolygonToLayer( hOutLayer, iPixValField, 
@@ -774,7 +791,7 @@ GDALFPolygonize( GDALRasterBandH hSrcBand,
         if( papoPoly[iX] )
         {
             if( hMaskBand == NULL
-                || !equals(papoPoly[iX]->fPolyValue, GP_NODATA_MARKER) )
+                || !GDALFloatEquals(papoPoly[iX]->fPolyValue, GP_NODATA_MARKER) )
             {
                 eErr = 
                     EmitPolygonToLayer( hOutLayer, iPixValField, 
