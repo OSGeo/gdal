@@ -117,6 +117,7 @@ public:
     void     Clear();
 };
 
+#ifdef OGR_ENABLED
 /************************************************************************/
 /*                          Polygon Enumerator                          */
 /*                                                                      */
@@ -151,6 +152,7 @@ public:
 
     void     Clear();
 };
+#endif
 
 typedef void* (*GDALTransformDeserializeFunc)( CPLXMLNode *psTree );
 
