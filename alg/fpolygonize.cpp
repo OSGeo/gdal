@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 #ifdef OGR_ENABLED
 
 /******************************************************************************/
-/*                                equals()                                    */
+/*                          GDALFloatEquals()                                 */
 /* Code from:                                                                 */
 /* http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm  */
 /******************************************************************************/
@@ -51,7 +51,7 @@ GBool GDALFloatEquals(float A, float B)
      * This function will allow maxUlps-1 floats between A and B.
      */
     int maxUlps = MAX_ULPS;
-    int aInt = 0;
+    int aInt, bInt;
 
     /**
      * Make sure maxUlps is non-negative and small enough that the default NAN
@@ -495,7 +495,7 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine, int iY, int nXS
  *
  * The source pixel band values are read into a 32bit float buffer. If you want
  * to use a (probably faster) version using signed 32bit integer buffer, see
- * GDALPolygonize at polygonize.cpp
+ * GDALPolygonize() at polygonize.cpp.
  *
  * Polygon features will be created on the output layer, with polygon 
  * geometries representing the polygons.  The polygon geometries will be
@@ -536,6 +536,8 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine, int iY, int nXS
  * @param pProgressArg callback argument passed to pfnProgress.
  * 
  * @return CE_None on success or CE_Failure on a failure.
+ *
+ * @since GDAL 1.9.0
  */
 
 CPLErr CPL_STDCALL
