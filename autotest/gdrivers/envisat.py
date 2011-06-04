@@ -127,11 +127,11 @@ class TestEnvisat:
         product = ds.GetMetadataItem('MPH_PRODUCT')
         record_md = ds.GetMetadata('RECORDS')
 
-        if product.startswith('ASA') and not record_md:
+        if product[:3] in ('ASA', 'SAR') and not record_md:
             gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
             return 'failure'
 
-        if not product.startswith('ASA') and record_md:
+        if product[:3] not in ('ASA', 'SAR') and record_md:
             gdaltest.post_reason('Unexpected metadata in the "RECORDS" domain.')
             return 'failure'
 
