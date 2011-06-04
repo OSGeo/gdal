@@ -121,13 +121,12 @@ class GDALPDFObjectPoppler : public GDALPDFObject
     private:
         Object* m_po;
         int     m_bDestroy;
-        int     m_bFree;
         GDALPDFDictionary* m_poDict;
         GDALPDFArray* m_poArray;
         CPLString osStr;
 
     public:
-        GDALPDFObjectPoppler(Object* po, int bDestroy, int bFree) : m_po(po), m_bDestroy(bDestroy), m_bFree(bFree), m_poDict(NULL), m_poArray(NULL) {}
+        GDALPDFObjectPoppler(Object* po, int bDestroy) : m_po(po), m_bDestroy(bDestroy), m_poDict(NULL), m_poArray(NULL) {}
 
         virtual ~GDALPDFObjectPoppler();
 
