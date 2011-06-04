@@ -80,8 +80,7 @@ class GDALPDFArrayPoppler : public GDALPDFArray
 
 GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
 {
-    if (m_bFree)
-        m_po->free();
+    m_po->free();
     if (m_bDestroy)
         delete m_po;
     delete m_poDict;
@@ -187,7 +186,7 @@ GDALPDFObject* GDALPDFDictionaryPoppler::Get(const char* pszKey)
     Object* po = new Object;
     if (m_poDict->lookup((char*)pszKey, po) && !po->isNull())
     {
-         GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(po, TRUE, TRUE);
+         GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(po, TRUE);
          m_map[pszKey] = poObj;
          return poObj;
     }
@@ -243,7 +242,7 @@ GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
     Object* po = new Object;
     if (m_poArray->get(nIndex, po) && !po->isNull())
     {
-        GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(po, TRUE, TRUE);
+        GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(po, TRUE);
         m_v[nIndex] = poObj;
         return poObj;
     }

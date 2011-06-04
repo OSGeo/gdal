@@ -664,7 +664,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    GDALPDFObjectPoppler oPageObjPoppler(&oPageObj, FALSE, TRUE);
+    GDALPDFObjectPoppler oPageObjPoppler(&oPageObj, FALSE);
     GDALPDFObject* poPageObj = &oPageObjPoppler;
 #else
     PoDoFo::PdfError::EnableDebug( false );
