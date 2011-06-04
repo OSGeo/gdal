@@ -171,6 +171,6 @@ void GDALUnregisterTransformDeserializer(void* pData);
  */
 #define MAX_ULPS 10
 
-GBool equals(float A, float B);
+GBool GDALFloatEquals(float A, float B);
 
 #endif /* ndef GDAL_ALG_PRIV_H_INCLUDED */
