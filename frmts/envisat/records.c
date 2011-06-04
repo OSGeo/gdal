@@ -1217,6 +1217,9 @@ const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(
         else
             return NULL;
     }
+    else if( EQUALN(pszProduct,"SAR",3) )
+        /* ERS products in ENVISAT format have the same records of ASAR ones */
+        paRecords = aASAR_Records;
     else
         return NULL;
 
