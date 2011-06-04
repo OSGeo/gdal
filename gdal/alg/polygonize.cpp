@@ -447,7 +447,7 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine, int iY, int nXS
  * Note that currently the source pixel band values are read into a
  * signed 32bit integer buffer (Int32), so floating point or complex 
  * bands will be implicitly truncated before processing. If you want to use a
- * version using 32bit float buffers, see GDALFPolygonize, at fpolygonize.cpp
+ * version using 32bit float buffers, see GDALFPolygonize() at fpolygonize.cpp.
  *
  * Polygon features will be created on the output layer, with polygon 
  * geometries representing the polygons.  The polygon geometries will be
