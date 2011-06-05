@@ -18,11 +18,11 @@ stable, so the driver compilation may fail with too old or too recent poppler ve
 Successfully tested versions are poppler &gt;= 0.12.X and &lt;= 0.16.0.
 <p>
 Starting with GDAL 1.9.0, as an alternative, the PDF driver can be compiled against libpodofo (LGPL-licensed)
-to avoid the libpoppler dependency. The driver has been tested against libpodofo 0.9.1. This is sufficient
-to get the georeferencing information. However, for getting the imagery, the pdftoppm utility that comes with
-the poppler distribution must be available in the system PATH. A temporary file will be generated in a directory
-determined by the following configuration options : CPL_TMPDIR, TMPDIR or TEMP (in that order). If none are defined,
-the current directory will be used.
+to avoid the libpoppler dependency. This is sufficient to get the georeferencing information. However, for
+getting the imagery, the pdftoppm utility that comes with the poppler distribution must be available in the system PATH.
+A temporary file will be generated in a directory determined by the following configuration options : CPL_TMPDIR,
+TMPDIR or TEMP (in that order). If none are defined, the current directory will be used.
+Successfully tested versions are libpodofo 0.8.4 and 0.9.1.
 <p>
 The driver supports reading georeferencing encoded in either of the 2 current existing ways : according to the OGC
 encoding best practice, or according to the Adobe Supplement to ISO 32000.
