@@ -1,0 +1,64 @@
+
+OBJ =	\
+    ogrdwgdriver.obj \
+    ogrdwgdatasource.obj \
+    ogrdwglayer.obj \
+    ogrdwgblockslayer.obj \
+    ogrdwg_blockmap.obj \
+    ogrdwg_dimension.obj \
+    ogrdwg_hatch.obj 
+
+DXF_OBJ = ..\dxf\intronurbs.obj ..\dxf\ogrdxf_polyline_smooth.obj 
+
+PLUGINDLL = ogr_DWG.dll
+
+GDAL_ROOT	=	..\..\..
+
+TD_LIBS =  \
+	$(TD_LIBDIR)/TD_ExamplesCommon.lib \
+	$(TD_LIBDIR)/TD_Key.lib \
+	$(TD_LIBDIR)/ModelerGeometry.lib \
+	$(TD_LIBDIR)/TD_BrepRenderer.lib \
+	$(TD_LIBDIR)/TD_Br.lib \
+	$(TD_LIBDIR)/TD_AcisBuilder.lib \
+	$(TD_LIBDIR)/TD_DynBlocks.lib \
+	$(TD_LIBDIR)/TD_Db.lib \
+	$(TD_LIBDIR)/TD_DbRoot.lib \
+	$(TD_LIBDIR)/TD_Gs.lib \
+	$(TD_LIBDIR)/TD_SpatialIndex.lib \
+	$(TD_LIBDIR)/TD_Ave.lib \
+	$(TD_LIBDIR)/TD_Root.lib \
+	$(TD_LIBDIR)/TD_Gi.lib \
+	$(TD_LIBDIR)/TD_Ge.lib \
+	$(TD_LIBDIR)/TD_FT.lib \
+	$(TD_LIBDIR)/TD_Alloc.lib \
+	$(TD_LIBDIR)/RxRasterServices.lib \
+	$(TD_LIBDIR)/Jpeg.lib \
+	$(TD_LIBDIR)/RecomputeDimBlock.lib \
+	$(TD_LIBDIR)/ExFieldEvaluator.lib \
+	$(TD_LIBDIR)/OdBagFiler.lib \
+	$(TD_LIBDIR)/RasterProcessor.lib \
+	advapi32.lib
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
+EXTRAFLAGS = -I.. -I..\.. $(TD_FLAGS) $(TD_INCLUDE) -I..\dxf
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.dll
+
+plugin:	 $(PLUGINDLL)
+
+$(PLUGINDLL):	$(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGINDLL) $(OBJ) $(DXF_OBJ) \
+		$(GDAL_ROOT)/gdal_i.lib $(TD_LIBS)
+	if exist $(PLUGINDLL).manifest mt -manifest $(PLUGINDLL).manifest \
+		-outputresource:$(PLUGINDLL);2
+
+
+
