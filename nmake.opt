@@ -260,6 +260,13 @@ JPEG12_SUPPORTED = 1
 #		/D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS \
 #		/DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI
 
+# DWG support using the Open Design Alliance Teigha Libraries
+
+#TD_BASE = C:\warmerda\pkg\td_vc9
+#TD_FLAGS = -D_TOOLKIT_IN_DLL_
+#TD_INCLUDE = -I$(TD_BASE)\TD\Include -I$(TD_BASE)\TD\Extensions\ExServices
+#TD_LIBDIR = $(TD_BASE)\lib\vc9dll
+
 # DWG/DXF support via DWGdirect from Open Design Alliance
 
 #DWGDIRECT=C:\warmerda\DWGdirect
