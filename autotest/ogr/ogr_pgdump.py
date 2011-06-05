@@ -258,9 +258,9 @@ def ogr_pgdump_3():
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;""") == -1 or \
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" CHAR(8);""") == -1 or \
        sql.find("""COPY "another_schema"."tpoly" ("emptychar", "area", "eas_id", "prfedea", "shortname") FROM STDIN;""") == -1 or \
-       sql.find("""\N	215229.266	168	35043411	\\N""") == -1 or \
+       sql.find("""\\N	215229.266	168	35043411	\\N""") == -1 or \
        sql.find("""	5268.813	170	35043413	\\N""") == -1 or \
-       sql.find("""\.""") == -1 or \
+       sql.find("""\\.""") == -1 or \
        sql.find("""COMMIT;""") == -1 :
         print(sql)
         return 'fail'
