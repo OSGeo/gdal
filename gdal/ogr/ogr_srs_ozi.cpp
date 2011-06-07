@@ -51,6 +51,7 @@ static const OZIDatums aoDatums[] =
     { "Pulkovo 1942 (1)", 4284 },   // Pulkovo 1942
     { "Pulkovo 1942 (2)", 4284 },   // Pulkovo 1942, XXX: What is a difference
                                     // with the previous one?
+    { "Potsdam Rauenberg DHDN", 31467 }, // Gauss-Krueger GK3 Central_Meridian 9 deg
     { NULL, 0 }
 };
 
