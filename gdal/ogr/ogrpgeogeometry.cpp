@@ -4,9 +4,11 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements decoder of shapebin geometry for PGeo
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *           Paul Ramsey, pramsey at cleverelephant.ca
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +30,7 @@
  ****************************************************************************/
 
 #include "ogrpgeogeometry.h"
+#include "ogr_p.h"
 #include "cpl_string.h"
 #include "zlib.h"
 
@@ -240,6 +243,613 @@ static OGRGeometry* OGRCreateFromMultiPatch(int nParts,
     return poMP;
 }
 
+
+/************************************************************************/
+/*                      OGRWriteToShapeBin()                            */
+/*                                                                      */
+/*      Translate OGR geometry to a shapefile binary representation     */
+/************************************************************************/
+
+OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom, 
+                           GByte **ppabyShape,
+                           int *pnBytes )
+{
+    GUInt32 nGType = SHPT_NULL;
+    int nShpSize = 4; /* All types start with integer type number */
+    int nShpZSize = 0; /* Z gets tacked onto the end */
+    GUInt32 nPoints = 0;
+    GUInt32 nParts = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Null or Empty input maps to SHPT_NULL.                          */
+/* -------------------------------------------------------------------- */
+    if ( ! poGeom || poGeom->IsEmpty() )
+    {
+        *ppabyShape = (GByte*)VSIMalloc(nShpSize);
+        GUInt32 zero = SHPT_NULL;
+        memcpy(*ppabyShape, &zero, nShpSize);
+        *pnBytes = nShpSize;
+        return OGRERR_NONE;
+    }
+
+    OGRwkbGeometryType nOGRType = wkbFlatten(poGeom->getGeometryType());
+    int b3d = (poGeom->getGeometryType() & wkb25DBit);
+    int nCoordDims = b3d ? 3 : 2;
+
+/* -------------------------------------------------------------------- */
+/*      Calculate the shape buffer size                                 */
+/* -------------------------------------------------------------------- */
+    if ( nOGRType == wkbPoint )
+    {
+        nShpSize += 8 * nCoordDims;
+    }
+    else if ( nOGRType == wkbLineString )
+    {
+        OGRLineString *poLine = (OGRLineString*)poGeom;
+        nPoints = poLine->getNumPoints();
+        nParts = 1;
+        nShpSize += 16 * nCoordDims; /* xy(z) box */ 
+        nShpSize += 4; /* nparts */
+        nShpSize += 4; /* npoints */
+        nShpSize += 4; /* parts[1] */
+        nShpSize += 8 * nCoordDims * nPoints; /* points */
+        nShpZSize = 16 + 8 * nPoints;
+    }
+    else if ( nOGRType == wkbPolygon )
+    {
+        poGeom->closeRings();
+        OGRPolygon *poPoly = (OGRPolygon*)poGeom;
+        nParts = poPoly->getNumInteriorRings() + 1;
+        for ( GUInt32 i = 0; i < nParts; i++ )
+        {
+            OGRLinearRing *poRing;
+            if ( i == 0 )
+                poRing = poPoly->getExteriorRing();
+            else
+                poRing = poPoly->getInteriorRing(i-1);
+            nPoints += poRing->getNumPoints();
+        }
+        nShpSize += 16 * nCoordDims; /* xy(z) box */ 
+        nShpSize += 4; /* nparts */
+        nShpSize += 4; /* npoints */
+        nShpSize += 4 * nParts; /* parts[nparts] */
+        nShpSize += 8 * nCoordDims * nPoints; /* points */    
+        nShpZSize = 16 + 8 * nPoints;
+    }
+    else if ( nOGRType == wkbMultiPoint )
+    {
+        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
+        for ( int i = 0; i < poMPoint->getNumGeometries(); i++ )
+        {
+            OGRPoint *poPoint = (OGRPoint*)(poMPoint->getGeometryRef(i));
+            if ( poPoint->IsEmpty() ) 
+                continue;
+            nPoints++;
+        }
+        nShpSize += 16 * nCoordDims; /* xy(z) box */ 
+        nShpSize += 4; /* npoints */
+        nShpSize += 8 * nCoordDims * nPoints; /* points */    
+        nShpZSize = 16 + 8 * nPoints;
+    }
+    else if ( nOGRType == wkbMultiLineString )
+    {
+        OGRMultiLineString *poMLine = (OGRMultiLineString*)poGeom;
+        for ( int i = 0; i < poMLine->getNumGeometries(); i++ )
+        {
+            OGRLineString *poLine = (OGRLineString*)(poMLine->getGeometryRef(i));
+            /* Skip empties */
+            if ( poLine->IsEmpty() ) 
+                continue;
+            nParts++;
+            nPoints += poLine->getNumPoints();
+        }
+        nShpSize += 16 * nCoordDims; /* xy(z) box */ 
+        nShpSize += 4; /* nparts */
+        nShpSize += 4; /* npoints */
+        nShpSize += 4 * nParts; /* parts[nparts] */
+        nShpSize += 8 * nCoordDims * nPoints ; /* points */    
+        nShpZSize = 16 + 8 * nPoints;
+    }
+    else if ( nOGRType == wkbMultiPolygon )
+    {
+        poGeom->closeRings();
+        OGRMultiPolygon *poMPoly = (OGRMultiPolygon*)poGeom;
+        for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
+        {
+            OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(j));
+            int nRings = poPoly->getNumInteriorRings() + 1;
+
+            /* Skip empties */
+            if ( poPoly->IsEmpty() ) 
+                continue;
+
+            nParts += nRings;
+            for ( int i = 0; i < nRings; i++ )
+            {
+                OGRLinearRing *poRing;
+                if ( i == 0 )
+                    poRing = poPoly->getExteriorRing();
+                else
+                    poRing = poPoly->getInteriorRing(i-1);
+                nPoints += poRing->getNumPoints();
+            }
+        }
+        nShpSize += 16 * nCoordDims; /* xy(z) box */ 
+        nShpSize += 4; /* nparts */
+        nShpSize += 4; /* npoints */
+        nShpSize += 4 * nParts; /* parts[nparts] */
+        nShpSize += 8 * nCoordDims * nPoints ; /* points */  
+        nShpZSize = 16 + 8 * nPoints;
+    }
+    else
+    {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+    /* Allocate our shape buffer */
+    *ppabyShape = (GByte*)VSIMalloc(nShpSize);
+    if ( ! *ppabyShape )
+        return OGRERR_FAILURE;
+
+    /* Fill in the output size. */
+    *pnBytes = nShpSize;
+
+    /* Set up write pointers */
+    unsigned char *pabyPtr = *ppabyShape;
+    unsigned char *pabyPtrZ = NULL;
+    if ( b3d )
+        pabyPtrZ = pabyPtr + nShpSize - nShpZSize;
+
+/* -------------------------------------------------------------------- */
+/*      Write in the Shape type number now                              */
+/* -------------------------------------------------------------------- */
+    switch(nOGRType)
+    {
+        case wkbPoint:
+        {
+            nGType = b3d ? SHPT_POINTZ : SHPT_POINT;
+            break;
+        }
+        case wkbMultiPoint:
+        {
+            nGType = b3d ? SHPT_MULTIPOINTZ : SHPT_MULTIPOINT;
+            break;
+        }
+        case wkbLineString:
+        case wkbMultiLineString:
+        {
+            nGType = b3d ? SHPT_ARCZ : SHPT_ARC;
+            break;
+        }
+        case wkbPolygon:
+        case wkbMultiPolygon:
+        {
+            nGType = b3d ? SHPT_POLYGONZ : SHPT_POLYGON;
+            break;
+        }
+        default:
+        {
+            return OGRERR_UNSUPPORTED_OPERATION;
+        }
+    }
+    /* Write in the type number and advance the pointer */
+    nGType = CPL_LSBWORD32( nGType );
+    memcpy( pabyPtr, &nGType, 4 );
+    pabyPtr += 4;
+
+
+/* -------------------------------------------------------------------- */
+/*      POINT and POINTZ                                                */
+/* -------------------------------------------------------------------- */
+    if ( nOGRType == wkbPoint )
+    {
+        OGRPoint *poPoint = (OGRPoint*)poGeom;
+        double x = poPoint->getX();
+        double y = poPoint->getY();
+
+        /* Copy in the raw data. */
+        memcpy( pabyPtr, &x, 8 );
+        memcpy( pabyPtr+8, &y, 8 );
+        if( b3d )
+        {
+            double z = poPoint->getZ();
+            memcpy( pabyPtr+8+8, &z, 8 );
+        }
+
+        /* Swap if needed. Shape doubles always LSB */
+        if( OGR_SWAP( wkbNDR ) )
+        {
+            CPL_SWAPDOUBLE( pabyPtr );
+            CPL_SWAPDOUBLE( pabyPtr+8 );
+            if( b3d )
+                CPL_SWAPDOUBLE( pabyPtr+8+8 );
+        }
+
+        return OGRERR_NONE;    
+    }
+
+/* -------------------------------------------------------------------- */
+/*      All the non-POINT types require an envelope next                */
+/* -------------------------------------------------------------------- */
+    OGREnvelope3D envelope;
+    poGeom->getEnvelope(&envelope);
+    memcpy( pabyPtr, &(envelope.MinX), 8 );
+    memcpy( pabyPtr+8, &(envelope.MinY), 8 );
+    memcpy( pabyPtr+8+8, &(envelope.MaxX), 8 );
+    memcpy( pabyPtr+8+8+8, &(envelope.MaxY), 8 );
+
+    /* Swap box if needed. Shape doubles are always LSB */
+    if( OGR_SWAP( wkbNDR ) )
+    {
+        for ( int i = 0; i < 4; i++ )
+            CPL_SWAPDOUBLE( pabyPtr + 8*i );
+    }
+    pabyPtr += 32;
+
+    /* Write in the Z bounds at the end of the XY buffer */
+    if ( b3d )
+    {
+        memcpy( pabyPtrZ, &(envelope.MinZ), 8 );
+        memcpy( pabyPtrZ+8, &(envelope.MaxZ), 8 );
+
+        /* Swap Z bounds if necessary */
+        if( OGR_SWAP( wkbNDR ) )
+        {
+            for ( int i = 0; i < 2; i++ )
+                CPL_SWAPDOUBLE( pabyPtrZ + 8*i );
+        } 
+        pabyPtrZ += 16;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LINESTRING and LINESTRINGZ                                      */
+/* -------------------------------------------------------------------- */
+    if ( nOGRType == wkbLineString )
+    {
+        const OGRLineString *poLine = (OGRLineString*)poGeom;
+
+        /* Write in the nparts (1) */
+        GUInt32 nPartsLsb = CPL_LSBWORD32( nParts );
+        memcpy( pabyPtr, &nPartsLsb, 4 );
+        pabyPtr += 4;
+
+        /* Write in the npoints */
+        GUInt32 nPointsLsb = CPL_LSBWORD32( nPoints );
+        memcpy( pabyPtr, &nPointsLsb, 4 );
+        pabyPtr += 4;
+
+        /* Write in the part index (0) */
+        GUInt32 nPartIndex = 0;
+        memcpy( pabyPtr, &nPartIndex, 4 );
+        pabyPtr += 4;
+
+        /* Write in the point data */
+        poLine->getPoints((OGRRawPoint*)pabyPtr, (double*)pabyPtrZ);
+
+        /* Swap if necessary */
+        if( OGR_SWAP( wkbNDR ) )
+        {
+            for( GUInt32 k = 0; k < nPoints; k++ )
+            {
+                CPL_SWAPDOUBLE( pabyPtr + 16*k );
+                CPL_SWAPDOUBLE( pabyPtr + 16*k + 8 );
+                if( b3d )
+                    CPL_SWAPDOUBLE( pabyPtrZ + 8*k );
+            }
+        }
+        return OGRERR_NONE;    
+
+    }
+/* -------------------------------------------------------------------- */
+/*      POLYGON and POLYGONZ                                            */
+/* -------------------------------------------------------------------- */
+    else if ( nOGRType == wkbPolygon )
+    {
+        OGRPolygon *poPoly = (OGRPolygon*)poGeom;
+
+        /* Write in the part count */
+        GUInt32 nPartsLsb = CPL_LSBWORD32( nParts );
+        memcpy( pabyPtr, &nPartsLsb, 4 );
+        pabyPtr += 4;
+
+        /* Write in the total point count */
+        GUInt32 nPointsLsb = CPL_LSBWORD32( nPoints );
+        memcpy( pabyPtr, &nPointsLsb, 4 );
+        pabyPtr += 4;
+
+/* -------------------------------------------------------------------- */
+/*      Now we have to visit each ring and write an index number into   */
+/*      the parts list, and the coordinates into the points list.       */
+/*      to do it in one pass, we will use three write pointers.         */
+/*      pabyPtr writes the part indexes                                 */
+/*      pabyPoints writes the xy coordinates                            */
+/*      pabyPtrZ writes the z coordinates                               */
+/* -------------------------------------------------------------------- */
+
+        /* Just past the partindex[nparts] array */
+        unsigned char* pabyPoints = pabyPtr + 4*nParts; 
+
+        int nPointIndexCount = 0;
+
+        for( GUInt32 i = 0; i < nParts; i++ )
+        {
+            /* Check our Ring and condition it */
+            OGRLinearRing *poRing;
+            if ( i == 0 ) 
+            {
+                poRing = poPoly->getExteriorRing();
+                /* Outer ring must be clockwise */
+                if ( ! poRing->isClockwise() )
+                    poRing->reverseWindingOrder();
+            }
+            else
+            {
+                poRing = poPoly->getInteriorRing(i-1);
+                /* Inner rings should be anti-clockwise */
+                if ( poRing->isClockwise() )
+                    poRing->reverseWindingOrder();
+            }
+
+            int nRingNumPoints = poRing->getNumPoints();
+
+            /* Cannot write un-closed rings to shape */
+            if( nRingNumPoints <= 2 || ! poRing->get_IsClosed() )
+                return OGRERR_FAILURE;
+
+            /* Write in the part index */
+            GUInt32 nPartIndex = CPL_LSBWORD32( nPointIndexCount );
+            memcpy( pabyPtr, &nPartIndex, 4 );
+
+            /* Write in the point data */
+            poRing->getPoints((OGRRawPoint*)pabyPoints, (double*)pabyPtrZ);
+
+            /* Swap if necessary */
+            if( OGR_SWAP( wkbNDR ) )
+            {
+                for( int k = 0; k < nRingNumPoints; k++ )
+                {
+                    CPL_SWAPDOUBLE( pabyPoints + 16*k );
+                    CPL_SWAPDOUBLE( pabyPoints + 16*k + 8 );
+                    if( b3d )
+                        CPL_SWAPDOUBLE( pabyPtrZ + 8*k );
+                }
+            }
+
+            nPointIndexCount += nRingNumPoints;
+            /* Advance the write pointers */
+            pabyPtr += 4;
+            pabyPoints += 16 * nRingNumPoints;
+            if ( b3d )
+                pabyPtrZ += 8 * nRingNumPoints; 
+        }
+
+        return OGRERR_NONE;
+
+    }
+/* -------------------------------------------------------------------- */
+/*      MULTIPOINT and MULTIPOINTZ                                      */
+/* -------------------------------------------------------------------- */
+    else if ( nOGRType == wkbMultiPoint )
+    {
+        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
+
+        /* Write in the total point count */
+        GUInt32 nPointsLsb = CPL_LSBWORD32( nPoints );
+        memcpy( pabyPtr, &nPointsLsb, 4 );
+        pabyPtr += 4;
+
+/* -------------------------------------------------------------------- */
+/*      Now we have to visit each point write it into the points list   */
+/*      We will use two write pointers.                                 */
+/*      pabyPtr writes the xy coordinates                               */
+/*      pabyPtrZ writes the z coordinates                               */
+/* -------------------------------------------------------------------- */
+
+        for( GUInt32 i = 0; i < nPoints; i++ )
+        {
+            const OGRPoint *poPt = (OGRPoint*)(poMPoint->getGeometryRef(i));
+
+            /* Skip empties */
+            if ( poPt->IsEmpty() ) 
+                continue;
+
+            /* Write the coordinates */
+            double x = poPt->getX();
+            double y = poPt->getY();
+            memcpy(pabyPtr, &x, 8);
+            memcpy(pabyPtr+8, &y, 8);
+            if ( b3d )
+            {
+                double z = poPt->getZ();
+                memcpy(pabyPtrZ, &z, 8);
+            }
+
+            /* Swap if necessary */
+            if( OGR_SWAP( wkbNDR ) )
+            {
+                CPL_SWAPDOUBLE( pabyPtr );
+                CPL_SWAPDOUBLE( pabyPtr + 8 );
+                if( b3d )
+                    CPL_SWAPDOUBLE( pabyPtrZ );
+            }
+
+            /* Advance the write pointers */
+            pabyPtr += 16;
+            if ( b3d )
+                pabyPtrZ += 8; 
+        }    
+
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      MULTILINESTRING and MULTILINESTRINGZ                            */
+/* -------------------------------------------------------------------- */
+    else if ( nOGRType == wkbMultiLineString )
+    {
+        OGRMultiLineString *poMLine = (OGRMultiLineString*)poGeom;
+
+        /* Write in the part count */
+        GUInt32 nPartsLsb = CPL_LSBWORD32( nParts );
+        memcpy( pabyPtr, &nPartsLsb, 4 );
+        pabyPtr += 4;
+
+        /* Write in the total point count */
+        GUInt32 nPointsLsb = CPL_LSBWORD32( nPoints );
+        memcpy( pabyPtr, &nPointsLsb, 4 );
+        pabyPtr += 4;
+
+        /* Just past the partindex[nparts] array */
+        unsigned char* pabyPoints = pabyPtr + 4*nParts; 
+
+        int nPointIndexCount = 0;
+
+        for( GUInt32 i = 0; i < nParts; i++ )
+        {
+            const OGRLineString *poLine = (OGRLineString*)(poMLine->getGeometryRef(i));
+
+            /* Skip empties */
+            if ( poLine->IsEmpty() ) 
+                continue;
+
+            int nLineNumPoints = poLine->getNumPoints();
+
+            /* Write in the part index */
+            GUInt32 nPartIndex = CPL_LSBWORD32( nPointIndexCount );
+            memcpy( pabyPtr, &nPartIndex, 4 );
+
+            /* Write in the point data */
+            poLine->getPoints((OGRRawPoint*)pabyPoints, (double*)pabyPtrZ);
+
+            /* Swap if necessary */
+            if( OGR_SWAP( wkbNDR ) )
+            {
+                for( int k = 0; k < nLineNumPoints; k++ )
+                {
+                    CPL_SWAPDOUBLE( pabyPoints + 16*k );
+                    CPL_SWAPDOUBLE( pabyPoints + 16*k + 8 );
+                    if( b3d )
+                        CPL_SWAPDOUBLE( pabyPtrZ + 8*k );
+                }
+            }
+
+            nPointIndexCount += nLineNumPoints;
+
+            /* Advance the write pointers */
+            pabyPtr += 4;
+            pabyPoints += 16 * nLineNumPoints;
+            if ( b3d )
+                pabyPtrZ += 8 * nLineNumPoints; 
+        }
+
+        return OGRERR_NONE;      
+
+    }
+/* -------------------------------------------------------------------- */
+/*      MULTIPOLYGON and MULTIPOLYGONZ                                  */
+/* -------------------------------------------------------------------- */
+    else if ( nOGRType == wkbMultiPolygon )
+    {
+        OGRMultiPolygon *poMPoly = (OGRMultiPolygon*)poGeom;
+
+        /* Write in the part count */
+        GUInt32 nPartsLsb = CPL_LSBWORD32( nParts );
+        memcpy( pabyPtr, &nPartsLsb, 4 );
+        pabyPtr += 4;
+
+        /* Write in the total point count */
+        GUInt32 nPointsLsb = CPL_LSBWORD32( nPoints );
+        memcpy( pabyPtr, &nPointsLsb, 4 );
+        pabyPtr += 4;
+
+/* -------------------------------------------------------------------- */
+/*      Now we have to visit each ring and write an index number into   */
+/*      the parts list, and the coordinates into the points list.       */
+/*      to do it in one pass, we will use three write pointers.         */
+/*      pabyPtr writes the part indexes                                 */
+/*      pabyPoints writes the xy coordinates                            */
+/*      pabyPtrZ writes the z coordinates                               */
+/* -------------------------------------------------------------------- */
+
+        /* Just past the partindex[nparts] array */
+        unsigned char* pabyPoints = pabyPtr + 4*nParts; 
+
+        int nPointIndexCount = 0;
+
+        for( int i = 0; i < poMPoly->getNumGeometries(); i++ )
+        {
+            OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(i));
+
+            /* Skip empties */
+            if ( poPoly->IsEmpty() ) 
+                continue;
+
+            int nRings = 1 + poPoly->getNumInteriorRings();
+
+            for( int j = 0; j < nRings; j++ )
+            {
+                /* Check our Ring and condition it */
+                OGRLinearRing *poRing;
+                if ( j == 0 )
+                {
+                    poRing = poPoly->getExteriorRing();
+                    /* Outer ring must be clockwise */
+                    if ( ! poRing->isClockwise() )
+                        poRing->reverseWindingOrder();
+                }
+                else
+                {
+                    poRing = poPoly->getInteriorRing(j-1);
+                    /* Inner rings should be anti-clockwise */
+                    if ( poRing->isClockwise() )
+                        poRing->reverseWindingOrder();
+                }
+
+                int nRingNumPoints = poRing->getNumPoints();
+
+                /* Cannot write closed rings to shape */
+                if( nRingNumPoints <= 2 || ! poRing->get_IsClosed() )
+                    return OGRERR_FAILURE;
+
+                /* Write in the part index */
+                GUInt32 nPartIndex = CPL_LSBWORD32( nPointIndexCount );
+                memcpy( pabyPtr, &nPartIndex, 4 );
+
+                /* Write in the point data */
+                poRing->getPoints((OGRRawPoint*)pabyPoints, (double*)pabyPtrZ);
+
+                /* Swap if necessary */
+                if( OGR_SWAP( wkbNDR ) )
+                {
+                    for( int k = 0; k < nRingNumPoints; k++ )
+                    {
+                        CPL_SWAPDOUBLE( pabyPoints + 16*k );
+                        CPL_SWAPDOUBLE( pabyPoints + 16*k + 8 );
+                        if( b3d )
+                            CPL_SWAPDOUBLE( pabyPtrZ + 8*k );
+                    }
+                }
+
+                nPointIndexCount += nRingNumPoints;
+                /* Advance the write pointers */
+                pabyPtr += 4;
+                pabyPoints += 16 * nRingNumPoints;
+                if ( b3d )
+                    pabyPtrZ += 8 * nRingNumPoints; 
+            }
+        }
+
+        return OGRERR_NONE;
+
+    }
+    else
+    {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+}  
+
+
 /************************************************************************/
 /*                      OGRCreateFromShapeBin()                         */
 /*                                                                      */
@@ -331,6 +941,16 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 
     int nSHPType = pabyShape[0];
 
+/* -------------------------------------------------------------------- */
+/*      Return a NULL geometry when SHPT_NULL is encountered.           */
+/*      Watch out, null return does not mean "bad data" it means        */
+/*      "no geometry here". Watch the OGRErr for the error status       */
+/* -------------------------------------------------------------------- */
+    if ( nSHPType == SHPT_NULL )
+    {
+      *ppoGeom = NULL;
+      return OGRERR_NONE;
+    }
 
 //    CPLDebug( "PGeo",
 //              "Shape type read from PGeo data is nSHPType = %d",
@@ -683,86 +1303,55 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
              || nSHPType == SHPT_MULTIPOINTZ
              || nSHPType == SHPT_MULTIPOINTZM )
     {
-#ifdef notdef
-    int32       nPoints;
-    int         i, nOffset;
+      GInt32 nPoints;
+      GInt32 nOffsetZ;
+      int i;
 
-    memcpy( &nPoints, psSHP->pabyRec + 44, 4 );
-    if( bBigEndian ) SwapWord( 4, &nPoints );
+      int bHasZ = (  nSHPType == SHPT_MULTIPOINTZ
+                  || nSHPType == SHPT_MULTIPOINTZM );
 
-    psShape->nVertices = nPoints;
-        psShape->padfX = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfY = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfM = (double *) calloc(nPoints,sizeof(double));
+                
+      memcpy( &nPoints, pabyShape + 36, 4 );
+      CPL_LSBPTR32( &nPoints );
 
-    for( i = 0; i < nPoints; i++ )
-    {
-        memcpy(psShape->padfX+i, psSHP->pabyRec + 48 + 16 * i, 8 );
-        memcpy(psShape->padfY+i, psSHP->pabyRec + 48 + 16 * i + 8, 8 );
+      if (nPoints < 0 || nPoints > 50 * 1000 * 1000 )
+      {
+          CPLError(CE_Failure, CPLE_AppDefined, "Corrupted Shape : nPoints=%d.",
+                   nPoints);
+          return OGRERR_FAILURE;
+      }
 
-        if( bBigEndian ) SwapWord( 8, psShape->padfX + i );
-        if( bBigEndian ) SwapWord( 8, psShape->padfY + i );
-    }
+      nOffsetZ = 40 + 2*8*nPoints + 2*8;
+    
+      OGRMultiPoint *poMultiPt = new OGRMultiPoint;
+      *ppoGeom = poMultiPt;
 
-        nOffset = 48 + 16*nPoints;
-
-/* -------------------------------------------------------------------- */
-/*  Get the X/Y bounds.                     */
-/* -------------------------------------------------------------------- */
-        memcpy( &(psShape->dfXMin), psSHP->pabyRec + 8 +  4, 8 );
-        memcpy( &(psShape->dfYMin), psSHP->pabyRec + 8 + 12, 8 );
-        memcpy( &(psShape->dfXMax), psSHP->pabyRec + 8 + 20, 8 );
-        memcpy( &(psShape->dfYMax), psSHP->pabyRec + 8 + 28, 8 );
-
-    if( bBigEndian ) SwapWord( 8, &(psShape->dfXMin) );
-    if( bBigEndian ) SwapWord( 8, &(psShape->dfYMin) );
-    if( bBigEndian ) SwapWord( 8, &(psShape->dfXMax) );
-    if( bBigEndian ) SwapWord( 8, &(psShape->dfYMax) );
-
-/* -------------------------------------------------------------------- */
-/*      If we have a Z coordinate, collect that now.                    */
-/* -------------------------------------------------------------------- */
-        if( psShape->nSHPType == SHPT_MULTIPOINTZ || psShape->nSHPType == SHPT_MULTIPOINTZM )
-        {
-            memcpy( &(psShape->dfZMin), psSHP->pabyRec + nOffset, 8 );
-            memcpy( &(psShape->dfZMax), psSHP->pabyRec + nOffset + 8, 8 );
-
-            if( bBigEndian ) SwapWord( 8, &(psShape->dfZMin) );
-            if( bBigEndian ) SwapWord( 8, &(psShape->dfZMax) );
-
-            for( i = 0; i < nPoints; i++ )
-            {
-                memcpy( psShape->padfZ + i,
-                        psSHP->pabyRec + nOffset + 16 + i*8, 8 );
-                if( bBigEndian ) SwapWord( 8, psShape->padfZ + i );
-            }
-
-            nOffset += 16 + 8*nPoints;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      If we have a M measure value, then read it now.  We assume      */
-/*      that the measure can be present for any shape if the size is    */
-/*      big enough, but really it will only occur for the Z shapes      */
-/*      (options), and the M shapes.                                    */
-/* -------------------------------------------------------------------- */
-        if( psSHP->panRecSize[hEntity]+8 >= nOffset + 16 + 8*nPoints )
-        {
-            memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
-            memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
-
-            if( bBigEndian ) SwapWord( 8, &(psShape->dfMMin) );
-            if( bBigEndian ) SwapWord( 8, &(psShape->dfMMax) );
-
-            for( i = 0; i < nPoints; i++ )
-            {
-                memcpy( psShape->padfM + i,
-                        psSHP->pabyRec + nOffset + 16 + i*8, 8 );
-                if( bBigEndian ) SwapWord( 8, psShape->padfM + i );
-            }
-        }
-#endif
+      for( i = 0; i < nPoints; i++ )
+      {
+          double x, y, z;
+          OGRPoint *poPt = new OGRPoint;
+        
+          /* Copy X */
+          memcpy(&x, pabyShape + 40 + i*16, 8);
+          CPL_LSBPTR64(&x);
+          poPt->setX(x);
+        
+          /* Copy Y */
+          memcpy(&y, pabyShape + 40 + i*16 + 8, 8);
+          CPL_LSBPTR64(&y);
+          poPt->setY(y);
+        
+          /* Copy Z */
+          if ( bHasZ )
+          {
+            memcpy(&z, pabyShape + nOffsetZ + i*8, 8);
+            CPL_LSBPTR64(&z);
+            poPt->setZ(z);
+          }
+        
+          poMultiPt->addGeometryDirectly( poPt );
+      }
+      return OGRERR_NONE;
     }
 
 /* ==================================================================== */

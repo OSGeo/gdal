@@ -77,4 +77,9 @@ OGRErr CPL_DLL OGRCreateFromShapeBin( GByte *pabyShape,
                               OGRGeometry **ppoGeom,
                               int nBytes );
 
+OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom, 
+                           GByte **ppabyShape,
+                           int *pnBytes );
+
+
 #endif
