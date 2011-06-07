@@ -237,6 +237,10 @@ class SpatialReference(_object):
         """IsProjected(self) -> int"""
         return _osr.SpatialReference_IsProjected(self, *args)
 
+    def IsCompound(self, *args):
+        """IsCompound(self) -> int"""
+        return _osr.SpatialReference_IsCompound(self, *args)
+
     def IsGeocentric(self, *args):
         """IsGeocentric(self) -> int"""
         return _osr.SpatialReference_IsGeocentric(self, *args)
@@ -272,6 +276,10 @@ class SpatialReference(_object):
     def GetAngularUnits(self, *args):
         """GetAngularUnits(self) -> double"""
         return _osr.SpatialReference_GetAngularUnits(self, *args)
+
+    def SetTargetLinearUnits(self, *args):
+        """SetTargetLinearUnits(self, char target, char name, double to_meters) -> OGRErr"""
+        return _osr.SpatialReference_SetTargetLinearUnits(self, *args)
 
     def SetLinearUnits(self, *args):
         """SetLinearUnits(self, char name, double to_meters) -> OGRErr"""
@@ -605,6 +613,10 @@ class SpatialReference(_object):
             int VertDatumType = 0) -> OGRErr
         """
         return _osr.SpatialReference_SetVertCS(self, *args)
+
+    def SetCompoundCS(self, *args):
+        """SetCompoundCS(self, char name, SpatialReference horizcs, SpatialReference vertcs) -> OGRErr"""
+        return _osr.SpatialReference_SetCompoundCS(self, *args)
 
     def ImportFromWkt(self, *args):
         """ImportFromWkt(self, char ppszInput) -> OGRErr"""

@@ -331,6 +331,7 @@ double CPL_DLL OSRGetPrimeMeridian( OGRSpatialReferenceH, char ** );
 int CPL_DLL OSRIsGeographic( OGRSpatialReferenceH );
 int CPL_DLL OSRIsLocal( OGRSpatialReferenceH );
 int CPL_DLL OSRIsProjected( OGRSpatialReferenceH );
+int CPL_DLL OSRIsCompound( OGRSpatialReferenceH );
 int CPL_DLL OSRIsGeocentric( OGRSpatialReferenceH );
 int CPL_DLL OSRIsVertical( OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
@@ -352,6 +353,14 @@ OGRErr CPL_DLL OSRSetTOWGS84( OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRGetTOWGS84( OGRSpatialReferenceH hSRS, double *, int );
                         
 
+OGRErr OSRSetCompoundCS( OGRSpatialReferenceH hSRS,
+                         const char *pszName,
+                         OGRSpatialReferenceH hHorizSRS,
+                         OGRSpatialReferenceH hVertSRS );
+OGRErr OSRSetVertCS( OGRSpatialReferenceH hSRS,
+                     const char * pszVertCSName,
+                     const char * pszVertDatumName,
+                     int nVertDatumType );
 OGRErr CPL_DLL OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
                       const char * pszDatumName,
