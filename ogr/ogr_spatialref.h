@@ -243,6 +243,7 @@ class CPL_DLL OGRSpatialReference
     int         IsGeocentric() const;
     int         IsLocal() const;
     int         IsVertical() const;
+    int         IsCompound() const;
     int         IsSameGeogCS( const OGRSpatialReference * ) const;
     int         IsSameVertCS( const OGRSpatialReference * ) const;
     int         IsSame( const OGRSpatialReference * ) const;
@@ -265,6 +266,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetVertCS( const char *pszVertCSName,
                            const char *pszVertDatumName, 
                            int nVertDatumClass = 2005 );
+    OGRErr      SetCompoundCS( const char *pszName, 
+                               const OGRSpatialReference *poHorizSRS,
+                               const OGRSpatialReference *poVertSRS );
 
     OGRErr      SetFromUserInput( const char * );
 
