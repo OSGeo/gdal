@@ -10490,6 +10490,16 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetCompoundCS(PyObject *SWIGUNUSEDPA
     }
   }
   {
+    if (!arg3) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if (!arg4) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
@@ -10668,6 +10678,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromUrl(PyObject *SWIGUNUSEDPA
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_ImportFromUrl" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
@@ -11238,6 +11253,16 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromERM(PyObject *SWIGUNUSEDPA
     SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "SpatialReference_ImportFromERM" "', argument " "4"" of type '" "char const *""'");
   }
   arg4 = reinterpret_cast< char * >(buf4);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if (!arg3) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
