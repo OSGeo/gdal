@@ -740,7 +740,9 @@ public:
                     int VertDatumType = 0) {
     return OSRSetVertCS( self, VertCSName, VertDatumName, VertDatumType );
   }  
-  
+
+%apply Pointer NONNULL {OSRSpatialReferenceShadow* horizcs};
+%apply Pointer NONNULL {OSRSpatialReferenceShadow* vertcs};  
   OGRErr SetCompoundCS( const char *name,
                         OSRSpatialReferenceShadow *horizcs,
                         OSRSpatialReferenceShadow *vertcs ) {
@@ -756,10 +758,12 @@ public:
   OGRErr ImportFromProj4( char *ppszInput ) {
     return OSRImportFromProj4( self, ppszInput );
   }
-  
+
+%apply Pointer NONNULL {char* url};
   OGRErr ImportFromUrl( char *url ) {
     return OSRImportFromUrl( self, url );
   }
+
 %apply (char **options) { (char **) };
   OGRErr ImportFromESRI( char **ppszInput ) {
     return OSRImportFromESRI( self, ppszInput );
@@ -788,7 +792,9 @@ public:
   OGRErr ImportFromXML( char const *xmlString ) {
     return OSRImportFromXML( self, xmlString );
   }
-  
+
+%apply Pointer NONNULL {char const *proj};
+%apply Pointer NONNULL {char const *datum};
   OGRErr ImportFromERM( char const *proj, char const *datum,
                         char const *units ) {
     return OSRImportFromERM( self, proj, datum, units );
