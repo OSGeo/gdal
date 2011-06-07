@@ -2895,6 +2895,89 @@ OGRErr OSRSetVertCS( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                           SetCompoundCS()                            */
+/************************************************************************/
+
+/**
+ * \brief Setup a compound coordinate system.
+ *
+ * This method is the same as the C function OSRSetCompoundCS(). 
+
+ * This method is replace the current SRS with a COMPD_CS coordinate system
+ * consisting of the passed in horizontal and vertical coordinate systems.
+ *
+ * @param pszName the name of the compound coordinate system. 
+ * 
+ * @param poHorizSRS the horizontal SRS (PROJCS or GEOGCS).
+ *  
+ * @param poVertSRS the vertical SRS (VERT_CS).
+ * 
+ * @return OGRERR_NONE on success.
+ */
+
+OGRErr 
+OGRSpatialReference::SetCompoundCS( const char *pszName,
+                                    const OGRSpatialReference *poHorizSRS,
+                                    const OGRSpatialReference *poVertSRS )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify these are legal horizontal and vertical coordinate       */
+/*      systems.                                                        */
+/* -------------------------------------------------------------------- */
+    if( !poVertSRS->IsVertical() ) 
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SetCompoundCS() fails, vertical component is not VERT_CS." );
+        return OGRERR_FAILURE;
+    }
+    if( !poHorizSRS->IsProjected() 
+        && !poHorizSRS->IsGeographic() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SetCompoundCS() fails, horizontal component is not PROJCS or GEOGCS." );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Replace with compound srs.                                      */
+/* -------------------------------------------------------------------- */
+    Clear();
+
+    poRoot = new OGR_SRSNode( "COMPD_CS" );
+    poRoot->AddChild( new OGR_SRSNode( pszName ) );
+    poRoot->AddChild( poHorizSRS->GetRoot()->Clone() );
+    poRoot->AddChild( poVertSRS->GetRoot()->Clone() );
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OSRSetCompoundCS()                          */
+/************************************************************************/
+
+/**
+ * \brief Setup a compound coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::SetCompoundCS()
+ */
+OGRErr OSRSetCompoundCS( OGRSpatialReferenceH hSRS,
+                         const char *pszName,
+                         OGRSpatialReferenceH hHorizSRS,
+                         OGRSpatialReferenceH hVertSRS )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetCompoundCS", CE_Failure );
+    VALIDATE_POINTER1( hHorizSRS, "OSRSetCompoundCS", CE_Failure );
+    VALIDATE_POINTER1( hVertSRS, "OSRSetCompoundCS", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->
+        SetCompoundCS( pszName,
+                       (OGRSpatialReference *) hHorizSRS,
+                       (OGRSpatialReference *) hVertSRS );
+}
+
+/************************************************************************/
 /*                             SetProjCS()                              */
 /************************************************************************/
 
@@ -5592,6 +5675,44 @@ OGRErr OSRStripCTParms( OGRSpatialReferenceH hSRS )
     VALIDATE_POINTER1( hSRS, "OSRStripCTParms", CE_Failure );
 
     return ((OGRSpatialReference *) hSRS)->StripCTParms( NULL );
+}
+
+/************************************************************************/
+/*                             IsCompound()                             */
+/************************************************************************/
+
+/**
+ * \brief Check if coordinate system is compound.
+ *
+ * This method is the same as the C function OSRIsCompound().
+ *
+ * @return TRUE if this is rooted with a COMPD_CS node.
+ */
+
+int OGRSpatialReference::IsCompound() const
+
+{
+    if( poRoot == NULL )
+        return FALSE;
+
+    return EQUAL(poRoot->GetValue(),"COMPD_CS");
+}
+
+/************************************************************************/
+/*                           OSRIsCompound()                            */
+/************************************************************************/
+
+/** 
+ * \brief Check if the coordinate system is compound.
+ *
+ * This function is the same as OGRSpatialReference::IsCompound().
+ */
+int OSRIsCompound( OGRSpatialReferenceH hSRS ) 
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRIsCompound", 0 );
+
+    return ((OGRSpatialReference *) hSRS)->IsCompound();
 }
 
 /************************************************************************/
