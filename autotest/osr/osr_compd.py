@@ -62,6 +62,10 @@ def osr_compd_1():
         gdaltest.post_reason( 'projected COMPD_CS misrecognised as local.')
         return 'fail'
 
+    if not srs.IsCompound():
+        gdaltest.post_reason( 'COMPD_CS not recognised as compound.' )
+        return 'fail'
+
     expected_proj4 = '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.999601272 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=375,-111,431,0,0,0,0 +units=m +vunits=m +no_defs '
     got_proj4 = srs.ExportToProj4()
 
@@ -278,6 +282,47 @@ def osr_compd_6():
     
     return 'success'
 
+###############################################################################
+# Test SetCompound()
+
+def osr_compd_7():
+
+    srs_horiz = osr.SpatialReference()
+    srs_horiz.ImportFromEPSG( 4326 )
+
+    srs_vert = osr.SpatialReference()
+    srs_vert.ImportFromEPSG( 5703 )
+    srs_vert.SetTargetLinearUnits( 'VERT_CS', 'foot', 0.304800609601219 )
+
+    srs = osr.SpatialReference()
+    srs.SetCompoundCS( 'My Compound SRS', srs_horiz, srs_vert )
+
+    exp_wkt = """COMPD_CS["My Compound SRS",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    VERT_CS["NAVD88 height",
+        VERT_DATUM["North American Vertical Datum 1988",2005,
+            AUTHORITY["EPSG","5103"],
+            EXTENSION["PROJ4_GRIDS","g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx"]],
+        AXIS["Up",UP],
+        UNIT["foot",0.304800609601219],
+        AUTHORITY["EPSG","5703"]]]"""
+        
+    wkt = srs.ExportToPrettyWkt() 
+
+    if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_compd_1,
     osr_compd_2,
@@ -285,6 +330,7 @@ gdaltest_list = [
     osr_compd_4,
     osr_compd_5,
     osr_compd_6,
+    osr_compd_7,
     None ]
 
 if __name__ == '__main__':

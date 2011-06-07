@@ -239,6 +239,10 @@ public:
     return OSRIsProjected(self);
   }
 
+  int IsCompound() {
+    return OSRIsCompound(self);
+  }
+
   int IsGeocentric() {
     return OSRIsGeocentric(self);
   }
@@ -288,6 +292,10 @@ public:
   double GetAngularUnits() {
     // Return code ignored.
     return OSRGetAngularUnits( self, 0 );
+  }
+
+  OGRErr SetTargetLinearUnits( const char *target, const char*name, double to_meters ) {
+    return OSRSetTargetLinearUnits( self, target, name, to_meters );
   }
 
   OGRErr SetLinearUnits( const char*name, double to_meters ) {
@@ -732,6 +740,12 @@ public:
                     int VertDatumType = 0) {
     return OSRSetVertCS( self, VertCSName, VertDatumName, VertDatumType );
   }  
+  
+  OGRErr SetCompoundCS( const char *name,
+                        OSRSpatialReferenceShadow *horizcs,
+                        OSRSpatialReferenceShadow *vertcs ) {
+    return OSRSetCompoundCS( self, name, horizcs, vertcs );
+  }
 
 %apply (char **ignorechange) { (char **) };
   OGRErr ImportFromWkt( char **ppszInput ) {
