@@ -353,14 +353,10 @@ OGRErr CPL_DLL OSRSetTOWGS84( OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRGetTOWGS84( OGRSpatialReferenceH hSRS, double *, int );
                         
 
-OGRErr OSRSetCompoundCS( OGRSpatialReferenceH hSRS,
-                         const char *pszName,
-                         OGRSpatialReferenceH hHorizSRS,
-                         OGRSpatialReferenceH hVertSRS );
-OGRErr OSRSetVertCS( OGRSpatialReferenceH hSRS,
-                     const char * pszVertCSName,
-                     const char * pszVertDatumName,
-                     int nVertDatumType );
+OGRErr CPL_DLL OSRSetCompoundCS( OGRSpatialReferenceH hSRS,
+                                 const char *pszName,
+                                 OGRSpatialReferenceH hHorizSRS,
+                                 OGRSpatialReferenceH hVertSRS );
 OGRErr CPL_DLL OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
                       const char * pszDatumName,
