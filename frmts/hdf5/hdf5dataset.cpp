@@ -297,9 +297,8 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 {
-    int i;
-
-
+    unsigned i;
+    
 /* -------------------------------------------------------------------- */
 /*      Visit all objects                                               */
 /* -------------------------------------------------------------------- */
@@ -433,7 +432,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
     hid_t	hDatasetID;		/* identifier of dataset */
     hsize_t     nbObjs=0;		/* number of objects in a group */
     int         nbAttrs=0;		/* number of attributes in object */
-    int		idx;
+    unsigned	idx;
     int         n_dims;
     H5G_stat_t  oStatbuf;
     hsize_t     *dims=NULL;
@@ -442,8 +441,6 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
     hid_t       dataspace;
     hid_t       native;
     herr_t status;
-
-    char *CreatePath( HDF5GroupObjects *poH5Object );
 
     HDF5GroupObjects *poHchild;
     HDF5GroupObjects *poHparent;
@@ -590,7 +587,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
 /************************************************************************/
 
 herr_t HDF5AttrIterate( hid_t hH5ObjID, 
-			const char *AttrName, 
+			const char *pszAttrName, 
 			void *pDS )
 {
     hid_t           hAttrID;
@@ -600,22 +597,47 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
 
     char           *szData = NULL;
     hsize_t        nSize[64];
-    unsigned int            nAttrElmts;
+    unsigned int   nAttrElmts;
     hsize_t        nAttrSize;
     hsize_t        i;
     void           *buf = NULL;
-    unsigned int             nAttrDims;
+    unsigned int   nAttrDims;
 
+    char          **papszTokens;
 
     HDF5Dataset    *poDS;
-    char           *szTemp = (char*) CPLMalloc( 8192 );
+    CPLString       osKey;
     char           *szValue = NULL;
 
     poDS = (HDF5Dataset *) pDS;
-    sprintf( szTemp, "%s:%s", poDS->poH5CurrentObject->pszName, 
-	     AttrName );
 
-    hAttrID          = H5Aopen_name( hH5ObjID, AttrName );
+    // Convert "/" into "_" fro the path component
+    const char* pszPath = poDS->poH5CurrentObject->pszUnderscorePath;
+    if(pszPath != NULL && strlen(pszPath) > 0)
+    {
+	papszTokens = CSLTokenizeString2( pszPath, "/", CSLT_HONOURSTRINGS );
+
+	for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; ++i )
+	{
+	    if( i != 0)
+		osKey += '_';
+	    osKey += papszTokens[i];
+	}
+	CSLDestroy( papszTokens );
+    }
+    
+    // Convert whitespaces into "_" for the attribute name component
+    papszTokens = CSLTokenizeString2( pszAttrName, " ", 
+                            CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+    for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; ++i )
+    {
+	if(!osKey.empty())
+	    osKey += '_';
+	osKey += papszTokens[i];
+    }
+    CSLDestroy( papszTokens );
+
+    hAttrID          = H5Aopen_name( hH5ObjID, pszAttrName );
     hAttrTypeID      = H5Aget_type( hAttrID );
     hAttrNativeType  = H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
     hAttrSpace       = H5Aget_space( hAttrID );
@@ -731,11 +753,8 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     H5Tclose(hAttrNativeType);
     H5Tclose(hAttrTypeID);
     H5Aclose( hAttrID );
-    //printf( "%s = %s\n",szTemp, szValue );
-    poDS->papszMetadata =
-	CSLSetNameValue( poDS->papszMetadata, szTemp,  
-			 CPLSPrintf( "%s", szValue ) );
-    CPLFree( szTemp );
+    poDS->papszMetadata = CSLSetNameValue( poDS->papszMetadata, osKey, szValue);
+
     CPLFree( szData );
     CPLFree( szValue );
 
@@ -804,7 +823,7 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
     ( HDF5GroupObjects *poH5Objects, const char* pszDatasetPath )
 {
-    int i;
+    unsigned i;
     HDF5Dataset *poDS;
     HDF5GroupObjects *poObjectsFound;
     poDS=this;
@@ -840,7 +859,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
 HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
     ( HDF5GroupObjects *poH5Objects, const char* pszDatasetName )
 {
-    int i;
+    unsigned i;
     HDF5Dataset *poDS;
     HDF5GroupObjects *poObjectsFound;
     poDS=this;
@@ -878,14 +897,13 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
 CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 					  int bSUBDATASET )
 {
-    int i;
     char szTemp[8192];
     char szDim[8192];
     HDF5Dataset *poDS;
     poDS=this;
     
     if( poRootGroup->nbObjs >0 )  
-	for( i=0; i < poRootGroup->nbObjs; i++ ) {
+	for( hsize_t i=0; i < poRootGroup->nbObjs; i++ ) {
 	    poDS->HDF5ListGroupObjects( poRootGroup->poHchild+i, bSUBDATASET );
 	}
     
@@ -906,6 +924,8 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
     }
     else if( (poRootGroup->nType == H5G_DATASET ) && bSUBDATASET ) 
     {
+        CreateMetadata( poRootGroup, H5G_DATASET );
+
 	szDim[0]='\0';
 	switch( poRootGroup->nRank ) {
 	case 3: 
@@ -986,7 +1006,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     
     poRootGroup->nbAttrs = H5Aget_num_attrs( hGroupID );
 
-    H5Gget_num_objs( hGroupID, (hsize_t *) &( poRootGroup->nbObjs ) );
+    H5Gget_num_objs( hGroupID, &( poRootGroup->nbObjs ) );
     
     if( poRootGroup->nbObjs > 0 ) {
 	poRootGroup->poHchild = ( HDF5GroupObjects * ) 
