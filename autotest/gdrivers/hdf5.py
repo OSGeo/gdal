@@ -30,10 +30,12 @@
 
 import os
 import sys
-import gdal
-import array
-import string
 import shutil
+
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
 
 sys.path.append( '../pymod' )
 
@@ -168,6 +170,99 @@ def hdf5_6():
     return 'success'
 
 ###############################################################################
+# Coarse metadata check (regression test for #2412).
+
+def hdf5_7():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/metadata.h5' )
+    metadata = ds.GetMetadata()
+    metadataList = ds.GetMetadata_List()
+    ds = None
+
+    if len(metadata) != len(metadataList):
+        gdaltest.post_reason( 'error in metadata dictionary setup' )
+        return 'fail'
+
+    metadataList = [item.split('=', 1)[0] for item in metadataList]
+    for key in metadataList:
+        try:
+            metadata.pop(key)
+        except KeyError:
+            gdaltest.post_reason( 'unable to fing "%s" key' % key )
+            return 'fail'
+    return 'success'
+
+###############################################################################
+# Test metadata names.
+
+def hdf5_8():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/metadata.h5' )
+    metadata = ds.GetMetadata()
+    ds = None
+
+    if len(metadata) == 0:
+        gdaltest.post_reason( 'no metadata found' )
+        return 'fail'
+
+    h5groups = ['G1', 'Group with spaces', 'Group_with_underscores',
+                'Group with spaces_and_underscores']
+    h5datasets = ['D1', 'Dataset with spaces', 'Dataset_with_underscores',
+                  'Dataset with spaces_and_underscores']
+    attributes = {
+        'attribute': 'value',
+        'attribute with spaces': 0,
+        'attribute_with underscores': 0,
+        'attribute with spaces_and_underscores': .1,
+    }
+
+    def scanMetadata(parts):
+        for attr in attributes:
+            name = '_'.join(parts + [attr])
+            name = name.replace(' ', '_')
+            if name not in metadata:
+                gdaltest.post_reason( 'unable to find metadata: "%s"' % name )
+                return 'fail'
+
+            value = metadata.pop(name)
+
+            value = value.strip(' d')
+            value = type(attributes[attr])(value)
+            if value != attributes[attr]:
+                gdaltest.post_reason( 'incorrect metadata value for "%s": '
+                                       '"%s" != "%s"' % (name, value,
+                                                         attributes[attr]) )
+                return 'fail'
+
+    # level0
+    if scanMetadata([]) is not None:
+        return 'fail'
+
+    # level1 datasets
+    for h5dataset in h5datasets:
+        if scanMetadata([h5dataset]) is not None:
+            return 'fail'
+
+    # level1 groups
+    for h5group in h5groups:
+        if scanMetadata([h5group]) is not None:
+            return 'fail'
+
+        # level2 datasets
+        for h5dataset in h5datasets:
+            if scanMetadata([h5group, h5dataset]) is not None:
+                return 'fail'
+
+
+    return 'success'
+
+###############################################################################
 # 
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
@@ -199,13 +294,15 @@ gdaltest_list = [ hdf5_1,
                   hdf5_3,
                   hdf5_4,
                   hdf5_5,
-                  hdf5_6 ]
+                  hdf5_6,
+                  hdf5_7,
+                  hdf5_8 ]
 
-hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/hdf_files/hdf5/samples/convert', 'C1979091.h5',
+hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
                                      'HDF4_PALGROUP/HDF4_PALETTE_2', 7488, -1),
-              ('ftp://ftp.hdfgroup.uiuc.edu/hdf_files/hdf5/samples/convert', 'C1979091.h5',
+              ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
                                      'Raster_Image_#0', 3661, -1),
-              ('ftp://ftp.hdfgroup.uiuc.edu/hdf_files/hdf5/geospatial/DEM', 'half_moon_bay.grid',
+              ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/geospatial/DEM', 'half_moon_bay.grid',
                                      'HDFEOS/GRIDS/DEMGRID/Data_Fields/Elevation', 30863, -1),
             ]
 
