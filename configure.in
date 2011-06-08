@@ -2135,7 +2135,7 @@ if test "$LIBCURL_CONFIG" != "no" ; then
 
   AC_MSG_RESULT([        found libcurl version $CURL_VER])
   
-  AC_CHECK_LIB(curl,curl_global_init,CURL_SETTING=yes,CURL_SETTING=no,)
+  AC_CHECK_LIB(curl,curl_global_init,CURL_SETTING=yes,CURL_SETTING=no,`$LIBCURL_CONFIG --libs`)
 
 fi
 
