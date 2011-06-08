@@ -188,6 +188,11 @@ void OGRDWGDataSource::ReadLayerDefinitions()
         osValue.Printf( "%d", (int) poLD->lineWeight() );
         oLayerProperties["LineWeight"] = osValue;
 
+        if( poLD->isFrozen() || poLD->isHidden() || poLD->isOff() )
+            oLayerProperties["Hidden"] = "1";
+        else
+            oLayerProperties["Hidden"] = "0";
+
         oLayerTable[osLayerName] = oLayerProperties;
     }
 
@@ -278,10 +283,10 @@ void OGRDWGDataSource::ReadHeaderSection()
     CPLString osValue;
 
     osValue.Printf( "%d", poDb->getLUPREC() );
-    oHeaderVariables["LUPREC"] = osValue;
+    oHeaderVariables["$LUPREC"] = osValue;
 
     osValue.Printf( "%g", poDb->dimtxt() );
-    oHeaderVariables["DIMTXT"] = osValue;
+    oHeaderVariables["$DIMTXT"] = osValue;
 
     CPLDebug( "DWG", "Read %d header variables.", 
               (int) oHeaderVariables.size() );
