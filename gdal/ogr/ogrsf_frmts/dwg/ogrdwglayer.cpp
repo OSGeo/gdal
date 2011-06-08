@@ -43,6 +43,7 @@
 #include "DbCircle.h"
 #include "DbSpline.h"
 #include "DbBlockReference.h"
+#include "DbAttribute.h"
 #include "DbFiler.h"
 #include "Ge/GeScale3d.h"
 
@@ -321,6 +322,12 @@ void OGRDWGLayer::PrepareLineStyle( OGRFeature *poFeature )
     CPLString osLayer = poFeature->GetFieldAsString("Layer");
 
 /* -------------------------------------------------------------------- */
+/*      Is the layer disabled/hidden/frozen/off?                        */
+/* -------------------------------------------------------------------- */
+    int bHidden = 
+        EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
+
+/* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
 /* -------------------------------------------------------------------- */
     int nColor = 256;
@@ -370,6 +377,9 @@ void OGRDWGLayer::PrepareLineStyle( OGRFeature *poFeature )
                     pabyDWGColors[nColor*3+0],
                     pabyDWGColors[nColor*3+1],
                     pabyDWGColors[nColor*3+2] );
+
+    if( bHidden )
+        osStyle += "00"; 
 
     if( dfWeight > 0.0 )
     {
@@ -1167,6 +1177,8 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
     oTransformer.dfYScale = oScale.sy;    
     oTransformer.dfZScale = oScale.sz;
 
+    oTransformer.dfAngle = poRef->rotation();
+
     OdDbBlockTableRecordPtr poBlockRec = poRef->blockTableRecord().openObject();
     if (poBlockRec.get())
         osBlockName = (const char *) poBlockRec->getName();
@@ -1234,6 +1246,22 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
                                 poFeature->GetFieldAsString("EntityHandle") );
 
         apoPendingFeatures.push( poSubFeature );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have attributes, insert them on the stack at this         */
+/*      point too.                                                      */
+/* -------------------------------------------------------------------- */
+    OdDbObjectIteratorPtr pIter = poRef->attributeIterator();
+    for (; !pIter->done(); pIter->step())
+    {
+        OdDbAttributePtr pAttr = pIter->entity();
+        if (!pAttr.isNull())
+        {
+            OGRFeature *poAttrFeat = TranslateTEXT( pAttr );
+            if( poAttrFeat )
+                apoPendingFeatures.push( poAttrFeat );
+        }
     }
 
 /* -------------------------------------------------------------------- */
