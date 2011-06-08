@@ -40,7 +40,7 @@ typedef struct HDF5GroupObjects {
   char         *pszTemp;
   int		nType;
   int		nIndex;
-  int		nbObjs;
+  hsize_t	nbObjs;
   int		nbAttrs;
   int           nRank;
   hsize_t       *paDims;
