@@ -265,6 +265,33 @@ the approach is as above in all these cases.
     PrepareLineStyle( poFeature );
 
 /* -------------------------------------------------------------------- */
+/*      Is the layer disabled/hidden/frozen/off?                        */
+/* -------------------------------------------------------------------- */
+    CPLString osLayer = poFeature->GetFieldAsString("Layer");
+
+    int bHidden = 
+        EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
+
+/* -------------------------------------------------------------------- */
+/*      Work out the color for this feature.                            */
+/* -------------------------------------------------------------------- */
+    int nColor = 256;
+
+    if( oStyleProperties.count("Color") > 0 )
+        nColor = atoi(oStyleProperties["Color"]);
+
+    // Use layer color? 
+    if( nColor < 1 || nColor > 255 )
+    {
+        const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
+        if( pszValue != NULL )
+            nColor = atoi(pszValue);
+    }
+        
+    if( nColor < 1 || nColor > 255 )
+        nColor = 8;
+
+/* -------------------------------------------------------------------- */
 /*      Prepare a new feature to serve as the dimension text label      */
 /*      feature.  We will push it onto the layer as a pending           */
 /*      feature for the next feature read.                              */
@@ -309,7 +336,16 @@ the approach is as above in all these cases.
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
-    // add color!
+    const unsigned char *pabyDWGColors = OGRDWGDriver::GetDWGColorTable();
+
+    snprintf( szBuffer, sizeof(szBuffer), ",c:#%02x%02x%02x", 
+              pabyDWGColors[nColor*3+0],
+              pabyDWGColors[nColor*3+1],
+              pabyDWGColors[nColor*3+2] );
+    osStyle += szBuffer;
+
+    if( bHidden )
+        osStyle += "00"; 
 
     osStyle += ")";
 
