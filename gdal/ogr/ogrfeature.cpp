@@ -3188,16 +3188,16 @@ OGRErr OGR_F_SetFromWithMap( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
 
 const char *OGRFeature::GetStyleString()
 {
-	int  iStyleFieldIndex;
+    int  iStyleFieldIndex;
 
-	if (m_pszStyleString)
-       return m_pszStyleString;
+    if (m_pszStyleString)
+        return m_pszStyleString;
 
-	iStyleFieldIndex = GetFieldIndex("OGR_STYLE");
-	if (iStyleFieldIndex >= 0)
-       return GetFieldAsString(iStyleFieldIndex);
+    iStyleFieldIndex = GetFieldIndex("OGR_STYLE");
+    if (iStyleFieldIndex >= 0)
+        return GetFieldAsString(iStyleFieldIndex);
 
-	return NULL;
+    return NULL;
 }
 
 /************************************************************************/
