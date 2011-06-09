@@ -139,6 +139,7 @@ class OGRDWGLayer : public OGRLayer
     OGRFeature *        TranslateINSERT( OdDbEntityPtr poEntity );
 
     void                FormatDimension( CPLString &osText, double dfValue );
+    void                RotateText( double dfAngle, OGRFeature *poFeature );
 
     CPLString           TextUnescape( OdString );
 
