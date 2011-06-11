@@ -3,9 +3,11 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements FileGDB OGR driver.
  * Author:   Ragi Yaser Burhum, ragi@burhum.com
+ *           Paul Ramsey, pramsey at cleverelephant.ca
  *
  ******************************************************************************
  * Copyright (c) 2010, Ragi Yaser Burhum
+ * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -64,8 +66,7 @@ const char *FGdbDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *FGdbDriver::Open( const char* pszFilename,
-                              int bUpdate )
+OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
 
 {
   // First check if we have to do any work.
@@ -73,6 +74,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename,
     return NULL;
 
   long hr;
+
 
   Geodatabase* pGeoDatabase = new Geodatabase;
 
@@ -103,10 +105,59 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename,
 *                     CreateDataSource()                                *
 ************************************************************************/
 
-OGRDataSource* FGdbDriver::CreateDataSource( const char * pszName,
+OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
                                            char **papszOptions)
 {
-  return NULL;
+  long hr;
+  Geodatabase *pGeodatabase;
+  std::wstring wconn = StringToWString(conn);
+  int bUpdate = TRUE; // If we're creating, we must be writing. 
+  VSIStatBuf stat;
+  
+  /* We don't support options yet, so warn if they send us some */
+  if ( papszOptions )
+  {
+    /* TODO: warning, ignoring options */
+  }
+
+  /* Only accept names of form "filename.gdb" */
+  if ( ! EQUAL(CPLGetExtension(conn),"gdb") ) 
+  {
+    CPLError( CE_Failure, CPLE_AppDefined, "FGDB data source name must use 'gdb' extension.\n" );    
+    return NULL;
+  }
+  
+  /* Don't try to create on top of something already there */
+  if( CPLStat( conn, &stat ) == 0 ) 
+  {
+    CPLError( CE_Failure, CPLE_AppDefined, "%s already exists.\n", conn );    
+    return NULL;
+  }
+  
+  /* Try to create the geodatabase */
+  pGeodatabase = new Geodatabase; // Create on heap so we can store it in the Datasource
+  hr = CreateGeodatabase(wconn, *pGeodatabase);
+  
+  /* Handle creation errors */
+  if ( S_OK != hr )
+  {
+    char *errstr = "Error creating geodatabase (%s).\n";
+    if ( hr == -2147220653 ) 
+      errstr = "File already exists (%s).\n";
+    delete pGeodatabase;
+    CPLError( CE_Failure, CPLE_AppDefined, errstr, conn );    
+    return NULL;
+  }
+  
+  /* Ready to embed the Geodatabase in an OGR Datasource */
+  FGdbDataSource* pDS = new FGdbDataSource();
+  if ( ! pDS->Open(pGeodatabase, conn, bUpdate) )
+  {
+    delete pDS;
+    return NULL;
+  }
+  else
+    return pDS;
 }
 
 
@@ -145,10 +196,10 @@ int FGdbDriver::TestCapability( const char * pszCap )
     */
   if (EQUAL(pszCap, ODsCDeleteLayer) )
     return TRUE;
-  /*
+
   if (EQUAL(pszCap, ODrCCreateDataSource) )
-    return FALSE;
-  */
+    return TRUE;
+
 
   return FALSE;
 }
@@ -157,7 +208,7 @@ int FGdbDriver::TestCapability( const char * pszCap )
 *                           RegisterOGRGdb()                                 *
 ************************************************************************/
 
-void RegisterOGRfilegdb()
+void RegisterOGRFileGDB()
 
 {
   if (! GDAL_CHECK_VERSION("OGR FGDB"))
