@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.54 2010-10-07 18:46:26 aboudreault Exp $
+ * $Id: mitab_spatialref.cpp,v 1.55 2011-06-11 00:35:00 fwarmerdam Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.55  2011-06-11 00:35:00  fwarmerdam
+ * add support for reading google mercator (#4115)
+ *
  * Revision 1.54  2010-10-07 18:46:26  aboudreault
  * Fixed bad use of atof when locale setting doesn't use . for float (GDAL bug #3775)
  *
@@ -375,6 +378,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {150, "Hartebeesthoek94",           0, 0,    0,   0,    0, 0, 0, 0, 0},
 {151, "ATS77",                      51, 0, 0, 0, 0, 0, 0, 0, 0},
 {152, "JGD2000",                    0, 0, 0, 0, 0, 0, 0, 0, 0},
+{157, "WGS_1984",                   54,0, 0, 0, 0, 0, 0, 0, 0}, // Google merc
 {1000,"DHDN_Potsdam_Rauenberg",     10,582,  105, 414, -1.04, -0.35, 3.08, 8.3, 0},
 {1001,"Pulkovo_1942",               3, 24,   -123, -94, -0.02, 0.25, 0.13, 1.1, 0},
 {1002,"NTF_Paris_Meridian",         30,-168, -60, 320, 0, 0, 0, 0, 2.337229166667},
@@ -460,6 +464,7 @@ MapInfoSpheroidInfo asSpheroidInfoList[] =
 { 1,"WGS 72",                                   6378135.0,      298.26},
 {28,"WGS 84",                                   6378137.0,      298.257223563},
 {29,"WGS 84 (MAPINFO Datum 0)",                 6378137.01,     298.257223563},
+{54,"WGS 84 (MAPINFO Datum 157)",               6378137.01,     298.257223563},
 {-1,NULL,                                       0.0,            0.0}
 };
  
@@ -1061,6 +1066,17 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                     -psDatumInfo->dfDatumParm1, 
                                     -psDatumInfo->dfDatumParm2, 
                                     psDatumInfo->dfDatumParm3 );
+    }
+
+    /*-----------------------------------------------------------------
+     * Special case for Google Mercator (datum=157, ellipse=54, gdal #4115)
+     *----------------------------------------------------------------*/
+    if( sTABProj.nProjId == 10 
+        && sTABProj.nDatumId == 157
+        && sTABProj.nEllipsoidId == 54 )
+    {
+        m_poSpatialRef->SetNode( "PROJCS", "WGS 84 / Pseudo-Mercator" );
+        m_poSpatialRef->SetExtension( "PROJCS", "PROJ4", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs" );
     }
 
     return m_poSpatialRef;
