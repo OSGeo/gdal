@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.41 2010-10-07 18:46:26 aboudreault Exp $
+ * $Id: mitab_coordsys.cpp,v 1.42 2011-06-11 00:35:00 fwarmerdam Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.42  2011-06-11 00:35:00  fwarmerdam
+ * add support for reading google mercator (#4115)
+ *
  * Revision 1.41  2010-10-07 18:46:26  aboudreault
  * Fixed bad use of atof when locale setting doesn't use . for float (GDAL bug #3775)
  *
@@ -785,6 +788,15 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                       -adfDatumParm[3], -adfDatumParm[4], -adfDatumParm[5], 
                       adfDatumParm[6] );
 
+    /*-----------------------------------------------------------------
+     * Special case for Google Mercator (datum=157, ellipse=54, gdal #4115)
+     *----------------------------------------------------------------*/
+
+    if( nBaseProjection == 10 && nDatum == 157 )
+    {
+        poSR->SetNode( "PROJCS", "WGS 84 / Pseudo-Mercator" );
+        poSR->SetExtension( "PROJCS", "PROJ4", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs" );
+    }
 /* -------------------------------------------------------------------- */
 /*      Report on translation.                                          */
 /* -------------------------------------------------------------------- */
