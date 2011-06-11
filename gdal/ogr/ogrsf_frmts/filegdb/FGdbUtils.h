@@ -41,9 +41,15 @@ std::string WStringToString(const std::wstring& s);
 //
 // GDB API to OGR Geometry Mapping
 //
+
+// Type mapping
 bool GDBToOGRGeometry(std::string geoType, bool hasZ, OGRwkbGeometryType* pOut);
+bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *hasZ);
+
+
 bool GDBToOGRSpatialReference(const std::string & wkt, OGRSpatialReference** ppSR);
 
+// Feature mapping 
 bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeometry, 
                               OGRSpatialReference* pOGRSR, OGRGeometry** ppOutGeometry);
 
@@ -54,11 +60,21 @@ bool GhettoGDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pG
 // GDB API to OGR Field Mapping
 //
 bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* ogrType);
+bool OGRToGDBFieldType(OGRFieldType ogrType, std::string* gdbType);
+
+//
+// GDB Field Width defaults
+//
+bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precision);
 
 //
 // GDBAPI error to OGR
 //
 bool GDBErr(long hr, std::string desc);
 
+//
+// Utility for adding attributes to CPL nodes
+//
+void CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char* attrvalue);
 
 #endif

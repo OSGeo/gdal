@@ -3,9 +3,11 @@
 * Project:  OpenGIS Simple Features Reference Implementation
 * Purpose:  Different utility functions used in FileGDB OGR driver.
 * Author:   Ragi Yaser Burhum, ragi@burhum.com
+*           Paul Ramsey, pramsey at cleverelephant.ca
 *
 ******************************************************************************
 * Copyright (c) 2010, Ragi Yaser Burhum
+* Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +42,6 @@ std::wstring StringToWString(const std::string& s)
   return temp; 
 }
 
-
 std::string WStringToString(const std::wstring& s)
 {
   //TODO: Need to see if this works on *nix port - write a more efficient - unnecessary mem copied around
@@ -56,28 +57,22 @@ std::string WStringToString(const std::wstring& s)
   return returnMe; 
 }
 
-
-bool GDBErr(long hr, std::string desc)
+bool GDBErr(long int hr, std::string desc)
 {
-  //  IErrorInfoPtr ipErrorInfo = NULL;
-  //  ::GetErrorInfo(NULL, &ipErrorInfo);
-
-  //  if (ipErrorInfo)
-  //  {
-  //    CComBSTR comErrDesc;
-  //    ipErrorInfo->GetDescription(&comErrDesc);
-
-  //    CW2A errMsg(comErrDesc);
-
-  //    CPLError( CE_Failure, CPLE_AppDefined, "AO Error: %s long:%d COM_ERROR:%s", desc.c_str(), hr, errMsg );
-
-  //    ::SetErrorInfo(NULL, NULL);
-  //  }
-  //  else
-  //  {
-  CPLError( CE_Failure, CPLE_AppDefined, "GDB Error: %s long:%ld", desc.c_str(), hr);
-  //  }
-
+  std::wstring fgdb_error_desc_w;
+  fgdbError er;
+  er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+  if ( er == S_OK )
+  {
+    std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
+    CPLError( CE_Failure, CPLE_AppDefined, "Error: %s (%s)", desc.c_str(), fgdb_error_desc.c_str());
+  }
+  else
+  {
+    CPLError( CE_Failure, CPLE_AppDefined, "Error (%ld): %s", hr, desc.c_str());
+  }
+  FileGDBAPI::ErrorInfo::ClearErrors();
+  
   return false;
 }
 
@@ -114,10 +109,86 @@ bool GDBToOGRGeometry(string geoType, bool hasZ, OGRwkbGeometryType* pOut)
 }
 
 
+bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *hasZ)
+{
+  switch (ogrType) {
+    /* 3D forms */
+    case wkbPoint25D: 
+    {
+      *gdbType = "esriGeometryPoint";
+      *hasZ = true;
+      break;
+    }
+    case wkbMultiPoint25D: 
+    {
+      *gdbType = "esriGeometryMultipoint";
+      *hasZ = true;
+      break;
+    }
+    case wkbLineString25D: 
+    {
+      *gdbType = "esriGeometryLine";
+      *hasZ = true;
+      break;
+    }
+    case wkbMultiLineString25D: 
+    {
+      *gdbType = "esriGeometryPolyline";
+      *hasZ = true;
+      break;
+    }
+    case wkbPolygon25D: 
+    case wkbMultiPolygon25D: 
+    {
+      *gdbType = "esriGeometryPolygon";
+      *hasZ = true;
+      break;
+    }
+    /* 2D forms */
+    case wkbPoint: 
+    {
+      *gdbType = "esriGeometryPoint";
+      *hasZ = false;
+      break;
+    }
+    case wkbMultiPoint: 
+    {
+      *gdbType = "esriGeometryMultipoint";
+      *hasZ = false;
+      break;
+    }
+    case wkbLineString: 
+    {
+      *gdbType = "esriGeometryLine";
+      *hasZ = false;
+      break;
+    }
+    case wkbMultiLineString: 
+    {
+      *gdbType = "esriGeometryPolyline";
+      *hasZ = false;
+      break;
+    }
+    case wkbPolygon: 
+    case wkbMultiPolygon: 
+    {
+      *gdbType = "esriGeometryPolygon";
+      *hasZ = false;
+      break;
+    }
+    default:
+    {
+      CPLError( CE_Failure, CPLE_AppDefined, "Cannot map OGRwkbGeometryType (%d) to ESRI type", ogrType);
+      return false;
+    }
+  }
+  return true;
+}
+
+
 
 // We could make this function far more robust by doing automatic coertion of types,
 // and/or skipping fields we do not know. But our purposes this works fine
-
 bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut)
 {
   /*
@@ -195,6 +266,93 @@ bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut)
     return false;
   }
 }
+
+bool OGRToGDBFieldType(OGRFieldType ogrType, std::string* gdbType)
+{
+  
+  switch(ogrType)
+  {
+    case OFTInteger:
+    {
+      *gdbType = "esriFieldTypeInteger";
+      break;
+    }
+    case OFTReal:
+    {
+      *gdbType = "esriFieldTypeDouble";
+      break;
+    }
+    case OFTString:
+    {
+      *gdbType = "esriFieldTypeString";
+      break;
+    }
+    case OFTBinary:
+    {
+      *gdbType = "esriFieldTypeBlob";
+      break;
+    }
+    case OFTDate:
+    case OFTDateTime:
+    {
+      *gdbType = "esriFieldTypeDate";
+      break;      
+    }
+    default:
+    {
+      CPLError( CE_Warning, CPLE_AppDefined, "Cannot map OGR field type (%d)", ogrType);
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+
+bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precision)
+{
+
+  *precision = 0;
+  
+  if(gdbType == "esriFieldTypeSmallInteger" )
+  {
+    *width = 2;
+  }
+  else if(gdbType == "esriFieldTypeInteger" )
+  {
+    *width = 12;
+  }    
+  else if(gdbType == "esriFieldTypeSingle" )
+  {
+    *width = 12;
+    *precision = 5;
+  }    
+  else if(gdbType == "esriFieldTypeDouble" )
+  {
+    *width = 24;
+    *precision = 15;
+  }
+  else if(gdbType == "esriFieldTypeString" )
+  {
+    *width = 256;
+  }
+  else if(gdbType == "esriFieldTypeDate" )
+  {
+    *width = 32;
+  }
+  else if(gdbType == "esriFieldTypeOID" )
+  {
+    *width = 15;
+  }
+  else 
+  {
+    CPLError( CE_Warning, CPLE_AppDefined, "Cannot map ESRI field type (%s)", gdbType.c_str());
+    return false;
+  }
+  
+  return true;
+}
+
 
 // TODO: this is the temporary version - we need to do a full binary import to make it work for other geometries
 // only works for points - temporary
@@ -335,4 +493,11 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
 
     return false;
   }
+}
+
+/* Utility method for attributing nodes */
+void CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char* attrvalue)
+{
+  if ( !node ) return;
+  CPLCreateXMLNode( CPLCreateXMLNode( node, CXT_Attribute, attrname ), CXT_Text, attrvalue );
 }

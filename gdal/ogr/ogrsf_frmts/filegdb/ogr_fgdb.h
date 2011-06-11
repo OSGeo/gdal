@@ -34,12 +34,6 @@
 #include <vector>
 #include "cpl_string.h"
 
-//COM ATL Includes
-#include <atlbase.h>
-//#include <atlcom.h>
-//#include <atlctl.h>
-//#include <atlstr.h> //CString
-
 #ifndef WIN32
 #define LINUX_FILEGDB_API
 #include <wctype.h>
@@ -72,10 +66,11 @@ public:
   FGdbLayer();
   virtual ~FGdbLayer();
 
+  // Internal used by FGDB driver */
   bool Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std::wstring wstrTablePath);
+  bool Create(FGdbDataSource* pParentDataSource, const char * pszLayerName, OGRSpatialReference *poSRS, OGRwkbGeometryType eType, char ** papszOptions);
 
   // virtual const char *GetName();
-
   virtual const char* GetFIDColumn() { return m_strOIDFieldName.c_str(); }
   virtual const char* GetGeometryColumn() { return m_strShapeFieldName.c_str(); }
 
@@ -85,7 +80,8 @@ public:
 
   long GetTable(Table** ppTable);
 
-
+  virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK );
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
   virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
   virtual int         GetFeatureCount( int bForce );
   virtual OGRErr      SetAttributeFilter( const char *pszQuery );
@@ -154,7 +150,6 @@ public:
   FGdbDataSource();
   virtual ~FGdbDataSource();
 
-
   int         Open(Geodatabase* pGeodatabase, const char *, int );
 
   const char* GetName() { return m_pszName; }
@@ -162,14 +157,8 @@ public:
 
   OGRLayer*   GetLayer( int );
 
+  virtual OGRLayer* CreateLayer( const char *, OGRSpatialReference* = NULL, OGRwkbGeometryType = wkbUnknown, char** = NULL );
 
-  /*
-  virtual OGRLayer* CreateLayer( const char *,
-  OGRSpatialReference* = NULL,
-  OGRwkbGeometryType = wkbUnknown,
-  char** = NULL );
-
-  */
   virtual OGRErr DeleteLayer( int );
 
   int TestCapability( const char * );
@@ -184,6 +173,8 @@ public:
   */
 protected:
   bool LoadLayers(const std::vector<std::wstring> & typesRequested, const std::wstring & parent);
+  bool LoadLayers2(const std::wstring & parent);
+  bool OpenFGDBTables(const std::vector<std::wstring> &layers);
 
   char* m_pszName;
   std::vector <FGdbLayer*> m_layers;
@@ -214,7 +205,7 @@ private:
 };
 
 CPL_C_START
-void CPL_DLL RegisterOGRfilegdb();
+void CPL_DLL RegisterOGRFileGDB();
 CPL_C_END
 
 #endif /* ndef _OGR_PG_H_INCLUDED */
