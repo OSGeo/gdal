@@ -3,9 +3,11 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements FileGDB OGR Datasource.
  * Author:   Ragi Yaser Burhum, ragi@burhum.com
+ *           Paul Ramsey, pramsey at cleverelephant.ca
  *
  ******************************************************************************
  * Copyright (c) 2010, Ragi Yaser Burhum
+ * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -82,26 +84,95 @@ int FGdbDataSource::Open(Geodatabase* pGeodatabase, const char * pszNewName, int
     
     m_pGeodatabase = pGeodatabase;
 
-    long hr;
-
     // Anything will be fetched
     // we could have something more restrictive that only fetches certain item types
 
     std::vector<std::wstring> typesRequested;
-    if (FAILED(hr = m_pGeodatabase->GetDatasetTypes(typesRequested)))
-      return GDBErr(hr, "Failed Opening Workspace Layers");
+	// We're only interested in Tables, Feature Datasets and Feature Classes
+	typesRequested.push_back(L"Feature Class");
+	typesRequested.push_back(L"Table");
+	typesRequested.push_back(L"Feature Dataset");
+	
+    //if (FAILED(hr = m_pGeodatabase->GetDatasetTypes(typesRequested)))
+    //  return GDBErr(hr, "Failed Opening Workspace Layers");
 
-    bool ok = LoadLayers(typesRequested, L"\\");
+    //bool ok = LoadLayers(typesRequested, L"\\");
+    bool rv = LoadLayers2(L"\\");
 
-    if ((!ok) && m_layers.size() == 0)
-      return false; //all of the ones we tried had errors
-    else
-      return true; //at least one worked
+    //std::cout << "m_layers.size() = " << m_layers.size() << std::endl;
+
+    return rv;
 }
 
 /************************************************************************/
 /*                          LoadLayers()                                */
 /************************************************************************/
+
+bool FGdbDataSource::OpenFGDBTables(const std::vector<std::wstring> &layers)
+{
+	fgdbError hr;
+	for ( unsigned int i = 0; i < layers.size(); i++ )
+	{
+		Table* pTable = new Table;
+		if (FAILED(hr = m_pGeodatabase->OpenTable(layers[i], *pTable)))
+		{
+	  		delete pTable;
+	  		return GDBErr(hr, "Error opening " + WStringToString(layers[i]));
+		}
+		FGdbLayer* pLayer = new FGdbLayer;
+		if (!pLayer->Initialize(this, pTable, layers[i]))
+		{
+		  delete pLayer;
+		  return GDBErr(hr, "Error initializing OGRLayer for " + WStringToString(layers[i]));
+		}
+
+		m_layers.push_back(pLayer);
+	}
+	return true;
+}
+
+bool FGdbDataSource::LoadLayers2(const std::wstring &root) 
+{
+  std::vector<wstring> tables;
+  std::vector<wstring> featureclasses;
+  std::vector<wstring> featuredatasets;
+	fgdbError hr;
+		
+	/* Find all the Tables in the root */
+	if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Table", tables)) )
+	{
+		return GDBErr(hr, "Error reading Tables in " + WStringToString(root));	
+	}
+	/* Open the tables we found */
+	if ( tables.size() > 0 && ! OpenFGDBTables(tables) )
+    return false;
+	
+	/* Find all the Feature Classes in the root */
+	if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Feature Class", featureclasses)) )
+	{
+		return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(root));	
+	}
+	/* Open the tables we found */
+	if ( featureclasses.size() > 0 && ! OpenFGDBTables(featureclasses) )
+    return false;
+	
+	/* Find all the Feature Datasets in the root */
+	if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Feature Dataset", featuredatasets)) )
+	{
+		return GDBErr(hr, "Error reading Feature Datasets in " + WStringToString(root));	
+	}
+	/* Look for Feature Classes inside the Feature Dataset */
+	for ( unsigned int i = 0; i < featuredatasets.size(); i++ )
+	{
+		if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(featuredatasets[i], L"Feature Class", featureclasses)) )
+		{
+			return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(featuredatasets[i]));	
+		}
+		if ( featureclasses.size() > 0 && ! OpenFGDBTables(featureclasses) )
+      return false;
+	}
+	return true;
+}
 
 // Flattens out hierarchichal GDB structure
 bool FGdbDataSource::LoadLayers(const std::vector<wstring> & datasetTypes, const wstring & parent)
@@ -131,7 +202,7 @@ bool FGdbDataSource::LoadLayers(const std::vector<wstring> & datasetTypes, const
         
         // do something with it
         // For now, we just ignore dataset containers and only open the children
-        //wcout << datasetTypes[dsTypeIndex] << L" " << childDatasets[childDatasetIndex] << endl;
+        //std::wcout << datasetTypes[dsTypeIndex] << L" " << childDatasets[childDatasetIndex] << std::endl;
 
         if (!LoadLayers(datasetTypes, childDatasets[childDatasetIndex]))
           errorsEncountered = true;
@@ -215,21 +286,18 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
 
 int FGdbDataSource::TestCapability( const char * pszCap )
 {
-  /*
-    if( EQUAL(pszCap,ODsCCreateLayer) && bDSUpdate )
-        return TRUE;
-    else if( EQUAL(pszCap,ODsCDeleteLayer) && bDSUpdate )
-        return TRUE;
-    else
-        return FALSE;
-  */
 
-//  if(EQUAL(pszCap,ODsCDeleteLayer))
-//    return TRUE;
-//  else
-    return FALSE;
+  if( EQUAL(pszCap,ODsCCreateLayer) )
+    return TRUE;
+    
+  // Have not implemented this yet
+  else if( EQUAL(pszCap,ODsCDeleteLayer) )
+    return FALSE; 
+
+  return FALSE;
 }
-//
+
+
 /************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
@@ -242,4 +310,29 @@ OGRLayer *FGdbDataSource::GetLayer( int iLayer )
     return NULL;
   else
     return m_layers[iLayer];
+}
+
+/************************************************************************/
+/*                              CreateLayer()                              */
+/************************************************************************/
+
+OGRLayer *
+FGdbDataSource::CreateLayer( const char * pszLayerName,
+                              OGRSpatialReference *poSRS,
+                              OGRwkbGeometryType eType,
+                              char ** papszOptions )
+{
+  
+	FGdbLayer* pLayer = new FGdbLayer;
+	if (!pLayer->Create(this, pszLayerName, poSRS, eType, papszOptions))
+	{
+	  delete pLayer;
+    return NULL;
+	}
+
+  /* papszOption: FEATUREDATASET=myfeaturedataset */
+  /* otherwise create in "\" */
+  return pLayer;
+
+  
 }
