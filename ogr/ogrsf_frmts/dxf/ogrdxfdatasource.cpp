@@ -281,25 +281,33 @@ void OGRDXFDataSource::ReadLayerDefinition()
     std::map<CPLString,CPLString> oLayerProperties;
     CPLString osLayerName = "";
 
+    oLayerProperties["Hidden"] = "0";
+
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
     {
         switch( nCode )
         {
           case 2:
-            osLayerName = szLineBuf;
+            osLayerName = ACTextUnescape(szLineBuf,GetEncoding());
             oLayerProperties["Exists"] = "1";
             break;
 
           case 6:
-            oLayerProperties["Linetype"] = szLineBuf;
+            oLayerProperties["Linetype"] = ACTextUnescape(szLineBuf,
+                                                          GetEncoding());
             break;
             
           case 62:
             oLayerProperties["Color"] = szLineBuf;
+
+            if( atoi(szLineBuf) < 0 ) // Is layer off?
+                oLayerProperties["Hidden"] = "1";
             break;
             
           case 70:
             oLayerProperties["Flags"] = szLineBuf;
+            if( atoi(szLineBuf) & 0x01 ) // Is layer frozen?
+                oLayerProperties["Hidden"] = "1";
             break;
 
           case 370:
@@ -353,7 +361,7 @@ void OGRDXFDataSource::ReadLineTypeDefinition()
         switch( nCode )
         {
           case 2:
-            osLineTypeName = szLineBuf;
+            osLineTypeName = ACTextUnescape(szLineBuf,GetEncoding());
             break;
 
           case 49:
