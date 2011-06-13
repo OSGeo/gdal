@@ -50,6 +50,8 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     int         bServiceDirty;
     CPLXMLNode *psService;
 
+    char       *apszCoverageOfferingMD[2];
+
     int         nVersion;  // eg 100 for 1.0.0, 110 for 1.1.0
 
     CPLString   osCRS;
@@ -98,6 +100,8 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
     virtual char **GetFileList(void);
+
+    virtual char **GetMetadata( const char *pszDomain );
 };
 
 /************************************************************************/
@@ -447,6 +451,9 @@ WCSDataset::WCSDataset()
 
     nMaxCols = -1;
     nMaxRows = -1;
+
+    apszCoverageOfferingMD[0] = NULL;
+    apszCoverageOfferingMD[1] = NULL;
 }
 
 /************************************************************************/
@@ -469,6 +476,8 @@ WCSDataset::~WCSDataset()
     pszProjection = NULL;
 
     CSLDestroy( papszHttpOptions );
+
+    CPLFree( apszCoverageOfferingMD[0] );
 
     FlushMemoryResult();
 }
@@ -2140,6 +2149,40 @@ char **WCSDataset::GetFileList()
     
     return papszFileList;
 }
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **WCSDataset::GetMetadata( const char *pszDomain )
+
+{
+    if( pszDomain == NULL
+        || !EQUAL(pszDomain,"xml:CoverageOffering") )
+        return GDALPamDataset::GetMetadata( pszDomain );
+
+    
+    CPLXMLNode *psNode = CPLGetXMLNode( psService, "CoverageOffering" );
+
+    if( psNode == NULL )
+        psNode = CPLGetXMLNode( psService, "CoverageDescription" );
+
+    if( psNode == NULL )
+        return NULL;
+
+    if( apszCoverageOfferingMD[0] == NULL )
+    {
+        CPLXMLNode *psNext = psNode->psNext;
+        psNode->psNext = NULL;
+
+        apszCoverageOfferingMD[0] = CPLSerializeXMLTree( psNode );
+
+        psNode->psNext = psNext;
+    }
+
+    return apszCoverageOfferingMD;
+}
+
 
 /************************************************************************/
 /*                          GDALRegister_WCS()                        */
