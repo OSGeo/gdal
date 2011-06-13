@@ -1078,7 +1078,7 @@ int OGRDXFWriterLayer::ColorStringToDXFColor( const char *pszRGB )
 /* -------------------------------------------------------------------- */
 /*      Find near color in DXF palette.                                 */
 /* -------------------------------------------------------------------- */
-    const unsigned char *pabyDXFColors = OGRDXFDriver::GetDXFColorTable();
+    const unsigned char *pabyDXFColors = ACGetColorTable();
     int i;
     int nMinDist = 768;
     int nBestColor = -1;

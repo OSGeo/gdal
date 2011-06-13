@@ -122,7 +122,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
     switch( nCode )
     {
       case 8: 
-        poFeature->SetField( "Layer", pszValue );
+        poFeature->SetField( "Layer", TextUnescape(pszValue) );
         break;
             
       case 100: 
@@ -140,7 +140,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
         break;
 
       case 6:
-        poFeature->SetField( "Linetype", pszValue );
+        poFeature->SetField( "Linetype", TextUnescape(pszValue) );
         break;
 
       case 370:
@@ -201,6 +201,12 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
     CPLString osLayer = poFeature->GetFieldAsString("Layer");
 
 /* -------------------------------------------------------------------- */
+/*      Is the layer disabled/hidden/frozen/off?                        */
+/* -------------------------------------------------------------------- */
+    int bHidden = 
+        EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
+
+/* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
 /* -------------------------------------------------------------------- */
     int nColor = 256;
@@ -244,12 +250,15 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 /*      Format the style string.                                        */
 /* -------------------------------------------------------------------- */
     CPLString osStyle;
-    const unsigned char *pabyDXFColors = OGRDXFDriver::GetDXFColorTable();
+    const unsigned char *pabyDXFColors = ACGetColorTable();
 
     osStyle.Printf( "PEN(c:#%02x%02x%02x", 
                     pabyDXFColors[nColor*3+0],
                     pabyDXFColors[nColor*3+1],
                     pabyDXFColors[nColor*3+2] );
+
+    if( bHidden )
+        osStyle += "00"; 
 
     if( dfWeight > 0.0 )
     {
@@ -258,7 +267,7 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
         char* pszComma = strchr(szBuffer, ',');
         if (pszComma)
             *pszComma = '.';
-        osStyle += CPLString().Printf( ",w:%smm", szBuffer );
+        osStyle += CPLString().Printf( ",w:%sg", szBuffer );
     }
 
     if( pszPattern )
@@ -382,79 +391,7 @@ void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
 CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
 
 {
-    CPLString osResult;
-    CPLString osInput = pszInput;
-    
-/* -------------------------------------------------------------------- */
-/*      Translate text from Win-1252 to UTF8.  We approximate this      */
-/*      by treating Win-1252 as Latin-1.  Note that we likely ought     */
-/*      to be consulting the $DWGCODEPAGE header variable which         */
-/*      defaults to ANSI_1252 if not set.                               */
-/* -------------------------------------------------------------------- */
-    osInput.Recode( poDS->GetEncoding(), CPL_ENC_UTF8 );
-    pszInput = osInput.c_str();
-
-/* -------------------------------------------------------------------- */
-/*      Now translate escape sequences.  They are all plain ascii       */
-/*      characters and won't have been affected by the UTF8             */
-/*      recoding.                                                       */
-/* -------------------------------------------------------------------- */
-    while( *pszInput != '\0' )
-    {
-        if( pszInput[0] == '\\' && pszInput[1] == 'P' )
-        {
-            osResult += '\n';
-            pszInput++;
-        }
-        else if( pszInput[0] == '\\' && pszInput[1] == '~' )
-        {
-            osResult += ' ';
-            pszInput++;
-        }
-        else if( pszInput[0] == '\\' && pszInput[1] == 'U' 
-                 && pszInput[2] == '+' )
-        {
-            CPLString osHex;
-            int iChar;
-
-            osHex.assign( pszInput+3, 4 );
-            sscanf( osHex.c_str(), "%x", &iChar );
-
-            wchar_t anWCharString[2];
-            anWCharString[0] = (wchar_t) iChar;
-            anWCharString[1] = 0;
-            
-            char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
-                                                    CPL_ENC_UCS2, 
-                                                    CPL_ENC_UTF8 );
-
-            osResult += pszUTF8Char;
-            CPLFree( pszUTF8Char );
-            
-            pszInput += 6;
-        }
-        else if( pszInput[0] == '\\'
-                 && (pszInput[1] == 'W' || pszInput[1] == 'T') )
-        {
-            // eg. \W1.073172x;\T1.099;Bonneuil de Verrines
-            // See data/dwg/EP/42002.dwg
-            // Not sure what \W and \T do, but we skip them. 
-            
-            while( *pszInput != ';' && *pszInput != '\0' )
-                pszInput++;
-        }
-        else if( pszInput[0] == '\\' && pszInput[1] == '\\' )
-        {
-            osResult += '\\';
-            pszInput++;
-        }
-        else 
-            osResult += *pszInput;
-
-        pszInput++;
-    }
-    
-    return osResult;
+    return ACTextUnescape( pszInput, poDS->GetEncoding() );
 }
 
 /************************************************************************/
@@ -617,7 +554,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
     if( nColor > 0 && nColor < 256 )
     {
-        const unsigned char *pabyDXFColors = OGRDXFDriver::GetDXFColorTable();
+        const unsigned char *pabyDXFColors = ACGetColorTable();
         osStyle += 
             CPLString().Printf( ",c:#%02x%02x%02x", 
                                 pabyDXFColors[nColor*3+0],
@@ -670,7 +607,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
             break;
 
           case 1:
-          case 3:
+          // case 3:  // we used to capture prompt, but it should not be displayed as text.
             osText += szLineBuf;
             break;
 
@@ -701,6 +638,52 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     poFeature->SetField( "Text", osText );
 
 /* -------------------------------------------------------------------- */
+/*      We need to escape double quotes with backslashes before they    */
+/*      can be inserted in the style string.                            */
+/* -------------------------------------------------------------------- */
+    if( strchr( osText, '"') != NULL )
+    {
+        CPLString osEscaped;
+        size_t iC;
+
+        for( iC = 0; iC < osText.size(); iC++ )
+        {
+            if( osText[iC] == '"' )
+                osEscaped += "\\\"";
+            else
+                osEscaped += osText[iC];
+        }
+        osText = osEscaped;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is the layer disabled/hidden/frozen/off?                        */
+/* -------------------------------------------------------------------- */
+    CPLString osLayer = poFeature->GetFieldAsString("Layer");
+
+    int bHidden = 
+        EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
+
+/* -------------------------------------------------------------------- */
+/*      Work out the color for this feature.                            */
+/* -------------------------------------------------------------------- */
+    int nColor = 256;
+
+    if( oStyleProperties.count("Color") > 0 )
+        nColor = atoi(oStyleProperties["Color"]);
+
+    // Use layer color? 
+    if( nColor < 1 || nColor > 255 )
+    {
+        const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
+        if( pszValue != NULL )
+            nColor = atoi(pszValue);
+    }
+        
+    if( nColor < 1 || nColor > 255 )
+        nColor = 8;
+
+/* -------------------------------------------------------------------- */
 /*      Prepare style string.                                           */
 /* -------------------------------------------------------------------- */
     CPLString osStyle;
@@ -727,7 +710,16 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
-    // add color!
+    const unsigned char *pabyDWGColors = ACGetColorTable();
+
+    snprintf( szBuffer, sizeof(szBuffer), ",c:#%02x%02x%02x", 
+              pabyDWGColors[nColor*3+0],
+              pabyDWGColors[nColor*3+1],
+              pabyDWGColors[nColor*3+2] );
+    osStyle += szBuffer;
+
+    if( bHidden )
+        osStyle += "00"; 
 
     osStyle += ")";
 
@@ -1606,12 +1598,20 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
     for( iSubFeat = 0; iSubFeat < poBlock->apoFeatures.size(); iSubFeat++ )
     {
         OGRFeature *poSubFeature = poBlock->apoFeatures[iSubFeat]->Clone();
+        CPLString osCompEntityId;
 
         if( poSubFeature->GetGeometryRef() != NULL )
             poSubFeature->GetGeometryRef()->transform( &oTransformer );
 
-        poSubFeature->SetField( "EntityHandle",
-                                poFeature->GetFieldAsString("EntityHandle") );
+        ACAdjustText( dfAngle, oTransformer.dfXScale, poSubFeature );
+
+#ifdef notdef
+        osCompEntityId = poSubFeature->GetFieldAsString( "EntityHandle" );
+        osCompEntityId += ":";
+#endif
+        osCompEntityId += poFeature->GetFieldAsString( "EntityHandle" );
+
+        poSubFeature->SetField( "EntityHandle", osCompEntityId );
 
         apoPendingFeatures.push( poSubFeature );
     }
@@ -1744,7 +1744,12 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         }
         else
         {
-            CPLDebug( "DXF", "Ignoring entity '%s'.", szLineBuf );
+            if( oIgnoredEntities.count(szLineBuf) == 0 )
+            {
+                oIgnoredEntities.insert( szLineBuf );
+                CPLDebug( "DWG", "Ignoring one or more of entity '%s'.", 
+                          szLineBuf );
+            }
         }
     }
 
