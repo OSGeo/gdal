@@ -175,12 +175,13 @@ void OGRDWGDataSource::ReadLayerDefinitions()
         OdDbLayerTableRecordPtr poLD = poIter->getRecordId().safeOpenObject();
         std::map<CPLString,CPLString> oLayerProperties;
 
-        CPLString osLayerName = (const char *) poLD->getName();
+        CPLString osLayerName = ACTextUnescape(poLD->getName(),GetEncoding());
         
         oLayerProperties["Exists"] = "1";
         
-        //pRecord->linetypeObjectId()
-        oLayerProperties["Linetype"] = osValue;
+        OdDbLinetypeTableRecordPtr poLT = poLD->linetypeObjectId().safeOpenObject();
+        oLayerProperties["Linetype"] = 
+            ACTextUnescape(poLT->getName(),GetEncoding());
 
         osValue.Printf( "%d", poLD->colorIndex() );
         oLayerProperties["Color"] = osValue;
@@ -234,7 +235,7 @@ void OGRDWGDataSource::ReadLineTypeDefinitions()
         CPLString osLineTypeDef;
         OdDbLinetypeTableRecordPtr poLT = poIter->getRecordId().safeOpenObject();
 
-        osLineTypeName = (const char *) poLT->getName();
+        osLineTypeName = ACTextUnescape(poLT->getName(),GetEncoding());
 
         if (poLT->numDashes()) 
         {
