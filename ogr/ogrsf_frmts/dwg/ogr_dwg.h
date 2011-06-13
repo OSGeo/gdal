@@ -37,6 +37,8 @@
 #include <set>
 #include <queue>
 
+#include "ogr_autocad_services.h"
+
 #include "OdaCommon.h"
 #include "diagnostics.h"
 #include "DbDatabase.h"
@@ -114,6 +116,8 @@ class OGRDWGLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
     int                 iNextFID;
 
+    std::set<CPLString> oIgnoredEntities;
+
     std::queue<OGRFeature*> apoPendingFeatures;
     void                ClearPendingFeatures();
 
@@ -139,9 +143,8 @@ class OGRDWGLayer : public OGRLayer
     OGRFeature *        TranslateINSERT( OdDbEntityPtr poEntity );
 
     void                FormatDimension( CPLString &osText, double dfValue );
-    void                RotateText( double dfAngle, OGRFeature *poFeature );
 
-    CPLString           TextUnescape( OdString );
+    CPLString           TextUnescape( OdString oString);
 
     OdDbBlockTableRecordPtr poBlock;
     OdDbObjectIteratorPtr   poEntIter;
@@ -263,8 +266,6 @@ class OGRDWGDriver : public OGRSFDriver
   public:
     OGRDWGDriver();
     ~OGRDWGDriver();
-
-    static const unsigned char *GetDWGColorTable();
 
     OGRDWGServices *GetServices() { return &oServices; }
 
