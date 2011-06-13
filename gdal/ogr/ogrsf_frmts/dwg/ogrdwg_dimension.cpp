@@ -336,7 +336,7 @@ the approach is as above in all these cases.
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
-    const unsigned char *pabyDWGColors = OGRDWGDriver::GetDWGColorTable();
+    const unsigned char *pabyDWGColors = ACGetColorTable();
 
     snprintf( szBuffer, sizeof(szBuffer), ",c:#%02x%02x%02x", 
               pabyDWGColors[nColor*3+0],

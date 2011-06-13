@@ -115,7 +115,7 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
     if( nColor >= 1 && nColor <= 255 )
     {
         CPLString osStyle;
-        const unsigned char *pabyDWGColors = OGRDWGDriver::GetDWGColorTable();
+        const unsigned char *pabyDWGColors = ACGetColorTable();
         
         osStyle.Printf( "BRUSH(fc:#%02x%02x%02x)",
                         pabyDWGColors[nColor*3+0],
