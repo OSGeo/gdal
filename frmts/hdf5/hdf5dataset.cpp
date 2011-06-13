@@ -732,7 +732,7 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
 	}
 	else if( H5Tequal( H5T_NATIVE_FLOAT,  hAttrNativeType ) ) {
 	    for( i=0; i < nAttrElmts; i++ ) {
-		sprintf( szData, "%f ",  ((float *)buf)[i] );
+		sprintf( szData, "%.8g ",  ((float *)buf)[i] );
 		if( CPLStrlcat(szValue,szData,MAX_METADATA_LEN) >= MAX_METADATA_LEN )
 		    CPLError( CE_Warning, CPLE_OutOfMemory,
 			      "Header data too long. Truncated\n");
@@ -740,7 +740,7 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
 	}
 	else if( H5Tequal( H5T_NATIVE_DOUBLE, hAttrNativeType ) ) {
 	    for( i=0; i < nAttrElmts; i++ ) {
-		sprintf( szData, "%g ",  ((double *)buf)[i] );
+		sprintf( szData, "%.15g ",  ((double *)buf)[i] );
 		if( CPLStrlcat(szValue,szData,MAX_METADATA_LEN) >= MAX_METADATA_LEN )
 		    CPLError( CE_Warning, CPLE_OutOfMemory,
 			      "Header data too long. Truncated\n");
