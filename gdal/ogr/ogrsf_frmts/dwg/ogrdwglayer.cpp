@@ -118,6 +118,16 @@ OGRDWGLayer::~OGRDWGLayer()
 }
 
 /************************************************************************/
+/*                            TextUnescape()                            */
+/************************************************************************/
+
+CPLString OGRDWGLayer::TextUnescape( OdString oString )
+
+{ 
+    return ACTextUnescape( (const char *) oString, poDS->GetEncoding() );
+}
+
+/************************************************************************/
 /*                           SetBlockTable()                            */
 /*                                                                      */
 /*      Set what block table to read features from.  This layer         */
@@ -173,8 +183,8 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
                                               OdDbEntityPtr poEntity )
 
 {
-    poFeature->SetField( "Layer", (const char *) poEntity->layer() );
-    poFeature->SetField( "Linetype", (const char *) poEntity->linetype() );
+    poFeature->SetField( "Layer", TextUnescape(poEntity->layer()) );
+    poFeature->SetField( "Linetype", TextUnescape(poEntity->layer()) );
 
     CPLString osValue;
     osValue.Printf( "%d", (int) poEntity->lineWeight() );
@@ -371,7 +381,7 @@ void OGRDWGLayer::PrepareLineStyle( OGRFeature *poFeature )
 /*      Format the style string.                                        */
 /* -------------------------------------------------------------------- */
     CPLString osStyle;
-    const unsigned char *pabyDWGColors = OGRDWGDriver::GetDWGColorTable();
+    const unsigned char *pabyDWGColors = ACGetColorTable();
 
     osStyle.Printf( "PEN(c:#%02x%02x%02x", 
                     pabyDWGColors[nColor*3+0],
@@ -388,7 +398,7 @@ void OGRDWGLayer::PrepareLineStyle( OGRFeature *poFeature )
         char* pszComma = strchr(szBuffer, ',');
         if (pszComma)
             *pszComma = '.';
-        osStyle += CPLString().Printf( ",w:%smm", szBuffer );
+        osStyle += CPLString().Printf( ",w:%sg", szBuffer );
     }
 
     if( pszPattern )
@@ -401,121 +411,6 @@ void OGRDWGLayer::PrepareLineStyle( OGRFeature *poFeature )
     osStyle += ")";
     
     poFeature->SetStyleString( osStyle );
-}
-
-/************************************************************************/
-/*                            TextUnescape()                            */
-/*                                                                      */
-/*      Unexcape DWG style escape sequences such as \P for newline      */
-/*      and \~ for space, and do the recoding to UTF8.                  */
-/************************************************************************/
-
-CPLString OGRDWGLayer::TextUnescape( OdString osOdInput )
-
-{
-    CPLString osResult;
-    CPLString osInput = (const char *) osOdInput;
-    
-/* -------------------------------------------------------------------- */
-/*      Translate text from Win-1252 to UTF8.  We approximate this      */
-/*      by treating Win-1252 as Latin-1.  Note that we likely ought     */
-/*      to be consulting the $DWGCODEPAGE header variable which         */
-/*      defaults to ANSI_1252 if not set.                               */
-/* -------------------------------------------------------------------- */
-    osInput.Recode( poDS->GetEncoding(), CPL_ENC_UTF8 );
-
-    const char *pszInput = osInput.c_str();
-
-/* -------------------------------------------------------------------- */
-/*      Now translate escape sequences.  They are all plain ascii       */
-/*      characters and won't have been affected by the UTF8             */
-/*      recoding.                                                       */
-/* -------------------------------------------------------------------- */
-    while( *pszInput != '\0' )
-    {
-        if( pszInput[0] == '\\' && pszInput[1] == 'P' )
-        {
-            osResult += '\n';
-            pszInput++;
-        }
-        else if( pszInput[0] == '\\' && pszInput[1] == '~' )
-        {
-            osResult += ' ';
-            pszInput++;
-        }
-        else if( pszInput[0] == '\\' && pszInput[1] == 'U' 
-                 && pszInput[2] == '+' )
-        {
-            CPLString osHex;
-            int iChar;
-
-            osHex.assign( pszInput+3, 4 );
-            sscanf( osHex.c_str(), "%x", &iChar );
-
-            wchar_t anWCharString[2];
-            anWCharString[0] = (wchar_t) iChar;
-            anWCharString[1] = 0;
-            
-            char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
-                                                    CPL_ENC_UCS2, 
-                                                    CPL_ENC_UTF8 );
-
-            osResult += pszUTF8Char;
-            CPLFree( pszUTF8Char );
-            
-            pszInput += 6;
-        }
-        else if( pszInput[0] == '\\'
-                 && (pszInput[1] == 'W' 
-                     || pszInput[1] == 'T'
-                     || pszInput[1] == 'A' ) )
-        {
-            // eg. \W1.073172x;\T1.099;Bonneuil de Verrines
-            // See data/dwg/EP/42002.dwg
-            // Not sure what \W and \T do, but we skip them. 
-            // According to qcad rs_text.cpp, \A values are vertical
-            // alignment, 0=bottom, 1=mid, 2=top but we ignore for now.
-            
-            while( *pszInput != ';' && *pszInput != '\0' )
-                pszInput++;
-        }
-        else if( pszInput[0] == '\\' && pszInput[1] == '\\' )
-        {
-            osResult += '\\';
-            pszInput++;
-        }
-        else if( EQUALN(pszInput,"%%c",3) 
-                 || EQUALN(pszInput,"%%d",3)
-                 || EQUALN(pszInput,"%%p",3) )
-        {
-            wchar_t anWCharString[2];
-
-            anWCharString[1] = 0;
-
-            // These are especial symbol representations for autocad.
-            if( EQUALN(pszInput,"%%c",3) )
-                anWCharString[0] = 0x2300; // diameter (0x00F8 is a good approx)
-            else if( EQUALN(pszInput,"%%d",3) )
-                anWCharString[0] = 0x00B0; // degree
-            else if( EQUALN(pszInput,"%%p",3) )
-                anWCharString[0] = 0x00B1; // plus/minus
-
-            char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
-                                                    CPL_ENC_UCS2, 
-                                                    CPL_ENC_UTF8 );
-
-            osResult += pszUTF8Char;
-            CPLFree( pszUTF8Char );
-            
-            pszInput += 2;
-        }
-        else 
-            osResult += *pszInput;
-
-        pszInput++;
-    }
-    
-    return osResult;
 }
 
 /************************************************************************/
@@ -626,7 +521,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 
     if( nColor > 0 && nColor < 256 )
     {
-        const unsigned char *pabyDWGColors = OGRDWGDriver::GetDWGColorTable();
+        const unsigned char *pabyDWGColors = ACGetColorTable();
         osStyle += 
             CPLString().Printf( ",c:#%02x%02x%02x", 
                                 pabyDWGColors[nColor*3+0],
@@ -747,7 +642,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
-    const unsigned char *pabyDWGColors = OGRDWGDriver::GetDWGColorTable();
+    const unsigned char *pabyDWGColors = ACGetColorTable();
 
     snprintf( szBuffer, sizeof(szBuffer), ",c:#%02x%02x%02x", 
               pabyDWGColors[nColor*3+0],
@@ -1233,7 +1128,7 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
     double dfAngle = poRef->rotation() * 180 / PI;
     OdGePoint3d oPosition = poRef->position();
     OdGeScale3d oScale = poRef->scaleFactors();
-
+    
     oTransformer.dfXOffset = oPosition.x;
     oTransformer.dfYOffset = oPosition.y;
     oTransformer.dfZOffset = oPosition.z;
@@ -1303,14 +1198,20 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
     for( iSubFeat = 0; iSubFeat < poBlock->apoFeatures.size(); iSubFeat++ )
     {
         OGRFeature *poSubFeature = poBlock->apoFeatures[iSubFeat]->Clone();
+        CPLString osCompEntityId;
 
         if( poSubFeature->GetGeometryRef() != NULL )
             poSubFeature->GetGeometryRef()->transform( &oTransformer );
 
-        RotateText( dfAngle, poSubFeature );
+        ACAdjustText( dfAngle, oScale.sx, poSubFeature );
 
-        poSubFeature->SetField( "EntityHandle",
-                                poFeature->GetFieldAsString("EntityHandle") );
+#ifdef notdef
+        osCompEntityId = poSubFeature->GetFieldAsString( "EntityHandle" );
+        osCompEntityId += ":";
+#endif
+        osCompEntityId += poFeature->GetFieldAsString( "EntityHandle" );
+
+        poSubFeature->SetField( "EntityHandle", osCompEntityId );
 
         apoPendingFeatures.push( poSubFeature );
     }
@@ -1348,63 +1249,6 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
     {
         return poFeature;
     }
-}
-
-/************************************************************************/
-/*                             RotateText()                             */
-/*                                                                      */
-/*      Rotate text features by the designated amount by adjusting      */
-/*      the style string.                                               */
-/************************************************************************/
-
-void OGRDWGLayer::RotateText( double dfAngle, OGRFeature *poFeature )
-
-{
-/* -------------------------------------------------------------------- */
-/*      We only try to alter text elements (LABEL styles).              */
-/* -------------------------------------------------------------------- */
-    if( poFeature->GetStyleString() == NULL )
-        return;
-
-    CPLString osOldStyle = poFeature->GetStyleString();
-
-    if( strstr(osOldStyle,"LABEL") == NULL )
-        return;
-
-/* -------------------------------------------------------------------- */
-/*      Is there existing angle text?                                   */
-/* -------------------------------------------------------------------- */
-    double dfOldAngle = 0.0;
-    CPLString osPreAngle, osPostAngle;
-    size_t nAngleOff = osOldStyle.find( ",a:" );
-
-    if( nAngleOff != std::string::npos )
-    {
-        size_t nEndOfAngleOff = osOldStyle.find( ",", nAngleOff + 1 );
-
-        osPreAngle.assign( osOldStyle, nAngleOff );
-        osPostAngle.assign( osOldStyle.c_str() + nEndOfAngleOff + 1 );
-        
-        dfOldAngle = CPLAtof( osOldStyle.c_str() + nAngleOff + 3 );
-    }
-    else
-    {
-        CPLAssert( osOldStyle[osOldStyle.size()-1] == ')' );
-        osPreAngle.assign( osOldStyle, osOldStyle.size() - 1 );
-        osPostAngle = ")";
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Format with the new angle.                                      */
-/* -------------------------------------------------------------------- */
-    CPLString osNewStyle;
-
-    osNewStyle.Printf( "%s,a:%g,%s", 
-                       osPreAngle.c_str(), 
-                       dfOldAngle + dfAngle,
-                       osPostAngle.c_str() );
-
-    poFeature->SetStyleString( osNewStyle );
 }
 
 /************************************************************************/
@@ -1514,7 +1358,12 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         }
         else
         {
-            CPLDebug( "DWG", "Ignoring entity '%s'.", pszEntityClassName );
+            if( oIgnoredEntities.count(pszEntityClassName) == 0 )
+            {
+                oIgnoredEntities.insert( pszEntityClassName );
+                CPLDebug( "DWG", "Ignoring one or more of entity '%s'.", 
+                          pszEntityClassName );
+            }
         }
 
         poEntIter->step();
