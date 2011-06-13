@@ -31,6 +31,7 @@
 #define _OGR_DXF_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include "ogr_autocad_services.h"
 #include "cpl_conv.h"
 #include <vector>
 #include <map>
@@ -93,6 +94,8 @@ class OGRDXFLayer : public OGRLayer
 
     OGRFeatureDefn     *poFeatureDefn;
     int                 iNextFID;
+
+    std::set<CPLString> oIgnoredEntities;
 
     std::queue<OGRFeature*> apoPendingFeatures;
     void                ClearPendingFeatures();
@@ -395,8 +398,6 @@ class OGRDXFDriver : public OGRSFDriver
 {
   public:
                 ~OGRDXFDriver();
-
-    static const unsigned char *GetDXFColorTable();
 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

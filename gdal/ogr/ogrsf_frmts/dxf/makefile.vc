@@ -2,7 +2,8 @@ OBJ     =       ogrdxfdriver.obj ogrdxfdatasource.obj ogrdxflayer.obj \
 		ogrdxfreader.obj ogrdxf_blockmap.obj ogrdxf_dimension.obj \
 		ogrdxfwriterds.obj ogrdxfwriterlayer.obj intronurbs.obj \
 		ogrdxf_polyline_smooth.obj ogrdxfblockslayer.obj \
-		ogrdxfblockswriterlayer.obj ogrdxf_hatch.obj
+		ogrdxfblockswriterlayer.obj ogrdxf_hatch.obj \
+		ogr_autocad_services.obj
         
 EXTRAFLAGS =	-I.. -I..\..
 
