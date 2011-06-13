@@ -9,9 +9,13 @@
 # nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1
 #
 ###############################################################################
-# For convenience, user may put custom settings to private mynmake.opt
-# and use EXT_NMAKE_OPT option while calling nmake.exe, as follows:
-#
+# For convenience, user may put custom settings in a local settings file
+# named nmake.local, or a name defined by the EXT_NMAKE_OPT option.
+
+!IF EXIST("$(GDAL_ROOT)\nmake.local")
+!INCLUDE $(GDAL_ROOT)\nmake.local
+!ENDIF
+
 # nmake -f makefile.vc EXT_NMAKE_OPT=mynmake.opt
 !IFDEF EXT_NMAKE_OPT
 !INCLUDE $(EXT_NMAKE_OPT)
