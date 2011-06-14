@@ -304,6 +304,7 @@ class CPL_DLL OGRSFDriverRegistrar
 CPL_C_START
 void CPL_DLL OGRRegisterAll();
 
+void CPL_DLL RegisterOGRFileGDB();
 void CPL_DLL RegisterOGRShape();
 void CPL_DLL RegisterOGRNTF();
 void CPL_DLL RegisterOGRFME();
