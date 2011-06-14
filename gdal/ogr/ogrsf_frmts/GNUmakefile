@@ -21,6 +21,7 @@ SUBDIRS-$(HAVE_OCI)	+= oci
 SUBDIRS-$(HAVE_OGR_PG)	+= pg
 SUBDIRS-$(HAVE_SQLITE)	+= sqlite
 SUBDIRS-$(HAVE_SDE)     += sde
+SUBDIRS-$(HAVE_FGDB)    += filegdb
 SUBDIRS-$(HAVE_ARCOBJECTS)  += arcobjects
 SUBDIRS-$(HAVE_INGRES)  += ingres
 SUBDIRS-$(HAVE_VFK)     += vfk
