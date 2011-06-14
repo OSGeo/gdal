@@ -35,7 +35,7 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
 		$(MRSID_LIBS) $(MRSID_LIDAR_LIBS) $(INGRES_LIB) \
 		$(PCIDSK_LIB) $(RASDAMAN_LIB) $(CHARLS_LIB) \
-		$(OPENCL_LIB) $(JVM_LIB) $(LIBICONV)
+		$(OPENCL_LIB) $(JVM_LIB) $(LIBICONV) $(FGDB_LIB)
 
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_LIBS = @PYTHON_LIBS@
@@ -247,10 +247,8 @@ SDE_INC = @SDE_INC@
 # FileGDB
 #
 HAVE_FGDB = @FGDB_ENABLED@
-FGDB_LIB	= @FGDB_LIB@
+FGDB_LIB = @FGDB_LIB@
 FGDB_INC = @FGDB_INC@
-
-
 
 # 
 # ArcObjects
@@ -430,6 +428,7 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
 		coasp tsx terragen blx msgn til r northwood saga xyz hf2 \
 		kmlsuperoverlay ozi ctg e00grid \
 		@OPT_GDAL_FORMATS@
+
 
 ifneq ($(LIBZ_SETTING),no)
 GDAL_FORMATS := $(GDAL_FORMATS) rik

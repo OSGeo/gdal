@@ -707,6 +707,9 @@ MRSID_FLAGS
 MRSID_INCLUDE
 KAKDIR
 ECW_SETTING
+FGDB_INC
+FGDB_LIB
+FGDB_ENABLED
 HAVE_OPENJPEG
 JASPER_FLAGS
 HAVE_JASPER
@@ -872,6 +875,7 @@ with_hdf4
 with_hdf5
 with_jasper
 with_openjpeg
+with_fgdb
 with_ecw
 with_kakadu
 with_mrsid
@@ -1603,6 +1607,7 @@ Optional Packages:
   --with-hdf5=ARG       Include HDF5 support (ARG=path)
   --with-jasper=ARG     Include JPEG-2000 support via JasPer library (ARG=path)
   --with-openjpeg=ARG     Include JPEG-2000 support via OpenJPEG v2 library (ARG=path)
+  --with-fgdb=ARG        Include ESRI File Geodatabase support (ARG=FGDP API Path, yes or no)
   --with-ecw=ARG        Include ECW support (ARG=ECW SDK Path, yes or no)
   --with-kakadu=ARG     Include Kakadu/JPEG2000 support
   --with-mrsid=ARG      Include MrSID support (ARG=path to MrSID DSDK or no)
@@ -21325,6 +21330,103 @@ HAVE_OPENJPEG=$HAVE_OPENJPEG
 
 
 
+
+
+# Check whether --with-fgdb was given.
+if test "${with_fgdb+set}" = set; then :
+  withval=$with_fgdb;
+fi
+
+
+if test "$with_fgdb" = "no" ; then
+
+  FGDB_ENABLED=no
+
+  echo "FGDB support disabled."
+
+elif test "$with_fgdb" = "yes" -o "$with_fgdb" = "" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenGeodatabase in -lFileGDBAPI" >&5
+$as_echo_n "checking for OpenGeodatabase in -lFileGDBAPI... " >&6; }
+if ${ac_cv_lib_FileGDBAPI_OpenGeodatabase+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lFileGDBAPI -lFileGDBAPI -lfgdblinuxrtl $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char OpenGeodatabase ();
+int
+main ()
+{
+return OpenGeodatabase ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_FileGDBAPI_OpenGeodatabase=yes
+else
+  ac_cv_lib_FileGDBAPI_OpenGeodatabase=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_FileGDBAPI_OpenGeodatabase" >&5
+$as_echo "$ac_cv_lib_FileGDBAPI_OpenGeodatabase" >&6; }
+if test "x$ac_cv_lib_FileGDBAPI_OpenGeodatabase" = xyes; then :
+  FGDB_ENABLED=yes
+else
+  FGDB_ENABLED=no
+fi
+
+
+  if test "$FGDB_ENABLED" = "yes" ; then
+    LIBS="-lFileGDBAPI -lfgdblinuxrtl"
+  fi
+
+else
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libFileGDBAPI.so in in $with_fgdb/lib" >&5
+$as_echo_n "checking for libFileGDBAPI.so in in $with_fgdb/lib... " >&6; }
+  FGDB_ENABLED=yes
+  if test -r $with_fgdb/lib/libFileGDBAPI.so ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
+$as_echo "found." >&6; }
+    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI -lfgdblinuxrtl"
+  else
+    as_fn_error $? "not found." "$LINENO" 5
+  fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FileGDBAPI.h in $with_fgdb/include" >&5
+$as_echo_n "checking for FileGDBAPI.h in $with_fgdb/include... " >&6; }
+  if test -r $with_fgdb/include/FileGDBAPI.h ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
+$as_echo "found." >&6; }
+    FGDB_INC="-I$with_fgdb/include"
+  else
+    as_fn_error $? "not found." "$LINENO" 5
+  fi
+
+fi
+
+FGDB_ENABLED=$FGDB_ENABLED
+
+FGDB_LIB=$FGDB_LIB
+
+FGDB_INC=$FGDB_INC
+
+
+
+
 # Check whether --with-ecw was given.
 if test "${with_ecw+set}" = set; then :
   withval=$with_ecw;
@@ -29257,6 +29359,9 @@ echo "  ODBC support:              ${ODBC_SETTING}"
 
 
 echo "  PGeo support:              ${ODBC_SETTING}"
+
+
+echo "  FGDB support:              ${FGDB_ENABLED}"
 
 
 echo "  MDB support:               ${MDB_ENABLED}"

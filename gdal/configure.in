@@ -1453,6 +1453,53 @@ fi
 
 AC_SUBST([HAVE_OPENJPEG],$HAVE_OPENJPEG)
 
+
+
+dnl ---------------------------------------------------------------------------
+dnl Select a FGDB API to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(fgdb,[  --with-fgdb[=ARG]        Include ESRI File Geodatabase support (ARG=FGDP API Path, yes or no)],,)
+
+if test "$with_fgdb" = "no" ; then
+
+  FGDB_ENABLED=no
+
+  echo "FGDB support disabled."
+
+elif test "$with_fgdb" = "yes" -o "$with_fgdb" = "" ; then
+
+  AC_CHECK_LIB(FileGDBAPI,OpenGeodatabase,FGDB_ENABLED=yes,FGDB_ENABLED=no,-lFileGDBAPI -lfgdblinuxrtl)
+
+  if test "$FGDB_ENABLED" = "yes" ; then   
+    LIBS="-lFileGDBAPI -lfgdblinuxrtl"
+  fi
+
+else
+
+  AC_MSG_CHECKING([for libFileGDBAPI.so in in $with_fgdb/lib])
+  FGDB_ENABLED=yes
+  if test -r $with_fgdb/lib/libFileGDBAPI.so ; then
+    AC_MSG_RESULT([found.])
+    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI -lfgdblinuxrtl"
+  else
+    AC_MSG_ERROR([not found.])
+  fi
+
+  AC_MSG_CHECKING([for FileGDBAPI.h in $with_fgdb/include])
+  if test -r $with_fgdb/include/FileGDBAPI.h ; then  
+    AC_MSG_RESULT([found.])
+    FGDB_INC="-I$with_fgdb/include"
+  else
+    AC_MSG_ERROR([not found.])
+  fi
+
+fi
+
+AC_SUBST(FGDB_ENABLED, $FGDB_ENABLED)
+AC_SUBST(FGDB_LIB, $FGDB_LIB)
+AC_SUBST(FGDB_INC, $FGDB_INC)
+
 dnl ---------------------------------------------------------------------------
 dnl Select a ECW Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
@@ -3217,6 +3264,7 @@ LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  PGeo support:              ${ODBC_SETTING}])
+LOC_MSG([  FGDB support:              ${FGDB_ENABLED}])
 LOC_MSG([  MDB support:               ${MDB_ENABLED}])
 LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
