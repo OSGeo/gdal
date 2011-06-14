@@ -990,6 +990,22 @@ int WCSDataset::ExtractGridInfo100()
                       pszNativeCRSs );
     }
 
+    // We should try to use the services name for the CRS if possible.
+    if( pszNativeCRSs != NULL
+        && ( EQUALN(pszNativeCRSs,"EPSG:",5)
+             || EQUALN(pszNativeCRSs,"AUTO:",5)
+             || EQUALN(pszNativeCRSs,"Image ",6)
+             || EQUALN(pszNativeCRSs,"Engineering ",12)
+             || EQUALN(pszNativeCRSs,"OGC:",4) ) )
+    {
+        osCRS = pszNativeCRSs;
+        
+        size_t nDivider = osCRS.find( " " );
+
+        if( nDivider != std::string::npos )
+            osCRS.resize( nDivider-1 );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Do we have a coordinate system override?                        */
 /* -------------------------------------------------------------------- */
@@ -1009,6 +1025,13 @@ int WCSDataset::ExtractGridInfo100()
 
         CPLFree( pszProjection );
         oSRS.exportToWkt( &pszProjection );
+
+        if( EQUALN(pszProjOverride,"EPSG:",5)
+            || EQUALN(pszProjOverride,"AUTO:",5)
+            || EQUALN(pszProjOverride,"OGC:",4)
+            || EQUALN(pszProjOverride,"Image ",6)
+            || EQUALN(pszProjOverride,"Engineering ",12) )
+            osCRS = pszProjOverride;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1017,7 +1040,7 @@ int WCSDataset::ExtractGridInfo100()
     OGRSpatialReference oSRS;
     const char *pszAuth;
 
-    if( pszProjection && strlen(pszProjection) > 0 )
+    if( pszProjection && strlen(pszProjection) > 0 && osCRS == "" )
     {
         oSRS.SetFromUserInput( pszProjection );
         pszAuth = oSRS.GetAuthorityName(NULL);
@@ -1608,11 +1631,10 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
 
 {
 /* -------------------------------------------------------------------- */
-/*      In this case we can presume the error was already issued by     */
-/*      CPLHTTPFetch().                                                 */
+/*      There isn't much we can do in this case.  Hopefully an error    */
+/*      was already issued by CPLHTTPFetch()                            */
 /* -------------------------------------------------------------------- */
-    if( psResult == NULL || psResult->nDataLen == 0 ||
-        CPLGetLastErrorNo() != 0 )
+    if( psResult == NULL || psResult->nDataLen == 0 )
     {
         CPLHTTPDestroyResult( psResult );
         return TRUE;
@@ -1675,6 +1697,14 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
         CPLHTTPDestroyResult( psResult );
         return TRUE;
     }
+
+
+/* -------------------------------------------------------------------- */
+/*      Hopefully the error already issued by CPLHTTPFetch() is         */
+/*      sufficient.                                                     */
+/* -------------------------------------------------------------------- */
+    if( CPLGetLastErrorNo() != 0 )
+        return TRUE;
 
     return FALSE;
 }
