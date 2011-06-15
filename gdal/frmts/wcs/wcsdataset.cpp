@@ -60,6 +60,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     double      adfGeoTransform[6];
 
     CPLString   osBandIdentifier;
+    CPLString   osDefaultTime;
 
     int         TestUseBlockIO( int, int, int, int, int, int );
     CPLErr      DirectRasterIO( GDALRWFlag, int, int, int, int,
@@ -733,6 +734,12 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
             osRequest += CPLGetXMLValue( psService, "Resample", "" );
         }
 
+        if( osDefaultTime != "" )
+        {
+            osRequest += "&time=";
+            osRequest += osDefaultTime;
+        }
+
         if( bSelectingBands )
         {
             osRequest += CPLString().Printf( "&%s=%s", 
@@ -1198,6 +1205,44 @@ int WCSDataset::ExtractGridInfo100()
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "BandIdentifier", 
                                          osBandIdentifier );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a temporal domain?  If so, try to identify a         */
+/*      default time value.                                             */
+/* -------------------------------------------------------------------- */
+    osDefaultTime = CPLGetXMLValue( psService, "DefaultTime", "" );
+    CPLXMLNode * psTD = 
+        CPLGetXMLNode( psService, "CoverageOffering.domainSet.temporalDomain" );
+    CPLString osServiceURL = CPLGetXMLValue( psService, "ServiceURL", "" );
+    CPLString osCoverageExtra = CPLGetXMLValue( psService, "GetCoverageExtra", "" );
+
+    if( psTD != NULL && osDefaultTime == ""
+        && osServiceURL.ifind("time=") == std::string::npos
+        && osCoverageExtra.ifind("time=") == std::string::npos )
+    {
+        CPLXMLNode *psTime;
+
+        // we will default to the last - likely the most recent - entry.
+        
+        for( psTime = psTD->psChild; 
+             psTime != NULL && psTime->psNext != NULL
+                 && psTime->psNext->eType == CXT_Element
+                 && EQUAL(psTime->psNext->pszValue,"timePosition");
+             psTime = psTime->psNext ) {}
+
+        if( psTime != NULL
+            && psTime->eType == CXT_Element
+            && EQUAL(psTime->pszValue,"timePosition") 
+            && psTime->psChild != NULL
+            && psTime->psChild->eType == CXT_Text )
+        {
+            osDefaultTime = psTime->psChild->pszValue;
+
+            bServiceDirty = TRUE;
+            CPLCreateXMLElementAndValue( psService, "DefaultTime", 
+                                         osDefaultTime );
         }
     }
 
