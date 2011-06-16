@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.25 2010-07-07 19:00:15 aboudreault Exp $
+ * $Id: mitab_utils.cpp,v 1.26 2011-06-16 15:53:12 fwarmerdam Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.26  2011-06-16 15:53:12  fwarmerdam
+ * improve TABBasename() for filenames with an embedded dot (gdal #4123)
+ *
  * Revision 1.25  2010-07-07 19:00:15  aboudreault
  * Cleanup Win32 Compile Warnings (GDAL bug #2930)
  *
@@ -417,7 +420,7 @@ char *TABGetBasename(const char *pszFname)
      *----------------------------------------------------------------*/
     char *pszBasename = CPLStrdup(pszTmp);
     int i;
-    for(i=0; pszBasename[i] != '\0'; i++)
+    for(i=strlen(pszBasename)-1; i >= 0; i-- )
     {
         if (pszBasename[i] == '.')
         {
