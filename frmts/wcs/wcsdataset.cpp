@@ -52,6 +52,8 @@ class CPL_DLL WCSDataset : public GDALPamDataset
 
     char       *apszCoverageOfferingMD[2];
 
+    char      **papszSDSModifiers;
+
     int         nVersion;  // eg 100 for 1.0.0, 110 for 1.1.0
 
     CPLString   osCRS;
@@ -60,7 +62,9 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     double      adfGeoTransform[6];
 
     CPLString   osBandIdentifier;
+
     CPLString   osDefaultTime;
+    std::vector<CPLString> aosTimePositions;
 
     int         TestUseBlockIO( int, int, int, int, int, int );
     CPLErr      DirectRasterIO( GDALRWFlag, int, int, int, int,
@@ -339,7 +343,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 eErr = CE_Failure;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
@@ -455,6 +459,8 @@ WCSDataset::WCSDataset()
 
     apszCoverageOfferingMD[0] = NULL;
     apszCoverageOfferingMD[1] = NULL;
+
+    papszSDSModifiers = NULL;
 }
 
 /************************************************************************/
@@ -477,6 +483,7 @@ WCSDataset::~WCSDataset()
     pszProjection = NULL;
 
     CSLDestroy( papszHttpOptions );
+    CSLDestroy( papszSDSModifiers );
 
     CPLFree( apszCoverageOfferingMD[0] );
 
@@ -711,6 +718,13 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLFree( pszEncoded );
     
 /* -------------------------------------------------------------------- */
+/*      Do we have a time we want to use?                               */
+/* -------------------------------------------------------------------- */
+    CPLString osTime;
+
+    osTime = CSLFetchNameValueDef( papszSDSModifiers, "time", osDefaultTime );
+    
+/* -------------------------------------------------------------------- */
 /*      Construct a "simple" GetCoverage request (WCS 1.0).		*/
 /* -------------------------------------------------------------------- */
     CPLString osRequest;
@@ -734,10 +748,10 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
             osRequest += CPLGetXMLValue( psService, "Resample", "" );
         }
 
-        if( osDefaultTime != "" )
+        if( osTime != "" )
         {
             osRequest += "&time=";
-            osRequest += osDefaultTime;
+            osRequest += osTime;
         }
 
         if( bSelectingBands )
@@ -1218,27 +1232,28 @@ int WCSDataset::ExtractGridInfo100()
     CPLString osServiceURL = CPLGetXMLValue( psService, "ServiceURL", "" );
     CPLString osCoverageExtra = CPLGetXMLValue( psService, "GetCoverageExtra", "" );
 
-    if( psTD != NULL && osDefaultTime == ""
-        && osServiceURL.ifind("time=") == std::string::npos
-        && osCoverageExtra.ifind("time=") == std::string::npos )
+    if( psTD != NULL )
     {
         CPLXMLNode *psTime;
 
+        // collect all the allowed time positions.
+
+        for( psTime = psTD->psChild; psTime != NULL; psTime = psTime->psNext )
+        {
+            if( psTime->eType == CXT_Element
+                && EQUAL(psTime->pszValue,"timePosition") 
+                && psTime->psChild->eType == CXT_Text )
+                aosTimePositions.push_back( psTime->psChild->pszValue );
+        }
+
         // we will default to the last - likely the most recent - entry.
         
-        for( psTime = psTD->psChild; 
-             psTime != NULL && psTime->psNext != NULL
-                 && psTime->psNext->eType == CXT_Element
-                 && EQUAL(psTime->psNext->pszValue,"timePosition");
-             psTime = psTime->psNext ) {}
-
-        if( psTime != NULL
-            && psTime->eType == CXT_Element
-            && EQUAL(psTime->pszValue,"timePosition") 
-            && psTime->psChild != NULL
-            && psTime->psChild->eType == CXT_Text )
+        if( aosTimePositions.size() > 0 
+            && osDefaultTime == ""
+            && osServiceURL.ifind("time=") == std::string::npos
+            && osCoverageExtra.ifind("time=") == std::string::npos )
         {
-            osDefaultTime = psTime->psChild->pszValue;
+            osDefaultTime = aosTimePositions[aosTimePositions.size()-1];
 
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "DefaultTime", 
@@ -2000,14 +2015,19 @@ int WCSDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes == 0
         && EQUALN((const char *) poOpenInfo->pszFilename,"<WCS_GDAL>",10) )
-    {
         return TRUE;
-    }
+
     else if( poOpenInfo->nHeaderBytes >= 10
              && EQUALN((const char *) poOpenInfo->pabyHeader,"<WCS_GDAL>",10) )
-    {
         return TRUE;
-    }
+
+/* -------------------------------------------------------------------- */
+/*      Is this apparently a WCS subdataset reference?                  */
+/* -------------------------------------------------------------------- */
+    else if( EQUALN((const char *) poOpenInfo->pszFilename,"WCS_SDS:",8) 
+             && poOpenInfo->nHeaderBytes == 0 )
+        return TRUE;
+
     else
         return FALSE;
 }
@@ -2019,6 +2039,8 @@ int WCSDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    char **papszModifiers = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Is this a WCS_GDAL service description file or "in url"         */
 /*      equivelent?                                                     */
@@ -2035,17 +2057,42 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         psService = CPLParseXMLFile( poOpenInfo->pszFilename );
     }
-    else
-        return NULL;
+/* -------------------------------------------------------------------- */
+/*      Is this apparently a subdataset?                                */
+/* -------------------------------------------------------------------- */
+    else if( EQUALN((const char *) poOpenInfo->pszFilename,"WCS_SDS:",8) 
+             && poOpenInfo->nHeaderBytes == 0 )
+    {
+        int iLast;
 
+        papszModifiers = CSLTokenizeString2( poOpenInfo->pszFilename+8, ",",
+                                             CSLT_HONOURSTRINGS );
+
+        iLast = CSLCount(papszModifiers)-1;
+        if( iLast >= 0 )
+        {
+            psService = CPLParseXMLFile( papszModifiers[iLast] );
+            CPLFree( papszModifiers[iLast] );
+            papszModifiers[iLast] = NULL;
+        }
+
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Success so far?                                                 */
+/* -------------------------------------------------------------------- */
     if( psService == NULL )
+    {
+        CSLDestroy( papszModifiers );
         return NULL;
+    }
         
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
+        CSLDestroy( papszModifiers );
         CPLDestroyXMLNode( psService );
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "The WCS driver does not support update access to existing"
@@ -2059,6 +2106,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !CPLGetXMLValue( psService, "ServiceURL", NULL )
         || !CPLGetXMLValue( psService, "CoverageName", NULL ) )
     {
+        CSLDestroy( papszModifiers );
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Missing one or both of ServiceURL and CoverageName elements.\n"
                   "See WCS driver documentation for details on service description file format." );
@@ -2081,6 +2129,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         nVersion = 100;
     else
     {
+        CSLDestroy( papszModifiers );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "WCS Version '%s' not supported.", pszVersion );
         CPLDestroyXMLNode( psService );
@@ -2097,6 +2146,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psService = psService;
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->nVersion = nVersion;
+    poDS->papszSDSModifiers = papszModifiers;
 
 /* -------------------------------------------------------------------- */
 /*      Capture HTTP parameters.                                        */
@@ -2161,9 +2211,61 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( iBand+1, new WCSRasterBand( poDS, iBand+1, -1 ) );
 
 /* -------------------------------------------------------------------- */
+/*      Set time metadata on the dataset if we are selecting a          */
+/*      temporal slice.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLString osTime = CSLFetchNameValueDef( poDS->papszSDSModifiers, "time", 
+                                             poDS->osDefaultTime );
+    
+    if( osTime != "" )
+        poDS->GDALMajorObject::SetMetadataItem( "TIME_POSITION", 
+                                                osTime.c_str() );
+
+/* -------------------------------------------------------------------- */
 /*      Do we have a band identifier to select only a subset of bands?  */
 /* -------------------------------------------------------------------- */
     poDS->osBandIdentifier = CPLGetXMLValue(psService,"BandIdentifier","");
+
+/* -------------------------------------------------------------------- */
+/*      Do we have time based subdatasets?  If so, record them in       */
+/*      metadata.  Note we don't do subdatasets if this is a            */
+/*      subdataset or if this is an all-in-memory service.              */
+/* -------------------------------------------------------------------- */
+    if( !EQUALN(poOpenInfo->pszFilename,"WCS_SDS:",8) 
+        && !EQUALN(poOpenInfo->pszFilename,"<WCS_GDAL>",10) 
+        && poDS->aosTimePositions.size() > 0 )
+    {
+        char **papszSubdatasets = NULL;
+        int iTime;
+
+        for( iTime = 0; iTime < (int)poDS->aosTimePositions.size(); iTime++ )
+        {
+            CPLString osName;
+            CPLString osValue;
+            
+            osName.Printf( "SUBDATASET_%d_NAME", iTime+1 );
+            osValue.Printf( "WCS_SDS:time=\"%s\",%s", 
+                           poDS->aosTimePositions[iTime].c_str(), 
+                           poOpenInfo->pszFilename );
+            papszSubdatasets = CSLSetNameValue( papszSubdatasets, 
+                                                osName, osValue );
+
+            CPLString osCoverage = 
+                CPLGetXMLValue( poDS->psService, "CoverageName", "" );
+
+            osName.Printf( "SUBDATASET_%d_DESC", iTime+1 );
+            osValue.Printf( "Coverage %s at time %s", 
+                            osCoverage.c_str(), 
+                            poDS->aosTimePositions[iTime].c_str() );
+            papszSubdatasets = CSLSetNameValue( papszSubdatasets, 
+                                                osName, osValue );
+        }
+        
+        poDS->GDALMajorObject::SetMetadata( papszSubdatasets, 
+                                            "SUBDATASETS" );
+        
+        CSLDestroy( papszSubdatasets );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
