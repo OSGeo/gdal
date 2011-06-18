@@ -1328,23 +1328,20 @@ void OGROCITableLayer::UpdateLayerExtents()
     {
         CPLString osCommand, osMoreCmd;
 
-        osCommand.Printf( 
-            "SELECT "
-            "MIN(SDO_GEOM.SDO_MIN_MBR_ORDINATE(t.%s,m.DIMINFO,1)) AS MINX,"
-            "MIN(SDO_GEOM.SDO_MIN_MBR_ORDINATE(t.%s,m.DIMINFO,2)) AS MINY,"
-            "MAX(SDO_GEOM.SDO_MAX_MBR_ORDINATE(t.%s,m.DIMINFO,1)) AS MAXX,"
-            "MAX(SDO_GEOM.SDO_MAX_MBR_ORDINATE(t.%s,m.DIMINFO,2)) AS MAXY "
-            "FROM ALL_SDO_GEOM_METADATA m, "
-            "%s t "
-            "WHERE m.TABLE_NAME = UPPER('%s') AND m.COLUMN_NAME = UPPER('%s') ",
-            pszGeomName, pszGeomName, pszGeomName, pszGeomName,
-            GetLayerDefn()->GetName(),
+        osCommand.Printf(
+            "select min(case when r=1 then sdo_lb else null end) minx, min(case when r=2 then sdo_lb else null end) miny, "
+            "min(case when r=1 then sdo_ub else null end) maxx, min(case when r=2 then sdo_ub else null end) maxy"
+            "from (SELECT d.sdo_dimname, d.sdo_lb, sdo_ub, sdo_tolerance, rownum r"
+            "FROM ALL_SDO_GEOM_METADATA m, table(m.diminfo) d" 
+            "where m.table_name = UPPER('%s') and m.COLUMN_NAME = UPPER('%s')",
             osTableName.c_str(), pszGeomName );
 
         if( osOwner != "" )
         {
             osMoreCmd.Printf( "AND OWNER = UPPER('%s')", osOwner.c_str() );
         }
+
+        osMoreCmd.Printf("))");
 
         OGROCISession *poSession = poDS->GetSession();
         CPLAssert( NULL != poSession );
