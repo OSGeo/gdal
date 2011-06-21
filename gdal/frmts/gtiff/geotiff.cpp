@@ -8393,6 +8393,9 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
 
     else if( pszDomain != NULL && EQUAL(pszDomain,"IMD") )
         LoadIMD();
+    
+    else if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
+        ScanDirectories();
 
     /* FIXME ? Should we call LookForProjection() to load GDALMD_AREA_OR_POINT ? */
     /* This can impact performances */
@@ -8443,6 +8446,9 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
 
     else if( pszDomain != NULL && EQUAL(pszDomain,"IMD") )
         LoadIMD();
+
+    else if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
+        ScanDirectories();
 
     else if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL && EQUAL(pszName, GDALMD_AREA_OR_POINT) )
