@@ -508,6 +508,13 @@ def tiff_multi_images():
     if ds.GetRasterBand(1).Checksum() != 4672:
             print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
+
+    md = ds.GetMetadata('SUBDATASETS')
+    if md['SUBDATASET_1_NAME'] != 'GTIFF_DIR:1:data/twoimages.tif':
+        print md
+        gdaltest.post_reason( 'did not get expected subdatasets metadata.' )
+        return 'fail'
+    
     ds = None
 
     # Explicitely get the content of the first image
