@@ -59,6 +59,7 @@ class GDALWMSMetaDataset : public GDALPamDataset
 {
   private:
     CPLString osGetURL;
+    CPLString osVersion;
     CPLString osXMLEncoding;
     char** papszSubDatasets;
 
