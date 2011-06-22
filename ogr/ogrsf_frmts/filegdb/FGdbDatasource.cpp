@@ -323,16 +323,18 @@ FGdbDataSource::CreateLayer( const char * pszLayerName,
                               char ** papszOptions )
 {
   
-	FGdbLayer* pLayer = new FGdbLayer;
-	if (!pLayer->Create(this, pszLayerName, poSRS, eType, papszOptions))
-	{
-	  delete pLayer;
-    return NULL;
-	}
+    FGdbLayer* pLayer = new FGdbLayer;
+    if (!pLayer->Create(this, pszLayerName, poSRS, eType, papszOptions))
+    {
+        delete pLayer;
+        return NULL;
+    }
 
-  /* papszOption: FEATUREDATASET=myfeaturedataset */
-  /* otherwise create in "\" */
-  return pLayer;
+    m_layers.push_back(pLayer);
+
+    /* papszOption: FEATUREDATASET=myfeaturedataset */
+    /* otherwise create in "\" */
+    return pLayer;
 
   
 }
