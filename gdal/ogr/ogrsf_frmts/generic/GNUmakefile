@@ -54,6 +54,10 @@ ifeq ($(HAVE_SDE),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DSDE_ENABLED
 endif
 
+ifeq ($(HAVE_FGDB),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DFGDB_ENABLED
+endif
+
 ifeq ($(HAVE_OGR_PG),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DPG_ENABLED
 endif

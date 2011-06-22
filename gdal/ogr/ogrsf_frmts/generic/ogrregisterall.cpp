@@ -143,6 +143,9 @@ void OGRRegisterAll()
 #ifdef SDE_ENABLED
     RegisterOGRSDE();
 #endif
+#ifdef FGDB_ENABLED
+    RegisterOGRFileGDB();
+#endif
 #ifdef XPLANE_ENABLED
     RegisterOGRXPlane();
 #endif
