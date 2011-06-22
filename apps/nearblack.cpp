@@ -242,35 +242,17 @@ int main( int argc, char ** argv )
 
         if (bSetAlpha)
         {
-            if (nBands == 3)
-                nDstBands ++;
-
             /***** fixme there should be a way to preserve alpha band data not in the collar *****/
-            
-            else if (nBands == 4)
+            if (nBands == 4)
                 nBands --;
             else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Number of bands of file = %d. Expected 3 or 4.",
-                         nBands);
-                exit(1);
-            }
+                nDstBands ++;
         }
 
         if (bSetMask)
         {
-            if (nBands == 3){
-            }
-            else if (nBands == 4)
+            if (nBands == 4)
                 nDstBands = nBands = 3;
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Number of bands of file = %d. Expected 3 or 4.",
-                         nBands);
-                exit(1);
-            }
         }
 
         hOutDS = GDALCreate( hDriver, pszOutFile, 
@@ -291,11 +273,12 @@ int main( int argc, char ** argv )
     {
         if (bSetAlpha)
         {
-            if (nBands != 4)
+            if (nBands != 4 &&
+                (nBands < 2 ||
+                 GDALGetRasterColorInterpretation(GDALGetRasterBand(hOutDS, nBands)) != GCI_AlphaBand))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "Number of bands of output file = %d. Expected 4.",
-                        nBands);
+                        "Last band is not an alpha band.");
                 exit(1);
             }
 
@@ -306,14 +289,6 @@ int main( int argc, char ** argv )
         {
             if (nBands == 4)
                 nDstBands = nBands = 3;
-
-            if (nBands != 3)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Number of bands of output file = %d. Expected 3.",
-                        nBands);
-                exit(1);
-            }
         }
     }
 
@@ -389,7 +364,7 @@ int main( int argc, char ** argv )
 
             if ( CE_None != GDALCreateDatasetMaskBand(hOutDS, GMF_PER_DATASET) ) {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "CE_Warning Failed to create mask band on output DS");
+                         "Failed to create mask band on output DS");
                 bSetMask = FALSE;
             }
         }
