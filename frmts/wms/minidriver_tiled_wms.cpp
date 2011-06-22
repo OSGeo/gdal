@@ -98,16 +98,22 @@ static CPLXMLNode *SearchLeafGroupName( CPLXMLNode *psRoot, const char *name )
     if( psRoot == NULL || name == NULL ) return NULL;
 
     // Has to be a leaf TileGroup with the right name
-    if (NULL==SearchXMLSiblings(psRoot->psChild,"TiledGroup")) {
-	if (EQUAL(name,CPLGetXMLValue(psRoot,"Name",""))) {
-	    return psRoot;
-	} else { // Try a sibling
-	    return SearchLeafGroupName(psRoot->psNext,name);
-	}
-    } else { // Is metagroup, try children then siblings
-	ret=SearchLeafGroupName(psRoot->psChild,name);
-	if (NULL!=ret) return ret;
-	return SearchLeafGroupName(psRoot->psNext,name);
+    if (NULL==CPLSearchXMLNode(psRoot->psChild,"=TiledGroup"))
+    {
+        if (EQUAL(name,CPLGetXMLValue(psRoot,"Name","")))
+        {
+            return psRoot;
+        }
+        else
+        { // Try a sibling
+            return SearchLeafGroupName(psRoot->psNext,name);
+        }
+    }
+    else
+    { // Is metagroup, try children then siblings
+        ret=SearchLeafGroupName(psRoot->psChild,name);
+        if (NULL!=ret) return ret;
+        return SearchLeafGroupName(psRoot->psNext,name);
     }
 }
 
