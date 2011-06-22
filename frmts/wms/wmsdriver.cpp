@@ -127,12 +127,10 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     const char* pszMaxX = papszTokens[2];
     const char* pszMaxY = papszTokens[3];
 
-    #define SWAP(a,b) do { const char* _pszTmp = a; a = b; b = _pszTmp; } while(0);
-
     if (osBBOXOrder.compare("yxYX") == 0)
     {
-        SWAP(pszMinX, pszMinY);
-        SWAP(pszMaxX, pszMaxY);
+        std::swap(pszMinX, pszMinY);
+        std::swap(pszMaxX, pszMaxY);
     }
 
     double dfMinX = CPLAtofM(pszMinX);
