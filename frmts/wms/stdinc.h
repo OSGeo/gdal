@@ -1,6 +1,7 @@
 #include <math.h>
 #include <vector>
 #include <list>
+#include <algorithm>
 #include <curl/curl.h>
 #include <gdal.h>
 #include <gdalwarper.h>
