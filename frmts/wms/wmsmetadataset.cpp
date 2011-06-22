@@ -29,6 +29,8 @@
 
 #include "wmsmetadataset.h"
 
+int VersionStringToInt(const char *version);
+
 /************************************************************************/
 /*                          GDALWMSMetaDataset()                        */
 /************************************************************************/
@@ -77,14 +79,19 @@ GDALDataset *GDALWMSMetaDataset::DownloadGetCapabilities(GDALOpenInfo *poOpenInf
 
     CPLString osFormat = CPLURLGetValue(pszURL, "FORMAT");
     CPLString osTransparent = CPLURLGetValue(pszURL, "TRANSPARENT");
+    CPLString osVersion = CPLURLGetValue(pszURL, "VERSION");
+
+    if (osVersion.size() == 0)
+        osVersion = "1.1.1";
 
     CPLString osURL(pszURL);
     osURL = CPLURLAddKVP(osURL, "SERVICE", "WMS");
-    osURL = CPLURLAddKVP(osURL, "VERSION", "1.1.1");
+    osURL = CPLURLAddKVP(osURL, "VERSION", osVersion);
     osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
     /* Remove all other keywords */
     osURL = CPLURLAddKVP(osURL, "LAYERS", NULL);
     osURL = CPLURLAddKVP(osURL, "SRS", NULL);
+    osURL = CPLURLAddKVP(osURL, "CRS", NULL);
     osURL = CPLURLAddKVP(osURL, "BBOX", NULL);
     osURL = CPLURLAddKVP(osURL, "FORMAT", NULL);
     osURL = CPLURLAddKVP(osURL, "TRANSPARENT", NULL);
@@ -149,6 +156,7 @@ GDALDataset *GDALWMSMetaDataset::DownloadGetTileService(GDALOpenInfo *poOpenInfo
     osURL = CPLURLAddKVP(osURL, "VERSION", NULL);
     osURL = CPLURLAddKVP(osURL, "LAYERS", NULL);
     osURL = CPLURLAddKVP(osURL, "SRS", NULL);
+    osURL = CPLURLAddKVP(osURL, "CRS", NULL);
     osURL = CPLURLAddKVP(osURL, "BBOX", NULL);
     osURL = CPLURLAddKVP(osURL, "FORMAT", NULL);
     osURL = CPLURLAddKVP(osURL, "TRANSPARENT", NULL);
@@ -226,10 +234,18 @@ void GDALWMSMetaDataset::AddSubDataset( const char* pszLayerName,
     CPLString osSubdatasetName = "WMS:";
     osSubdatasetName += osGetURL;
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SERVICE", "WMS");
-    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "VERSION", "1.1.1");
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "VERSION", osVersion);
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "REQUEST", "GetMap");
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "LAYERS", pszLayerName);
-    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SRS", pszSRS);
+    if(VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0"))
+    {
+        osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "CRS", pszSRS);
+        /* FIXME: this should apply to all SRS that need axis inversion */
+        if (strcmp(pszSRS, "EPSG:4326") == 0)
+            osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "BBOXORDER", "yxYX");
+    }
+    else
+        osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SRS", pszSRS);
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "BBOX",
              CPLSPrintf("%s,%s,%s,%s", pszMinX, pszMinY, pszMaxX, pszMaxY));
     if (osFormat.size() != 0)
@@ -276,10 +292,13 @@ void GDALWMSMetaDataset::AddWMSCSubDataset(WMSCTileSetDesc& oWMSCTileSetDesc,
     CPLString osSubdatasetName = "WMS:";
     osSubdatasetName += osGetURL;
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SERVICE", "WMS");
-    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "VERSION", "1.1.1");
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "VERSION", osVersion);
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "REQUEST", "GetMap");
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "LAYERS", oWMSCTileSetDesc.osLayers);
-    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SRS", oWMSCTileSetDesc.osSRS);
+    if(VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0"))
+        osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "CRS", oWMSCTileSetDesc.osSRS);
+    else
+        osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SRS", oWMSCTileSetDesc.osSRS);
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "BBOX",
              CPLSPrintf("%s,%s,%s,%s", oWMSCTileSetDesc.osMinX.c_str(),
                                        oWMSCTileSetDesc.osMinY.c_str(),
@@ -349,6 +368,9 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
     const char* pszMaxXLocal = NULL;
     const char* pszMaxYLocal = NULL;
 
+    const char* pszSRSTagName =
+        VersionStringToInt(osVersion.c_str()) >= VersionStringToInt("1.3.0") ? "CRS" : "SRS";
+
     /* Use local bounding box if available, otherwise use the one */
     /* that comes from an upper layer */
     /* such as in http://neowms.sci.gsfc.nasa.gov/wms/wms */
@@ -356,12 +378,12 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
     if (psSRS == NULL)
     {
         psSRS = CPLGetXMLNode( psXML, "LatLonBoundingBox" );
-        pszSRSLocal = CPLGetXMLValue(psXML, "SRS", NULL);
+        pszSRSLocal = CPLGetXMLValue(psXML, pszSRSTagName, NULL);
         if (pszSRSLocal == NULL)
             pszSRSLocal = "EPSG:4326";
     }
     else
-        pszSRSLocal = CPLGetXMLValue(psSRS, "SRS", NULL);
+        pszSRSLocal = CPLGetXMLValue(psSRS, pszSRSTagName, NULL);
 
     if (pszSRSLocal != NULL && psSRS != NULL)
     {
@@ -557,6 +579,11 @@ GDALDataset* GDALWMSMetaDataset::AnalyzeGetCapabilities(CPLXMLNode* psXML,
         CPLGetXMLNode(psCapability, "VendorSpecificCapabilities");
 
     GDALWMSMetaDataset* poDS = new GDALWMSMetaDataset();
+    const char* pszVersion = CPLGetXMLValue(psRoot, "version", NULL);
+    if (pszVersion)
+        poDS->osVersion = pszVersion;
+    else
+        poDS->osVersion = "1.1.1";
     poDS->osGetURL = pszGetURL;
     poDS->osXMLEncoding = pszEncoding ? pszEncoding : "";
     if (psVendorSpecificCapabilities)
