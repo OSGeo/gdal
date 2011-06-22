@@ -605,6 +605,31 @@ void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
 }
 
 /************************************************************************/
+/*                     AnalyzeGetTileServiceRecurse()                   */
+/************************************************************************/
+
+void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML)
+{
+    CPLXMLNode* psIter = psXML->psChild;
+    for(; psIter != NULL; psIter = psIter->psNext)
+    {
+        if (psIter->eType == CXT_Element &&
+            EQUAL(psIter->pszValue, "TiledGroup"))
+        {
+            const char* pszName = CPLGetXMLValue(psIter, "Name", NULL);
+            const char* pszTitle = CPLGetXMLValue(psIter, "Title", NULL);
+            if (pszName)
+                AddTiledSubDataset(pszName, pszTitle);
+        }
+        else if (psIter->eType == CXT_Element &&
+            EQUAL(psIter->pszValue, "TiledGroups"))
+        {
+            AnalyzeGetTileServiceRecurse(psIter);
+        }
+    }
+}
+
+/************************************************************************/
 /*                        AnalyzeGetTileService()                       */
 /************************************************************************/
 
@@ -630,18 +655,7 @@ GDALDataset* GDALWMSMetaDataset::AnalyzeGetTileService(CPLXMLNode* psXML)
     poDS->osGetURL = pszURL;
     poDS->osXMLEncoding = pszEncoding ? pszEncoding : "";
 
-    CPLXMLNode* psIter = psTiledPatterns->psChild;
-    for(; psIter != NULL; psIter = psIter->psNext)
-    {
-        if (psIter->eType == CXT_Element &&
-            EQUAL(psIter->pszValue, "TiledGroup"))
-        {
-            const char* pszName = CPLGetXMLValue(psIter, "Name", NULL);
-            const char* pszTitle = CPLGetXMLValue(psIter, "Title", NULL);
-            if (pszName)
-                poDS->AddTiledSubDataset(pszName, pszTitle);
-        }
-    }
+    poDS->AnalyzeGetTileServiceRecurse(psTiledPatterns);
 
     return poDS;
 }
