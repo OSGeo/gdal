@@ -45,6 +45,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     CPLString osLayer = CPLURLGetValue(pszBaseURL, "LAYERS");
     CPLString osVersion = CPLURLGetValue(pszBaseURL, "VERSION");
     CPLString osSRS = CPLURLGetValue(pszBaseURL, "SRS");
+    CPLString osCRS = CPLURLGetValue(pszBaseURL, "CRS");
     CPLString osBBOX = CPLURLGetValue(pszBaseURL, "BBOX");
     CPLString osFormat = CPLURLGetValue(pszBaseURL, "FORMAT");
     CPLString osTransparent = CPLURLGetValue(pszBaseURL, "TRANSPARENT");
@@ -53,6 +54,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     CPLString osOverviewCount = CPLURLGetValue(pszBaseURL, "OVERVIEWCOUNT");
     CPLString osTileSize = CPLURLGetValue(pszBaseURL, "TILESIZE");
     CPLString osMinResolution = CPLURLGetValue(pszBaseURL, "MINRESOLUTION");
+    CPLString osBBOXOrder = CPLURLGetValue(pszBaseURL, "BBOXORDER");
 
     CPLString osBaseURL = pszBaseURL;
     /* Remove all keywords to get base URL */
@@ -61,6 +63,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     osBaseURL = CPLURLAddKVP(osBaseURL, "REQUEST", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "LAYERS", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "SRS", NULL);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "CRS", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "BBOX", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "FORMAT", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "TRANSPARENT", NULL);
@@ -71,16 +74,47 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     osBaseURL = CPLURLAddKVP(osBaseURL, "OVERVIEWCOUNT", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "TILESIZE", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "MINRESOLUTION", NULL);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "BBOXORDER", NULL);
 
     if (osBaseURL.size() > 0 && osBaseURL[osBaseURL.size() - 1] == '&')
         osBaseURL.resize(osBaseURL.size() - 1);
 
     if (osVersion.size() == 0)
         osVersion = "1.1.1";
-    if (osSRS.size() == 0)
-        osSRS = "EPSG:4326";
+
+    CPLString osSRSTag;
+    CPLString osSRSValue;
+    if(VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0"))
+    {
+        if (osSRS.size())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "WMS version 1.3 and above expects CRS however SRS was set instead.");
+        }
+        osSRSValue = osCRS;
+        osSRSTag = "CRS";
+    }
+    else
+    {
+        if (osCRS.size())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "WMS version 1.1.1 and below expects SRS however CRS was set instead.");
+        }
+        osSRSValue = osSRS;
+        osSRSTag = "SRS";
+    }
+
+    if (osSRSValue.size() == 0)
+        osSRSValue = "EPSG:4326";
+    
     if (osBBOX.size() == 0)
-        osBBOX = "-180,-90,180,90";
+    {
+        if (osBBOXOrder.compare("yxYX") == 0)
+            osBBOX = "-90,-180,90,180";
+        else
+            osBBOX = "-180,-90,180,90";
+    }
 
     char** papszTokens = CSLTokenizeStringComplex(osBBOX, ",", 0, 0);
     if (CSLCount(papszTokens) != 4)
@@ -92,6 +126,14 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     const char* pszMinY = papszTokens[1];
     const char* pszMaxX = papszTokens[2];
     const char* pszMaxY = papszTokens[3];
+
+    #define SWAP(a,b) do { const char* _pszTmp = a; a = b; b = _pszTmp; } while(0);
+
+    if (osBBOXOrder.compare("yxYX") == 0)
+    {
+        SWAP(pszMinX, pszMinY);
+        SWAP(pszMaxX, pszMaxY);
+    }
 
     double dfMinX = CPLAtofM(pszMinX);
     double dfMinY = CPLAtofM(pszMinY);
@@ -170,9 +212,10 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             "    <Version>%s</Version>\n"
             "    <ServerUrl>%s</ServerUrl>\n"
             "    <Layers>%s</Layers>\n"
-            "    <SRS>%s</SRS>\n"
+            "    <%s>%s</%s>\n"
             "    <ImageFormat>%s</ImageFormat>\n"
             "    <Transparent>%s</Transparent>\n"
+            "    <BBoxOrder>%s</BBoxOrder>\n"
             "  </Service>\n"
             "  <DataWindow>\n"
             "    <UpperLeftX>%s</UpperLeftX>\n"
@@ -190,9 +233,12 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             osVersion.c_str(),
             pszEscapedURL,
             pszEscapedLayerXML,
-            osSRS.c_str(),
+            osSRSTag.c_str(),
+            osSRSValue.c_str(),
+            osSRSTag.c_str(),
             osFormat.c_str(),
             (bTransparent) ? "TRUE" : "FALSE",
+            (osBBOXOrder.size()) ? osBBOXOrder.c_str() : "xyXY",
             pszMinX, pszMaxY, pszMaxX, pszMinY,
             nXSize, nYSize,
             (bTransparent) ? 4 : 3,
