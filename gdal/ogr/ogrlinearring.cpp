@@ -335,7 +335,8 @@ int OGRLinearRing::isClockwise() const
 
 {
     int    i, v, next;
-    double  dx0, dy0, dx1, dy1, crossproduct; 
+    double  dx0, dy0, dx1, dy1, crossproduct;
+    int    bUseFallback = FALSE;
 
     if( nPointCount < 2 )
         return TRUE;
@@ -352,69 +353,56 @@ int OGRLinearRing::isClockwise() const
             v = i;
         }
     }
-    
-    /* Vertices may be duplicate, we have to go to nearest different in each direction */
-    /* preceding */
+
+    /* previous */
     next = v - 1;
-    while ( 1 )
+    if ( next < 0 )
     {
-        if ( next < 0 ) 
-        {
-            next = nPointCount - 1 - 1; 
-        }
-
-        if( !epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) 
-            || !epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON) )
-        {
-            break;
-        }
-
-        if ( next == v ) /* So we cannot get into endless loop */
-        {
-            break;
-        }
-
-        next--;
+        next = nPointCount - 1 - 1;
     }
-	    
+
+    if( epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) &&
+        epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON) )
+    {
+        /* Don't try to be too clever by retrying with a next point */
+        /* This can lead to false results as in the case of #3356 */
+        bUseFallback = TRUE;
+    }
+
     dx0 = paoPoints[next].x - paoPoints[v].x;
     dy0 = paoPoints[next].y - paoPoints[v].y;
     
     
     /* following */
     next = v + 1;
-    while ( 1 )
+    if ( next >= nPointCount - 1 )
     {
-        if ( next >= nPointCount - 1 ) 
-        {
-            next = 0; 
-        }
+        next = 0;
+    }
 
-        if ( !epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) 
-             || !epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON) )
-        {
-            break;
-        }
-
-        if ( next == v ) /* So we cannot get into endless loop */
-        {
-            break;
-        }
-
-        next++;
+    if( epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) &&
+        epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON) )
+    {
+        /* Don't try to be too clever by retrying with a next point */
+        /* This can lead to false results as in the case of #3356 */
+        bUseFallback = TRUE;
     }
 
     dx1 = paoPoints[next].x - paoPoints[v].x;
     dy1 = paoPoints[next].y - paoPoints[v].y;
 
     crossproduct = dx1 * dy0 - dx0 * dy1;
-    
-    if ( crossproduct > 0 )      /* CCW */
-	return FALSE;
-    else if ( crossproduct < 0 )  /* CW */
-	return TRUE;
+
+    if (!bUseFallback)
+    {
+        if ( crossproduct > 0 )      /* CCW */
+            return FALSE;
+        else if ( crossproduct < 0 )  /* CW */
+            return TRUE;
+    }
     
     /* ok, this is a degenerate case : the extent of the polygon is less than EPSILON */
+    /* or 2 nearly identical points were found */
     /* Try with Green Formula as a fallback, but this is not a guarantee */
     /* as we'll probably be affected by numerical instabilities */
     
