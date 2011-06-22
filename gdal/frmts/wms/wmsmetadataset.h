@@ -91,6 +91,8 @@ class GDALWMSMetaDataset : public GDALPamDataset
     void                AddTiledSubDataset(const char* pszTiledGroupName,
                                            const char* pszTitle);
 
+    void                AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML);
+
     void                AddWMSCSubDataset(WMSCTileSetDesc& oWMSCTileSetDesc,
                                           const char* pszTitle,
                                           CPLString osTransparent);
