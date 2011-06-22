@@ -141,7 +141,7 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
   /* Handle creation errors */
   if ( S_OK != hr )
   {
-    char *errstr = "Error creating geodatabase (%s).\n";
+    const char *errstr = "Error creating geodatabase (%s).\n";
     if ( hr == -2147220653 ) 
       errstr = "File already exists (%s).\n";
     delete pGeodatabase;

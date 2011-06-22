@@ -1130,7 +1130,8 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
         if (!m_supressColumnMappingError)
         {
           foundBadColumn = true;
-          CPLError( CE_Warning, CPLE_AppDefined, "Row id: %d col:%d has unhandled col type (%d). Setting to NULL.", (int)oid, i, m_pFeatureDefn->GetFieldDefn(i)->GetType());
+          CPLError( CE_Warning, CPLE_AppDefined, "Row id: %d col:%d has unhandled col type (%d). Setting to NULL.",
+                    (int)oid, (int)i, m_pFeatureDefn->GetFieldDefn(i)->GetType());
         }
       }
     }
