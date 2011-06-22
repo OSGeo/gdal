@@ -1,22 +1,23 @@
 <html>
 <head>
-<title>FileGDB Open API driver</title>
+<title>FileGDB API driver</title>
 </head>
 
 <body bgcolor="#ffffff">
 
-<h1>FileGDB Open API driver</h1>
+<h1>FileGDB API driver</h1>
 
 <h2>Overview</h2>
 
-<p>The FileGDB driver provides read-only access to FileGDB based datasources.</p>
+<p>The FileGDB driver provides read and write access to FileGDB based datasources (the ones created by ArcGIS 10 and above).</p>
 
 
 <h2>Requirements</h2>
 
 <p>
 	<ul>
-		<li>FileGDB SDK</li>
+		<li>FileGDB API SDK</li>
+        <li>OGR >= 1.9.0</li>
 	</ul>
 </p>
 
@@ -60,6 +61,10 @@ After you are done, go to the <i>$gdal_source_root\ogr\ogrsf_frmts\filegdb</i> f
 <p>
 	Date and blob fields have not been implemented. It is probably just a few lines of code, I just have not had time (or need) to do it.
 </p>
+
+<h2>Links</h2>
+
+<li><a href="http://resources.arcgis.com/fr/content/geodatabases/10.0/file-gdb-api">File Geodatabase API page</a></li>
 
 </body>
 </html>
