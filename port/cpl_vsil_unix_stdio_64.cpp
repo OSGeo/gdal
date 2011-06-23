@@ -372,7 +372,20 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
     poHandle->bAtEOF = FALSE;
 
     errno = nError;
-    return poHandle;
+
+/* -------------------------------------------------------------------- */
+/*      If VSI_CACHE is set we want to use a cached reader instead      */
+/*      of more direct io on the underlying file.                       */
+/* -------------------------------------------------------------------- */
+    if( (EQUAL(pszAccess,"r") || EQUAL(pszAccess,"rb"))
+        && CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
+    {
+        return VSICreateCachedFile( poHandle );
+    }
+    else
+    {
+        return poHandle;
+    }
 }
 
 /************************************************************************/
