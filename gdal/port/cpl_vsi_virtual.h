@@ -185,5 +185,6 @@ public:
 };
 
 VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
+VSIVirtualHandle* VSICreateCachedFile( VSIVirtualHandle* poBaseHandle );
 
 #endif /* ndef CPL_VSI_VIRTUAL_H_INCLUDED */
