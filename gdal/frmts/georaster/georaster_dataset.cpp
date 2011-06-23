@@ -1693,15 +1693,14 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
               ( panOverviewList[i] != panOverviewList[i-1] * 2 ) )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                    "Invalid GeoRaster Pyramids levels." );
-                
+                    "Invalid GeoRaster Pyramids levels." );        
                 return CE_Failure;
             }
         }
     }
 
     //  -----------------------------------------------------------
-    //  Re-sampling method:
+    //  Re-sampling method: 
     //    NN, BILINEAR, AVERAGE4, AVERAGE16 and CUBIC
     //  -----------------------------------------------------------
 
@@ -1718,7 +1717,6 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Invalid resampling method" );
-
         return CE_Failure;
     }
 
@@ -1726,14 +1724,10 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     //  Generate pyramids on poGeoRaster
     //  -----------------------------------------------------------
 
-    if( bInternal )
+    if( ! poGeoRaster->GeneratePyramid( nOverviews, szMethod, bInternal ) )
     {
-        if( ! poGeoRaster->GeneratePyramid( nOverviews, szMethod, bInternal ) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "Error generating pyramid" );
-
-            return CE_Failure;
-        }
+        CPLError( CE_Failure, CPLE_AppDefined, "Error generating pyramid" );
+        return CE_Failure;
     }
 
     //  -----------------------------------------------------------
@@ -1743,7 +1737,6 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     if( bInternal )
     {
         pfnProgress( 1 , NULL, pProgressData );
-        
         return CE_None;
     }
 
@@ -1757,11 +1750,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
 
     for( i = 0; i < nBands; i++ )
     {
-        //  -------------------------------------------------------
-        //  Get GeoRaster's Band
-        //  -------------------------------------------------------
-
-        GeoRasterRasterBand* poBand = (GeoRasterRasterBand*) this->papoBands[i];
+        GeoRasterRasterBand* poBand = (GeoRasterRasterBand*) papoBands[i];
 
         //  -------------------------------------------------------
         //  Clean up previous overviews
@@ -1786,20 +1775,24 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
         poBand->papoOverviews  = (GeoRasterRasterBand**) VSIMalloc(
                 sizeof(GeoRasterRasterBand*) * poBand->nOverviewCount );
 
-        for( j = 0; j < nOverviews; j++ )
+        for( j = 0; j < poBand->nOverviewCount; j++ )
         {
           poBand->papoOverviews[j] = new GeoRasterRasterBand(
                 (GeoRasterDataset*) this, ( i + 1 ), ( j + 1 ) );
         }
+    }
 
-        void *pScaledProgressData;
+    //  -----------------------------------------------------------
+    //  Load band's overviews
+    //  -----------------------------------------------------------
 
-        pScaledProgressData = GDALCreateScaledProgress( i / (double) nBands,
-            ( i + 1) / (double) nBands, pfnProgress, pProgressData );
+    for( i = 0; i < nBands; i++ )
+    {
+        GeoRasterRasterBand* poBand = (GeoRasterRasterBand*) papoBands[i];
 
-        //  -------------------------------------------------------
-        //  Load band's overviews
-        //  -------------------------------------------------------
+        void *pScaledProgressData = GDALCreateScaledProgress( 
+            i / (double) nBands, ( i + 1) / (double) nBands, 
+            pfnProgress, pProgressData );
 
         eErr = GDALRegenerateOverviews(
             (GDALRasterBandH) poBand,
@@ -1807,7 +1800,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
             (GDALRasterBandH*) poBand->papoOverviews,
             pszResampling,
             GDALScaledProgress,
-            pScaledProgressData);
+            pScaledProgressData );
 
         GDALDestroyScaledProgress( pScaledProgressData );
     }

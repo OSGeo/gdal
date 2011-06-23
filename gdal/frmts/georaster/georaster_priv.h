@@ -281,12 +281,13 @@ private:
     OWStatement*        poBlockStmt;
     OWStatement*        poStmtWrite;
 
-    long                nCurrentBlock;
-    long                nCacheBlockIn;
-    long                nCacheBlockOut;
     int                 nCurrentLevel;
     long                nLevelOffset;
+
+    long                nCacheBlockId;
     bool                bFlushBlock;
+    unsigned long       nFlushBlockSize;
+
     bool                bWriteOnly;
 
     hLevelDetails*      pahLevels;

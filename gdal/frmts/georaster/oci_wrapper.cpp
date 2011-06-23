@@ -741,9 +741,9 @@ void OWStatement::Bind( sdo_geometry** pphData )
         hBind,
         hError,
         poConnection->hGeometryTDO,
-	(dvoid**) pphData,
+    (dvoid**) pphData,
         (ub4*) 0,
-	(dvoid**) 0,
+    (dvoid**) 0,
         (ub4*) 0),
         hError );
 
@@ -1367,7 +1367,7 @@ char* OWStatement::ReadCLob( OCILobLocator* phLocator )
 
     pszBuffer[nAmont] = '\0';
 
-	return pszBuffer;
+    return pszBuffer;
 }
 
 void OWStatement::BindName( const char* pszName, int* pnData )
@@ -1571,10 +1571,11 @@ const char* OWReplaceString( const char* pszBaseString,
     // Search for Token, Stop Token on the Base String
 
     char* pszStart = strstr( szUpcaseBase, szUpcaseToken );
-    char* pszEnd   = strstr( szUpcaseBase, szUpcaseStopT );
 
     if( pszStart )
     {
+	    char* pszEnd = strstr( pszStart, szUpcaseStopT );
+
         // Concatenate the result
 
         int nStart = (int) ( pszStart - szUpcaseBase );
@@ -1586,7 +1587,7 @@ const char* OWReplaceString( const char* pszBaseString,
         strcat( szResult, &pszBaseString[nEnd + 1] );
     }
 
-    return CPLStrdup( szResult );
+    return szResult;
 }
 
 /*****************************************************************************/
@@ -1645,7 +1646,7 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
         *pszIn = (char) toupper( *pszIn );
     }
 
-    char* pszStart = strstr( szUpcase, "SDO_GEOR.INIT" );
+    char* pszStart = strstr( szUpcase, "SDO_GEOR.INIT" ) + strlen("SDO_GEOR.");
 
     if( pszStart == NULL )
     {
@@ -1668,7 +1669,7 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
     strncpy( szBuffer, pszStart, nLength );
     szBuffer[nLength] = '\0';
 
-    const char* pszValue = OWParseValue( szBuffer, " .(,)", "INIT", nField );
+    const char* pszValue = OWParseValue( szBuffer, " (,)", "INIT", nField );
 
     return EQUAL( pszValue, "" ) ? "NULL" : pszValue;
 }
