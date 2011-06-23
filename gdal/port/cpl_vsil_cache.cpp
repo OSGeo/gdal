@@ -169,12 +169,6 @@ int VSICachedFile::Seek( vsi_l_offset nReqOffset, int nWhence )
         nReqOffset += nFileSize;
     }
 
-    if( nReqOffset > nFileSize )
-    {
-        errno = EINVAL;
-        return -1;
-    }
-
     nOffset = nReqOffset;
 
     return 0;
@@ -362,6 +356,9 @@ int VSICachedFile::LoadBlocks( size_t nStartBlock, size_t nBlockCount,
 size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
+    if( nOffset >= nFileSize )
+        return 0;
+
 /* ==================================================================== */
 /*      Make sure the cache is loaded for the whole request region.     */
 /* ==================================================================== */
@@ -438,7 +435,7 @@ size_t VSICachedFile::Write( const void * pBuffer, size_t nSize, size_t nCount )
 int VSICachedFile::Eof()
 
 {
-    if( nOffset == nFileSize )
+    if( nOffset >= nFileSize )
         return 1;
     else
         return 0;
