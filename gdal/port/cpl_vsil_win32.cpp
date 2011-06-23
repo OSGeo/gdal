@@ -406,15 +406,28 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
         errno = ErrnoFromGetLastError();
         return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Create a VSI file handle.                                       */
+/* -------------------------------------------------------------------- */
+    VSIWin32Handle *poHandle = new VSIWin32Handle;
+    
+    poHandle->hFile = hFile;
+    
+    if (strchr(pszAccess, 'a') != 0)
+        poHandle->Seek(0, SEEK_END);
+    
+/* -------------------------------------------------------------------- */
+/*      If VSI_CACHE is set we want to use a cached reader instead      */
+/*      of more direct io on the underlying file.                       */
+/* -------------------------------------------------------------------- */
+    if( (EQUAL(pszAccess,"r") || EQUAL(pszAccess,"rb"))
+        && CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
+    {
+        return VSICreateCachedFile( poHandle );
+    }
     else
     {
-        VSIWin32Handle *poHandle = new VSIWin32Handle;
-        
-        poHandle->hFile = hFile;
-        
-        if (strchr(pszAccess, 'a') != 0)
-            poHandle->Seek(0, SEEK_END);
-
         return poHandle;
     }
 }
