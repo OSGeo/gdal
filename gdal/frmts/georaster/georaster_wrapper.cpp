@@ -1028,7 +1028,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "  STM  VARCHAR2(1024)  := '';\n"
         "BEGIN\n"
         "\n"
-        "  %s;\n"
+        "  %s\n"
         "\n"
         "  SELECT GR1.RASTERDATATABLE INTO :rdt FROM DUAL;\n"
         "  SELECT GR1.RASTERID        INTO :rid FROM DUAL;\n"
