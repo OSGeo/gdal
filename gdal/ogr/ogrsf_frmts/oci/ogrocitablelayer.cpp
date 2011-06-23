@@ -1326,29 +1326,29 @@ void OGROCITableLayer::UpdateLayerExtents()
 
     if( !bNewLayer && pszGeomName )
     {
-        CPLString osCommand, osMoreCmd;
+        OGROCIStringBuf oCommand;
 
-        osCommand.Printf(
-            "select min(case when r=1 then sdo_lb else null end) minx, min(case when r=2 then sdo_lb else null end) miny, "
-            "min(case when r=1 then sdo_ub else null end) maxx, min(case when r=2 then sdo_ub else null end) maxy"
-            "from (SELECT d.sdo_dimname, d.sdo_lb, sdo_ub, sdo_tolerance, rownum r"
-            "FROM ALL_SDO_GEOM_METADATA m, table(m.diminfo) d" 
-            "where m.table_name = UPPER('%s') and m.COLUMN_NAME = UPPER('%s')",
-            osTableName.c_str(), pszGeomName );
-
-        if( osOwner != "" )
-        {
-            osMoreCmd.Printf( "AND OWNER = UPPER('%s')", osOwner.c_str() );
-        }
-
-        osMoreCmd.Printf("))");
+        oCommand.Appendf(1000, 
+                          "select min(case when r=1 then sdo_lb else null end) minx, min(case when r=2 then sdo_lb else null end) miny, " 
+                          "min(case when r=1 then sdo_ub else null end) maxx, min(case when r=2 then sdo_ub else null end) maxy" 
+                          " from (SELECT d.sdo_dimname, d.sdo_lb, sdo_ub, sdo_tolerance, rownum r" 
+                          " FROM ALL_SDO_GEOM_METADATA m, table(m.diminfo) d"  
+                          " where m.table_name = UPPER('%s') and m.COLUMN_NAME = UPPER('%s')", 
+                          osTableName.c_str(), pszGeomName ); 
+ 		 
+        if( osOwner != "" ) 
+        { 
+            oCommand.Appendf(500, " AND OWNER = UPPER('%s')", osOwner.c_str() ); 
+        } 
+ 		 
+        oCommand.Append(" ) ");
 
         OGROCISession *poSession = poDS->GetSession();
         CPLAssert( NULL != poSession );
         
         OGROCIStatement oGetExtent( poSession );
         
-        if( oGetExtent.Execute( osCommand ) == CE_None )
+        if( oGetExtent.Execute( oCommand.GetString() ) == CE_None )
         {
             char **papszRow = oGetExtent.SimpleFetchRow();
             
