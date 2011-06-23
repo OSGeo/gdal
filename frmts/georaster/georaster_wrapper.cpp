@@ -469,6 +469,8 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     poStmt->BindName( ":wktext", szWKText, sizeof(szWKText) );
     poStmt->BindName( ":authority", szAuthority );
 
+    CPLErrorReset();
+
     if( ! poStmt->Execute() )
     {
         delete poStmt;
@@ -644,8 +646,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
         if( pszInsert )
         {
-            if( strstr( pszInsert, "VALUES" ) == NULL &&
-                strstr( pszInsert, "values" ) == NULL )
+            if( ! EQUALN( pszInsert, "VALUES", 6 ) )
             {
                 sValues = CPLSPrintf( "VALUES %s", pszInsert );
             }
@@ -707,7 +708,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     if( ! bUpdate )
     {
         strcpy( szInsert,
-            OWReplaceString( sValues.c_str(), "SDO_GEOR.INIT", ")", "GR1" ) );
+            OWReplaceString( sValues.c_str(), "SDO_GEOR.INIT", ")", szCreateBlank ) );
     }
 
     //  -----------------------------------------------------------
@@ -880,7 +881,6 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         if( ! poStmt->Execute() )
         {
             delete ( poStmt );
-            CPLError( CE_Failure, CPLE_AppDefined, "Create Table Error!" );
             return false;
         }
 
@@ -891,26 +891,27 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     //  Prepare UPDATE or INSERT comand
     //  -----------------------------------------------------------
 
-    char szCommand[OWTEXT];
+    CPLString sCommand;
 
     if( bUpdate )
     {
-        strcpy( szCommand, CPLSPrintf(
-            "UPDATE %s%s T SET %s = GR1 WHERE %s RETURNING %s INTO GR1;",
+        sCommand = CPLSPrintf(
+            "UPDATE %s%s T SET %s = %s WHERE %s RETURNING %s INTO GR1;",
             sSchema.c_str(),
             sTable.c_str(),
             sColumn.c_str(),
+            szCreateBlank,
             sWhere.c_str(),
-            sColumn.c_str() ) );
+            sColumn.c_str() );
     }
     else
     {
-        strcpy( szCommand, CPLSPrintf(
+        sCommand = CPLSPrintf(
             "INSERT INTO %s%s %s RETURNING %s INTO GR1;",
             sSchema.c_str(),
             sTable.c_str(),
             szInsert,
-            sColumn.c_str() ) );
+            sColumn.c_str() );
     }
 
     //  -----------------------------------------------------------
@@ -931,10 +932,6 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "  CNT  NUMBER          := 0;\n"
             "  GR1  SDO_GEORASTER   := NULL;\n"
             "BEGIN\n"
-            "\n"
-            "  GR1 := %s;\n"
-            "\n"
-            "  GR1.spatialExtent := NULL;\n"
             "\n"
             "  %s\n"
             "\n"
@@ -972,8 +969,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                 sTable.c_str(),
                 sColumn.c_str(),
                 sOwner.c_str(),
-                szCreateBlank,
-                szCommand,
+                sCommand.c_str(),
                 sSchema.c_str(),
                 sFormat.c_str(),
                 sSchema.c_str(),
@@ -993,11 +989,11 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         poStmt->BindName( ":rdt", szBindRDT );
         poStmt->BindName( ":rid", &nBindRID );
 
+        CPLErrorReset();
+
         if( ! poStmt->Execute() )
         {
             delete poStmt;
-            CPLError( CE_Failure, CPLE_AppDefined,
-                "Failure to initialize GeoRaster" );
             return false;
         }
 
@@ -1032,11 +1028,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "  STM  VARCHAR2(1024)  := '';\n"
         "BEGIN\n"
         "\n"
-        "  GR1 := %s;\n"
-        "\n"
-        "  GR1.spatialExtent := NULL;\n"
-        "\n"
-        "  %s\n"
+        "  %s;\n"
         "\n"
         "  SELECT GR1.RASTERDATATABLE INTO :rdt FROM DUAL;\n"
         "  SELECT GR1.RASTERID        INTO :rid FROM DUAL;\n"
@@ -1098,8 +1090,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "\n"
         "END;",
             sOwner.c_str(),
-            szCreateBlank,
-            szCommand,
+            sCommand.c_str(),
             sColumn.c_str(), sSchema.c_str(), sTable.c_str(),
             sColumn.c_str(), sColumn.c_str(),
             sColumn.c_str(), sSchema.c_str(), sTable.c_str(),
@@ -1125,8 +1116,6 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     if( ! poStmt->Execute() )
     {
         delete poStmt;
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "Failure to initialize GeoRaster" );
         return false;
     }
 
@@ -2905,8 +2894,6 @@ bool GeoRasterWrapper::GeneratePyramid( int nLevels,
     if( ! poStmt->Execute() )
     {
         delete poStmt;
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "Failure to initialize Level %d", nLevels );
         return false;
     }
 
@@ -3015,8 +3002,6 @@ bool GeoRasterWrapper::InitializeMask( int nLevel,
     if( ! poStmt->Execute() )
     {
         delete poStmt;
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "Failure to initialize Level %d", nLevel );
         return false;
     }
 
