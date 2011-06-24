@@ -726,3 +726,4 @@ GDALDataset* GDALWMSMetaDataset::AnalyzeTileMapService(CPLXMLNode* psXML)
 
     return poDS;
 }
+

@@ -171,12 +171,12 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
         if (dfRatio > 1)
         {
             nXSize = nTileSize;
-            nYSize = nXSize / dfRatio;
+            nYSize = (int) (nXSize / dfRatio);
         }
         else
         {
             nYSize = nTileSize;
-            nXSize = nYSize * dfRatio;
+            nXSize = (int) (nYSize * dfRatio);
         }
 
         if (nOverviewCount < 0 || nOverviewCount > 20)
