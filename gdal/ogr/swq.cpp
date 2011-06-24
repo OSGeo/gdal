@@ -611,3 +611,42 @@ CPLErr swq_expr_compile2( const char *where_clause,
         return CE_Failure;
     }
 }
+
+/************************************************************************/
+/*                        swq_is_reserved_keyword()                     */
+/************************************************************************/
+
+static const char* apszSQLReservedKeywords[] = {
+    "OR",
+    "AND",
+    "NOT",
+    "LIKE",
+    "IS",
+    "NULL",
+    "IN",
+    "BETWEEN",
+    "CAST",
+    "DISTINCT",
+    "ESCAPE",
+    "SELECT",
+    "LEFT",
+    "JOIN",
+    "WHERE",
+    "ON",
+    "ORDER",
+    "BY",
+    "FROM",
+    "AS",
+    "ASC",
+    "DESC"
+};
+
+int swq_is_reserved_keyword(const char* pszStr)
+{
+    for(int i = 0; i < (int)(sizeof(apszSQLReservedKeywords)/sizeof(char*)); i++)
+    {
+        if (EQUAL(pszStr, apszSQLReservedKeywords[i]))
+            return TRUE;
+    }
+    return FALSE;
+}
