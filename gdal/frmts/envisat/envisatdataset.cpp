@@ -200,8 +200,8 @@ void EnvisatDataset::ScanForGCPs_ASAR()
 
         if((iRecord>1) && (int(pasGCPList[nGCPCount-1].dfGCPLine+0.5) > nRange))
         {
-            int delta = pasGCPList[nGCPCount-1].dfGCPLine -
-                        pasGCPList[nGCPCount-12].dfGCPLine;
+            int delta = (int) (pasGCPList[nGCPCount-1].dfGCPLine -
+                               pasGCPList[nGCPCount-12].dfGCPLine);
             nRange = int(pasGCPList[nGCPCount-1].dfGCPLine+0.5) + delta;
             nRangeOffset = nRange-1;
         }
