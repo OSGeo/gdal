@@ -370,8 +370,24 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         else if( field_index != -1 )
             osExpr.Printf( "%s", field_list->names[field_index] );
 
-        Quote( osExpr, chColumnQuote );
 
+        for( int i = 0; i < (int) osExpr.size(); i++ )
+        {
+            char ch = osExpr[i];
+            if (!isalnum((int)ch))
+            {
+                Quote( osExpr, chColumnQuote );
+                return CPLStrdup(osExpr.c_str());
+            }
+        }
+
+        if (swq_is_reserved_keyword(osExpr))
+        {
+            Quote( osExpr, chColumnQuote );
+            return CPLStrdup(osExpr.c_str());
+        }
+
+        /* The string is just alphanum and not a reserved SQL keyword, no needs to quote and escape */
         return CPLStrdup(osExpr.c_str());
     }
 
@@ -414,10 +430,31 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
       case SWQ_DIVIDE:
       case SWQ_MODULUS:
         CPLAssert( nSubExprCount >= 2 );
-        osExpr.Printf( "(%s) %s (%s)", 
-                       apszSubExpr[0],
-                       poOp->osName.c_str(),
-                       apszSubExpr[1] );
+        if (papoSubExpr[0]->eNodeType == SNT_COLUMN ||
+            papoSubExpr[0]->eNodeType == SNT_CONSTANT)
+        {
+            osExpr += apszSubExpr[0];
+        }
+        else
+        {
+            osExpr += "(";
+            osExpr += apszSubExpr[0];
+            osExpr += ")";
+        }
+        osExpr += " ";
+        osExpr += poOp->osName;
+        osExpr += " ";
+        if (papoSubExpr[1]->eNodeType == SNT_COLUMN ||
+            papoSubExpr[1]->eNodeType == SNT_CONSTANT)
+        {
+            osExpr += apszSubExpr[1];
+        }
+        else
+        {
+            osExpr += "(";
+            osExpr += apszSubExpr[1];
+            osExpr += ")";
+        }
         if( nOperation == SWQ_LIKE && nSubExprCount == 3 )
             osExpr += CPLSPrintf( " ESCAPE (%s)", apszSubExpr[2] );
         break;

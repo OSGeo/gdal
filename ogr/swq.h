@@ -323,4 +323,6 @@ const char *swq_select_summarize( swq_select *select_info,
                                   int dest_column, 
                                   const char *value );
 
+int swq_is_reserved_keyword(const char* pszStr);
+
 #endif /* def _SWQ_H_INCLUDED_ */
