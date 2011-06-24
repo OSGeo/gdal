@@ -193,7 +193,10 @@ void VSICachedFile::FlushLRU()
 {
     CPLAssert( poLRUStart != NULL );
 
-    nCacheUsed -= CHUNK_SIZE;
+    if (nCacheUsed >= CHUNK_SIZE)
+        nCacheUsed -= CHUNK_SIZE;
+    else
+        nCacheUsed = 0;
     
     VSICacheChunk *poBlock = poLRUStart;
     
