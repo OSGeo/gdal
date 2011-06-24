@@ -160,7 +160,7 @@ static GDALColorInterp BandInterp(int nbands, int band) {
  */
 
 static int FindBbox(CPLString in) {
-    unsigned int pos=0;
+    size_t pos;
     while (std::string::npos != (pos=in.find('&',pos))) {
 	pos++;
 	const char *p=in.c_str()+pos;
@@ -382,7 +382,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                 CPLString request;
                 FindChangePattern(Pattern->psChild->pszValue,substs,request);
 
-                char **papszTokens=CSLTokenizeString2(request,"&",NULL);
+                char **papszTokens=CSLTokenizeString2(request,"&",0);
 
                 mbsx=atoi(CSLFetchNameValue(papszTokens,"WIDTH"));
                 mbsy=atoi(CSLFetchNameValue(papszTokens,"HEIGHT"));
@@ -421,14 +421,14 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                     break;
                 }
                 int sx=static_cast<int>((m_data_window.m_x1-m_data_window.m_x0)/(X-x)*m_bsx);
-                int sy=static_cast<int>(abs((m_data_window.m_y1-m_data_window.m_y0)/(Y-y)*m_bsy));
+                int sy=static_cast<int>(fabs((m_data_window.m_y1-m_data_window.m_y0)/(Y-y)*m_bsy));
                 if (sx>m_data_window.m_sx) m_data_window.m_sx=sx;
                 if (sy>m_data_window.m_sy) m_data_window.m_sy=sy;
                 CSLDestroy(papszTokens);
 
                 // Only use overlays where the top coordinate is within a pixel from the top of coverage
                 double pix_off,temp;
-                pix_off=m_bsy*modf(abs((Y-m_data_window.m_y0)/(Y-y)),&temp);
+                pix_off=m_bsy*modf(fabs((Y-m_data_window.m_y0)/(Y-y)),&temp);
                 if ((pix_off<1)||((m_bsy-pix_off)<1)) {
                     requests=CSLAddString(requests,request);
                     m_overview_count++;
