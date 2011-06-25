@@ -106,7 +106,7 @@ protected:
 
   bool GDBToOGRFields(CPLXMLNode* psFields);  
   bool ParseGeometryDef(CPLXMLNode* psGeometryDef);
-  bool ParseSpatialReference(CPLXMLNode* psSpatialRefNode, std::string* pOutWkt);
+  bool ParseSpatialReference(CPLXMLNode* psSpatialRefNode, std::string* pOutWkt, std::string* pOutWKID);
 
   bool OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature);
   
