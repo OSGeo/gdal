@@ -860,6 +860,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
       }
 
       OGRFieldType ogrType;
+      //CPLDebug("FGDB", "name = %s, type = %s", fieldName.c_str(), fieldType.c_str() );
       if (!GDBToOGRFieldType(fieldType, &ogrType))
       {
         // field cannot be mapped, skipping further processing
@@ -877,6 +878,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
       m_pFeatureDefn->AddFieldDefn( &fieldTemplate );
 
       m_vOGRFieldToESRIField.push_back(StringToWString(fieldName));
+      m_vOGRFieldToESRIFieldType.push_back( fieldType );
 
     }
   }
@@ -1058,6 +1060,7 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
   for (size_t i = 0; i < mappedFieldCount; ++i)
   {
     const wstring & wstrFieldName = m_vOGRFieldToESRIField[i];
+    const std::string & strFieldType = m_vOGRFieldToESRIFieldType[i];
 
     bool isNull = false;
 
@@ -1102,16 +1105,32 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
 
     case OFTReal:
       {
-        double val;
-
-        if (FAILED(hr = pRow->GetDouble(wstrFieldName, val)))
+        if (strFieldType == "esriFieldTypeSingle")
         {
-          GDBErr(hr, "Failed to determine real value for column " + WStringToString(wstrFieldName));
-          foundBadColumn = true;
-          continue;
-        }
+            float val;
 
-        pOutFeature->SetField(i, val);
+            if (FAILED(hr = pRow->GetFloat(wstrFieldName, val)))
+            {
+                GDBErr(hr, "Failed to determine float value for column " + WStringToString(wstrFieldName));
+                foundBadColumn = true;
+                continue;
+            }
+
+            pOutFeature->SetField(i, val);
+        }
+        else
+        {
+            double val;
+
+            if (FAILED(hr = pRow->GetDouble(wstrFieldName, val)))
+            {
+                GDBErr(hr, "Failed to determine real value for column " + WStringToString(wstrFieldName));
+                foundBadColumn = true;
+                continue;
+            }
+
+            pOutFeature->SetField(i, val);
+        }
       }
       break;
     case OFTString:
