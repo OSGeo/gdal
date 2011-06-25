@@ -330,22 +330,30 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS)
         wkid = CPLStrdup(poSRS->GetAuthorityCode(NULL));
     }
 
+    OGRSpatialReference* poSRSClone = poSRS->Clone();
+
     /* Flip the WKT to ESRI form */
-    if ( poSRS->morphToESRI() != OGRERR_NONE ) return NULL;
+    if ( poSRSClone->morphToESRI() != OGRERR_NONE )
+    {
+        delete poSRSClone;
+        return NULL;
+    }
 
     CPLXMLNode *srs_xml = CPLCreateXMLNode(NULL, CXT_Element, "SpatialReference");
 
     /* Set the SpatialReference type attribute correctly for GEOGCS/PROJCS */
-    if ( poSRS->IsProjected() )
+    if ( poSRSClone->IsProjected() )
         CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:ProjectedCoordinateSystem");
     else
         CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:GeographicCoordinateSystem");
 
     /* Add the WKT to the XML */
     char *wkt = NULL;
-    poSRS->exportToWkt(&wkt);
+    poSRSClone->exportToWkt(&wkt);
     CPLCreateXMLElementAndValue(srs_xml,"WKT", wkt);
     if( wkt ) OGRFree(wkt);
+
+    delete poSRSClone;
 
     /* Add the WKID to the XML */
     if ( wkid ) 
@@ -510,8 +518,8 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
   char *defn_str = CPLSerializeXMLTree(xml_xml);
   
   /* TODO, tie this to debugging levels */
-  //std::cout << defn_str << std::endl;
-  
+  CPLDebug("FGDB", "%s", defn_str);
+
   /* Create the table. */
   Table *table = new Table;
   Geodatabase *gdb = pParentDataSource->GetGDB();
@@ -637,7 +645,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
 
   string geometryType;
   bool hasZ = false;
-  string wkt;
+  string wkt, wkid;
 
   for (psGeometryDefItem = psRoot->psChild;
     psGeometryDefItem != NULL;
@@ -659,7 +667,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
       }
       else if (EQUAL(psGeometryDefItem->pszValue,"SpatialReference"))
       {
-        ParseSpatialReference(psGeometryDefItem, &wkt); // we don't check for success because it
+        ParseSpatialReference(psGeometryDefItem, &wkt, &wkid); // we don't check for success because it
                                                         // may not be there
       }
       /* No M support in OGR yet 
@@ -696,6 +704,18 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
     m_forceMulti = true;
 
 
+  if (wkid.length() > 0)
+  {
+      m_pSRS = new OGRSpatialReference();
+      if (m_pSRS->importFromEPSG(atoi(wkid.c_str())) != OGRERR_NONE)
+      {
+          delete m_pSRS;
+          m_pSRS = NULL;
+      }
+      else
+          return true;
+  }
+
   if (wkt.length() > 0)
   {
     if (!GDBToOGRSpatialReference(wkt, &m_pSRS))
@@ -713,9 +733,10 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
   return true;
 }
 
-bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode, string* pOutWkt)
+bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode, string* pOutWkt, string* pOutWKID)
 {
   *pOutWkt = "";
+  *pOutWKID = "";
 
   CPLXMLNode* psSRItemNode;
 
@@ -726,7 +747,16 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode, string* pOut
     //loop through all "Field" elements
     //
 
-    if( psSRItemNode->eType == CXT_Element && 
+    if( psSRItemNode->eType == CXT_Element &&
+        psSRItemNode->psChild != NULL &&
+        EQUAL(psSRItemNode->pszValue,"WKID"))
+    {
+
+      char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
+      *pOutWKID = pszUnescaped;
+      CPLFree(pszUnescaped);
+    }
+    else if( psSRItemNode->eType == CXT_Element &&
         psSRItemNode->psChild != NULL && 
         EQUAL(psSRItemNode->pszValue,"WKT"))
     {
@@ -734,12 +764,10 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode, string* pOut
       char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
       *pOutWkt = pszUnescaped;
       CPLFree(pszUnescaped);
-
-      return true; // found what I was looking for
     }
   }
 
-  return false;
+  return (*pOutWkt != "" || *pOutWKID != "");
 }
 
 bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
