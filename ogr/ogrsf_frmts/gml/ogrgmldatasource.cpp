@@ -267,7 +267,9 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             szPtr += 3;
         }
 
-        bIsUTF8 = strstr(szPtr, "encoding='UTF-8'") != NULL ||
+        bIsUTF8 = strstr(szPtr, "encoding='utf-8'") != NULL ||
+                  strstr(szPtr, "encoding=\"utf-8\"") != NULL ||
+                  strstr(szPtr, "encoding='UTF-8'") != NULL ||
                   strstr(szPtr, "encoding=\"UTF-8\"") != NULL;
 
         bHas3D = strstr(szPtr, "srsDimension=\"3\"") != NULL || strstr(szPtr, "<gml:Z>") != NULL;
