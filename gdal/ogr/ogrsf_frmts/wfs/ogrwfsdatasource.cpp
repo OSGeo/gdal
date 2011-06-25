@@ -154,6 +154,8 @@ OGRWFSDataSource::OGRWFSDataSource()
 
     poLayerMetadataDS = NULL;
     poLayerMetadataLayer = NULL;
+
+    bKeepLayerNamePrefix = FALSE;
 }
 
 /************************************************************************/
@@ -259,7 +261,7 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
     }
 
     /* now try looking after the colon character */
-    if (bHasFoundLayerWithColon && strchr(pszName, ':') == NULL)
+    if (!bKeepLayerNamePrefix && bHasFoundLayerWithColon && strchr(pszName, ':') == NULL)
     {
         for( i = 0; i < nLayers; i++ )
         {
@@ -1016,6 +1018,33 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
     CPLXMLNode* psChildIter;
+
+    /* Check if there are layer names whose identical except their prefix */
+    std::set<CPLString> aosSetLayerNames;
+    for(psChildIter = psChild->psChild;
+        psChildIter != NULL;
+        psChildIter = psChildIter->psNext)
+    {
+        if (psChildIter->eType == CXT_Element &&
+            strcmp(psChildIter->pszValue, "FeatureType") == 0)
+        {
+            const char* pszName = CPLGetXMLValue(psChildIter, "Name", NULL);
+            if (pszName != NULL)
+            {
+                const char* pszShortName = strchr(pszName, ':');
+                if (pszShortName)
+                    pszName = pszShortName + 1;
+                if (aosSetLayerNames.find(pszName) != aosSetLayerNames.end())
+                {
+                    bKeepLayerNamePrefix = TRUE;
+                    CPLDebug("WFS", "At least 2 layers have names that are only distinguishable by keeping the prefix");
+                    break;
+                }
+                aosSetLayerNames.insert(pszName);
+            }
+        }
+    }
+
     for(psChildIter = psChild->psChild;
         psChildIter != NULL;
         psChildIter = psChildIter->psNext)
@@ -1449,7 +1478,18 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
             GMLFeatureClass* poClass = *iter;
             iter ++;
 
-            OGRWFSLayer* poLayer = (OGRWFSLayer* )GetLayerByName(poClass->GetName());
+            OGRWFSLayer* poLayer;
+
+            if (bKeepLayerNamePrefix && pszNS != NULL && strchr(poClass->GetName(), ':') == NULL)
+            {
+                CPLString osWithPrefix(pszNS);
+                osWithPrefix += ":";
+                osWithPrefix += poClass->GetName();
+                poLayer = (OGRWFSLayer* )GetLayerByName(osWithPrefix);
+            }
+            else
+                poLayer = (OGRWFSLayer* )GetLayerByName(poClass->GetName());
+
             if (poLayer)
             {
                 if (!poLayer->HasLayerDefn())

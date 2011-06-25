@@ -221,6 +221,8 @@ class OGRWFSDataSource : public OGRDataSource
     OGRDataSource      *poLayerMetadataDS;
     OGRLayer           *poLayerMetadataLayer;
 
+    int                 bKeepLayerNamePrefix;
+
   public:
                         OGRWFSDataSource();
                         ~OGRWFSDataSource();
@@ -272,6 +274,8 @@ class OGRWFSDataSource : public OGRDataSource
 
     void                        LoadMultipleLayerDefn(const char* pszLayerName,
                                                       char* pszNS, char* pszNSVal);
+
+    int                         GetKeepLayerNamePrefix() { return bKeepLayerNamePrefix; }
 };
 
 /************************************************************************/
