@@ -131,6 +131,7 @@ protected:
 
 
   std::vector<std::wstring> m_vOGRFieldToESRIField; //OGR Field Index to ESRI Field Name Mapping
+  std::vector<std::string> m_vOGRFieldToESRIFieldType; //OGR Field Index to ESRI Field Type Mapping
 
   //buffers are used for avoiding constant reallocation of temp memory
   //unsigned char* m_pBuffer;
