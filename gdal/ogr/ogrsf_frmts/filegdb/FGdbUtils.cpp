@@ -71,7 +71,9 @@ bool GDBErr(long int hr, std::string desc)
   {
     CPLError( CE_Failure, CPLE_AppDefined, "Error (%ld): %s", hr, desc.c_str());
   }
-  FileGDBAPI::ErrorInfo::ClearErrors();
+  // FIXME? EvenR: not sure if ClearErrors() is really necessary, but as it, it causes crashes in case of
+  // repeated errors
+  //FileGDBAPI::ErrorInfo::ClearErrors();
   
   return false;
 }
@@ -126,12 +128,7 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
       break;
     }
     case wkbLineString25D: 
-    {
-      *gdbType = "esriGeometryLine";
-      *hasZ = true;
-      break;
-    }
-    case wkbMultiLineString25D: 
+    case wkbMultiLineString25D:
     {
       *gdbType = "esriGeometryPolyline";
       *hasZ = true;
@@ -158,12 +155,7 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
       break;
     }
     case wkbLineString: 
-    {
-      *gdbType = "esriGeometryLine";
-      *hasZ = false;
-      break;
-    }
-    case wkbMultiLineString: 
+    case wkbMultiLineString:
     {
       *gdbType = "esriGeometryPolyline";
       *hasZ = false;
