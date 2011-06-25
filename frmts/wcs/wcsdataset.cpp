@@ -1241,7 +1241,8 @@ int WCSDataset::ExtractGridInfo100()
         for( psTime = psTD->psChild; psTime != NULL; psTime = psTime->psNext )
         {
             if( psTime->eType == CXT_Element
-                && EQUAL(psTime->pszValue,"timePosition") 
+                && EQUAL(psTime->pszValue,"timePosition")
+                && psTime->psChild != NULL
                 && psTime->psChild->eType == CXT_Text )
                 aosTimePositions.push_back( psTime->psChild->pszValue );
         }
