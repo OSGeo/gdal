@@ -7,6 +7,7 @@ http://giswebservices.massgis.state.ma.us/geoserver/wfs
 http://gem.demo.opengeo.org/geoserver/wfs
 http://geohub.jrc.ec.europa.eu/effis/ows
 http://v2.suite.opengeo.org/geoserver/ows
+http://data.wien.gv.at/daten/wfs  # layers with identical names within 2 different namespaces
 
 MapServer:
 http://www.bsc-eoc.org/cgi-bin/bsc_ows.asp (4.8.1)
