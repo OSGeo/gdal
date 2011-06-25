@@ -305,7 +305,10 @@ OGRErr FGdbLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
         return GDBErr(hr, "Failed at creating Field for " + fieldname);
 
     /* Now add the OGRFieldDefn to the OGRFeatureDefn */
-    m_pFeatureDefn->AddFieldDefn(&oField);  
+    m_pFeatureDefn->AddFieldDefn(&oField);
+
+    m_vOGRFieldToESRIField.push_back(StringToWString(fieldname));
+    m_vOGRFieldToESRIFieldType.push_back( gdbFieldType );
 
     /* All done and happy */
     return OGRERR_NONE;
@@ -1151,7 +1154,16 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
       /* TODO: Need to get test dataset to implement these leave it as NULL for now
       case OFTBinary:
       {
-      
+        ByteArray binaryBuf;
+
+        if (FAILED(hr = pRow->GetBinary(wstrFieldName, binaryBuf)))
+        {
+          GDBErr(hr, "Failed to determine binary value for column " + WStringToString(wstrFieldName));
+          foundBadColumn = true;
+          continue;
+        }
+
+        pOutFeature->SetField(i, (int)binaryBuf.inUseLength, (GByte*)binaryBuf.byteArray);
       }
       break;
       */
