@@ -355,8 +355,12 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
         bHasCheckVersion = TRUE;
     }
+    int bGZipRequested = FALSE;
     if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
+    {
+        bGZipRequested = TRUE;
         curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Execute the request, waiting for results.                       */
@@ -379,9 +383,38 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /* -------------------------------------------------------------------- */
     if( strlen(szCurlErrBuf) > 0 )
     {
-        psResult->pszErrBuf = CPLStrdup(szCurlErrBuf);
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", szCurlErrBuf );
+        int bSkipError = FALSE;
+
+        /* Some servers such as http://115.113.193.14/cgi-bin/world/qgis_mapserv.fcgi?VERSION=1.1.1&SERVICE=WMS&REQUEST=GetCapabilities */
+        /* invalidly return Content-Length as the uncompressed size, with makes curl to wait for more data */
+        /* and time-out finally. If we got the expected data size, then we don't emit an error */
+        /* but turn off GZip requests */
+        if (bGZipRequested &&
+            strstr(szCurlErrBuf, "transfer closed with") &&
+            strstr(szCurlErrBuf, "bytes remaining to read"))
+        {
+            const char* pszContentLength =
+                CSLFetchNameValue(psResult->papszHeaders, "Content-Length");
+            if (pszContentLength && psResult->nDataLen != 0 &&
+                atoi(pszContentLength) == psResult->nDataLen)
+            {
+                const char* pszCurlGZIPOption = CPLGetConfigOption("CPL_CURL_GZIP", NULL);
+                if (pszCurlGZIPOption == NULL)
+                {
+                    CPLSetConfigOption("CPL_CURL_GZIP", "NO");
+                    CPLDebug("HTTP", "Disabling CPL_CURL_GZIP, because %s doesn't support it properly",
+                             pszURL);
+                }
+                psResult->nStatus = 0;
+                bSkipError = TRUE;
+            }
+        }
+        if (!bSkipError)
+        {
+            psResult->pszErrBuf = CPLStrdup(szCurlErrBuf);
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s", szCurlErrBuf );
+        }
     }
     else
     {
