@@ -1352,6 +1352,12 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
     psExtent->MaxX = envelope.xMax;
     psExtent->MaxY = envelope.yMax;
 
+    if (CPLIsNan(psExtent->MinX) ||
+        CPLIsNan(psExtent->MinY) ||
+        CPLIsNan(psExtent->MaxX) ||
+        CPLIsNan(psExtent->MaxY))
+        return OGRERR_FAILURE;
+
     return OGRERR_NONE;
 }
 
