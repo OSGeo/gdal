@@ -1521,25 +1521,22 @@ const char *ECWDataset::GetProjectionRef()
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /*                                                                      */
-/*      Only return the native geotransform if we appear to be          */
-/*      returning the native coordinate system, otherwise defer to      */
-/*      the PAM geotransform.                                           */
+/*      Let the PAM geotransform override the native one if it is       */
+/*      available.                                                      */
 /************************************************************************/
 
 CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
 
 {
-    if( (GetProjectionRef() != pszProjection  
-         && strlen(GetProjectionRef()) > 0)
-        || !bGeoTransformValid )
-    {
-        return GDALPamDataset::GetGeoTransform( padfTransform );
-    }
-    else
+    CPLErr eErr = GDALPamDataset::GetGeoTransform( padfTransform );
+
+    if( eErr != CE_None && bGeoTransformValid )
     {
         memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
         return( CE_None );
     }
+    else
+        return eErr;
 }
 
 /************************************************************************/
