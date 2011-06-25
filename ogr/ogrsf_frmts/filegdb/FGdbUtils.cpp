@@ -97,7 +97,8 @@ bool GDBToOGRGeometry(string geoType, bool hasZ, OGRwkbGeometryType* pOut)
   {
     *pOut = hasZ? wkbMultiLineString25D : wkbMultiLineString;
   }
-  else if (geoType == "esriGeometryPolygon")
+  else if (geoType == "esriGeometryPolygon" ||
+           geoType == "esriGeometryMultiPatch")
   {
     *pOut = hasZ? wkbMultiPolygon25D : wkbMultiPolygon; // no mapping to single polygon
   }
