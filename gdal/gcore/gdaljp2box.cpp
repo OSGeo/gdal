@@ -193,7 +193,8 @@ int GDALJP2Box::ReadBox()
 int GDALJP2Box::IsSuperBox()
 
 {
-    if( EQUAL(GetType(),"asoc") || EQUAL(GetType(),"jp2h") )
+    if( EQUAL(GetType(),"asoc") || EQUAL(GetType(),"jp2h")
+        || EQUAL(GetType(),"res ") )
         return TRUE;
     else
         return FALSE;
