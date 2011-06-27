@@ -51,6 +51,7 @@ class XYZDataset : public GDALPamDataset
     
     VSILFILE   *fp;
     int         bHasHeaderLine;
+    int         nCommentLineCount;
     int         nXIndex;
     int         nYIndex;
     int         nZIndex;
@@ -59,7 +60,7 @@ class XYZDataset : public GDALPamDataset
     int         nDataLineNum; /* line with values (header line and empty lines ignored) */
     double      adfGeoTransform[6];
     
-    static int          IdentifyEx( GDALOpenInfo *, int& );
+    static int          IdentifyEx( GDALOpenInfo *, int&, int& nCommentLineCount );
 
   public:
                  XYZDataset();
@@ -126,6 +127,10 @@ CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         poGDS->nDataLineNum = 0;
         VSIFSeekL(poGDS->fp, 0, SEEK_SET);
+
+        for(int i=0;i<poGDS->nCommentLineCount;i++)
+            CPLReadLine2L(poGDS->fp, 100, NULL);
+
         if (poGDS->bHasHeaderLine)
         {
             const char* pszLine = CPLReadLine2L(poGDS->fp, 100, 0);
@@ -285,8 +290,8 @@ XYZDataset::~XYZDataset()
 
 int XYZDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
-    int bHasHeaderLine;
-    return IdentifyEx(poOpenInfo, bHasHeaderLine);
+    int bHasHeaderLine, nCommentLineCount;
+    return IdentifyEx(poOpenInfo, bHasHeaderLine, nCommentLineCount);
 }
 
 /************************************************************************/
@@ -294,12 +299,15 @@ int XYZDataset::Identify( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 
-int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo, int& bHasHeaderLine )
+int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
+                            int& bHasHeaderLine,
+                            int& nCommentLineCount)
 
 {
     int         i;
 
     bHasHeaderLine = FALSE;
+    nCommentLineCount = 0;
 
     CPLString osFilename(poOpenInfo->pszFilename);
 
@@ -327,7 +335,34 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo, int& bHasHeaderLine )
 /*      Chech that it looks roughly as a XYZ dataset                    */
 /* -------------------------------------------------------------------- */
     const char* pszData = (const char*)poOpenInfo->pabyHeader;
-    for(i=0;i<poOpenInfo->nHeaderBytes;i++)
+
+    /* Skip comments line at the beginning such as in */
+    /* http://pubs.usgs.gov/of/2003/ofr-03-230/DATA/NSLCU.XYZ */
+    i=0;
+    if (pszData[i] == '/')
+    {
+        nCommentLineCount ++;
+
+        i++;
+        for(;i<poOpenInfo->nHeaderBytes;i++)
+        {
+            char ch = pszData[i];
+            if (ch == 13 || ch == 10)
+            {
+                if (ch == 13 && pszData[i+1] == 10)
+                    i++;
+                if (pszData[i+1] == '/')
+                {
+                    nCommentLineCount ++;
+                    i++;
+                }
+                else
+                    break;
+            }
+        }
+    }
+
+    for(;i<poOpenInfo->nHeaderBytes;i++)
     {
         char ch = pszData[i];
         if (ch == 13 || ch == 10)
@@ -402,8 +437,9 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int         i;
     int         bHasHeaderLine;
+    int         nCommentLineCount = 0;
 
-    if (!IdentifyEx(poOpenInfo, bHasHeaderLine))
+    if (!IdentifyEx(poOpenInfo, bHasHeaderLine, nCommentLineCount))
         return NULL;
 
     CPLString osFilename(poOpenInfo->pszFilename);
@@ -433,7 +469,11 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     const char* pszLine;
     int nXIndex = -1, nYIndex = -1, nZIndex = -1;
     int nMinTokens = 0;
-    
+
+
+    for(i=0;i<nCommentLineCount;i++)
+        CPLReadLine2L(fp, 100, NULL);
+
 /* -------------------------------------------------------------------- */
 /*      Parse header line                                               */
 /* -------------------------------------------------------------------- */
@@ -700,6 +740,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new XYZDataset();
     poDS->fp = fp;
     poDS->bHasHeaderLine = bHasHeaderLine;
+    poDS->nCommentLineCount = nCommentLineCount;
     poDS->nXIndex = nXIndex;
     poDS->nYIndex = nYIndex;
     poDS->nZIndex = nZIndex;
