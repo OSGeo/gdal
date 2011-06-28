@@ -4484,8 +4484,6 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
             /* Make sure we have as many values as bands */
             if (CSLCount(papszNoDataValues) == poDS->GetRasterCount() && poDS->GetRasterCount() != 0)
             {
-                CSLDestroy(papszNoDataValues);
-
                 /* Make sure that all bands have the same data type */
                 /* This is cleraly not a fundamental condition, just a condition to make implementation */
                 /* easier. */
@@ -4505,6 +4503,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
                     nMaskFlags = GMF_NODATA | GMF_PER_DATASET;
                     poMask = new GDALNoDataValuesMaskBand ( poDS );
                     bOwnMask = true;
+                    CSLDestroy(papszNoDataValues);
                     return poMask;
                 }
                 else
