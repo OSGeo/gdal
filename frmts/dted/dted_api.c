@@ -563,7 +563,6 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
     if( VSIFSeekL( psDInfo->fp, nOffset, SEEK_SET ) != 0
         || VSIFWriteL( pabyRecord,(12+psDInfo->nYSize*2),1,psDInfo->fp ) != 1)
     {
-        CPLFree( pabyRecord );
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_FileIO,
 #else
