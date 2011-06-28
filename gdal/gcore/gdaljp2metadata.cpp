@@ -303,9 +303,9 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                         
                         // compute in pixels/cm 
                         double dfVertRes = 
-                            (nVertNum/(double)nVertDen) * pow(10,nVertExp)/100;
+                            (nVertNum/(double)nVertDen) * pow(10.0,nVertExp)/100;
                         double dfHorzRes = 
-                            (nHorzNum/(double)nHorzDen) * pow(10,nHorzExp)/100;
+                            (nHorzNum/(double)nHorzDen) * pow(10.0,nHorzExp)/100;
                         CPLString osFormatter;
 
                         papszMetadata = CSLSetNameValue( 
