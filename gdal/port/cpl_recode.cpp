@@ -278,3 +278,47 @@ char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacement
     pszOutputString[i] = '\0';
     return pszOutputString;
 }
+
+/************************************************************************/
+/*                        CPLEncodingCharSize()                         */
+/************************************************************************/
+
+/**
+ * Return bytes per character for encoding.
+ *
+ * This function returns the size in bytes of the smallest character
+ * in this encoding.  For fixed width encodings (ASCII, UCS-2, UCS-4) this
+ * is straight forward.  For encodings like UTF8 and UTF16 which represent
+ * some characters as a sequence of atomic character sizes the function
+ * still returns the atomic character size (1 for UTF8, 2 for UTF16). 
+ *
+ * This function will return the correct value for well known encodings
+ * with corresponding CPL_ENC_ values.  It may not return the correct value
+ * for other encodings even if they are supported by the underlying iconv 
+ * or windows transliteration services.  Hopefully it will improve over time.
+ *
+ * @param pszEncoding the name of the encoding.
+ *
+ * @return the size of a minimal character in bytes or -1 if the size is 
+ * unknown. 
+ */
+
+int CPLEncodingCharSize( const char *pszEncoding )
+
+{
+    if( EQUAL(pszEncoding,CPL_ENC_UTF8) )
+        return 1;
+    else if( EQUAL(pszEncoding,CPL_ENC_UTF16) )
+        return 2;
+    else if( EQUAL(pszEncoding,CPL_ENC_UCS2) )
+        return 2;
+    else if( EQUAL(pszEncoding,CPL_ENC_UCS4) )
+        return 4;
+    else if( EQUAL(pszEncoding,CPL_ENC_ASCII) )
+        return 1;
+    else if( EQUALN(pszEncoding,"ISO-8859-",9) )
+        return 1;
+    else
+        return -1;
+}
+
