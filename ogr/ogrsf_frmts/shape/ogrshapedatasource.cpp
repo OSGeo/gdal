@@ -766,15 +766,17 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /*      What layer are we operating on.                                 */
 /* -------------------------------------------------------------------- */
     OGRShapeLayer *poLayer = (OGRShapeLayer *) GetLayerByName(papszTokens[4]);
-    CSLDestroy( papszTokens );
 
     if( poLayer == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Layer %s not recognised.", 
                   papszTokens[4] );
+        CSLDestroy( papszTokens );
         return NULL;
     }
+
+    CSLDestroy( papszTokens );
 
     poLayer->CreateSpatialIndex( nDepth );
     return NULL;
