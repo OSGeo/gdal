@@ -245,9 +245,10 @@ GDALDataset* PCRasterDataset::createCopy(
     // Get row from source.
     if(raster->RasterIO(GF_Read, 0, row, nrCols, 1, buffer, nrCols, 1,
          raster->GetRasterDataType(), 0, 0) != CE_None) {
-      free(buffer);
       CPLError(CE_Failure, CPLE_FileIO,
          "PCRaster driver: Error reading from source raster");
+      errorCode = CE_Failure;
+      break;
     }
 
     // Upon reading values are converted to the
@@ -267,9 +268,10 @@ GDALDataset* PCRasterDataset::createCopy(
     RputRow(map, row, buffer);
 
     if(!progress((row + 1) / (static_cast<double>(nrRows)), 0, progressData)) {
-      free(buffer);
       CPLError(CE_Failure, CPLE_UserInterrupt,
          "PCRaster driver: User terminated CreateCopy()");
+      errorCode = CE_Failure;
+      break;
     }
   }
 
