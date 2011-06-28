@@ -675,7 +675,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLFree( pszTemp );
 
     // Read filenames
-    pszTemp = pszHeader;
     poDS->nBands = 0;
     
     if (strstr( pszHeader, FILENAME ) == NULL)
@@ -734,10 +733,10 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     /* the usual patterns like bandX.dat, etc... */
     if ( !poDS->nBands )
     {
+        pszTemp = pszHeader;
         for ( i = 0; i < 7; i++ )
         {
             char *pszFilename = NULL ;
-    
             if ( pszTemp )
                 pszTemp = strstr( pszTemp, FILENAME );
             if ( pszTemp )
