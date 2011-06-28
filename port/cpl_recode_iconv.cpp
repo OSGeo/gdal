@@ -158,12 +158,55 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
                                const char *pszDstEncoding )
 
 {
+/* -------------------------------------------------------------------- */
+/*      What is the source length.                                      */
+/* -------------------------------------------------------------------- */
+    size_t  nSrcLen = 0;
+
+    while ( pwszSource[nSrcLen] != 0 )
+        nSrcLen++;
+
+/* -------------------------------------------------------------------- */
+/*      iconv() does not support wchar_t so we need to repack the       */
+/*      characters according to the width of a character in the         */
+/*      source encoding.  For instance if wchar_t is 4 bytes but our    */
+/*      source is UTF16 then we need to pack down into 2 byte           */
+/*      characters before passing to iconv().                           */
+/* -------------------------------------------------------------------- */
+    int nTargetCharWidth = CPLEncodingCharSize( pszSrcEncoding );
+
+    if( nTargetCharWidth < 1 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Recode from %s with CPLRecodeFromWChar() failed because"
+                  " the width of characters in the encoding are not known.",
+                  pszSrcEncoding );
+        return CPLStrdup("");
+    }
+
+    GByte *pszIconvSrcBuf = (GByte*) CPLCalloc((nSrcLen+1),nTargetCharWidth);
+    unsigned int iSrc;
+
+    for( iSrc = 0; iSrc <= nSrcLen; iSrc++ )
+    {
+        if( nTargetCharWidth == 1 )
+            pszIconvSrcBuf[iSrc] = (GByte) pwszSource[iSrc];
+        else if( nTargetCharWidth == 2 )
+            ((short *)pszIconvSrcBuf)[iSrc] = (short) pwszSource[iSrc];
+        else if( nTargetCharWidth == 4 )
+            ((GInt32 *)pszIconvSrcBuf)[iSrc] = pwszSource[iSrc];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the iconv() translation object.                          */
+/* -------------------------------------------------------------------- */
     iconv_t sConv;
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
     if ( sConv == (iconv_t)-1 )
     {
+        CPLFree( pszIconvSrcBuf );
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "Recode from %s to %s failed with the error: \"%s\".", 
                   pszSrcEncoding, pszDstEncoding, strerror(errno) );
@@ -177,16 +220,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 /*      argument could be declared as char** (as POSIX defines) or      */
 /*      as a const char**. Handle it with the ICONV_CONST macro here.   */
 /* -------------------------------------------------------------------- */
-    ICONV_CONST char *pszSrcBuf = (ICONV_CONST char *)pwszSource;
-
-/* -------------------------------------------------------------------- */
-/*      What is the source length.                                      */
-/*      TODO: use wcslen() if available.                                */
-/* -------------------------------------------------------------------- */
-    size_t  nSrcLen = 0;
-
-    while ( pwszSource[nSrcLen] != 0 )
-        nSrcLen++;
+    ICONV_CONST char *pszSrcBuf = (ICONV_CONST char *) pszIconvSrcBuf;
 
     /* iconv expects a number of bytes, not characters */
     nSrcLen *= sizeof(wchar_t);
@@ -244,6 +278,8 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
     pszDestination[nDstCurLen - nDstLen] = '\0';
 
     iconv_close( sConv );
+
+    CPLFree( pszIconvSrcBuf );
 
     return pszDestination;
 }
