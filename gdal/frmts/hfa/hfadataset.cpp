@@ -3076,6 +3076,8 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
               oSRS.Fixup();
               if( oSRS.exportToWkt( &pszNewProj ) == OGRERR_NONE )
                   return pszNewProj;
+              else
+                  return NULL;
           }
 
           /* Set state plane zone.  Set NAD83/27 on basis of spheroid */
