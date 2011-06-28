@@ -308,10 +308,10 @@ OGRLayer *OGRDataSource::CopyLayer( OGRLayer *poSrcLayer,
 
         if( poDstFeature->SetFrom( poFeature, TRUE ) != OGRERR_NONE )
         {
-            delete poFeature;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to translate feature %ld from layer %s.\n",
                       poFeature->GetFID(), poSrcDefn->GetName() );
+            OGRFeature::DestroyFeature( poFeature );
             return poDstLayer;
         }
 
