@@ -500,7 +500,6 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
     if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
     {
         delete poSRS;
-        CPLFree(pszWKTOri);
         poSRS = NULL;
     }
 
