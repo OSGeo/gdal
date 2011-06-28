@@ -422,10 +422,20 @@ int main( int argc, char ** argv )
             }
         }
         
-        ProcessLine( pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands, nNearDist, nMaxNonBlack,
-                     bNearWhite, &oColors, panLastLineCounts, TRUE, TRUE, FALSE );
-        ProcessLine( pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands, nNearDist, nMaxNonBlack,
-                     bNearWhite, &oColors, panLastLineCounts, TRUE, FALSE, FALSE );
+        ProcessLine( pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands,
+                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                     panLastLineCounts,
+                     TRUE, // bDoHorizontalCheck
+                     TRUE, // bDoVerticalCheck
+                     FALSE // bBottomUp
+                    );
+        ProcessLine( pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands,
+                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                     panLastLineCounts,
+                     TRUE,  // bDoHorizontalCheck
+                     FALSE, // bDoVerticalCheck
+                     FALSE  // bBottomUp
+                    );
         
         eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
@@ -482,10 +492,20 @@ int main( int argc, char ** argv )
         }
 
         
-        ProcessLine( pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands, nNearDist, nMaxNonBlack,
-                     bNearWhite, &oColors, panLastLineCounts, TRUE, TRUE, TRUE );
-        ProcessLine( pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands, nNearDist, nMaxNonBlack,
-                     bNearWhite, &oColors, panLastLineCounts, TRUE, FALSE, TRUE );
+        ProcessLine( pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands,
+                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                     panLastLineCounts,
+                     TRUE, // bDoHorizontalCheck
+                     TRUE, // bDoVerticalCheck
+                     TRUE  // bBottomUp
+                   );
+        ProcessLine( pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands,
+                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                     panLastLineCounts,
+                     TRUE,  // bDoHorizontalCheck
+                     FALSE, // bDoVerticalCheck
+                     TRUE   // bBottomUp
+                    );
         
         eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
@@ -536,74 +556,81 @@ int main( int argc, char ** argv )
 /************************************************************************/
 
 static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
-                         int iEnd, int nSrcBands, int nDstBands, int nNearDist,
-                         int nMaxNonBlack, int bNearWhite, Colors *poColors,
-                         int *panLastLineCounts, int bDoHorizontalCheck,
-                         int bDoVerticalCheck, int bBottomUp )
+                        int iEnd, int nSrcBands, int nDstBands, int nNearDist,
+                        int nMaxNonBlack, int bNearWhite, Colors *poColors,
+                        int *panLastLineCounts, int bDoHorizontalCheck,
+                        int bDoVerticalCheck, int bBottomUp )
 {
     int iDir, i;
+    GByte nReplacevalue = 0;
+    if( bNearWhite )
+        nReplacevalue = 255;
 
-/* -------------------------------------------------------------------- */
-/*      Vertical checking.                                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Vertical checking.                                              */
+    /* -------------------------------------------------------------------- */
+    
     if( bDoVerticalCheck )
     {
         int nXSize = MAX(iStart+1,iEnd+1);
 
         for( i = 0; i < nXSize; i++ )
         {
-            int iBand;
-            int bIsNonBlack = FALSE;
 
             // are we already terminated for this column?
+
             if( panLastLineCounts[i] > nMaxNonBlack )
                 continue;
 
+            /***** is the pixel valid data? ****/
+
+            int bIsNonBlack = FALSE;
+
             /***** loop over the colors *****/
+
             int iColor;
-            for (iColor = 0; iColor < (int)poColors->size(); iColor++)
-            {
+            for (iColor = 0; iColor < (int)poColors->size(); iColor++) {
+
                 Color oColor = (*poColors)[iColor];
-                
+
                 bIsNonBlack = FALSE;
 
                 /***** loop over the bands *****/
-                
+
+                int iBand;
                 for( iBand = 0; iBand < nSrcBands; iBand++ )
                 {
                     int nPix = pabyLine[i * nDstBands + iBand];
-                    
+
                     if( oColor[iBand] - nPix > nNearDist ||
-                        nPix > nNearDist + oColor[iBand] )
+                       nPix > nNearDist + oColor[iBand] )
                     {
-                       bIsNonBlack = TRUE;
-                       break;
+                        bIsNonBlack = TRUE;
+                        break;
                     }
                 }
+                
                 if (bIsNonBlack == FALSE)
-                    break;                
+                    break;          
             }
 
-            if( bIsNonBlack )
-            {
+            if (bIsNonBlack) {
                 panLastLineCounts[i]++;
 
                 if( panLastLineCounts[i] > nMaxNonBlack )
                     continue; 
             }
-            else
-                panLastLineCounts[i] = 0;
+            //else
+            //  panLastLineCounts[i] = 0; // not sure this even makes sense 
 
+            /***** replace the pixel values *****/
+
+            int iBand;
             for( iBand = 0; iBand < nSrcBands; iBand++ )
-            {
-                if( bNearWhite )
-                    pabyLine[i * nDstBands + iBand] = 255;
-                else
-                    pabyLine[i * nDstBands + iBand] = 0;
-            }
+                pabyLine[i * nDstBands + iBand] = nReplacevalue;
 
             /***** alpha *****/
-            
+
             if( nDstBands > nSrcBands )
                 pabyLine[i * nDstBands + nDstBands - 1] = 0;
 
@@ -614,89 +641,88 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Horizontal Checking.                                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Horizontal Checking.                                            */
+    /* -------------------------------------------------------------------- */
+    
     if( bDoHorizontalCheck )
     {
         int nNonBlackPixels = 0;
+
+        /***** on a bottom up pass assume nMaxNonBlack is 0 *****/ 
+
+        if (bBottomUp)
+            nMaxNonBlack = 0;
 
         if( iStart < iEnd )
             iDir = 1;
         else
             iDir = -1;
         int bDoTest = TRUE;
-        
+
         for( i = iStart; i != iEnd; i += iDir )
         {
-            
+
             /***** not seen any valid data? *****/
-        
+
             if ( bDoTest ) {
-                int iBand;
+
+                /***** is the pixel valid data? ****/
+
                 int bIsNonBlack = FALSE;
-                
+
                 /***** loop over the colors *****/
 
                 int iColor;
-                for (iColor = 0; iColor < (int)poColors->size(); iColor++)
-                {
+                for (iColor = 0; iColor < (int)poColors->size(); iColor++) {
+
                     Color oColor = (*poColors)[iColor];
 
                     bIsNonBlack = FALSE;
 
                     /***** loop over the bands *****/
-                    
+
+                    int iBand;
                     for( iBand = 0; iBand < nSrcBands; iBand++ )
                     {
                         int nPix = pabyLine[i * nDstBands + iBand];
-                        
+
                         if( oColor[iBand] - nPix > nNearDist ||
-                            nPix > nNearDist + oColor[iBand] )
+                           nPix > nNearDist + oColor[iBand] )
                         {
-                           bIsNonBlack = TRUE;
-                           break;
+                            bIsNonBlack = TRUE;
+                            break;
                         }
                     }
+                    
                     if (bIsNonBlack == FALSE)
-                        break;                
+                        break;          
                 }
 
-                if( bIsNonBlack )
-                {
-                    /***** on a bottom up pass assume nMaxNonBlack is 0 *****/ 
-                    
-                    if (bBottomUp) {
-                        bDoTest = TRUE;
-                        continue;
-                    }
+                if (bIsNonBlack) {
 
                     /***** use nNonBlackPixels in grey areas  *****/
                     /***** from the verical pass's grey areas ****/
-                    
-                    else if( panLastLineCounts[i] < nMaxNonBlack )
+
+                    if( panLastLineCounts[i] <= nMaxNonBlack )
                         nNonBlackPixels = panLastLineCounts[i];
                     else 
                         nNonBlackPixels++;
-                   
-                    if( nNonBlackPixels > nMaxNonBlack ) {
-                        bDoTest = TRUE;
-                        continue;
-                    }
                 }
-                else
-                    nNonBlackPixels = 0;
 
-                for( iBand = 0; iBand < nSrcBands; iBand++ )
-                {
-                    if( bNearWhite )
-                        pabyLine[i * nDstBands + iBand] = 255;
-                    else
-                        pabyLine[i * nDstBands + iBand] = 0;
+                if( nNonBlackPixels > nMaxNonBlack ) {
+                    bDoTest = FALSE;
+                    continue;
                 }
+
+                /***** replace the pixel values *****/
+
+                int iBand;
+                for( iBand = 0; iBand < nSrcBands; iBand++ )
+                    pabyLine[i * nDstBands + iBand] = nReplacevalue;
 
                 /***** alpha *****/
-                
+
                 if( nDstBands > nSrcBands )
                     pabyLine[i * nDstBands + nDstBands - 1] = 0;
 
@@ -708,12 +734,13 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 
             /***** seen valid data but test if the *****/
             /***** vertical pass saw any non valid data *****/
-        
+
             else if( panLastLineCounts[i] == 0 ) {
-                bDoTest = FALSE;
+                bDoTest = TRUE;
                 nNonBlackPixels = 0;
             }        
         }
     }
 
 }
+
