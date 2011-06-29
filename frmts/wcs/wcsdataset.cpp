@@ -2207,6 +2207,12 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int nBandCount = atoi(CPLGetXMLValue(psService,"BandCount","1"));
     int iBand;
+
+    if (!GDALCheckBandCount(nBandCount, 0))
+    {
+        delete poDS;
+        return NULL;
+    }
      
     for( iBand = 0; iBand < nBandCount; iBand++ )
         poDS->SetBand( iBand+1, new WCSRasterBand( poDS, iBand+1, -1 ) );
