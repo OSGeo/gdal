@@ -1118,7 +1118,10 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
     }
 
     if (nFlags & ALTER_NAME_FLAG)
+    {
         strncpy(szFieldName, poNewFieldDefn->GetNameRef(), 10);
+        szFieldName[10] = '\0';
+    }
     if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
     {
         nWidth = poNewFieldDefn->GetWidth();
