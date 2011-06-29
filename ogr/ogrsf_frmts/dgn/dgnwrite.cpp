@@ -1593,7 +1593,7 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
 /* -------------------------------------------------------------------- */
 /*      Setup Raw data for the color table specific portion.            */
 /* -------------------------------------------------------------------- */
-    psCore->raw_bytes = 806;
+    psCore->raw_bytes = 806; /* FIXME: this is invalid : 806 < 41 + 783 (see below lines) */
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
     psCore->raw_data[36] = (unsigned char) (nScreenFlag % 256);
