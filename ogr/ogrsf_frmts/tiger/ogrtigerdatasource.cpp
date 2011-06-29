@@ -322,7 +322,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
         pszPath = CPLStrdup( CPLGetPath(pszFilename) );
 
         strncpy( szModule, CPLGetFilename(pszFilename), sizeof(szModule)-1 );
-        szModule[strlen(szModule)-1] = '\0';
+        szModule[sizeof(szModule)-1] = '\0';
 
         papszFileList = CSLAddString( papszFileList, szModule );
     }
