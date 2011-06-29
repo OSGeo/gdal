@@ -1981,8 +1981,6 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
     std::map<CPLString,VSIArchiveContent*>::iterator iter = oFileList.find(osZipFilename);
     if (iter != oFileList.end())
     {
-        oFileList.erase(iter);
-
         VSIArchiveContent* content = iter->second;
         int i;
         for(i=0;i<content->nEntries;i++)
@@ -1992,6 +1990,8 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
         }
         CPLFree(content->entries);
         delete content;
+
+        oFileList.erase(iter);
     }
 
     VSIZipWriteHandle* poZIPHandle;
