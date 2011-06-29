@@ -304,6 +304,7 @@ int TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField,
     {
         strncpy( szValue, poFeature->GetFieldAsString( iField ), 
                  sizeof(szValue) - 1 );
+        szValue[sizeof(szValue) - 1] = 0;
         if( (int) strlen(szValue) < nEnd - nStart + 1 )
             memset( szValue + strlen(szValue), ' ', 
                     nEnd - nStart + 1 - strlen(szValue) );
