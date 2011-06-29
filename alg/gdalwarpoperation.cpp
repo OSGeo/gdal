@@ -1203,6 +1203,8 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Integer overflow : nDstXSize=%d, nDstYSize=%d",
                   nDstXSize, nDstYSize);
+        if( hIOMutex != NULL )
+            CPLReleaseMutex( hIOMutex );
         return CE_Failure;
     }
 
@@ -1212,6 +1214,8 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "Out of memory allocating %d byte destination buffer.",
                   nBandSize * psOptions->nBandCount );
+        if( hIOMutex != NULL )
+            CPLReleaseMutex( hIOMutex );
         return CE_Failure;
     }
 
@@ -1295,6 +1299,8 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         if( eErr != CE_None )
         {
             CPLFree( pDstBuffer );
+            if( hIOMutex != NULL )
+                CPLReleaseMutex( hIOMutex );
             return eErr;
         }
 
