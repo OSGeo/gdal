@@ -1213,7 +1213,8 @@ int EnvisatFile_GetDatasetIndex( EnvisatFile *self, const char *ds_name )
      * be 28 characters, I try to pad more than this incase the specification
      * is changed. 
      */
-    strcpy( padded_ds_name, ds_name );
+    strncpy( padded_ds_name, ds_name, sizeof(padded_ds_name) );
+    padded_ds_name[sizeof(padded_ds_name)-1] = 0;
     for( i = strlen(padded_ds_name); i < sizeof(padded_ds_name)-1; i++ )
     {
         padded_ds_name[i] = ' ';
