@@ -246,8 +246,11 @@ ELASDataset::~ELASDataset()
 {
     FlushCache();
 
-    VSIFClose( fp );
-    fp = NULL;
+    if( fp != NULL )
+    {
+        VSIFClose( fp );
+        fp = NULL;
+    }
 }
 
 /************************************************************************/
@@ -309,6 +312,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to open `%s' with acces `%s' failed.\n",
                   poOpenInfo->pszFilename, pszAccess );
+        delete poDS;
         return NULL;
     }
 
