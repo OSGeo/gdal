@@ -199,7 +199,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     }
     else if( strlen(pszProfile) > 0 )
     {
-       sprintf( szTargetFile, "s57objectclasses_%s.csv", pszProfile );
+       snprintf( szTargetFile, sizeof(szTargetFile), "s57objectclasses_%s.csv", pszProfile );
     }
     else
     {
@@ -220,6 +220,8 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "s57objectclasses columns don't match expected format!\n" );
+        if( fp != NULL )
+            VSIFClose( fp );
         return FALSE;
     }
 
@@ -270,7 +272,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     }
     else if( strlen(pszProfile) > 0 )
     {
-       sprintf( szTargetFile, "s57attributes_%s.csv", pszProfile );
+       snprintf( szTargetFile, sizeof(szTargetFile), "s57attributes_%s.csv", pszProfile );
     }
     else
     {
@@ -290,6 +292,8 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "s57attributes columns don't match expected format!\n" );
+        if( fp != NULL )
+            VSIFClose( fp );
         return FALSE;
     }
     
