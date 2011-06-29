@@ -402,6 +402,7 @@ char **EnvisatDataset::GetMetadata( const char * pszDomain )
     int         i, nRecord = -1;
 
     strncpy( szDSName, pszDomain+11, sizeof(szDSName) );
+    szDSName[sizeof(szDSName)-1] = 0;
     for( i = 0; i < (int) sizeof(szDSName)-1; i++ )
     {
         if( szDSName[i] == '-' )
