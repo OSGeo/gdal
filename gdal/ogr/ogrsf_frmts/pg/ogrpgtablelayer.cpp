@@ -1133,37 +1133,58 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
     else if( bHasPostGISGeometry || bHasPostGISGeography )
     {
         osCommand = osCommand + OGRPGEscapeColumnName(pszGeomColumn) + " = ";
-        char    *pszWKT = NULL;
-
+        OGRGeometry *poGeom = NULL;
+        
         if( poFeature->GetGeometryRef() != NULL )
         {
-            OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
+            poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
 
             poGeom->closeRings();
             poGeom->setCoordinateDimension( nCoordDimension );
 
-            poGeom->exportToWkt( &pszWKT );
         }
 
-        if( pszWKT != NULL )
+        if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
         {
-            if( bHasPostGISGeography )
-                osCommand +=
-                    CPLString().Printf(
-                        "ST_GeographyFromText('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
-            else if( poDS->sPostGISVersion.nMajor >= 1 )
-                osCommand +=
-                    CPLString().Printf(
-                        "GeomFromEWKT('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
+            if ( poGeom != NULL )
+            {
+                char* pszHexEWKB = GeometryToHex( poGeom, nSRSId );
+                if ( bHasPostGISGeography )
+                    osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
+                else
+                    osCommand += CPLString().Printf("'%s'::GEOMETRY", pszHexEWKB);
+                OGRFree( pszHexEWKB );
+            }
             else
-                osCommand += 
-                    CPLString().Printf(
-                        "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
-            OGRFree( pszWKT );
+                osCommand += "NULL";    
         }
         else
-            osCommand += "NULL";
+        {
+            char    *pszWKT = NULL;
+    
+            if (poGeom != NULL)
+                poGeom->exportToWkt( &pszWKT );
 
+            if( pszWKT != NULL )
+            {
+                if( bHasPostGISGeography )
+                    osCommand +=
+                        CPLString().Printf(
+                            "ST_GeographyFromText('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
+                else if( poDS->sPostGISVersion.nMajor >= 1 )
+                    osCommand +=
+                        CPLString().Printf(
+                            "GeomFromEWKT('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
+                else
+                    osCommand += 
+                        CPLString().Printf(
+                            "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
+                OGRFree( pszWKT );
+            }
+            else
+                osCommand += "NULL";
+
+        }
         bNeedComma = TRUE;
     }
 
@@ -1460,34 +1481,47 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     bNeedComma = FALSE;
     if( (bHasPostGISGeometry || bHasPostGISGeography) && poGeom != NULL)
     {
-        char    *pszWKT = NULL;
         
         CheckGeomTypeCompatibility(poGeom);
 
         poGeom->closeRings();
         poGeom->setCoordinateDimension( nCoordDimension );
 
-        poGeom->exportToWkt( &pszWKT );
 
-        if( pszWKT != NULL )
+        if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
         {
-            if( bHasPostGISGeography )
-                osCommand +=
-                    CPLString().Printf(
-                        "ST_GeographyFromText('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
-            else if( poDS->sPostGISVersion.nMajor >= 1 )
-                osCommand +=
-                    CPLString().Printf(
-                        "GeomFromEWKT('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
+            char    *pszHexEWKB = GeometryToHex( poGeom, nSRSId );
+            if ( bHasPostGISGeography )
+                osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
             else
-                osCommand += 
-                    CPLString().Printf(
-                        "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
-            OGRFree( pszWKT );
+                osCommand += CPLString().Printf("'%s'::GEOMETRY", pszHexEWKB);
+            OGRFree( pszHexEWKB );
         }
         else
-            osCommand += "''";
+        { 
+            char    *pszWKT = NULL;
+            poGeom->exportToWkt( &pszWKT );
+
+            if( pszWKT != NULL )
+            {
+                if( bHasPostGISGeography )
+                    osCommand +=
+                        CPLString().Printf(
+                            "ST_GeographyFromText('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
+                else if( poDS->sPostGISVersion.nMajor >= 1 )
+                    osCommand +=
+                        CPLString().Printf(
+                            "GeomFromEWKT('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
+                else
+                    osCommand += 
+                        CPLString().Printf(
+                            "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
+                OGRFree( pszWKT );
+            }
+            else
+                osCommand += "''";
             
+        }
         bNeedComma = TRUE;
     }
     else if( bHasWkb && !bWkbAsOid && poGeom != NULL )
