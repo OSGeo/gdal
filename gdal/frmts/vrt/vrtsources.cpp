@@ -331,7 +331,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     }
     else
         nSrcBand = atoi(pszSourceBand);
-    if (nSrcBand <= 0)
+    if (!GDALCheckBandCount(nSrcBand, 0))
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Invalid <SourceBand> element in VRTRasterBand." );
