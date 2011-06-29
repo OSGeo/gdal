@@ -397,6 +397,7 @@ static void InitDatumMappingTable()
                   "Failed to find required field in gdal_datum.csv in InitDatumMappingTable(), using default table setup." );
         
         papszDatumMapping = (char **)apszDefaultDatumMapping;
+        VSIFClose( fp );
         return;
     }
     
