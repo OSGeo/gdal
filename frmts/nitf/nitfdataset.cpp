@@ -501,9 +501,24 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
 
             if( poDS->poJ2KDataset == NULL )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Unable to open JPEG2000 image within NITF file.\n"
-                          "Is the JP2KAK driver available?" );
+                int bFoundJPEG2000Driver = FALSE;
+                for(int iDriver=0;apszDrivers[iDriver]!=NULL;iDriver++)
+                {
+                    if (GDALGetDriverByName(apszDrivers[iDriver]) != NULL)
+                        bFoundJPEG2000Driver = TRUE;
+                }
+                if (!bFoundJPEG2000Driver)
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                            "Unable to open JPEG2000 image within NITF file.\n"
+                            "No JPEG2000 capable driver (JP2KAK, JP2ECW, JP2MRSID, JP2OPENJPEG, etc...) is available." );
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                            "Unable to open JPEG2000 image within NITF file.\n"
+                            "One or several JPEG2000 capable drivers are available but the datastream could not be opened successfully." );
+                }
                 delete poDS;
                 return NULL;
             }
