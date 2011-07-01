@@ -865,7 +865,12 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
     *ppoGeom = NULL;
 
     if( nBytes < 4 )
+    {    
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Shape buffer size (%d) too small",
+                 nBytes);
         return OGRERR_FAILURE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*  Detect zlib compressed shapes and uncompress buffer if necessary    */
@@ -1201,6 +1206,10 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     poMulti->addGeometryDirectly( poLine );
                 }
             }
+            (*ppoGeom)->setCoordinateDimension( bHasZ ? 3 : 2 );
+            
+            return OGRERR_NONE;
+        
         } /* ARC */
 
 /* -------------------------------------------------------------------- */
@@ -1267,6 +1276,9 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     delete[] tabPolygons;
                 }
             }
+            (*ppoGeom)->setCoordinateDimension( bHasZ ? 3 : 2 );
+            return OGRERR_NONE;
+
         } /* polygon */
 
 /* -------------------------------------------------------------------- */
@@ -1289,8 +1301,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         CPLFree( padfY );
         CPLFree( padfZ );
 
-        if( !bHasZ )
-            (*ppoGeom)->setCoordinateDimension( 2 );
+        (*ppoGeom)->setCoordinateDimension( bHasZ ? 3 : 2 );
 
         return OGRERR_NONE;
     }
@@ -1351,6 +1362,9 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         
           poMultiPt->addGeometryDirectly( poPt );
       }
+      
+      poMultiPt->setCoordinateDimension( bHasZ ? 3 : 2 );
+      
       return OGRERR_NONE;
     }
 
@@ -1374,8 +1388,8 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
             return OGRERR_FAILURE;
         }
 
-    memcpy( &dfX, pabyShape + 4, 8 );
-    memcpy( &dfY, pabyShape + 4 + 8, 8 );
+        memcpy( &dfX, pabyShape + 4, 8 );
+        memcpy( &dfY, pabyShape + 4 + 8, 8 );
 
         CPL_LSBPTR64( &dfX );
         CPL_LSBPTR64( &dfY );
@@ -1388,17 +1402,14 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         }
 
         *ppoGeom = new OGRPoint( dfX, dfY, dfZ );
-
-        if( !bHasZ )
-            (*ppoGeom)->setCoordinateDimension( 2 );
+        (*ppoGeom)->setCoordinateDimension( bHasZ ? 3 : 2 );
 
         return OGRERR_NONE;
     }
 
-    char* pszHex = CPLBinaryToHex( nBytes, pabyShape );
-    CPLDebug( "PGEO", "Unsupported geometry type:%d\nnBytes=%d, hex=%s",
-              nSHPType, nBytes, pszHex );
-    CPLFree(pszHex);
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Unsupported geometry type: %d", 
+              nSHPType );
 
     return OGRERR_FAILURE;
 }
