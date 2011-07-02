@@ -160,15 +160,12 @@ static GDALColorInterp BandInterp(int nbands, int band) {
  */
 
 static int FindBbox(CPLString in) {
-    size_t pos;
-    while (std::string::npos != (pos=in.find('&',pos))) {
-	pos++;
-	const char *p=in.c_str()+pos;
-	if ((in.size()>(pos+5)) && (toupper(*p)==toupper(p[1])) && 
-	    (toupper(*p)=='B') && (toupper(p[2])=='O') && (toupper(p[3])=='X') && (p[4]=='='))
-            return pos+5;
-    }
-    return -1;
+
+    size_t pos = in.ifind("&bbox=");
+    if (pos == std::string::npos)
+        return -1;
+    else
+        return (int)pos + 6;
 }
 
 /************************************************************************/
