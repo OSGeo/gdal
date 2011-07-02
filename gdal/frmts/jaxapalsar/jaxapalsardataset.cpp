@@ -232,7 +232,7 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
         nFileType = level_11;
     }
     else {
-        eDataType = GDT_Int16;
+        eDataType = GDT_UInt16;
         nFileType = level_15;
     }
 
