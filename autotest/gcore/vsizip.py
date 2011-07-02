@@ -191,8 +191,41 @@ def vsizip_2():
     return 'success'
 
 
+###############################################################################
+# Test opening in write mode a file inside a zip archive whose content has been listed before (testcase for fix of r22625)
+
+def vsizip_3():
+
+    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test3.zip", "wb")
+
+    f = gdal.VSIFOpenL("/vsizip/vsimem/test3.zip/foo", "wb")
+    gdal.VSIFWriteL("foo", 1, 3, f)
+    gdal.VSIFCloseL(f)
+    f = gdal.VSIFOpenL("/vsizip/vsimem/test3.zip/bar", "wb")
+    gdal.VSIFWriteL("bar", 1, 3, f)
+    gdal.VSIFCloseL(f)
+
+    gdal.VSIFCloseL(fmain)
+
+    gdal.ReadDir("/vsizip/vsimem/test3.zip")
+
+    f = gdal.VSIFOpenL("/vsizip/vsimem/test3.zip/baz", "wb")
+    gdal.VSIFWriteL("baz", 1, 3, f)
+    gdal.VSIFCloseL(f)
+
+    res = gdal.ReadDir("/vsizip/vsimem/test3.zip")
+
+    gdal.Unlink("/vsimem/test3.zip")
+
+    if res != ['foo', 'bar', 'baz']:
+        print(res)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ vsizip_1,
-                  vsizip_2 ]
+                  vsizip_2,
+                  vsizip_3 ]
 
 
 if __name__ == '__main__':
