@@ -51,7 +51,7 @@ def ers_2():
 
     tst = gdaltest.GDALTest( 'ERS', 'float32.bil', 1, 27 )
     return tst.testCreateCopy( new_filename = 'tmp/float32.ers',
-                               check_gt = 1 )
+                               check_gt = 1, vsimem = 1 )
     
 ###############################################################################
 # Test multi-band file.
