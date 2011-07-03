@@ -138,7 +138,8 @@ CPL_C_END
 /* a few useful enums */
 enum eFileType {
 	level_11 = 0,
-	level_15
+	level_15,
+    level_10
 };
 
 enum ePolarization {
@@ -231,6 +232,10 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
         eDataType = GDT_CFloat32;
         nFileType = level_11;
     }
+    else if (nBitsPerSample == 8 && nSamplesPerGroup == 2) {
+        eDataType = GDT_CInt16; /* shuold be 2 x signed byte */
+        nFileType = level_10;
+    }
     else {
         eDataType = GDT_UInt16;
         nFileType = level_15;
@@ -243,8 +248,8 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
     READ_CHAR_VAL( nRasterYSize, NUMBER_LINES_LENGTH, fp );
     VSIFSeekL( fp, SAR_DATA_RECORD_LENGTH_OFFSET, SEEK_SET );
     READ_CHAR_VAL( nRecordSize, SAR_DATA_RECORD_LENGTH_LENGTH, fp );
-    nRasterXSize = (nRecordSize - 
-                    (nFileType == level_11 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET))
+    nRasterXSize = (nRecordSize -
+                    (nFileType != level_15 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET))
         / ((nBitsPerSample / 8) * nSamplesPerGroup);
 
     poDS->nRasterXSize = nRasterXSize;
@@ -351,7 +356,11 @@ const GDAL_GCP *PALSARJaxaDataset::GetGCPs() {
 void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
     /* seek to the end fo the leader file descriptor */
     VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH, SEEK_SET );
-    if (poDS->nFileType == level_11) {
+    if (poDS->nFileType == level_10) {
+        poDS->SetMetadataItem( "PRODUCT_LEVEL", "1.0" );
+        poDS->SetMetadataItem( "AZIMUTH_LOOKS", "1.0" );
+    }
+    else if (poDS->nFileType == level_11) {
         poDS->SetMetadataItem( "PRODUCT_LEVEL", "1.1" );
         poDS->SetMetadataItem( "AZIMUTH_LOOKS", "1.0" );
     }
@@ -581,6 +590,14 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     if (fpVV == NULL && fpVH == NULL && fpHV == NULL && fpHH == NULL) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find any image data. Aborting opening as PALSAR image.");
+        delete poDS;
+        return NULL;
+    }
+
+    /* Level 1.0 products are not supported */
+    if (poDS->nFileType == level_10) {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "ALOS PALSAR Level 1.0 products are not supported. Aborting opening as PALSAR image.");
         delete poDS;
         return NULL;
     }
