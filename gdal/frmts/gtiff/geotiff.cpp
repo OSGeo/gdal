@@ -8901,7 +8901,7 @@ int GTiffOneTimeInit()
     /* by the following code - is "-ltiff -lgdal". "-lgdal -ltiff" works for the */
     /* GTiff driver but probably breaks the application that believes it uses libtiff 3.X */
     /* but we cannot detect that... */
-#ifdef BIGTIFF_SUPPORT
+#if defined(BIGTIFF_SUPPORT) && !defined(RENAME_INTERNAL_LIBTIFF_SYMBOLS)
 #if defined(HAVE_DLFCN_H) && !defined(WIN32)
     const char* (*pfnVersion)(void);
     pfnVersion = (const char* (*)(void)) dlsym(RTLD_DEFAULT, "TIFFGetVersion");
