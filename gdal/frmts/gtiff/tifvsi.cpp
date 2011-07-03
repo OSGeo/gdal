@@ -38,6 +38,10 @@
 // We avoid including xtiffio.h since it drags in the libgeotiff version
 // of the VSI functions.
 
+#ifdef RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS
+#include "gdal_libgeotiff_symbol_rename.h"
+#endif
+
 CPL_C_START
 extern TIFF CPL_DLL * XTIFFClientOpen(const char* name, const char* mode, 
                                       thandle_t thehandle,

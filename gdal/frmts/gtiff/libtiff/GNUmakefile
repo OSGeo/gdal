@@ -51,6 +51,10 @@ else
 XTRA_OPT = 
 endif
 
+ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DRENAME_INTERNAL_LIBTIFF_SYMBOLS
+endif
+
 ifneq ($(LIBZ_SETTING),no)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DPIXARLOG_SUPPORT -DZIP_SUPPORT $(XTRA_OPT)
 endif
@@ -65,7 +69,7 @@ endif
 
 ifeq ($(JPEG12_ENABLED),yes)
 ALL_C_FLAGS	:=      $(ALL_C_FLAGS) -DJPEG_DUAL_MODE_8_12
-EXTRA_DEP	=	libjpeg12src	
+EXTRA_DEP	=	libjpeg12src
 endif
 
 ifeq ($(LIBLZMA_SETTING),yes)
@@ -95,6 +99,13 @@ import:
 	@echo
 
 install-obj:	$(EXTRA_DEP) $(O_OBJ:.o=.$(OBJ_EXT))
+
+ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
+../../o/tif_jpeg.$(OBJ_EXT) : tif_jpeg.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h
+	sed "s/defined(TIFFInitJPEG)/0/" < tif_jpeg.c > tmp_tif_jpeg.c
+	$(CC) -c -I../../port $(ALL_C_FLAGS) tmp_tif_jpeg.c -o $@
+	rm tmp_tif_jpeg.c
+endif
 
 ../../o/%.$(OBJ_EXT):	%.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h
 	$(CC) -c -I../../port $(ALL_C_FLAGS) $< -o $@

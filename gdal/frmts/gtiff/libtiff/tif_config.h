@@ -85,3 +85,7 @@
 #ifdef JPEG_DUAL_MODE_8_12
 #  define LIBJPEG_12_PATH "../../jpeg/libjpeg12/jpeglib.h"
 #endif
+
+#ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
+#include "gdal_libtiff_symbol_rename.h"
+#endif

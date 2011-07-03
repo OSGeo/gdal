@@ -208,7 +208,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check if user requests hidding internal symbols
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(with_hide_internal_symbols,[  --with-hide-internal-symbols[=ARG] Try to hide internal symbols (ARG=yes/no)],,)
+AC_ARG_WITH(hide_internal_symbols,[  --with-hide-internal-symbols[=ARG] Try to hide internal symbols (ARG=yes/no)],,)
 
 HAVE_HIDE_INTERNAL_SYMBOLS=no
 
@@ -242,6 +242,27 @@ if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
 fi
 
 AC_SUBST(HAVE_HIDE_INTERNAL_SYMBOLS,$HAVE_HIDE_INTERNAL_SYMBOLS)
+
+dnl ---------------------------------------------------------------------------
+dnl Check if user requests renaming internal libtiff symbols
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(rename_internal_libtiff_symbols,[  --with-rename-internal-libtiff-symbols[=ARG] Prefix internal libtiff symbols with gdal_ (ARG=yes/no)],,)
+if test "$with_rename_internal_libtiff_symbols" = ""; then
+    with_rename_internal_libtiff_symbols=no
+fi
+AC_SUBST(RENAME_INTERNAL_LIBTIFF_SYMBOLS,$with_rename_internal_libtiff_symbols)
+
+dnl ---------------------------------------------------------------------------
+dnl Check if user requests renaming internal libgeotiff symbols
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(rename_internal_libgeotiff_symbols,[  --with-rename-internal-libgeotiff-symbols[=ARG] Prefix internal libgeotiff symbols with gdal_ (ARG=yes/no)],,)
+if test "$with_rename_internal_libgeotiff_symbols" = ""; then
+    with_rename_internal_libgeotiff_symbols=no
+fi
+AC_SUBST(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS,$with_rename_internal_libgeotiff_symbols)
+
 
 dnl ---------------------------------------------------------------------------
 dnl Check if user requests /usr/local to be included.

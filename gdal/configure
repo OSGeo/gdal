@@ -746,6 +746,8 @@ LIBLZMA_SETTING
 LTLIBICONV
 LIBICONV
 LIBZ_SETTING
+RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS
+RENAME_INTERNAL_LIBTIFF_SYMBOLS
 HAVE_HIDE_INTERNAL_SYMBOLS
 HAVE_GCC_ATOMIC_BUILTINS
 HAVE_LIBTOOL
@@ -849,7 +851,9 @@ with_libtool
 with_ld_shared
 with_unix_stdio_64
 enable_debug
-with_with_hide_internal_symbols
+with_hide_internal_symbols
+with_rename_internal_libtiff_symbols
+with_rename_internal_libgeotiff_symbols
 with_local
 with_threads
 with_libz
@@ -1580,6 +1584,8 @@ Optional Packages:
   --without-ld-shared   Disable shared library support
   --with-unix-stdio-64=ARG Utilize 64 stdio api (yes/no)
   --with-hide-internal-symbols=ARG Try to hide internal symbols (ARG=yes/no)
+  --with-rename-internal-libtiff-symbols=ARG Prefix internal libtiff symbols with gdal_ (ARG=yes/no)
+  --with-rename-internal-libgeotiff-symbols=ARG Prefix internal libgeotiff symbols with gdal_ (ARG=yes/no)
   --with-local=dir      Include /usr/local or other local tree for INCLUDE/LIBS
   --with-threads=ARG    Include thread safe support (ARG=yes(default), no or linkopt)
   --with-libz=ARG       Include libz support (ARG=internal or libz directory)
@@ -17253,9 +17259,9 @@ HAVE_GCC_ATOMIC_BUILTINS=$HAVE_GCC_ATOMIC_BUILTINS
 
 
 
-# Check whether --with-with_hide_internal_symbols was given.
-if test "${with_with_hide_internal_symbols+set}" = set; then :
-  withval=$with_with_hide_internal_symbols;
+# Check whether --with-hide_internal_symbols was given.
+if test "${with_hide_internal_symbols+set}" = set; then :
+  withval=$with_hide_internal_symbols;
 fi
 
 
@@ -17300,6 +17306,33 @@ _ACEOF
 fi
 
 HAVE_HIDE_INTERNAL_SYMBOLS=$HAVE_HIDE_INTERNAL_SYMBOLS
+
+
+
+
+# Check whether --with-rename_internal_libtiff_symbols was given.
+if test "${with_rename_internal_libtiff_symbols+set}" = set; then :
+  withval=$with_rename_internal_libtiff_symbols;
+fi
+
+if test "$with_rename_internal_libtiff_symbols" = ""; then
+    with_rename_internal_libtiff_symbols=no
+fi
+RENAME_INTERNAL_LIBTIFF_SYMBOLS=$with_rename_internal_libtiff_symbols
+
+
+
+
+# Check whether --with-rename_internal_libgeotiff_symbols was given.
+if test "${with_rename_internal_libgeotiff_symbols+set}" = set; then :
+  withval=$with_rename_internal_libgeotiff_symbols;
+fi
+
+if test "$with_rename_internal_libgeotiff_symbols" = ""; then
+    with_rename_internal_libgeotiff_symbols=no
+fi
+RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS=$with_rename_internal_libgeotiff_symbols
+
 
 
 
