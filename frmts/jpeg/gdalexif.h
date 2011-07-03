@@ -33,6 +33,9 @@
 #define GPSOFFSETTAG     0x8825
 #define MAXSTRINGLENGTH 65535
 
+#ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
+#include "gdal_libtiff_symbol_rename.h"
+#endif
 
 static const struct gpsname {
     GUInt16     tag;

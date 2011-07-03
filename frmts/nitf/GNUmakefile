@@ -10,6 +10,9 @@ NITFLIB_OBJ =	nitffile.o nitfimage.o mgrs.o nitfaridpcm.o \
 CPPFLAGS	:=	-I../vrt $(GDAL_INCLUDE) $(CPPFLAGS)
 
 ifeq ($(TIFF_SETTING),internal)
+ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
+CPPFLAGS 	:=	$(CPPFLAGS) -DRENAME_INTERNAL_LIBTIFF_SYMBOLS
+endif
 CPPFLAGS	:=	$(CPPFLAGS) -I../gtiff/libtiff
 endif
 
@@ -23,9 +26,7 @@ endif
 
 ifeq ($(JPEG12_ENABLED),yes)
 CPPFLAGS	:=	$(CPPFLAGS) -DJPEG_DUAL_MODE_8_12
-ifeq ($(JPEG_SETTING),internal)
 PREDEPEND 	=	libjpeg12
-endif
 endif
 
 OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
