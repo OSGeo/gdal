@@ -468,7 +468,7 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
 /************************************************************************/
 
 int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
-    if ( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 360 )
+    if ( poOpenInfo->nHeaderBytes < 360 )
         return 0;
 
     /* First, check that this is a PALSAR image indeed */
@@ -591,6 +591,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find any image data. Aborting opening as PALSAR image.");
         delete poDS;
+        VSIFree( pszSuffix );
         return NULL;
     }
 
@@ -599,6 +600,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "ALOS PALSAR Level 1.0 products are not supported. Aborting opening as PALSAR image.");
         delete poDS;
+        VSIFree( pszSuffix );
         return NULL;
     }
 
@@ -650,6 +652,8 @@ void GDALRegister_PALSARJaxa() {
                                    "frmt_palsar.html" );
         poDriver->pfnOpen = PALSARJaxaDataset::Open;
         poDriver->pfnIdentify = PALSARJaxaDataset::Identify;
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
