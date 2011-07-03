@@ -87,7 +87,7 @@ typedef struct {		/* state table entry */
 	GUInt32	Param;		/* unsigned 32-bit run length in bits */
 } TIFFFaxTabEnt;
 
-static const TIFFFaxTabEnt TIFFFaxMainTable[128] = {
+static const TIFFFaxTabEnt aig_TIFFFaxMainTable[128] = {
 {12,7,0},{3,1,0},{5,3,1},{3,1,0},{2,3,0},{3,1,0},{4,3,1},{3,1,0},{1,4,0},{3,1,0},{5,3,1},{3,1,0},
 {2,3,0},{3,1,0},{4,3,1},{3,1,0},{5,6,2},{3,1,0},{5,3,1},{3,1,0},{2,3,0},{3,1,0},{4,3,1},{3,1,0},
 {1,4,0},{3,1,0},{5,3,1},{3,1,0},{2,3,0},{3,1,0},{4,3,1},{3,1,0},{5,7,3},{3,1,0},{5,3,1},{3,1,0},
@@ -100,7 +100,7 @@ static const TIFFFaxTabEnt TIFFFaxMainTable[128] = {
 {2,3,0},{3,1,0},{4,3,1},{3,1,0},{4,6,2},{3,1,0},{5,3,1},{3,1,0},{2,3,0},{3,1,0},{4,3,1},{3,1,0},
 {1,4,0},{3,1,0},{5,3,1},{3,1,0},{2,3,0},{3,1,0},{4,3,1},{3,1,0}
 };
-static const TIFFFaxTabEnt TIFFFaxWhiteTable[4096] = {
+static const TIFFFaxTabEnt aig_TIFFFaxWhiteTable[4096] = {
 {12,11,0},{7,4,3},{7,5,11},{7,4,5},{7,6,12},{7,5,9},{9,6,1664},{7,4,6},{7,7,20},{9,5,128},{7,7,24},{7,6,14},
 {7,7,28},{7,4,4},{7,4,2},{7,4,7},{7,7,23},{7,4,3},{7,7,27},{7,4,5},{7,8,39},{7,6,16},{9,8,576},{7,4,6},
 {7,7,19},{7,5,8},{7,8,55},{9,5,64},{7,5,10},{7,4,4},{7,4,2},{7,4,7},{7,8,45},{7,4,3},{7,5,11},{7,4,5},
@@ -444,7 +444,7 @@ static const TIFFFaxTabEnt TIFFFaxWhiteTable[4096] = {
 {7,6,13},{7,4,3},{7,7,18},{7,4,5},{7,7,21},{7,6,17},{9,7,256},{7,4,6},{7,6,1},{7,5,8},{9,6,192},{9,5,64},
 {7,5,10},{7,4,4},{7,4,2},{7,4,7}
 };
-static const TIFFFaxTabEnt TIFFFaxBlackTable[8192] = {
+static const TIFFFaxTabEnt aig_TIFFFaxBlackTable[8192] = {
 {12,11,0},{8,2,3},{8,3,1},{8,2,2},{8,4,6},{8,2,3},{8,3,4},{8,2,2},{8,6,9},{8,2,3},{8,3,1},{8,2,2},
 {8,4,5},{8,2,3},{8,3,4},{8,2,2},{8,7,10},{8,2,3},{8,3,1},{8,2,2},{8,4,6},{8,2,3},{8,3,4},{8,2,2},
 {8,5,7},{8,2,3},{8,3,1},{8,2,2},{8,4,5},{8,2,3},{8,3,4},{8,2,2},{8,8,13},{8,2,3},{8,3,1},{8,2,2},
@@ -1130,7 +1130,7 @@ static const TIFFFaxTabEnt TIFFFaxBlackTable[8192] = {
 {8,5,7},{8,2,3},{8,3,1},{8,2,2},{8,4,5},{8,2,3},{8,3,4},{8,2,2}
 };
 
-static const unsigned char TIFFBitRevTable[256] = {
+static const unsigned char aig_TIFFBitRevTable[256] = {
     0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
     0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
     0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,
@@ -1164,7 +1164,7 @@ static const unsigned char TIFFBitRevTable[256] = {
     0x0f, 0x8f, 0x4f, 0xcf, 0x2f, 0xaf, 0x6f, 0xef,
     0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff
 };
-static const unsigned char TIFFNoBitRevTable[256] = {
+static const unsigned char aig_TIFFNoBitRevTable[256] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 
@@ -1619,7 +1619,7 @@ Fax3PrematureEOF()
 /************************************************************************/
 
 static void
-_TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun, 
+aig_TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun, 
                   GUInt32 lastx)
 {
 	static const unsigned char _fillmasks[] =
@@ -1753,7 +1753,7 @@ Fax3DecodeRLE(Fax3BaseState* tif, unsigned char *buf, int occ,
         do {						
             for (;;) {							 
                 for (;;) {						     
-                    LOOKUP16(12, TIFFFaxWhiteTable, eof1d);		  
+                    LOOKUP16(12, aig_TIFFFaxWhiteTable, eof1d);		  
                     switch (TabEnt->State) {				       
                       case S_EOL:					
                         EOLcnt = 1;					
@@ -1775,7 +1775,7 @@ Fax3DecodeRLE(Fax3BaseState* tif, unsigned char *buf, int occ,
                 if (a0 >= lastx)					
                     goto done1d;					
                 for (;;) {						
-                    LOOKUP16(13, TIFFFaxBlackTable, eof1d);		
+                    LOOKUP16(13, aig_TIFFFaxBlackTable, eof1d);		
                     switch (TabEnt->State) {				
                       case S_EOL:					
                         EOLcnt = 1;					
@@ -1862,7 +1862,7 @@ CPLErr DecompressCCITTRLETile( unsigned char *pabySrcData, int nSrcBytes,
     sp->subaddress = NULL;
     
     DecoderState(sp)->runs = NULL;
-    DecoderState(sp)->fill = _TIFFFax3fillruns;
+    DecoderState(sp)->fill = aig_TIFFFax3fillruns;
 
     if( sizeof(runs_buf) < (nBlockXSize * 2 + 3) )
     {
@@ -1900,7 +1900,7 @@ CPLErr DecompressCCITTRLETile( unsigned char *pabySrcData, int nSrcBytes,
     DecoderState(sp)->data = 0;
     DecoderState(sp)->EOLcnt = 0;	/* force initial scan for EOL */
 
-    DecoderState(sp)->bitmap = TIFFBitRevTable;
+    DecoderState(sp)->bitmap = aig_TIFFBitRevTable;
 
     if (DecoderState(sp)->refruns) {	/* init reference line to white */
         DecoderState(sp)->refruns[0] = (GUInt32) DecoderState(sp)->b.rowpixels;
