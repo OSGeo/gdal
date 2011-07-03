@@ -270,8 +270,8 @@ VRTWarpedDataset::VRTWarpedDataset( int nXSize, int nYSize )
 
 {
     poWarper = NULL;
-    nBlockXSize = 512;
-    nBlockYSize = 128;
+    nBlockXSize = MIN(nXSize, 512);
+    nBlockYSize = MIN(nYSize, 128);
     eAccess = GA_Update;
 
     nOverviewCount = 0;
