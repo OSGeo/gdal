@@ -1228,6 +1228,8 @@ void GDALRegister_ERS()
 "   <Option name='PIXELTYPE' type='string' description='By setting this to SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
 "</CreationOptionList>" );
 
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = ERSDataset::Open;
         poDriver->pfnCreate = ERSDataset::Create;
 
