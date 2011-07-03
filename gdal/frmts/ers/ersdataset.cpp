@@ -557,7 +557,8 @@ void ERSDataset::ReadGCPs()
         nItemsPerLine = 8;
     else if( nItemCount < 14 )
     {
-        CPLAssert( FALSE );
+        CPLDebug("ERS", "Invalid item count for ControlPoints");
+        CSLDestroy( papszTokens );
         return;
     }
     else if( EQUAL(papszTokens[8],"Yes") || EQUAL(papszTokens[8],"No") )
@@ -566,7 +567,8 @@ void ERSDataset::ReadGCPs()
         nItemsPerLine = 8;
     else
     {
-        CPLAssert( FALSE );
+        CPLDebug("ERS", "Invalid format for ControlPoints");
+        CSLDestroy( papszTokens );
         return;
     }
 
