@@ -35,26 +35,20 @@
 
 using std::string;
 
-std::wstring StringToWString(const std::string& s)
+std::wstring StringToWString(const std::string& utf8string)
 {
-  std::wstring temp(s.length(),L' ');
-  std::copy(s.begin(), s.end(), temp.begin());
-  return temp; 
+  wchar_t* pszUTF16 = CPLRecodeToWChar( utf8string.c_str(), CPL_ENC_UTF8, CPL_ENC_UCS2);
+  std::wstring utf16string = pszUTF16;
+  CPLFree(pszUTF16);
+  return utf16string;
 }
 
-std::string WStringToString(const std::wstring& s)
+std::string WStringToString(const std::wstring& utf16string)
 {
-  //TODO: Need to see if this works on *nix port - write a more efficient - unnecessary mem copied around
-
-  char *tempString = new char[(s.size() * 2) + 1];
-
-  sprintf(tempString,"%ls",s.c_str());
-
-  string returnMe = tempString;
-
-  delete [] tempString;
-
-  return returnMe; 
+  char* pszUTF8 = CPLRecodeFromWChar( utf16string.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8 );
+  std::string utf8string = pszUTF8;
+  CPLFree(pszUTF8);
+  return utf8string; 
 }
 
 bool GDBErr(long int hr, std::string desc)
