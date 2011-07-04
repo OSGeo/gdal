@@ -33,6 +33,7 @@
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 #include "cpl_string.h"
+#include "commonutils.h"
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -836,6 +837,9 @@ int main( int argc, char ** argv )
             printf( "\n" );
             exit( 1 );
         }
+
+        if (!bQuiet)
+            CheckExtensionConsistency(pszDstFilename, pszFormat);
     }
     else
     {
