@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include <vector>
+#include "commonutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -239,6 +240,9 @@ int main( int argc, char ** argv )
         GDALDriverH hDriver = GDALGetDriverByName( pszDriverName );
         if (hDriver == NULL)
             exit(1);
+
+        if (!bQuiet)
+            CheckExtensionConsistency(pszOutFile, pszDriverName);
 
         if (bSetAlpha)
         {

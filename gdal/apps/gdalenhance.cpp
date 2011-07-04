@@ -32,6 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 #include "vrt/vrtdataset.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -99,6 +100,7 @@ int main( int argc, char ** argv )
     int               **papanLUTs = NULL;
     int                 iBand;
     const char         *pszConfigFile = NULL;
+    int                 bQuiet = FALSE;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -184,6 +186,7 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-quiet") )
         {
             pfnProgress = GDALDummyProgress;
+            bQuiet = TRUE;
         }
 
         else if( argv[i][0] == '-' )
@@ -256,6 +259,9 @@ int main( int argc, char ** argv )
         printf( "\n" );
         Usage();
     }
+
+    if (!bQuiet && pszDest != NULL)
+        CheckExtensionConsistency(pszDest, pszFormat);
 
 /* -------------------------------------------------------------------- */
 /*      If histogram equalization is requested, do it now.              */
