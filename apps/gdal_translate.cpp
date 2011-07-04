@@ -33,6 +33,7 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "vrt/vrtdataset.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -496,6 +497,9 @@ static int ProxyMain( int argc, char ** argv )
         bQuiet = TRUE;
         pfnProgress = GDALDummyProgress;
     }
+
+    if (!bQuiet)
+        CheckExtensionConsistency(pszDest, pszFormat);
 
 /* -------------------------------------------------------------------- */
 /*      Attempt to open source file.                                    */

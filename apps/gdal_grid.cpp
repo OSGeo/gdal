@@ -38,6 +38,7 @@
 #include "ogr_api.h"
 #include "ogrsf_frmts.h"
 #include "gdalgrid.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -879,6 +880,9 @@ int main( int argc, char ** argv )
         nXSize = 256;
     if ( nYSize == 0 )
         nYSize = 256;
+
+    if (!bQuiet)
+        CheckExtensionConsistency(pszDest, pszFormat);
 
     hDstDS = GDALCreate( hDriver, pszDest, nXSize, nYSize, nBands,
                          eOutputType, papszCreateOptions );

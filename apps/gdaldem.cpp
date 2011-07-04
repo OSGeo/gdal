@@ -89,6 +89,7 @@
 #include "cpl_string.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -2153,6 +2154,8 @@ int main( int argc, char ** argv )
     
     int bComputeAtEdges = FALSE;
     int bZevenbergenThorne = FALSE;
+
+    int bQuiet = FALSE;
     
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -2294,6 +2297,7 @@ int main( int argc, char ** argv )
         else if ( EQUAL(argv[i], "-q") || EQUAL(argv[i], "-quiet") )
         {
             pfnProgress = GDALDummyProgress;
+            bQuiet = TRUE;
         }
         else if( EQUAL(argv[i],"-co") && i < argc-1 )
         {
@@ -2396,6 +2400,9 @@ int main( int argc, char ** argv )
         GDALDestroyDriverManager();
         exit( 1 );
     }
+
+    if (!bQuiet)
+        CheckExtensionConsistency(pszDstFilename, pszFormat);
 
     double dfDstNoDataValue = 0;
     int bDstHasNoData = FALSE;

@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -748,6 +749,9 @@ int main( int argc, char ** argv )
 
     if( hDstDS == NULL )
     {
+        if (!bQuiet)
+            CheckExtensionConsistency(pszDstFilename, pszFormat);
+
         hDstDS = GDALWarpCreateOutput( papszSrcFiles, pszDstFilename,pszFormat,
                                        papszTO, &papszCreateOptions, 
                                        eOutputType );
