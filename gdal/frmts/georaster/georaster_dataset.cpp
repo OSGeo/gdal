@@ -525,12 +525,12 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
             poGRW->bBlocking = false;
         }
 
-        if( EQUAL( pszFetched, "OPTIMUM" ) )
+        if( EQUAL( pszFetched, "OPTIMALPADDING" ) )
         {
             if( poGRW->poConnection->GetVersion() < 11 )
             {
                 CPLError( CE_Warning, CPLE_IllegalArg, 
-                    "BLOCKING=OPTIMUM not supported on Oracle older than 11g" );
+                    "BLOCKING=OPTIMALPADDING not supported on Oracle older than 11g" );
             }
             else
             {
@@ -1886,7 +1886,7 @@ void CPL_DLL GDALRegister_GEOR()
 "  <Option name='BLOCKING'    type='string-select' default='YES'>"
 "       <Value>YES</Value>"
 "       <Value>NO</Value>"
-"       <Value>OPTIMUM</Value>"
+"       <Value>OPTIMALPADDING</Value>"
 "  </Option>"
 "  <Option name='COORDLOCATION'    type='string-select' default='CENTER'>"
 "       <Value>CENTER</Value>"
