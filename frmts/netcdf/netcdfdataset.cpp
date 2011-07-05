@@ -252,7 +252,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
 /* -------------------------------------------------------------------- */
 
         if( status != NC_NOERR ) {
-            szVarName[0]=toupper(szVarName[0]);
+            szVarName[0]=(char) toupper(szVarName[0]);
             status=nc_inq_varid(poDS->cdfid,  
                                 szVarName,
                                 &nVarID );
@@ -620,7 +620,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   (float *) pImage );
         for( i=0; i<nBlockXSize; i++ ){
             if( CPLIsNan( ( (float *) pImage )[i] ) )
-                ( (float *)pImage )[i] = dfNoDataValue;
+                ( (float *)pImage )[i] = (float) dfNoDataValue;
         }
     }
     else if( eDataType == GDT_Float64 ){
@@ -769,8 +769,8 @@ void netCDFDataset::SetProjection( int var )
     char         szGridMappingName[ MAX_NC_NAME ];
     char         szGridMappingValue[ MAX_NC_NAME ];
 
-    double       dfStdP1;
-    double       dfStdP2;
+    double       dfStdP1=0.0;
+    double       dfStdP2=0.0;
     double       dfCenterLat;
     double       dfCenterLon;
     double       dfScale;
@@ -842,12 +842,12 @@ void netCDFDataset::SetProjection( int var )
 
     for( i = 0; (i < strlen( poDS->papszDimName[ poDS->nDimXid ] )  && 
                  i < 3 ); i++ ) {
-        szDimNameX[i] = tolower( ( poDS->papszDimName[poDS->nDimXid] )[i] );
+        szDimNameX[i]=(char)tolower( ( poDS->papszDimName[poDS->nDimXid] )[i] );
     }
     szDimNameX[3] = '\0';
     for( i = 0; (i < strlen( poDS->papszDimName[ poDS->nDimYid ] )  && 
                  i < 3 ); i++ ) {
-        szDimNameY[i] = tolower( ( poDS->papszDimName[poDS->nDimYid] )[i] );
+        szDimNameY[i]=(char)tolower( ( poDS->papszDimName[poDS->nDimYid] )[i] );
     }
     szDimNameY[3] = '\0';
 
@@ -1597,7 +1597,7 @@ void netCDFDataset::SetProjection( int var )
 /*      Look for corner array values                                    */
 /* -------------------------------------------------------------------- */
             } else {
-                double dfNN, dfSN, dfEE, dfWE;
+                double dfNN=0.0, dfSN=0.0, dfEE=0.0, dfWE=0.0;
                 strcpy(szTemp,szGridMappingValue);
                 strcat( szTemp, "#" );
                 strcat( szTemp, "Northernmost_Northing");
@@ -2431,7 +2431,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         int status;
         int i;
-        int NCDFVarID;
+        int NCDFVarID=0;
 
         double dfNN=0.0;
         double dfSN=0.0;
