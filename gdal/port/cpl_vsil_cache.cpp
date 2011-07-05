@@ -337,7 +337,7 @@ int VSICachedFile::LoadBlocks( size_t nStartBlock, size_t nBlockCount,
             poBlock->nDataFilled = nDataRead - i*CHUNK_SIZE;
 
         memcpy( poBlock->abyData, pabyWorkBuffer + i*CHUNK_SIZE,
-                poBlock->nDataFilled );
+                (size_t) poBlock->nDataFilled );
 
         nCacheUsed += poBlock->nDataFilled;
 
@@ -364,8 +364,8 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 /* ==================================================================== */
 /*      Make sure the cache is loaded for the whole request region.     */
 /* ==================================================================== */
-    size_t nStartBlock = nOffset / CHUNK_SIZE;
-    size_t nEndBlock = (nOffset + nSize * nCount - 1) / CHUNK_SIZE;
+    size_t nStartBlock = (size_t) (nOffset / CHUNK_SIZE);
+    size_t nEndBlock = (size_t) ((nOffset + nSize * nCount - 1) / CHUNK_SIZE);
     
     for( size_t iBlock = nStartBlock; iBlock <= nEndBlock; iBlock++ )
     {
@@ -388,12 +388,13 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 
     while( nAmountCopied < nSize * nCount )
     {
-        size_t iBlock = (nOffset + nAmountCopied) / CHUNK_SIZE;
+        size_t iBlock = (size_t) ((nOffset + nAmountCopied) / CHUNK_SIZE);
         size_t nThisCopy;
         VSICacheChunk *poBlock = apoCache[iBlock];
 
-        nThisCopy = (iBlock * CHUNK_SIZE + poBlock->nDataFilled) 
-            - nAmountCopied - nOffset;
+        nThisCopy = (size_t)
+            ((iBlock * CHUNK_SIZE + poBlock->nDataFilled) 
+             - nAmountCopied - nOffset);
         
         if( nThisCopy > nSize * nCount - nAmountCopied )
             nThisCopy = nSize * nCount - nAmountCopied;

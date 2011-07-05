@@ -517,7 +517,7 @@ int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
     CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
     BOOL ret;
 
-    while( !(ret = TryEnterCriticalSection(pcs)) && dfWaitInSeconds > 0.0 )
+    while( (ret = TryEnterCriticalSection(pcs)) == 0 && dfWaitInSeconds > 0.0 )
     {
         CPLSleep( MIN(dfWaitInSeconds,0.125) );
         dfWaitInSeconds -= 0.125;

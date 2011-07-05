@@ -302,7 +302,7 @@ CPLString &CPLString::toupper()
     size_t i;
 
     for( i = 0; i < size(); i++ )
-        (*this)[i] = ::toupper( (*this)[i] );
+        (*this)[i] = (char) ::toupper( (*this)[i] );
 
     return *this;
 }
@@ -321,7 +321,7 @@ CPLString &CPLString::tolower()
     size_t i;
 
     for( i = 0; i < size(); i++ )
-        (*this)[i] = ::tolower( (*this)[i] );
+        (*this)[i] = (char) ::tolower( (*this)[i] );
 
     return *this;
 }

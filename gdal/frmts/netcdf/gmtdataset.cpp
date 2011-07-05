@@ -129,7 +129,7 @@ CPLErr GMTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     size_t start[2], edge[2];
-    int    nErr;
+    int    nErr = NC_NOERR;
     int    cdfid = ((GMTDataset *) poDS)->cdfid;
 
     start[0] = nBlockYOff * nBlockXSize;
