@@ -341,6 +341,56 @@ def jp2kak_14():
     return 'success'
 
 ###############################################################################
+# Confirm we can read resolution information.
+#
+
+def jp2kak_15():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    jp2_ds = gdal.Open( 'data/small_200ppcm.jp2' )
+
+    md = jp2_ds.GetMetadata()
+
+    if md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)' \
+       or md['TIFFTAG_XRESOLUTION'] != '200.012':
+       gdaltest.post_reason( 'did not get expected resolution metadata' )
+       return 'fail'
+
+    jp2_ds = None
+
+    return 'success'
+
+###############################################################################
+# Confirm we can write and then reread resolution information.
+#
+
+def jp2kak_16():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    jp2_ds = gdal.Open( 'data/small_200ppcm.jp2' )
+    out_ds = gdaltest.jp2kak_drv.CreateCopy( 'tmp/jp2kak_16.jp2', jp2_ds )
+    out_ds = None
+    jp2_ds = None
+
+    jp2_ds = gdal.Open( 'tmp/jp2kak_16.jp2' )
+    md = jp2_ds.GetMetadata()
+
+    if md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)' \
+       or md['TIFFTAG_XRESOLUTION'] != '200.012':
+       gdaltest.post_reason( 'did not get expected resolution metadata' )
+       return 'fail'
+
+    jp2_ds = None
+
+    gdaltest.jp2kak_drv.Delete( 'tmp/jp2kak_16.jp2' )
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def jp2kak_cleanup():
@@ -364,6 +414,8 @@ gdaltest_list = [
     jp2kak_12,
     jp2kak_13,
     jp2kak_14,
+    jp2kak_15,
+    jp2kak_16,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':

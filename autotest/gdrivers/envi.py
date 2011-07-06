@@ -87,20 +87,21 @@ def envi_4():
 
     tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 24 )
 
-    prj = """PROJCS["unnamed",
-    GEOGCS["NAD83",
+    prj = """PROJCS["Lambert_Conformal_Conic",
+    GEOGCS["GCS_North_American_1983",
         DATUM["North_American_Datum_1983",
-            SPHEROID["GRS 1980",6378137,298.257222101],
-            TOWGS84[0,0,0,0,0,0,0]],
+            SPHEROID["GRS_1980",6378137,298.257222101]],
         PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433]],
+        UNIT["Degree",0.017453292519943295]],
     PROJECTION["Lambert_Conformal_Conic_2SP"],
     PARAMETER["standard_parallel_1",33.90363402775256],
     PARAMETER["standard_parallel_2",33.62529002776137],
     PARAMETER["latitude_of_origin",33.76446202775696],
     PARAMETER["central_meridian",-117.4745428888127],
     PARAMETER["false_easting",20000],
-    PARAMETER["false_northing",30000]]"""
+    PARAMETER["false_northing",30000],
+    PARAMETER["scale_factor",1.0],
+    UNIT["Meter",1]]"""
 
     return tst.testSetProjection( prj = prj )
 
