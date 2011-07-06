@@ -58,7 +58,6 @@ GDALJP2Metadata::GDALJP2Metadata()
     pasGCPList = NULL;
 
     papszGMLMetadata = NULL;
-    papszMetadata = NULL;
 
     nGeoTIFFSize = 0;
     pabyGeoTIFFData = NULL;
@@ -92,7 +91,6 @@ GDALJP2Metadata::~GDALJP2Metadata()
     CPLFree( pabyGeoTIFFData );
     CPLFree( pabyMSIGData );
     CSLDestroy( papszGMLMetadata );
-    CSLDestroy( papszMetadata );
 }
 
 /************************************************************************/
@@ -308,17 +306,17 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                             (nHorzNum/(double)nHorzDen) * pow(10.0,nHorzExp)/100;
                         CPLString osFormatter;
 
-                        papszMetadata = CSLSetNameValue( 
-                            papszMetadata, 
+                        papszGMLMetadata = CSLSetNameValue( 
+                            papszGMLMetadata, 
                             "TIFFTAG_XRESOLUTION",
                             osFormatter.Printf("%g",dfHorzRes) );
                         
-                        papszMetadata = CSLSetNameValue( 
-                            papszMetadata, 
+                        papszGMLMetadata = CSLSetNameValue( 
+                            papszGMLMetadata, 
                             "TIFFTAG_YRESOLUTION",
                             osFormatter.Printf("%g",dfVertRes) );
-                        papszMetadata = CSLSetNameValue( 
-                            papszMetadata, 
+                        papszGMLMetadata = CSLSetNameValue( 
+                            papszGMLMetadata, 
                             "TIFFTAG_RESOLUTIONUNIT", 
                             "3 (pixels/cm)" );
                         

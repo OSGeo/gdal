@@ -1417,11 +1417,33 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Do we have other misc metadata?                                 */
 /* -------------------------------------------------------------------- */
-            if( oJP2Geo.papszMetadata != NULL )
+            if( CSLFetchNameValue( oJP2Geo.papszGMLMetadata,
+                                   "TIFFTAG_XRESOLUTION" ) != NULL )
             {
                 char **papszMD = poDS->GDALPamDataset::GetMetadata();
+                const char *pszItem;
 
-                papszMD = CSLMerge( papszMD, oJP2Geo.papszMetadata );
+                pszItem = CSLFetchNameValue( oJP2Geo.papszGMLMetadata,
+                                             "TIFFTAG_XRESOLUTION" );
+                if( pszItem )
+                    papszMD = 
+                        CSLSetNameValue( papszMD, "TIFFTAG_XRESOLUTION", 
+                                         pszItem );
+                                         
+                pszItem = CSLFetchNameValue( oJP2Geo.papszGMLMetadata,
+                                             "TIFFTAG_YRESOLUTION" );
+                if( pszItem )
+                    papszMD = 
+                        CSLSetNameValue( papszMD, "TIFFTAG_YRESOLUTION", 
+                                         pszItem );
+                                         
+                pszItem = CSLFetchNameValue( oJP2Geo.papszGMLMetadata,
+                                             "TIFFTAG_RESOLUTIONUNIT" );
+                if( pszItem )
+                    papszMD = 
+                        CSLSetNameValue( papszMD, "TIFFTAG_RESOLUTIONUNIT", 
+                                         pszItem );
+                                         
                 poDS->GDALPamDataset::SetMetadata( papszMD );
 
                 CSLDestroy( papszMD );
