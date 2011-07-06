@@ -739,6 +739,21 @@ def warp_24():
     return 'success'
 
 ###############################################################################
+# Test -refine_gcps (#4143)
+
+def warp_25():
+
+    ds = gdal.Open('data/refine_gcps.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    if cs != 4672:
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -769,7 +784,8 @@ gdaltest_list = [
     warp_21,
     warp_22,
     warp_23,
-    warp_24
+    warp_24,
+    warp_25,
     ]
 
 if __name__ == '__main__':

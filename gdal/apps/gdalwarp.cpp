@@ -72,6 +72,7 @@ Usage:
 gdalwarp [--help-general] [--formats]
     [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
     [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]
+    [-refine_gcps tolerance minimum_gcps]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
     [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
     [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha
@@ -113,6 +114,12 @@ available GCPs.</dd>
 <dt> <b>-geoloc</b>:</dt><dd>Force use of Geolocation Arrays.</dd>
 <dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for
 transformation approximation (in pixel units - defaults to 0.125).</dd>
+<dt> <b>-refine_gcps</b> <em>tolerance minimum_gcps</em>:</dt><dd>  (GDAL >= 1.9.0) refines the GCPs by automatically eliminating outliers.
+Outliers will be eliminated until minimum_gcps are left or when no outliers can be detected.
+The tolerance is passed to adjust when a GCP will be eliminated.
+Not that GCP refinement only works with polynomial interpolation.
+The tolerance is in pixel units if no projection is available, otherwise it is in SRS units.
+If minimum_gcps is not provided, the minimum GCPs according to the polynomial model is used.</dd>
 <dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt><dd> set georeferenced
 extents of output file to be created (in target SRS).</dd>
 <dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in
@@ -225,6 +232,7 @@ static void Usage()
         "Usage: gdalwarp [--help-general] [--formats]\n"
         "    [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
         "    [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]\n"
+        "    [-refine_gcps tolerance minimum_gcps]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n" 
@@ -387,6 +395,23 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-order") && i < argc-1 )
         {
             papszTO = CSLSetNameValue( papszTO, "MAX_GCP_ORDER", argv[++i] );
+        }
+        else if( EQUAL(argv[i],"-refine_gcps") && i < argc-1 )
+        {
+            papszTO = CSLSetNameValue( papszTO, "REFINE_TOLERANCE", argv[++i] );
+            if(atof(argv[i]) < 0)
+            {
+                printf( "The tolerance for -refine_gcps may not be negative\n");
+                Usage();
+            }
+            if (i < argc-1 && atoi(argv[i+1]) >= 0 && isdigit(argv[i+1][0]))
+            {
+                papszTO = CSLSetNameValue( papszTO, "REFINE_MINIMUM_GCPS", argv[++i] );
+            }
+            else
+            {
+                papszTO = CSLSetNameValue( papszTO, "REFINE_MINIMUM_GCPS", "-1" );
+            }
         }
         else if( EQUAL(argv[i],"-tps") )
         {
@@ -774,7 +799,7 @@ int main( int argc, char ** argv )
         CSLDestroy( papszCreateOptions );
         papszCreateOptions = NULL;
     }
-
+ 
     if( hDstDS == NULL )
         exit( 1 );
 
@@ -799,7 +824,7 @@ int main( int argc, char ** argv )
 /*      Check that there's at least one raster band                     */
 /* -------------------------------------------------------------------- */
         if ( GDALGetRasterCount(hSrcDS) == 0 )
-        {
+        {     
             fprintf(stderr, "Input file %s has no raster bands.\n", papszSrcFiles[iSrc] );
             exit( 1 );
         }
@@ -811,7 +836,7 @@ int main( int argc, char ** argv )
 /*      Warns if the file has a color table and something more          */
 /*      complicated than nearest neighbour resampling is asked          */
 /* -------------------------------------------------------------------- */
-
+ 
         if ( eResampleAlg != GRA_NearestNeighbour &&
              GDALGetRasterColorTable(GDALGetRasterBand(hSrcDS, 1)) != NULL)
         {
