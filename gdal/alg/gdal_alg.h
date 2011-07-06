@@ -165,6 +165,12 @@ int CPL_DLL GDALReprojectionTransform(
 void CPL_DLL *
 GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
                           int nReqOrder, int bReversed );
+			  
+/* GCP based transformer with refinement of the GCPs ... forward is to georef coordinates */
+void CPL_DLL *
+GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
+                                int nReqOrder, int bReversed, double tolerance, int minimumGcps);
+			  
 void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
 int CPL_DLL GDALGCPTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
