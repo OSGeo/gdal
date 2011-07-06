@@ -1,3 +1,90 @@
+= GDAL/OGR 1.8.1 release notes = 
+
+The 1.8.1 release is a routine bug fix release on the stable GDAL/OGR 1.8
+branch.
+
+== General ==
+ * Fix for windows build of cpl_vsil_gzip.cpp (#3908)
+ * Fix OGRDataSource.Open() signature so utf8 translation works in C# (#3766).
+ * Fix cpl_config.h.vc so it also works with mingw compiler on windows (#3960)
+ * Fix GEOS configuration checking affecting GEOS 3.0.4 (#3990)
+ * Support optional nmake.local file for local MSVC config (r22529).
+
+== GDAL / Raster ==
+
+ * GDALReplicateWord(): fix error with missing one pixel (#4090) 
+ * Fix issue with duplicating metadata (#3961)
+ * VRT: Fix issues with complex data types (#3977)
+ * VRT: Fix issue with nodata values and uninitialized buffers (#4045)
+ * VRT/.aux.xml: Fix performance with large color tables (#3961)
+ * VRT: Fix for VRTs smaller than the default block size (#4137)
+ * IDRISI/RST: Fix seg fault with missing fields in .ref and .rdc (#4100)
+ * IDRISI: Fix problem with spherical inverse flattening (#3757)
+ * GTIFF: Fix support for external overviews with COPY_SRC_OVERVIEWS (#3938)
+ * GTIFF: Correct handling of linear geokeys in feet (#3091)
+ * GTIFF: Fix edge anomoly issues with jpeg tiles (#4096)
+ * GTIFF: Don't skip driver even if library versions differ (#4101)
+ * SAGA: Fix reading/writing .sdat files larger than 2GB. (#4104)
+ * PCIDSK: Various fixes particularly for linked files (r21513)
+ * PCIDSK: Fixes for georeferencing parsing (#3913)
+ * ECW: Added/fixed french ECW coordinate systems (#3868)
+ * ECW: Force sign of y pixel size when needed (#393)
+ * ECW: Support EPSG:n style coordinate systems (#3955)
+ * ECW: Fixes related to geotransform overrides (#4131)
+ * ERS: Handle .ers files in case insensitive way (#3974)
+ * PNG: Add support for libpng >= 1.5.0 (#3914)
+ * JP2KAK: Support reading and writing resolution info (#3847)
+ * MRSID: Fix for configuring and building on MacOS X (#3910)
+ * HFA (.img): Fix filename computations and updating for renaming files (#3897)
+ * HFA (.img): Support reading 2bit compressed .img files (#3956)
+ * HFA (.img): Fix for rewriting projection/datum parameters (#3969)
+ * NITF: Correct hemisphere setting for ICORDS=U with world file (#3931)
+ * NITF: Added NITF_DISABLE_RPF_LOCATION_TABLE_SANITY_TESTS option (#3930)
+ * NITF: Make attribute section size hack safer (#4020)
+ * EHDR: Improved floating point file detection (#3933)
+ * ASRP: Approximated support for Azimuthal Equidistant in poles (#3946)
+ * HDF5/BAG: fix handle and memory leaks (#3953)
+ * HDF5: Avoid returning NULL from GetProjectionRef() (#4076)
+ * HDF5: Improve preservation of floating point precision in metadata (r22531).
+ * JPIPKAK: Fix problems with overviews, windowing and errors (#3967)
+ * USGSDEM: Fixing locale dependent parsing of numbers (#3886, #3979)
+ * RS2: Support subdataset oriented metadata and overviews (#4006)
+ * AIGRID: Support uncompressed integer images (ArcGIS 10) (#4035)
+ * gdalwarp: Include DstDensity mask in memory calculations (#4042)
+ * GeoRaster: Full backport for fixes and features (#4039,#3266,#4071,#4072,#4132)
+ * ENVISAT: Fix gcp computations for stripline products (#3160,#3709)
+ * ENVISAT: Fix gcp computations for MERIS products (#4086)
+ * SAR_CEOS: Fix potential crash with odd filenames. (#4065)
+ * ENVI: Support ESRI style coordinate system strings (#3312)
+ * JAXAPALSAR: Fix datatype of 1.5 level product (#4136)
+ * gdalfillnodata: working file is created as bigtiff if possibly needed (#4088)
+
+== OGR / Vector ==
+
+ * LIBKML: Fix build issue against static libkml (#3909)
+ * LIBKML: Improve checking to see if files are actually kml (#4003)
+ * GML: Fix crash with invalid geometries when axis order is lat/long (#3935) 
+ * GML: Support curves in directEdges (#3934)
+ * GML: Do not force 3D linestrings for directed edges (#3936)
+ * GPX/GeoRSS: Fix expat library order issue on unix (#3948)
+ * PG/PGDUMP: Fix handling of NaN in zero width fields (#2112)
+ * PGDUMP: Add CREATE_SCHEMA and DROP_TABLE layer options (#4033)
+ * PGDUMP: Support wkbNone geometry better, and other subtle bugs (#4040)
+ * OGR SQL: Allow double quoting column name in SELECT DISTINCT (#3966)
+ * OGR SQL: Fix crashes with some uses of SUBSTR and CAST (#4055)
+ * OGR SQL: Fix crash on IS NULL test on floating point fields (#4091)
+ * OGR SQL: Fix error with SQL joins 
+ * MSSQL: Fix for IDENTITY INSERT problem (#3992)
+ * MSSQL: Fix for schema handling (#3951)
+ * OCI: Fix writing of tables with no general attributes (#4063)
+ * GeoJSON: Fix assertion on ESRI json (#4056, #4057)
+ * GeoJSON: Improve numeric field determination (#4082)
+ * SHAPE: Fix decoding of triangle fans in multipatch files (#4081)
+ * SHAPE: Fix multipolygon detection issue due to isClockwise failure (#4122)
+ * MITAB: Fix handling of filenames with two dots in them. (#4123)
+ * ogr2ogr: Improve -overwrite/-append handling (#4012)
+ * ogr2ogr: Ensure -where fields are address in SetIgnoredFields (#4015)
+
 = GDAL/OGR 1.8.0 release notes =
 
 (Note: Most changes/bugfixes between 1.7.0 and 1.8.0 that have already gone
