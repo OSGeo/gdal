@@ -3408,7 +3408,8 @@ NITFDataset::NITFCreateCopy(
         {
             poJ2KDriver = 
                 GetGDALDriverManager()->GetDriverByName( "JP2ECW" );
-            if( poJ2KDriver == NULL )
+            if( poJ2KDriver == NULL || 
+                poJ2KDriver->GetMetadataItem( GDAL_DCAP_CREATECOPY, NULL ) == NULL )
             {
                 /* Try with Jasper as an alternate driver */
                 poJ2KDriver = 
