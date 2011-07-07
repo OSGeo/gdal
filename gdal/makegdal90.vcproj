@@ -23,9 +23,9 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1400 DEBUG=1"
-				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1400 DEBUG=1 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1400 DEBUG=1"
-				CleanCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1400 DEBUG=1 clean"
+				BuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1"
+				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1"
+				CleanCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1 clean"
 				Output="gdal17.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
@@ -43,9 +43,9 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1400"
-				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1400 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1400"
-				CleanCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1400 clean"
+				BuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500"
+				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1500"
+				CleanCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 clean"
 				Output="gdal17.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
