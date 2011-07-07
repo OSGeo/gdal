@@ -51,18 +51,18 @@ static void *hRBMutex = NULL;
  * \brief Set maximum cache memory.
  *
  * This function sets the maximum amount of memory that GDAL is permitted
- * to use for GDALRasterBlock caching.
+ * to use for GDALRasterBlock caching. The unit of the value is bytes.
  *
  * The maximum value is 2GB, due to the use of a signed 32 bit integer.
  * Use GDALSetCacheMax64() to be able to set a higher value.
  *
- * @param nNewSize the maximum number of bytes for caching.
+ * @param nNewSizeInBytes the maximum number of bytes for caching.
  */
 
-void CPL_STDCALL GDALSetCacheMax( int nNewSize )
+void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
 
 {
-    GDALSetCacheMax64(nNewSize);
+    GDALSetCacheMax64(nNewSizeInBytes);
 }
 
 
@@ -74,22 +74,22 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSize )
  * \brief Set maximum cache memory.
  *
  * This function sets the maximum amount of memory that GDAL is permitted
- * to use for GDALRasterBlock caching.
+ * to use for GDALRasterBlock caching. The unit of the value is bytes.
  *
  * Note: On 32 bit platforms, the maximum amount of memory that can be addressed
  * by a process might be 2 GB or 3 GB, depending on the operating system
  * capabilities. This function will not make any attempt to check the
  * consistency of the passed value with the effective capabilities of the OS.
  *
- * @param nNewSize the maximum number of bytes for caching.
+ * @param nNewSizeInBytes the maximum number of bytes for caching.
  *
  * @since GDAL 1.8.0
  */
 
-void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSize )
+void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
 {
-    nCacheMax = nNewSize;
+    nCacheMax = nNewSizeInBytes;
 
 /* -------------------------------------------------------------------- */
 /*      Flush blocks till we are under the new limit or till we         */
