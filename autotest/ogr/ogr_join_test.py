@@ -259,6 +259,24 @@ def ogr_join_11():
         return 'success'
     else:
         return 'fail'
+
+###############################################################################
+# Test fix for #4112 (join between 2 datasources)
+
+def ogr_join_12():
+    ds = ogr.Open( 'data/poly.shp' )
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM poly LEFT JOIN 'data/idlink.dbf'.idlink ON poly.eas_id = idlink.eas_id" )
+
+    count = sql_lyr.GetFeatureCount()
+    if count != 10:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 10' % count )
+        return 'fail'
+
+    ds.ReleaseResultSet( sql_lyr )
+
+    return 'success'
 ###############################################################################
 
 def ogr_join_cleanup():
@@ -280,6 +298,7 @@ gdaltest_list = [
     ogr_join_9,
     ogr_join_10,
     ogr_join_11,
+    ogr_join_12,
     ogr_join_cleanup ]
 
 if __name__ == '__main__':
