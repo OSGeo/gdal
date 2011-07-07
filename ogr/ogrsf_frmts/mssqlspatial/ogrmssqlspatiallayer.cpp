@@ -315,7 +315,8 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
             int nLength = poStmt->GetColDataLength( iField );
 
             if ( nGeomColumnType == MSSQLCOLTYPE_GEOMETRY || 
-                 nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY )
+                 nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY ||
+                 nGeomColumnType == MSSQLCOLTYPE_BINARY)
             {
                 switch ( poDS->GetGeometryFormat() )
                 {
@@ -341,12 +342,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
             {
                 eErr = OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
                                                       NULL, &poGeom);
-            }
-            else if (nGeomColumnType == MSSQLCOLTYPE_BINARY)
-            {
-                eErr = OGRGeometryFactory::createFromWkb((unsigned char *) pszGeomText,
-                                                      NULL, &poGeom, nLength);
-            }      
+            }    
         }
         
         if ( eErr != OGRERR_NONE )
