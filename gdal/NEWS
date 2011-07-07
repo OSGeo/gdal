@@ -73,7 +73,7 @@ branch.
  * OGR SQL: Allow double quoting column name in SELECT DISTINCT (#3966)
  * OGR SQL: Fix crashes with some uses of SUBSTR and CAST (#4055)
  * OGR SQL: Fix crash on IS NULL test on floating point fields (#4091)
- * OGR SQL: Fix error with SQL joins 
+ * OGR SQL: Fix error with SQL joins (#4112)
  * MSSQL: Fix for IDENTITY INSERT problem (#3992)
  * MSSQL: Fix for schema handling (#3951)
  * OCI: Fix writing of tables with no general attributes (#4063)
