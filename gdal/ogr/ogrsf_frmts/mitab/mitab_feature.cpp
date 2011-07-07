@@ -617,6 +617,9 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
                 GetFieldAsDateTime(iField, &nYear, &nMon, &nDay,
                                    &nHour, &nMin, &nSec, &nTZFlag);
              }
+             else
+                 nYear = nMon = nDay = 0;
+
              nStatus = poDATFile->WriteDateField(nYear, nMon, nDay,
                                                  poINDFile, panIndexNo[iField]);
 #else
@@ -650,6 +653,9 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
                 GetFieldAsDateTime(iField, &nYear, &nMon, &nDay,
                                    &nHour, &nMin, &nSec, &nTZFlag);
              }
+             else
+                 nYear = nMon = nDay = nHour = nMin = nSec = 0;
+
              nStatus = poDATFile->WriteDateTimeField(nYear, nMon, nDay, 
                                                      nHour, nMin, nSec, 0,
                                                      poINDFile, panIndexNo[iField]);
