@@ -1014,7 +1014,7 @@ static int worst_outlier(struct Control_Points *cp, double E[], double N[], doub
 {
     double *padfResiduals;
     int nI, nIndex;
-    double dfThreshold, dfDifference, dfSampleResidual, dfLineResidual, dfSampleRes, dfLineRes, dfCurrentDifference;
+    double dfDifference, dfSampleResidual, dfLineResidual, dfSampleRes, dfLineRes, dfCurrentDifference;
     double dfE1, dfN1, dfE2, dfN2, dfEn;
   
     padfResiduals = (double *) CPLCalloc(sizeof(double),cp->count);
@@ -1038,8 +1038,6 @@ static int worst_outlier(struct Control_Points *cp, double E[], double N[], doub
         padfResiduals[nI] = sqrt(dfSampleRes*dfSampleRes + dfLineRes*dfLineRes);
     }
   
-    dfThreshold = dfTolerance * sqrt( (dfSampleResidual + dfLineResidual) / (double) cp->count );
-  
     nIndex = -1;
     dfDifference = -1.0;
     for(nI = 0; nI < cp->count; nI++)
@@ -1049,7 +1047,7 @@ static int worst_outlier(struct Control_Points *cp, double E[], double N[], doub
         {
             dfCurrentDifference = 0.0;
         }
-        if(dfCurrentDifference > dfDifference && dfCurrentDifference >= dfThreshold)
+        if(dfCurrentDifference > dfDifference && dfCurrentDifference >= dfTolerance)
         {
             dfDifference = dfCurrentDifference;
             nIndex = nI;
