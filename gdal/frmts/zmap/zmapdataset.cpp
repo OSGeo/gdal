@@ -427,13 +427,26 @@ GDALDataset *ZMapDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = nRows;
     poDS->dfNoDataValue = dfNoDataValue;
 
-    double dfStepX = (dfMaxX - dfMinX) / (nCols - 1);
-    double dfStepY = (dfMaxY - dfMinY) / (nRows - 1);
-    
-    poDS->adfGeoTransform[0] = dfMinX - dfStepX / 2;
-    poDS->adfGeoTransform[1] = dfStepX;
-    poDS->adfGeoTransform[3] = dfMaxY + dfStepY / 2;
-    poDS->adfGeoTransform[5] = -dfStepY;
+    if (CSLTestBoolean(CPLGetConfigOption("ZMAP_PIXEL_IS_POINT", "FALSE")))
+    {
+        double dfStepX = (dfMaxX - dfMinX) / (nCols - 1);
+        double dfStepY = (dfMaxY - dfMinY) / (nRows - 1);
+
+        poDS->adfGeoTransform[0] = dfMinX - dfStepX / 2;
+        poDS->adfGeoTransform[1] = dfStepX;
+        poDS->adfGeoTransform[3] = dfMaxY + dfStepY / 2;
+        poDS->adfGeoTransform[5] = -dfStepY;
+    }
+    else
+    {
+        double dfStepX = (dfMaxX - dfMinX) / nCols ;
+        double dfStepY = (dfMaxY - dfMinY) / nRows;
+
+        poDS->adfGeoTransform[0] = dfMinX;
+        poDS->adfGeoTransform[1] = dfStepX;
+        poDS->adfGeoTransform[3] = dfMaxY;
+        poDS->adfGeoTransform[5] = -dfStepY;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -595,15 +608,30 @@ GDALDataset* ZMapDataset::CreateCopy( const char * pszFilename,
     VSIFPrintfL(fp, ",");
     WriteRightJustified(fp, nXSize, 10);
     VSIFPrintfL(fp, ",");
-    WriteRightJustified(fp, adfGeoTransform[0] + adfGeoTransform[1] / 2, 14, 7);
-    VSIFPrintfL(fp, ",");
-    WriteRightJustified(fp, adfGeoTransform[0] + adfGeoTransform[1] * nXSize -
-                            adfGeoTransform[1] / 2, 14, 7);
-    VSIFPrintfL(fp, ",");
-    WriteRightJustified(fp, adfGeoTransform[3] + adfGeoTransform[5] * nYSize -
-                            adfGeoTransform[5] / 2, 14, 7);
-    VSIFPrintfL(fp, ",");
-    WriteRightJustified(fp, adfGeoTransform[3] + adfGeoTransform[5] / 2, 14, 7);
+
+    if (CSLTestBoolean(CPLGetConfigOption("ZMAP_PIXEL_IS_POINT", "FALSE")))
+    {
+        WriteRightJustified(fp, adfGeoTransform[0] + adfGeoTransform[1] / 2, 14, 7);
+        VSIFPrintfL(fp, ",");
+        WriteRightJustified(fp, adfGeoTransform[0] + adfGeoTransform[1] * nXSize -
+                                adfGeoTransform[1] / 2, 14, 7);
+        VSIFPrintfL(fp, ",");
+        WriteRightJustified(fp, adfGeoTransform[3] + adfGeoTransform[5] * nYSize -
+                                adfGeoTransform[5] / 2, 14, 7);
+        VSIFPrintfL(fp, ",");
+        WriteRightJustified(fp, adfGeoTransform[3] + adfGeoTransform[5] / 2, 14, 7);
+    }
+    else
+    {
+        WriteRightJustified(fp, adfGeoTransform[0], 14, 7);
+        VSIFPrintfL(fp, ",");
+        WriteRightJustified(fp, adfGeoTransform[0] + adfGeoTransform[1] * nXSize, 14, 7);
+        VSIFPrintfL(fp, ",");
+        WriteRightJustified(fp, adfGeoTransform[3] + adfGeoTransform[5] * nYSize, 14, 7);
+        VSIFPrintfL(fp, ",");
+        WriteRightJustified(fp, adfGeoTransform[3], 14, 7);
+    }
+
     VSIFPrintfL(fp, "\n");
 
     VSIFPrintfL(fp, "0.0, 0.0, 0.0\n");
