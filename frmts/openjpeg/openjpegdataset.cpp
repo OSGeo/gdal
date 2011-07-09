@@ -866,6 +866,13 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             GDALDuplicateGCPs( oJP2Geo.nGCPCount, oJP2Geo.pasGCPList );
     }
 
+    if (oJP2Geo.pszXMPMetadata)
+    {
+        char *apszMDList[2];
+        apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
+        apszMDList[1] = NULL;
+        poDS->SetMetadata(apszMDList, "xml:XMP");
+    }
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
