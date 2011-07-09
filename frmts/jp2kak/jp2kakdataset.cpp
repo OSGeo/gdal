@@ -1387,6 +1387,14 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 oJP2Geo.nGCPCount = 0;
             }
 
+            if (oJP2Geo.pszXMPMetadata)
+            {
+                char *apszMDList[2];
+                apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
+                apszMDList[1] = NULL;
+                poDS->GDALPamDataset::SetMetadata(apszMDList, "xml:XMP");
+            }
+
 /* -------------------------------------------------------------------- */
 /*      Do we have any XML boxes we would like to treat as special      */
 /*      domain metadata?                                                */

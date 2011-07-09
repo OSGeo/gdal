@@ -111,6 +111,10 @@ class PNGDataset : public GDALPamDataset
 
 
     void        CollectMetadata();
+
+    int         bHasReadXMPMetadata;
+    void        CollectXMPMetadata();
+
     CPLErr      LoadScanline( int );
     CPLErr      LoadInterlacedChunk( int );
     void        Restart();
@@ -135,6 +139,10 @@ class PNGDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform( double * );
     virtual void FlushCache( void );
+
+    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
 
     // semi-private.
     jmp_buf     sSetJmpContext;
@@ -426,6 +434,7 @@ PNGDataset::PNGDataset()
     adfGeoTransform[5] = 1.0;
 
     bHasTriedLoadWorldFile = FALSE;
+    bHasReadXMPMetadata = FALSE;
 }
 
 /************************************************************************/
@@ -731,6 +740,120 @@ void PNGDataset::CollectMetadata()
 }
 
 /************************************************************************/
+/*                       CollectXMPMetadata()                           */
+/************************************************************************/
+
+/* See §2.1.5 of http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/xmp/pdfs/XMPSpecificationPart3.pdf */
+
+void PNGDataset::CollectXMPMetadata()
+
+{
+    if (fpImage == NULL || bHasReadXMPMetadata)
+        return;
+
+    /* Save current position to avoid disturbing PNG stream decoding */
+    vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+
+    vsi_l_offset nOffset = 8;
+    VSIFSeekL( fpImage, nOffset, SEEK_SET );
+
+    /* Loop over chunks */
+    while(TRUE)
+    {
+        int nLength;
+        char pszChunkType[5];
+        int nCRC;
+
+        if (VSIFReadL( &nLength, 4, 1, fpImage ) != 1)
+            break;
+        nOffset += 4;
+        CPL_MSBPTR32(&nLength);
+        if (nLength <= 0)
+            break;
+        if (VSIFReadL( pszChunkType, 4, 1, fpImage ) != 1)
+            break;
+        nOffset += 4;
+        pszChunkType[4] = 0;
+
+        if (strcmp(pszChunkType, "iTXt") == 0 && nLength > 22)
+        {
+            char* pszContent = (char*)VSIMalloc(nLength + 1);
+            if (pszContent == NULL)
+                break;
+            if (VSIFReadL( pszContent, nLength, 1, fpImage) != 1)
+            {
+                VSIFree(pszContent);
+                break;
+            }
+            nOffset += nLength;
+            pszContent[nLength] = '\0';
+            if (memcmp(pszContent, "XML:com.adobe.xmp\0\0\0\0\0", 22) == 0)
+            {
+                /* Avoid setting the PAM dirty bit just for that */
+                int nOldPamFlags = nPamFlags;
+
+                char *apszMDList[2];
+                apszMDList[0] = pszContent + 22;
+                apszMDList[1] = NULL;
+                SetMetadata(apszMDList, "xml:XMP");
+
+                nPamFlags = nOldPamFlags;
+
+                VSIFree(pszContent);
+
+                break;
+            }
+            else
+            {
+                VSIFree(pszContent);
+            }
+        }
+        else
+        {
+            nOffset += nLength;
+            VSIFSeekL( fpImage, nOffset, SEEK_SET );
+        }
+
+        nOffset += 4;
+        if (VSIFReadL( &nCRC, 4, 1, fpImage ) != 1)
+            break;
+    }
+
+    VSIFSeekL( fpImage, nCurOffset, SEEK_SET );
+
+    bHasReadXMPMetadata = TRUE;
+}
+
+/************************************************************************/
+/*                           GetMetadata()                              */
+/************************************************************************/
+
+char  **PNGDataset::GetMetadata( const char * pszDomain )
+{
+    if (fpImage == NULL)
+        return NULL;
+    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
+        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
+        CollectXMPMetadata();
+    return GDALPamDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                       GetMetadataItem()                              */
+/************************************************************************/
+
+const char *PNGDataset::GetMetadataItem( const char * pszName,
+                                         const char * pszDomain )
+{
+    if (fpImage == NULL)
+        return NULL;
+    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
+        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
+        CollectXMPMetadata();
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -964,6 +1087,8 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Extract any text chunks as "metadata".                          */
 /* -------------------------------------------------------------------- */
     poDS->CollectMetadata();
+
+    poDS->CollectXMPMetadata();
 
 /* -------------------------------------------------------------------- */
 /*      More metadata.                                                  */
