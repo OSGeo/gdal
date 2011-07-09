@@ -50,13 +50,14 @@ gdal_array_wrap.cpp:  ../include/gdal_array.i ../include/python/typemaps_python.
 
 # A few hacks (cat, mv) : the first one for SWIG < 1.3.36 and the second one for SWIG <= 1.3.39 python 3.X on 64bit platforms
 # The python3.2.patch is from https://sourceforge.net/tracker/?func=detail&aid=3057804&group_id=1645&atid=101645
+# and is no longer necessary with swig 2.0.4
 generate: ${WRAPPERS} gdal_array_wrap.cpp
 	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp; do sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/$$i | sed "s/int len;/Py_ssize_t len;/" > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; done
-	grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && patch -p0 < python3.2.patch
-	grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/ogr_wrap/" | patch -p0
-	grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/osr_wrap/" | patch -p0
-	grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap\.cpp/gdalconst_wrap\.c/" | patch -p0
-	grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/gdal_array_wrap/" | patch -p0
+	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && patch -p0 < python3.2.patch
+	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/ogr_wrap/" | patch -p0
+	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/osr_wrap/" | patch -p0
+	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap\.cpp/gdalconst_wrap\.c/" | patch -p0
+	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/gdal_array_wrap/" | patch -p0
     
 build:
 	$(PYTHON) setup.py build
