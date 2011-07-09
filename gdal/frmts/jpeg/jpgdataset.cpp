@@ -110,6 +110,7 @@ class JPGDataset : public GDALPamDataset
     GByte  *pabyScanline;
 
     int    bHasReadEXIFMetadata;
+    int    bHasReadXMPMetadata;
     char   **papszMetadata;
     char   **papszSubDatasets;
     int	   bigendian;
@@ -135,6 +136,7 @@ class JPGDataset : public GDALPamDataset
     void   DecompressMask();
 
     void   ReadEXIFMetadata();
+    void   ReadXMPMetadata();
 
     int    bHasCheckedForMask;
     JPGMaskBand *poMaskBand;
@@ -269,6 +271,81 @@ void JPGDataset::ReadEXIFMetadata()
 }
 
 /************************************************************************/
+/*                        ReadXMPMetadata()                             */
+/************************************************************************/
+
+/* See §2.1.3 of http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/xmp/pdfs/XMPSpecificationPart3.pdf */
+
+void JPGDataset::ReadXMPMetadata()
+{
+    if (bHasReadXMPMetadata)
+        return;
+
+    /* Save current position to avoid disturbing JPEG stream decoding */
+    vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+
+/* -------------------------------------------------------------------- */
+/*      Search for APP1 chunk.                                          */
+/* -------------------------------------------------------------------- */
+    GByte abyChunkHeader[2+2+29];
+    int nChunkLoc = 2;
+    int bFoundXMP = TRUE;
+
+    for( ; TRUE; )
+    {
+        if( VSIFSeekL( fpImage, nChunkLoc, SEEK_SET ) != 0 )
+            break;
+
+        if( VSIFReadL( abyChunkHeader, sizeof(abyChunkHeader), 1, fpImage ) != 1 )
+            break;
+
+        if( abyChunkHeader[0] != 0xFF
+            || (abyChunkHeader[1] & 0xf0) != 0xe0 )
+            break; // Not an APP chunk.
+
+        if( abyChunkHeader[1] == 0xe1
+            && strncmp((const char *) abyChunkHeader + 4,"http://ns.adobe.com/xap/1.0/",28) == 0 )
+        {
+            bFoundXMP = TRUE;
+            break; // APP1 - XMP
+        }
+
+        nChunkLoc += 2 + abyChunkHeader[2] * 256 + abyChunkHeader[3];
+    }
+
+    if (bFoundXMP)
+    {
+        int nXMPLength = abyChunkHeader[2] * 256 + abyChunkHeader[3];
+        if (nXMPLength > 2 + 29)
+        {
+            char* pszXMP = (char*)VSIMalloc(nXMPLength - 2 - 29 + 1);
+            if (pszXMP)
+            {
+                if (VSIFReadL( pszXMP, nXMPLength - 2 - 29, 1, fpImage ) == 1)
+                {
+                    pszXMP[nXMPLength - 2 - 29] = '\0';
+
+                    /* Avoid setting the PAM dirty bit just for that */
+                    int nOldPamFlags = nPamFlags;
+
+                    char *apszMDList[2];
+                    apszMDList[0] = pszXMP;
+                    apszMDList[1] = NULL;
+                    SetMetadata(apszMDList, "xml:XMP");
+
+                    nPamFlags = nOldPamFlags;
+                }
+                VSIFree(pszXMP);
+            }
+        }
+    }
+
+    VSIFSeekL( fpImage, nCurOffset, SEEK_SET );
+
+    bHasReadXMPMetadata = TRUE;
+}
+
+/************************************************************************/
 /*                           GetMetadata()                              */
 /************************************************************************/
 char  **JPGDataset::GetMetadata( const char * pszDomain )
@@ -278,6 +355,9 @@ char  **JPGDataset::GetMetadata( const char * pszDomain )
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
         (pszDomain == NULL || EQUAL(pszDomain, "")))
         ReadEXIFMetadata();
+    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
+        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
+        ReadXMPMetadata();
     return GDALPamDataset::GetMetadata(pszDomain);
 }
 
@@ -293,6 +373,9 @@ const char *JPGDataset::GetMetadataItem( const char * pszName,
         (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL && EQUALN(pszName, "EXIF_", 5))
         ReadEXIFMetadata();
+    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
+        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
+        ReadXMPMetadata();
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 
@@ -473,7 +556,7 @@ int JPGDataset::EXIFInit(VSILFILE *fp)
             || (abyChunkHeader[1] & 0xf0) != 0xe0 )
             return FALSE; // Not an APP chunk.
 
-        if( abyChunkHeader[1] == 0xe1 
+        if( abyChunkHeader[1] == 0xe1
             && strncmp((const char *) abyChunkHeader + 4,"Exif",4) == 0 )
         {
             nTIFFHEADER = nChunkLoc + 10;
@@ -1087,6 +1170,7 @@ JPGDataset::JPGDataset()
     nLoadedScanline = -1;
 
     bHasReadEXIFMetadata = FALSE;
+    bHasReadXMPMetadata = FALSE;
     papszMetadata   = NULL;
     papszSubDatasets= NULL;
     nExifOffset     = -1;

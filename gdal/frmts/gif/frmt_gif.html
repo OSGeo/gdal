@@ -18,6 +18,9 @@ be returned as the NoData value for the band.<p>
 If an ESRI world file exists with the .gfw, .gifw or .wld extension, it will be read and
 used to establish the geotransform for the image.<p>
 
+Starting with GDAL 1.9.0, XMP metadata can be extracted from the file, and will be
+stored as XML raw content in the xml:XMP metadata domain.<p>
+
 <h2>Creation Issues</h2>
 
 GIF files can only be created as 1 8bit band using the "CreateCopy" mechanism.

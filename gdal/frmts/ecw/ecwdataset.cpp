@@ -1259,18 +1259,28 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
 /*      Look for supporting coordinate system information.              */
 /* -------------------------------------------------------------------- */
-    GDALJP2Metadata oJP2Geo;
-
-    if( bIsJPEG2000 && oJP2Geo.ReadAndParse( osFilename ) )
+    if( bIsJPEG2000 )
     {
-        poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-        poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
-        memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
-                sizeof(double) * 6 );
-        poDS->nGCPCount = oJP2Geo.nGCPCount;
-        poDS->pasGCPList = oJP2Geo.pasGCPList;
-        oJP2Geo.pasGCPList = NULL;
-        oJP2Geo.nGCPCount = 0;
+        GDALJP2Metadata oJP2Geo;
+        if ( oJP2Geo.ReadAndParse( osFilename ) )
+        {
+            poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+            poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
+            memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform,
+                    sizeof(double) * 6 );
+            poDS->nGCPCount = oJP2Geo.nGCPCount;
+            poDS->pasGCPList = oJP2Geo.pasGCPList;
+            oJP2Geo.pasGCPList = NULL;
+            oJP2Geo.nGCPCount = 0;
+        }
+
+        if (oJP2Geo.pszXMPMetadata)
+        {
+            char *apszMDList[2];
+            apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
+            apszMDList[1] = NULL;
+            poDS->SetMetadata(apszMDList, "xml:XMP");
+        }
     }
     else
     {

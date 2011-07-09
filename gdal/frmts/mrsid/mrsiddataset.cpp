@@ -32,6 +32,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdaljp2metadata.h"
 #include <string>
 
 #include <geo_normalize.h>
@@ -1688,6 +1689,30 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 
     if( poDS->nBands > 1 )
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+
+    if (bIsJP2)
+    {
+        GDALJP2Metadata oJP2Geo;
+        if ( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
+        {
+            /*poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+            poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
+            memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform,
+                    sizeof(double) * 6 );
+            poDS->nGCPCount = oJP2Geo.nGCPCount;
+            poDS->pasGCPList = oJP2Geo.pasGCPList;
+            oJP2Geo.pasGCPList = NULL;
+            oJP2Geo.nGCPCount = 0;*/
+        }
+
+        if (oJP2Geo.pszXMPMetadata)
+        {
+            char *apszMDList[2];
+            apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
+            apszMDList[1] = NULL;
+            poDS->SetMetadata(apszMDList, "xml:XMP");
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */

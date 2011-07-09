@@ -123,6 +123,7 @@ public:
     GDAL_GCP    *pasGCPList;
 
     char  **papszMetadata;
+    char   *pszXMPMetadata;
 
 public:
             GDALJP2Metadata();
