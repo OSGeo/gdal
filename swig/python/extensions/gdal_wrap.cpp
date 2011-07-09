@@ -4951,11 +4951,33 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
     if( nChildCount < 0 )
     {
         PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
-	return NULL;
+        return NULL;
     }
 
     PyArg_Parse( PyList_GET_ITEM(pyList,0), "i", &nType );
     PyArg_Parse( PyList_GET_ITEM(pyList,1), "s", &pszText );
+
+    /* Detect "pseudo" root */
+    if (nType == CXT_Element && pszText != NULL && strlen(pszText) == 0 && nChildCount == 2)
+    {
+        PyObject *pyFirst = PyList_GET_ITEM(pyList, 2);
+        if (PyList_Size(pyFirst) < 2)
+        {
+            PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
+            return NULL;
+        }
+        int nTypeFirst = 0;
+        char* pszTextFirst = NULL;
+        PyArg_Parse( PyList_GET_ITEM(pyFirst,0), "i", &nTypeFirst );
+        PyArg_Parse( PyList_GET_ITEM(pyFirst,1), "s", &pszTextFirst );
+        if (nTypeFirst == CXT_Element && pszTextFirst != NULL && pszTextFirst[0] == '?')
+        {
+            psThisNode = PyListToXMLTree( PyList_GET_ITEM(pyList,2) );
+            psThisNode->psNext = PyListToXMLTree( PyList_GET_ITEM(pyList,3) );
+            return psThisNode;
+        }
+    }
+
     psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, pszText );
 
     for( iChild = 0; iChild < nChildCount; iChild++ )
