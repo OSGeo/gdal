@@ -781,60 +781,57 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
     char abyNoData[8];
     double dfNoDataVal = 0.0;
 
-    switch (eType)	/* GDT_Byte, GDT_UInt16, GDT_Int16, GDT_UInt32  */
-    {				/* GDT_Int32, GDT_Float32, GDT_Float64 */
-      case (GDT_Byte):
-      {
-          GByte nodata = SG_NODATA_GDT_Byte;
-          dfNoDataVal = nodata;
-          memcpy(abyNoData, &nodata, 1);
-          break;
-      }
-      case (GDT_UInt16):
-      {
-          GUInt16 nodata = SG_NODATA_GDT_UInt16;
-          dfNoDataVal = nodata;
-          memcpy(abyNoData, &nodata, 2);
-          break;
-      }
-      case (GDT_Int16):
-      {
-          GInt16 nodata = SG_NODATA_GDT_Int16;
-          dfNoDataVal = nodata;
-          memcpy(abyNoData, &nodata, 2);
-          break;
-      }
-      case (GDT_UInt32):
-      {
-          GUInt32 nodata = SG_NODATA_GDT_UInt32;
-          dfNoDataVal = nodata;
-          memcpy(abyNoData, &nodata, 4);
-          break;
-      }
-      case (GDT_Int32):
-      {
-          GInt32 nodata = SG_NODATA_GDT_Int32;
-          dfNoDataVal = nodata;
-          memcpy(abyNoData, &nodata, 4);
-          break;
-      }
-      default:
-      case (GDT_Float32):
-      {
-          float nodata = SG_NODATA_GDT_Float32;
-          dfNoDataVal = nodata;
-          memcpy(abyNoData, &nodata, 4);
-          break;
-      }
-      case (GDT_Float64):
-      {
-          double nodata = SG_NODATA_GDT_Float64;
-          dfNoDataVal = nodata;
-          memcpy(abyNoData, &nodata, 8);
-          break;
+    const char* pszNoDataValue = CSLFetchNameValue(papszParmList, "NODATA_VALUE");
+    if (pszNoDataValue)
+    {
+        dfNoDataVal = CPLAtofM(pszNoDataValue);
+    }
+    else
+    {
+      switch (eType)	/* GDT_Byte, GDT_UInt16, GDT_Int16, GDT_UInt32  */
+      {				/* GDT_Int32, GDT_Float32, GDT_Float64 */
+        case (GDT_Byte):
+        {
+            dfNoDataVal = SG_NODATA_GDT_Byte;
+            break;
+        }
+        case (GDT_UInt16):
+        {
+            dfNoDataVal = SG_NODATA_GDT_UInt16;
+            break;
+        }
+        case (GDT_Int16):
+        {
+            dfNoDataVal = SG_NODATA_GDT_Int16;
+            break;
+        }
+        case (GDT_UInt32):
+        {
+            dfNoDataVal = SG_NODATA_GDT_UInt32;
+            break;
+        }
+        case (GDT_Int32):
+        {
+            dfNoDataVal = SG_NODATA_GDT_Int32;
+            break;
+        }
+        default:
+        case (GDT_Float32):
+        {
+            dfNoDataVal = SG_NODATA_GDT_Float32;
+            break;
+        }
+        case (GDT_Float64):
+        {
+            dfNoDataVal = SG_NODATA_GDT_Float64;
+            break;
+        }
       }
     }
-    
+
+    GDALCopyWords(&dfNoDataVal, GDT_Float64, 0,
+                  abyNoData, eType, 0, 1);
+
     CPLString osHdrFilename = CPLResetExtension( pszFilename, "sgrd" );
     CPLErr eErr = WriteHeader( osHdrFilename, eType,
                                nXSize, nYSize,
@@ -921,6 +918,13 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
     
     char** papszCreateOptions = NULL;
     papszCreateOptions = CSLSetNameValue(papszCreateOptions, "FILL_NODATA", "NO");
+
+    int bHasNoDataValue = FALSE;
+    double dfNoDataValue = poSrcBand->GetNoDataValue(&bHasNoDataValue);
+    if (bHasNoDataValue)
+        papszCreateOptions = CSLSetNameValue(papszCreateOptions, "NODATA_VALUE",
+                                             CPLSPrintf("%.16g", dfNoDataValue));
+    
     GDALDataset* poDstDS =
         Create(pszFilename, poSrcBand->GetXSize(), poSrcBand->GetYSize(),
                1, poSrcBand->GetRasterDataType(), papszCreateOptions);
