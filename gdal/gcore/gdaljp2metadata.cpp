@@ -45,6 +45,10 @@ static const unsigned char msig_uuid[16] =
 { 0x96,0xA9,0xF1,0xF1,0xDC,0x98,0x40,0x2D,
   0xA7,0xAE,0xD6,0x8E,0x34,0x45,0x18,0x09 };
 
+static const unsigned char xmp_uuid[16] =
+{ 0xBE,0x7A,0xCF,0xCB,0x97,0xA9,0x42,0xE8,
+  0x9C,0x71,0x99,0x94,0x91,0xE3,0xAF,0xAC};
+
 /************************************************************************/
 /*                          GDALJP2Metadata()                           */
 /************************************************************************/
@@ -65,6 +69,8 @@ GDALJP2Metadata::GDALJP2Metadata()
 
     nMSIGSize = 0;
     pabyMSIGData = NULL;
+
+    pszXMPMetadata = NULL;
 
     bHaveGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -93,6 +99,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
     CPLFree( pabyMSIGData );
     CSLDestroy( papszGMLMetadata );
     CSLDestroy( papszMetadata );
+    CPLFree( pszXMPMetadata );
 }
 
 /************************************************************************/
@@ -213,7 +220,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         if( EQUAL(oBox.GetType(),"uuid") 
             && memcmp( oBox.GetUUID(), msi_uuid2, 16 ) == 0 )
         {
-	    nGeoTIFFSize = (int) oBox.GetDataLength();
+            nGeoTIFFSize = (int) oBox.GetDataLength();
             pabyGeoTIFFData = oBox.ReadBoxData();
         }
 
@@ -223,7 +230,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         if( EQUAL(oBox.GetType(),"uuid") 
             && memcmp( oBox.GetUUID(), msig_uuid, 16 ) == 0 )
         {
-	    nMSIGSize = (int) oBox.GetDataLength();
+            nMSIGSize = (int) oBox.GetDataLength();
             pabyMSIGData = oBox.ReadBoxData();
 
             if( nMSIGSize < 70 
@@ -233,6 +240,16 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                 pabyMSIGData = NULL;
                 nMSIGSize = 0;
             }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Collect XMP box.                                                */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(oBox.GetType(),"uuid")
+            && memcmp( oBox.GetUUID(), xmp_uuid, 16 ) == 0 &&
+            pszXMPMetadata == NULL )
+        {
+            pszXMPMetadata = (char*) oBox.ReadBoxData();
         }
 
 /* -------------------------------------------------------------------- */

@@ -925,6 +925,90 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree(pszNeatLineWkt);
     }
 
+
+#ifdef USE_POPPLER
+    int nXRefSize = poDoc->getXRef()->getNumObjects();
+    for(int i=0;i<nXRefSize;i++)
+    {
+        Object o;
+        poDoc->getXRef()->fetch(i, 0, &o);
+        if (o.isStream())
+        {
+            Dict* dict = o.getStream()->getDict();
+            if (dict)
+            {
+                Object oSubType, oType;
+                dict->lookup((char*)"Subtype", &oSubType);
+                dict->lookup((char*)"Type", &oType);
+                if (oType.getType() == objName &&
+                    strcmp(oType.getName(), "Metadata") == 0 &&
+                    oSubType.getType() == objName &&
+                    strcmp(oSubType.getName(), "XML") == 0)
+                {
+                    GooString gooStr;
+                    o.getStream()->fillGooString(&gooStr);
+                    const char* pszXMP = (const char*)gooStr.getCString();
+                    if (strncmp(pszXMP, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+                    {
+                        char *apszMDList[2];
+                        apszMDList[0] = (char*) pszXMP;
+                        apszMDList[1] = NULL;
+                        poDS->SetMetadata(apszMDList, "xml:XMP");
+                    }
+                }
+                oSubType.free();
+                oType.free();
+            }
+        }
+        o.free();
+    }
+#else
+    PoDoFo::TIVecObjects it = poDoc->GetObjects().begin();
+    for( ; it != poDoc->GetObjects().end(); ++it )
+    {
+        if( (*it)->HasStream() && (*it)->GetDataType() == PoDoFo::ePdfDataType_Dictionary)
+        {
+            PoDoFo::PdfDictionary& dict = (*it)->GetDictionary();
+            const PoDoFo::PdfObject* poType = dict.GetKey(PoDoFo::PdfName("Type"));
+            const PoDoFo::PdfObject* poSubType = dict.GetKey(PoDoFo::PdfName("Subtype"));
+            if (poType == NULL ||
+                poType->GetDataType() != PoDoFo::ePdfDataType_Name ||
+                poType->GetName().GetName().compare("Metadata") != 0 ||
+                poSubType == NULL || 
+                poSubType->GetDataType() != PoDoFo::ePdfDataType_Name ||
+                poSubType->GetName().GetName().compare("XML") != 0)
+                continue;
+
+            try
+            {
+                PoDoFo::PdfMemStream* pStream = dynamic_cast<PoDoFo::PdfMemStream*>((*it)->GetStream());
+                pStream->Uncompress();
+
+                const char* pszContent = pStream->Get();
+                int nLength = (int)pStream->GetLength();
+                if (pszContent != NULL && nLength > 15 &&
+                    strncmp(pszContent, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+                {
+                    char *apszMDList[2];
+                    apszMDList[0] = (char*) CPLMalloc(nLength + 1);
+                    memcpy(apszMDList[0], pszContent, nLength);
+                    apszMDList[0][nLength] = 0;
+                    apszMDList[1] = NULL;
+                    poDS->SetMetadata(apszMDList, "xml:XMP");
+                    CPLFree(apszMDList[0]);
+
+                    break;
+                }
+            }
+            catch( const PoDoFo::PdfError & e )
+            {
+                e.PrintErrorMsg();
+            }
+        }
+    }
+#endif
+
+
 #ifndef USE_POPPLER
     delete poDoc;
 #endif

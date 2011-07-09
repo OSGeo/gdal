@@ -72,6 +72,9 @@ class GIFDataset : public GDALPamDataset
     int         nGCPCount;
     GDAL_GCP	*pasGCPList;
 
+    int         bHasReadXMPMetadata;
+    void        CollectXMPMetadata();
+
   public:
                  GIFDataset();
                  ~GIFDataset();
@@ -81,6 +84,11 @@ class GIFDataset : public GDALPamDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+
+    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
     static GDALDataset* CreateCopy( const char * pszFilename,
@@ -326,6 +334,8 @@ GIFDataset::GIFDataset()
 
     nGCPCount = 0;
     pasGCPList = NULL;
+
+    bHasReadXMPMetadata = FALSE;
 }
 
 /************************************************************************/
@@ -351,6 +361,138 @@ GIFDataset::~GIFDataset()
 
     if( fp != NULL )
         VSIFCloseL( fp );
+}
+
+/************************************************************************/
+/*                       CollectXMPMetadata()                           */
+/************************************************************************/
+
+/* See §2.1.2 of http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/xmp/pdfs/XMPSpecificationPart3.pdf */
+
+void GIFDataset::CollectXMPMetadata()
+
+{
+    if (fp == NULL || bHasReadXMPMetadata)
+        return;
+
+    /* Save current position to avoid disturbing GIF stream decoding */
+    vsi_l_offset nCurOffset = VSIFTellL(fp);
+
+    char abyBuffer[2048+1];
+
+    VSIFSeekL( fp, 0, SEEK_SET );
+
+    /* Loop over file */
+
+    int iStartSearchOffset = 1024;
+    while(TRUE)
+    {
+        int nRead = VSIFReadL( abyBuffer + 1024, 1, 1024, fp );
+        if (nRead <= 0)
+            break;
+        abyBuffer[1024 + nRead] = 0;
+
+        int i;
+        int iFoundOffset = -1;
+        for(i=iStartSearchOffset;i<1024+nRead - 14;i++)
+        {
+            if (memcmp(abyBuffer + i, "\x21\xff\x0bXMP DataXMP", 14) == 0)
+            {
+                iFoundOffset = i + 14;
+                break;
+            }
+        }
+
+        iStartSearchOffset = 0;
+
+        if (iFoundOffset >= 0)
+        {
+            int nSize = 1024 + nRead - iFoundOffset;
+            char* pszXMP = (char*)VSIMalloc(nSize + 1);
+            if (pszXMP == NULL)
+                break;
+
+            pszXMP[nSize] = 0;
+            memcpy(pszXMP, abyBuffer + iFoundOffset, nSize);
+
+            /* Read from file until we find a NUL character */
+            int nLen = (int)strlen(pszXMP);
+            while(nLen == nSize)
+            {
+                char* pszNewXMP = (char*)VSIRealloc(pszXMP, nSize + 1024 + 1);
+                if (pszNewXMP == NULL)
+                    break;
+                pszXMP = pszNewXMP;
+
+                nRead = VSIFReadL( pszXMP + nSize, 1, 1024, fp );
+                if (nRead <= 0)
+                    break;
+
+                pszXMP[nSize + nRead] = 0;
+                nLen += (int)strlen(pszXMP + nSize);
+                nSize += nRead;
+            }
+
+            if (nLen > 256 && pszXMP[nLen - 1] == '\x01' &&
+                pszXMP[nLen - 2] == '\x02' && pszXMP[nLen - 255] == '\xff' &&
+                pszXMP[nLen - 256] == '\x01')
+            {
+                pszXMP[nLen - 256] = 0;
+
+                /* Avoid setting the PAM dirty bit just for that */
+                int nOldPamFlags = nPamFlags;
+
+                char *apszMDList[2];
+                apszMDList[0] = pszXMP;
+                apszMDList[1] = NULL;
+                SetMetadata(apszMDList, "xml:XMP");
+
+                nPamFlags = nOldPamFlags;
+            }
+
+            VSIFree(pszXMP);
+
+            break;
+        }
+
+        if (nRead != 1024)
+            break;
+
+        memcpy(abyBuffer, abyBuffer + 1024, 1024);
+    }
+
+    VSIFSeekL( fp, nCurOffset, SEEK_SET );
+
+    bHasReadXMPMetadata = TRUE;
+}
+
+/************************************************************************/
+/*                           GetMetadata()                              */
+/************************************************************************/
+
+char  **GIFDataset::GetMetadata( const char * pszDomain )
+{
+    if (fp == NULL)
+        return NULL;
+    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
+        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
+        CollectXMPMetadata();
+    return GDALPamDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                       GetMetadataItem()                              */
+/************************************************************************/
+
+const char *GIFDataset::GetMetadataItem( const char * pszName,
+                                         const char * pszDomain )
+{
+    if (fp == NULL)
+        return NULL;
+    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
+        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
+        CollectXMPMetadata();
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/

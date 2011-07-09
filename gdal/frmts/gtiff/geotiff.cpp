@@ -6212,6 +6212,25 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         SetMetadataItem( "TIFFTAG_RESOLUTIONUNIT", szWorkMDI );
     }
 
+    int nTagSize;
+    void* pData;
+    if( TIFFGetField( hTIFF, TIFFTAG_XMLPACKET, &nTagSize, &pData ) )
+    {
+        char* pszXMP = (char*)VSIMalloc(nTagSize + 1);
+        if (pszXMP)
+        {
+            memcpy(pszXMP, pData, nTagSize);
+            pszXMP[nTagSize] = '\0';
+
+            char *apszMDList[2];
+            apszMDList[0] = pszXMP;
+            apszMDList[1] = NULL;
+            SetMetadata(apszMDList, "xml:XMP");
+
+            CPLFree(pszXMP);
+        }
+    }
+
     if( nCompression == COMPRESSION_NONE )
         /* no compression tag */;
     else if( nCompression == COMPRESSION_CCITTRLE )
