@@ -190,6 +190,20 @@ def minixml_3():
     return 'success'
 
 ###############################################################################
+# Parse and serialize an XML Tree with a <?xml> prolog
+
+def minixml_4():
+
+    xml = """<?xml encoding="utf-8"?>\n<foo />\n"""
+    got_xml = gdal.SerializeXMLTree(gdal.ParseXMLString(xml))
+    if xml != got_xml:
+        gdaltest.post_reason( 'serialize xml tree failed.' )
+        print(got_xml)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def minixml_cleanup():
@@ -199,6 +213,7 @@ gdaltest_list = [
     minixml_1,
     minixml_2,
     minixml_3,
+    minixml_4,
     minixml_cleanup ]
 
 if __name__ == '__main__':
