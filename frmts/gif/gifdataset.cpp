@@ -631,7 +631,22 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     while( DGifGetRecordType(hGifFile, &RecordType) != GIF_ERROR
         && RecordType != TERMINATE_RECORD_TYPE
-        && RecordType != IMAGE_DESC_RECORD_TYPE ) {}
+        && RecordType != IMAGE_DESC_RECORD_TYPE )
+    {
+        /* Skip extension records found before IMAGE_DESC_RECORD_TYPE */
+        if (RecordType == EXTENSION_RECORD_TYPE)
+        {
+            int nFunction;
+            GifByteType *pExtData;
+            if (DGifGetExtension(hGifFile, &nFunction, &pExtData) == GIF_ERROR)
+                break;
+            while (pExtData != NULL)
+            {
+                if (DGifGetExtensionNext(hGifFile, &pExtData) == GIF_ERROR)
+                    break;
+            }
+        }
+    }
 
     if( RecordType == IMAGE_DESC_RECORD_TYPE  &&
         DGifGetImageDesc(hGifFile) != GIF_ERROR)
