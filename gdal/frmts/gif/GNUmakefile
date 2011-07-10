@@ -5,9 +5,9 @@ ifeq ($(GIF_SETTING),internal)
 XTRA_OPT =	-Igiflib
 OBJ	=	egif_lib.o dgif_lib.o gifalloc.o gif_err.o gif_hash.o \
 		\
-		gifdataset.o biggifdataset.o
+		gifdataset.o biggifdataset.o gifabstractdataset.o
 else
-OBJ	=	gifdataset.o biggifdataset.o
+OBJ	=	gifdataset.o biggifdataset.o gifabstractdataset.o
 endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT)

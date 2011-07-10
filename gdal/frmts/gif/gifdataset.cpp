@@ -29,12 +29,9 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gifabstractdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-#include "gif_lib.h"
-CPL_C_END
 
 CPL_C_START
 void	GDALRegister_GIF(void);
@@ -51,46 +48,21 @@ static int VSIGIFWriteFunc( GifFileType *, const GifByteType *, int );
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GIFDataset				*/
+/*	                            GIFDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
 class GIFRasterBand;
 
-class GIFDataset : public GDALPamDataset
+class GIFDataset : public GIFAbstractDataset
 {
     friend class GIFRasterBand;
 
-    VSILFILE        *fp;
-
-    GifFileType *hGifFile;
-
-    char        *pszProjection;
-    int	        bGeoTransformValid;
-    double      adfGeoTransform[6];
-
-    int         nGCPCount;
-    GDAL_GCP	*pasGCPList;
-
-    int         bHasReadXMPMetadata;
-    void        CollectXMPMetadata();
-
   public:
                  GIFDataset();
-                 ~GIFDataset();
-
-    virtual const char *GetProjectionRef();
-    virtual CPLErr GetGeoTransform( double * );
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-
-    virtual char  **GetMetadata( const char * pszDomain = "" );
-    virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
 
     static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
+
     static GDALDataset* CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -318,266 +290,7 @@ double GIFRasterBand::GetNoDataValue( int *pbSuccess )
 /************************************************************************/
 
 GIFDataset::GIFDataset()
-
 {
-    hGifFile = NULL;
-    fp = NULL;
-
-    pszProjection = NULL;
-    bGeoTransformValid = FALSE;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-
-    nGCPCount = 0;
-    pasGCPList = NULL;
-
-    bHasReadXMPMetadata = FALSE;
-}
-
-/************************************************************************/
-/*                           ~GIFDataset()                            */
-/************************************************************************/
-
-GIFDataset::~GIFDataset()
-
-{
-    FlushCache();
-
-    if ( pszProjection )
-        CPLFree( pszProjection );
-
-    if ( nGCPCount > 0 )
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
-    }
-
-    if( hGifFile )
-        DGifCloseFile( hGifFile );
-
-    if( fp != NULL )
-        VSIFCloseL( fp );
-}
-
-/************************************************************************/
-/*                       CollectXMPMetadata()                           */
-/************************************************************************/
-
-/* See §2.1.2 of http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/xmp/pdfs/XMPSpecificationPart3.pdf */
-
-void GIFDataset::CollectXMPMetadata()
-
-{
-    if (fp == NULL || bHasReadXMPMetadata)
-        return;
-
-    /* Save current position to avoid disturbing GIF stream decoding */
-    vsi_l_offset nCurOffset = VSIFTellL(fp);
-
-    char abyBuffer[2048+1];
-
-    VSIFSeekL( fp, 0, SEEK_SET );
-
-    /* Loop over file */
-
-    int iStartSearchOffset = 1024;
-    while(TRUE)
-    {
-        int nRead = VSIFReadL( abyBuffer + 1024, 1, 1024, fp );
-        if (nRead <= 0)
-            break;
-        abyBuffer[1024 + nRead] = 0;
-
-        int i;
-        int iFoundOffset = -1;
-        for(i=iStartSearchOffset;i<1024+nRead - 14;i++)
-        {
-            if (memcmp(abyBuffer + i, "\x21\xff\x0bXMP DataXMP", 14) == 0)
-            {
-                iFoundOffset = i + 14;
-                break;
-            }
-        }
-
-        iStartSearchOffset = 0;
-
-        if (iFoundOffset >= 0)
-        {
-            int nSize = 1024 + nRead - iFoundOffset;
-            char* pszXMP = (char*)VSIMalloc(nSize + 1);
-            if (pszXMP == NULL)
-                break;
-
-            pszXMP[nSize] = 0;
-            memcpy(pszXMP, abyBuffer + iFoundOffset, nSize);
-
-            /* Read from file until we find a NUL character */
-            int nLen = (int)strlen(pszXMP);
-            while(nLen == nSize)
-            {
-                char* pszNewXMP = (char*)VSIRealloc(pszXMP, nSize + 1024 + 1);
-                if (pszNewXMP == NULL)
-                    break;
-                pszXMP = pszNewXMP;
-
-                nRead = VSIFReadL( pszXMP + nSize, 1, 1024, fp );
-                if (nRead <= 0)
-                    break;
-
-                pszXMP[nSize + nRead] = 0;
-                nLen += (int)strlen(pszXMP + nSize);
-                nSize += nRead;
-            }
-
-            if (nLen > 256 && pszXMP[nLen - 1] == '\x01' &&
-                pszXMP[nLen - 2] == '\x02' && pszXMP[nLen - 255] == '\xff' &&
-                pszXMP[nLen - 256] == '\x01')
-            {
-                pszXMP[nLen - 256] = 0;
-
-                /* Avoid setting the PAM dirty bit just for that */
-                int nOldPamFlags = nPamFlags;
-
-                char *apszMDList[2];
-                apszMDList[0] = pszXMP;
-                apszMDList[1] = NULL;
-                SetMetadata(apszMDList, "xml:XMP");
-
-                nPamFlags = nOldPamFlags;
-            }
-
-            VSIFree(pszXMP);
-
-            break;
-        }
-
-        if (nRead != 1024)
-            break;
-
-        memcpy(abyBuffer, abyBuffer + 1024, 1024);
-    }
-
-    VSIFSeekL( fp, nCurOffset, SEEK_SET );
-
-    bHasReadXMPMetadata = TRUE;
-}
-
-/************************************************************************/
-/*                           GetMetadata()                              */
-/************************************************************************/
-
-char  **GIFDataset::GetMetadata( const char * pszDomain )
-{
-    if (fp == NULL)
-        return NULL;
-    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
-        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
-        CollectXMPMetadata();
-    return GDALPamDataset::GetMetadata(pszDomain);
-}
-
-/************************************************************************/
-/*                       GetMetadataItem()                              */
-/************************************************************************/
-
-const char *GIFDataset::GetMetadataItem( const char * pszName,
-                                         const char * pszDomain )
-{
-    if (fp == NULL)
-        return NULL;
-    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
-        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
-        CollectXMPMetadata();
-    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
-}
-
-/************************************************************************/
-/*                        GetProjectionRef()                            */
-/************************************************************************/
-
-const char *GIFDataset::GetProjectionRef()
-
-{
-    if ( pszProjection && bGeoTransformValid )
-        return pszProjection;
-    else
-        return GDALPamDataset::GetProjectionRef();
-}
-
-/************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr GIFDataset::GetGeoTransform( double * padfTransform )
-
-{
-    if( bGeoTransformValid )
-    {
-        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
-        return CE_None;
-    }
-    else
-        return GDALPamDataset::GetGeoTransform( padfTransform );
-}
-
-/************************************************************************/
-/*                            GetGCPCount()                             */
-/************************************************************************/
-
-int GIFDataset::GetGCPCount()
-
-{
-    if (nGCPCount > 0)
-        return nGCPCount;
-    else
-        return GDALPamDataset::GetGCPCount();
-}
-
-/************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *GIFDataset::GetGCPProjection()
-
-{
-    if ( pszProjection && nGCPCount > 0 )
-        return pszProjection;
-    else
-        return GDALPamDataset::GetGCPProjection();
-}
-
-/************************************************************************/
-/*                               GetGCPs()                              */
-/************************************************************************/
-
-const GDAL_GCP *GIFDataset::GetGCPs()
-
-{
-    if (nGCPCount > 0)
-        return pasGCPList;
-    else
-        return GDALPamDataset::GetGCPs();
-}
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-int GIFDataset::Identify( GDALOpenInfo * poOpenInfo )
-
-{
-    if( poOpenInfo->nHeaderBytes < 8 )
-        return FALSE;
-
-    if( strncmp((const char *) poOpenInfo->pabyHeader, "GIF87a",5) != 0
-        && strncmp((const char *) poOpenInfo->pabyHeader, "GIF89a",5) != 0 )
-        return FALSE;
-
-    return TRUE;
 }
 
 /************************************************************************/
@@ -738,29 +451,9 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check for world file.                                           */
+/*      Check for georeferencing.                                       */
 /* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
-                           poDS->adfGeoTransform );
-    if ( !poDS->bGeoTransformValid )
-    {
-        poDS->bGeoTransformValid =
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                               poDS->adfGeoTransform );
-
-        if ( !poDS->bGeoTransformValid )
-        {
-            int bOziFileOK = 
-                GDALReadOziMapFile( poOpenInfo->pszFilename,
-                                    poDS->adfGeoTransform, 
-                                    &poDS->pszProjection,
-                                    &poDS->nGCPCount, &poDS->pasGCPList );
-
-            if ( bOziFileOK && poDS->nGCPCount == 0 )
-                 poDS->bGeoTransformValid = TRUE;
-        }
-    }
+    poDS->DetectGeoreferencing(poOpenInfo);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1152,7 +845,7 @@ void GDALRegister_GIF()
 
         poDriver->pfnOpen = GIFDataset::Open;
         poDriver->pfnCreateCopy = GIFDataset::CreateCopy;
-        poDriver->pfnIdentify = GIFDataset::Identify;
+        poDriver->pfnIdentify = GIFAbstractDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
