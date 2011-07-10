@@ -914,11 +914,15 @@ public:
 %apply (double argin[ANY]) {(double inout[3])};
 #endif
   void TransformPoint( double inout[3] ) {
+    if (self == NULL)
+        return;
     OCTTransform( self, 1, &inout[0], &inout[1], &inout[2] );
   }
 %clear (double inout[3]);
 
   void TransformPoint( double argout[3], double x, double y, double z = 0.0 ) {
+    if (self == NULL)
+        return;
     argout[0] = x;
     argout[1] = y;
     argout[2] = z;
@@ -929,6 +933,8 @@ public:
   %apply (double *inout) {(double*)};
 #endif
   void TransformPoints( int nCount, double *x, double *y, double *z ) {
+    if (self == NULL)
+        return;
     OCTTransform( self, nCount, x, y, z );
   }
 #ifdef SWIGCSHARP
