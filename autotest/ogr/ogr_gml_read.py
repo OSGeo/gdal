@@ -1076,6 +1076,44 @@ def ogr_gml_27():
     return 'success'
 
 ###############################################################################
+# Test writing and reading layers of type wkbNone (#4154)
+
+def ogr_gml_28():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/ogr_gml_28.gml data/idlink.dbf')
+
+    # Try with .xsd
+    ds = ogr.Open('tmp/ogr_gml_28.gml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbNone:
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/ogr_gml_28.xsd')
+
+    ds = ogr.Open('tmp/ogr_gml_28.gml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbNone:
+        return 'fail'
+    ds = None
+
+    # Try with .gfs
+    ds = ogr.Open('tmp/ogr_gml_28.gml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbNone:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -1142,6 +1180,11 @@ def ogr_gml_clean_files():
         os.remove( 'tmp/ogr_gml_27.xsd' )
     except:
         pass
+    try:
+        os.remove( 'tmp/ogr_gml_28.gml' )
+        os.remove( 'tmp/ogr_gml_28.gfs' )
+    except:
+        pass
 
     files = os.listdir('data')
     for filename in files:
@@ -1179,6 +1222,7 @@ gdaltest_list = [
     ogr_gml_25,
     ogr_gml_26,
     ogr_gml_27,
+    ogr_gml_28,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
