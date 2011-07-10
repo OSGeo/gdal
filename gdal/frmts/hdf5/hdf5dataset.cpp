@@ -611,7 +611,7 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
 
     poDS = (HDF5Dataset *) pDS;
 
-    // Convert "/" into "_" fro the path component
+    // Convert "/" into "_" for the path component
     const char* pszPath = poDS->poH5CurrentObject->pszUnderscorePath;
     if(pszPath != NULL && strlen(pszPath) > 0)
     {
