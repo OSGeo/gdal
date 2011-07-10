@@ -3776,9 +3776,13 @@ SWIGINTERN void delete_OSRCoordinateTransformationShadow(OSRCoordinateTransforma
     OCTDestroyCoordinateTransformation( self );
   }
 SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoint__SWIG_0(OSRCoordinateTransformationShadow *self,double inout[3]){
+    if (self == NULL)
+        return;
     OCTTransform( self, 1, &inout[0], &inout[1], &inout[2] );
   }
 SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoint__SWIG_1(OSRCoordinateTransformationShadow *self,double argout[3],double x,double y,double z=0.0){
+    if (self == NULL)
+        return;
     argout[0] = x;
     argout[1] = y;
     argout[2] = z;
@@ -3860,6 +3864,8 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
 }
 
 SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoints(OSRCoordinateTransformationShadow *self,int nCount,double *x,double *y,double *z){
+    if (self == NULL)
+        return;
     OCTTransform( self, nCount, x, y, z );
   }
 #ifdef __cplusplus
