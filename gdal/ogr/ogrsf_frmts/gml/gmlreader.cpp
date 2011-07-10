@@ -33,6 +33,7 @@
 #include "gmlutils.h"
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
+#include <map>
 
 #define SUPPORT_GEOMETRY
 
@@ -1200,6 +1201,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
 
     m_bCanUseGlobalSRSName = TRUE;
 
+    std::map<GMLFeatureClass*, int> osMapCountFeatureWithoutGeometry;
+
     while( (poFeature = NextFeature()) != NULL )
     {
         GMLFeatureClass *poClass = poFeature->GetClass();
@@ -1208,6 +1211,17 @@ int GMLReader::PrescanForSchema( int bGetExtents )
             poClass->SetFeatureCount( 1 );
         else
             poClass->SetFeatureCount( poClass->GetFeatureCount() + 1 );
+
+        if (poFeature->GetGeometryList() == NULL)
+        {
+            std::map<GMLFeatureClass*, int>::iterator oIter =
+                osMapCountFeatureWithoutGeometry.find(poClass);
+            if (oIter == osMapCountFeatureWithoutGeometry.end())
+                osMapCountFeatureWithoutGeometry[poClass] = 1;
+            else
+                oIter->second ++;
+        }
+
 
 #ifdef SUPPORT_GEOMETRY
         if( bGetExtents )
@@ -1301,6 +1315,14 @@ int GMLReader::PrescanForSchema( int bGetExtents )
                     }
                 }
             }
+        }
+
+        std::map<GMLFeatureClass*, int>::iterator oIter =
+                osMapCountFeatureWithoutGeometry.find(poClass);
+        if (oIter != osMapCountFeatureWithoutGeometry.end() &&
+            oIter->second == poClass->GetFeatureCount())
+        {
+            poClass->SetGeometryType(wkbNone);
         }
     }
 
