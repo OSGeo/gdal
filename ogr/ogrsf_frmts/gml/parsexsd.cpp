@@ -222,6 +222,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
     CPLXMLNode *psAttrDef;
     int nAttributeIndex = 0;
 
+    int bGotUnrecognizedType = FALSE;
+
     for( psAttrDef = psAttrSeq->psChild;
             psAttrDef != NULL;
             psAttrDef = psAttrDef->psNext )
@@ -276,6 +278,10 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 
                     psIter ++;
                 }
+
+                if (poClass->GetGeometryAttributeIndex() == -1)
+                    bGotUnrecognizedType = TRUE;
+
                 continue;
             }
 
@@ -329,6 +335,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 if ( ! LookForSimpleType(psSchemaNode, pszStrippedNSType,
                                          &gmlType, &nWidth, &nPrecision) )
                 {
+                    bGotUnrecognizedType = TRUE;
                     //CPLDebug("GML", "Unknown type (%s).", pszType);
                 }
             }
@@ -372,6 +379,15 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             delete poProp;
         else
             nAttributeIndex ++;
+    }
+
+    /* Only report wkbNone if we didn't find a known geometry type */
+    /* and there were not any unknown types (in case this unknown type */
+    /* would be a geometry type) */
+    if (poClass->GetGeometryAttributeIndex() == -1 &&
+        !bGotUnrecognizedType)
+    {
+        poClass->SetGeometryType(wkbNone);
     }
 
 /* -------------------------------------------------------------------- */
