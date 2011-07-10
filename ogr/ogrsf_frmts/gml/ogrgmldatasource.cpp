@@ -1133,8 +1133,12 @@ void OGRGMLDataSource::InsertHeader()
             default:
                 break;
         }
-        PrintLine( fpSchema,
-            "        <xs:element name=\"geometryProperty\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>", pszGeometryTypeName );
+
+        if (poFDefn->GetGeomType() != wkbNone)
+        {
+            PrintLine( fpSchema,
+                "        <xs:element name=\"geometryProperty\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>", pszGeometryTypeName );
+        }
             
 /* -------------------------------------------------------------------- */
 /*      Emit each of the attributes.                                    */
