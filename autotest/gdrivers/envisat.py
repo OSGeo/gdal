@@ -131,43 +131,64 @@ class TestEnvisat:
             gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
             return 'failure'
 
-        if product[:3] not in ('ASA', 'SAR') and record_md:
+        if product[:3] not in ('ASA', 'SAR', 'MER') and record_md:
             gdaltest.post_reason('Unexpected metadata in the "RECORDS" domain.')
             return 'failure'
 
-        record = 'SQ_ADS' # it is present in all ASAR poducts
-        if product.startswith('ASA_WV'):
-            for field in ('ZERO_DOPPLER_TIME',
-                          'INPUT_MEAN',
-                          'INPUT_STD_DEV',
-                          'PHASE_CROSS_CONF'):
+        if product[:3] in ('ASA', 'SAR'):
+            record = 'SQ_ADS' # it is present in all ASAR poducts
+            if product.startswith('ASA_WV'):
+                for field in ('ZERO_DOPPLER_TIME',
+                              'INPUT_MEAN',
+                              'INPUT_STD_DEV',
+                              'PHASE_CROSS_CONF'):
+                    key0 = '%s_%s' % (record, field)
+                    key1 = '%s_0_%s' % (record, field)
+                    if key0 not in record_md and key1 not in record_md:
+                        gdaltest.post_reason(
+                            'No "%s" or "%s" key in "RECORDS" domain.' %
+                                                                (key0, key1))
+                        return 'failure'
+            else:
+                for mds in range(1, ds.RasterCount + 1):
+                    for field in ('ZERO_DOPPLER_TIME',
+                                  'INPUT_MEAN',
+                                  'INPUT_STD_DEV'):
+                        key0 = 'MDS%d_%s_%s' % (mds, record, field)
+                        key1 = 'MDS%d_%s_0_%s' % (mds, record, field)
+                        if key0 not in record_md and key1 not in record_md:
+                            gdaltest.post_reason(
+                                'No "%s" or "%s" key in "RECORDS" domain.' %
+                                                                (key0, key1))
+                            return 'failure'
+        elif product[:3] in ('MER',):
+            record = 'Quality_ADS' # it is present in all MER poducts
+
+            for field in ('DSR_TIME',
+                          'ATTACH_FLAG'):
                 key0 = '%s_%s' % (record, field)
                 key1 = '%s_0_%s' % (record, field)
                 if key0 not in record_md and key1 not in record_md:
-                    gdaltest.post_reason('No "%s" or "%s" key in "RECORDS"'
-                                         ' domain.' % (key0, key1))
+                    gdaltest.post_reason(
+                        'No "%s" or "%s" key in "RECORDS" domain.' %
+                                                            (key0, key1))
                     return 'failure'
-        else:
-            for mds in range(1, ds.RasterCount + 1):
-                for field in ('ZERO_DOPPLER_TIME',
-                              'INPUT_MEAN',
-                              'INPUT_STD_DEV'):
-                    key0 = 'MDS%d_%s_%s' % (mds, record, field)
-                    key1 = 'MDS%d_%s_0_%s' % (mds, record, field)
-                    if key0 not in record_md and key1 not in record_md:
-                        gdaltest.post_reason('No "%s" or "%s" key in "RECORDS"'
-                                             ' domain.' % (key0, key1))
-                        return 'failure'
+
 
         return 'success'
 
-ut = TestEnvisat( 'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz', 'ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1', (524, 945), 44998 )
+ut1 = TestEnvisat( 'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz', 'ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1', (524, 945), 44998 )
+ut2 = TestEnvisat( 'http://earth.esa.int/services/sample_products/meris/RRC/L2/MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1.gz', 'MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1', (1121, 593), 55146 )
 
 gdaltest_list = [
-    ut.test_envisat_1,
-    ut.test_envisat_2,
-    ut.test_envisat_3,
-    ut.test_envisat_4,
+    ut1.test_envisat_1,
+    ut1.test_envisat_2,
+    ut1.test_envisat_3,
+    ut1.test_envisat_4,
+    ut2.test_envisat_1,
+    ut2.test_envisat_2,
+    ut2.test_envisat_3,
+    ut2.test_envisat_4,
 ]
 
 
