@@ -41,9 +41,10 @@ import gdaltest
 def _get_mds_num(filename):
     mph_size = 1247
 
-    fd = open(filename)
+    fd = open(filename, 'rb')
     mph = fd.read(mph_size)
     for line in mph.splitlines():
+        line = line.decode('iso8859-1')
         if line.startswith('SPH_SIZE'):
             sph_size = int(line.split('=')[-1][:-7])
             break
@@ -51,7 +52,7 @@ def _get_mds_num(filename):
         return
 
     sph = fd.read(sph_size)
-    sph = '\n'.join(line.rstrip() for line in sph.splitlines())
+    sph = '\n'.join(line.decode('iso8859-1').rstrip() for line in sph.splitlines())
     count = 0
     for block in sph.split('\n\n'):
         if block.startswith('DS_NAME'):
