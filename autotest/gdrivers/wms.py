@@ -608,6 +608,41 @@ def wms_15():
     return 'success'
 
 ###############################################################################
+# Test getting subdatasets from WMS-C Capabilities
+
+def wms_16():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    name = "WMS:http://demo.opengeo.org/geoserver/gwc/service/wms?tiled=TRUE"
+    ds = gdal.Open( name )
+    if ds is None:
+        srv = 'http://demo.opengeo.org/geoserver/gwc/service/wms?'
+        if gdaltest.gdalurlopen(srv) is None:
+            return 'skip'
+        gdaltest.post_reason( 'open of %s failed.' % name)
+        return 'fail'
+
+    subdatasets = ds.GetMetadata("SUBDATASETS")
+    if len(subdatasets) == 0:
+        gdaltest.post_reason( 'did not get expected subdataset count' )
+        print(subdatasets)
+        return 'fail'
+
+    ds = None
+
+    name = subdatasets['SUBDATASET_1_NAME']
+    ds = gdal.Open( name )
+    if ds is None:
+        gdaltest.post_reason( 'open of %s failed.' % name)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 def wms_cleanup():
 
     gdaltest.wms_ds = None
@@ -631,6 +666,7 @@ gdaltest_list = [
     wms_13,
     wms_14,
     wms_15,
+    wms_16,
     wms_cleanup ]
 
 if __name__ == '__main__':
