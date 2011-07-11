@@ -77,7 +77,11 @@ def osr_compd_1():
     
     if srs.GetLinearUnitsName() != 'metre_1':
         gdaltest.post_reason( 'Did not get expected linear units.' )
-        return 'false'
+        return 'fail'
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'Validate() failed.' )
+        return 'fail'
 
     return 'success'
 
