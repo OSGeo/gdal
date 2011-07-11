@@ -38,6 +38,35 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 
+def _get_mds_num(filename):
+    mph_size = 1247
+
+    fd = open(filename)
+    mph = fd.read(mph_size)
+    for line in mph.splitlines():
+        if line.startswith('SPH_SIZE'):
+            sph_size = int(line.split('=')[-1][:-7])
+            break
+    else:
+        return
+
+    sph = fd.read(sph_size)
+    sph = '\n'.join(line.rstrip() for line in sph.splitlines())
+    count = 0
+    for block in sph.split('\n\n'):
+        if block.startswith('DS_NAME'):
+            ds_type = None
+            ds_size = 0
+            for line in block.splitlines():
+                if line.startswith('DS_TYPE'):
+                    ds_type = line.split('=')[-1]
+                elif line.startswith('DS_SIZE'):
+                    ds_size = int(line.split('=')[-1][:-7])
+            if ds_type == 'M' and ds_size > 0:
+                count += 1
+
+    return count
+
 ###############################################################################
 #
 class TestEnvisat:
@@ -177,18 +206,48 @@ class TestEnvisat:
 
         return 'success'
 
-ut1 = TestEnvisat( 'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz', 'ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1', (524, 945), 44998 )
-ut2 = TestEnvisat( 'http://earth.esa.int/services/sample_products/meris/RRC/L2/MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1.gz', 'MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1', (1121, 593), 55146 )
+    def test_envisat_5( self ):
+        # test metadata in RECORDS domain
+
+        if not self.download_file():
+            return 'skip'
+
+        filename = os.path.join('tmp', 'cache', self.fileName)
+        mds_num = _get_mds_num(filename)
+
+        ds = gdal.Open(filename)
+        if ds is None:
+            return 'fail'
+
+        if ds.RasterCount < mds_num:
+            gdaltest.post_reason('Not all bands have been detected')
+            return 'failure'
+
+        return 'success'
+
+
+ut1 = TestEnvisat(
+    'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz',
+    'ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1',
+    (524, 945),
+    44998 )
+ut2 = TestEnvisat(
+    'http://earth.esa.int/services/sample_products/meris/RRC/L2/MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1.gz',
+    'MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1',
+    (1121, 593),
+    55146 )
 
 gdaltest_list = [
     ut1.test_envisat_1,
     ut1.test_envisat_2,
     ut1.test_envisat_3,
     ut1.test_envisat_4,
+    ut1.test_envisat_5,
     ut2.test_envisat_1,
     ut2.test_envisat_2,
     ut2.test_envisat_3,
     ut2.test_envisat_4,
+    ut2.test_envisat_5,
 ]
 
 
