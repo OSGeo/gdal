@@ -40,6 +40,8 @@ CPLErr NITFSetColorInterpretation( NITFImage *psImage,
                                    int nBand,
                                    GDALColorInterp eInterp );
 
+/* Unused in normal builds. Caller code in nitfdataset.cpp is protected by #ifdef ESRI_BUILD */
+#ifdef ESRI_BUILD
 /* -------------------------------------------------------------------- */
 /*      Functions in nitf_gcprpc.cpp.                                   */
 /* -------------------------------------------------------------------- */
@@ -48,6 +50,7 @@ void NITFDensifyGCPs( GDAL_GCP **psGCPs, int *pnGCPCount );
 void NITFUpdateGCPsWithRPC( NITFRPC00BInfo *psRPCInfo,
                             GDAL_GCP       *psGCPs,
                             int            *pnGCPCount );
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
