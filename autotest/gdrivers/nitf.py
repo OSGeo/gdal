@@ -1881,6 +1881,25 @@ def nitf_67():
     return 'success'
 
 ###############################################################################
+# Test reading NITF_METADATA domain
+
+def nitf_68():
+
+    ds = gdal.Open('data/rgb.ntf')
+    if len(ds.GetMetadata('NITF_METADATA')) != 2:
+        print(ds.GetMetadata('NITF_METADATA'))
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('data/rgb.ntf')
+    if len(ds.GetMetadataItem('NITFFileHeader','NITF_METADATA')) == 0:
+        print(ds.GetMetadataItem('NITFFileHeader','NITF_METADATA'))
+        return 'fail'
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -2832,6 +2851,7 @@ gdaltest_list = [
     nitf_65,
     nitf_66,
     nitf_67,
+    nitf_68,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
