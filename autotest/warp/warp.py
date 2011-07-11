@@ -754,6 +754,33 @@ def warp_25():
     return 'success'
 
 ###############################################################################
+# Test serializing and deserializing TPS transformer
+
+def warp_26():
+
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/byte.tif tmp/warp_25_gcp.vrt -of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 -gcp 20 0 20 20 -gcp 20 20 20 0')
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -of VRT -tps tmp/warp_25_gcp.vrt tmp/warp_25_warp.vrt')
+
+    ds = gdal.Open('tmp/warp_25_warp.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    if cs != 4672:
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+
+    os.unlink('tmp/warp_25_gcp.vrt')
+    os.unlink('tmp/warp_25_warp.vrt')
+
+    return 'success'
+    
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -786,6 +813,7 @@ gdaltest_list = [
     warp_23,
     warp_24,
     warp_25,
+    warp_26
     ]
 
 if __name__ == '__main__':
