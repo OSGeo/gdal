@@ -646,8 +646,14 @@ void L1BDataset::ProcessRecordHeaders()
 /* -------------------------------------------------------------------- */
 /*      Initialize the GCP list.                                        */
 /* -------------------------------------------------------------------- */
-    pasGCPList = (GDAL_GCP *)CPLCalloc( nTargetLines * nGCPsPerLine,
+    pasGCPList = (GDAL_GCP *)VSICalloc( nTargetLines * nGCPsPerLine,
                                         sizeof(GDAL_GCP) );
+    if (pasGCPList == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        CPLFree( pRecordHeader );
+        return;
+    }
     GDALInitGCPs( nTargetLines * nGCPsPerLine, pasGCPList );
 
 /* -------------------------------------------------------------------- */
@@ -1584,9 +1590,6 @@ int L1BDataset::DetectFormat( GDALOpenInfo *poOpenInfo )
 int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    if( poOpenInfo->fp == NULL )
-        return FALSE;
-
     if ( DetectFormat(poOpenInfo) == L1B_NONE )
         return FALSE;
 
@@ -1625,7 +1628,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     L1BDataset  *poDS;
-    VSIStatBuf  sStat;
+    VSIStatBufL  sStat;
     const char  *pszFilename = poOpenInfo->pszFilename;
 
     poDS = new L1BDataset( eL1BFormat );
@@ -1646,7 +1649,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         goto bad;
     }
 
-    CPLStat(pszFilename, &sStat);
+    VSIStatL(pszFilename, &sStat);
 
     if ( poDS->bGuessDataFormat )
     {
@@ -1847,6 +1850,8 @@ void GDALRegister_L1B()
                                    "NOAA Polar Orbiter Level 1b Data Set" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_l1b.html" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = L1BDataset::Open;
 
