@@ -120,6 +120,7 @@ class JPGDataset : public GDALPamDataset
     int	   bSwabflag;
     int    nTiffDirStart;
     int    nTIFFHEADER;
+    int    bHasDoneJpegCreateDecompress;
     int    bHasDoneJpegStartDecompress;
 
     CPLErr LoadScanline(int);
@@ -1188,6 +1189,7 @@ JPGDataset::JPGDataset()
     nGCPCount = 0;
     pasGCPList = NULL;
 
+    bHasDoneJpegCreateDecompress = FALSE;
     bHasDoneJpegStartDecompress = FALSE;
 
     bHasCheckedForMask = FALSE;
@@ -1216,6 +1218,9 @@ JPGDataset::~JPGDataset()
     if (bHasDoneJpegStartDecompress)
     {
         jpeg_abort_decompress( &sDInfo );
+    }
+    if (bHasDoneJpegCreateDecompress)
+    {
         jpeg_destroy_decompress( &sDInfo );
     }
 
@@ -1827,6 +1832,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->sDInfo.client_data = (void *) &(poDS->setjmp_buffer);
 
     jpeg_create_decompress( &(poDS->sDInfo) );
+    poDS->bHasDoneJpegCreateDecompress = TRUE;
 
     /* This is to address bug related in ticket #1795 */
     if (CPLGetConfigOption("JPEGMEM", NULL) == NULL)
