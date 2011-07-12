@@ -474,7 +474,9 @@ void GDALRegister_TIL()
                                    "EarthWatch .TIL" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_til.html" );
-        
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = TILDataset::Open;
         poDriver->pfnIdentify = TILDataset::Identify;
 
