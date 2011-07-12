@@ -59,7 +59,7 @@ def idrisi_3():
 
     tst = gdaltest.GDALTest( 'RST', 'float32.bil', 1, 27 )
 
-    return tst.testCreate( new_filename = 'tmp/float32.rst', out_bands=1 )
+    return tst.testCreate( new_filename = 'tmp/float32.rst', out_bands=1, vsimem = 1 )
     
 ###############################################################################
 # 
@@ -69,7 +69,7 @@ def idrisi_4():
     tst = gdaltest.GDALTest( 'RST', 'rgbsmall.tif', 2, 21053 )
 
     return tst.testCreateCopy( check_gt = 1, check_srs = 1,
-                               new_filename = 'tmp/rgbsmall_cc.rst' )
+                               new_filename = 'tmp/rgbsmall_cc.rst', vsimem = 1 )
     
 ###############################################################################
 # Cleanup.

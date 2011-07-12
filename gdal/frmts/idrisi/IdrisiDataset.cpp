@@ -427,8 +427,7 @@ IdrisiDataset::~IdrisiDataset()
 
 GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
 {
-    if( ( poOpenInfo->fp == NULL ) || 
-        ( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), extRST ) == FALSE ) )
+    if( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), extRST ) == FALSE )
         return NULL;
 
     // --------------------------------------------------------------------
@@ -481,6 +480,7 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
     if( poDS->fp == NULL )
     {
         CSLDestroy( papszLRDC );
+        delete poDS;
         return NULL;
     }
 
@@ -2837,9 +2837,9 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
 
 bool FileExists( const char *pszPath )
 {
-    VSIStatBuf  sStat;
+    VSIStatBufL  sStat;
 
-    return (bool) ( CPLStat( pszPath, &sStat ) == 0 );
+    return (bool) ( VSIStatL( pszPath, &sStat ) == 0 );
 }
 
 /************************************************************************/
@@ -3004,6 +3004,9 @@ void GDALRegister_IDRISI()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_Idrisi.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, extRST );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 Float32" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = IdrisiDataset::Open;
         poDriver->pfnCreate = IdrisiDataset::Create;
         poDriver->pfnCreateCopy = IdrisiDataset::CreateCopy;
