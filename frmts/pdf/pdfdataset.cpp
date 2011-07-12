@@ -945,16 +945,32 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     oSubType.getType() == objName &&
                     strcmp(oSubType.getName(), "XML") == 0)
                 {
-                    GooString gooStr;
-                    o.getStream()->fillGooString(&gooStr);
-                    const char* pszXMP = (const char*)gooStr.getCString();
+                    int nBufferAlloc = 4096;
+                    char* pszXMP = (char*) CPLMalloc(nBufferAlloc);
+                    Stream* poStream = o.getStream();
+                    poStream->reset();
+                    int j;
+                    for(j=0; ; j++)
+                    {
+                        const int ch = poStream->getChar();
+                        if (ch == EOF)
+                            break;
+                        if (j == nBufferAlloc - 2)
+                        {
+                            nBufferAlloc *= 2;
+                            pszXMP = (char*) CPLRealloc(pszXMP, nBufferAlloc);
+                        }
+                        pszXMP[j] = (char)ch;
+                    }
+                    pszXMP[j] = '\0';
                     if (strncmp(pszXMP, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
                     {
                         char *apszMDList[2];
-                        apszMDList[0] = (char*) pszXMP;
+                        apszMDList[0] = pszXMP;
                         apszMDList[1] = NULL;
                         poDS->SetMetadata(apszMDList, "xml:XMP");
                     }
+                    CPLFree(pszXMP);
                 }
                 oSubType.free();
                 oType.free();
