@@ -646,6 +646,10 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
 
             AddChild( poNewChild );
             
+            // swallow whitespace
+            while( isspace(*pszInput) ) 
+                pszInput++;
+
         } while( *pszInput == ',' );
 
         if( *pszInput != ')' && *pszInput != ']' )
