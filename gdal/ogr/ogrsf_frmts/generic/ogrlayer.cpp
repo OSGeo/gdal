@@ -1280,7 +1280,7 @@ OGRErr OGRLayer::SetIgnoredFields( const char **papszFields )
 OGRErr OGR_L_SetIgnoredFields( OGRLayerH hLayer, const char **papszFields )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_SetIgnoredFields", NULL );
+    VALIDATE_POINTER1( hLayer, "OGR_L_SetIgnoredFields", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *) hLayer)->SetIgnoredFields( papszFields );
 }
