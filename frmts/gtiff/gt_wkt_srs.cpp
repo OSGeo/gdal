@@ -2011,7 +2011,11 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
     // Note that VERTCS is an ESRI "spelling" of VERT_CS so we assume if
     // we find it that we should try to treat this as a PE string.
-    if( bWritePEString || poSRS->GetAttrValue("VERTCS") != NULL )
+    bWritePEString |= (poSRS->GetAttrValue("VERTCS") != NULL);
+
+    if( bWritePEString 
+        && CSLTestBoolean( CPLGetConfigOption("GTIFF_ESRI_CITATION",
+                                              "YES") ) )
     {
         /* Anyhing we can't map, we store as an ESRI PE string with a citation key */
         char *pszPEString = NULL;
@@ -2071,8 +2075,15 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
                         dfLinearUOM);
 
         /* if linear units name is available and user defined, store it as citation */
-        if(!peStrStored && nUOMLengthCode == KvUserDefined && pszLinearUOMName && strlen(pszLinearUOMName)>0)
+        if(!peStrStored 
+           && nUOMLengthCode == KvUserDefined 
+           && pszLinearUOMName 
+           && strlen(pszLinearUOMName)>0
+           && CSLTestBoolean( CPLGetConfigOption("GTIFF_ESRI_CITATION",
+                                                 "YES") ) )
+        {
             SetLinearUnitCitation(psGTIF, pszLinearUOMName);
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -2190,7 +2201,9 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
             GTIFKeySet( psGTIF, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1,
                         dfSemiMajor );
 
-        if( nGCS == KvUserDefined )
+        if( nGCS == KvUserDefined 
+            && CSLTestBoolean( CPLGetConfigOption("GTIFF_ESRI_CITATION",
+                                                  "YES") ) )
             SetGeogCSCitation(psGTIF, poSRS, angUnitName, nDatum, nSpheroid);
     }
 
