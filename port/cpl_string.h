@@ -49,7 +49,11 @@
  * name/value pairs.  The actual data is formatted with each string having
  * the format "<name>:<value>" (though "=" is also an acceptable separator). 
  * A number of the functions in the file operate on name/value style
- * string lists (such as CSLSetNameValue(), and CSLFetchNameValue()). 
+ * string lists (such as CSLSetNameValue(), and CSLFetchNameValue()).
+ *
+ * To some extent the CPLStringList C++ class can be used to abstract
+ * managing string lists a bit but still be able to return them from C
+ * functions.
  *
  */
 
@@ -265,9 +269,79 @@ public:
 
 };
 
+/* -------------------------------------------------------------------- */
+/*      URL processing functions, here since they depend on CPLString.  */
+/* -------------------------------------------------------------------- */
 CPLString CPL_DLL CPLURLGetValue(const char* pszURL, const char* pszKey);
 CPLString CPL_DLL CPLURLAddKVP(const char* pszURL, const char* pszKey,
                                const char* pszValue);
+
+/************************************************************************/
+/*                            CPLStringList                             */
+/*                                                                      */
+/*      A class intended to making working with class C GDAL string     */
+/*      lists more efficient and possibly safter in some cases.         */
+/*      Note this is completely *not* const correct.                    */
+/************************************************************************/
+
+class CPLStringList
+{
+    char **papszList;
+    mutable int nCount;
+    mutable int nAllocation;
+    int    bOwnList;
+
+    void   MakeOurOwnCopy();
+    void   EnsureAllocation( int nMaxLength );
+    
+  public:
+    CPLStringList();
+    CPLStringList( char **papszList, int bTakeOwnership=TRUE );
+    ~CPLStringList();
+
+    CPLStringList &Clear();
+
+    int    size() const { return Count(); }
+    int    Count() const;
+
+    CPLStringList &AddString( const char *pszNewString );
+    CPLStringList &AddStringDirectly( char *pszNewString );
+
+    // Defer implementation till needed and we will take the time to test.
+//    CPLStringList &InsertString( int nInsertAtLieNo, const char *pszNewLine );
+//    CPLStringList &InsertStrings( int nInsertAtLieNo, const char *pszNewLine );
+//    CPLStringList RemoveStrings( int nFirstLineToDelete, int nNumToRemove=1 );
+    
+    int    FindString( const char *pszTarget ) const
+    { return CSLFindString( papszList, pszTarget ); }
+    int    PartialFindString( const char *pszNeedle ) const
+    { return CSLPartialFindString( papszList, pszNeedle ); }
+
+    int    FindName( const char *pszName ) const
+    { return CSLFindName( papszList, pszName ); }
+    int    FetchBoolean( const char *pszKey, int bDefault ) const
+    { return CSLFetchBoolean( papszList, pszKey, bDefault ); }
+    const char *FetchNameValue( const char *pszKey ) const
+    { return CSLFetchNameValue( papszList, pszKey ); }
+    const char *FetchNameValueDef( const char *pszKey, const char *pszDefault ) const
+    { return CSLFetchNameValueDef( papszList, pszKey, pszDefault ); }
+    
+    CPLStringList &AddNameValue( const char *pszKey, const char *pszValue );
+    CPLStringList &SetNameValue( const char *pszKey, const char *pszValue );
+
+    CPLStringList &Assign( char **papszList, int bTakeOwnership=TRUE );
+    CPLStringList &operator=(char **papszList) { Assign( papszList, TRUE ); }
+
+    char * operator[](int i);
+    char * operator[](size_t i) { return (*this)[(int)i]; }
+    const char * operator[](int i) const;
+    const char * operator[](size_t i) const { return (*this)[(int)i]; }
+
+    char **List() { return papszList; }
+    char **StealList();
+
+    operator char**(void) { List(); }
+};
 
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
 
