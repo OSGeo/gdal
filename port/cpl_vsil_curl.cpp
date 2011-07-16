@@ -1166,6 +1166,32 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     return poHandle;
 }
 
+/************************************************************************/
+/*                        VSICurlParserFindEOL()                        */
+/*                                                                      */
+/*      Small helper function for VSICurlPaseHTMLFileList() to find     */
+/*      the end of a line in the directory listing.  Either a <br>      */
+/*      or newline.                                                     */
+/************************************************************************/
+
+static char *VSICurlParserFindEOL( char *pszData )
+
+{
+    while( *pszData != '\0' && *pszData != '\n' && !EQUALN(pszData,"<br>",4) )
+        pszData++;
+
+    if( *pszData == '\0' )
+        return NULL;
+    else 
+        return pszData;
+}
+
+/************************************************************************/
+/*                      VSICurlParseHTMLFileList()                      */
+/*                                                                      */
+/*      Parse a file list document and return all the components.       */
+/************************************************************************/
+
 static char** VSICurlParseHTMLFileList(const char* pszFilename,
                                        char* pszData,
                                        int* pbGotFileList)
@@ -1217,8 +1243,7 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
         CPLFree(pszUnescapedDir);
     }
     
-    while( (c = strstr(iter, "<br>")) != NULL ||
-           (c = strchr(iter, '\n')) != NULL )
+    while( (c = VSICurlParserFindEOL( iter )) != NULL )
     {
         *c = 0;
         if (strstr(iter, osExpectedString.c_str()) ||
