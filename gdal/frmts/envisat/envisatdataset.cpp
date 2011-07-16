@@ -813,8 +813,9 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Scan for all datasets matching the reference dataset.           */
 /* -------------------------------------------------------------------- */
-    int	num_dsr2, dsr_size2, iBand = 0;
+    int num_dsr2, dsr_size2, iBand = 0;
     const char *pszDSName;
+    bool bMiltiChannel;
 
     for( ds_index = 0;
          EnvisatFile_GetDatasetInfo( hEnvisatFile, ds_index,
@@ -823,8 +824,17 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                                      &num_dsr2, &dsr_size2 ) == SUCCESS;
          ds_index++ )
     {
-        if( EQUAL(pszDSType,"M")
-            && num_dsr2 == num_dsr && dsr_size2 == dsr_size )
+        if( !EQUAL(pszDSType,"M") || num_dsr2 != num_dsr )
+            continue;
+
+        if( EQUALN(pszProduct,"MER",3) && (pszProduct[8] == '2') &&
+            ((strstr(pszDSName, "MDS(16)") != NULL) ||
+             (strstr(pszDSName, "MDS(19)") != NULL)) )
+            bMiltiChannel = true;
+        else
+            bMiltiChannel = false;
+
+        if( (dsr_size2 == dsr_size) && !bMiltiChannel )
         {
             poDS->SetBand( iBand+1,
                        new RawRasterBand( poDS, iBand+1, poDS->fpImage,
@@ -840,8 +850,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /*       Handle MERIS Level 2 datasets with data type different from    */
 /*       the one declared in the SPH                                    */
 /* -------------------------------------------------------------------- */
-        else if( EQUAL(pszDSType,"M") && num_dsr2 == num_dsr &&
-                 EQUALN(pszProduct,"MER",3) && (pszProduct[8] == '2') )
+        else if( EQUALN(pszProduct,"MER",3) && (pszProduct[8] == '2') )
         {
             int nPrefixBytes2, nSubBands, nSubBandIdx, nSubBandOffset;
             char szBandName[128];
