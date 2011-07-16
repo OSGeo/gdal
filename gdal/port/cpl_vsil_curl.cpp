@@ -761,7 +761,7 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
             bEOF = TRUE;
             return 0;
         }
-        int nToCopy = MIN(nBufferRequestSize, psRegion->nSize - (iterOffset - psRegion->nFileOffsetStart));
+        int nToCopy = (int) MIN(nBufferRequestSize, psRegion->nSize - (iterOffset - psRegion->nFileOffsetStart));
         memcpy(pBuffer, psRegion->pData + iterOffset - psRegion->nFileOffsetStart,
                 nToCopy);
         pBuffer = (char*) pBuffer + nToCopy;
@@ -773,7 +773,7 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         }
     }
 
-    size_t ret = (iterOffset - curOffset) / nSize;
+    size_t ret = (size_t) ((iterOffset - curOffset) / nSize);
     if (ret != nMemb)
         bEOF = TRUE;
 
