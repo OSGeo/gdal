@@ -156,13 +156,8 @@ void FromR(GDALDataType intype, ConstantType inval, ConstantType invali, GDALDat
 int i;
 GDALDataType outtype;
 
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-#define CST_3000000000 3000000000I64
-#define CST_5000000000 5000000000I64
-#else
-#define CST_3000000000 3000000000LL
-#define CST_5000000000 5000000000LL
-#endif
+#define CST_3000000000 (((GIntBig)3000) * 1000 * 1000)
+#define CST_5000000000 (((GIntBig)5000) * 1000 * 1000)
 
 void check_GDT_Byte()
 {
