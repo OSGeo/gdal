@@ -330,7 +330,7 @@ class CPLStringList
     CPLStringList &SetNameValue( const char *pszKey, const char *pszValue );
 
     CPLStringList &Assign( char **papszList, int bTakeOwnership=TRUE );
-    CPLStringList &operator=(char **papszList) { Assign( papszList, TRUE ); }
+    CPLStringList &operator=(char **papszList) { return Assign( papszList, TRUE ); }
 
     char * operator[](int i);
     char * operator[](size_t i) { return (*this)[(int)i]; }
@@ -340,7 +340,7 @@ class CPLStringList
     char **List() { return papszList; }
     char **StealList();
 
-    operator char**(void) { List(); }
+    operator char**(void) { return List(); }
 };
 
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
