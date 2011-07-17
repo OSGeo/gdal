@@ -195,43 +195,43 @@ No known bug
                 dx2 = padfX[ind1];
                 dx1 = padfX[ind2];
             } else /* if (fabs(dy1-dy2)< 1.e-6) */
-	    {
+            {
                 
                 /*AE: DO NOT skip bottom horizontal segments 
-		  -Fill them separately- 
-		  They are not taken into account twice.*/
-		if (padfX[ind1] > padfX[ind2])
-		{
-		    horizontal_x1 = (int) floor(padfX[ind2]+0.5);
-		    horizontal_x2 = (int) floor(padfX[ind1]+0.5);
+                  -Fill them separately- 
+                  They are not taken into account twice.*/
+                if (padfX[ind1] > padfX[ind2])
+                {
+                    horizontal_x1 = (int) floor(padfX[ind2]+0.5);
+                    horizontal_x2 = (int) floor(padfX[ind1]+0.5);
 		
                     if  ( (horizontal_x1 >  maxx) ||  (horizontal_x2 <= minx) )
                         continue;
 
-		    /*fill the horizontal segment (separately from the rest)*/
-		    pfnScanlineFunc( pCBData, y, horizontal_x1, horizontal_x2 - 1, (dfVariant == NULL)?0:dfVariant[0] );
-		    continue;
-		}
-		else /*skip top horizontal segments (they are already filled in the regular loop)*/
-		    continue;
+                    /*fill the horizontal segment (separately from the rest)*/
+                    pfnScanlineFunc( pCBData, y, horizontal_x1, horizontal_x2 - 1, (dfVariant == NULL)?0:dfVariant[0] );
+                    continue;
+                }
+                else /*skip top horizontal segments (they are already filled in the regular loop)*/
+                    continue;
 
-	    }
+            }
 
             if(( dy < dy2 ) && (dy >= dy1))
             {
                 
                 intersect = (dy-dy1) * (dx2-dx1) / (dy2-dy1) + dx1;
 
-		polyInts[ints++] = (int) floor(intersect+0.5);
-	    }
-	}
+                polyInts[ints++] = (int) floor(intersect+0.5);
+            }
+        }
 
         /* 
          * It would be more efficient to do this inline, to avoid 
          * a function call for each comparison.
-	 * NOTE - mloskot: make llCompareInt a functor and use std
-	 * algorithm and it will be optimized and expanded
-	 * automatically in compile-time, with modularity preserved.
+         * NOTE - mloskot: make llCompareInt a functor and use std
+         * algorithm and it will be optimized and expanded
+         * automatically in compile-time, with modularity preserved.
          */
         qsort(polyInts, ints, sizeof(int), llCompareInt);
 
