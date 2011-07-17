@@ -30,7 +30,7 @@
 #include "cpl_string.h"
 #include <string>
 
-CPL_CVSID("$Id: cplstring.cpp 22648 2011-07-05 23:14:50Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           CPLStringList()                            */
@@ -57,14 +57,14 @@ CPLStringList::CPLStringList()
  * of the list of strings which implies responsibility to free them.
  */
 
-CPLStringList::CPLStringList( char **papszList, int bTakeOwnership )
+CPLStringList::CPLStringList( char **papszListIn, int bTakeOwnership )
 
 {
     papszList = NULL;
     nCount = 0;
     nAllocation = 0;
     bOwnList = FALSE;
-    Assign( papszList, bTakeOwnership );
+    Assign( papszListIn, bTakeOwnership );
 }
 
 /************************************************************************/
@@ -108,19 +108,19 @@ CPLStringList &CPLStringList::Clear()
  * Assign a list of strings. 
  *
  * 
- * @param papszList the NULL terminated list of strings to consume.
+ * @param papszListIn the NULL terminated list of strings to consume.
  * @param bTakeOwnership TRUE if the CPLStringList should take ownership
  * of the list of strings which implies responsibility to free them.
  *
  * @return a reference to the CPLStringList on which it was invoked.
  */
 
-CPLStringList &CPLStringList::Assign( char **papszList, int bTakeOwnership )
+CPLStringList &CPLStringList::Assign( char **papszListIn, int bTakeOwnership )
 
 {
     Clear();
 
-    this->papszList = papszList;
+    papszList = papszListIn;
     bOwnList = bTakeOwnership;
 
     if( papszList == NULL || *papszList == NULL )
@@ -177,6 +177,7 @@ void CPLStringList::MakeOurOwnCopy()
         return;
 
     Count();
+    bOwnList = TRUE;
     papszList = CSLDuplicate( papszList );
     nAllocation = nCount+1;
 }
@@ -312,12 +313,15 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
     Count();
     MakeOurOwnCopy();
 
+    CPLFree( papszList[iKey] );
     if( pszValue == NULL ) // delete entry
     {
-        CPLFree( papszList[iKey] );
         while( papszList[iKey+1] != NULL )
+        {
             papszList[iKey] = papszList[iKey+1];
-        papszList[iKey+1] = NULL;
+            iKey ++;
+        }
+        papszList[iKey] = NULL;
         nCount--;
     }
     else
