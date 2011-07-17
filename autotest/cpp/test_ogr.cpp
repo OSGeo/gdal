@@ -96,8 +96,12 @@ namespace tut
         OGRSFDriverRegistrar* reg = NULL;
         reg = OGRSFDriverRegistrar::GetRegistrar();
         ensure(NULL != reg);
+
+#ifdef WIN32CE
+        // This is only restricted on WIN32CE. 
         ensure_equals("OGR registered drivers count doesn't match",
             reg->GetDriverCount(), drv_count_);
+#endif
     }
 
     // Test if Shapefile driver is registered
