@@ -369,6 +369,9 @@ namespace tut
     void object::test<6>()
     {
         /*
+         * NOTE: This test will generally fail if iconv() is not
+         *       linked in.
+         *
          * CPLRecode() will be tested using the test file containing
          * a list of strings of the same text in different encoding. The
          * string is non-ASCII to avoid trivial transformations. Test file
@@ -451,6 +454,59 @@ namespace tut
         }
 
         fin.close();
+    }
+
+/************************************************************************/
+/*                         CPLStringList tests                          */
+/************************************************************************/
+    template<>
+    template<>
+    void object::test<7>()
+    {
+        CPLStringList  oCSL;
+
+        ensure( oCSL.List() == NULL );
+        
+        oCSL.AddString( "def" );
+        oCSL.AddString( "abc" );
+
+        ensure_equals( oCSL.Count(), 2 );
+        ensure( EQUAL(oCSL[0], "def") );
+        ensure( EQUAL(oCSL[1], "abc") );
+        ensure( oCSL[17] == NULL );
+        ensure( oCSL[-1] == NULL );
+        ensure_equals( oCSL.FindString("abc"), 1 );
+
+        CSLDestroy( oCSL.StealList() );
+        ensure_equals( oCSL.Count(), 0 );
+        ensure( oCSL.List() == NULL );
+        
+        // Test that the list will make an internal copy when needed to
+        // modify a read-only list. 
+
+        oCSL.AddString( "def" );
+        oCSL.AddString( "abc" );
+
+        CPLStringList  oCopy( oCSL.List(), FALSE );
+
+        ensure_equals( oCSL.List(), oCopy.List() );
+        ensure_equals( oCSL.Count(), oCopy.Count() );
+
+        oCopy.AddString( "xyz" );
+        ensure( oCSL.List() != oCopy.List() );
+        ensure_equals( oCopy.Count(), 3 );
+        ensure_equals( oCSL.Count(), 2 );
+        ensure( EQUAL(oCopy[2], "xyz") );
+
+        // Test some name=value handling stuff. 
+        CPLStringList oNVL;
+
+        oNVL.AddNameValue( "KEY1", "VALUE1" );
+        oNVL.AddNameValue( "2KEY", "VALUE2" );
+        ensure_equals( oNVL.Count(), 2 );
+        ensure( EQUALS(oNVL.
+
+        oNVL.AddNameValue( "KEY1", "VALUE3" );
     }
 
 } // namespace tut

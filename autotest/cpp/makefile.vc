@@ -9,7 +9,8 @@
 #############################################################################
 # CONFIGURATION
 
-GDAL_VERSION = 17
+GDAL_VERSION = 19dev
+GDAL_ROOT = ..\..
 
 # GDAL library
 !IFNDEF GDAL_ROOT
@@ -19,18 +20,24 @@ GDAL_ROOT = ..\..\gdal
 GDAL_LIB = $(GDAL_ROOT)\gdal_i.lib
 
 # GEOS sources location, DLL and Import library
-GEOS_ROOT = e:\geos-3.2.0
-GEOS_LIB = $(GEOS_ROOT)\source\geos_c_i.lib
-GEOS_DLL = geos_c.dll
+#GEOS_ROOT = e:\geos-3.2.0
+#GEOS_LIB = $(GEOS_ROOT)\source\geos_c_i.lib
+#GEOS_DLL = geos_c.dll
 
 # PROJ.4 sources location, DLL and Import library
-PROJ4_ROOT = e:\proj-4.7.0
-PROJ4_LIB = $(PROJ4_ROOT)\src\proj_i.lib
-PROJ4_DLL = proj.dll
+#PROJ4_ROOT = e:\proj-4.7.0
+#PROJ4_LIB = $(PROJ4_ROOT)\src\proj_i.lib
+#PROJ4_DLL = proj.dll
 
 # Specification of enabled GDAL drivers
+#GDAL_SUPPORT = \
+#    -DHAVE_GEOS \
+#    -DOGR_ENABLED \
+#    -DSHAPE_ENABLED \
+#    -DFRMT_aaigrid \
+#    -DFRMT_dted \
+#    -DFRMT_gtiff
 GDAL_SUPPORT = \
-    -DHAVE_GEOS \
     -DOGR_ENABLED \
     -DSHAPE_ENABLED \
     -DFRMT_aaigrid \
@@ -47,8 +54,6 @@ INCLUDE_DIR = \
     -I$(GDAL_ROOT)\gcore \
     -I$(GDAL_ROOT)\ogr \
     -I$(GDAL_ROOT)\ogr/ogrsf_frmts \
-    -I$(GEOS_ROOT)\capi \
-    -I$(GEOS_ROOT)\source\headers \
     -I$(PROJ4_ROOT)\src
 
 OBJ = \
@@ -70,7 +75,8 @@ OBJ = \
 RM = -del
 
 # Always compile tests in debug mode
-OPTFLAGS = /nologo /MDd /EHsc /W3 /Od /Zi
+OPTFLAGS = /nologo /MDd /EHsc /W3 /Od /Zi \
+	 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
 
 # Preprocessor definitions
 CPPFLAGS = /D "WIN32" /D "_DEBUG" /D "UNICODE" /D "_UNICODE" /D "_CONSOLE" \
@@ -100,10 +106,10 @@ copy-gdal-dll:
     copy $(GDAL_ROOT)\$(GDAL_DLL) .
 
 copy-geos-dll:
-    copy $(GEOS_ROOT)\source\$(GEOS_DLL) .
+#    copy $(GEOS_ROOT)\source\$(GEOS_DLL) .
 
 copy-proj4-dll:
-    copy $(PROJ4_ROOT)\src\$(PROJ4_DLL) .
+#    copy $(PROJ4_ROOT)\src\$(PROJ4_DLL) .
     
 $(GDAL_DLL):
     cd $(GDAL_ROOT)
