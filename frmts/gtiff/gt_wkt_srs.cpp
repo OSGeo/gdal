@@ -77,6 +77,9 @@ GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename,
                                     GUIntBig *pnDataLength, 
                                     int bUnlinkAndSeize );
 
+int CPL_DLL CSLTestBoolean( const char *pszValue );
+const char CPL_DLL * CPL_STDCALL CPLGetConfigOption( const char *, const char * );
+									
 /* Those stuff are redefined in external libgeotiff cpl_serv.h */
 /* as macros. Let's use GDAL functions instead */
 /* E.Rouault : I'm wondering why we just don't #define CPL_SERV_H_INCLUDED */
