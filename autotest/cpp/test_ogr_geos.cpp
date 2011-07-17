@@ -424,7 +424,7 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("GEOS support is not available", false);
+        CPLDebug( "TEST", "GEOS support is not available" );
     }
 
 #endif // ndef HAVE_GEOS

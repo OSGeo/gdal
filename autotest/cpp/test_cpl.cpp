@@ -504,9 +504,42 @@ namespace tut
         oNVL.AddNameValue( "KEY1", "VALUE1" );
         oNVL.AddNameValue( "2KEY", "VALUE2" );
         ensure_equals( oNVL.Count(), 2 );
-        ensure( EQUALS(oNVL.
+        ensure( EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE2") );
+        ensure( oNVL.FetchNameValue("MISSING") == NULL );
 
         oNVL.AddNameValue( "KEY1", "VALUE3" );
+        ensure( EQUAL(oNVL.FetchNameValue("KEY1"),"VALUE1") );
+        ensure( EQUAL(oNVL[2],"KEY1=VALUE3") );
+        ensure( EQUAL(oNVL.FetchNameValueDef("MISSING","X"),"X") );
+
+        oNVL.SetNameValue( "2KEY", "VALUE4" );
+        ensure( EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE4") );
+        ensure_equals( oNVL.Count(), 3 );
+
+        // make sure deletion works.
+        oNVL.SetNameValue( "2KEY", NULL );
+        ensure( oNVL.FetchNameValue("2KEY") == NULL );
+        ensure_equals( oNVL.Count(), 2 );
+
+        // Test boolean support.
+        ensure_equals( oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
+        ensure_equals( oNVL.FetchBoolean( "BOOL", FALSE ), FALSE );
+
+        oNVL.SetNameValue( "BOOL", "YES" );
+        ensure_equals( oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
+        ensure_equals( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
+
+        oNVL.SetNameValue( "BOOL", "1" );
+        ensure_equals( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
+
+        oNVL.SetNameValue( "BOOL", "0" );
+        ensure_equals( oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
+
+        oNVL.SetNameValue( "BOOL", "FALSE" );
+        ensure_equals( oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
+
+        oNVL.SetNameValue( "BOOL", "ON" );
+        ensure_equals( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
     }
 
 } // namespace tut
