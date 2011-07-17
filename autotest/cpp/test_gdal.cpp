@@ -79,8 +79,10 @@ namespace tut
     template<>
     void object::test<2>()
     {
+#ifdef WIN32CE
         ensure_equals("GDAL registered drivers count doesn't match",
             GDALGetDriverCount(), drv_count_);
+#endif
     }
 
     // Test if AAIGrid driver is registered
