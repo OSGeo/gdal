@@ -1206,10 +1206,6 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     poMulti->addGeometryDirectly( poLine );
                 }
             }
-            (*ppoGeom)->setCoordinateDimension( bHasZ ? 3 : 2 );
-            
-            return OGRERR_NONE;
-        
         } /* ARC */
 
 /* -------------------------------------------------------------------- */
@@ -1276,9 +1272,6 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     delete[] tabPolygons;
                 }
             }
-            (*ppoGeom)->setCoordinateDimension( bHasZ ? 3 : 2 );
-            return OGRERR_NONE;
-
         } /* polygon */
 
 /* -------------------------------------------------------------------- */
