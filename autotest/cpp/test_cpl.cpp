@@ -540,6 +540,61 @@ namespace tut
 
         oNVL.SetNameValue( "BOOL", "ON" );
         ensure_equals( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
+        
+        // Test assignmenet operator.
+        {
+            CPLStringList oTemp;
+            oTemp.AddString("test");
+            oCopy = oTemp;
+        }
+        ensure( EQUAL(oCopy[0],"test") );
+        
+        // Test copy constructor.
+        CPLStringList oCopy2(oCopy);
+        oCopy.Clear();
+        ensure( EQUAL(oCopy2[0],"test") );
+        
+        // Test sorting
+        CPLStringList oTestSort;
+        oTestSort.AddNameValue("Z", "1");
+        oTestSort.AddNameValue("L", "2");
+        oTestSort.AddNameValue("T", "3");
+        oTestSort.AddNameValue("A", "4");
+        oTestSort.Sort();
+        ensure( EQUAL(oTestSort[0],"A=4") );
+        ensure( EQUAL(oTestSort[1],"L=2") );
+        ensure( EQUAL(oTestSort[2],"T=3") );
+        ensure( EQUAL(oTestSort[3],"Z=1") );
+        ensure_equals( oTestSort[4], (const char*)NULL );
+        
+        // Test FetchNameValue() in a sorted list
+        ensure( EQUAL(oTestSort.FetchNameValue("A"),"4") );
+        ensure( EQUAL(oTestSort.FetchNameValue("L"),"2") );
+        ensure( EQUAL(oTestSort.FetchNameValue("T"),"3") );
+        ensure( EQUAL(oTestSort.FetchNameValue("Z"),"1") );
+        
+        // Test AddNameValue() in a sorted list
+        oTestSort.AddNameValue("B", "5");
+        ensure( EQUAL(oTestSort[0],"A=4") );
+        ensure( EQUAL(oTestSort[1],"B=5") );
+        ensure( EQUAL(oTestSort[2],"L=2") );
+        ensure( EQUAL(oTestSort[3],"T=3") );
+        ensure( EQUAL(oTestSort[4],"Z=1") );
+        ensure_equals( oTestSort[5], (const char*)NULL );
+        
+        // Test SetNameValue() of an existing item in a sorted list
+        oTestSort.SetNameValue("Z", "6");
+        ensure( EQUAL(oTestSort[4],"Z=6") );
+        
+        // Test SetNameValue() of a non-existing item in a sorted list
+        oTestSort.SetNameValue("W", "7");
+        ensure( EQUAL(oTestSort[0],"A=4") );
+        ensure( EQUAL(oTestSort[1],"B=5") );
+        ensure( EQUAL(oTestSort[2],"L=2") );
+        ensure( EQUAL(oTestSort[3],"T=3") );
+        ensure( EQUAL(oTestSort[4],"W=7") );
+        ensure( EQUAL(oTestSort[5],"Z=6") );
+        ensure_equals( oTestSort[6], (const char*)NULL );
     }
 
 } // namespace tut

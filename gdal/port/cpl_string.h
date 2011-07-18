@@ -294,7 +294,7 @@ class CPL_DLL CPLStringList
   public:
     CPLStringList();
     CPLStringList( char **papszList, int bTakeOwnership=TRUE );
-    CPLStringList( CPLStringList& oOther );
+    CPLStringList( const CPLStringList& oOther );
     ~CPLStringList();
 
     CPLStringList &Clear();
@@ -326,6 +326,7 @@ class CPL_DLL CPLStringList
 
     CPLStringList &Assign( char **papszList, int bTakeOwnership=TRUE );
     CPLStringList &operator=(char **papszList) { return Assign( papszList, TRUE ); }
+    CPLStringList &operator=(const CPLStringList& oOther);
 
     char * operator[](int i);
     char * operator[](size_t i) { return (*this)[(int)i]; }
