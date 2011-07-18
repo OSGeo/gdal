@@ -318,13 +318,9 @@ class CPL_DLL CPLStringList
     { return CSLPartialFindString( papszList, pszNeedle ); }
 
     int    FindName( const char *pszName ) const;
-    int    FetchBoolean( const char *pszKey, int bDefault ) const
-    { return CSLFetchBoolean( papszList, pszKey, bDefault ); }
-    const char *FetchNameValue( const char *pszKey ) const
-    { return CSLFetchNameValue( papszList, pszKey ); }
-    const char *FetchNameValueDef( const char *pszKey, const char *pszDefault ) const
-    { return CSLFetchNameValueDef( papszList, pszKey, pszDefault ); }
-    
+    int    FetchBoolean( const char *pszKey, int bDefault ) const;
+    const char *FetchNameValue( const char *pszKey ) const;
+    const char *FetchNameValueDef( const char *pszKey, const char *pszDefault ) const;
     CPLStringList &AddNameValue( const char *pszKey, const char *pszValue );
     CPLStringList &SetNameValue( const char *pszKey, const char *pszValue );
 

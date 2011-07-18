@@ -63,10 +63,9 @@ CPLStringList::CPLStringList( char **papszListIn, int bTakeOwnership )
 
 /************************************************************************/
 /*                           CPLStringList()                            */
-/*                                                                      */
-/*      Copy constructor.                                               */
 /************************************************************************/
 
+//! Copy constructor
 CPLStringList::CPLStringList( CPLStringList &oOther )
 
 {
@@ -464,6 +463,14 @@ static int llCompareStr(const void *a, const void *b)
 
 /**
  * Sort the entries in the list and mark list sorted.
+ *
+ * Note that once put into "sorted" mode, the CPLStringList will attempt to
+ * keep things in sorted order through calls to AddString(), 
+ * AddStringDirectly(), AddNameValue(), SetNameValue(). Complete list
+ * assignments (via Assign() and operator= will clear the sorting state.
+ * When in sorted order FindName(), FetchNameValue() and FetchNameValueDef()
+ * will do a binary search to find the key, substantially improve lookup
+ * performance in large lists.
  */
 
 CPLStringList &CPLStringList::Sort()
@@ -481,6 +488,18 @@ CPLStringList &CPLStringList::Sort()
 /************************************************************************/
 /*                              FindName()                              */
 /************************************************************************/
+
+/**
+ * Get index of given name/value keyword.
+ * 
+ * Note that this search is for a line in the form name=value or name:value. 
+ * Use FindString() or PartialFindString() for searches not based on name=value
+ * pairs. 
+ *
+ * @param pszKey the name to search for.  
+ *
+ * @return the string list index of this name, or -1 on failure.
+ */
 
 int CPLStringList::FindName( const char *pszKey ) const
 
@@ -511,8 +530,130 @@ int CPLStringList::FindName( const char *pszKey ) const
 }
 
 /************************************************************************/
+/*                            FetchBoolean()                            */
+/************************************************************************/
+/**
+ *
+ * Check for boolean key value.
+ *
+ * In a CPLStringList of "Name=Value" pairs, look to see if there is a key
+ * with the given name, and if it can be interpreted as being TRUE.  If
+ * the key appears without any "=Value" portion it will be considered true. 
+ * If the value is NO, FALSE or 0 it will be considered FALSE otherwise
+ * if the key appears in the list it will be considered TRUE.  If the key
+ * doesn't appear at all, the indicated default value will be returned. 
+ * 
+ * @param papszStrList the string list to search.
+ * @param pszKey the key value to look for (case insensitive).
+ * @param bDefault the value to return if the key isn't found at all. 
+ * 
+ * @return TRUE or FALSE 
+ */
+
+int CPLStringList::FetchBoolean( const char *pszKey, int bDefault ) const
+
+{
+    const char *pszValue = FetchNameValue( pszKey );
+
+    if( pszValue == NULL )
+        return bDefault;
+    else
+        return CSLTestBoolean( pszValue );
+}
+
+/************************************************************************/
+/*                           FetchNameValue()                           */
+/************************************************************************/
+
+/**
+ * Fetch value associated with this key name.
+ *
+ * If this list sorted, a fast binary search is done, otherwise a linear
+ * scan is done.  Name lookup is case insensitive. 
+ * 
+ * @param pszName the key name to search for.
+ * 
+ * @return the corresponding value or NULL if not found.  The returned string 
+ * should not be modified and points into internal object state that may 
+ * change on future calls. 
+ */
+
+const char *CPLStringList::FetchNameValue( const char *pszName ) const
+
+{
+    int iKey = FindName( pszName );
+
+    if( iKey == -1 )
+        return NULL;
+
+    CPLAssert( papszList[iKey][strlen(pszName)] == '='
+               || papszList[iKey][strlen(pszName)] == ':' );
+
+    return papszList[iKey] + strlen(pszName)+1;
+}
+
+/************************************************************************/
+/*                         FetchNameValueDef()                          */
+/************************************************************************/
+
+/**
+ * Fetch value associated with this key name.
+ *
+ * If this list sorted, a fast binary search is done, otherwise a linear
+ * scan is done.  Name lookup is case insensitive. 
+ * 
+ * @param pszName the key name to search for.
+ * @param pszDefault the default value returned if the named entry isn't found.
+ * 
+ * @return the corresponding value or the passed default if not found. 
+ */
+
+const char *CPLStringList::FetchNameValueDef( const char *pszName,
+                                              const char *pszDefault ) const
+
+{
+    const char *pszValue = FetchNameValue( pszName );
+    if( pszValue == NULL )
+        return pszDefault;
+    else
+        return pszValue;
+}
+
+/************************************************************************/
+/*                            InsertString()                            */
+/************************************************************************/
+
+/**
+ * \fn CPLStringList *CPLStringList::InsertString( int nInsertAtLineNo,
+ *                                                 const char *pszNewLine );
+ *
+ * \brief Insert into the list at identified location.
+ *
+ * This method will insert a string into the list at the identified
+ * location.  The insertion point must be within or at the end of the list.
+ * The following entries are pushed down to make space.
+ *
+ * @param nInsertAtLineNo the line to insert at, zero to insert at front.
+ * @param pszNewLine to the line to insert.  This string will be copied.
+ */
+
+
+/************************************************************************/
 /*                        InsertStringDirectly()                        */
 /************************************************************************/
+
+/**
+ * Insert into the list at identified location.
+ *
+ * This method will insert a string into the list at the identified
+ * location.  The insertion point must be within or at the end of the list.
+ * The following entries are pushed down to make space.
+ *
+ * @param nInsertAtLineNo the line to insert at, zero to insert at front.
+ * @param pszNewLine to the line to insert, the ownership of this string
+ * will be taken over the by the object.  It must have been allocated on the
+ * heap.
+ */
 
 CPLStringList &CPLStringList::InsertStringDirectly( int nInsertAtLineNo, 
                                                     char *pszNewLine )
