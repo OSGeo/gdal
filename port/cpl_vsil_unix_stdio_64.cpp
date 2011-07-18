@@ -451,36 +451,18 @@ char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
 {
     DIR           *hDir;
     struct dirent *psDirEntry;
-    char          **papszDir = NULL;
+    CPLStringList  oDir;
 
     if (strlen(pszPath) == 0)
         pszPath = ".";
 
     if ( (hDir = opendir(pszPath)) != NULL )
     {
-        /* In case of really big number of files in the directory, CSLAddString */
-        /* can be slow (see #2158). We then directly build the list. */
-        int nItems=0;
-        int nAllocatedItems=0;
+        // we want to avoid returning NULL for an empty list.
+        oDir.Assign( (char**) CPLCalloc(2,sizeof(char*)) );
+
         while( (psDirEntry = readdir(hDir)) != NULL )
-        {
-            if (nItems == 0)
-            {
-                papszDir = (char**) CPLCalloc(2,sizeof(char*));
-                nAllocatedItems = 1;
-            }
-            else if (nItems >= nAllocatedItems)
-            {
-                nAllocatedItems = nAllocatedItems * 2;
-                papszDir = (char**)CPLRealloc(papszDir, 
-                                              (nAllocatedItems+2)*sizeof(char*));
-            }
-
-            papszDir[nItems] = CPLStrdup(psDirEntry->d_name);
-            papszDir[nItems+1] = NULL;
-
-            nItems++;
-        }
+            oDir.AddString( psDirEntry->d_name );
 
         closedir( hDir );
     }
@@ -491,7 +473,7 @@ char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
          */
     }
 
-    return papszDir;
+    return oDir.StealList();
 }
 
 /************************************************************************/

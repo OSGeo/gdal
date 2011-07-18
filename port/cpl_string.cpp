@@ -791,8 +791,7 @@ char ** CSLTokenizeString2( const char * pszString,
 {
     if( pszString == NULL )
         return (char **) CPLCalloc(sizeof(char *),1);
-    char        **papszRetList = NULL;
-    int         nRetMax = 0, nRetLen = 0;
+    CPLStringList oRetList;
     char        *pszToken;
     int         nTokenMax, nTokenLen;
     int         bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS);
@@ -900,43 +899,29 @@ char ** CSLTokenizeString2( const char * pszString,
          * Add the token.
          */
         if( pszToken[0] != '\0' || bAllowEmptyTokens )
-        {
-            if( nRetLen >= nRetMax - 1 )
-            {
-                nRetMax = nRetMax * 2 + 10;
-                papszRetList = (char **) 
-                    CPLRealloc(papszRetList, sizeof(char*) * nRetMax );
-            }
-
-            papszRetList[nRetLen++] = CPLStrdup( pszToken );
-            papszRetList[nRetLen] = NULL;
-        }
+            oRetList.AddString( pszToken );
     }
 
     /*
      * If the last token was empty, then we need to capture
      * it now, as the loop would skip it.
      */
-    if( *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0 
+    if( *pszString == '\0' && bAllowEmptyTokens && oRetList.Count() > 0 
         && strchr(pszDelimiters,*(pszString-1)) != NULL )
     {
-        if( nRetLen >= nRetMax - 1 )
-        {
-            nRetMax = nRetMax * 2 + 10;
-            papszRetList = (char **) 
-                CPLRealloc(papszRetList, sizeof(char*) * nRetMax );
-        }
-
-        papszRetList[nRetLen++] = CPLStrdup("");
-        papszRetList[nRetLen] = NULL;
+        oRetList.AddString( "" );
     }
-
-    if( papszRetList == NULL )
-        papszRetList = (char **) CPLCalloc(sizeof(char *),1);
 
     CPLFree( pszToken );
 
-    return papszRetList;
+    if( oRetList.List() == NULL )
+    {
+        // we prefer to return empty lists as a pointer to 
+        // a null pointer since some client code might depend on this.
+        oRetList.Assign( (char**) CPLCalloc(sizeof(char**),1) );
+    }
+
+    return oRetList.StealList();
 }
 
 /**********************************************************************
