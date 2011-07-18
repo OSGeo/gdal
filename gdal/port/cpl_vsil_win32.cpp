@@ -599,12 +599,9 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
         
         if ( (hFile = _wfindfirst( pwszFileSpec, &c_file )) != -1L )
         {
-            // we want to avoid returning NULL for an empty list.
-            oDir.Assign( (char**) CPLCalloc(2,sizeof(char*)) );
-
             do
             {
-                oDir.AddString(
+                oDir.AddStringDirectly(
                     CPLRecodeFromWChar(c_file.name,CPL_ENC_UCS2,CPL_ENC_UTF8));
             } while( _wfindnext( hFile, &c_file ) == 0 );
             
@@ -627,7 +624,8 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
     {
         struct _finddata_t c_file;
         intptr_t hFile;
-        char    *pszFileSpec, **papszDir = NULL;
+        char    *pszFileSpec;
+        CPLStringList oDir;
         
         if (strlen(pszPath) == 0)
             pszPath = ".";
@@ -636,28 +634,9 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
         
         if ( (hFile = _findfirst( pszFileSpec, &c_file )) != -1L )
         {
-            /* In case of really big number of files in the directory, CSLAddString */
-            /* can be slow (see #2158). We then directly build the list. */
-            int nItems=0;
-            int nAllocatedItems=0;
             do
             {
-                if (nItems == 0)
-                {
-                    papszDir = (char**) CPLCalloc(2,sizeof(char*));
-                    nAllocatedItems = 1;
-                }
-                else if (nItems >= nAllocatedItems)
-                {
-                    nAllocatedItems = nAllocatedItems * 2;
-                    papszDir = (char**)CPLRealloc(papszDir, 
-                                                  (nAllocatedItems+2)*sizeof(char*));
-                }
-                
-                papszDir[nItems] = CPLStrdup(c_file.name);
-                papszDir[nItems+1] = NULL;
-                
-                nItems++;
+                oDir.AddString(c_file.name);
             } while( _findnext( hFile, &c_file ) == 0 );
             
             _findclose( hFile );
@@ -670,8 +649,8 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
         }
 
         CPLFree(pszFileSpec);
-
-        return papszDir;
+        
+        return oDir.StealList();
     }
 }
 
