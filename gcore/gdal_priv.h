@@ -73,7 +73,7 @@ class CPL_DLL GDALMultiDomainMetadata
 {
 private:
     char **papszDomainList;
-    char ***papapszMetadataLists;
+    CPLStringList **papoMetadataLists;
 
 public:
     GDALMultiDomainMetadata();

@@ -1196,7 +1196,7 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
                                        char* pszData,
                                        int* pbGotFileList)
 {
-    CPLStringList oasFileList;
+    CPLStringList oFileList;
     char* iter = pszData;
     char* c;
     int nCount = 0;
@@ -1304,7 +1304,7 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
                 /* shttpd links include slashes from the root directory. Skip them */
                 while(strchr(beginFilename, '/'))
                     beginFilename = strchr(beginFilename, '/') + 1;
-                oasFileList.AddString( beginFilename );
+                oFileList.AddString( beginFilename );
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "File[%d] = %s", nCount, beginFilename);
                 nCount ++;
@@ -1313,7 +1313,7 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
         iter = c + 1;
     }
     
-    return oasFileList.StealList();
+    return oFileList.StealList();
 }
 
 /************************************************************************/
