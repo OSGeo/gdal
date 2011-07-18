@@ -39,10 +39,7 @@ CPL_CVSID("$Id$");
 CPLStringList::CPLStringList()
 
 {
-    papszList = NULL;
-    nCount = 0;
-    nAllocation = 0;
-    bOwnList = FALSE;
+    Initialize();
 }
 
 /************************************************************************/
@@ -60,11 +57,40 @@ CPLStringList::CPLStringList()
 CPLStringList::CPLStringList( char **papszListIn, int bTakeOwnership )
 
 {
+    Initialize();
+    Assign( papszListIn, bTakeOwnership );
+}
+
+/************************************************************************/
+/*                           CPLStringList()                            */
+/*                                                                      */
+/*      Copy constructor.                                               */
+/************************************************************************/
+
+CPLStringList::CPLStringList( CPLStringList &oOther )
+
+{
+    Initialize();
+    Assign( oOther.List(), FALSE );
+
+    // We don't want to just retain a reference to the others list
+    // as we don't want to make assumptions about it's lifetime that
+    // might surprise the client developer.
+    MakeOurOwnCopy();
+}
+
+/************************************************************************/
+/*                             Initialize()                             */
+/************************************************************************/
+
+void CPLStringList::Initialize()
+
+{
     papszList = NULL;
     nCount = 0;
     nAllocation = 0;
     bOwnList = FALSE;
-    Assign( papszListIn, bTakeOwnership );
+    bIsSorted = FALSE;
 }
 
 /************************************************************************/
@@ -129,6 +155,7 @@ CPLStringList &CPLStringList::Assign( char **papszListIn, int bTakeOwnership )
         nCount = -1;      // unknown
 
     nAllocation = 0;  
+    bIsSorted = FALSE;
 
     return *this;
 }
@@ -234,6 +261,8 @@ CPLStringList &CPLStringList::AddStringDirectly( char *pszNewString )
     papszList[nCount++] = pszNewString;
     papszList[nCount] = NULL;
 
+    bIsSorted = FALSE;
+
     return *this;
 }
 
@@ -278,10 +307,27 @@ CPLStringList &CPLStringList::AddNameValue( const char  *pszKey,
 
     MakeOurOwnCopy();
 
+/* -------------------------------------------------------------------- */
+/*      Format the line.                                                */
+/* -------------------------------------------------------------------- */
     char *pszLine;
     pszLine = (char *) CPLMalloc(strlen(pszKey)+strlen(pszValue)+2);
     sprintf( pszLine, "%s=%s", pszKey, pszValue );
-    AddStringDirectly( pszLine );
+
+/* -------------------------------------------------------------------- */
+/*      If we don't need to keep the sort order things are pretty       */
+/*      straight forward.                                               */
+/* -------------------------------------------------------------------- */
+    if( !IsSorted() )
+        return AddStringDirectly( pszLine );
+
+/* -------------------------------------------------------------------- */
+/*      Find the proper insertion point.                                */
+/* -------------------------------------------------------------------- */
+    CPLAssert( IsSorted() );
+    int iKey = FindSortedInsertionPoint( pszLine );
+    InsertStringDirectly( iKey, pszLine );
+    bIsSorted = TRUE; // we have actually preserved sort order.
 
     return *this;
 }
@@ -316,12 +362,14 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
     CPLFree( papszList[iKey] );
     if( pszValue == NULL ) // delete entry
     {
-        while( papszList[iKey+1] != NULL )
+
+        // shift everything down by one.
+        do 
         {
             papszList[iKey] = papszList[iKey+1];
-            iKey ++;
-        }
-        papszList[iKey] = NULL;
+        } 
+        while( papszList[iKey++] != NULL );
+
         nCount--;
     }
     else
@@ -329,7 +377,7 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
         char *pszLine;
         pszLine = (char *) CPLMalloc(strlen(pszKey)+strlen(pszValue)+2);
         sprintf( pszLine, "%s=%s", pszKey, pszValue );
-        
+
         papszList[iKey] = pszLine;
     }
 
@@ -397,4 +445,133 @@ char **CPLStringList::StealList()
     nAllocation = 0;
     
     return papszRetList;
+}
+
+/************************************************************************/
+/*                            llCompareStr()                            */
+/*                                                                      */
+/*      Note this is case insensitive!  This is because we normally     */
+/*      treat key value keywords as case insensitive.                   */
+/************************************************************************/
+static int llCompareStr(const void *a, const void *b)
+{
+	return STRCASECMP((*(const char **)a),(*(const char **)b));
+}
+
+/************************************************************************/
+/*                                Sort()                                */
+/************************************************************************/
+
+/**
+ * Sort the entries in the list and mark list sorted.
+ */
+
+CPLStringList &CPLStringList::Sort()
+
+{
+    Count();
+    MakeOurOwnCopy();
+
+    qsort( papszList, nCount, sizeof(char*), llCompareStr );
+    bIsSorted = TRUE;
+    
+    return *this;
+}
+
+/************************************************************************/
+/*                              FindName()                              */
+/************************************************************************/
+
+int CPLStringList::FindName( const char *pszKey ) const
+
+{
+    if( !IsSorted() )
+        return CSLFindName( papszList, pszKey );
+
+    // If we are sorted, we can do an optimized binary search. 
+    int iStart=0, iEnd=nCount-1;
+    int nKeyLen = strlen(pszKey);
+
+    while( iStart <= iEnd )
+    {
+        int iMiddle = (iEnd+iStart)/2;
+        const char *pszMiddle = papszList[iMiddle];
+
+        if (EQUALN(pszMiddle, pszKey, nKeyLen)
+            && (pszMiddle[nKeyLen] == '=' || pszMiddle[nKeyLen] == ':') )
+            return iMiddle;
+
+        if( STRCASECMP(pszKey,pszMiddle) < 0 )
+            iEnd = iMiddle-1;
+        else
+            iStart = iMiddle+1;
+    }
+
+    return -1;
+}
+
+/************************************************************************/
+/*                        InsertStringDirectly()                        */
+/************************************************************************/
+
+CPLStringList &CPLStringList::InsertStringDirectly( int nInsertAtLineNo, 
+                                                    char *pszNewLine )
+
+{
+    if( nCount == -1 )
+        Count();
+
+    EnsureAllocation( nCount+1 );
+
+    if( nInsertAtLineNo < 0 || nInsertAtLineNo > nCount )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "CPLStringList::InsertString() requested beyond list end." );
+        return *this;
+    }
+
+    bIsSorted = FALSE;
+
+    for( int i = nCount; i > nInsertAtLineNo; i-- )
+        papszList[i] = papszList[i-1];
+
+    papszList[nInsertAtLineNo] = pszNewLine;
+    papszList[++nCount] = NULL;
+
+    return *this;
+}
+
+/************************************************************************/
+/*                      FindSortedInsertionPoint()                      */
+/*                                                                      */
+/*      Find the location at which the indicated line should be         */
+/*      inserted in order to keep things in sorted order.               */
+/************************************************************************/
+
+int CPLStringList::FindSortedInsertionPoint( const char *pszLine )
+
+{
+    CPLAssert( IsSorted() );
+    
+    int iStart=0, iEnd=nCount-1;
+
+    while( iStart <= iEnd )
+    {
+        int iMiddle = (iEnd+iStart)/2;
+        const char *pszMiddle = papszList[iMiddle];
+
+        if( STRCASECMP(pszLine,pszMiddle) < 0 )
+            iEnd = iMiddle-1;
+        else
+            iStart = iMiddle+1;
+    }
+
+    iEnd++;
+    CPLAssert( iEnd >= 0 && iEnd <= nCount );
+    CPLAssert( iEnd == 0 
+               || STRCASECMP(pszLine,papszList[iEnd-1]) >= 0 );
+    CPLAssert( iEnd == nCount
+               || STRCASECMP(pszLine,papszList[iEnd]) <= 0 );
+    
+    return iEnd;
 }
