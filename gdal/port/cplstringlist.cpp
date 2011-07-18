@@ -85,13 +85,16 @@ CPLStringList::CPLStringList( const CPLStringList &oOther )
 
 CPLStringList &CPLStringList::operator=(const CPLStringList& oOther)
 {
-    Assign( oOther.papszList, FALSE );
+    if (this != &oOther)
+    {
+        Assign( oOther.papszList, FALSE );
 
-    // We don't want to just retain a reference to the others list
-    // as we don't want to make assumptions about it's lifetime that
-    // might surprise the client developer.
-    MakeOurOwnCopy();
-    bIsSorted = oOther.bIsSorted;
+        // We don't want to just retain a reference to the others list
+        // as we don't want to make assumptions about it's lifetime that
+        // might surprise the client developer.
+        MakeOurOwnCopy();
+        bIsSorted = oOther.bIsSorted;
+    }
     
     return *this;
 }

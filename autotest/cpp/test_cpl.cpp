@@ -549,6 +549,9 @@ namespace tut
         }
         ensure( EQUAL(oCopy[0],"test") );
         
+        oCopy = oCopy;
+        ensure( EQUAL(oCopy[0],"test") );
+        
         // Test copy constructor.
         CPLStringList oCopy2(oCopy);
         oCopy.Clear();
