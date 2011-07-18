@@ -66,16 +66,34 @@ CPLStringList::CPLStringList( char **papszListIn, int bTakeOwnership )
 /************************************************************************/
 
 //! Copy constructor
-CPLStringList::CPLStringList( CPLStringList &oOther )
+CPLStringList::CPLStringList( const CPLStringList &oOther )
 
 {
     Initialize();
-    Assign( oOther.List(), FALSE );
+    Assign( oOther.papszList, FALSE );
 
     // We don't want to just retain a reference to the others list
     // as we don't want to make assumptions about it's lifetime that
     // might surprise the client developer.
     MakeOurOwnCopy();
+    bIsSorted = oOther.bIsSorted;
+}
+
+/************************************************************************/
+/*                             operator=()                              */
+/************************************************************************/
+
+CPLStringList &CPLStringList::operator=(const CPLStringList& oOther)
+{
+    Assign( oOther.papszList, FALSE );
+
+    // We don't want to just retain a reference to the others list
+    // as we don't want to make assumptions about it's lifetime that
+    // might surprise the client developer.
+    MakeOurOwnCopy();
+    bIsSorted = oOther.bIsSorted;
+    
+    return *this;
 }
 
 /************************************************************************/
