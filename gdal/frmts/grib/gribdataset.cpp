@@ -238,7 +238,7 @@ CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
-    if (!m_Grib_Data)
+    if( !m_Grib_Data )
     {
         GRIBDataset *poGDS = (GRIBDataset *) poDS;
 
@@ -246,6 +246,11 @@ CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         // we don't seem to have any way to detect errors in this!
         ReadGribData(grib_fp, start, subgNum, &m_Grib_Data, &m_Grib_MetaData);
+        if( !m_Grib_Data )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Out of memory." );
+            return CE_Failure;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Check that this band matches the dataset as a whole, size       */
@@ -546,7 +551,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
             double * data = NULL;
             grib_MetaData* metaData;
             GRIBRasterBand::ReadGribData(grib_fp, 0, Inv[i].subgNum, &data, &metaData);
-            if (metaData->gds.Nx < 1 || metaData->gds.Ny < 1 )
+            if (data == 0 || metaData->gds.Nx < 1 || metaData->gds.Ny < 1)
             {
                 CPLError( CE_Failure, CPLE_OpenFailed, 
                           "%s is a grib file, but no raster dataset was successfully identified.",

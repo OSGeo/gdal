@@ -1797,6 +1797,11 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       *grib_DataLen = meta->gds.numPts;
       *Grib_Data = (double *) realloc ((void *) (*Grib_Data),
                                        (*grib_DataLen) * sizeof (double));
+      if (!(*Grib_Data))
+      {
+        *grib_DataLen = 0;
+        return -1;
+      }
    }
    grib_Data = *Grib_Data;
 
