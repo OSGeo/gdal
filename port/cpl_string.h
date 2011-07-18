@@ -218,9 +218,7 @@ CPL_C_END
 #  pragma warning(disable:4251 4275 4786)
 #endif
 
-
-
-
+//! Convenient string class based on std::string.
 class CPL_DLL CPLString : public gdal_std_string
 {
 public:
@@ -266,7 +264,6 @@ public:
     size_t    ifind( const char * s, size_t pos = 0 ) const;
     CPLString &toupper( void );
     CPLString &tolower( void );
-
 };
 
 /* -------------------------------------------------------------------- */
@@ -278,25 +275,26 @@ CPLString CPL_DLL CPLURLAddKVP(const char* pszURL, const char* pszKey,
 
 /************************************************************************/
 /*                            CPLStringList                             */
-/*                                                                      */
-/*      A class intended to making working with class C GDAL string     */
-/*      lists more efficient and possibly safter in some cases.         */
-/*      Note this is completely *not* const correct.                    */
 /************************************************************************/
 
-class CPLStringList
+//! String list class designed around our use of C "char**" string lists.
+class CPL_DLL CPLStringList
 {
     char **papszList;
     mutable int nCount;
     mutable int nAllocation;
     int    bOwnList;
+    int    bIsSorted;
 
+    void   Initialize();
     void   MakeOurOwnCopy();
     void   EnsureAllocation( int nMaxLength );
+    int    FindSortedInsertionPoint( const char *pszLine );
     
   public:
     CPLStringList();
     CPLStringList( char **papszList, int bTakeOwnership=TRUE );
+    CPLStringList( CPLStringList& oOther );
     ~CPLStringList();
 
     CPLStringList &Clear();
@@ -307,18 +305,19 @@ class CPLStringList
     CPLStringList &AddString( const char *pszNewString );
     CPLStringList &AddStringDirectly( char *pszNewString );
 
-    // Defer implementation till needed and we will take the time to test.
-//    CPLStringList &InsertString( int nInsertAtLieNo, const char *pszNewLine );
-//    CPLStringList &InsertStrings( int nInsertAtLieNo, const char *pszNewLine );
-//    CPLStringList RemoveStrings( int nFirstLineToDelete, int nNumToRemove=1 );
+    CPLStringList &InsertString( int nInsertAtLineNo, const char *pszNewLine )
+    { return InsertStringDirectly( nInsertAtLineNo, CPLStrdup(pszNewLine) ); }
+    CPLStringList &InsertStringDirectly( int nInsertAtLineNo, char *pszNewLine);
+    
+//    CPLStringList &InsertStrings( int nInsertAtLineNo, char **papszNewLines );
+//    CPLStringList &RemoveStrings( int nFirstLineToDelete, int nNumToRemove=1 );
     
     int    FindString( const char *pszTarget ) const
     { return CSLFindString( papszList, pszTarget ); }
     int    PartialFindString( const char *pszNeedle ) const
     { return CSLPartialFindString( papszList, pszNeedle ); }
 
-    int    FindName( const char *pszName ) const
-    { return CSLFindName( papszList, pszName ); }
+    int    FindName( const char *pszName ) const;
     int    FetchBoolean( const char *pszKey, int bDefault ) const
     { return CSLFetchBoolean( papszList, pszKey, bDefault ); }
     const char *FetchNameValue( const char *pszKey ) const
@@ -339,6 +338,9 @@ class CPLStringList
 
     char **List() { return papszList; }
     char **StealList();
+
+    CPLStringList &Sort();
+    int    IsSorted() const { return bIsSorted; }
 
     operator char**(void) { return List(); }
 };
