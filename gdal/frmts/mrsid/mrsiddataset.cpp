@@ -434,8 +434,6 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
         case LTI_COLORSPACE_RGBA:
-#endif
-        case LTI_COLORSPACE_RGBK:
             if( nBand == 1 )
                 eBandInterp = GCI_RedBand;
             else if( nBand == 2 )
@@ -447,6 +445,7 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
             else
                 eBandInterp = GCI_Undefined;
             break;
+#endif
 
         case LTI_COLORSPACE_CMYK:
             if( nBand == 1 )
