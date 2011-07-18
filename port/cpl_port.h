@@ -305,14 +305,19 @@ typedef unsigned long    GUIntBig;
 #  define CPLIsEqual(x,y) (fabs((x) - (y)) < 0.0000000000001)
 #endif
 
+/* -------------------------------------------------------------------- */
+/*      Provide macros for case insensitive string comparisons.         */
+/* -------------------------------------------------------------------- */
 #ifndef EQUAL
-#if defined(WIN32) || defined(WIN32CE)
-#  define EQUALN(a,b,n)           (strnicmp(a,b,n)==0)
-#  define EQUAL(a,b)              (stricmp(a,b)==0)
-#else
-#  define EQUALN(a,b,n)           (strncasecmp(a,b,n)==0)
-#  define EQUAL(a,b)              (strcasecmp(a,b)==0)
-#endif
+#  if defined(WIN32) || defined(WIN32CE)
+#    define STRCASECMP(a,b)         (stricmp(a,b))
+#    define STRNCASECMP(a,b,n)      (strnicmp(a,b,n))
+#  else
+#    define STRCASECMP(a,b)         (strcasecmp(a,b))
+#    define STRNCASECMP(a,b,n)      (strncasecmp(a,b,n))
+#  endif
+#  define EQUALN(a,b,n)           (STRNCASECMP(a,b,n)==0)
+#  define EQUAL(a,b)              (STRCASECMP(a,b)==0)
 #endif
 
 #ifdef macos_pre10
