@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Various FileGDB OGR Datasource utility functions
@@ -75,6 +76,6 @@ bool GDBErr(long hr, std::string desc);
 //
 // Utility for adding attributes to CPL nodes
 //
-void CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char* attrvalue);
+void FGDB_CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char* attrvalue);
 
 #endif
