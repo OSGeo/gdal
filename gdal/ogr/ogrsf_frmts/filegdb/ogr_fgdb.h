@@ -29,32 +29,33 @@
 #ifndef _OGR_FGDB_H_INCLUDED
 #define _OGR_FGDB_H_INCLUDED
 
+#include <vector>
 #include "ogrsf_frmts.h"
 
-#include <vector>
+/* GDAL string utilities */
 #include "cpl_string.h"
 
-#ifndef WIN32
-#define LINUX_FILEGDB_API
-#include <wctype.h>
-#define FAILED(hr) ((hr) < 0)
-#endif
-
-
-#include "Table.h"
-#include "Geodatabase.h"
-#include "GeodatabaseManagement.h"
-#include "Row.h"
-#include "Util.h"
-
+/* GDAL XML handler */
 #include "cpl_minixml.h"
 
+/* FGDB API headers */
+#include "FileGDBAPI.h"
+
+/************************************************************************
+* Default layer creation options
+*/
+
+#define FGDB_FEATURE_DATASET "";
+#define FGDB_GEOMETRY_NAME "SHAPE"
+#define FGDB_OID_NAME "OBJECTID"
+
+
+/* The ESRI FGDB API namespace */
 using namespace FileGDBAPI;
 
 
-
 /************************************************************************/
-/*                            FGdbLayer                                  */
+/*                            FGdbLayer                                 */
 /************************************************************************/
 
 class FGdbDataSource;
@@ -69,6 +70,7 @@ public:
   // Internal used by FGDB driver */
   bool Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std::wstring wstrTablePath);
   bool Create(FGdbDataSource* pParentDataSource, const char * pszLayerName, OGRSpatialReference *poSRS, OGRwkbGeometryType eType, char ** papszOptions);
+	bool CreateFeatureDataset(FGdbDataSource* pParentDataSource, std::string feature_dataset_name, OGRSpatialReference* poSRS, char** papszOptions );
 
   // virtual const char *GetName();
   virtual const char* GetFIDColumn() { return m_strOIDFieldName.c_str(); }
@@ -88,19 +90,15 @@ public:
   virtual void 	      SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
   virtual void        SetSpatialFilter( OGRGeometry * );
 
-  /*
-  virtual OGRErr      CreateField( OGRFieldDefn *poFieldIn,
-  int bApproxOK );
-
-  virtual OGRErr      SetFeature( OGRFeature *poFeature );
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
-  virtual OGRErr      DeleteFeature( long nFID );
-  */
   OGRFeatureDefn *    GetLayerDefn() { return m_pFeatureDefn; }
-
+	
   virtual OGRSpatialReference *GetSpatialRef() { return m_pSRS; }
 
   virtual int         TestCapability( const char * );
+
+	// Access the XML directly
+	OGRErr              GetLayerXML ( char **poXml );
+	
 
 protected:
 
