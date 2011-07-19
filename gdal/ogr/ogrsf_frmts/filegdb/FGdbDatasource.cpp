@@ -313,7 +313,9 @@ OGRLayer *FGdbDataSource::GetLayer( int iLayer )
 }
 
 /************************************************************************/
-/*                              CreateLayer()                              */
+/*                              CreateLayer()                           */
+/*                                                                      */
+/* See FGdbLayer::Create for creation options                           */
 /************************************************************************/
 
 OGRLayer *
@@ -322,7 +324,6 @@ FGdbDataSource::CreateLayer( const char * pszLayerName,
                               OGRwkbGeometryType eType,
                               char ** papszOptions )
 {
-  
     FGdbLayer* pLayer = new FGdbLayer;
     if (!pLayer->Create(this, pszLayerName, poSRS, eType, papszOptions))
     {
@@ -332,9 +333,5 @@ FGdbDataSource::CreateLayer( const char * pszLayerName,
 
     m_layers.push_back(pLayer);
 
-    /* papszOption: FEATUREDATASET=myfeaturedataset */
-    /* otherwise create in "\" */
-    return pLayer;
-
-  
+    return pLayer;  
 }

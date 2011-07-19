@@ -204,7 +204,7 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     /* Free the shape buffer */
-    if (pabyShape) CPLFree(pabyShape);
+    CPLFree(pabyShape);
 
     /* Write ShapeBuffer into the Row */
     hr = fgdb_row.SetGeometry(shape);
@@ -321,64 +321,170 @@ OGRErr FGdbLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
 /*  Used in layer creation.                                             */
 /*                                                                      */
 /************************************************************************/
-CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS)
+CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
 {
-    /* Duck NULL */
-    if ( ! poSRS ) return NULL;
+  
+    /* We always need a SpatialReference */
+    CPLXMLNode *srs_xml = CPLCreateXMLNode(NULL, CXT_Element, "SpatialReference");
 
     /* Extract the WKID before morphing */
     char *wkid = NULL;
-    if ( poSRS->GetAuthorityCode(NULL) )
+    if ( poSRS && poSRS->GetAuthorityCode(NULL) )
     {
         wkid = CPLStrdup(poSRS->GetAuthorityCode(NULL));
     }
-
-    OGRSpatialReference* poSRSClone = poSRS->Clone();
-
-    /* Flip the WKT to ESRI form */
-    if ( poSRSClone->morphToESRI() != OGRERR_NONE )
+    
+    /* NULL poSRS => UnknownCoordinateSystem */
+    if ( ! poSRS )
     {
-        delete poSRSClone;
-        return NULL;
+      CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:UnknownCoordinateSystem");
+    }
+    else
+    {
+      /* Make a clone so we can morph it without morphing the original */
+      OGRSpatialReference* poSRSClone = poSRS->Clone();
+
+      /* Flip the WKT to ESRI form, return UnknownCoordinateSystem if we can't */
+      if ( poSRSClone->morphToESRI() != OGRERR_NONE )
+      {
+          delete poSRSClone;
+          CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:UnknownCoordinateSystem");
+          return srs_xml;
+      }
+
+      /* Set the SpatialReference type attribute correctly for GEOGCS/PROJCS */
+      if ( poSRSClone->IsProjected() )
+          CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:ProjectedCoordinateSystem");
+      else
+          CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:GeographicCoordinateSystem");
+
+      /* Add the WKT to the XML */
+      char *wkt = NULL;
+      poSRSClone->exportToWkt(&wkt);
+      CPLCreateXMLElementAndValue(srs_xml,"WKT", wkt);
+      if( wkt ) OGRFree(wkt);
+
+      /* Dispose of our close */
+      delete poSRSClone;
     }
 
-    CPLXMLNode *srs_xml = CPLCreateXMLNode(NULL, CXT_Element, "SpatialReference");
+    /* Handle Origin/Scale/Tolerance */
+    const char* grid[7] = {
+      "XOrigin", "YOrigin", "XYScale",
+      "ZOrigin", "ZScale",
+      "XYTolerance", "ZTolerance" };
+    const char* gridvalues[7] = {
+      "-2147483647", "-2147483647", "1000000000",
+      "-2147483647", "1000000000",
+      "0.0001", "0.0001" };
+    
+    /* Convert any values available */
+    for( int i = 0; i < 7; i++ )
+    {
+      if ( CSLFetchNameValue( papszOptions, grid[i] ) != NULL ) 
+        gridvalues[i] = CSLFetchNameValue( papszOptions, grid[i] );
 
-    /* Set the SpatialReference type attribute correctly for GEOGCS/PROJCS */
-    if ( poSRSClone->IsProjected() )
-        CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:ProjectedCoordinateSystem");
-    else
-        CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:GeographicCoordinateSystem");
-
-    /* Add the WKT to the XML */
-    char *wkt = NULL;
-    poSRSClone->exportToWkt(&wkt);
-    CPLCreateXMLElementAndValue(srs_xml,"WKT", wkt);
-    if( wkt ) OGRFree(wkt);
-
-    delete poSRSClone;
+      CPLCreateXMLElementAndValue(srs_xml, grid[i], gridvalues[i]);
+    }
+    
+    /* FGDB is always High Precision */
+    CPLCreateXMLElementAndValue(srs_xml, "HighPrecision", "true");     
 
     /* Add the WKID to the XML */
     if ( wkid ) 
     {
-        CPLCreateXMLElementAndValue(srs_xml,"WKID", wkid);
+        CPLCreateXMLElementAndValue(srs_xml, "WKID", wkid);
         CPLFree(wkid);
     }
 
     return srs_xml;
 }
   
+bool FGdbLayer::CreateFeatureDataset(FGdbDataSource* pParentDataSource, 
+                                     std::string feature_dataset_name,
+                                     OGRSpatialReference* poSRS,
+                                     char** papszOptions )
+{
+  /* XML node */
+  CPLXMLNode *xml_xml = CPLCreateXMLNode(NULL, CXT_Element, "?xml");
+  CPLAddXMLAttribute(xml_xml, "version", "1.0");
+  CPLAddXMLAttribute(xml_xml, "encoding", "UTF-8");
+  
+  /* First build up a bare-bones feature definition */
+  CPLXMLNode *defn_xml = CPLCreateXMLNode(NULL, CXT_Element, "esri:DataElement");
+  CPLAddXMLSibling(xml_xml, defn_xml);
+
+  /* Add the attributes to the DataElement */
+  CPLAddXMLAttribute(defn_xml, "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+  CPLAddXMLAttribute(defn_xml, "xmlns:xs", "http://www.w3.org/2001/XMLSchema");
+  CPLAddXMLAttribute(defn_xml, "xmlns:esri", "http://www.esri.com/schemas/ArcGIS/10.1");
+                            
+  /* Need to set this to esri:DEFeatureDataset or esri:DETable */
+  CPLAddXMLAttribute(defn_xml, "xsi:type", "esri:DEFeatureDataset");
+
+  /* Add in more children */
+  std::string catalog_page = "\\" + feature_dataset_name;
+  CPLCreateXMLElementAndValue(defn_xml,"CatalogPath", catalog_page.c_str());
+  CPLCreateXMLElementAndValue(defn_xml,"Name", feature_dataset_name.c_str()); 
+  CPLCreateXMLElementAndValue(defn_xml,"ChildrenExpanded", "false");
+  CPLCreateXMLElementAndValue(defn_xml,"DatasetType", "esriDTFeatureDataset");
+  CPLCreateXMLElementAndValue(defn_xml,"Versioned", "false");
+  CPLCreateXMLElementAndValue(defn_xml,"CanVersion", "false");
+
+  /* Add in empty extent */
+  CPLXMLNode *extent_xml = CPLCreateXMLNode(NULL, CXT_Element, "Extent");
+  CPLAddXMLAttribute(extent_xml, "xsi:nil", "true");
+  CPLAddXMLChild(defn_xml, extent_xml);
+  
+  /* Add the SRS */
+  if( TRUE ) // TODO: conditional on existence of SRS
+  {
+    CPLXMLNode *srs_xml = XMLSpatialReference(poSRS, papszOptions);
+    if ( srs_xml )
+      CPLAddXMLChild(defn_xml, srs_xml);
+  }
+  
+  /* Convert our XML tree into a string for FGDB */
+  char *defn_str = CPLSerializeXMLTree(xml_xml);
+  CPLDestroyXMLNode(xml_xml);
+  
+  /* TODO, tie this to debugging levels */
+  CPLDebug("FGDB", "%s", defn_str);
+
+  /* Create the FeatureDataset. */
+  Geodatabase *gdb = pParentDataSource->GetGDB();
+  fgdbError hr = gdb->CreateFeatureDataset(defn_str);
+
+  /* Free the XML */
+  CPLFree(defn_str);
+
+  /* Check table create status */
+  if (FAILED(hr))
+  {
+    return GDBErr(hr, "Failed at creating FeatureDataset " + feature_dataset_name);
+  }
+  
+  return true;
+
+}  
+
 
 
 /************************************************************************/
 /*                            Create()                                  */
 /* Build up an FGDB XML layer definition and use it to create a Table   */
 /* or Feature Class to work from.                                       */
-//
-// TODO: handle a "FEATUREDATASET" creation keyword to nest layer 
-// within a particular FeatureDataset 
-//
+/*                                                                      */
+/* Layer creation options:                                              */
+/*   FEATURE_DATASET, nest layer inside a FeatureDataset folder         */
+/*   GEOMETRY_NAME, user-selected name for the geometry column          */
+/*   OID_NAME, user-selected name for the FID column                    */
+/*   XORIGIN, YORIGIN, ZORIGIN, origin of the snapping grid             */
+/*   XYSCALE, ZSCALE, inverse resolution of the snapping grid           */
+/*   XYTOLERANCE, ZTOLERANCE, snapping tolerance for topology/networks  */
+/*                                                                      */
 /************************************************************************/
+
 bool FGdbLayer::Create(FGdbDataSource* pParentDataSource, 
                        const char* pszLayerName, 
                        OGRSpatialReference* poSRS, 
@@ -387,12 +493,27 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 {
   
   std::string table_path = "\\" + std::string(pszLayerName);
-  std::wstring wtable_path = StringToWString(table_path);
-  std::wstring parent_path = L"";
-  std::string geometry_name = "SHAPE";
-  std::string fid_name = "OBJECTID";
+  std::string parent_path = "";
+  std::wstring wtable_path, wparent_path;
+  std::string geometry_name = FGDB_GEOMETRY_NAME;
+  std::string fid_name = FGDB_OID_NAME;
   std::string esri_type;
   bool has_z = false;
+
+  /* Handle the FEATURE_DATASET case */
+  if (  CSLFetchNameValue( papszOptions, "FEATURE_DATASET") != NULL ) 
+  {
+    std::string feature_dataset = CSLFetchNameValue( papszOptions, "FEATURE_DATASET");
+    bool rv = CreateFeatureDataset(pParentDataSource, feature_dataset, poSRS, papszOptions);
+    if ( ! rv ) 
+      return rv;
+    table_path = "\\" + feature_dataset + table_path;
+    parent_path = "\\" + feature_dataset;
+  }
+  
+  /* Convert table_path into wstring */
+  wtable_path = StringToWString(table_path);
+  wparent_path = StringToWString(parent_path);
 
   /* Over-ride the geometry name if necessary */
   if ( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL ) 
@@ -467,7 +588,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     CPLCreateXMLElementAndValue(geom_xml,"HasZ", (has_z ? "true" : "false"));
 
     /* Add the SRS if we have one */
-    CPLXMLNode *srs_xml = XMLSpatialReference(poSRS);
+    CPLXMLNode *srs_xml = XMLSpatialReference(poSRS, papszOptions);
     if ( srs_xml )
       CPLAddXMLChild(geom_xml, srs_xml);
   }
@@ -512,25 +633,26 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
   /* Feature Class with known SRS gets an SRS entry */
   if( eType != wkbNone )
   {
-    CPLXMLNode *srs_xml = XMLSpatialReference(poSRS);
+    CPLXMLNode *srs_xml = XMLSpatialReference(poSRS, papszOptions);
     if ( srs_xml )
       CPLAddXMLChild(defn_xml, srs_xml);
   }
   
   /* Convert our XML tree into a string for FGDB */
   char *defn_str = CPLSerializeXMLTree(xml_xml);
+  CPLDestroyXMLNode(xml_xml);
   
   /* TODO, tie this to debugging levels */
   CPLDebug("FGDB", "%s", defn_str);
+  //std::cout << defn_str << std::endl;
 
   /* Create the table. */
   Table *table = new Table;
   Geodatabase *gdb = pParentDataSource->GetGDB();
-  fgdbError hr = gdb->CreateTable(defn_str, parent_path, *table);
+  fgdbError hr = gdb->CreateTable(defn_str, wparent_path, *table);
 
   /* Free the XML */
   CPLFree(defn_str);
-  CPLDestroyXMLNode(xml_xml);
 
   /* Check table create status */
   if (FAILED(hr))
@@ -1371,6 +1493,29 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
         return OGRERR_FAILURE;
 
     return OGRERR_NONE;
+}
+
+
+/************************************************************************/
+/*                           GetLayerXML()                              */
+/* Return XML definition of the Layer as provided by FGDB. Caller must  */
+/* free result.                                                         */
+/************************************************************************/
+
+OGRErr FGdbLayer::GetLayerXML (char **ppXml)
+{
+  long hr;
+  std::string xml;
+  
+  if ( FAILED(hr = m_pTable->GetDefinition(xml)) )
+  {
+    GDBErr(hr, "Failed fetching XML table definition");
+    return OGRERR_FAILURE;
+  }
+  
+  *ppXml = (char*)CPLMalloc(xml.size() + 1);
+  memcpy(*ppXml, xml.c_str(), xml.size() + 1);
+  return OGRERR_NONE;  
 }
 
 
