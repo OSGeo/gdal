@@ -55,10 +55,15 @@ def ogr_fgdb_init():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except:
+        pass
+
     return 'success'
 
 ###############################################################################
-# Write and read back
+# Write and read back various geometry types
 
 def ogr_fgdb_1():
     if ogrtest.fgdb_drv is None:
@@ -69,15 +74,18 @@ def ogr_fgdb_1():
 
     ds = ogrtest.fgdb_drv.CreateDataSource("tmp/test.gdb")
 
-    datalist = [ [ "point", ogr.wkbPoint, "POINT(1 2)", "POINT (1.0 2.0)" ],
-                 [ "multipoint", ogr.wkbMultiPoint, "MULTIPOINT(1 2,3 4)", "MULTIPOINT (1.0 2.0,3.0 4.0)" ],
-                 [ "linestring", ogr.wkbLineString, "LINESTRING(1 2,3 4)", "MULTILINESTRING ((1.0 2.0,3.0 4.0))" ],
-                 [ "multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1.0 2.0,3.0 4.0))", "MULTILINESTRING ((1.0 2.0,3.0 4.0))" ],
-                 [ "polygon", ogr.wkbPolygon, "POLYGON((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0.0 0.0,0.0 1.0,1.0 1.0,1.0 0.0,0.0 0.0)))" ],
-                 [ "multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0.0 0.0,0.0 1.0,1.0 1.0,1.0 0.0,0.0 0.0)))", "MULTIPOLYGON (((0.0 0.0,0.0 1.0,1.0 1.0,1.0 0.0,0.0 0.0)))" ],
-                 #[ "point25D", ogr.wkbPoint25D, "POINT(1 2 3)", "POINT (1.0 2.0 3.0)" ],
-                 #[ "multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT(1 2 -10,3 4 -20)", "MULTIPOINT (1.0 2.0 -10.0,3.0 4.0 -20.0)" ],
-                 #[ "linestring25D", ogr.wkbLineString25D, "LINESTRING(1 2 -10,3 4 -20)", "MULTILINESTRING ((1.0 2.0 -10.0,3.0 4.0 -20.0))" ],
+    datalist = [ [ "point", ogr.wkbPoint, "POINT (1 2)" ],
+                 [ "multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)" ],
+                 [ "linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))" ],
+                 [ "multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4))" ],
+                 [ "polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))" ],
+                 [ "multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))" ],
+                 [ "point25D", ogr.wkbPoint25D, "POINT (1 2 3)" ],
+                 [ "multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)" ],
+                 [ "linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))" ],
+                 [ "multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))" ],
+                 [ "polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
+                 [ "multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
                ]
 
     for data in datalist:
@@ -94,12 +102,67 @@ def ogr_fgdb_1():
 
     for data in datalist:
         lyr = ds.GetLayerByName(data[0])
+        if lyr.GetSpatialRef().IsSame(srs) != 1:
+            print(lyr.GetSpatialRef())
+            return 'fail'
         feat = lyr.GetNextFeature()
-        if feat.GetGeometryRef().ExportToWkt() != data[3]:
+        try:
+            expected_wkt = data[3]
+        except:
+            expected_wkt = data[2]
+        if feat.GetGeometryRef().ExportToWkt() != expected_wkt:
             feat.DumpReadable()
             return 'fail'
 
     ds = None
+
+    return 'success'
+
+###############################################################################
+# Run test_ogrsf
+
+def ogr_fgdb_2():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test.gdb')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Run ogr2ogr
+
+def ogr_fgdb_3():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree("tmp/poly.gdb")
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f filegdb tmp/poly.gdb data/poly.shp -nlt MULTIPOLYGON -a_srs None')
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.gdb')
+    #print ret
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
 
     return 'success'
 
@@ -112,11 +175,18 @@ def ogr_fgdb_cleanup():
 
     shutil.rmtree("tmp/test.gdb")
 
+    try:
+        shutil.rmtree("tmp/poly.gdb")
+    except:
+        pass
+
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_fgdb_init,
     ogr_fgdb_1,
+    ogr_fgdb_2,
+    ogr_fgdb_3,
     ogr_fgdb_cleanup,
     ]
 
