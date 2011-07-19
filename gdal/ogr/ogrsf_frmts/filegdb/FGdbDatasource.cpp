@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements FileGDB OGR Datasource.
@@ -33,6 +34,8 @@
 #include "cpl_string.h"
 #include "gdal.h"
 #include "FGdbUtils.h"
+
+CPL_CVSID("$Id$");
 
 using std::vector;
 using std::wstring;
@@ -105,164 +108,175 @@ int FGdbDataSource::Open(Geodatabase* pGeodatabase, const char * pszNewName, int
 }
 
 /************************************************************************/
-/*                          LoadLayers()                                */
+/*                          OpenFGDBTables()                            */
 /************************************************************************/
 
 bool FGdbDataSource::OpenFGDBTables(const std::vector<std::wstring> &layers)
 {
-	fgdbError hr;
-	for ( unsigned int i = 0; i < layers.size(); i++ )
-	{
-		Table* pTable = new Table;
-		if (FAILED(hr = m_pGeodatabase->OpenTable(layers[i], *pTable)))
-		{
-	  		delete pTable;
-	  		return GDBErr(hr, "Error opening " + WStringToString(layers[i]));
-		}
-		FGdbLayer* pLayer = new FGdbLayer;
-		if (!pLayer->Initialize(this, pTable, layers[i]))
-		{
-		  delete pLayer;
-		  return GDBErr(hr, "Error initializing OGRLayer for " + WStringToString(layers[i]));
-		}
+    fgdbError hr;
+    for ( unsigned int i = 0; i < layers.size(); i++ )
+    {
+        Table* pTable = new Table;
+        if (FAILED(hr = m_pGeodatabase->OpenTable(layers[i], *pTable)))
+        {
+            delete pTable;
+            return GDBErr(hr, "Error opening " + WStringToString(layers[i]));
+        }
+        FGdbLayer* pLayer = new FGdbLayer;
+        if (!pLayer->Initialize(this, pTable, layers[i]))
+        {
+            delete pLayer;
+            return GDBErr(hr, "Error initializing OGRLayer for " + WStringToString(layers[i]));
+        }
 
-		m_layers.push_back(pLayer);
-	}
-	return true;
+        m_layers.push_back(pLayer);
+    }
+    return true;
 }
+
+/************************************************************************/
+/*                            LoadLayers2()                             */
+/************************************************************************/
 
 bool FGdbDataSource::LoadLayers2(const std::wstring &root) 
 {
-  std::vector<wstring> tables;
-  std::vector<wstring> featureclasses;
-  std::vector<wstring> featuredatasets;
-	fgdbError hr;
-		
-	/* Find all the Tables in the root */
-	if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Table", tables)) )
-	{
-		return GDBErr(hr, "Error reading Tables in " + WStringToString(root));	
-	}
-	/* Open the tables we found */
-	if ( tables.size() > 0 && ! OpenFGDBTables(tables) )
-    return false;
-	
-	/* Find all the Feature Classes in the root */
-	if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Feature Class", featureclasses)) )
-	{
-		return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(root));	
-	}
-	/* Open the tables we found */
-	if ( featureclasses.size() > 0 && ! OpenFGDBTables(featureclasses) )
-    return false;
-	
-	/* Find all the Feature Datasets in the root */
-	if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Feature Dataset", featuredatasets)) )
-	{
-		return GDBErr(hr, "Error reading Feature Datasets in " + WStringToString(root));	
-	}
-	/* Look for Feature Classes inside the Feature Dataset */
-	for ( unsigned int i = 0; i < featuredatasets.size(); i++ )
-	{
-		if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(featuredatasets[i], L"Feature Class", featureclasses)) )
-		{
-			return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(featuredatasets[i]));	
-		}
-		if ( featureclasses.size() > 0 && ! OpenFGDBTables(featureclasses) )
-      return false;
-	}
-	return true;
+    std::vector<wstring> tables;
+    std::vector<wstring> featureclasses;
+    std::vector<wstring> featuredatasets;
+    fgdbError hr;
+
+    /* Find all the Tables in the root */
+    if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Table", tables)) )
+    {
+        return GDBErr(hr, "Error reading Tables in " + WStringToString(root));
+    }
+    /* Open the tables we found */
+    if ( tables.size() > 0 && ! OpenFGDBTables(tables) )
+        return false;
+
+    /* Find all the Feature Classes in the root */
+    if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Feature Class", featureclasses)) )
+    {
+        return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(root));
+    }
+    /* Open the tables we found */
+    if ( featureclasses.size() > 0 && ! OpenFGDBTables(featureclasses) )
+        return false;
+
+    /* Find all the Feature Datasets in the root */
+    if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Feature Dataset", featuredatasets)) )
+    {
+        return GDBErr(hr, "Error reading Feature Datasets in " + WStringToString(root));
+    }
+    /* Look for Feature Classes inside the Feature Dataset */
+    for ( unsigned int i = 0; i < featuredatasets.size(); i++ )
+    {
+        if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(featuredatasets[i], L"Feature Class", featureclasses)) )
+        {
+            return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(featuredatasets[i]));
+        }
+        if ( featureclasses.size() > 0 && ! OpenFGDBTables(featureclasses) )
+            return false;
+    }
+    return true;
 }
 
+/************************************************************************/
+/*                            LoadLayers()                              */
+/************************************************************************/
+
 // Flattens out hierarchichal GDB structure
-bool FGdbDataSource::LoadLayers(const std::vector<wstring> & datasetTypes, const wstring & parent)
+bool FGdbDataSource::LoadLayers(const std::vector<wstring> & datasetTypes,
+                                const wstring & parent)
 {
-  long hr = S_OK;
+    long hr = S_OK;
 
-  // I didn't find an API to give me the type of the dataset based on name - I am *not*
-  // parsing XML for something like this - in the meantime I can use this hack to see
-  // if the dataset had any children whatsoever - if so, then I won't attempt to open it
-  // otherwise, do attempt to do that
+    // I didn't find an API to give me the type of the dataset based on name - I am *not*
+    // parsing XML for something like this - in the meantime I can use this hack to see
+    // if the dataset had any children whatsoever - if so, then I won't attempt to open it
+    // otherwise, do attempt to do that
 
-  bool childrenFound = false;
-  bool errorsEncountered = false;
+    bool childrenFound = false;
+    bool errorsEncountered = false;
 
-  for (size_t dsTypeIndex = 0; dsTypeIndex <  datasetTypes.size(); dsTypeIndex++)
-  {
-    std::vector<wstring> childDatasets;
-    m_pGeodatabase->GetChildDatasets( parent, datasetTypes[dsTypeIndex], childDatasets);
-
-    if (childDatasets.size() > 0)
+    for (size_t dsTypeIndex = 0; dsTypeIndex < datasetTypes.size(); dsTypeIndex++)
     {
-      //it is a container of other datasets
+        std::vector<wstring> childDatasets;
+        m_pGeodatabase->GetChildDatasets( parent, datasetTypes[dsTypeIndex], childDatasets);
 
-      for (size_t childDatasetIndex = 0; childDatasetIndex < childDatasets.size(); childDatasetIndex++)
-      {
-        childrenFound = true;
-        
-        // do something with it
-        // For now, we just ignore dataset containers and only open the children
-        //std::wcout << datasetTypes[dsTypeIndex] << L" " << childDatasets[childDatasetIndex] << std::endl;
+        if (childDatasets.size() > 0)
+        {
+            //it is a container of other datasets
 
-        if (!LoadLayers(datasetTypes, childDatasets[childDatasetIndex]))
-          errorsEncountered = true;
-      }
-    }
-  }
+            for (size_t childDatasetIndex = 0;
+                 childDatasetIndex < childDatasets.size();
+                 childDatasetIndex++)
+            {
+                childrenFound = true;
 
-  //it is a full fledged dataset itself without children - open it (except the root)
+                // do something with it
+                // For now, we just ignore dataset containers and only open the children
+                //std::wcout << datasetTypes[dsTypeIndex] << L" " << childDatasets[childDatasetIndex] << std::endl;
 
-  if ((!childrenFound) && parent != L"\\")
-  {
-    //wcout << "Opening " << parent << "...";
-    Table* pTable = new Table;
-    if (FAILED(hr = m_pGeodatabase->OpenTable(parent,*pTable)))
-    {
-      delete pTable;
-      return GDBErr(hr, "Error opening " + WStringToString(parent));
+                if (!LoadLayers(datasetTypes, childDatasets[childDatasetIndex]))
+                    errorsEncountered = true;
+            }
+        }
     }
 
-    FGdbLayer* pLayer = new FGdbLayer;
+    //it is a full fledged dataset itself without children - open it (except the root)
 
-    //pLayer has ownership of the table pointer as soon Initialize is called
-    if (!pLayer->Initialize(this, pTable, parent))
+    if ((!childrenFound) && parent != L"\\")
     {
-      delete pLayer;
-      
-      return GDBErr(hr, "Error initializing OGRLayer for " + WStringToString(parent));
+        //wcout << "Opening " << parent << "...";
+        Table* pTable = new Table;
+        if (FAILED(hr = m_pGeodatabase->OpenTable(parent,*pTable)))
+        {
+            delete pTable;
+            return GDBErr(hr, "Error opening " + WStringToString(parent));
+        }
+
+        FGdbLayer* pLayer = new FGdbLayer;
+
+        //pLayer has ownership of the table pointer as soon Initialize is called
+        if (!pLayer->Initialize(this, pTable, parent))
+        {
+            delete pLayer;
+
+            return GDBErr(hr, "Error initializing OGRLayer for " +
+                          WStringToString(parent));
+        }
+
+        m_layers.push_back(pLayer);
     }
 
-    m_layers.push_back(pLayer);
-  }
-
-  return !errorsEncountered;
+    return !errorsEncountered;
 }
 
 
 /************************************************************************/
 /*                            DeleteLayer()                             */
-/* Not implemented                                                      */                                
+/* Not implemented                                                      */
 /************************************************************************/
 
 OGRErr FGdbDataSource::DeleteLayer( int iLayer )
 {
-  if( iLayer < 0 || iLayer >= static_cast<int>(m_layers.size()) )
-    return OGRERR_FAILURE;
+    if( iLayer < 0 || iLayer >= static_cast<int>(m_layers.size()) )
+        return OGRERR_FAILURE;
 
-  // Fetch FGDBAPI Table before deleting OGR layer object
+    // Fetch FGDBAPI Table before deleting OGR layer object
 
-  Table* pTable;
-  m_layers[iLayer]->GetTable(&pTable);
+    Table* pTable;
+    m_layers[iLayer]->GetTable(&pTable);
 
-  std::string name = m_layers[iLayer]->GetLayerDefn()->GetName();
+    std::string name = m_layers[iLayer]->GetLayerDefn()->GetName();
 
-  // delete OGR layer
-  delete m_layers[iLayer];
+    // delete OGR layer
+    delete m_layers[iLayer];
 
-  pTable = NULL; // OGR Layer had ownership of FGDB Table
+    pTable = NULL; // OGR Layer had ownership of FGDB Table
 
-  m_layers.erase(m_layers.begin() + iLayer);
-
+    m_layers.erase(m_layers.begin() + iLayer);
 
   // TODO: the FileGDB requires the type - need to converve that and call Delete on the
   // parent GDB
@@ -271,9 +285,10 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
   
   //if (FAILED(hr = ipDataset->Delete()))
   //{
-    CPLError( CE_Warning, CPLE_AppDefined, "%s was not deleted however it has been closed", name.c_str());
+    CPLError( CE_Warning, CPLE_AppDefined,
+              "%s was not deleted however it has been closed", name.c_str());
   //  GDBErr(hr, "Failed deleting dataset");
-   
+
     return OGRERR_FAILURE;
   //}
   //else
@@ -286,15 +301,14 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
 
 int FGdbDataSource::TestCapability( const char * pszCap )
 {
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
 
-  if( EQUAL(pszCap,ODsCCreateLayer) )
-    return TRUE;
-    
-  // Have not implemented this yet
-  else if( EQUAL(pszCap,ODsCDeleteLayer) )
-    return FALSE; 
+    // Have not implemented this yet
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
+        return FALSE;
 
-  return FALSE;
+    return FALSE;
 }
 
 
@@ -304,12 +318,12 @@ int FGdbDataSource::TestCapability( const char * pszCap )
 
 OGRLayer *FGdbDataSource::GetLayer( int iLayer )
 { 
-  int count = static_cast<int>(m_layers.size());
+    int count = static_cast<int>(m_layers.size());
 
-  if( iLayer < 0 || iLayer >= count )
-    return NULL;
-  else
-    return m_layers[iLayer];
+    if( iLayer < 0 || iLayer >= count )
+        return NULL;
+    else
+        return m_layers[iLayer];
 }
 
 /************************************************************************/

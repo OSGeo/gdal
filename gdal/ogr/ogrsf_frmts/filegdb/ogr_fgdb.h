@@ -1,4 +1,5 @@
 /******************************************************************************
+* $Id$
 *
 * Project:  OpenGIS Simple Features Reference Implementation
 * Purpose:  Standard includes and class definitions ArcObjects OGR driver.
@@ -70,7 +71,7 @@ public:
   // Internal used by FGDB driver */
   bool Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std::wstring wstrTablePath);
   bool Create(FGdbDataSource* pParentDataSource, const char * pszLayerName, OGRSpatialReference *poSRS, OGRwkbGeometryType eType, char ** papszOptions);
-	bool CreateFeatureDataset(FGdbDataSource* pParentDataSource, std::string feature_dataset_name, OGRSpatialReference* poSRS, char** papszOptions );
+  bool CreateFeatureDataset(FGdbDataSource* pParentDataSource, std::string feature_dataset_name, OGRSpatialReference* poSRS, char** papszOptions );
 
   // virtual const char *GetName();
   virtual const char* GetFIDColumn() { return m_strOIDFieldName.c_str(); }
@@ -96,9 +97,9 @@ public:
 
   virtual int         TestCapability( const char * );
 
-	// Access the XML directly
-	OGRErr              GetLayerXML ( char **poXml );
-	
+  // Access the XML directly
+  OGRErr              GetLayerXML ( char **poXml );
+
 
 protected:
 
