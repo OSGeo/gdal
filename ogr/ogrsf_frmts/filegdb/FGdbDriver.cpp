@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements FileGDB OGR driver.
@@ -32,11 +33,12 @@
 #include "cpl_conv.h"
 #include "FGdbUtils.h"
 
-//g++ -Wall -g ogr/ogrsf_frmts/filegdb/*.c* -shared -o ogr_FileGDB.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/filegdb -L. -lgdal -I/home/even/filegdb/dist/include -L/home/even/filegdb/dist/lib  -I/home/even/filegdb/dist/src/FileGDBEngine/include/FileGDBLinux -lFileGDBAPI
+CPL_CVSID("$Id$");
+
 extern "C" void RegisterOGRFileGDB();
 
 /************************************************************************/
-/*                            FGdbDriver()                            */
+/*                            FGdbDriver()                              */
 /************************************************************************/
 FGdbDriver::FGdbDriver():
 OGRSFDriver()
@@ -44,7 +46,7 @@ OGRSFDriver()
 }
 
 /************************************************************************/
-/*                            ~FGdbDriver()                            */
+/*                            ~FGdbDriver()                             */
 /************************************************************************/
 FGdbDriver::~FGdbDriver()
 
@@ -59,7 +61,7 @@ FGdbDriver::~FGdbDriver()
 const char *FGdbDriver::GetName()
 
 {
-  return "FileGDB";
+    return "FileGDB";
 }
 
 /************************************************************************/
@@ -69,150 +71,153 @@ const char *FGdbDriver::GetName()
 OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
 
 {
-  // First check if we have to do any work.
-  if (!EQUAL(CPLGetExtension(pszFilename), "gdb"))
-    return NULL;
+    // First check if we have to do any work.
+    if (!EQUAL(CPLGetExtension(pszFilename), "gdb"))
+        return NULL;
 
-  long hr;
+    long hr;
 
 
-  Geodatabase* pGeoDatabase = new Geodatabase;
+    Geodatabase* pGeoDatabase = new Geodatabase;
 
-  hr = ::OpenGeodatabase(StringToWString(pszFilename), *pGeoDatabase);
+    hr = ::OpenGeodatabase(StringToWString(pszFilename), *pGeoDatabase);
 
-  if (FAILED(hr) || pGeoDatabase == NULL)
-  {
-    delete pGeoDatabase;
+    if (FAILED(hr) || pGeoDatabase == NULL)
+    {
+        delete pGeoDatabase;
 
-    GDBErr(hr, "Failed to open Geodatabase");
-    return NULL;
-  }
+        GDBErr(hr, "Failed to open Geodatabase");
+        return NULL;
+    }
 
-  FGdbDataSource* pDS;
+    FGdbDataSource* pDS;
 
-  pDS = new FGdbDataSource();
+    pDS = new FGdbDataSource();
 
-  if(!pDS->Open( pGeoDatabase, pszFilename, bUpdate ) )
-  {
-    delete pDS;
-    return NULL;
-  }
-  else
-    return pDS;
+    if(!pDS->Open( pGeoDatabase, pszFilename, bUpdate ) )
+    {
+        delete pDS;
+        return NULL;
+    }
+    else
+        return pDS;
 }
 
-/************************************************************************
-*                     CreateDataSource()                                *
-************************************************************************/
+/***********************************************************************/
+/*                     CreateDataSource()                              */
+/***********************************************************************/
 
 OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
                                            char **papszOptions)
 {
-  long hr;
-  Geodatabase *pGeodatabase;
-  std::wstring wconn = StringToWString(conn);
-  int bUpdate = TRUE; // If we're creating, we must be writing. 
-  VSIStatBuf stat;
-  
-  /* We don't support options yet, so warn if they send us some */
-  if ( papszOptions )
-  {
-    /* TODO: warning, ignoring options */
-  }
+    long hr;
+    Geodatabase *pGeodatabase;
+    std::wstring wconn = StringToWString(conn);
+    int bUpdate = TRUE; // If we're creating, we must be writing.
+    VSIStatBuf stat;
 
-  /* Only accept names of form "filename.gdb" */
-  if ( ! EQUAL(CPLGetExtension(conn),"gdb") ) 
-  {
-    CPLError( CE_Failure, CPLE_AppDefined, "FGDB data source name must use 'gdb' extension.\n" );    
-    return NULL;
-  }
-  
-  /* Don't try to create on top of something already there */
-  if( CPLStat( conn, &stat ) == 0 ) 
-  {
-    CPLError( CE_Failure, CPLE_AppDefined, "%s already exists.\n", conn );    
-    return NULL;
-  }
-  
-  /* Try to create the geodatabase */
-  pGeodatabase = new Geodatabase; // Create on heap so we can store it in the Datasource
-  hr = CreateGeodatabase(wconn, *pGeodatabase);
-  
-  /* Handle creation errors */
-  if ( S_OK != hr )
-  {
-    const char *errstr = "Error creating geodatabase (%s).\n";
-    if ( hr == -2147220653 ) 
-      errstr = "File already exists (%s).\n";
-    delete pGeodatabase;
-    CPLError( CE_Failure, CPLE_AppDefined, errstr, conn );    
-    return NULL;
-  }
-  
-  /* Ready to embed the Geodatabase in an OGR Datasource */
-  FGdbDataSource* pDS = new FGdbDataSource();
-  if ( ! pDS->Open(pGeodatabase, conn, bUpdate) )
-  {
-    delete pDS;
-    return NULL;
-  }
-  else
-    return pDS;
+    /* We don't support options yet, so warn if they send us some */
+    if ( papszOptions )
+    {
+        /* TODO: warning, ignoring options */
+    }
+
+    /* Only accept names of form "filename.gdb" */
+    if ( ! EQUAL(CPLGetExtension(conn),"gdb") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "FGDB data source name must use 'gdb' extension.\n" );
+        return NULL;
+    }
+
+    /* Don't try to create on top of something already there */
+    if( CPLStat( conn, &stat ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s already exists.\n", conn );
+        return NULL;
+    }
+
+    /* Try to create the geodatabase */
+    pGeodatabase = new Geodatabase; // Create on heap so we can store it in the Datasource
+    hr = CreateGeodatabase(wconn, *pGeodatabase);
+
+    /* Handle creation errors */
+    if ( S_OK != hr )
+    {
+        const char *errstr = "Error creating geodatabase (%s).\n";
+        if ( hr == -2147220653 )
+            errstr = "File already exists (%s).\n";
+        delete pGeodatabase;
+        CPLError( CE_Failure, CPLE_AppDefined, errstr, conn );
+        return NULL;
+    }
+
+    /* Ready to embed the Geodatabase in an OGR Datasource */
+    FGdbDataSource* pDS = new FGdbDataSource();
+    if ( ! pDS->Open(pGeodatabase, conn, bUpdate) )
+    {
+        delete pDS;
+        return NULL;
+    }
+    else
+        return pDS;
 }
 
+/***********************************************************************/
+/*                        OpenGeodatabase()                            */
+/***********************************************************************/
 
 void FGdbDriver::OpenGeodatabase(std::string conn, Geodatabase** ppGeodatabase)
 {
-  *ppGeodatabase = NULL;
-  
-  std::wstring wconn = StringToWString(conn); 
+    *ppGeodatabase = NULL;
 
-  long hr;
+    std::wstring wconn = StringToWString(conn);
 
-  Geodatabase* pGeoDatabase = new Geodatabase;
+    long hr;
 
-  if (S_OK != (hr = ::OpenGeodatabase(wconn, *pGeoDatabase)))
-  {
-    delete pGeoDatabase;
+    Geodatabase* pGeoDatabase = new Geodatabase;
 
-    return;
-  }
+    if (S_OK != (hr = ::OpenGeodatabase(wconn, *pGeoDatabase)))
+    {
+        delete pGeoDatabase;
 
-  *ppGeodatabase = pGeoDatabase;
+        return;
+    }
 
+    *ppGeodatabase = pGeoDatabase;
 }
 
-/************************************************************************
-*                           TestCapability()                           *
-************************************************************************/
+/***********************************************************************/
+/*                         TestCapability()                            */
+/***********************************************************************/
 
 int FGdbDriver::TestCapability( const char * pszCap )
 {
+    /*
+    if (EQUAL(pszCap, ODsCCreateLayer) )
+        return FALSE;
+        */
+    if (EQUAL(pszCap, ODsCDeleteLayer) )
+        return TRUE;
 
-  
-  /*
-  if (EQUAL(pszCap, ODsCCreateLayer) )
+    if (EQUAL(pszCap, ODrCCreateDataSource) )
+        return TRUE;
+
+
     return FALSE;
-    */
-  if (EQUAL(pszCap, ODsCDeleteLayer) )
-    return TRUE;
-
-  if (EQUAL(pszCap, ODrCCreateDataSource) )
-    return TRUE;
-
-
-  return FALSE;
 }
 
-/************************************************************************
-*                           RegisterOGRGdb()                                 *
-************************************************************************/
+
+/***********************************************************************/
+/*                       RegisterOGRFileGDB()                          */
+/***********************************************************************/
 
 void RegisterOGRFileGDB()
 
 {
-  if (! GDAL_CHECK_VERSION("OGR FGDB"))
-    return;
-  OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new FGdbDriver );
+    if (! GDAL_CHECK_VERSION("OGR FGDB"))
+        return;
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new FGdbDriver );
 }
 
