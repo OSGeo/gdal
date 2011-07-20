@@ -1352,35 +1352,29 @@ void kml2FeatureDef (
             pszName = oName.c_str (  );
         }
 
-        if ( EQUAL ( pszType, "string" ) ) {
-            OGRFieldDefn oOgrFieldName (
-    pszName,
-    OFTString );
+        if ( EQUAL ( pszType, "bool" ) ||
+             EQUAL ( pszType, "int" ) ||
+             EQUAL ( pszType, "short" ) ||
+             EQUAL ( pszType, "ushort" ) ) {
+            OGRFieldDefn oOgrFieldName ( pszName, OFTInteger );
 
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
-        if ( EQUAL ( pszType, "int" ) ) {
-            OGRFieldDefn oOgrFieldName (
-    pszName,
-    OFTInteger );
+        else if ( EQUAL ( pszType, "float" ) ||
+                  EQUAL ( pszType, "double" ) ||
+
+                  /* a too big uint wouldn't fit in a int, so we map it to OFTReal for now ... */
+                  EQUAL ( pszType, "uint" ) ) {
+            OGRFieldDefn oOgrFieldName ( pszName, OFTReal );
 
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
-        if ( EQUAL ( pszType, "float" ) ) {
-            OGRFieldDefn oOgrFieldName (
-    pszName,
-    OFTReal );
+        else /* string, or any other unrecognized type */
+        {
+            OGRFieldDefn oOgrFieldName ( pszName, OFTString );
 
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
-        if ( EQUAL ( pszType, "bool" ) ) {
-            OGRFieldDefn oOgrFieldName (
-    pszName,
-    OFTBinary );
-
-            poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
-        }
-
 
     }
 
