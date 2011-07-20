@@ -48,7 +48,9 @@ FGdbLayer::FGdbLayer():
     OGRLayer(), m_pDS(NULL), m_pTable(NULL), m_pFeatureDefn(NULL), 
     m_pSRS(NULL), m_wstrSubfields(L"*"), m_pOGRFilterGeometry(NULL), 
     m_pEnumRows(NULL), m_bFilterDirty(true), 
-    m_supressColumnMappingError(false), m_forceMulti(false)
+    m_supressColumnMappingError(false), m_forceMulti(false),
+    m_xOrigin(-2147483647), m_yOrigin(-2147483647), m_zOrigin(-2147483647), 
+    m_xyScale(1000000000), m_zScale(1000000000)
 {
     m_pEnumRows = new EnumRows;
 }
@@ -888,35 +890,72 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
 
     CPLXMLNode* psSRItemNode;
 
+    /* Loop through all the SRS elements we want to store */
     for( psSRItemNode = psSpatialRefNode->psChild;
-        psSRItemNode != NULL;
-        psSRItemNode = psSRItemNode->psNext )
+         psSRItemNode != NULL;
+         psSRItemNode = psSRItemNode->psNext )
     {
-        //loop through all "Field" elements
-        //
-
+        /* The WKID maps (mostly) to an EPSG code */
         if( psSRItemNode->eType == CXT_Element &&
             psSRItemNode->psChild != NULL &&
-            EQUAL(psSRItemNode->pszValue,"WKID"))
+            EQUAL(psSRItemNode->pszValue,"WKID") )
         {
-
-            char* pszUnescaped = CPLUnescapeString(
-                psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
+            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
             *pOutWKID = pszUnescaped;
             CPLFree(pszUnescaped);
         }
+        /* The WKT well-known text can be converted by OGR */
         else if( psSRItemNode->eType == CXT_Element &&
-            psSRItemNode->psChild != NULL &&
-            EQUAL(psSRItemNode->pszValue,"WKT"))
+                psSRItemNode->psChild != NULL &&
+                EQUAL(psSRItemNode->pszValue,"WKT") )
         {
-
-            char* pszUnescaped = CPLUnescapeString(
-                psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
+            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
             *pOutWkt = pszUnescaped;
             CPLFree(pszUnescaped);
         }
-    }
+        /* The precision grid parameters are useful for handling the coordinates */
+        else if( psSRItemNode->eType == CXT_Element &&
+                psSRItemNode->psChild != NULL &&
+                EQUAL(psSRItemNode->pszValue,"XOrigin") )
+        {
+            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
+            m_xOrigin = atof(pszUnescaped);
+            CPLFree(pszUnescaped);
+        }
+        else if( psSRItemNode->eType == CXT_Element &&
+                psSRItemNode->psChild != NULL &&
+                EQUAL(psSRItemNode->pszValue,"YOrigin") )
+        {
+            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
+            m_yOrigin = atof(pszUnescaped);
+            CPLFree(pszUnescaped);
+        }
+        else if( psSRItemNode->eType == CXT_Element &&
+                psSRItemNode->psChild != NULL &&
+                EQUAL(psSRItemNode->pszValue,"ZOrigin") )
+        {
+            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
+            m_zOrigin = atof(pszUnescaped);
+            CPLFree(pszUnescaped);
+        }
+        else if( psSRItemNode->eType == CXT_Element &&
+                psSRItemNode->psChild != NULL &&
+                EQUAL(psSRItemNode->pszValue,"XYScale") )
+        {
+            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
+            m_xyScale = atof(pszUnescaped);
+            CPLFree(pszUnescaped);
+        }
+        else if( psSRItemNode->eType == CXT_Element &&
+                psSRItemNode->psChild != NULL &&
+                EQUAL(psSRItemNode->pszValue,"ZScale") )
+        {
+            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
+            m_zScale = atof(pszUnescaped);
+            CPLFree(pszUnescaped);
+        }
 
+    }
     return (*pOutWkt != "" || *pOutWKID != "");
 }
 
@@ -1538,6 +1577,8 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
 /*                           GetLayerXML()                              */
 /* Return XML definition of the Layer as provided by FGDB. Caller must  */
 /* free result.                                                         */
+/* Not currently used by the driver, but can be used by external code   */
+/* for specific purposes.                                               */
 /************************************************************************/
 
 OGRErr FGdbLayer::GetLayerXML (char **ppXml)
@@ -1555,6 +1596,33 @@ OGRErr FGdbLayer::GetLayerXML (char **ppXml)
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                           GetLayerPrecision()                        */
+/* Return precision numbers for this layer, as defined in the FGDB file */
+/* Not currently used by the driver, but can be used by external code   */
+/* for specific purposes.                                               */
+/************************************************************************/
+
+OGRErr FGdbLayer::GetLayerPrecision (double *xOrigin, double *yOrigin, double *zOrigin,
+                                     double *xyScale, double *zScale)
+{
+    if ( xOrigin )
+        *xOrigin = m_xOrigin;
+
+    if ( yOrigin )
+        *yOrigin = m_yOrigin;
+
+    if ( zOrigin )
+        *zOrigin = m_zOrigin;
+
+    if ( xyScale )
+        *xyScale = m_xyScale;
+        
+    if ( zScale )
+        *zScale = m_zScale;
+        
+    return OGRERR_NONE;
+}
 
 /************************************************************************/
 /*                           TestCapability()                           */
