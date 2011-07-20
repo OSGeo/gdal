@@ -1311,47 +1311,47 @@ void kml2FeatureDef (
             pszType = oType.c_str (  );
         }
 
-        if ( poKmlSimpleField->has_displayname (  ) ) {
+        /* FIXME? We cannot set displayname as the field name because in kml2field() we make the */
+        /* lookup on fields based on their name. We would need some map if we really */
+        /* want to use displayname, but that might not be a good idea because displayname */
+        /* may have HTML formatting, which makes it impractical when converting to other */
+        /* drivers or to make requests */
+        /* Example: http://www.jasonbirch.com/files/newt_combined.kml */
+        /*if ( poKmlSimpleField->has_displayname (  ) ) {
             const string oName = poKmlSimpleField->get_displayname (  );
 
             pszName = oName.c_str (  );
         }
 
-        else if ( poKmlSimpleField->has_name (  ) ) {
+        else*/ if ( poKmlSimpleField->has_name (  ) ) {
             const string oName = poKmlSimpleField->get_name (  );
 
             pszName = oName.c_str (  );
         }
 
-        if ( EQUAL ( pszType, "string" ) ) {
-            OGRFieldDefn oOgrFieldName (
-    pszName,
-    OFTString );
+        if ( EQUAL ( pszType, "bool" ) ||
+             EQUAL ( pszType, "int" ) ||
+             EQUAL ( pszType, "short" ) ||
+             EQUAL ( pszType, "ushort" ) ) {
+            OGRFieldDefn oOgrFieldName ( pszName, OFTInteger );
 
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
-        if ( EQUAL ( pszType, "int" ) ) {
-            OGRFieldDefn oOgrFieldName (
-    pszName,
-    OFTInteger );
+        else if ( EQUAL ( pszType, "float" ) ||
+                  EQUAL ( pszType, "double" ) ||
+
+                  /* a too big uint wouldn't fit in a int, so we map it to OFTReal for now ... */
+                  EQUAL ( pszType, "uint" ) ) {
+            OGRFieldDefn oOgrFieldName ( pszName, OFTReal );
 
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
-        if ( EQUAL ( pszType, "float" ) ) {
-            OGRFieldDefn oOgrFieldName (
-    pszName,
-    OFTReal );
+        else /* string, or any other unrecognized type */
+        {
+            OGRFieldDefn oOgrFieldName ( pszName, OFTString );
 
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
-        if ( EQUAL ( pszType, "bool" ) ) {
-            OGRFieldDefn oOgrFieldName (
-    pszName,
-    OFTBinary );
-
-            poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
-        }
-
 
     }
 
