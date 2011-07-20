@@ -97,9 +97,10 @@ public:
 
   virtual int         TestCapability( const char * );
 
-  // Access the XML directly
+  // Access the XML directly. The 2 following methods are not currently used by the driver, but
+  // can be used by external code for specific purposes.
   OGRErr              GetLayerXML ( char **poXml );
-
+  OGRErr              GetLayerPrecision( double *xOrigin, double *yOrigin, double *zOrigin, double *xyScale, double *zScale );
 
 protected:
 
@@ -138,6 +139,13 @@ protected:
   
   bool  m_supressColumnMappingError;
   bool  m_forceMulti;
+
+  double m_xOrigin;
+  double m_yOrigin;
+  double m_zOrigin;
+  double m_xyScale;
+  double m_zScale;
+
 };
 
 /************************************************************************/
