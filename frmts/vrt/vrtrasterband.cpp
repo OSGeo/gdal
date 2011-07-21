@@ -350,6 +350,8 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         CSLDestroy( papszCategoryNames );
         papszCategoryNames = NULL;
 
+        CPLStringList oCategoryNames;
+
         for( psEntry = CPLGetXMLNode( psTree, "CategoryNames" )->psChild;
              psEntry != NULL; psEntry = psEntry->psNext )
         {
@@ -358,9 +360,11 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
                 || (psEntry->psChild != NULL && psEntry->psChild->eType != CXT_Text) )
                 continue;
             
-            papszCategoryNames = CSLAddString( papszCategoryNames, 
+            oCategoryNames.AddString(
                                 (psEntry->psChild) ? psEntry->psChild->pszValue : "");
         }
+
+        papszCategoryNames = oCategoryNames.StealList();
     }
 
 /* -------------------------------------------------------------------- */
@@ -574,11 +578,17 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
     {
         CPLXMLNode *psCT_XML = CPLCreateXMLNode( psTree, CXT_Element, 
                                                  "CategoryNames" );
+        CPLXMLNode* psLastChild = NULL;
 
         for( int iEntry=0; papszCategoryNames[iEntry] != NULL; iEntry++ )
         {
-            CPLCreateXMLElementAndValue( psCT_XML, "Category", 
+            CPLXMLNode *psNode = CPLCreateXMLElementAndValue( NULL, "Category",
                                          papszCategoryNames[iEntry] );
+            if( psLastChild == NULL )
+                psCT_XML->psChild = psNode;
+            else
+                psLastChild->psNext = psNode;
+            psLastChild = psNode;
         }
     }
 
