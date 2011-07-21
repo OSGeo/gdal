@@ -519,6 +519,18 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Category names                                                  */
+/* -------------------------------------------------------------------- */
+    if( nCloneFlags & GCIF_CATEGORYNAMES )
+    {
+        if( poSrcBand->GetCategoryNames() != NULL )
+        {
+            if( !bOnlyIfMissing || GetCategoryNames() == NULL )
+                GDALPamRasterBand::SetCategoryNames( poSrcBand->GetCategoryNames() );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Offset/scale                                                    */
 /* -------------------------------------------------------------------- */
     if( nCloneFlags & GCIF_SCALEOFFSET )
