@@ -130,11 +130,17 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszUnused )
     {
         CPLXMLNode *psCT_XML = CPLCreateXMLNode( psTree, CXT_Element, 
                                                  "CategoryNames" );
+        CPLXMLNode* psLastChild = NULL;
 
         for( int iEntry=0; psPam->papszCategoryNames[iEntry] != NULL; iEntry++)
         {
-            CPLCreateXMLElementAndValue( psCT_XML, "Category", 
+            CPLXMLNode *psNode = CPLCreateXMLElementAndValue( NULL, "Category",
                                          psPam->papszCategoryNames[iEntry] );
+            if( psLastChild == NULL )
+                psCT_XML->psChild = psNode;
+            else
+                psLastChild->psNext = psNode;
+            psLastChild = psNode;
         }
     }
 
@@ -361,7 +367,7 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
     if( CPLGetXMLNode( psTree, "CategoryNames" ) != NULL )
     {
         CPLXMLNode *psEntry;
-        char **papszCategoryNames = NULL;
+        CPLStringList oCategoryNames;
 
         for( psEntry = CPLGetXMLNode( psTree, "CategoryNames" )->psChild;
              psEntry != NULL; psEntry = psEntry->psNext )
@@ -372,11 +378,11 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
                 || (psEntry->psChild != NULL && psEntry->psChild->eType != CXT_Text) )
                 continue;
             
-            papszCategoryNames = CSLAddString( papszCategoryNames, 
+            oCategoryNames.AddString( 
                                  (psEntry->psChild) ? psEntry->psChild->pszValue : "" );
         }
         
-        GDALPamRasterBand::SetCategoryNames( papszCategoryNames );
+        GDALPamRasterBand::SetCategoryNames( oCategoryNames.List() );
     }
 
 /* -------------------------------------------------------------------- */
