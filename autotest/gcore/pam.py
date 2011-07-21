@@ -278,6 +278,69 @@ def pam_9():
     return 'success'
 
 ###############################################################################
+# Test serializing and deserializing of various band metadata
+
+def pam_10():
+
+    src_ds = gdal.Open('data/testserialization.asc')
+    ds = gdal.GetDriverByName('AAIGRID').CreateCopy('/vsimem/pam_10.asc', src_ds)
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('/vsimem/pam_10.asc')
+    band = ds.GetRasterBand(1)
+    if band.GetDescription() != 'MyDescription':
+        print(band.GetDescription())
+        return 'success'
+
+    if band.GetUnitType() != 'MyUnit':
+        print(band.GetUnitType())
+        return 'success'
+
+    if band.GetOffset() != 1:
+        print(band.GetOffset())
+        return 'success'
+
+    if band.GetScale() != 2:
+        print(band.GetScale())
+        return 'success'
+
+    if band.GetRasterColorInterpretation() != gdal.GCI_PaletteIndex:
+        print(band.GetRasterColorInterpretation())
+        return 'success'
+
+    if band.GetCategoryNames() != ['Cat1', 'Cat2']:
+        print(band.GetCategoryNames())
+        return 'success'
+
+    ct = band.GetColorTable()
+    if ct.GetColorEntry(0) != (0,0,0,255):
+        print(ct.GetColorEntry(0))
+        return 'fail'
+    if ct.GetColorEntry(1) != (1,1,1,255):
+        print(ct.GetColorEntry(1))
+        return 'fail'
+
+    if band.GetMaximum() != 0:
+        print(band.GetMaximum())
+        return 'success'
+
+    if band.GetMinimum() != 2:
+        print(band.GetMinimum())
+        return 'success'
+
+    if band.GetMetadata() != {'STATISTICS_MEAN': '1', 'STATISTICS_MINIMUM': '2', 'STATISTICS_MAXIMUM': '0', 'STATISTICS_STDDEV': '3'}:
+        print(band.GetMetadata())
+        return 'success'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/pam_10.asc')
+    gdal.Unlink('/vsimem/pam_10.asc.aux.xml')
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def pam_cleanup():
@@ -298,6 +361,7 @@ gdaltest_list = [
     pam_7,
     pam_8,
     pam_9,
+    pam_10,
     pam_cleanup ]
 
 if __name__ == '__main__':

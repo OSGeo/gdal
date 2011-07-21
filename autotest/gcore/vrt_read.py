@@ -173,6 +173,68 @@ def vrt_read_4():
 
     return 'success'
 
+###############################################################################
+# Test serializing and deserializing of various band metadata
+
+def vrt_read_5():
+
+    src_ds = gdal.Open('data/testserialization.asc')
+    ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrt_read_5.vrt', src_ds)
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('/vsimem/vrt_read_5.vrt')
+    band = ds.GetRasterBand(1)
+    if band.GetDescription() != 'MyDescription':
+        print(band.GetDescription())
+        return 'success'
+
+    if band.GetUnitType() != 'MyUnit':
+        print(band.GetUnitType())
+        return 'success'
+
+    if band.GetOffset() != 1:
+        print(band.GetOffset())
+        return 'success'
+
+    if band.GetScale() != 2:
+        print(band.GetScale())
+        return 'success'
+
+    if band.GetRasterColorInterpretation() != gdal.GCI_PaletteIndex:
+        print(band.GetRasterColorInterpretation())
+        return 'success'
+
+    if band.GetCategoryNames() != ['Cat1', 'Cat2']:
+        print(band.GetCategoryNames())
+        return 'success'
+
+    ct = band.GetColorTable()
+    if ct.GetColorEntry(0) != (0,0,0,255):
+        print(ct.GetColorEntry(0))
+        return 'fail'
+    if ct.GetColorEntry(1) != (1,1,1,255):
+        print(ct.GetColorEntry(1))
+        return 'fail'
+
+    if band.GetMaximum() != 0:
+        print(band.GetMaximum())
+        return 'success'
+
+    if band.GetMinimum() != 2:
+        print(band.GetMinimum())
+        return 'success'
+
+    if band.GetMetadata() != {'STATISTICS_MEAN': '1', 'STATISTICS_MINIMUM': '2', 'STATISTICS_MAXIMUM': '0', 'STATISTICS_STDDEV': '3'}:
+        print(band.GetMetadata())
+        return 'success'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/vrt_read_5.vrt')
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -184,6 +246,7 @@ gdaltest_list.append( vrt_read_1 )
 gdaltest_list.append( vrt_read_2 )
 gdaltest_list.append( vrt_read_3 )
 gdaltest_list.append( vrt_read_4 )
+gdaltest_list.append( vrt_read_5 )
 
 if __name__ == '__main__':
 

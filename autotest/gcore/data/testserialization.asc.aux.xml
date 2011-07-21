@@ -1,0 +1,23 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Description>MyDescription</Description>
+    <UnitType>MyUnit</UnitType>
+    <Offset>1</Offset>
+    <Scale>2</Scale>
+    <ColorInterp>Palette</ColorInterp>
+    <CategoryNames>
+      <Category>Cat1</Category>
+      <Category>Cat2</Category>
+    </CategoryNames>
+    <ColorTable>
+      <Entry c1="0" c2="0" c3="0" c4="255" />
+      <Entry c1="1" c2="1" c3="1" c4="255" />
+    </ColorTable>
+    <Metadata>
+      <MDI key="STATISTICS_MAXIMUM">0</MDI>
+      <MDI key="STATISTICS_MEAN">1</MDI>
+      <MDI key="STATISTICS_MINIMUM">2</MDI>
+      <MDI key="STATISTICS_STDDEV">3</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>
