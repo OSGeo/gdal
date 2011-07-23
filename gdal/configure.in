@@ -1030,6 +1030,7 @@ if test "$with_gif" = "no" ; then
 elif test "$with_gif" = "yes" -o "$with_gif" = "" ; then
 
   AC_CHECK_LIB(gif,DGifOpenFileName,GIF_SETTING=external,GIF_SETTING=internal,)
+  AC_CHECK_HEADERS(gif_lib.h)
 
   if test "$GIF_SETTING" = "external" ; then   
     LIBS="-lgif $LIBS"

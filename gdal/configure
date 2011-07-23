@@ -20177,6 +20177,18 @@ else
   GIF_SETTING=internal
 fi
 
+  for ac_header in gif_lib.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "gif_lib.h" "ac_cv_header_gif_lib_h" "$ac_includes_default"
+if test "x$ac_cv_header_gif_lib_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GIF_LIB_H 1
+_ACEOF
+
+fi
+
+done
+
 
   if test "$GIF_SETTING" = "external" ; then
     LIBS="-lgif $LIBS"
