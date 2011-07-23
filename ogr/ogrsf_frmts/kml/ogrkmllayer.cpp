@@ -102,6 +102,7 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
 
     bWriter_ = bWriterIn;
     nWroteFeatureCount_ = 0;
+    bClosedForWriting = bWriterIn == NULL;
 
     pszName_ = CPLStrdup(pszName);
 }
@@ -242,6 +243,13 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
 
     if( !bWriter_ )
         return OGRERR_FAILURE;
+
+    if( bClosedForWriting )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Interleaved feature adding to different layers is not supported");
+        return OGRERR_FAILURE;
+    }
 
     VSILFILE *fp = poDS_->GetOutputFP();
     CPLAssert( NULL != fp );
