@@ -181,7 +181,8 @@ void GenerateTiles(std::string filename,
     GDALDataset* outDs = poOutputTileDriver->CreateCopy(filename.c_str(), poTmpDataset, FALSE, NULL, NULL, NULL);
 
     GDALClose(poTmpDataset);
-    GDALClose(outDs);
+    if (outDs)
+        GDALClose(outDs);
 }
 
 /************************************************************************/
