@@ -473,6 +473,7 @@ protected:
     double             dfNoDataValue;
 
     void NullBlock( void *pData );
+    CPLErr FillCacheForOtherBands( int nBlockXOff, int nBlockYOff );
 
 public:
                    GTiffRasterBand( GTiffDataset *, int );
@@ -951,6 +952,21 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
+    if (eErr == CE_None)
+        eErr = FillCacheForOtherBands(nBlockXOff, nBlockYOff);
+
+    return eErr;
+}
+
+
+/************************************************************************/
+/*                       FillCacheForOtherBands()                       */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::FillCacheForOtherBands( int nBlockXOff, int nBlockYOff )
+
+{
+    CPLErr eErr = CE_None;
 /* -------------------------------------------------------------------- */
 /*      In the fairly common case of pixel interleaved 8bit data        */
 /*      that is multi-band, lets push the rest of the data into the     */
@@ -967,7 +983,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      If there are many bands and the block cache size is not big     */
 /*      enough to accomodate the size of all the blocks, don't enter    */
 /* -------------------------------------------------------------------- */
-    if( poGDS->nBands != 1 && eErr == CE_None && !poGDS->bLoadingOtherBands &&
+    if( poGDS->nBands != 1 && !poGDS->bLoadingOtherBands &&
         nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) < GDALGetCacheMax64() / poGDS->nBands)
     {
         int iOtherBand;
@@ -1920,6 +1936,9 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
                        ((GByte *) pImage)+iDestLine*nBlockXSize, GDT_Byte, 1, 
                        nBlockXSize );
     }
+
+    if (eErr == CE_None)
+        eErr = FillCacheForOtherBands(nBlockXOff, nBlockYOff);
 
     return eErr;
 }
