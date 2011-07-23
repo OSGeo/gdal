@@ -284,6 +284,7 @@ int main( int argc, char ** argv )
 {
     GDALDatasetH	hDstDS;
     const char         *pszFormat = "GTiff";
+    int bFormatExplicitelySet = FALSE;
     char              **papszSrcFiles = NULL;
     char               *pszDstFilename = NULL;
     int                 bCreateOutput = FALSE, i;
@@ -376,6 +377,7 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
+            bFormatExplicitelySet = TRUE;
             bCreateOutput = TRUE;
             if( EQUAL(pszFormat,"VRT") )
                 bVRT = TRUE;
@@ -774,7 +776,7 @@ int main( int argc, char ** argv )
 
     if( hDstDS == NULL )
     {
-        if (!bQuiet)
+        if (!bQuiet && !bFormatExplicitelySet)
             CheckExtensionConsistency(pszDstFilename, pszFormat);
 
         hDstDS = GDALWarpCreateOutput( papszSrcFiles, pszDstFilename,pszFormat,

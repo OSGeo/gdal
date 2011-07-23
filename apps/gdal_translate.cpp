@@ -100,6 +100,7 @@ static int ProxyMain( int argc, char ** argv )
     int			i;
     int			nRasterXSize, nRasterYSize;
     const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
+    int bFormatExplicitelySet = FALSE;
     GDALDriverH		hDriver;
     int			*panBandList = NULL; /* negative value of panBandList[i] means mask band of ABS(panBandList[i]) */
     int         nBandCount = 0, bDefBands = TRUE;
@@ -178,7 +179,10 @@ static int ProxyMain( int argc, char ** argv )
             return 0;
         }
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
+        {
             pszFormat = argv[++i];
+            bFormatExplicitelySet = TRUE;
+        }
 
         else if( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
         {
@@ -498,7 +502,7 @@ static int ProxyMain( int argc, char ** argv )
         pfnProgress = GDALDummyProgress;
     }
 
-    if (!bQuiet)
+    if (!bQuiet && !bFormatExplicitelySet)
         CheckExtensionConsistency(pszDest, pszFormat);
 
 /* -------------------------------------------------------------------- */
