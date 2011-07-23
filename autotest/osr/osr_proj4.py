@@ -405,6 +405,11 @@ def osr_proj4_11():
     for proj4str in proj4strlist:
         srs = osr.SpatialReference()
         srs.ImportFromProj4(proj4str)
+        if srs.Validate() != 0:
+            gdaltest.post_reason( 'does not validate' )
+            print(proj4str)
+            print(srs.ExportToPrettyWkt())
+            return 'fail'
         out = srs.ExportToProj4()
         if proj4str.find("+no_defs") == -1:
             expected = proj4str + " +ellps=WGS84 +units=m +no_defs "
