@@ -72,6 +72,8 @@ public:
     //
     void SetLayerNumber( int nLayer );
 
+    void SetClosedForWriting() { bClosedForWriting = TRUE; }
+
 private:
     OGRKMLDataSource* poDS_;
     OGRSpatialReference* poSRS_;
@@ -84,6 +86,7 @@ private:
     int bWriter_;
     int nLayerNumber_;
     int nWroteFeatureCount_;
+    int bClosedForWriting;
     char* pszName_;
 
     int nLastAsked;

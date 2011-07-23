@@ -613,6 +613,24 @@ def ogr_kml_test_ogrsf():
     return 'success'
 
 ###############################################################################
+# Test fix for #2772
+
+def ogr_kml_interleaved_writing():
+
+    ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_interleaved_writing.kml')
+    lyr1 = ds.CreateLayer("lyr1")
+    lyr2 = ds.CreateLayer("lyr2")
+    feat = ogr.Feature(lyr1.GetLayerDefn())
+    ret = lyr1.CreateFeature(feat)
+    ds = None
+
+    # CreateFeature() should fail
+    if ret == 0:
+        return 'failure'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_kml_cleanup():
@@ -647,6 +665,7 @@ gdaltest_list = [
     ogr_kml_xml_attributes,
     ogr_kml_read_geometries,
     ogr_kml_test_ogrsf,
+    ogr_kml_interleaved_writing,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
