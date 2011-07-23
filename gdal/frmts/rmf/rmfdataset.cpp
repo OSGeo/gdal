@@ -1627,6 +1627,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Unable to create file %s.\n",
                   pszFilename );
+        delete poDS;
         return NULL;
     }
 
