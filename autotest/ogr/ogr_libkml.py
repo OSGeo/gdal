@@ -654,7 +654,25 @@ def ogr_libkml_test_ogrsf():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test reading KML with only Placemark
+
+def ogr_libkml_read_placemark():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/placemark.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -696,6 +714,7 @@ gdaltest_list = [
     ogr_libkml_xml_attributes,
     ogr_libkml_read_geometries,
     ogr_libkml_test_ogrsf,
+    ogr_libkml_read_placemark,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

@@ -633,6 +633,24 @@ def ogr_kml_interleaved_writing():
     return 'success'
 
 ###############################################################################
+# Test reading KML with only Placemark
+
+def ogr_kml_read_placemark():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/placemark.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 #  Cleanup
 
 def ogr_kml_cleanup():
@@ -668,6 +686,7 @@ gdaltest_list = [
     ogr_kml_read_geometries,
     ogr_kml_test_ogrsf,
     ogr_kml_interleaved_writing,
+    ogr_kml_read_placemark,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
