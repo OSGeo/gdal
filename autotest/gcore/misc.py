@@ -141,6 +141,12 @@ def misc_5_internal(drv, datatype, nBands):
         filename = filename + '.sdat'
     elif drv.ShortName == 'ADRG':
         filename = '%s/ABCDEF01.GEN' % dirname
+    elif drv.ShortName == 'SRTMHGT':
+        filename = '%s/N48E002.HGT' % dirname
+    elif drv.ShortName == 'ECW':
+        filename = filename + '.ecw'
+    elif drv.ShortName == 'KMLSUPEROVERLAY':
+        filename = filename + '.kmz'
     ds = drv.Create(filename, 100, 100, nBands, datatype)
     if ds is not None:
         set_gt = (2,1.0/10,0,49,0,-1.0/10)
@@ -274,6 +280,20 @@ def misc_6_internal(datatype, nBands):
                             return 'fail'
 
                     filename = '%s/foo' % dirname
+                    if drv.ShortName == 'GTX':
+                        filename = filename + '.gtx'
+                    elif drv.ShortName == 'RST':
+                        filename = filename + '.rst'
+                    elif drv.ShortName == 'SAGA':
+                        filename = filename + '.sdat'
+                    elif drv.ShortName == 'ADRG':
+                        filename = '%s/ABCDEF01.GEN' % dirname
+                    elif drv.ShortName == 'SRTMHGT':
+                        filename = '%s/N48E002.HGT' % dirname
+                    elif drv.ShortName == 'ECW':
+                        filename = filename + '.ecw'
+                    elif drv.ShortName == 'KMLSUPEROVERLAY':
+                        filename = filename + '.kmz'
                     dst_ds = drv.CreateCopy(filename, ds)
                     dst_ds = None
 
@@ -443,7 +463,80 @@ def misc_11():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test CreateCopy() with a target filename in a non-existing dir
+
+def misc_12():
+
+    for i in range(gdal.GetDriverCount()):
+        drv = gdal.GetDriver(i)
+        md = drv.GetMetadata()
+        if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md:
+
+            ext = ''
+            if drv.ShortName == 'GTX':
+                ext = '.gtx'
+            elif drv.ShortName == 'RST':
+                ext = '.rst'
+            elif drv.ShortName == 'SAGA':
+                ext = '.sdat'
+            elif drv.ShortName == 'ECW':
+                ext = '.ecw'
+            elif drv.ShortName == 'KMLSUPEROVERLAY':
+                ext = '.kmz'
+            elif drv.ShortName == 'ADRG':
+                ext = '/ABCDEF01.GEN'
+            elif drv.ShortName == 'SRTMHGT':
+                ext = '/N48E002.HGT'
+
+            nbands = 1
+            if drv.ShortName == 'WEBP' or drv.ShortName == 'ADRG':
+                nbands = 3
+
+            datatype = gdal.GDT_Byte
+            if drv.ShortName == 'BT' or drv.ShortName == 'BLX':
+                datatype = gdal.GDT_Int16
+            elif drv.ShortName == 'GTX' or drv.ShortName == 'NTv2' or drv.ShortName == 'Leveller' :
+                datatype = gdal.GDT_Float32
+
+            size = 1201
+            if drv.ShortName == 'BLX':
+                size = 128
+
+            src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/misc_12_src.tif', size, size, nbands, datatype)
+            set_gt = (2,1.0/size,0,49,0,-1.0/size)
+            src_ds.SetGeoTransform(set_gt)
+            src_ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]]')
+
+            # Test to detect crashes
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ds = drv.CreateCopy('/nonexistingpath/nonexistingfile' + ext, src_ds)
+            gdal.PopErrorHandler()
+            ds = None
+
+            # Test to detect memleaks
+            ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
+            import test_cli_utilities
+            (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/nonexistingfile' + ext, check_memleak = False)
+            ds = None
+            gdal.Unlink('tmp/misc_12.vrt')
+
+            # If DEBUG_VSIMALLOC_STATS is defined, this is an easy way
+            # to catch some memory leaks
+            if out.find('VSIMalloc + VSICalloc - VSIFree') != -1 and \
+               out.find('VSIMalloc + VSICalloc - VSIFree : 0') == -1:
+                   if drv.ShortName == 'Rasterlite' and out.find('VSIMalloc + VSICalloc - VSIFree : 1') != -1:
+                       pass
+                   else:
+                       print('memleak detected for driver %s' % drv.ShortName)
+
+            src_ds = None
+
+            gdal.Unlink('/vsimem/misc_12_src.tif')
+
+    return 'success'
+
 ###############################################################################
 def misc_cleanup():
 
@@ -465,6 +558,7 @@ gdaltest_list = [ misc_1,
                   misc_9,
                   misc_10,
                   misc_11,
+                  misc_12,
                   misc_cleanup ]
 
 if __name__ == '__main__':
