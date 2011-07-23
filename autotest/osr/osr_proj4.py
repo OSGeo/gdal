@@ -340,6 +340,85 @@ def osr_proj4_10():
     
     return 'success'
 
+###############################################################################
+# Test round-tripping of all supported projection methods
+#
+def osr_proj4_11():
+
+    proj4strlist = [ '+proj=bonne +lon_0=2 +lat_1=1 +x_0=3 +y_0=4',
+                     '+proj=cass +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=nzmg +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=cea +lon_0=2 +lat_ts=1 +x_0=3 +y_0=4',
+                     '+proj=tmerc +lat_0=1 +lon_0=2 +k=5 +x_0=3 +y_0=4',
+                     '+proj=utm +zone=31 +south',
+                     '+proj=merc +lon_0=2 +lat_ts=45 +x_0=3 +y_0=4',
+                     '+proj=merc +lon_0=2 +k=5 +x_0=3 +y_0=4',
+                     '+proj=stere +lat_0=90 +lat_ts=1 +lon_0=2 +k=2 +x_0=3 +y_0=4',
+                     '+proj=stere +lat_0=-90 +lat_ts=-1 +lon_0=2 +k=2 +x_0=3 +y_0=4',
+                     '+proj=sterea +lat_0=45 +lon_0=2 +k=2 +x_0=3 +y_0=4',
+                     #'+proj=stere +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=eqc +lat_ts=0 +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     #'+proj=eqc +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=gstmerc +lat_0=1 +lon_0=2 +k_0=5 +x_0=3 +y_0=4',
+                     '+proj=gnom +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=ortho +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=laea +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=aeqd +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=eqdc +lat_0=1 +lon_0=2 +lat_1=-2 +lat_2=-1 +x_0=3 +y_0=4',
+                     '+proj=mill +lat_0=1 +lon_0=2 +x_0=3 +y_0=4 +R_A',
+                     '+proj=moll +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=eck1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=eck2 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=eck3 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=eck4 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=eck5 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=eck6 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=poly +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=aea +lat_1=-2 +lat_2=-1 +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=robin +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=vandg +lon_0=2 +x_0=3 +y_0=4 +R_A',
+                     '+proj=sinu +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=gall +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=goode +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=geos +lon_0=2 +h=1 +x_0=3 +y_0=4',
+                     '+proj=lcc +lat_1=1 +lat_0=1 +lon_0=2 +k_0=2 +x_0=3 +y_0=4',
+                     '+proj=lcc +lat_1=-10 +lat_2=30 +lat_0=60 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=omerc +lat_0=1 +lonc=2 +alpha=-1 +k=-3 +x_0=3 +y_0=4 +gamma=-2',
+                     '+proj=somerc +lat_0=1 +lon_0=2 +k_0=2 +x_0=3 +y_0=4',
+                     '+proj=krovak +lat_0=1 +lon_0=2 +alpha=0 +k=2 +x_0=3 +y_0=4',
+                     '+proj=iwm_p +lat_1=-2 +lat_2=-1 +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=wag1 +x_0=3 +y_0=4',
+                     '+proj=wag2 +x_0=3 +y_0=4',
+                     '+proj=wag3 +lat_ts=1 +x_0=3 +y_0=4',
+                     '+proj=wag4 +x_0=3 +y_0=4',
+                     '+proj=wag5 +x_0=3 +y_0=4',
+                     '+proj=wag6 +x_0=3 +y_0=4',
+                     '+proj=wag7 +x_0=3 +y_0=4',
+                     '+proj=tpeqd +lat_1=1 +lon_1=2 +lat_2=3 +lon_2=4 +x_0=5 +y_0=6',
+
+                     '+proj=utm +zone=31 +south +ellps=WGS84 +units=us-ft +no_defs ',
+                     '+proj=utm +zone=31 +south +ellps=WGS84 +units=ft +no_defs ',
+                     '+proj=utm +zone=31 +south +ellps=WGS84 +units=yd +no_defs ',
+                     '+proj=utm +zone=31 +south +ellps=WGS84 +units=us-yd +no_defs ',
+                     ]
+
+    for proj4str in proj4strlist:
+        srs = osr.SpatialReference()
+        srs.ImportFromProj4(proj4str)
+        out = srs.ExportToProj4()
+        if proj4str.find("+no_defs") == -1:
+            expected = proj4str + " +ellps=WGS84 +units=m +no_defs "
+        else:
+            expected = proj4str
+
+        if out != expected:
+            gdaltest.post_reason( 'round trip via PROJ.4 failed' )
+            print(expected)
+            print(out)
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -351,7 +430,7 @@ gdaltest_list = [
     osr_proj4_8,
     osr_proj4_9,
     osr_proj4_10,
-    None ]
+    osr_proj4_11 ]
 
 if __name__ == '__main__':
 
