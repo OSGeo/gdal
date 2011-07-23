@@ -1471,6 +1471,9 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
             CSLDestroy( papszMerged );
         }
 
+        if( strlen(poAuxBand->GetDescription()) > 0 )
+            poBand->SetDescription( poAuxBand->GetDescription() );
+
         if( poAuxBand->GetCategoryNames() != NULL )
             poBand->SetCategoryNames( poAuxBand->GetCategoryNames() );
 
