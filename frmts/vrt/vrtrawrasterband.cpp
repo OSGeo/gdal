@@ -200,6 +200,11 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
     if( fp == NULL )
         fp = CPLOpenShared( pszExpandedFilename, "rb", TRUE );
 
+    if( fp == NULL && ((VRTDataset *)poDS)->GetAccess() == GA_Update )
+    {
+        fp = CPLOpenShared( pszExpandedFilename, "wb+", TRUE );
+    }
+
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
