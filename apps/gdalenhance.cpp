@@ -88,6 +88,7 @@ int main( int argc, char ** argv )
     GDALDatasetH	hDataset, hOutDS;
     int			i;
     const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
+    int bFormatExplicitelySet = FALSE;
     GDALDriverH		hDriver;
     GDALDataType	eOutputType = GDT_Unknown;
     char                **papszCreateOptions = NULL;
@@ -126,7 +127,10 @@ int main( int argc, char ** argv )
             return 0;
         }
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
+        {
             pszFormat = argv[++i];
+            bFormatExplicitelySet = TRUE;
+        }
 
         else if( EQUAL(argv[i],"-ot") && i < argc-1 )
         {
@@ -260,7 +264,7 @@ int main( int argc, char ** argv )
         Usage();
     }
 
-    if (!bQuiet && pszDest != NULL)
+    if (!bQuiet && pszDest != NULL && !bFormatExplicitelySet)
         CheckExtensionConsistency(pszDest, pszFormat);
 
 /* -------------------------------------------------------------------- */
