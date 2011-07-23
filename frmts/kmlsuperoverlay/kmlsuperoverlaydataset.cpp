@@ -579,6 +579,10 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
                                                  int bStrict, char ** papszOptions, GDALProgressFunc pfnProgress, void * pProgressData)
 {
     bool isKmz = false;
+
+    int bands = poSrcDS->GetRasterCount();
+    if (bands == 0)
+        return NULL;
    
     //correct the file and get the directory
     char* output_dir = NULL;
@@ -648,7 +652,6 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
         return NULL;
     }
 
-    int bands = poSrcDS->GetRasterCount();
     int xsize = poSrcDS->GetRasterXSize();
     int ysize = poSrcDS->GetRasterYSize();
 
