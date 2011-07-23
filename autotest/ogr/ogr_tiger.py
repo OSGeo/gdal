@@ -43,14 +43,6 @@ def ogr_tiger_1():
 
     ogrtest.tiger_ds = None
 
-    try:
-        drv = ogr.GetDriverByName('OGDI')
-    except:
-        drv = None
-   
-    if drv is None:
-        return 'skip'
-
     if not gdaltest.download_file('http://www2.census.gov/geo/tiger/tiger2006se/AL/TGR01001.ZIP', 'TGR01001.ZIP'):
         return 'skip'
 
