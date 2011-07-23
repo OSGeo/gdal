@@ -624,6 +624,8 @@ def ogr_kml_interleaved_writing():
     ret = lyr1.CreateFeature(feat)
     ds = None
 
+    gdal.Unlink('/vsimem/ogr_kml_interleaved_writing.kml')
+
     # CreateFeature() should fail
     if ret == 0:
         return 'failure'
