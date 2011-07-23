@@ -478,10 +478,14 @@ void OGRFree( void * pMemory )
  * options for all OGR commandline utilities.  It takes care of the following
  * commandline options:
  *  
+ *  --version: report version of GDAL in use. 
+ *  --license: report GDAL license info.
  *  --formats: report all format drivers configured.
  *  --optfile filename: expand an option file into the argument list. 
  *  --config key value: set system configuration option. 
  *  --debug [on/off/value]: set debug level.
+ *  --pause: Pause for user input (allows time to attach debugger)
+ *  --locale [locale]: Install a locale using setlocale() (debugging)
  *  --help-general: report detailed help on general options. 
  *
  * The argument array is replaced "in place" and should be freed with 
@@ -715,10 +719,8 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--pause") )
         {
-            char szLine[81];
-
-            printf( "Hit <ENTER> to continue.\n" );
-            fgets( szLine, sizeof(szLine), stdin );
+            printf( "Hit <ENTER> to Continue.\n" );
+            CPLReadLine( stdin );
         }
 
 /* -------------------------------------------------------------------- */
@@ -735,6 +737,8 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             printf( "  --optfile filename: expand an option file into the argument list.\n" );
             printf( "  --config key value: set system configuration option.\n" );
             printf( "  --debug [on/off/value]: set debug level.\n" );
+            printf( "  --pause: wait for user input, time to attach debugger\n" );
+            printf( "  --locale [locale]: install locale for debugging (ie. en_US.UTF-8)\n" );
             printf( "  --help-general: report detailed help on general options.\n" );
             CSLDestroy( papszReturn );
             return 0;

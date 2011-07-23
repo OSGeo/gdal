@@ -2308,6 +2308,8 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
  *  --config key value: set system configuration option. 
  *  --debug [on/off/value]: set debug level.
  *  --mempreload dir: preload directory contents into /vsimem
+ *  --pause: Pause for user input (allows time to attach debugger)
+ *  --locale [locale]: Install a locale using setlocale() (debugging)
  *  --help-general: report detailed help on general options. 
  *
  * The argument array is replaced "in place" and should be freed with 
@@ -2633,6 +2635,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             printf( "  --optfile filename: expand an option file into the argument list.\n" );
             printf( "  --config key value: set system configuration option.\n" );
             printf( "  --debug [on/off/value]: set debug level.\n" );
+            printf( "  --pause: wait for user input, time to attach debugger\n" );
+            printf( "  --locale [locale]: install locale for debugging (ie. en_US.UTF-8)\n" );
             printf( "  --help-general: report detailed help on general options.\n" );
             CSLDestroy( papszReturn );
             return 0;
@@ -2644,6 +2648,15 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         else if( EQUAL(papszArgv[iArg],"--locale") && iArg < nArgc-1 )
         {
             setlocale( LC_ALL, papszArgv[++iArg] );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --pause                                                         */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--pause") )
+        {
+            printf( "Hit <ENTER> to Continue.\n" );
+            CPLReadLine( stdin );
         }
 
 /* -------------------------------------------------------------------- */
