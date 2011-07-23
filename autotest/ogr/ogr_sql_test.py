@@ -424,12 +424,23 @@ def ogr_sql_18():
     if sql_lyr is None:
         ds = None
         return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+    feat = None
 
-    # XXX - Ticket #2221:
-    # Field name returned consists of incorrectly encoding characters
-    # so its not possible to compare it against fld_name value
-    #fld_name = u'nomd\303\251part'
-    #fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(1)
+    ds.ReleaseResultSet( sql_lyr )
+
+    # Test #2221
+    sql = 'select NOMd\303\251PART from D\303\251parts'
+    sql_lyr = ds.ExecuteSQL( sql )
+    if sql_lyr is None:
+        ds = None
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+    feat = None
 
     ds.ReleaseResultSet( sql_lyr )
     ds = None
