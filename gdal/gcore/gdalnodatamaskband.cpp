@@ -143,7 +143,10 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
                                pabySrc, nXSizeRequest, nYSizeRequest,
                                eWrkDT, 0, nBlockXSize * (GDALGetDataTypeSize(eWrkDT)/8) );
     if( eErr != CE_None )
+    {
+        CPLFree(pabySrc);
         return eErr;
+    }
 
     int bIsNoDataNan = CPLIsNan(dfNoDataValue);
 
