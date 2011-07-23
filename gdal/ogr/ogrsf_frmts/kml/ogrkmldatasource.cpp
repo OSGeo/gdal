@@ -335,6 +335,7 @@ OGRKMLDataSource::CreateLayer( const char * pszLayerName,
     if (GetLayerCount() > 0)
     {
         VSIFPrintfL( fpOutput_, "</Folder>\n");
+        ((OGRKMLLayer*)GetLayer(GetLayerCount()-1))->SetClosedForWriting();
     }
     
 /* -------------------------------------------------------------------- */
