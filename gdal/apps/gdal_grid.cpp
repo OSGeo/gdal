@@ -513,6 +513,7 @@ int main( int argc, char ** argv )
 {
     GDALDriverH     hDriver;
     const char      *pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
+    int             bFormatExplicitelySet = FALSE;
     char            **papszLayers = NULL;
     const char      *pszBurnAttribute = NULL;
     const char      *pszWHERE = NULL, *pszSQL = NULL;
@@ -560,6 +561,7 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
+            bFormatExplicitelySet = TRUE;
         }
 
         else if( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
@@ -881,7 +883,7 @@ int main( int argc, char ** argv )
     if ( nYSize == 0 )
         nYSize = 256;
 
-    if (!bQuiet)
+    if (!bQuiet && !bFormatExplicitelySet)
         CheckExtensionConsistency(pszDest, pszFormat);
 
     hDstDS = GDALCreate( hDriver, pszDest, nXSize, nYSize, nBands,

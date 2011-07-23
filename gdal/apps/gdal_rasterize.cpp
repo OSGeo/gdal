@@ -467,6 +467,7 @@ int main( int argc, char ** argv )
     double dfXRes = 0, dfYRes = 0;
     int bCreateOutput = FALSE;
     const char* pszFormat = "GTiff";
+    int bFormatExplicitelySet = FALSE;
     char **papszCreateOptions = NULL;
     GDALDriverH hDriver = NULL;
     GDALDataType eOutputType = GDT_Float64;
@@ -594,6 +595,7 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
+            bFormatExplicitelySet = TRUE;
             bCreateOutput = TRUE;
         }
         else if( EQUAL(argv[i],"-init") && i < argc - 1 )
@@ -838,7 +840,7 @@ int main( int argc, char ** argv )
             exit( 1 );
         }
 
-        if (!bQuiet)
+        if (!bQuiet && !bFormatExplicitelySet)
             CheckExtensionConsistency(pszDstFilename, pszFormat);
     }
     else

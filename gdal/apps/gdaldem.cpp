@@ -2139,6 +2139,7 @@ int main( int argc, char ** argv )
     const char *pszDstFilename = NULL;
     const char *pszColorFilename = NULL;
     const char *pszFormat = "GTiff";
+    int bFormatExplicitelySet = FALSE;
     char **papszCreateOptions = NULL;
     
     GDALDatasetH hSrcDataset = NULL;
@@ -2306,6 +2307,7 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
+            bFormatExplicitelySet = TRUE;
         }
         else if( argv[i][0] == '-' )
         {
@@ -2401,7 +2403,7 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
 
-    if (!bQuiet)
+    if (!bQuiet && !bFormatExplicitelySet)
         CheckExtensionConsistency(pszDstFilename, pszFormat);
 
     double dfDstNoDataValue = 0;
