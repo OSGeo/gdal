@@ -48,7 +48,7 @@ static void Usage()
 /*                              TortureDS()                             */
 /************************************************************************/
 
-static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations)
+static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations, int nRecurse)
 {
     int             nBlockXSize, nBlockYSize;
     int             nRasterXSize, nRasterYSize;
@@ -59,6 +59,9 @@ static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations)
     //double          adfMinMax[2];
     float           afSampleBuf;
     GDALRasterBandH hMaskBand;
+
+    if (nRecurse > 5)
+        return;
 
     GDALGetRasterDataType(hBand);
     GDALGetBlockSize(hBand, &nBlockXSize, &nBlockYSize);
@@ -82,7 +85,7 @@ static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations)
     {
         GDALRasterBandH hOverviewBand = GDALGetOverview(hBand, iOverview);
         if (hOverviewBand)
-            TortureBand(hOverviewBand, FALSE);
+            TortureBand(hOverviewBand, FALSE, nRecurse + 1);
     }
 
     GDALGetRasterNoDataValue(hBand, &bHasNoData);
@@ -113,7 +116,7 @@ static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations)
     //GDALAddDerivedBandPixelFunc
     hMaskBand = GDALGetMaskBand(hBand);
     if (hMaskBand != hBand)
-        TortureBand(hMaskBand, FALSE);
+        TortureBand(hMaskBand, FALSE, nRecurse + 1);
     GDALGetMaskFlags(hBand);
     //GDALCreateMaskBand
     
@@ -176,7 +179,7 @@ static void TortureDS(const char *pszTarget, int bReadWriteOperations)
         if (hBand == NULL)
             continue;
 
-        TortureBand(hBand, bReadWriteOperations);
+        TortureBand(hBand, bReadWriteOperations, 0);
     }
 
     GDALClose(hDS);
