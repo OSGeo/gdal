@@ -648,11 +648,13 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 
         if( poPen->Color(bDefault) != NULL && !bDefault )
             WriteValue( 62, ColorStringToDXFColor( poPen->Color(bDefault) ) );
-        
-        double dfWidthInMM = poPen->Width(bDefault);
+
+        // we want to fetch the width in ground units. 
+        poPen->SetUnit( OGRSTUGround, 1.0 );
+        double dfWidth = poPen->Width(bDefault);
 
         if( !bDefault )
-            WriteValue( 370, (int) floor(dfWidthInMM * 100 + 0.5) );
+            WriteValue( 370, (int) floor(dfWidth * 100 + 0.5) );
     }
 
 /* -------------------------------------------------------------------- */
