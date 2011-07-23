@@ -3566,6 +3566,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Can't create HDF4 file %s", pszFilename );
+        delete poDS;
         return NULL;
     }
     poDS->iXDim = 1;
