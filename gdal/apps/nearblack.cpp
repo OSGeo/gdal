@@ -114,6 +114,7 @@ int main( int argc, char ** argv )
     int bSetAlpha = FALSE;
     int bSetMask = FALSE;
     const char* pszDriverName = "HFA";
+    int bFormatExplicitelySet = FALSE;
     char** papszCreationOptions = NULL;
     int bQuiet = FALSE;
 
@@ -130,7 +131,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i], "-o") && i < argc-1 )
             pszOutFile = argv[++i];
         else if( EQUAL(argv[i], "-of") && i < argc-1 )
+        {
             pszDriverName = argv[++i];
+            bFormatExplicitelySet = TRUE;
+        }
         else if( EQUAL(argv[i], "-white") ) {
             bNearWhite = TRUE;
         }
@@ -241,7 +245,7 @@ int main( int argc, char ** argv )
         if (hDriver == NULL)
             exit(1);
 
-        if (!bQuiet)
+        if (!bQuiet && !bFormatExplicitelySet)
             CheckExtensionConsistency(pszOutFile, pszDriverName);
 
         if (bSetAlpha)
