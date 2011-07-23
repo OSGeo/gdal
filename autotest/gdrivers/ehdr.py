@@ -206,6 +206,76 @@ def ehdr_11():
     tst = gdaltest.GDALTest( 'EHDR', 'ehdr11.flt', 1, 8202 )
     return tst.testOpen()
 
+###############################################################################
+# Test CreateCopy with 1bit data
+
+def ehdr_12():
+
+    src_ds = gdal.Open('../gcore/data/1bit.bmp')
+    ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/1bit.bil', src_ds, options = ['NBITS=1'] )
+    ds = None
+
+    ds = gdal.Open('/vsimem/1bit.bil')
+    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+    ds = None
+    src_ds = None
+
+    gdal.GetDriverByName('EHDR').Delete('/vsimem/1bit.bil')
+
+    return 'success'
+
+###############################################################################
+# Test statistics
+
+def ehdr_13():
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/byte.bil', src_ds)
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open('/vsimem/byte.bil')
+    if ds.GetRasterBand(1).GetMinimum() != None:
+        gdaltest.post_reason('did not expected minimum')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMaximum() != None:
+        gdaltest.post_reason('did not expected maximum')
+        return 'fail'
+    stats = ds.GetRasterBand(1).GetStatistics(False, True)
+    expected_stats = [74.0, 255.0, 126.765, 22.928470838675704]
+    for i in range(4):
+        if abs(stats[i]-expected_stats[i]) > 0.0001:
+            gdaltest.post_reason('did not get expected statistics')
+            return 'fail'
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/byte.stx', 'rb')
+    if f is None:
+        gdaltest.post_reason('expected .stx file')
+        return 'fail'
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open('/vsimem/byte.bil')
+    if abs(ds.GetRasterBand(1).GetMinimum() - 74) > 0.0001:
+        gdaltest.post_reason('did not get expected minimum')
+        return 'fail'
+    if abs(ds.GetRasterBand(1).GetMaximum() - 255) > 0.0001:
+        gdaltest.post_reason('did not get expected maximum')
+        return 'fail'
+    stats = ds.GetRasterBand(1).GetStatistics(False, True)
+    expected_stats = [74.0, 255.0, 126.765, 22.928470838675704]
+    for i in range(4):
+        if abs(stats[i]-expected_stats[i]) > 0.0001:
+            gdaltest.post_reason('did not get expected statistics')
+            return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('EHDR').Delete('/vsimem/byte.bil')
+
+    return 'success'
+    
 gdaltest_list = [
     ehdr_1,
     ehdr_2,
@@ -217,7 +287,9 @@ gdaltest_list = [
     ehdr_8,
     ehdr_9,
     ehdr_10,
-    ehdr_11 ]
+    ehdr_11,
+    ehdr_12,
+    ehdr_13 ]
 
 if __name__ == '__main__':
 
