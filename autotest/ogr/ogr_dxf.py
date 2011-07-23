@@ -905,7 +905,7 @@ def ogr_dxf_18():
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('LINESTRING(0 0,25 25)') )
     dst_feat.SetField( 'Linetype', 'DASHED' )
-    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:1mm,p:"12.0g 6.0g")' )
+    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:2g,p:"12.0g 6.0g")' )
     lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
     
@@ -913,14 +913,14 @@ def ogr_dxf_18():
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('LINESTRING(5 5,30 30)') )
     dst_feat.SetField( 'Linetype', 'DOTTED' )
-    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:1mm,p:"0.0g 4.0g")' )
+    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:2g,p:"0.0g 4.0g")' )
     lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
     
     # Write a feature without a linetype name - it will be created.
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('LINESTRING(5 5,40 30)') )
-    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:1mm,p:"3.0g 4.0g")' )
+    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:2g,p:"3.0g 4.0g")' )
     lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
     
@@ -938,7 +938,8 @@ def ogr_dxf_18():
         gdaltest.post_reason( 'Got wrong linetype. (1)' )
         return 'fail'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:1mm,p:"12.6999999999999993g 6.3499999999999996g")':
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"12.6999999999999993g 6.3499999999999996g")':
+        print feat.GetStyleString()
         gdaltest.post_reason( "got wrong style string (1)" )
         return 'fail'
         
@@ -951,7 +952,8 @@ def ogr_dxf_18():
         gdaltest.post_reason( 'Got wrong linetype. (2)' )
         return 'fail'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:1mm,p:"0.0g 4.0g")':
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"0.0g 4.0g")':
+        print feat.GetStyleString()
         gdaltest.post_reason( "got wrong style string (2)" )
         return 'fail'
         
@@ -964,7 +966,8 @@ def ogr_dxf_18():
         gdaltest.post_reason( 'Got wrong linetype. (3)' )
         return 'fail'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:1mm,p:"3.0g 4.0g")':
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"3.0g 4.0g")':
+        print feat.GetStyleString()
         gdaltest.post_reason( "got wrong style string (3)" )
         return 'fail'
         
