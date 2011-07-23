@@ -581,7 +581,7 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
     bool isKmz = false;
 
     int bands = poSrcDS->GetRasterCount();
-    if (bands == 0)
+    if (bands != 1 && bands != 3 && bands != 4)
         return NULL;
    
     //correct the file and get the directory
