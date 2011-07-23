@@ -1093,8 +1093,17 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         pszSDSName = CPLStrdup( CSLFetchNameValue( poDS->papszSubDatasets,
                             "SUBDATASET_1_NAME" ));
         delete poDS;
-        poDS = (HDF4Dataset *) GDALOpen( pszSDSName, poOpenInfo->eAccess );
+        poDS = NULL;
+
+        GDALDataset* poRetDS = (GDALDataset*) GDALOpen( pszSDSName, poOpenInfo->eAccess );
         CPLFree( pszSDSName );
+
+        if (poRetDS)
+        {
+            poRetDS->SetDescription(poOpenInfo->pszFilename);
+        }
+
+        return poRetDS;
     }
     else
     {
