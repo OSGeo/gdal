@@ -1243,6 +1243,9 @@ static const char *LinearToProj4( double dfLinearConv,
     
     else if( EQUAL(pszLinearUnits,"IYARD") || dfLinearConv == 0.9144 )
         return "yd";
+
+    else if( dfLinearConv == 0.914401828803658 )
+        return "us-yd";
     
     else if( dfLinearConv == 0.001 )
         return "mm";
