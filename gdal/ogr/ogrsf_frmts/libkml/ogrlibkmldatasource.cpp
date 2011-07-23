@@ -699,8 +699,8 @@ int OGRLIBKMLDataSource::ParseLayers (
 
 ******************************************************************************/
 
-ContainerPtr GetContainerFromRoot (
-    ElementPtr poKmlRoot )
+static ContainerPtr GetContainerFromRoot (
+    KmlFactory *m_poKmlFactory, ElementPtr poKmlRoot )
 {
     ContainerPtr poKmlContainer = NULL;
 
@@ -717,6 +717,12 @@ ContainerPtr GetContainerFromRoot (
 
                 if ( poKmlFeat->IsA ( kmldom::Type_Container ) )
                     poKmlContainer = AsContainer ( poKmlFeat );
+                else if ( poKmlFeat->IsA ( kmldom::Type_Placemark ) )
+                {
+                    poKmlContainer = m_poKmlFactory->CreateDocument (  );
+                    poKmlContainer->add_feature ( kmldom::AsFeature(kmlengine::Clone(poKmlFeat)) );
+                }
+
             }
 
         }
@@ -751,7 +757,7 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable (
     
     ContainerPtr poKmlContainer;
 
-    if ( !( poKmlContainer = GetContainerFromRoot ( poKmlRoot ) ) ) {
+    if ( !( poKmlContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlRoot ) ) ) {
         return false;
     }
     
@@ -825,7 +831,7 @@ int OGRLIBKMLDataSource::OpenKml (
 
     /***** get the container from root  *****/
 
-    if ( !( m_poKmlDSContainer = GetContainerFromRoot ( poKmlRoot ) ) ) {
+    if ( !( m_poKmlDSContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlRoot ) ) ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
                    "ERROR Parseing kml %s :%s %s",
                    pszFilename, "This file does not fit the OGR model,",
@@ -941,7 +947,7 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     ContainerPtr poKmlContainer;
 
-    if (!(poKmlContainer = GetContainerFromRoot ( poKmlDocKmlRoot ))) {
+    if (!(poKmlContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlDocKmlRoot ))) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
                    "ERROR Parseing %s from %s :%s",
                    oKmlKmlPath.c_str (  ),
@@ -1011,7 +1017,7 @@ int OGRLIBKMLDataSource::OpenKmz (
                 /***** get the container from root  *****/
 
                 ContainerPtr poKmlLyrContainer =
-                    GetContainerFromRoot ( poKmlLyrRoot );
+                    GetContainerFromRoot ( m_poKmlFactory, poKmlLyrRoot );
 
                 if ( !poKmlLyrContainer )
                 {
@@ -1174,7 +1180,7 @@ int OGRLIBKMLDataSource::OpenDir (
 
         ContainerPtr poKmlContainer;
 
-        if ( !( poKmlContainer = GetContainerFromRoot ( poKmlRoot ) ) ) {
+        if ( !( poKmlContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlRoot ) ) ) {
             CPLError ( CE_Failure, CPLE_OpenFailed,
                        "ERROR Parseing kml %s :%s %s",
                        pszFilename,
