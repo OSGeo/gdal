@@ -255,15 +255,15 @@ TSXDataset::~TSXDataset() {
 /*                              Identify()                              */
 /************************************************************************/
 
-int TSXDataset::Identify( GDALOpenInfo *poOpenInfo ) 
+int TSXDataset::Identify( GDALOpenInfo *poOpenInfo )
 {
     if (poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 260)
     {
         if( poOpenInfo->bIsDirectory )
         {
-            CPLString osFilename = 
+            CPLString osFilename =
                 CPLFormCIFilename( poOpenInfo->pszFilename, CPLGetFilename( poOpenInfo->pszFilename ), "xml" );
-        
+
             /* Check if the filename contains TSX1_SAR */
             if (!EQUALN(CPLGetBasename( osFilename ), "TSX1_SAR", 8))
                 return 0;
@@ -404,6 +404,8 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
     CPLFree(pszGCPProjection);
     osr.exportToWkt( &(pszGCPProjection) );
 
+    CPLDestroyXMLNode( psGeorefData );
+
     return true;
 }
 
@@ -415,7 +417,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 /* -------------------------------------------------------------------- */
 /*      Is this a TerraSAR-X product file?                              */
 /* -------------------------------------------------------------------- */
-    if (!TSXDataset::Identify( poOpenInfo )) 
+    if (!TSXDataset::Identify( poOpenInfo ))
     {
         return NULL; /* nope */
     }
@@ -435,7 +437,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 
     if( poOpenInfo->bIsDirectory )
     {
-        osFilename = 
+        osFilename =
                 CPLFormCIFilename( poOpenInfo->pszFilename, CPLGetFilename( poOpenInfo->pszFilename ), "xml" );
     }
     else
