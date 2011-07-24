@@ -661,7 +661,19 @@ int OGRLIBKMLDataSource::ParseLayers (
 
             std::string oKmlFeatName;
             if ( poKmlFeat->has_name (  ) ) {
-                oKmlFeatName = poKmlFeat->get_name (  );
+                /* Strip leading and trailing spaces */
+                const char* pszName = poKmlFeat->get_name (  ).c_str();
+                while(*pszName == ' ' || *pszName == '\n' || *pszName == '\r' || *pszName == '\t' )
+                    pszName ++;
+                oKmlFeatName = pszName;
+                int nSize = (int)oKmlFeatName.size();
+                while (nSize > 0 &&
+                       (oKmlFeatName[nSize-1] == ' ' || oKmlFeatName[nSize-1] == '\n' ||
+                        oKmlFeatName[nSize-1] == '\r' || oKmlFeatName[nSize-1] == '\t'))
+                {
+                    nSize --;
+                    oKmlFeatName.resize(nSize);
+                }
             }
 
             /***** use the feature index number as the name *****/
