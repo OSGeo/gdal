@@ -457,8 +457,6 @@ OGRSpatialReference:
  * Add SetVertCS(), OSRSetVertCS(), and target oriented set/get linear units functions
  * ESRI : Improve spheroid remapping (#3904)
  * ESRI: Compare whole names in RemapNameBasedOnKeyName() (#3965).
- * ESRI: morphFromESRI(): Remap Stereographic to OBLIQUE_STEREOGRAPHIC to get
-         correct round-tripping (for example for EPSG:3844)
  * ESRI: addition of ImportFromESRIStatePlaneWKT and ImportfromESRIWisconsinWKT methods
  * ESRI: importFromESRI() : support POLYCONIC projection from old style files (#3983)
  * ESRI: fix EPSG:32161 mapping
