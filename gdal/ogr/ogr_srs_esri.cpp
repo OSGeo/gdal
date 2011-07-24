@@ -1536,16 +1536,6 @@ OGRErr OGRSpatialReference::morphFromESRI()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Remap "Stereographic" to OBLIQUE_STEREOGRAPHIC                  */
-/* -------------------------------------------------------------------- */
-    if( pszProjection != NULL
-        && ( EQUAL(pszProjection,"Stereographic") ))
-    {
-        SetNode( "PROJCS|PROJECTION", SRS_PT_OBLIQUE_STEREOGRAPHIC );
-        pszProjection = GetAttrValue("PROJECTION");
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Remap Equidistant_Cylindrical parameter. It is same as          */
 /*      Stereographic                                                   */
 /* -------------------------------------------------------------------- */
