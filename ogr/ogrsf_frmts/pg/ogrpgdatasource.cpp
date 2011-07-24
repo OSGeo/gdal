@@ -1226,13 +1226,17 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     if (bNoneAsUnknown && eType == wkbNone)
         eType = wkbUnknown;
 
+
+    int bExtractSchemaFromLayerName = CSLTestBoolean(CSLFetchNameValueDef(
+                                    papszOptions, "EXTRACT_SCHEMA_FROM_LAYER_NAME", "YES"));
+
     /* Postgres Schema handling:
        Extract schema name from input layer name or passed with -lco SCHEMA.
        Set layer name to "schema.table" or to "table" if schema == current_schema()
        Usage without schema name is backwards compatible
     */
     const char* pszDotPos = strstr(pszLayerName,".");
-    if ( pszDotPos != NULL )
+    if ( pszDotPos != NULL && bExtractSchemaFromLayerName )
     {
       int length = pszDotPos - pszLayerName;
       pszSchemaName = (char*)CPLMalloc(length+1);
@@ -1450,6 +1454,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 
     OGRPGClearResult( hResult );
 
+    CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName, -1, "");
+    const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
+
 /* -------------------------------------------------------------------- */
 /*      Eventually we should be adding this table to a table of         */
 /*      "geometric layers", capturing the WKT projection, and           */
@@ -1467,15 +1474,15 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
          * an effort to clean out such cruft.
          */
         osCommand.Printf(
-                 "DELETE FROM geometry_columns WHERE f_table_name = '%s' AND f_table_schema = '%s'",
-                 pszTableName, pszSchemaName );
+                 "DELETE FROM geometry_columns WHERE f_table_name = %s AND f_table_schema = '%s'",
+                 pszEscapedTableNameSingleQuote, pszSchemaName );
 
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
         OGRPGClearResult( hResult );
 
         osCommand.Printf(
-                 "SELECT AddGeometryColumn('%s','%s','%s',%d,'%s',%d)",
-                 pszSchemaName, pszTableName, pszGFldName,
+                 "SELECT AddGeometryColumn('%s',%s,'%s',%d,'%s',%d)",
+                 pszSchemaName, pszEscapedTableNameSingleQuote, pszGFldName,
                  nSRSId, pszGeometryType, nDimension );
 
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
@@ -2240,7 +2247,7 @@ char *OGRPGDataSource::LaunderName( const char *pszSrcName )
     for( int i = 0; pszSafeName[i] != '\0'; i++ )
     {
         pszSafeName[i] = (char) tolower( pszSafeName[i] );
-        if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
+        if( pszSafeName[i] == '\'' || pszSafeName[i] == '-' || pszSafeName[i] == '#' )
             pszSafeName[i] = '_';
     }
 
