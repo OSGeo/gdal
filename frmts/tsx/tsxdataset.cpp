@@ -333,7 +333,10 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
     CPLXMLNode *psNode;
     CPLXMLNode *psGeolocationGrid = CPLGetXMLNode( psGeorefData, "=geoReference.geolocationGrid" );
     if (psGeolocationGrid==NULL)
+    {
+        CPLDestroyXMLNode( psGeorefData );
         return false;
+    }
     nGCPCount = atoi(CPLGetXMLValue( psGeolocationGrid, "numberOfGridPoints.total", "0" ));
     //count the gcps if the given count value is invalid
     if (nGCPCount<=0)
@@ -344,7 +347,11 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
     }
     //if there are no gcps, fail
     if(nGCPCount<=0)
+    {
+        CPLDestroyXMLNode( psGeorefData );
         return false;
+    }
+
     //put some reasonable limits of the number of gcps
     if (nGCPCount>MAX_GCPS )
         nGCPCount=MAX_GCPS;
@@ -365,7 +372,10 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
                  !strcmp(CPLGetXMLValue(psNode,"row","error"), "error") ||
                  !strcmp(CPLGetXMLValue(psNode,"lon","error"), "error") ||
                  !strcmp(CPLGetXMLValue(psNode,"lat","error"), "error"))
-             return false;
+        {
+            CPLDestroyXMLNode( psGeorefData );
+            return false;
+        }
     }
     for( psNode = psGeolocationGrid->psChild; psNode != NULL; psNode = psNode->psNext )
     {
@@ -398,7 +408,6 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
          //looks like height is in meters - should it be converted so xyz are all on the same scale??
          psGCP->dfGCPZ = 0;
              //atof(CPLGetXMLValue(psNode,"height",""));
-
     }
 
     CPLFree(pszGCPProjection);
