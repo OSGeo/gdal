@@ -448,7 +448,8 @@ namespace tut
             size_t  nLength =
                 MIN( strlen(pszDecodedString),
                      sizeof(oReferenceString.szEncoding) );
-            ensure( memcmp(pszDecodedString, oReferenceString.szString,
+            ensure( std::string("Recode from ") + oTestString.szEncoding,
+                    memcmp(pszDecodedString, oReferenceString.szString,
                            nLength) == 0 );
             CPLFree( pszDecodedString );
         }
@@ -465,21 +466,21 @@ namespace tut
     {
         CPLStringList  oCSL;
 
-        ensure( oCSL.List() == NULL );
+        ensure( "7nil", oCSL.List() == NULL );
         
         oCSL.AddString( "def" );
         oCSL.AddString( "abc" );
 
-        ensure_equals( oCSL.Count(), 2 );
-        ensure( EQUAL(oCSL[0], "def") );
-        ensure( EQUAL(oCSL[1], "abc") );
-        ensure( oCSL[17] == NULL );
-        ensure( oCSL[-1] == NULL );
-        ensure_equals( oCSL.FindString("abc"), 1 );
+        ensure_equals( "7", oCSL.Count(), 2 );
+        ensure( "70", EQUAL(oCSL[0], "def") );
+        ensure( "71", EQUAL(oCSL[1], "abc") );
+        ensure( "72", oCSL[17] == NULL );
+        ensure( "73", oCSL[-1] == NULL );
+        ensure_equals( "74", oCSL.FindString("abc"), 1 );
 
         CSLDestroy( oCSL.StealList() );
-        ensure_equals( oCSL.Count(), 0 );
-        ensure( oCSL.List() == NULL );
+        ensure_equals( "75", oCSL.Count(), 0 );
+        ensure( "76", oCSL.List() == NULL );
         
         // Test that the list will make an internal copy when needed to
         // modify a read-only list. 
@@ -489,15 +490,20 @@ namespace tut
 
         CPLStringList  oCopy( oCSL.List(), FALSE );
 
-        ensure_equals( oCSL.List(), oCopy.List() );
-        ensure_equals( oCSL.Count(), oCopy.Count() );
+        ensure_equals( "77", oCSL.List(), oCopy.List() );
+        ensure_equals( "78", oCSL.Count(), oCopy.Count() );
 
         oCopy.AddString( "xyz" );
-        ensure( oCSL.List() != oCopy.List() );
-        ensure_equals( oCopy.Count(), 3 );
-        ensure_equals( oCSL.Count(), 2 );
-        ensure( EQUAL(oCopy[2], "xyz") );
+        ensure( "79", oCSL.List() != oCopy.List() );
+        ensure_equals( "7a", oCopy.Count(), 3 );
+        ensure_equals( "7b", oCSL.Count(), 2 );
+        ensure( "7c", EQUAL(oCopy[2], "xyz") );
+    }
 
+    template<>
+    template<>
+    void object::test<8>()
+    {
         // Test some name=value handling stuff. 
         CPLStringList oNVL;
 
@@ -522,40 +528,42 @@ namespace tut
         ensure_equals( oNVL.Count(), 2 );
 
         // Test boolean support.
-        ensure_equals( oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
-        ensure_equals( oNVL.FetchBoolean( "BOOL", FALSE ), FALSE );
+        ensure_equals( "b1", oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
+        ensure_equals( "b2", oNVL.FetchBoolean( "BOOL", FALSE ), FALSE );
 
         oNVL.SetNameValue( "BOOL", "YES" );
-        ensure_equals( oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
-        ensure_equals( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
+        ensure_equals( "b3", oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
+        ensure_equals( "b4", oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
 
         oNVL.SetNameValue( "BOOL", "1" );
-        ensure_equals( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
+        ensure_equals( "b5", oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
 
         oNVL.SetNameValue( "BOOL", "0" );
-        ensure_equals( oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
+        ensure_equals( "b6", oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
 
         oNVL.SetNameValue( "BOOL", "FALSE" );
-        ensure_equals( oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
+        ensure_equals( "b7", oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
 
         oNVL.SetNameValue( "BOOL", "ON" );
-        ensure_equals( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
+        ensure_equals( "b8", oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
         
         // Test assignmenet operator.
+        CPLStringList oCopy;
+
         {
             CPLStringList oTemp;
             oTemp.AddString("test");
             oCopy = oTemp;
         }
-        ensure( EQUAL(oCopy[0],"test") );
+        ensure( "c1", EQUAL(oCopy[0],"test") );
         
         oCopy = oCopy;
-        ensure( EQUAL(oCopy[0],"test") );
+        ensure( "c2", EQUAL(oCopy[0],"test") );
         
         // Test copy constructor.
         CPLStringList oCopy2(oCopy);
         oCopy.Clear();
-        ensure( EQUAL(oCopy2[0],"test") );
+        ensure( "c3", EQUAL(oCopy2[0],"test") );
         
         // Test sorting
         CPLStringList oTestSort;
@@ -564,40 +572,91 @@ namespace tut
         oTestSort.AddNameValue("T", "3");
         oTestSort.AddNameValue("A", "4");
         oTestSort.Sort();
-        ensure( EQUAL(oTestSort[0],"A=4") );
-        ensure( EQUAL(oTestSort[1],"L=2") );
-        ensure( EQUAL(oTestSort[2],"T=3") );
-        ensure( EQUAL(oTestSort[3],"Z=1") );
-        ensure_equals( oTestSort[4], (const char*)NULL );
+        ensure( "c4", EQUAL(oTestSort[0],"A=4") );
+        ensure( "c5", EQUAL(oTestSort[1],"L=2") );
+        ensure( "c6", EQUAL(oTestSort[2],"T=3") );
+        ensure( "c7", EQUAL(oTestSort[3],"Z=1") );
+        ensure_equals( "c8", oTestSort[4], (const char*)NULL );
         
         // Test FetchNameValue() in a sorted list
-        ensure( EQUAL(oTestSort.FetchNameValue("A"),"4") );
-        ensure( EQUAL(oTestSort.FetchNameValue("L"),"2") );
-        ensure( EQUAL(oTestSort.FetchNameValue("T"),"3") );
-        ensure( EQUAL(oTestSort.FetchNameValue("Z"),"1") );
+        ensure( "c9", EQUAL(oTestSort.FetchNameValue("A"),"4") );
+        ensure( "c10", EQUAL(oTestSort.FetchNameValue("L"),"2") );
+        ensure( "c11", EQUAL(oTestSort.FetchNameValue("T"),"3") );
+        ensure( "c12", EQUAL(oTestSort.FetchNameValue("Z"),"1") );
         
         // Test AddNameValue() in a sorted list
         oTestSort.AddNameValue("B", "5");
-        ensure( EQUAL(oTestSort[0],"A=4") );
-        ensure( EQUAL(oTestSort[1],"B=5") );
-        ensure( EQUAL(oTestSort[2],"L=2") );
-        ensure( EQUAL(oTestSort[3],"T=3") );
-        ensure( EQUAL(oTestSort[4],"Z=1") );
-        ensure_equals( oTestSort[5], (const char*)NULL );
+        ensure( "c13", EQUAL(oTestSort[0],"A=4") );
+        ensure( "c14", EQUAL(oTestSort[1],"B=5") );
+        ensure( "c15", EQUAL(oTestSort[2],"L=2") );
+        ensure( "c16", EQUAL(oTestSort[3],"T=3") );
+        ensure( "c17", EQUAL(oTestSort[4],"Z=1") );
+        ensure_equals( "c18", oTestSort[5], (const char*)NULL );
         
         // Test SetNameValue() of an existing item in a sorted list
         oTestSort.SetNameValue("Z", "6");
-        ensure( EQUAL(oTestSort[4],"Z=6") );
+        ensure( "c19", EQUAL(oTestSort[4],"Z=6") );
         
         // Test SetNameValue() of a non-existing item in a sorted list
         oTestSort.SetNameValue("W", "7");
-        ensure( EQUAL(oTestSort[0],"A=4") );
-        ensure( EQUAL(oTestSort[1],"B=5") );
-        ensure( EQUAL(oTestSort[2],"L=2") );
-        ensure( EQUAL(oTestSort[3],"T=3") );
-        ensure( EQUAL(oTestSort[4],"W=7") );
-        ensure( EQUAL(oTestSort[5],"Z=6") );
-        ensure_equals( oTestSort[6], (const char*)NULL );
+        ensure( "c20", EQUAL(oTestSort[0],"A=4") );
+        ensure( "c21", EQUAL(oTestSort[1],"B=5") );
+        ensure( "c22", EQUAL(oTestSort[2],"L=2") );
+        ensure( "c23", EQUAL(oTestSort[3],"T=3") );
+        ensure( "c24", EQUAL(oTestSort[4],"W=7") );
+        ensure( "c25", EQUAL(oTestSort[5],"Z=6") );
+        ensure_equals( "c26", oTestSort[6], (const char*)NULL );
+    }
+
+    template<>
+    template<>
+    void object::test<9>()
+    {
+        // Test some name=value handling stuff *with* sorting active.
+        CPLStringList oNVL;
+
+        oNVL.Sort();
+
+        oNVL.AddNameValue( "KEY1", "VALUE1" );
+        oNVL.AddNameValue( "2KEY", "VALUE2" );
+        ensure_equals( "91", oNVL.Count(), 2 );
+        ensure( "92", EQUAL(oNVL.FetchNameValue("KEY1"),"VALUE1") );
+        ensure( "93", EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE2") );
+        ensure( "94", oNVL.FetchNameValue("MISSING") == NULL );
+
+        oNVL.AddNameValue( "KEY1", "VALUE3" );
+        ensure_equals( "95", oNVL.Count(), 3 );
+        ensure( "96", EQUAL(oNVL.FetchNameValue("KEY1"),"VALUE1") );
+        ensure( "97", EQUAL(oNVL.FetchNameValueDef("MISSING","X"),"X") );
+
+        oNVL.SetNameValue( "2KEY", "VALUE4" );
+        ensure( "98", EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE4") );
+        ensure_equals( "99", oNVL.Count(), 3 );
+
+        // make sure deletion works.
+        oNVL.SetNameValue( "2KEY", NULL );
+        ensure( "9a", oNVL.FetchNameValue("2KEY") == NULL );
+        ensure_equals( "9b", oNVL.Count(), 2 );
+
+        // Test insertion logic pretty carefully.
+        oNVL.Clear();
+        ensure( "9c", oNVL.IsSorted() == TRUE );
+        
+        oNVL.SetNameValue( "B", "BB" );
+        oNVL.SetNameValue( "A", "AA" );
+        oNVL.SetNameValue( "D", "DD" );
+        oNVL.SetNameValue( "C", "CC" );
+
+        // items should be in sorted order.
+        ensure( "9c1", EQUAL(oNVL[0],"A=AA") );
+        ensure( "9c2", EQUAL(oNVL[1],"B=BB") );
+        ensure( "9c3", EQUAL(oNVL[2],"C=CC") );
+        ensure( "9c4", EQUAL(oNVL[3],"D=DD") );
+
+        ensure( "9d", EQUAL(oNVL.FetchNameValue("A"),"AA") );
+        ensure( "9e", EQUAL(oNVL.FetchNameValue("B"),"BB") );
+        ensure( "9f", EQUAL(oNVL.FetchNameValue("C"),"CC") );
+        ensure( "9g", EQUAL(oNVL.FetchNameValue("D"),"DD") );
     }
 
 } // namespace tut

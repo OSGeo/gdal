@@ -19,16 +19,6 @@ GDAL_ROOT = ..\..\gdal
 
 GDAL_LIB = $(GDAL_ROOT)\gdal_i.lib
 
-# GEOS sources location, DLL and Import library
-#GEOS_ROOT = e:\geos-3.2.0
-#GEOS_LIB = $(GEOS_ROOT)\source\geos_c_i.lib
-#GEOS_DLL = geos_c.dll
-
-# PROJ.4 sources location, DLL and Import library
-#PROJ4_ROOT = e:\proj-4.7.0
-#PROJ4_LIB = $(PROJ4_ROOT)\src\proj_i.lib
-#PROJ4_DLL = proj.dll
-
 # Specification of enabled GDAL drivers
 #GDAL_SUPPORT = \
 #    -DHAVE_GEOS \
@@ -90,7 +80,10 @@ GDAL_TEST_EXE = gdal_unit_test.exe
 
 default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe
 
-$(GDAL_TEST_EXE): gdal_unit_test.cpp copy-gdal-dll copy-geos-dll copy-proj4-dll $(OBJ)
+check:	 $(GDAL_TEST_EXE)
+	 $(GDAL_TEST_EXE)
+
+$(GDAL_TEST_EXE): gdal_unit_test.cpp $(GDAL_DLL) $(OBJ)
 	$(CC) gdal_unit_test.cpp $(CFLAGS) $(OBJ) $(GDAL_LIB) $(GEOS_LIB) $(PROJ4_LIB)
     if exist $(GDAL_TEST_EXE).manifest mt -manifest $(GDAL_TEST_EXE).manifest -outputresource:$(GDAL_TEST_EXE);1
 
@@ -102,19 +95,10 @@ testperfcopywords.exe: testperfcopywords.cpp
 	$(CC) testperfcopywords.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testperfcopywords.exe.manifest mt -manifest testperfcopywords.exe.manifest -outputresource:testperfcopywords.exe;1
 	
-copy-gdal-dll:
+copy-gdal-dll:	$(GDAL_DLL) 
+
+$(GDAL_DLL):	$(GDAL_ROOT)\$(GDAL_DLL)
     copy $(GDAL_ROOT)\$(GDAL_DLL) .
-
-copy-geos-dll:
-#    copy $(GEOS_ROOT)\source\$(GEOS_DLL) .
-
-copy-proj4-dll:
-#    copy $(PROJ4_ROOT)\src\$(PROJ4_DLL) .
-    
-$(GDAL_DLL):
-    cd $(GDAL_ROOT)
-    nmake /f makefile.vc
-    cd ..
 
 .cpp.obj:
 	$(CC) $(CFLAGS) /c $*.cpp /Fo$@
