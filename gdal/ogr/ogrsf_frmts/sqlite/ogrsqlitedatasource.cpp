@@ -593,6 +593,9 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         pszLayerName = LaunderName( pszLayerNameIn );
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
+
+    CPLString osEscapedLayerName = OGRSQLiteEscape(pszLayerName);
+    const char* pszEscapedLayerName = osEscapedLayerName.c_str();
     
     pszGeomFormat = CSLFetchNameValue( papszOptions, "FORMAT" );
     if( pszGeomFormat == NULL )
@@ -662,7 +665,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
     if( eType == wkbNone )
         osCommand.Printf( 
             "CREATE TABLE '%s' ( OGC_FID INTEGER PRIMARY KEY )", 
-            pszLayerName );
+            pszEscapedLayerName );
     else
     {
         if( EQUAL(pszGeomFormat,"WKT") )
@@ -672,7 +675,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                 "CREATE TABLE '%s' ( "
                 "  OGC_FID INTEGER PRIMARY KEY,"
                 "  %s VARCHAR )", 
-                pszLayerName, pszGeomCol );
+                pszEscapedLayerName, pszGeomCol );
         }
         else
         {
@@ -681,7 +684,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                 "CREATE TABLE '%s' ( "
                 "  OGC_FID INTEGER PRIMARY KEY,"
                 "  %s BLOB )", 
-                pszLayerName, pszGeomCol );
+                pszEscapedLayerName, pszGeomCol );
         }
     }
 
@@ -714,7 +717,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
          */
         osCommand.Printf(
             "DELETE FROM geometry_columns WHERE f_table_name = '%s'", 
-            pszLayerName );
+            pszEscapedLayerName );
                  
 #ifdef DEBUG
         CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
@@ -740,7 +743,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "(f_table_name, f_geometry_column, type, "
                     "coord_dimension, srid, spatial_index_enabled) "
                     "VALUES ('%s','%s', '%s', '%s', %d, 0)",
-                    pszLayerName, pszGeomCol, OGRToOGCGeomType(eType),
+                    pszEscapedLayerName, pszGeomCol, OGRToOGCGeomType(eType),
                     nCoordDim == 3 ? "XYZ" : "2" /* FIXME ? */, nSRSId );
             else
                 osCommand.Printf(
@@ -748,7 +751,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "(f_table_name, f_geometry_column, geometry_format, "
                     "geometry_type, coord_dimension, srid) VALUES "
                     "('%s','%s','%s', %d, %d, %d)", 
-                    pszLayerName, pszGeomCol, pszGeomFormat,
+                    pszEscapedLayerName, pszGeomCol, pszGeomFormat,
                     (int) wkbFlatten(eType), nCoordDim, nSRSId );
         }
         else
@@ -759,7 +762,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "(f_table_name, f_geometry_column, type, "
                     "coord_dimension, spatial_index_enabled) "
                     "VALUES ('%s','%s', '%s', %d, 0)", 
-                    pszLayerName, pszGeomCol, OGRToOGCGeomType(eType),
+                    pszEscapedLayerName, pszGeomCol, OGRToOGCGeomType(eType),
                     nCoordDim );
             else
                 osCommand.Printf(
@@ -767,7 +770,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "(f_table_name, f_geometry_column, geometry_format, "
                     "geometry_type, coord_dimension) VALUES "
                     "('%s','%s','%s', %d, %d)", 
-                    pszLayerName, pszGeomCol, pszGeomFormat,
+                    pszEscapedLayerName, pszGeomCol, pszGeomFormat,
                     (int) wkbFlatten(eType), nCoordDim );
         }
 
@@ -802,7 +805,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
             if( pszSI == NULL || CSLTestBoolean(pszSI) )
             {
                 osCommand.Printf("SELECT CreateSpatialIndex('%s', '%s')",
-                                 pszLayerName, pszGeomCol);
+                                 pszEscapedLayerName, pszGeomCol);
 
                 rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
                 if( rc != SQLITE_OK )
@@ -859,11 +862,27 @@ char *OGRSQLiteDataSource::LaunderName( const char *pszSrcName )
     for( i = 0; pszSafeName[i] != '\0'; i++ )
     {
         pszSafeName[i] = (char) tolower( pszSafeName[i] );
-        if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
+        if( pszSafeName[i] == '\'' || pszSafeName[i] == '-' || pszSafeName[i] == '#' )
             pszSafeName[i] = '_';
     }
 
     return pszSafeName;
+}
+
+/************************************************************************/
+/*                          OGRSQLiteEscape()                           */
+/************************************************************************/
+
+CPLString OGRSQLiteEscape( const char *pszSrcName )
+{
+    CPLString osVal;
+    for( int i = 0; pszSrcName[i] != '\0'; i++ )
+    {
+        if ( pszSrcName[i] == '\'' )
+            osVal += '\'';
+        osVal += pszSrcName[i];
+    }
+    return osVal;
 }
 
 /************************************************************************/
@@ -928,7 +947,10 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
     int rc;
     char *pszErrMsg;
 
-    rc = sqlite3_exec( hDB, CPLSPrintf( "DROP TABLE '%s'", osLayerName.c_str() ),
+    CPLString osEscapedLayerName = OGRSQLiteEscape(osLayerName);
+    const char* pszEscapedLayerName = osEscapedLayerName.c_str();
+
+    rc = sqlite3_exec( hDB, CPLSPrintf( "DROP TABLE '%s'", pszEscapedLayerName ),
                        NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
@@ -948,7 +970,7 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
 
         osCommand.Printf( 
             "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
-            osLayerName.c_str() );
+            pszEscapedLayerName );
         
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )

@@ -218,6 +218,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     CPLString           osWHERE;
     CPLString           osQuery;
 
+    char               *pszEscapedTableName;
+
     void                BuildWhere(void);
 
     OGRErr              ResetStatement();
@@ -391,6 +393,7 @@ class OGRSQLiteDriver : public OGRSFDriver
     int                 TestCapability( const char * );
 };
 
+CPLString OGRSQLiteEscape( const char *pszSrcName );
 
 #endif /* ndef _OGR_SQLITE_H_INCLUDED */
 
