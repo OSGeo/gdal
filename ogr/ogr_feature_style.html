@@ -10,12 +10,14 @@
 OGR - Feature Style Specification</H1></CENTER>
 
 <CENTER>
-  <H2>DRAFT V0.012 - 2008/07/21</H2>
+  <H2>DRAFT V0.014 - 2011-07-24</H2>
 </CENTER>
 
 <HR WIDTH=50%>
 <H2>REVISION HISTORY</H2>
 <UL>
+<LI><B>Version 0.014 - 2011-07-24 - Even Rouault</B><BR>
+    Mention the escaping of double-quote characters in the text string of a LABEL (ticket #3675)
 <LI><B>Version 0.013 - 2008-07-29 - Daniel Morissette</B><BR>
     Added 'o:' for font point symbol outline color (ticket #2509)
 <LI><B>Version 0.012 - 2008-07-21 - Daniel Morissette</B><BR>
@@ -744,11 +746,14 @@ this list can eventually grow and all parameters are optional:
   <TR>
     <TD ALIGN=CENTER>t</TD>
     <TD><B>Text String</B> - Can be a constant string, or a reference to an
-attribute field's value.
+attribute field's value. If a double-quote character is present in the string,
+it is escaped with a antislash (\) character before it.
 <BR>
       Examples:
 <BR>
       LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World!")
+<BR>
+      LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World with escaped double-quote(\") character!")
 <BR>
       LABEL(f:"Arial, Helvetica", s:12pt, t:{text_value})</TD>
   </TR>
