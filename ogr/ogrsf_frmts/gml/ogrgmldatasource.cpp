@@ -208,7 +208,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         return FALSE;
     }
 
-    int bIsUTF8 = FALSE;
+    int bExpatCompatibleEncoding = FALSE;
     int bHas3D = FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -267,10 +267,13 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             szPtr += 3;
         }
 
-        bIsUTF8 = strstr(szPtr, "encoding='utf-8'") != NULL ||
-                  strstr(szPtr, "encoding=\"utf-8\"") != NULL ||
-                  strstr(szPtr, "encoding='UTF-8'") != NULL ||
-                  strstr(szPtr, "encoding=\"UTF-8\"") != NULL;
+        const char* pszEncoding = strstr(szPtr, "encoding=");
+        if (pszEncoding)
+            bExpatCompatibleEncoding = (pszEncoding[9] == '\'' || pszEncoding[9] == '"') &&
+                                       (EQUALN(pszEncoding + 10, "UTF-8", 5) ||
+                                        EQUALN(pszEncoding + 10, "ISO-8859-1", 10));
+        else
+            bExpatCompatibleEncoding = TRUE; /* utf-8 is the default */
 
         bHas3D = strstr(szPtr, "srsDimension=\"3\"") != NULL || strstr(szPtr, "<gml:Z>") != NULL;
 
@@ -348,7 +351,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     /* EXPAT is faster than Xerces, so when it is safe to use it, use it ! */
     /* The only interest of Xerces is for rare encodings that Expat doesn't handle */
     /* but UTF-8 is well handled by Expat */
-    int bUseExpatParserPreferably = bIsUTF8;
+    int bUseExpatParserPreferably = bExpatCompatibleEncoding;
 
     /* Override default choice */
     const char* pszGMLParser = CPLGetConfigOption("GML_PARSER", NULL);
