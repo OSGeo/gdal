@@ -119,6 +119,8 @@ to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is ava
 spatial tables of type GEOMETRY (wkbUnknown), which was the behaviour prior to GDAL 1.8.0. Defaults to NO, in which case
 a regular table is created and not recorded in the PostGIS geometry_columns table.<p>
 <li> <b>FID</b>: (From GDAL 1.9.0) Name of the FID column to create. Defaults to 'ogc_fid'.<p>
+<li> <b>EXTRACT_SCHEMA_FROM_LAYER_NAME</b>: (From GDAL 1.9.0) Can be set to NO to avoid considering the dot character
+as the separator between the schema and the table name. Defaults to YES.<p>
 </ul>
 
 <h3>Configuration Options</h3>
