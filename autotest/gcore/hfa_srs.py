@@ -90,7 +90,7 @@ class TestHFASRS:
 gdaltest_list = []
 
 hfa_srs_list = [ 2758, #tmerc
-                  2036, #sterea
+                  [2036, True], #sterea   # failure caused by revert done in r22803
                   2046, #tmerc
                   [3031, True], #stere
                   [32661, True], #stere
