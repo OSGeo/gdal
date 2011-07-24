@@ -50,6 +50,7 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     nSRSId = -1;
 
     poFeatureDefn = NULL;
+    pszEscapedTableName = NULL;
 }
 
 /************************************************************************/
@@ -60,6 +61,7 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
 
 {
     ClearStatement();
+    CPLFree(pszEscapedTableName);
 }
 
 /************************************************************************/
@@ -109,19 +111,21 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     this->bSpatialiteReadOnly = bSpatialiteReadOnly;
     this->bSpatialiteLoaded = bSpatialiteLoaded;
     this->iSpatialiteVersion = iSpatialiteVersion;
-	
+
+    pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
+
     CPLErr eErr;
     sqlite3_stmt *hColStmt = NULL;
     const char *pszSQL;
-	
-    if ( eGeomFormat == OSGF_SpatiaLite && 
+
+    if ( eGeomFormat == OSGF_SpatiaLite &&
          bSpatialiteLoaded == TRUE && 
          iSpatialiteVersion < 24 )
     {
     // we need to test version required by Spatialite TRIGGERs 
         hColStmt = NULL;
         pszSQL = CPLSPrintf( "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND tbl_name = '%s' AND sql LIKE '%%RTreeAlign%%'",
-            pszTableName );
+            pszEscapedTableName );
 
         int nRowTriggerCount, nColTriggerCount;
         char **papszTriggerResult, *pszErrMsg;
@@ -147,7 +151,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 /* -------------------------------------------------------------------- */
     hColStmt = NULL;
     pszSQL = CPLSPrintf( "SELECT _rowid_, * FROM '%s' LIMIT 1",
-                                     pszTableName );
+                                     pszEscapedTableName );
 
     rc = sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL ); 
     if( rc != SQLITE_OK )
@@ -190,7 +194,6 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     if( eErr != CE_None )
         return eErr;
 
-
 /* -------------------------------------------------------------------- */
 /*      Set the geometry type if we know it.                            */
 /* -------------------------------------------------------------------- */
@@ -214,8 +217,8 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    osSQL.Printf( "SELECT _rowid_, * FROM '%s' %s", 
-                    poFeatureDefn->GetName(), 
+    osSQL.Printf( "SELECT _rowid_, * FROM '%s' %s",
+                    pszEscapedTableName, 
                     osWHERE.c_str() );
 
     rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(),
@@ -260,8 +263,8 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
 
     iNextShapeId = nFeatureId;
 
-    osSQL.Printf( "SELECT _rowid_, * FROM '%s' WHERE \"%s\" = %d", 
-                  poFeatureDefn->GetName(), 
+    osSQL.Printf( "SELECT _rowid_, * FROM '%s' WHERE \"%s\" = %d",
+                  pszEscapedTableName, 
                   pszFIDColumn, (int) nFeatureId );
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
@@ -414,7 +417,7 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
     const char *pszSQL;
 
     pszSQL = CPLSPrintf( "SELECT count(*) FROM '%s' %s",
-                            poFeatureDefn->GetName(), osWHERE.c_str() );
+                          pszEscapedTableName, osWHERE.c_str() );
 
 /* -------------------------------------------------------------------- */
 /*      Execute.                                                        */
@@ -575,8 +578,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     sqlite3 *hDB = poDS->GetDB();
     CPLString osSQL;
 
-    osSQL.Printf( "SELECT sql FROM sqlite_master WHERE type IN ('trigger','index') AND tbl_name='%s'", 
-                   poFeatureDefn->GetName() );
+    osSQL.Printf( "SELECT sql FROM sqlite_master WHERE type IN ('trigger','index') AND tbl_name='%s'",
+                   pszEscapedTableName );
 
     int nRowTriggerIndexCount, nColTriggerIndexCount;
     char **papszTriggerIndexResult = NULL;
@@ -597,7 +600,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         rc = sqlite3_exec( hDB, 
                            CPLSPrintf( "INSERT INTO t1_back SELECT %s FROM '%s'",
                                        pszOldFieldList, 
-                                       poFeatureDefn->GetName() ),
+                                       pszEscapedTableName ),
                            NULL, NULL, &pszErrMsg );
 
 
@@ -607,14 +610,14 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     if( rc == SQLITE_OK )
         rc = sqlite3_exec( hDB, 
                            CPLSPrintf( "DROP TABLE '%s'", 
-                                       poFeatureDefn->GetName() ),
+                                       pszEscapedTableName ),
                            NULL, NULL, &pszErrMsg );
 
     if( rc == SQLITE_OK )
     {
         const char *pszCmd = 
             CPLSPrintf( "CREATE TABLE '%s' (%s)", 
-                        poFeatureDefn->GetName(),
+                        pszEscapedTableName,
                         pszNewFieldList );
         rc = sqlite3_exec( hDB, pszCmd, 
                            NULL, NULL, &pszErrMsg );
@@ -629,7 +632,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     if( rc == SQLITE_OK )
         rc = sqlite3_exec( hDB, 
                            CPLSPrintf( "INSERT INTO '%s' SELECT %s, NULL FROM t1_back",
-                                       poFeatureDefn->GetName(),
+                                       pszEscapedTableName,
                                        pszOldFieldList ),
                            NULL, NULL, &pszErrMsg );
 
@@ -727,9 +730,9 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
     char *pszErrMsg = NULL;
     const char *pszSQL;
 
-    pszSQL = 
+    pszSQL =
         CPLSPrintf( "DELETE FROM '%s' WHERE \"%s\" = %ld", 
-                    poFeatureDefn->GetName(), 
+                    pszEscapedTableName, 
                     pszFIDColumn,
                     poFeature->GetFID() );
 
@@ -769,7 +772,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
-    osCommand += CPLSPrintf( "INSERT INTO '%s' (", poFeatureDefn->GetName() );
+    osCommand += CPLSPrintf( "INSERT INTO '%s' (", pszEscapedTableName );
 
 /* -------------------------------------------------------------------- */
 /*      Add FID if we have a cleartext FID column.                      */
