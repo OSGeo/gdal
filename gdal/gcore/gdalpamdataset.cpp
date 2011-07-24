@@ -219,17 +219,28 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
         CPLXMLNode *psPamGCPList = CPLCreateXMLNode( psDSTree, CXT_Element, 
                                                      "GCPList" );
 
+        CPLXMLNode* psLastChild = NULL;
+
         if( psPam->pszGCPProjection != NULL 
             && strlen(psPam->pszGCPProjection) > 0 )
+        {
             CPLSetXMLValue( psPamGCPList, "#Projection", 
                             psPam->pszGCPProjection );
+            psLastChild = psPamGCPList->psChild;
+        }
 
         for( int iGCP = 0; iGCP < psPam->nGCPCount; iGCP++ )
         {
             CPLXMLNode *psXMLGCP;
             GDAL_GCP *psGCP = psPam->pasGCPList + iGCP;
 
-            psXMLGCP = CPLCreateXMLNode( psPamGCPList, CXT_Element, "GCP" );
+            psXMLGCP = CPLCreateXMLNode( NULL, CXT_Element, "GCP" );
+
+            if( psLastChild == NULL )
+                psPamGCPList->psChild = psXMLGCP;
+            else
+                psLastChild->psNext = psXMLGCP;
+            psLastChild = psXMLGCP;
 
             CPLSetXMLValue( psXMLGCP, "#Id", psGCP->pszId );
 

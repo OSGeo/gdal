@@ -288,30 +288,39 @@ def pam_10():
     ds = None
 
     ds = gdal.Open('/vsimem/pam_10.asc')
+
+    gcps = ds.GetGCPs()
+    if len(gcps) != 2 or ds.GetGCPCount() != 2:
+        return 'fail'
+
+    if ds.GetGCPProjection().find("WGS 84") == -1:
+        print(ds.GetGCPProjection())
+        return 'fail'
+
     band = ds.GetRasterBand(1)
     if band.GetDescription() != 'MyDescription':
         print(band.GetDescription())
-        return 'success'
+        return 'fail'
 
     if band.GetUnitType() != 'MyUnit':
         print(band.GetUnitType())
-        return 'success'
+        return 'fail'
 
     if band.GetOffset() != 1:
         print(band.GetOffset())
-        return 'success'
+        return 'fail'
 
     if band.GetScale() != 2:
         print(band.GetScale())
-        return 'success'
+        return 'fail'
 
     if band.GetRasterColorInterpretation() != gdal.GCI_PaletteIndex:
         print(band.GetRasterColorInterpretation())
-        return 'success'
+        return 'fail'
 
     if band.GetCategoryNames() != ['Cat1', 'Cat2']:
         print(band.GetCategoryNames())
-        return 'success'
+        return 'fail'
 
     ct = band.GetColorTable()
     if ct.GetColorEntry(0) != (0,0,0,255):
@@ -323,15 +332,15 @@ def pam_10():
 
     if band.GetMaximum() != 0:
         print(band.GetMaximum())
-        return 'success'
+        return 'fail'
 
     if band.GetMinimum() != 2:
         print(band.GetMinimum())
-        return 'success'
+        return 'fail'
 
     if band.GetMetadata() != {'STATISTICS_MEAN': '1', 'STATISTICS_MINIMUM': '2', 'STATISTICS_MAXIMUM': '0', 'STATISTICS_STDDEV': '3'}:
         print(band.GetMetadata())
-        return 'success'
+        return 'fail'
 
     ds = None
 
