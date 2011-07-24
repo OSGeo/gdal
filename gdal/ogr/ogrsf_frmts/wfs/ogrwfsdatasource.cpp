@@ -740,6 +740,17 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             return FALSE;
         }
 
+        if (strstr((const char*)psResult->pabyData,
+                                        "<ServiceExceptionReport") != NULL ||
+            strstr((const char*)psResult->pabyData,
+                                        "<ows:ExceptionReport") != NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                    psResult->pabyData);
+            CPLHTTPDestroyResult(psResult);
+            return FALSE;
+        }
+
         if (strstr((const char*) psResult->pabyData, "CubeWerx"))
         {
             /* At least true for CubeWerx Suite 4.15.1 */
