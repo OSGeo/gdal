@@ -125,8 +125,8 @@ CPLErr GDALMultiDomainMetadata::SetMetadata( char **papszMetadata,
     papoMetadataLists[iDomain]->Assign( CSLDuplicate( papszMetadata ) );
 
     // we want to mark name/value pair domains as being sorted for fast
-    // access.  
-    if( !EQUALN(pszDomain,"xml:",4) )
+    // access.
+    if( !EQUALN(pszDomain,"xml:",4) && !EQUAL(pszDomain, "SUBDATASETS") )
         papoMetadataLists[iDomain]->Sort();
 
     return CE_None;
