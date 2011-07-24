@@ -233,15 +233,26 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
         CPLXMLNode *psGCPList = CPLCreateXMLNode( psDSTree, CXT_Element, 
                                                   "GCPList" );
 
+        CPLXMLNode* psLastChild = NULL;
+
         if( pszGCPProjection != NULL && strlen(pszGCPProjection) > 0 )
+        {
             CPLSetXMLValue( psGCPList, "#Projection", pszGCPProjection );
+            psLastChild = psGCPList->psChild;
+        }
 
         for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
         {
             CPLXMLNode *psXMLGCP;
             GDAL_GCP *psGCP = pasGCPList + iGCP;
 
-            psXMLGCP = CPLCreateXMLNode( psGCPList, CXT_Element, "GCP" );
+            psXMLGCP = CPLCreateXMLNode( NULL, CXT_Element, "GCP" );
+
+            if( psLastChild == NULL )
+                psGCPList->psChild = psXMLGCP;
+            else
+                psLastChild->psNext = psXMLGCP;
+            psLastChild = psXMLGCP;
 
             CPLSetXMLValue( psXMLGCP, "#Id", psGCP->pszId );
 
