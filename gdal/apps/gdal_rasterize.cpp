@@ -334,7 +334,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
         {
             OGREnvelope sLayerEnvelop;
 
-            if (OGR_L_GetExtent(hLayer, &sLayerEnvelop, FALSE) != OGRERR_NONE)
+            if (OGR_L_GetExtent(hLayer, &sLayerEnvelop, TRUE) != OGRERR_NONE)
             {
                 fprintf(stderr, "Cannot get layer extent\n");
                 exit(2);
