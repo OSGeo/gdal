@@ -270,6 +270,9 @@ def ogr_shape_8():
     if not tr:
         return 'fail'
 
+    # Test recreating while already existing
+    gdaltest.shape_ds.ExecuteSQL( 'CREATE SPATIAL INDEX ON tpoly' )
+
     gdaltest.shape_ds.ExecuteSQL( 'DROP SPATIAL INDEX ON tpoly' )
 
     if os.access( 'tmp/tpoly.qix', os.F_OK ):
@@ -2116,6 +2119,287 @@ def ogr_shape_52():
     return 'success'
 
 ###############################################################################
+# Test various expected error cases
+
+def ogr_shape_53():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_53.shp')
+    lyr = ds.CreateLayer('ogr_shape_53')
+
+    # Test ReorderFields() when there are no fields
+    ret = lyr.ReorderFields([])
+    if ret != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test REPACK when there are no features
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = ds.ExecuteSQL("REPACK ogr_shape_53")
+    gdal.PopErrorHandler()
+    # Should work without any error
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Create a field
+    fd = ogr.FieldDefn("foo", ogr.OFTString)
+    lyr.CreateField(fd)
+
+    # GetFeature() on a invalid FID
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    feat = lyr.GetFeature(-1)
+    gdal.PopErrorHandler()
+    if feat is not None or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # DeleteFeature() on a invalid FID
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.DeleteFeature(-1)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    feat = None
+
+    ret = lyr.DeleteFeature(0)
+    if ret != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Try deleting an already deleted feature
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.DeleteFeature(0)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test DeleteField() on a invalid index
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.DeleteField(-1)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test ReorderFields() with invalid permutation
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.ReorderFields([1])
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test AlterFieldDefn() on a invalid index
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    fd = ogr.FieldDefn("foo2", ogr.OFTString)
+    ret = lyr.AlterFieldDefn(-1, fd, 0)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test AlterFieldDefn() when attempting to convert from OFTString to something else
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    fd = ogr.FieldDefn("foo", ogr.OFTInteger)
+    ret = lyr.AlterFieldDefn(0, fd, ogr.ALTER_TYPE_FLAG)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test DROP SPATIAL INDEX ON layer without index
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = ds.ExecuteSQL("DROP SPATIAL INDEX ON ogr_shape_53")
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Re-create a feature
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    feat = None
+
+    lyr = None
+    ds = None
+
+    # Test that some operations are not possible in read-only mode
+    ds = ogr.Open('/vsimem/ogr_shape_53.shp')
+    lyr = ds.GetLayer(0)
+
+    if lyr.TestCapability(ogr.OLCSequentialWrite) != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCDeleteFeature) != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCCreateField) != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCDeleteField) != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCReorderFields) != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCAlterFieldDefn) != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test CreateField()
+    fd = ogr.FieldDefn("bar", ogr.OFTString)
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateField(fd)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test ReorderFields()
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.ReorderFields([0])
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test DeleteField()
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.DeleteField(0)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test AlterFieldDefn()
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    fd = ogr.FieldDefn("foo2", ogr.OFTString)
+    ret = lyr.AlterFieldDefn(0, fd, 0)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test CreateFeature()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test DeleteFeature()
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.DeleteFeature(0)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test SetFeature()
+    feat = lyr.GetNextFeature()
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.SetFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test REPACK
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = ds.ExecuteSQL("REPACK ogr_shape_53")
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test RECOMPUTE EXTENT ON
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    feat = None
+    lyr = None
+    ds = None
+
+    # Attempt to delete shape in shapefile with no .dbf file
+    gdal.Unlink('/vsimem/ogr_shape_53.dbf' )
+    ds = ogr.Open('/vsimem/ogr_shape_53.shp', update = 1)
+    lyr = ds.GetLayer(0)
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.DeleteFeature(0)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test REPACK
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = ds.ExecuteSQL("REPACK ogr_shape_53")
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    # Tests on a DBF only
+    ds = ogr.Open('data/idlink.dbf')
+    lyr = ds.GetLayer(0)
+
+    # Test GetExtent()
+    # FIXME : GetExtent() should fail. Currently we'll get garbage here
+    lyr.GetExtent()
+
+    # Test RECOMPUTE EXTENT ON
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -2134,6 +2418,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_46.shp' )
     shape_drv.DeleteDataSource( '/vsimem/this_one_i_care_46.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_52.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_53.shp' )
     
     return 'success'
 
@@ -2191,6 +2476,7 @@ gdaltest_list = [
     ogr_shape_50,
     ogr_shape_51,
     ogr_shape_52,
+    ogr_shape_53,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
