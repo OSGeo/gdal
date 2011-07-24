@@ -204,6 +204,9 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
     else
         pszTypnameEqualsAnyClause = "ANY(ARRAY['int2','int4','serial'])";
 
+    CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName, -1, "");
+    const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
+
     /* See #1889 for why we don't use 'AND a.attnum = ANY(i.indkey)' */
     osCommand.Printf("SELECT a.attname, a.attnum, t.typname, "
               "t.typname = %s AS isfid "
@@ -211,12 +214,12 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
               "WHERE a.attnum > 0 AND a.attrelid = c.oid "
               "AND a.atttypid = t.oid AND c.relnamespace = n.oid "
               "AND c.oid = i.indrelid AND i.indisprimary = 't' "
-              "AND t.typname !~ '^geom' AND c.relname = '%s' "
+              "AND t.typname !~ '^geom' AND c.relname = %s "
               "AND (i.indkey[0]=a.attnum OR i.indkey[1]=a.attnum OR i.indkey[2]=a.attnum "
               "OR i.indkey[3]=a.attnum OR i.indkey[4]=a.attnum OR i.indkey[5]=a.attnum "
               "OR i.indkey[6]=a.attnum OR i.indkey[7]=a.attnum OR i.indkey[8]=a.attnum "
               "OR i.indkey[9]=a.attnum) %s ORDER BY a.attnum",
-              pszTypnameEqualsAnyClause, pszTableName, osSchemaClause.c_str() );
+              pszTypnameEqualsAnyClause, pszEscapedTableNameSingleQuote, osSchemaClause.c_str() );
      
     hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
@@ -262,12 +265,12 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
                  "SELECT DISTINCT a.attname, t.typname, a.attlen,"
                  "       format_type(a.atttypid,a.atttypmod) "
                  "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n "
-                 "WHERE c.relname = '%s' "
+                 "WHERE c.relname = %s "
                  "AND a.attnum > 0 AND a.attrelid = c.oid "
                  "AND a.atttypid = t.oid "
                  "AND c.relnamespace=n.oid "
                  "%s",
-                 pszTableName, osSchemaClause.c_str());
+                 pszEscapedTableNameSingleQuote, osSchemaClause.c_str());
 
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
     }
@@ -519,20 +522,24 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
         }
         else
         {
+            CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn,
+                    (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName, -1, "");
+            const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
+
             /* Fetch the name of the parent table */
             if (pszSchemaName)
             {
                 osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
                                 "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
-                                "(SELECT c.oid FROM pg_class c, pg_namespace n WHERE c.relname = '%s' AND c.relnamespace=n.oid AND n.nspname = '%s'))",
-                                (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName, pszSchemaName );
+                                "(SELECT c.oid FROM pg_class c, pg_namespace n WHERE c.relname = %s AND c.relnamespace=n.oid AND n.nspname = '%s'))",
+                                pszEscapedTableNameSingleQuote, pszSchemaName );
             }
             else
             {
                 osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
                                 "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
-                                "(SELECT pg_class.oid FROM pg_class WHERE relname = '%s'))",
-                                (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName );
+                                "(SELECT pg_class.oid FROM pg_class WHERE relname = %s))",
+                                pszEscapedTableNameSingleQuote );
             }
 
             OGRPGClearResult( hResult );
