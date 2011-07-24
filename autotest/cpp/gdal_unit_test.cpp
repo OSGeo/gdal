@@ -70,11 +70,17 @@ namespace tut
 
 } // namespace tut
 
-int main(int argc, const char* argv[])
+int main(int argc, char* argv[])
 {
     // Register GDAL/OGR drivers
     ::GDALAllRegister();
     ::OGRRegisterAll();
+
+    GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+
+    // We don't actually use the arguments ourself. 
+    CSLDestroy( argv );
+    argv = NULL;
 
 #ifdef _WIN32_WCE
     // Register GDAL dictionaries location.
