@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "hfa_p.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -218,6 +219,9 @@ int main( int argc, char ** argv )
     psDatum = HFAGetDatum( hHFA );
     
     HFAClose( hHFA );
+
+    VSICleanupFileManager();
+    CPLCleanupTLS();
 
 #ifdef DBMALLOC
     malloc_dump(1);
