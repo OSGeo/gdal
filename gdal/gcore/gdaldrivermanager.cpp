@@ -234,6 +234,15 @@ GDALDriverManager::~GDALDriverManager()
     CPLCleanupTLS();
 
 /* -------------------------------------------------------------------- */
+/*      Cleanup our mutex.                                              */
+/* -------------------------------------------------------------------- */
+    if( hDMMutex )
+    {
+        CPLDestroyMutex( hDMMutex );
+        hDMMutex = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Ensure the global driver manager pointer is NULLed out.         */
 /* -------------------------------------------------------------------- */
     if( poDM == this )
