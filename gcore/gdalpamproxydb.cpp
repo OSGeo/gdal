@@ -281,12 +281,17 @@ static void InitProxyDB()
 void PamCleanProxyDB()
 
 {
-    CPLMutexHolderD( &hProxyDBLock );
-    
-    bProxyDBInitialized = FALSE;
+    {
+        CPLMutexHolderD( &hProxyDBLock );
+        
+        bProxyDBInitialized = FALSE;
+        
+        delete poProxyDB;
+        poProxyDB = NULL;
+    }
 
-    delete poProxyDB;
-    poProxyDB = NULL;
+    CPLDestroyMutex( hProxyDBLock );
+    hProxyDBLock = NULL;
 }
 
 /************************************************************************/

@@ -1583,17 +1583,21 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
 void CPL_STDCALL CPLFreeConfig()
 
 {
-    CPLMutexHolderD( &hConfigMutex );
-
-    CSLDestroy( (char **) papszConfigOptions);
-    papszConfigOptions = NULL;
-
-    char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
-    if( papszTLConfigOptions != NULL )
     {
-        CSLDestroy( papszTLConfigOptions );
-        CPLSetTLS( CTLS_CONFIGOPTIONS, NULL, FALSE );
+        CPLMutexHolderD( &hConfigMutex );
+
+        CSLDestroy( (char **) papszConfigOptions);
+        papszConfigOptions = NULL;
+        
+        char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
+        if( papszTLConfigOptions != NULL )
+        {
+            CSLDestroy( papszTLConfigOptions );
+            CPLSetTLS( CTLS_CONFIGOPTIONS, NULL, FALSE );
+        }
     }
+    CPLDestroyMutex( hConfigMutex );
+    hConfigMutex = NULL;
 }
 
 /************************************************************************/
