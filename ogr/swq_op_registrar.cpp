@@ -178,14 +178,19 @@ void swq_op_registrar::Initialize()
 void swq_op_registrar::DeInitialize()
 
 {
-    CPLMutexHolderD( &hOperationsMutex );
+    {
+        CPLMutexHolderD( &hOperationsMutex );
+        
+        if( papoOperations != NULL)
+        {
+            for( unsigned int i=0; i < papoOperations->size(); i++ )
+                delete (*papoOperations)[i];
+            
+            delete papoOperations;
+            papoOperations = NULL;
+        }
+    }
 
-    if( papoOperations == NULL)
-        return;
-
-    for( unsigned int i=0; i < papoOperations->size(); i++ )
-        delete (*papoOperations)[i];
-
-    delete papoOperations;
-    papoOperations = NULL;
+    CPLDestroyMutex( hOperationsMutex );
+    hOperationsMutex = NULL;
 }

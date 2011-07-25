@@ -150,6 +150,9 @@ void OGRCleanupAll()
         swq_op_registrar::DeInitialize();
     }
 
+    CPLDestroyMutex( hDRMutex );
+    hDRMutex = NULL;
+
     CPLFinderClean();
     VSICleanupFileManager();
     CPLFreeConfig();
