@@ -175,6 +175,13 @@ shown in parenthesis):<p>
 	<li> SeaWiFS Level 3 Standard Mapped Image Products (<B>SEAWIFS_L3</B>)
 </ul>
 
+<p>
+By default the hdf4 driver only reads the gcps from every 10th row and column
+from EOS_SWATH datasets. You can change this behaviour by setting the
+GEOL_AS_GCPS environment variable to PARTIAL (default), NONE, or FULL.
+</p>
+
+
 <h2>Creation Issues</h2>
 
 This driver supports creation of the HDF4 Scientific Datasets. You may create
