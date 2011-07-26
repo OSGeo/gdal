@@ -198,7 +198,7 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
     poDS->papszMetadata = NULL;
 
     if( poDS->poH5Objects->nType == H5G_DATASET ) {
-	poDS->CreateMetadata( poDS->poH5Objects, H5G_DATASET );
+        poDS->CreateMetadata( poDS->poH5Objects, H5G_DATASET );
     }
 
 /* -------------------------------------------------------------------- */
@@ -452,6 +452,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                             (char *)poDS->GetSubdatasetName() );
 
     if( poDS->poH5Objects == NULL ) {
+        delete poDS;
         return NULL;
     }
 /* -------------------------------------------------------------------- */
