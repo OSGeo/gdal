@@ -512,9 +512,15 @@ static double OSR_GDV( char **papszNV, const char * pszField,
             papszTokens = CSLTokenizeString(papszNV[iLine]);
             if( CSLCount(papszTokens) == 3 )
             {
+                /* http://agdcftp1.wr.usgs.gov/pub/projects/lcc/akcan_lcc/akcan.tar.gz contains */
+                /* weird values for the second. Ignore it and the result looks correct */
+                double dfSecond = atof(papszTokens[2]);
+                if (dfSecond < 0.0 || dfSecond >= 60.0)
+                    dfSecond = 0.0;
+
                 dfValue = ABS(atof(papszTokens[0]))
                     + atof(papszTokens[1]) / 60.0
-                    + atof(papszTokens[2]) / 3600.0;
+                    + dfSecond / 3600.0;
 
                 if( atof(papszTokens[0]) < 0.0 )
                     dfValue *= -1;
