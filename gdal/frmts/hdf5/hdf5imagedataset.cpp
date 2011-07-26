@@ -122,10 +122,10 @@ HDF5ImageDataset::~HDF5ImageDataset( )
     CPLFree(pszGCPProjection);
 
     if( dims )
-	CPLFree( dims );
+        CPLFree( dims );
 
     if( maxdims )
-	CPLFree( maxdims );
+        CPLFree( maxdims );
 
     if( nGCPCount > 0 )
     {
@@ -135,7 +135,7 @@ HDF5ImageDataset::~HDF5ImageDataset( )
                 CPLFree( pasGCPList[i].pszId );
             if( pasGCPList[i].pszInfo )
                 CPLFree( pasGCPList[i].pszInfo );
-	}
+        }
 
         CPLFree( pasGCPList );
     }
@@ -273,19 +273,19 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     HDF5ImageDataset    *poGDS = ( HDF5ImageDataset * ) poDS;
    
     if( poGDS->eAccess == GA_Update ) {
-	memset( pImage, 0,
-		nBlockXSize * nBlockYSize * 
-		GDALGetDataTypeSize( eDataType )/8 );
-	return CE_None;
+        memset( pImage, 0,
+            nBlockXSize * nBlockYSize *
+            GDALGetDataTypeSize( eDataType )/8 );
+        return CE_None;
     }
 
     rank=2;
 
     if( poGDS->ndims == 3 ){
-	rank=3;
-	offset[0]   = nBand-1;
-	count[0]    = 1;
-	col_dims[0] = 1;
+        rank=3;
+        offset[0]   = nBand-1;
+        count[0]    = 1;
+        col_dims[0] = 1;
     }
 
     offset[poGDS->ndims - 2] = nBlockYOff*nBlockYSize;
@@ -308,9 +308,9 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Select block from file space                                    */
 /* -------------------------------------------------------------------- */
     status =  H5Sselect_hyperslab( poGDS->dataspace_id, 
-				  H5S_SELECT_SET, 
-				  offset, NULL, 
-				  count, NULL );
+                                   H5S_SELECT_SET,
+                                   offset, NULL,
+                                   count, NULL );
    
 /* -------------------------------------------------------------------- */
 /*      Create memory space to receive the data                         */
@@ -325,11 +325,11 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   count, NULL);
 
     status = H5Dread ( poGDS->dataset_id,
-		      poGDS->native, 
-		      memspace,
-		      poGDS->dataspace_id,
-		      H5P_DEFAULT, 
-		      pImage );
+                       poGDS->native,
+                       memspace,
+                       poGDS->dataspace_id,
+                       H5P_DEFAULT,
+                       pImage );
 
     H5Sclose( memspace );
 
@@ -344,7 +344,7 @@ int HDF5ImageDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
     if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) )
-	return FALSE;
+        return FALSE;
     else
         return TRUE;
 }
@@ -360,7 +360,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) ||
         strlen(poOpenInfo->pszFilename) > sizeof(szFilename) - 3 )
-	return NULL;
+        return NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -399,8 +399,8 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( strlen(papszName[1]) == 1 && papszName[3] != NULL ) 
     {
-	strcat(szFilename, ":");
-	strcat(szFilename, papszName[2]);
+        strcat(szFilename, ":");
+        strcat(szFilename, papszName[2]);
         
         poDS->SetSubdatasetName( papszName[3] );
     }
@@ -421,19 +421,21 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     /*      Try opening the dataset.                                        */
     /* -------------------------------------------------------------------- */
     poDS->hHDF5 = H5Fopen(szFilename,
-			  H5F_ACC_RDONLY, 
-			  H5P_DEFAULT );
+                          H5F_ACC_RDONLY,
+                          H5P_DEFAULT );
   
-    if( poDS->hHDF5 < 0 )  {
+    if( poDS->hHDF5 < 0 )
+    {
         delete poDS;
-	return NULL;
+        return NULL;
     }
   
     poDS->hGroupID = H5Gopen( poDS->hHDF5, "/" ); 
-    if( poDS->hGroupID < 0 ){
-	poDS->bIsHDFEOS=false;
+    if( poDS->hGroupID < 0 )
+    {
+        poDS->bIsHDFEOS=false;
         delete poDS;
-	return NULL;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -450,7 +452,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                             (char *)poDS->GetSubdatasetName() );
 
     if( poDS->poH5Objects == NULL ) {
-	return NULL;
+        return NULL;
     }
 /* -------------------------------------------------------------------- */
 /*      Retrieve HDF5 data information                                  */
@@ -458,10 +460,8 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->dataset_id   = H5Dopen( poDS->hHDF5,poDS->poH5Objects->pszPath ); 
     poDS->dataspace_id = H5Dget_space( poDS->dataset_id );                       
     poDS->ndims        = H5Sget_simple_extent_ndims( poDS->dataspace_id );
-    poDS->dims         = ( hsize_t * )CPLCalloc( poDS->ndims, 
-						 sizeof( hsize_t ) );
-    poDS->maxdims      = ( hsize_t * )CPLCalloc( poDS->ndims, 
-						 sizeof( hsize_t ) );
+    poDS->dims         = (hsize_t*)CPLCalloc( poDS->ndims, sizeof(hsize_t) );
+    poDS->maxdims      = (hsize_t*)CPLCalloc( poDS->ndims, sizeof(hsize_t) );
     poDS->dimensions   = H5Sget_simple_extent_dims( poDS->dataspace_id,
 						   poDS->dims,
 						   poDS->maxdims );
@@ -480,13 +480,13 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
     for(  i = 1; i <= poDS->nBands; i++ ) {
-	HDF5ImageRasterBand *poBand = 
-	    new HDF5ImageRasterBand( poDS, i, 
-				     poDS->GetDataType( poDS->native ) );
-	
-	poDS->SetBand( i, poBand );
-	if( poBand->bNoDataSet )
-		poBand->SetNoDataValue( 255 );
+        HDF5ImageRasterBand *poBand =
+            new HDF5ImageRasterBand( poDS, i,
+                            poDS->GetDataType( poDS->native ) );
+
+        poDS->SetBand( i, poBand );
+        if( poBand->bNoDataSet )
+            poBand->SetNoDataValue( 255 );
     }
 
     poDS->CreateProjections( );
@@ -563,14 +563,14 @@ CPLErr HDF5ImageDataset::CreateProjections()
 /* -------------------------------------------------------------------- */
     poH5Objects=HDF5FindDatasetObjects( poH5RootGroup,  "Latitude" );
     if( !poH5Objects ) {
-	return CE_None;
+        return CE_None;
     }
 /* -------------------------------------------------------------------- */
 /*      The Lattitude and Longitude arrays must have a rank of 2 to     */
 /*      retrieve GCPs.                                                  */
 /* -------------------------------------------------------------------- */
     if( poH5Objects->nRank != 2 ) {
-	return CE_None;
+        return CE_None;
     }
     
 /* -------------------------------------------------------------------- */
@@ -584,61 +584,63 @@ CPLErr HDF5ImageDataset::CreateProjections()
     LongitudeDataspaceID = H5Dget_space( dataset_id );                       
 
     if( ( LatitudeDatasetID > 0 ) && ( LongitudeDatasetID > 0) ) {
-	
-	Latitude         = ( float * ) CPLCalloc(  nRasterYSize*nRasterXSize, 
-						sizeof( float ) );
-	Longitude         = ( float * ) CPLCalloc( nRasterYSize*nRasterXSize, 
-						 sizeof( float ) );
-	memset( Latitude, 0, nRasterXSize*nRasterYSize*sizeof(  float ) );
-	memset( Longitude, 0, nRasterXSize*nRasterYSize*sizeof( float ) );
-	
-	H5Dread ( LatitudeDatasetID,
-		  H5T_NATIVE_FLOAT, 
-		  H5S_ALL,
-		  H5S_ALL,
-		  H5P_DEFAULT, 
-		  Latitude );
-	
-	H5Dread ( LongitudeDatasetID,
-		  H5T_NATIVE_FLOAT, 
-		  H5S_ALL,
-		  H5S_ALL,
-		  H5P_DEFAULT, 
-		  Longitude );
-	
-	oSRS.SetWellKnownGeogCS( "WGS84" );
-        CPLFree(pszProjection);
-        CPLFree(pszGCPProjection);
-	oSRS.exportToWkt( &pszProjection );
-	oSRS.exportToWkt( &pszGCPProjection );
-	
-/* -------------------------------------------------------------------- */
-/*  Fill the GCPs list.                                                 */
-/* -------------------------------------------------------------------- */
-	nGCPCount = nRasterYSize/nDeltaLat * nRasterXSize/nDeltaLon;
 
-	pasGCPList = ( GDAL_GCP * )
-	    CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) );
-	
-	GDALInitGCPs( nGCPCount, pasGCPList );
-	int k=0;
+        Latitude         = ( float * ) CPLCalloc(  nRasterYSize*nRasterXSize,
+                            sizeof( float ) );
+        Longitude         = ( float * ) CPLCalloc( nRasterYSize*nRasterXSize,
+                            sizeof( float ) );
+        memset( Latitude, 0, nRasterXSize*nRasterYSize*sizeof(  float ) );
+        memset( Longitude, 0, nRasterXSize*nRasterYSize*sizeof( float ) );
 
-	int nYLimit = ((int)nRasterYSize/nDeltaLat) * nDeltaLat;
-	int nXLimit = ((int)nRasterXSize/nDeltaLon) * nDeltaLon;
-	for( j = 0; j < nYLimit; j+=nDeltaLat ) {
-	    for( i = 0; i < nXLimit; i+=nDeltaLon ) {
-		int iGCP =  j * nRasterXSize + i;
-		pasGCPList[k].dfGCPX = ( double ) Longitude[iGCP]+180.0;
-		pasGCPList[k].dfGCPY = ( double ) Latitude[iGCP];
-		
-		pasGCPList[k].dfGCPPixel = i + 0.5;
-		pasGCPList[k++].dfGCPLine =  j + 0.5;
-		
-	    }
-	}
-	
-	CPLFree( Latitude );
-	CPLFree( Longitude );
+        H5Dread ( LatitudeDatasetID,
+            H5T_NATIVE_FLOAT,
+            H5S_ALL,
+            H5S_ALL,
+            H5P_DEFAULT,
+            Latitude );
+
+        H5Dread ( LongitudeDatasetID,
+            H5T_NATIVE_FLOAT,
+            H5S_ALL,
+            H5S_ALL,
+            H5P_DEFAULT,
+            Longitude );
+
+        oSRS.SetWellKnownGeogCS( "WGS84" );
+            CPLFree(pszProjection);
+            CPLFree(pszGCPProjection);
+        oSRS.exportToWkt( &pszProjection );
+        oSRS.exportToWkt( &pszGCPProjection );
+
+    /* -------------------------------------------------------------------- */
+    /*  Fill the GCPs list.                                                 */
+    /* -------------------------------------------------------------------- */
+        nGCPCount = nRasterYSize/nDeltaLat * nRasterXSize/nDeltaLon;
+
+        pasGCPList = ( GDAL_GCP * )
+            CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) );
+
+        GDALInitGCPs( nGCPCount, pasGCPList );
+        int k=0;
+
+        int nYLimit = ((int)nRasterYSize/nDeltaLat) * nDeltaLat;
+        int nXLimit = ((int)nRasterXSize/nDeltaLon) * nDeltaLon;
+        for( j = 0; j < nYLimit; j+=nDeltaLat )
+        {
+            for( i = 0; i < nXLimit; i+=nDeltaLon )
+            {
+                int iGCP =  j * nRasterXSize + i;
+                pasGCPList[k].dfGCPX = ( double ) Longitude[iGCP]+180.0;
+                pasGCPList[k].dfGCPY = ( double ) Latitude[iGCP];
+
+                pasGCPList[k].dfGCPPixel = i + 0.5;
+                pasGCPList[k++].dfGCPLine =  j + 0.5;
+
+            }
+        }
+
+        CPLFree( Latitude );
+        CPLFree( Longitude );
     }
     return CE_None;
 
@@ -677,9 +679,9 @@ const char *HDF5ImageDataset::GetGCPProjection( )
 
 {
     if( nGCPCount > 0 )
-	return pszGCPProjection;
+        return pszGCPProjection;
     else
-	return GDALPamDataset::GetGCPProjection();
+        return GDALPamDataset::GetGCPProjection();
 }
 
 /************************************************************************/
@@ -693,8 +695,3 @@ const GDAL_GCP *HDF5ImageDataset::GetGCPs( )
     else
         return GDALPamDataset::GetGCPs();
 }
-
-
-
-
-
