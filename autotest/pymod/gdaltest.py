@@ -150,7 +150,6 @@ def post_reason( msg ):
         reason = 'line %d: %s' % (lineno, msg)
     else:
         reason = msg
-    print(reason)
 
 ###############################################################################
 
