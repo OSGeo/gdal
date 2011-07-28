@@ -50,7 +50,7 @@ static CPLString OGRPGDumpEscapeStringList(
 
 OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
                                const char* pszSchemaName,
-                               const char* pszLayerName,
+                               const char* pszTableName,
                                const char* pszGeomColumn,
                                const char *pszFIDColumn,
                                int         nCoordDimension,
@@ -59,10 +59,12 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
                                int         bCreateTable)
 {
     this->poDS = poDS;
-    poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    poFeatureDefn = new OGRFeatureDefn( pszTableName );
     poFeatureDefn->Reference();
     nFeatures = 0;
-    pszSqlTableName = CPLStrdup(CPLSPrintf("\"%s\".\"%s\"", pszSchemaName, pszLayerName));
+    pszSqlTableName = CPLStrdup(CPLString().Printf("%s.%s",
+                               OGRPGDumpEscapeColumnName(pszSchemaName).c_str(),
+                               OGRPGDumpEscapeColumnName(pszTableName).c_str() ));
     this->pszGeomColumn = (pszGeomColumn) ? CPLStrdup(pszGeomColumn) : NULL;
     this->pszFIDColumn = CPLStrdup(pszFIDColumn);
     this->nCoordDimension = nCoordDimension;
@@ -230,6 +232,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     int                 i = 0;
     int                 bNeedComma = FALSE;
     OGRErr              eErr = OGRERR_FAILURE;
+    int bEmptyInsert = FALSE;
     
     if( NULL == poFeature )
     {
@@ -246,7 +249,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     if( poGeom != NULL && pszGeomColumn != NULL )
     {
-        osCommand = osCommand + "\"" + pszGeomColumn + "\" ";
+        osCommand = osCommand + OGRPGDumpEscapeColumnName(pszGeomColumn) + " ";
         bNeedComma = TRUE;
     }
 
@@ -255,7 +258,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         if( bNeedComma )
             osCommand += ", ";
         
-        osCommand = osCommand + "\"" + pszFIDColumn + "\" ";
+        osCommand = osCommand + OGRPGDumpEscapeColumnName(pszFIDColumn) + " ";
         bNeedComma = TRUE;
     }
 
@@ -270,8 +273,11 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             osCommand += ", ";
 
         osCommand = osCommand 
-            + "\"" + poFeatureDefn->GetFieldDefn(i)->GetNameRef() + "\"";
+            + OGRPGDumpEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
     }
+
+    if (!bNeedComma)
+        bEmptyInsert = TRUE;
 
     osCommand += ") VALUES (";
 
@@ -335,6 +341,9 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     }
 
     osCommand += ")";
+
+    if (bEmptyInsert)
+        osCommand.Printf( "INSERT INTO %s DEFAULT VALUES", pszSqlTableName );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
@@ -615,9 +624,7 @@ CPLString OGRPGDumpLayer::BuildCopyFields()
 
     if( /*bHasFid &&*/ poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
     {
-        osFieldList += "\"";
-        osFieldList += pszFIDColumn;
-        osFieldList += "\"";
+        osFieldList += OGRPGDumpEscapeColumnName(pszFIDColumn);
     }
 
     if( pszGeomColumn )
@@ -625,9 +632,7 @@ CPLString OGRPGDumpLayer::BuildCopyFields()
         if( strlen(osFieldList) > 0 )
             osFieldList += ", ";
 
-        osFieldList += "\"";
-        osFieldList += pszGeomColumn;
-        osFieldList += "\"";
+        osFieldList += OGRPGDumpEscapeColumnName(pszGeomColumn);
     }
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
@@ -637,19 +642,40 @@ CPLString OGRPGDumpLayer::BuildCopyFields()
         if( strlen(osFieldList) > 0 )
             osFieldList += ", ";
 
-        osFieldList += "\"";
-        osFieldList += pszName;
-        osFieldList += "\"" ;
+        osFieldList += OGRPGDumpEscapeColumnName(pszName);
     }
 
     return osFieldList;
 }
 
 /************************************************************************/
+/*                       OGRPGDumpEscapeColumnName( )                   */
+/************************************************************************/
+
+CPLString OGRPGDumpEscapeColumnName(const char* pszColumnName)
+{
+    CPLString osStr;
+
+    osStr += "\"";
+
+    char ch;
+    for(int i=0; (ch = pszColumnName[i]) != '\0'; i++)
+    {
+        if (ch == '"')
+            osStr.append(1, ch);
+        osStr.append(1, ch);
+    }
+
+    osStr += "\"";
+
+    return osStr;
+}
+
+/************************************************************************/
 /*                             EscapeString( )                          */
 /************************************************************************/
 
-static CPLString OGRPGDumpEscapeString(
+CPLString OGRPGDumpEscapeString(
                                    const char* pszStrValue, int nMaxLength,
                                    const char* pszFieldName)
 {
@@ -1056,8 +1082,9 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
-    osCommand.Printf( "ALTER TABLE %s ADD COLUMN \"%s\" %s",
-                      pszSqlTableName, oField.GetNameRef(), szFieldType );
+    osCommand.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
+                      pszSqlTableName, OGRPGDumpEscapeColumnName(oField.GetNameRef()).c_str(),
+                      szFieldType );
     if (bCreateTable)
         poDS->Log(osCommand);
 
