@@ -2014,8 +2014,6 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
             SetAuthority( "PROJCS", "EPSG", nCode );
         else if( IsGeographic() )
             SetAuthority( "GEOGCS", "EPSG", nCode );
-
-        eErr = FixupOrdering();
     }
 
 /* -------------------------------------------------------------------- */
@@ -2027,6 +2025,13 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
                   "EPSG PCS/GCS code %d not found in EPSG support files.  Is this a valid\nEPSG coordinate system?", 
                   nCode );
     }
+
+/* -------------------------------------------------------------------- */
+/*      To the extent possible, we want to return the results in as     */
+/*      close to standard OGC format as possible, so we fixup the       */
+/*      ordering.                                                       */
+/* -------------------------------------------------------------------- */
+    eErr = FixupOrdering();
 
     return eErr;
 }
