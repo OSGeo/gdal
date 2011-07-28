@@ -514,6 +514,84 @@ def osr_basic_15():
     return 'success'
 
 ###############################################################################
+# Test OSRSetGeocCS()
+
+def osr_basic_16():
+
+    # Nominal test : change citation of a GEOCCS
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( """GEOCCS["WGS 84 (geocentric)",
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    AXIS["Geocentric X",OTHER],
+    AXIS["Geocentric Y",OTHER],
+    AXIS["Geocentric Z",OTHER],
+    AUTHORITY["EPSG","4328"]]""" )
+    srs.SetGeocCS("a")
+    expect_wkt = """GEOCCS["a",
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    AXIS["Geocentric X",OTHER],
+    AXIS["Geocentric Y",OTHER],
+    AXIS["Geocentric Z",OTHER],
+    AUTHORITY["EPSG","4328"]]"""
+    wkt = srs.ExportToPrettyWkt()
+    if wkt != expect_wkt:
+        print('Got:%s' % wkt)
+        print('Expected:%s' % expect_wkt)
+        gdaltest.post_reason( 'Did not get expected result.' )
+        return 'fail'
+
+    # Build GEOCCS from a valid GEOGCS
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetGeocCS("a")
+    expect_wkt = """GEOCCS["a",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]]]"""
+    wkt = srs.ExportToPrettyWkt()
+    if wkt != expect_wkt:
+        print('Got:%s' % wkt)
+        print('Expected:%s' % expect_wkt)
+        gdaltest.post_reason( 'Did not get expected result.' )
+        return 'fail'
+
+    # Error expected. Cannot work on a PROJCS
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    ret = srs.SetGeocCS("a")
+    if ret == 0:
+        gdaltest.post_reason('expected failure')
+        print(srs)
+        return 'fail'
+
+    # Limit test : build GEOCCS from an invalid GEOGCS
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( """GEOGCS["foo"]""" )
+    srs.SetGeocCS("bar")
+    expect_wkt = """GEOCCS["bar"]"""
+    wkt = srs.ExportToPrettyWkt()
+    if wkt != expect_wkt:
+        print('Got:%s' % wkt)
+        print('Expected:%s' % expect_wkt)
+        gdaltest.post_reason( 'Did not get expected result.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_basic_1,
@@ -531,6 +609,7 @@ gdaltest_list = [
     osr_basic_13,
     osr_basic_14,
     osr_basic_15,
+    osr_basic_16,
     None ]
 
 if __name__ == '__main__':
