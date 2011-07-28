@@ -68,6 +68,12 @@ This option will have no effect if PG_USE_COPY environment variable is to YES.<p
 <li> <b>DROP_TABLE</b>: (OGR >= 1.8.1) Set to ON by default so that tables are destroyed before being recreated.
 Set to OFF to prevent DROP TABLE from being emitted. Set to IF_EXISTS in order DROP TABLE IF EXISTS to be emitted (needs PostgreSQL >= 8.2)<p>
 <li> <b>SRID</b>: Set the SRID of the geometry. Defaults to -1, unless a SRS is associated with the layer. In the case, if the EPSG code is mentionned, it will be used as the SRID. (Note: the spatial_ref_sys table must be correctly populated with the specified SRID) <p>
+<li> <b>NONE_AS_UNKNOWN</b>: (From GDAL 1.9.0) Can bet set to TRUE to force non-spatial layers (wkbNone) to be created as
+spatial tables of type GEOMETRY (wkbUnknown), which was the behaviour prior to GDAL 1.8.0. Defaults to NO, in which case
+a regular table is created and not recorded in the PostGIS geometry_columns table.<p>
+<li> <b>FID</b>: (From GDAL 1.9.0) Name of the FID column to create. Defaults to 'ogc_fid'.<p>
+<li> <b>EXTRACT_SCHEMA_FROM_LAYER_NAME</b>: (From GDAL 1.9.0) Can be set to NO to avoid considering the dot character
+as the separator between the schema and the table name. Defaults to YES.<p>
 </ul>
 
 <h3>Environment variables</h3>
