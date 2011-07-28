@@ -380,6 +380,7 @@ def osr_proj4_11():
                      '+proj=sinu +lon_0=2 +x_0=3 +y_0=4',
                      '+proj=gall +lon_0=2 +x_0=3 +y_0=4',
                      '+proj=goode +lon_0=2 +x_0=3 +y_0=4',
+                     '+proj=igh',
                      '+proj=geos +lon_0=2 +h=1 +x_0=3 +y_0=4',
                      '+proj=lcc +lat_1=1 +lat_0=1 +lon_0=2 +k_0=2 +x_0=3 +y_0=4',
                      '+proj=lcc +lat_1=-10 +lat_2=30 +lat_0=60 +lon_0=2 +x_0=3 +y_0=4',
@@ -424,6 +425,56 @@ def osr_proj4_11():
 
     return 'success'
 
+###############################################################################
+# Test importing +init=epsg:XXX
+#
+def osr_proj4_12():
+
+    expect_wkt = """GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        TOWGS84[0,0,0,0,0,0,0],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9108"]],
+    AUTHORITY["EPSG","4326"]]"""
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4("+init=epsg:4326")
+    wkt = srs.ExportToPrettyWkt()
+
+    if wkt != expect_wkt:
+        print('Got:%s' % wkt)
+        print('Expected:%s' % expect_wkt)
+        gdaltest.post_reason( 'Did not get expected result.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test error cases
+#
+def osr_proj4_13():
+
+    proj4strlist = [ '',
+                     #None,
+                     'foo',
+                     '+a=5',
+                     '+proj=foo',
+                     '+proj=longlat +a=5',
+                     '+proj=longlat +ellps=wgs72 +towgs84=3']
+
+    for proj4str in proj4strlist:
+        srs = osr.SpatialReference()
+        gdal.ErrorReset()
+        if srs.ImportFromProj4(proj4str) == 0 and gdal.GetLastErrorMsg() == '':
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -435,7 +486,9 @@ gdaltest_list = [
     osr_proj4_8,
     osr_proj4_9,
     osr_proj4_10,
-    osr_proj4_11 ]
+    osr_proj4_11,
+    osr_proj4_12,
+    osr_proj4_13 ]
 
 if __name__ == '__main__':
 
