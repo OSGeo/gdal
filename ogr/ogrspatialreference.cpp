@@ -2751,8 +2751,13 @@ OGRErr OGRSpatialReference::SetGeocCS( const char * pszName )
 
     if( poGeogCS != NULL )
     {
-        poRoot->InsertChild( poGeogCS->GetNode( "DATUM" )->Clone(), 1 );
-        poRoot->InsertChild( poGeogCS->GetNode( "PRIMEM" )->Clone(), 2 );
+        OGR_SRSNode *poDatum = poGeogCS->GetNode( "DATUM" );
+        OGR_SRSNode *poPRIMEM = poGeogCS->GetNode( "PRIMEM" );
+        if ( poDatum != NULL && poPRIMEM != NULL )
+        {
+            poRoot->InsertChild( poDatum->Clone(), 1 );
+            poRoot->InsertChild( poPRIMEM->Clone(), 2 );
+        }
     }
 
     return OGRERR_NONE;
