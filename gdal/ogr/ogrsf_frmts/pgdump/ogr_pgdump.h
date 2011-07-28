@@ -33,6 +33,10 @@
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
 
+CPLString OGRPGDumpEscapeColumnName(const char* pszColumnName);
+CPLString OGRPGDumpEscapeString(   const char* pszStrValue, int nMaxLength,
+                                   const char* pszFieldName);
+
 /************************************************************************/
 /*                          OGRPGDumpLayer                              */
 /************************************************************************/

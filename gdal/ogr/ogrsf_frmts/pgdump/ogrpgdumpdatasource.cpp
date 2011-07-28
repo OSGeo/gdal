@@ -139,7 +139,7 @@ char *OGRPGDumpDataSource::LaunderName( const char *pszSrcName )
     for( int i = 0; pszSafeName[i] != '\0'; i++ )
     {
         pszSafeName[i] = (char) tolower( pszSafeName[i] );
-        if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
+        if( pszSafeName[i] == '\'' || pszSafeName[i] == '-' || pszSafeName[i] == '#' )
             pszSafeName[i] = '_';
     }
 
@@ -155,7 +155,7 @@ char *OGRPGDumpDataSource::LaunderName( const char *pszSrcName )
 /************************************************************************/
 
 OGRLayer *
-OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
+OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
                                   OGRSpatialReference *poSRS,
                                   OGRwkbGeometryType eType,
                                   char ** papszOptions )
@@ -163,17 +163,29 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
 {
     CPLString            osCommand;
     const char          *pszGeomType = NULL;
-    char                *pszLayerName = NULL;
-    const char          *pszTableName = NULL;
+    char                *pszTableName = NULL;
     char                *pszSchemaName = NULL;
     int                  nDimension = 3;
-    const char          *pszFIDColumn = "OGC_FID";
     int                  bHavePostGIS = TRUE;
 
-    if (pszLayerNameIn == NULL)
-        return NULL;
+    const char* pszFIDColumnName = CSLFetchNameValue(papszOptions, "FID");
+    CPLString osFIDColumnName;
+    if (pszFIDColumnName == NULL)
+        osFIDColumnName = "OGC_FID";
+    else
+    {
+        if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+        {
+            char* pszLaunderedFid = LaunderName(pszFIDColumnName);
+            osFIDColumnName += OGRPGDumpEscapeColumnName(pszLaunderedFid);
+            CPLFree(pszLaunderedFid);
+        }
+        else
+            osFIDColumnName += OGRPGDumpEscapeColumnName(pszFIDColumnName);
+    }
+    pszFIDColumnName = osFIDColumnName.c_str();
 
-    if (strncmp(pszLayerNameIn, "pg", 2) == 0)
+    if (strncmp(pszLayerName, "pg", 2) == 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "The layer name should not begin by 'pg' as it is a reserved prefix");
@@ -181,44 +193,53 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
     
     //bHavePostGIS = CSLFetchBoolean(papszOptions,"POSTGIS", TRUE);
 
-    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
-    {
-        pszLayerName = LaunderName( pszLayerNameIn );
-        
-    }
-    else
-        pszLayerName = CPLStrdup( pszLayerNameIn );
-    
     int bCreateTable = CSLFetchBoolean(papszOptions,"CREATE_TABLE", TRUE);
     int bCreateSchema = CSLFetchBoolean(papszOptions,"CREATE_SCHEMA", TRUE);
     const char* pszDropTable = CSLFetchNameValueDef(papszOptions,"DROP_TABLE", "YES");
 
-    if (eType == wkbNone)
-        bHavePostGIS = FALSE;
-    else if( wkbFlatten(eType) == eType )
+    if( wkbFlatten(eType) == eType )
         nDimension = 2;
 
     if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
         nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
+
+    /* Should we turn layers with None geometry type as Unknown/GEOMETRY */
+    /* so they are still recorded in geometry_columns table ? (#4012) */
+    int bNoneAsUnknown = CSLTestBoolean(CSLFetchNameValueDef(
+                                    papszOptions, "NONE_AS_UNKNOWN", "NO"));
+    if (bNoneAsUnknown && eType == wkbNone)
+        eType = wkbUnknown;
+    else if (eType == wkbNone)
+        bHavePostGIS = FALSE;
+
+    int bExtractSchemaFromLayerName = CSLTestBoolean(CSLFetchNameValueDef(
+                                    papszOptions, "EXTRACT_SCHEMA_FROM_LAYER_NAME", "YES"));
 
     /* Postgres Schema handling:
        Extract schema name from input layer name or passed with -lco SCHEMA.
        Set layer name to "schema.table" or to "table" if schema == current_schema()
        Usage without schema name is backwards compatible
     */
-    pszTableName = strstr(pszLayerName,".");
-    if ( pszTableName != NULL )
+    const char* pszDotPos = strstr(pszLayerName,".");
+    if ( pszDotPos != NULL && bExtractSchemaFromLayerName )
     {
-      int length = pszTableName - pszLayerName;
+      int length = pszDotPos - pszLayerName;
       pszSchemaName = (char*)CPLMalloc(length+1);
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
-      ++pszTableName; //skip "."
+
+      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+          pszTableName = LaunderName( pszDotPos + 1 ); //skip "."
+      else
+          pszTableName = CPLStrdup( pszDotPos + 1 ); //skip "."
     }
     else
     {
       pszSchemaName = NULL;
-      pszTableName = pszLayerName;
+      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+          pszTableName = LaunderName( pszLayerName ); //skip "."
+      else
+          pszTableName = CPLStrdup( pszLayerName ); //skip "."
     }
 
     Commit();
@@ -254,7 +275,7 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Layer %s already exists, CreateLayer failed.\n", 
                       pszLayerName );
-            CPLFree( pszLayerName );
+            CPLFree( pszTableName );
             CPLFree( pszSchemaName );
             return NULL;
         }
@@ -288,7 +309,7 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
                     "GEOM_TYPE in PostGIS enabled databases must be 'geometry' or 'geography'.\n"
                     "Creation of layer %s with GEOM_TYPE %s has failed.",
                     pszLayerName, pszGeomType );
-        CPLFree( pszLayerName );
+        CPLFree( pszTableName );
         CPLFree( pszSchemaName );
         return NULL;
     }
@@ -320,6 +341,9 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
         }
     }
 
+    CPLString osEscapedTableNameSingleQuote = OGRPGDumpEscapeString(pszTableName, -1, "");
+    const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
+
     const char *pszGeometryType = OGRToOGCGeomType(eType);
 
     const char *pszGFldName = NULL;
@@ -335,8 +359,8 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
         * an effort to clean out such cruft.
         */
         osCommand.Printf(
-                "DELETE FROM geometry_columns WHERE f_table_name = '%s' AND f_table_schema = '%s'",
-                pszTableName, pszSchemaName );
+                "DELETE FROM geometry_columns WHERE f_table_name = %s AND f_table_schema = '%s'",
+                pszEscapedTableNameSingleQuote, pszSchemaName );
         if (bCreateTable)
             Log(osCommand);
     }
@@ -368,14 +392,14 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
                     "%s ( "
                     "   %s SERIAL, "
                     "   CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                    osCreateTable.c_str(), pszFIDColumn, pszTableName, pszFIDColumn );
+                    osCreateTable.c_str(), pszFIDColumnName, pszTableName, pszFIDColumnName );
         else
             osCommand.Printf(
                     "%s ( "
                     "   %s SERIAL, "
                     "   WKB_GEOMETRY %s, "
                     "   CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                    osCreateTable.c_str(), pszFIDColumn, pszGeomType, pszTableName, pszFIDColumn );
+                    osCreateTable.c_str(), pszFIDColumnName, pszGeomType, pszTableName, pszFIDColumnName );
     }
     else if ( EQUAL(pszGeomType, "geography") )
     {
@@ -387,17 +411,17 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
         if (nSRSId)
             osCommand.Printf(
                      "%s ( %s SERIAL, \"%s\" geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(), pszFIDColumn, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName, pszFIDColumn );
+                     osCreateTable.c_str(), pszFIDColumnName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName, pszFIDColumnName );
         else
             osCommand.Printf(
                      "%s ( %s SERIAL, \"%s\" geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(), pszFIDColumn, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName, pszFIDColumn );
+                     osCreateTable.c_str(), pszFIDColumnName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName, pszFIDColumnName );
     }
     else
     {
         osCommand.Printf(
                  "%s ( %s SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                 osCreateTable.c_str(), pszFIDColumn, pszTableName, pszFIDColumn );
+                 osCreateTable.c_str(), pszFIDColumnName, pszTableName, pszFIDColumnName );
     }
 
     if (bCreateTable)
@@ -411,8 +435,8 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
     if( bCreateTable && bHavePostGIS && !EQUAL(pszGeomType, "geography"))
     {
         osCommand.Printf(
-                "SELECT AddGeometryColumn('%s','%s','%s',%d,'%s',%d)",
-                pszSchemaName, pszTableName, pszGFldName,
+                "SELECT AddGeometryColumn('%s',%s,'%s',%d,'%s',%d)",
+                pszSchemaName, pszEscapedTableNameSingleQuote, pszGFldName,
                 nSRSId, pszGeometryType, nDimension );
         Log(osCommand);
     }
@@ -444,8 +468,8 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
 
     int bWriteAsHex = !CSLFetchBoolean(papszOptions,"WRITE_EWKT_GEOM",FALSE);
 
-    poLayer = new OGRPGDumpLayer( this, pszSchemaName, pszLayerName, pszGFldName,
-                                  pszFIDColumn, nDimension, nSRSId, bWriteAsHex, bCreateTable );
+    poLayer = new OGRPGDumpLayer( this, pszSchemaName, pszTableName, pszGFldName,
+                                  pszFIDColumnName, nDimension, nSRSId, bWriteAsHex, bCreateTable );
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
@@ -457,7 +481,7 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerNameIn,
 
     papoLayers[nLayers++] = poLayer;
 
-    CPLFree( pszLayerName );
+    CPLFree( pszTableName );
     CPLFree( pszSchemaName );
 
     return poLayer;
