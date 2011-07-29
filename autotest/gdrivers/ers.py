@@ -131,7 +131,48 @@ def ers_7():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test GCP support
+
+def ers_8():
+
+    src_ds = gdal.Open('../gcore/data/gcps.vrt')
+    drv = gdal.GetDriverByName( 'ERS' )
+    ds = drv.CreateCopy('/vsimem/ers_8.ers', src_ds)
+    ds = None
+
+    gdal.Unlink('/vsimem/ers_8.ers.aux.xml')
+
+    ds = gdal.Open('/vsimem/ers_8.ers')
+    expected_gcps = src_ds.GetGCPs()
+    gcps = ds.GetGCPs()
+    gcp_count = ds.GetGCPCount()
+    wkt = ds.GetGCPProjection()
+    ds = None
+
+    if wkt != """PROJCS["NUTM11",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.978698213898,AUTHORITY["EPSG","7008"]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]""":
+        gdaltest.post_reason('did not get expected GCP projection')
+        print(wkt)
+        return 'fail'
+
+    if len(gcps) != len(expected_gcps) or len(gcps) != gcp_count:
+        gdaltest.post_reason('did not get expected GCP number')
+        return 'fail'
+
+    for i in range(len(gcps)):
+        if abs(gcps[i].GCPPixel - expected_gcps[i].GCPPixel) > 1e-6 or \
+           abs(gcps[i].GCPLine - expected_gcps[i].GCPLine) > 1e-6 or \
+           abs(gcps[i].GCPX - expected_gcps[i].GCPX) > 1e-6 or \
+           abs(gcps[i].GCPY - expected_gcps[i].GCPY) > 1e-6:
+            gdaltest.post_reason('did not get expected GCP %d' % i)
+            print(gcps[i])
+            return 'fail'
+
+    drv.Delete('/vsimem/ers_8.ers')
+
+    return 'success'
+
 ###############################################################################
 # Create simple copy and check (greyscale) using progressive option.
 
@@ -147,6 +188,7 @@ gdaltest_list = [
     ers_5,
     ers_6,
     ers_7,
+    ers_8,
     ers_cleanup
     ]
   
