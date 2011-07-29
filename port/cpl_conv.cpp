@@ -77,14 +77,8 @@ void *CPLCalloc( size_t nCount, size_t nSize )
     if( nSize * nCount == 0 )
         return NULL;
     
-    pReturn = VSICalloc( nCount, nSize );
-    if( pReturn == NULL )
-    {
-        CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLCalloc(): Out of memory allocating %ld bytes.\n",
-                  (long) (nSize * nCount) );
-    }
-
+    pReturn = CPLMalloc( nCount * nSize );
+    memset( pReturn, 0, nCount * nSize );
     return pReturn;
 }
 
@@ -128,9 +122,19 @@ void *CPLMalloc( size_t nSize )
     pReturn = VSIMalloc( nSize );
     if( pReturn == NULL )
     {
-        CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLMalloc(): Out of memory allocating %ld bytes.\n",
-                  (long) nSize );
+        if( nSize > 0 && nSize < 2000 )
+        {
+            char szSmallMsg[60];
+
+            sprintf( szSmallMsg, 
+                     "CPLMalloc(): Out of memory allocating %ld bytes.", 
+                     (long) nSize );
+            CPLEmergencyError( szSmallMsg ); 
+        }
+        else
+            CPLError( CE_Fatal, CPLE_OutOfMemory,
+                      "CPLMalloc(): Out of memory allocating %ld bytes.\n",
+                      (long) nSize );
     }
 
     return pReturn;
@@ -186,9 +190,19 @@ void * CPLRealloc( void * pData, size_t nNewSize )
     
     if( pReturn == NULL )
     {
-        CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLRealloc(): Out of memory allocating %ld bytes.\n",
-                  (long)nNewSize );
+        if( nNewSize > 0 && nNewSize < 2000 )
+        {
+            char szSmallMsg[60];
+
+            sprintf( szSmallMsg, 
+                     "CPLRealloc(): Out of memory allocating %ld bytes.", 
+                     (long) nNewSize );
+            CPLEmergencyError( szSmallMsg ); 
+        }
+        else
+            CPLError( CE_Fatal, CPLE_OutOfMemory,
+                      "CPLRealloc(): Out of memory allocating %ld bytes.\n",
+                      (long) nNewSize );
     }
 
     return pReturn;
@@ -224,8 +238,7 @@ char *CPLStrdup( const char * pszString )
     if( pszString == NULL )
         pszString = "";
 
-    pszReturn = VSIStrdup( pszString );
-        
+    pszReturn = (char *) CPLMalloc(strlen(pszString)+1);
     if( pszReturn == NULL )
     {
         CPLError( CE_Fatal, CPLE_OutOfMemory,
@@ -233,7 +246,8 @@ char *CPLStrdup( const char * pszString )
                   (long) strlen(pszString) );
         
     }
-    
+
+    strcpy( pszReturn, pszString );
     return( pszReturn );
 }
 
