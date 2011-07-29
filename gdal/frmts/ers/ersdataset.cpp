@@ -480,6 +480,7 @@ static double ERSDMS2Dec( const char *pszDMS )
 
     if( CSLCount(papszTokens) != 3 )
     {
+        CSLDestroy(papszTokens);
         return CPLAtof( pszDMS );
     }
     else
