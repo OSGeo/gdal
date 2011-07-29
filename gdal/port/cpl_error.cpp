@@ -238,6 +238,54 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 }
 
 /************************************************************************/
+/*                         CPLEmergencyError()                          */
+/************************************************************************/
+
+/**
+ * Fatal error when things are bad. 
+ *
+ * This function should be called in an emergency situation where
+ * it is unlikely that a regular error report would work.  This would 
+ * include in the case of heap exhaustion for even small allocations, 
+ * or any failure in the process of reporting an error (such as TLS 
+ * allocations). 
+ *
+ * This function should never return.  After the error message has been
+ * reported as best possible, the application will abort() similarly to how
+ * CPLError() aborts on CE_Fatal class errors.
+ *
+ * @param pszMessage the error message to report.
+ */
+
+void CPLEmergencyError( const char *pszMessage )
+{
+    CPLErrorContext *psCtx = NULL;
+    static int bInEmergencyError = FALSE;
+
+    if( !bInEmergencyError )
+    {
+        bInEmergencyError = TRUE;
+        psCtx = (CPLErrorContext *) CPLGetTLS( CTLS_ERRORCONTEXT );
+    }
+
+    if( psCtx != NULL && psCtx->psHandlerStack != NULL )
+    {
+        psCtx->psHandlerStack->pfnHandler( CE_Fatal, CPLE_AppDefined, 
+                                           pszMessage );
+    }
+    else if( pfnErrorHandler != NULL )
+    {
+        pfnErrorHandler( CE_Fatal, CPLE_AppDefined, pszMessage );
+    }
+    else
+    {
+        fprintf( stderr, "FATAL: %s\n", pszMessage );
+    }
+
+    abort();
+}
+
+/************************************************************************/
 /*                              CPLDebug()                              */
 /************************************************************************/
 
