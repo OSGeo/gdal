@@ -1,8 +1,8 @@
 
 /* pngwrite.c - general routines to write a PNG file
  *
- * Last changed in libpng 1.2.42 [January 3, 2010]
- * Copyright (c) 1998-2010 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.45 [July 7, 2011]
+ * Copyright (c) 1998-2011 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -295,6 +295,7 @@ png_write_info(png_structp png_ptr, png_infop info_ptr)
          if (keep != PNG_HANDLE_CHUNK_NEVER &&
             up->location && (up->location & PNG_HAVE_PLTE) &&
             !(up->location & PNG_HAVE_IDAT) &&
+            !(up->location & PNG_AFTER_IDAT) &&
             ((up->name[3] & 0x20) || keep == PNG_HANDLE_CHUNK_ALWAYS ||
             (png_ptr->flags & PNG_FLAG_KEEP_UNSAFE_CHUNKS)))
          {
