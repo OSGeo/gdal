@@ -1,8 +1,8 @@
 
 /* pngrtran.c - transforms the data in a row for PNG readers
  *
- * Last changed in libpng 1.2.43 [February 25, 2010]
- * Copyright (c) 1998-2010 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.45 [July 7, 2011]
+ * Copyright (c) 1998-2011 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -676,10 +676,21 @@ void PNGAPI
 png_set_rgb_to_gray(png_structp png_ptr, int error_action, double red,
    double green)
 {
-   int red_fixed = (int)((float)red*100000.0 + 0.5);
-   int green_fixed = (int)((float)green*100000.0 + 0.5);
+   int red_fixed, green_fixed;
    if (png_ptr == NULL)
       return;
+   if (red > 21474.83647 || red < -21474.83648 ||
+       green > 21474.83647 || green < -21474.83648)
+   {
+      png_warning(png_ptr, "ignoring out of range rgb_to_gray coefficients");
+      red_fixed = -1;
+      green_fixed = -1;
+   }
+   else
+   {
+      red_fixed = (int)((float)red*100000.0 + 0.5);
+      green_fixed = (int)((float)green*100000.0 + 0.5);
+   }
    png_set_rgb_to_gray_fixed(png_ptr, error_action, red_fixed, green_fixed);
 }
 #endif
@@ -1196,8 +1207,7 @@ png_read_transform_info(png_structp png_ptr, png_infop info_ptr)
    {
       if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
       {
-         if (png_ptr->num_trans &&
-              (png_ptr->transformations & PNG_EXPAND_tRNS))
+         if (png_ptr->num_trans)
             info_ptr->color_type = PNG_COLOR_TYPE_RGB_ALPHA;
          else
             info_ptr->color_type = PNG_COLOR_TYPE_RGB;
