@@ -442,7 +442,7 @@ png_destroy_struct_2(png_voidp struct_ptr, png_free_ptr free_fn,
  * have the ability to do that.
  */
 
-png_voidp PNGAPI
+png_voidp /* PRIVATE */
 png_calloc(png_structp png_ptr, png_uint_32 size)
 {
    png_voidp ret;
