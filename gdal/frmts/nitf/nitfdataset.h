@@ -146,7 +146,7 @@ class NITFDataset : public GDALPamDataset
                                     int, int *, GDALProgressFunc, void * );
 
     static int          Identify( GDALOpenInfo * );
-    static GDALDataset *Open( GDALOpenInfo *, GDALDataset *poWritableJ2KDataset,
+    static GDALDataset *OpenInternal( GDALOpenInfo *, GDALDataset *poWritableJ2KDataset,
                               int bOpenForCreate);
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *

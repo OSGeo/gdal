@@ -30,6 +30,9 @@
 /* If we use sunpro compiler on linux. Weird idea indeed ! */
 #if defined(__SUNPRO_CC) && defined(__linux__)
 #define _GNU_SOURCE
+#elif defined(__GNUC__) && !defined(_GNU_SOURCE)
+/* Required to use RTLD_DEFAULT of dlfcn.h */
+#define _GNU_SOURCE
 #endif
 
 #include "gdal_pam.h"
