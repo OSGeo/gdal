@@ -343,6 +343,18 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
     {
+        if( EQUAL(argv[i],"-tps") || EQUAL(argv[i],"-rpc") || EQUAL(argv[i],"-geoloc")  )
+        {
+            const char* pszMethod = CSLFetchNameValue(papszTO, "METHOD");
+            if (pszMethod)
+                fprintf(stderr, "Warning: only one METHOD can be used. Method %s is already defined.\n",
+                        pszMethod);
+            const char* pszMAX_GCP_ORDER = CSLFetchNameValue(papszTO, "MAX_GCP_ORDER");
+            if (pszMAX_GCP_ORDER)
+                fprintf(stderr, "Warning: only one METHOD can be used. -order %s option was specified, so it is likely that GCP_POLYNOMIAL was implied.\n",
+                        pszMAX_GCP_ORDER);
+        }
+
         if( EQUAL(argv[i], "--utility_version") )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
@@ -396,6 +408,10 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-order") && i < argc-1 )
         {
+            const char* pszMethod = CSLFetchNameValue(papszTO, "METHOD");
+            if (pszMethod)
+                fprintf(stderr, "Warning: only one METHOD can be used. Method %s is already defined\n",
+                        pszMethod);
             papszTO = CSLSetNameValue( papszTO, "MAX_GCP_ORDER", argv[++i] );
         }
         else if( EQUAL(argv[i],"-refine_gcps") && i < argc-1 )
