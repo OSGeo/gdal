@@ -30,10 +30,11 @@
 #ifndef _OGR_VRT_H_INCLUDED
 #define _OGR_VRT_H_INCLUDED
 
-#include <vector>
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
+
+#include <vector>
 
 typedef enum { 
     VGS_None,

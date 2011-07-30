@@ -350,10 +350,10 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    return Open(poOpenInfo, NULL, FALSE);
+    return OpenInternal(poOpenInfo, NULL, FALSE);
 }
 
-GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo,
+GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                                 GDALDataset *poWritableJ2KDataset,
                                 int bOpenForCreate)
 
@@ -3350,7 +3350,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
     NITFDataset* poDS = (NITFDataset*)
-            NITFDataset::Open(&oOpenInfo, poWritableJ2KDataset, TRUE);
+            NITFDataset::OpenInternal(&oOpenInfo, poWritableJ2KDataset, TRUE);
     if (poDS)
     {
         poDS->papszTextMDToWrite = papszTextMD;
