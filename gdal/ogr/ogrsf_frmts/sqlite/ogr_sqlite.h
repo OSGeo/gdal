@@ -35,7 +35,7 @@
 
 /* When used with Spatialite amalgation, there might be no sqlite3 headers */
 /* in other places than /include/spatialite/ subdir */
-#ifdef HAVE_SPATIALITE
+#if defined(HAVE_SPATIALITE) && defined(SPATIALITE_AMALGATION)
 #include <spatialite/sqlite3.h>
 #else
 #include "sqlite3.h"
