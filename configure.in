@@ -2229,15 +2229,25 @@ AC_ARG_WITH(spatialite,
     ,,)
 
 HAVE_SPATIALITE=no
+SPATIALITE_AMALGATION=no
 
 if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
     AC_MSG_RESULT(disabled)
 elif test "$with_spatialite" = "yes"; then
-    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,)
-    if test "$SPATIALITE_INIT_FOUND" = "yes"; then
-        HAVE_SPATIALITE=yes
-        LIBS="$LIBS -lspatialite"
-        HAVE_SQLITE3=yes
+    AC_CHECK_HEADERS(sqlite3.h)
+    if test "$ac_cv_header_sqlite3_h" = "yes"; then
+        AC_MSG_CHECKING([for spatialite.h in /usr/include or /usr/local/include])
+        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
+            AC_MSG_RESULT(found)
+            AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,)
+            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
+                HAVE_SPATIALITE=yes
+                LIBS="$LIBS -lspatialite"
+                HAVE_SQLITE3=yes
+            fi
+        else
+            AC_MSG_RESULT(not found : spatialite support disabled)
+        fi
     fi
 else
     AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
@@ -2247,6 +2257,7 @@ else
 
         AC_MSG_RESULT(enabled)
         HAVE_SPATIALITE=yes
+        SPATIALITE_AMALGATION=yes
 
         # SpatiaLite availability implies SQLite availability
         # Caution : don't include the include/spatialite subdir in the include dir
@@ -2261,6 +2272,7 @@ else
 fi
 
 AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
+AC_SUBST([SPATIALITE_AMALGATION], $SPATIALITE_AMALGATION)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for SQLite (only if SpatiaLite is not detected)
