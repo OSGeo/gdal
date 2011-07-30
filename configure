@@ -662,6 +662,7 @@ SQLITE_INC
 SQLITE3_LDFLAGS
 SQLITE3_CFLAGS
 SQLITE3_VERSION
+SPATIALITE_AMALGATION
 HAVE_SPATIALITE
 CURL_LIB
 CURL_INC
@@ -24108,12 +24109,31 @@ fi
 
 
 HAVE_SPATIALITE=no
+SPATIALITE_AMALGATION=no
 
 if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
 elif test "$with_spatialite" = "yes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
+    for ac_header in sqlite3.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sqlite3.h" "ac_cv_header_sqlite3_h" "$ac_includes_default"
+if test "x$ac_cv_header_sqlite3_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SQLITE3_H 1
+_ACEOF
+
+fi
+
+done
+
+    if test "$ac_cv_header_sqlite3_h" = "yes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite.h in /usr/include or /usr/local/include" >&5
+$as_echo_n "checking for spatialite.h in /usr/include or /usr/local/include... " >&6; }
+        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+$as_echo "found" >&6; }
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
 $as_echo_n "checking for spatialite_init in -lspatialite... " >&6; }
 if ${ac_cv_lib_spatialite_spatialite_init+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -24155,10 +24175,15 @@ else
   SPATIALITE_INIT_FOUND=no
 fi
 
-    if test "$SPATIALITE_INIT_FOUND" = "yes"; then
-        HAVE_SPATIALITE=yes
-        LIBS="$LIBS -lspatialite"
-        HAVE_SQLITE3=yes
+            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
+                HAVE_SPATIALITE=yes
+                LIBS="$LIBS -lspatialite"
+                HAVE_SQLITE3=yes
+            fi
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found : spatialite support disabled" >&5
+$as_echo "not found : spatialite support disabled" >&6; }
+        fi
     fi
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
@@ -24210,6 +24235,7 @@ fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
         HAVE_SPATIALITE=yes
+        SPATIALITE_AMALGATION=yes
 
         # SpatiaLite availability implies SQLite availability
         # Caution : don't include the include/spatialite subdir in the include dir
@@ -24225,6 +24251,8 @@ $as_echo "disabled" >&6; }
 fi
 
 HAVE_SPATIALITE=$HAVE_SPATIALITE
+
+SPATIALITE_AMALGATION=$SPATIALITE_AMALGATION
 
 
 
