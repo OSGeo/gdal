@@ -1,3 +1,5 @@
+#include <cpl_port.h>
+
 #include "grib2.h"
 
 #include <stdio.h>
@@ -11,8 +13,6 @@
 /*      jpeg2000 chunks.                                                */
 /* ==================================================================== */
 /* -------------------------------------------------------------------- */
-
-#include <cpl_port.h>
 
 #ifdef HAVE_JASPER
 #include <jasper/jasper.h>
