@@ -26,12 +26,12 @@ iso8211.dll: $(OBJ) $(CPLLIB)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
 
 8211view.exe:	8211view.obj $(OBJ) $(CPLLIB) 
-	$(CC) $(CFLAGS) 8211view.obj $(OBJ) $(CPLLIB) $(CURL_LIB) ../zlib/*.obj /link $(LINKER_FLAGS)
+	$(CC) $(CFLAGS) 8211view.obj $(OBJ) $(CPLLIB) $(LIBICONV_LIBRARY) $(CURL_LIB) ../zlib/*.obj /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
 	del 8211view.obj
 
 8211dump.exe:	8211dump.obj $(OBJ) $(CPLLIB) 
-	$(CC) $(CFLAGS) 8211dump.obj $(OBJ) $(CPLLIB) $(CURL_LIB) ../zlib/*.obj  /link $(LINKER_FLAGS)
+	$(CC) $(CFLAGS) 8211dump.obj $(OBJ) $(CPLLIB) $(LIBICONV_LIBRARY) $(CURL_LIB) ../zlib/*.obj  /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
 	del 8211dump.obj
 
