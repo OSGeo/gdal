@@ -1665,8 +1665,8 @@ Optional Packages:
   --without-pam         Disable PAM (.aux.xml) support
   --with-poppler=ARG    Include poppler(for PDF) support (ARG=no(default), yes or poppler install path)
   --with-podofo=ARG    Include podofo(for PDF) support (ARG=no(default), yes or podofo install path)
-  --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...)
-  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...)
+  --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...). Mainly for static libpodofo
+  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpodofo
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
@@ -25765,15 +25765,35 @@ fi
 
     if test "$with_podofo" = "yes" ; then
         TEST_PODOFO_INC="-I/usr/include -I/usr/include/podofo"
-        PODOFO_LIB="-lpodofo -lfreetype -lfontconfig -lpthread"
+        PODOFO_LIB="-lpodofo"
     else
         TEST_PODOFO_INC="-I$with_podofo/include -I$with_podofo/include/podofo"
-        PODOFO_LIB="-L$with_podofo/lib -lpodofo -lfreetype -lfontconfig -lpthread"
+        PODOFO_LIB="-L$with_podofo/lib -lpodofo"
     fi
 
-    if test "x$with_podofo_lib" != "x" ; then
-        PODOFO_LIB="$with_podofo_lib"
+    if test "x$with_podofo_lib" = "x" ; then
+        rm -f testpodofo.*
+        echo '#include <podofo.h>' > testpodofo.cpp
+        echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
+        if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${PODOFO_LIB}  2>&1`" ; then
+            HAVE_PODOFO=yes
+            LIBS="${PODOFO_LIB} ${LIBS}"
+            OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
+            PODOFO_INC=$TEST_PODOFO_INC
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        fi
+        rm -f testpodofo.*
+        rm -f testpodofo
     fi
+
+    if test "$HAVE_PODOFO" = "no"; then
+        if test "x$with_podofo_lib" != "x" ; then
+            PODOFO_LIB="$with_podofo_lib"
+        else
+            # This may be a static libpodofo.a, so add dependant libraries
+            PODOFO_LIB="$PODOFO_LIB -lfreetype -lfontconfig -lpthread"
+        fi
 
 
 # Check whether --with-podofo-extra-lib-for-test was given.
@@ -25782,28 +25802,29 @@ if test "${with_podofo_extra_lib_for_test+set}" = set; then :
 fi
 
 
-    if test "x$with_podofo_extra_lib_for_test" = "x" ; then
-        TEST_PODOFO_LIB="$PODOFO_LIB"
-    else
-        TEST_PODOFO_LIB="$PODOFO_LIB $with_podofo_extra_lib_for_test"
-    fi
+        if test "x$with_podofo_extra_lib_for_test" = "x" ; then
+            TEST_PODOFO_LIB="$PODOFO_LIB"
+        else
+            TEST_PODOFO_LIB="$PODOFO_LIB $with_podofo_extra_lib_for_test"
+        fi
 
-    rm -f testpodofo.*
-    echo '#include <podofo.h>' > testpodofo.cpp
-    echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
-    if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>&1`" ; then
-        HAVE_PODOFO=yes
-        LIBS="${PODOFO_LIB} ${LIBS}"
-        OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+        rm -f testpodofo.*
+        echo '#include <podofo.h>' > testpodofo.cpp
+        echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
+        if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>&1`" ; then
+            HAVE_PODOFO=yes
+            LIBS="${PODOFO_LIB} ${LIBS}"
+            OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
+            PODOFO_INC=$TEST_PODOFO_INC
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        PODOFO_INC=$TEST_PODOFO_INC
-    else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+        fi
+        rm -f testpodofo.*
+        rm -f testpodofo
     fi
-    rm -f testpodofo.*
-    rm -f testpodofo
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
