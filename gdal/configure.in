@@ -2707,7 +2707,7 @@ AC_MSG_CHECKING([for podofo])
 if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
 
     AC_ARG_WITH(podofo-lib,
-      [  --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...)],,,)
+      [  --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...). Mainly for static libpodofo],,,)
 
     if test "$HAVE_POPPLER" = "yes"; then
         AC_MSG_ERROR([--with-podofo and --with-poppler cannot be specified at the same time])
@@ -2715,39 +2715,59 @@ if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
 
     if test "$with_podofo" = "yes" ; then
         TEST_PODOFO_INC="-I/usr/include -I/usr/include/podofo"
-        PODOFO_LIB="-lpodofo -lfreetype -lfontconfig -lpthread"
+        PODOFO_LIB="-lpodofo"
     else
         TEST_PODOFO_INC="-I$with_podofo/include -I$with_podofo/include/podofo"
-        PODOFO_LIB="-L$with_podofo/lib -lpodofo -lfreetype -lfontconfig -lpthread"
+        PODOFO_LIB="-L$with_podofo/lib -lpodofo"
     fi
 
-    if test "x$with_podofo_lib" != "x" ; then
-        PODOFO_LIB="$with_podofo_lib"
+    if test "x$with_podofo_lib" = "x" ; then
+        rm -f testpodofo.*
+        echo '#include <podofo.h>' > testpodofo.cpp
+        echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
+        if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${PODOFO_LIB}  2>&1`" ; then
+            HAVE_PODOFO=yes
+            LIBS="${PODOFO_LIB} ${LIBS}"
+            OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
+            PODOFO_INC=$TEST_PODOFO_INC
+            AC_MSG_RESULT([yes])
+        fi
+        rm -f testpodofo.*
+        rm -f testpodofo
     fi
 
-    AC_ARG_WITH(podofo-extra-lib-for-test,
-      [  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...)],,,)
+    if test "$HAVE_PODOFO" = "no"; then
+        if test "x$with_podofo_lib" != "x" ; then
+            PODOFO_LIB="$with_podofo_lib"
+        else
+            # This may be a static libpodofo.a, so add dependant libraries
+            PODOFO_LIB="$PODOFO_LIB -lfreetype -lfontconfig -lpthread"
+        fi
 
-    if test "x$with_podofo_extra_lib_for_test" = "x" ; then
-        TEST_PODOFO_LIB="$PODOFO_LIB"
-    else
-        TEST_PODOFO_LIB="$PODOFO_LIB $with_podofo_extra_lib_for_test"
-    fi
+        AC_ARG_WITH(podofo-extra-lib-for-test,
+          [  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpodofo],,,)
 
-    rm -f testpodofo.*
-    echo '#include <podofo.h>' > testpodofo.cpp
-    echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
-    if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>&1`" ; then
-        HAVE_PODOFO=yes
-        LIBS="${PODOFO_LIB} ${LIBS}"
-        OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
-        AC_MSG_RESULT([yes])
-        PODOFO_INC=$TEST_PODOFO_INC
-    else
-        AC_MSG_RESULT([no])
+        if test "x$with_podofo_extra_lib_for_test" = "x" ; then
+            TEST_PODOFO_LIB="$PODOFO_LIB"
+        else
+            TEST_PODOFO_LIB="$PODOFO_LIB $with_podofo_extra_lib_for_test"
+        fi
+
+        rm -f testpodofo.*
+        echo '#include <podofo.h>' > testpodofo.cpp
+        echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
+        if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>&1`" ; then
+            HAVE_PODOFO=yes
+            LIBS="${PODOFO_LIB} ${LIBS}"
+            OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
+            PODOFO_INC=$TEST_PODOFO_INC
+            AC_MSG_RESULT([yes])
+        else
+            AC_MSG_RESULT([no])
+        fi
+        rm -f testpodofo.*
+        rm -f testpodofo
     fi
-    rm -f testpodofo.*
-    rm -f testpodofo
 else
     AC_MSG_RESULT([disabled])
 fi
