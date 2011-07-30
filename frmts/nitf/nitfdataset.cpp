@@ -1207,11 +1207,8 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Do we have metadata.                                            */
 /* -------------------------------------------------------------------- */
-    char **papszCSEXRA_MD;
-    char **papszCSDIDA_MD;
     char **papszMergedMD;
-    char **papszPIAIMC_MD;
-    char **papszUSE00A_MD;
+    char **papszTRE_MD;
 
     // File and Image level metadata.
     papszMergedMD = CSLDuplicate( poDS->psFile->papszMetadata );
@@ -1267,62 +1264,63 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         }
 
         // CSDIDA
-        papszCSDIDA_MD = NITFReadCSDIDA( psFile );
-        if( papszCSDIDA_MD != NULL )
+        papszTRE_MD = NITFReadCSDIDA( psFile );
+        if( papszTRE_MD != NULL )
         {
             papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszCSDIDA_MD ),
-                                              papszCSDIDA_MD );
-            CSLDestroy( papszCSDIDA_MD );
+                                              CSLCount( papszTRE_MD ),
+                                              papszTRE_MD );
+            CSLDestroy( papszTRE_MD );
         }
 
         // CSEXRA
-        papszCSEXRA_MD = NITFReadCSEXRA( psImage );
-        if( papszCSEXRA_MD != NULL )
+        papszTRE_MD = NITFReadCSEXRA( psImage );
+        if( papszTRE_MD != NULL )
         {
             papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszCSEXRA_MD ),
-                                              papszCSEXRA_MD );
-            CSLDestroy( papszCSEXRA_MD );
+                                              CSLCount( papszTRE_MD ),
+                                              papszTRE_MD );
+            CSLDestroy( papszTRE_MD );
         }
 
         // PIAIMC
-        papszPIAIMC_MD = NITFReadPIAIMC( psImage );
-        if( papszPIAIMC_MD != NULL )
+        papszTRE_MD = NITFReadPIAIMC( psImage );
+        if( papszTRE_MD != NULL )
         {
             papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszPIAIMC_MD ),
-                                              papszPIAIMC_MD );
-            CSLDestroy( papszPIAIMC_MD );
+                                              CSLCount( papszTRE_MD ),
+                                              papszTRE_MD );
+            CSLDestroy( papszTRE_MD );
         }
 
         // USE00A 
-        papszUSE00A_MD = NITFReadUSE00A( psImage );
-        if( papszUSE00A_MD != NULL )
+        papszTRE_MD = NITFReadUSE00A( psImage );
+        if( papszTRE_MD != NULL )
         {
             papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszUSE00A_MD ),
-                                              papszUSE00A_MD );
-            CSLDestroy( papszUSE00A_MD );
+                                              CSLCount( papszTRE_MD ),
+                                              papszTRE_MD );
+            CSLDestroy( papszTRE_MD );
         }
         
         // BLOCKA 
-        papszUSE00A_MD = NITFReadBLOCKA( psImage );
-        if( papszUSE00A_MD != NULL )
+        papszTRE_MD = NITFReadBLOCKA( psImage );
+        if( papszTRE_MD != NULL )
         {
             papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszUSE00A_MD ),
-                                              papszUSE00A_MD );
-            CSLDestroy( papszUSE00A_MD );
+                                              CSLCount( papszTRE_MD ),
+                                              papszTRE_MD );
+            CSLDestroy( papszTRE_MD );
         }
-        
-        papszUSE00A_MD = NITFReadSTDIDC( psImage );
-        if( papszUSE00A_MD != NULL )
+
+        // STDIDC
+        papszTRE_MD = NITFReadSTDIDC( psImage );
+        if( papszTRE_MD != NULL )
         {
             papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszUSE00A_MD ),
-                                              papszUSE00A_MD );
-            CSLDestroy( papszUSE00A_MD );
+                                              CSLCount( papszTRE_MD ),
+                                              papszTRE_MD );
+            CSLDestroy( papszTRE_MD );
         }
     }
         
