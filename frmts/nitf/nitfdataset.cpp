@@ -48,6 +48,10 @@ static int NITFWriteJPEGImage( GDALDataset *, VSILFILE *, vsi_l_offset, char **,
                                void * pProgressData );
 #endif
 
+#ifdef ESRI_BUILD
+static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBand );
+#endif
+
 /************************************************************************/
 /* ==================================================================== */
 /*                             NITFDataset                              */
@@ -242,14 +246,14 @@ void NITFDataset::FlushCache()
     GDALPamDataset::FlushCache();
 }
 
+#ifdef ESRI_BUILD
+
 /************************************************************************/
 /*                           ExtractEsriMD()                            */
 /*                                                                      */
 /*      Extracts ESRI-specific required meta data from metadata         */
 /*      string list papszStrList.                                       */
 /************************************************************************/
-
-#ifdef ESRI_BUILD
 
 static char **ExtractEsriMD( char **papszMD )
 {
@@ -258,12 +262,21 @@ static char **ExtractEsriMD( char **papszMD )
     if( papszMD )
     {
         // These are the current generic ESRI metadata.
+        const char *const pEsriMDAcquisitionDate   = "ESRI_MD_ACQUISITION_DATE";
+        const char *const pEsriMDAngleToNorth      = "ESRI_MD_ANGLE_TO_NORTH";
+        const char *const pEsriMDCircularError     = "ESRI_MD_CE";
+        const char *const pEsriMDDataType          = "ESRI_MD_DATA_TYPE";
+        const char *const pEsriMDIsCloudCover      = "ESRI_MD_ISCLOUDCOVER";
+        const char *const pEsriMDLinearError       = "ESRI_MD_LE";
+        const char *const pEsriMDOffNaDir          = "ESRI_MD_OFF_NADIR";
+        const char *const pEsriMDPercentCloudCover = "ESRI_MD_PERCENT_CLOUD_COVER";
+        const char *const pEsriMDProductName       = "ESRI_MD_PRODUCT_NAME";
+        const char *const pEsriMDSensorAzimuth     = "ESRI_MD_SENSOR_AZIMUTH";
+        const char *const pEsriMDSensorElevation   = "ESRI_MD_SENSOR_ELEVATION";
+        const char *const pEsriMDSensorName        = "ESRI_MD_SENSOR_NAME";
+        const char *const pEsriMDSunAzimuth        = "ESRI_MD_SUN_AZIMUTH";
+        const char *const pEsriMDSunElevation      = "ESRI_MD_SUN_ELEVATION";
 
-        const char *const pEsriMDAngleToNorth = "ESRI_MD_ANGLE_TO_NORTH";
-        const char *const pEsriMDCloudCover   = "ESRI_MD_ISCLOUDCOVER";    
-        const char *const pEsriMDSunAzimuth   = "ESRI_MD_SUN_AZIMUTH";
-        const char *const pEsriMDSunElevation = "ESRI_MD_SUN_ELEVATION";
-    
         char         szField[11];
         const char  *pCCImageSegment = CSLFetchNameValue( papszMD, "NITF_IID1" );
         std::string  ccSegment("false");
@@ -274,36 +287,122 @@ static char **ExtractEsriMD( char **papszMD )
             strncpy( szField, pCCImageSegment, strlen(pCCImageSegment) );
             szField[strlen(pCCImageSegment)] = '\0';
 
-            // trim white off tag. 
+            // Trim white off tag.
             while( ( strlen(szField) > 0 ) && ( szField[strlen(szField)-1] == ' ' ) )
                 szField[strlen(szField)-1] = '\0';
 
             if ((strlen(szField) == 2) && (EQUALN(szField, "CC", 2))) ccSegment.assign("true");
         }
-   
-        const char *pAngleToNorth = CSLFetchNameValue( papszMD, "NITF_CSEXRA_ANGLE_TO_NORTH" );
-        const char *pSunAzimuth   = CSLFetchNameValue( papszMD, "NITF_CSEXRA_SUN_AZIMUTH" );
-        const char *pSunElevation = CSLFetchNameValue( papszMD, "NITF_CSEXRA_SUN_ELEVATION" );
+
+        const char *pAcquisitionDate   = CSLFetchNameValue( papszMD, "NITF_FDT" );
+        const char *pAngleToNorth      = CSLFetchNameValue( papszMD, "NITF_CSEXRA_ANGLE_TO_NORTH" );
+        const char *pCircularError     = CSLFetchNameValue( papszMD, "NITF_CSEXRA_CIRCL_ERR" );      // Unit in feet.
+        const char *pLinearError       = CSLFetchNameValue( papszMD, "NITF_CSEXRA_LINEAR_ERR" );     // Unit in feet.
+        const char *pPercentCloudCover = CSLFetchNameValue( papszMD, "NITF_PIAIMC_CLOUDCVR" );
+        const char *pProductName       = CSLFetchNameValue( papszMD, "NITF_CSDIDA_PRODUCT_ID" );
+        const char *pSensorName        = CSLFetchNameValue( papszMD, "NITF_PIAIMC_SENSNAME" );
+        const char *pSunAzimuth        = CSLFetchNameValue( papszMD, "NITF_CSEXRA_SUN_AZIMUTH" );
+        const char *pSunElevation      = CSLFetchNameValue( papszMD, "NITF_CSEXRA_SUN_ELEVATION" );
+
+        // Get ESRI_MD_DATA_TYPE.
+        const char *pDataType        = NULL;
+        const char *pImgSegFieldICAT = CSLFetchNameValue( papszMD, "NITF_ICAT" );
+
+        if( ( pImgSegFieldICAT != NULL ) && ( EQUALN(pImgSegFieldICAT, "DTEM", 4) ) )
+            pDataType = "Elevation";
+        else
+            pDataType = "Generic";
 
         if( pAngleToNorth == NULL )
             pAngleToNorth = CSLFetchNameValue( papszMD, "NITF_USE00A_ANGLE_TO_NORTH" );
+
+        // Percent cloud cover == 999 means that the information is not available.
+        if( (pPercentCloudCover != NULL) &&  (EQUALN(pPercentCloudCover, "999", 3)) )
+            pPercentCloudCover = NULL;
+
+        pAngleToNorth = CSLFetchNameValue( papszMD, "NITF_USE00A_ANGLE_TO_NORTH" );
 
         if( pSunAzimuth == NULL )
             pSunAzimuth = CSLFetchNameValue( papszMD, "NITF_USE00A_SUN_AZ" );
 
         if( pSunElevation == NULL )
             pSunElevation = CSLFetchNameValue( papszMD, "NITF_USE00A_SUN_EL" );
-    
-        // CSLAddNameValue will not add the key/value pair if the value is NULL.
 
-        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDAngleToNorth, pAngleToNorth );
-        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDCloudCover,   ccSegment.c_str() );
-        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDSunAzimuth,   pSunAzimuth );
-        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDSunElevation, pSunElevation );
+        // CSLAddNameValue will not add the key/value pair if the value is NULL.
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDAcquisitionDate,   pAcquisitionDate );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDAngleToNorth,      pAngleToNorth );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDCircularError,     pCircularError );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDDataType,          pDataType );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDIsCloudCover,      ccSegment.c_str() );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDLinearError,       pLinearError );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDProductName,       pProductName );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDPercentCloudCover, pPercentCloudCover );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDSensorName,        pSensorName );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDSunAzimuth,        pSunAzimuth );
+        papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDSunElevation,      pSunElevation );
     }
 
     return (papszEsriMD);
 }
+
+/************************************************************************/
+/*                          SetBandMetadata()                           */
+/************************************************************************/
+
+static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBand )
+{
+    if( (psImage != NULL) && (poBand != NULL) && (nBand > 0) )
+    {
+        NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
+
+        if( psBandInfo != NULL )
+        {
+            // Set metadata BandName, WavelengthMax and WavelengthMin.
+
+            if ( psBandInfo->szIREPBAND != NULL )
+            {
+                if( EQUAL(psBandInfo->szIREPBAND,"B") )
+                {
+                    poBand->SetMetadataItem( "BandName", "Blue" );
+                    poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
+                    poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
+                }
+                else if( EQUAL(psBandInfo->szIREPBAND,"G") )
+                {
+                    poBand->SetMetadataItem( "BandName", "Green" );
+                    poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
+                    poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
+                }
+                else if( EQUAL(psBandInfo->szIREPBAND,"R") )
+                {
+                    poBand->SetMetadataItem( "BandName", "Red" );
+                    poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
+                    poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
+                }
+                else if( EQUAL(psBandInfo->szIREPBAND,"N") )
+                {
+                    poBand->SetMetadataItem( "BandName", "NearInfrared" );
+                    poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
+                    poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
+                }
+                else if( ( EQUAL(psBandInfo->szIREPBAND,"M") ) || ( ( psImage->szIREP != NULL ) && ( EQUAL(psImage->szIREP,"MONO") ) ) )
+                {
+                    poBand->SetMetadataItem( "BandName", "Panchromatic" );
+                }
+                else
+                {
+                    if( ( psImage->szICAT != NULL ) && ( EQUAL(psImage->szICAT,"IR") ) )
+                    {
+                        poBand->SetMetadataItem( "BandName", "Infrared" );
+                        poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
+                        poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
+                    }
+                }
+            }
+        }
+    }
+}
+
 #endif /* def ESRI_BUILD */
 
 /************************************************************************/
@@ -644,6 +743,11 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         {
             GDALRasterBand* poBaseBand =
                 poBaseDS->GetRasterBand(iBand+1);
+
+#ifdef ESRI_BUILD
+            SetBandMetadata( psImage, poBaseBand, iBand+1 );
+#endif
+
             NITFWrapperRasterBand* poBand =
                 new NITFWrapperRasterBand(poDS, poBaseBand, iBand+1 );
                 
@@ -685,6 +789,11 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                 delete poDS;
                 return NULL;
             }
+
+#ifdef ESRI_BUILD
+            SetBandMetadata( psImage, poBand, iBand+1 );
+#endif
+
             poDS->SetBand( iBand+1, poBand );
         }
     }
@@ -2006,6 +2115,272 @@ CPLErr NITFDataset::SetProjection(const char* _pszProjection)
     return CE_None;
 }
 
+#ifdef ESRI_BUILD
+/************************************************************************/
+/*                       InitializeNITFDESMetadata()                    */
+/************************************************************************/
+
+void NITFDataset::InitializeNITFDESMetadata()
+{
+    static const char   *pszDESMetadataDomain       = "NITF_DES_METADATA";
+    static const char   *pszDESsDomain              = "NITF_DES";
+    static const char   *pszMDXmlDataContentDESDATA = "NITF_DES_XML_DATA_CONTENT_DESDATA";
+    static const char   *pszXmlDataContent          = "XML_DATA_CONTENT";
+    static const int     idxXmlDataContentDESDATA   = 973;
+    static const int     sizeXmlDataContent         = (int)strlen(pszXmlDataContent);
+
+    char **ppszDESMetadataList = oSpecialMD.GetMetadata( pszDESMetadataDomain );
+
+    if( ppszDESMetadataList != NULL ) return;
+
+    char **ppszDESsList = this->GetMetadata( pszDESsDomain );
+
+    if( ppszDESsList == NULL ) return;
+
+    bool          foundXmlDataContent = false;
+    char         *pachNITFDES         = NULL;
+
+    // Set metadata "NITF_DES_XML_DATA_CONTENT_DESDATA".
+    // NOTE: There should only be one instance of XML_DATA_CONTENT DES.
+
+    while( ((pachNITFDES = *ppszDESsList) != NULL) && (!foundXmlDataContent) )
+    {
+        // The data stream has been Base64 encoded, need to decode it.
+        // NOTE: The actual length of the DES data stream is appended at the beginning of the encoded
+        //       data and is separated by a space.
+
+        const char* pszSpace = strchr(pachNITFDES, ' ');
+
+        char* pszData = NULL;
+        int   nDataLen = 0;
+        if( pszSpace )
+        {
+            pszData = CPLStrdup( pszSpace+1 );
+            nDataLen = CPLBase64DecodeInPlace((GByte*)pszData);
+            pszData[nDataLen] = 0;
+        }
+
+        if ( nDataLen > 2 + sizeXmlDataContent && EQUALN(pszData, "DE", 2) )
+        {
+            // Check to see if this is a XML_DATA_CONTENT DES.
+            if ( EQUALN(pszData + 2, pszXmlDataContent, sizeXmlDataContent) &&
+                 nDataLen > idxXmlDataContentDESDATA )
+            {
+                foundXmlDataContent = true;
+
+                // Get the value of the DESDATA field and set metadata "NITF_DES_XML_DATA_CONTENT_DESDATA".
+                const char* pszXML = pszData + idxXmlDataContentDESDATA;
+
+                // Set the metadata.
+                oSpecialMD.SetMetadataItem( pszMDXmlDataContentDESDATA, pszXML, pszDESMetadataDomain );
+            }
+        }
+
+        CPLFree(pszData);
+
+        pachNITFDES   = NULL;
+        ppszDESsList += 1;
+    }
+}
+
+
+/************************************************************************/
+/*                       InitializeNITFDESs()                           */
+/************************************************************************/
+
+void NITFDataset::InitializeNITFDESs()
+{
+    static const char *pszDESsDomain = "NITF_DES";
+
+    char **ppszDESsList = oSpecialMD.GetMetadata( pszDESsDomain );
+
+    if( ppszDESsList != NULL ) return;
+
+/* -------------------------------------------------------------------- */
+/*  Go through all the segments and process all DES segments.           */
+/* -------------------------------------------------------------------- */
+
+    char               *pachDESData  = NULL;
+    int                 nDESDataSize = 0;
+    std::string         encodedDESData("");
+    CPLStringList       aosList;
+
+    for( int iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+    {
+        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
+
+        if( EQUAL(psSegInfo->szSegmentType,"DE") )
+        {
+            nDESDataSize = psSegInfo->nSegmentHeaderSize + psSegInfo->nSegmentSize;
+            pachDESData  = (char*) VSIMalloc( nDESDataSize + 1 );
+
+            if (pachDESData == NULL)
+            {
+                CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory for DES segment" );
+                return;
+            }
+
+            if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart,
+                          SEEK_SET ) != 0
+                || (int)VSIFReadL( pachDESData, 1, nDESDataSize,
+                             psFile->fp ) != nDESDataSize )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Failed to read %d byte DES subheader from " CPL_FRMT_GUIB ".",
+                          nDESDataSize,
+                          psSegInfo->nSegmentHeaderStart );
+                CPLFree( pachDESData );
+                return;
+            }
+
+            pachDESData[nDESDataSize] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*          Accumulate all the DES segments.                            */
+/* -------------------------------------------------------------------- */
+
+            char* pszBase64 = CPLBase64Encode( nDESDataSize, (const GByte *)pachDESData );
+            encodedDESData = pszBase64;
+            CPLFree(pszBase64);
+
+            CPLFree( pachDESData );
+            pachDESData = NULL;
+
+            if( encodedDESData.empty() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Failed to encode DES subheader data!");
+                return;
+            }
+
+            // The length of the DES subheader data plus a space is append to the beginning of the encoded
+            // string so that we can recover the actual length of the image subheader when we decode it.
+
+            char buffer[20];
+
+            sprintf(buffer, "%d", nDESDataSize);
+
+            std::string desSubheaderStr(buffer);
+            desSubheaderStr.append(" ");
+            desSubheaderStr.append(encodedDESData);
+
+            aosList.AddString(desSubheaderStr.c_str() );
+        }
+    }
+
+    if (aosList.size() > 0)
+        oSpecialMD.SetMetadata( aosList.List(), pszDESsDomain );
+}
+
+/************************************************************************/
+/*                       InitializeNITFTREs()                           */
+/************************************************************************/
+
+void NITFDataset::InitializeNITFTREs()
+{
+    static const char *pszFileHeaderTREsDomain   = "NITF_FILE_HEADER_TRES";
+    static const char *pszImageSegmentTREsDomain = "NITF_IMAGE_SEGMENT_TRES";
+
+    char **ppszFileHeaderTREsList   = oSpecialMD.GetMetadata( pszFileHeaderTREsDomain );
+    char **ppszImageSegmentTREsList = oSpecialMD.GetMetadata( pszImageSegmentTREsDomain );
+
+    if( (ppszFileHeaderTREsList != NULL) && (ppszImageSegmentTREsList != NULL ) ) return;
+
+/* -------------------------------------------------------------------- */
+/*      Loop over TRE sources (file and image).                         */
+/* -------------------------------------------------------------------- */
+
+    for( int nTRESrc = 0; nTRESrc < 2; nTRESrc++ )
+    {
+        int                 nTREBytes  = 0;
+        char               *pszTREData = NULL;
+        const char         *pszTREsDomain = NULL;
+        CPLStringList       aosList;
+
+/* -------------------------------------------------------------------- */
+/*      Extract file header or image segment TREs.                      */
+/* -------------------------------------------------------------------- */
+
+        if( nTRESrc == 0 )
+        {
+            if( ppszFileHeaderTREsList != NULL ) continue;
+
+            nTREBytes     = psFile->nTREBytes;
+            pszTREData    = psFile->pachTRE;
+            pszTREsDomain = pszFileHeaderTREsDomain;
+        }
+        else
+        {
+            if( ppszImageSegmentTREsList != NULL ) continue;
+
+            if( psImage )
+            {
+                nTREBytes     = psImage->nTREBytes;
+                pszTREData    = psImage->pachTRE;
+                pszTREsDomain = pszImageSegmentTREsDomain;
+            }
+            else
+            {
+                nTREBytes  = 0;
+                pszTREData = NULL;
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over TREs.                                                 */
+/* -------------------------------------------------------------------- */
+
+        while( nTREBytes >= 11 )
+        {
+            char szTemp[100];
+            char szTag[7];
+            char *pszEscapedData = NULL;
+            int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+
+            if (nThisTRESize < 0)
+            {
+                NITFGetField(szTemp, pszTREData, 0, 6 );
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid size (%d) for TRE %s",
+                        nThisTRESize, szTemp);
+                return;
+            }
+
+            if (nThisTRESize > nTREBytes - 11)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Not enough bytes in TRE");
+                return;
+            }
+
+            strncpy( szTag, pszTREData, 6 );
+            szTag[6] = '\0';
+
+            // trim white off tag.
+            while( strlen(szTag) > 0 && szTag[strlen(szTag)-1] == ' ' )
+                szTag[strlen(szTag)-1] = '\0';
+
+            // escape data.
+            pszEscapedData = CPLEscapeString( pszTREData + 6,
+                                              nThisTRESize + 5,
+                                              CPLES_BackslashQuotable );
+
+            char * pszLine = (char *) CPLMalloc( strlen(szTag)+strlen(pszEscapedData)+2 );
+            sprintf( pszLine, "%s=%s", szTag, pszEscapedData );
+            aosList.AddString(pszLine);
+            CPLFree(pszLine);
+            pszLine        = NULL;
+
+            CPLFree( pszEscapedData );
+            pszEscapedData = NULL;
+
+            nTREBytes  -= (nThisTRESize + 11);
+            pszTREData += (nThisTRESize + 11);
+        }
+
+        if (aosList.size() > 0)
+            oSpecialMD.SetMetadata( aosList.List(), pszTREsDomain );
+    }
+}
+#endif
+
 /************************************************************************/
 /*                       InitializeNITFMetadata()                        */
 /************************************************************************/
@@ -2464,9 +2839,49 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
 {
     if( pszDomain != NULL && EQUAL(pszDomain,"NITF_METADATA") )
     {
+        // InitializeNITFMetadata retrieves the NITF file header and all image segment file headers. (NOTE: The returned strings are base64-encoded).
+
         InitializeNITFMetadata();
         return oSpecialMD.GetMetadata( pszDomain );
     }
+
+#ifdef ESRI_BUILD
+    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_DES") )
+    {
+        // InitializeNITFDESs retrieves all the DES file headers (NOTE: The returned strings are base64-encoded).
+
+        InitializeNITFDESs();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
+
+    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_DES_METADATA") )
+    {
+        // InitializeNITFDESs retrieves all the DES file headers (NOTE: The returned strings are base64-encoded).
+
+        InitializeNITFDESMetadata();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
+
+    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_FILE_HEADER_TRES") )
+    {
+        // InitializeNITFTREs retrieves all the TREs that are resides in the NITF file header and all the
+        // TREs that are resides in the current image segment.
+        // NOTE: the returned strings are backslash-escaped
+
+        InitializeNITFTREs();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
+
+    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_IMAGE_SEGMENT_TRES") )
+    {
+        // InitializeNITFTREs retrieves all the TREs that are resides in the NITF file header and all the
+        // TREs that are resides in the current image segment.
+        // NOTE: the returned strings are backslash-escaped
+
+        InitializeNITFTREs();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
+#endif
 
     if( pszDomain != NULL && EQUAL(pszDomain,"CGM") )
     {
@@ -2499,9 +2914,41 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
 {
     if( pszDomain != NULL && EQUAL(pszDomain,"NITF_METADATA") )
     {
+        // InitializeNITFMetadata retrieves the NITF file header and all image segment file headers. (NOTE: The returned strings are base64-encoded).
+
         InitializeNITFMetadata();
         return oSpecialMD.GetMetadataItem( pszName, pszDomain );
     }
+
+#ifdef ESRI_BUILD
+    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_DES_METADATA") )
+    {
+        // InitializeNITFDESs retrieves all the DES file headers (NOTE: The returned strings are base64-encoded).
+
+        InitializeNITFDESMetadata();
+        return oSpecialMD.GetMetadataItem( pszName, pszDomain );
+    }
+
+    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_FILE_HEADER_TRES") )
+    {
+        // InitializeNITFTREs retrieves all the TREs that are resides in the NITF file header and all the
+        // TREs that are resides in the current image segment.
+        // NOTE: the returned strings are backslash-escaped
+
+        InitializeNITFTREs();
+        return oSpecialMD.GetMetadataItem( pszName, pszDomain );
+    }
+
+    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_IMAGE_SEGMENT_TRES") )
+    {
+        // InitializeNITFTREs retrieves all the TREs that are resides in the NITF file header and all the
+        // TREs that are resides in the current image segment.
+        // NOTE: the returned strings are backslash-escaped
+
+        InitializeNITFTREs();
+        return oSpecialMD.GetMetadataItem( pszName, pszDomain );
+    }
+#endif
 
     if( pszDomain != NULL && EQUAL(pszDomain,"CGM") )
     {
