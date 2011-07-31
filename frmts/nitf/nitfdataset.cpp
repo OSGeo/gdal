@@ -1263,58 +1263,10 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                                  psImage->szIMAG );
         }
 
-        // CSDIDA
-        papszTRE_MD = NITFReadCSDIDA( psFile );
-        if( papszTRE_MD != NULL )
-        {
-            papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszTRE_MD ),
-                                              papszTRE_MD );
-            CSLDestroy( papszTRE_MD );
-        }
+        papszMergedMD = NITFGenericMetadataRead(papszMergedMD, psFile, psImage, NULL);
 
-        // CSEXRA
-        papszTRE_MD = NITFReadCSEXRA( psImage );
-        if( papszTRE_MD != NULL )
-        {
-            papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszTRE_MD ),
-                                              papszTRE_MD );
-            CSLDestroy( papszTRE_MD );
-        }
-
-        // PIAIMC
-        papszTRE_MD = NITFReadPIAIMC( psImage );
-        if( papszTRE_MD != NULL )
-        {
-            papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszTRE_MD ),
-                                              papszTRE_MD );
-            CSLDestroy( papszTRE_MD );
-        }
-
-        // USE00A 
-        papszTRE_MD = NITFReadUSE00A( psImage );
-        if( papszTRE_MD != NULL )
-        {
-            papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszTRE_MD ),
-                                              papszTRE_MD );
-            CSLDestroy( papszTRE_MD );
-        }
-        
         // BLOCKA 
         papszTRE_MD = NITFReadBLOCKA( psImage );
-        if( papszTRE_MD != NULL )
-        {
-            papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                              CSLCount( papszTRE_MD ),
-                                              papszTRE_MD );
-            CSLDestroy( papszTRE_MD );
-        }
-
-        // STDIDC
-        papszTRE_MD = NITFReadSTDIDC( psImage );
         if( papszTRE_MD != NULL )
         {
             papszMergedMD = CSLInsertStrings( papszMergedMD, 
@@ -2700,6 +2652,8 @@ void NITFDataset::InitializeTREMetadata()
     if( oSpecialMD.GetMetadata( "TRE" ) != NULL )
         return;
 
+    CPLXMLNode* psTresNode = CPLCreateXMLNode(NULL, CXT_Element, "tres");
+
 /* -------------------------------------------------------------------- */
 /*      Loop over TRE sources (file and image).                         */
 /* -------------------------------------------------------------------- */
@@ -2759,7 +2713,15 @@ void NITFDataset::InitializeTREMetadata()
             // trim white off tag. 
             while( strlen(szTag) > 0 && szTag[strlen(szTag)-1] == ' ' )
                 szTag[strlen(szTag)-1] = '\0';
-            
+
+            CPLXMLNode* psTreNode = NITFCreateXMLTre(psFile, szTag, pszTREData + 11,nThisTRESize);
+            if (psTreNode)
+            {
+                CPLCreateXMLNode(CPLCreateXMLNode(psTreNode, CXT_Attribute, "location"),
+                                 CXT_Text, nTRESrc == 0 ? "file" : "image");
+                CPLAddXMLChild(psTresNode, psTreNode);
+            }
+
             // escape data. 
             pszEscapedData = CPLEscapeString( pszTREData + 11,
                                               nThisTRESize,
@@ -2815,6 +2777,15 @@ void NITFDataset::InitializeTREMetadata()
             while( strlen(szTREName) > 0 && szTREName[strlen(szTREName)-1] == ' ' )
                 szTREName[strlen(szTREName)-1] = '\0';
 
+            CPLXMLNode* psTreNode = NITFCreateXMLTre(psFile, szTREName, pabyTREData,nThisTRESize);
+            if (psTreNode)
+            {
+                const char* pszDESID = CSLFetchNameValue(psDES->papszMetadata, "NITF_DESID");
+                CPLCreateXMLNode(CPLCreateXMLNode(psTreNode, CXT_Attribute, "location"),
+                                 CXT_Text, pszDESID ? CPLSPrintf("des %s", pszDESID) : "des");
+                CPLAddXMLChild(psTresNode, psTreNode);
+            }
+
             oSpecialMD.SetMetadataItem( szTREName, pszEscapedData, "TRE" );
 
             CPLFree(pszEscapedData);
@@ -2826,6 +2797,17 @@ void NITFDataset::InitializeTREMetadata()
 
         NITFDESDeaccess(psDES);
     }
+
+    if (psTresNode->psChild != NULL)
+    {
+        char* pszXML = CPLSerializeXMLTree(psTresNode);
+        char* apszMD[2];
+        apszMD[0] = pszXML;
+        apszMD[1] = NULL;
+        oSpecialMD.SetMetadata( apszMD, "xml:TRE" );
+        CPLFree(pszXML);
+    }
+    CPLDestroyXMLNode(psTresNode);
 }
 
 /************************************************************************/
@@ -2894,6 +2876,12 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
     }
 
     if( pszDomain != NULL && EQUAL(pszDomain,"TRE") )
+    {
+        InitializeTREMetadata();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
+
+    if( pszDomain != NULL && EQUAL(pszDomain,"xml:TRE") )
     {
         InitializeTREMetadata();
         return oSpecialMD.GetMetadata( pszDomain );
