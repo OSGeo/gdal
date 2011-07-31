@@ -9,6 +9,11 @@ Established from r21484 up to r22503
 * Encoding support for shapefile/dbf (#882)
 * RFC 35: Delete, reorder and alter field definitions of OGR layers
 
+== New installed files ==
+
+* data/nitf_spec.xml
+* data/nitf_spec.xsd
+
 == Backward compatibility issues ==
 
 * GTiff: ensure false easting/northing in geotiff geokeys are treated as being

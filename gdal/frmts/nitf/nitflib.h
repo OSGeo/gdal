@@ -33,6 +33,7 @@
 #include "cpl_port.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
+#include "cpl_minixml.h"
 
 CPL_C_START
 
@@ -69,6 +70,8 @@ typedef struct {
     char    *pachTRE;
 
     char    **papszMetadata;
+
+    CPLXMLNode *psNITFSpecNode;
     
 } NITFFile;
 
@@ -91,7 +94,6 @@ const char CPL_DLL *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
 
 int CPL_DLL NITFCollectAttachments( NITFFile *psFile );
 int CPL_DLL NITFReconcileAttachments( NITFFile *psFile );
-char CPL_DLL **NITFReadCSDIDA( NITFFile *psFile );
 
 /* -------------------------------------------------------------------- */
 /*      Image level access.                                             */
@@ -389,6 +391,20 @@ typedef struct
 
 /** Return not freeable (maybe NULL if no matching) */
 const NITFSeries CPL_DLL *NITFGetSeriesInfo(const char* pszFilename);
+
+/* -------------------------------------------------------------------- */
+/*                           Internal use                               */
+/* -------------------------------------------------------------------- */
+
+char **NITFGenericMetadataRead(char **papszMD,
+                               NITFFile* psFile,
+                               NITFImage *psImage,
+                               const char* pszSpecificTREName);
+
+CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
+                             const char* pszTREName,
+                             const char *pachTRE,
+                             int nTRESize);
 
 CPL_C_END
 
