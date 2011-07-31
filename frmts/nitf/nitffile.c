@@ -1969,13 +1969,11 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (psOutXMLNode != NULL)
                 {
                     const char* pszVal = CSLFetchNameValue(papszMD, pszMDItemName);
-                    char* pszEscaped;
                     CPLXMLNode* psFieldNode;
                     CPLXMLNode* psNameNode;
                     CPLXMLNode* psValueNode;
 
                     CPLAssert(pszVal != NULL);
-                    pszEscaped = CPLEscapeString( pszVal, -1, CPLES_XML );
                     psFieldNode =
                         CPLCreateXMLNode(psOutXMLNode, CXT_Element, "field");
                     psNameNode =
@@ -1984,8 +1982,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                         CPLCreateXMLNode(psFieldNode, CXT_Attribute, "value");
                     CPLCreateXMLNode(psNameNode, CXT_Text,
                        (pszName[0] || pszLongName == NULL) ? pszName : pszLongName);
-                    CPLCreateXMLNode(psValueNode, CXT_Text, pszEscaped);
-                    CPLFree(pszEscaped);
+                    CPLCreateXMLNode(psValueNode, CXT_Text, pszVal);
                 }
 
                 CPLFree(pszMDItemName);
