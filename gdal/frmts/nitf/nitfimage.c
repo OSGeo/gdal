@@ -2157,102 +2157,7 @@ static void NITFSwapWords( NITFImage *psImage, void *pData, int nWordCount )
 char **NITFReadCSEXRA( NITFImage *psImage )
 
 {
-    const char *pachTRE;
-    int  nTRESize;
-    char **papszMD = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Do we have the TRE?                                             */
-/* -------------------------------------------------------------------- */
-    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
-                           "CSEXRA", &nTRESize );
-
-    if( pachTRE == NULL )
-        return NULL;
-
-    if( nTRESize != 132 )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "CSEXRA TRE wrong size, ignoring." );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Parse out field values.                                         */
-/* -------------------------------------------------------------------- */
-    NITFExtractMetadata( &papszMD, pachTRE,   0,   6, 
-                         "NITF_CSEXRA_SENSOR" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   6,   12, 
-                         "NITF_CSEXRA_TIME_FIRST_LINE_IMAGE" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   18,   12, 
-                         "NITF_CSEXRA_TIME_IMAGE_DURATION" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   30,   5, 
-                         "NITF_CSEXRA_MAX_GSD" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   35,   5, 
-                         "NITF_CSEXRA_ALONG_SCAN_GSD" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   40,   5, 
-                         "NITF_CSEXRA_CROSS_SCAN_GSD" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   45,   5, 
-                         "NITF_CSEXRA_GEO_MEAN_GSD" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   50,   5, 
-                         "NITF_CSEXRA_A_S_VERT_GSD" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   55,   5, 
-                         "NITF_CSEXRA_C_S_VERT_GSD" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   60,   5, 
-                         "NITF_CSEXRA_GEO_MEAN_VERT_GSD" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   65,   5, 
-                         "NITF_CSEXRA_GSD_BETA_ANGLE" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   70,   5, 
-                         "NITF_CSEXRA_DYNAMIC_RANGE" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   75,   7, 
-                         "NITF_CSEXRA_NUM_LINES" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   82,   5, 
-                         "NITF_CSEXRA_NUM_SAMPLES" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   87,   7, 
-                         "NITF_CSEXRA_ANGLE_TO_NORTH" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   94,   6, 
-                         "NITF_CSEXRA_OBLIQUITY_ANGLE" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   100,   7, 
-                         "NITF_CSEXRA_AZ_OF_OBLIQUITY" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   107,   1, 
-                         "NITF_CSEXRA_GRD_COVER" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   108,   1, 
-                         "NITF_CSEXRA_SNOW_DEPTH_CAT" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   109,   7, 
-                         "NITF_CSEXRA_SUN_AZIMUTH" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   116,   7, 
-                         "NITF_CSEXRA_SUN_ELEVATION" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   123,   3, 
-                         "NITF_CSEXRA_PREDICTED_NIIRS" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   126,   3, 
-                         "NITF_CSEXRA_CIRCL_ERR" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   129,   3, 
-                         "NITF_CSEXRA_LINEAR_ERR" );
-
-    return papszMD;
+    return NITFGenericMetadataRead(NULL, NULL, psImage, "CSEXRA");
 }
 
 /************************************************************************/
@@ -2264,88 +2169,7 @@ char **NITFReadCSEXRA( NITFImage *psImage )
 char **NITFReadPIAIMC( NITFImage *psImage )
 
 {
-    const char *pachTRE;
-    int  nTRESize;
-    char **papszMD = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Do we have the TRE?                                             */
-/* -------------------------------------------------------------------- */
-    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
-                           "PIAIMC", &nTRESize );
-
-    if( pachTRE == NULL )
-        return NULL;
-
-    if( nTRESize != 362 )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "PIAIMC TRE wrong size, ignoring." );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Parse out field values.                                         */
-/* -------------------------------------------------------------------- */
-
-    NITFExtractMetadata( &papszMD, pachTRE,   0,   3, 
-                         "NITF_PIAIMC_CLOUDCVR" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   3,   1, 
-                         "NITF_PIAIMC_SRP" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   4,   12, 
-                         "NITF_PIAIMC_SENSMODE" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   16,  18, 
-                         "NITF_PIAIMC_SENSNAME" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   34,  255, 
-                         "NITF_PIAIMC_SOURCE" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   289,   2, 
-                         "NITF_PIAIMC_COMGEN" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   291,   1, 
-                         "NITF_PIAIMC_SUBQUAL" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   292,   7, 
-                         "NITF_PIAIMC_PIAMSNNUM" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   299,   32, 
-                         "NITF_PIAIMC_CAMSPECS" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   331,   2, 
-                         "NITF_PIAIMC_PROJID" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   333,   1, 
-                         "NITF_PIAIMC_GENERATION" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   334,   1, 
-                         "NITF_PIAIMC_ESD" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   335,   2, 
-                         "NITF_PIAIMC_OTHERCOND" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   337,   7, 
-                         "NITF_PIAIMC_MEANGSD" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   344,   3, 
-                         "NITF_PIAIMC_IDATUM" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   347,   3, 
-                         "NITF_PIAIMC_IELLIP" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   350,   2, 
-                         "NITF_PIAIMC_PREPROC" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   352,   2, 
-                         "NITF_PIAIMC_IPROJ" );
-
-    NITFExtractMetadata( &papszMD, pachTRE,   354,   8, 
-                         "NITF_PIAIMC_SATTRACK" );
-
-    return papszMD;
+    return NITFGenericMetadataRead(NULL, NULL, psImage, "PIAIMC");
 }
 
 /************************************************************************/
@@ -2541,57 +2365,7 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
 char **NITFReadUSE00A( NITFImage *psImage )
 
 {
-    const char *pachTRE;
-    int  nTRESize;
-    char **papszMD = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Do we have the TRE?                                             */
-/* -------------------------------------------------------------------- */
-    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
-                           "USE00A", &nTRESize );
-
-    if( pachTRE == NULL )
-        return NULL;
-
-    if( nTRESize != 107 )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "USE00A TRE wrong size, ignoring." );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Parse out field values.                                         */
-/* -------------------------------------------------------------------- */
-    NITFExtractMetadata( &papszMD, pachTRE,   0,   3, 
-                         "NITF_USE00A_ANGLE_TO_NORTH" );
-    NITFExtractMetadata( &papszMD, pachTRE,   3,   5, 
-                         "NITF_USE00A_MEAN_GSD" );
-    /* reserved: 1 */
-    NITFExtractMetadata( &papszMD, pachTRE,   9,   5, 
-                         "NITF_USE00A_DYNAMIC_RANGE" );
-    /* reserved: 3+1+3 */
-    NITFExtractMetadata( &papszMD, pachTRE,  21,   5, 
-                         "NITF_USE00A_OBL_ANG" );
-    NITFExtractMetadata( &papszMD, pachTRE,  26,   6, 
-                         "NITF_USE00A_ROLL_ANG" );
-    /* reserved: 12+15+4+1+3+1+1 = 37 */
-    NITFExtractMetadata( &papszMD, pachTRE,  69,   2, 
-                         "NITF_USE00A_N_REF" );
-    NITFExtractMetadata( &papszMD, pachTRE,  71,   5, 
-                         "NITF_USE00A_REV_NUM" );
-    NITFExtractMetadata( &papszMD, pachTRE,  76,   3, 
-                         "NITF_USE00A_N_SEG" );
-    NITFExtractMetadata( &papszMD, pachTRE,  79,   6, 
-                         "NITF_USE00A_MAX_LP_SEG" );
-    /* reserved: 6+6 */
-    NITFExtractMetadata( &papszMD, pachTRE,  97,   5, 
-                         "NITF_USE00A_SUN_EL" );
-    NITFExtractMetadata( &papszMD, pachTRE, 102,   5, 
-                         "NITF_USE00A_SUN_AZ" );
-
-    return papszMD;
+    return NITFGenericMetadataRead(NULL, NULL, psImage, "USE00A");
 }
 
 /************************************************************************/
@@ -3614,63 +3388,7 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
 char **NITFReadSTDIDC( NITFImage *psImage )
 
 {
-    const char *pachTRE;
-    int  nTRESize;
-    char **papszMD = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Do we have the TRE?                                             */
-/* -------------------------------------------------------------------- */
-    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
-                           "STDIDC", &nTRESize );
-
-    if( pachTRE == NULL )
-        return NULL;
-
-    if( nTRESize != 89 )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "STDIDC TRE wrong size, ignoring." );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Parse out field values.                                         */
-/* -------------------------------------------------------------------- */
-    NITFExtractMetadata( &papszMD, pachTRE,   0,  14, 
-                         "NITF_STDIDC_ACQUISITION_DATE" );
-    NITFExtractMetadata( &papszMD, pachTRE,  14,  14, 
-                         "NITF_STDIDC_MISSION" );
-    NITFExtractMetadata( &papszMD, pachTRE,  28,   2, 
-                         "NITF_STDIDC_PASS" );
-    NITFExtractMetadata( &papszMD, pachTRE,  30,   3, 
-                         "NITF_STDIDC_OP_NUM" );
-    NITFExtractMetadata( &papszMD, pachTRE,  33,   2, 
-                         "NITF_STDIDC_START_SEGMENT" );
-    NITFExtractMetadata( &papszMD, pachTRE,  35,   2, 
-                         "NITF_STDIDC_REPRO_NUM" );
-    NITFExtractMetadata( &papszMD, pachTRE,  37,   3, 
-                         "NITF_STDIDC_REPLAY_REGEN" );
-    /* reserved: 1 */
-    NITFExtractMetadata( &papszMD, pachTRE,  41,   3, 
-                         "NITF_STDIDC_START_COLUMN" );
-    NITFExtractMetadata( &papszMD, pachTRE,  44,   5, 
-                         "NITF_STDIDC_START_ROW" );
-    NITFExtractMetadata( &papszMD, pachTRE,  49,   2, 
-                         "NITF_STDIDC_END_SEGMENT" );
-    NITFExtractMetadata( &papszMD, pachTRE,  51,   3, 
-                         "NITF_STDIDC_END_COLUMN" );
-    NITFExtractMetadata( &papszMD, pachTRE,  54,   5, 
-                         "NITF_STDIDC_END_ROW" );
-    NITFExtractMetadata( &papszMD, pachTRE,  59,   2, 
-                         "NITF_STDIDC_COUNTRY" );
-    NITFExtractMetadata( &papszMD, pachTRE,  61,   4, 
-                         "NITF_STDIDC_WAC" );
-    NITFExtractMetadata( &papszMD, pachTRE,  65,  11, 
-                         "NITF_STDIDC_LOCATION" );
-    /* reserved: 5+8 */
-
-    return papszMD;
+    return NITFGenericMetadataRead(NULL, NULL, psImage, "STDIDC");
 }
 
 /************************************************************************/

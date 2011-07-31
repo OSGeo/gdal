@@ -1446,7 +1446,7 @@ def nitf_52():
 
     # Create a fake NITF file with GeoSDE TREs (probably not conformant, but enough to test GDAL code)
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf52.ntf', 1, 1, options = \
-         ['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM', \
+         ['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM                                                                                                                                                                                                                                                                                                                                                                 ', \
           'FILE_TRE=PRJPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789AC0000000000000000000000000000000', \
           'TRE=MAPLOB=M  0001000010000000000100000000000005000000'])
     ds = None
@@ -1650,7 +1650,10 @@ def nitf_59():
 
 def nitf_60():
 
+    # Shut down errors because the file is truncated
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('data/testtest.on9')
+    gdal.PopErrorHandler()
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
     ds = None
@@ -1678,10 +1681,16 @@ def nitf_61():
     # but hand edited to have just 1x1 imagery
     ds = gdal.Open('data/i_6130a_truncated.ntf')
     md = ds.GetMetadata('TRE')
+    xml_tre = ds.GetMetadata('xml:TRE')[0]
     ds = None
 
     if md is None or 'RSMDCA' not in md or 'RSMECA' not in md or 'RSMPCA' not in md or 'RSMIDA' not in md:
         print(md)
+        return 'fail'
+
+    if xml_tre.find('<tre name="RSMDCA"') == -1:
+        gdaltest.post_reason('did not get expected xml:TRE')
+        print(xml_tre[0])
         return 'fail'
 
     return 'success'
