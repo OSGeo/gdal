@@ -1738,8 +1738,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *real_filename = poOpenInfo->pszFilename;
     int nQLevel = -1;
 
-    if( ( poOpenInfo->fp == NULL ) &&
-        ( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:",13) ) )
+    if( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:",13) )
     {
         char** papszTokens;
         int bScan = FALSE;

@@ -421,6 +421,15 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
+/*      Avoid that on Windows, JPEG_SUBFILE:x,y,z,data/../tmp/foo.ntf   */
+/*      to be recognized by the NITF driver, because                    */
+/*      'JPEG_SUBFILE:x,y,z,data' is considered as a (valid) directory  */
+/*      and thus the whole filename is evaluated as tmp/foo.ntf         */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszFilename,"JPEG_SUBFILE:",13) )
+        return FALSE;
+        
+/* -------------------------------------------------------------------- */
 /*	First we check to see if the file has the expected header	*/
 /*	bytes.								*/    
 /* -------------------------------------------------------------------- */
@@ -560,6 +569,11 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         poDS->nRasterXSize = 1;
         poDS->nRasterYSize = 1;
     }
+        
+    /* Can be set to NO to avoid opening the underlying JPEG2000/JPEG */
+    /* stream. Might speed up operations when just metadata is needed */
+    int bOpenUnderlyingDS = CSLTestBoolean(
+            CPLGetConfigOption("NITF_OPEN_UNDERLYING_DS", "YES"));
 
 /* -------------------------------------------------------------------- */
 /*      If the image is JPEG2000 (C8) compressed, we will need to       */
@@ -573,7 +587,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     if( psImage )
         nUsableBands = psImage->nBands;
 
-    if( psImage != NULL && EQUAL(psImage->szIC,"C8") )
+    if( bOpenUnderlyingDS && psImage != NULL && EQUAL(psImage->szIC,"C8") )
     {
         CPLString osDSName;
 
@@ -606,18 +620,13 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                     if (GDALGetDriverByName(apszDrivers[iDriver]) != NULL)
                         bFoundJPEG2000Driver = TRUE;
                 }
-                if (!bFoundJPEG2000Driver)
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                            "Unable to open JPEG2000 image within NITF file.\n"
-                            "No JPEG2000 capable driver (JP2KAK, JP2ECW, JP2MRSID, JP2OPENJPEG, etc...) is available." );
-                }
-                else
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                            "Unable to open JPEG2000 image within NITF file.\n"
-                            "One or several JPEG2000 capable drivers are available but the datastream could not be opened successfully." );
-                }
+
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Unable to open JPEG2000 image within NITF file.\n%s\n",
+                         (!bFoundJPEG2000Driver) ?
+                            "No JPEG2000 capable driver (JP2KAK, JP2ECW, JP2MRSID, JP2OPENJPEG, etc...) is available." :
+                            "One or several JPEG2000 capable drivers are available but the datastream could not be opened successfully.",
+                         "You can define the NITF_OPEN_UNDERLYING_DS configuration option to NO, in order to just get the metadata.");
                 delete poDS;
                 return NULL;
             }
@@ -675,7 +684,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 /*      If the image is JPEG (C3) compressed, we will need to open      */
 /*      the image data as a JPEG dataset.                               */
 /* -------------------------------------------------------------------- */
-    else if( psImage != NULL
+    else if( bOpenUnderlyingDS && psImage != NULL
              && EQUAL(psImage->szIC,"C3") 
              && psImage->nBlocksPerRow == 1
              && psImage->nBlocksPerColumn == 1 )
@@ -698,9 +707,13 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         poDS->poJPEGDataset = (GDALPamDataset*) GDALOpen(osDSName,GA_ReadOnly);
         if( poDS->poJPEGDataset == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unable to open JPEG image within NITF file.\n"
-                      "Is the JPEG driver available?" );
+            int bFoundJPEGDriver = GDALGetDriverByName("JPEG") != NULL;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Unable to open JPEG image within NITF file.\n%s\n",
+                     (!bFoundJPEGDriver) ?
+                        "The JPEG driver is not available." :
+                        "The JPEG driver is available but the datastream could not be opened successfully.",
+                     "You can define the NITF_OPEN_UNDERLYING_DS configuration option to NO, in order to just get the metadata.");
             delete poDS;
             return NULL;
         }
