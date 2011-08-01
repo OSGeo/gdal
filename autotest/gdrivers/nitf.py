@@ -2633,6 +2633,65 @@ def nitf_online_23():
     return tst.testOpen()
 
 ###############################################################################
+# Test reading ECRG frames
+
+def nitf_online_24():
+
+    if not gdaltest.download_file('http://www.falconview.org/trac/FalconView/downloads/17', 'ECRG_Sample.zip'):
+        return 'skip'
+
+    try:
+        os.stat('tmp/cache/ECRG_Sample.zip')
+    except:
+        return 'skip'
+
+    oldval = gdal.GetConfigOption('NITF_OPEN_UNDERLYING_DS')
+    gdal.SetConfigOption('NITF_OPEN_UNDERLYING_DS', 'NO')
+    ds = gdal.Open('/vsizip/tmp/cache/ECRG_Sample.zip/ECRG_Sample/EPF/clfc/2/000000009s0013.lf2')
+    gdal.SetConfigOption('NITF_OPEN_UNDERLYING_DS', oldval)
+    if ds is None:
+        return 'fail'
+    xml_tre = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    if xml_tre.find('<tre name="GEOPSB"') == -1 or \
+       xml_tre.find('<tre name="J2KLRA"') == -1 or \
+       xml_tre.find('<tre name="GEOLOB"') == -1 or \
+       xml_tre.find('<tre name="BNDPLB"') == -1 or \
+       xml_tre.find('<tre name="ACCPOB"') == -1 or \
+       xml_tre.find('<tre name="SOURCB"') == -1:
+           gdaltest.post_reason('did not get expected xml:TRE')
+           print(xml_tre)
+           return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a HRE file
+
+def nitf_online_25():
+
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/docs/HRE_spec/Case1_HRE10G324642N1170747W_Uxx.hr5', 'Case1_HRE10G324642N1170747W_Uxx.hr5'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5', 1, 7099, filename_absolute = 1 )
+
+    ret = tst.testOpen()
+    if ret != 'success':
+        return ret
+
+    ds = gdal.Open('tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5')
+    xml_tre = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    if xml_tre.find('<tre name="PIAPRD"') == -1:
+           gdaltest.post_reason('did not get expected xml:TRE')
+           print(xml_tre)
+           return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -2896,6 +2955,8 @@ gdaltest_list = [
     nitf_online_21,
     nitf_online_22,
     nitf_online_23,
+    nitf_online_24,
+    nitf_online_25,
     nitf_cleanup ]
 
 if __name__ == '__main__':
