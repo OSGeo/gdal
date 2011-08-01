@@ -97,10 +97,10 @@
 
     <xs:complexType name="ifType">
         <xs:group ref="itemType"/>
-        <xs:attribute name="cond" use="optional">
+        <xs:attribute name="cond">
             <xs:simpleType>
                 <xs:restriction base="xs:string">
-                    <xs:pattern value=".+=.+"/>
+                    <xs:pattern value=".+[!]?=.*"/>
                 </xs:restriction>
             </xs:simpleType>
         </xs:attribute>
@@ -114,7 +114,15 @@
         <xs:attribute name="length" type="positiveInteger"/>
         <xs:attribute name="name" type="xs:string" use="optional"/>
         <xs:attribute name="longname" type="xs:string" use="optional"/>
-        <xs:attribute name="type" type="xs:string" use="optional"/>
+        <xs:attribute name="type" use="optional">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="string"/>
+                    <xs:enumeration value="integer"/>
+                    <xs:enumeration value="real"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
         <xs:attribute name="unit" type="xs:string" use="optional"/>
         <xs:attribute name="minval" use="optional"/>
         <xs:attribute name="maxval" use="optional"/>
