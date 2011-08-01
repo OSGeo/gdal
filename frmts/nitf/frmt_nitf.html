@@ -9,17 +9,14 @@
 
 GDAL supports reading of several subtypes of NITF image files, and writing
 simple NITF 2.1 files.  NITF 1.1, NITF 2.0, NITF 2.1 and NSIF 1.0
-files with uncompressed, ARIDPCM, JPEG compressed, JPEG2000 (with Kakadu or ECW SDKs)
-or VQ compressed images should be readable.  Other compression mechanisms are 
-not supported at this time.  The read support test has been tested on CIB and 
-CADRG RPF products.<p>
+files with uncompressed, ARIDPCM, JPEG compressed, JPEG2000 (with Kakadu, ECW SDKs or other JPEG2000 capable driver)
+or VQ compressed images should be readable.<p>
+
+The read support test has been tested on various products,
+including CIB and CADRG frames from RPF products, ECRG frames, HRE products.<p>
 
 Color tables for pseudocolored images are read.  In some cases nodata values
-may be identified.  In theory all input pixel types 
-except 1bit are supported, but only 8bit and 16bit types have actually been 
-tested.<p>
-<!-- New tests have been added to the autotest suite. So this could be probably
-be rephrased differently -->
+may be identified.<p>
 
 Lat/Long extents are read from the IGEOLO information in 
 the image header if available.  If high precision lat/long georeferencing 
@@ -30,7 +27,7 @@ the complete image - that is the L_LINES field with the row count for that
 block is equal to the row count of the image. Additionally, all BLOCKA 
 instances are returned as metadata. If GeoSDE TRE are available, they will be
 used to provide higher precision coordinates.
-<P>
+<p>
 
 Most file header and image header fields are returned as dataset level
 metadata.<p>
@@ -135,22 +132,22 @@ more precise georeferencing. This is limited to geographic SRS, and to CreateCop
 </ul>
 
 
+<h2>Links</h2>
+<ul>
+<li><a href="frmt_nitf_advanced.html">Advanced GDAL NITF Driver Information</a></li>
+<li> <a href="http://www.gwg.nga.mil/ntb/">NITFS Technical Board Public Page</a></li>
+<li> <a href="http://www.gwg.nga.mil/ntb/baseline/docs/digest/part2_annex_d.pdf">DIGEST Part 2 Annex D (describe encoding of NITF Spatial Data Extensions)</a></li>
+<li> <a href="frmt_various.html#RPFTOC">RPFTOC</a> driver : to read the Table Of Content of CIB and CADRG products.</li>
+<li> <a href="http://www.everyspec.com/MIL-PRF/MIL-PRF+%28080000+-+99999%29/MIL-PRF-89038_25371/">MIL-PRF-89038</a> : specification of RPF, CADRG, CIB products</li>
+<li> <a href="http://www.everyspec.com/MIL-PRF/MIL-PRF+%28030000+-+79999%29/MIL-PRF-32283_26022/">MIL-PRF-32283</a> : specification of EDRG products</li>
+</ul>
+
 <h2>Credit</h2>
 
 The author wishes to thank <a href="http://www.augsignals.com/">AUG
 Signals</a> and the <a href="http://geoconnections.org/">GeoConnections</a>
-program for supporting development of this driver, and to thank 
+program for supporting development of this driver, and to thank
 Steve Rawlinson (JPEG), Reiner Beck (BLOCKA) for assistance adding features.<p>
-
-See Also: <p>
-<ul>
-<li><a href="frmt_nitf_advanced.html">Advanced GDAL NITF Driver Information</a>
-<li> <a href="http://164.214.2.51/ntb/">NITFS Technical Board Public Page</a>
-<li> <a href="http://www.gwg.nga.mil/ntb/baseline/docs/digest/part2_annex_d.pdf">DIGEST Part 2 Annex D (describe encoding of NITF Spatial Data Extensions)</a>
-<li> The <a href="frmt_ogdi.html">OGDI</a> driver supports many NITF based RPF
-products including CIB and CADRG.<p>
-<li> The <a href="frmt_various.html#RPFTOC">RPFTOC</a> driver is an alternative to the OGDI driver for CIB and CADRG products.<p>
-</ul>
 
 </body>
 </html>

@@ -890,8 +890,9 @@ software which is not liberal to this value.</li>
 
 <h2><a name="RPFTOC">Raster Product Format/RPF (a.toc)</a></h2>
 
-<p>This is a read-only reader for RPF products, like CADRG or CIB, that use the table of
-content file - A.TOC - from a RPF exchange.</p>
+<p>This is a read-only reader for RPF products, like CADRG or CIB, that uses the table of
+content file - A.TOC - from a RPF exchange, and exposes it as a virtual dataset whose
+coverage is the set of frames contained in the table of content.</p>
 <p>The driver will report a different subdataset for each subdataset found in the A.TOC
 file.</p>
 
@@ -911,7 +912,7 @@ Subdatasets:
 </pre>
 
 
-<p>In some situations, NITF tiles inside a subdataset don't share the same palettes.
+<p>In some situations, <a href="frmt_nitf.html">NITF</a> tiles inside a subdataset don't share the same palettes.
 The RPFTOC driver will do its best to remap palettes to the reported palette by gdalinfo (which
 is the palette of the first tile of the subdataset).
 In situations where it wouldn't give a good result, you can try to set the RPFTOC_FORCE_RGBA
@@ -931,13 +932,9 @@ as the list of the NITF tiles of the subdataset.</p>
 
 <ul>
 <li> <a href="frmt_ogdi.html">OGDI Bridge</a> : the RPFTOC driver gives an equivalent
-     functionnality to the RPF driver from the OGDI library. </li>
-<li> <a href="RPF">MIL-PRF-89038</a> : specifications of RPF, CADRG, CIB</li>
+     functionnality (without external dependency) to the RPF driver from the OGDI library. </li>
+<li> <a href="http://www.everyspec.com/MIL-PRF/MIL-PRF+%28080000+-+99999%29/MIL-PRF-89038_25371/">MIL-PRF-89038</a> : specification of RPF, CADRG, CIB products</li>
 </ul>
-
-
-<p>This driver gives an equivalent functionnality to the RPF driver from the
-OGDI library, that can be accessed through the  <a href="frmt_ogdi.html">OGDI Bridge</a></p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/nitf/rpftocdataset.cpp</tt></p>
 
