@@ -406,10 +406,22 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
     /* ERO : note I'm not sure if CFloat64 can be transmitted as NBPP is only 2 characters */
     else
     {
-        eDataType = GDT_Unknown;
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Unsupported combination of PVTYPE(%s) and NBPP(%d).",
-                  psImage->szPVType, psImage->nBitsPerSample );
+        int bOpenUnderlyingDS = CSLTestBoolean(
+                CPLGetConfigOption("NITF_OPEN_UNDERLYING_DS", "YES"));
+        if (!bOpenUnderlyingDS && psImage->nBitsPerSample > 8 && psImage->nBitsPerSample < 16)
+        {
+            if (EQUAL(psImage->szPVType,"SI"))
+                eDataType = GDT_Int16;
+            else
+                eDataType = GDT_UInt16;
+        }
+        else
+        {
+            eDataType = GDT_Unknown;
+            CPLError( CE_Warning, CPLE_AppDefined,
+                    "Unsupported combination of PVTYPE(%s) and NBPP(%d).",
+                    psImage->szPVType, psImage->nBitsPerSample );
+        }
     }
 
 /* -------------------------------------------------------------------- */
