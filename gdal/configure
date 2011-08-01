@@ -662,7 +662,7 @@ SQLITE_INC
 SQLITE3_LDFLAGS
 SQLITE3_CFLAGS
 SQLITE3_VERSION
-SPATIALITE_AMALGATION
+SPATIALITE_AMALGAMATION
 HAVE_SPATIALITE
 CURL_LIB
 CURL_INC
@@ -24109,7 +24109,7 @@ fi
 
 
 HAVE_SPATIALITE=no
-SPATIALITE_AMALGATION=no
+SPATIALITE_AMALGAMATION=no
 
 if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
@@ -24235,7 +24235,7 @@ fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
         HAVE_SPATIALITE=yes
-        SPATIALITE_AMALGATION=yes
+        SPATIALITE_AMALGAMATION=yes
 
         # SpatiaLite availability implies SQLite availability
         # Caution : don't include the include/spatialite subdir in the include dir
@@ -24252,7 +24252,7 @@ fi
 
 HAVE_SPATIALITE=$HAVE_SPATIALITE
 
-SPATIALITE_AMALGATION=$SPATIALITE_AMALGATION
+SPATIALITE_AMALGAMATION=$SPATIALITE_AMALGAMATION
 
 
 
