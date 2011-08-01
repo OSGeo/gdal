@@ -622,7 +622,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                 }
 
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Unable to open JPEG2000 image within NITF file.\n%s\n",
+                        "Unable to open JPEG2000 image within NITF file.\n%s\n%s",
                          (!bFoundJPEG2000Driver) ?
                             "No JPEG2000 capable driver (JP2KAK, JP2ECW, JP2MRSID, JP2OPENJPEG, etc...) is available." :
                             "One or several JPEG2000 capable drivers are available but the datastream could not be opened successfully.",
@@ -709,7 +709,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         {
             int bFoundJPEGDriver = GDALGetDriverByName("JPEG") != NULL;
             CPLError( CE_Failure, CPLE_AppDefined,
-                    "Unable to open JPEG image within NITF file.\n%s\n",
+                    "Unable to open JPEG image within NITF file.\n%s\n%s",
                      (!bFoundJPEGDriver) ?
                         "The JPEG driver is not available." :
                         "The JPEG driver is available but the datastream could not be opened successfully.",
