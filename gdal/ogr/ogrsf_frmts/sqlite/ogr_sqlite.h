@@ -33,9 +33,9 @@
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
 
-/* When used with Spatialite amalgation, there might be no sqlite3 headers */
-/* in other places than /include/spatialite/ subdir */
-#if defined(HAVE_SPATIALITE) && defined(SPATIALITE_AMALGATION)
+/* When used with Spatialite amalgamation, there might be no sqlite3 headers */
+/* in other places than /include/spatialite/ subdir. */
+#if defined(HAVE_SPATIALITE) && defined(SPATIALITE_AMALGAMATION)
 #include <spatialite/sqlite3.h>
 #else
 #include "sqlite3.h"
