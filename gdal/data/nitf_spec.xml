@@ -34,6 +34,33 @@
 
 <tres>
 
+    <tre name="ACCPOB" minlength="17" maxlength="99985" location="image">
+        <field name="NUM_ACPO" length="2" type="integer" minval="1" maxval="99"/>
+        <loop counter="NUM_ACPO" md_prefix="ACCPO_%02d_" name="ACCPO">
+            <field name="UNIAAH" length="3" type="string"/>
+            <if cond="UNIAAH!=">
+                <field name="AAH" length="5" type="integer"/>
+            </if>
+            <field name="UNIAAV" length="3" type="string"/>
+            <if cond="UNIAAV!=">
+                <field name="AAV" length="5" type="integer"/>
+            </if>
+            <field name="UNIAPH" length="3" type="string"/>
+            <if cond="UNIAPH!=">
+                <field name="APH" length="5" type="integer"/>
+            </if>
+            <field name="UNIAPV" length="3" type="string"/>
+            <if cond="UNIAPV!=">
+                <field name="APV" length="5" type="integer"/>
+            </if>
+            <field name="NUM_PTS" length="3" type="integer"/>
+            <loop counter="NUM_PTS" md_prefix="POINT_%03d_" name="POINT">
+                <field name="LON" length="15" type="real"/>
+                <field name="LAT" length="15" type="real"/>
+            </loop>
+        </loop>
+    </tre>
+
     <tre name="BLOCKA" length="123" location="image">
         <field name="BLOCK_INSTANCE" length="2" type="integer" minval="1" maxval="99"/>
         <field name="N_GRAY" length="5" type="integer" minval="0" maxval="99999"/>
@@ -46,6 +73,14 @@
         <field name="LRFC_LOC" length="21"/>
         <field name="FRFC_LOC" length="21"/>
         <field length="5"/>
+    </tre>
+
+    <tre name="BNDPLB" minlength="124" maxlength="99964" location="image">
+        <field name="NUM_PTS" length="4" type="integer" minval="4" maxval="3332"/>
+        <loop counter="NUM_PTS" md_prefix="POINT_%04d_" name="POINT">
+            <field name="LON" length="15" type="real"/>
+            <field name="LAT" length="15" type="real"/>
+        </loop>
     </tre>
 
     <tre name="CSDIDA" md_prefix="NITF_CSDIDA_" length="70" location="file">
@@ -416,7 +451,7 @@
         <field name="NPAR" length="2" type="integer" minval="1" maxval="36"/>
         <field name="NIMGE" length="3" type="integer" minval="1" maxval="999"/>
         <field name="NPART" length="5" type="integer" minval="1" maxval="99999"/>
-        <loop counter="NIMGE" md_prefix="IMAGEF_%03d" name="IMAGE">
+        <loop counter="NIMGE" md_prefix="IMAGEF_%03d_" name="IMAGE">
             <field name="IID" length="80" type="string"/>
             <field name="NPARI" length="2" type="integer" minval="1" maxval="36"/>
         </loop>
@@ -468,8 +503,8 @@
         <field name="GZX" length="2" type="integer" minval="1" maxval="36"/>
         <field name="GZY" length="2" type="integer" minval="1" maxval="36"/>
         <field name="GZZ" length="2" type="integer" minval="1" maxval="36"/>
-        <loop formula="(NPART+1)*(NPART)/2" name="DERCOV" md_prefix="DERCOV_%05d">
-            <field name="DERCOV" length="21" type="real"/>
+        <loop formula="(NPART+1)*(NPART)/2" name="DERCOV" md_prefix="DERCOV_%05d"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+            <field name="" longname="DERCOV" length="21" type="real"/>
         </loop>
     </tre>
 
@@ -532,20 +567,20 @@
             <field name="GZX" length="2" type="integer" minval="1" maxval="36"/>
             <field name="GZY" length="2" type="integer" minval="1" maxval="36"/>
             <field name="GZZ" length="2" type="integer" minval="1" maxval="36"/>
-            <loop counter="IGN" name="IG" md_prefix="IG_%02d">
+            <loop counter="IGN" name="IG" md_prefix="IG_%02d_">
                 <field name="NUMOPG" length="2" type="integer" minval="1" maxval="36"/>
-                <loop formula="(NUMOPG+1)*(NUMOPG)/2" name="EG" md_prefix="EG_%02d">
-                    <field name="ERRCVG" length="21" type="real"/>
+                <loop formula="(NUMOPG+1)*(NUMOPG)/2" name="EG" md_prefix="EG_%02d"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+                    <field name="" longname="ERRCVG" length="21" type="real"/>
                 </loop>
                 <field name="TCDF" length="1" type="integer" minval="0" maxval="2"/>
                 <field name="NCSEG" length="1" type="integer" minval="2" maxval="9"/>
-                <loop counter="NCSEG" name="CORSEG" md_prefix="CORSEG_%d">
+                <loop counter="NCSEG" name="CORSEG" md_prefix="CORSEG_%d_">
                     <field name="CORSEG" length="21" type="real"/>
                     <field name="TAUSEG" length="21" type="real" unit="seconds"/>
                 </loop>
             </loop>
-            <loop formula="NPAR*NPARO" name="MAP" md_prefix="MAP_%04d">
-                <field name="MAP" length="21" type="real"/>
+            <loop formula="NPAR*NPARO" name="MAP" md_prefix="MAP_%04d"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+                <field name="" longname="MAP" length="21" type="real"/>
             </loop>
         </if>
         <if cond="INCLUC=Y">
@@ -553,12 +588,12 @@
             <field name="URC" length="21" type="real" unit="pixel^2"/>
             <field name="UCC" length="21" type="real" unit="pixel^2"/>
             <field name="UNCSR" length="1" type="integer" minval="2" maxval="9"/>
-            <loop counter="UNCSR" name="CORSR" md_prefix="CORSR_%d">
+            <loop counter="UNCSR" name="CORSR" md_prefix="CORSR_%d_">
                 <field name="UCORSR" length="21" type="real"/>
                 <field name="UTAUSR" length="21" type="real" unit="pixels"/>
             </loop>
             <field name="UNCSC" length="1" type="integer" minval="2" maxval="9"/>
-            <loop counter="UNCSC" name="CORSC" md_prefix="CORSC_%d">
+            <loop counter="UNCSC" name="CORSC" md_prefix="CORSC_%d_">
                 <field name="UCORSC" length="21" type="real"/>
                 <field name="UTAUSC" length="21" type="real" unit="pixels"/>
             </loop>
@@ -672,28 +707,134 @@
         <field name="RNPWRZ" length="1" type="integer" minval="0" maxval="5"/>
         <field name="RNTRMS" length="3" type="integer" minval="1" maxval="216"/>
         <loop counter="RNTRMS" name="RNPCF" md_prefix="RNPCF_%03d">
-            <field name="RNPCF" length="21" type="real"/>
+            <field name="" longname="RNPCF" length="21" type="real"/>
         </loop>
         <field name="RDPWRX" length="1" type="integer" minval="0" maxval="5"/>
         <field name="RDPWRY" length="1" type="integer" minval="0" maxval="5"/>
         <field name="RDPWRZ" length="1" type="integer" minval="0" maxval="5"/>
         <field name="RDTRMS" length="3" type="integer" minval="1" maxval="216"/>
         <loop counter="RDTRMS" name="RDPCF" md_prefix="RDPCF_%03d">
-            <field name="RDPCF" length="21" type="real"/>
+            <field name="" longname="RDPCF" length="21" type="real"/>
         </loop>
         <field name="CNPWRX" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CNPWRY" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CNPWRZ" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CNTRMS" length="3" type="integer" minval="1" maxval="216"/>
         <loop counter="CNTRMS" name="CNPCF" md_prefix="CNPCF_%03d">
-            <field name="CNPCF" length="21" type="real"/>
+            <field name="" longname="CNPCF" length="21" type="real"/>
         </loop>
         <field name="CDPWRX" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CDPWRY" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CDPWRZ" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CDTRMS" length="3" type="integer" minval="1" maxval="216"/>
         <loop counter="CDTRMS" name="CDPCF" md_prefix="CDPCF_%03d">
-            <field name="CDPCF" length="21" type="real"/>
+            <field name="" longname="CDPCF" length="21" type="real"/>
+        </loop>
+    </tre>
+
+    <tre name="SOURCB" minlength="906" maxlength="99985" location="image">
+        <field name="IS_SCA" length="9" type="integer"/>
+        <field name="CPATCH" length="10" type="string"/>
+        <field name="NUM_SOUR" length="2" type="integer" minval="1"/>
+        <loop counter="NUM_SOUR" name="SOURCE" md_prefix="SOURCE_%02d_">
+            <field name="NUM_BP" length="2" type="integer"/>
+            <loop counter="NUM_BP" name="BP" md_prefix="BP_%02d_">
+                <field name="NUM_PTS" length="3" type="integer"/>
+                <loop counter="NUM_PTS" md_prefix="POINT_%03d_" name="POINT">
+                    <field name="LON" length="15" type="real"/>
+                    <field name="LAT" length="15" type="real"/>
+                </loop>
+            </loop>
+            <field name="PRT" length="10" type="string"/>
+            <field name="URF" length="20" type="string"/>
+            <field name="EDN" length="7" type="string"/>
+            <field name="NAM" length="20" type="string"/>
+            <field name="CDP" length="3" type="integer"/>
+            <field name="CDV" length="8" type="string"/>
+            <field name="CDV27" length="8" type="string"/>
+            <field name="SRN" length="80" type="string"/>
+            <field name="SCA" length="9" type="integer"/>
+            <field name="UNISQU" length="3" type="string"/>
+            <if cond="UNISQU!=">
+                <field name="SQU" length="10" type="integer"/>
+            </if>
+            <field name="UNIPCI" length="3" type="string"/>
+            <if cond="UNIPCI!=">
+                <field name="PCI" length="4" type="integer"/>
+            </if>
+            <field name="WPC" length="3" type="integer"/>
+            <field name="NST" length="3" type="integer"/>
+            <field name="UNIHKE" length="3" type="string"/>
+            <if cond="UNIHKE!=">
+                <field name="HKE" length="6" type="integer"/>
+                <field name="LONHKE" length="15" type="real"/>
+                <field name="LATHKE" length="15" type="real"/>
+            </if>
+            <field name="QSS" length="1" type="string"/>
+            <field name="QOD" length="1" type="string"/>
+            <if cond="QSS!=U AND QOD!=Y">                           <!--Warning: this condition is currently hardcoded in the interpreter -->
+                <field name="CDV10" length="8" type="string"/>
+            </if>
+            <field name="QLE" length="80" type="string"/>
+            <field name="CPY" length="80" type="string"/>
+            <field name="NMI" length="2" type="integer"/>
+            <loop counter="NMI" name="MI" md_prefix="MI_%02d_">
+                <field name="CDV30" length="8" type="string"/>
+                <field name="UNIRAT" length="3" type="string"/>
+                <field name="RAT" length="8" type="real"/>
+                <field name="UNIGMA" length="3" type="string"/>
+                <field name="GMA" length="8" type="real"/>
+                <field name="LONGMA" length="15" type="real"/>
+                <field name="LATGMA" length="15" type="real"/>
+                <field name="UNIGCA" length="3" type="string"/>
+                <if cond="UNIGCA!=">
+                    <field name="GCA" length="8" type="real"/>
+                </if>
+            </loop>
+            <field name="NLI" length="2" type="integer"/>
+            <loop counter="NLI" name="LI" md_prefix="LI_%02d_">
+                <field name="BAD" length="10" type="string"/>
+            </loop>
+            <field name="DAG" length="80" type="string"/>
+            <field name="DCD" length="4" type="string"/>
+            <field name="ELL" length="80" type="string"/>
+            <field name="ELC" length="3" type="string"/>
+            <field name="DVR" length="80" type="string"/>
+            <field name="VDCDVR" length="4" type="string"/>
+            <field name="SDA" length="80" type="string"/>
+            <field name="VDCSDA" length="4" type="string"/>
+            <field name="PRN" length="80" type="string"/>
+            <field name="PCO" length="2" type="string"/>
+            <field name="NUM_PRJ" length="1" type="integer"/>
+            <loop counter="NUM_PRJ" name="PRJ" md_prefix="PRJ_%d">
+                <field name="" longname="PRJ" length="15" type="real"/>
+            </loop>
+            <field name="XOR" length="15" type="integer" minval="0"/>
+            <field name="YOR" length="15" type="integer" minval="0"/>
+            <field name="GRD" length="3" type="string"/>
+            <field name="GRN" length="80" type="string"/>
+            <field name="ZNA" length="4" type="integer" minval="0"/>
+            <field name="NIN" length="2" type="integer"/>
+            <loop counter="NIN" name="IN" md_prefix="IN_%02d_">
+                <field name="INT" length="10" type="string"/>
+                <field name="INS_SCA" length="9" type="integer"/>
+                <field name="NTL" length="15" type="real"/>
+                <field name="TTL" length="15" type="real"/>
+                <field name="NVL" length="15" type="real"/>
+                <field name="TVL" length="15" type="real"/>
+                <field name="NTR" length="15" type="real"/>
+                <field name="TTR" length="15" type="real"/>
+                <field name="NVR" length="15" type="real"/>
+                <field name="TVR" length="15" type="real"/>
+                <field name="NRL" length="15" type="real"/>
+                <field name="TRL" length="15" type="real"/>
+                <field name="NSL" length="15" type="real"/>
+                <field name="TSL" length="15" type="real"/>
+                <field name="NRR" length="15" type="real"/>
+                <field name="TRR" length="15" type="real"/>
+                <field name="NSR" length="15" type="real"/>
+                <field name="TSR" length="15" type="real"/>
+            </loop>
         </loop>
     </tre>
 

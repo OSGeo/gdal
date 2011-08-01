@@ -2209,13 +2209,50 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
         {
             const char* pszCond = CPLGetXMLValue(psIter, "cond", NULL);
             const char* pszEqual = NULL;
-            if (pszCond && (pszEqual = strchr(pszCond, '=')) != NULL)
+            if (pszCond != NULL && strcmp(pszCond, "QSS!=U AND QOD!=Y") == 0)
+            {
+                char* pszQSSName = CPLStrdup(
+                            CPLSPrintf("%s%s", pszMDPrefix, "QSS"));
+                char* pszQODName = CPLStrdup(
+                            CPLSPrintf("%s%s", pszMDPrefix, "QOD"));
+                const char* pszQSSVal = CSLFetchNameValue(papszMD, pszQSSName);
+                const char* pszQODVal = CSLFetchNameValue(papszMD, pszQODName);
+                if (pszQSSVal == NULL)
+                {
+                    CPLDebug("NITF", "Cannot find if cond variable %s", "QSS");
+                }
+                else if (pszQODVal == NULL)
+                {
+                    CPLDebug("NITF", "Cannot find if cond variable %s", "QOD");
+                }
+                else if (strcmp(pszQSSVal, "U") != 0 && strcmp(pszQODVal, "Y") != 0)
+                {
+                    papszMD = NITFGenericMetadataReadTREInternal(papszMD,
+                                                                 psOutXMLNode,
+                                                                 pszTREName,
+                                                                 pachTRE,
+                                                                 nTRESize,
+                                                                 psIter,
+                                                                 pnTreOffset,
+                                                                 pszMDPrefix,
+                                                                 pbError);
+                }
+                CPLFree(pszQSSName);
+                CPLFree(pszQODName);
+            }
+            else if (pszCond != NULL && (pszEqual = strchr(pszCond, '=')) != NULL)
             {
                 char* pszCondVar = (char*)CPLMalloc(pszEqual - pszCond + 1);
                 const char* pszCondExpectedVal = pszEqual + 1;
                 char* pszMDItemName;
                 const char* pszCondVal;
+                int bTestEqual = TRUE;
                 memcpy(pszCondVar, pszCond, pszEqual - pszCond);
+                if (pszEqual - pszCond > 1 && pszCondVar[pszEqual - pszCond - 1] == '!')
+                {
+                    bTestEqual = FALSE;
+                    pszCondVar[pszEqual - pszCond - 1] = '\0';
+                }
                 pszCondVar[pszEqual - pszCond] = '\0';
                 pszMDItemName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, pszCondVar));
@@ -2225,7 +2262,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     CPLDebug("NITF", "Cannot find if cond variable %s",
                              pszMDItemName);
                 }
-                else if (strcmp(pszCondVal, pszCondExpectedVal) == 0)
+                else if ((bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) == 0) ||
+                         (!bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0))
                 {
                     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
                                                                  psOutXMLNode,
