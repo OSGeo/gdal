@@ -2229,7 +2229,7 @@ AC_ARG_WITH(spatialite,
     ,,)
 
 HAVE_SPATIALITE=no
-SPATIALITE_AMALGATION=no
+SPATIALITE_AMALGAMATION=no
 
 if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
     AC_MSG_RESULT(disabled)
@@ -2257,7 +2257,7 @@ else
 
         AC_MSG_RESULT(enabled)
         HAVE_SPATIALITE=yes
-        SPATIALITE_AMALGATION=yes
+        SPATIALITE_AMALGAMATION=yes
 
         # SpatiaLite availability implies SQLite availability
         # Caution : don't include the include/spatialite subdir in the include dir
@@ -2272,7 +2272,7 @@ else
 fi
 
 AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
-AC_SUBST([SPATIALITE_AMALGATION], $SPATIALITE_AMALGATION)
+AC_SUBST([SPATIALITE_AMALGAMATION], $SPATIALITE_AMALGAMATION)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for SQLite (only if SpatiaLite is not detected)
