@@ -3624,7 +3624,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     CPLAssert( FALSE );
                 }
                 
-                if( bGotNoDataValue && EQUAL_TO_NODATA(dfValue, dfNoDataValue) )
+                if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
                 if( bFirstValue )
@@ -3759,7 +3759,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                         CPLAssert( FALSE );
                     }
                     
-                    if( bGotNoDataValue && EQUAL_TO_NODATA(dfValue, dfNoDataValue) )
+                    if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
                     if( bFirstValue )
@@ -4099,7 +4099,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                     CPLAssert( FALSE );
                 }
                 
-                if( bGotNoDataValue && EQUAL_TO_NODATA(dfValue, dfNoDataValue) )
+                if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
                 if( bFirstValue )
@@ -4229,7 +4229,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                         CPLAssert( FALSE );
                     }
                     
-                    if( bGotNoDataValue && EQUAL_TO_NODATA(dfValue, dfNoDataValue) )
+                    if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
                     if( bFirstValue )
