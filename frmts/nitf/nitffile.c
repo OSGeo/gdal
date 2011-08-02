@@ -2003,7 +2003,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             }
         }
         else if (psIter->eType == CXT_Element &&
-                 psIter->pszValue &&
+                 psIter->pszValue != NULL &&
                  strcmp(psIter->pszValue, "loop") == 0)
         {
             const char* pszCounter = CPLGetXMLValue(psIter, "counter", NULL);
@@ -2406,7 +2406,8 @@ static CPLXMLNode* NITFFindTREXMLDescFromName(NITFFile* psFile,
     CPLXMLNode* psTresNode;
     CPLXMLNode* psIter;
 
-    if (!(psTreeNode = NITFLoadXMLSpec(psFile)))
+    psTreeNode = NITFLoadXMLSpec(psFile);
+    if (psTreeNode == NULL)
         return NULL;
 
     psTresNode = CPLGetXMLNode(psTreeNode, "=tres");
@@ -2416,10 +2417,10 @@ static CPLXMLNode* NITFFindTREXMLDescFromName(NITFFile* psFile,
         return NULL;
     }
 
-    for(psIter = psTresNode->psChild;psIter;psIter = psIter->psNext)
+    for(psIter = psTresNode->psChild;psIter != NULL;psIter = psIter->psNext)
     {
         if (psIter->eType == CXT_Element &&
-            psIter->pszValue &&
+            psIter->pszValue != NULL &&
             strcmp(psIter->pszValue, "tre") == 0)
         {
             const char* pszName = CPLGetXMLValue(psIter, "name", NULL);
@@ -2519,7 +2520,8 @@ char **NITFGenericMetadataRead( char **papszMD,
     if (psFile == NULL && psImage == NULL)
         return papszMD;
 
-    if (!(psTreeNode = NITFLoadXMLSpec(psFile ? psFile : psImage->psFile)))
+    psTreeNode = NITFLoadXMLSpec(psFile ? psFile : psImage->psFile);
+    if (psTreeNode == NULL)
         return papszMD;
 
     psTresNode = CPLGetXMLNode(psTreeNode, "=tres");
@@ -2529,10 +2531,10 @@ char **NITFGenericMetadataRead( char **papszMD,
         return papszMD;
     }
 
-    for(psIter = psTresNode->psChild;psIter;psIter = psIter->psNext)
+    for(psIter = psTresNode->psChild;psIter!=NULL;psIter = psIter->psNext)
     {
         if (psIter->eType == CXT_Element &&
-            psIter->pszValue &&
+            psIter->pszValue != NULL &&
             strcmp(psIter->pszValue, "tre") == 0)
         {
             const char* pszName = CPLGetXMLValue(psIter, "name", NULL);
