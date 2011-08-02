@@ -1026,10 +1026,11 @@ PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
             || !EQUAL(psXMLHist->pszValue,"HistItem") )
             continue;
 
-        // should try and make min/max test a bit fuzzy.
+        double dfHistMin = atof(CPLGetXMLValue( psXMLHist, "HistMin", "0"));
+        double dfHistMax = atof(CPLGetXMLValue( psXMLHist, "HistMax", "0"));
 
-        if( atof(CPLGetXMLValue( psXMLHist, "HistMin", "0")) != dfMin 
-            || atof(CPLGetXMLValue( psXMLHist, "HistMax", "0")) != dfMax
+        if( !(ARE_REAL_EQUAL(dfHistMin, dfMin))
+            || !(ARE_REAL_EQUAL(dfHistMax, dfMax))
             || atoi(CPLGetXMLValue( psXMLHist, 
                                     "BucketCount","0")) != nBuckets
             || !atoi(CPLGetXMLValue( psXMLHist, 
