@@ -207,7 +207,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
               float fVal =((float *)pabySrc)[i];
               if( bIsNoDataNan && CPLIsNan(fVal))
                   ((GByte *) pImage)[i] = 0;
-              else if( EQUAL_TO_NODATA(fVal, fNoData) )
+              else if( ARE_REAL_EQUAL(fVal, fNoData) )
                   ((GByte *) pImage)[i] = 0;
               else
                   ((GByte *) pImage)[i] = 255;
@@ -222,7 +222,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
               double dfVal =((double *)pabySrc)[i];
               if( bIsNoDataNan && CPLIsNan(dfVal))
                   ((GByte *) pImage)[i] = 0;
-              else if( EQUAL_TO_NODATA(dfVal, dfNoDataValue) )
+              else if( ARE_REAL_EQUAL(dfVal, dfNoDataValue) )
                   ((GByte *) pImage)[i] = 0;
               else
                   ((GByte *) pImage)[i] = 255;

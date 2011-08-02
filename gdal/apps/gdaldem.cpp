@@ -97,7 +97,7 @@ CPL_CVSID("$Id$");
 # define M_PI  3.1415926535897932384626433832795
 #endif
 
-#define INTERPOL(a,b) ((bSrcHasNoData && (EQUAL_TO_NODATA(a, fSrcNoDataValue) || EQUAL_TO_NODATA(b, fSrcNoDataValue))) ? fSrcNoDataValue : 2 * (a) - (b))
+#define INTERPOL(a,b) ((bSrcHasNoData && (ARE_REAL_EQUAL(a, fSrcNoDataValue) || ARE_REAL_EQUAL(b, fSrcNoDataValue))) ? fSrcNoDataValue : 2 * (a) - (b))
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -163,7 +163,7 @@ static float ComputeVal(int bSrcHasNoData, float fSrcNoDataValue,
                         void* pData,
                         int bComputeAtEdges)
 {
-    if (bSrcHasNoData && EQUAL_TO_NODATA(afWin[4], fSrcNoDataValue))
+    if (bSrcHasNoData && ARE_REAL_EQUAL(afWin[4], fSrcNoDataValue))
     {
         return fDstNoDataValue;
     }
@@ -172,7 +172,7 @@ static float ComputeVal(int bSrcHasNoData, float fSrcNoDataValue,
         int k;
         for(k=0;k<9;k++)
         {
-            if (EQUAL_TO_NODATA(afWin[k], fSrcNoDataValue))
+            if (ARE_REAL_EQUAL(afWin[k], fSrcNoDataValue))
             {
                 if (bComputeAtEdges)
                     afWin[k] = afWin[4];

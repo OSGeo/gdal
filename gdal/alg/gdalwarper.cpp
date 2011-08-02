@@ -429,7 +429,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
           {
               float fVal = pafData[iOffset];
-              if( (bIsNoDataNan && CPLIsNan(fVal)) || EQUAL_TO_NODATA(fVal, fNoData) )
+              if( (bIsNoDataNan && CPLIsNan(fVal)) || ARE_REAL_EQUAL(fVal, fNoData) )
               {
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
               }
@@ -451,7 +451,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
           {
               double dfVal = padfData[iOffset];
-              if( (bIsNoDataNan && CPLIsNan(dfVal)) || EQUAL_TO_NODATA(dfVal, dfNoData) )
+              if( (bIsNoDataNan && CPLIsNan(dfVal)) || ARE_REAL_EQUAL(dfVal, dfNoData) )
               {
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
               }
@@ -478,9 +478,9 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
               for( iPixel = 0; iPixel < nXSize; iPixel++ )
               {
                   if( ((bIsNoDataRealNan && CPLIsNan(padfWrk[iPixel*2])) ||
-                        EQUAL_TO_NODATA(padfWrk[iPixel*2], padfNoData[0]))
+                        ARE_REAL_EQUAL(padfWrk[iPixel*2], padfNoData[0]))
                       && ((bIsNoDataImagNan && CPLIsNan(padfWrk[iPixel*2+1])) ||
-                        EQUAL_TO_NODATA(padfWrk[iPixel*2+1], padfNoData[1])) )
+                        ARE_REAL_EQUAL(padfWrk[iPixel*2+1], padfNoData[1])) )
                   {
                       int iOffset = iPixel + iLine * nXSize;
                       
