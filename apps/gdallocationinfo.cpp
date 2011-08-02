@@ -384,7 +384,9 @@ int main( int argc, char ** argv )
             printf( "Report:\n" );
             printf( "  Location: (%dP,%dL)\n", iPixel, iLine );
         }
-    
+
+        int bPixelReport = TRUE;
+
         if( iPixel < 0 || iLine < 0 
             || iPixel >= GDALGetRasterXSize( hSrcDS )
             || iLine  >= GDALGetRasterYSize( hSrcDS ) )
@@ -395,13 +397,13 @@ int main( int argc, char ** argv )
                 printf("\n");
             else if( !bQuiet )
                 printf( "\nLocation is off this file! No further details to report.\n");
-            anBandList.clear();
+            bPixelReport = FALSE;
         }
         
     /* -------------------------------------------------------------------- */
     /*      Process each band.                                              */
     /* -------------------------------------------------------------------- */
-        for( i = 0; i < (int) anBandList.size(); i++ )
+        for( i = 0; bPixelReport && i < (int) anBandList.size(); i++ )
         {
             GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, anBandList[i] );
             if (hBand == NULL)
