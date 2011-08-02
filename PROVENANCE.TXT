@@ -47,7 +47,7 @@ Historical and Current:
  kruland - Kevin Ruland
  vgough - Valient Gough - 1999 - configure stuff. 
  silke - Silke Reimer (Intevation)
- ilucena - Ivan Lucena (Idrisi)
+ ilucena - Ivan Lucena (Oracle)
  shalasz - Steve Halasz (Debian)
  srioux - Sylvain Rioux (Softmap)
  ldjohn - Lowell D. Johnson - 2001 - rawdataset.cpp - one commit
