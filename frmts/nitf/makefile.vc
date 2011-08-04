@@ -1,6 +1,6 @@
 
 GDAL_OBJ =	nitfdataset.obj rpftocdataset.obj nitfwritejpeg.obj \
-	 	nitfwritejpeg_12.obj nitfrasterband.obj
+	 	nitfwritejpeg_12.obj nitfrasterband.obj ecrgtocdataset.obj
 
 NITFLIB_OBJ  =	nitffile.obj nitfimage.obj mgrs.obj nitfaridpcm.obj \
 		nitfbilevel.obj rpftocfile.obj nitfdes.obj nitf_gcprpc.obj
