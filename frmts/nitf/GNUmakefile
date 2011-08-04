@@ -3,7 +3,7 @@
 include ../../GDALmake.opt
 
 GDAL_OBJ =	nitfdataset.o rpftocdataset.o nitfwritejpeg.o \
-		nitfwritejpeg_12.o nitfrasterband.o
+		nitfwritejpeg_12.o nitfrasterband.o ecrgtocdataset.o
 NITFLIB_OBJ =	nitffile.o nitfimage.o mgrs.o nitfaridpcm.o \
 		nitfbilevel.o rpftocfile.o nitfdes.o nitf_gcprpc.o
 
