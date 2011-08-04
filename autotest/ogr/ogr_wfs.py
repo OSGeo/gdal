@@ -761,6 +761,8 @@ def ogr_wfs_deegree_gml321():
 
     ds = ogr.Open('WFS:http://deegree3-testing.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10')
     if ds is None:
+        if gdal.GetLastErrorMsg().find("Unable to determine the subcontroller for request type 'GetCapabilities' and service type 'WFS'") != -1:
+            return 'skip'
         return 'fail'
 
     lyr = ds.GetLayerByName("ad:Address")
