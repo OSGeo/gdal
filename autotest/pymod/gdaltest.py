@@ -1230,7 +1230,7 @@ def run_slow_tests():
 # Return true if the platform support symlinks
 
 def support_symlink():
-    if sys.platform == 'linux2':
+    if sys.platform.startswith('linux'):
         return True
     if sys.platform.find('freebsd') != -1:
         return True

@@ -3968,7 +3968,7 @@ def tiff_write_101():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
-    if sys.platform == 'linux2':
+    if sys.platform.startswith('linux'):
         # Much faster to use /dev/urandom than python random generator !
         f = open('/dev/urandom', 'rb')
         rand_array = f.read(10 * 1024 * 1024)

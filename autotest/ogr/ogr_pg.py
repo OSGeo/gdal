@@ -1559,7 +1559,7 @@ def ogr_pg_34():
 
     # We only test that on Linux since setting os.environ['XXX']
     # is not guaranteed to have effects on system not supporting putenv
-    if sys.platform == 'linux2':
+    if sys.platform.startswith('linux'):
         os.environ['PGCLIENTENCODING'] = 'LATIN1' 
         ogr_pg_1()
         del os.environ['PGCLIENTENCODING']
