@@ -87,6 +87,7 @@ void CPL_DLL GDALRegister_BMP(void);
 void CPL_DLL GDALRegister_GSC(void);
 void CPL_DLL GDALRegister_NITF(void);
 void CPL_DLL GDALRegister_RPFTOC(void);
+void CPL_DLL GDALRegister_ECRGTOC(void);
 void CPL_DLL GDALRegister_MrSID(void);
 void CPL_DLL GDALRegister_MG4Lidar(void);
 void CPL_DLL GDALRegister_PCIDSK(void);
