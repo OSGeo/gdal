@@ -597,23 +597,19 @@ def ogr_libkml_xml_attributes():
         return 'skip'
 
     ds = ogr.Open('data/description_with_xml.kml')
-    if ds is not None:
+
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    if feat.GetField('description').find('Description<br></br><i attr="val">Interesting</i><br></br>') != 0:
+        gdaltest.post_reason( 'Wrong description field value' )
+        print('got: %s ' % feat.GetField('description'))
         return 'fail'
-    
+
+    feat.Destroy()
+    ds.Destroy()
+
     return 'success'
-
-    #lyr = ds.GetLayer(0)
-    #feat = lyr.GetNextFeature()
-
-    #if feat.GetField('description') != 'Description<br></br><i attr="val">Interesting</i><br></br>':
-    #    gdaltest.post_reason( 'Wrong description field value' )
-    #    print('got: ', feat.GetField('description'))
-    #    return 'fail'
-        
-    #feat.Destroy()
-    #ds.Destroy()
-
-    #return 'success'
 
 ###############################################################################
 # Test reading all geometry types (#3558)
