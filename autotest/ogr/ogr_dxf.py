@@ -939,7 +939,7 @@ def ogr_dxf_18():
         return 'fail'
 
     if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"12.6999999999999993g 6.3499999999999996g")':
-        print feat.GetStyleString()
+        print(feat.GetStyleString())
         gdaltest.post_reason( "got wrong style string (1)" )
         return 'fail'
         
@@ -953,7 +953,7 @@ def ogr_dxf_18():
         return 'fail'
 
     if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"0.0g 4.0g")':
-        print feat.GetStyleString()
+        print(feat.GetStyleString())
         gdaltest.post_reason( "got wrong style string (2)" )
         return 'fail'
         
@@ -967,7 +967,7 @@ def ogr_dxf_18():
         return 'fail'
 
     if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"3.0g 4.0g")':
-        print feat.GetStyleString()
+        print(feat.GetStyleString())
         gdaltest.post_reason( "got wrong style string (3)" )
         return 'fail'
         
