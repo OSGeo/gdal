@@ -319,6 +319,22 @@
         <field name="PSO" length="15" type="real"/>
     </tre>
 
+    <tre name="PIAIMB" md_prefix="NITF_PIAIMB_" length="337" location="image">
+        <field name="CLOUDCVR" length="3"/>
+        <field name="SRP" length="1"/>
+        <field name="SENSMODE" length="12"/>
+        <field name="SENSNAME" length="18"/>
+        <field name="SOURCE" length="255"/>
+        <field name="COMGEN" length="2"/>
+        <field name="SUBQUAL" length="1"/>
+        <field name="PIAMSNNUM" length="7"/>
+        <field name="CAMSPECS" length="32"/>
+        <field name="PROJID" length="2"/>
+        <field name="GENERATION" length="1"/>
+        <field name="ESD" length="1"/>
+        <field name="OTHERCOND" length="2"/>
+    </tre>
+
     <tre name="PIAIMC" md_prefix="NITF_PIAIMC_" length="362" location="image">
         <field name="CLOUDCVR" length="3"/>
         <field name="SRP" length="1"/>
@@ -339,6 +355,49 @@
         <field name="PREPROC" length="2"/>
         <field name="IPROJ" length="2"/>
         <field name="SATTRACK" length="8"/>
+    </tre>
+
+    <tre name="PIAPEA" length="92" location="image">
+        <field name="LASTNME" length="28" type="string"/>
+        <field name="FIRSTNME" length="28" type="string"/>
+        <field name="MIDNME" length="28" type="string"/>
+        <field name="DOB" length="6" type="string"/>
+        <field name="ASSOCTRY" length="2" type="string"/>
+    </tre>
+
+    <tre name="PIAPRC" minlength="201" maxlength="63759" location="file"> <!-- same as PIAPRD apparently ? -->
+        <field name="ACCESSID" length="64" type="string"/>
+        <field name="FMCONTROL" length="32" type="string"/>
+        <field name="SUBDET" length="1" type="string"/>
+        <field name="PRODCODE" length="2" type="string"/>
+        <field name="PRODUCERSE" length="6" type="string"/>
+        <field name="PRODIDNO" length="20" type="string"/>
+        <field name="PRODSNME" length="10" type="string"/>
+        <field name="PRODUCERCD" length="2" type="string"/>
+        <field name="PRODCRTIME" length="14" type="string"/>
+        <field name="MAPID" length="40" type="string"/>
+        <field name="SECTITLEREP" length="2" type="integer" minval="0" maxval="99"/>
+        <loop counter="SECTITLEREP" md_prefix="SECTITLE_%02d_" name="SECTITLE">
+            <field name="SECTITLE" length="40" type="string"/>
+            <field name="PPNUM" length="5" type="string"/>
+            <field name="TPP" length="3" type="integer" minval="1" maxval="999"/>
+        </loop>
+        <field name="REQORGREP" length="2" type="integer" minval="0" maxval="99"/>
+        <loop counter="REQORGREP" md_prefix="REQORG_%02d" name="REQORG">
+            <field name="" longname="REQORG" length="64" type="string"/>
+        </loop>
+        <field name="KEYWORDREP" length="2" type="integer" minval="0" maxval="99"/>
+        <loop counter="KEYWORDREP" md_prefix="KEYWORD_%02d" name="KEYWORD">
+            <field name="" longname="KEYWORD" length="255" type="string"/>
+        </loop>
+        <field name="ASSRPTREP" length="2" type="integer" minval="0" maxval="99"/>
+        <loop counter="ASSRPTREP" md_prefix="ASSRPT_%02d" name="ASSRPT">
+            <field name="" longname="ASSRPT" length="20" type="string"/>
+        </loop>
+        <field name="ATEXTREP" length="2" type="integer" minval="0" maxval="99"/>
+        <loop counter="ATEXTREP" md_prefix="ATEXT_%02d" name="ATEXT">
+            <field name="" longname="ATEXT" length="255" type="string"/>
+        </loop>
     </tre>
 
     <tre name="PIAPRD" minlength="201" maxlength="63759" location="image">
