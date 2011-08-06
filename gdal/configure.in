@@ -3067,7 +3067,7 @@ dnl ---------------------------------------------------------------------------
 dnl Java support
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(java,[  --with-java       Include Java support (ARG=yes, no or JDK home path)],,)
+AC_ARG_WITH(java,[  --with-java       Include Java support (ARG=yes, no or JDK home path)  [[default=no]]],,)
 
 AC_MSG_CHECKING([whether we should include Java support])
 
@@ -3263,6 +3263,36 @@ AC_SUBST(RASDAMAN_ENABLED,$RASDAMAN_ENABLED)
 AC_SUBST(RASDAMAN_INC,    $RASDAMAN_INC)
 AC_SUBST(RASDAMAN_LIB,    $RASDAMAN_LIB)
 
+dnl ---------------------------------------------------------------------------
+dnl Armadillo support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(armadillo,[  --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no) [[default=no]]],,)
+
+AC_MSG_CHECKING([whether we should include Armadillo support])
+
+HAVE_ARMADILLO=no
+
+if test "$with_armadillo" = "yes" ; then
+    rm -f testarmadillo.*
+    rm -f testarmadillo
+    echo '#include <armadillo>' > testarmadillo.cpp
+    echo 'int main(int argc, char** argv) { arma::mat matInput(2,2); const arma::mat& matInv = arma::inv(matInput); return 0; } ' >> testarmadillo.cpp
+    if test -z "`${CXX} testarmadillo.cpp -o testarmadillo -larmadillo 2>&1`" ; then
+        HAVE_ARMADILLO=yes
+        LIBS="-larmadillo ${LIBS}"
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+    rm -f testarmadillo.*
+    rm -f testarmadillo
+else
+    AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(HAVE_ARMADILLO,$HAVE_ARMADILLO)
+
 
 AC_OUTPUT(GDALmake.opt)
 
@@ -3335,6 +3365,7 @@ LOC_MSG([  VFK support:               ${HAVE_VFK}])
 LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
 LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
 LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
+LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
   LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])

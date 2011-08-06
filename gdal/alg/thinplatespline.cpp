@@ -5,7 +5,7 @@
  * Purpose:  Implemenentation of 2D Thin Plate Spline transformer. 
  * Author:   VIZRT Development Team.
  *
- * This code was provided by Gilad Ronnen (gro at visrt dot com) with 
+ * This code was provided by Gilad Ronnen (gro at visrt dot com) with
  * permission to reuse under the following license.
  * 
  ******************************************************************************
@@ -29,6 +29,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+#ifdef HAVE_ARMADILLO
+/* Include before #define A(r,c) because armadillo uses A in its include files */
+#include "armadillo"
+#endif
 
 #include "thinplatespline.h"
 
@@ -56,7 +61,7 @@ VizGeorefSpline2D* viz_llz2xy;
 
 #define VIZ_GEOREF_SPLINE_DEBUG 0
 
-int matrixInvert( int N, double input[], double output[] );
+static int matrixInvert( int N, double input[], double output[] );
 
 void VizGeorefSpline2D::grow_points()
 
@@ -434,7 +439,32 @@ double VizGeorefSpline2D::base_func( const double x1, const double y1,
 	return dist * log( dist );	
 }
 
-int matrixInvert( int N, double input[], double output[] )
+#ifdef HAVE_ARMADILLO
+
+static int matrixInvert( int N, double input[], double output[] )
+{
+    try
+    {
+        arma::mat matInput(input,N,N,false);
+        const arma::mat& matInv = arma::inv(matInput);
+        int row, col;
+        for(row = 0; row < N; row++)
+            for(col = 0; col < N; col++)
+                output[row * N + col] = matInv.at(row, col);
+        return true;
+        //arma::mat matInv(output,N,N,false);
+        //return arma::inv(matInv, matInput);
+    }
+    catch(...)
+    {
+        fprintf(stderr, "matrixInvert(): error occured.\n");
+        return false;
+    }
+}
+
+#else
+
+static int matrixInvert( int N, double input[], double output[] )
 {
     // Receives an array of dimension NxN as input.  This is passed as a one-
     // dimensional array of N-squared size.  It produces the inverse of the
@@ -530,14 +560,16 @@ int matrixInvert( int N, double input[], double output[] )
             temp[ k*2*N + col ] /= ftemp;
         }
 		
+        int i2 = k*2*N ;
         for ( row=0; row<N; row++ )
         {
             if ( row != k )
             {
-                ftemp = temp[ row*2*N + k ];
+                int i1 = row*2*N;
+                ftemp = temp[ i1 + k ];
                 for ( col=k; col<2*N; col++ ) 
                 {
-                    temp[ row*2*N + col ] -= ftemp * temp[ k*2*N + col ];
+                    temp[ i1 + col ] -= ftemp * temp[ i2 + col ];
                 }
             }
         }
@@ -568,3 +600,4 @@ int matrixInvert( int N, double input[], double output[] )
     delete [] temp;       // free memory
     return true;
 }
+#endif
