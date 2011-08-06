@@ -2443,7 +2443,7 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
     int bError = FALSE;
     int nTreOffset = 0;
     const char* pszMDPrefix;
-    int nMDSize = 0, nMDAlloc = 0;
+    int nMDSize, nMDAlloc;
 
     nTreLength = atoi(CPLGetXMLValue(psTreNode, "length", "-1"));
     nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
@@ -2458,6 +2458,8 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
     }
 
     pszMDPrefix = CPLGetXMLValue(psTreNode, "md_prefix", "");
+
+    nMDSize = nMDAlloc = CSLCount(papszMD);
 
     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
                                                  &nMDSize,
