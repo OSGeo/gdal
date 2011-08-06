@@ -925,6 +925,53 @@ def test_gdalwarp_33():
     return 'success'
 
 ###############################################################################
+# Test warping multiple sources
+
+def test_gdalwarp_34():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    try:
+        os.remove('tmp/testgdalwarp34.tif')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp34src_1.tif -srcwin 0 0 10 20')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp34src_2.tif -srcwin 10 0 10 20')
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/testgdalwarp34src_1.tif tmp/testgdalwarp34src_2.tif tmp/testgdalwarp34.tif')
+    os.remove('tmp/testgdalwarp34src_1.tif')
+    os.remove('tmp/testgdalwarp34src_2.tif')
+
+    ds = gdal.Open('tmp/testgdalwarp34.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    gt = ds.GetGeoTransform()
+    xsize = ds.RasterXSize
+    ysize = ds.RasterYSize
+    ds = None
+
+    os.remove('tmp/testgdalwarp34.tif')
+
+    if xsize != 20 or ysize != 20:
+        gdaltest.post_reason('bad dimensions')
+        print(xsize)
+        print(ysize)
+        return 'fail'
+
+    if cs != 4672:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+
+    if gt != (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0):
+        gdaltest.post_reason('bad gt')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -1016,6 +1063,7 @@ gdaltest_list = [
     test_gdalwarp_31,
     test_gdalwarp_32,
     test_gdalwarp_33,
+    test_gdalwarp_34,
     test_gdalwarp_cleanup
     ]
 
