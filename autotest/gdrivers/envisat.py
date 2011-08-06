@@ -52,7 +52,8 @@ def _get_mds_num(filename):
         return
 
     sph = fd.read(sph_size)
-    sph = '\n'.join(line.decode('iso8859-1').rstrip() for line in sph.splitlines())
+    sph = '\n'.join(line.decode('iso8859-1').rstrip()
+                                                for line in sph.splitlines())
     count = 0
     for block in sph.split('\n\n'):
         if block.startswith('DS_NAME'):
@@ -71,6 +72,8 @@ def _get_mds_num(filename):
 ###############################################################################
 #
 class TestEnvisat:
+    # Just a base class
+
     def __init__( self, downloadURL, fileName, size, checksum ):
         self.downloadURL = downloadURL
         self.fileName = fileName
@@ -145,70 +148,7 @@ class TestEnvisat:
         return 'success'
 
     def test_envisat_4( self ):
-        # test metadata in RECORDS domain
-
-        if not self.download_file():
-            return 'skip'
-
-        ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
-
-        product = ds.GetMetadataItem('MPH_PRODUCT')
-        record_md = ds.GetMetadata('RECORDS')
-
-        if product[:3] in ('ASA', 'SAR') and not record_md:
-            gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
-            return 'failure'
-
-        if product[:3] not in ('ASA', 'SAR', 'MER') and record_md:
-            gdaltest.post_reason('Unexpected metadata in the "RECORDS" domain.')
-            return 'failure'
-
-        if product[:3] in ('ASA', 'SAR'):
-            record = 'SQ_ADS' # it is present in all ASAR poducts
-            if product.startswith('ASA_WV'):
-                for field in ('ZERO_DOPPLER_TIME',
-                              'INPUT_MEAN',
-                              'INPUT_STD_DEV',
-                              'PHASE_CROSS_CONF'):
-                    key0 = '%s_%s' % (record, field)
-                    key1 = '%s_0_%s' % (record, field)
-                    if key0 not in record_md and key1 not in record_md:
-                        gdaltest.post_reason(
-                            'No "%s" or "%s" key in "RECORDS" domain.' %
-                                                                (key0, key1))
-                        return 'failure'
-            else:
-                for mds in range(1, ds.RasterCount + 1):
-                    for field in ('ZERO_DOPPLER_TIME',
-                                  'INPUT_MEAN',
-                                  'INPUT_STD_DEV'):
-                        key0 = 'MDS%d_%s_%s' % (mds, record, field)
-                        key1 = 'MDS%d_%s_0_%s' % (mds, record, field)
-                        if key0 not in record_md and key1 not in record_md:
-                            gdaltest.post_reason(
-                                'No "%s" or "%s" key in "RECORDS" domain.' %
-                                                                (key0, key1))
-                            return 'failure'
-        elif product[:3] in ('MER',):
-            record = 'Quality_ADS' # it is present in all MER poducts
-
-            for field in ('DSR_TIME',
-                          'ATTACH_FLAG'):
-                key0 = '%s_%s' % (record, field)
-                key1 = '%s_0_%s' % (record, field)
-                if key0 not in record_md and key1 not in record_md:
-                    gdaltest.post_reason(
-                        'No "%s" or "%s" key in "RECORDS" domain.' %
-                                                            (key0, key1))
-                    return 'failure'
-
-
-        return 'success'
-
-    def test_envisat_5( self ):
-        # test metadata in RECORDS domain
+        # test number of bands
 
         if not self.download_file():
             return 'skip'
@@ -226,13 +166,208 @@ class TestEnvisat:
 
         return 'success'
 
+    def test_envisat_5( self ):
+        # test metadata in RECORDS domain
 
-ut1 = TestEnvisat(
+        if not self.download_file():
+            return 'skip'
+
+        ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
+        if ds is None:
+            return 'fail'
+
+        product = ds.GetMetadataItem('MPH_PRODUCT')
+        record_md = ds.GetMetadata('RECORDS')
+
+        if product[:3] not in ('ASA', 'SAR', 'MER') and record_md:
+            gdaltest.post_reason('Unexpected metadata in the "RECORDS" domain.')
+            return 'failure'
+
+        return 'success'
+
+###############################################################################
+#
+class TestEnvisatASAR(TestEnvisat):
+    def test_envisat_asar_1( self ):
+        # test sensor ID
+
+        if not self.download_file():
+            return 'skip'
+
+        ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
+        if ds is None:
+            return 'fail'
+
+        product = ds.GetMetadataItem('MPH_PRODUCT')
+
+        if product[:3] not in ('ASA', 'SAR'):
+            gdaltest.post_reason('Wrong sensor ID.')
+            return 'failure'
+
+        return 'success'
+
+    def test_envisat_asar_2( self ):
+        # test metadata in RECORDS domain
+
+        if not self.download_file():
+            return 'skip'
+
+        ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
+        if ds is None:
+            return 'fail'
+
+        product = ds.GetMetadataItem('MPH_PRODUCT')
+        record_md = ds.GetMetadata('RECORDS')
+
+        if not record_md:
+            gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
+            return 'failure'
+
+        record = 'SQ_ADS' # it is present in all ASAR poducts
+        if product.startswith('ASA_WV'):
+            for field in ('ZERO_DOPPLER_TIME',
+                          'INPUT_MEAN',
+                          'INPUT_STD_DEV',
+                          'PHASE_CROSS_CONF'):
+                key0 = '%s_%s' % (record, field)
+                key1 = '%s_0_%s' % (record, field)
+                if key0 not in record_md and key1 not in record_md:
+                    gdaltest.post_reason(
+                        'No "%s" or "%s" key in "RECORDS" domain.' %
+                                                            (key0, key1))
+                    return 'failure'
+        else:
+            for mds in range(1, ds.RasterCount + 1):
+                for field in ('ZERO_DOPPLER_TIME',
+                              'INPUT_MEAN',
+                              'INPUT_STD_DEV'):
+                    key0 = 'MDS%d_%s_%s' % (mds, record, field)
+                    key1 = 'MDS%d_%s_0_%s' % (mds, record, field)
+                    if key0 not in record_md and key1 not in record_md:
+                        gdaltest.post_reason(
+                            'No "%s" or "%s" key in "RECORDS" domain.' %
+                                                            (key0, key1))
+                        return 'failure'
+
+        return 'success'
+
+###############################################################################
+#
+class TestEnvisatMERIS(TestEnvisat):
+    def test_envisat_meris_1( self ):
+        # test sensor ID
+
+        if not self.download_file():
+            return 'skip'
+
+        ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
+        if ds is None:
+            return 'fail'
+
+        product = ds.GetMetadataItem('MPH_PRODUCT')
+
+        if product[:3] not in ('MER',):
+            gdaltest.post_reason('Wrong sensor ID.')
+            return 'failure'
+
+        return 'success'
+
+    def test_envisat_meris_2( self ):
+        # test metadata in RECORDS domain
+
+        if not self.download_file():
+            return 'skip'
+
+        ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
+        if ds is None:
+            return 'fail'
+
+        record_md = ds.GetMetadata('RECORDS')
+
+        if not record_md:
+            gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
+            return 'failure'
+
+        record = 'Quality_ADS' # it is present in all MER poducts
+
+        for field in ('DSR_TIME', 'ATTACH_FLAG'):
+            key0 = '%s_%s' % (record, field)
+            key1 = '%s_0_%s' % (record, field)
+            if key0 not in record_md and key1 not in record_md:
+                gdaltest.post_reason(
+                    'No "%s" or "%s" key in "RECORDS" domain.' %
+                                                        (key0, key1))
+                return 'failure'
+
+        return 'success'
+
+    def test_envisat_meris_3( self ):
+        # test Flag bands
+
+        if not self.download_file():
+            return 'skip'
+
+        ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
+        if ds is None:
+            return 'fail'
+
+        flags_band = None
+        detector_index_band = None
+        for bandno in range(1, ds.RasterCount + 1):
+            band = ds.GetRasterBand(bandno)
+            name = band.GetDescription()
+            if 'Flags' in name:
+                flags_band = bandno
+            if name.startswith('Detector index'):
+                detector_index_band = bandno
+
+        product = ds.GetMetadataItem('MPH_PRODUCT')
+        level = product[8]
+        if level == '1':
+            if not flags_band:
+                gdaltest.post_reason('No flag band in MERIS Level 1 product.')
+                return 'failure'
+
+            band = ds.GetRasterBand(flags_band)
+            if band.DataType != gdal.GDT_Byte:
+                gdaltest.post_reason('Incorrect data type of the flag band in '
+                                     'MERIS Level 1 product.')
+                return 'failure'
+
+            if not detector_index_band:
+                gdaltest.post_reason('No "detector index" band in MERIS '
+                                     'Level 1 product.')
+                return 'failure'
+
+            band = ds.GetRasterBand(detector_index_band)
+            if band.DataType != gdal.GDT_Int16:
+                gdaltest.post_reason('Incorrect data type of the '
+                                     '"detector index" band in MERIS Level 2 '
+                                     'product.')
+                return 'failure'
+        elif level == '2':
+            if not flags_band:
+                gdaltest.post_reason('No flag band in MERIS Level 2 product.')
+                return 'failure'
+
+            band = ds.GetRasterBand(flags_band)
+            if band.DataType != gdal.GDT_UInt32:
+                gdaltest.post_reason('Incorrect data type of the flag band in '
+                                     'MERIS Level 2 product.')
+                return 'failure'
+        else:
+            gdaltest.post_reason('Invalid product level: %s.' % level)
+            return 'failure'
+
+        return 'success'
+
+
+ut1 = TestEnvisatASAR(
     'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz',
     'ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1',
     (524, 945),
     44998 )
-ut2 = TestEnvisat(
+ut2 = TestEnvisatMERIS(
     'http://earth.esa.int/services/sample_products/meris/RRC/L2/MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1.gz',
     'MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1',
     (1121, 593),
@@ -243,12 +378,15 @@ gdaltest_list = [
     ut1.test_envisat_2,
     ut1.test_envisat_3,
     ut1.test_envisat_4,
-    ut1.test_envisat_5,
+    ut1.test_envisat_asar_1,
+    ut1.test_envisat_asar_2,
     ut2.test_envisat_1,
     ut2.test_envisat_2,
     ut2.test_envisat_3,
     ut2.test_envisat_4,
-    ut2.test_envisat_5,
+    ut2.test_envisat_meris_1,
+    ut2.test_envisat_meris_2,
+    ut2.test_envisat_meris_3,
 ]
 
 
