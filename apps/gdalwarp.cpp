@@ -47,7 +47,9 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
                       const char *pszFormat, char **papszTO,
-                      char ***ppapszCreateOptions, GDALDataType eDT );
+                      char ***ppapszCreateOptions, GDALDataType eDT,
+                      void ** phTransformArg,
+                      GDALDatasetH* phSrcDS );
 
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
 static double	       dfXRes=0.0, dfYRes=0.0;
@@ -790,6 +792,9 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     int   bInitDestSetForFirst = FALSE;
 
+    void* hUniqueTransformArg = NULL;
+    GDALDatasetH hUniqueSrcDS = NULL;
+
     if( hDstDS == NULL )
     {
         if (!bQuiet && !bFormatExplicitelySet)
@@ -797,7 +802,8 @@ int main( int argc, char ** argv )
 
         hDstDS = GDALWarpCreateOutput( papszSrcFiles, pszDstFilename,pszFormat,
                                        papszTO, &papszCreateOptions, 
-                                       eOutputType );
+                                       eOutputType, &hUniqueTransformArg,
+                                       &hUniqueSrcDS);
         bCreateOutput = TRUE;
 
         if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL 
@@ -833,7 +839,10 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Open this file.                                                 */
 /* -------------------------------------------------------------------- */
-        hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
+        if (hUniqueSrcDS)
+            hSrcDS = hUniqueSrcDS;
+        else
+            hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
     
         if( hSrcDS == NULL )
             exit( 2 );
@@ -883,8 +892,11 @@ int main( int argc, char ** argv )
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
-        hTransformArg = hGenImgProjArg = 
-            GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszTO );
+        if (hUniqueTransformArg)
+            hTransformArg = hGenImgProjArg = hUniqueTransformArg;
+        else
+            hTransformArg = hGenImgProjArg =
+                GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszTO );
         
         if( hTransformArg == NULL )
             exit( 1 );
@@ -1258,12 +1270,18 @@ int main( int argc, char ** argv )
 /*                                                                      */
 /*      Create the output file based on various commandline options,    */
 /*      and the input file.                                             */
+/*      If there's just one source file, then *phTransformArg and       */
+/*      *phSrcDS will be set, in order them to be reused by main        */
+/*      function. This saves dataset re-opening, and above all transform*/
+/*      recomputation, which can be expensive in the -tps case          */
 /************************************************************************/
 
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
                       const char *pszFormat, char **papszTO, 
-                      char ***ppapszCreateOptions, GDALDataType eDT )
+                      char ***ppapszCreateOptions, GDALDataType eDT,
+                      void ** phTransformArg,
+                      GDALDatasetH* phSrcDS)
 
 
 {
@@ -1274,6 +1292,9 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     double dfWrkMinX=0, dfWrkMaxX=0, dfWrkMinY=0, dfWrkMaxY=0;
     double dfWrkResX=0, dfWrkResY=0;
     int nDstBandCount = 0;
+
+    *phTransformArg = NULL;
+    *phSrcDS = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
@@ -1459,10 +1480,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
             {
                 CPLSetConfigOption( "CHECK_WITH_INVERT_PROJ", "TRUE" );
                 CPLDebug("WARP", "Recompute out extent with CHECK_WITH_INVERT_PROJ=TRUE");
-                GDALDestroyGenImgProjTransformer(hTransformArg);
-                hTransformArg = 
-                    GDALCreateGenImgProjTransformer2( hSrcDS, NULL, papszTO );
-                    
+
                 if( GDALSuggestedWarpOutput2( hSrcDS, 
                                       GDALGenImgProjTransform, hTransformArg, 
                                       adfThisGeoTransform, 
@@ -1498,10 +1516,17 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
             dfWrkResX = MIN(dfWrkResX,adfThisGeoTransform[1]);
             dfWrkResY = MIN(dfWrkResY,ABS(adfThisGeoTransform[5]));
         }
-        
-        GDALDestroyGenImgProjTransformer( hTransformArg );
 
-        GDALClose( hSrcDS );
+        if (iSrc == 0 && papszSrcFiles[1] == NULL)
+        {
+            *phTransformArg = hTransformArg;
+            *phSrcDS = hSrcDS;
+        }
+        else
+        {
+            GDALDestroyGenImgProjTransformer( hTransformArg );
+            GDALClose( hSrcDS );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1673,6 +1698,9 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /* -------------------------------------------------------------------- */
     GDALSetProjection( hDstDS, pszThisTargetSRS );
     GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
+
+    if (*phTransformArg != NULL)
+        GDALSetGenImgProjTransformerDstGeoTransform( *phTransformArg, adfDstGeoTransform);
 
 /* -------------------------------------------------------------------- */
 /*      Try to set color interpretation of output file alpha band.      */
