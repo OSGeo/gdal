@@ -102,7 +102,7 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
 
     bWriter_ = bWriterIn;
     nWroteFeatureCount_ = 0;
-    bClosedForWriting = bWriterIn == NULL;
+    bClosedForWriting = (bWriterIn == FALSE);
 
     pszName_ = CPLStrdup(pszName);
 }
