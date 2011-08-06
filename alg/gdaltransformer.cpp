@@ -51,6 +51,8 @@ static void *GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree );
 static CPLXMLNode *GDALSerializeGenImgProjTransformer( void *pTransformArg );
 static void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree );
 
+static void GDALRefreshGenImgProjTransformer(void* hTransformArg);
+
 /************************************************************************/
 /*                          GDALTransformFunc                           */
 /*                                                                      */
@@ -347,6 +349,12 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     int    nSamplePoints = 0;
     int    nInXSize = GDALGetRasterXSize( hSrcDS );
     int    nInYSize = GDALGetRasterYSize( hSrcDS );
+
+    if (pfnTransformer == GDALGenImgProjTransform)
+    {
+        /* In case CHECK_WITH_INVERT_PROJ has been modified */
+        GDALRefreshGenImgProjTransformer(pTransformArg);
+    }
 
 #define N_PIXELSTEP 50
     int nSteps = (int) (double(MIN(nInYSize, nInXSize)) / N_PIXELSTEP + .5);
@@ -1247,6 +1255,24 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 }
 
 /************************************************************************/
+/*                  GDALRefreshGenImgProjTransformer()                  */
+/************************************************************************/
+
+void GDALRefreshGenImgProjTransformer(void* hTransformArg)
+{
+    GDALGenImgProjTransformInfo *psInfo =
+        static_cast<GDALGenImgProjTransformInfo *>( hTransformArg );
+
+    if (psInfo->pReprojectArg)
+    {
+        CPLXMLNode* psXML = GDALSerializeReprojectionTransformer(psInfo->pReprojectArg);
+        GDALDestroyReprojectionTransformer(psInfo->pReprojectArg);
+        psInfo->pReprojectArg = GDALDeserializeReprojectionTransformer(psXML);
+        CPLDestroyXMLNode(psXML);
+    }
+}
+
+/************************************************************************/
 /*                  GDALCreateGenImgProjTransformer3()                  */
 /************************************************************************/
 
@@ -2030,7 +2056,7 @@ void GDALDestroyReprojectionTransformer( void *pTransformAlg )
         delete psInfo->poForwardTransform;
 
     if( psInfo->poReverseTransform )
-    delete psInfo->poReverseTransform;
+        delete psInfo->poReverseTransform;
 
     CPLFree( psInfo );
 }
