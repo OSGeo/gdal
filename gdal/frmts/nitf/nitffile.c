@@ -1922,10 +1922,32 @@ int NITFReconcileAttachments( NITFFile *psFile )
 }
 
 /************************************************************************/
+/*                        NITFFindValFromEnd()                          */
+/************************************************************************/
+
+static const char* NITFFindValFromEnd(char** papszMD,
+                                      int nMDSize,
+                                      const char* pszVar,
+                                      const char* pszDefault)
+{
+    int nVarLen = strlen(pszVar);
+    int nIter = nMDSize-1;
+    for(;nIter >= 0;nIter--)
+    {
+        if (strncmp(papszMD[nIter], pszVar, nVarLen) == 0 &&
+            papszMD[nIter][nVarLen] == '=')
+            return papszMD[nIter] + nVarLen + 1;
+    }
+    return NULL;
+}
+
+/************************************************************************/
 /*                  NITFGenericMetadataReadTREInternal()                */
 /************************************************************************/
 
 static char** NITFGenericMetadataReadTREInternal(char **papszMD,
+                                                 int* pnMDSize,
+                                                 int* pnMDAlloc,
                                                  CPLXMLNode* psOutXMLNode,
                                                  const char* pszTREName,
                                                  const char *pachTRE,
@@ -1946,10 +1968,35 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
         {
             const char* pszName = CPLGetXMLValue(psIter, "name", NULL);
             const char* pszLongName = CPLGetXMLValue(psIter, "longname", NULL);
-            int nLength = atoi(CPLGetXMLValue(psIter, "length", "-1"));
+            const char* pszLength = CPLGetXMLValue(psIter, "length", NULL);
+            int nLength = -1;
+            if (pszLength != NULL)
+                nLength = atoi(pszLength);
+            else
+            {
+                const char* pszLengthVar = CPLGetXMLValue(psIter, "length_var", NULL);
+                if (pszLengthVar != NULL)
+                {
+                    char** papszMDIter = papszMD;
+                    while(papszMDIter != NULL && *papszMDIter != NULL)
+                    {
+                        if (strstr(*papszMDIter, pszLengthVar) != NULL)
+                        {
+                            const char* pszEqual = strchr(*papszMDIter, '=');
+                            if (pszEqual != NULL)
+                            {
+                                nLength = atoi(pszEqual + 1);
+                                break;
+                            }
+                        }
+                        papszMDIter ++;
+                    }
+                }
+            }
             if (pszName != NULL && nLength > 0)
             {
                 char* pszMDItemName;
+                char** papszTmp = NULL;
 
                 if (*pnTreOffset + nLength > nTRESize)
                 {
@@ -1963,12 +2010,23 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
 
                 pszMDItemName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, pszName));
-                NITFExtractMetadata( &papszMD, pachTRE, *pnTreOffset,
+
+                NITFExtractMetadata( &papszTmp, pachTRE, *pnTreOffset,
                                      nLength, pszMDItemName );
+                if (*pnMDSize + 1 >= *pnMDAlloc)
+                {
+                    *pnMDAlloc = *pnMDAlloc * 1.3 + 32;
+                    papszMD = (char**)CPLRealloc(papszMD, *pnMDAlloc * sizeof(char**));
+                }
+                papszMD[*pnMDSize] = papszTmp[0];
+                papszMD[(*pnMDSize) + 1] = NULL;
+                (*pnMDSize) ++;
+                papszTmp[0] = NULL;
+                CPLFree(papszTmp);
 
                 if (psOutXMLNode != NULL)
                 {
-                    const char* pszVal = CSLFetchNameValue(papszMD, pszMDItemName);
+                    const char* pszVal = strchr(papszMD[(*pnMDSize) - 1], '=') + 1;
                     CPLXMLNode* psFieldNode;
                     CPLXMLNode* psNameNode;
                     CPLXMLNode* psValueNode;
@@ -2016,7 +2074,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             {
                 char* pszMDItemName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, pszCounter));
-                nIterations = atoi(CSLFetchNameValueDef(papszMD, pszMDItemName, "-1"));
+                nIterations = atoi(NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, "-1"));
                 CPLFree(pszMDItemName);
                 if (nIterations < 0)
                 {
@@ -2037,7 +2095,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             {
                 char* pszMDItemName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, "NPART"));
-                int NPART = atoi(CSLFetchNameValueDef(papszMD, pszMDItemName, "-1"));
+                int NPART = atoi(NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, "-1"));
                 CPLFree(pszMDItemName);
                 if (NPART < 0)
                 {
@@ -2055,7 +2113,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             {
                 char* pszMDItemName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, "NUMOPG"));
-                int NUMOPG = atoi(CSLFetchNameValueDef(papszMD, pszMDItemName, "-1"));
+                int NUMOPG = atoi(NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, "-1"));
                 CPLFree(pszMDItemName);
                 if (NUMOPG < 0)
                 {
@@ -2073,10 +2131,10 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             {
                 char* pszMDNPARName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, "NPAR"));
-                int NPAR = atoi(CSLFetchNameValueDef(papszMD, pszMDNPARName, "-1"));
+                int NPAR = atoi(NITFFindValFromEnd(papszMD, *pnMDSize, pszMDNPARName, "-1"));
                 char* pszMDNPAROName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, "NPARO"));
-                int NPARO= atoi(CSLFetchNameValueDef(papszMD, pszMDNPAROName, "-1"));
+                int NPARO= atoi(NITFFindValFromEnd(papszMD, *pnMDSize, pszMDNPAROName, "-1"));
                 CPLFree(pszMDNPARName);
                 CPLFree(pszMDNPAROName);
                 if (NPAR < 0)
@@ -2093,11 +2151,60 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     CPLError( CE_Warning, CPLE_AppDefined,
                             "Invalid loop construct in %s TRE in XML ressource : "
                             "invalid 'counter' %s",
-                            pszTREName, "NPAR" );
+                            pszTREName, "NPAR0" );
                     *pbError = TRUE;
                     break;
                 }
                 nIterations = NPAR*NPARO;
+            }
+            else if (pszFormula != NULL &&
+                     strcmp(pszFormula, "NPLN-1") == 0)
+            {
+                char* pszMDItemName = CPLStrdup(
+                            CPLSPrintf("%s%s", pszMDPrefix, "NPLN"));
+                int NPLN = atoi(NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, "-1"));
+                CPLFree(pszMDItemName);
+                if (NPLN < 0)
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "invalid 'counter' %s",
+                            pszTREName, "NPLN" );
+                    *pbError = TRUE;
+                    break;
+                }
+                nIterations = NPLN-1;
+            }
+            else if (pszFormula != NULL &&
+                     strcmp(pszFormula, "NXPTS*NYPTS") == 0)
+            {
+                char* pszMDNPARName = CPLStrdup(
+                            CPLSPrintf("%s%s", pszMDPrefix, "NXPTS"));
+                int NXPTS = atoi(NITFFindValFromEnd(papszMD, *pnMDSize, pszMDNPARName, "-1"));
+                char* pszMDNPAROName = CPLStrdup(
+                            CPLSPrintf("%s%s", pszMDPrefix, "NYPTS"));
+                int NYPTS= atoi(NITFFindValFromEnd(papszMD, *pnMDSize, pszMDNPAROName, "-1"));
+                CPLFree(pszMDNPARName);
+                CPLFree(pszMDNPAROName);
+                if (NXPTS < 0)
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "invalid 'counter' %s",
+                            pszTREName, "NXPTS" );
+                    *pbError = TRUE;
+                    break;
+                }
+                if (NYPTS < 0)
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "invalid 'counter' %s",
+                            pszTREName, "NYPTS" );
+                    *pbError = TRUE;
+                    break;
+                }
+                nIterations = NXPTS*NYPTS;
             }
             else
             {
@@ -2191,6 +2298,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     }
 
                     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
+                                                                 pnMDSize,
+                                                                 pnMDAlloc,
                                                                  psGroupNode,
                                                                  pszTREName,
                                                                  pachTRE,
@@ -2215,8 +2324,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                             CPLSPrintf("%s%s", pszMDPrefix, "QSS"));
                 char* pszQODName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, "QOD"));
-                const char* pszQSSVal = CSLFetchNameValue(papszMD, pszQSSName);
-                const char* pszQODVal = CSLFetchNameValue(papszMD, pszQODName);
+                const char* pszQSSVal = NITFFindValFromEnd(papszMD, *pnMDSize, pszQSSName, NULL);
+                const char* pszQODVal = NITFFindValFromEnd(papszMD, *pnMDSize, pszQODName, NULL);
                 if (pszQSSVal == NULL)
                 {
                     CPLDebug("NITF", "Cannot find if cond variable %s", "QSS");
@@ -2228,6 +2337,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 else if (strcmp(pszQSSVal, "U") != 0 && strcmp(pszQODVal, "Y") != 0)
                 {
                     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
+                                                                 pnMDSize,
+                                                                 pnMDAlloc,
                                                                  psOutXMLNode,
                                                                  pszTREName,
                                                                  pachTRE,
@@ -2256,7 +2367,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 pszCondVar[pszEqual - pszCond] = '\0';
                 pszMDItemName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, pszCondVar));
-                pszCondVal = CSLFetchNameValue(papszMD, pszMDItemName);
+                pszCondVal = NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, NULL);
                 if (pszCondVal == NULL)
                 {
                     CPLDebug("NITF", "Cannot find if cond variable %s",
@@ -2266,6 +2377,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                          (!bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0))
                 {
                     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
+                                                                 pnMDSize,
+                                                                 pnMDAlloc,
                                                                  psOutXMLNode,
                                                                  pszTREName,
                                                                  pachTRE,
@@ -2295,6 +2408,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             if (*pnTreOffset < nTRESize)
             {
                 papszMD = NITFGenericMetadataReadTREInternal(papszMD,
+                                                             pnMDSize,
+                                                             pnMDAlloc,
                                                              psOutXMLNode,
                                                              pszTREName,
                                                              pachTRE,
@@ -2328,6 +2443,7 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
     int bError = FALSE;
     int nTreOffset = 0;
     const char* pszMDPrefix;
+    int nMDSize = 0, nMDAlloc = 0;
 
     nTreLength = atoi(CPLGetXMLValue(psTreNode, "length", "-1"));
     nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
@@ -2344,6 +2460,8 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
     pszMDPrefix = CPLGetXMLValue(psTreNode, "md_prefix", "");
 
     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
+                                                 &nMDSize,
+                                                 &nMDAlloc,
                                                  NULL,
                                                  pszTREName,
                                                  pachTRE,
@@ -2448,6 +2566,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
     int nTreOffset = 0;
     CPLXMLNode* psTreNode;
     CPLXMLNode* psOutXMLNode = NULL;
+    int nMDSize = 0, nMDAlloc = 0;
 
     psTreNode = NITFFindTREXMLDescFromName(psFile, pszTREName);
     if (psTreNode == NULL)
@@ -2477,14 +2596,16 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
                      CXT_Text, pszTREName);
 
     CSLDestroy(NITFGenericMetadataReadTREInternal(NULL,
-                                       psOutXMLNode,
-                                       pszTREName,
-                                       pachTRE,
-                                       nTRESize,
-                                       psTreNode,
-                                       &nTreOffset,
-                                       "",
-                                       &bError));
+                                                  &nMDSize,
+                                                  &nMDAlloc,
+                                                  psOutXMLNode,
+                                                  pszTREName,
+                                                  pachTRE,
+                                                  nTRESize,
+                                                  psTreNode,
+                                                  &nTreOffset,
+                                                  "",
+                                                  &bError));
 
     if (bError == FALSE && nTreLength > 0 && nTreOffset != nTreLength)
     {

@@ -444,6 +444,64 @@
         </loop>
     </tre>
 
+    <tre name="RSMAPA" minlength="507" maxlength="1243" location="image">
+        <field name="IID" length="80" type="string"/>
+        <field name="EDITION" length="40" type="string"/>
+        <field name="TID" length="40" type="string"/>
+        <field name="NPAR" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="XUOL" length="21" type="real" unit="meters"/>
+        <field name="YUOL" length="21" type="real" unit="meters"/>
+        <field name="ZUOL" length="21" type="real" unit="meters"/>
+        <field name="XUXL" length="21" type="real"/>
+        <field name="XUYL" length="21" type="real"/>
+        <field name="XUZL" length="21" type="real"/>
+        <field name="YUXL" length="21" type="real"/>
+        <field name="YUYL" length="21" type="real"/>
+        <field name="YUZL" length="21" type="real"/>
+        <field name="ZUXL" length="21" type="real"/>
+        <field name="ZUYL" length="21" type="real"/>
+        <field name="ZUZL" length="21" type="real"/>
+        <field name="IRO" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IRX" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IRY" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IRZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IRXX" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IRXY" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IRXZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IRYY" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IRYZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IRZZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="IC0" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="ICX" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="ICY" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="ICZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="ICXX" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="ICXY" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="ICXZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="ICYY" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="ICYZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="ICZZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GXO" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GYO" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GZO" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GXR" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GYR" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GZR" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GS" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GXX" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GXY" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GXZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GYX" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GYY" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GYZ" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GZX" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GZY" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="GZZ" length="2" type="integer" minval="1" maxval="36"/>
+        <loop counter="NPAR" md_prefix="PAR_%02d_" name="PAR">
+            <field name="PARVAL" length="21" type="real"/>
+        </loop>
+    </tre>
+
     <tre name="RSMDCA" minlength="597" maxlength="99988" location="image">
         <field name="IID" length="80" type="string"/>
         <field name="EDITION" length="40" type="string"/>
@@ -600,6 +658,71 @@
         </if>
     </tre>
 
+    <tre name="RSMGGA" minlength="390" maxlength="99988" location="image">
+        <field name="IID" length="80" type="string"/>
+        <field name="EDITION" length="40" type="string"/>
+        <field name="GGRSN" length="3" type="integer" minval="1" maxval="256"/>
+        <field name="GGCSN" length="3" type="integer" minval="1" maxval="256"/>
+        <field name="GGRFEP" length="21" type="real"/>
+        <field name="GGCFEP" length="21" type="real"/>
+        <field name="INTORD" length="1" type="integer" minval="0" maxval="3"/>
+        <field name="NPLN" length="3" type="integer" minval="2" maxval="999"/>
+        <field name="DELTAZ" length="21" type="real"/>
+        <field name="DELTAX" length="21" type="real"/>
+        <field name="DELTAY" length="21" type="real"/>
+        <field name="ZPLN1" length="21" type="real"/>
+        <field name="XIPLN1" length="21" type="real"/>
+        <field name="YIPLN1" length="21" type="real"/>
+        <field name="REFROW" length="9" type="integer"/>
+        <field name="REFCOL" length="9" type="integer"/>
+        <field name="TNUMRD" length="2" type="integer" minval="3" maxval="31"/>
+        <field name="TNUMCD" length="2" type="integer" minval="3" maxval="31"/>
+        <field name="FNUMRD" length="1" type="integer" minval="1" maxval="3"/>
+        <field name="FNUMCD" length="1" type="integer" minval="1" maxval="3"/>
+        <loop formula="NPLN-1" name="IG" md_prefix="IG_%03d_"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+            <field name="IXO" length="4" type="integer"/>
+            <field name="IYO" length="4" type="integer"/>
+        </loop>
+        <loop counter="NPLN" name="GP" md_prefix="GP_%03d_">
+            <field name="NXPTS" length="3" type="integer" minval="2"/>
+            <field name="NYPTS" length="3" type="integer" minval="2"/>
+            <loop formula="NXPTS*NYPTS" name="GPCOORD" md_prefix="GPCOORD_%06d_"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+                <field name="RCOORD" length_var="TNUMRD" type="integer"/>
+                <field name="CCOORD" length_var="TNUMCD" type="integer"/>
+            </loop>
+        </loop>
+    </tre>
+
+    <tre name="RSMGIA" length="591" location="image">
+        <field name="IID" length="80" type="string"/>
+        <field name="EDITION" length="40" type="string"/>
+        <field name="GR0" length="21" type="real"/>
+        <field name="GRX" length="21" type="real"/>
+        <field name="GRY" length="21" type="real"/>
+        <field name="GRZ" length="21" type="real"/>
+        <field name="GRXX" length="21" type="real"/>
+        <field name="GRXY" length="21" type="real"/>
+        <field name="GRXZ" length="21" type="real"/>
+        <field name="GRYY" length="21" type="real"/>
+        <field name="GRYZ" length="21" type="real"/>
+        <field name="GRZZ" length="21" type="real"/>
+        <field name="GC0" length="21" type="real"/>
+        <field name="GCX" length="21" type="real"/>
+        <field name="GCY" length="21" type="real"/>
+        <field name="GCZ" length="21" type="real"/>
+        <field name="GCXX" length="21" type="real"/>
+        <field name="GCXY" length="21" type="real"/>
+        <field name="GCXZ" length="21" type="real"/>
+        <field name="GCYY" length="21" type="real"/>
+        <field name="GCYZ" length="21" type="real"/>
+        <field name="GCZZ" length="21" type="real"/>
+        <field name="GRNIS" length="3" type="integer"/>
+        <field name="GCNIS" length="3" type="integer"/>
+        <field name="GTNIS" length="3" type="integer"/>
+        <field name="GRSSIZ" length="21" type="real"/>
+        <field name="GCSSIZ" length="21" type="real"/>
+    </tre>
+
     <tre name="RSMIDA" length="1628" location="image">
         <field name="IID" length="80" type="string"/>
         <field name="EDITION" length="40" type="string"/>
@@ -730,6 +853,36 @@
         <loop counter="CDTRMS" name="CDPCF" md_prefix="CDPCF_%03d">
             <field name="" longname="CDPCF" length="21" type="real"/>
         </loop>
+    </tre>
+
+    <tre name="RSMPIA" length="591" location="image">
+        <field name="IID" length="80" type="string"/>
+        <field name="EDITION" length="40" type="string"/>
+        <field name="R0" length="21" type="real"/>
+        <field name="RX" length="21" type="real"/>
+        <field name="RY" length="21" type="real"/>
+        <field name="RZ" length="21" type="real"/>
+        <field name="RXX" length="21" type="real"/>
+        <field name="RXY" length="21" type="real"/>
+        <field name="RXZ" length="21" type="real"/>
+        <field name="RYY" length="21" type="real"/>
+        <field name="RYZ" length="21" type="real"/>
+        <field name="RZZ" length="21" type="real"/>
+        <field name="C0" length="21" type="real"/>
+        <field name="CX" length="21" type="real"/>
+        <field name="CY" length="21" type="real"/>
+        <field name="CZ" length="21" type="real"/>
+        <field name="CXX" length="21" type="real"/>
+        <field name="CXY" length="21" type="real"/>
+        <field name="CXZ" length="21" type="real"/>
+        <field name="CYY" length="21" type="real"/>
+        <field name="CYZ" length="21" type="real"/>
+        <field name="CZZ" length="21" type="real"/>
+        <field name="RNIS" length="3" type="integer"/>
+        <field name="CNIS" length="3" type="integer"/>
+        <field name="TNIS" length="3" type="integer"/>
+        <field name="RSSIZ" length="21" type="real"/>
+        <field name="CSSIZ" length="21" type="real"/>
     </tre>
 
     <tre name="SOURCB" minlength="906" maxlength="99985" location="image">
