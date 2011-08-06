@@ -890,7 +890,7 @@ long VFKDataBlock::LoadGeometry()
     end = clock();
     
     CPLDebug("OGR_VFK", "VFKDataBlock::LoadGeometry(): name=%s nfeatures=%ld sec=%ld",
-	     m_pszName, nfeatures, (end - start) / CLOCKS_PER_SEC);
+	     m_pszName, nfeatures, (long)((end - start) / CLOCKS_PER_SEC));
     
     return nfeatures;
 }
