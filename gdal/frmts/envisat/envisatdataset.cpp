@@ -44,6 +44,113 @@ CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
+/*                        MerisL2FlagBand                         */
+/* ==================================================================== */
+/************************************************************************/
+class MerisL2FlagBand : public GDALPamRasterBand
+{
+  public:
+    MerisL2FlagBand( GDALDataset *, int, FILE*, off_t, off_t );
+    virtual ~MerisL2FlagBand();
+    virtual CPLErr IReadBlock( int, int, void * );
+
+  private:
+    off_t nImgOffset;
+    off_t nPrefixBytes;
+    size_t nBytePerPixel;
+    size_t nRecordSize;
+    size_t nDataSize;
+    GByte *pReadBuf;
+    FILE *fpImage;
+};
+
+/************************************************************************/
+/*                        MerisL2FlagBand()                       */
+/************************************************************************/
+MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDS, int nBand,
+                                  FILE* fpImage, off_t nImgOffset,
+                                  off_t nPrefixBytes )
+{
+    this->poDS = (GDALDataset *) poDS;
+    this->nBand = nBand;
+
+    this->fpImage = fpImage;
+    this->nImgOffset = nImgOffset;
+    this->nPrefixBytes = nPrefixBytes;
+
+    eDataType = GDT_UInt32;
+
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
+    nBytePerPixel = 3;
+
+    nDataSize = nBlockXSize * nBytePerPixel;
+    nRecordSize = nPrefixBytes + nDataSize;
+
+    pReadBuf = (GByte *) CPLMalloc( nRecordSize );
+}
+
+
+/************************************************************************/
+/*                        ~MerisL2FlagBand()                       */
+/************************************************************************/
+MerisL2FlagBand::~MerisL2FlagBand()
+{
+    CPLFree( pReadBuf );
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+CPLErr MerisL2FlagBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                    void * pImage )
+{
+    CPLAssert( nBlockXOff == 0 );
+    CPLAssert( pReadBuf != NULL );
+
+    off_t nOffset = nImgOffset + nPrefixBytes +
+                    nBlockYOff * nBlockYSize * nRecordSize;
+
+    if ( VSIFSeek( fpImage, nOffset, SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Seek to %d for scanline %d failed.\n",
+                  (int)nOffset, nBlockYOff );
+        return CE_Failure;
+    }
+
+    if ( VSIFRead( pReadBuf, 1, nDataSize, fpImage ) != nDataSize )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Read of %d bytes for scanline %d failed.\n",
+                  (int)nDataSize, nBlockYOff );
+        return CE_Failure;
+    }
+
+    unsigned iImg, iBuf;
+    for( iImg = 0, iBuf = 0;
+         iImg < nBlockXSize * sizeof(GDT_UInt32);
+         iImg += sizeof(GDT_UInt32), iBuf += nBytePerPixel )
+    {
+#ifdef CPL_LSB
+        ((GByte*) pImage)[iImg] = pReadBuf[iBuf + 2];
+        ((GByte*) pImage)[iImg + 1] = pReadBuf[iBuf + 1];
+        ((GByte*) pImage)[iImg + 2] = pReadBuf[iBuf];
+        ((GByte*) pImage)[iImg + 3] = 0;
+#else
+        ((GByte*) pImage)[iImg] = 0;
+        ((GByte*) pImage)[iImg + 1] = pReadBuf[iBuf];
+        ((GByte*) pImage)[iImg + 2] = pReadBuf[iBuf + 1];
+        ((GByte*) pImage)[iImg + 3] = pReadBuf[iBuf + 2];
+#endif
+    }
+
+    return CE_None;
+}
+
+
+/************************************************************************/
+/* ==================================================================== */
 /*				EnvisatDataset				*/
 /* ==================================================================== */
 /************************************************************************/
@@ -815,6 +922,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int num_dsr2, dsr_size2, iBand = 0;
     const char *pszDSName;
+    char szBandName[128];
     bool bMiltiChannel;
 
     for( ds_index = 0;
@@ -828,8 +936,8 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
             continue;
 
         if( EQUALN(pszProduct,"MER",3) && (pszProduct[8] == '2') &&
-            ((strstr(pszDSName, "MDS(16)") != NULL) ||
-             (strstr(pszDSName, "MDS(19)") != NULL)) )
+            ( (strstr(pszDSName, "MDS(16)") != NULL) ||
+              (strstr(pszDSName, "MDS(19)") != NULL)) )
             bMiltiChannel = true;
         else
             bMiltiChannel = false;
@@ -850,10 +958,51 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /*       Handle MERIS Level 2 datasets with data type different from    */
 /*       the one declared in the SPH                                    */
 /* -------------------------------------------------------------------- */
+        else if( EQUALN(pszProduct,"MER",3) &&
+                 (strstr(pszDSName, "Flags") != NULL) )
+        {
+            if (pszProduct[8] == '1')
+            {
+                // Flags
+                poDS->SetBand( iBand+1,
+                           new RawRasterBand( poDS, iBand+1, poDS->fpImage,
+                                              ds_offset + nPrefixBytes, 3,
+                                              dsr_size, GDT_Byte, bNative ) );
+                iBand++;
+
+                poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
+
+                // Detector indices
+                poDS->SetBand( iBand+1,
+                           new RawRasterBand( poDS, iBand+1, poDS->fpImage,
+                                              ds_offset + nPrefixBytes + 1,
+                                              3, dsr_size, GDT_Int16,
+                                              bNative ) );
+                iBand++;
+
+                const char *pszSuffix = strstr( pszDSName, "MDS" );
+                if ( pszSuffix != NULL)
+                    sprintf( szBandName, "Detector index %s", pszSuffix );
+                else
+                    sprintf( szBandName, "Detector index" );
+                poDS->GetRasterBand(iBand)->SetDescription( szBandName );
+            }
+            else if ( (pszProduct[8] == '2') &&
+                      (dsr_size2 >= 3 * poDS->nRasterXSize ) )
+            {
+                int nFlagPrefixBytes = dsr_size2 - 3 * poDS->nRasterXSize;
+
+                poDS->SetBand( iBand+1,
+                       new MerisL2FlagBand( poDS, iBand+1, poDS->fpImage,
+                                            ds_offset, nFlagPrefixBytes ) );
+                iBand++;
+
+                poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
+            }
+        }
         else if( EQUALN(pszProduct,"MER",3) && (pszProduct[8] == '2') )
         {
             int nPrefixBytes2, nSubBands, nSubBandIdx, nSubBandOffset;
-            char szBandName[128];
 
             int nPixelSize = 1;
             GDALDataType eDataType2 = GDT_Byte;
