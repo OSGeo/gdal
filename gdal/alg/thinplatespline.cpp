@@ -397,16 +397,25 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars
 			fact * rhs[v][rightP+3];
 		break;
 	case VIZ_GEOREF_SPLINE_FULL :
-		for ( v = 0; v < _nof_vars; v++ )
-			vars[v] = coef[v][0] + coef[v][1] * Px + coef[v][2] * Py;
-		
-		for ( r = 0; r < _nof_points; r++ )
-		{
-			tmp = base_func( Px, Py, x[r], y[r] );
-			for ( v= 0; v < _nof_vars; v++ )
-				vars[v] += coef[v][r+3] * tmp;
-		}
-		break;
+    {
+        for ( v = 0; v < _nof_vars; v++ )
+            vars[v] = coef[v][0] + coef[v][1] * Px + coef[v][2] * Py;
+
+        const double dfPxMinusPy = Px - Py;
+        const double dfSqPxMinusPy = dfPxMinusPy * dfPxMinusPy;
+        for ( r = 0; r < _nof_points; r++ )
+        {
+            const double dfXrMinuxYr = x[r] - y[r];
+            const double dist = dfSqPxMinusPy + dfXrMinuxYr * dfXrMinuxYr;
+            if (dist)
+                tmp = dist * log( dist );
+            else
+                tmp = 0;
+            for ( v= 0; v < _nof_vars; v++ )
+                vars[v] += coef[v][r+3] * tmp;
+        }
+        break;
+    }
 	case VIZ_GEOREF_SPLINE_POINT_WAS_ADDED :
 		fprintf(stderr, " A point was added after the last solve\n");
 		fprintf(stderr, " NO interpolation - return values are zero\n");
