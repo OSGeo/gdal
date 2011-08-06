@@ -51,9 +51,14 @@
     <xs:group name="itemType">
         <xs:sequence>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element name="field" type="fieldType"/>
+                <xs:element name="field" type="fieldType">
+                    <xs:key name="att1">
+                        <xs:selector xpath="."/>
+                        <xs:field xpath="@length|@length_var"/>
+                    </xs:key>
+                </xs:element>
                 <xs:element name="loop" type="loopType">
-                    <xs:key name="att">
+                    <xs:key name="att2">
                         <xs:selector xpath="."/>
                         <xs:field xpath="@counter|@iterations|@formula"/>
                     </xs:key>
@@ -76,6 +81,8 @@
                         <xs:enumeration value="(NPART+1)*(NPART)/2"/>
                         <xs:enumeration value="(NUMOPG+1)*(NUMOPG)/2"/>
                         <xs:enumeration value="NPAR*NPARO"/>
+                        <xs:enumeration value="NPLN-1"/>
+                        <xs:enumeration value="NXPTS*NYPTS"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>
@@ -111,7 +118,10 @@
     </xs:complexType>
 
     <xs:complexType name="fieldType">
-        <xs:attribute name="length" type="positiveInteger"/>
+        <!-- xs:choice -->
+            <xs:attribute name="length" type="positiveInteger"/>
+            <xs:attribute name="length_var" type="xs:string"/>
+        <!-- /xs:choice -->
         <xs:attribute name="name" type="xs:string" use="optional"/>
         <xs:attribute name="longname" type="xs:string" use="optional"/>
         <xs:attribute name="type" use="optional">
