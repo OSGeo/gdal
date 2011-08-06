@@ -419,6 +419,8 @@ JVM_LIB  =   @JVM_LIB@
 
 MDB_ENABLED =   @MDB_ENABLED@
 
+HAVE_ARMADILLO = @HAVE_ARMADILLO@
+
 #
 #	Note these codes have to exactly match the format directory names, 
 #	and their uppercase form should be the format portion of the

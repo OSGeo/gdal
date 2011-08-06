@@ -15,6 +15,10 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
 
+ifeq ($(HAVE_ARMADILLO),yes)
+CPPFLAGS 	:=	-DHAVE_ARMADILLO
+endif
+
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(OPENCL_FLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
