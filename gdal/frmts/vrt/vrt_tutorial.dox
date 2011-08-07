@@ -682,7 +682,7 @@ calling the pixel function, and the imaginary portion would be lost.
   <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
     <Description>Magnitude</Description>
     <PixelFunctionType>MyFirstFunction</PixelFunctionType>
-    <SourceTransferType>"CFloat64"</SourceTransferType>
+    <SourceTransferType>CFloat64</SourceTransferType>
     ...
 \endcode
 
