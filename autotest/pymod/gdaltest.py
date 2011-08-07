@@ -171,6 +171,13 @@ def summarize():
         print('As GDAL_RUN_SLOW_TESTS environment variable is not defined, %d "slow" tests have been skipped' % count_skipped_tests_slow)
     print('')
 
+    sys.path.append( 'gcore' )
+    sys.path.append( '../gcore' )
+    import testnonboundtoswig
+    testnonboundtoswig.OSRCleanup()
+    testnonboundtoswig.GDALDestroyDriverManager()
+    testnonboundtoswig.OGRCleanupAll()
+
     return failure_counter + blow_counter
 
 ###############################################################################

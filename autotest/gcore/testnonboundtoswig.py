@@ -28,7 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdal
+from osgeo import gdal
 import sys
 import os
 from sys import version_info
@@ -42,6 +42,7 @@ except:
 
 import gdaltest
 
+gdal_handle_init = False
 gdal_handle = None
 gdal_handle_stdcall = None
 
@@ -50,7 +51,14 @@ gdal_handle_stdcall = None
 
 def testnonboundtoswig_init():
 
-    global gdal_handle, gdal_handle_stdcall
+    global gdal_handle_init, gdal_handle, gdal_handle_stdcall
+
+    if gdal_handle_init:
+        if gdal_handle is None:
+            return 'skip'
+        return 'success'
+
+    gdal_handle_init = True
 
     try:
         ctypes.cdll
@@ -88,6 +96,60 @@ def testnonboundtoswig_init():
 
     print('cannot find gdal shared object')
     return 'skip'
+
+###############################################################################
+# Call GDALDestroyDriverManager()
+
+def GDALDestroyDriverManager():
+
+    if gdal_handle is None:
+        testnonboundtoswig_init()
+
+    if gdal_handle is None:
+        return 'skip'
+
+    gdal_handle_stdcall.GDALDestroyDriverManager.argtypes = [ ]
+    gdal_handle_stdcall.GDALDestroyDriverManager.restype = None
+
+    gdal_handle_stdcall.GDALDestroyDriverManager()
+
+    return 'success'
+
+###############################################################################
+# Call OGRCleanupAll()
+
+def OGRCleanupAll():
+
+    if gdal_handle is None:
+        testnonboundtoswig_init()
+
+    if gdal_handle is None:
+        return 'skip'
+
+    gdal_handle_stdcall.OGRCleanupAll.argtypes = [ ]
+    gdal_handle_stdcall.OGRCleanupAll.restype = None
+
+    gdal_handle_stdcall.OGRCleanupAll()
+
+    return 'success'
+
+###############################################################################
+# Call OSRCleanup()
+
+def OSRCleanup():
+
+    if gdal_handle is None:
+        testnonboundtoswig_init()
+
+    if gdal_handle is None:
+        return 'skip'
+
+    gdal_handle.OSRCleanup.argtypes = [ ]
+    gdal_handle.OSRCleanup.restype = None
+
+    gdal_handle.OSRCleanup()
+
+    return 'success'
 
 ###############################################################################
 # Test GDALSimpleImageWarp
