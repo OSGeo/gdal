@@ -40,6 +40,53 @@ import osr
 import ogr
 
 ###############################################################################
+# Return True if proj is at least 4.8.0
+
+have_proj480_flag = None
+
+def have_proj480():
+
+    global have_proj480_flag
+
+    if have_proj480_flag is not None:
+        return have_proj480_flag
+
+    try:
+        import ctypes
+    except:
+        print('cannot find ctypes')
+        have_proj480_flag = False
+        return have_proj480_flag
+
+    handle = None
+    for name in ["libproj.so", "proj.dll", "libproj.dylib"]:
+        try:
+            handle = ctypes.cdll.LoadLibrary(name)
+        except:
+            pass
+    if handle is None:
+        print('cannot load libproj.so, proj.dll or libproj.dylib')
+        have_proj480_flag = False
+        return have_proj480_flag
+
+    try:
+        handle.pj_init
+    except:
+        print('cannot find pj_init symbol : weird')
+        have_proj480_flag = False
+        return have_proj480_flag
+
+    # Proj4.8.0 has introduced the pj_etmerc() function. Test for it
+    try:
+        handle.pj_etmerc
+        have_proj480_flag = True
+        return have_proj480_flag
+    except:
+        print('cannot find pj_etmerc : PROJ < 4.8.0')
+        have_proj480_flag = False
+        return have_proj480_flag
+
+###############################################################################
 # Test the the +k_0 flag works as well as +k when consuming PROJ.4 format.
 # This is from Bugzilla bug 355.
 #
@@ -355,9 +402,7 @@ def osr_proj4_11():
                      '+proj=merc +lon_0=2 +k=5 +x_0=3 +y_0=4',
                      '+proj=stere +lat_0=90 +lat_ts=1 +lon_0=2 +k=2 +x_0=3 +y_0=4',
                      '+proj=stere +lat_0=-90 +lat_ts=-1 +lon_0=2 +k=2 +x_0=3 +y_0=4',
-
-                     # Disabled because proj-4.7.0-4.fc15.x86_64 crashes on that
-                     #'+proj=sterea +lat_0=45 +lon_0=2 +k=2 +x_0=3 +y_0=4',
+                     '+proj=sterea +lat_0=45 +lon_0=2 +k=2 +x_0=3 +y_0=4',
 
                      #'+proj=stere +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
                      '+proj=eqc +lat_ts=0 +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
@@ -407,6 +452,11 @@ def osr_proj4_11():
                      ]
 
     for proj4str in proj4strlist:
+
+        # Disabled because proj-4.7.0-4.fc15.x86_64 crashes on that
+        if proj4str.find('sterea') != -1 and not have_proj480():
+            continue
+
         srs = osr.SpatialReference()
         #print(proj4str)
         srs.ImportFromProj4(proj4str)
