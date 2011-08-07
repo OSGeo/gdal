@@ -294,8 +294,8 @@ void PDSDataset::ParseSRS()
 
     value = GetKeyword("IMAGE_MAP_PROJECTION.MAP_SCALE");
     if (strlen(value) > 0 ) {
-        dfXDim = (float) atof(value);
-        dfYDim = (float) atof(value) * -1;
+        dfXDim = atof(value);
+        dfYDim = atof(value) * -1;
         
         CPLString unit = GetKeywordUnit("IMAGE_MAP_PROJECTION.MAP_SCALE",2); //KM
         //value = GetKeywordUnit("IMAGE_MAP_PROJECTION.MAP_SCALE",3); //PIXEL
@@ -345,14 +345,14 @@ void PDSDataset::ParseSRS()
     /***********   Grab LINE_PROJECTION_OFFSET ************/
     value = GetKeyword("IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
-        yulcenter = (float) atof(value);
+        yulcenter = atof(value);
         dfULYMap = ((yulcenter + dfLineOffset_Shift) * -dfYDim * dfLineOffset_Mult);
         //notice dfYDim is negative here which is why it is again negated here
     }
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
     value = GetKeyword("IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
-        xulcenter = (float) atof(value);
+        xulcenter = atof(value);
         dfULXMap = ((xulcenter + dfSampleOffset_Shift) * dfXDim * dfSampleOffset_Mult);
     }
 

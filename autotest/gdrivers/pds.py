@@ -115,7 +115,7 @@ def pds_3():
 def pds_4():
 
     tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 3418 )
-    gt_expected = (6119184.37008214, 1.0113804340362549, 0.0, -549696.39108347893, 0.0, -1.0113804340362549)
+    gt_expected = (6119184.3590369327, 1.0113804322107001, 0.0, -549696.39009125973, 0.0, -1.0113804322107001)
     return tst.testOpen( check_gt = gt_expected )
 
 ###############################################################################
@@ -134,7 +134,7 @@ def pds_6():
 
     tst = gdaltest.GDALTest( 'PDS', 'ESP_013951_1955_RED.LBL', 1, 4672 )
 
-    gt_expected = (-6139197.75, 0.5, 0.0, 936003.0, 0.0, -0.5)
+    gt_expected = (-6139197.5, 0.5, 0.0, 936003.0, 0.0, -0.5)
     
     if tst.testOpen( check_gt=gt_expected ) != 'success':
         return 'fail'
