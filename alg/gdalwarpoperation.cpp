@@ -1261,11 +1261,12 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
                 memset( pBandData, 
                         MAX(0,MIN(255,(int)adfInitRealImag[0])), 
                         nBandSize);
-            else if( adfInitRealImag[0] == 0.0 && adfInitRealImag[1] == 0 )
+            else if( !CPLIsNan(adfInitRealImag[0]) && adfInitRealImag[0] == 0.0 &&
+                     !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0 )
             {
                 memset( pBandData, 0, nBandSize );
             }
-            else if( adfInitRealImag[1] == 0.0 )
+            else if( !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0 )
             {
                 GDALCopyWords( &adfInitRealImag, GDT_Float64, 0, 
                                pBandData,psOptions->eWorkingDataType,nWordSize,
