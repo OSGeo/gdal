@@ -88,7 +88,12 @@ static const char* VSICurlGetCacheFileName()
     return "gdal_vsicurl_cache.bin";
 }
 
-static int CSLFindStringSensitive( char ** papszList, const char * pszTarget )
+/************************************************************************/
+/*          VSICurlFindStringSensitiveExceptEscapeSequences()           */
+/************************************************************************/
+
+static int VSICurlFindStringSensitiveExceptEscapeSequences( char ** papszList,
+                                                            const char * pszTarget )
 
 {
     int         i;
@@ -98,11 +103,57 @@ static int CSLFindStringSensitive( char ** papszList, const char * pszTarget )
 
     for( i = 0; papszList[i] != NULL; i++ )
     {
-        if( strcmp(papszList[i],pszTarget) == 0 )
+        const char* pszIter1 = papszList[i];
+        const char* pszIter2 = pszTarget;
+        char ch1, ch2;
+        /* The comparison is case-sensitive, escape for escaped */
+        /* sequences where letters of the hexadecimal sequence */
+        /* can be uppercase or lowercase depending on the quoting algorithm */
+        while(TRUE)
+        {
+            ch1 = *pszIter1;
+            ch2 = *pszIter2;
+            if (ch1 == '\0' || ch2 == '\0')
+                break;
+            if (ch1 == '%' && ch2 == '%' &&
+                pszIter1[1] != '\0' && pszIter1[2] != '\0' &&
+                pszIter2[1] != '\0' && pszIter2[2] != '\0')
+            {
+                if (!EQUALN(pszIter1+1, pszIter2+1, 2))
+                    break;
+                pszIter1 += 2;
+                pszIter2 += 2;
+            }
+            if (ch1 != ch2)
+                break;
+            pszIter1 ++;
+            pszIter2 ++;
+        }
+        if (ch1 == ch2 && ch1 == '\0')
             return i;
     }
 
     return -1;
+}
+
+/************************************************************************/
+/*                      VSICurlIsFileInList()                           */
+/************************************************************************/
+
+static int VSICurlIsFileInList( char ** papszList, const char * pszTarget )
+{
+    int nRet = VSICurlFindStringSensitiveExceptEscapeSequences(papszList, pszTarget);
+    if (nRet >= 0)
+        return nRet;
+
+    /* If we didn't find anything, try to URL-escape the target filename */
+    char* pszEscaped = CPLEscapeString(pszTarget, -1, CPLES_URL);
+    if (strcmp(pszTarget, pszEscaped) != 0)
+    {
+        nRet = VSICurlFindStringSensitiveExceptEscapeSequences(papszList, pszEscaped);
+    }
+    CPLFree(pszEscaped);
+    return nRet;
 }
 
 /************************************************************************/
@@ -1145,7 +1196,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
         strncmp(CPLGetExtension(osFilename), "zip", 3) != 0 && !bSkipReadDir)
     {
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
-        int bFound = (CSLFindStringSensitive(papszFileList, CPLGetFilename(osFilename)) != -1);
+        int bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
         {
@@ -1456,7 +1507,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
     {
         int bGotFileList;
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
-        int bFound = (CSLFindStringSensitive(papszFileList, CPLGetFilename(osFilename)) != -1);
+        int bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
         {
