@@ -169,9 +169,137 @@ def testnonboundtoswig_GDALSimpleImageWarp():
 
     return 'success'
 
+###############################################################################
+# Test VRT derived bands with callback functions implemented in Python!
+
+def GDALTypeToCTypes(gdaltype):
+
+    if gdaltype == gdal.GDT_Byte:
+        return ctypes.c_ubyte
+    elif gdaltype == gdal.GDT_Int16:
+        return ctypes.c_short
+    elif gdaltype == gdal.GDT_UInt16:
+        return ctypes.c_ushort
+    elif gdaltype == gdal.GDT_Int32:
+        return ctypes.c_int
+    elif gdaltype == gdal.GDT_UInt32:
+        return ctypes.c_uint
+    elif gdaltype == gdal.GDT_Float32:
+        return ctypes.c_float
+    elif gdaltype == gdal.GDT_Float64:
+        return ctypes.c_double
+    else:
+        return None
+
+def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eSrcType, eBufType, nPixelSpace, nLineSpace):
+    if nSources != 1:
+        print(nSources)
+        gdaltest.post_reason('did not get expected nSources')
+        return 1
+
+    srcctype = GDALTypeToCTypes(eSrcType)
+    if srcctype is None:
+        print(eSrcType)
+        gdaltest.post_reason('did not get expected eSrcType')
+        return 1
+
+    dstctype = GDALTypeToCTypes(eBufType)
+    if dstctype is None:
+        print(eBufType)
+        gdaltest.post_reason('did not get expected eBufType')
+        return 1
+
+    if nPixelSpace != gdal.GetDataTypeSize(eBufType) / 8:
+        print(nPixelSpace)
+        gdaltest.post_reason('did not get expected nPixelSpace')
+        return 1
+
+    if (nLineSpace % nPixelSpace) != 0:
+        print(nLineSpace)
+        gdaltest.post_reason('did not get expected nLineSpace')
+        return 1
+
+    nLineStride = (int)(nLineSpace/nPixelSpace)
+
+    srcValues = ctypes.cast(papoSources[0], ctypes.POINTER(srcctype))
+    dstValues = ctypes.cast(pData, ctypes.POINTER(dstctype))
+    for j in range(nBufYSize):
+        for i in range(nBufXSize):
+            dstValues[j * nLineStride + i] = srcValues[j * nBufXSize + i]
+
+    return 0
+
+def testnonboundtoswig_VRTDerivedBands():
+
+    if gdal_handle is None:
+        return 'skip'
+
+    DerivedPixelFuncType = ctypes.CFUNCTYPE(ctypes.c_int, # ret CPLErr
+                                            ctypes.POINTER(ctypes.c_void_p), # void **papoSources
+                                            ctypes.c_int, # int nSources
+                                            ctypes.c_void_p, #void *pData
+                                            ctypes.c_int, #int nBufXSize
+                                            ctypes.c_int, #int nBufYSize
+                                            ctypes.c_int, # GDALDataType eSrcType
+                                            ctypes.c_int, # GDALDataType eBufType
+                                            ctypes.c_int, #int nPixelSpace
+                                            ctypes.c_int ) #int nLineSpace
+
+    my_cDerivedPixelFunc = DerivedPixelFuncType(my_pyDerivedPixelFunc)
+
+    #CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc( const char *pszName,
+    #                                GDALDerivedPixelFunc pfnPixelFunc );
+
+    gdal_handle_stdcall.GDALAddDerivedBandPixelFunc.argtypes = [ ctypes.c_char_p, DerivedPixelFuncType]
+    gdal_handle_stdcall.GDALAddDerivedBandPixelFunc.restype = ctypes.c_int
+
+    funcName = "pyDerivedPixelFunc"
+    if version_info >= (3,0,0):
+        funcName = bytes(funcName, 'utf-8')
+    ret = gdal_handle_stdcall.GDALAddDerivedBandPixelFunc(funcName, my_cDerivedPixelFunc)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    vrt_xml = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <PixelFunctionType>pyDerivedPixelFunc</PixelFunctionType>
+    <SourceTransferType>Byte</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+
+    src_ds = gdal.Open('data/byte.tif')
+    ref_cs = src_ds.GetRasterBand(1).Checksum()
+    ref_data = src_ds.GetRasterBand(1).ReadRaster(0,0,20,20)
+    src_ds = None
+
+    ds = gdal.Open(vrt_xml)
+    got_cs = ds.GetRasterBand(1).Checksum()
+    got_data = ds.GetRasterBand(1).ReadRaster(0,0,20,20)
+    ds = None
+
+    if ref_cs != got_cs:
+        gdaltest.post_reason('wrong checksum')
+        print(got_cs)
+        return 'fail'
+
+    if ref_data != got_data:
+        gdaltest.post_reason('wrong data')
+        print(ref_data)
+        print(got_data)
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = [ testnonboundtoswig_init,
-                  testnonboundtoswig_GDALSimpleImageWarp ]
+                  testnonboundtoswig_GDALSimpleImageWarp,
+                  testnonboundtoswig_VRTDerivedBands ]
 
 if __name__ == '__main__':
 
