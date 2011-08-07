@@ -819,7 +819,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    // Calculate the number of levels to expose.  The highest level correpsonds to a
    // raster size of 256 on the longest side.
    double blocksizefactor = MaxRasterSize/256.0;
-   poDS->nOverviewCount = (int)(log(blocksizefactor)/log(RESOLUTION_RATIO) + 0.5);
+   poDS->nOverviewCount = MAX(0, (int)(log(blocksizefactor)/log(RESOLUTION_RATIO) + 0.5));
    if ( poDS->nOverviewCount > 0 )
    {
       int i;
