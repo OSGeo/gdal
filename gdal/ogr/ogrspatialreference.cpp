@@ -2758,6 +2758,7 @@ OGRErr OGRSpatialReference::SetGeocCS( const char * pszName )
             poRoot->InsertChild( poDatum->Clone(), 1 );
             poRoot->InsertChild( poPRIMEM->Clone(), 2 );
         }
+        delete poGeogCS;
     }
 
     return OGRERR_NONE;
