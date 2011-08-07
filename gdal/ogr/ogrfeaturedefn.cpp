@@ -399,6 +399,9 @@ OGRErr OGRFeatureDefn::DeleteFieldDefn( int iField )
     if (iField < 0 || iField >= nFieldCount)
         return OGRERR_FAILURE;
 
+    delete papoFieldDefn[iField];
+    papoFieldDefn[iField] = NULL;
+
     if (iField < nFieldCount - 1)
     {
         memmove(papoFieldDefn + iField,
