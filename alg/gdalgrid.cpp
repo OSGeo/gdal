@@ -30,10 +30,20 @@
 #include "cpl_vsi.h"
 #include "cpl_string.h"
 #include "gdalgrid.h"
+#include <float.h>
+#include <limits.h>
 
 CPL_CVSID("$Id$");
 
 #define TO_RADIANS (3.14159265358979323846 / 180.0)
+
+#ifndef DBL_MAX
+# ifdef __DBL_MAX__
+#  define DBL_MAX __DBL_MAX__
+# else
+#  define DBL_MAX 1.7976931348623157E+308
+# endif /* __DBL_MAX__ */
+#endif /* DBL_MAX */
 
 /************************************************************************/
 /*                   GDALGridInverseDistanceToAPower()                  */
@@ -409,8 +419,7 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
         ((GDALGridNearestNeighborOptions *)poOptions)->dfNoDataValue;
     // Nearest distance will be initialized with the distance to the first
     // point in array.
-    double      dfNearestR = (padfX[0] - dfXPoint) * (padfX[0] - dfXPoint)
-        + (padfY[0] - dfYPoint) * (padfY[0] - dfYPoint);
+    double      dfNearestR = DBL_MAX;
     GUInt32 i = 0;
 
     while ( i < nPoints )
@@ -1296,6 +1305,11 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
                                  GDALGridAlgorithm *peAlgorithm,
                                  void **ppOptions )
 {
+    CPLAssert( pszAlgoritm );
+    CPLAssert( peAlgorithm );
+    CPLAssert( ppOptions );
+
+    *ppOptions = NULL;
 
     char **papszParms = CSLTokenizeString2( pszAlgoritm, ":", FALSE );
 
