@@ -49,7 +49,16 @@ def run_func(func):
         import traceback
         traceback.print_exc()    
         return result
-        
+
+def urlescape(url):
+    # Escape any non-ASCII characters
+    try:
+        import urllib
+        url = urllib.quote(url)
+    except:
+        pass
+    return url
+
 def gdalurlopen(url):
     timeout = 10
     old_timeout = socket.getdefaulttimeout()
@@ -70,14 +79,6 @@ def gdalurlopen(url):
         opener = urllib2.build_opener(proxyHandler, urllib2.HTTPHandler)
 
         urllib2.install_opener(opener)
-
-    # Escape any non-ASCII characters
-    try:
-        if url[0:5] == 'http:':
-            import urllib
-            url = 'http:' + urllib.quote(url[5:])
-    except:
-        pass
 
     try:
         handle = urllib2.urlopen(url)
