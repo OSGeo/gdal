@@ -856,7 +856,8 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
 
     psMetadata = CPLGetXMLNode( psTree, "Metadata" );
 
-    if( psMetadata->eType != CXT_Element
+    if( psMetadata == NULL
+        || psMetadata->eType != CXT_Element
         || !EQUAL(psMetadata->pszValue,"Metadata") )
         return NULL;
     
