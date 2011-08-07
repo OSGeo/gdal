@@ -32,6 +32,7 @@ import os
 import sys
 from osgeo import gdal
 from osgeo import ogr
+from sys import version_info
 
 sys.path.append( '../pymod' )
 
@@ -41,6 +42,8 @@ import gdaltest
 #
 
 def vsicurl_1():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -60,6 +63,8 @@ def vsicurl_1():
 #
 
 def vsicurl_2():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -79,6 +84,8 @@ def vsicurl_2():
 # This server doesn't support range downloading
 
 def vsicurl_3():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -98,6 +105,8 @@ def vsicurl_3():
 # This server doesn't support range downloading
 
 def vsicurl_4():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -117,6 +126,8 @@ def vsicurl_4():
 # Test URL unescaping when reading HTTP file list
 
 def vsicurl_5():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -136,6 +147,8 @@ def vsicurl_5():
 # Test with FTP server that doesn't support EPSV command 
 
 def vsicurl_6():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -156,6 +169,8 @@ def vsicurl_6():
 # Test Microsoft-IIS/6.0 listing
 
 def vsicurl_7():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -175,6 +190,8 @@ def vsicurl_7():
 # Test interleaved reading between 2 datasets
 
 def vsicurl_8():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -192,21 +209,73 @@ def vsicurl_8():
 
     return 'success'
 
-# Not run by run_all.py
-my_gdaltest_list = [ vsicurl_1,
-                     vsicurl_2,
-                     vsicurl_3,
-                     vsicurl_4,
-                     vsicurl_5,
-                     vsicurl_6,
-                     vsicurl_7,
-                     vsicurl_8 ]
+###############################################################################
+# Test reading a file with chinese characters, but the http file listing
+# returns escaped sequences instead of the chinese characters
+
+def vsicurl_9():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    if version_info >= (3,0,0):
+        filename =  'xx\u4E2D\u6587.\u4E2D\u6587'
+    else:
+        exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
+        filename = filename.encode( 'utf-8' )
+
+    ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/' + filename)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a file with escaped chinese characters
+
+def vsicurl_10():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/xx%E4%B8%AD%E6%96%87.%E4%B8%AD%E6%96%87')
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+gdaltest_list = [ vsicurl_1,
+                  vsicurl_2,
+                  vsicurl_3,
+                  vsicurl_4,
+                  vsicurl_5,
+                  vsicurl_6,
+                  vsicurl_7,
+                  vsicurl_8,
+                  vsicurl_9,
+                  vsicurl_10]
 
 if __name__ == '__main__':
 
+    gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
+
     gdaltest.setup_run( 'vsicurl' )
 
-    gdaltest.run_tests( my_gdaltest_list )
+    gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
 
