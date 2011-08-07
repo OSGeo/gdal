@@ -1527,13 +1527,13 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             if( (pszInput[iIn] >= 'a' && pszInput[iIn] <= 'z')
                 || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
                 || (pszInput[iIn] >= '0' && pszInput[iIn] <= '9')
-                || pszInput[iIn] == '_' )
+                || pszInput[iIn] == '_' || pszInput[iIn] == '.' )
             {
                 pszOutput[iOut++] = pszInput[iIn];
             }
             else
             {
-                sprintf( pszOutput+iOut, "%%%02X", pszInput[iIn] );
+                sprintf( pszOutput+iOut, "%%%02X", ((unsigned char*)pszInput)[iIn] );
                 iOut += 3;
             }
         }
