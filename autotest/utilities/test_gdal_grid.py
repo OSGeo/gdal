@@ -145,6 +145,7 @@ def test_gdal_grid_2():
     # We should get the same values as in "gcore/data/byte.tif"
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
+        gdaltest.post_reason('bad checksum')
         print('bad checksum : got %d, expected %d' % \
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
@@ -164,6 +165,7 @@ def test_gdal_grid_2():
     # We should get the same values as in "gcore/data/byte.tif"
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
+        gdaltest.post_reason('bad checksum')
         print('bad checksum : got %d, expected %d' % \
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
@@ -182,6 +184,7 @@ def test_gdal_grid_2():
     # We should get the same values as in "gcore/data/byte.tif"
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
+        gdaltest.post_reason('bad checksum')
         print('bad checksum : got %d, expected %d' % \
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
@@ -200,6 +203,7 @@ def test_gdal_grid_2():
     # We should get the same values as in "gcore/data/byte.tif"
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
+        gdaltest.post_reason('bad checksum')
         print('bad checksum : got %d, expected %d' % \
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
@@ -218,6 +222,7 @@ def test_gdal_grid_2():
     # We should get the same values as in "gcore/data/byte.tif"
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
+        gdaltest.post_reason('bad checksum')
         print('bad checksum : got %d, expected %d' % \
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
@@ -236,6 +241,7 @@ def test_gdal_grid_2():
     # We should get the same values as in "gcore/data/byte.tif"
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
+        gdaltest.post_reason('bad checksum')
         print('bad checksum : got %d, expected %d' % \
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
