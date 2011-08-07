@@ -2651,6 +2651,35 @@ free_warper:
 }
 #endif /* defined(HAVE_OPENCL) */
 
+
+#define COMPUTE_iSrcOffset(_pabSuccess, _iDstX, _padfX, _padfY, _poWK, _nSrcXSize, _nSrcYSize) \
+            if( !_pabSuccess[_iDstX] ) \
+                continue; \
+\
+/* -------------------------------------------------------------------- */ \
+/*      Figure out what pixel we want in our source raster, and skip    */ \
+/*      further processing if it is well off the source image.          */ \
+/* -------------------------------------------------------------------- */ \
+            /* We test against the value before casting to avoid the */ \
+            /* problem of asymmetric truncation effects around zero.  That is */ \
+            /* -0.5 will be 0 when cast to an int. */ \
+            if( _padfX[_iDstX] < _poWK->nSrcXOff \
+                || _padfY[_iDstX] < _poWK->nSrcYOff ) \
+                continue; \
+\
+            int iSrcX, iSrcY, iSrcOffset;\
+\
+            iSrcX = ((int) (_padfX[_iDstX] + 1e-10)) - _poWK->nSrcXOff;\
+            iSrcY = ((int) (_padfY[_iDstX] + 1e-10)) - _poWK->nSrcYOff;\
+\
+            /* If operating outside natural projection area, padfX/Y can be */ \
+            /* a very huge positive number, that becomes -2147483648 in the */ \
+            /* int trucation. So it is necessary to test now for non negativeness. */ \
+            if( iSrcX < 0 || iSrcX >= _nSrcXSize || iSrcY < 0 || iSrcY >= _nSrcYSize )\
+                continue;\
+\
+            iSrcOffset = iSrcX + iSrcY * _nSrcXSize;
+
 /************************************************************************/
 /*                           GWKGeneralCase()                           */
 /*                                                                      */
@@ -2730,32 +2759,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
         {
             int iDstOffset;
 
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Do not try to apply transparent/invalid source pixels to the    */
@@ -2959,29 +2963,7 @@ static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
             if( !pabSuccess[iDstX] )
                 continue;
 
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -3091,32 +3073,7 @@ static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
 /* ==================================================================== */
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -3228,32 +3185,7 @@ static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
 /* ==================================================================== */
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -3368,32 +3300,7 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
 /* ==================================================================== */
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -3509,32 +3416,7 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
         {
             int iDstOffset;
 
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Do not try to apply invalid source pixels to the dest.          */
@@ -3701,32 +3583,7 @@ static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
         {
             int iDstOffset;
 
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -3835,32 +3692,7 @@ static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
 /* ==================================================================== */
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -3974,32 +3806,7 @@ static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
 /* ==================================================================== */
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -4117,32 +3924,7 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
 /* ==================================================================== */
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -4260,32 +4042,7 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
         {
             int iDstOffset;
 
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Don't generate output pixels for which the source valid         */
@@ -4451,32 +4208,7 @@ static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
         {
             int iDstOffset;
 
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -4587,32 +4319,7 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
         {
             int iDstOffset;
 
-            if( !pabSuccess[iDstX] )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Figure out what pixel we want in our source raster, and skip    */
-/*      further processing if it is well off the source image.          */
-/* -------------------------------------------------------------------- */
-            // We test against the value before casting to avoid the
-            // problem of asymmetric truncation effects around zero.  That is
-            // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff 
-                || padfY[iDstX] < poWK->nSrcYOff )
-                continue;
-
-            int iSrcX, iSrcY, iSrcOffset;
-
-            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
-            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
-
-            // If operating outside natural projection area, padfX/Y can be
-            // a very huge positive number, that becomes -2147483648 in the
-            // int trucation. So it is necessary to test now for non negativeness.
-            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
-                continue;
-
-            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Do not try to apply invalid source pixels to the dest.          */
