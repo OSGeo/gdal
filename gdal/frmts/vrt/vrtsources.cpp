@@ -1287,6 +1287,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     int bIsComplex = GDALDataTypeIsComplex(eBufType);
     GDALDataType eWrkDataType = (bIsComplex) ? GDT_CFloat32 : GDT_Float32;
     int nWordSize = GDALGetDataTypeSize(eWrkDataType) / 8;
+    int bNoDataSetAndNotNan = bNoDataSet && !CPLIsNan(dfNoDataValue);
 
     if( bDoScaling && bNoDataSet == FALSE && dfScaleRatio == 0)
     {
@@ -1348,7 +1349,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 float fResult = pafData[iX + iY * nOutXSize];
                 if( CPLIsNan(dfNoDataValue) && CPLIsNan(fResult) )
                     continue;
-                if( bNoDataSet && ARE_REAL_EQUAL(fResult, dfNoDataValue) )
+                if( bNoDataSetAndNotNan && ARE_REAL_EQUAL(fResult, dfNoDataValue) )
                     continue;
 
                 if (nColorTableComponent)

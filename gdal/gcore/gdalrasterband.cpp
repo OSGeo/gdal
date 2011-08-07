@@ -3521,6 +3521,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     }
 
     dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
+    bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
@@ -3758,7 +3759,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                       default:
                         CPLAssert( FALSE );
                     }
-                    
+
                     if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
@@ -3996,6 +3997,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
     double  dfNoDataValue;
 
     dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
+    bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));

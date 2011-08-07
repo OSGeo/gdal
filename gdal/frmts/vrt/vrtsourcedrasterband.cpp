@@ -157,7 +157,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
     if ( nPixelSpace == GDALGetDataTypeSize(eBufType)/8 &&
-         (!bNoDataValueSet || dfNoDataValue == 0) )
+         (!bNoDataValueSet || (!CPLIsNan(dfNoDataValue) && dfNoDataValue == 0)) )
     {
         if (nLineSpace == nBufXSize * nPixelSpace)
         {
