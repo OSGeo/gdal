@@ -1419,6 +1419,8 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
             GDALClose( hSrcDS );
             return NULL;
         }
+        
+        GDALTransformerInfo* psInfo = (GDALTransformerInfo*)hTransformArg;
 
 /* -------------------------------------------------------------------- */
 /*      Get approximate output definition.                              */
@@ -1428,7 +1430,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         int    nThisPixels, nThisLines;
 
         if( GDALSuggestedWarpOutput2( hSrcDS, 
-                                      GDALGenImgProjTransform, hTransformArg, 
+                                      psInfo->pfnTransform, hTransformArg, 
                                       adfThisGeoTransform, 
                                       &nThisPixels, &nThisLines, 
                                       adfExtent, 0 ) != CE_None )
@@ -1462,10 +1464,10 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                     double y = expected_y;
                     double z = 0;
                     /* Target SRS coordinates to source image pixel coordinates */
-                    if (!GDALGenImgProjTransform(hTransformArg, TRUE, 1, &x, &y, &z, &bSuccess) || !bSuccess)
+                    if (!psInfo->pfnTransform(hTransformArg, TRUE, 1, &x, &y, &z, &bSuccess) || !bSuccess)
                         bSuccess = FALSE;
                     /* Source image pixel coordinates to target SRS coordinates */
-                    if (!GDALGenImgProjTransform(hTransformArg, FALSE, 1, &x, &y, &z, &bSuccess) || !bSuccess)
+                    if (!psInfo->pfnTransform(hTransformArg, FALSE, 1, &x, &y, &z, &bSuccess) || !bSuccess)
                         bSuccess = FALSE;
                     if (fabs(x - expected_x) > (MaxX - MinX) / nThisPixels ||
                         fabs(y - expected_y) > (MaxY - MinY) / nThisLines)
@@ -1482,7 +1484,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                 CPLDebug("WARP", "Recompute out extent with CHECK_WITH_INVERT_PROJ=TRUE");
 
                 if( GDALSuggestedWarpOutput2( hSrcDS, 
-                                      GDALGenImgProjTransform, hTransformArg, 
+                                      psInfo->pfnTransform, hTransformArg, 
                                       adfThisGeoTransform, 
                                       &nThisPixels, &nThisLines, 
                                       adfExtent, 0 ) != CE_None )
