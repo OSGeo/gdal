@@ -630,6 +630,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                         }
                         CSLDestroy( papszLineItems );
                     }
+                    CSLDestroy( papszLineItems );
                     
                     VSIFClose( fp );
                 }
@@ -718,6 +719,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                             CPLAtof(papszDatumDefn[5]) );
             }
         }
+
+        CSLDestroy(papszDatumDefn);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1208,6 +1211,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                         strncpy( szEarthModel, papszLineItems[0], 5 );
                         break;
                     }
+
+                    CSLDestroy( papszLineItems );
                 }
 
                 CSLDestroy( papszLineItems );
