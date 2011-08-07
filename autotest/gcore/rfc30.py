@@ -45,13 +45,13 @@ def rfc30_1():
 
     if version_info >= (3,0,0):
         filename =  'xx\u4E2D\u6587.\u4E2D\u6587'
-        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gtiff/' + filename, filename):
-            return 'skip'
+        filename_escaped = gdaltest.urlescape(filename)
     else:
         exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
-        filename_utf8 = filename.encode( 'utf-8' )
-        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gtiff/' + filename_utf8, filename):
-            return 'skip'
+        filename_escaped = gdaltest.urlescape(filename.encode( 'utf-8' ))
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gtiff/' + filename_escaped, filename):
+        return 'skip'
 
     filename = 'tmp/cache/' + filename
 
