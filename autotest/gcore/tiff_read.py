@@ -28,6 +28,7 @@
 import os
 import sys
 import string
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -511,7 +512,7 @@ def tiff_multi_images():
 
     md = ds.GetMetadata('SUBDATASETS')
     if md['SUBDATASET_1_NAME'] != 'GTIFF_DIR:1:data/twoimages.tif':
-        print md
+        print(md)
         gdaltest.post_reason( 'did not get expected subdatasets metadata.' )
         return 'fail'
     
@@ -886,6 +887,25 @@ def tiff_read_buggy_packbits():
 
     return 'success'
 
+
+###############################################################################
+# Test reading a GeoEye _rpc.txt (#3639)
+
+def tiff_read_rpc_txt():
+
+    shutil.copy('data/byte.tif', 'tmp/test.tif')
+    shutil.copy('data/test_rpc.txt', 'tmp/test_rpc.txt')
+    ds = gdal.Open('tmp/test.tif')
+    rpc_md = ds.GetMetadata('RPC')
+    ds = None
+    os.remove('tmp/test.tif')
+    os.remove('tmp/test_rpc.txt')
+
+    if not 'HEIGHT_OFF' in rpc_md:
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
@@ -951,6 +971,7 @@ gdaltest_list.append( (tiff_read_geomatrix) )
 gdaltest_list.append( (tiff_read_corrupted_gtiff) )
 gdaltest_list.append( (tiff_read_tag_without_null_byte) )
 gdaltest_list.append( (tiff_read_buggy_packbits) )
+gdaltest_list.append( (tiff_read_rpc_txt) )
 gdaltest_list.append( (tiff_read_online_1) )
 
 if __name__ == '__main__':
