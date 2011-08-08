@@ -154,12 +154,13 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
             std::wstring wfldvalue = StringToWString(fldvalue);
             hr = fgdb_row.SetString(wfield_name, wfldvalue);
         }
-        else if ( nOGRFieldType == OFTDateTime )
+        else if ( nOGRFieldType == OFTDateTime || nOGRFieldType == OFTDate )
         {
             /* Dates we need to coerce a little */
             struct tm val;
             poFeature->GetFieldAsDateTime(i, &(val.tm_year), &(val.tm_mon), &(val.tm_mday),
                                           &(val.tm_hour), &(val.tm_min), &(val.tm_sec), NULL);
+            val.tm_year -= 1900;
             val.tm_mon = val.tm_mon - 1; /* OGR months go 1-12, FGDB go 0-11 */
             hr = fgdb_row.SetDate(wfield_name, val);
         }
@@ -534,6 +535,10 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     /* Figure out our geometry type */
     if ( eType != wkbNone )
     {
+        if ( wkbFlatten(eType) == wkbUnknown )
+        {
+            return GDBErr(-1, "FGDB layers cannot be created with a wkbUnknown layer geometry type.");
+        }
         if ( ! OGRGeometryToGDB(eType, &esri_type, &has_z) )
             return GDBErr(-1, "Unable to map OGR type to ESRI type");
     }
