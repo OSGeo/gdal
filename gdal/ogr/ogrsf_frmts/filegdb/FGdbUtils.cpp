@@ -32,6 +32,7 @@
 #include "FGdbUtils.h"
 #include <algorithm>
 
+#include "ogr_api.h"
 #include "ogrpgeogeometry.h"
 
 CPL_CVSID("$Id$");
@@ -198,7 +199,8 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
         
         default:
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Cannot map OGRwkbGeometryType (%d) to ESRI type", ogrType);
+            CPLError( CE_Failure, CPLE_AppDefined, "Cannot map OGRwkbGeometryType (%s) to ESRI type",
+                      OGRGeometryTypeToName(ogrType));
             return false;
         }
     }
@@ -326,7 +328,8 @@ bool OGRToGDBFieldType(OGRFieldType ogrType, std::string* gdbType)
         default:
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Cannot map OGR field type (%d)", ogrType);
+                      "Cannot map OGR field type (%s)",
+                      OGR_GetFieldTypeName(ogrType) );
             return false;
         }
     }
