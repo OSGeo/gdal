@@ -441,11 +441,12 @@ int TigerFileBase::SetWriteModule( const char *pszExtension, int nRecLen,
 /* -------------------------------------------------------------------- */
 /*      Does this file already exist?                                   */
 /* -------------------------------------------------------------------- */
-    const char *pszFilename;
+    char *pszFilename;
 
     pszFilename = poDS->BuildFilename( szFullModule, pszExtension );
 
     fpPrimary = VSIFOpen( pszFilename, "ab" );
+    CPLFree(pszFilename);
     if( fpPrimary == NULL )
         return FALSE;
 
