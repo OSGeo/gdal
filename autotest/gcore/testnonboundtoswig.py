@@ -296,9 +296,6 @@ def testnonboundtoswig_VRTDerivedBands():
     if gdal_handle is None:
         return 'skip'
 
-    if sys.platform.find("sunos") == 0:
-        return 'skip'
-
     DerivedPixelFuncType = ctypes.CFUNCTYPE(ctypes.c_int, # ret CPLErr
                                             ctypes.POINTER(ctypes.c_void_p), # void **papoSources
                                             ctypes.c_int, # int nSources
