@@ -86,6 +86,55 @@ def ogr_tiger_2():
     return 'success'
 
 ###############################################################################
+# Test TIGER writing
+
+def ogr_tiger_3():
+
+    if ogrtest.tiger_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree('tmp/outtiger')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f TIGER tmp/outtiger tmp/cache/TGR01001 -dsco VERSION=1006')
+
+    ret = 'success'
+
+    filelist = os.listdir('tmp/cache/TGR01001')
+    exceptions = [ 'TGR01001.RTA', 'TGR01001.RTC', 'TGR01001.MET', 'TGR01001.RTZ', 'TGR01001.RTS']
+    for filename in filelist:
+        if filename in exceptions:
+            continue
+        f = open('tmp/cache/TGR01001/' + filename, 'rb')
+        data1 = f.read()
+        f.close()
+        try:
+            f = open('tmp/outtiger/' + filename, 'rb')
+            data2 = f.read()
+            f.close()
+            if data1 != data2:
+                #gdaltest.post_reason('%s is different' % filename)
+                print('%s is different' % filename)
+                ret = 'fail'
+        except:
+            #gdaltest.post_reason('could not find %s' % filename)
+            print('could not find %s' % filename)
+            ret = 'fail'
+
+    try:
+        shutil.rmtree('tmp/outtiger')
+    except:
+        pass
+
+    return ret
+
+###############################################################################
 
 def ogr_tiger_cleanup():
 
@@ -99,6 +148,7 @@ def ogr_tiger_cleanup():
 gdaltest_list = [
     ogr_tiger_1,
     ogr_tiger_2,
+    ogr_tiger_3,
     ogr_tiger_cleanup]
 
 if __name__ == '__main__':
