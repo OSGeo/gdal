@@ -4644,6 +4644,8 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CPLFree( pszBinValues );
             }
 
+            CPLFree(panHistogram);
+
             if( CSLCount(papszStatsMD) > 0 )
                 HFASetMetadata( poDS->hHFA, iBand+1, papszStatsMD );
 
