@@ -233,7 +233,7 @@ void TigerFileBase::EstablishFeatureCount()
 /*                              GetField()                              */
 /************************************************************************/
 
-CPLString TigerFileBase::GetField( const char * pachRawDataRecord,
+const char* TigerFileBase::GetField( const char * pachRawDataRecord,
                                      int nStartChar, int nEndChar )
 
 {
@@ -248,7 +248,7 @@ CPLString TigerFileBase::GetField( const char * pachRawDataRecord,
     while( nLength > 0 && aszField[nLength-1] == ' ' )
         aszField[--nLength] = '\0';
 
-    return aszField;
+    return CPLSPrintf("%s", aszField);
 }
 
 /************************************************************************/
