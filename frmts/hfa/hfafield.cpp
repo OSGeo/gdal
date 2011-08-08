@@ -181,13 +181,18 @@ const char *HFAField::Initialize( const char * pszInput )
         int	nEnumCount = atoi(pszInput);
         int	iEnum;
 
+        if (nEnumCount < 0 || nEnumCount > 100000)
+            return NULL;
+
         pszInput = strchr(pszInput,':');
         if( pszInput == NULL )
             return NULL;
 
         pszInput++;
 
-        papszEnumNames = (char **) CPLCalloc(sizeof(char *), nEnumCount+1);
+        papszEnumNames = (char **) VSICalloc(sizeof(char *), nEnumCount+1);
+        if (papszEnumNames == NULL)
+            return NULL;
         
         for( iEnum = 0; iEnum < nEnumCount; iEnum++ )
         {
