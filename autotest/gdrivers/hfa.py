@@ -79,14 +79,15 @@ def hfa_histread():
     return 'success'
     
 ###############################################################################
-# Verify that if we copy this test image to a new Imagine file the histofram
+# Verify that if we copy this test image to a new Imagine file the histogram
 # info is preserved.
 
 def hfa_histwrite():
 
     drv = gdal.GetDriverByName('HFA')
     ds_src = gdal.Open('../gcore/data/utmsmall.img')
-    drv.CreateCopy( 'tmp/work.img', ds_src )
+    out_ds = drv.CreateCopy( 'tmp/work.img', ds_src )
+    out_ds = None
     ds_src = None
     
     # Remove .aux.xml file as histogram can be written in it
@@ -326,7 +327,8 @@ def hfa_pe_write():
 
     drv = gdal.GetDriverByName('HFA')
     ds_src = gdal.Open('data/87test.img')
-    drv.CreateCopy( 'tmp/87test.img', ds_src )
+    out_ds = drv.CreateCopy( 'tmp/87test.img', ds_src )
+    out_ds = None
     ds_src = None
 
     expected = 'PROJCS["World_Cube",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Cube"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Option",1.0],UNIT["Meter",1.0]]'
@@ -440,8 +442,9 @@ def hfa_clean_ige():
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/byte.tif')
 
-    drv.CreateCopy( 'tmp/igetest.img', src_ds,
+    out_ds = drv.CreateCopy( 'tmp/igetest.img', src_ds,
                     options = [ 'USE_SPILL=YES' ] )
+    out_ds = None
 
     try:
         open( 'tmp/igetest.ige' )
@@ -466,7 +469,8 @@ def hfa_clean_ige():
 
     # Create a file without a spill file, and verify old ige cleaned up.
     
-    drv.CreateCopy( 'tmp/igetest.img', src_ds )
+    out_ds = drv.CreateCopy( 'tmp/igetest.img', src_ds )
+    out_ds = None
 
     try:
         open( 'tmp/igetest.ige' )
@@ -1151,13 +1155,15 @@ def hfa_rde_overviews():
     return 'success'
  
 ###############################################################################
-# Check that we can copy a complex file set, and that the internal filenames
+# Check that we can copy and rename a complex file set, and that the internal filenames
 # in the .img and .rrd seem to be updated properly.
 
 def hfa_copyfiles():
 
     drv = gdal.GetDriverByName( 'HFA' )
-    drv.CopyFiles( 'tmp/newnamexxx.img', 'data/spill.img' )
+    drv.CopyFiles( 'tmp/newnamexxx_after_copy.img', 'data/spill.img' )
+
+    drv.Rename( 'tmp/newnamexxx.img', 'tmp/newnamexxx_after_copy.img' )
 
     ds = gdal.Open( 'tmp/newnamexxx.img' )
     
@@ -1254,7 +1260,38 @@ def hfa_write_rat():
     drv.Delete( 'tmp/write_rat.img' )
     
     return 'success'
-    
+
+###############################################################################
+# Test STATISTICS creation option
+
+def hfa_createcopy_statistics():
+
+    try:
+        os.remove('../gcore/data/byte.tif.aux.xml')
+    except:
+        pass
+    ds_src = gdal.Open('../gcore/data/byte.tif')
+    out_ds = gdal.GetDriverByName('HFA').CreateCopy( '/vsimem/byte.img', ds_src, options = ['STATISTICS=YES'] )
+    out_ds = None
+    ds_src = None
+    os.remove('../gcore/data/byte.tif.aux.xml')
+
+    gdal.Unlink( '/vsimem/byte.img.aux.xml' )
+
+    ds = gdal.Open('/vsimem/byte.img')
+    md = ds.GetRasterBand(1).GetMetadata()
+    ds = None
+
+    gdal.GetDriverByName('HFA').Delete('/vsimem/byte.img')
+
+    if md['STATISTICS_MINIMUM'] != '74':
+        gdaltest.post_reason( 'STATISTICS_MINIMUM is wrong.' )
+        print(md['STATISTICS_MINIMUM'])
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 #
 
@@ -1294,7 +1331,8 @@ gdaltest_list = [
     hfa_camera_md,
     hfa_rde_overviews,
     hfa_copyfiles,
-    hfa_write_rat ]
+    hfa_write_rat,
+    hfa_createcopy_statistics ]
 
 if __name__ == '__main__':
 
