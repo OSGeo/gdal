@@ -291,7 +291,7 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByt
 #endif
 
 /* Added in GDAL 1.7.0 */
-int VSIUnlink(const char * pszFilename );
+int VSIUnlink(const char * utf8_path );
 
 /* Added in GDAL 1.7.0 */
 /* Thread support is necessary for binding languages with threaded GC */
