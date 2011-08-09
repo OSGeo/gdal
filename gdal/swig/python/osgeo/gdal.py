@@ -219,7 +219,7 @@ def FileFromMemBuffer(*args):
   return _gdal.FileFromMemBuffer(*args)
 
 def Unlink(*args):
-  """Unlink(char pszFilename) -> int"""
+  """Unlink(char utf8_path) -> int"""
   return _gdal.Unlink(*args)
 
 def HasThreadSupport(*args):
