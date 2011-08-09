@@ -1385,7 +1385,7 @@ public class gdal:public static Dataset OpenShared(String name)
  * file system machinery, it is possible to give an optional list of files.
  * This is the list of all files at the same level in the file system as the
  * target file, including the target file. The filenames will not include any
- * path components, are an essentially just the output of CPLReadDir() on the
+ * path components, are an essentially just the output of ReadDir() on the
  * parent directory. If the target object does not have filesystem semantics
  * then the file list should be null.
  *
@@ -1500,6 +1500,87 @@ public class gdal:public static double[] InvGeoTransform(double[] gt_in)
 
 
 @hide public class gdal:public static int HasThreadSupport()
+
+
+/**
+ * Create a directory.
+ * <p>
+ * Create a new directory with the indicated mode.  The mode is ignored
+ * on some platforms.  A reasonable default mode value would be 0666.
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ * <p>
+ * Analog of the POSIX mkdir() function.
+ *
+ * @param path the path to the directory to create.
+ * @param mode the permissions mode.
+ *
+ * @return 0 on success or -1 on an error.
+ *
+ * @since Java bindings 1.8.0
+ */
+public class gdal:public static int Mkdir(String path, int mode)
+
+/**
+ * Rename a file.
+ * <p>
+ * Renames a file object in the file system.  It should be possible
+ * to rename a file onto a new filesystem, but it is safest if this
+ * function is only used to rename files that remain in the same directory.
+ * <p>
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ * <p>
+ * Analog of the POSIX rename() function.
+ *
+ * @param oldpath the name of the file to be renamed.
+ * @param newpath the name the file should be given.
+ *
+ * @return 0 on success or -1 on an error.
+ *
+ * @since Java bindings 1.8.0
+ */
+
+public class gdal:public static int Rename( String oldpath, String newpath )
+
+/**
+ * Delete a directory.
+ * <p>
+ * Deletes a directory object from the file system.  On some systems
+ * the directory must be empty before it can be deleted.
+ * <p>
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ * <p>
+ * Analog of the POSIX rmdir() function.
+ *
+ * @param path the path of the directory to be deleted.
+ *
+ * @return 0 on success or -1 on an error.
+ *
+ * @since Java bindings 1.8.0
+ */
+
+public class gdal:public static int Rmdir(String path)
+
+/**
+ * Read names in a directory.
+ * <p>
+ * This function abstracts access to directory contains.  It returns a
+ * list of strings containing the names of files, and directories in this
+ * directory.
+ * <p>
+ * Note that no error is issued via CPLError() if the directory path is
+ * invalid, though null is returned.
+ *
+ * @param path the relative, or absolute path of a directory to read.
+ * @return The list of entries in the directory, or null if the directory
+ * doesn't exist.
+ *
+ * @since Java bindings 1.7.0
+ */
+
+public class gdal:public static java.util.Vector ReadDir(String path)
 
 /* Class ColorTable */
 
@@ -3183,6 +3264,19 @@ public class Band:public int GetOverviewCount()
 /**
  * Fetch the list of category names for this raster.
  * <p>
+ * Raster values without
+ * associated names will have an empty string in the returned list.  The
+ * first entry in the list is for raster values of zero, and so on.
+ *
+ * @return vector of names, or null if none.
+ *
+ * @since GDAL 1.9.0
+ */
+public class Band:public java.util.Vector GetCategoryNames()
+
+/**
+ * Fetch the list of category names for this raster.
+ * <p>
  * Raster values without 
  * associated names will have an empty string in the returned list.  The
  * first entry in the list is for raster values of zero, and so on. 
@@ -4329,6 +4423,23 @@ public class Band:public int SetScale(double newscale)
  * @since Java bindings 1.8.0
  */
 public class Band:public int SetUnitType(String newunittype)
+
+/**
+ * Set the category names for this band.
+ * <p>
+ * See the GetCategoryNames() method for more on the interpretation of
+ * category names.
+ *
+ * @param names a vector of strings with category names.  May
+ * be ,ull to just clear the existing list.
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure on failure.  If unsupported
+ * by the driver, CE_Failure is returned by no error message will have
+ * been emitted.
+ *
+ * @since GDAL 1.9.0
+ */
+public class Band:public int SetCategoryNames(java.util.Vector names)
 
 /**
  * Set the category names for this band.
@@ -6168,6 +6279,32 @@ public class DataSource:public Layer ExecuteSQL(String statement)
  @param layer the result of a previous ExecuteSQL() call.
 */
 public class DataSource:public void ReleaseResultSet(Layer layer)
+
+
+
+/**
+Flush pending changes to disk.
+<p>
+This call is intended to force the datasource to flush any pending writes to
+disk, and leave the disk file in a consistent state.  It would not normally
+have any effect on read-only datasources.
+<p>
+Some data sources do not implement this method, and will still return
+ogr.OGRERR_NONE.  An error is only returned if an error occurs while attempting
+to flush to disk.
+<p>
+The default implementation of this method just calls the SyncToDisk() method
+on each of the layers.  Conceptionally, calling SyncToDisk() on a datasource
+should include any work that might be accomplished by calling SyncToDisk()
+on layers in that data source.
+<p>
+In any event, you should always close any opened datasource with
+delete() that will ensure all data is correctly flushed.
+
+@return ogr.OGRERR_NONE if no error occurs (even if nothing is done) or an
+error code.
+*/
+public class DataSource:public int SyncToDisk()
 
 /**
  Test if capability is available.
@@ -10460,6 +10597,25 @@ public class SpatialReference:public int ImportFromWkt(String wkt)
 public class SpatialReference:public int ImportFromXML(String xmlString)
 
 /**
+ * Check if coordinate system is compound.
+ *
+ * @return 1 if this is rooted with a COMPD_CS node.
+ *
+ * @since GDAL 1.9.0
+ */
+public class SpatialReference:public int IsCompound()
+
+/**
+ * Check if geocentric coordinate system.
+ *
+ * @return 1 if this contains a GEOCCS node indicating a it is a
+ * geocentric coordinate system.
+ *
+ * @since GDAL 1.9.0
+ */
+public class SpatialReference:public int IsGeocentric()
+
+/**
  * Check if geographic coordinate system.
  *
  * @return 1 if this spatial reference is geographic ... that is the 
@@ -10500,6 +10656,25 @@ public class SpatialReference:public int IsSame(SpatialReference other)
  * @return 1 if they are the same or 0 otherwise. 
  */
 public class SpatialReference:public int IsSameGeogCS(SpatialReference other)
+
+/**
+ * Do the VertCS'es match?
+ *
+ * @param other the SRS being compared against.
+ *
+ * @return 1 if they are the same or 0 otherwise.
+ */
+public class SpatialReference:public int IsSameVertCS(SpatialReference other)
+
+/**
+ * Check if vertical coordinate system.
+ *
+ * @return 1 if this contains a VERT_CS node indicating a it is a
+ * vertical coordinate system.
+ *
+ * @since OGR 1.8.0
+ */
+public class SpatialReference:public int IsVertical()
 
 /**
  * Convert in place from ESRI WKT format.
@@ -10610,6 +10785,33 @@ public class SpatialReference:public int SetAuthority(String target_key, String 
  * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */ 
 public class SpatialReference:public int SetFromUserInput(String definition)
+
+/**
+ * Set the user visible GEOCCS name.
+ * <p>
+ * Same as below with name == null
+ *
+ * @see #SetGeocCS(String name)
+ *
+ * @since OGR 1.9.0
+ */
+public class SpatialReference:public int SetGeocCS()
+
+/**
+ * Set the user visible GEOCCS name.
+ * <p>
+ * This method is will ensure a GEOCCS node is created as the root,
+ * and set the provided name on it.  If used on a GEOGCS coordinate system,
+ * the DATUM and PRIMEM nodes from the GEOGCS will be tarnsferred over to
+ * the GEOGCS.
+ *
+ * @param name the user visible name to assign. Not used as a key. May be null
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 1.9.0
+ */
+public class SpatialReference:public int SetGeocCS(String name)
 
 /**
  * Set geographic coordinate system. 
@@ -10870,6 +11072,29 @@ public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, S
 public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, String unitsname, double units)
 
 /**
+ * Set the linear units for the projection.
+ * <p>
+ * This method creates a UNIT subnode with the specified values as a
+ * child of the target node.
+ *
+ * @param target the keyword to set the linear units for.  ie. "PROJCS" or "VERT_CS"
+ *
+ * @param name the units name to be used.  Some preferred units
+ * names can be found in ogr_srs_api.h such as SRS_UL_METER, SRS_UL_FOOT
+ * and SRS_UL_US_FOOT.
+ *
+ * @param to_meters the value to multiple by a length in the indicated
+ * units to transform to meters.  Some standard conversion factors can
+ * be found in ogr_srs_api.h.
+ *
+ * @return OGRERR_NONE on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 1.9.0
+ */
+
+public class SpatialReference:public int SetTargetLinearUnits(String target, String name, double to_meters)
+
+/**
  * Set the Bursa-Wolf conversion to WGS84. 
  * <p>
  * Same as below with dfEX == dfEY == dfEZ == dfPPM == 0
@@ -10940,6 +11165,27 @@ public class SpatialReference:public int SetUTM(int zone, int north)
  * @since Java bindings 1.8.0
  */
 public class SpatialReference:public int GetUTMZone()
+
+/**
+ * Set the user visible VERT_CS name.
+ * <p>
+ * This method is will ensure a VERT_CS node is created if needed.  If the
+ * existing coordinate system is GEOGCS or PROJCS rooted, then it will be
+ * turned into a COMPD_CS.
+ *
+ * @param VertCSName the user visible name of the vertical coordinate
+ * system. Not used as a key.
+ *
+ * @param VertDatumName the user visible name of the vertical datum.  It
+ * is helpful if this matches the EPSG name.
+ *
+ * @param VertDatumType the OGC vertical datum type, usually 2005.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 1.9.0
+ */
+public class SpatialReference:public int SetVertCS(String VertCSName, String VertDatumName, int VertDatumType)
 
 /**
  * Set a GeogCS based on well known name.
