@@ -27,7 +27,7 @@ Usage:
 ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]
         [-spat xmin ymin xmax ymax] [-fid fid]
         [-sql statement] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
-        [-geom={YES/NO/SUMMARY}] [-nogeomtype] [--formats]
+        [-geom={YES/NO/SUMMARY}][--formats]
         datasource_name [layer [layer ...]]
 
 \endverbatim
@@ -43,7 +43,7 @@ source to stdout (the terminal).
 <dt> <b>-ro</b>:</dt><dd> Open the data source in read-only mode.  </dd>
 <dt> <b>-al</b>:</dt><dd> List all features of all layers (used instead of having to
 give layer names as arguments).</dd>
-<dt> <b>-so</b>:</dt><dd> Summary Only: suppress listing of features, show only the 
+<dt> <b>-so</b>:</dt><dd> Summary Only: supress listing of features, show only the 
 summary information like projection, schema, feature count and
 extents.</dd>
 <dt> <b>-q</b>:</dt><dd> Quiet verbose reporting of various information, including
@@ -67,8 +67,6 @@ the feature dump will not display field values. Default value is YES.</dd>
 the feature dump will not display the geometry. If set to SUMMARY, only a
 summary of the geometry will be displayed. If set to YES, the geometry will be reported in full OGC WKT format.
 Default value is YES.</dd>
-<dt> <b>-nogeomtype</b>:</dt><dd> (GDAL >= 1.9.0) Skip retrieving the layer geometry type. Particularly
-usefull for some drivers, like WFS, where this can be a slow operation.</dd>
 <dt> <b>--formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
