@@ -60,6 +60,7 @@ int main( int nArgc, char ** papszArgv )
     int         nRepeatCount = 1, bAllLayers = FALSE;
     const char  *pszSQLStatement = NULL;
     const char  *pszDialect = NULL;
+    int          bDisplayGeomType = FALSE;
     int          nRet = 0;
     
     /* Check strict compilation and runtime library version as we use C++ API */
@@ -149,6 +150,10 @@ int main( int nArgc, char ** papszArgv )
             sprintf(pszTemp, "DISPLAY_GEOMETRY=%s", papszArgv[iArg] + strlen("-geom="));
             papszOptions = CSLAddString(papszOptions, pszTemp);
             CPLFree(pszTemp);
+        }
+        else if( EQUAL(papszArgv[iArg],"-nogeomtype") )
+        {
+            bDisplayGeomType = FALSE;
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -271,7 +276,7 @@ int main( int nArgc, char ** papszArgv )
                             iLayer+1,
                             poLayer->GetName() );
 
-                    if( poLayer->GetGeomType() != wkbUnknown )
+                    if( bDisplayGeomType && poLayer->GetGeomType() != wkbUnknown )
                         printf( " (%s)", 
                                 OGRGeometryTypeToName( 
                                     poLayer->GetGeomType() ) );
@@ -338,7 +343,7 @@ static void Usage()
     printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
             "               [-sql statement] [-dialect sql_dialect] [-al] [-so] [-fields={YES/NO}]\n"
-            "               [-geom={YES/NO/SUMMARY}][--formats]\n"
+            "               [-geom={YES/NO/SUMMARY}] [-nogeomtype] [--formats]\n"
             "               datasource_name [layer [layer ...]]\n");
     exit( 1 );
 }
