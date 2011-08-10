@@ -31,6 +31,7 @@
 import os
 import sys
 import shutil
+import stat
 
 sys.path.append( '../pymod' )
 
@@ -350,6 +351,54 @@ def pam_10():
     return 'success'
 
 ###############################################################################
+# Test PamProxyDb mechanism
+
+def pam_11():
+
+    # Create a read-only directory
+    try:
+        os.chmod('tmpdirreadonly', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        shutil.rmtree('tmpdirreadonly')
+    except:
+        pass
+    os.mkdir('tmpdirreadonly')
+    shutil.copy('data/byte.tif', 'tmpdirreadonly/byte.tif')
+    os.chmod('tmpdirreadonly', stat.S_IRUSR | stat.S_IXUSR)
+
+    # Compute statistics --> the saving as .aux.xml should fail
+    ds = gdal.Open('tmpdirreadonly/byte.tif')
+    stats = ds.GetRasterBand(1).ComputeStatistics(False)
+    if stats[0] != 74:
+        gdaltest.post_reason('did not get expected minimum')
+        return 'fail'
+    gdal.ErrorReset()
+    ds = None
+    error_msg = gdal.GetLastErrorMsg()
+    if error_msg.find('Unable to save auxilary information') != 0:
+        gdaltest.post_reason('warning was expected at that point')
+        return 'fail'
+
+    # Check that we actually have no saved statistics
+    ds = gdal.Open('tmpdirreadonly/byte.tif')
+    stats = ds.GetRasterBand(1).GetStatistics(False, False)
+    if stats[3] != -1:
+        gdaltest.post_reason('did not expected to have stats at that point')
+        return 'fail'
+    ds = None
+
+    # This must be run as an external process so we can override GDAL_PAM_PROXY_DIR
+    # at the beginning of the process
+    import test_py_scripts
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-run')
+    #print(ret)
+    if ret.find('success') == -1:
+        gdaltest.post_reason('pamproxydb.py failed')
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def pam_cleanup():
@@ -358,6 +407,17 @@ def pam_cleanup():
         gdal.SetConfigOption( 'GDAL_PAM_ENABLED', gdaltest.pam_setting )
     else:
         gdal.SetConfigOption( 'GDAL_PAM_ENABLED', None )
+
+    try:
+        os.chmod('tmpdirreadonly', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        shutil.rmtree('tmpdirreadonly')
+    except:
+        pass
+    try:
+        shutil.rmtree('tmppamproxydir')
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -371,6 +431,7 @@ gdaltest_list = [
     pam_8,
     pam_9,
     pam_10,
+    pam_11,
     pam_cleanup ]
 
 if __name__ == '__main__':
