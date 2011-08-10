@@ -654,6 +654,33 @@ const char *GDALPamDataset::BuildPamFilename()
 }
 
 /************************************************************************/
+/*                   IsPamFilenameAPotentialSiblingFile()               */
+/************************************************************************/
+
+int GDALPamDataset::IsPamFilenameAPotentialSiblingFile()
+{
+    if (psPam == NULL)
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Determine if the PAM filename is a .aux.xml file next to the    */
+/*      physical file, or if it comes from the ProxyDB                  */
+/* -------------------------------------------------------------------- */
+    const char *pszPhysicalFile = psPam->osPhysicalFilename;
+
+    if( strlen(pszPhysicalFile) == 0 && GetDescription() != NULL )
+        pszPhysicalFile = GetDescription();
+
+    int nLenPhysicalFile = strlen(pszPhysicalFile);
+    int bIsSiblingPamFile = strncmp(psPam->pszPamFilename, pszPhysicalFile,
+                                    nLenPhysicalFile) == 0 &&
+                            strcmp(psPam->pszPamFilename + nLenPhysicalFile,
+                                   ".aux.xml") == 0;
+
+    return bIsSiblingPamFile;
+}
+
+/************************************************************************/
 /*                             TryLoadXML()                             */
 /************************************************************************/
 
@@ -682,7 +709,12 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
 
     VSIStatBufL sStatBuf;
 
-    if (papszSiblingFiles != NULL)
+/* -------------------------------------------------------------------- */
+/*      In case the PAM filename is a .aux.xml file next to the         */
+/*      physical file and we have a siblings list, then we can skip     */
+/*      stat'ing the filesystem.                                        */
+/* -------------------------------------------------------------------- */
+    if (papszSiblingFiles != NULL && IsPamFilenameAPotentialSiblingFile())
     {
         int iSibling = CSLFindString( papszSiblingFiles,
                                       CPLGetFilename(psPam->pszPamFilename) );
@@ -1049,7 +1081,7 @@ char **GDALPamDataset::GetFileList()
         int bAddPamFile = (nPamFlags & GPF_DIRTY);
         if (!bAddPamFile)
         {
-            if (oOvManager.GetSiblingFiles() != NULL)
+            if (oOvManager.GetSiblingFiles() != NULL && IsPamFilenameAPotentialSiblingFile())
                 bAddPamFile = CSLFindString(oOvManager.GetSiblingFiles(),
                                   CPLGetFilename(psPam->pszPamFilename)) >= 0;
             else
