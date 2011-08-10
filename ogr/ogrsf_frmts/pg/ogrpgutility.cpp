@@ -77,6 +77,15 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllo
         CPLDebug("PG", "PQexec(%s) = %s%s", query, pszRetCode, szNTuples);
     else
         CPLDebug("PG", "PQexecParams(%s) = %s%s", query, pszRetCode, szNTuples);
+
+/* -------------------------------------------------------------------- */
+/*      Generate an error report if an error occured.                   */
+/* -------------------------------------------------------------------- */
+    if ( !hResult || (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR ||
+                      PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )
+    {
+        CPLDebug( "PG", "%s", PQerrorMessage( conn ) );
+    }
 #endif
 
     return hResult;

@@ -2180,10 +2180,14 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
                                 "executeSQLCursor", pszSQLCommand );
 
             hResult = OGRPG_PQexec(hPGConn, osCommand );
-            OGRPGClearResult( hResult );
+            if( hResult && (PQresultStatus(hResult) == PGRES_TUPLES_OK ||
+                            PQresultStatus(hResult) == PGRES_COMMAND_OK ))
+            {
+                OGRPGClearResult( hResult );
 
-            osCommand.Printf( "FETCH 0 in %s", "executeSQLCursor" );
-            hResult = OGRPG_PQexec(hPGConn, osCommand );
+                osCommand.Printf( "FETCH 0 in %s", "executeSQLCursor" );
+                hResult = OGRPG_PQexec(hPGConn, osCommand );
+            }
         }
     }
 
@@ -2210,12 +2214,12 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Generate an error report if an error occured.                   */
 /* -------------------------------------------------------------------- */
-    if( hResult &&
+    if( !hResult ||
         (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR
          || PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", PQresultErrorMessage( hResult ) );
+                  "%s", PQerrorMessage( hPGConn ) );
     }
 
     OGRPGClearResult( hResult );
