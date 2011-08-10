@@ -363,7 +363,19 @@ def pam_11():
         pass
     os.mkdir('tmpdirreadonly')
     shutil.copy('data/byte.tif', 'tmpdirreadonly/byte.tif')
+
+    # FIXME: how do we create a read-only dir on windows ?
+    # The following has no effect
     os.chmod('tmpdirreadonly', stat.S_IRUSR | stat.S_IXUSR)
+
+    # Test that the directory is really read-only
+    try:
+        f = open('tmpdirreadonly/test', 'w')
+        if f is not None:
+            f.close()
+            return 'skip'
+    except:
+        pass
 
     # Compute statistics --> the saving as .aux.xml should fail
     ds = gdal.Open('tmpdirreadonly/byte.tif')
