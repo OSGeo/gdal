@@ -109,6 +109,9 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 {
     friend class GDALPamRasterBand;
 
+  private:
+    int IsPamFilenameAPotentialSiblingFile();
+
   protected:
                 GDALPamDataset(void);
 
