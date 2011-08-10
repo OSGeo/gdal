@@ -48,9 +48,10 @@ CPL_CVSID("$Id$");
  * 
  * <h3>Enabling PAM</h3>
  * 
- * PAM support can be enabled in GDAL by setting the GDAL_PAM_ENABLED
+ * PAM support can be enabled (resp. disabled) in GDAL by setting the GDAL_PAM_ENABLED
  * configuration option (via CPLSetConfigOption(), or the environment) to 
- * the value of YES.  
+ * the value of YES (resp. NO). Note: The default value is build dependant and defaults
+ * to YES in Windows and Unix builds.
  *
  * <h3>PAM Proxy Files</h3>
  * 
@@ -58,10 +59,12 @@ CPL_CVSID("$Id$");
  * read-only media such as CDROMs or in directories where the user does not
  * have write permissions, it is possible to enable the "PAM Proxy Database".
  * When enabled the .aux.xml files are kept in a different directory, writable
- * by the user. 
+ * by the user. Overviews will also be stored in the PAM proxy directory.
  *
- * To enable this, set the GDAL_PAM_PROXY_DIR configuration open to be
- * the name of the directory where the proxies should be kept.  
+ * To enable this, set the GDAL_PAM_PROXY_DIR configuration option to be
+ * the name of the directory where the proxies should be kept. The configuration
+ * option must be set *before* the first access to PAM, because its value is cached
+ * for later access.
  *
  * <h3>Adding PAM to Drivers</h3>
  *
