@@ -1321,6 +1321,11 @@ void OGRPGLayer::SetInitialQueryCursor()
                             pszCursorName, pszQueryStatement );
 
     hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
+    if ( !hCursorResult || PQresultStatus(hCursorResult) != PGRES_COMMAND_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", PQerrorMessage( hPGConn ) );
+    }
     OGRPGClearResult( hCursorResult );
 
     osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
