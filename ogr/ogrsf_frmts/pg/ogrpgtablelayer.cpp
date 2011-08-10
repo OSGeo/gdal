@@ -2348,6 +2348,11 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
             }
         }
     }
+    else if ( hResult && PQresultStatus(hResult) == PGRES_FATAL_ERROR )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", PQresultErrorMessage( hResult ) );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
