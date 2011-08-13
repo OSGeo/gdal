@@ -546,8 +546,11 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
                 else
                     bReadGeometry = TRUE;
             }
-            CPLAssert(m_nGeometryDepth == 0);
-            m_nGeometryDepth = m_nDepth;
+            if (bReadGeometry)
+            {
+                CPLAssert(m_nGeometryDepth == 0);
+                m_nGeometryDepth = m_nDepth;
+            }
         }
         else
             bReadGeometry = TRUE;

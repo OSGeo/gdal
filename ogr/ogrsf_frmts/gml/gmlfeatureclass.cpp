@@ -156,7 +156,10 @@ void GMLFeatureClass::SetGeometryElement( const char *pszElement )
 
 {
     CPLFree( m_pszGeometryElement );
-    m_pszGeometryElement = CPLStrdup( pszElement );
+    if (pszElement)
+        m_pszGeometryElement = CPLStrdup( pszElement );
+    else
+        m_pszGeometryElement = NULL;
 }
 
 /************************************************************************/

@@ -236,6 +236,32 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                                                   poDS->GetInvertAxisOrderIfLatLong(),
                                                   pszSRSName,
                                                   poDS->GetConsiderEPSGAsURN());
+
+            /* Force single geometry to multigeometry if needed to match layer geometry type */
+            if (poGeom != NULL)
+            {
+                OGRwkbGeometryType eType = poGeom->getGeometryType();
+                OGRwkbGeometryType eLayerType = GetGeomType();
+                if (eType == wkbPoint && eLayerType == wkbMultiPoint)
+                {
+                    OGRMultiPoint* poNewGeom = new OGRMultiPoint();
+                    poNewGeom->addGeometryDirectly(poGeom);
+                    poGeom = poNewGeom;
+                }
+                else if (eType == wkbLineString && eLayerType == wkbMultiLineString)
+                {
+                    OGRMultiLineString* poNewGeom = new OGRMultiLineString();
+                    poNewGeom->addGeometryDirectly(poGeom);
+                    poGeom = poNewGeom;
+                }
+                else if (eType == wkbPolygon && eLayerType == wkbMultiPolygon)
+                {
+                    OGRMultiPolygon* poNewGeom = new OGRMultiPolygon();
+                    poNewGeom->addGeometryDirectly(poGeom);
+                    poGeom = poNewGeom;
+                }
+            }
+
             if (poGeom != NULL && poSRS != NULL)
                 poGeom->assignSpatialReference(poSRS);
 
