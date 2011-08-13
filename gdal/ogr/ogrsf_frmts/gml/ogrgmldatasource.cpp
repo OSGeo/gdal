@@ -210,6 +210,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 
     int bExpatCompatibleEncoding = FALSE;
     int bHas3D = FALSE;
+    int bHintConsiderEPSGAsURN = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't sure it is GML, load a header chunk and check      */
@@ -337,6 +338,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             if (pszExposeFid)
                 bExposeFid = CSLTestBoolean(pszExposeFid);
         }
+
+        bHintConsiderEPSGAsURN = strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != NULL;
     }
     
 /* -------------------------------------------------------------------- */
@@ -346,7 +349,18 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     VSIFCloseL( fp );
 
     m_bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
-    m_bConsiderEPSGAsURN = CSLTestBoolean(CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "NO"));
+
+    const char* pszConsiderEPSGAsURN = CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", NULL);
+    if (pszConsiderEPSGAsURN != NULL)
+        m_bConsiderEPSGAsURN = CSLTestBoolean(pszConsiderEPSGAsURN);
+    else if (bHintConsiderEPSGAsURN)
+    {
+        /* GML produced by FME (at least CanVec GML) seem to honour EPSG axis ordering */
+        CPLDebug("GML", "FME-produced GML --> consider that GML_CONSIDER_EPSG_AS_URN is set to YES");
+        m_bConsiderEPSGAsURN = TRUE;
+    }
+    else
+        m_bConsiderEPSGAsURN = FALSE;
 
     /* EXPAT is faster than Xerces, so when it is safe to use it, use it ! */
     /* The only interest of Xerces is for rare encodings that Expat doesn't handle */
