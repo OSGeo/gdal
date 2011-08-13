@@ -297,21 +297,35 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
             {
                 VSIStatBufL sStat;
                 const char* pszDBFName = CPLResetExtension(pszNewName, "dbf");
+                VSILFILE* fp = NULL;
                 if( VSIStatExL( pszDBFName, &sStat, VSI_STAT_EXISTS_FLAG) == 0 )
                 {
-                    CPLError( CE_Failure, CPLE_OpenFailed,
-                              "%s exists, but cannot be opened in update mode",
-                              pszDBFName );
-                    return FALSE;
+                    fp = VSIFOpenL(pszDBFName, "r+");
+                    if (fp == NULL)
+                    {
+                        CPLError( CE_Failure, CPLE_OpenFailed,
+                                "%s exists, but cannot be opened in update mode",
+                                pszDBFName );
+                        return FALSE;
+                    }
                 }
-                pszDBFName = CPLResetExtension(pszNewName, "DBF");
-                if( VSIStatExL( pszDBFName, &sStat, VSI_STAT_EXISTS_FLAG) == 0 )
+                else
                 {
-                    CPLError( CE_Failure, CPLE_OpenFailed,
-                              "%s exists, but cannot be opened in update mode",
-                              pszDBFName );
-                    return FALSE;
+                    pszDBFName = CPLResetExtension(pszNewName, "DBF");
+                    if( VSIStatExL( pszDBFName, &sStat, VSI_STAT_EXISTS_FLAG) == 0 )
+                    {
+                        fp = VSIFOpenL(pszDBFName, "r+");
+                        if (fp == NULL)
+                        {
+                            CPLError( CE_Failure, CPLE_OpenFailed,
+                                    "%s exists, but cannot be opened in update mode",
+                                    pszDBFName );
+                            return FALSE;
+                        }
+                    }
                 }
+                if (fp != NULL)
+                    VSIFCloseL(fp);
             }
         }
         else
