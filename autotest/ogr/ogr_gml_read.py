@@ -1114,6 +1114,39 @@ def ogr_gml_28():
     return 'success'
 
 ###############################################################################
+# Test reading FME GMLs
+
+def ogr_gml_29():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/testfmegml.gml')
+
+    expected_results = [ [ ogr.wkbMultiPoint, 'MULTIPOINT (2 49)' ],
+                         [ ogr.wkbMultiPolygon, 'MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49)))'],
+                         [ ogr.wkbMultiLineString, 'MULTILINESTRING ((2 49,3 50))'],
+                       ]
+
+    for j in range(len(expected_results)):
+        lyr = ds.GetLayer(j)
+        if lyr.GetGeomType() != expected_results[j][0]:
+            gdaltest.post_reason('layer %d, did not get expected layer geometry type' % j)
+            return 'fail'
+        for i in range(2):
+            feat = lyr.GetNextFeature()
+            geom = feat.GetGeometryRef()
+            got_wkt = geom.ExportToWkt()
+            if got_wkt != expected_results[j][1]:
+                gdaltest.post_reason('layer %d, did not get expected geometry' % j)
+                print(got_wkt)
+                return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -1223,6 +1256,7 @@ gdaltest_list = [
     ogr_gml_26,
     ogr_gml_27,
     ogr_gml_28,
+    ogr_gml_29,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
