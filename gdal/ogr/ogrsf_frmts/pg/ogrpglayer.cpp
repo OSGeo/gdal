@@ -111,7 +111,6 @@ OGRPGLayer::OGRPGLayer()
     pszCursorName = CPLStrdup(CPLSPrintf("OGRPGLayerReader%p", this));
     
     hCursorResult = NULL;
-    bCursorActive = FALSE;
 
     bCanUseBinaryCursor = TRUE;
 
@@ -149,35 +148,41 @@ OGRPGLayer::~OGRPGLayer()
 }
 
 /************************************************************************/
+/*                            CloseCursor()                             */
+/************************************************************************/
+
+void OGRPGLayer::CloseCursor()
+{
+    PGconn      *hPGConn = poDS->GetPGConn();
+
+    if( hCursorResult != NULL )
+    {
+        OGRPGClearResult( hCursorResult );
+
+        CPLString    osCommand;
+        osCommand.Printf("CLOSE %s", pszCursorName );
+
+        hCursorResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+        OGRPGClearResult( hCursorResult );
+
+        poDS->FlushSoftTransaction();
+
+        hCursorResult = NULL;
+    }
+}
+
+/************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRPGLayer::ResetReading()
 
 {
-    PGconn      *hPGConn = poDS->GetPGConn();
-    CPLString    osCommand;
-
     GetLayerDefn();
 
     iNextShapeId = 0;
 
-    if( hCursorResult != NULL )
-    {
-        OGRPGClearResult( hCursorResult );
-
-        if( bCursorActive )
-        {
-            osCommand.Printf("CLOSE %s", pszCursorName );
-
-            hCursorResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-            OGRPGClearResult( hCursorResult );
-        }
-
-        poDS->FlushSoftTransaction();
-
-        hCursorResult = NULL;
-    }
+    CloseCursor();
 }
 
 /************************************************************************/
@@ -1331,8 +1336,6 @@ void OGRPGLayer::SetInitialQueryCursor()
     osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
     hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
 
-    bCursorActive = TRUE;
-
     CreateMapFromFieldNameToIndex();
 
     nResultOffset = 0;
@@ -1373,9 +1376,11 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Do we need to fetch more records?                               */
 /* -------------------------------------------------------------------- */
-    if( PQntuples(hCursorResult) > 0 &&
-        nResultOffset >= PQntuples(hCursorResult)
-        && bCursorActive )
+
+    /* We test for PQntuples(hCursorResult) == 1 in the case the previous */
+    /* request was a SetNextByIndex() */
+    if( (PQntuples(hCursorResult) == 1 || PQntuples(hCursorResult) == CURSOR_PAGE) &&
+        nResultOffset == PQntuples(hCursorResult) )
     {
         OGRPGClearResult( hCursorResult );
         
@@ -1389,22 +1394,9 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /*      Are we out of results?  If so complete the transaction, and     */
 /*      cleanup, but don't reset the next shapeid.                      */
 /* -------------------------------------------------------------------- */
-    if( nResultOffset >= PQntuples(hCursorResult) )
+    if( nResultOffset == PQntuples(hCursorResult) )
     {
-        OGRPGClearResult( hCursorResult );
-
-        if( bCursorActive )
-        {
-            osCommand.Printf( "CLOSE %s", pszCursorName );
-
-            hCursorResult = OGRPG_PQexec(hPGConn, osCommand);
-            OGRPGClearResult( hCursorResult );
-        }
-
-        poDS->FlushSoftTransaction();
-
-        hCursorResult = NULL;
-        bCursorActive = FALSE;
+        CloseCursor();
 
         iNextShapeId = MAX(1,iNextShapeId);
 
@@ -1464,27 +1456,14 @@ OGRErr OGRPGLayer::SetNextByIndex( long nIndex )
     
     osCommand.Printf( "FETCH ABSOLUTE %ld in %s", nIndex+1, pszCursorName );
     hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
-    
+
     if (PQresultStatus(hCursorResult) != PGRES_TUPLES_OK ||
         PQntuples(hCursorResult) != 1)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to read feature at invalid index (%ld).", nIndex );
-                  
-        OGRPGClearResult( hCursorResult );
 
-        if( bCursorActive )
-        {
-            osCommand.Printf( "CLOSE %s", pszCursorName );
-
-            hCursorResult = OGRPG_PQexec(hPGConn, osCommand);
-            OGRPGClearResult( hCursorResult );
-        }
-
-        poDS->FlushSoftTransaction();
-
-        hCursorResult = NULL;
-        bCursorActive = FALSE;
+        CloseCursor();
 
         iNextShapeId = 0;
 

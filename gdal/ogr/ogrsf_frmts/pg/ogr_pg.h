@@ -110,7 +110,6 @@ class OGRPGLayer : public OGRLayer
 
     char               *pszCursorName;
     PGresult           *hCursorResult;
-    int                 bCursorActive;
 
     int                 nResultOffset;
 
@@ -129,6 +128,7 @@ class OGRPGLayer : public OGRLayer
     int                 ParsePGDate( const char *, OGRField * );
 
     void                SetInitialQueryCursor();
+    void                CloseCursor();
 
     OGRErr              RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
                                              CPLString osCommand);
