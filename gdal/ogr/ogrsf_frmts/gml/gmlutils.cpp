@@ -30,6 +30,7 @@
 #include "cpl_string.h"
 
 #include "gmlutils.h"
+#include <string>
 
 /************************************************************************/
 /*                GML_ExtractSrsNameFromGeometry()                      */
@@ -47,25 +48,35 @@ char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList,
         {
             pszSRSName += strlen("srsName=\"");
 
+            const char* pszEndQuote = strchr(pszSRSName, '"');
+            if (pszEndQuote == NULL)
+                return NULL;
+
+            int nLen = pszEndQuote - pszSRSName;
+
             char* pszRet;
             if (strncmp(pszSRSName, "EPSG:", 5) == 0 &&
                 bConsiderEPSGAsURN)
             {
-                pszRet = CPLStrdup(CPLSPrintf("urn:ogc:def:crs:EPSG::%s", pszSRSName+5));
+                pszRet = (char*) CPLMalloc(22 + nLen-5 + 1);
+                memcpy(pszRet, "urn:ogc:def:crs:EPSG::", 22);
+                memcpy(pszRet + 22, pszSRSName+5, nLen-5);
+                pszRet[22 + nLen-5] = '\0';
             }
-            else if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#",
-                        strlen("http://www.opengis.net/gml/srs/epsg.xml#")) == 0)
+            else if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
             {
-                pszRet = CPLStrdup(CPLSPrintf("EPSG:%s", pszSRSName +
-                            strlen("http://www.opengis.net/gml/srs/epsg.xml#")));
+                pszRet = (char*) CPLMalloc(5 + nLen-40 + 1);
+                memcpy(pszRet, "EPSG:", 5);
+                memcpy(pszRet + 5, pszSRSName+40, nLen-40);
+                pszRet[5 + nLen-40] = '\0';
             }
             else
             {
-                pszRet = CPLStrdup(pszSRSName);
+                pszRet = (char*) CPLMalloc(nLen + 1);
+                memcpy(pszRet, pszSRSName, nLen);
+                pszRet[nLen] = '\0';
             }
-            char* pszEndQuote = strchr(pszRet, '"');
-            if (pszEndQuote)
-                *pszEndQuote = 0;
+
             return pszRet;
         }
     }
@@ -102,6 +113,32 @@ int GML_IsSRSLatLongOrder(const char* pszSRSName)
     return FALSE;
 }
 
+
+/************************************************************************/
+/*                GML_BuildOGRGeometryFromList_CreateCache()            */
+/************************************************************************/
+
+class SRSCache
+{
+public:
+    std::string osLastSRSName;
+    int   bAxisInvertLastSRSName;
+};
+
+void* GML_BuildOGRGeometryFromList_CreateCache()
+{
+    return new SRSCache();
+}
+
+/************************************************************************/
+/*                 GML_BuildOGRGeometryFromList_DestroyCache()          */
+/************************************************************************/
+
+void GML_BuildOGRGeometryFromList_DestroyCache(void* hCacheSRS)
+{
+    delete (SRSCache*)hCacheSRS;
+}
+
 /************************************************************************/
 /*                 GML_BuildOGRGeometryFromList()                       */
 /************************************************************************/
@@ -110,7 +147,8 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                                           int bTryToMakeMultipolygons,
                                           int bInvertAxisOrderIfLatLong,
                                           const char* pszDefaultSRSName,
-                                          int bConsiderEPSGAsURN)
+                                          int bConsiderEPSGAsURN,
+                                          void* hCacheSRS)
 {
     OGRGeometry* poGeom = NULL;
     if( papszGeometryList != NULL )
@@ -166,7 +204,8 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                             return GML_BuildOGRGeometryFromList(papszGeometryList, FALSE,
                                                                 bInvertAxisOrderIfLatLong,
                                                                 pszDefaultSRSName,
-                                                                bConsiderEPSGAsURN);
+                                                                bConsiderEPSGAsURN,
+                                                                hCacheSRS);
                         }
                         else
                         {
@@ -189,8 +228,24 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
     {
         char* pszSRSName = GML_ExtractSrsNameFromGeometry(papszGeometryList,
                                                           bConsiderEPSGAsURN);
-        if (GML_IsSRSLatLongOrder(pszSRSName ? pszSRSName : pszDefaultSRSName))
-            poGeom->swapXY();
+        const char* pszNameLookup = pszSRSName ? pszSRSName : pszDefaultSRSName;
+        if (pszNameLookup != NULL)
+        {
+            SRSCache* poSRSCache = (SRSCache*)hCacheSRS;
+            int bSwap;
+            if (strcmp(poSRSCache->osLastSRSName.c_str(), pszNameLookup) == 0)
+            {
+                bSwap = poSRSCache->bAxisInvertLastSRSName;
+            }
+            else
+            {
+                int bSwap = GML_IsSRSLatLongOrder(pszNameLookup);
+                poSRSCache->osLastSRSName = pszNameLookup;
+                poSRSCache->bAxisInvertLastSRSName= bSwap;
+            }
+            if (bSwap)
+                poGeom->swapXY();
+        }
         CPLFree(pszSRSName);
     }
     
