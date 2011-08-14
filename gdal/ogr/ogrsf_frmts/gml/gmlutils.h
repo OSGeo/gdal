@@ -37,11 +37,15 @@ char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList,
 
 int GML_IsSRSLatLongOrder(const char* pszSRSName);
 
+void* GML_BuildOGRGeometryFromList_CreateCache();
+void GML_BuildOGRGeometryFromList_DestroyCache(void* hCacheSRS);
+
 OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
                                           int bTryToMakeMultipolygons,
                                           int bInvertAxisOrderIfLatLong,
                                           const char* pszDefaultSRSName,
-                                          int bConsiderEPSGAsURN);
+                                          int bConsiderEPSGAsURN,
+                                          void* hCacheSRS);
 
 char* GML_GetSRSName(const OGRSpatialReference* poSRS, int bLongSRS, int *pbCoordSwap);
 

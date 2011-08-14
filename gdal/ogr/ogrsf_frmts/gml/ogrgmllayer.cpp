@@ -75,6 +75,8 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
         poFClass = poDS->GetReader()->GetClass( pszName );
     else
         poFClass = NULL;
+
+    hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
 }
 
 /************************************************************************/
@@ -91,6 +93,8 @@ OGRGMLLayer::~OGRGMLLayer()
 
     if( poSRS != NULL )
         poSRS->Release();
+
+    GML_BuildOGRGeometryFromList_DestroyCache(hCacheSRS);
 }
 
 /************************************************************************/
@@ -235,7 +239,8 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             poGeom = GML_BuildOGRGeometryFromList(papszGeometryList, TRUE,
                                                   poDS->GetInvertAxisOrderIfLatLong(),
                                                   pszSRSName,
-                                                  poDS->GetConsiderEPSGAsURN());
+                                                  poDS->GetConsiderEPSGAsURN(),
+                                                  hCacheSRS);
 
             /* Force single geometry to multigeometry if needed to match layer geometry type */
             if (poGeom != NULL)

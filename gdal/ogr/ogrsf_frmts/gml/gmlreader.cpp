@@ -1203,6 +1203,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
 
     std::map<GMLFeatureClass*, int> osMapCountFeatureWithoutGeometry;
 
+    void* hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
+
     while( (poFeature = NextFeature()) != NULL )
     {
         GMLFeatureClass *poClass = poFeature->GetClass();
@@ -1227,7 +1229,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
         if( bGetExtents )
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
-                poFeature->GetGeometryList(), TRUE, m_bInvertAxisOrderIfLatLong, NULL, m_bConsiderEPSGAsURN);
+                poFeature->GetGeometryList(), TRUE, m_bInvertAxisOrderIfLatLong,
+                NULL, m_bConsiderEPSGAsURN, hCacheSRS);
 
             if( poGeometry != NULL )
             {
@@ -1280,6 +1283,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
         
         delete poFeature;
     }
+
+    GML_BuildOGRGeometryFromList_DestroyCache(hCacheSRS);
 
     for( int i = 0; i < m_nClassCount; i++ )
     {
