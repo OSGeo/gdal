@@ -56,6 +56,8 @@ class OGRGMLLayer : public OGRLayer
 
     GMLFeatureClass     *poFClass;
 
+    void                *hCacheSRS;
+
   public:
                         OGRGMLLayer( const char * pszName, 
                                      OGRSpatialReference *poSRS, 
