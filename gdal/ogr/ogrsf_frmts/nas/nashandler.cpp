@@ -134,7 +134,7 @@ void NASHandler::startElement(const XMLCh* const    uri,
         if( m_pszGeometry == NULL )
             m_nGeometryDepth = poState->m_nPathLength;
         
-        if( m_nGeomLen + nLNLen + 4 + osAttributes.size() > m_nGeomAlloc )
+        if( m_nGeomLen + nLNLen + 4 + (int)osAttributes.size() > m_nGeomAlloc )
         {
             m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLen + osAttributes.size() + 1000);
             m_pszGeometry = (char *) 
