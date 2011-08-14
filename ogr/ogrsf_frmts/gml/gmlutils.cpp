@@ -239,7 +239,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
             }
             else
             {
-                int bSwap = GML_IsSRSLatLongOrder(pszNameLookup);
+                bSwap = GML_IsSRSLatLongOrder(pszNameLookup);
                 poSRSCache->osLastSRSName = pszNameLookup;
                 poSRSCache->bAxisInvertLastSRSName= bSwap;
             }
