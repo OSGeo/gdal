@@ -1016,17 +1016,16 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
 
         size_t nCharsLen = nLen - nIter;
 
-        size_t nNewSize = m_nCurFieldLen + nCharsLen +1;
-        if (nNewSize >= m_nCurFieldAlloc)
+        if (m_nCurFieldLen + nCharsLen + 1 >= m_nCurFieldAlloc)
         {
+            m_nCurFieldAlloc = (size_t) (m_nCurFieldAlloc * 1.3 + nCharsLen + 1000);
             char *pszNewCurField = (char *)
-                VSIRealloc( m_pszCurField, m_nCurFieldAlloc * 2 );
+                VSIRealloc( m_pszCurField, m_nCurFieldAlloc );
             if (pszNewCurField == NULL)
             {
                 return CE_Failure;
             }
             m_pszCurField = pszNewCurField;
-            m_nCurFieldAlloc *= 2;
         }
         memcpy( m_pszCurField + m_nCurFieldLen, data + nIter, nCharsLen);
         m_nCurFieldLen += nCharsLen;
