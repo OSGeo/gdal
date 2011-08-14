@@ -36,12 +36,18 @@
 
 class GMLReader;
 
+typedef struct _GeometryNamesStruct GeometryNamesStruct;
+
 /************************************************************************/
 /*                              GMLHandler                              */
 /************************************************************************/
 class GMLHandler
 {
     char       *m_pszCurField;
+    size_t     m_nCurFieldAlloc;
+    size_t     m_nCurFieldLen;
+    int        m_bInCurField;
+    int        m_nAttributeIndex;
 
     char       *m_pszGeometry;
     size_t     m_nGeomAlloc;
@@ -66,6 +72,8 @@ class GMLHandler
     char      *m_pszHref;
     char      *m_pszUom;
     char      *m_pszValue;
+
+    GeometryNamesStruct* pasGeometryNames;
 
 protected:
     GMLReader  *m_poReader;
@@ -290,6 +298,7 @@ private:
     GMLFeature ** ppoFeatureTab;
     int           nFeatureTabLength;
     int           nFeatureTabIndex;
+    int           nFeatureTabAlloc;
     int           SetupParserExpat();
     GMLFeature   *NextFeatureExpat();
 #endif
@@ -357,14 +366,15 @@ public:
     void             PushState( GMLReadState * );
 
     int         IsFeatureElement( const char *pszElement );
-    int         IsAttributeElement( const char *pszElement );
+    int         GetAttributeElementIndex( const char *pszElement );
     int         IsCityGMLGenericAttributeElement( const char *pszElement, void* attr );
 
     void        PushFeature( const char *pszElement, 
                              const char *pszFID );
 
     void        SetFeatureProperty( const char *pszElement,
-                                    const char *pszValue );
+                                    const char *pszValue,
+                                    int iPropertyIn = -1);
 
     int         HasStoppedParsing() { return m_bStopParsing; }
 

@@ -139,6 +139,7 @@ GMLReader::GMLReader(int bUseExpatParserPreferably, int bInvertAxisOrderIfLatLon
     ppoFeatureTab = NULL;
     nFeatureTabIndex = 0;
     nFeatureTabLength = 0;
+    nFeatureTabAlloc = 0;
 #endif
     fpGML = NULL;
     m_bReadStarted = FALSE;
@@ -419,6 +420,7 @@ void GMLReader::CleanupParser()
     CPLFree(ppoFeatureTab);
     nFeatureTabIndex = 0;
     nFeatureTabLength = 0;
+    nFeatureTabAlloc = 0;
     ppoFeatureTab = NULL;
 
 #endif
@@ -564,8 +566,6 @@ GMLFeature *GMLReader::NextFeatureExpat()
 
     char aBuf[BUFSIZ];
 
-    CPLFree(ppoFeatureTab);
-    ppoFeatureTab = NULL;
     nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
 
@@ -684,41 +684,48 @@ int GMLReader::IsFeatureElement( const char *pszElement )
 
     const char *pszLast = m_poState->GetLastComponent();
     int        nLen = strlen(pszLast);
-    int        nElementLength = strlen(pszElement);
 
-    if (strcmp(pszLast, "dane") == 0)
+    if( nLen >= 6 && (EQUAL(pszLast+nLen-6,"member") ||
+                      EQUAL(pszLast+nLen-7,"members")) )
     {
-         /* Polish TBD GML */
+        /* Default feature name */
     }
+    else
+    {
+        int        nElementLength = strlen(pszElement);
 
-    /* Begin of OpenLS */
-    else if (strcmp(pszLast, "GeocodeResponseList") == 0 &&
-             strcmp(pszElement, "GeocodedAddress") == 0)
-    {
-    }
-    else if (strcmp(pszLast, "DetermineRouteResponse") == 0)
-    {
-        /* We don't want the children of RouteInstructionsList */
-        /* to be a single feature. We want each RouteInstruction */
-        /* to be a feature */
-        if (strcmp(pszElement, "RouteInstructionsList") == 0)
+        if (strcmp(pszLast, "dane") == 0)
+        {
+            /* Polish TBD GML */
+        }
+
+        /* Begin of OpenLS */
+        else if (strcmp(pszLast, "GeocodeResponseList") == 0 &&
+                strcmp(pszElement, "GeocodedAddress") == 0)
+        {
+        }
+        else if (strcmp(pszLast, "DetermineRouteResponse") == 0)
+        {
+            /* We don't want the children of RouteInstructionsList */
+            /* to be a single feature. We want each RouteInstruction */
+            /* to be a feature */
+            if (strcmp(pszElement, "RouteInstructionsList") == 0)
+                return FALSE;
+        }
+        else if (strcmp(pszElement, "RouteInstruction") == 0 &&
+                strcmp(pszLast, "RouteInstructionsList") == 0)
+        {
+        }
+        /* End of OpenLS */
+
+        else if (nLen > 6 && strcmp(pszLast + nLen - 6, "_layer") == 0 &&
+                nElementLength > 8 && strcmp(pszElement + nElementLength - 8, "_feature") == 0)
+        {
+            /* GML answer of MapServer WMS GetFeatureInfo request */
+        }
+        else
             return FALSE;
     }
-    else if (strcmp(pszElement, "RouteInstruction") == 0 &&
-             strcmp(pszLast, "RouteInstructionsList") == 0)
-    {
-    }
-    /* End of OpenLS */
-
-    else if (nLen > 6 && strcmp(pszLast + nLen - 6, "_layer") == 0 &&
-             nElementLength > 8 && strcmp(pszElement + nElementLength - 8, "_feature") == 0)
-    {
-        /* GML answer of MapServer WMS GetFeatureInfo request */
-    }
-
-    else if( nLen < 6 || !(EQUAL(pszLast+nLen-6,"member") ||
-                      EQUAL(pszLast+nLen-7,"members")) )
-        return FALSE;
 
     // If the class list isn't locked, any element that is a featureMember
     // will do. 
@@ -778,40 +785,43 @@ int GMLReader::IsCityGMLGenericAttributeElement( const char *pszElement, void* a
 }
 
 /************************************************************************/
-/*                         IsAttributeElement()                         */
+/*                       GetAttributeElementIndex()                     */
 /************************************************************************/
 
-int GMLReader::IsAttributeElement( const char *pszElement )
+int GMLReader::GetAttributeElementIndex( const char *pszElement )
 
 {
     if( m_poState->m_poFeature == NULL )
-        return FALSE;
+        return -1;
 
     GMLFeatureClass *poClass = m_poState->m_poFeature->GetClass();
 
     // If the schema is not yet locked, then any simple element
     // is potentially an attribute.
     if( !poClass->IsSchemaLocked() )
-        return TRUE;
+        return INT_MAX;
 
     // Otherwise build the path to this element into a single string
     // and compare against known attributes.
     CPLString osElemPath;
+    const char* pszElemPath;
 
     if( m_poState->m_nPathLength == 0 )
-        osElemPath = pszElement;
+        pszElemPath = pszElement;
     else
     {
         osElemPath = m_poState->m_pszPath;
         osElemPath += "|";
         osElemPath += pszElement;
+        pszElemPath = osElemPath.c_str();
     }
 
-    for( int i = 0; i < poClass->GetPropertyCount(); i++ )
-        if( strcmp(poClass->GetProperty(i)->GetSrcElement(),osElemPath) == 0 )
-            return TRUE;
+    int nPropertyCount = poClass->GetPropertyCount();
+    for( int i = 0; i < nPropertyCount; i++ )
+        if( strcmp(poClass->GetProperty(i)->GetSrcElement(),pszElemPath) == 0 )
+            return i;
 
-    return FALSE;
+    return -1;
 }
 
 /************************************************************************/
@@ -835,9 +845,13 @@ void GMLReader::PopState()
 #ifdef HAVE_EXPAT
         if ( bUseExpatReader && m_poState->m_poFeature != NULL )
         {
-            ppoFeatureTab = (GMLFeature**)
-                    CPLRealloc(ppoFeatureTab,
-                                sizeof(GMLFeature*) * (nFeatureTabLength + 1));
+            if (nFeatureTabLength >= nFeatureTabAlloc)
+            {
+                nFeatureTabAlloc = nFeatureTabLength * 1.3 + 16;
+                ppoFeatureTab = (GMLFeature**)
+                        CPLRealloc(ppoFeatureTab,
+                                    sizeof(GMLFeature*) * (nFeatureTabAlloc));
+            }
             ppoFeatureTab[nFeatureTabLength] = m_poState->m_poFeature;
             nFeatureTabLength++;
 
@@ -936,7 +950,8 @@ void GMLReader::ClearClasses()
 /************************************************************************/
 
 void GMLReader::SetFeatureProperty( const char *pszElement, 
-                                    const char *pszValue )
+                                    const char *pszValue,
+                                    int iPropertyIn )
 
 {
     GMLFeature *poFeature = GetState()->m_poFeature;
@@ -950,47 +965,55 @@ void GMLReader::SetFeatureProperty( const char *pszElement,
     GMLFeatureClass *poClass = poFeature->GetClass();
     int      iProperty;
 
-    for( iProperty=0; iProperty < poClass->GetPropertyCount(); iProperty++ )
+    int nPropertyCount = poClass->GetPropertyCount();
+    if (iPropertyIn >= 0 && iPropertyIn < nPropertyCount)
     {
-        if( strcmp(poClass->GetProperty( iProperty )->GetSrcElement(),
-                  pszElement ) == 0 )
-            break;
+        iProperty = iPropertyIn;
     }
-    
-    if( iProperty == poClass->GetPropertyCount() )
+    else
     {
-        if( poClass->IsSchemaLocked() )
+        for( iProperty=0; iProperty < nPropertyCount; iProperty++ )
         {
-            CPLDebug("GML","Encountered property missing from class schema.");
-            return;
+            if( strcmp(poClass->GetProperty( iProperty )->GetSrcElement(),
+                    pszElement ) == 0 )
+                break;
         }
 
-        CPLString osFieldName;
-        
-        if( strchr(pszElement,'|') == NULL )
-            osFieldName = pszElement;
-        else
+        if( iProperty == nPropertyCount )
         {
-            osFieldName = strrchr(pszElement,'|') + 1;
-            if( poClass->GetPropertyIndex(osFieldName) != -1 )
+            if( poClass->IsSchemaLocked() )
+            {
+                CPLDebug("GML","Encountered property missing from class schema.");
+                return;
+            }
+
+            CPLString osFieldName;
+
+            if( strchr(pszElement,'|') == NULL )
                 osFieldName = pszElement;
-        }
+            else
+            {
+                osFieldName = strrchr(pszElement,'|') + 1;
+                if( poClass->GetPropertyIndex(osFieldName) != -1 )
+                    osFieldName = pszElement;
+            }
 
-        // Does this conflict with an existing property name? 
-        while( poClass->GetProperty(osFieldName) != NULL )
-        {
-            osFieldName += "_";
-        }
+            // Does this conflict with an existing property name?
+            while( poClass->GetProperty(osFieldName) != NULL )
+            {
+                osFieldName += "_";
+            }
 
-        GMLPropertyDefn *poPDefn = new GMLPropertyDefn(osFieldName,pszElement);
+            GMLPropertyDefn *poPDefn = new GMLPropertyDefn(osFieldName,pszElement);
 
-        if( EQUAL(CPLGetConfigOption( "GML_FIELDTYPES", ""), "ALWAYS_STRING") )
-            poPDefn->SetType( GMLPT_String );
+            if( EQUAL(CPLGetConfigOption( "GML_FIELDTYPES", ""), "ALWAYS_STRING") )
+                poPDefn->SetType( GMLPT_String );
 
-        if (poClass->AddProperty( poPDefn ) < 0)
-        {
-            delete poPDefn;
-            return;
+            if (poClass->AddProperty( poPDefn ) < 0)
+            {
+                delete poPDefn;
+                return;
+            }
         }
     }
 

@@ -31,6 +31,7 @@
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_hash_set.h"
 
 #ifdef HAVE_XERCES
 
@@ -356,16 +357,8 @@ char* GMLExpatHandler::GetFID(void* attr)
     const char** papszIter = (const char** )attr;
     while(*papszIter)
     {
-        if (strcmp(*papszIter, "fid") == 0)
-        {
-            return CPLStrdup(papszIter[1]);
-        }
-        papszIter += 2;
-    }
-    papszIter = (const char** )attr;
-    while(*papszIter)
-    {
-        if (strcmp(*papszIter, "gml:id") == 0)
+        if (strcmp(*papszIter, "fid") == 0 ||
+            strcmp(*papszIter, "gml:id") == 0)
         {
             return CPLStrdup(papszIter[1]);
         }
@@ -381,6 +374,8 @@ char* GMLExpatHandler::GetFID(void* attr)
 char* GMLExpatHandler::GetAttributes(void* attr)
 {
     const char** papszIter = (const char** )attr;
+    if (*papszIter == NULL)
+        return NULL;
     CPLString osRes;
     while(*papszIter)
     {
@@ -416,6 +411,49 @@ char* GMLExpatHandler::GetAttributeValue(void* attr, const char* pszAttributeNam
 #endif
 
 
+static const char* const apszGMLGeometryElements[] =
+{
+    "CompositeSurface",
+    "Curve",
+    "GeometryCollection", /* OGR < 1.8.0 bug... */
+    "LineString",
+    "MultiCurve",
+    "MultiGeometry",
+    "MultiLineString",
+    "MultiPoint",
+    "MultiPolygon",
+    "MultiSurface",
+    "Point",
+    "Polygon",
+    "PolygonPatch",
+    "Solid",
+    "Surface",
+    "TopoCurve",
+    "TopoSurface"
+};
+
+#define GML_GEOMETRY_TYPE_COUNT  \
+    (int)(sizeof(apszGMLGeometryElements) / sizeof(apszGMLGeometryElements[0]))
+
+struct _GeometryNamesStruct {
+    unsigned long nHash;
+    const char   *pszName;
+} ;
+
+/************************************************************************/
+/*                    GMLHandlerSortGeometryElements()                  */
+/************************************************************************/
+
+static int GMLHandlerSortGeometryElements(const void *_pA, const void *_pB)
+{
+    GeometryNamesStruct* pA = (GeometryNamesStruct*)_pA;
+    GeometryNamesStruct* pB = (GeometryNamesStruct*)_pB;
+    CPLAssert(pA->nHash != pB->nHash);
+    if (pA->nHash < pB->nHash)
+        return -1;
+    else
+        return 1;
+}
 
 /************************************************************************/
 /*                            GMLHandler()                              */
@@ -425,7 +463,12 @@ GMLHandler::GMLHandler( GMLReader *poReader )
 
 {
     m_poReader = poReader;
-    m_pszCurField = NULL;
+    m_bInCurField = FALSE;
+    m_nCurFieldAlloc = 256;
+    m_nCurFieldLen = 0;
+    m_pszCurField = (char*)CPLMalloc(m_nCurFieldAlloc);
+    m_pszCurField[0] = '\0';
+    m_nAttributeIndex = -1;
     m_pszGeometry = NULL;
     m_nGeomAlloc = m_nGeomLen = 0;
     m_nDepthFeature = m_nDepth = 0;
@@ -442,6 +485,18 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_pszHref = NULL;
     m_pszUom = NULL;
     m_pszValue = NULL;
+
+    pasGeometryNames = (GeometryNamesStruct*)CPLMalloc(
+        GML_GEOMETRY_TYPE_COUNT * sizeof(GeometryNamesStruct));
+    for(int i=0; i<GML_GEOMETRY_TYPE_COUNT; i++)
+    {
+        pasGeometryNames[i].pszName = apszGMLGeometryElements[i];
+        pasGeometryNames[i].nHash =
+                    CPLHashSetHashStr(pasGeometryNames[i].pszName);
+    }
+    qsort(pasGeometryNames, GML_GEOMETRY_TYPE_COUNT,
+          sizeof(GeometryNamesStruct),
+          GMLHandlerSortGeometryElements);
 }
 
 /************************************************************************/
@@ -457,6 +512,7 @@ GMLHandler::~GMLHandler()
     CPLFree( m_pszHref );
     CPLFree( m_pszUom );
     CPLFree( m_pszValue );
+    CPLFree( pasGeometryNames );
 }
 
 
@@ -502,18 +558,15 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 /*      try to collect for now, so just terminate the field             */
 /*      collection.                                                     */
 /* -------------------------------------------------------------------- */
-    if( m_pszCurField != NULL )
-    {
-        CPLFree( m_pszCurField );
-        m_pszCurField = NULL;
-    }
+    m_bInCurField = FALSE;
 
     if ( m_bInCityGMLGenericAttr )
     {
         if( strcmp(pszName, "value") == 0 )
         {
-            CPLFree( m_pszCurField );
-            m_pszCurField = CPLStrdup("");
+            m_pszCurField[0] = '\0';
+            m_nCurFieldLen = 0;
+            m_bInCurField = TRUE;
         }
     }
 
@@ -558,6 +611,7 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         if (bReadGeometry)
         {
             char* pszAttributes = GetAttributes(attr);
+            size_t nLenAttributes = pszAttributes ? strlen(pszAttributes) : 0;
             size_t nLNLenBytes = strlen(pszName);
 
             /* Some CityGML lack a srsDimension="3" in posList, such as in */
@@ -568,13 +622,13 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
             {
                 CPLFree(pszAttributes);
                 pszAttributes = CPLStrdup(" srsDimension=\"3\"");
+                nLenAttributes = strlen(pszAttributes);
             }
 
-            if( m_nGeomLen + nLNLenBytes + 4 + strlen( pszAttributes ) >
+            if( m_nGeomLen + nLNLenBytes + 4 + nLenAttributes >
                 m_nGeomAlloc )
             {
-                m_nGeomAlloc = (size_t) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000 +
-                                    strlen( pszAttributes ));
+                m_nGeomAlloc = (size_t) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000 + nLenAttributes);
                 char* pszNewGeometry = (char *)
                     VSIRealloc( m_pszGeometry, m_nGeomAlloc);
                 if (pszNewGeometry == NULL)
@@ -585,14 +639,18 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
                 m_pszGeometry = pszNewGeometry;
             }
 
-            strcpy( m_pszGeometry+m_nGeomLen++, "<" );
-            strcpy( m_pszGeometry+m_nGeomLen, pszName );
+            m_pszGeometry[m_nGeomLen++] = '<';
+            memcpy( m_pszGeometry+ m_nGeomLen, pszName, nLNLenBytes );
             m_nGeomLen += nLNLenBytes;
-            /* saving attributes */
-            strcat( m_pszGeometry + m_nGeomLen, pszAttributes );
-            m_nGeomLen += strlen( pszAttributes );
-            CPLFree(pszAttributes);
-            strcat( m_pszGeometry + (m_nGeomLen++), ">" );
+            if (pszAttributes)
+            {
+                /* saving attributes */
+                memcpy( m_pszGeometry + m_nGeomLen, pszAttributes, nLenAttributes );
+                m_nGeomLen += nLenAttributes;
+                CPLFree(pszAttributes);
+            }
+            m_pszGeometry[m_nGeomLen++] = '>';
+            m_pszGeometry[m_nGeomLen] = '\0';
         }
     }
 
@@ -646,7 +704,8 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 /* -------------------------------------------------------------------- */
 /*      Is it a CityGML generic attribute ?                             */
 /* -------------------------------------------------------------------- */
-    else if( m_poReader->IsCityGMLGenericAttributeElement( pszName, attr ) )
+    else if( m_bIsCityGML &&
+             m_poReader->IsCityGMLGenericAttributeElement( pszName, attr ) )
     {
         m_bInCityGMLGenericAttr = TRUE;
         CPLFree(m_pszCityGMLGenericAttrName);
@@ -658,10 +717,12 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 /*      If it is (or at least potentially is) a simple attribute,       */
 /*      then start collecting it.                                       */
 /* -------------------------------------------------------------------- */
-    else if( m_poReader->IsAttributeElement( pszName ) )
+    else if( (m_nAttributeIndex =
+                m_poReader->GetAttributeElementIndex( pszName )) != -1 )
     {
-        CPLFree( m_pszCurField );
-        m_pszCurField = CPLStrdup("");
+        m_pszCurField[0] = '\0';
+        m_nCurFieldLen = 0;
+        m_bInCurField = TRUE;
         if (m_bReportHref)
         {
             CPLFree(m_pszHref);
@@ -672,10 +733,12 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         CPLFree(m_pszValue);
         m_pszValue = GetAttributeValue(attr, "value");
     }
-    else if( m_bReportHref && m_poReader->IsAttributeElement( CPLSPrintf("%s_href", pszName ) ) )
+    else if( m_bReportHref && (m_nAttributeIndex =
+                m_poReader->GetAttributeElementIndex( CPLSPrintf("%s_href", pszName ) )) != -1 )
     {
-        CPLFree( m_pszCurField );
-        m_pszCurField = CPLStrdup("");
+        m_pszCurField[0] = '\0';
+        m_nCurFieldLen = 0;
+        m_bInCurField = TRUE;
         CPLFree(m_pszHref);
         m_pszHref = GetAttributeValue(attr, "xlink:href");
     }
@@ -683,7 +746,8 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
 /* -------------------------------------------------------------------- */
 /*      Push the element onto the current state's path.                 */
 /* -------------------------------------------------------------------- */
-    poState->PushPath( pszName );
+    if (m_pszGeometry == NULL)
+        poState->PushPath( pszName );
 
     m_nDepth ++;
 
@@ -710,7 +774,7 @@ OGRErr GMLHandler::endElement(const char* pszName )
 
     GMLReadState *poState = m_poReader->GetState();
 
-    if( m_bInBoundedBy && strcmp(pszName, "boundedBy") == 0 &&
+    if( m_bInBoundedBy /*&& strcmp(pszName, "boundedBy") == 0*/ &&
         m_inBoundedByDepth == m_nDepth)
     {
         m_bInBoundedBy = FALSE;
@@ -718,13 +782,14 @@ OGRErr GMLHandler::endElement(const char* pszName )
 
     else if( m_bInCityGMLGenericAttr )
     {
-        if( m_pszCityGMLGenericAttrName != NULL && m_pszCurField != NULL )
+        if( m_pszCityGMLGenericAttrName != NULL && m_bInCurField )
         {
             CPLAssert( poState->m_poFeature != NULL );
 
             m_poReader->SetFeatureProperty( m_pszCityGMLGenericAttrName, m_pszCurField );
-            CPLFree( m_pszCurField );
-            m_pszCurField = NULL;
+            m_pszCurField[0] = '\0';
+            m_nCurFieldLen = 0;
+            m_bInCurField = FALSE;
             CPLFree(m_pszCityGMLGenericAttrName);
             m_pszCityGMLGenericAttrName = NULL;
         }
@@ -741,21 +806,21 @@ OGRErr GMLHandler::endElement(const char* pszName )
 /*      We don't bother validating that the closing tag matches the     */
 /*      opening tag.                                                    */
 /* -------------------------------------------------------------------- */
-    else if( m_pszCurField != NULL )
+    else if( m_bInCurField )
     {
         CPLAssert( poState->m_poFeature != NULL );
 
-        if ( m_pszHref != NULL && (m_pszCurField == NULL || EQUAL(m_pszCurField, "")))
+        if ( m_pszHref != NULL && m_pszCurField[0] == '\0' )
         {
             CPLString osPropNameHref = CPLSPrintf("%s_href", poState->m_pszPath);
             m_poReader->SetFeatureProperty( osPropNameHref, m_pszHref );
         }
         else
         {
-            if (EQUAL(m_pszCurField, "") && m_pszValue != NULL)
+            if (m_pszCurField[0] == '\0' && m_pszValue != NULL)
                 m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszValue );
             else
-                m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszCurField );
+                m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszCurField, m_nAttributeIndex );
 
             if (m_pszHref != NULL)
             {
@@ -769,8 +834,11 @@ OGRErr GMLHandler::endElement(const char* pszName )
             m_poReader->SetFeatureProperty( osPropNameUom, m_pszUom );
         }
 
-        CPLFree( m_pszCurField );
-        m_pszCurField = NULL;
+        m_pszCurField[0] = '\0';
+        m_nCurFieldLen = 0;
+        m_bInCurField = FALSE;
+        m_nAttributeIndex = -1;
+
         CPLFree( m_pszHref );
         m_pszHref = NULL;
         CPLFree( m_pszUom );
@@ -783,10 +851,8 @@ OGRErr GMLHandler::endElement(const char* pszName )
 /*      If we are collecting Geometry than store it, and consider if    */
 /*      this is the end of the geometry.                                */
 /* -------------------------------------------------------------------- */
-    if( m_pszGeometry != NULL )
+    else if( m_pszGeometry != NULL )
     {
-        /* should save attributes too! */
-
         size_t nLNLenBytes = strlen(pszName);
 
         if( m_nGeomLen + nLNLenBytes + 4 > m_nGeomAlloc )
@@ -801,10 +867,12 @@ OGRErr GMLHandler::endElement(const char* pszName )
             m_pszGeometry = pszNewGeometry;
         }
 
-        strcat( m_pszGeometry+m_nGeomLen, "</" );
-        strcpy( m_pszGeometry+m_nGeomLen+2, pszName );
-        strcat( m_pszGeometry+m_nGeomLen+nLNLenBytes+2, ">" );
-        m_nGeomLen += nLNLenBytes + 3;
+        m_pszGeometry[m_nGeomLen++] = '<';
+        m_pszGeometry[m_nGeomLen++] = '/';
+        memcpy( m_pszGeometry+m_nGeomLen, pszName, nLNLenBytes );
+        m_nGeomLen += nLNLenBytes;
+        m_pszGeometry[m_nGeomLen++] = '>';
+        m_pszGeometry[m_nGeomLen] = '\0';
 
         if( m_nDepth == m_nGeometryDepth )
         {
@@ -895,21 +963,21 @@ OGRErr GMLHandler::endElement(const char* pszName )
 
             m_pszGeometry = NULL;
             m_nGeomAlloc = m_nGeomLen = 0;
+            m_nGeometryDepth = 0;
         }
-    }
 
-    if ( m_nGeometryDepth != 0 && m_nDepth == m_nGeometryDepth )
-        m_nGeometryDepth = 0;
+        return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are collecting a feature, and this element tag matches    */
 /*      element name for the class, then we have finished the           */
 /*      feature, and we pop the feature read state.                     */
 /* -------------------------------------------------------------------- */
-    if( m_nDepth == m_nDepthFeature && poState->m_poFeature != NULL
-        && strcmp(pszName,
-                 poState->m_poFeature->GetClass()->GetElementName()) == 0 )
+    if( m_nDepth == m_nDepthFeature && poState->m_poFeature != NULL )
     {
+        CPLAssert(strcmp(pszName,
+                    poState->m_poFeature->GetClass()->GetElementName()) == 0);
         m_nDepthFeature = 0;
         m_poReader->PopState();
     }
@@ -920,12 +988,8 @@ OGRErr GMLHandler::endElement(const char* pszName )
 /* -------------------------------------------------------------------- */
     else
     {
-        if( strcmp(pszName,poState->GetLastComponent()) == 0 )
-            poState->PopPath();
-        else
-        {
-            CPLAssert( FALSE );
-        }
+        CPLAssert( strcmp(pszName,poState->GetLastComponent()) == 0 );
+        poState->PopPath();
     }
 
     return CE_None;
@@ -940,12 +1004,10 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
 {
     int nIter = 0;
 
-    if( m_pszCurField != NULL )
+    if( m_bInCurField )
     {
-        int     nCurFieldLength = strlen(m_pszCurField);
-
         // Ignore white space
-        if (nCurFieldLength == 0)
+        if (m_nCurFieldLen == 0)
         {
             while (nIter < nLen &&
                    ( data[nIter] == ' ' || data[nIter] == 10 || data[nIter]== 13 || data[nIter] == '\t') )
@@ -954,18 +1016,22 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
 
         size_t nCharsLen = nLen - nIter;
 
-        char *pszNewCurField = (char *)
-            VSIRealloc( m_pszCurField,
-                        nCurFieldLength+ nCharsLen +1 );
-        if (pszNewCurField == NULL)
+        size_t nNewSize = m_nCurFieldLen + nCharsLen +1;
+        if (nNewSize >= m_nCurFieldAlloc)
         {
-            return CE_Failure;
+            char *pszNewCurField = (char *)
+                VSIRealloc( m_pszCurField, m_nCurFieldAlloc * 2 );
+            if (pszNewCurField == NULL)
+            {
+                return CE_Failure;
+            }
+            m_pszCurField = pszNewCurField;
+            m_nCurFieldAlloc *= 2;
         }
-        m_pszCurField = pszNewCurField;
-        memcpy( m_pszCurField + nCurFieldLength, data + nIter, nCharsLen);
-        nCurFieldLength += nCharsLen;
+        memcpy( m_pszCurField + m_nCurFieldLen, data + nIter, nCharsLen);
+        m_nCurFieldLen += nCharsLen;
 
-        m_pszCurField[nCurFieldLength] = '\0';
+        m_pszCurField[m_nCurFieldLen] = '\0';
     }
     else if( m_pszGeometry != NULL )
     {
@@ -1007,21 +1073,18 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
 int GMLHandler::IsGeometryElement( const char *pszElement )
 
 {
-    return strcmp(pszElement,"Polygon") == 0
-        || strcmp(pszElement,"MultiPolygon") == 0
-        || strcmp(pszElement,"MultiPoint") == 0
-        || strcmp(pszElement,"MultiLineString") == 0
-        || strcmp(pszElement,"MultiSurface") == 0
-        || strcmp(pszElement,"MultiGeometry") == 0
-        || strcmp(pszElement,"GeometryCollection") == 0 /* OGR < 1.8.0 bug... */
-        || strcmp(pszElement,"Point") == 0
-        || strcmp(pszElement,"Curve") == 0
-        || strcmp(pszElement,"MultiCurve") == 0
-        || strcmp(pszElement,"TopoCurve") == 0
-        || strcmp(pszElement,"Surface") == 0
-        || strcmp(pszElement,"TopoSurface") == 0
-        || strcmp(pszElement,"PolygonPatch") == 0
-        || strcmp(pszElement,"LineString") == 0
-        || strcmp(pszElement,"CompositeSurface") == 0
-        || strcmp(pszElement,"Solid") == 0;
+    int nFirst = 0;
+    int nLast = GML_GEOMETRY_TYPE_COUNT- 1;
+    unsigned long nHash = CPLHashSetHashStr(pszElement);
+    do
+    {
+        int nMiddle = (nFirst + nLast) / 2;
+        if (nHash == pasGeometryNames[nMiddle].nHash)
+            return strcmp(pszElement, pasGeometryNames[nMiddle].pszName) == 0;
+        if (nHash < pasGeometryNames[nMiddle].nHash)
+            nLast = nMiddle - 1;
+        else
+            nFirst = nMiddle + 1;
+    } while(nFirst <= nLast);
+    return FALSE;
 }
