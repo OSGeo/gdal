@@ -1145,7 +1145,61 @@ def ogr_gml_29():
     ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test reading a big field and a big geometry
+
+def ogr_gml_30():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    field1 = " "
+    for i in range(11):
+        field1 = field1 + field1
+
+    geom = "0 1 "
+    for i in range(9):
+        geom = geom + geom
+
+    data = """<FeatureCollection xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <layer1>
+      <geometry><gml:LineString><gml:posList>%s</gml:posList></gml:LineString></geometry>
+      <field1>A%sZ</field1>
+    </layer1>
+  </gml:featureMember>
+</FeatureCollection>""" % (geom, field1)
+
+    f = gdal.VSIFOpenL("/vsimem/ogr_gml_30.gml", "wb")
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open("/vsimem/ogr_gml_30.gml")
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    field1 = feat.GetField(0)
+    geom_wkt = feat.GetGeometryRef().ExportToWkt()
+    ds = None
+
+    gdal.Unlink("/vsimem/ogr_gml_30.gml")
+    gdal.Unlink("/vsimem/ogr_gml_30.gfs")
+
+    if len(field1) != 2050:
+        gdaltest.post_reason('did not get expected len(field1)')
+        print(field1)
+        print(len(field1))
+        return 'fail'
+
+    if len(geom_wkt) != 2060:
+        gdaltest.post_reason('did not get expected len(geom_wkt)')
+        print(geom_wkt)
+        print(len(geom_wkt))
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 #  Cleanup
 
@@ -1257,6 +1311,7 @@ gdaltest_list = [
     ogr_gml_27,
     ogr_gml_28,
     ogr_gml_29,
+    ogr_gml_30,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
